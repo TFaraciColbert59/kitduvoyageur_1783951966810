@@ -7,7 +7,7 @@ import WeightGauge from '@/components/WeightGauge';
 import TopoSeparator from '@/components/TopoSeparator';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
-import type { CountryDataV2 } from '@/app/api/pays/[code]/route';
+import type { CountryDataV2 } from '@/types/country';
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────
 
@@ -103,7 +103,12 @@ export default function CountryPage({ params }: { params: Promise<{ code: string
       .then((r) => r.json())
       .then((json) => {
         if (json.error) throw new Error(json.error);
-        setCountry(json.data as CountryDataV2);
+        const data = json.data;
+        // Validate that the response matches the v2 schema before setting state
+        if (!data || !data.pays || !data.meteo || !data.securite || !data.pratique) {
+          throw new Error('Format de données invalide. Veuillez réessayer.');
+        }
+        setCountry(data as CountryDataV2);
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
@@ -383,10 +388,14 @@ export default function CountryPage({ params }: { params: Promise<{ code: string
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h2 className="font-bold text-xl text-foreground" style={{ fontFamily: 'var(--font-display)' }}>Calendrier météo</h2>
-                  <p className="text-xs text-white/30 font-mono" style={{ fontFamily: 'var(--font-mono)' }}>Source : {country.meteo.source}</p>
+                  <p className="text-xs text-white/30 font-mono" style={{ fontFamily: 'var(--font-mono)' }}>Source : {country.meteo?.source}</p>
                 </div>
                 <p className="text-sm text-muted-foreground mb-6">Températures, précipitations et affluence touristique pour {country.pays.nom}.</p>
 
+                {!country.meteo?.calendrier_12_mois ? (
+                  <div className="topo-card p-6 text-center text-white/40 text-sm">Données météo indisponibles pour ce pays.</div>
+                ) : (
+                  <>
                 {/* Month cards */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
                   {country.meteo.calendrier_12_mois.map((m) => {
@@ -440,6 +449,8 @@ export default function CountryPage({ params }: { params: Promise<{ code: string
                     })}
                   </div>
                 </div>
+                  </>
+                )}
 
                 {/* Legend */}
                 <div className="flex flex-wrap gap-4 mt-2">
