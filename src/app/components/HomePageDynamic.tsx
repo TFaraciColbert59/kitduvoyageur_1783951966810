@@ -1,14 +1,8 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-
-const DynamicHome = dynamic(() => import('@/app/components/HomePageClient'), {
-  ssr: false,
-  loading: () => (
-    <div className="min-h-screen bg-[#1C2620]" aria-label="Chargement..." />
-  ),
-});
+// This file is no longer used — page.tsx imports HomePageClient directly.
+// Kept as a no-op to avoid breaking any cached references.
 
 export default function HomePageDynamic() {
-  return <DynamicHome />;
+  return null;
 }

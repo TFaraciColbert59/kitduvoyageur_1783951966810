@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Metadata } from 'next';
-import HomePageDynamic from '@/app/components/HomePageDynamic';
+import HomePageClient from '@/app/components/HomePageClient';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
@@ -59,7 +59,7 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
       />
-      <HomePageDynamic />
+      <HomePageClient />
     </>
   );
 }
