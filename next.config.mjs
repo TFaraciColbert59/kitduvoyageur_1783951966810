@@ -59,6 +59,13 @@ const nextConfig = {
         /src[/\\]app[/\\]components[/\\]HomePageContent\.tsx$/,
         /src[/\\]app[/\\]components[/\\]home[/\\]/,
         /\[id\]/,
+        /src[/\\]app[/\\]carnets[/\\]/,
+        /src[/\\]app[/\\]clubs[/\\]/,
+        /src[/\\]app[/\\]pays[/\\]/,
+        /src[/\\]app[/\\]ai-configurator[/\\]/,
+        /src[/\\]app[/\\]profil[/\\]/,
+        /src[/\\]app[/\\]compte[/\\]/,
+        /src[/\\]app[/\\]evenements[/\\]/,
       ],
       use: [{
         loader: '@dhiwise/component-tagger/nextLoader',

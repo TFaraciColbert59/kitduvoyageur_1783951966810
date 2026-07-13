@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import WeightGauge from '@/components/WeightGauge';
+import { getChatCompletion } from '@/lib/ai/chatCompletion';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface WizardState {
@@ -29,28 +30,13 @@ interface EquipmentItem {
   essential: boolean;
 }
 
-// ── Mock AI Result ──────────────────────────────────────────────────────────────
-const mockResult = {
-  sac_recommande: 'Osprey Exos 58 L',
-  poids_total_g: 9_200,
-  budget_estime_eur: 485,
-  alertes: [
-    'Conditions météo imprévisibles en juillet — emportez une couche imperméable',
-    'Eau potable rare sur certains tronçons — filtration obligatoire',
-  ],
-  liste_equipement: [
-    { id: 'e1', name: 'Tente ultralégère 2P', category: 'Abri', weightG: 1_100, priceEur: 189, essential: true },
-    { id: 'e2', name: 'Sac de couchage -5°C', category: 'Sommeil', weightG: 850, priceEur: 145, essential: true },
-    { id: 'e3', name: 'Réchaud à gaz compact', category: 'Cuisine', weightG: 87, priceEur: 38, essential: true },
-    { id: 'e4', name: 'Filtre à eau Sawyer', category: 'Eau', weightG: 57, priceEur: 32, essential: true },
-    { id: 'e5', name: 'Veste imperméable 2.5L', category: 'Vêtements', weightG: 320, priceEur: 95, essential: true },
-    { id: 'e6', name: 'Bâtons de trekking', category: 'Matériel', weightG: 480, priceEur: 55, essential: false },
-    { id: 'e7', name: 'Lampe frontale 400lm', category: 'Éclairage', weightG: 95, priceEur: 28, essential: true },
-    { id: 'e8', name: 'Kit premiers secours', category: 'Sécurité', weightG: 210, priceEur: 24, essential: true },
-    { id: 'e9', name: 'Tapis de sol isolant', category: 'Sommeil', weightG: 340, priceEur: 42, essential: false },
-    { id: 'e10', name: 'Gourde 1L inox', category: 'Eau', weightG: 175, priceEur: 18, essential: false },
-  ] as EquipmentItem[],
-};
+interface AIResult {
+  sac_recommande: string;
+  poids_total_g: number;
+  budget_estime_eur: number;
+  alertes: string[];
+  liste_equipement: EquipmentItem[];
+}
 
 // ── Altimeter Loader ─────────────────────────────────────────────────────────────
 function AltimeterLoader({ active }: { active: boolean }) {
@@ -83,22 +69,15 @@ function AltimeterLoader({ active }: { active: boolean }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-6" role="status" aria-live="polite" aria-label="Génération de votre liste en cours">
       <div className="flex items-center gap-1">
-        <span className="font-mono-data text-4xl font-600" style={{ color: 'var(--info)', fontFamily: 'var(--font-mono)' }}>
-          {digits[0]}
-        </span>
-        <span className="font-mono-data text-4xl font-600" style={{ color: 'var(--info)', fontFamily: 'var(--font-mono)' }}>
-          {digits[1]}
-        </span>
-        <span className="font-mono-data text-4xl font-600" style={{ color: 'var(--info)', fontFamily: 'var(--font-mono)' }}>
-          {digits[2]}
-        </span>
-        <span className="font-mono-data text-4xl font-600" style={{ color: 'var(--info)', fontFamily: 'var(--font-mono)' }}>
-          {digits[3]}
-        </span>
+        {digits.map((d, i) => (
+          <span key={i} className="font-mono-data text-4xl font-600" style={{ color: 'var(--info)', fontFamily: 'var(--font-mono)' }}>
+            {d}
+          </span>
+        ))}
         <span className="font-mono-data text-2xl text-muted-foreground ml-1" style={{ fontFamily: 'var(--font-mono)' }}>m</span>
       </div>
       <p className="text-sm text-muted-foreground font-mono-data uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>
-        Analyse de la destination…
+        Analyse IA en cours…
       </p>
       <div className="flex gap-1.5">
         {[0, 1, 2].map((i) => (
@@ -211,7 +190,7 @@ function StepDates({ state, onChange }: { state: WizardState; onChange: (k: keyo
               onClick={() => onChange('season', s.id)}
               className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
                 state.season === s.id
-                  ? 'border-primary bg-primary/5' :'border-border hover:border-muted-foreground'
+                  ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground'
               }`}
               aria-pressed={state.season === s.id}
             >
@@ -262,7 +241,7 @@ function StepProfile({ state, onChange }: { state: WizardState; onChange: (k: ke
               onClick={() => onChange('level', lv.id)}
               className={`flex flex-col gap-1 p-4 rounded-xl border-2 text-left transition-all duration-200 ${
                 state.level === lv.id
-                  ? 'border-primary bg-primary/5' :'border-border hover:border-muted-foreground'
+                  ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground'
               }`}
               aria-pressed={state.level === lv.id}
             >
@@ -330,17 +309,79 @@ function StepProfile({ state, onChange }: { state: WizardState; onChange: (k: ke
   );
 }
 
+// ── Step Result with Gemini AI ──────────────────────────────────────────────────
 function StepResult({ state }: { state: WizardState }) {
   const [loading, setLoading] = useState(true);
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(
-    new Set(mockResult.liste_equipement.filter((i) => i.essential).map((i) => i.id))
-  );
+  const [aiResult, setAiResult] = useState<AIResult | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(t);
-  }, []);
+    const fetchAI = async () => {
+      setLoading(true);
+      setAiError(null);
+
+      const systemPrompt = `Tu es un expert en équipement outdoor et randonnée. Tu génères des listes d'équipement optimisées pour les voyageurs. 
+Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans texte avant ou après.
+Le JSON doit avoir exactement cette structure:
+{
+  "sac_recommande": "string",
+  "poids_total_g": number,
+  "budget_estime_eur": number,
+  "alertes": ["string"],
+  "liste_equipement": [
+    {
+      "id": "string",
+      "name": "string",
+      "category": "string",
+      "weightG": number,
+      "priceEur": number,
+      "essential": boolean
+    }
+  ]
+}`;
+
+      const userPrompt = `Génère une liste d'équipement optimisée pour:
+- Destination: ${state.destination}
+- Saison: ${state.season}
+- Activité: ${state.activity}
+- Niveau: ${state.level}
+- Poids max du sac: ${(state.maxWeightG / 1000).toFixed(1)} kg
+- Budget max: ${state.budgetEur} €
+${state.startDate ? `- Dates: ${state.startDate} au ${state.endDate}` : ''}
+
+Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes spécifiques à la destination et à la saison. Recommande un sac adapté.`;
+
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const response = await getChatCompletion('GEMINI', 'gemini/gemini-2.5-flash', [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ], { temperature: 0.7, max_tokens: 2000 }) as any;
+
+        const content = response?.choices?.[0]?.message?.content ?? '';
+        const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const parsed: AIResult = JSON.parse(cleaned);
+
+        if (!parsed.liste_equipement || !Array.isArray(parsed.liste_equipement)) {
+          throw new Error('Format de réponse invalide');
+        }
+
+        setAiResult(parsed);
+        setSelectedItems(new Set(parsed.liste_equipement.filter((i) => i.essential).map((i) => i.id)));
+      } catch (err) {
+        console.error('AI configurator error:', err);
+        setAiError('Impossible de générer la liste. Veuillez réessayer.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAI();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [retryCount]);
 
   const toggleItem = (id: string) => {
     setSelectedItems((prev) => {
@@ -351,15 +392,15 @@ function StepResult({ state }: { state: WizardState }) {
     });
   };
 
-  const totalWeightG = mockResult.liste_equipement
+  const totalWeightG = (aiResult?.liste_equipement ?? [])
     .filter((i) => selectedItems.has(i.id))
     .reduce((sum, i) => sum + i.weightG, 0);
 
-  const totalPriceEur = mockResult.liste_equipement
+  const totalPriceEur = (aiResult?.liste_equipement ?? [])
     .filter((i) => selectedItems.has(i.id))
     .reduce((sum, i) => sum + i.priceEur, 0);
 
-  const categories = Array.from(new Set(mockResult.liste_equipement.map((i) => i.category)));
+  const categories = Array.from(new Set((aiResult?.liste_equipement ?? []).map((i) => i.category)));
 
   const handleAddToCart = () => {
     setToast(true);
@@ -368,15 +409,32 @@ function StepResult({ state }: { state: WizardState }) {
 
   if (loading) return <AltimeterLoader active />;
 
+  if (aiError) {
+    return (
+      <div className="text-center py-16 space-y-4">
+        <div className="text-4xl">⚠️</div>
+        <p className="text-foreground font-600">{aiError}</p>
+        <button
+          onClick={() => { setAiError(null); setRetryCount((c) => c + 1); }}
+          className="btn-primary px-6 py-2.5"
+        >
+          Réessayer
+        </button>
+      </div>
+    );
+  }
+
+  if (!aiResult) return null;
+
   return (
     <div className="space-y-6">
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Sac recommandé', val: mockResult.sac_recommande, icon: 'ShoppingBagIcon', color: 'var(--secondary)' },
+          { label: 'Sac recommandé', val: aiResult.sac_recommande, icon: 'ShoppingBagIcon', color: 'var(--secondary)' },
           { label: 'Poids total', val: `${(totalWeightG / 1000).toFixed(2)} kg`, icon: 'ScaleIcon', color: 'var(--info)', mono: true },
           { label: 'Budget estimé', val: `${totalPriceEur} €`, icon: 'BanknotesIcon', color: 'var(--accent)', mono: true },
-          { label: 'Articles', val: `${selectedItems.size} / ${mockResult.liste_equipement.length}`, icon: 'ListBulletIcon', color: 'var(--primary)', mono: true },
+          { label: 'Articles', val: `${selectedItems.size} / ${aiResult.liste_equipement.length}`, icon: 'ListBulletIcon', color: 'var(--primary)', mono: true },
         ].map(({ label, val, icon, color, mono }) => (
           <div key={label} className="topo-card p-4">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-3" style={{ background: `${color}20` }}>
@@ -402,9 +460,9 @@ function StepResult({ state }: { state: WizardState }) {
       </div>
 
       {/* Alerts */}
-      {mockResult.alertes.length > 0 && (
+      {aiResult.alertes.length > 0 && (
         <div className="space-y-2">
-          {mockResult.alertes.map((alert, idx) => (
+          {aiResult.alertes.map((alert, idx) => (
             <div key={idx} className="flex items-start gap-3 p-3 rounded-xl" style={{ background: 'rgba(228,80,28,0.08)', border: '1px solid rgba(228,80,28,0.2)' }}>
               <Icon name="ExclamationTriangleIcon" size={16} variant="outline" className="text-primary flex-shrink-0 mt-0.5" />
               <p className="text-sm text-foreground">{alert}</p>
@@ -416,7 +474,7 @@ function StepResult({ state }: { state: WizardState }) {
       {/* Equipment list by category */}
       <div>
         <h3 className="font-display font-700 text-foreground text-base mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-          Liste d&apos;équipement ({mockResult.liste_equipement.length} articles)
+          Liste d&apos;équipement ({aiResult.liste_equipement.length} articles)
         </h3>
         <div className="space-y-4">
           {categories.map((cat) => (
@@ -425,14 +483,14 @@ function StepResult({ state }: { state: WizardState }) {
                 {cat}
               </p>
               <div className="space-y-2">
-                {mockResult.liste_equipement
+                {aiResult.liste_equipement
                   .filter((i) => i.category === cat)
                   .map((item) => (
                     <div
                       key={item.id}
                       className={`flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 cursor-pointer ${
                         selectedItems.has(item.id)
-                          ? 'border-secondary/40 bg-secondary/5' :'border-border opacity-50'
+                          ? 'border-secondary/40 bg-secondary/5' : 'border-border opacity-50'
                       }`}
                       onClick={() => toggleItem(item.id)}
                       role="checkbox"
@@ -473,7 +531,7 @@ function StepResult({ state }: { state: WizardState }) {
         </div>
       </div>
 
-      {/* Addto cart CTA */}
+      {/* Add to cart CTA */}
       <div className="flex flex-col sm:flex-row gap-3 pt-2">
         <button
           onClick={handleAddToCart}
@@ -491,7 +549,7 @@ function StepResult({ state }: { state: WizardState }) {
       {/* Toast */}
       {toast && (
         <div
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl toast-enter"
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl"
           style={{ background: 'var(--secondary)', color: 'var(--secondary-foreground)', border: '1px solid rgba(255,255,255,0.1)' }}
           role="alert"
           aria-live="polite"
@@ -584,7 +642,7 @@ export default function ConfiguratorWizard() {
         </div>
       </div>
 
-      {/* Mono data band — contextual sidebar info on mobile as horizontal band */}
+      {/* Mono data band */}
       {state.destination && (
         <div
           className="border-b border-border py-2 px-4 sm:px-6 overflow-x-auto"
