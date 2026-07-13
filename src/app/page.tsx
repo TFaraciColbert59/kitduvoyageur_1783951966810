@@ -1,27 +1,6 @@
 import React from 'react';
-import dynamic from 'next/dynamic';
 import type { Metadata } from 'next';
-
-// Static imports for above-the-fold critical components
-import Header from '@/components/Header';
-import HeroSection from '@/app/components/HeroSection';
-
-// Dynamic imports for below-the-fold components — each gets its own webpack chunk
-// This prevents the react-server-dom-webpack module factory collision
-const VerifiedReviewsSection = dynamic(
-  () => import('@/app/components/VerifiedReviewsSection'),
-  { ssr: true }
-);
-
-const BelowFoldSections = dynamic(
-  () => import('@/app/components/BelowFoldSections'),
-  { ssr: true }
-);
-
-const Footer = dynamic(
-  () => import('@/components/Footer'),
-  { ssr: true }
-);
+import HomePageClient from '@/app/components/HomePageClient';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.com';
 
@@ -71,7 +50,7 @@ const websiteSchema = {
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen">
+    <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
@@ -80,13 +59,7 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
       />
-      <Header />
-      <div id="main-content">
-        <HeroSection />
-        <VerifiedReviewsSection />
-        <BelowFoldSections />
-      </div>
-      <Footer />
-    </main>
+      <HomePageClient />
+    </>
   );
 }
