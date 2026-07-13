@@ -25,15 +25,11 @@ function HeroSection() {
           alt="Randonneur solitaire face à un panorama montagneux au lever du soleil, sac à dos posé sur un rocher"
           fill
           priority
-          fetchPriority="high"
           sizes="100vw"
           className="object-cover object-center"
         />
-        {/* Layered overlays for depth */}
         <div className="absolute inset-0" style={{ background: 'linear-gradient(105deg, rgba(28,38,32,0.92) 0%, rgba(28,38,32,0.70) 40%, rgba(28,38,32,0.25) 100%)' }} />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(28,38,32,1) 0%, transparent 35%)' }} />
-        {/* Subtle grain texture */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")', backgroundSize: '200px 200px' }} />
       </div>
 
       {/* Content */}
@@ -133,7 +129,7 @@ function HeroSection() {
       {/* Scroll indicator */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40" aria-hidden="true">
         <div className="w-px h-10 bg-white/30 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full bg-white animate-[scrollFill_2s_ease-in-out_infinite]" style={{ height: '40%', animation: 'scrollDown 2s ease-in-out infinite' }} />
+          <div className="absolute top-0 left-0 w-full bg-white" style={{ height: '40%', animation: 'scrollDown 2s ease-in-out infinite' }} />
         </div>
         <span className="text-[9px] font-mono text-white/30 tracking-[0.2em] uppercase" style={{ fontFamily: 'var(--font-mono)' }}>Scroll</span>
       </div>
@@ -202,7 +198,6 @@ function ConfiguratorSection() {
               transition: 'all 0.9s cubic-bezier(0.16,1,0.3,1) 0.2s',
             }}
           >
-            {/* Glow */}
             <div className="absolute -inset-8 rounded-3xl opacity-20" style={{ background: 'radial-gradient(ellipse at center, #E4501C 0%, transparent 70%)' }} aria-hidden="true" />
 
             <div className="relative bg-[#243028] border border-white/10 rounded-3xl overflow-hidden shadow-2xl shadow-black/50">
@@ -258,11 +253,11 @@ function ConfiguratorSection() {
                   <div className="bg-[#E4501C]/15 px-5 py-3 flex items-center justify-between">
                     <div>
                       <p className="text-[9px] font-mono text-[#E4501C] tracking-[0.2em] uppercase mb-0.5" style={{ fontFamily: 'var(--font-mono)' }}>Résultat généré</p>
-                      <p className="font-display font-700 text-white text-base" style={{ fontFamily: 'var(--font-display)', fontWeight: 700 }}>Kit Islande Automne</p>
+                      <p className="font-display font-bold text-white text-base" style={{ fontFamily: 'var(--font-display)' }}>Kit Islande Automne</p>
                     </div>
                     <div className="flex items-center gap-1.5 bg-[#E4501C]/20 rounded-full px-3 py-1.5">
                       <Icon name="SparklesIcon" size={12} variant="outline" className="text-[#E4501C]" />
-                      <span className="text-[10px] font-mono text-[#E4501C] font-600" style={{ fontFamily: 'var(--font-mono)' }}>IA</span>
+                      <span className="text-[10px] font-mono text-[#E4501C]" style={{ fontFamily: 'var(--font-mono)' }}>IA</span>
                     </div>
                   </div>
                   <div className="bg-[#1C2620]/60 px-5 py-4 grid grid-cols-4 gap-3">
@@ -273,7 +268,7 @@ function ConfiguratorSection() {
                       { val: '94', unit: '/100' },
                     ].map(({ val, unit }) => (
                       <div key={unit} className="text-center">
-                        <p className="font-mono font-700 text-white text-lg leading-none" style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{val}</p>
+                        <p className="font-mono font-bold text-white text-lg leading-none" style={{ fontFamily: 'var(--font-mono)' }}>{val}</p>
                         <p className="text-[9px] font-mono text-white/30 tracking-wider mt-0.5" style={{ fontFamily: 'var(--font-mono)' }}>{unit}</p>
                       </div>
                     ))}
@@ -284,7 +279,7 @@ function ConfiguratorSection() {
                       <div className="h-1 w-20 bg-white/10 rounded-full overflow-hidden">
                         <div className="h-full bg-[#E4501C] rounded-full" style={{ width: '94%' }} />
                       </div>
-                      <span className="text-[10px] font-mono text-[#E4501C] font-600" style={{ fontFamily: 'var(--font-mono)' }}>94/100</span>
+                      <span className="text-[10px] font-mono text-[#E4501C]" style={{ fontFamily: 'var(--font-mono)' }}>94/100</span>
                     </div>
                   </div>
                 </div>
@@ -397,7 +392,7 @@ function BeforeAfterSection() {
 
 // ─── POPULAR KITS ────────────────────────────────────────────────────────────
 
-const KITS = [
+const KITS_DATA = [
   {
     name: 'Kit Islande',
     tag: 'Volcans & Aurores',
@@ -494,7 +489,7 @@ function PopularKitsSection() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {KITS.map((kit, i) => (
+          {KITS_DATA.map((kit, i) => (
             <Link
               key={kit.slug}
               href={`/kits/${kit.slug}`}
@@ -524,7 +519,7 @@ function PopularKitsSection() {
 
               {/* Content */}
               <div className="p-5">
-                <h3 className="font-display font-700 text-white text-lg mb-3" style={{ fontFamily: 'var(--font-display)', fontWeight: 700 }}>
+                <h3 className="font-display font-bold text-white text-lg mb-3" style={{ fontFamily: 'var(--font-display)' }}>
                   {kit.name}
                 </h3>
                 <div className="flex items-center gap-4 mb-4">
@@ -534,7 +529,7 @@ function PopularKitsSection() {
                     { val: kit.price, unit: 'estimé' },
                   ].map(({ val, unit }) => (
                     <div key={unit}>
-                      <p className="font-mono font-600 text-white text-sm" style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{val}</p>
+                      <p className="font-mono font-semibold text-white text-sm" style={{ fontFamily: 'var(--font-mono)' }}>{val}</p>
                       <p className="text-[9px] font-mono text-white/30 tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>{unit}</p>
                     </div>
                   ))}
@@ -707,7 +702,7 @@ function TrustScoreSection() {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-display font-800 text-white text-4xl leading-none" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>97</span>
+                <span className="font-display font-extrabold text-white text-4xl leading-none" style={{ fontFamily: 'var(--font-display)' }}>97</span>
                 <span className="text-[10px] font-mono text-white/30 tracking-wider mt-1" style={{ fontFamily: 'var(--font-mono)' }}>/100</span>
               </div>
             </div>
@@ -740,7 +735,7 @@ function TrustScoreSection() {
               {[
                 { icon: 'KeyIcon', label: 'Location entre particuliers', desc: 'Accédez à du matériel premium' },
                 { icon: 'TagIcon', label: 'Seconde main vérifiée', desc: 'Achetez et vendez en confiance' },
-                { icon: 'UsersIcon', label: 'Communauté d\'experts', desc: 'Rejoignez les meilleurs voyageurs' },
+                { icon: 'UsersIcon', label: "Communauté d'experts", desc: 'Rejoignez les meilleurs voyageurs' },
               ].map(({ icon, label, desc }) => (
                 <div key={label} className="flex items-start gap-4 bg-white/5 rounded-2xl px-5 py-4 border border-white/8">
                   <div className="w-9 h-9 rounded-xl bg-[#E4501C]/15 flex items-center justify-center flex-shrink-0 mt-0.5">
