@@ -140,10 +140,6 @@ export default function HeroSection() {
                 <Icon name="SparklesIcon" size={16} variant="outline" />
                 Configurer mon kit
               </Link>
-              <Link href="/catalogue" className="flex items-center gap-2 border border-white/20 text-white/80 hover:text-white hover:border-white/40 hover:bg-white/5 px-6 py-3.5 rounded-xl font-medium text-sm transition-all">
-                Voir le catalogue
-                <Icon name="ArrowRightIcon" size={14} variant="outline" />
-              </Link>
             </div>
 
             {/* Stats row */}

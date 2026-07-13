@@ -62,9 +62,7 @@ const NAV_GROUPS: NavGroup[] = [
 ];
 
 const QUICK_LINKS = [
-  { label: 'Pro', href: '/pro' },
-  { label: 'Abonnements', href: '/abonnements' },
-  { label: 'Ambassadeurs', href: '/ambassadeurs' },
+  { label: 'Pass Voyageur', href: '/abonnements' },
 ];
 
 export default function Header() {

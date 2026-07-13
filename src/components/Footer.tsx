@@ -9,23 +9,14 @@ const FOOTER_COLS = [
   {
     title: 'Produits',
     links: [
-      { label: 'Catalogue', href: '/catalogue' },
       { label: 'Kits prêts à partir', href: '/kits' },
       { label: 'Location matériel', href: '/location' },
-      { label: 'Occasion', href: '/occasion' },
-      { label: 'Enchères', href: '/encheres' },
-      { label: 'Abonnements Box', href: '/abonnements' },
     ],
   },
   {
     title: 'IA & Outils',
     links: [
       { label: 'Configurateur IA', href: '/ai-configurator' },
-      { label: 'Copilote IA', href: '/copilote' },
-      { label: 'Outils voyage', href: '/outils' },
-      { label: 'Recommandations ML', href: '/recommandations' },
-      { label: 'Rapport expédition', href: '/rapport-expedition' },
-      { label: 'Bilan carbone', href: '/carbone' },
     ],
   },
   {
@@ -33,20 +24,12 @@ const FOOTER_COLS = [
     links: [
       { label: 'Toutes les destinations', href: '/pays' },
       { label: 'Guides de voyage', href: '/guides' },
-      { label: 'Inventaire perso', href: '/inventaire' },
-      { label: 'Jumeau 3D', href: '/jumeau-3d' },
-      { label: 'Alertes prix', href: '/alertes' },
     ],
   },
   {
     title: 'Communauté',
     links: [
       { label: 'Forum communauté', href: '/communaute' },
-      { label: 'Experts certifiés', href: '/experts' },
-      { label: 'Gamification', href: '/gamification' },
-      { label: 'Espace Pro', href: '/pro' },
-      { label: 'Ambassadeurs', href: '/ambassadeurs' },
-      { label: 'Programme fidélité', href: '/fidelite' },
     ],
   },
 ];
