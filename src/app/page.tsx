@@ -99,7 +99,7 @@ const POPULAR_KITS = [
 ];
 
 // ─── Hero Section ──────────────────────────────────────────────────────────
-function HeroSection() {
+function HomeHeroSection() {
   const [scrollY, setScrollY] = useState(0);
   const [mounted, setMounted] = useState(false);
 
@@ -338,7 +338,7 @@ function HeroSection() {
 }
 
 // ─── AI Configurator Section ───────────────────────────────────────────────
-function ConfiguratorSection() {
+function HomeConfiguratorSection() {
   const { ref, visible } = useInView();
   const [activeField, setActiveField] = useState<string | null>(null);
 
@@ -486,7 +486,7 @@ function ConfiguratorSection() {
 }
 
 // ─── Before / After Section ────────────────────────────────────────────────
-function BeforeAfterSection() {
+function HomeBeforeAfterSection() {
   const { ref, visible } = useInView();
 
   const before = [
@@ -587,7 +587,7 @@ function BeforeAfterSection() {
 }
 
 // ─── Popular Kits Section ──────────────────────────────────────────────────
-function PopularKitsSection() {
+function HomePopularKitsSection() {
   const { ref, visible } = useInView();
 
   return (
@@ -719,7 +719,7 @@ function PopularKitsSection() {
 }
 
 // ─── Marketplace Section ───────────────────────────────────────────────────
-function MarketplaceSection() {
+function HomeMarketplaceSection() {
   const { ref, visible } = useInView();
 
   return (
@@ -849,7 +849,7 @@ function MarketplaceSection() {
 }
 
 // ─── Trust Score Section ───────────────────────────────────────────────────
-function TrustScoreSection() {
+function HomeTrustScoreSection() {
   const { ref, visible } = useInView();
   const circumference = 2 * Math.PI * 70;
 
@@ -951,7 +951,7 @@ function TrustScoreSection() {
 }
 
 // ─── Vision Section ────────────────────────────────────────────────────────
-function VisionSection() {
+function HomeVisionSection() {
   const { ref, visible } = useInView();
 
   return (
@@ -1158,13 +1158,13 @@ function HomepageFooter() {
 export default function HomePage() {
   return (
     <main>
-      <HeroSection />
-      <ConfiguratorSection />
-      <BeforeAfterSection />
-      <PopularKitsSection />
-      <MarketplaceSection />
-      <TrustScoreSection />
-      <VisionSection />
+      <HomeHeroSection />
+      <HomeConfiguratorSection />
+      <HomeBeforeAfterSection />
+      <HomePopularKitsSection />
+      <HomeMarketplaceSection />
+      <HomeTrustScoreSection />
+      <HomeVisionSection />
       <HomepageFooter />
     </main>
   );
