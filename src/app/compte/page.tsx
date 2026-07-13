@@ -8,10 +8,11 @@ import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-type Tab = 'profil' | 'inventaire' | 'fidelite' | 'gamification' | 'commandes' | 'rapport' | 'documents' | 'securite';
+type Tab = 'profil' | 'inventaire' | 'fidelite' | 'gamification' | 'commandes' | 'rapport' | 'documents' | 'securite' | 'communaute';
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'profil', label: 'Profil', icon: 'UserIcon' },
+  { id: 'communaute', label: 'Communauté', icon: 'UserGroupIcon' },
   { id: 'commandes', label: 'Commandes', icon: 'ShoppingBagIcon' },
   { id: 'inventaire', label: 'Inventaire', icon: 'ArchiveBoxIcon' },
   { id: 'fidelite', label: 'Fidélité', icon: 'TrophyIcon' },
@@ -960,6 +961,306 @@ function SecuriteTab() {
   );
 }
 
+// ─── Communauté Tab ────────────────────────────────────────────────────────────
+function CommunauteTab() {
+  const { user } = useAuth();
+  const supabase = useMemo(() => createClient(), []);
+  const [clubs, setClubs] = useState<{ id: string; club_id: string; role: string; joined_at: string; club?: { name: string; emoji: string; category: string; members_count: number; privacy: string } }[]>([]);
+  const [events, setEvents] = useState<{ id: string; event_id: string; event?: { title: string; emoji: string; event_date: string; location: string; type: string; status: string } }[]>([]);
+  const [carnets, setCarnets] = useState<{ id: string; title: string; destination: string; cover_image: string; route_rating: number; likes_count: number; visibility: string; created_at: string }[]>([]);
+  const [posts, setPosts] = useState<{ id: string; content: string; post_type: string; likes_count: number; comments_count: number; created_at: string }[]>([]);
+  const [followers, setFollowers] = useState(0);
+  const [following, setFollowing] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [newPost, setNewPost] = useState('');
+  const [postType, setPostType] = useState<'post' | 'tip' | 'question' | 'share'>('post');
+  const [submittingPost, setSubmittingPost] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
+
+  useEffect(() => {
+    if (!user) { setLoading(false); return; }
+    const load = async () => {
+      const [clubsRes, eventsRes, carnetsRes, postsRes, fwersRes, fwingRes] = await Promise.all([
+        supabase.from('club_members').select('id, club_id, role, joined_at, club:clubs(name, emoji, category, members_count, privacy)').eq('user_id', user.id).eq('status', 'active').order('joined_at', { ascending: false }).limit(6),
+        supabase.from('event_participants').select('id, event_id, event:events(title, emoji, event_date, location, type, status)').eq('user_id', user.id).limit(6),
+        supabase.from('carnets').select('id, title, destination, cover_image, route_rating, likes_count, visibility, created_at').eq('author_id', user.id).order('created_at', { ascending: false }).limit(6),
+        supabase.from('community_posts').select('id, content, post_type, likes_count, comments_count, created_at').eq('author_id', user.id).order('created_at', { ascending: false }).limit(5),
+        supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('following_id', user.id),
+        supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('follower_id', user.id),
+      ]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setClubs((clubsRes.data ?? []) as any[]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setEvents((eventsRes.data ?? []) as any[]);
+      setCarnets(carnetsRes.data ?? []);
+      setPosts(postsRes.data ?? []);
+      setFollowers(fwersRes.count ?? 0);
+      setFollowing(fwingRes.count ?? 0);
+      setLoading(false);
+    };
+    load();
+  }, [user, supabase]);
+
+  const handlePublishPost = async () => {
+    if (!user || !newPost.trim()) return;
+    setSubmittingPost(true);
+    const { data } = await supabase.from('community_posts').insert({ author_id: user.id, content: newPost.trim(), post_type: postType, likes_count: 0, comments_count: 0 }).select('id, content, post_type, likes_count, comments_count, created_at').single();
+    if (data) setPosts((prev) => [data, ...prev]);
+    setNewPost('');
+    setSubmittingPost(false);
+    showToast('Publication partagée !');
+  };
+
+  const POST_TYPE_OPTS = [
+    { id: 'post', label: '💬 Post', color: 'bg-gray-100 text-gray-700' },
+    { id: 'tip', label: '💡 Conseil', color: 'bg-emerald-100 text-emerald-700' },
+    { id: 'question', label: '❓ Question', color: 'bg-blue-100 text-blue-700' },
+    { id: 'share', label: '🔗 Partage', color: 'bg-purple-100 text-purple-700' },
+  ];
+
+  if (loading) return <div className="space-y-4">{[1, 2, 3].map((i) => <div key={i} className="h-32 bg-[#C8C3B0]/30 rounded-2xl animate-pulse" />)}</div>;
+
+  return (
+    <div className="space-y-8">
+      {/* Community stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {[
+          { label: 'Abonnés', value: followers, icon: '👥', href: `/profil/${user?.id}` },
+          { label: 'Abonnements', value: following, icon: '🔔', href: `/profil/${user?.id}` },
+          { label: 'Clubs', value: clubs.length, icon: '🏕️', href: '/clubs' },
+          { label: 'Carnets', value: carnets.length, icon: '🗺️', href: '/carnets' },
+        ].map((s) => (
+          <a key={s.label} href={s.href} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 text-center hover:border-[#E4501C]/30 hover:shadow-md transition-all">
+            <p className="text-2xl mb-1">{s.icon}</p>
+            <p className="font-display font-700 text-[#1C2620] text-2xl">{s.value}</p>
+            <p className="text-xs text-[#5C6B5E]">{s.label}</p>
+          </a>
+        ))}
+      </div>
+
+      {/* Publish a post */}
+      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5">
+        <h3 className="font-display font-700 text-[#1C2620] mb-4">Partager avec la communauté</h3>
+        <div className="flex gap-2 mb-3 flex-wrap">
+          {POST_TYPE_OPTS.map((opt) => (
+            <button key={opt.id} onClick={() => setPostType(opt.id as typeof postType)} className={`text-xs font-600 px-3 py-1.5 rounded-full border-2 transition-all ${postType === opt.id ? 'border-[#E4501C] ' + opt.color : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-[#E4501C]/40'}`}>
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <textarea
+          rows={3}
+          className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-3 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 resize-none mb-3"
+          placeholder="Partagez une astuce, posez une question, racontez votre aventure..."
+          value={newPost}
+          onChange={(e) => setNewPost(e.target.value)}
+        />
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-[#5C6B5E]">{newPost.length}/500 caractères</p>
+          <button
+            onClick={handlePublishPost}
+            disabled={submittingPost || !newPost.trim() || newPost.length > 500}
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors disabled:opacity-50"
+          >
+            <Icon name="PaperAirplaneIcon" size={14} variant="outline" />
+            {submittingPost ? 'Publication...' : 'Publier'}
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* My clubs */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display font-700 text-[#1C2620]">Mes clubs</h3>
+            <a href="/clubs" className="text-xs text-[#E4501C] hover:underline flex items-center gap-1">
+              Gérer <Icon name="ArrowTopRightOnSquareIcon" size={11} />
+            </a>
+          </div>
+          {clubs.length === 0 ? (
+            <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-6 text-center">
+              <p className="text-2xl mb-2">🏕️</p>
+              <p className="text-sm text-[#5C6B5E] mb-3">Vous n&apos;avez rejoint aucun club</p>
+              <a href="/clubs" className="inline-flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600 hover:bg-[#E4501C]/90 transition-colors">
+                <Icon name="PlusIcon" size={14} /> Rejoindre un club
+              </a>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {clubs.map((m) => (
+                <a key={m.id} href="/clubs" className="flex items-center gap-3 bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 hover:border-[#E4501C]/30 hover:shadow-sm transition-all">
+                  <div className="w-11 h-11 rounded-xl bg-[#1C2620] flex items-center justify-center text-xl flex-shrink-0">
+                    {m.club?.emoji ?? '🏕️'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-600 text-sm text-[#1C2620] truncate">{m.club?.name ?? 'Club'}</p>
+                    <p className="text-xs text-[#5C6B5E]">{m.club?.category} · {m.club?.members_count ?? 0} membres</p>
+                  </div>
+                  <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full flex-shrink-0 ${m.role === 'admin' ? 'bg-amber-100 text-amber-700' : m.role === 'moderator' ? 'bg-blue-100 text-blue-700' : 'bg-[#E7E3D6] text-[#5C6B5E]'}`}>
+                    {m.role === 'admin' ? '👑 Admin' : m.role === 'moderator' ? '🛡️ Modo' : '👤 Membre'}
+                  </span>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* My events */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display font-700 text-[#1C2620]">Mes événements</h3>
+            <a href="/evenements" className="text-xs text-[#E4501C] hover:underline flex items-center gap-1">
+              Explorer <Icon name="ArrowTopRightOnSquareIcon" size={11} />
+            </a>
+          </div>
+          {events.length === 0 ? (
+            <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-6 text-center">
+              <p className="text-2xl mb-2">📅</p>
+              <p className="text-sm text-[#5C6B5E] mb-3">Aucun événement inscrit</p>
+              <a href="/evenements" className="inline-flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600 hover:bg-[#E4501C]/90 transition-colors">
+                <Icon name="CalendarDaysIcon" size={14} variant="outline" /> Voir les événements
+              </a>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {events.map((p) => {
+                const ev = p.event;
+                if (!ev) return null;
+                return (
+                  <a key={p.id} href="/evenements" className="flex items-center gap-3 bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 hover:border-[#E4501C]/30 hover:shadow-sm transition-all">
+                    <div className="w-11 h-11 rounded-xl bg-[#1C2620] flex items-center justify-center text-xl flex-shrink-0">
+                      {ev.emoji ?? '🏕️'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-600 text-sm text-[#1C2620] truncate">{ev.title}</p>
+                      <p className="text-xs text-[#5C6B5E] truncate">{ev.location}</p>
+                      {ev.event_date && <p className="text-[10px] text-[#5C6B5E]">{new Date(ev.event_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
+                    </div>
+                    <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full flex-shrink-0 ${ev.status === 'upcoming' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
+                      {ev.status === 'upcoming' ? '✓ Inscrit' : 'Passé'}
+                    </span>
+                  </a>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* My carnets */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-display font-700 text-[#1C2620]">Mes carnets d&apos;expédition</h3>
+          <a href="/carnets" className="text-xs text-[#E4501C] hover:underline flex items-center gap-1">
+            Gérer <Icon name="ArrowTopRightOnSquareIcon" size={11} />
+          </a>
+        </div>
+        {carnets.length === 0 ? (
+          <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-6 text-center">
+            <p className="text-2xl mb-2">🗺️</p>
+            <p className="text-sm text-[#5C6B5E] mb-3">Aucun carnet publié</p>
+            <a href="/carnets" className="inline-flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600 hover:bg-[#E4501C]/90 transition-colors">
+              <Icon name="PlusIcon" size={14} /> Créer un carnet
+            </a>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {carnets.map((c) => (
+              <a key={c.id} href="/carnets" className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl overflow-hidden hover:shadow-md hover:border-[#E4501C]/30 transition-all">
+                <div className="relative h-32 bg-[#C8C3B0] overflow-hidden">
+                  {c.cover_image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={c.cover_image} alt={c.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-3xl">🗺️</div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute bottom-2 left-3 right-3">
+                    <p className="text-[10px] text-white/60 font-mono">{c.destination}</p>
+                    <p className="font-display font-700 text-white text-xs line-clamp-1">{c.title}</p>
+                  </div>
+                </div>
+                <div className="p-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs text-[#5C6B5E]">
+                    <Icon name="HeartIcon" size={11} /> {c.likes_count}
+                  </div>
+                  <span className="font-mono font-700 text-[#E4501C] text-xs">{c.route_rating}/10</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Recent posts */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-display font-700 text-[#1C2620]">Mes publications récentes</h3>
+          <a href={user ? `/profil/${user.id}` : '/communaute'} className="text-xs text-[#E4501C] hover:underline flex items-center gap-1">
+            Voir tout <Icon name="ArrowTopRightOnSquareIcon" size={11} />
+          </a>
+        </div>
+        {posts.length === 0 ? (
+          <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-6 text-center">
+            <p className="text-sm text-[#5C6B5E]">Aucune publication. Partagez quelque chose avec la communauté !</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {posts.map((post) => {
+              const TYPE_CFG: Record<string, { label: string; color: string; emoji: string }> = {
+                post: { label: 'Post', color: 'bg-gray-100 text-gray-700', emoji: '💬' },
+                tip: { label: 'Conseil', color: 'bg-emerald-100 text-emerald-700', emoji: '💡' },
+                question: { label: 'Question', color: 'bg-blue-100 text-blue-700', emoji: '❓' },
+                share: { label: 'Partage', color: 'bg-purple-100 text-purple-700', emoji: '🔗' },
+              };
+              const cfg = TYPE_CFG[post.post_type] ?? TYPE_CFG['post'];
+              return (
+                <div key={post.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${cfg.color}`}>{cfg.emoji} {cfg.label}</span>
+                    <span className="text-[10px] text-[#5C6B5E]">{new Date(post.created_at).toLocaleDateString('fr-FR')}</span>
+                  </div>
+                  <p className="text-sm text-[#1C2620] leading-relaxed mb-3 line-clamp-3">{post.content}</p>
+                  <div className="flex items-center gap-4 text-xs text-[#5C6B5E]">
+                    <span className="flex items-center gap-1"><Icon name="HeartIcon" size={12} /> {post.likes_count}</span>
+                    <span className="flex items-center gap-1"><Icon name="ChatBubbleLeftIcon" size={12} /> {post.comments_count}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Quick links */}
+      <div className="bg-[#1C2620] rounded-2xl p-5">
+        <p className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-4">Accès rapide communauté</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: 'Mon profil public', href: user ? `/profil/${user.id}` : '/connexion', icon: 'UserCircleIcon', emoji: '👤' },
+            { label: 'Communauté', href: '/communaute', icon: 'UserGroupIcon', emoji: '🌍' },
+            { label: 'Feed', href: '/feed', icon: 'RssIcon', emoji: '📰' },
+            { label: 'Messagerie', href: '/messagerie', icon: 'ChatBubbleLeftRightIcon', emoji: '💬' },
+          ].map((item) => (
+            <a key={item.href} href={item.href} className="flex flex-col items-center gap-2 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors text-center">
+              <span className="text-2xl">{item.emoji}</span>
+              <span className="text-xs text-white/70 font-500">{item.label}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1C2620] text-white px-5 py-3 rounded-xl text-sm font-600 shadow-xl">
+          {toast}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function ComptePage() {
   const { user } = useAuth();
@@ -981,6 +1282,7 @@ export default function ComptePage() {
   const renderTab = () => {
     switch (activeTab) {
       case 'profil': return <ProfilTab />;
+      case 'communaute': return <CommunauteTab />;
       case 'commandes': return <CommandesTab />;
       case 'inventaire': return <InventaireTab />;
       case 'fidelite': return <FideliteTab />;

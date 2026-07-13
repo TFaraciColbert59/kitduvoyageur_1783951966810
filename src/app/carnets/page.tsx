@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import Image from 'next/image';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -128,27 +129,14 @@ function CarnetModal({
           </button>
         </div>
         <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
-          {/* Title */}
           <div>
             <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Titre *</label>
-            <input
-              className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30"
-              placeholder="Ex: Circuit des Annapurnas — 18 jours"
-              value={form.title}
-              onChange={(e) => set('title', e.target.value)}
-            />
+            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" placeholder="Ex: Circuit des Annapurnas — 18 jours" value={form.title} onChange={(e) => set('title', e.target.value)} />
           </div>
-          {/* Destination */}
           <div>
             <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Destination *</label>
-            <input
-              className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30"
-              placeholder="Ex: Népal, Corse, Islande..."
-              value={form.destination}
-              onChange={(e) => set('destination', e.target.value)}
-            />
+            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" placeholder="Ex: Népal, Corse, Islande..." value={form.destination} onChange={(e) => set('destination', e.target.value)} />
           </div>
-          {/* Dates */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Date de départ</label>
@@ -159,99 +147,52 @@ function CarnetModal({
               <input type="date" className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" value={form.end_date} onChange={(e) => set('end_date', e.target.value)} />
             </div>
           </div>
-          {/* Description */}
           <div>
             <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Description</label>
-            <textarea
-              rows={4}
-              className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 resize-none"
-              placeholder="Décrivez votre expédition, les conditions, les moments forts..."
-              value={form.description}
-              onChange={(e) => set('description', e.target.value)}
-            />
+            <textarea rows={4} className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 resize-none" placeholder="Décrivez votre expédition, les conditions, les moments forts..." value={form.description} onChange={(e) => set('description', e.target.value)} />
           </div>
-          {/* Cover image */}
           <div>
             <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">URL de la photo de couverture</label>
-            <input
-              className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30"
-              placeholder="https://..."
-              value={form.cover_image}
-              onChange={(e) => set('cover_image', e.target.value)}
-            />
+            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" placeholder="https://..." value={form.cover_image} onChange={(e) => set('cover_image', e.target.value)} />
           </div>
-          {/* Weather & Rating */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Météo</label>
-              <input
-                className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30"
-                placeholder="Ex: Ensoleillé, tempête J5..."
-                value={form.weather}
-                onChange={(e) => set('weather', e.target.value)}
-              />
+              <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" placeholder="Ex: Ensoleillé, tempête J5..." value={form.weather} onChange={(e) => set('weather', e.target.value)} />
             </div>
             <div>
               <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Note parcours ({form.route_rating}/10)</label>
-              <input
-                type="range" min={1} max={10} step={0.1}
-                className="w-full mt-2 accent-[#E4501C]"
-                value={form.route_rating}
-                onChange={(e) => set('route_rating', parseFloat(e.target.value))}
-              />
+              <input type="range" min={1} max={10} step={0.1} className="w-full mt-2 accent-[#E4501C]" value={form.route_rating} onChange={(e) => set('route_rating', parseFloat(e.target.value))} />
             </div>
           </div>
-          {/* Tags */}
           <div>
             <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Tags (séparés par des virgules)</label>
-            <input
-              className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30"
-              placeholder="himalaya, autonomie, haute-altitude..."
-              value={form.tags}
-              onChange={(e) => set('tags', e.target.value)}
-            />
+            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" placeholder="himalaya, autonomie, haute-altitude..." value={form.tags} onChange={(e) => set('tags', e.target.value)} />
           </div>
-          {/* Visibility */}
           <div>
             <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-2">Visibilité</label>
             <div className="grid grid-cols-3 gap-2">
               {VISIBILITY_OPTS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => set('visibility', opt.value)}
-                  className={`p-3 rounded-xl border-2 text-left transition-all ${form.visibility === opt.value ? 'border-[#E4501C] bg-[#E4501C]/5' : 'border-[#C8C3B0] hover:border-[#E4501C]/40'}`}
-                >
+                <button key={opt.value} type="button" onClick={() => set('visibility', opt.value)} className={`p-3 rounded-xl border-2 text-left transition-all ${form.visibility === opt.value ? 'border-[#E4501C] bg-[#E4501C]/5' : 'border-[#C8C3B0] hover:border-[#E4501C]/40'}`}>
                   <p className="text-sm font-600 text-[#1C2620]">{opt.label}</p>
                   <p className="text-[10px] text-[#5C6B5E] mt-0.5">{opt.desc}</p>
                 </button>
               ))}
             </div>
           </div>
-          {/* Collaborative */}
           <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-[#C8C3B0]">
             <div>
               <p className="text-sm font-600 text-[#1C2620]">Carnet collaboratif</p>
               <p className="text-xs text-[#5C6B5E]">Permettre à d&apos;autres membres de contribuer</p>
             </div>
-            <button
-              type="button"
-              onClick={() => set('is_collaborative', !form.is_collaborative)}
-              className={`w-12 h-6 rounded-full transition-all relative ${form.is_collaborative ? 'bg-[#E4501C]' : 'bg-[#C8C3B0]'}`}
-            >
+            <button type="button" onClick={() => set('is_collaborative', !form.is_collaborative)} className={`w-12 h-6 rounded-full transition-all relative ${form.is_collaborative ? 'bg-[#E4501C]' : 'bg-[#C8C3B0]'}`}>
               <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${form.is_collaborative ? 'left-6' : 'left-0.5'}`} />
             </button>
           </div>
         </div>
         <div className="flex gap-3 p-6 border-t border-[#C8C3B0]">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-[#C8C3B0] text-sm font-600 text-[#5C6B5E] hover:bg-[#C8C3B0]/20 transition-colors">
-            Annuler
-          </button>
-          <button
-            onClick={() => onSave(form)}
-            disabled={saving || !form.title.trim() || !form.destination.trim()}
-            className="flex-1 py-2.5 rounded-xl bg-[#E4501C] text-white text-sm font-700 hover:bg-[#E4501C]/90 transition-colors disabled:opacity-50"
-          >
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-[#C8C3B0] text-sm font-600 text-[#5C6B5E] hover:bg-[#C8C3B0]/20 transition-colors">Annuler</button>
+          <button onClick={() => onSave(form)} disabled={saving || !form.title.trim() || !form.destination.trim()} className="flex-1 py-2.5 rounded-xl bg-[#E4501C] text-white text-sm font-700 hover:bg-[#E4501C]/90 transition-colors disabled:opacity-50">
             {saving ? 'Enregistrement...' : initial ? 'Mettre à jour' : 'Publier le carnet'}
           </button>
         </div>
@@ -260,26 +201,35 @@ function CarnetModal({
   );
 }
 
-// ─── Modal: Comments ──────────────────────────────────────────────────────────
-function CommentsModal({
-  open,
-  onClose,
+// ─── Modal: Full Detail ───────────────────────────────────────────────────────
+function CarnetDetailModal({
   carnet,
+  onClose,
+  onEdit,
+  onDelete,
+  onLike,
+  onFavorite,
+  currentUserId,
 }: {
-  open: boolean;
-  onClose: () => void;
   carnet: Carnet | null;
+  onClose: () => void;
+  onEdit: (c: Carnet) => void;
+  onDelete: (c: Carnet) => void;
+  onLike: (c: Carnet, reaction: string) => void;
+  onFavorite: (c: Carnet) => void;
+  currentUserId?: string;
 }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loadingComments, setLoadingComments] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showReactions, setShowReactions] = useState(false);
   const { user } = useAuth();
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
-    if (!open || !carnet) return;
-    setLoading(true);
+    if (!carnet) return;
+    setLoadingComments(true);
     supabase
       .from('carnet_comments')
       .select('*, author:user_profiles(full_name, avatar_url)')
@@ -287,11 +237,11 @@ function CommentsModal({
       .order('created_at', { ascending: true })
       .then(({ data }) => {
         setComments((data as Comment[]) ?? []);
-        setLoading(false);
+        setLoadingComments(false);
       });
-  }, [open, carnet, supabase]);
+  }, [carnet, supabase]);
 
-  const handleSubmit = async () => {
+  const handleSubmitComment = async () => {
     if (!user || !carnet || !newComment.trim()) return;
     setSubmitting(true);
     const { data } = await supabase
@@ -299,64 +249,260 @@ function CommentsModal({
       .insert({ carnet_id: carnet.id, author_id: user.id, content: newComment.trim() })
       .select('*, author:user_profiles(full_name, avatar_url)')
       .single();
-    if (data) {
-      setComments((prev) => [...prev, data as Comment]);
-      await supabase.from('carnets').update({ comments_count: (carnet.comments_count ?? 0) + 1 }).eq('id', carnet.id);
-    }
+    if (data) setComments((prev) => [...prev, data as Comment]);
     setNewComment('');
     setSubmitting(false);
   };
 
-  if (!open || !carnet) return null;
+  if (!carnet) return null;
+
+  const isOwner = currentUserId === carnet.author_id;
+  const durationDays = carnet.start_date && carnet.end_date
+    ? Math.ceil((new Date(carnet.end_date).getTime() - new Date(carnet.start_date).getTime()) / 86400000)
+    : null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
-        <div className="flex items-center justify-between p-5 border-b border-[#C8C3B0]">
-          <h3 className="font-display font-700 text-[#1C2620]">Commentaires ({carnet.comments_count})</h3>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {loading ? (
-            <div className="text-center py-8 text-[#5C6B5E] text-sm">Chargement...</div>
-          ) : comments.length === 0 ? (
-            <div className="text-center py-8 text-[#5C6B5E] text-sm">Aucun commentaire. Soyez le premier !</div>
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-3xl my-4 overflow-hidden">
+        {/* Cover Hero */}
+        <div className="relative h-64 overflow-hidden bg-[#1C2620]">
+          {carnet.cover_image ? (
+            <Image src={carnet.cover_image} alt={carnet.cover_image_alt || carnet.title} fill className="object-cover" />
           ) : (
-            comments.map((c) => (
-              <div key={c.id} className="flex gap-3">
-                <div className="w-8 h-8 rounded-xl bg-[#E4501C]/20 flex items-center justify-center text-xs font-700 text-[#E4501C] flex-shrink-0">
-                  {c.author?.full_name?.[0] ?? '?'}
-                </div>
-                <div className="flex-1 bg-white rounded-xl p-3">
-                  <p className="text-xs font-700 text-[#1C2620] mb-1">{c.author?.full_name ?? 'Anonyme'}</p>
-                  <p className="text-sm text-[#5C6B5E]">{c.content}</p>
-                </div>
-              </div>
-            ))
+            <div className="w-full h-full flex items-center justify-center text-7xl">🗺️</div>
           )}
-        </div>
-        {user ? (
-          <div className="p-5 border-t border-[#C8C3B0] flex gap-3">
-            <input
-              className="flex-1 bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30"
-              placeholder="Écrire un commentaire..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
-            />
-            <button
-              onClick={handleSubmit}
-              disabled={submitting || !newComment.trim()}
-              className="px-4 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-600 disabled:opacity-50 hover:bg-[#E4501C]/90 transition-colors"
-            >
-              {submitting ? '...' : 'Envoyer'}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+
+          {/* Top actions */}
+          <div className="absolute top-4 left-4 flex gap-2 flex-wrap">
+            {carnet.verified && <span className="text-[10px] bg-emerald-500 text-white px-2.5 py-1 rounded-full font-700">✓ Vérifié</span>}
+            {carnet.is_collaborative && <span className="text-[10px] bg-blue-500 text-white px-2.5 py-1 rounded-full font-700">👥 Collaboratif</span>}
+            <span className={`text-[10px] px-2.5 py-1 rounded-full font-700 ${carnet.visibility === 'public' ? 'bg-white/20 text-white' : carnet.visibility === 'friends' ? 'bg-blue-500/80 text-white' : 'bg-gray-800/80 text-white'}`}>
+              {carnet.visibility === 'public' ? '🌍 Public' : carnet.visibility === 'friends' ? '👥 Amis' : '🔒 Privé'}
+            </span>
+          </div>
+          <div className="absolute top-4 right-4 flex gap-2">
+            {isOwner && (
+              <>
+                <button onClick={() => { onClose(); onEdit(carnet); }} className="p-2 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/40 transition-colors">
+                  <Icon name="PencilIcon" size={15} className="text-white" />
+                </button>
+                <button onClick={() => { onClose(); onDelete(carnet); }} className="p-2 bg-red-500/70 backdrop-blur-sm rounded-xl hover:bg-red-500 transition-colors">
+                  <Icon name="TrashIcon" size={15} className="text-white" />
+                </button>
+              </>
+            )}
+            <button onClick={onClose} className="p-2 bg-black/40 backdrop-blur-sm rounded-xl hover:bg-black/60 transition-colors">
+              <Icon name="XMarkIcon" size={18} className="text-white" />
             </button>
           </div>
-        ) : (
-          <div className="p-5 border-t border-[#C8C3B0] text-center text-sm text-[#5C6B5E]">
-            Connectez-vous pour commenter
+
+          {/* Bottom info */}
+          <div className="absolute bottom-5 left-5 right-5">
+            <p className="text-[10px] font-mono text-[#E4501C] uppercase tracking-wider mb-1">{carnet.destination}</p>
+            <h2 className="font-display font-800 text-white text-2xl leading-tight mb-2">{carnet.title}</h2>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-[#E4501C]/30 flex items-center justify-center text-xs font-700 text-white">
+                  {carnet.author?.full_name?.[0] ?? '?'}
+                </div>
+                <span className="text-white/80 text-sm font-500">{carnet.author?.full_name ?? 'Anonyme'}</span>
+              </div>
+              <span className="text-white/40">·</span>
+              <span className="text-white/60 text-xs">{new Date(carnet.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+            </div>
           </div>
-        )}
+        </div>
+
+        {/* Scrollable content */}
+        <div className="max-h-[60vh] overflow-y-auto">
+          {/* Key stats */}
+          <div className="grid grid-cols-5 divide-x divide-[#C8C3B0] border-b border-[#C8C3B0]">
+            {[
+              { label: 'Note', value: `${carnet.route_rating}/10`, icon: '⭐' },
+              { label: 'Durée', value: durationDays ? `${durationDays}j` : '—', icon: '📅' },
+              { label: 'Vues', value: carnet.views_count ?? 0, icon: '👁️' },
+              { label: 'Réactions', value: carnet.likes_count, icon: '🎒' },
+              { label: 'Favoris', value: carnet.favorites_count, icon: '🔖' },
+            ].map((s) => (
+              <div key={s.label} className="p-4 text-center">
+                <p className="text-base mb-0.5">{s.icon}</p>
+                <p className="font-display font-700 text-[#1C2620] text-sm">{s.value}</p>
+                <p className="text-[10px] text-[#5C6B5E]">{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="p-6 space-y-6">
+            {/* Dates */}
+            {(carnet.start_date || carnet.end_date) && (
+              <div className="flex items-center gap-4 p-4 bg-[#1C2620] rounded-xl">
+                <Icon name="CalendarDaysIcon" size={20} className="text-[#E4501C] flex-shrink-0" />
+                <div className="flex flex-wrap items-center gap-4 text-sm">
+                  {carnet.start_date && (
+                    <div>
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider">Départ</p>
+                      <p className="text-white font-600">{new Date(carnet.start_date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                    </div>
+                  )}
+                  {carnet.start_date && carnet.end_date && (
+                    <div className="text-white/30 text-xl">→</div>
+                  )}
+                  {carnet.end_date && (
+                    <div>
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider">Retour</p>
+                      <p className="text-white font-600">{new Date(carnet.end_date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                    </div>
+                  )}
+                  {durationDays && (
+                    <div className="ml-auto">
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider">Durée</p>
+                      <p className="font-mono font-700 text-[#E4501C] text-lg">{durationDays}j</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Description */}
+            {carnet.description && (
+              <div>
+                <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider mb-3">Récit d&apos;expédition</p>
+                <p className="text-sm text-[#1C2620] leading-relaxed whitespace-pre-line">{carnet.description}</p>
+              </div>
+            )}
+
+            {/* Weather */}
+            {carnet.weather && (
+              <div className="flex items-start gap-3 p-4 bg-[#E7E3D6] rounded-xl border border-[#C8C3B0]">
+                <Icon name="CloudIcon" size={18} className="text-[#5C6B5E] flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Conditions météo</p>
+                  <p className="text-sm text-[#1C2620]">{carnet.weather}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Map points */}
+            {carnet.map_points?.length > 0 && (
+              <div>
+                <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider mb-3">Points d&apos;étape</p>
+                <div className="space-y-2">
+                  {carnet.map_points.map((point, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 bg-[#E7E3D6] rounded-xl border border-[#C8C3B0]">
+                      <div className="w-7 h-7 rounded-lg bg-[#E4501C] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">
+                        {point.day ?? i + 1}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-600 text-[#1C2620]">{point.label}</p>
+                        <p className="text-[10px] text-[#5C6B5E] font-mono">{point.lat.toFixed(4)}, {point.lng.toFixed(4)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tags */}
+            {carnet.tags?.length > 0 && (
+              <div>
+                <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider mb-2">Tags</p>
+                <div className="flex flex-wrap gap-2">
+                  {carnet.tags.map((tag) => (
+                    <span key={tag} className="text-xs bg-[#1C2620] text-white/70 px-3 py-1.5 rounded-full">#{tag}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex items-center gap-3 py-3 border-t border-[#C8C3B0]">
+              {/* Reactions */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowReactions(!showReactions)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-600 border transition-all ${carnet.user_liked ? 'bg-[#E4501C]/10 border-[#E4501C]/30 text-[#E4501C]' : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-[#E4501C]/30'}`}
+                >
+                  {carnet.user_reaction ? REACTION_OPTS.find((r) => r.key === carnet.user_reaction)?.emoji : '🎒'}
+                  <span>{carnet.likes_count} réactions</span>
+                </button>
+                {showReactions && (
+                  <div className="absolute bottom-full left-0 mb-2 bg-white border border-[#C8C3B0] rounded-xl p-2 flex gap-1 shadow-lg z-10">
+                    {REACTION_OPTS.map((r) => (
+                      <button key={r.key} onClick={() => { onLike(carnet, r.key); setShowReactions(false); }} title={r.label} className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg hover:bg-[#E7E3D6] transition-colors ${carnet.user_reaction === r.key ? 'bg-[#E4501C]/10' : ''}`}>
+                        {r.emoji}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Favorite */}
+              <button
+                onClick={() => onFavorite(carnet)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-600 border transition-all ${carnet.user_favorited ? 'bg-amber-50 border-amber-300 text-amber-600' : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-amber-300'}`}
+              >
+                <Icon name={carnet.user_favorited ? 'BookmarkSolidIcon' : 'BookmarkIcon'} size={15} />
+                {carnet.favorites_count} favoris
+              </button>
+
+              {/* Author link */}
+              {carnet.author_id && (
+                <Link href={`/profil/${carnet.author_id}`} className="ml-auto flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-600 border border-[#C8C3B0] text-[#5C6B5E] hover:text-[#1C2620] transition-all">
+                  <Icon name="UserCircleIcon" size={15} />
+                  Voir le profil
+                </Link>
+              )}
+            </div>
+
+            {/* Comments */}
+            <div>
+              <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider mb-3">
+                Commentaires ({carnet.comments_count})
+              </p>
+              {loadingComments ? (
+                <div className="space-y-2">{[1, 2].map((i) => <div key={i} className="h-14 bg-[#C8C3B0]/30 rounded-xl animate-pulse" />)}</div>
+              ) : comments.length === 0 ? (
+                <p className="text-sm text-[#5C6B5E] text-center py-4">Aucun commentaire. Soyez le premier !</p>
+              ) : (
+                <div className="space-y-3 mb-4">
+                  {comments.map((c) => (
+                    <div key={c.id} className="flex gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-[#E4501C]/20 flex items-center justify-center text-xs font-700 text-[#E4501C] flex-shrink-0">
+                        {c.author?.full_name?.[0] ?? '?'}
+                      </div>
+                      <div className="flex-1 bg-white rounded-xl p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs font-700 text-[#1C2620]">{c.author?.full_name ?? 'Anonyme'}</p>
+                          <p className="text-[10px] text-[#5C6B5E]">{new Date(c.created_at).toLocaleDateString('fr-FR')}</p>
+                        </div>
+                        <p className="text-sm text-[#5C6B5E]">{c.content}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {user ? (
+                <div className="flex gap-3">
+                  <input
+                    className="flex-1 bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30"
+                    placeholder="Écrire un commentaire..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitComment(); } }}
+                  />
+                  <button onClick={handleSubmitComment} disabled={submitting || !newComment.trim()} className="px-4 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-600 disabled:opacity-50 hover:bg-[#E4501C]/90 transition-colors">
+                    {submitting ? '...' : 'Envoyer'}
+                  </button>
+                </div>
+              ) : (
+                <p className="text-sm text-center text-[#5C6B5E] py-2">
+                  <Link href="/connexion" className="text-[#E4501C] hover:underline">Connectez-vous</Link> pour commenter
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -390,20 +536,20 @@ function DeleteModal({ open, onClose, onConfirm, deleting }: { open: boolean; on
 function CarnetCard({
   carnet,
   currentUserId,
+  onViewDetail,
   onEdit,
   onDelete,
   onLike,
   onFavorite,
-  onComment,
   onShare,
 }: {
   carnet: Carnet;
   currentUserId?: string;
+  onViewDetail: (c: Carnet) => void;
   onEdit: (c: Carnet) => void;
   onDelete: (c: Carnet) => void;
   onLike: (c: Carnet, reaction: string) => void;
   onFavorite: (c: Carnet) => void;
-  onComment: (c: Carnet) => void;
   onShare: (c: Carnet) => void;
 }) {
   const [showReactions, setShowReactions] = useState(false);
@@ -414,10 +560,10 @@ function CarnetCard({
 
   return (
     <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
-      {/* Cover */}
-      <div className="relative h-52 overflow-hidden bg-[#C8C3B0]">
+      {/* Cover — clickable to open detail */}
+      <button onClick={() => onViewDetail(carnet)} className="w-full relative h-52 overflow-hidden bg-[#C8C3B0] block">
         {carnet.cover_image ? (
-          <Image src={carnet.cover_image} alt={carnet.cover_image_alt || carnet.title} fill className="object-cover" />
+          <Image src={carnet.cover_image} alt={carnet.cover_image_alt || carnet.title} fill className="object-cover hover:scale-105 transition-transform duration-300" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-4xl">🗺️</div>
         )}
@@ -432,11 +578,11 @@ function CarnetCard({
         </div>
         {/* Owner actions */}
         {isOwner && (
-          <div className="absolute top-3 right-3 flex items-center gap-1">
-            <button onClick={() => onEdit(carnet)} className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg hover:bg-white/40 transition-colors">
+          <div className="absolute top-3 right-3 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <button onClick={(e) => { e.stopPropagation(); onEdit(carnet); }} className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg hover:bg-white/40 transition-colors">
               <Icon name="PencilIcon" size={14} className="text-white" />
             </button>
-            <button onClick={() => onDelete(carnet)} className="p-1.5 bg-red-500/80 backdrop-blur-sm rounded-lg hover:bg-red-500 transition-colors">
+            <button onClick={(e) => { e.stopPropagation(); onDelete(carnet); }} className="p-1.5 bg-red-500/80 backdrop-blur-sm rounded-lg hover:bg-red-500 transition-colors">
               <Icon name="TrashIcon" size={14} className="text-white" />
             </button>
           </div>
@@ -449,17 +595,24 @@ function CarnetCard({
           </div>
           <h3 className="font-display font-700 text-white text-base leading-tight line-clamp-2">{carnet.title}</h3>
         </div>
-      </div>
+        {/* View detail hint */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-2">
+            <Icon name="EyeIcon" size={16} className="text-white" />
+            <span className="text-white text-sm font-600">Voir les détails</span>
+          </div>
+        </div>
+      </button>
 
       {/* Body */}
       <div className="p-4">
         {/* Author */}
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-xl bg-[#E4501C]/20 flex items-center justify-center text-xs font-700 text-[#E4501C] flex-shrink-0">
+          <Link href={`/profil/${carnet.author_id}`} className="w-8 h-8 rounded-xl bg-[#E4501C]/20 flex items-center justify-center text-xs font-700 text-[#E4501C] flex-shrink-0 hover:bg-[#E4501C]/30 transition-colors">
             {carnet.author?.full_name?.[0] ?? '?'}
-          </div>
+          </Link>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-600 text-[#1C2620] truncate">{carnet.author?.full_name ?? 'Anonyme'}</p>
+            <Link href={`/profil/${carnet.author_id}`} className="text-sm font-600 text-[#1C2620] truncate hover:text-[#E4501C] transition-colors block">{carnet.author?.full_name ?? 'Anonyme'}</Link>
             <p className="text-[10px] text-[#5C6B5E]">Trust {carnet.author?.trust_score ?? 0}</p>
           </div>
           <div className="text-right flex-shrink-0">
@@ -504,12 +657,7 @@ function CarnetCard({
             {showReactions && (
               <div className="absolute bottom-full left-0 mb-2 bg-white border border-[#C8C3B0] rounded-xl p-2 flex gap-1 shadow-lg z-10">
                 {REACTION_OPTS.map((r) => (
-                  <button
-                    key={r.key}
-                    onClick={() => { onLike(carnet, r.key); setShowReactions(false); }}
-                    title={r.label}
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-base hover:bg-[#E7E3D6] transition-colors ${carnet.user_reaction === r.key ? 'bg-[#E4501C]/10' : ''}`}
-                  >
+                  <button key={r.key} onClick={() => { onLike(carnet, r.key); setShowReactions(false); }} title={r.label} className={`w-8 h-8 rounded-lg flex items-center justify-center text-base hover:bg-[#E7E3D6] transition-colors ${carnet.user_reaction === r.key ? 'bg-[#E4501C]/10' : ''}`}>
                     {r.emoji}
                   </button>
                 ))}
@@ -517,9 +665,9 @@ function CarnetCard({
             )}
           </div>
 
-          {/* Comments */}
+          {/* Comments — opens detail modal */}
           <button
-            onClick={() => onComment(carnet)}
+            onClick={() => onViewDetail(carnet)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border border-[#C8C3B0] text-[#5C6B5E] hover:border-[#1C2620]/30 transition-all"
           >
             <Icon name="ChatBubbleLeftIcon" size={13} />
@@ -535,10 +683,19 @@ function CarnetCard({
             <span>{carnet.favorites_count}</span>
           </button>
 
+          {/* View detail */}
+          <button
+            onClick={() => onViewDetail(carnet)}
+            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 bg-[#1C2620] text-white hover:bg-[#1C2620]/80 transition-all"
+          >
+            <Icon name="EyeIcon" size={13} />
+            Détails
+          </button>
+
           {/* Share */}
           <button
             onClick={() => onShare(carnet)}
-            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border border-[#C8C3B0] text-[#5C6B5E] hover:border-[#1C2620]/30 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border border-[#C8C3B0] text-[#5C6B5E] hover:border-[#1C2620]/30 transition-all"
           >
             <Icon name="ShareIcon" size={13} />
           </button>
@@ -560,7 +717,7 @@ export default function CarnetsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [editCarnet, setEditCarnet] = useState<Carnet | null>(null);
   const [deleteCarnet, setDeleteCarnet] = useState<Carnet | null>(null);
-  const [commentCarnet, setCommentCarnet] = useState<Carnet | null>(null);
+  const [detailCarnet, setDetailCarnet] = useState<Carnet | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -685,13 +842,16 @@ export default function CarnetsPage() {
       await supabase.from('carnet_likes').delete().eq('carnet_id', carnet.id).eq('user_id', user.id);
       await supabase.from('carnets').update({ likes_count: Math.max(0, carnet.likes_count - 1) }).eq('id', carnet.id);
       setCarnets((prev) => prev.map((c) => c.id === carnet.id ? { ...c, user_liked: false, user_reaction: undefined, likes_count: Math.max(0, c.likes_count - 1) } : c));
+      if (detailCarnet?.id === carnet.id) setDetailCarnet((prev) => prev ? { ...prev, user_liked: false, user_reaction: undefined, likes_count: Math.max(0, prev.likes_count - 1) } : null);
     } else {
       await supabase.from('carnet_likes').upsert({ carnet_id: carnet.id, user_id: user.id, reaction }, { onConflict: 'carnet_id,user_id' });
       if (!carnet.user_liked) {
         await supabase.from('carnets').update({ likes_count: carnet.likes_count + 1 }).eq('id', carnet.id);
         setCarnets((prev) => prev.map((c) => c.id === carnet.id ? { ...c, user_liked: true, user_reaction: reaction, likes_count: c.likes_count + 1 } : c));
+        if (detailCarnet?.id === carnet.id) setDetailCarnet((prev) => prev ? { ...prev, user_liked: true, user_reaction: reaction, likes_count: prev.likes_count + 1 } : null);
       } else {
         setCarnets((prev) => prev.map((c) => c.id === carnet.id ? { ...c, user_reaction: reaction } : c));
+        if (detailCarnet?.id === carnet.id) setDetailCarnet((prev) => prev ? { ...prev, user_reaction: reaction } : null);
       }
     }
   };
@@ -702,17 +862,19 @@ export default function CarnetsPage() {
       await supabase.from('carnet_favorites').delete().eq('carnet_id', carnet.id).eq('user_id', user.id);
       await supabase.from('carnets').update({ favorites_count: Math.max(0, carnet.favorites_count - 1) }).eq('id', carnet.id);
       setCarnets((prev) => prev.map((c) => c.id === carnet.id ? { ...c, user_favorited: false, favorites_count: Math.max(0, c.favorites_count - 1) } : c));
+      if (detailCarnet?.id === carnet.id) setDetailCarnet((prev) => prev ? { ...prev, user_favorited: false, favorites_count: Math.max(0, prev.favorites_count - 1) } : null);
       showToast('Retiré des favoris');
     } else {
       await supabase.from('carnet_favorites').insert({ carnet_id: carnet.id, user_id: user.id });
       await supabase.from('carnets').update({ favorites_count: carnet.favorites_count + 1 }).eq('id', carnet.id);
       setCarnets((prev) => prev.map((c) => c.id === carnet.id ? { ...c, user_favorited: true, favorites_count: c.favorites_count + 1 } : c));
+      if (detailCarnet?.id === carnet.id) setDetailCarnet((prev) => prev ? { ...prev, user_favorited: true, favorites_count: prev.favorites_count + 1 } : null);
       showToast('Ajouté aux favoris ⭐');
     }
   };
 
   const handleShare = (carnet: Carnet) => {
-    const url = `${window.location.origin}/carnets/${carnet.id}`;
+    const url = `${window.location.origin}/carnets`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url);
       showToast('Lien copié dans le presse-papier !');
@@ -835,11 +997,11 @@ export default function CarnetsPage() {
                 key={c.id}
                 carnet={c}
                 currentUserId={user?.id}
+                onViewDetail={setDetailCarnet}
                 onEdit={(c) => { setEditCarnet(c); setShowCreate(true); }}
                 onDelete={setDeleteCarnet}
                 onLike={handleLike}
                 onFavorite={handleFavorite}
-                onComment={setCommentCarnet}
                 onShare={handleShare}
               />
             ))}
@@ -855,10 +1017,14 @@ export default function CarnetsPage() {
         initial={editForm}
         saving={saving}
       />
-      <CommentsModal
-        open={!!commentCarnet}
-        onClose={() => setCommentCarnet(null)}
-        carnet={commentCarnet}
+      <CarnetDetailModal
+        carnet={detailCarnet}
+        onClose={() => setDetailCarnet(null)}
+        onEdit={(c) => { setDetailCarnet(null); setEditCarnet(c); setShowCreate(true); }}
+        onDelete={(c) => { setDetailCarnet(null); setDeleteCarnet(c); }}
+        onLike={handleLike}
+        onFavorite={handleFavorite}
+        currentUserId={user?.id}
       />
       <DeleteModal
         open={!!deleteCarnet}
