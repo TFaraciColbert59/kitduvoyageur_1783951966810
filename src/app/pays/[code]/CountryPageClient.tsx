@@ -109,8 +109,8 @@ export default function CountryPage({ params }: { params: Promise<{ code: string
       .finally(() => setLoading(false));
   }, [code]);
 
-  const bestMonths = country?.meteo.calendrier_12_mois.filter((m) => m.niveau === 'ideal' || m.niveau === 'bon') || [];
-  const worstSecZone = country?.securite.zones && country.securite.zones.length > 0
+  const bestMonths = country?.meteo?.calendrier_12_mois?.filter((m) => m.niveau === 'ideal' || m.niveau === 'bon') || [];
+  const worstSecZone = country?.securite?.zones && country.securite.zones.length > 0
     ? country.securite.zones.reduce((worst, z) => {
         const order = ['sur', 'vigilance', 'deconseille_sauf_raison_imperative', 'formellement_deconseille'];
         return order.indexOf(z.niveau) > order.indexOf(worst.niveau) ? z : worst;

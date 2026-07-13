@@ -1,0 +1,336 @@
+{
+  "version": "v2",
+  "generated_at": "2026-07-13T23:20:49.826Z",
+  "valid_until": "2026-07-15T23:20:49.826Z",
+  "data": {
+    "pays": {
+      "nom": "Nouvelle-Zélande",
+      "code_iso": "NZ",
+      "continent": "Océanie"
+    },
+    "meteo": {
+      "calendrier_12_mois": [
+        {
+          "mois": "Janvier",
+          "temp_min_c": 14,
+          "temp_max_c": 23,
+          "precipitations_mm": 55,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Février",
+          "temp_min_c": 14,
+          "temp_max_c": 23,
+          "precipitations_mm": 50,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Mars",
+          "temp_min_c": 12,
+          "temp_max_c": 21,
+          "precipitations_mm": 65,
+          "niveau": "bon",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Avril",
+          "temp_min_c": 10,
+          "temp_max_c": 18,
+          "precipitations_mm": 70,
+          "niveau": "bon",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Mai",
+          "temp_min_c": 7,
+          "temp_max_c": 16,
+          "precipitations_mm": 80,
+          "niveau": "moyen",
+          "affluence": "faible"
+        },
+        {
+          "mois": "Juin",
+          "temp_min_c": 5,
+          "temp_max_c": 14,
+          "precipitations_mm": 95,
+          "niveau": "deconseille",
+          "affluence": "faible"
+        },
+        {
+          "mois": "Juillet",
+          "temp_min_c": 4,
+          "temp_max_c": 13,
+          "precipitations_mm": 95,
+          "niveau": "deconseille",
+          "affluence": "faible"
+        },
+        {
+          "mois": "Août",
+          "temp_min_c": 5,
+          "temp_max_c": 14,
+          "precipitations_mm": 85,
+          "niveau": "deconseille",
+          "affluence": "faible"
+        },
+        {
+          "mois": "Septembre",
+          "temp_min_c": 7,
+          "temp_max_c": 16,
+          "precipitations_mm": 65,
+          "niveau": "moyen",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Octobre",
+          "temp_min_c": 9,
+          "temp_max_c": 18,
+          "precipitations_mm": 65,
+          "niveau": "bon",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Novembre",
+          "temp_min_c": 11,
+          "temp_max_c": 19,
+          "precipitations_mm": 60,
+          "niveau": "bon",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Décembre",
+          "temp_min_c": 13,
+          "temp_max_c": 21,
+          "precipitations_mm": 65,
+          "niveau": "ideal",
+          "affluence": "forte"
+        }
+      ],
+      "source": "Données climatiques officielles / estimation climatique générale",
+      "derniere_maj": "2024-07-13"
+    },
+    "securite": {
+      "zones": [
+        {
+          "nom_zone": "Ensemble du territoire",
+          "niveau": "vigilance",
+          "description": "La Nouvelle-Zélande est un pays sûr. Une vigilance est recommandée face à la petite délinquance (vols à la tire, vols dans les véhicules). Le pays est situé sur la ceinture de feu du Pacifique et est sujet aux risques naturels (séismes, éruptions volcaniques, tsunamis). Il est essentiel de se familiariser avec les consignes de sécurité locales en cas de catastrophe naturelle."
+        }
+      ],
+      "source_officielle": {
+        "nom": "France Diplomatie",
+        "url": "https://www.diplomatie.gouv.fr/fr/conseils-aux-voyageurs/conseils-par-pays-destination/nouvelle-zelande/"
+      },
+      "derniere_synchronisation": "2024-07-13",
+      "statut": "verifie",
+      "ambassade_consulat": {
+        "nom": "Ambassade de France à Wellington",
+        "telephone": "+64 4 384 2555",
+        "url": "https://nz.ambafrance.org/"
+      }
+    },
+    "sante": {
+      "risques": [
+        "Forte exposition aux rayons UV (protection solaire indispensable)",
+        "Piqûres de sandflies (mouches des sables) particulièrement dans le Sud de l'île du Sud",
+        "Leptospirose (activités en eau douce, zones rurales)",
+        "Giardiase (contamination de l'eau non traitée)"
+      ],
+      "vaccins_recommandes": [
+        "Hépatite A",
+        "Hépatite B",
+        "Rappel DTPC"
+      ],
+      "vaccins_obligatoires": [],
+      "eau_potable": "oui",
+      "source": "Institut Pasteur / OMS",
+      "derniere_maj": "2024-07-13",
+      "statut": "verifie"
+    },
+    "connectivite": {
+      "couverture_mobile": "bonne",
+      "wifi_disponibilite": "La couverture mobile est bonne dans les zones urbaines et le long des axes principaux. Elle peut être limitée ou inexistante dans les zones rurales reculées et les parcs nationaux. Le Wi-Fi est largement disponible dans les hôtels, cafés, bibliothèques et de nombreux lieux publics, souvent gratuit.",
+      "statut": "verifie"
+    },
+    "pratique": {
+      "visa": {
+        "nationalite": "France",
+        "regle": "Les ressortissants français n'ont pas besoin de visa pour un séjour touristique de moins de 3 mois. Cependant, une autorisation de voyage électronique (NZeTA - New Zealand Electronic Travel Authority) est obligatoire et doit être obtenue avant le départ. Une taxe internationale de conservation et de tourisme (IVL) est également perçue.",
+        "duree_sejour_sans_visa": "90 jours (avec NZeTA)"
+      },
+      "monnaie": "Dollar néo-zélandais (NZD)",
+      "prise_electrique": {
+        "type": "Type I",
+        "voltage": "230V 50Hz"
+      },
+      "langues": [
+        "Anglais",
+        "Māori"
+      ],
+      "phrases_survie": [
+        {
+          "fr": "Bonjour",
+          "locale": "Kia Ora (Māori) / Hello (Anglais)"
+        },
+        {
+          "fr": "Merci",
+          "locale": "Kia ora (Māori, aussi pour merci) / Thank you (Anglais)"
+        },
+        {
+          "fr": "Au revoir",
+          "locale": "Haere rā (Māori) / Goodbye (Anglais)"
+        },
+        {
+          "fr": "Où sont les toilettes ?",
+          "locale": "Kei hea te wharepaku? (Māori) / Where are the toilets? (Anglais)"
+        },
+        {
+          "fr": "Combien ça coûte ?",
+          "locale": "E hia te utu? (Māori) / How much does it cost? (Anglais)"
+        }
+      ],
+      "decalage_horaire_utc": "UTC+12 (heure de Paris : +10 ou +11 heures en fonction de l'heure d'été/hiver)",
+      "budget_quotidien_repere_eur": {
+        "petit": {
+          "logement": 40,
+          "nourriture": 25,
+          "transport": 15
+        },
+        "moyen": {
+          "logement": 100,
+          "nourriture": 50,
+          "transport": 40
+        },
+        "gros": {
+          "logement": 200,
+          "nourriture": 80,
+          "transport": 70
+        }
+      }
+    },
+    "vols": {
+      "tendance_par_saison": [
+        {
+          "periode": "Haute saison (Décembre à Février)",
+          "niveau_prix": "haut"
+        },
+        {
+          "periode": "Basse saison (Juin à Août)",
+          "niveau_prix": "bas"
+        },
+        {
+          "periode": "Épaule (Mars à Mai, Septembre à Novembre)",
+          "niveau_prix": "moyen"
+        }
+      ],
+      "statut": "indicatif"
+    },
+    "carbone": {
+      "vol_paris_kg_co2_estime": 9435,
+      "methodologie": "Distance Paris–Auckland (environ 18 500 km) × 2 (aller-retour) × 0.255 kg CO2/km/passager (facteur ADEME aviation moyen-courrier/long-courrier)",
+      "statut": "estimation"
+    },
+    "evenements": [
+      {
+        "nom": "Waitangi Day",
+        "periode": "6 Février",
+        "description": "Fête nationale commémorant la signature du Traité de Waitangi, avec des célébrations culturelles Māori et des événements historiques à Waitangi."
+      },
+      {
+        "nom": "Festival international des arts de Nouvelle-Zélande",
+        "periode": "Février-Mars (années paires)",
+        "description": "Un festival majeur présentant des performances artistiques locales et internationales à Wellington, incluant théâtre, danse, musique et arts visuels."
+      },
+      {
+        "nom": "Régates de l'America's Cup",
+        "periode": "Variable (selon les éditions)",
+        "description": "Événement nautique de renommée mondiale, souvent accueilli par Auckland, attirant des équipes et des spectateurs du monde entier."
+      }
+    ],
+    "lieux_incontournables": [
+      {
+        "nom": "Parc national de Fiordland (Milford Sound)",
+        "description": "Un paysage spectaculaire de fjords, de montagnes escarpées et de cascades, offrant des croisières inoubliables et des randonnées.",
+        "lat": -44.67,
+        "lng": 167.925
+      },
+      {
+        "nom": "Rotorua",
+        "description": "Cœur de la culture Māori et région géothermique active avec geysers, piscines de boue bouillonnante et sources chaudes.",
+        "lat": -38.1368,
+        "lng": 176.25
+      },
+      {
+        "nom": "Parc national de Tongariro",
+        "description": "Site du patrimoine mondial de l'UNESCO, célèbre pour ses paysages volcaniques, ses lacs d'émeraude et le Tongariro Alpine Crossing, l'une des plus belles randonnées d'une journée au monde.",
+        "lat": -39.15,
+        "lng": 175.6
+      },
+      {
+        "nom": "Queenstown",
+        "description": "Capitale mondiale de l'aventure, offrant des activités comme le saut à l'élastique, le jet boat, le ski et des paysages alpins époustouflants.",
+        "lat": -45.0312,
+        "lng": 168.6626
+      },
+      {
+        "nom": "Bay of Islands",
+        "description": "Une région historique et pittoresque de l'île du Nord, avec plus de 140 îles, des plages magnifiques et des opportunités d'observation des dauphins.",
+        "lat": -35.226,
+        "lng": 174.09
+      }
+    ],
+    "coutumes": "La culture Māori est une partie intégrante de l'identité néo-zélandaise. Il est courant d'entendre le 'Kia Ora' (bonjour/salut) et de voir des éléments de l'art et des traditions Māori. Les Néo-Zélandais, souvent appelés 'Kiwis', sont généralement décontractés, amicaux et ont un grand respect pour la nature et l'environnement. Le pourboire n'est pas obligatoire mais apprécié pour un service exceptionnel. Il est important de retirer ses chaussures avant d'entrer dans une maison ou un marae (lieu de rencontre Māori).",
+    "kits_recommandes_tags_climat": [
+      "randonnee",
+      "aventure",
+      "impermeable",
+      "ete",
+      "hiver",
+      "couches_vetements"
+    ],
+    "gabarit_poids_recommande": {
+      "poids_total_kg": 20,
+      "justification": "La Nouvelle-Zélande offre une grande diversité d'activités (randonnée, sports nautiques, exploration urbaine) et de climats (subtropical au nord, alpin au sud). Un poids de 20 kg permet d'emporter des vêtements adaptés à différentes conditions météorologiques et activités, y compris des équipements de randonnée et des couches pour les variations de température."
+    },
+    "pays_similaires": [
+      {
+        "code_iso": "CA",
+        "nom": "Canada",
+        "raison": "Paysages naturels vastes et diversifiés, opportunités d'activités de plein air (randonnée, ski), culture accueillante."
+      },
+      {
+        "code_iso": "CL",
+        "nom": "Chili",
+        "raison": "Grande diversité de paysages, des montagnes aux côtes, avec des opportunités d'aventure et de découverte de la nature sauvage."
+      },
+      {
+        "code_iso": "IS",
+        "nom": "Islande",
+        "raison": "Paysages volcaniques et géothermiques uniques, forte culture de l'aventure et de l'exploration de la nature."
+      }
+    ],
+    "faq": [
+      {
+        "question": "Ai-je besoin d'un visa pour la Nouvelle-Zélande en tant que citoyen français ?",
+        "reponse": "Non, un visa n'est pas requis pour les séjours touristiques de moins de 3 mois. Cependant, vous devez obligatoirement obtenir une autorisation de voyage électronique (NZeTA) et payer une taxe internationale de conservation et de tourisme (IVL) avant votre départ."
+      },
+      {
+        "question": "Quelle est la meilleure période pour visiter la Nouvelle-Zélande ?",
+        "reponse": "La meilleure période est l'été néo-zélandais, de décembre à février, pour profiter des températures chaudes et des activités de plein air. Le printemps (septembre-novembre) et l'automne (mars-mai) sont également de bons moments avec une affluence moyenne et des températures agréables."
+      },
+      {
+        "question": "Quel budget quotidien dois-je prévoir pour un voyage en Nouvelle-Zélande ?",
+        "reponse": "Pour un petit budget, prévoyez environ 80 EUR par jour. Un budget moyen se situe autour de 180 EUR par jour, tandis qu'un budget plus conséquent peut dépasser 350 EUR par jour, en fonction du logement, des repas et des activités."
+      },
+      {
+        "question": "L'eau du robinet est-elle potable en Nouvelle-Zélande ?",
+        "reponse": "Oui, l'eau du robinet est généralement potable dans tout le pays. Il est cependant recommandé de se méfier des eaux de surface non traitées dans les zones rurales ou de montagne."
+      }
+    ],
+    "meta": {
+      "genere_le": "2024-07-13T23:20:20.665Z",
+      "cache_valide_jusqu_au": "2024-07-15T23:20:20.665Z"
+    }
+  }
+}
