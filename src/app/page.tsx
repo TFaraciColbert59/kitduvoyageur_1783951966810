@@ -3,6 +3,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HeroSection from '@/app/components/HeroSection';
 import BelowFoldSections from '@/app/components/BelowFoldSections';
+import VerifiedReviewsSection from '@/app/components/VerifiedReviewsSection';
 import type { Metadata } from 'next';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.com';
@@ -66,6 +67,8 @@ export default function HomePage() {
       <div id="main-content">
         {/* Hero is critical — loaded eagerly */}
         <HeroSection />
+        {/* Verified reviews — just below the fold */}
+        <VerifiedReviewsSection />
         {/* Below-fold sections lazy loaded via client wrapper */}
         <BelowFoldSections />
       </div>

@@ -16,7 +16,7 @@ const STATS = [
 { value: '12 847', label: 'Kits configurés', icon: 'SparklesIcon' },
 { value: '94', label: 'Destinations', icon: 'GlobeAltIcon' },
 { value: '4.9', label: 'Note moyenne', icon: 'StarIcon' },
-{ value: '48h', label: 'Livraison express', icon: 'BoltIcon' }];
+{ value: 'Expédition', label: 'sous 48h', icon: 'BoltIcon' }];
 
 
 const FEATURES = [
@@ -140,6 +140,33 @@ export default function HeroSection() {
                 <Icon name="SparklesIcon" size={16} variant="outline" />
                 Configurer mon kit
               </Link>
+            </div>
+
+            {/* Reassurance block */}
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <span className="text-white/40 text-xs" style={{ fontFamily: 'var(--font-display)' }}>
+                🔒 Paiement sécurisé par Stripe | Chiffrement SSL
+              </span>
+              <div className="flex items-center gap-2 opacity-40">
+                {/* Visa */}
+                <svg width="34" height="22" viewBox="0 0 34 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Visa">
+                  <rect width="34" height="22" rx="3" fill="white" fillOpacity="0.15"/>
+                  <text x="5" y="15" fontSize="9" fontWeight="700" fill="white" fontFamily="Arial, sans-serif" letterSpacing="0.5">VISA</text>
+                </svg>
+                {/* Mastercard */}
+                <svg width="34" height="22" viewBox="0 0 34 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Mastercard">
+                  <rect width="34" height="22" rx="3" fill="white" fillOpacity="0.15"/>
+                  <circle cx="13" cy="11" r="6" fill="white" fillOpacity="0.6"/>
+                  <circle cx="21" cy="11" r="6" fill="white" fillOpacity="0.4"/>
+                </svg>
+                {/* Apple Pay */}
+                <svg width="40" height="22" viewBox="0 0 40 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Apple Pay">
+                  <rect width="40" height="22" rx="3" fill="white" fillOpacity="0.15"/>
+                  <text x="5" y="15" fontSize="8" fontWeight="600" fill="white" fontFamily="Arial, sans-serif" letterSpacing="0.3">Pay</text>
+                  <path d="M4 8.5C4.6 7.8 5 6.9 4.9 6C4.1 6.1 3.1 6.6 2.5 7.3C1.9 7.9 1.5 8.8 1.6 9.7C2.4 9.7 3.4 9.2 4 8.5Z" transform="translate(22, 3) scale(0.9)" fill="white"/>
+                  <path d="M4.9 9.8C3.7 9.7 2.7 10.5 2.1 10.5C1.5 10.5 0.7 9.8 -0.2 9.8C-1.4 9.8 -2.5 10.5 -3.1 11.6C-4.3 13.8 -3.4 17.1 -2.2 18.9C-1.6 19.8 -0.9 20.8 0 20.8C0.9 20.7 1.2 20.2 2.3 20.2C3.4 20.2 3.7 20.8 4.6 20.7C5.5 20.7 6.1 19.8 6.7 18.9C7.4 17.9 7.7 16.9 7.7 16.9C7.7 16.9 5.8 16.1 5.8 13.9C5.8 12 7.4 11.1 7.4 11.1C6.5 9.8 5.1 9.8 4.9 9.8Z" transform="translate(22, 3) scale(0.45)" fill="white"/>
+                </svg>
+              </div>
             </div>
 
             {/* Stats row */}
