@@ -1,0 +1,253 @@
+{
+  "code": "NP",
+  "nom": "Népal",
+  "continent": "Asie",
+  "capital": "Katmandou",
+  "coordonnees": "28.3949° N, 84.1240° E",
+  "fuseau": "UTC+5:45 (NPT)",
+  "monnaie": "Roupie népalaise (NPR)",
+  "langues": [
+    "Népalais",
+    "Maithili",
+    "Bhojpuri"
+  ],
+  "population": "30 millions hab.",
+  "superficie": "147 181 km²",
+  "danger_global": 6,
+  "danger_details": [
+    {
+      "label": "Sécurité générale",
+      "level": "medium",
+      "note": "Risques de petite délinquance et d'incidents liés à l'instabilité politique locale."
+    },
+    {
+      "label": "Risques naturels",
+      "level": "high",
+      "note": "Fort risque sismique, glissements de terrain et inondations pendant la mousson."
+    },
+    {
+      "label": "Santé",
+      "level": "medium",
+      "note": "Conditions sanitaires précaires, risques de maladies hydriques et d'altitude."
+    },
+    {
+      "label": "Zones à éviter",
+      "level": "medium",
+      "note": "Certaines zones frontalières et sentiers de trekking isolés sans guide expérimenté."
+    }
+  ],
+  "calendrier": [
+    {
+      "month": "Janvier",
+      "short": "Jan",
+      "status": "bad",
+      "temp_min": 0,
+      "temp_max": 18,
+      "rain_mm": 15,
+      "description": "Froid et sec, surtout en montagne. Brouillard dans le Terai."
+    },
+    {
+      "month": "Février",
+      "short": "Fév",
+      "status": "bad",
+      "temp_min": 2,
+      "temp_max": 20,
+      "rain_mm": 20,
+      "description": "Encore froid, mais les températures commencent à monter."
+    },
+    {
+      "month": "Mars",
+      "short": "Mar",
+      "status": "medium",
+      "temp_min": 6,
+      "temp_max": 25,
+      "rain_mm": 30,
+      "description": "Printemps agréable, idéal pour le trekking à basse altitude."
+    },
+    {
+      "month": "Avril",
+      "short": "Avr",
+      "status": "good",
+      "temp_min": 10,
+      "temp_max": 29,
+      "rain_mm": 40,
+      "description": "Très agréable, floraison des rhododendrons. Haute saison de trekking."
+    },
+    {
+      "month": "Mai",
+      "short": "Mai",
+      "status": "medium",
+      "temp_min": 15,
+      "temp_max": 30,
+      "rain_mm": 100,
+      "description": "Chaud et humide, début de la pré-mousson avec averses."
+    },
+    {
+      "month": "Juin",
+      "short": "Jun",
+      "status": "bad",
+      "temp_min": 18,
+      "temp_max": 29,
+      "rain_mm": 250,
+      "description": "Début de la mousson, pluies intenses, glissements de terrain."
+    },
+    {
+      "month": "Juillet",
+      "short": "Jul",
+      "status": "bad",
+      "temp_min": 19,
+      "temp_max": 28,
+      "rain_mm": 350,
+      "description": "Pleine mousson, fortes pluies, trekking difficile et vues limitées."
+    },
+    {
+      "month": "Août",
+      "short": "Aoû",
+      "status": "bad",
+      "temp_min": 19,
+      "temp_max": 28,
+      "rain_mm": 300,
+      "description": "Mousson continue, mais les rizières sont luxuriantes."
+    },
+    {
+      "month": "Septembre",
+      "short": "Sep",
+      "status": "good",
+      "temp_min": 16,
+      "temp_max": 27,
+      "rain_mm": 150,
+      "description": "Fin de la mousson, ciel dégagé, verdure éclatante. Excellente période."
+    },
+    {
+      "month": "Octobre",
+      "short": "Oct",
+      "status": "good",
+      "temp_min": 10,
+      "temp_max": 25,
+      "rain_mm": 50,
+      "description": "Meilleure période pour visiter, ciel clair, températures douces. Haute saison."
+    },
+    {
+      "month": "Novembre",
+      "short": "Nov",
+      "status": "good",
+      "temp_min": 5,
+      "temp_max": 22,
+      "rain_mm": 10,
+      "description": "Clair et frais, idéal pour le trekking avant l'arrivée du froid hivernal."
+    },
+    {
+      "month": "Décembre",
+      "short": "Déc",
+      "status": "bad",
+      "temp_min": 1,
+      "temp_max": 19,
+      "rain_mm": 10,
+      "description": "Froid et sec, particulièrement en altitude. Vues claires sur les montagnes."
+    }
+  ],
+  "infos_pratiques": [
+    {
+      "icon": "IdentificationIcon",
+      "label": "Visa",
+      "value": "Visa obligatoire pour les ressortissants français, délivré à l'arrivée (aéroport de Katmandou) ou en ligne avant le départ. Passeport valide 6 mois après la date de retour."
+    },
+    {
+      "icon": "HeartIcon",
+      "label": "Vaccins",
+      "value": "Vaccins universels (DTCP, hépatite B) à jour. Recommandés : hépatite A, typhoïde, encéphalite japonaise (si séjour prolongé en zone rurale), rage (si contact avec animaux)."
+    },
+    {
+      "icon": "CurrencyEuroIcon",
+      "label": "Monnaie",
+      "value": "La Roupie népalaise (NPR). 1 EUR ≈ 140-150 NPR. Les distributeurs automatiques sont courants dans les villes, mais prévoyez des espèces pour les zones rurales. Les cartes de crédit sont acceptées dans les grands hôtels et magasins."
+    },
+    {
+      "icon": "BoltIcon",
+      "label": "Prises",
+      "value": "Types C, D et M. Le voltage est de 230 V et la fréquence de 50 Hz. Un adaptateur universel est fortement recommandé."
+    },
+    {
+      "icon": "BeakerIcon",
+      "label": "Eau",
+      "value": "L'eau du robinet n'est pas potable. Il est impératif de boire de l'eau en bouteille capsulée, de l'eau filtrée ou purifiée (pastilles, filtre UV). Évitez les glaçons."
+    },
+    {
+      "icon": "PhoneIcon",
+      "label": "Urgences",
+      "value": "Police : 100, Ambulance : 102, Pompiers : 101. Pour les urgences en montagne, contactez votre agence de trekking ou l'ambassade."
+    }
+  ],
+  "lieux": [
+    {
+      "nom": "Katmandou Durbar Square",
+      "description": "Cœur historique de Katmandou, classé au patrimoine mondial de l'UNESCO, avec ses temples anciens, palais et cours royales. Témoin de l'architecture Newar."
+    },
+    {
+      "nom": "Swayambhunath Stupa (Monkey Temple)",
+      "description": "Un ancien complexe religieux perché sur une colline à l'ouest de Katmandou, offrant une vue panoramique sur la vallée. Célèbre pour ses singes sacrés et son stupa emblématique."
+    },
+    {
+      "nom": "Boudhanath Stupa",
+      "description": "L'un des plus grands stupas bouddhistes du monde, centre du bouddhisme tibétain au Népal. Son immense dôme blanc est entouré de monastères et de boutiques."
+    },
+    {
+      "nom": "Pokhara",
+      "description": "Ville lacustre pittoresque au pied de l'Annapurna, point de départ de nombreux treks. Offre des vues imprenables sur les montagnes, des activités nautiques sur le lac Phewa et une ambiance relaxante."
+    },
+    {
+      "nom": "Parc National de Sagarmatha (Everest)",
+      "description": "Abritant le mont Everest, ce parc est un site du patrimoine mondial de l'UNESCO. Il offre des paysages himalayens spectaculaires, des cultures sherpas uniques et des treks légendaires vers le camp de base de l'Everest."
+    }
+  ],
+  "kits_recommandes": [
+    {
+      "nom": "Kit Trekking Himalaya",
+      "poids_g": 8500,
+      "prix_cents": 29900,
+      "slug": "kit-trekking-himalaya",
+      "description": "Équipement essentiel pour les treks en haute altitude : vêtements techniques, sac de couchage chaud, trousse de premiers secours spécifique, purificateur d'eau."
+    },
+    {
+      "nom": "Kit Culturel Népal",
+      "poids_g": 5200,
+      "prix_cents": 18900,
+      "slug": "kit-culturel-nepal",
+      "description": "Pour explorer les villes et sites culturels : adaptateur universel, petit sac à dos, foulard, désinfectant pour les mains, guide de conversation."
+    },
+    {
+      "nom": "Kit Essentiel Aventure",
+      "poids_g": 3100,
+      "prix_cents": 12900,
+      "slug": "kit-essentiel-aventure",
+      "description": "Base pour tout voyage : trousse de toilette compacte, lampe frontale, batterie externe, petit cadenas, kit de couture de voyage."
+    }
+  ],
+  "events": [
+    {
+      "mois": "Septembre/Octobre",
+      "titre": "Dashain",
+      "type": "festival"
+    },
+    {
+      "mois": "Octobre/Novembre",
+      "titre": "Tihar (Deepawali)",
+      "type": "festival"
+    },
+    {
+      "mois": "Octobre-Novembre & Mars-Avril",
+      "titre": "Haute saison touristique",
+      "type": "saison"
+    },
+    {
+      "mois": "Juin-Août",
+      "titre": "Période de mousson (à éviter pour le trekking)",
+      "type": "eviter"
+    },
+    {
+      "mois": "Mars",
+      "titre": "Holi (Festival des Couleurs)",
+      "type": "festival"
+    }
+  ]
+}
