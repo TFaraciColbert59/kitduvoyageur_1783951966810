@@ -684,13 +684,13 @@ function CarnetCard({
           </button>
 
           {/* View detail */}
-          <button
-            onClick={() => onViewDetail(carnet)}
+          <Link
+            href={`/carnets/${carnet.id}`}
             className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 bg-[#1C2620] text-white hover:bg-[#1C2620]/80 transition-all"
           >
-            <Icon name="EyeIcon" size={13} />
-            Détails
-          </button>
+            <Icon name="ArrowTopRightOnSquareIcon" size={13} />
+            Page complète
+          </Link>
 
           {/* Share */}
           <button

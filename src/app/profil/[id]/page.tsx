@@ -541,9 +541,9 @@ export default function ProfilPage() {
                             ? Math.ceil((new Date(carnet.end_date).getTime() - new Date(carnet.start_date).getTime()) / 86400000)
                             : null;
                           return (
-                            <button
+                            <Link
                               key={carnet.id}
-                              onClick={() => setSelectedCarnet(carnet)}
+                              href={`/carnets/${carnet.id}`}
                               className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl overflow-hidden hover:shadow-lg hover:border-[#E4501C]/30 transition-all text-left group"
                             >
                               <div className="relative h-40 overflow-hidden bg-[#C8C3B0]">
@@ -568,7 +568,7 @@ export default function ProfilPage() {
                                 </div>
                                 <span className="font-mono font-700 text-[#E4501C] text-sm">{carnet.route_rating}/10</span>
                               </div>
-                            </button>
+                            </Link>
                           );
                         })}
                       </div>
@@ -589,7 +589,7 @@ export default function ProfilPage() {
                         {clubs.map((membership) => (
                           <Link
                             key={membership.id}
-                            href="/clubs"
+                            href={`/clubs/${membership.club_id}`}
                             className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 hover:shadow-md hover:border-[#E4501C]/30 transition-all flex items-center gap-4"
                           >
                             <div className="w-12 h-12 rounded-xl bg-[#1C2620] flex items-center justify-center text-2xl flex-shrink-0">

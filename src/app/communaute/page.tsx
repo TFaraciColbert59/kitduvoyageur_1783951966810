@@ -427,12 +427,12 @@ function FeedTab() {
             <div key={post.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4">
               {/* Author */}
               <div className="flex items-start gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-[#E4501C]/20 flex items-center justify-center font-700 text-[#E4501C] flex-shrink-0">
+                <Link href={`/profil/${post.author_id}`} className="w-10 h-10 rounded-xl bg-[#E4501C]/20 flex items-center justify-center font-700 text-[#E4501C] flex-shrink-0 hover:bg-[#E4501C]/30 transition-colors">
                   {post.author?.full_name?.[0] ?? '?'}
-                </div>
+                </Link>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-700 text-[#1C2620] text-sm">{post.author?.full_name ?? 'Anonyme'}</p>
+                    <Link href={`/profil/${post.author_id}`} className="font-700 text-[#1C2620] text-sm hover:text-[#E4501C] transition-colors">{post.author?.full_name ?? 'Anonyme'}</Link>
                     <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${lvl.color}`}>{lvl.icon} {post.author?.loyalty_level}</span>
                     <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${typeCfg.color}`}>{typeCfg.emoji} {typeCfg.label}</span>
                     {post.is_trending && <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-700">🔥 Trending</span>}

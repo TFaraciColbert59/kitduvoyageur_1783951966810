@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
@@ -641,12 +642,21 @@ function ClubCard({
           </div>
         )}
 
-        <button
-          onClick={() => onOpenDetail(club)}
-          className="btn-secondary justify-center py-2 text-sm mt-auto"
-        >
-          Accéder au club
-        </button>
+        <div className="flex gap-2 mt-auto">
+          <Link
+            href={`/clubs/${club.id}`}
+            className="flex-1 btn-secondary justify-center py-2 text-sm text-center"
+          >
+            Accéder au club
+          </Link>
+          <button
+            onClick={() => onOpenDetail(club)}
+            className="px-3 py-2 border border-border rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            title="Aperçu rapide"
+          >
+            <Icon name="EyeIcon" size={14} />
+          </button>
+        </div>
       </div>
     </div>
   );
