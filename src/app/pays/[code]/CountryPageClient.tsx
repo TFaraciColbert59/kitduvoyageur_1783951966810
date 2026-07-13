@@ -99,13 +99,20 @@ export default function CountryPage({ params }: { params: Promise<{ code: string
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetch(`/api/pays/${code}`)
+    fetch(`/api/pays/${code}?v=2`)
       .then((r) => r.json())
       .then((json) => {
         if (json.error) throw new Error(json.error);
         const data = json.data;
         // Validate that the response matches the v2 schema before setting state
-        if (!data || !data.pays || !data.meteo || !data.securite || !data.pratique) {
+        if (
+          !data ||
+          !data.pays ||
+          !data.meteo ||
+          !Array.isArray(data.meteo?.calendrier_12_mois) ||
+          !data.securite ||
+          !data.pratique
+        ) {
           throw new Error('Format de données invalide. Veuillez réessayer.');
         }
         setCountry(data as CountryDataV2);
@@ -114,7 +121,9 @@ export default function CountryPage({ params }: { params: Promise<{ code: string
       .finally(() => setLoading(false));
   }, [code]);
 
-  const bestMonths = country?.meteo?.calendrier_12_mois?.filter((m) => m.niveau === 'ideal' || m.niveau === 'bon') || [];
+  const bestMonths = Array.isArray(country?.meteo?.calendrier_12_mois)
+    ? (country!.meteo.calendrier_12_mois).filter((m) => m.niveau === 'ideal' || m.niveau === 'bon')
+    : [];
   const worstSecZone = country?.securite?.zones && country.securite.zones.length > 0
     ? country.securite.zones.reduce((worst, z) => {
         const order = ['sur', 'vigilance', 'deconseille_sauf_raison_imperative', 'formellement_deconseille'];
