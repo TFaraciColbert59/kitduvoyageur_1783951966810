@@ -19,7 +19,6 @@ interface AppImageProps {
     fallbackSrc?: string;
     loading?: 'lazy' | 'eager';
     unoptimized?: boolean;
-    [key: string]: unknown;
 }
 
 interface ImageBaseProps {
@@ -53,7 +52,6 @@ const AppImage = memo(function AppImage({
     fallbackSrc = '/assets/images/no_image.png',
     loading = 'lazy',
     unoptimized = false,
-    ...props
 }: AppImageProps) {
     const [imageSrc, setImageSrc] = useState(src);
     const [isLoading, setIsLoading] = useState(true);
@@ -117,7 +115,6 @@ const AppImage = memo(function AppImage({
                     alt={alt}
                     sizes={sizes || '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'}
                     style={{ objectFit: 'cover' }}
-                    {...(props as Record<string, unknown>)}
                 />
             </div>
         );
@@ -130,7 +127,6 @@ const AppImage = memo(function AppImage({
             width={width || 400}
             height={height || 300}
             sizes={sizes}
-            {...(props as Record<string, unknown>)}
         />
     );
 });
