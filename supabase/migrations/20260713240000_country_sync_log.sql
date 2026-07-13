@@ -26,12 +26,8 @@ CREATE POLICY "country_sync_log_public_read"
   ON public.country_sync_log FOR SELECT
   USING (true);
 
--- Only authenticated admins or service role can insert/update
+-- Only service role can insert/update (API route uses service role key)
 CREATE POLICY "country_sync_log_service_write"
   ON public.country_sync_log FOR ALL
-  USING (auth.role() = 'service_role' OR (auth.uid() IS NOT NULL AND EXISTS (
-    SELECT 1 FROM public.user_profiles WHERE id = auth.uid() AND role = 'admin'
-  )))
-  WITH CHECK (auth.role() = 'service_role' OR (auth.uid() IS NOT NULL AND EXISTS (
-    SELECT 1 FROM public.user_profiles WHERE id = auth.uid() AND role = 'admin'
-  )));
+  USING (auth.role() = 'service_role')
+  WITH CHECK (auth.role() = 'service_role');
