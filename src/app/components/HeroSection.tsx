@@ -101,7 +101,6 @@ export default function HeroSection() {
           alt="Forêt de conifères vue du ciel, lumière dorée traversant la cime des arbres, atmosphère brumeuse"
           fill
           priority
-          fetchPriority="high"
           sizes="100vw"
           className="object-cover object-center" />
         
