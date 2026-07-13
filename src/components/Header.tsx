@@ -22,7 +22,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Destinations', href: '/pays', desc: 'Fiches pays & sécurité', icon: 'MapPinIcon' },
       { label: 'Guides terrain', href: '/guides', desc: 'Conseils & tutoriels', icon: 'BookOpenIcon' },
       { label: 'Outils', href: '/outils', desc: 'Calculateurs & planners', icon: 'WrenchScrewdriverIcon' },
-      { label: 'Empreinte carbone', href: '/carbone', desc: 'Calculer & compenser', icon: 'LeafIcon' },
+      { label: 'Empreinte carbone', href: '/carbone', desc: 'Calculer & compenser', icon: 'GlobeAmericasIcon' },
       { label: 'Copilote IA', href: '/copilote', desc: 'Assistant voyage Gemini', icon: 'SparklesIcon' },
     ],
   },

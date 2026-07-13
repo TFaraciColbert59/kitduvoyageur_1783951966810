@@ -20,7 +20,7 @@ const nextConfig = {
     qualities: [85],
   },
   experimental: {
-    optimizePackageImports: ['@heroicons/react', 'recharts'],
+    optimizePackageImports: [],
   },
   async headers() {
     return [
