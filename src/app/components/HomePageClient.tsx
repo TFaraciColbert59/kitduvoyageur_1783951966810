@@ -9,7 +9,7 @@ import Icon from '@/components/ui/AppIcon';
 
 // ─── HERO SECTION ────────────────────────────────────────────────────────────
 
-function HeroSection() {
+function HomeHeroSection() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
@@ -455,7 +455,7 @@ const KITS_DATA = [
   },
 ];
 
-function PopularKitsSection() {
+function HomePopularKitsSection() {
   const [active, setActive] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -829,10 +829,10 @@ export default function HomePageClient() {
     <main className="min-h-screen">
       <Header />
       <div id="main-content">
-        <HeroSection />
+        <HomeHeroSection />
         <ConfiguratorSection />
         <BeforeAfterSection />
-        <PopularKitsSection />
+        <HomePopularKitsSection />
         <MarketplaceSection />
         <TrustScoreSection />
         <VisionSection />
