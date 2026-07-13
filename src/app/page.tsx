@@ -2,15 +2,15 @@ import React from 'react';
 import type { Metadata } from 'next';
 import HomePageClient from '@/app/components/HomePageClient';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.com';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
 export const metadata: Metadata = {
-  title: 'Le Kit du Voyageur — Équipement outdoor & Configurateur IA',
-  description: 'Configurateur IA, équipement outdoor, fiches pays et outils terrain. La plateforme complète du voyageur et de l\'aventurier.',
+  title: 'Le Kit du Voyageur — Votre voyage commence par le bon sac',
+  description: "L'IA qui analyse votre destination, votre style de voyage et votre équipement pour créer le kit parfait. Aucun oubli. Aucun surplus. Juste ce qu'il faut.",
   alternates: { canonical: siteUrl },
   openGraph: {
-    title: 'Le Kit du Voyageur — Équipement & Préparation',
-    description: 'Configurez, achetez et préparez chaque voyage en un seul endroit.',
+    title: 'Le Kit du Voyageur — Votre voyage commence par le bon sac',
+    description: "L'IA qui analyse votre destination, votre style de voyage et votre équipement pour créer le kit parfait.",
     url: siteUrl,
     images: [
       {
@@ -29,7 +29,7 @@ const organizationSchema = {
   name: 'Le Kit du Voyageur',
   url: siteUrl,
   logo: `${siteUrl}/assets/images/og-image.png`,
-  description: 'Plateforme d\'équipement outdoor avec configurateur IA, fiches pays et outils de préparation voyage.',
+  description: "Plateforme d'équipement outdoor avec configurateur IA, fiches pays et outils de préparation voyage.",
   sameAs: [],
 };
 
