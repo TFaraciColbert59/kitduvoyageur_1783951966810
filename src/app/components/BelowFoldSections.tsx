@@ -3,10 +3,7 @@
 import dynamic from 'next/dynamic';
 
 // Lazy load below-fold sections — client component wrapper
-const LazyFeatures = dynamic(
-  () => import('@/app/components/HeroSection')?.then((m) => ({ default: m?.FeaturesSection })),
-  { ssr: false }
-);
+const LazyFeatures = dynamic(() => import('@/app/components/FeaturesSection'), { ssr: false });
 const LazyKits = dynamic(() => import('@/app/components/PopularKitsSection'), { ssr: false });
 const LazyProof = dynamic(() => import('@/app/components/SocialProofSection'), { ssr: false });
 const LazyCategories = dynamic(() => import('@/app/components/CategoriesSection'), { ssr: false });
