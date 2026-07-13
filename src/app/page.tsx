@@ -1,10 +1,27 @@
 import React from 'react';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import HeroSection from '@/app/components/HeroSection';
-import BelowFoldSections from '@/app/components/BelowFoldSections';
-import VerifiedReviewsSection from '@/app/components/VerifiedReviewsSection';
+import dynamic from 'next/dynamic';
 import type { Metadata } from 'next';
+
+// Static imports for above-the-fold critical components
+import Header from '@/components/Header';
+import HeroSection from '@/app/components/HeroSection';
+
+// Dynamic imports for below-the-fold components — each gets its own webpack chunk
+// This prevents the react-server-dom-webpack module factory collision
+const VerifiedReviewsSection = dynamic(
+  () => import('@/app/components/VerifiedReviewsSection'),
+  { ssr: true }
+);
+
+const BelowFoldSections = dynamic(
+  () => import('@/app/components/BelowFoldSections'),
+  { ssr: true }
+);
+
+const Footer = dynamic(
+  () => import('@/components/Footer'),
+  { ssr: true }
+);
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.com';
 
@@ -65,11 +82,8 @@ export default function HomePage() {
       />
       <Header />
       <div id="main-content">
-        {/* Hero is critical — loaded eagerly */}
         <HeroSection />
-        {/* Verified reviews — just below the fold */}
         <VerifiedReviewsSection />
-        {/* Below-fold sections lazy loaded via client wrapper */}
         <BelowFoldSections />
       </div>
       <Footer />
