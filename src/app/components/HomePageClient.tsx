@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import AppImage from '@/components/ui/AppImage';
 import Icon from '@/components/ui/AppIcon';
 
 // ─── HERO SECTION ────────────────────────────────────────────────────────────
@@ -20,13 +20,14 @@ function HomeHeroSection() {
     >
       {/* Background image */}
       <div className="absolute inset-0" aria-hidden="true">
-        <AppImage
+        <Image
           src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4"
           alt="Randonneur solitaire face à un panorama montagneux au lever du soleil, sac à dos posé sur un rocher"
           fill
           priority
           sizes="100vw"
           className="object-cover object-center"
+          unoptimized
         />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(105deg, rgba(28,38,32,0.92) 0%, rgba(28,38,32,0.70) 40%, rgba(28,38,32,0.25) 100%)' }} />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(28,38,32,1) 0%, transparent 35%)' }} />
@@ -502,12 +503,13 @@ function HomePopularKitsSection() {
             >
               {/* Image */}
               <div className="relative h-52 overflow-hidden">
-                <AppImage
+                <Image
                   src={kit.img}
                   alt={kit.alt}
                   fill
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  unoptimized
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#243028] via-transparent to-transparent" />
                 <div className="absolute top-3 left-3">
@@ -773,12 +775,13 @@ function VisionSection() {
     <section ref={ref} className="relative overflow-hidden bg-[#E7E3D6] py-24 sm:py-36" aria-label="Vision">
       {/* Background image */}
       <div className="absolute inset-0" aria-hidden="true">
-        <AppImage
+        <Image
           src="https://images.unsplash.com/photo-1501854140801-50d01698950b"
           alt="Vue aérienne d'une forêt de montagne au lever du soleil, brume légère entre les arbres"
           fill
           sizes="100vw"
           className="object-cover object-center opacity-20"
+          unoptimized
         />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(231,227,214,0.85) 0%, rgba(231,227,214,0.6) 50%, rgba(231,227,214,0.85) 100%)' }} />
       </div>
