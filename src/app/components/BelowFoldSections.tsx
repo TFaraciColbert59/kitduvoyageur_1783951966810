@@ -1,5 +1,3 @@
-'use client';
-
 import FeaturesSection from '@/app/components/FeaturesSection';
 import PopularKitsSection from '@/app/components/PopularKitsSection';
 import SocialProofSection from '@/app/components/SocialProofSection';

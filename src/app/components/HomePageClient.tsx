@@ -1,5 +1,3 @@
-'use client';
-
 import Header from '@/components/Header';
 import HeroSection from '@/app/components/HeroSection';
 import VerifiedReviewsSection from '@/app/components/VerifiedReviewsSection';
