@@ -52,7 +52,13 @@ const nextConfig = {
   ) {
     config.module.rules.push({
       test: /\.(jsx|tsx)$/,
-      exclude: [/node_modules/, /\.next/],
+      exclude: [
+        /node_modules/,
+        /\.next/,
+        /src[/\\]app[/\\]page\.tsx$/,
+        /src[/\\]app[/\\]components[/\\]HomePageContent\.tsx$/,
+        /src[/\\]app[/\\]components[/\\]home[/\\]/,
+      ],
       use: [{
         loader: '@dhiwise/component-tagger/nextLoader',
         options: {
