@@ -401,7 +401,7 @@ export default function CountryPage({ params }: { params: Promise<{ code: string
                 </div>
                 <p className="text-sm text-muted-foreground mb-6">Températures, précipitations et affluence touristique pour {country.pays.nom}.</p>
 
-                {!country.meteo?.calendrier_12_mois ? (
+                {!Array.isArray(country.meteo?.calendrier_12_mois) || country.meteo!.calendrier_12_mois.length === 0 ? (
                   <div className="topo-card p-6 text-center text-white/40 text-sm">Données météo indisponibles pour ce pays.</div>
                 ) : (
                   <>

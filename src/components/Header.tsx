@@ -43,9 +43,9 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Communauté', href: '/communaute', desc: 'Hub communautaire complet', icon: 'UsersIcon' },
       { label: 'Carnets d\'expédition', href: '/carnets', desc: 'Récits de voyage vérifiés', icon: 'BookOpenIcon' },
       { label: 'Clubs', href: '/clubs', desc: 'Clubs activité & destination', icon: 'UserGroupIcon' },
-      { label: 'Événements', href: '/communaute', desc: 'Sorties organisées', icon: 'CalendarIcon' },
-      { label: 'Entraide SOS', href: '/communaute', desc: 'Réseau d\'entraide géolocalisé', icon: 'HandRaisedIcon' },
-      { label: 'Créateurs', href: '/communaute', desc: 'Guides & itinéraires vérifiés', icon: 'SparklesIcon' },
+      { label: 'Événements', href: '/evenements', desc: 'Sorties organisées', icon: 'CalendarIcon' },
+      { label: 'Entraide SOS', href: '/entraide', desc: 'Réseau d\'entraide géolocalisé', icon: 'HandRaisedIcon' },
+      { label: 'Créateurs', href: '/createurs', desc: 'Guides & itinéraires vérifiés', icon: 'SparklesIcon' },
     ],
   },
   {
