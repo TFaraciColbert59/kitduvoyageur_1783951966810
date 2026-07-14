@@ -1,258 +1,346 @@
 {
-  "code": "MA",
-  "nom": "Royaume du Maroc",
-  "continent": "Afrique",
-  "capital": "Rabat",
-  "coordonnees": "31.7917° N, 7.0926° O",
-  "fuseau": "UTC+1",
-  "monnaie": "Dirham marocain (MAD)",
-  "langues": [
-    "Arabe",
-    "Berbère",
-    "Français"
-  ],
-  "population": "Environ 37 millions hab.",
-  "superficie": "446 550 km²",
-  "danger_global": 3,
-  "danger_details": [
-    {
-      "label": "Sécurité générale",
-      "level": "low",
-      "note": "Risque faible, mais attention aux pickpockets dans les zones touristiques et aux arnaques."
+  "version": "v2",
+  "generated_at": "2026-07-14T18:18:57.920Z",
+  "valid_until": "2026-07-16T18:18:57.920Z",
+  "data": {
+    "pays": {
+      "nom": "Maroc",
+      "code_iso": "MA",
+      "continent": "Afrique"
     },
-    {
-      "label": "Risques naturels",
-      "level": "medium",
-      "note": "Risque sismique (particulièrement dans l'Atlas), inondations et vagues de chaleur en été."
+    "meteo": {
+      "calendrier_12_mois": [
+        {
+          "mois": "Janvier",
+          "temp_min_c": 7,
+          "temp_max_c": 18,
+          "precipitations_mm": 40,
+          "niveau": "bon",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Février",
+          "temp_min_c": 8,
+          "temp_max_c": 19,
+          "precipitations_mm": 35,
+          "niveau": "bon",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Mars",
+          "temp_min_c": 10,
+          "temp_max_c": 22,
+          "precipitations_mm": 30,
+          "niveau": "ideal",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Avril",
+          "temp_min_c": 12,
+          "temp_max_c": 25,
+          "precipitations_mm": 25,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Mai",
+          "temp_min_c": 15,
+          "temp_max_c": 28,
+          "precipitations_mm": 15,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Juin",
+          "temp_min_c": 18,
+          "temp_max_c": 32,
+          "precipitations_mm": 5,
+          "niveau": "bon",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Juillet",
+          "temp_min_c": 20,
+          "temp_max_c": 35,
+          "precipitations_mm": 2,
+          "niveau": "moyen",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Août",
+          "temp_min_c": 20,
+          "temp_max_c": 35,
+          "precipitations_mm": 2,
+          "niveau": "moyen",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Septembre",
+          "temp_min_c": 18,
+          "temp_max_c": 30,
+          "precipitations_mm": 10,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Octobre",
+          "temp_min_c": 15,
+          "temp_max_c": 27,
+          "precipitations_mm": 25,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Novembre",
+          "temp_min_c": 11,
+          "temp_max_c": 22,
+          "precipitations_mm": 40,
+          "niveau": "bon",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Décembre",
+          "temp_min_c": 8,
+          "temp_max_c": 19,
+          "precipitations_mm": 45,
+          "niveau": "bon",
+          "affluence": "moyenne"
+        }
+      ],
+      "source": "Données climatiques officielles / estimation climatique générale",
+      "derniere_maj": "2024-07-14"
     },
-    {
-      "label": "Santé",
-      "level": "low",
-      "note": "Bonne infrastructure médicale dans les grandes villes. Eau du robinet non potable. Vaccins de routine à jour."
+    "securite": {
+      "zones": [
+        {
+          "nom_zone": "Ensemble du territoire",
+          "niveau": "vigilance",
+          "description": "Une vigilance renforcée est recommandée sur l'ensemble du territoire marocain, notamment dans les lieux publics et touristiques, en raison d'un risque terroriste persistant."
+        },
+        {
+          "nom_zone": "Zones frontalières avec l'Algérie et la Mauritanie",
+          "niveau": "deconseille_sauf_raison_imperative",
+          "description": "Les zones frontalières terrestres avec l'Algérie et la Mauritanie sont déconseillées sauf raison impérative en raison de risques sécuritaires et de la présence de champs de mines."
+        },
+        {
+          "nom_zone": "Sahara occidental",
+          "niveau": "deconseille_sauf_raison_imperative",
+          "description": "Le Sahara occidental est déconseillé sauf raison impérative en raison de la présence de champs de mines et d'une situation politique sensible."
+        }
+      ],
+      "source_officielle": {
+        "nom": "France Diplomatie",
+        "url": "https://www.diplomatie.gouv.fr/fr/conseils-aux-voyageurs/conseils-par-pays-destination/maroc/"
+      },
+      "derniere_synchronisation": "2024-07-14",
+      "statut": "verifie",
+      "ambassade_consulat": {
+        "nom": "Ambassade de France à Rabat",
+        "telephone": "+212 537 68 97 00",
+        "url": "https://ma.ambafrance.org/"
+      }
     },
-    {
-      "label": "Zones à éviter",
-      "level": "medium",
-      "note": "Éviter les zones frontalières avec l'Algérie et les régions non balisées du Sahara Occidental en raison des mines."
+    "sante": {
+      "risques": [
+        "Turista (diarrhée du voyageur)",
+        "Rage (en zones rurales, contact avec animaux)",
+        "Leishmaniose cutanée (zones rurales, piqûres d'insectes)",
+        "Scorpions et serpents (zones désertiques et rurales)"
+      ],
+      "vaccins_recommandes": [
+        "Hépatite A",
+        "Typhoïde",
+        "DTP (Diphtérie, Tétanos, Poliomyélite)",
+        "Rage (pour les séjours prolongés ou aventureux en zones rurales)"
+      ],
+      "vaccins_obligatoires": [],
+      "eau_potable": "a_traiter",
+      "source": "Institut Pasteur / OMS / Santé Voyageurs",
+      "derniere_maj": "2024-07-14",
+      "statut": "verifie"
+    },
+    "connectivite": {
+      "couverture_mobile": "bonne",
+      "wifi_disponibilite": "Bonne disponibilité dans les hôtels, riads, cafés et restaurants des villes principales et zones touristiques. La 4G est largement déployée.",
+      "statut": "verifie"
+    },
+    "pratique": {
+      "visa": {
+        "nationalite": "France",
+        "regle": "Les ressortissants français n'ont pas besoin de visa pour un séjour touristique au Maroc.",
+        "duree_sejour_sans_visa": "90 jours"
+      },
+      "monnaie": "Dirham marocain (MAD)",
+      "prise_electrique": {
+        "type": "Type C et E",
+        "voltage": "220V 50Hz"
+      },
+      "langues": [
+        "Arabe (officielle)",
+        "Amazigh (officielle)",
+        "Français (couramment parlé)"
+      ],
+      "phrases_survie": [
+        {
+          "fr": "Bonjour",
+          "locale": "Salam alikoum"
+        },
+        {
+          "fr": "Merci",
+          "locale": "Choukran"
+        },
+        {
+          "fr": "Au revoir",
+          "locale": "Bslama"
+        },
+        {
+          "fr": "Où sont les toilettes ?",
+          "locale": "Fin twalette ?"
+        },
+        {
+          "fr": "Combien ça coûte ?",
+          "locale": "Bch'hal hada ?"
+        }
+      ],
+      "decalage_horaire_utc": "UTC+1 (heure de Paris : -1h en été, 0h en hiver)",
+      "budget_quotidien_repere_eur": {
+        "petit": {
+          "logement": 20,
+          "nourriture": 15,
+          "transport": 10
+        },
+        "moyen": {
+          "logement": 50,
+          "nourriture": 25,
+          "transport": 15
+        },
+        "gros": {
+          "logement": 120,
+          "nourriture": 45,
+          "transport": 30
+        }
+      }
+    },
+    "vols": {
+      "tendance_par_saison": [
+        {
+          "periode": "Haute saison (Juillet-Août, Décembre-Janvier, Pâques)",
+          "niveau_prix": "haut"
+        },
+        {
+          "periode": "Basse saison (Novembre, Février)",
+          "niveau_prix": "bas"
+        },
+        {
+          "periode": "Épaule (Mars-Juin, Septembre-Octobre)",
+          "niveau_prix": "moyen"
+        }
+      ],
+      "statut": "indicatif"
+    },
+    "carbone": {
+      "vol_paris_kg_co2_estime": 969,
+      "methodologie": "Distance Paris–Rabat (environ 1900 km) × 2 (aller-retour) × 0.255 kg CO2/km/passager (facteur ADEME aviation moyen-courrier/long-courrier)",
+      "statut": "estimation"
+    },
+    "evenements": [
+      {
+        "nom": "Festival Gnaoua et Musiques du Monde",
+        "periode": "Juin",
+        "description": "Un festival international de musique à Essaouira, célébrant la musique Gnaoua et d'autres musiques du monde."
+      },
+      {
+        "nom": "Festival International du Film de Marrakech",
+        "periode": "Novembre-Décembre",
+        "description": "Un événement cinématographique majeur qui attire des célébrités et des professionnels du cinéma du monde entier."
+      },
+      {
+        "nom": "Moussem de Tan-Tan",
+        "periode": "Mai-Juin",
+        "description": "Un rassemblement annuel des tribus nomades du Sahara, inscrit au patrimoine culturel immatériel de l'UNESCO, avec des courses de chameaux et des chants traditionnels."
+      }
+    ],
+    "lieux_incontournables": [
+      {
+        "nom": "Place Jemaa el-Fna, Marrakech",
+        "description": "Cœur vibrant de Marrakech, classée au patrimoine mondial de l'UNESCO, animée par des conteurs, musiciens, charmeurs de serpents et stands de nourriture.",
+        "lat": 31.6278,
+        "lng": -7.9892
+      },
+      {
+        "nom": "Jardin Majorelle, Marrakech",
+        "description": "Un jardin botanique et paysager d'une grande beauté, créé par le peintre Jacques Majorelle et restauré par Yves Saint Laurent, célèbre pour son bleu intense.",
+        "lat": 31.636,
+        "lng": -7.9921
+      },
+      {
+        "nom": "Fès el-Bali (Médina de Fès)",
+        "description": "La plus ancienne et la plus grande médina du monde, classée au patrimoine mondial de l'UNESCO, avec ses ruelles labyrinthiques, ses tanneries et ses souks traditionnels.",
+        "lat": 34.0633,
+        "lng": -4.989
+      },
+      {
+        "nom": "Chefchaouen (la ville bleue)",
+        "description": "Située dans les montagnes du Rif, cette ville est célèbre pour ses bâtiments peints en différentes nuances de bleu, offrant un cadre pittoresque unique.",
+        "lat": 35.1728,
+        "lng": -5.2637
+      },
+      {
+        "nom": "Ksar d'Aït Benhaddou",
+        "description": "Un village fortifié traditionnel en terre, classé au patrimoine mondial de l'UNESCO, souvent utilisé comme décor de films pour son architecture spectaculaire.",
+        "lat": 31.047,
+        "lng": -7.129
+      }
+    ],
+    "coutumes": "La culture marocaine est riche en traditions et en hospitalité. Il est d'usage de saluer avec 'Salam alikoum', d'accepter le thé à la menthe offert et de marchander dans les souks. Une tenue respectueuse est appréciée, surtout en dehors des zones touristiques balnéaires. Il est poli de manger avec la main droite et de retirer ses chaussures avant d'entrer dans une mosquée ou une maison.",
+    "kits_recommandes_tags_climat": [
+      "chaleur_intense",
+      "desert",
+      "mediterraneen",
+      "montagne"
+    ],
+    "gabarit_poids_recommande": {
+      "poids_total_kg": 15,
+      "justification": "Pour un voyage varié entre villes impériales, désert et côtes, un bagage de 15 kg permet d'emporter des vêtements adaptés aux variations de température (chaud en journée, frais le soir, très chaud en été) et des chaussures confortables pour la marche, tout en restant léger pour les déplacements."
+    },
+    "pays_similaires": [
+      {
+        "code_iso": "TN",
+        "nom": "Tunisie",
+        "raison": "Climat méditerranéen et désertique, culture maghrébine similaire, sites historiques et plages."
+      },
+      {
+        "code_iso": "EG",
+        "nom": "Égypte",
+        "raison": "Présence de désert, culture ancienne riche, souks animés et hospitalité."
+      },
+      {
+        "code_iso": "ES",
+        "nom": "Espagne",
+        "raison": "Proximité géographique, influences culturelles historiques, climat méditerranéen et activités côtières."
+      }
+    ],
+    "faq": [
+      {
+        "question": "Ai-je besoin d'un visa pour voyager au Maroc en tant que citoyen français ?",
+        "reponse": "Non, les citoyens français n'ont pas besoin de visa pour un séjour touristique au Maroc d'une durée maximale de 90 jours."
+      },
+      {
+        "question": "Quelle est la meilleure période pour visiter le Maroc ?",
+        "reponse": "Les mois d'avril, mai, septembre et octobre sont considérés comme idéaux pour visiter le Maroc, offrant des températures agréables et moins de précipitations. L'été peut être très chaud, surtout à l'intérieur des terres."
+      },
+      {
+        "question": "Quels sont les vaccins recommandés avant un voyage au Maroc ?",
+        "reponse": "Les vaccins recommandés incluent l'Hépatite A, la Typhoïde et le DTP. La vaccination contre la rage peut être conseillée pour les séjours prolongés en zones rurales ou pour les activités à risque."
+      },
+      {
+        "question": "L'eau du robinet est-elle potable au Maroc ?",
+        "reponse": "Il est généralement recommandé de traiter l'eau du robinet ou de consommer de l'eau en bouteille pour éviter la turista, surtout en dehors des grandes villes."
+      }
+    ],
+    "meta": {
+      "genere_le": "2024-07-14T12:00:00.000Z",
+      "cache_valide_jusqu_au": "2024-07-16T12:00:00.000Z"
     }
-  ],
-  "calendrier": [
-    {
-      "month": "Janvier",
-      "short": "Jan",
-      "status": "bad",
-      "temp_min": 5,
-      "temp_max": 18,
-      "rain_mm": 60,
-      "description": "Frais et humide, surtout sur la côte et dans le nord."
-    },
-    {
-      "month": "Février",
-      "short": "Fév",
-      "status": "bad",
-      "temp_min": 6,
-      "temp_max": 19,
-      "rain_mm": 55,
-      "description": "Similaire à janvier, avec des journées plus longues."
-    },
-    {
-      "month": "Mars",
-      "short": "Mar",
-      "status": "medium",
-      "temp_min": 8,
-      "temp_max": 22,
-      "rain_mm": 45,
-      "description": "Le printemps commence, températures plus douces, moins de pluie."
-    },
-    {
-      "month": "Avril",
-      "short": "Avr",
-      "status": "good",
-      "temp_min": 10,
-      "temp_max": 25,
-      "rain_mm": 30,
-      "description": "Idéal pour visiter, températures agréables et ensoleillement."
-    },
-    {
-      "month": "Mai",
-      "short": "Mai",
-      "status": "good",
-      "temp_min": 13,
-      "temp_max": 28,
-      "rain_mm": 15,
-      "description": "Très agréable, chaud mais supportable, peu de pluie."
-    },
-    {
-      "month": "Juin",
-      "short": "Jun",
-      "status": "good",
-      "temp_min": 16,
-      "temp_max": 32,
-      "rain_mm": 5,
-      "description": "Chaud et ensoleillé, parfait pour la côte, très chaud à l'intérieur."
-    },
-    {
-      "month": "Juillet",
-      "short": "Jul",
-      "status": "good",
-      "temp_min": 19,
-      "temp_max": 36,
-      "rain_mm": 2,
-      "description": "Très chaud et sec, surtout dans le sud et l'intérieur. Idéal pour la côte."
-    },
-    {
-      "month": "Août",
-      "short": "Aoû",
-      "status": "good",
-      "temp_min": 19,
-      "temp_max": 36,
-      "rain_mm": 2,
-      "description": "Période la plus chaude et sèche. Privilégier les régions côtières ou montagneuses."
-    },
-    {
-      "month": "Septembre",
-      "short": "Sep",
-      "status": "good",
-      "temp_min": 16,
-      "temp_max": 30,
-      "rain_mm": 10,
-      "description": "Les températures commencent à baisser, très agréable pour voyager."
-    },
-    {
-      "month": "Octobre",
-      "short": "Oct",
-      "status": "good",
-      "temp_min": 13,
-      "temp_max": 27,
-      "rain_mm": 25,
-      "description": "Excellent mois pour visiter, températures douces et ensoleillement."
-    },
-    {
-      "month": "Novembre",
-      "short": "Nov",
-      "status": "medium",
-      "temp_min": 9,
-      "temp_max": 22,
-      "rain_mm": 40,
-      "description": "Plus frais et risque de pluie, surtout en fin de mois."
-    },
-    {
-      "month": "Décembre",
-      "short": "Déc",
-      "status": "bad",
-      "temp_min": 6,
-      "temp_max": 19,
-      "rain_mm": 50,
-      "description": "Froid et humide, surtout le soir et la nuit. Possibilité de neige en montagne."
-    }
-  ],
-  "infos_pratiques": [
-    {
-      "icon": "IdentificationIcon",
-      "label": "Visa",
-      "value": "Les ressortissants français n'ont pas besoin de visa pour un séjour de moins de 90 jours. Un passeport valide est requis."
-    },
-    {
-      "icon": "HeartIcon",
-      "label": "Vaccins",
-      "value": "Aucun vaccin n'est obligatoire. Il est recommandé d'être à jour sur les vaccins universels (DTP, hépatite B) et d'envisager l'hépatite A et la typhoïde."
-    },
-    {
-      "icon": "CurrencyEuroIcon",
-      "label": "Monnaie",
-      "value": "Le Dirham marocain (MAD) est la monnaie locale. 1 EUR ≈ 10,8 MAD. Les cartes bancaires sont acceptées dans les grandes villes, mais prévoyez du liquide pour les petits commerces et les souks."
-    },
-    {
-      "icon": "BoltIcon",
-      "label": "Prises",
-      "value": "Les prises sont de type C et E, avec une tension de 220V et une fréquence de 50Hz. Les adaptateurs ne sont généralement pas nécessaires pour les appareils français."
-    },
-    {
-      "icon": "BeakerIcon",
-      "label": "Eau",
-      "value": "L'eau du robinet n'est pas potable. Il est recommandé de boire de l'eau en bouteille capsulée et d'éviter les glaçons."
-    },
-    {
-      "icon": "PhoneIcon",
-      "label": "Urgences",
-      "value": "Police : 19 (villes), Gendarmerie Royale : 177 (zones rurales), Pompiers/Ambulance : 15."
-    }
-  ],
-  "lieux": [
-    {
-      "nom": "Marrakech",
-      "description": "La 'ville rouge' est célèbre pour sa médina animée, la place Djemaa el-Fna, ses souks colorés, le jardin Majorelle et le palais de la Bahia."
-    },
-    {
-      "nom": "Fès",
-      "description": "Abritant la plus ancienne université du monde, Fès est réputée pour sa médina médiévale labyrinthique, ses tanneries traditionnelles et son artisanat."
-    },
-    {
-      "nom": "Chefchaouen",
-      "description": "La 'ville bleue' du Rif, avec ses ruelles pittoresques et ses maisons peintes en bleu et blanc, offre une atmosphère unique et des vues magnifiques."
-    },
-    {
-      "nom": "Désert du Sahara (Merzouga)",
-      "description": "Expérience inoubliable avec des dunes de sable impressionnantes (Erg Chebbi), balades à dos de chameau et nuits sous les étoiles dans des camps berbères."
-    },
-    {
-      "nom": "Essaouira",
-      "description": "Ville côtière fortifiée, connue pour sa médina classée à l'UNESCO, son port de pêche animé, ses plages ventées idéales pour les sports nautiques et son festival Gnaoua."
-    }
-  ],
-  "kits_recommandes": [
-    {
-      "nom": "Kit Aventure Marocaine",
-      "poids_g": 7500,
-      "prix_cents": 28900,
-      "slug": "kit-aventure-marocaine",
-      "description": "Idéal pour explorer les villes impériales et les paysages variés, incluant des protections solaires, un filtre à eau et des vêtements adaptés."
-    },
-    {
-      "nom": "Kit Randonnée Atlas",
-      "poids_g": 6200,
-      "prix_cents": 22900,
-      "slug": "kit-randonnee-atlas",
-      "description": "Spécialement conçu pour les treks en montagne, avec des équipements pour le froid, la navigation et la sécurité en altitude."
-    },
-    {
-      "nom": "Kit Essentiel Urbain",
-      "poids_g": 3800,
-      "prix_cents": 14900,
-      "slug": "kit-essentiel-urbain",
-      "description": "Un kit léger pour les séjours en ville, incluant des articles de première nécessité, un adaptateur universel et un petit sac à dos."
-    }
-  ],
-  "events": [
-    {
-      "mois": "Mai",
-      "titre": "Festival des Roses (Kelaat M'Gouna)",
-      "type": "festival"
-    },
-    {
-      "mois": "Juin",
-      "titre": "Festival Gnaoua et Musiques du Monde (Essaouira)",
-      "type": "festival"
-    },
-    {
-      "mois": "Avril-Mai",
-      "titre": "Haute saison touristique (printemps)",
-      "type": "saison"
-    },
-    {
-      "mois": "Septembre-Octobre",
-      "titre": "Haute saison touristique (automne)",
-      "type": "saison"
-    },
-    {
-      "mois": "Juillet-Août",
-      "titre": "Période à éviter si possible (chaleur intense dans l'intérieur)",
-      "type": "eviter"
-    },
-    {
-      "mois": "Novembre-Décembre",
-      "titre": "Festival International du Film de Marrakech",
-      "type": "festival"
-    }
-  ]
+  }
 }

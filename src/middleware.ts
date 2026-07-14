@@ -2,11 +2,28 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCountryCodeByName, getCountryByCode } from '@/lib/countries';
 
 /**
- * Middleware for country page redirects
- * Handles: /pays/islande → /pays/is (301 redirect)
+ * Middleware for:
+ * 1. Country page redirects: /pays/islande → /pays/is (301)
+ * 2. Shop redirects: /catalogue/* → /shop/* (301)
+ * 3. Kits redirects: /kits → /shop?type=kit (301)
  */
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+
+  // ─── /catalogue → /shop redirects (301) ──────────────────────────────────
+  if (pathname === '/catalogue' || pathname.startsWith('/catalogue/')) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace(/^\/catalogue/, '/shop');
+    return NextResponse.redirect(url, { status: 301 });
+  }
+
+  // ─── /kits → /shop?type=kit redirect (301) ───────────────────────────────
+  if (pathname === '/kits') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/shop';
+    url.searchParams.set('type', 'kit');
+    return NextResponse.redirect(url, { status: 301 });
+  }
 
   // ─── Country redirect logic ───────────────────────────────────────────────
   const paysMatch = pathname.match(/^\/pays\/([a-zà-ü-]+)$/i);
@@ -32,5 +49,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/pays/:path*',
+  matcher: ['/catalogue/:path*', '/kits', '/pays/:path*'],
 };

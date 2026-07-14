@@ -27,14 +27,14 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'Boutique',
+    label: 'Shop',
     items: [
-      { label: 'Boutique', href: '/boutique', desc: 'Tout l\'équipement', icon: 'ShoppingBagIcon' },
-      { label: 'Catalogue', href: '/catalogue', desc: '500+ produits outdoor', icon: 'ArchiveBoxIcon' },
-      { label: 'Kits prêts à partir', href: '/kits', desc: 'Kits complets par destination', icon: 'CubeIcon' },
-      { label: 'Occasion', href: '/occasion', desc: 'Matériel d\'occasion vérifié', icon: 'TagIcon' },
-      { label: 'Enchères', href: '/encheres', desc: 'Ventes aux enchères', icon: 'BoltIcon' },
-      { label: 'Location', href: '/location', desc: 'Louer entre particuliers', icon: 'KeyIcon' },
+      { label: 'Shop', href: '/shop', desc: 'Tout l\'équipement', icon: 'ShoppingBagIcon' },
+      { label: 'Neuf', href: '/shop?type=neuf', desc: '500+ produits outdoor', icon: 'ArchiveBoxIcon' },
+      { label: 'Kit assemblé', href: '/shop?type=kit', desc: 'Kits complets par destination', icon: 'CubeIcon' },
+      { label: 'Occasion', href: '/shop?type=occasion', desc: 'Matériel d\'occasion vérifié', icon: 'TagIcon' },
+      { label: 'Enchères', href: '/shop?type=enchere', desc: 'Ventes aux enchères', icon: 'BoltIcon' },
+      { label: 'Location', href: '/shop?type=location', desc: 'Louer entre particuliers', icon: 'KeyIcon' },
     ],
   },
   {
@@ -161,7 +161,7 @@ export default function Header() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/catalogue?q=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(`/shop?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchOpen(false);
       setSearchQuery('');
     }
