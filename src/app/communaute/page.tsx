@@ -1080,6 +1080,12 @@ export default function CommunautePage() {
             <Link href="/clubs" className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-600 transition-colors">
               <Icon name="UserGroupIcon" size={14} /> Clubs
             </Link>
+            <Link href="/groupes" className="flex items-center gap-2 px-4 py-2 bg-[#E4501C]/20 hover:bg-[#E4501C]/30 border border-[#E4501C]/40 text-white rounded-xl text-sm font-600 transition-colors">
+              <Icon name="MapIcon" size={14} /> Groupes de voyage
+            </Link>
+            <Link href="/groupes?tab=decouvrir" className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-600 transition-colors">
+              <Icon name="MagnifyingGlassIcon" size={14} /> Découvrir des groupes
+            </Link>
           </div>
 
           {/* Tab bar */}

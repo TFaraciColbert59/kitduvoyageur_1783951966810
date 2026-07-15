@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -109,9 +110,10 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(hrs / 24)}j`;
 }
 
-export default function GroupePage() {
+function GroupePageInner() {
   const { user, profile } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const { toast } = useToast();
 
@@ -130,6 +132,10 @@ export default function GroupePage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createForm, setCreateForm] = useState({ name: '', description: '', destination: '', theme: 'Trek', visibility: 'public', departure_date: '', return_date: '', budget_target: '', max_members: '20' });
   const [creating, setCreating] = useState(false);
+
+  // Edit group modal
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({ name: '', description: '', destination: '', theme: 'Trek', visibility: 'public', departure_date: '', return_date: '', budget_target: '', max_members: '20' });
 
   // Chat
   const [newMessage, setNewMessage] = useState('');
@@ -186,6 +192,7 @@ export default function GroupePage() {
 
   async function loadMyGroups() {
     setLoading(true);
+    const targetGroupId = searchParams?.get('group');
     try {
       if (!user) {
         // Load public groups for non-authenticated users
@@ -196,7 +203,12 @@ export default function GroupePage() {
           .order('created_at', { ascending: false })
           .limit(10);
         setMyGroups(data || []);
-        if (data && data.length > 0) setSelectedGroup(data[0]);
+        if (targetGroupId) {
+          const target = (data || []).find(g => g.id === targetGroupId);
+          setSelectedGroup(target || (data && data.length > 0 ? data[0] : null));
+        } else if (data && data.length > 0) {
+          setSelectedGroup(data[0]);
+        }
         return;
       }
 
@@ -220,7 +232,12 @@ export default function GroupePage() {
           my_role: memberData.find(m => m.group_id === g.id)?.role
         }));
         setMyGroups(enriched);
-        if (enriched.length > 0) setSelectedGroup(enriched[0]);
+        if (targetGroupId) {
+          const target = enriched.find(g => g.id === targetGroupId);
+          setSelectedGroup(target || (enriched.length > 0 ? enriched[0] : null));
+        } else if (enriched.length > 0) {
+          setSelectedGroup(enriched[0]);
+        }
       } else {
         // Show public groups if no memberships
         const { data } = await supabase
@@ -230,7 +247,12 @@ export default function GroupePage() {
           .order('created_at', { ascending: false })
           .limit(6);
         setMyGroups(data || []);
-        if (data && data.length > 0) setSelectedGroup(data[0]);
+        if (targetGroupId) {
+          const target = (data || []).find(g => g.id === targetGroupId);
+          setSelectedGroup(target || (data && data.length > 0 ? data[0] : null));
+        } else if (data && data.length > 0) {
+          setSelectedGroup(data[0]);
+        }
       }
     } catch (e) {
       console.error('loadMyGroups error:', e);
@@ -332,6 +354,46 @@ export default function GroupePage() {
     } finally {
       setCreating(false);
     }
+  }
+
+  async function handleEditGroup(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedGroup) return;
+    try {
+      const { error } = await supabase.from('travel_groups').update({
+        name: editForm.name,
+        description: editForm.description,
+        destination: editForm.destination,
+        theme: editForm.theme,
+        visibility: editForm.visibility,
+        departure_date: editForm.departure_date || null,
+        return_date: editForm.return_date || null,
+        budget_target: parseFloat(editForm.budget_target) || 0,
+        max_members: parseInt(editForm.max_members) || 20,
+      }).eq('id', selectedGroup.id);
+      if (error) throw error;
+      toast('Groupe modifié !', 'success');
+      setShowEditModal(false);
+      await loadMyGroups();
+    } catch (err: any) {
+      toast(err.message || 'Erreur', 'error');
+    }
+  }
+
+  function openEditModal() {
+    if (!selectedGroup) return;
+    setEditForm({
+      name: selectedGroup.name,
+      description: selectedGroup.description || '',
+      destination: selectedGroup.destination,
+      theme: selectedGroup.theme,
+      visibility: selectedGroup.visibility,
+      departure_date: selectedGroup.departure_date?.split('T')[0] || '',
+      return_date: selectedGroup.return_date?.split('T')[0] || '',
+      budget_target: selectedGroup.budget_target?.toString() || '',
+      max_members: selectedGroup.max_members?.toString() || '20',
+    });
+    setShowEditModal(true);
   }
 
   async function handleJoinByCode() {
@@ -517,7 +579,14 @@ export default function GroupePage() {
       {/* Hero */}
       <section className="pt-20 bg-dark-bg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <p className="font-mono text-xs text-primary tracking-widest uppercase mb-2" style={{ fontFamily: 'var(--font-mono)' }}>VOYAGES EN GROUPE</p>
+          <div className="flex items-center gap-2 mb-2">
+            <Link href="/groupes" className="text-white/40 hover:text-white/70 transition-colors text-xs font-mono tracking-widest uppercase flex items-center gap-1">
+              <Icon name="ChevronLeftIcon" size={12} variant="outline" />
+              Mes groupes
+            </Link>
+            <span className="text-white/20 text-xs">/</span>
+            <p className="font-mono text-xs text-primary tracking-widest uppercase">VOYAGES EN GROUPE</p>
+          </div>
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
               <h1 className="font-display font-800 text-3xl md:text-4xl text-white tracking-tight" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>
@@ -555,7 +624,13 @@ export default function GroupePage() {
           <div className="flex gap-6">
             {/* Sidebar: group list */}
             <div className="w-64 flex-shrink-0 space-y-2">
-              <p className="text-xs font-mono text-muted-foreground uppercase tracking-wider mb-3" style={{ fontFamily: 'var(--font-mono)' }}>Mes groupes ({myGroups.length})</p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-mono text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>Mes groupes ({myGroups.length})</p>
+                <Link href="/groupes" className="text-[10px] text-primary hover:underline flex items-center gap-0.5">
+                  <Icon name="ArrowTopRightOnSquareIcon" size={10} variant="outline" />
+                  Gérer
+                </Link>
+              </div>
               {myGroups.length === 0 ? (
                 <div className="topo-card p-4 text-center">
                   <Icon name="UserGroupIcon" size={32} className="text-muted-foreground mx-auto mb-2" variant="outline" />
@@ -566,7 +641,7 @@ export default function GroupePage() {
                 myGroups.map(group => (
                   <button
                     key={group.id}
-                    onClick={() => setSelectedGroup(group)}
+                    onClick={() => { setSelectedGroup(group); router.replace(`/groupe?group=${group.id}`, { scroll: false }); }}
                     className={`w-full text-left p-3 rounded-xl border transition-all ${selectedGroup?.id === group.id ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/40'}`}
                   >
                     <div className="flex items-center gap-2 mb-1">
@@ -631,6 +706,15 @@ export default function GroupePage() {
                       <div className="text-xs font-mono text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>
                         Code: <span className="text-foreground font-700">{selectedGroup.invite_code}</span>
                       </div>
+                      {(selectedGroup.my_role === 'organizer' || selectedGroup.my_role === 'co_organizer' || selectedGroup.owner_id === user?.id) && (
+                        <button
+                          onClick={openEditModal}
+                          className="flex items-center gap-1.5 text-xs border border-border text-muted-foreground px-2.5 py-1.5 rounded-lg hover:border-primary hover:text-primary transition-colors"
+                        >
+                          <Icon name="PencilIcon" size={11} variant="outline" />
+                          Modifier
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -1147,6 +1231,78 @@ export default function GroupePage() {
         )}
       </div>
 
+      {/* EDIT GROUP MODAL */}
+      {showEditModal && selectedGroup && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-background rounded-2xl border border-border w-full max-w-lg p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-display font-700 text-lg text-foreground" style={{ fontFamily: 'var(--font-display)' }}>Modifier le groupe</h3>
+              <button onClick={() => setShowEditModal(false)} className="p-1 text-muted-foreground hover:text-foreground"><Icon name="XMarkIcon" size={18} variant="outline" /></button>
+            </div>
+            {selectedGroup.invite_code && (
+              <div className="mb-4 p-3 bg-primary/5 border border-primary/20 rounded-xl flex items-center gap-3">
+                <Icon name="LinkIcon" size={14} className="text-primary flex-shrink-0" variant="outline" />
+                <div>
+                  <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Code d&apos;invitation</p>
+                  <p className="font-mono font-700 text-primary text-sm tracking-widest">{selectedGroup.invite_code}</p>
+                </div>
+              </div>
+            )}
+            <form onSubmit={handleEditGroup} className="space-y-4">
+              <div>
+                <label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-1.5">Nom du groupe *</label>
+                <input required value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-1.5">Destination *</label>
+                <input required value={editForm.destination} onChange={e => setEditForm({ ...editForm, destination: e.target.value })} className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-1.5">Description</label>
+                <textarea value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} rows={2} className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors resize-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-1.5">Thème</label>
+                  <select value={editForm.theme} onChange={e => setEditForm({ ...editForm, theme: e.target.value })} className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors">
+                    {THEMES.map(t => <option key={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-1.5">Visibilité</label>
+                  <select value={editForm.visibility} onChange={e => setEditForm({ ...editForm, visibility: e.target.value })} className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors">
+                    <option value="public">🌍 Public</option>
+                    <option value="private">🔒 Privé</option>
+                    <option value="invite_only">🔗 Sur invitation</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-1.5">Départ</label>
+                  <input type="date" value={editForm.departure_date} onChange={e => setEditForm({ ...editForm, departure_date: e.target.value })} className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors" />
+                </div>
+                <div>
+                  <label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-1.5">Retour</label>
+                  <input type="date" value={editForm.return_date} onChange={e => setEditForm({ ...editForm, return_date: e.target.value })} className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-1.5">Budget (€)</label>
+                  <input type="number" value={editForm.budget_target} onChange={e => setEditForm({ ...editForm, budget_target: e.target.value })} className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors" />
+                </div>
+                <div>
+                  <label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-1.5">Max membres</label>
+                  <input type="number" min={2} max={50} value={editForm.max_members} onChange={e => setEditForm({ ...editForm, max_members: e.target.value })} className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors" />
+                </div>
+              </div>
+              <button type="submit" className="btn-primary w-full justify-center py-3">Enregistrer les modifications</button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* CREATE GROUP MODAL */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -1347,5 +1503,13 @@ export default function GroupePage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function GroupePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+      <GroupePageInner />
+    </Suspense>
   );
 }

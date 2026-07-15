@@ -76,6 +76,20 @@ interface Badge {
   rarity: string;
 }
 
+interface UserGroup {
+  id: string;
+  name: string;
+  destination: string;
+  theme: string;
+  departure_date: string | null;
+  return_date: string | null;
+  visibility: string;
+  group_level: number;
+  optimization_score: number;
+  my_role?: string;
+  member_count?: number;
+}
+
 const LEVEL_CFG: Record<string, { color: string; icon: string; bg: string }> = {
   Explorateur: { color: 'text-stone-600', icon: '🥾', bg: 'bg-stone-100 border-stone-300' },
   Aventurier: { color: 'text-emerald-700', icon: '🏕️', bg: 'bg-emerald-50 border-emerald-300' },
@@ -222,7 +236,7 @@ function CarnetDetailModal({ carnet, onClose }: { carnet: Carnet | null; onClose
   );
 }
 
-type ProfileTab = 'publications' | 'carnets' | 'clubs' | 'evenements' | 'badges';
+type ProfileTab = 'publications' | 'carnets' | 'clubs' | 'evenements' | 'badges' | 'groupes';
 
 export default function ProfilPage() {
   const params = useParams();
@@ -233,6 +247,7 @@ export default function ProfilPage() {
   const [clubs, setClubs] = useState<ClubMembership[]>([]);
   const [events, setEvents] = useState<EventParticipation[]>([]);
   const [badges, setBadges] = useState<Badge[]>([]);
+  const [groups, setGroups] = useState<UserGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ProfileTab>('publications');
   const [isFollowing, setIsFollowing] = useState(false);
@@ -265,6 +280,31 @@ export default function ProfilPage() {
       setEvents((eventsRes.data ?? []) as unknown as EventParticipation[]);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setBadges(((badgesRes.data ?? []) as any[]).map((b) => b.badge).filter(Boolean));
+
+      // Load groups
+      const { data: memberData } = await supabase
+        .from('group_members')
+        .select('group_id, role')
+        .eq('user_id', profileId)
+        .eq('status', 'active');
+
+      if (memberData?.length) {
+        const groupIds = memberData.map(m => m.group_id);
+        const { data: groupsData } = await supabase
+          .from('travel_groups')
+          .select('id, name, destination, theme, departure_date, return_date, visibility, group_level, optimization_score')
+          .in('id', groupIds)
+          .order('created_at', { ascending: false })
+          .limit(8);
+
+        const enriched = await Promise.all((groupsData || []).map(async (g) => {
+          const { count } = await supabase
+            .from('group_members').select('*', { count: 'exact', head: true })
+            .eq('group_id', g.id).eq('status', 'active');
+          return { ...g, member_count: count || 0, my_role: memberData.find(m => m.group_id === g.id)?.role };
+        }));
+        setGroups(enriched);
+      }
 
       const [fwersRes, fwingRes] = await Promise.all([
         supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('following_id', profileId),
@@ -305,6 +345,7 @@ export default function ProfilPage() {
   const PROFILE_TABS: { id: ProfileTab; label: string; icon: string; count?: number }[] = [
     { id: 'publications', label: 'Publications', icon: 'ChatBubbleLeftRightIcon', count: posts.length },
     { id: 'carnets', label: 'Carnets', icon: 'BookOpenIcon', count: carnets.length },
+    { id: 'groupes', label: 'Groupes', icon: 'MapIcon', count: groups.length },
     { id: 'clubs', label: 'Clubs', icon: 'UserGroupIcon', count: clubs.length },
     { id: 'evenements', label: 'Événements', icon: 'CalendarDaysIcon', count: events.length },
     { id: 'badges', label: 'Badges', icon: 'TrophyIcon', count: badges.length },
@@ -377,9 +418,14 @@ export default function ProfilPage() {
                       </div>
                       <div className="flex gap-2">
                         {isOwnProfile ? (
-                          <Link href="/compte" className="flex items-center gap-2 px-4 py-2 border border-[#C8C3B0] rounded-xl text-sm font-600 text-[#5C6B5E] hover:text-[#1C2620] hover:border-[#1C2620]/30 transition-all">
-                            <Icon name="PencilIcon" size={14} /> Modifier
-                          </Link>
+                          <>
+                            <Link href="/compte" className="flex items-center gap-2 px-4 py-2 border border-[#C8C3B0] rounded-xl text-sm font-600 text-[#5C6B5E] hover:text-[#1C2620] hover:border-[#1C2620]/30 transition-all">
+                              <Icon name="PencilIcon" size={14} /> Modifier
+                            </Link>
+                            <Link href="/groupes" className="flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600 hover:bg-[#E4501C]/90 transition-all">
+                              <Icon name="UserGroupIcon" size={14} /> Mes groupes
+                            </Link>
+                          </>
                         ) : (
                           <>
                             <button
@@ -571,6 +617,74 @@ export default function ProfilPage() {
                             </Link>
                           );
                         })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Groupes */}
+                {activeTab === 'groupes' && (
+                  <div>
+                    {groups.length === 0 ? (
+                      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-8 text-center text-[#5C6B5E]">
+                        <p className="text-3xl mb-2">🗺️</p>
+                        <p className="text-sm mb-4">Aucun groupe de voyage pour l&apos;instant</p>
+                        {isOwnProfile && (
+                          <Link href="/groupes" className="inline-flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600 hover:bg-[#E4501C]/90 transition-colors">
+                            <Icon name="PlusIcon" size={14} /> Créer ou rejoindre un groupe
+                          </Link>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {groups.map((group) => {
+                            const themeEmoji: Record<string, string> = { Trek: '🏔️', 'Van Life': '🚐', Randonnée: '🥾', Expédition: '🧭', 'Tour du monde': '🌍', Plage: '🏖️', Ski: '⛷️', Vélo: '🚴', Moto: '🏍️', Autre: '🎒' };
+                            return (
+                              <Link
+                                key={group.id}
+                                href={`/groupe?group=${group.id}`}
+                                className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 hover:shadow-md hover:border-[#E4501C]/30 transition-all flex items-start gap-4"
+                              >
+                                <div className="w-12 h-12 rounded-xl bg-[#1C2620] flex items-center justify-center text-2xl flex-shrink-0">
+                                  {themeEmoji[group.theme] || '🎒'}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-display font-700 text-[#1C2620] text-sm truncate">{group.name}</p>
+                                  <p className="text-xs text-[#5C6B5E] flex items-center gap-1 mt-0.5">
+                                    <Icon name="MapPinIcon" size={10} /> {group.destination}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                    {group.my_role && (
+                                      <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${group.my_role === 'organizer' ? 'bg-amber-100 text-amber-700' : group.my_role === 'co_organizer' ? 'bg-blue-100 text-blue-700' : 'bg-[#E7E3D6] text-[#5C6B5E]'}`}>
+                                        {group.my_role === 'organizer' ? '👑 Organisateur' : group.my_role === 'co_organizer' ? '🛡️ Co-org' : '👤 Membre'}
+                                      </span>
+                                    )}
+                                    <span className="text-[10px] text-[#5C6B5E]">{group.member_count} membres</span>
+                                    <span className="text-[10px] font-mono text-[#E4501C] font-700">{group.optimization_score}/100</span>
+                                  </div>
+                                  {group.departure_date && (
+                                    <p className="text-[10px] text-[#5C6B5E] mt-1 flex items-center gap-1">
+                                      <Icon name="CalendarIcon" size={9} />
+                                      {new Date(group.departure_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                    </p>
+                                  )}
+                                </div>
+                                <Icon name="ChevronRightIcon" size={14} className="text-[#5C6B5E] flex-shrink-0 mt-1" />
+                              </Link>
+                            );
+                          })}
+                        </div>
+                        {isOwnProfile && (
+                          <div className="flex gap-3 pt-2">
+                            <Link href="/groupes" className="flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600 hover:bg-[#E4501C]/90 transition-colors">
+                              <Icon name="PlusIcon" size={14} /> Gérer mes groupes
+                            </Link>
+                            <Link href="/groupes?tab=decouvrir" className="flex items-center gap-2 px-4 py-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl text-sm font-600 hover:text-[#1C2620] transition-colors">
+                              <Icon name="MagnifyingGlassIcon" size={14} /> Découvrir
+                            </Link>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

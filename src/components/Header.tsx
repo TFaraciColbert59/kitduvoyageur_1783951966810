@@ -53,6 +53,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Mon compte', href: '/compte', desc: 'Profil & paramètres', icon: 'UserIcon' },
       { label: 'Inventaire', href: '/inventaire', desc: 'Mon équipement', icon: 'ArchiveBoxIcon' },
+      { label: 'Mes groupes', href: '/groupes', desc: 'Groupes de voyage', icon: 'MapIcon' },
       { label: 'Fidélité & Défis', href: '/fidelite', desc: 'Points & badges', icon: 'TrophyIcon' },
       { label: 'Commandes', href: '/compte#commandes', desc: 'Historique & suivi', icon: 'ShoppingBagIcon' },
       { label: 'Documents', href: '/compte#documents', desc: 'Passeports, visas, assurances', icon: 'FolderIcon' },
