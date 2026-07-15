@@ -27,7 +27,7 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'Shop',
+    label: 'Boutique',
     items: [
       { label: 'Shop', href: '/shop', desc: 'Tout l\'équipement', icon: 'ShoppingBagIcon' },
       { label: 'Neuf', href: '/shop?type=neuf', desc: '500+ produits outdoor', icon: 'ArchiveBoxIcon' },
