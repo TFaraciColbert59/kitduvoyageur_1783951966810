@@ -3,16 +3,8 @@ import ProductDetailClient from './ProductDetailClient';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.com';
 
-// Static product slugs for pre-generation
 export async function generateStaticParams() {
-  return [
-    { slug: 'sac-a-dos-osprey-atmos-65' },
-    { slug: 'osprey-exos-58' },
-    { slug: 'big-agnes-copper-spur' },
-    { slug: 'sea-to-summit-reactor' },
-    { slug: 'msr-pocket-rocket' },
-    { slug: 'sawyer-squeeze' },
-  ];
+  return [];
 }
 
 export async function generateMetadata({
@@ -62,4 +54,11 @@ export async function generateMetadata({
   };
 }
 
-export default ProductDetailClient;
+export default async function ProductPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  return <ProductDetailClient slug={slug} />;
+}

@@ -7,10 +7,11 @@ import WeightGauge from '@/components/WeightGauge';
 import TopoSeparator from '@/components/TopoSeparator';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
-import { saveCart, getCart } from '@/lib/cart';
+
 import AuctionZone from '@/components/AuctionZone';
 import NewProductZone from '@/components/NewProductZone';
 import OccasionProductZone from '@/components/OccasionProductZone';
+import { createClient } from '@/lib/supabase/client';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type ListingType = 'neuf' | 'kit' | 'occasion' | 'enchere' | 'location';
@@ -28,18 +29,6 @@ interface ProductReview {
   verified: boolean;
 }
 
-interface KitItem {
-  id: string;
-  nom: string;
-  categorie: string;
-  poids_g: number;
-  prix_cents: number;
-  quantite: number;
-  slug: string;
-  image: string;
-  alt: string;
-}
-
 interface Product {
   id: string;
   slug: string;
@@ -55,27 +44,25 @@ interface Product {
   specs: ProductSpec[];
   tags: string[];
   stock: number;
-  /** Explicit stock status — overrides stock count when set */
   stock_statut?: 'en_stock' | 'rupture' | 'reappro';
-  /** ISO date — shown when stock_statut === 'reappro' */
   reappro_date?: string;
   note: number;
   avis_count: number;
   reviews: ProductReview[];
-  // Listing-type specific
   listing_type?: ListingType;
+  listing_id?: string;
   etat?: 'comme_neuf' | 'bon_etat' | 'etat_correct';
   prix_depart_cents?: number;
   enchere_actuelle_cents?: number;
+  increment_min_cents?: number;
   date_fin_enchere?: string;
   nombre_encherisseurs?: number;
   prix_jour_cents?: number;
   caution_cents?: number;
-  composition?: KitItem[];
   vendeur_nom?: string;
   vendeur_trust_score?: number;
-  // Occasion extended fields
-  listing_id?: string;
+  vendeur_nb_ventes?: number;
+  vendeur_delai_reponse_heures?: number;
   occasion_statut?: 'en_attente_moderation' | 'active' | 'vendue' | 'retiree' | 'litige';
   faire_offre_active?: boolean;
   historique_produit?: {
@@ -100,12 +87,6 @@ interface Product {
   produit_id?: string;
 }
 
-const ETAT_LABELS: Record<string, { label: string; cls: string }> = {
-  comme_neuf: { label: 'Comme neuf', cls: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/30' },
-  bon_etat: { label: 'Bon état', cls: 'text-blue-400 bg-blue-400/10 border-blue-400/30' },
-  etat_correct: { label: 'État correct', cls: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30' },
-};
-
 const TYPE_LABELS: Record<ListingType, string> = {
   neuf: 'Neuf',
   kit: 'Kit assemblé',
@@ -114,53 +95,91 @@ const TYPE_LABELS: Record<ListingType, string> = {
   location: 'Location',
 };
 
-// ── Mock product (fallback) ────────────────────────────────────────────────────
-const mockProduct: Product = {
-  id: '1',
-  slug: 'sac-a-dos-osprey-atmos-65',
-  nom: 'Osprey Atmos AG 65',
-  marque: 'Osprey',
-  reference: 'OSP-ATM65-M-GRN',
-  prix_cents: 34900,
-  poids_g: 2180,
-  poids_max_g: 4000,
-  categorie: 'Sacs à dos',
-  description: "Le sac à dos de randonnée ultime pour les longues distances. Le système Anti-Gravity d'Osprey offre un confort exceptionnel même chargé, grâce à son dos en filet tendu qui laisse circuler l'air.",
-  images: [
-    { url: 'https://img.rocket.new/generatedImages/rocket_gen_img_1de5a8766-1772222096368.png', alt: 'Sac à dos Osprey Atmos AG 65 vert forêt, vue de face avec bretelles ergonomiques' },
-    { url: 'https://img.rocket.new/generatedImages/rocket_gen_img_1850f09c6-176554483.png', alt: 'Détail du système de dos Anti-Gravity Osprey avec filet aéré' },
-    { url: 'https://images.unsplash.com/photo-1723825001909-1e45b76a9555', alt: 'Randonneur portant le sac Osprey en montagne avec vue panoramique' },
-  ],
-  specs: [
-    { label: 'Volume', value: '65 L' },
-    { label: 'Poids', value: '2 180 g' },
-    { label: 'Matière', value: 'Nylon 100D / 210D' },
-    { label: 'Dos', value: 'Anti-Gravity AG' },
-    { label: 'Ceinture', value: 'Réglable, amovible' },
-    { label: 'Accès', value: 'Haut + bas + côté' },
-    { label: 'Poche hydratation', value: '3 L compatible' },
-    { label: 'Taille', value: 'M/L (dos 46–51 cm)' },
-    { label: 'Garantie', value: 'À vie (All Mighty)' },
-    { label: 'Origine', value: 'Conçu aux USA' },
-  ],
-  tags: ['Randonnée', 'Trekking', 'Multi-jours', 'Montagne'],
-  stock: 8,
-  stock_statut: 'en_stock',
-  note: 4.8,
-  avis_count: 247,
-  reviews: [
-    { author: 'Marie L.', rating: 5, comment: 'Utilisé 3 semaines sur le GR20 avec 14 kg. Aucune douleur dorsale, le système AG est bluffant.', date: '2024-08-12', verified: true },
-    { author: 'Thomas R.', rating: 5, comment: "Confort incroyable même en longue journée. L'accès bas est très pratique.", date: '2024-07-03', verified: true },
-    { author: 'Sophie M.', rating: 4, comment: 'Excellent sac, léger pour sa capacité. Juste un peu cher mais la qualité justifie le prix.', date: '2024-06-18', verified: false },
-  ],
-  listing_type: 'neuf',
-};
-
 const relatedProducts = [
   { id: '2', nom: 'Tente MSR Hubba Hubba NX', prix_cents: 54900, poids_g: 1540, image: 'https://images.unsplash.com/photo-1722607731217-31b4aee4b2d4', alt: 'Tente légère MSR Hubba Hubba NX orange montée en bivouac montagne', reason: 'Complément idéal pour votre trek multi-jours' },
   { id: '3', nom: 'Sac de couchage Cumulus Panyam 450', prix_cents: 28900, poids_g: 890, image: 'https://img.rocket.new/generatedImages/rocket_gen_img_175618416-1783673001212.png', alt: 'Sac de couchage duvet Cumulus Panyam 450 bleu compact', reason: 'Souvent acheté ensemble' },
   { id: '4', nom: 'Bâtons Black Diamond Trail Ergo', prix_cents: 8900, poids_g: 510, image: 'https://img.rocket.new/generatedImages/rocket_gen_img_102d3d253-1767017230132.png', alt: 'Paire de bâtons de randonnée Black Diamond Trail Ergo en aluminium', reason: 'Accessoire recommandé pour la catégorie' },
 ];
+
+// ── Supabase fetch ─────────────────────────────────────────────────────────────
+async function fetchProductBySlug(slug: string): Promise<Product | null> {
+  const supabase = createClient();
+
+  // Fetch product + its listings
+  const { data: productData, error: productError } = await supabase
+    .from('products')
+    .select('*')
+    .eq('slug', slug)
+    .single();
+
+  if (productError || !productData) return null;
+
+  // Fetch all listings for this product
+  const { data: listingsData } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('produit_id', productData.id)
+    .order('created_at', { ascending: true });
+
+  const listing = listingsData?.[0] ?? null;
+
+  // Build specs from product fields
+  const specs: ProductSpec[] = [
+    { label: 'Catégorie', value: productData.category ?? 'N/A' },
+    { label: 'Marque', value: productData.brand ?? 'N/A' },
+    { label: 'Poids', value: productData.weight_g ? `${productData.weight_g} g` : 'N/A' },
+    { label: 'Prix', value: productData.price_eur ? `${Number(productData.price_eur).toFixed(2)} €` : 'N/A' },
+  ];
+
+  const product: Product = {
+    id: productData.id,
+    slug: productData.slug,
+    nom: productData.name,
+    marque: productData.brand ?? '',
+    reference: productData.slug?.toUpperCase().slice(0, 12) ?? '',
+    prix_cents: listing?.prix_cents ?? Math.round(Number(productData.price_eur ?? 0) * 100),
+    poids_g: productData.weight_g ?? 0,
+    poids_max_g: Math.max((productData.weight_g ?? 0) * 2, 5000),
+    categorie: productData.category ?? 'Autre',
+    description: productData.description ?? '',
+    images: productData.image
+      ? [{ url: productData.image, alt: productData.image_alt ?? productData.name }]
+      : [{ url: 'https://images.unsplash.com/photo-1723825001909-1e45b76a9555', alt: productData.name }],
+    specs,
+    tags: productData.activity ?? [],
+    stock: productData.stock ?? 10,
+    stock_statut: listing?.stock_statut ?? productData.stock_statut ?? 'en_stock',
+    reappro_date: listing?.reappro_date ?? productData.reappro_date,
+    note: 4.5,
+    avis_count: 0,
+    reviews: [],
+    listing_type: listing?.listing_type ?? 'neuf',
+    listing_id: listing?.id,
+    produit_id: productData.id,
+    // Occasion
+    etat: listing?.etat ?? 'bon_etat',
+    occasion_statut: (listing?.occasion_statut as Product['occasion_statut']) ?? 'active',
+    faire_offre_active: listing?.faire_offre_active ?? false,
+    historique_produit: listing?.historique_produit ?? undefined,
+    certificat_authenticite: listing?.certificat_authenticite ?? undefined,
+    photos_defauts: listing?.photos_defauts ?? undefined,
+    // Enchère
+    prix_depart_cents: listing?.prix_depart_cents ?? 0,
+    enchere_actuelle_cents: listing?.enchere_actuelle_cents ?? listing?.prix_depart_cents ?? 0,
+    increment_min_cents: listing?.increment_min_cents ?? 500,
+    date_fin_enchere: listing?.date_fin_enchere ?? new Date(Date.now() + 7 * 86400000).toISOString(),
+    nombre_encherisseurs: listing?.nombre_encherisseurs ?? 0,
+    // Location
+    prix_jour_cents: listing?.prix_jour_cents ?? 0,
+    caution_cents: listing?.caution_cents ?? 0,
+    // Vendeur
+    vendeur_trust_score: listing?.vendeur_trust_score ?? 0,
+    vendeur_nb_ventes: listing?.vendeur_nb_ventes ?? 0,
+    vendeur_delai_reponse_heures: listing?.vendeur_delai_reponse_heures ?? undefined,
+  };
+
+  return product;
+}
 
 // ── Countdown hook ─────────────────────────────────────────────────────────────
 function useCountdown(endDate?: string) {
@@ -186,146 +205,7 @@ function useCountdown(endDate?: string) {
   return timeLeft;
 }
 
-// ── Action Zone Components ─────────────────────────────────────────────────────
-function ActionZoneNeuf({ product, onAddToCart, added }: { product: Product; onAddToCart: () => void; added: boolean }) {
-  const [quantity, setQuantity] = useState(1);
-  const formatPrice = (c: number) => (c / 100).toFixed(2).replace('.', ',') + ' €';
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-end justify-between">
-        <div>
-          <p className="text-3xl font-display font-700 text-foreground" style={{ fontFamily: 'var(--font-display)' }}>{formatPrice(product.prix_cents)}</p>
-          <p className="text-sm text-muted-foreground mt-0.5">TVA incluse · Livraison gratuite dès 50 €</p>
-        </div>
-        <div className={`flex items-center gap-1.5 text-sm font-medium ${product.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
-          <span className={`w-2 h-2 rounded-full ${product.stock > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
-          {product.stock > 0 ? `${product.stock} en stock` : 'Rupture de stock'}
-        </div>
-      </div>
-      <div className="flex gap-3">
-        <div className="flex items-center border border-border rounded-full overflow-hidden">
-          <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-11 h-11 flex items-center justify-center hover:bg-muted transition-colors" aria-label="Diminuer">
-            <Icon name="MinusIcon" size={16} variant="outline" />
-          </button>
-          <span className="w-10 text-center font-mono text-sm font-semibold" style={{ fontFamily: 'var(--font-mono)' }}>{quantity}</span>
-          <button onClick={() => setQuantity(Math.min(product.stock, quantity + 1))} className="w-11 h-11 flex items-center justify-center hover:bg-muted transition-colors" aria-label="Augmenter">
-            <Icon name="PlusIcon" size={16} variant="outline" />
-          </button>
-        </div>
-        <button
-          onClick={onAddToCart}
-          disabled={product.stock === 0}
-          className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-full font-semibold text-sm transition-all min-h-[44px] ${added ? 'bg-green-600 text-white' : 'bg-primary hover:bg-primary/90 text-white'} disabled:opacity-50 disabled:cursor-not-allowed`}
-        >
-          <Icon name={added ? 'CheckIcon' : 'ShoppingBagIcon'} size={18} variant="outline" />
-          {added ? 'Ajouté au panier !' : 'Ajouter au panier'}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function ActionZoneOccasion({ product }: { product: Product }) {
-  const formatPrice = (c: number) => (c / 100).toFixed(2).replace('.', ',') + ' €';
-  const etatInfo = ETAT_LABELS[product.etat ?? 'bon_etat'];
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <span className={`px-3 py-1 rounded-full text-xs font-600 border ${etatInfo.cls}`}>{etatInfo.label}</span>
-        <span className="text-xs text-muted-foreground font-mono" style={{ fontFamily: 'var(--font-mono)' }}>Certifié authentique</span>
-      </div>
-      <div className="topo-card p-4 space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Prix occasion</span>
-          <span className="text-2xl font-display font-700 text-foreground" style={{ fontFamily: 'var(--font-display)' }}>{formatPrice(product.prix_cents)}</span>
-        </div>
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Prix neuf estimé</span>
-          <span className="line-through font-mono" style={{ fontFamily: 'var(--font-mono)' }}>{formatPrice(Math.round(product.prix_cents * 1.6))}</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
-          <Icon name="ArrowTrendingDownIcon" size={12} variant="outline" />
-          Économie de {Math.round((1 - 1 / 1.6) * 100)}% vs neuf
-        </div>
-      </div>
-      {product.vendeur_nom && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Icon name="UserCircleIcon" size={14} variant="outline" />
-          Vendu par <span className="text-foreground font-medium">{product.vendeur_nom}</span>
-          {product.vendeur_trust_score && (
-            <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-mono text-[10px]" style={{ fontFamily: 'var(--font-mono)' }}>
-              Trust {product.vendeur_trust_score}
-            </span>
-          )}
-        </div>
-      )}
-      <button className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-full bg-primary hover:bg-primary/90 text-white font-semibold text-sm transition-all min-h-[44px]">
-        <Icon name="ShoppingBagIcon" size={18} variant="outline" />
-        Acheter cet article d&apos;occasion
-      </button>
-      <button className="w-full flex items-center justify-center gap-2 py-2.5 px-6 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 text-sm transition-all">
-        <Icon name="ShieldCheckIcon" size={14} variant="outline" />
-        Voir le certificat d&apos;authenticité
-      </button>
-    </div>
-  );
-}
-
-function ActionZoneEnchere({ product }: { product: Product }) {
-  const [offerAmount, setOfferAmount] = useState('');
-  const countdown = useCountdown(product.date_fin_enchere);
-  const formatPrice = (c: number) => (c / 100).toFixed(2).replace('.', ',') + ' €';
-  const currentBid = product.enchere_actuelle_cents ?? product.prix_depart_cents ?? 0;
-  const minNext = currentBid + (product.prix_depart_cents ? Math.round(product.prix_depart_cents * 0.05) : 500);
-
-  return (
-    <div className="space-y-4">
-      <div className="topo-card p-4 border-orange-500/20 border">
-        <p className="text-xs font-mono text-orange-400 uppercase tracking-widest mb-3" style={{ fontFamily: 'var(--font-mono)' }}>Enchère en cours</p>
-        <div className="flex items-end justify-between mb-3">
-          <div>
-            <p className="text-xs text-muted-foreground mb-0.5">Enchère actuelle</p>
-            <p className="text-3xl font-display font-700 text-foreground" style={{ fontFamily: 'var(--font-display)' }}>{formatPrice(currentBid)}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground mb-0.5">{product.nombre_encherisseurs ?? 0} enchérisseurs</p>
-            <p className="text-xs font-mono text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>Départ : {formatPrice(product.prix_depart_cents ?? 0)}</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-4 gap-2 text-center">
-          {[
-            { val: countdown.days, label: 'j' },
-            { val: countdown.hours, label: 'h' },
-            { val: countdown.minutes, label: 'min' },
-            { val: countdown.seconds, label: 's' },
-          ].map(({ val, label }) => (
-            <div key={label} className="bg-background rounded-lg py-2">
-              <p className="font-mono text-xl font-700 text-orange-400" style={{ fontFamily: 'var(--font-mono)' }}>{String(val).padStart(2, '0')}</p>
-              <p className="text-[10px] text-muted-foreground font-mono" style={{ fontFamily: 'var(--font-mono)' }}>{label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="flex gap-2">
-        <input
-          type="number"
-          value={offerAmount}
-          onChange={(e) => setOfferAmount(e.target.value)}
-          placeholder={`Min. ${(minNext / 100).toFixed(0)} €`}
-          className="flex-1 px-4 py-3 rounded-xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary"
-        />
-        <button className="flex items-center gap-2 px-5 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm transition-all">
-          <Icon name="BoltIcon" size={16} variant="outline" />
-          Enchérir
-        </button>
-      </div>
-      <p className="text-xs text-muted-foreground text-center">Incrément minimum : {formatPrice(minNext - currentBid)}</p>
-    </div>
-  );
-}
-
+// ── Location Action Zone ───────────────────────────────────────────────────────
 function ActionZoneLocation({ product }: { product: Product }) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -380,27 +260,6 @@ function ActionZoneLocation({ product }: { product: Product }) {
   );
 }
 
-function ActionZoneKit({ product }: { product: Product }) {
-  const formatPrice = (c: number) => (c / 100).toFixed(2).replace('.', ',') + ' €';
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-end justify-between">
-        <div>
-          <p className="text-3xl font-display font-700 text-foreground" style={{ fontFamily: 'var(--font-display)' }}>{formatPrice(product.prix_cents)}</p>
-          <p className="text-sm text-muted-foreground mt-0.5">Kit complet · Livraison gratuite</p>
-        </div>
-        <span className="px-3 py-1 rounded-full text-xs font-600 bg-blue-500/15 text-blue-400 border border-blue-500/30">Kit assemblé</span>
-      </div>
-      <button className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-full bg-primary hover:bg-primary/90 text-white font-semibold text-sm transition-all min-h-[44px]">
-        <Icon name="ShoppingBagIcon" size={18} variant="outline" />
-        Ajouter le kit au panier
-      </button>
-      <p className="text-xs text-muted-foreground text-center">Tous les articles du kit expédiés ensemble</p>
-    </div>
-  );
-}
-
 // ── AI Panels ──────────────────────────────────────────────────────────────────
 function AIDescriptionPanel({ product }: { product: Product }) {
   const [open, setOpen] = useState(false);
@@ -418,7 +277,7 @@ function AIDescriptionPanel({ product }: { product: Product }) {
         body: JSON.stringify({
           messages: [{
             role: 'user',
-            content: `Génère une description enrichie et engageante pour ce produit outdoor en français. Ton cohérent, professionnel, orienté terrain. 3-4 phrases max.\n\nProduit: ${product.nom}\nMarque: ${product.marque}\nCatégorie: ${product.categorie}\nSpécifications: ${product.specs.map(s => `${s.label}: ${s.value}`).join(', ')}\nDescription brute: ${product.description}`,
+            content: `Génère une description enrichie et engageante pour ce produit outdoor en français. Ton cohérent, professionnel, orienté terrain. 3-4 phrases max.\n\nProduit: ${product.nom}\nMarque: ${product.marque}\nCatégorie: ${product.categorie}\nDescription brute: ${product.description}`,
           }],
           model: 'gemini-2.0-flash',
         }),
@@ -457,130 +316,42 @@ function AIDescriptionPanel({ product }: { product: Product }) {
   );
 }
 
-function AIComparatorPanel({ product }: { product: Product }) {
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+// ── Shared: Product Gallery + Info Header ──────────────────────────────────────
+function ProductGallery({ product, listingType }: { product: Product; listingType: ListingType }) {
+  const [activeImage, setActiveImage] = useState(0);
 
-  const generate = useCallback(async () => {
-    if (result) { setOpen(true); return; }
-    setOpen(true);
-    setLoading(true);
-    try {
-      const res = await fetch('/api/ai/chat-completion', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{
-            role: 'user',
-            content: `Génère un tableau de comparaison entre ce produit et 2-3 alternatives comparables (même catégorie, gamme de prix proche). Format: lignes avec critères clés (poids, prix, confort, garantie). Inclus un verdict final en 1 phrase. En français.\n\nProduit: ${product.nom} (${product.marque})\nCatégorie: ${product.categorie}\nPrix: ${(product.prix_cents / 100).toFixed(0)}€\nSpecs: ${product.specs.slice(0, 5).map(s => `${s.label}: ${s.value}`).join(', ')}`,
-          }],
-          model: 'gemini-2.0-flash',
-        }),
-      });
-      const data = await res.json();
-      setResult(data.content ?? data.message ?? 'Comparaison non disponible.');
-    } catch {
-      setResult('Comparateur IA temporairement indisponible.');
-    } finally {
-      setLoading(false);
-    }
-  }, [product, result]);
+  const badgeColors: Record<ListingType, string> = {
+    neuf: 'bg-emerald-500/80 text-white',
+    kit: 'bg-blue-500/80 text-white',
+    occasion: 'bg-yellow-500/80 text-white',
+    enchere: 'bg-orange-500/80 text-white',
+    location: 'bg-purple-500/80 text-white',
+  };
 
   return (
-    <div className="topo-card p-5 border-info/20 border">
-      <button onClick={generate} className="w-full flex items-center justify-between gap-3 text-left">
-        <div className="flex items-center gap-2">
-          <Icon name="ArrowsRightLeftIcon" size={16} variant="outline" className="text-info flex-shrink-0" />
-          <span className="font-display font-700 text-sm text-foreground" style={{ fontFamily: 'var(--font-display)' }}>Comparateur intelligent IA</span>
+    <div className="space-y-4">
+      <div className="aspect-square rounded-2xl overflow-hidden bg-card border border-border relative">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={product.images[activeImage]?.url} alt={product.images[activeImage]?.alt} className="w-full h-full object-cover" />
+        <div className="absolute top-4 left-4">
+          <span className={`px-3 py-1 rounded-full text-xs font-600 backdrop-blur-sm ${badgeColors[listingType]}`}>
+            {TYPE_LABELS[listingType]}
+          </span>
         </div>
-        <Icon name={open ? 'ChevronUpIcon' : 'ChevronDownIcon'} size={14} variant="outline" className="text-muted-foreground flex-shrink-0" />
-      </button>
-      {open && (
-        <div className="mt-4 pt-4 border-t border-border">
-          {loading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="flex gap-1">{[0, 1, 2].map(i => <span key={i} className="w-1.5 h-1.5 rounded-full bg-info animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}</div>
-              Analyse des alternatives en cours…
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {result?.split('\n').map((line, i) => (
-                <p key={i} className={`text-sm ${line.toLowerCase().includes('verdict') ? 'font-semibold text-foreground mt-3 pt-3 border-t border-border' : 'text-muted-foreground'}`}>
-                  {line.replace(/\*\*/g, '')}
-                </p>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function AIFAQPanel({ product }: { product: Product }) {
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [faqs, setFaqs] = useState<{ q: string; a: string }[]>([]);
-  const [openIdx, setOpenIdx] = useState<number | null>(null);
-
-  const generate = useCallback(async () => {
-    if (faqs.length) { setOpen(true); return; }
-    setOpen(true);
-    setLoading(true);
-    try {
-      const res = await fetch('/api/ai/chat-completion', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{
-            role: 'user',
-            content: `Génère 4 questions-réponses FAQ pertinentes pour ce produit outdoor, basées sur ses specs réelles et les avis clients. Questions concrètes, réponses courtes (2-3 phrases). Format JSON: [{"q":"...","a":"..."}]. En français.\n\nProduit: ${product.nom}\nSpecs: ${product.specs.map(s => `${s.label}: ${s.value}`).join(', ')}\nAvis: ${product.reviews.map(r => r.comment).join(' | ')}`,
-          }],
-          model: 'gemini-2.0-flash',
-        }),
-      });
-      const data = await res.json();
-      const text = data.content ?? data.message ?? '[]';
-      const match = text.match(/\[[\s\S]*\]/);
-      if (match) setFaqs(JSON.parse(match[0]));
-      else setFaqs([{ q: 'FAQ temporairement indisponible', a: 'Veuillez réessayer.' }]);
-    } catch {
-      setFaqs([{ q: 'FAQ temporairement indisponible', a: 'Veuillez réessayer.' }]);
-    } finally {
-      setLoading(false);
-    }
-  }, [product, faqs]);
-
-  return (
-    <div className="topo-card p-5 border-info/20 border">
-      <button onClick={generate} className="w-full flex items-center justify-between gap-3 text-left">
-        <div className="flex items-center gap-2">
-          <Icon name="QuestionMarkCircleIcon" size={16} variant="outline" className="text-info flex-shrink-0" />
-          <span className="font-display font-700 text-sm text-foreground" style={{ fontFamily: 'var(--font-display)' }}>FAQ générée par IA</span>
-        </div>
-        <Icon name={open ? 'ChevronUpIcon' : 'ChevronDownIcon'} size={14} variant="outline" className="text-muted-foreground flex-shrink-0" />
-      </button>
-      {open && (
-        <div className="mt-4 pt-4 border-t border-border space-y-2">
-          {loading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="flex gap-1">{[0, 1, 2].map(i => <span key={i} className="w-1.5 h-1.5 rounded-full bg-info animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}</div>
-              Génération des questions…
-            </div>
-          ) : faqs.map((faq, i) => (
-            <div key={i} className="border border-border rounded-xl overflow-hidden">
-              <button
-                onClick={() => setOpenIdx(openIdx === i ? null : i)}
-                className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted/50 transition-colors"
-              >
-                <span className="text-sm font-medium text-foreground">{faq.q}</span>
-                <Icon name={openIdx === i ? 'ChevronUpIcon' : 'ChevronDownIcon'} size={12} variant="outline" className="text-muted-foreground flex-shrink-0" />
-              </button>
-              {openIdx === i && (
-                <div className="px-4 pb-3 text-sm text-muted-foreground leading-relaxed border-t border-border pt-3">{faq.a}</div>
-              )}
-            </div>
+      </div>
+      {product.images.length > 1 && (
+        <div className="flex gap-3">
+          {product.images.map((img, i) => (
+            <button
+              key={i}
+              onClick={() => setActiveImage(i)}
+              className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${activeImage === i ? 'border-primary' : 'border-border hover:border-accent'}`}
+              aria-label={`Voir image ${i + 1}`}
+              aria-pressed={activeImage === i}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={img.url} alt="" className="w-full h-full object-cover" aria-hidden="true" />
+            </button>
           ))}
         </div>
       )}
@@ -588,131 +359,139 @@ function AIFAQPanel({ product }: { product: Product }) {
   );
 }
 
-function AIReviewSummaryPanel({ product }: { product: Product }) {
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ pros: string[]; cons: string[]; verdict: string } | null>(null);
-
-  const generate = useCallback(async () => {
-    if (result) { setOpen(true); return; }
-    setOpen(true);
-    setLoading(true);
-    try {
-      const res = await fetch('/api/ai/chat-completion', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{
-            role: 'user',
-            content: `Analyse ces avis clients et génère un résumé structuré. Format JSON: {"pros":["...","..."],"cons":["..."],"verdict":"..."}. 2-3 points forts, 1-2 points faibles, verdict 1 phrase. En français.\n\nAvis: ${product.reviews.map(r => `${r.rating}/5 - ${r.comment}`).join('\n')}`,
-          }],
-          model: 'gemini-2.0-flash',
-        }),
-      });
-      const data = await res.json();
-      const text = data.content ?? data.message ?? '{}';
-      const match = text.match(/\{[\s\S]*\}/);
-      if (match) setResult(JSON.parse(match[0]));
-      else setResult({ pros: ['Qualité reconnue'], cons: ['Prix élevé'], verdict: 'Produit recommandé.' });
-    } catch {
-      setResult({ pros: ['Qualité reconnue'], cons: ['Prix élevé'], verdict: 'Résumé temporairement indisponible.' });
-    } finally {
-      setLoading(false);
-    }
-  }, [product, result]);
-
+function ProductInfoHeader({ product }: { product: Product }) {
   return (
-    <div className="topo-card p-5 border-info/20 border">
-      <button onClick={generate} className="w-full flex items-center justify-between gap-3 text-left">
-        <div className="flex items-center gap-2">
-          <Icon name="ChatBubbleLeftRightIcon" size={16} variant="outline" className="text-info flex-shrink-0" />
-          <span className="font-display font-700 text-sm text-foreground" style={{ fontFamily: 'var(--font-display)' }}>Résumé IA des avis clients</span>
-        </div>
-        <Icon name={open ? 'ChevronUpIcon' : 'ChevronDownIcon'} size={14} variant="outline" className="text-muted-foreground flex-shrink-0" />
-      </button>
-      {open && (
-        <div className="mt-4 pt-4 border-t border-border">
-          {loading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="flex gap-1">{[0, 1, 2].map(i => <span key={i} className="w-1.5 h-1.5 rounded-full bg-info animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}</div>
-              Analyse des avis…
-            </div>
-          ) : result && (
-            <div className="space-y-3">
-              <div>
-                <p className="text-xs font-mono text-emerald-400 uppercase tracking-widest mb-2" style={{ fontFamily: 'var(--font-mono)' }}>Points forts</p>
-                {result.pros.map((p, i) => (
-                  <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground mb-1">
-                    <Icon name="CheckCircleIcon" size={14} variant="outline" className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                    {p}
-                  </div>
-                ))}
-              </div>
-              {result.cons.length > 0 && (
-                <div>
-                  <p className="text-xs font-mono text-red-400 uppercase tracking-widest mb-2" style={{ fontFamily: 'var(--font-mono)' }}>Points faibles</p>
-                  {result.cons.map((c, i) => (
-                    <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground mb-1">
-                      <Icon name="ExclamationCircleIcon" size={14} variant="outline" className="text-red-400 flex-shrink-0 mt-0.5" />
-                      {c}
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="pt-2 border-t border-border">
-                <p className="text-sm font-medium text-foreground">{result.verdict}</p>
-              </div>
-            </div>
-          )}
+    <div>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-xs font-mono text-info uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>{product.marque}</span>
+        <span className="text-muted-foreground" aria-hidden="true">·</span>
+        <span className="text-xs font-mono text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{product.reference}</span>
+      </div>
+      <h1 className="font-display font-700 text-3xl text-foreground mb-3" style={{ fontFamily: 'var(--font-display)' }}>{product.nom}</h1>
+      {product.avis_count > 0 && (
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1" aria-label={`Note : ${product.note} sur 5`}>
+            {[1, 2, 3, 4, 5].map((s) => (
+              <svg key={s} className={`w-4 h-4 ${s <= Math.round(product.note) ? 'text-yellow-400' : 'text-border'}`} fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            ))}
+          </div>
+          <span className="text-sm font-mono text-info" style={{ fontFamily: 'var(--font-mono)' }}>{product.note} ({product.avis_count} avis)</span>
         </div>
       )}
     </div>
   );
 }
 
-// ── Main Component ─────────────────────────────────────────────────────────────
-export default function ProductDetailClient() {
-  const product = mockProduct;
-  const [activeImage, setActiveImage] = useState(0);
-  const [addedToCart, setAddedToCart] = useState(false);
-  const [activeTab, setActiveTab] = useState<'specs' | 'reviews' | 'composition'>('specs');
-
-  const listingType: ListingType = product.listing_type ?? 'neuf';
-
-  const formatPrice = (cents: number) => (cents / 100).toFixed(2).replace('.', ',') + ' €';
-
-  const handleAddToCart = useCallback(() => {
-    const existing = getCart();
-    const idx = existing.findIndex((i) => i.id === product.id);
-    if (idx >= 0) existing[idx].quantity += 1;
-    else existing.push({
-      id: product.id,
-      slug: product.slug,
-      name: product.nom,
-      brand: product.marque,
-      category: product.categorie,
-      priceEur: product.prix_cents / 100,
-      weightG: product.poids_g,
-      quantity: 1,
-      image: product.images[0]?.url ?? '',
-      imageAlt: product.images[0]?.alt ?? '',
-    });
-    saveCart(existing);
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 2500);
-  }, [product]);
-
-  // Show composition tab for kits
-  useEffect(() => {
-    if (listingType === 'kit') setActiveTab('composition');
-  }, [listingType]);
-
+function ProductWeightCard({ product }: { product: Product }) {
   const weightPercent = Math.round((product.poids_g / product.poids_max_g) * 100);
+  return (
+    <div className="topo-card p-4">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Gabarit de poids</span>
+        <span className="font-mono text-lg font-semibold text-info" style={{ fontFamily: 'var(--font-mono)' }}>{product.poids_g} g</span>
+      </div>
+      <WeightGauge weightG={product.poids_g} maxG={product.poids_max_g} />
+      <div className="flex justify-between mt-1.5">
+        <span className="text-xs font-mono text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>0 g</span>
+        <span className="text-xs font-mono text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{product.poids_max_g} g</span>
+      </div>
+      <p className="text-xs text-muted-foreground mt-2">{weightPercent}% du poids de référence · {product.categorie}</p>
+    </div>
+  );
+}
+
+function ProductTags({ tags }: { tags: string[] }) {
+  if (!tags?.length) return null;
+  return (
+    <div className="flex flex-wrap gap-2" aria-label="Catégories">
+      {tags.map((tag) => (
+        <span key={tag} className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">{tag}</span>
+      ))}
+    </div>
+  );
+}
+
+function ProductSpecsTab({ product }: { product: Product }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" role="tabpanel" aria-label="Caractéristiques">
+      {product.specs.map((spec) => (
+        <div key={spec.label} className="flex items-center justify-between py-3 px-4 rounded-xl bg-card border border-border">
+          <span className="text-sm text-muted-foreground">{spec.label}</span>
+          <span className="font-mono text-sm font-semibold text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{spec.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ProductReviewsTab({ product }: { product: Product }) {
+  if (!product.reviews?.length) {
+    return <p className="text-sm text-muted-foreground">Aucun avis pour ce produit.</p>;
+  }
+  return (
+    <div className="space-y-4" role="tabpanel" aria-label="Avis clients">
+      {product.reviews.map((review, i) => (
+        <div key={i} className="topo-card p-5">
+          <div className="flex items-start justify-between mb-2">
+            <div>
+              <span className="font-semibold text-foreground text-sm">{review.author}</span>
+              {review.verified && <span className="ml-2 text-xs text-green-600 font-medium">✓ Achat vérifié</span>}
+            </div>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <svg key={s} className={`w-3.5 h-3.5 ${s <= review.rating ? 'text-yellow-400' : 'text-border'}`} fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              ))}
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
+          <p className="text-xs font-mono text-muted-foreground mt-2" style={{ fontFamily: 'var(--font-mono)' }}>{review.date}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RelatedProducts({ formatPrice }: { formatPrice: (c: number) => string }) {
+  return (
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-16">
+      <h2 className="font-display font-700 text-2xl text-foreground mb-8" style={{ fontFamily: 'var(--font-display)' }}>Complétez votre kit</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        {relatedProducts.map((p) => (
+          <Link key={p.id} href={`/produit/${p.id}`} className="topo-card group overflow-hidden block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl">
+            <div className="aspect-[4/3] overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p.image} alt={p.alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            </div>
+            <div className="p-4">
+              <h3 className="font-semibold text-foreground text-sm mb-2 group-hover:text-primary transition-colors">{p.nom}</h3>
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-mono text-sm font-semibold text-info" style={{ fontFamily: 'var(--font-mono)' }}>{p.poids_g} g</span>
+                <span className="font-display font-700 text-foreground" style={{ fontFamily: 'var(--font-display)' }}>{formatPrice(p.prix_cents)}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-mono" style={{ fontFamily: 'var(--font-mono)' }}>
+                <Icon name="SparklesIcon" size={10} variant="outline" className="text-info flex-shrink-0" />
+                {p.reason}
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ── TEMPLATE: NEUF ─────────────────────────────────────────────────────────────
+function TemplateNeuf({ product }: { product: Product }) {
+  const formatPrice = (cents: number) => (cents / 100).toFixed(2).replace('.', ',') + ' €';
+  const [activeTab, setActiveTab] = useState<'specs' | 'reviews'>('specs');
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-
       <main id="main-content" className="pt-20">
         {/* Breadcrumb */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -721,322 +500,484 @@ export default function ProductDetailClient() {
             <Icon name="ChevronRightIcon" size={14} variant="outline" aria-hidden="true" />
             <Link href="/shop" className="hover:text-foreground transition-colors">Shop</Link>
             <Icon name="ChevronRightIcon" size={14} variant="outline" aria-hidden="true" />
-            {listingType !== 'neuf' && (
-              <>
-                <Link href={`/shop?type=${listingType}`} className="hover:text-foreground transition-colors capitalize">
-                  {TYPE_LABELS[listingType]}
-                </Link>
-                <Icon name="ChevronRightIcon" size={14} variant="outline" aria-hidden="true" />
-              </>
-            )}
             <span className="text-foreground font-medium truncate max-w-[200px]" aria-current="page">{product.nom}</span>
           </nav>
         </div>
 
-        {/* Product Main */}
+        {/* Hero banner — Neuf accent */}
+        <div className="bg-gradient-to-r from-emerald-900/30 to-transparent border-b border-emerald-500/10 mb-2">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center gap-2">
+            <Icon name="SparklesIcon" size={14} variant="outline" className="text-emerald-400" />
+            <span className="text-xs text-emerald-400 font-mono uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>Produit neuf · Garantie constructeur · Livraison rapide</span>
+          </div>
+        </div>
+
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
-
-            {/* Images Gallery */}
-            <div className="space-y-4">
-              <div className="aspect-square rounded-2xl overflow-hidden bg-card border border-border relative">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={product.images[activeImage]?.url} alt={product.images[activeImage]?.alt} className="w-full h-full object-cover" />
-                {/* Type badge overlay */}
-                {listingType !== 'neuf' && (
-                  <div className="absolute top-4 left-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-600 backdrop-blur-sm ${
-                      listingType === 'kit' ? 'bg-blue-500/80 text-white' :
-                      listingType === 'occasion' ? 'bg-yellow-500/80 text-white' :
-                      listingType === 'enchere'? 'bg-orange-500/80 text-white' : 'bg-purple-500/80 text-white'
-                    }`}>
-                      {TYPE_LABELS[listingType]}
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-3">
-                {product.images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveImage(i)}
-                    className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${activeImage === i ? 'border-primary' : 'border-border hover:border-accent'}`}
-                    aria-label={`Voir image ${i + 1}`}
-                    aria-pressed={activeImage === i}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={img.url} alt="" className="w-full h-full object-cover" aria-hidden="true" />
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Product Info */}
+            <ProductGallery product={product} listingType="neuf" />
             <div className="space-y-6">
-              {/* Header */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs font-mono text-info uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>{product.marque}</span>
-                  <span className="text-muted-foreground" aria-hidden="true">·</span>
-                  <span className="text-xs font-mono text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{product.reference}</span>
-                </div>
-                <h1 className="font-display font-700 text-3xl text-foreground mb-3" style={{ fontFamily: 'var(--font-display)' }}>{product.nom}</h1>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1" aria-label={`Note : ${product.note} sur 5`}>
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <svg key={s} className={`w-4 h-4 ${s <= Math.round(product.note) ? 'text-yellow-400' : 'text-border'}`} fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                  </div>
-                  <span className="text-sm font-mono text-info" style={{ fontFamily: 'var(--font-mono)' }}>{product.note} ({product.avis_count} avis)</span>
-                </div>
-              </div>
-
-              {/* Weight Gauge — common to all types */}
-              <div className="topo-card p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Gabarit de poids</span>
-                  <span className="font-mono text-lg font-semibold text-info" style={{ fontFamily: 'var(--font-mono)' }}>{product.poids_g} g</span>
-                </div>
-                <WeightGauge weightG={product.poids_g} maxG={product.poids_max_g} />
-                <div className="flex justify-between mt-1.5">
-                  <span className="text-xs font-mono text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>0 g</span>
-                  <span className="text-xs font-mono text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{product.poids_max_g} g</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">{weightPercent}% du poids de référence · {product.categorie}</p>
-              </div>
-
-              {/* Tags */}
-              <div className="flex flex-wrap gap-2" aria-label="Catégories">
-                {product.tags.map((tag) => (
-                  <span key={tag} className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">{tag}</span>
-                ))}
-              </div>
-
-              {/* ── CONDITIONAL ACTION ZONE ── */}
-              {listingType === 'neuf' && (
-                <NewProductZone
-                  product={{
-                    id: product.id,
-                    slug: product.slug,
-                    nom: product.nom,
-                    marque: product.marque,
-                    reference: product.reference,
-                    categorie: product.categorie,
-                    prix_cents: product.prix_cents,
-                    poids_g: product.poids_g,
-                    stock: product.stock,
-                    stock_statut: product.stock_statut,
-                    reappro_date: product.reappro_date,
-                    description: product.description,
-                    specs: product.specs,
-                    tags: product.tags,
-                    note: product.note,
-                    avis_count: product.avis_count,
-                    reviews: product.reviews,
-                    images: product.images,
-                  }}
-                />
-              )}
-              {listingType === 'kit' && <ActionZoneKit product={product} />}
-              {listingType === 'occasion' && (
-                <OccasionProductZone
-                  product={{
-                    id: product.id,
-                    listing_id: product.listing_id ?? product.id,
-                    slug: product.slug,
-                    nom: product.nom,
-                    marque: product.marque,
-                    reference: product.reference,
-                    categorie: product.categorie,
-                    prix_cents: product.prix_cents,
-                    poids_g: product.poids_g,
-                    description: product.description,
-                    specs: product.specs,
-                    tags: product.tags,
-                    note: product.note,
-                    avis_count: product.avis_count,
-                    reviews: product.reviews,
-                    images: product.images,
-                    etat: product.etat ?? 'bon_etat',
-                    statut: product.occasion_statut ?? 'active',
-                    faire_offre_active: product.faire_offre_active ?? false,
-                    historique: product.historique_produit,
-                    certificat: product.certificat_authenticite,
-                    photos_defauts: product.photos_defauts,
-                    vendeur: product.vendeur,
-                    produit_id: product.produit_id,
-                  }}
-                />
-              )}
-              {listingType === 'enchere' && (
-                <AuctionZone
-                  listing={{
-                    id: product.id,
-                    produit_id: product.id,
-                    prix_depart_cents: product.prix_depart_cents ?? 0,
-                    enchere_actuelle_cents: product.enchere_actuelle_cents ?? product.prix_depart_cents ?? 0,
-                    increment_min_cents: product.prix_depart_cents ? Math.round(product.prix_depart_cents * 0.05) : 500,
-                    date_fin_enchere: product.date_fin_enchere ?? new Date(Date.now() + 7 * 86400000).toISOString(),
-                    nombre_encherisseurs: product.nombre_encherisseurs ?? 0,
-                    statut: 'actif',
-                    vendeur_id: undefined,
-                  }}
-                />
-              )}
-              {listingType === 'location' && <ActionZoneLocation product={product} />}
+              <ProductInfoHeader product={product} />
+              <ProductWeightCard product={product} />
+              <ProductTags tags={product.tags} />
+              <NewProductZone
+                product={{
+                  id: product.id,
+                  slug: product.slug,
+                  nom: product.nom,
+                  marque: product.marque,
+                  reference: product.reference,
+                  categorie: product.categorie,
+                  prix_cents: product.prix_cents,
+                  poids_g: product.poids_g,
+                  stock: product.stock,
+                  stock_statut: product.stock_statut,
+                  reappro_date: product.reappro_date,
+                  description: product.description,
+                  specs: product.specs,
+                  tags: product.tags,
+                  note: product.note,
+                  avis_count: product.avis_count,
+                  reviews: product.reviews,
+                  images: product.images,
+                }}
+              />
             </div>
           </div>
         </section>
-
-        {/* ── AI PANELS (non-neuf types only — neuf has its own AI panels in NewProductZone) ── */}
-        {listingType !== 'neuf' && (
-          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-            <div className="mb-4 flex items-center gap-2">
-              <Icon name="SparklesIcon" size={16} variant="outline" className="text-info" />
-              <h2 className="font-display font-700 text-lg text-foreground" style={{ fontFamily: 'var(--font-display)' }}>Intelligence artificielle</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <AIDescriptionPanel product={product} />
-              <AIComparatorPanel product={product} />
-              <AIFAQPanel product={product} />
-              <AIReviewSummaryPanel product={product} />
-            </div>
-          </section>
-        )}
 
         <TopoSeparator />
 
-        {/* Tabs: Specs / Reviews / Composition */}
+        {/* Tabs */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="flex gap-1 mb-8 border-b border-border" role="tablist" aria-label="Informations produit">
-            {listingType === 'kit' && (
-              <button
-                role="tab"
-                aria-selected={activeTab === 'composition'}
-                onClick={() => setActiveTab('composition')}
-                className={`px-6 py-3 text-sm font-semibold transition-all border-b-2 -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${activeTab === 'composition' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
-              >
-                Composition du kit
+          <div className="flex gap-1 mb-8 border-b border-border" role="tablist">
+            {(['specs', 'reviews'] as const).map((tab) => (
+              <button key={tab} role="tab" aria-selected={activeTab === tab} onClick={() => setActiveTab(tab)}
+                className={`px-6 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${activeTab === tab ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
+                {tab === 'specs' ? 'Caractéristiques' : `Avis (${product.avis_count})`}
               </button>
-            )}
-            <button
-              role="tab"
-              aria-selected={activeTab === 'specs'}
-              onClick={() => setActiveTab('specs')}
-              className={`px-6 py-3 text-sm font-semibold transition-all border-b-2 -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${activeTab === 'specs' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
-            >
-              Caractéristiques
-            </button>
-            <button
-              role="tab"
-              aria-selected={activeTab === 'reviews'}
-              onClick={() => setActiveTab('reviews')}
-              className={`px-6 py-3 text-sm font-semibold transition-all border-b-2 -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${activeTab === 'reviews' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
-            >
-              Avis ({product.avis_count})
-            </button>
+            ))}
           </div>
-
-          {/* Composition tab — kit only */}
-          {activeTab === 'composition' && listingType === 'kit' && (
-            <div role="tabpanel" aria-label="Composition du kit">
-              {(product.composition ?? []).length === 0 ? (
-                <p className="text-sm text-muted-foreground">Composition non disponible.</p>
-              ) : (
-                <div className="space-y-3">
-                  {(product.composition ?? []).map((item) => (
-                    <Link key={item.id} href={`/produit/${item.slug}`} className="flex items-center gap-4 p-4 topo-card hover:border-primary/30 transition-colors group">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={item.image} alt={item.alt} className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-mono text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>{item.categorie}</p>
-                        <p className="font-display font-700 text-sm text-foreground group-hover:text-primary transition-colors" style={{ fontFamily: 'var(--font-display)' }}>{item.nom}</p>
-                        <p className="text-xs text-muted-foreground font-mono mt-0.5" style={{ fontFamily: 'var(--font-mono)' }}>{item.poids_g} g · Qté : {item.quantite}</p>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="font-mono font-700 text-foreground text-sm" style={{ fontFamily: 'var(--font-mono)' }}>{formatPrice(item.prix_cents)}</p>
-                        <Icon name="ChevronRightIcon" size={14} variant="outline" className="text-muted-foreground mt-1 ml-auto" />
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Specs tab */}
-          {activeTab === 'specs' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" role="tabpanel" aria-label="Caractéristiques">
-              {product.specs.map((spec) => (
-                <div key={spec.label} className="flex items-center justify-between py-3 px-4 rounded-xl bg-card border border-border">
-                  <span className="text-sm text-muted-foreground">{spec.label}</span>
-                  <span className="font-mono text-sm font-semibold text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{spec.value}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Reviews tab */}
-          {activeTab === 'reviews' && (
-            <div className="space-y-4" role="tabpanel" aria-label="Avis clients">
-              {product.reviews.map((review, i) => (
-                <div key={i} className="topo-card p-5">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <span className="font-semibold text-foreground text-sm">{review.author}</span>
-                      {review.verified && <span className="ml-2 text-xs text-green-600 font-medium">✓ Achat vérifié</span>}
-                    </div>
-                    <div className="flex items-center gap-1" aria-label={`Note : ${review.rating} sur 5`}>
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <svg key={s} className={`w-3.5 h-3.5 ${s <= review.rating ? 'text-yellow-400' : 'text-border'}`} fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
-                  <p className="text-xs font-mono text-muted-foreground mt-2" style={{ fontFamily: 'var(--font-mono)' }}>{review.date}</p>
-                </div>
-              ))}
-            </div>
-          )}
+          {activeTab === 'specs' && <ProductSpecsTab product={product} />}
+          {activeTab === 'reviews' && <ProductReviewsTab product={product} />}
         </section>
 
         <TopoSeparator inverted />
-
-        {/* Recommendations — multi-signal */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-16">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="font-display font-700 text-2xl text-foreground" style={{ fontFamily: 'var(--font-display)' }}>Complétez votre kit</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {relatedProducts.map((p) => (
-              <Link key={p.id} href={`/produit/${p.id}`} className="topo-card group overflow-hidden block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl">
-                <div className="aspect-[4/3] overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.image} alt={p.alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-foreground text-sm mb-2 group-hover:text-primary transition-colors">{p.nom}</h3>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-mono text-sm font-semibold text-info" style={{ fontFamily: 'var(--font-mono)' }}>{p.poids_g} g</span>
-                    <span className="font-display font-700 text-foreground" style={{ fontFamily: 'var(--font-display)' }}>{formatPrice(p.prix_cents)}</span>
-                  </div>
-                  {/* Recommendation reason */}
-                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-mono" style={{ fontFamily: 'var(--font-mono)' }}>
-                    <Icon name="SparklesIcon" size={10} variant="outline" className="text-info flex-shrink-0" />
-                    {p.reason}
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
+        <RelatedProducts formatPrice={formatPrice} />
       </main>
-
       <Footer />
     </div>
   );
+}
+
+// ── TEMPLATE: ENCHÈRE ──────────────────────────────────────────────────────────
+function TemplateEnchere({ product }: { product: Product }) {
+  const formatPrice = (cents: number) => (cents / 100).toFixed(2).replace('.', ',') + ' €';
+  const [activeTab, setActiveTab] = useState<'specs' | 'reviews'>('specs');
+  const countdown = useCountdown(product.date_fin_enchere);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main id="main-content" className="pt-20">
+        {/* Breadcrumb */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <nav aria-label="Fil d'Ariane" className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+            <Link href="/" className="hover:text-foreground transition-colors">Accueil</Link>
+            <Icon name="ChevronRightIcon" size={14} variant="outline" aria-hidden="true" />
+            <Link href="/encheres" className="hover:text-foreground transition-colors">Enchères</Link>
+            <Icon name="ChevronRightIcon" size={14} variant="outline" aria-hidden="true" />
+            <span className="text-foreground font-medium truncate max-w-[200px]" aria-current="page">{product.nom}</span>
+          </nav>
+        </div>
+
+        {/* Urgency banner — Enchère */}
+        <div className="bg-gradient-to-r from-orange-900/40 to-transparent border-b border-orange-500/20 mb-2">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Icon name="BoltIcon" size={14} variant="outline" className="text-orange-400" />
+              <span className="text-xs text-orange-400 font-mono uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>Enchère en cours · {product.nombre_encherisseurs ?? 0} enchérisseurs</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-mono text-orange-300" style={{ fontFamily: 'var(--font-mono)' }}>
+              <span>Fin dans :</span>
+              <span className="font-700">{countdown.days}j {countdown.hours}h {countdown.minutes}m {countdown.seconds}s</span>
+            </div>
+          </div>
+        </div>
+
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
+            <ProductGallery product={product} listingType="enchere" />
+            <div className="space-y-6">
+              <ProductInfoHeader product={product} />
+
+              {/* Prix actuel enchère */}
+              <div className="topo-card p-4 border-orange-500/30 border bg-orange-500/5">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-mono text-orange-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>Enchère actuelle</span>
+                  <span className="text-xs text-muted-foreground">Départ : {formatPrice(product.prix_depart_cents ?? 0)}</span>
+                </div>
+                <p className="text-4xl font-display font-700 text-orange-400" style={{ fontFamily: 'var(--font-display)' }}>
+                  {formatPrice(product.enchere_actuelle_cents ?? product.prix_depart_cents ?? 0)}
+                </p>
+              </div>
+
+              <ProductWeightCard product={product} />
+              <ProductTags tags={product.tags} />
+
+              <AuctionZone
+                listing={{
+                  id: product.listing_id ?? product.id,
+                  produit_id: product.id,
+                  prix_depart_cents: product.prix_depart_cents ?? 0,
+                  enchere_actuelle_cents: product.enchere_actuelle_cents ?? product.prix_depart_cents ?? 0,
+                  increment_min_cents: product.increment_min_cents ?? 500,
+                  date_fin_enchere: product.date_fin_enchere ?? new Date(Date.now() + 7 * 86400000).toISOString(),
+                  nombre_encherisseurs: product.nombre_encherisseurs ?? 0,
+                  statut: 'actif',
+                  vendeur_id: undefined,
+                }}
+              />
+
+              {/* Description */}
+              {product.description && (
+                <div className="topo-card p-4">
+                  <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2" style={{ fontFamily: 'var(--font-mono)' }}>Description</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* AI Panel */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+          <div className="mb-4 flex items-center gap-2">
+            <Icon name="SparklesIcon" size={16} variant="outline" className="text-info" />
+            <h2 className="font-display font-700 text-lg text-foreground" style={{ fontFamily: 'var(--font-display)' }}>Intelligence artificielle</h2>
+          </div>
+          <AIDescriptionPanel product={product} />
+        </section>
+
+        <TopoSeparator />
+
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="flex gap-1 mb-8 border-b border-border" role="tablist">
+            {(['specs', 'reviews'] as const).map((tab) => (
+              <button key={tab} role="tab" aria-selected={activeTab === tab} onClick={() => setActiveTab(tab)}
+                className={`px-6 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${activeTab === tab ? 'border-orange-500 text-orange-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
+                {tab === 'specs' ? 'Caractéristiques' : `Avis (${product.avis_count})`}
+              </button>
+            ))}
+          </div>
+          {activeTab === 'specs' && <ProductSpecsTab product={product} />}
+          {activeTab === 'reviews' && <ProductReviewsTab product={product} />}
+        </section>
+
+        <TopoSeparator inverted />
+        <RelatedProducts formatPrice={formatPrice} />
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+// ── TEMPLATE: LOCATION ─────────────────────────────────────────────────────────
+function TemplateLocation({ product }: { product: Product }) {
+  const formatPrice = (cents: number) => (cents / 100).toFixed(2).replace('.', ',') + ' €';
+  const [activeTab, setActiveTab] = useState<'specs' | 'reviews'>('specs');
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main id="main-content" className="pt-20">
+        {/* Breadcrumb */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <nav aria-label="Fil d'Ariane" className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+            <Link href="/" className="hover:text-foreground transition-colors">Accueil</Link>
+            <Icon name="ChevronRightIcon" size={14} variant="outline" aria-hidden="true" />
+            <Link href="/location" className="hover:text-foreground transition-colors">Location</Link>
+            <Icon name="ChevronRightIcon" size={14} variant="outline" aria-hidden="true" />
+            <span className="text-foreground font-medium truncate max-w-[200px]" aria-current="page">{product.nom}</span>
+          </nav>
+        </div>
+
+        {/* Location banner */}
+        <div className="bg-gradient-to-r from-purple-900/40 to-transparent border-b border-purple-500/20 mb-2">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center gap-2">
+            <Icon name="CalendarDaysIcon" size={14} variant="outline" className="text-purple-400" />
+            <span className="text-xs text-purple-400 font-mono uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>
+              Location · {formatPrice(product.prix_jour_cents ?? 0)}/jour · Caution {formatPrice(product.caution_cents ?? 0)}
+            </span>
+          </div>
+        </div>
+
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
+            <ProductGallery product={product} listingType="location" />
+            <div className="space-y-6">
+              <ProductInfoHeader product={product} />
+
+              {/* Pricing summary */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="topo-card p-4 border-purple-500/20 border text-center">
+                  <p className="text-xs text-muted-foreground mb-1">Prix / jour</p>
+                  <p className="text-2xl font-display font-700 text-purple-400" style={{ fontFamily: 'var(--font-display)' }}>{formatPrice(product.prix_jour_cents ?? 0)}</p>
+                </div>
+                <div className="topo-card p-4 border-yellow-500/20 border text-center">
+                  <p className="text-xs text-muted-foreground mb-1">Caution</p>
+                  <p className="text-2xl font-display font-700 text-yellow-400" style={{ fontFamily: 'var(--font-display)' }}>{formatPrice(product.caution_cents ?? 0)}</p>
+                </div>
+              </div>
+
+              <ProductWeightCard product={product} />
+              <ProductTags tags={product.tags} />
+              <ActionZoneLocation product={product} />
+
+              {/* Conditions de location */}
+              <div className="topo-card p-4 space-y-2">
+                <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-3" style={{ fontFamily: 'var(--font-mono)' }}>Conditions de location</p>
+                {[
+                  { icon: 'ShieldCheckIcon', text: 'Caution restituée après retour vérifié' },
+                  { icon: 'TruckIcon', text: 'Livraison et retour inclus dans le prix' },
+                  { icon: 'ClockIcon', text: 'Réservation minimum 2 jours' },
+                  { icon: 'WrenchScrewdriverIcon', text: 'Matériel vérifié et entretenu' },
+                ].map(({ icon, text }) => (
+                  <div key={text} className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Icon name={icon} size={14} variant="outline" className="text-purple-400 flex-shrink-0" />
+                    {text}
+                  </div>
+                ))}
+              </div>
+
+              {product.description && (
+                <div className="topo-card p-4">
+                  <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2" style={{ fontFamily: 'var(--font-mono)' }}>Description</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <TopoSeparator />
+
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="flex gap-1 mb-8 border-b border-border" role="tablist">
+            {(['specs', 'reviews'] as const).map((tab) => (
+              <button key={tab} role="tab" aria-selected={activeTab === tab} onClick={() => setActiveTab(tab)}
+                className={`px-6 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${activeTab === tab ? 'border-purple-500 text-purple-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
+                {tab === 'specs' ? 'Caractéristiques' : `Avis (${product.avis_count})`}
+              </button>
+            ))}
+          </div>
+          {activeTab === 'specs' && <ProductSpecsTab product={product} />}
+          {activeTab === 'reviews' && <ProductReviewsTab product={product} />}
+        </section>
+
+        <TopoSeparator inverted />
+        <RelatedProducts formatPrice={formatPrice} />
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+// ── TEMPLATE: OCCASION ─────────────────────────────────────────────────────────
+function TemplateOccasion({ product }: { product: Product }) {
+  const formatPrice = (cents: number) => (cents / 100).toFixed(2).replace('.', ',') + ' €';
+  const [activeTab, setActiveTab] = useState<'specs' | 'reviews'>('specs');
+
+  const ETAT_LABELS: Record<string, { label: string; cls: string }> = {
+    comme_neuf: { label: 'Comme neuf', cls: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/30' },
+    bon_etat: { label: 'Bon état', cls: 'text-blue-400 bg-blue-400/10 border-blue-400/30' },
+    etat_correct: { label: 'État correct', cls: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30' },
+  };
+  const etatInfo = ETAT_LABELS[product.etat ?? 'bon_etat'];
+  const savings = Math.round((1 - 1 / 1.6) * 100);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main id="main-content" className="pt-20">
+        {/* Breadcrumb */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <nav aria-label="Fil d'Ariane" className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+            <Link href="/" className="hover:text-foreground transition-colors">Accueil</Link>
+            <Icon name="ChevronRightIcon" size={14} variant="outline" aria-hidden="true" />
+            <Link href="/occasion" className="hover:text-foreground transition-colors">Occasion</Link>
+            <Icon name="ChevronRightIcon" size={14} variant="outline" aria-hidden="true" />
+            <span className="text-foreground font-medium truncate max-w-[200px]" aria-current="page">{product.nom}</span>
+          </nav>
+        </div>
+
+        {/* Occasion banner */}
+        <div className="bg-gradient-to-r from-yellow-900/30 to-transparent border-b border-yellow-500/10 mb-2">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center gap-3">
+            <Icon name="TagIcon" size={14} variant="outline" className="text-yellow-400" />
+            <span className={`px-2 py-0.5 rounded-full text-xs font-600 border ${etatInfo.cls}`}>{etatInfo.label}</span>
+            <span className="text-xs text-yellow-400 font-mono" style={{ fontFamily: 'var(--font-mono)' }}>Économisez {savings}% vs neuf · Certifié authentique</span>
+          </div>
+        </div>
+
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
+            <ProductGallery product={product} listingType="occasion" />
+            <div className="space-y-6">
+              <ProductInfoHeader product={product} />
+
+              {/* Price comparison */}
+              <div className="topo-card p-4 border-yellow-500/20 border">
+                <div className="flex items-end justify-between mb-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-0.5">Prix occasion</p>
+                    <p className="text-3xl font-display font-700 text-foreground" style={{ fontFamily: 'var(--font-display)' }}>{formatPrice(product.prix_cents)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Prix neuf estimé</p>
+                    <p className="text-sm line-through text-muted-foreground font-mono" style={{ fontFamily: 'var(--font-mono)' }}>{formatPrice(Math.round(product.prix_cents * 1.6))}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
+                  <Icon name="ArrowTrendingDownIcon" size={12} variant="outline" />
+                  Économie de {savings}% vs neuf
+                </div>
+              </div>
+
+              <ProductWeightCard product={product} />
+              <ProductTags tags={product.tags} />
+
+              <OccasionProductZone
+                product={{
+                  id: product.id,
+                  listing_id: product.listing_id ?? product.id,
+                  slug: product.slug,
+                  nom: product.nom,
+                  marque: product.marque,
+                  reference: product.reference,
+                  categorie: product.categorie,
+                  prix_cents: product.prix_cents,
+                  poids_g: product.poids_g,
+                  description: product.description,
+                  specs: product.specs,
+                  tags: product.tags,
+                  note: product.note,
+                  avis_count: product.avis_count,
+                  reviews: product.reviews,
+                  images: product.images,
+                  etat: product.etat ?? 'bon_etat',
+                  statut: product.occasion_statut ?? 'active',
+                  faire_offre_active: product.faire_offre_active ?? false,
+                  historique: product.historique_produit,
+                  certificat: product.certificat_authenticite,
+                  photos_defauts: product.photos_defauts,
+                  vendeur: product.vendeur,
+                  produit_id: product.produit_id,
+                }}
+              />
+            </div>
+          </div>
+        </section>
+
+        <TopoSeparator />
+
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="flex gap-1 mb-8 border-b border-border" role="tablist">
+            {(['specs', 'reviews'] as const).map((tab) => (
+              <button key={tab} role="tab" aria-selected={activeTab === tab} onClick={() => setActiveTab(tab)}
+                className={`px-6 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${activeTab === tab ? 'border-yellow-500 text-yellow-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
+                {tab === 'specs' ? 'Caractéristiques' : `Avis (${product.avis_count})`}
+              </button>
+            ))}
+          </div>
+          {activeTab === 'specs' && <ProductSpecsTab product={product} />}
+          {activeTab === 'reviews' && <ProductReviewsTab product={product} />}
+        </section>
+
+        <TopoSeparator inverted />
+        <RelatedProducts formatPrice={formatPrice} />
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+// ── Loading skeleton ───────────────────────────────────────────────────────────
+function ProductSkeleton() {
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main className="pt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div className="aspect-square rounded-2xl bg-muted animate-pulse" />
+            <div className="space-y-4">
+              <div className="h-6 w-32 rounded bg-muted animate-pulse" />
+              <div className="h-10 w-3/4 rounded bg-muted animate-pulse" />
+              <div className="h-24 rounded bg-muted animate-pulse" />
+              <div className="h-12 rounded-full bg-muted animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+// ── Not Found ──────────────────────────────────────────────────────────────────
+function ProductNotFound({ slug }: { slug: string }) {
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main className="pt-20 flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4 px-4">
+          <Icon name="ExclamationCircleIcon" size={48} variant="outline" className="text-muted-foreground mx-auto" />
+          <h1 className="font-display font-700 text-2xl text-foreground" style={{ fontFamily: 'var(--font-display)' }}>Produit introuvable</h1>
+          <p className="text-muted-foreground">Le produit &quot;{slug}&quot; n&apos;existe pas ou a été retiré.</p>
+          <Link href="/shop" className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-white font-semibold text-sm hover:bg-primary/90 transition-all">
+            <Icon name="ArrowLeftIcon" size={16} variant="outline" />
+            Retour au shop
+          </Link>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+// ── Main Component ─────────────────────────────────────────────────────────────
+export default function ProductDetailClient({ slug }: { slug: string }) {
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      const data = await fetchProductBySlug(slug);
+      if (cancelled) return;
+      if (!data) {
+        setNotFound(true);
+      } else {
+        setProduct(data);
+      }
+      setLoading(false);
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [slug]);
+
+  if (loading) return <ProductSkeleton />;
+  if (notFound || !product) return <ProductNotFound slug={slug} />;
+
+  const listingType = product.listing_type ?? 'neuf';
+
+  // Route to the correct template based on listing_type
+  if (listingType === 'enchere') return <TemplateEnchere product={product} />;
+  if (listingType === 'location') return <TemplateLocation product={product} />;
+  if (listingType === 'occasion') return <TemplateOccasion product={product} />;
+
+  // Default: neuf (and kit)
+  return <TemplateNeuf product={product} />;
 }
