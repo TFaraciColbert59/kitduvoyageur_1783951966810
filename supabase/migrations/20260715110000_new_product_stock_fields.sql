@@ -46,9 +46,10 @@ BEGIN
     SELECT 1 FROM information_schema.tables
     WHERE table_schema = 'public' AND table_name = 'listings'
   ) THEN
+    -- listing_type is the actual enum column (neuf/kit/occasion/enchere/location)
     CREATE INDEX IF NOT EXISTS idx_listings_occasion_check
-      ON public.listings(produit_id, type_annonce, statut)
-      WHERE type_annonce = 'occasion' AND statut = 'actif';
+      ON public.listings(produit_id, listing_type, statut)
+      WHERE listing_type = 'occasion' AND statut = 'actif';
   END IF;
 END $$;
 
@@ -60,11 +61,11 @@ STABLE
 SECURITY DEFINER
 AS $$
   SELECT
-    COALESCE(l.slug, 'occasion-' || l.id::TEXT) AS listing_slug,
+    'occasion-' || l.id::TEXT AS listing_slug,
     l.prix_cents AS listing_prix_cents
   FROM public.listings l
   WHERE l.produit_id = p_produit_id
-    AND l.type_annonce = 'occasion'
+    AND l.listing_type = 'occasion'
     AND l.statut = 'actif'
   ORDER BY l.prix_cents ASC
   LIMIT 1;

@@ -25,9 +25,9 @@ export async function GET(req: NextRequest) {
     // that references the same produit_id (or same model via product reference)
     const { data, error } = await supabase
       .from('listings')
-      .select('id, slug, prix_cents, statut, type_annonce')
+      .select('id, prix_cents, statut, listing_type')
       .eq('produit_id', produitId)
-      .eq('type_annonce', 'occasion')
+      .eq('listing_type', 'occasion')
       .eq('statut', 'actif')
       .order('prix_cents', { ascending: true })
       .limit(1)
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       listing: {
-        slug: data.slug ?? `occasion-${data.id}`,
+        slug: `occasion-${data.id}`,
         prix_cents: data.prix_cents,
       },
     });
