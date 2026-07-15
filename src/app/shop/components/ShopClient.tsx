@@ -12,6 +12,7 @@ import { saveCart, getCart } from '@/lib/cart';
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Product {
   id: string;
+  listing_id: string;
   slug: string;
   name: string;
   brand: string;
@@ -23,6 +24,7 @@ interface Product {
   image: string;
   image_alt: string;
   badge?: string;
+  listing_type: ListingType;
 }
 
 type ListingType = 'tous' | 'neuf' | 'kit' | 'occasion' | 'enchere' | 'location';
@@ -57,7 +59,8 @@ function ProductCard({
   onAddToCart: (id: string) => void;
 }) {
   const [added, setAdded] = useState(false);
-  const badge = TYPE_BADGE[listingType === 'tous' ? 'neuf' : listingType];
+  const effectiveType = product.listing_type && product.listing_type !== 'tous' ? product.listing_type : listingType;
+  const badge = TYPE_BADGE[effectiveType === 'tous' ? 'neuf' : effectiveType];
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -68,7 +71,7 @@ function ProductCard({
   };
 
   const actionLabel = () => {
-    switch (listingType) {
+    switch (effectiveType) {
       case 'enchere': return 'Enchérir';
       case 'location': return 'Réserver';
       case 'occasion': return 'Acheter';
@@ -121,11 +124,11 @@ function ProductCard({
           </span>
           <button
             onClick={handleAdd}
-            disabled={listingType === 'neuf' && product.stock === 0}
+            disabled={effectiveType === 'neuf' && product.stock === 0}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-600 transition-all duration-200 min-h-[36px] ${
               added
                 ? 'bg-secondary text-white'
-                : listingType === 'neuf'&& product.stock === 0 ?'bg-muted text-muted-foreground cursor-not-allowed' :'bg-primary text-white hover:bg-primary/90'
+                : effectiveType === 'neuf'&& product.stock === 0 ?'bg-muted text-muted-foreground cursor-not-allowed' :'bg-primary text-white hover:bg-primary/90'
             }`}
             aria-label={added ? 'Ajouté' : actionLabel()}
           >
@@ -190,13 +193,81 @@ export default function ShopClient() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: fetchError } = await supabase
-        .from('products')
-        .select('*')
-        .order('featured', { ascending: false })
+      // Query listings joined with products to get listing_type per product
+      const { data: listingsData, error: listingsError } = await supabase
+        .from('listings')
+        .select(`
+          id,
+          listing_type,
+          prix_cents,
+          statut,
+          produit_id,
+          products (
+            id,
+            slug,
+            name,
+            brand,
+            category,
+            activity,
+            weight_g,
+            price_eur,
+            stock,
+            image,
+            image_alt,
+            badge,
+            featured,
+            created_at
+          )
+        `)
+        .eq('statut', 'actif')
         .order('created_at', { ascending: false });
-      if (fetchError) throw fetchError;
-      setProducts(data ?? []);
+
+      if (listingsError) throw listingsError;
+
+      // Flatten listings+products into Product[] with listing_type
+      const mapped: Product[] = (listingsData ?? [])
+        .filter((l) => l.products)
+        .map((l) => {
+          const p = (l.products as unknown) as {
+            id: string; slug: string; name: string; brand: string; category: string;
+            activity: string[]; weight_g: number; price_eur: number; stock: number;
+            image: string; image_alt: string; badge?: string; featured?: boolean; created_at?: string;
+          };
+          return {
+            id: p.id,
+            listing_id: l.id,
+            slug: p.slug,
+            name: p.name,
+            brand: p.brand,
+            category: p.category,
+            activity: p.activity ?? [],
+            weight_g: p.weight_g ?? 0,
+            price_eur: l.prix_cents ? l.prix_cents / 100 : Number(p.price_eur),
+            stock: p.stock ?? 0,
+            image: p.image ?? '',
+            image_alt: p.image_alt ?? '',
+            badge: p.badge ?? '',
+            listing_type: (l.listing_type as ListingType) ?? 'neuf',
+          };
+        });
+
+      // If no listings data, fall back to products table directly (all treated as 'neuf')
+      if (mapped.length === 0) {
+        const { data: productsData, error: productsError } = await supabase
+          .from('products')
+          .select('*')
+          .order('featured', { ascending: false })
+          .order('created_at', { ascending: false });
+        if (productsError) throw productsError;
+        const fallback: Product[] = (productsData ?? []).map((p) => ({
+          ...p,
+          listing_id: p.id,
+          listing_type: 'neuf' as ListingType,
+        }));
+        setProducts(fallback);
+      } else {
+        setProducts(mapped);
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Erreur de chargement');
     } finally {
@@ -216,13 +287,15 @@ export default function ShopClient() {
 
   const filtered = useMemo(() => {
     let list = products.filter((p) => {
+      // ── FIX: apply listing_type filter ──────────────────────────────────────
+      const typeOk = activeType === 'tous' || p.listing_type === activeType;
       const catOk = activeCategory === 'Tous' || p.category === activeCategory;
       const actOk = activeActivity === 'Toutes' || (p.activity ?? []).includes(activeActivity);
       const brandOk = selectedBrands.size === 0 || selectedBrands.has(p.brand);
       const priceOk = p.price_eur <= maxPrice;
       const weightOk = p.weight_g <= maxWeight;
       const searchOk = !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.brand.toLowerCase().includes(searchQuery.toLowerCase());
-      return catOk && actOk && brandOk && priceOk && weightOk && searchOk;
+      return typeOk && catOk && actOk && brandOk && priceOk && weightOk && searchOk;
     });
 
     switch (sortBy) {
@@ -232,7 +305,7 @@ export default function ShopClient() {
       case 'weight-desc': list = list.sort((a, b) => b.weight_g - a.weight_g); break;
     }
     return list;
-  }, [products, activeCategory, activeActivity, selectedBrands, maxPrice, maxWeight, searchQuery, sortBy]);
+  }, [products, activeType, activeCategory, activeActivity, selectedBrands, maxPrice, maxWeight, searchQuery, sortBy]);
 
   const paginated = filtered.slice(0, page * PAGE_SIZE);
   const hasMore = paginated.length < filtered.length;
@@ -454,7 +527,7 @@ export default function ShopClient() {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                   {paginated.map((product) => (
-                    <Link key={product.id} href={`/produit/${product.slug}`}>
+                    <Link key={product.listing_id} href={`/produit/${product.slug}`}>
                       <ProductCard product={product} listingType={activeType} onAddToCart={handleAddToCart} />
                     </Link>
                   ))}
