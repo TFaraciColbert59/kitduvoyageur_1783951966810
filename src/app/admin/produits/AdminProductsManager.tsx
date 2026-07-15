@@ -160,6 +160,11 @@ function logAudit(supabase: ReturnType<typeof createClient>, action: string, tar
   });
 }
 
+// ─── AI Spinner ───────────────────────────────────────────────────────────────
+function AISpinner() {
+  return <span className="inline-block w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin" />;
+}
+
 // ─── Dashboard Section ────────────────────────────────────────────────────────
 
 function DashboardSection({ products }: { products: ShopProduct[] }) {
@@ -180,7 +185,58 @@ function DashboardSection({ products }: { products: ShopProduct[] }) {
   const cabinCount = active.filter(p => p.cabin_compatible).length;
   const noImage = active.filter(p => !p.image).length;
   const noDesc = active.filter(p => !p.description_why).length;
+  const noAdvantages = active.filter(p => !p.advantages_array?.length).length;
   const brands = new Set(active.map(p => p.brand).filter(Boolean)).size;
+
+  // AI catalogue analysis
+  const [aiAnalysis, setAiAnalysis] = useState('');
+  const [aiAnalysisLoading, setAiAnalysisLoading] = useState(false);
+  const { response: analysisResponse, isLoading: analysisLoading, sendMessage: sendAnalysis } = useChat('GEMINI', 'gemini/gemini-2.5-flash', false);
+
+  const runCatalogueAnalysis = () => {
+    setAiAnalysisLoading(true);
+    setAiAnalysis('');
+    const topProducts = active.slice(0, 20).map(p => `${p.name} (${p.brand}, ${p.price_eur}€, KDV:${p.score_kdv}, ${p.essentiality})`).join('\n');
+    const prompt = `Tu es expert en équipement outdoor et gestion de catalogue e-commerce. Analyse ce catalogue "Le Kit du Voyageur":
+
+STATS:
+- ${active.length} produits actifs, ${brands} marques
+- Prix moyen: ${avgPrice.toFixed(0)}€, Poids moyen: ${(avgWeight/1000).toFixed(1)}kg
+- Score KDV moyen: ${avgKdv.toFixed(1)}/100
+- ${noDesc} sans description, ${noImage} sans image, ${noAdvantages} sans avantages
+- Cabine compatible: ${cabinCount}/${active.length}
+
+TOP PRODUITS:
+${topProducts}
+
+RÉPARTITION CATÉGORIES: ${Object.entries(byCategory).map(([k,v]) => `${k}:${v}`).join(', ')}
+ESSENTIALITÉ: ${Object.entries(byEssentiality).map(([k,v]) => `${k}:${v}`).join(', ')}
+
+Donne une analyse concise (max 300 mots) avec:
+1. Points forts du catalogue (2-3 points)
+2. Lacunes identifiées (2-3 points)
+3. Recommandations prioritaires (3 actions concrètes)
+4. Score de complétude du catalogue /100
+
+Réponds en JSON: {"points_forts": ["..."], "lacunes": ["..."], "recommandations": ["..."], "score_completude": 0, "resume": "..."}`;
+    sendAnalysis([{ role: 'user', content: prompt }], { temperature: 0.4, max_tokens: 800 });
+  };
+
+  useEffect(() => {
+    if (analysisResponse && !analysisLoading) {
+      setAiAnalysis(analysisResponse);
+      setAiAnalysisLoading(false);
+    }
+  }, [analysisResponse, analysisLoading]);
+
+  const parsedAnalysis = useMemo(() => {
+    if (!aiAnalysis) return null;
+    try {
+      const m = aiAnalysis.match(/\{[\s\S]*\}/);
+      if (m) return JSON.parse(m[0]);
+    } catch (_e) { /* ignore */ }
+    return null;
+  }, [aiAnalysis]);
 
   const kpis = [
     { label: 'Produits actifs', value: active.length, icon: 'ArchiveBoxIcon', color: 'text-emerald-400' },
@@ -211,7 +267,7 @@ function DashboardSection({ products }: { products: ShopProduct[] }) {
       </div>
 
       {/* Alerts */}
-      {(noImage > 0 || noDesc > 0) && (
+      {(noImage > 0 || noDesc > 0 || noAdvantages > 0) && (
         <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 space-y-2">
           <div className="flex items-center gap-2 mb-2">
             <Icon name="ExclamationTriangleIcon" size={14} variant="outline" className="text-amber-400" />
@@ -219,8 +275,87 @@ function DashboardSection({ products }: { products: ShopProduct[] }) {
           </div>
           {noImage > 0 && <p className="text-xs text-amber-300/70">⚠️ {noImage} produit(s) sans image</p>}
           {noDesc > 0 && <p className="text-xs text-amber-300/70">⚠️ {noDesc} produit(s) sans description_why</p>}
+          {noAdvantages > 0 && <p className="text-xs text-amber-300/70">⚠️ {noAdvantages} produit(s) sans avantages listés</p>}
         </div>
       )}
+
+      {/* AI Catalogue Analysis */}
+      <div className="bg-[#1E2B25] border border-white/8 rounded-xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Icon name="SparklesIcon" size={16} variant="outline" className="text-[#E4501C]" />
+            <h3 className="text-sm font-semibold text-white">Analyse IA du catalogue</h3>
+          </div>
+          <button
+            onClick={runCatalogueAnalysis}
+            disabled={aiAnalysisLoading || analysisLoading}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#E4501C]/15 text-[#E4501C] text-xs hover:bg-[#E4501C]/25 disabled:opacity-40 transition-all"
+          >
+            {(aiAnalysisLoading || analysisLoading) ? <><AISpinner /> Analyse en cours...</> : '🔍 Analyser le catalogue'}
+          </button>
+        </div>
+
+        {!parsedAnalysis && !aiAnalysisLoading && !analysisLoading && (
+          <p className="text-xs text-white/30 italic">Cliquez sur "Analyser le catalogue" pour obtenir une analyse IA complète avec recommandations prioritaires.</p>
+        )}
+
+        {(aiAnalysisLoading || analysisLoading) && (
+          <div className="space-y-2">
+            {[1,2,3].map(i => <div key={i} className="h-3 bg-white/5 rounded animate-pulse" style={{width: `${70 + i * 10}%`}} />)}
+          </div>
+        )}
+
+        {parsedAnalysis && (
+          <div className="space-y-4">
+            {/* Score */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-white/50">Score de complétude</span>
+                  <span className={`font-mono text-sm font-bold ${parsedAnalysis.score_completude >= 80 ? 'text-emerald-400' : parsedAnalysis.score_completude >= 60 ? 'text-amber-400' : 'text-red-400'}`}>{parsedAnalysis.score_completude}/100</span>
+                </div>
+                <div className="h-2 bg-white/8 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all ${parsedAnalysis.score_completude >= 80 ? 'bg-emerald-400' : parsedAnalysis.score_completude >= 60 ? 'bg-amber-400' : 'bg-red-400'}`} style={{width: `${parsedAnalysis.score_completude}%`}} />
+                </div>
+              </div>
+            </div>
+
+            {parsedAnalysis.resume && (
+              <p className="text-xs text-white/60 bg-white/3 rounded-lg p-3 italic">{parsedAnalysis.resume}</p>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* Points forts */}
+              <div className="bg-emerald-500/5 border border-emerald-500/15 rounded-xl p-3">
+                <p className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider mb-2">✅ Points forts</p>
+                <ul className="space-y-1">
+                  {(parsedAnalysis.points_forts || []).map((p: string, i: number) => (
+                    <li key={i} className="text-xs text-white/60">• {p}</li>
+                  ))}
+                </ul>
+              </div>
+              {/* Lacunes */}
+              <div className="bg-red-500/5 border border-red-500/15 rounded-xl p-3">
+                <p className="text-[10px] font-mono text-red-400 uppercase tracking-wider mb-2">⚠️ Lacunes</p>
+                <ul className="space-y-1">
+                  {(parsedAnalysis.lacunes || []).map((p: string, i: number) => (
+                    <li key={i} className="text-xs text-white/60">• {p}</li>
+                  ))}
+                </ul>
+              </div>
+              {/* Recommandations */}
+              <div className="bg-blue-500/5 border border-blue-500/15 rounded-xl p-3">
+                <p className="text-[10px] font-mono text-blue-400 uppercase tracking-wider mb-2">🎯 Actions prioritaires</p>
+                <ul className="space-y-1">
+                  {(parsedAnalysis.recommandations || []).map((p: string, i: number) => (
+                    <li key={i} className="text-xs text-white/60">• {p}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {/* Categories */}
@@ -285,6 +420,15 @@ function ProductListSection({
   const [perPage, setPerPage] = useState(25);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<string[] | null>(null);
+
+  // AI batch enrichment
+  const [batchEnrichLoading, setBatchEnrichLoading] = useState(false);
+  const [batchEnrichResult, setBatchEnrichResult] = useState('');
+  const [enrichingProductId, setEnrichingProductId] = useState<string | null>(null);
+  const supabase = useMemo(() => createClient(), []);
+  const { response: enrichResponse, isLoading: enrichLoading, sendMessage: sendEnrich } = useChat('GEMINI', 'gemini/gemini-2.5-flash', false);
+  const enrichQueueRef = useRef<ShopProduct[]>([]);
+  const enrichIndexRef = useRef(0);
 
   const categories = useMemo(() => [...new Set(products.map(p => p.category_main || p.category).filter(Boolean))].sort(), [products]);
 
@@ -356,6 +500,64 @@ function ProductListSection({
     URL.revokeObjectURL(url);
   };
 
+  // AI batch enrichment: enrich products missing description one by one
+  const startBatchEnrich = () => {
+    const toEnrich = filtered.filter(p => !p.description_why && !p.deleted_at && p.is_active !== false).slice(0, 5);
+    if (toEnrich.length === 0) { setBatchEnrichResult('✅ Tous les produits filtrés ont déjà une description.'); return; }
+    enrichQueueRef.current = toEnrich;
+    enrichIndexRef.current = 0;
+    setBatchEnrichLoading(true);
+    setBatchEnrichResult(`Enrichissement de ${toEnrich.length} produits...`);
+    processNextEnrich(toEnrich, 0);
+  };
+
+  const processNextEnrich = (queue: ShopProduct[], idx: number) => {
+    if (idx >= queue.length) return;
+    const p = queue[idx];
+    setEnrichingProductId(p.product_id);
+    const prompt = `Génère une description_why (150-300 caractères) et une justification_ai (80-150 caractères) pour ce produit outdoor:
+Nom: ${p.name}, Marque: ${p.brand}, Catégorie: ${p.category_main}, Prix: ${p.price_eur}€, Poids: ${p.weight_g}g
+Réponds UNIQUEMENT en JSON: {"description_why": "...", "justification_ai": "..."}`;
+    sendEnrich([{ role: 'user', content: prompt }], { temperature: 0.6, max_tokens: 300 });
+    enrichIndexRef.current = idx;
+  };
+
+  useEffect(() => {
+    if (!enrichResponse || enrichLoading || !batchEnrichLoading) return;
+    const queue = enrichQueueRef.current;
+    const idx = enrichIndexRef.current;
+    const p = queue[idx];
+    if (!p) return;
+
+    (async () => {
+      try {
+        const m = enrichResponse.match(/\{[\s\S]*\}/);
+        if (m) {
+          const parsed = JSON.parse(m[0]);
+          if (parsed.description_why) {
+            await supabase.from('shop_products').update({
+              description_why: parsed.description_why,
+              justification_ai: parsed.justification_ai || '',
+            }).eq('id', p.id);
+          }
+        }
+      } catch (_e) { /* ignore */ }
+
+      const nextIdx = idx + 1;
+      if (nextIdx < queue.length) {
+        setBatchEnrichResult(`Enrichissement ${nextIdx + 1}/${queue.length} — ${queue[nextIdx].name}...`);
+        processNextEnrich(queue, nextIdx);
+      } else {
+        setBatchEnrichLoading(false);
+        setEnrichingProductId(null);
+        setBatchEnrichResult(`✅ ${queue.length} produits enrichis avec succès !`);
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enrichResponse, enrichLoading]);
+
+  const missingDescCount = filtered.filter(p => !p.description_why && !p.deleted_at && p.is_active !== false).length;
+
   return (
     <div className="space-y-4">
       {/* Confirm delete modal */}
@@ -374,6 +576,27 @@ function ProductListSection({
               <button onClick={() => { onDelete(confirmDelete); setConfirmDelete(null); setSelected(new Set()); }} className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-all">Supprimer</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* AI Batch Enrichment Banner */}
+      {missingDescCount > 0 && (
+        <div className="bg-[#E4501C]/8 border border-[#E4501C]/20 rounded-xl p-3 flex items-center gap-3">
+          <Icon name="SparklesIcon" size={14} variant="outline" className="text-[#E4501C] flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-white/70">
+              <span className="text-[#E4501C] font-medium">{missingDescCount} produit(s)</span> sans description dans la vue actuelle.
+              {batchEnrichResult && <span className="ml-2 text-white/40">{batchEnrichResult}</span>}
+              {enrichingProductId && <span className="ml-1 text-white/30 text-[10px]">({enrichingProductId})</span>}
+            </p>
+          </div>
+          <button
+            onClick={startBatchEnrich}
+            disabled={batchEnrichLoading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#E4501C] text-white text-xs hover:bg-[#cc3d10] disabled:opacity-50 transition-all flex-shrink-0"
+          >
+            {batchEnrichLoading ? <><AISpinner /> En cours...</> : '✨ Enrichir avec IA (max 5)'}
+          </button>
         </div>
       )}
 
@@ -468,7 +691,7 @@ function ProductListSection({
               {paginated.length === 0 ? (
                 <tr><td colSpan={11} className="px-4 py-10 text-center text-white/30">Aucun produit trouvé</td></tr>
               ) : paginated.map(p => (
-                <tr key={p.id} className={`hover:bg-white/3 transition-colors ${selected.has(p.id) ? 'bg-[#E4501C]/5' : ''}`}>
+                <tr key={p.id} className={`hover:bg-white/3 transition-colors ${selected.has(p.id) ? 'bg-[#E4501C]/5' : ''} ${enrichingProductId === p.product_id ? 'bg-[#E4501C]/8' : ''}`}>
                   <td className="px-3 py-3">
                     <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)}
                       className="rounded border-white/20 bg-transparent" />
@@ -477,6 +700,8 @@ function ProductListSection({
                   <td className="px-3 py-3">
                     <p className="text-sm font-medium text-white/85 truncate max-w-[160px]">{p.name}</p>
                     <p className="text-white/30 text-[10px] mt-0.5">{p.model}</p>
+                    {!p.description_why && <span className="text-[9px] text-amber-400/60">⚠ sans desc</span>}
+                    {enrichingProductId === p.product_id && <span className="text-[9px] text-[#E4501C] animate-pulse ml-1">✨ IA...</span>}
                   </td>
                   <td className="px-3 py-3 text-white/50">{p.brand}</td>
                   <td className="px-3 py-3 text-white/40 truncate max-w-[100px]">{p.category_main || p.category}</td>
@@ -564,14 +789,16 @@ function ProductFormSection({
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<'identity' | 'specs' | 'scores' | 'content' | 'relations' | 'media'>('identity');
-  const [aiLoading, setAiLoading] = useState<'desc' | 'coherence' | 'alternatives' | null>(null);
+  const [aiLoading, setAiLoading] = useState<string | null>(null);
   const [aiResult, setAiResult] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState(product?.image || '');
   const fileRef = useRef<HTMLInputElement>(null);
   const supabase = useMemo(() => createClient(), []);
 
-  const { sendMessage, isLoading: chatLoading, response: chatResponse } = useChat('GEMINI', 'gemini/gemini-2.5-flash', false);
+  // Separate useChat hooks for each AI action to avoid conflicts
+  const { response: chatResponse, isLoading: chatLoading, sendMessage } = useChat('GEMINI', 'gemini/gemini-2.5-flash', false);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
 
   // Draft autosave
   useEffect(() => {
@@ -646,67 +873,125 @@ function ProductFormSection({
     }
   };
 
-  const generateDescription = async () => {
-    setAiLoading('desc');
+  // ── AI Actions ──────────────────────────────────────────────────────────────
+
+  const runAI = (action: string, prompt: string, params = {}) => {
+    setAiLoading(action);
+    setPendingAction(action);
     setAiResult('');
-    const prompt = `Tu es expert en équipement outdoor. Génère une description_why (200-400 caractères) et une justification_ai (100-200 caractères) pour ce produit outdoor:
-Nom: ${form.name}
-Marque: ${form.brand}
-Modèle: ${form.model}
-Catégorie: ${form.category_main}
-Prix: ${form.price_eur}€
-Poids: ${form.weight_g}g
-Matériaux: ${form.materials}
-Réponds en JSON: {"description_why": "...", "justification_ai": "..."}`;
-    sendMessage([{ role: 'user', content: prompt }], { temperature: 0.7, max_tokens: 500 });
-    setAiLoading(null);
+    sendMessage([{ role: 'user', content: prompt }], { temperature: 0.6, max_tokens: 600, ...params });
   };
 
-  const analyzeCoherence = async () => {
-    setAiLoading('coherence');
-    setAiResult('');
-    const prompt = `Analyse la cohérence des scores de ce produit outdoor:
+  const generateDescription = () => {
+    if (!form.name) return;
+    runAI('desc', `Tu es expert en équipement outdoor. Génère une description_why (200-400 caractères) et une justification_ai (100-200 caractères) pour ce produit outdoor:
+Nom: ${form.name}, Marque: ${form.brand}, Modèle: ${form.model}, Catégorie: ${form.category_main}, Prix: ${form.price_eur}€, Poids: ${form.weight_g}g, Matériaux: ${form.materials}
+Réponds en JSON: {"description_why": "...", "justification_ai": "..."}`, { temperature: 0.7 });
+  };
+
+  const analyzeCoherence = () => {
+    if (!form.name) return;
+    runAI('coherence', `Analyse la cohérence des scores de ce produit outdoor:
 Nom: ${form.name}, Prix: ${form.price_eur}€
-Score qualité: ${form.score_quality}/10
-Score prix: ${form.score_price}/10
-Score durabilité: ${form.score_durability}/10
-Score KDV: ${form.score_kdv}/100
-Essentialité: ${form.essentiality}
-Donne une analyse courte (max 200 caractères) et un verdict: COHÉRENT ou INCOHÉRENT. Réponds en JSON: {"verdict": "COHÉRENT|INCOHÉRENT", "analyse": "..."}`;
-    sendMessage([{ role: 'user', content: prompt }], { temperature: 0.3, max_tokens: 300 });
-    setAiLoading(null);
+Score qualité: ${form.score_quality}/10, Score prix: ${form.score_price}/10, Score durabilité: ${form.score_durability}/10
+Score KDV: ${form.score_kdv}/100, Essentialité: ${form.essentiality}
+Réponds en JSON: {"verdict": "COHÉRENT|INCOHÉRENT", "analyse": "...", "score_kdv_suggere": 0}`, { temperature: 0.3, max_tokens: 300 });
   };
 
-  const suggestAlternatives = async () => {
-    setAiLoading('alternatives');
-    setAiResult('');
+  const suggestAlternatives = () => {
+    if (!form.name) return;
     const productList = allProducts.slice(0, 30).map(p => `${p.product_id}: ${p.name} (${p.brand}, ${p.price_eur}€, ${p.category_main})`).join('\n');
-    const prompt = `Parmi ces produits du catalogue Le Kit du Voyageur, suggère l'alternative premium et budget pour:
+    runAI('alternatives', `Parmi ces produits du catalogue Le Kit du Voyageur, suggère l'alternative premium et budget pour:
 Produit: ${form.name} (${form.brand}, ${form.price_eur}€, ${form.category_main})
+Catalogue: ${productList}
+Réponds en JSON: {"alt_premium_id": "P0XX", "alt_budget_id": "P0XX", "raison_premium": "...", "raison_budget": "..."}`, { temperature: 0.5 });
+  };
 
-Catalogue disponible:
-${productList}
+  const generateAdvantagesDisadvantages = () => {
+    if (!form.name) return;
+    runAI('pros_cons', `Tu es expert en équipement outdoor. Génère 3-5 avantages et 2-3 inconvénients pour ce produit:
+Nom: ${form.name}, Marque: ${form.brand}, Catégorie: ${form.category_main}, Prix: ${form.price_eur}€, Poids: ${form.weight_g}g, Matériaux: ${form.materials || 'N/A'}
+Réponds en JSON: {"advantages": ["...", "..."], "disadvantages": ["...", "..."]}`, { temperature: 0.7 });
+  };
 
-Réponds en JSON: {"alt_premium_id": "P0XX", "alt_budget_id": "P0XX", "raison_premium": "...", "raison_budget": "..."}`;
-    sendMessage([{ role: 'user', content: prompt }], { temperature: 0.5, max_tokens: 300 });
-    setAiLoading(null);
+  const suggestScoreKDV = () => {
+    if (!form.name) return;
+    runAI('score_kdv', `Calcule un score KDV (Kit du Voyageur) sur 100 pour ce produit outdoor. Le score KDV mesure la valeur globale pour un voyageur (rapport qualité/prix/poids/polyvalence).
+Nom: ${form.name}, Marque: ${form.brand}, Prix: ${form.price_eur}€, Poids: ${form.weight_g}g
+Score qualité: ${form.score_quality}/10, Score prix: ${form.score_price}/10, Score durabilité: ${form.score_durability}/10
+Polyvalence: ${form.versatility_10}/10, Réparabilité: ${form.repairability_10}/10
+Essentialité: ${form.essentiality}, Cabine: ${form.cabin_compatible ? 'oui' : 'non'}
+Réponds en JSON: {"score_kdv": 0, "essentiality_suggere": "Indispensable|Recommandé|Confort|Luxe", "explication": "..."}`, { temperature: 0.3 });
+  };
+
+  const autoFillFromName = () => {
+    if (!form.name) return;
+    runAI('autofill', `Tu es expert en équipement outdoor. À partir du nom de ce produit, déduis ses caractéristiques probables:
+Nom: ${form.name}${form.brand ? `, Marque: ${form.brand}` : ''}
+Réponds en JSON avec tes meilleures estimations:
+{"category_main": "...", "category_sub": "...", "materials": "...", "warranty": "...", "cabin_compatible": true/false, "travel_types_array": ["..."], "climates_array": ["..."], "essentiality": "Indispensable|Recommandé|Confort|Luxe", "image_alt": "..."}`, { temperature: 0.4 });
+  };
+
+  const generateSEOContent = () => {
+    if (!form.name) return;
+    runAI('seo', `Génère du contenu SEO optimisé pour ce produit outdoor sur le site "Le Kit du Voyageur":
+Nom: ${form.name}, Marque: ${form.brand}, Catégorie: ${form.category_main}, Prix: ${form.price_eur}€
+Réponds en JSON: {"slug": "...", "image_alt": "...", "source_review": "..."}`, { temperature: 0.5 });
   };
 
   // Parse AI response when it arrives
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (!chatResponse || chatLoading) return;
+    if (!chatResponse || chatLoading || !pendingAction) return;
     setAiResult(chatResponse);
+    setAiLoading(null);
     try {
       const jsonMatch = chatResponse.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
+        // desc
         if (parsed.description_why) setForm(prev => ({ ...prev, description_why: parsed.description_why }));
         if (parsed.justification_ai) setForm(prev => ({ ...prev, justification_ai: parsed.justification_ai }));
+        // alternatives
         if (parsed.alt_premium_id) setForm(prev => ({ ...prev, alt_premium_id: parsed.alt_premium_id }));
         if (parsed.alt_budget_id) setForm(prev => ({ ...prev, alt_budget_id: parsed.alt_budget_id }));
+        // pros/cons
+        if (parsed.advantages) setForm(prev => ({ ...prev, advantages_array: parsed.advantages }));
+        if (parsed.disadvantages) setForm(prev => ({ ...prev, disadvantages_array: parsed.disadvantages }));
+        // score KDV
+        if (parsed.score_kdv && pendingAction === 'score_kdv') setForm(prev => ({ ...prev, score_kdv: parsed.score_kdv }));
+        if (parsed.essentiality_suggere && pendingAction === 'score_kdv') setForm(prev => ({ ...prev, essentiality: parsed.essentiality_suggere }));
+        // coherence: suggest score_kdv
+        if (parsed.score_kdv_suggere && pendingAction === 'coherence') {
+          // don't auto-apply, just show in result
+        }
+        // autofill
+        if (pendingAction === 'autofill') {
+          setForm(prev => ({
+            ...prev,
+            ...(parsed.category_main && { category_main: parsed.category_main }),
+            ...(parsed.category_sub && { category_sub: parsed.category_sub }),
+            ...(parsed.materials && { materials: parsed.materials }),
+            ...(parsed.warranty && { warranty: parsed.warranty }),
+            ...(parsed.cabin_compatible !== undefined && { cabin_compatible: parsed.cabin_compatible }),
+            ...(parsed.travel_types_array?.length && { travel_types_array: parsed.travel_types_array }),
+            ...(parsed.climates_array?.length && { climates_array: parsed.climates_array }),
+            ...(parsed.essentiality && { essentiality: parsed.essentiality }),
+            ...(parsed.image_alt && { image_alt: parsed.image_alt }),
+          }));
+        }
+        // SEO
+        if (pendingAction === 'seo') {
+          setForm(prev => ({
+            ...prev,
+            ...(parsed.slug && !prev.slug && { slug: parsed.slug }),
+            ...(parsed.image_alt && { image_alt: parsed.image_alt }),
+            ...(parsed.source_review && { source_review: parsed.source_review }),
+          }));
+        }
       }
     } catch (_e) { /* ignore */ }
+    setPendingAction(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatResponse, chatLoading]);
 
   const TABS = [
@@ -721,6 +1006,17 @@ Réponds en JSON: {"alt_premium_id": "P0XX", "alt_budget_id": "P0XX", "raison_pr
   const inputCls = (field: string) => `w-full bg-[#162019] border ${errors[field] ? 'border-red-500/50' : 'border-white/10'} rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#E4501C]/50 transition-colors`;
   const labelCls = 'block text-xs font-mono text-white/40 uppercase tracking-wider mb-1.5';
 
+  // AI action buttons config
+  const AI_ACTIONS = [
+    { id: 'desc', label: '✍️ Description', onClick: generateDescription, color: 'bg-[#E4501C]/15 text-[#E4501C] hover:bg-[#E4501C]/25', tab: null },
+    { id: 'pros_cons', label: '⚖️ Avantages/Inconvénients', onClick: generateAdvantagesDisadvantages, color: 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25', tab: 'content' },
+    { id: 'score_kdv', label: '🎯 Score KDV', onClick: suggestScoreKDV, color: 'bg-amber-500/15 text-amber-400 hover:bg-amber-500/25', tab: 'scores' },
+    { id: 'coherence', label: '🔍 Cohérence', onClick: analyzeCoherence, color: 'bg-blue-500/15 text-blue-400 hover:bg-blue-500/25', tab: null },
+    { id: 'alternatives', label: '🔄 Alternatives', onClick: suggestAlternatives, color: 'bg-purple-500/15 text-purple-400 hover:bg-purple-500/25', tab: 'relations' },
+    { id: 'autofill', label: '⚡ Auto-remplir', onClick: autoFillFromName, color: 'bg-sky-500/15 text-sky-400 hover:bg-sky-500/25', tab: null },
+    { id: 'seo', label: '🔗 SEO', onClick: generateSEOContent, color: 'bg-pink-500/15 text-pink-400 hover:bg-pink-500/25', tab: null },
+  ];
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -733,30 +1029,47 @@ Réponds en JSON: {"alt_premium_id": "P0XX", "alt_budget_id": "P0XX", "raison_pr
           <button onClick={onCancel} className="px-4 py-2 rounded-xl border border-white/10 text-sm text-white/60 hover:text-white transition-all">Annuler</button>
           <button onClick={handleSubmit} disabled={saving}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#E4501C] text-white text-sm font-medium hover:bg-[#cc3d10] disabled:opacity-50 transition-all">
-            {saving ? <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />Sauvegarde...</> : <><Icon name="CheckIcon" size={14} variant="outline" />Sauvegarder</>}
+            {saving ? <><AISpinner />Sauvegarde...</> : <><Icon name="CheckIcon" size={14} variant="outline" />Sauvegarder</>}
           </button>
         </div>
       </div>
 
-      {/* AI Toolbar */}
-      <div className="bg-[#1E2B25] border border-white/8 rounded-xl p-3 flex flex-wrap gap-2 items-center">
-        <Icon name="SparklesIcon" size={14} variant="outline" className="text-[#E4501C]" />
-        <span className="text-xs text-white/40 mr-2">IA Gemini :</span>
-        <button onClick={generateDescription} disabled={chatLoading || !form.name}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#E4501C]/15 text-[#E4501C] text-xs hover:bg-[#E4501C]/25 disabled:opacity-40 transition-all">
-          {chatLoading && aiLoading === 'desc' ? '...' : '✍️ Générer description'}
-        </button>
-        <button onClick={analyzeCoherence} disabled={chatLoading || !form.name}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/15 text-blue-400 text-xs hover:bg-blue-500/25 disabled:opacity-40 transition-all">
-          {chatLoading && aiLoading === 'coherence' ? '...' : '🔍 Analyser cohérence'}
-        </button>
-        <button onClick={suggestAlternatives} disabled={chatLoading || !form.name}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/15 text-purple-400 text-xs hover:bg-purple-500/25 disabled:opacity-40 transition-all">
-          {chatLoading && aiLoading === 'alternatives' ? '...' : '🔄 Suggérer alternatives'}
-        </button>
-        {chatLoading && <span className="text-xs text-white/30 animate-pulse">Gemini réfléchit...</span>}
+      {/* AI Toolbar — expanded */}
+      <div className="bg-[#1E2B25] border border-[#E4501C]/20 rounded-xl p-3 space-y-2">
+        <div className="flex items-center gap-2 mb-1">
+          <Icon name="SparklesIcon" size={14} variant="outline" className="text-[#E4501C]" />
+          <span className="text-xs font-medium text-white/60">IA Gemini — 7 actions disponibles</span>
+          {chatLoading && <span className="text-xs text-white/30 animate-pulse ml-auto">Gemini réfléchit...</span>}
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {AI_ACTIONS.map(action => (
+            <button
+              key={action.id}
+              onClick={() => { action.onClick(); if (action.tab) setActiveTab(action.tab as typeof activeTab); }}
+              disabled={chatLoading || !form.name}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium disabled:opacity-40 transition-all ${action.color}`}
+              title={!form.name ? 'Renseignez le nom du produit d\'abord' : ''}
+            >
+              {chatLoading && aiLoading === action.id ? <><AISpinner /> En cours...</> : action.label}
+            </button>
+          ))}
+        </div>
+        {!form.name && <p className="text-[10px] text-white/25 italic">💡 Renseignez le nom du produit pour activer les actions IA</p>}
         {aiResult && !chatLoading && (
-          <div className="w-full mt-2 p-2 bg-white/5 rounded-lg text-xs text-white/60 max-h-20 overflow-y-auto">{aiResult}</div>
+          <div className="mt-2 p-2.5 bg-white/5 border border-white/8 rounded-lg text-xs text-white/60 max-h-24 overflow-y-auto">
+            {(() => {
+              try {
+                const m = aiResult.match(/\{[\s\S]*\}/);
+                if (m) {
+                  const p = JSON.parse(m[0]);
+                  if (p.verdict) return <span className={p.verdict === 'COHÉRENT' ? 'text-emerald-400' : 'text-red-400'}>Verdict: {p.verdict} — {p.analyse}{p.score_kdv_suggere ? ` (Score KDV suggéré: ${p.score_kdv_suggere})` : ''}</span>;
+                  if (p.explication) return <span>Score KDV suggéré: <strong className="text-[#E4501C]">{p.score_kdv}</strong> — {p.explication}</span>;
+                  if (p.raison_premium) return <span>Premium: {p.alt_premium_id} ({p.raison_premium}) · Budget: {p.alt_budget_id} ({p.raison_budget})</span>;
+                }
+              } catch (_e) { /* ignore */ }
+              return aiResult.slice(0, 200);
+            })()}
+          </div>
         )}
       </div>
 
@@ -779,7 +1092,14 @@ Réponds en JSON: {"alt_premium_id": "P0XX", "alt_budget_id": "P0XX", "raison_pr
             <div><label className={labelCls}>Nom *</label><input value={form.name || ''} onChange={e => set('name', e.target.value)} placeholder="Osprey Exos 58L" className={inputCls('name')} />{errors.name && <p className="text-xs text-red-400 mt-1">{errors.name}</p>}</div>
             <div><label className={labelCls}>Marque *</label><input value={form.brand || ''} onChange={e => set('brand', e.target.value)} placeholder="Osprey" className={inputCls('brand')} />{errors.brand && <p className="text-xs text-red-400 mt-1">{errors.brand}</p>}</div>
             <div><label className={labelCls}>Modèle</label><input value={form.model || ''} onChange={e => set('model', e.target.value)} placeholder="Exos 58" className={inputCls('model')} /></div>
-            <div><label className={labelCls}>Catégorie principale *</label><input value={form.category_main || ''} onChange={e => set('category_main', e.target.value)} placeholder="Sacs à dos" className={inputCls('category_main')} />{errors.category_main && <p className="text-xs text-red-400 mt-1">{errors.category_main}</p>}</div>
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className={labelCls.replace('mb-1.5', '')}>Catégorie principale *</label>
+                {chatLoading && aiLoading === 'autofill' && <span className="text-[10px] text-sky-400 animate-pulse">IA...</span>}
+              </div>
+              <input value={form.category_main || ''} onChange={e => set('category_main', e.target.value)} placeholder="Sacs à dos" className={inputCls('category_main')} />
+              {errors.category_main && <p className="text-xs text-red-400 mt-1">{errors.category_main}</p>}
+            </div>
             <div><label className={labelCls}>Sous-catégorie</label><input value={form.category_sub || ''} onChange={e => set('category_sub', e.target.value)} placeholder="Sacs de randonnée" className={inputCls('category_sub')} /></div>
             <div><label className={labelCls}>Essentialité *</label>
               <select value={form.essentiality || 'Recommandé'} onChange={e => set('essentiality', e.target.value)} className={inputCls('essentiality')}>
@@ -795,7 +1115,13 @@ Réponds en JSON: {"alt_premium_id": "P0XX", "alt_budget_id": "P0XX", "raison_pr
             <div><label className={labelCls}>Prix (€) *</label><input type="number" value={form.price_eur || ''} onChange={e => set('price_eur', Number(e.target.value))} placeholder="299" className={inputCls('price_eur')} />{errors.price_eur && <p className="text-xs text-red-400 mt-1">{errors.price_eur}</p>}</div>
             <div><label className={labelCls}>Poids (g) *</label><input type="number" value={form.weight_g || ''} onChange={e => set('weight_g', Number(e.target.value))} placeholder="1420" className={inputCls('weight_g')} />{errors.weight_g && <p className="text-xs text-red-400 mt-1">{errors.weight_g}</p>}</div>
             <div><label className={labelCls}>Dimensions</label><input value={form.dimensions || ''} onChange={e => set('dimensions', e.target.value)} placeholder="70x35x25 cm" className={inputCls('dimensions')} /></div>
-            <div><label className={labelCls}>Matériaux</label><input value={form.materials || ''} onChange={e => set('materials', e.target.value)} placeholder="Nylon 100D, aluminium" className={inputCls('materials')} /></div>
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className={labelCls.replace('mb-1.5', '')}>Matériaux</label>
+                {chatLoading && aiLoading === 'autofill' && <span className="text-[10px] text-sky-400 animate-pulse">IA...</span>}
+              </div>
+              <input value={form.materials || ''} onChange={e => set('materials', e.target.value)} placeholder="Nylon 100D, aluminium" className={inputCls('materials')} />
+            </div>
             <div><label className={labelCls}>Garantie</label><input value={form.warranty || ''} onChange={e => set('warranty', e.target.value)} placeholder="2 ans" className={inputCls('warranty')} /></div>
             <div><label className={labelCls}>Source avis</label><input value={form.source_review || ''} onChange={e => set('source_review', e.target.value)} placeholder="Wikiloc, Outdoor Gear Lab" className={inputCls('source_review')} /></div>
             <div className="flex items-center gap-3">
@@ -815,7 +1141,10 @@ Réponds en JSON: {"alt_premium_id": "P0XX", "alt_budget_id": "P0XX", "raison_pr
               </label>
             </div>
             <div>
-              <label className={labelCls}>Types de voyage</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className={labelCls.replace('mb-1.5', '')}>Types de voyage</label>
+                {chatLoading && aiLoading === 'autofill' && <span className="text-[10px] text-sky-400 animate-pulse">IA...</span>}
+              </div>
               <div className="flex flex-wrap gap-2 mt-1">
                 {TRAVEL_TYPES.map(t => (
                   <label key={t} className="flex items-center gap-1.5 cursor-pointer">
@@ -867,7 +1196,10 @@ Réponds en JSON: {"alt_premium_id": "P0XX", "alt_budget_id": "P0XX", "raison_pr
               </div>
             ))}
             <div>
-              <label className={labelCls}>Score KDV /100 *</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className={labelCls.replace('mb-1.5', '')}>Score KDV /100 *</label>
+                {chatLoading && aiLoading === 'score_kdv' && <span className="text-[10px] text-amber-400 animate-pulse">IA calcule...</span>}
+              </div>
               <div className="flex items-center gap-3">
                 <input type="range" min={0} max={100} step={1} value={Number(form.score_kdv) || 0}
                   onChange={e => set('score_kdv', Number(e.target.value))} className="flex-1 accent-[#E4501C]" />
@@ -885,7 +1217,10 @@ Réponds en JSON: {"alt_premium_id": "P0XX", "alt_budget_id": "P0XX", "raison_pr
         {activeTab === 'content' && (
           <div className="space-y-4">
             <div>
-              <label className={labelCls}>Pourquoi ce produit (description_why) * <span className="text-white/20 normal-case">{(form.description_why || '').length}/500</span></label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className={labelCls.replace('mb-1.5', '')}>Pourquoi ce produit (description_why) * <span className="text-white/20 normal-case">{(form.description_why || '').length}/500</span></label>
+                {chatLoading && aiLoading === 'desc' && <span className="text-[10px] text-[#E4501C] animate-pulse">IA rédige...</span>}
+              </div>
               <textarea value={form.description_why || ''} onChange={e => set('description_why', e.target.value)} rows={4}
                 placeholder="Expliquez pourquoi ce produit est recommandé pour les voyageurs..." className={`${inputCls('description_why')} resize-none`} />
               {errors.description_why && <p className="text-xs text-red-400 mt-1">{errors.description_why}</p>}
@@ -896,12 +1231,18 @@ Réponds en JSON: {"alt_premium_id": "P0XX", "alt_budget_id": "P0XX", "raison_pr
                 placeholder="Justification générée par IA..." className={`${inputCls('justification_ai')} resize-none`} />
             </div>
             <div>
-              <label className={labelCls}>Avantages (un par ligne)</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className={labelCls.replace('mb-1.5', '')}>Avantages (un par ligne)</label>
+                {chatLoading && aiLoading === 'pros_cons' && <span className="text-[10px] text-emerald-400 animate-pulse">IA génère...</span>}
+              </div>
               <textarea value={(form.advantages_array || []).join('\n')} onChange={e => set('advantages_array', e.target.value.split('\n').filter(Boolean))} rows={4}
                 placeholder="Ultra léger&#10;Résistant à l'eau&#10;Ergonomique" className={`${inputCls('advantages_array')} resize-none`} />
             </div>
             <div>
-              <label className={labelCls}>Inconvénients (un par ligne)</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className={labelCls.replace('mb-1.5', '')}>Inconvénients (un par ligne)</label>
+                {chatLoading && aiLoading === 'pros_cons' && <span className="text-[10px] text-emerald-400 animate-pulse">IA génère...</span>}
+              </div>
               <textarea value={(form.disadvantages_array || []).join('\n')} onChange={e => set('disadvantages_array', e.target.value.split('\n').filter(Boolean))} rows={3}
                 placeholder="Prix élevé&#10;Peu de poches" className={`${inputCls('disadvantages_array')} resize-none`} />
             </div>
@@ -911,7 +1252,10 @@ Réponds en JSON: {"alt_premium_id": "P0XX", "alt_budget_id": "P0XX", "raison_pr
         {activeTab === 'relations' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className={labelCls}>Alternative Premium (ID)</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className={labelCls.replace('mb-1.5', '')}>Alternative Premium (ID)</label>
+                {chatLoading && aiLoading === 'alternatives' && <span className="text-[10px] text-purple-400 animate-pulse">IA cherche...</span>}
+              </div>
               <input value={form.alt_premium_id || ''} onChange={e => set('alt_premium_id', e.target.value || null)} placeholder="P042"
                 list="product-ids" className={inputCls('alt_premium_id')} />
               <datalist id="product-ids">
@@ -922,7 +1266,10 @@ Réponds en JSON: {"alt_premium_id": "P0XX", "alt_budget_id": "P0XX", "raison_pr
               )}
             </div>
             <div>
-              <label className={labelCls}>Alternative Budget (ID)</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className={labelCls.replace('mb-1.5', '')}>Alternative Budget (ID)</label>
+                {chatLoading && aiLoading === 'alternatives' && <span className="text-[10px] text-purple-400 animate-pulse">IA cherche...</span>}
+              </div>
               <input value={form.alt_budget_id || ''} onChange={e => set('alt_budget_id', e.target.value || null)} placeholder="P015"
                 list="product-ids" className={inputCls('alt_budget_id')} />
               {form.alt_budget_id && (
@@ -930,7 +1277,10 @@ Réponds en JSON: {"alt_premium_id": "P0XX", "alt_budget_id": "P0XX", "raison_pr
               )}
             </div>
             <div>
-              <label className={labelCls}>Note qualité image alt</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className={labelCls.replace('mb-1.5', '')}>Alt image (image_alt)</label>
+                {chatLoading && aiLoading === 'seo' && <span className="text-[10px] text-pink-400 animate-pulse">IA génère...</span>}
+              </div>
               <input value={form.image_alt || ''} onChange={e => set('image_alt', e.target.value)} placeholder="Sac à dos Osprey Exos 58L vert" className={inputCls('image_alt')} />
             </div>
             <div>
@@ -995,6 +1345,12 @@ function RelationsSection({ products }: { products: ShopProduct[] }) {
   const [newAlt, setNewAlt] = useState({ original_product_id: '', substitute_product_id: '', priority: 1, reason: '' });
   const supabase = useMemo(() => createClient(), []);
 
+  // AI compatibility suggestions
+  const [aiCompatLoading, setAiCompatLoading] = useState(false);
+  const [aiCompatResult, setAiCompatResult] = useState('');
+  const [selectedProductForAI, setSelectedProductForAI] = useState('');
+  const { response: compatResponse, isLoading: compatLoading, sendMessage: sendCompatAI } = useChat('GEMINI', 'gemini/gemini-2.5-flash', false);
+
   useEffect(() => {
     Promise.all([
       supabase.from('product_compatibilities').select('*').order('created_at', { ascending: false }),
@@ -1028,6 +1384,43 @@ function RelationsSection({ products }: { products: ShopProduct[] }) {
     setAlternatives(prev => prev.filter(a => a.id !== id));
   };
 
+  const suggestCompatibilities = () => {
+    if (!selectedProductForAI) return;
+    const targetProduct = products.find(p => p.product_id === selectedProductForAI);
+    if (!targetProduct) return;
+    setAiCompatLoading(true);
+    setAiCompatResult('');
+    const productList = products.slice(0, 40).map(p => `${p.product_id}: ${p.name} (${p.category_main}, ${p.price_eur}€)`).join('\n');
+    const prompt = `Tu es expert en équipement outdoor. Pour ce produit: ${targetProduct.name} (${targetProduct.brand}, ${targetProduct.category_main})
+Parmi ces produits du catalogue, suggère 3-5 compatibilités logiques (produits qui vont bien ensemble):
+${productList}
+Réponds en JSON: {"compatibilites": [{"product_id": "P0XX", "relation_type": "compatible_with|completes|requires", "notes": "..."}]}`;
+    sendCompatAI([{ role: 'user', content: prompt }], { temperature: 0.5, max_tokens: 500 });
+  };
+
+  useEffect(() => {
+    if (!compatResponse || compatLoading) return;
+    setAiCompatLoading(false);
+    setAiCompatResult(compatResponse);
+    try {
+      const m = compatResponse.match(/\{[\s\S]*\}/);
+      if (m) {
+        const parsed = JSON.parse(m[0]);
+        if (parsed.compatibilites?.length) {
+          // Pre-fill the first suggestion
+          const first = parsed.compatibilites[0];
+          setNewCompat(prev => ({
+            ...prev,
+            product_id_1: selectedProductForAI,
+            product_id_2: first.product_id,
+            relation_type: first.relation_type || 'compatible_with',
+            notes: first.notes || '',
+          }));
+        }
+      }
+    } catch (_e) { /* ignore */ }
+  }, [compatResponse, compatLoading, selectedProductForAI]);
+
   const inputCls = 'bg-[#162019] border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#E4501C]/50 transition-colors';
   const getProductName = (pid: string) => products.find(p => p.product_id === pid)?.name || pid;
 
@@ -1046,6 +1439,53 @@ function RelationsSection({ products }: { products: ShopProduct[] }) {
         <>
           {tab === 'compat' && (
             <div className="space-y-3">
+              {/* AI Compatibility Suggestions */}
+              <div className="bg-purple-500/8 border border-purple-500/20 rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Icon name="SparklesIcon" size={14} variant="outline" className="text-purple-400" />
+                  <span className="text-sm font-medium text-white/70">IA — Suggérer des compatibilités</span>
+                </div>
+                <div className="flex gap-2">
+                  <select value={selectedProductForAI} onChange={e => setSelectedProductForAI(e.target.value)} className={`flex-1 ${inputCls}`}>
+                    <option value="">Choisir un produit...</option>
+                    {products.slice(0, 80).map(p => <option key={p.product_id} value={p.product_id}>{p.product_id}: {p.name}</option>)}
+                  </select>
+                  <button
+                    onClick={suggestCompatibilities}
+                    disabled={!selectedProductForAI || aiCompatLoading || compatLoading}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/20 text-purple-400 text-sm hover:bg-purple-500/30 disabled:opacity-40 transition-all"
+                  >
+                    {(aiCompatLoading || compatLoading) ? <><AISpinner /> En cours...</> : '✨ Suggérer'}
+                  </button>
+                </div>
+                {aiCompatResult && !compatLoading && (
+                  <div className="space-y-1">
+                    {(() => {
+                      try {
+                        const m = aiCompatResult.match(/\{[\s\S]*\}/);
+                        if (m) {
+                          const parsed = JSON.parse(m[0]);
+                          return (parsed.compatibilites || []).map((c: {product_id: string; relation_type: string; notes: string}, i: number) => (
+                            <div key={i} className="flex items-center gap-2 text-xs text-white/60 bg-white/3 rounded-lg px-3 py-2">
+                              <span className="font-mono text-purple-400">{c.product_id}</span>
+                              <span className="text-white/30">→</span>
+                              <span>{getProductName(c.product_id)}</span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-400/10 text-blue-400">{c.relation_type}</span>
+                              <span className="text-white/30 ml-auto">{c.notes}</span>
+                              <button
+                                onClick={() => setNewCompat({ product_id_1: selectedProductForAI, product_id_2: c.product_id, relation_type: c.relation_type, notes: c.notes })}
+                                className="text-[10px] px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-all"
+                              >Utiliser</button>
+                            </div>
+                          ));
+                        }
+                      } catch (_e) { /* ignore */ }
+                      return null;
+                    })()}
+                  </div>
+                )}
+              </div>
+
               <div className="bg-[#1E2B25] border border-white/8 rounded-xl p-4 space-y-3">
                 <h3 className="text-sm font-semibold text-white">Ajouter une relation</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -1137,6 +1577,15 @@ function ImportSection({ onImportDone }: { onImportDone: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const supabase = useMemo(() => createClient(), []);
 
+  // AI column mapping
+  const [rawHeaders, setRawHeaders] = useState<string[]>([]);
+  const [aiMappingLoading, setAiMappingLoading] = useState(false);
+  const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
+  const [showMapping, setShowMapping] = useState(false);
+  const { response: mappingResponse, isLoading: mappingLoading, sendMessage: sendMappingAI } = useChat('GEMINI', 'gemini/gemini-2.5-flash', false);
+
+  const EXPECTED_COLUMNS = ['product_id', 'name', 'brand', 'model', 'category_main', 'category_sub', 'price_eur', 'weight_g', 'score_kdv', 'essentiality', 'cabin_compatible', 'available_europe', 'available_usa', 'score_quality', 'score_price', 'score_durability', 'description_why'];
+
   const parseCSV = (text: string) => {
     const lines = text.trim().split('\n');
     if (lines.length < 2) return [];
@@ -1169,12 +1618,43 @@ function ImportSection({ onImportDone }: { onImportDone: () => void }) {
     reader.onload = ev => {
       const text = ev.target?.result as string;
       setCsvText(text);
+      const lines = text.trim().split('\n');
+      const headers = lines[0]?.split(',').map(h => h.trim().replace(/^"|"$/g, '')) || [];
+      setRawHeaders(headers);
       const rows = parseCSV(text);
       setPreview(rows.slice(0, 5));
       setErrors(validateRows(rows));
+      // Check if headers match expected — if not, suggest AI mapping
+      const mismatched = headers.filter(h => !EXPECTED_COLUMNS.includes(h));
+      if (mismatched.length > 0) {
+        setShowMapping(true);
+      }
     };
     reader.readAsText(file, 'UTF-8');
   };
+
+  const runAIColumnMapping = () => {
+    if (!rawHeaders.length) return;
+    setAiMappingLoading(true);
+    const prompt = `Tu es expert en import de données produits. Mappe ces colonnes CSV vers les colonnes attendues de la base de données:
+Colonnes CSV: ${rawHeaders.join(', ')}
+Colonnes attendues: ${EXPECTED_COLUMNS.join(', ')}
+Pour chaque colonne CSV, indique la colonne attendue correspondante (ou null si pas de correspondance).
+Réponds en JSON: {"mapping": {"colonne_csv": "colonne_attendue_ou_null"}}`;
+    sendMappingAI([{ role: 'user', content: prompt }], { temperature: 0.2, max_tokens: 400 });
+  };
+
+  useEffect(() => {
+    if (!mappingResponse || mappingLoading) return;
+    setAiMappingLoading(false);
+    try {
+      const m = mappingResponse.match(/\{[\s\S]*\}/);
+      if (m) {
+        const parsed = JSON.parse(m[0]);
+        if (parsed.mapping) setColumnMapping(parsed.mapping);
+      }
+    } catch (_e) { /* ignore */ }
+  }, [mappingResponse, mappingLoading]);
 
   const handleImport = async () => {
     const rows = parseCSV(csvText);
@@ -1183,7 +1663,13 @@ function ImportSection({ onImportDone }: { onImportDone: () => void }) {
     setImporting(true);
     let success = 0;
     let fail = 0;
-    for (const row of rows) {
+    for (const rawRow of rows) {
+      // Apply column mapping if available
+      const row: Record<string, string> = {};
+      for (const [csvCol, val] of Object.entries(rawRow)) {
+        const mappedCol = columnMapping[csvCol] || csvCol;
+        if (mappedCol && mappedCol !== 'null') row[mappedCol] = val;
+      }
       const slug = (row.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + (row.product_id || '').toLowerCase();
       const product = {
         product_id: row.product_id,
@@ -1229,6 +1715,40 @@ function ImportSection({ onImportDone }: { onImportDone: () => void }) {
         </button>
         <input ref={fileRef} type="file" accept=".csv,.txt" onChange={handleFile} className="hidden" />
 
+        {/* AI Column Mapping */}
+        {showMapping && rawHeaders.length > 0 && (
+          <div className="bg-sky-500/8 border border-sky-500/20 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Icon name="SparklesIcon" size={14} variant="outline" className="text-sky-400" />
+                <span className="text-sm font-medium text-white/70">IA — Mapping des colonnes</span>
+              </div>
+              <button
+                onClick={runAIColumnMapping}
+                disabled={aiMappingLoading || mappingLoading}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-400 text-xs hover:bg-sky-500/30 disabled:opacity-40 transition-all"
+              >
+                {(aiMappingLoading || mappingLoading) ? <><AISpinner /> Analyse...</> : '🗺️ Mapper automatiquement'}
+              </button>
+            </div>
+            <p className="text-xs text-white/40">Colonnes détectées: <span className="text-sky-400">{rawHeaders.join(', ')}</span></p>
+            {Object.keys(columnMapping).length > 0 && (
+              <div className="space-y-1">
+                <p className="text-xs text-white/50 font-medium">Mapping appliqué:</p>
+                <div className="grid grid-cols-2 gap-1">
+                  {Object.entries(columnMapping).filter(([, v]) => v && v !== 'null').map(([from, to]) => (
+                    <div key={from} className="flex items-center gap-2 text-[10px] bg-white/3 rounded px-2 py-1">
+                      <span className="text-sky-400 font-mono">{from}</span>
+                      <span className="text-white/30">→</span>
+                      <span className="text-white/60 font-mono">{to}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {errors.length > 0 && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
             <p className="text-xs font-medium text-red-400 mb-2">⚠️ {errors.length} erreur(s) détectée(s)</p>
@@ -1258,7 +1778,7 @@ function ImportSection({ onImportDone }: { onImportDone: () => void }) {
         {preview.length > 0 && (
           <button onClick={handleImport} disabled={importing || errors.length > 5}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E4501C] text-white text-sm font-medium hover:bg-[#cc3d10] disabled:opacity-50 transition-all">
-            {importing ? <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />Import en cours...</> : <><Icon name="CloudArrowUpIcon" size={14} variant="outline" />Importer {parseCSV(csvText).length} produits</>}
+            {importing ? <><AISpinner />Import en cours...</> : <><Icon name="CloudArrowUpIcon" size={14} variant="outline" />Importer {parseCSV(csvText).length} produits</>}
           </button>
         )}
 
@@ -1410,7 +1930,13 @@ export default function AdminProductsManager() {
           </Link>
           <span className="text-white/20">/</span>
           <h1 className="font-semibold text-white text-sm">Gestion Produits</h1>
-          <span className="ml-auto font-mono text-xs text-white/30">{products.length} produits en base</span>
+          <div className="ml-auto flex items-center gap-3">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#E4501C]/10 border border-[#E4501C]/20">
+              <Icon name="SparklesIcon" size={11} variant="outline" className="text-[#E4501C]" />
+              <span className="text-[10px] font-medium text-[#E4501C]">IA Gemini</span>
+            </div>
+            <span className="font-mono text-xs text-white/30">{products.length} produits en base</span>
+          </div>
         </div>
       </div>
 
