@@ -486,7 +486,7 @@ export default function CountryPage({ params }: { params: Promise<{ code: string
                     <div className="topo-card p-4 border border-amber-400/20 bg-amber-400/5 mb-4">
                       <p className="text-sm text-amber-400 flex items-center gap-2">
                         <Icon name="ExclamationTriangleIcon" size={16} variant="outline" />
-                        Ces informations n'ont pas pu être vérifiées auprès d'une source officielle. Consultez directement <a href={country.securite.source_officielle.url} target="_blank" rel="noopener noreferrer" className="underline">France Diplomatie</a>.
+                        Ces informations n&apos;ont pas pu être vérifiées auprès d&apos;une source officielle. Consultez directement <a href={country.securite.source_officielle.url} target="_blank" rel="noopener noreferrer" className="underline">France Diplomatie</a>.
                       </p>
                     </div>
                   )}
@@ -546,7 +546,7 @@ export default function CountryPage({ params }: { params: Promise<{ code: string
                     <div className="topo-card p-4 border border-amber-400/20 bg-amber-400/5 mb-4">
                       <p className="text-sm text-amber-400 flex items-center gap-2">
                         <Icon name="ExclamationTriangleIcon" size={16} variant="outline" />
-                        Consultez un médecin du voyage ou le site de l'Institut Pasteur avant votre départ.
+                        Consultez un médecin du voyage ou le site de l&apos;Institut Pasteur avant votre départ.
                       </p>
                     </div>
                   )}

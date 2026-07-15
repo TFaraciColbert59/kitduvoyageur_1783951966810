@@ -61,7 +61,7 @@ export default function PaysPage() {
     setPage(1);
   }, [search, continent, dangerFilter, tagFilter]);
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const _totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const displayItems = filtered.slice(0, page * PAGE_SIZE);
   const hasMore = page * PAGE_SIZE < filtered.length;
 
