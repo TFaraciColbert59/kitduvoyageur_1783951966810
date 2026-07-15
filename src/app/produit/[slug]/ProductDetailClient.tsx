@@ -8,6 +8,7 @@ import TopoSeparator from '@/components/TopoSeparator';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
 import { saveCart, getCart } from '@/lib/cart';
+import AuctionZone from '@/components/AuctionZone';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type ListingType = 'neuf' | 'kit' | 'occasion' | 'enchere' | 'location';
@@ -121,7 +122,11 @@ const mockProduct: Product = {
     { author: 'Thomas R.', rating: 5, comment: "Confort incroyable même en longue journée. L'accès bas est très pratique.", date: '2024-07-03', verified: true },
     { author: 'Sophie M.', rating: 4, comment: 'Excellent sac, léger pour sa capacité. Juste un peu cher mais la qualité justifie le prix.', date: '2024-06-18', verified: false },
   ],
-  listing_type: 'neuf',
+  listing_type: 'enchere',
+  prix_depart_cents: 18000,
+  enchere_actuelle_cents: 26500,
+  date_fin_enchere: new Date(Date.now() + 2 * 3600000 + 15 * 60000).toISOString(), // ends in ~2h15 (ending soon)
+  nombre_encherisseurs: 7,
 };
 
 const relatedProducts = [
@@ -786,7 +791,21 @@ export default function ProductDetailClient() {
               {listingType === 'neuf' && <ActionZoneNeuf product={product} onAddToCart={handleAddToCart} added={addedToCart} />}
               {listingType === 'kit' && <ActionZoneKit product={product} />}
               {listingType === 'occasion' && <ActionZoneOccasion product={product} />}
-              {listingType === 'enchere' && <ActionZoneEnchere product={product} />}
+              {listingType === 'enchere' && (
+                <AuctionZone
+                  listing={{
+                    id: product.id,
+                    produit_id: product.id,
+                    prix_depart_cents: product.prix_depart_cents ?? 0,
+                    enchere_actuelle_cents: product.enchere_actuelle_cents ?? product.prix_depart_cents ?? 0,
+                    increment_min_cents: product.prix_depart_cents ? Math.round(product.prix_depart_cents * 0.05) : 500,
+                    date_fin_enchere: product.date_fin_enchere ?? new Date(Date.now() + 7 * 86400000).toISOString(),
+                    nombre_encherisseurs: product.nombre_encherisseurs ?? 0,
+                    statut: 'actif',
+                    vendeur_id: undefined,
+                  }}
+                />
+              )}
               {listingType === 'location' && <ActionZoneLocation product={product} />}
             </div>
           </div>
