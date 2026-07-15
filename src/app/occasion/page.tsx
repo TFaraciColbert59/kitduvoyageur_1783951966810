@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
 
 interface OccasionItem {
   id: string;
@@ -40,6 +39,160 @@ const conditionConfig = {
   bon: { label: 'Bon état', color: 'text-amber-700 bg-amber-50 border-amber-200', badge: 'bg-amber-500' },
   acceptable: { label: 'Acceptable', color: 'text-gray-600 bg-gray-50 border-gray-200', badge: 'bg-gray-400' },
 };
+
+const STATIC_LISTINGS: OccasionItem[] = [
+  {
+    id: '1',
+    slug: 'occasion-tente-nemo-dagger',
+    title: 'Tente NEMO Dagger 2P',
+    seller: 'Sophie M.',
+    sellerAvatar: 'S',
+    sellerTrustScore: 94,
+    sellerSales: 12,
+    category: 'Tentes',
+    price: 180,
+    originalPrice: 420,
+    condition: 'tres_bon',
+    location: 'Toulouse',
+    postedAt: '2026-07-10T10:00:00Z',
+    image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600&q=80',
+    alt: 'Tente NEMO Dagger 2 places verte montée dans une forêt',
+    tags: ['2 places', '3 saisons', 'Légère'],
+    description: 'Tente NEMO Dagger 2P en très bon état. Utilisée 10 nuits. Toutes les sardines présentes. Légère et facile à monter.',
+    negotiable: true,
+    shippingAvailable: true,
+    shippingCost: 15,
+    brand: 'NEMO',
+    purchaseYear: '2024',
+    weight: '1.6 kg',
+  },
+  {
+    id: '2',
+    slug: 'occasion-sac-gregory-baltoro',
+    title: 'Sac à dos Gregory Baltoro 75L',
+    seller: 'Marc D.',
+    sellerAvatar: 'M',
+    sellerTrustScore: 87,
+    sellerSales: 5,
+    category: 'Sacs à dos',
+    price: 130,
+    originalPrice: 320,
+    condition: 'bon',
+    location: 'Bordeaux',
+    postedAt: '2026-07-08T14:00:00Z',
+    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80',
+    alt: 'Sac à dos Gregory Baltoro 75L rouge posé sur un sentier de montagne',
+    tags: ['75L', 'Taille L', 'Randonnée'],
+    description: 'Gregory Baltoro 75L taille L. Utilisé 3 saisons. Armature en parfait état. Quelques marques d\'usure sur le fond.',
+    negotiable: false,
+    shippingAvailable: true,
+    shippingCost: 20,
+    brand: 'Gregory',
+    purchaseYear: '2023',
+    weight: '2.1 kg',
+  },
+  {
+    id: '3',
+    slug: 'occasion-rechaud-msr-windburner',
+    title: 'Réchaud MSR WindBurner 1.0L',
+    seller: 'Julie K.',
+    sellerAvatar: 'J',
+    sellerTrustScore: 91,
+    sellerSales: 8,
+    category: 'Cuisine',
+    price: 65,
+    originalPrice: 140,
+    condition: 'comme_neuf',
+    location: 'Strasbourg',
+    postedAt: '2026-07-12T09:00:00Z',
+    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=80',
+    alt: 'Réchaud MSR WindBurner avec casserole intégrée sur une table de camping',
+    tags: ['Intégré', 'Coupe-vent', '1L'],
+    description: 'MSR WindBurner 1.0L comme neuf. Utilisé 2 fois. Système intégré très efficace par vent fort. Vendu avec la cartouche.',
+    negotiable: false,
+    shippingAvailable: true,
+    shippingCost: 8,
+    brand: 'MSR',
+    purchaseYear: '2025',
+    weight: '400 g',
+  },
+  {
+    id: '4',
+    slug: 'occasion-chaussures-salomon-xa-pro',
+    title: 'Chaussures Salomon XA Pro 3D GTX',
+    seller: 'Pierre L.',
+    sellerAvatar: 'P',
+    sellerTrustScore: 82,
+    sellerSales: 3,
+    category: 'Chaussures',
+    price: 75,
+    originalPrice: 160,
+    condition: 'bon',
+    location: 'Nantes',
+    postedAt: '2026-07-09T16:00:00Z',
+    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80',
+    alt: 'Chaussures de trail Salomon XA Pro 3D GTX bleues sur fond blanc',
+    tags: ['Gore-Tex', 'Taille 43', 'Trail'],
+    description: 'Salomon XA Pro 3D GTX taille 43. Environ 200 km au compteur. Semelle encore bien présente. Imperméabilité intacte.',
+    negotiable: true,
+    shippingAvailable: false,
+    brand: 'Salomon',
+    purchaseYear: '2024',
+    weight: '340 g',
+  },
+  {
+    id: '5',
+    slug: 'occasion-sac-de-couchage-rab-neutrino',
+    title: 'Sac de couchage Rab Neutrino 400',
+    seller: 'Claire B.',
+    sellerAvatar: 'C',
+    sellerTrustScore: 95,
+    sellerSales: 15,
+    category: 'Couchage',
+    price: 160,
+    originalPrice: 380,
+    condition: 'tres_bon',
+    location: 'Lyon',
+    postedAt: '2026-07-11T11:00:00Z',
+    image: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=600&q=80',
+    alt: 'Sac de couchage Rab Neutrino 400 bleu déplié sur un matelas de camping',
+    tags: ['Duvet', '-7°C', 'Compressible'],
+    description: 'Rab Neutrino 400 en très bon état. Duvet d\'oie 800+ cuin. Lavé et traité DWR. Idéal 3 saisons à haute altitude.',
+    negotiable: false,
+    shippingAvailable: true,
+    shippingCost: 12,
+    brand: 'Rab',
+    purchaseYear: '2024',
+    weight: '680 g',
+  },
+  {
+    id: '6',
+    slug: 'occasion-lampe-petzl-nao',
+    title: 'Lampe frontale Petzl NAO+ 750 lm',
+    seller: 'Antoine R.',
+    sellerAvatar: 'A',
+    sellerTrustScore: 89,
+    sellerSales: 7,
+    category: 'Éclairage',
+    price: 55,
+    originalPrice: 120,
+    condition: 'tres_bon',
+    location: 'Marseille',
+    postedAt: '2026-07-13T08:00:00Z',
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
+    alt: 'Lampe frontale Petzl NAO+ noire avec batterie rechargeable',
+    tags: ['750 lm', 'Rechargeable', 'Réactive'],
+    description: 'Petzl NAO+ 750 lm. Batterie rechargeable en bon état (80% capacité). Éclairage réactif automatique. Vendu avec câble USB.',
+    negotiable: true,
+    shippingAvailable: true,
+    shippingCost: 6,
+    brand: 'Petzl',
+    purchaseYear: '2024',
+    weight: '186 g',
+  },
+];
+
+const CATEGORIES = ['Tout', 'Cuisine', 'Chaussures', 'Tentes', 'Éclairage', 'Couchage', 'Bâtons', 'Sacs à dos', 'Navigation', 'Vêtements', 'Escalade', 'Sécurité'];
 
 function ContactModal({ item, onClose }: { item: OccasionItem; onClose: () => void }) {
   const [message, setMessage] = useState(`Bonjour ${item.seller.split(' ')[0]}, je suis intéressé(e) par votre annonce "${item.title}". Est-il toujours disponible ?`);
@@ -143,7 +296,7 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: 'Marque', value: item.brand },
-                { label: 'Année d\'achat', value: item.purchaseYear },
+                { label: "Année d'achat", value: item.purchaseYear },
                 { label: 'Poids', value: item.weight },
                 { label: 'Dimensions', value: item.dimensions },
                 { label: 'Livraison', value: item.shippingAvailable ? `Disponible${item.shippingCost ? ` (${item.shippingCost}€)` : ''}` : 'Remise en main propre' },
@@ -188,11 +341,8 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
   );
 }
 
-const CATEGORIES = ['Tout', 'Cuisine', 'Chaussures', 'Tentes', 'Éclairage', 'Couchage', 'Bâtons', 'Sacs à dos', 'Navigation', 'Vêtements', 'Escalade', 'Sécurité'];
-
 export default function OccasionPage() {
-  const [listings, setListings] = useState<OccasionItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [listings] = useState<OccasionItem[]>(STATIC_LISTINGS);
   const [selectedItem, setSelectedItem] = useState<OccasionItem | null>(null);
   const [category, setCategory] = useState('Tout');
   const [sortBy, setSortBy] = useState<'recent' | 'price_asc' | 'price_desc' | 'discount'>('recent');
@@ -200,164 +350,113 @@ export default function OccasionPage() {
   const [showSellModal, setShowSellModal] = useState(false);
   const [sellSent, setSellSent] = useState(false);
 
-  const supabase = useMemo(() => createClient(), []);
-
-  useEffect(() => {
-    supabase
-      .from('occasion_items')
-      .select('*')
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (error) {
-          console.error('Occasion fetch error:', error);
-          setLoading(false);
-          return;
-        }
-        const mapped: OccasionItem[] = (data ?? []).map((row: Record<string, unknown>) => {
-          const condRaw = (row.condition as string) ?? 'bon';
-          const validConditions = ['comme_neuf', 'tres_bon', 'bon', 'acceptable'] as const;
-          const condition = validConditions.includes(condRaw as typeof validConditions[number])
-            ? (condRaw as OccasionItem['condition'])
-            : 'bon';
-          return {
-            id: row.id as string,
-            slug: `occasion-${row.id as string}`,
-            title: row.title as string,
-            seller: 'Vendeur',
-            sellerAvatar: 'V',
-            sellerTrustScore: 70,
-            sellerSales: 0,
-            category: 'Matériel',
-            price: Number(row.price ?? 0),
-            originalPrice: Number(row.original_price ?? 0),
-            condition,
-            location: (row.location as string) ?? '',
-            postedAt: (row.created_at as string) ?? new Date().toISOString(),
-            image: (row.image as string) ?? '',
-            alt: (row.alt as string) ?? (row.title as string),
-            tags: [],
-            description: (row.description as string) ?? '',
-            negotiable: Boolean(row.negotiable),
-            shippingAvailable: Boolean(row.shipping),
-          };
-        });
-        setListings(mapped);
-        setLoading(false);
-      });
-  }, [supabase]);
-
   const filtered = listings
-    .filter((l) => category === 'Tout' || l.category === category)
-    .filter((l) => !search || l.title.toLowerCase().includes(search.toLowerCase()) || l.tags.some((t) => t.toLowerCase().includes(search.toLowerCase())))
+    .filter((item) => {
+      const matchCat = category === 'Tout' || item.category === category;
+      const matchSearch = search === '' || item.title.toLowerCase().includes(search.toLowerCase()) || item.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()));
+      return matchCat && matchSearch;
+    })
     .sort((a, b) => {
       if (sortBy === 'recent') return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime();
       if (sortBy === 'price_asc') return a.price - b.price;
       if (sortBy === 'price_desc') return b.price - a.price;
-      if (sortBy === 'discount') return (b.originalPrice > 0 ? (1 - b.price / b.originalPrice) : 0) - (a.originalPrice > 0 ? (1 - a.price / a.originalPrice) : 0);
+      if (sortBy === 'discount') {
+        const discA = a.originalPrice > 0 ? (1 - a.price / a.originalPrice) : 0;
+        const discB = b.originalPrice > 0 ? (1 - b.price / b.originalPrice) : 0;
+        return discB - discA;
+      }
       return 0;
     });
-
-  const avgDiscount = listings.length > 0
-    ? Math.round(listings.filter(l => l.originalPrice > 0).reduce((s, l) => s + (1 - l.price / l.originalPrice) * 100, 0) / Math.max(listings.filter(l => l.originalPrice > 0).length, 1))
-    : 0;
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="pt-20">
         {/* Hero */}
-        <section className="bg-dark-bg text-white py-10 px-4 border-b border-white/5">
+        <section className="bg-dark-bg text-white py-10 px-4">
           <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-secondary/20 flex items-center justify-center">
+                <Icon name="TagIcon" size={22} variant="outline" className="text-secondary" />
+              </div>
               <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                    <Icon name="TagIcon" size={20} variant="outline" className="text-emerald-400" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-mono text-emerald-400/80 tracking-widest uppercase">Marketplace · Seconde main</p>
-                    <h1 className="text-2xl font-display font-800 tracking-tight">Matériel d&apos;occasion</h1>
-                  </div>
-                </div>
-                <p className="text-white/60 text-sm max-w-xl">Achetez et vendez du matériel outdoor de qualité. Économisez jusqu&apos;à 70% sur les meilleures marques.</p>
+                <p className="text-xs font-mono text-secondary/80 tracking-widest uppercase">Phase 3 · Marketplace</p>
+                <h1 className="text-2xl font-display font-800 tracking-tight">Matériel d&apos;Occasion</h1>
               </div>
-              <button
-                onClick={() => setShowSellModal(true)}
-                className="flex items-center gap-2 px-5 py-3 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl font-medium transition-all shadow-lg shadow-emerald-500/20 whitespace-nowrap"
-              >
-                <Icon name="PlusIcon" size={18} variant="outline" />
-                Vendre mon matériel
-              </button>
             </div>
-
-            <div className="grid grid-cols-3 gap-3 mt-6 max-w-sm">
+            <p className="text-white/60 text-sm max-w-xl">Achetez et vendez du matériel outdoor de seconde main. Économisez jusqu&apos;à 60% sur les meilleures marques.</p>
+            <div className="grid grid-cols-3 gap-3 max-w-sm mt-4">
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-xl font-display font-700 text-emerald-400">{listings.length}</p>
-                <p className="text-xs text-white/50">Annonces</p>
+                <p className="text-xl font-display font-700 text-secondary">{listings.length}</p>
+                <p className="text-xs text-white/50">Annonces actives</p>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-xl font-display font-700 text-amber-400">{avgDiscount}%</p>
-                <p className="text-xs text-white/50">Remise moy.</p>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-xl font-display font-700 text-blue-400">{listings.filter((l) => l.condition === 'comme_neuf' || l.condition === 'tres_bon').length}</p>
+                <p className="text-xl font-display font-700 text-amber-400">
+                  {listings.filter((l) => l.condition === 'comme_neuf' || l.condition === 'tres_bon').length}
+                </p>
                 <p className="text-xs text-white/50">Très bon état</p>
+              </div>
+              <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
+                <p className="text-xl font-display font-700 text-emerald-400">{listings.filter((l) => l.negotiable).length}</p>
+                <p className="text-xs text-white/50">Négociables</p>
               </div>
             </div>
           </div>
         </section>
 
         <div className="max-w-7xl mx-auto px-4 py-8">
-          {/* Filters */}
+          {/* Search & Filters */}
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
             <div className="relative flex-1">
-              <Icon name="MagnifyingGlassIcon" size={16} variant="outline" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Icon name="MagnifyingGlassIcon" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Rechercher un article..."
+                className="input-field pl-9 w-full"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="input-field pl-9 w-full"
               />
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setCategory(cat)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${category === cat ? 'bg-primary text-white' : 'bg-card border border-border text-muted-foreground hover:text-foreground'}`}
-                >
-                  {cat}
-                </button>
-              ))}
             </div>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="px-3 py-1.5 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground"
+              className="px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
-              <option value="recent">Plus récent</option>
+              <option value="recent">Plus récents</option>
               <option value="price_asc">Prix croissant</option>
               <option value="price_desc">Prix décroissant</option>
-              <option value="discount">Meilleure remise</option>
+              <option value="discount">Meilleures remises</option>
             </select>
+            <button
+              onClick={() => setShowSellModal(true)}
+              className="btn-primary flex items-center gap-2 whitespace-nowrap"
+            >
+              <Icon name="PlusIcon" size={16} />
+              Vendre un article
+            </button>
+          </div>
+
+          {/* Category Filters */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setCategory(cat)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${category === cat ? 'bg-primary text-white' : 'bg-card border border-border text-muted-foreground hover:text-foreground'}`}
+              >
+                {cat}
+              </button>
+            ))}
           </div>
 
           {/* Grid */}
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-72 bg-card border border-border rounded-2xl animate-pulse" />
-              ))}
-            </div>
-          ) : filtered.length === 0 ? (
+          {filtered.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
-              <Icon name="MagnifyingGlassIcon" size={32} variant="outline" className="mx-auto mb-3 opacity-30" />
-              <p>Aucun article trouvé</p>
+              <Icon name="TagIcon" size={32} variant="outline" className="mx-auto mb-3 opacity-30" />
+              <p>Aucune annonce trouvée</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filtered.map((item) => {
                 const cond = conditionConfig[item.condition];
                 const discount = item.originalPrice > 0 ? Math.round((1 - item.price / item.originalPrice) * 100) : 0;
@@ -367,57 +466,52 @@ export default function OccasionPage() {
                     className="topo-card group flex flex-col cursor-pointer hover:border-primary/20 transition-all"
                     onClick={() => setSelectedItem(item)}
                   >
-                    <div className="relative overflow-hidden aspect-[4/3]">
+                    <div className="relative overflow-hidden aspect-[4/3] rounded-t-xl">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={item.image} alt={item.alt} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                      <div className="absolute top-3 left-3">
-                        <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full border ${cond.color}`}>{cond.label}</span>
+                      <img src={item.image} alt={item.alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <div className="absolute top-2 left-2 flex gap-1.5">
+                        <span className={`text-xs font-600 px-2 py-0.5 rounded-full border ${cond.color}`}>{cond.label}</span>
                       </div>
                       {discount > 0 && (
-                        <div className="absolute top-3 right-3 bg-primary rounded-lg px-2 py-1">
+                        <div className="absolute top-2 right-2 bg-primary rounded-lg px-2 py-1">
                           <span className="text-white text-xs font-700">-{discount}%</span>
                         </div>
                       )}
                     </div>
-                    <div className="p-4 flex flex-col flex-1 gap-3">
-                      <div>
-                        <p className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider mb-1">{item.category}</p>
-                        <h3 className="font-display font-700 text-foreground text-base leading-tight">{item.title}</h3>
+
+                    <div className="p-4 flex flex-col flex-1">
+                      <h3 className="font-display font-700 text-foreground text-sm mb-1 line-clamp-2">{item.title}</h3>
+                      <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{item.description}</p>
+
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {item.tags.slice(0, 3).map((tag) => (
+                          <span key={tag} className="px-1.5 py-0.5 bg-muted rounded text-[10px] text-muted-foreground">{tag}</span>
+                        ))}
                       </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
-                      <div className="flex items-center gap-2 mt-auto">
-                        <div className="w-7 h-7 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-700 flex-shrink-0">
-                          {item.sellerAvatar}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs text-foreground font-500 truncate">{item.seller}</p>
-                          <p className="text-[10px] text-muted-foreground">{item.location}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-display font-700 text-foreground text-lg">{item.price}€</p>
-                          {item.originalPrice > 0 && <p className="text-[10px] text-muted-foreground line-through">{item.originalPrice}€</p>}
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setSelectedItem(item); }}
-                          className="flex-1 py-2 text-xs font-medium bg-primary/10 text-primary border border-primary/20 rounded-lg hover:bg-primary/20 transition-all"
-                        >
-                          Voir l&apos;annonce
-                        </button>
-                        <Link
-                          href={`/produit/${item.slug}?type=occasion`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="px-3 py-2 rounded-lg border border-primary/30 text-primary text-xs font-medium hover:bg-primary/10 transition-colors flex items-center"
-                        >
-                          <Icon name="ArrowTopRightOnSquareIcon" size={13} variant="outline" />
-                        </Link>
-                        {item.shippingAvailable && (
-                          <div className="flex items-center gap-1 px-2 py-1 bg-muted rounded-lg">
-                            <Icon name="TruckIcon" size={12} variant="outline" className="text-muted-foreground" />
-                            {item.shippingCost && <span className="text-[10px] text-muted-foreground">{item.shippingCost}€</span>}
+
+                      <div className="mt-auto">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-baseline gap-2">
+                            <span className="font-display font-800 text-foreground text-xl">{item.price}€</span>
+                            {item.originalPrice > 0 && (
+                              <span className="text-muted-foreground line-through text-xs">{item.originalPrice}€</span>
+                            )}
                           </div>
-                        )}
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-700">
+                              {item.sellerAvatar}
+                            </div>
+                            <span className="text-xs text-muted-foreground">{item.seller}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Icon name="MapPinIcon" size={10} />
+                            {item.location}
+                          </span>
+                          {item.negotiable && <span className="text-green-500 font-500">Négociable</span>}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -428,8 +522,6 @@ export default function OccasionPage() {
         </div>
       </main>
 
-      <Footer />
-
       {selectedItem && <ItemDetailModal item={selectedItem} onClose={() => setSelectedItem(null)} />}
 
       {/* Sell Modal */}
@@ -439,28 +531,20 @@ export default function OccasionPage() {
             {!sellSent ? (
               <>
                 <div className="flex items-center justify-between mb-5">
-                  <h3 className="font-display font-700 text-foreground text-lg">Vendre mon matériel</h3>
-                  <button onClick={() => setShowSellModal(false)} className="p-1.5 rounded-lg hover:bg-muted transition-colors"><Icon name="XMarkIcon" size={18} /></button>
+                  <h3 className="font-display font-700 text-foreground text-lg">Vendre un article</h3>
+                  <button onClick={() => setShowSellModal(false)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                    <Icon name="XMarkIcon" size={18} />
+                  </button>
                 </div>
+                <p className="text-sm text-muted-foreground mb-4">Remplissez le formulaire pour publier votre annonce. Notre équipe la validera sous 24h.</p>
                 <div className="space-y-3">
-                  <input type="text" className="input-field w-full" placeholder="Titre de l'annonce *" />
-                  <input type="text" className="input-field w-full" placeholder="Marque et modèle" />
-                  <div className="grid grid-cols-2 gap-3">
-                    <input type="number" className="input-field w-full" placeholder="Prix demandé (€) *" />
-                    <input type="number" className="input-field w-full" placeholder="Prix neuf (€)" />
-                  </div>
-                  <select className="input-field w-full">
-                    <option value="">État de l&apos;article *</option>
-                    <option>Comme neuf</option>
-                    <option>Très bon état</option>
-                    <option>Bon état</option>
-                    <option>Acceptable</option>
-                  </select>
-                  <textarea className="input-field w-full resize-none" rows={3} placeholder="Description détaillée *" />
+                  <input type="text" placeholder="Titre de l'annonce" className="input-field w-full" />
+                  <input type="number" placeholder="Prix (€)" className="input-field w-full" />
+                  <textarea placeholder="Description de l'article..." className="input-field resize-none w-full" rows={3} />
                 </div>
-                <div className="flex gap-3 mt-5">
+                <div className="flex gap-3 mt-4">
                   <button onClick={() => setShowSellModal(false)} className="btn-secondary flex-1 justify-center py-3">Annuler</button>
-                  <button onClick={() => setSellSent(true)} className="btn-primary flex-1 justify-center py-3">Publier l&apos;annonce</button>
+                  <button onClick={() => setSellSent(true)} className="btn-primary flex-1 justify-center py-3">Publier</button>
                 </div>
               </>
             ) : (
@@ -468,14 +552,16 @@ export default function OccasionPage() {
                 <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
                   <Icon name="CheckIcon" size={28} className="text-emerald-600" />
                 </div>
-                <h3 className="font-display font-700 text-foreground text-lg mb-2">Annonce publiée !</h3>
-                <p className="text-sm text-muted-foreground mb-6">Votre annonce sera visible après validation par notre équipe.</p>
-                <button onClick={() => { setShowSellModal(false); setSellSent(false); }} className="btn-primary justify-center px-8 py-3">Fermer</button>
+                <h3 className="font-display font-700 text-foreground text-lg mb-2">Annonce soumise !</h3>
+                <p className="text-sm text-muted-foreground mb-6">Votre annonce sera publiée après validation.</p>
+                <button onClick={() => { setSellSent(false); setShowSellModal(false); }} className="btn-primary justify-center px-8 py-3">Fermer</button>
               </div>
             )}
           </div>
         </div>
       )}
+
+      <Footer />
     </div>
   );
 }
