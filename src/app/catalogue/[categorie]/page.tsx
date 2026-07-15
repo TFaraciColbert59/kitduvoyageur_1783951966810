@@ -6,20 +6,33 @@ import { Metadata } from 'next';
 import TopoSeparator from '@/components/TopoSeparator';
 import Icon from '@/components/ui/AppIcon';
 import ProductCard from './ProductCard';
+import { createClient } from '@/lib/supabase/server';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.com';
+
+// Mapping: URL slug → DB category value
+const CATEGORY_SLUG_TO_DB: Record<string, string> = {
+  sacs: 'Sacs',
+  tentes: 'Tentes',
+  sommeil: 'Sommeil',
+  cuisine: 'Cuisine',
+  eau: 'Eau',
+  vetements: 'Vêtements',
+  eclairage: 'Éclairage',
+  securite: 'Sécurité',
+  navigation: 'Navigation',
+};
 
 const CATEGORY_LABELS: Record<string, string> = {
   sacs: 'Sacs à dos',
   tentes: 'Tentes',
-  'sacs-de-couchage': 'Sacs de couchage',
+  sommeil: 'Sommeil & Couchage',
   cuisine: 'Cuisine outdoor',
   eau: 'Filtration & eau',
   vetements: 'Vêtements techniques',
   eclairage: 'Éclairage',
-  sommeil: 'Confort & sommeil',
-  navigation: 'Navigation',
   securite: 'Sécurité',
+  navigation: 'Navigation',
 };
 
 interface Product {
@@ -37,197 +50,6 @@ interface Product {
   description: string;
 }
 
-const allProducts: Product[] = [
-  {
-    id: 'p1',
-    slug: 'osprey-exos-58',
-    name: 'Osprey Exos 58 L',
-    brand: 'Osprey',
-    category: 'sacs',
-    weightG: 1060,
-    priceEur: 249,
-    stock: 12,
-    badge: 'Bestseller',
-    image: 'https://images.unsplash.com/photo-1687755541812-15786d01a728',
-    imageAlt: 'Sac à dos de randonnée rouge suspendu contre un mur de pierre, bretelles ergonomiques visibles',
-    description: 'Le sac à dos de randonnée ultra-léger par excellence. Suspension AirSpeed, 58 litres, 1 060 g.',
-  },
-  {
-    id: 'p2',
-    slug: 'deuter-aircontact',
-    name: 'Deuter Aircontact Lite 45+10',
-    brand: 'Deuter',
-    category: 'sacs',
-    weightG: 1480,
-    priceEur: 189,
-    stock: 8,
-    image: 'https://img.rocket.new/generatedImages/rocket_gen_img_1a0058070-1772361191132.png',
-    imageAlt: 'Sac à dos de trekking vert avec système de suspension dorsal visible sur fond blanc',
-    description: 'Sac polyvalent avec dos ventilé Aircontact, idéal pour les treks multi-jours.',
-  },
-  {
-    id: 'p3',
-    slug: 'big-agnes-copper-spur',
-    name: 'Big Agnes Copper Spur HV2',
-    brand: 'Big Agnes',
-    category: 'tentes',
-    weightG: 1080,
-    priceEur: 549,
-    stock: 5,
-    badge: 'Léger',
-    image: 'https://images.unsplash.com/photo-1571364588707-8638d6c49fea',
-    imageAlt: 'Tente légère orange installée sur prairie alpine au coucher du soleil, montagnes en arrière-plan',
-    description: 'Tente 2 places ultra-légère avec double paroi, idéale pour la randonnée légère.',
-  },
-  {
-    id: 'p4',
-    slug: 'msr-hubba-hubba',
-    name: 'MSR Hubba Hubba NX 2',
-    brand: 'MSR',
-    category: 'tentes',
-    weightG: 1540,
-    priceEur: 479,
-    stock: 7,
-    image: 'https://images.unsplash.com/photo-1626326355479-b3a7ddcfe606',
-    imageAlt: 'Tente de camping bleue installée en bord de lac de montagne au coucher du soleil',
-    description: 'Tente 3 saisons robuste et légère, montage rapide, excellente ventilation.',
-  },
-  {
-    id: 'p5',
-    slug: 'sea-to-summit-reactor',
-    name: 'Sea to Summit Reactor +5°C',
-    brand: 'Sea to Summit',
-    category: 'sacs-de-couchage',
-    weightG: 680,
-    priceEur: 175,
-    stock: 20,
-    image: 'https://img.rocket.new/generatedImages/rocket_gen_img_1d9318392-1766063031269.png',
-    imageAlt: 'Sac de couchage bleu déplié sur sol de forêt, texture lisse et coutures apparentes',
-    description: 'Sac de couchage compact et léger pour les nuits estivales en altitude.',
-  },
-  {
-    id: 'p6',
-    slug: 'thermarest-neoair',
-    name: 'Therm-a-Rest NeoAir XLite',
-    brand: 'Therm-a-Rest',
-    category: 'sacs-de-couchage',
-    weightG: 354,
-    priceEur: 199,
-    stock: 14,
-    badge: 'Top confort',
-    image: 'https://images.unsplash.com/photo-1663707333537-9808bb2a84a0',
-    imageAlt: 'Matelas gonflable argenté déroulé dans tente, texture alvéolaire visible, fond de toile verte',
-    description: 'Matelas gonflable ultra-léger avec isolation ThermaCapture, R-value 4.5.',
-  },
-  {
-    id: 'p7',
-    slug: 'msr-pocket-rocket',
-    name: 'MSR PocketRocket 2',
-    brand: 'MSR',
-    category: 'cuisine',
-    weightG: 73,
-    priceEur: 48,
-    stock: 35,
-    badge: 'Ultra-léger',
-    image: 'https://images.unsplash.com/photo-1729872416347-38d7dfbef04e',
-    imageAlt: 'Réchaud à gaz compact posé sur rocher avec casserole en titane, fond de forêt floue',
-    description: 'Réchaud à gaz ultra-compact, 73 g, ébullition en 3,5 min pour 1 litre.',
-  },
-  {
-    id: 'p8',
-    slug: 'jetboil-flash',
-    name: 'Jetboil Flash 1L',
-    brand: 'Jetboil',
-    category: 'cuisine',
-    weightG: 371,
-    priceEur: 99,
-    stock: 18,
-    image: 'https://images.unsplash.com/photo-1520963959303-a5cc3bdf9260',
-    imageAlt: 'Système de cuisson intégré Jetboil rouge posé sur rocher avec vapeur visible',
-    description: 'Système de cuisson intégré tout-en-un, ébullition en 100 secondes.',
-  },
-  {
-    id: 'p9',
-    slug: 'arcteryx-beta-jacket',
-    name: "Arc'teryx Beta SL Jacket",
-    brand: "Arc'teryx",
-    category: 'vetements',
-    weightG: 315,
-    priceEur: 375,
-    stock: 8,
-    badge: 'Premium',
-    image: 'https://images.unsplash.com/photo-1618143928355-3d9afff6ec23',
-    imageAlt: 'Veste imperméable rouge portée par randonneur sur crête rocheuse, ciel nuageux dramatique',
-    description: 'Veste imperméable Gore-Tex ultra-légère, coupe-vent, packable.',
-  },
-  {
-    id: 'p10',
-    slug: 'patagonia-nano-puff',
-    name: 'Patagonia Nano Puff Jacket',
-    brand: 'Patagonia',
-    category: 'vetements',
-    weightG: 298,
-    priceEur: 249,
-    stock: 7,
-    badge: 'Éco',
-    image: 'https://images.unsplash.com/photo-1698988934092-41ff930addd2',
-    imageAlt: 'Veste doudoune légère bleue portée en montagne avec vue sur vallée alpine',
-    description: "Doudoune synthétique recyclée, isolation PrimaLoft, résistante à l'humidité.",
-  },
-  {
-    id: 'p11',
-    slug: 'sawyer-squeeze',
-    name: 'Sawyer Squeeze Filter',
-    brand: 'Sawyer',
-    category: 'eau',
-    weightG: 85,
-    priceEur: 34,
-    stock: 48,
-    image: 'https://images.unsplash.com/photo-1735281257493-83be781b6483',
-    imageAlt: "Filtre à eau compact bleu posé sur pierres au bord d'un ruisseau de montagne",
-    description: "Filtre à eau ultra-léger, filtre jusqu'à 378 000 litres, 0,1 micron.",
-  },
-  {
-    id: 'p12',
-    slug: 'platypus-gravityworks',
-    name: 'Platypus GravityWorks 4L',
-    brand: 'Platypus',
-    category: 'eau',
-    weightG: 170,
-    priceEur: 72,
-    stock: 18,
-    image: 'https://images.unsplash.com/photo-1631329426101-b7250cde7fd7',
-    imageAlt: "Système de filtration d'eau suspendu à branche avec poches bleues, fond de forêt",
-    description: 'Système de filtration par gravité pour le camp, 1,75 L/min.',
-  },
-  {
-    id: 'p13',
-    slug: 'black-diamond-spot',
-    name: 'Black Diamond Spot 400',
-    brand: 'Black Diamond',
-    category: 'eclairage',
-    weightG: 91,
-    priceEur: 42,
-    stock: 30,
-    image: 'https://images.unsplash.com/photo-1570612117355-e3f8b19b1c08',
-    imageAlt: "Lampe frontale noire posée sur table de camping avec faisceau lumineux visible dans l'obscurité",
-    description: 'Lampe frontale 400 lumens, étanche IPX8, rechargeable USB.',
-  },
-  {
-    id: 'p14',
-    slug: 'leki-micro-vario',
-    name: 'LEKI Micro Vario Carbon',
-    brand: 'LEKI',
-    category: 'batons',
-    weightG: 430,
-    priceEur: 159,
-    stock: 22,
-    image: 'https://images.unsplash.com/photo-1607194383665-b75c341d03d0',
-    imageAlt: 'Bâtons de randonnée carbone appuyés contre rocher sur sentier de montagne ensoleillé',
-    description: 'Bâtons carbone pliables, système Speed Lock 2, poignée Aergon Thermo.',
-  },
-];
-
 const categoryMeta: Record<string, { label: string; description: string; icon: string }> = {
   sacs: {
     label: 'Sacs à dos',
@@ -239,8 +61,8 @@ const categoryMeta: Record<string, { label: string; description: string; icon: s
     description: 'Tentes légères, 3 saisons et 4 saisons pour tous les terrains.',
     icon: 'HomeIcon',
   },
-  'sacs-de-couchage': {
-    label: 'Sacs de couchage',
+  sommeil: {
+    label: 'Sommeil & Couchage',
     description: 'Sacs de couchage et matelas pour des nuits confortables en plein air.',
     icon: 'MoonIcon',
   },
@@ -256,7 +78,7 @@ const categoryMeta: Record<string, { label: string; description: string; icon: s
   },
   eau: {
     label: 'Eau & Hydratation',
-    description: 'Filtres, gourdes et systèmes de purification pour l\'eau en nature.',
+    description: "Filtres, gourdes et systèmes de purification pour l'eau en nature.",
     icon: 'BeakerIcon',
   },
   eclairage: {
@@ -264,10 +86,15 @@ const categoryMeta: Record<string, { label: string; description: string; icon: s
     description: 'Lampes frontales et lanternes pour les aventures nocturnes.',
     icon: 'SunIcon',
   },
-  batons: {
-    label: 'Bâtons',
-    description: 'Bâtons de randonnée et trekking pour soulager vos genoux.',
-    icon: 'WrenchScrewdriverIcon',
+  securite: {
+    label: 'Sécurité',
+    description: 'Équipements de sécurité et communication pour les aventures en montagne.',
+    icon: 'ShieldCheckIcon',
+  },
+  navigation: {
+    label: 'Navigation',
+    description: 'GPS, boussoles et montres outdoor pour ne jamais vous perdre.',
+    icon: 'MapIcon',
   },
 };
 
@@ -297,7 +124,40 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function CategorieFilterPage({ params }: PageProps) {
   const { categorie } = await params;
   const meta = categoryMeta[categorie];
-  const products = allProducts.filter((p) => p.category === categorie);
+  const dbCategory = CATEGORY_SLUG_TO_DB[categorie];
+
+  // Fetch products from Supabase
+  let products: Product[] = [];
+  if (dbCategory) {
+    try {
+      const supabase = await createClient();
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, slug, name, brand, category, weight_g, price_eur, stock, image, image_alt, badge, description, featured')
+        .eq('category', dbCategory)
+        .order('featured', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        products = data.map((p) => ({
+          id: p.id,
+          slug: p.slug,
+          name: p.name,
+          brand: p.brand,
+          category: p.category,
+          weightG: p.weight_g ?? 0,
+          priceEur: Number(p.price_eur),
+          stock: p.stock ?? 0,
+          image: p.image ?? '',
+          imageAlt: p.image_alt ?? '',
+          badge: p.badge || undefined,
+          description: p.description ?? '',
+        }));
+      }
+    } catch {
+      // Silently fall through to empty state
+    }
+  }
 
   if (!meta) {
     return (
