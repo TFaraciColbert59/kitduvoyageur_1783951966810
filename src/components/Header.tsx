@@ -16,6 +16,16 @@ interface NavGroup {
 
 const NAV_GROUPS: NavGroup[] = [
   {
+    label: 'Boutique',
+    items: [
+      { label: 'Boutique', href: '/boutique', desc: 'Moteur d\'optimisation voyage', icon: 'ShoppingBagIcon' },
+      { label: 'Kits assemblés', href: '/kits', desc: 'Kits prêts à l\'emploi', icon: 'CubeIcon' },
+      { label: 'Enchères', href: '/encheres', desc: 'Équipement aux enchères', icon: 'BoltIcon' },
+      { label: 'Location', href: '/location', desc: 'Louer du matériel', icon: 'KeyIcon' },
+      { label: 'Occasion', href: '/occasion', desc: 'Matériel d\'occasion', icon: 'TagIcon' },
+    ],
+  },
+  {
     label: 'Explorer',
     items: [
       { label: 'Explorer', href: '/explorer', desc: 'Destinations, guides & outils', icon: 'GlobeAltIcon' },
