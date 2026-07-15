@@ -282,7 +282,7 @@ export default function Header() {
             </nav>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5" suppressHydrationWarning>
               {/* Search */}
               <button
                 className="hidden sm:flex p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px] min-w-[44px] items-center justify-center"
@@ -296,51 +296,58 @@ export default function Header() {
               <Link
                 href="/compte"
                 className="relative hidden sm:flex p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px] min-w-[44px] items-center justify-center"
-                aria-label={mounted && wishlistCount > 0 ? `Favoris (${wishlistCount})` : 'Favoris'}
+                aria-label="Favoris"
+                suppressHydrationWarning
               >
                 <Icon name="HeartIcon" size={18} variant="outline" />
-                {mounted && wishlistCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#E4501C] text-white text-[9px] font-mono font-700 rounded-full flex items-center justify-center" aria-hidden="true">
-                    {wishlistCount > 9 ? '9+' : wishlistCount}
-                  </span>
-                )}
+                <span
+                  className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#E4501C] text-white text-[9px] font-mono font-700 rounded-full flex items-center justify-center"
+                  aria-hidden="true"
+                  suppressHydrationWarning
+                  style={{ display: mounted && wishlistCount > 0 ? 'flex' : 'none' }}
+                >
+                  {mounted ? (wishlistCount > 9 ? '9+' : wishlistCount) : ''}
+                </span>
               </Link>
 
               {/* Cart */}
               <Link
                 href="/panier"
                 className="relative flex p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px] min-w-[44px] items-center justify-center"
-                aria-label={mounted && cartCount > 0 ? `Panier (${cartCount} article${cartCount > 1 ? 's' : ''})` : 'Panier vide'}
+                aria-label="Panier"
+                suppressHydrationWarning
               >
                 <Icon name="ShoppingBagIcon" size={18} variant="outline" />
-                {mounted && cartCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#E4501C] text-white text-[9px] font-mono font-700 rounded-full flex items-center justify-center" aria-hidden="true">
-                    {cartCount > 9 ? '9+' : cartCount}
-                  </span>
-                )}
+                <span
+                  className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#E4501C] text-white text-[9px] font-mono font-700 rounded-full flex items-center justify-center"
+                  aria-hidden="true"
+                  suppressHydrationWarning
+                  style={{ display: mounted && cartCount > 0 ? 'flex' : 'none' }}
+                >
+                  {mounted ? (cartCount > 9 ? '9+' : cartCount) : ''}
+                </span>
               </Link>
 
-              {/* Auth */}
-              {!mounted ? (
-                <div className="hidden sm:flex min-h-[44px] min-w-[44px] w-[120px]" aria-hidden="true" />
-              ) : user ? (
-                <Link
-                  href="/compte"
-                  className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px]"
-                  aria-label="Mon compte"
-                >
-                  <Icon name="UserCircleIcon" size={18} variant="outline" />
-                  <span className="hidden md:block">Mon compte</span>
-                </Link>
-              ) : (
-                <Link
-                  href="/connexion"
-                  className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-[#E4501C] hover:bg-[#cc3d10] text-white text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] min-h-[44px]"
-                >
-                  <Icon name="ArrowRightOnRectangleIcon" size={16} variant="outline" />
-                  Connexion
-                </Link>
-              )}
+              {/* Auth — always render both, toggle visibility after mount */}
+              <Link
+                href="/connexion"
+                className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-[#E4501C] hover:bg-[#cc3d10] text-white text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] min-h-[44px]"
+                suppressHydrationWarning
+                style={{ display: mounted && user ? 'none' : undefined }}
+              >
+                <Icon name="ArrowRightOnRectangleIcon" size={16} variant="outline" />
+                Connexion
+              </Link>
+              <Link
+                href="/compte"
+                className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px]"
+                aria-label="Mon compte"
+                suppressHydrationWarning
+                style={{ display: mounted && user ? undefined : 'none' }}
+              >
+                <Icon name="UserCircleIcon" size={18} variant="outline" />
+                <span className="hidden md:block">Mon compte</span>
+              </Link>
 
               {/* Mobile menu toggle */}
               <button
