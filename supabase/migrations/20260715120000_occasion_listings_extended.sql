@@ -20,7 +20,6 @@ ALTER TABLE public.listings
   ADD COLUMN IF NOT EXISTS faire_offre_active BOOLEAN DEFAULT false,
   ADD COLUMN IF NOT EXISTS occasion_statut TEXT DEFAULT 'active',
   ADD COLUMN IF NOT EXISTS historique_produit JSONB DEFAULT '{}'::jsonb,
-  ADD COLUMN IF NOT EXISTS photos_defauts JSONB DEFAULT '[]'::jsonb,
   ADD COLUMN IF NOT EXISTS vendeur_trust_score INTEGER DEFAULT 0,
   ADD COLUMN IF NOT EXISTS vendeur_nb_ventes INTEGER DEFAULT 0,
   ADD COLUMN IF NOT EXISTS vendeur_delai_reponse_heures INTEGER,
@@ -28,7 +27,7 @@ ALTER TABLE public.listings
   ADD COLUMN IF NOT EXISTS moderation_at TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS moderation_by UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL;
 
--- Note: photos_defauts column may already exist from unified_listings migration
+-- Note: photos_defauts column already exists from unified_listings migration
 -- The ADD COLUMN IF NOT EXISTS handles this safely
 
 -- 3. Moderation queue table
@@ -56,13 +55,14 @@ CREATE INDEX IF NOT EXISTS idx_moderation_queue_listing ON public.moderation_que
 -- 5. RLS on moderation_queue
 ALTER TABLE public.moderation_queue ENABLE ROW LEVEL SECURITY;
 
+-- Admin/moderator access: users with trust_score >= 80 (no role column exists on user_profiles)
 DROP POLICY IF EXISTS "moderation_queue_admin_read" ON public.moderation_queue;
 CREATE POLICY "moderation_queue_admin_read" ON public.moderation_queue
   FOR SELECT TO authenticated
   USING (
     EXISTS (
       SELECT 1 FROM public.user_profiles
-      WHERE id = auth.uid() AND role IN ('admin', 'moderateur')
+      WHERE id = auth.uid() AND trust_score >= 80
     )
   );
 
