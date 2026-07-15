@@ -1075,22 +1075,22 @@ function CommunauteTab() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-display font-700 text-[#1C2620]">Mes clubs</h3>
-            <a href="/clubs" className="text-xs text-[#E4501C] hover:underline flex items-center gap-1">
+            <Link href="/clubs" className="text-xs text-[#E4501C] hover:underline flex items-center gap-1">
               Gérer <Icon name="ArrowTopRightOnSquareIcon" size={11} />
-            </a>
+            </Link>
           </div>
           {clubs.length === 0 ? (
             <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-6 text-center">
               <p className="text-2xl mb-2">🏕️</p>
               <p className="text-sm text-[#5C6B5E] mb-3">Vous n&apos;avez rejoint aucun club</p>
-              <a href="/clubs" className="inline-flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600 hover:bg-[#E4501C]/90 transition-colors">
+              <Link href="/clubs" className="inline-flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600 hover:bg-[#E4501C]/90 transition-colors">
                 <Icon name="PlusIcon" size={14} /> Rejoindre un club
-              </a>
+              </Link>
             </div>
           ) : (
             <div className="space-y-3">
               {clubs.map((m) => (
-                <a key={m.id} href="/clubs" className="flex items-center gap-3 bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 hover:border-[#E4501C]/30 hover:shadow-sm transition-all">
+                <Link key={m.id} href="/clubs" className="flex items-center gap-3 bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 hover:border-[#E4501C]/30 hover:shadow-sm transition-all">
                   <div className="w-11 h-11 rounded-xl bg-[#1C2620] flex items-center justify-center text-xl flex-shrink-0">
                     {m.club?.emoji ?? '🏕️'}
                   </div>
@@ -1101,7 +1101,7 @@ function CommunauteTab() {
                   <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full flex-shrink-0 ${m.role === 'admin' ? 'bg-amber-100 text-amber-700' : m.role === 'moderator' ? 'bg-blue-100 text-blue-700' : 'bg-[#E7E3D6] text-[#5C6B5E]'}`}>
                     {m.role === 'admin' ? '👑 Admin' : m.role === 'moderator' ? '🛡️ Modo' : '👤 Membre'}
                   </span>
-                </a>
+                </Link>
               ))}
             </div>
           )}
@@ -1153,22 +1153,22 @@ function CommunauteTab() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-display font-700 text-[#1C2620]">Mes carnets d&apos;expédition</h3>
-          <a href="/carnets" className="text-xs text-[#E4501C] hover:underline flex items-center gap-1">
+          <Link href="/carnets" className="text-xs text-[#E4501C] hover:underline flex items-center gap-1">
             Gérer <Icon name="ArrowTopRightOnSquareIcon" size={11} />
-          </a>
+          </Link>
         </div>
         {carnets.length === 0 ? (
           <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-6 text-center">
             <p className="text-2xl mb-2">🗺️</p>
             <p className="text-sm text-[#5C6B5E] mb-3">Aucun carnet publié</p>
-            <a href="/carnets" className="inline-flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600 hover:bg-[#E4501C]/90 transition-colors">
+            <Link href="/carnets" className="inline-flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600 hover:bg-[#E4501C]/90 transition-colors">
               <Icon name="PlusIcon" size={14} /> Créer un carnet
-            </a>
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {carnets.map((c) => (
-              <a key={c.id} href="/carnets" className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl overflow-hidden hover:shadow-md hover:border-[#E4501C]/30 transition-all">
+              <Link key={c.id} href="/carnets" className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl overflow-hidden hover:shadow-md hover:border-[#E4501C]/30 transition-all">
                 <div className="relative h-32 bg-[#C8C3B0] overflow-hidden">
                   {c.cover_image ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -1188,7 +1188,7 @@ function CommunauteTab() {
                   </div>
                   <span className="font-mono font-700 text-[#E4501C] text-xs">{c.route_rating}/10</span>
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         )}

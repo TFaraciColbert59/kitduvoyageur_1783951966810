@@ -873,7 +873,7 @@ export default function CarnetsPage() {
     }
   };
 
-  const handleShare = (carnet: Carnet) => {
+  const handleShare = (_carnet: Carnet) => {
     const url = `${window.location.origin}/carnets`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url);

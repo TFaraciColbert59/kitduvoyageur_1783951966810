@@ -19,7 +19,7 @@ const STATS = [
 { value: 'Expédition', label: 'sous 48h', icon: 'BoltIcon' }];
 
 
-const FEATURES = [
+const _FEATURES = [
 {
   icon: 'SparklesIcon',
   title: 'Configurateur IA',
@@ -46,7 +46,7 @@ const FEATURES = [
 }];
 
 
-const KITS = [
+const _KITS = [
 {
   name: 'Kit Népal Trekking',
   tag: 'Best-seller',
