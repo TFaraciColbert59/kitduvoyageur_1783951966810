@@ -205,13 +205,16 @@ export default function OccasionPage() {
   useEffect(() => {
     supabase
       .from('occasion_items')
-      .select('*, seller:user_profiles!occasion_items_seller_id_fkey(full_name, trust_score)')
+      .select('*')
       .eq('status', 'active')
       .order('created_at', { ascending: false })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Occasion fetch error:', error);
+          setLoading(false);
+          return;
+        }
         const mapped: OccasionItem[] = (data ?? []).map((row: Record<string, unknown>) => {
-          const seller = row.seller as { full_name?: string; trust_score?: number } | null;
-          const sellerName = seller?.full_name ?? 'Vendeur';
           const condRaw = (row.condition as string) ?? 'bon';
           const validConditions = ['comme_neuf', 'tres_bon', 'bon', 'acceptable'] as const;
           const condition = validConditions.includes(condRaw as typeof validConditions[number])
@@ -221,9 +224,9 @@ export default function OccasionPage() {
             id: row.id as string,
             slug: `occasion-${row.id as string}`,
             title: row.title as string,
-            seller: sellerName,
-            sellerAvatar: sellerName[0]?.toUpperCase() ?? 'V',
-            sellerTrustScore: seller?.trust_score ?? 70,
+            seller: 'Vendeur',
+            sellerAvatar: 'V',
+            sellerTrustScore: 70,
             sellerSales: 0,
             category: 'Matériel',
             price: Number(row.price ?? 0),

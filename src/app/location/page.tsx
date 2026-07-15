@@ -337,13 +337,16 @@ export default function LocationPage() {
   useEffect(() => {
     supabase
       .from('rental_items')
-      .select('*, owner:user_profiles!rental_items_owner_id_fkey(full_name, trust_score)')
+      .select('*')
       .eq('status', 'available')
       .order('created_at', { ascending: false })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Location fetch error:', error);
+          setLoading(false);
+          return;
+        }
         const mapped: RentalListing[] = (data ?? []).map((row: Record<string, unknown>) => {
-          const owner = row.owner as { full_name?: string; trust_score?: number } | null;
-          const ownerName = owner?.full_name ?? 'Propriétaire';
           const condRaw = (row.condition as string) ?? 'bon';
           const validConditions = ['neuf', 'excellent', 'bon', 'correct'] as const;
           const condition = validConditions.includes(condRaw as typeof validConditions[number])
@@ -353,9 +356,9 @@ export default function LocationPage() {
             id: row.id as string,
             slug: `location-${row.id as string}`,
             title: row.title as string,
-            owner: ownerName,
-            ownerAvatar: ownerName[0]?.toUpperCase() ?? 'P',
-            ownerTrustScore: owner?.trust_score ?? 70,
+            owner: 'Propriétaire',
+            ownerAvatar: 'P',
+            ownerTrustScore: 70,
             category: 'Matériel',
             pricePerDay: Number(row.price_per_day ?? 0),
             pricePerWeek: Number(row.price_per_week ?? 0),

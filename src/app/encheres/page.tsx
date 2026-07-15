@@ -77,13 +77,16 @@ export default function EncheresPage() {
   useEffect(() => {
     supabase
       .from('auction_items')
-      .select('*, seller:user_profiles!auction_items_seller_id_fkey(full_name, trust_score)')
+      .select('*')
       .eq('status', 'active')
       .order('ends_at', { ascending: true })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Enchères fetch error:', error);
+          setLoading(false);
+          return;
+        }
         const mapped: BidListing[] = (data ?? []).map((row: Record<string, unknown>) => {
-          const seller = row.seller as { full_name?: string; trust_score?: number } | null;
-          const sellerName = seller?.full_name ?? 'Vendeur';
           const condRaw = (row.condition as string) ?? 'bon';
           const validConditions = ['comme_neuf', 'tres_bon', 'bon', 'acceptable'] as const;
           const condition = validConditions.includes(condRaw as typeof validConditions[number])
@@ -93,9 +96,9 @@ export default function EncheresPage() {
             id: row.id as string,
             slug: `enchere-${row.id as string}`,
             title: row.title as string,
-            seller: sellerName,
-            sellerAvatar: sellerName[0]?.toUpperCase() ?? 'V',
-            sellerTrustScore: seller?.trust_score ?? 70,
+            seller: 'Vendeur',
+            sellerAvatar: 'V',
+            sellerTrustScore: 70,
             category: 'Matériel',
             startingPrice: Number(row.start_price ?? 0),
             currentBid: Number(row.current_bid ?? 0),
