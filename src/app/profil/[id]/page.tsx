@@ -630,9 +630,14 @@ export default function ProfilPage() {
                         <p className="text-3xl mb-2">🗺️</p>
                         <p className="text-sm mb-4">Aucun groupe de voyage pour l&apos;instant</p>
                         {isOwnProfile && (
-                          <Link href="/groupes" className="inline-flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600 hover:bg-[#E4501C]/90 transition-colors">
-                            <Icon name="PlusIcon" size={14} /> Créer ou rejoindre un groupe
-                          </Link>
+                          <div className="flex gap-3 justify-center flex-wrap">
+                            <Link href="/groupes" className="inline-flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600 hover:bg-[#E4501C]/90 transition-colors">
+                              <Icon name="PlusIcon" size={14} /> Créer un groupe
+                            </Link>
+                            <Link href="/groupes?tab=decouvrir" className="inline-flex items-center gap-2 px-4 py-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl text-sm font-600 hover:text-[#1C2620] transition-colors">
+                              <Icon name="MagnifyingGlassIcon" size={14} /> Découvrir
+                            </Link>
+                          </div>
                         )}
                       </div>
                     ) : (
@@ -676,12 +681,15 @@ export default function ProfilPage() {
                           })}
                         </div>
                         {isOwnProfile && (
-                          <div className="flex gap-3 pt-2">
+                          <div className="flex gap-3 pt-2 flex-wrap">
                             <Link href="/groupes" className="flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600 hover:bg-[#E4501C]/90 transition-colors">
                               <Icon name="PlusIcon" size={14} /> Gérer mes groupes
                             </Link>
                             <Link href="/groupes?tab=decouvrir" className="flex items-center gap-2 px-4 py-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl text-sm font-600 hover:text-[#1C2620] transition-colors">
                               <Icon name="MagnifyingGlassIcon" size={14} /> Découvrir
+                            </Link>
+                            <Link href="/communaute?tab=groupes" className="flex items-center gap-2 px-4 py-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl text-sm font-600 hover:text-[#1C2620] transition-colors">
+                              <Icon name="UsersIcon" size={14} /> Communauté
                             </Link>
                           </div>
                         )}
