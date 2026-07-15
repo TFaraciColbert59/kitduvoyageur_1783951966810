@@ -99,11 +99,31 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Le Kit du Voyageur',
+    url: siteUrl,
+    logo: `${siteUrl}/assets/images/app_logo.png`,
+    description: 'Configurateur IA, équipement outdoor, fiches pays et outils terrain. La plateforme complète du voyageur et de l\'aventurier.',
+    sameAs: [],
+  };
+
   return (
     <html
       lang="fr"
       className={`${publicSans.variable} ${spaceGrotesk.variable} ${ibmPlexMono.variable}`}
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationSchema),
+          }}
+        />
+      
+      <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fkitduvoyag4153back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.19" />
+      <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.2" /></head>
       <body className={publicSans.className}>
         <AuthProvider>
           <WishlistProvider>
@@ -124,9 +144,7 @@ export default function RootLayout({
             </ToastProvider>
           </WishlistProvider>
         </AuthProvider>
-
-        <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fkitduvoyag4153back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.19" />
-        <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.2" /></body>
+</body>
     </html>
   );
 }

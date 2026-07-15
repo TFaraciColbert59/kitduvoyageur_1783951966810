@@ -2,10 +2,29 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.com';
+
+const webPageSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'Le Kit du Voyageur — Équipement outdoor & aventure',
+  description: 'Configurez votre kit de voyage parfait avec notre IA. Équipements outdoor vérifiés, kits prêts à partir, communauté de voyageurs passionnés.',
+  url: siteUrl,
+  image: `${siteUrl}/assets/images/og-image.png`,
+  isPartOf: {
+    '@type': 'WebSite',
+    name: 'Le Kit du Voyageur',
+    url: siteUrl,
+  },
+};
+
 export const metadata = {
   title: 'Le Kit du Voyageur — Équipement outdoor & aventure',
   description:
     'Configurez votre kit de voyage parfait avec notre IA. Équipements outdoor vérifiés, kits prêts à partir, communauté de voyageurs passionnés.',
+  other: {
+    'script:ld+json': JSON.stringify(webPageSchema),
+  },
 };
 
 /* ─────────────────────────────────────────────
