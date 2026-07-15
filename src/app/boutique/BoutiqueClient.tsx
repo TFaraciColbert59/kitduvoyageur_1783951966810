@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WeightGauge from '@/components/WeightGauge';
@@ -192,57 +193,61 @@ function ProductCard({ product, isOptimized = false }: { product: ShopProduct; i
       className={`topo-card group overflow-hidden transition-all duration-300 ${isOptimized ? 'ring-2 ring-primary/40' : ''}`}
       aria-label={`${product.name} — ${priceDisplay()}`}
     >
-      <div className="relative aspect-[4/3] overflow-hidden">
-        <AppImage
-          src={product.image}
-          alt={product.image_alt}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(28,38,32,0.25) 0%, transparent 50%)' }} />
+      <Link href={`/produit/${product.slug}`} className="block">
+        <div className="relative aspect-[4/3] overflow-hidden">
+          <AppImage
+            src={product.image}
+            alt={product.image_alt}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(28,38,32,0.25) 0%, transparent 50%)' }} />
 
-        {/* Transaction badge */}
-        <div className="absolute top-3 left-3">
-          <span className={`inline-flex items-center gap-1 text-[9px] font-mono px-2 py-0.5 rounded-full font-700 tracking-widest ${badge.cls}`} style={{ fontFamily: 'var(--font-mono)' }}>
-            <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
-            {badge.label}
+          {/* Transaction badge */}
+          <div className="absolute top-3 left-3">
+            <span className={`inline-flex items-center gap-1 text-[9px] font-mono px-2 py-0.5 rounded-full font-700 tracking-widest ${badge.cls}`} style={{ fontFamily: 'var(--font-mono)' }}>
+              <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
+              {badge.label}
+            </span>
+          </div>
+
+          {/* Savings badge */}
+          {product.savings && product.savings > 0 ? (
+            <div className="absolute top-3 right-3">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full font-700 bg-primary text-white" style={{ fontFamily: 'var(--font-mono)' }}>
+                −{product.savings} €
+              </span>
+            </div>
+          ) : null}
+
+          {/* Optimized badge */}
+          {isOptimized && (
+            <div className="absolute bottom-3 left-3">
+              <span className="text-[9px] font-mono px-2 py-0.5 rounded-full font-700 bg-primary text-white flex items-center gap-1" style={{ fontFamily: 'var(--font-mono)' }}>
+                ✨ OPTIMISÉ
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="px-4 pt-4">
+          <div className="mb-1">
+            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>
+              {product.brand}
+            </p>
+            <h3 className="font-display font-700 text-foreground text-sm leading-tight mt-0.5 line-clamp-2 hover:text-primary transition-colors" style={{ fontFamily: 'var(--font-display)' }}>
+              {product.name}
+            </h3>
+          </div>
+
+          <span className="inline-block text-[10px] font-mono px-2 py-0.5 rounded-full bg-muted text-muted-foreground mt-1 mb-3" style={{ fontFamily: 'var(--font-mono)' }}>
+            {product.category}
           </span>
         </div>
+      </Link>
 
-        {/* Savings badge */}
-        {product.savings && product.savings > 0 ? (
-          <div className="absolute top-3 right-3">
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full font-700 bg-primary text-white" style={{ fontFamily: 'var(--font-mono)' }}>
-              −{product.savings} €
-            </span>
-          </div>
-        ) : null}
-
-        {/* Optimized badge */}
-        {isOptimized && (
-          <div className="absolute bottom-3 left-3">
-            <span className="text-[9px] font-mono px-2 py-0.5 rounded-full font-700 bg-primary text-white flex items-center gap-1" style={{ fontFamily: 'var(--font-mono)' }}>
-              ✨ OPTIMISÉ
-            </span>
-          </div>
-        )}
-      </div>
-
-      <div className="p-4">
-        <div className="mb-1">
-          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>
-            {product.brand}
-          </p>
-          <h3 className="font-display font-700 text-foreground text-sm leading-tight mt-0.5 line-clamp-2" style={{ fontFamily: 'var(--font-display)' }}>
-            {product.name}
-          </h3>
-        </div>
-
-        <span className="inline-block text-[10px] font-mono px-2 py-0.5 rounded-full bg-muted text-muted-foreground mt-1 mb-3" style={{ fontFamily: 'var(--font-mono)' }}>
-          {product.category}
-        </span>
-
+      <div className="px-4 pb-4">
         {/* Weight gauge */}
         <div className="mb-3">
           <WeightGauge weightG={product.weight_g} maxG={3000} size="sm" />
