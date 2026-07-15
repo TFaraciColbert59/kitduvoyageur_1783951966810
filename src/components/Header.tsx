@@ -475,26 +475,27 @@ export default function Header() {
                 ))}
               </div>
 
-              <div className="border-t border-white/10 pt-4 mt-4">
-                {mounted && user ? (
-                  <Link
-                    href="/compte"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-3 px-3 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/8 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] min-h-[44px]"
-                  >
-                    <Icon name="UserCircleIcon" size={18} variant="outline" className="text-[#E4501C]" />
-                    <span className="text-sm font-medium">Mon compte</span>
-                  </Link>
-                ) : (
-                  <Link
-                    href="/connexion"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-[#E4501C] hover:bg-[#cc3d10] text-white text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] min-h-[44px]"
-                  >
-                    <Icon name="ArrowRightOnRectangleIcon" size={16} variant="outline" />
-                    Connexion
-                  </Link>
-                )}
+              <div className="border-t border-white/10 pt-4 mt-4" suppressHydrationWarning>
+                <Link
+                  href="/compte"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/8 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] min-h-[44px]"
+                  suppressHydrationWarning
+                  style={{ display: mounted && user ? undefined : 'none' }}
+                >
+                  <Icon name="UserCircleIcon" size={18} variant="outline" className="text-[#E4501C]" />
+                  <span className="text-sm font-medium">Mon compte</span>
+                </Link>
+                <Link
+                  href="/connexion"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-[#E4501C] hover:bg-[#cc3d10] text-white text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] min-h-[44px]"
+                  suppressHydrationWarning
+                  style={{ display: mounted && user ? 'none' : undefined }}
+                >
+                  <Icon name="ArrowRightOnRectangleIcon" size={16} variant="outline" />
+                  Connexion
+                </Link>
               </div>
             </nav>
           </div>
