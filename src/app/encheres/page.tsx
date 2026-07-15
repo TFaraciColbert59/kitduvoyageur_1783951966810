@@ -4,10 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
-
+import Link from 'next/link';
 
 interface BidListing {
   id: string;
+  slug: string;
   title: string;
   seller: string;
   sellerAvatar: string;
@@ -34,143 +35,143 @@ const CONDITION_CONFIG = {
   comme_neuf: { label: 'Comme neuf', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
   tres_bon: { label: 'Très bon', color: 'text-green-600 bg-green-50 border-green-200' },
   bon: { label: 'Bon état', color: 'text-blue-600 bg-blue-50 border-blue-200' },
-  acceptable: { label: 'Acceptable', color: 'text-amber-600 bg-amber-50 border-amber-200' }
+  acceptable: { label: 'Acceptable', color: 'text-amber-600 bg-amber-50 border-amber-200' },
 };
 
 const LISTINGS: BidListing[] = [
-{
-  id: 'b1',
-  title: 'Arc\'teryx Beta AR Jacket — Taille M',
-  seller: 'Julien F.', sellerAvatar: 'JF', sellerTrustScore: 92,
-  category: 'Vêtements', startingPrice: 200, currentBid: 265, buyNowPrice: 380,
-  condition: 'tres_bon', location: 'Paris, 75', endsAt: '2026-07-12T18:00:00',
-  image: 'https://images.unsplash.com/photo-1618143928355-3d9afff6ec23',
-  alt: 'Veste imperméable rouge Arc\'teryx portée par un randonneur en montagne',
-  tags: ['Gore-Tex', 'Imperméable'], description: 'Portée 3 saisons, aucun défaut. Imperméabilisée avant vente.',
-  bidsCount: 7, watchers: 23, negotiable: false, shippingAvailable: true, topBidder: 'Marie C.'
-},
-{
-  id: 'b2',
-  title: 'Osprey Atmos AG 65 — Taille M/L',
-  seller: 'Thomas B.', sellerAvatar: 'TB', sellerTrustScore: 88,
-  category: 'Sacs', startingPrice: 120, currentBid: 178, buyNowPrice: 250,
-  condition: 'bon', location: 'Lyon, 69', endsAt: '2026-07-13T20:00:00',
-  image: "https://images.unsplash.com/photo-1572698846920-cb1e563bbb30",
-  alt: 'Sac à dos de randonnée Osprey orange posé sur un rocher en montagne',
-  tags: ['65L', 'Randonnée'], description: 'Sac en excellent état, sangles réglées. Vendu avec housse de pluie.',
-  bidsCount: 4, watchers: 15, negotiable: true, shippingAvailable: true, topBidder: 'Alex D.'
-},
-{
-  id: 'b3',
-  title: 'Tente MSR Hubba Hubba NX 2P',
-  seller: 'Sophie L.', sellerAvatar: 'SL', sellerTrustScore: 95,
-  category: 'Abri', startingPrice: 300, currentBid: 420, buyNowPrice: 520,
-  condition: 'comme_neuf', location: 'Grenoble, 38', endsAt: '2026-07-14T15:00:00',
-  image: "https://images.unsplash.com/photo-1571364588707-8638d6c49fea",
-  alt: 'Tente de randonnée légère orange installée dans un pré alpin au coucher du soleil',
-  tags: ['Légère', 'Bivouac', '2 places'], description: 'Utilisée 3 fois seulement. Comme neuve. Toutes les pièces présentes.',
-  bidsCount: 11, watchers: 42, negotiable: false, shippingAvailable: false, topBidder: 'Pierre M.'
-},
-{
-  id: 'b4',
-  title: 'Chaussures Scarpa Ribelle HD — 42',
-  seller: 'Marie C.', sellerAvatar: 'MC', sellerTrustScore: 85,
-  category: 'Chaussures', startingPrice: 80, currentBid: 115,
-  condition: 'bon', location: 'Chamonix, 74', endsAt: '2026-07-11T12:00:00',
-  image: "https://images.unsplash.com/photo-1573543794198-73ff121c0a8f",
-  alt: 'Chaussures de randonnée technique marron posées sur un rocher en montagne',
-  tags: ['Alpinisme', 'Technique'], description: 'Semelle en bon état, imperméabilisation à refaire.',
-  bidsCount: 3, watchers: 8, negotiable: true, shippingAvailable: true
-},
-{
-  id: 'b5',
-  title: 'Réchaud MSR WhisperLite Universal',
-  seller: 'Lucas R.', sellerAvatar: 'LR', sellerTrustScore: 79,
-  category: 'Cuisine', startingPrice: 50, currentBid: 72, buyNowPrice: 95,
-  condition: 'tres_bon', location: 'Toulouse, 31', endsAt: '2026-07-15T10:00:00',
-  image: "https://images.unsplash.com/photo-1606339777002-71a53b059c36",
-  alt: 'Réchaud de camping compact posé sur une casserole en aluminium en plein air',
-  tags: ['Multi-carburant', 'Expédition'], description: 'Révisé et nettoyé. Fonctionne parfaitement. Vendu avec adaptateurs.',
-  bidsCount: 5, watchers: 12, negotiable: true, shippingAvailable: true, topBidder: 'Emma V.'
-},
-{
-  id: 'b6',
-  title: 'GPS Garmin inReach Mini 2',
-  seller: 'Antoine P.', sellerAvatar: 'AP', sellerTrustScore: 91,
-  category: 'Navigation', startingPrice: 200, currentBid: 285, buyNowPrice: 340,
-  condition: 'comme_neuf', location: 'Bordeaux, 33', endsAt: '2026-07-16T18:00:00',
-  image: "https://images.unsplash.com/photo-1697115876539-98f4717cbbc6",
-  alt: 'GPS de randonnée orange Garmin posé sur une carte topographique',
-  tags: ['Satellite', 'SOS', 'Navigation'], description: 'Acheté en 2025, utilisé 2 fois. Abonnement non inclus.',
-  bidsCount: 9, watchers: 31, negotiable: false, shippingAvailable: true, topBidder: 'Camille B.'
-},
-{
-  id: 'b7',
-  title: 'Sac de couchage Rab Neutrino 400 — Taille Regular',
-  seller: 'Nathalie V.', sellerAvatar: 'NV', sellerTrustScore: 90,
-  category: 'Couchage', startingPrice: 150, currentBid: 210, buyNowPrice: 290,
-  condition: 'tres_bon', location: 'Annecy, 74', endsAt: '2026-07-17T14:00:00',
-  image: 'https://images.unsplash.com/photo-1722495274040-463c786b09b6',
-  alt: 'Sac de couchage duvet bleu nuit déroulé dans une tente avec vue sur les étoiles',
-  tags: ['Duvet', '-10°C', 'Compressible'], description: 'Duvet 800+ cuin. Lavé et séché correctement. Sac de compression inclus.',
-  bidsCount: 6, watchers: 19, negotiable: true, shippingAvailable: true, topBidder: 'Hugo T.'
-},
-{
-  id: 'b8',
-  title: 'Piolet Grivel Air Tech Evo 60cm',
-  seller: 'Maxime F.', sellerAvatar: 'MF', sellerTrustScore: 94,
-  category: 'Alpinisme', startingPrice: 60, currentBid: 88, buyNowPrice: 120,
-  condition: 'comme_neuf', location: 'Chamonix, 74', endsAt: '2026-07-18T09:00:00',
-  image: 'https://images.unsplash.com/photo-1665091995671-e72b1b848a77',
-  alt: 'Alpiniste avec piolet technique sur arête glacée en haute montagne',
-  tags: ['Alpinisme', 'Glace', 'Technique'], description: 'Utilisé une seule saison. Lame parfaite. Protège-pique inclus.',
-  bidsCount: 4, watchers: 14, negotiable: false, shippingAvailable: true, topBidder: 'Lucie M.'
-},
-{
-  id: 'b9',
-  title: 'Matelas gonflable Therm-a-Rest NeoAir XTherm',
-  seller: 'Pauline G.', sellerAvatar: 'PG', sellerTrustScore: 83,
-  category: 'Couchage', startingPrice: 100, currentBid: 145, buyNowPrice: 200,
-  condition: 'bon', location: 'Clermont-Ferrand, 63', endsAt: '2026-07-19T16:00:00',
-  image: 'https://images.unsplash.com/photo-1575270430711-3a5788f712bf',
-  alt: 'Matelas de camping gonflable argenté déployé à côté d\'un sac de couchage dans une tente',
-  tags: ['R-value 7.3', 'Hiver', 'Légère'], description: 'Aucune fuite. R-value 7.3 idéal pour l\'hiver. Sac de compression inclus.',
-  bidsCount: 8, watchers: 27, negotiable: true, shippingAvailable: true, topBidder: 'Bastien R.'
-},
-{
-  id: 'b10',
-  title: 'Veste doudoune Patagonia Nano Puff — Taille L',
-  seller: 'Clément B.', sellerAvatar: 'CB', sellerTrustScore: 87,
-  category: 'Vêtements', startingPrice: 80, currentBid: 118, buyNowPrice: 160,
-  condition: 'tres_bon', location: 'Marseille, 13', endsAt: '2026-07-20T12:00:00',
-  image: 'https://images.unsplash.com/photo-1572698846920-cb1e563bbb30',
-  alt: 'Randonneur portant une veste doudoune légère bleue dans un paysage montagneux',
-  tags: ['Doudoune', 'Légère', 'Polyvalent'], description: 'Portée 2 saisons, aucun défaut. Isolation PrimaLoft Gold. Taille L.',
-  bidsCount: 5, watchers: 16, negotiable: true, shippingAvailable: true, topBidder: 'Anaïs D.'
-},
-{
-  id: 'b11',
-  title: 'Lampe frontale Black Diamond Spot 400',
-  seller: 'Élodie C.', sellerAvatar: 'EC', sellerTrustScore: 77,
-  category: 'Navigation', startingPrice: 20, currentBid: 32, buyNowPrice: 50,
-  condition: 'bon', location: 'Nantes, 44', endsAt: '2026-07-21T10:00:00',
-  image: 'https://images.unsplash.com/photo-1602884347998-8320464ae9cd',
-  alt: 'Randonneur avec lampe frontale noire Black Diamond dans une grotte',
-  tags: ['400lm', 'Étanche', 'Légère'], description: 'Fonctionne parfaitement. Piles neuves incluses. Idéale pour le trail.',
-  bidsCount: 2, watchers: 7, negotiable: true, shippingAvailable: true
-},
-{
-  id: 'b12',
-  title: 'Bâtons Leki Micro Vario Carbon — 100–130cm',
-  seller: 'Olivier T.', sellerAvatar: 'OT', sellerTrustScore: 86,
-  category: 'Sacs', startingPrice: 70, currentBid: 105, buyNowPrice: 150,
-  condition: 'tres_bon', location: 'Strasbourg, 67', endsAt: '2026-07-22T18:00:00',
-  image: 'https://images.unsplash.com/photo-1698778508401-d07840925aeb',
-  alt: 'Bâtons de randonnée pliables en carbone Leki posés sur un sentier de montagne',
-  tags: ['Carbone', 'Pliable', 'Trail'], description: 'Bâtons pliables ultra-légers. Poignées liège. Sangles réglables. Parfait état.',
-  bidsCount: 7, watchers: 22, negotiable: false, shippingAvailable: true, topBidder: 'Sébastien L.'
-}];
-
+  {
+    id: 'e1', slug: 'dynafit-tlt8-expedition-crp',
+    title: 'Dynafit TLT8 Expedition CRP — Taille 27',
+    seller: 'Frédéric A.', sellerAvatar: 'FA', sellerTrustScore: 93,
+    category: 'Ski de rando', startingPrice: 280, currentBid: 390, buyNowPrice: 520,
+    condition: 'tres_bon', location: 'Val d\'Isère, 73', endsAt: '2026-07-18T14:00:00',
+    image: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256',
+    alt: 'Chaussures de ski de randonnée Dynafit légères sur neige en haute montagne',
+    tags: ['Ski de rando', 'Légère', 'Carbone'], description: 'Chaussures ski de rando haut de gamme. Utilisées 2 saisons. Semelles Pomoca neuves.',
+    bidsCount: 9, watchers: 34, negotiable: false, shippingAvailable: true, topBidder: 'Isabelle C.',
+  },
+  {
+    id: 'e2', slug: 'black-diamond-jetforce-tour-35',
+    title: 'Black Diamond JetForce Tour 35L — Airbag',
+    seller: 'Renaud M.', sellerAvatar: 'RM', sellerTrustScore: 88,
+    category: 'Sécurité', startingPrice: 350, currentBid: 480, buyNowPrice: 650,
+    condition: 'comme_neuf', location: 'Chamonix, 74', endsAt: '2026-07-20T10:00:00',
+    image: 'https://images.unsplash.com/photo-1572698846920-cb1e563bbb30',
+    alt: 'Sac airbag avalanche noir 35L posé dans la neige en montagne',
+    tags: ['Airbag', 'Avalanche', 'Électronique'], description: 'Sac airbag électronique. Batterie rechargeable. Jamais déclenché. Certifié CE.',
+    bidsCount: 6, watchers: 28, negotiable: false, shippingAvailable: true, topBidder: 'Damien L.',
+  },
+  {
+    id: 'e3', slug: 'petzl-corax-50m-corde',
+    title: 'Petzl Corax 50m 8.6mm — Corde à double usage',
+    seller: 'Virginie T.', sellerAvatar: 'VT', sellerTrustScore: 91,
+    category: 'Escalade', startingPrice: 80, currentBid: 118, buyNowPrice: 160,
+    condition: 'tres_bon', location: 'Fontainebleau, 77', endsAt: '2026-07-16T18:00:00',
+    image: 'https://images.unsplash.com/photo-1665091995671-e72b1b848a77',
+    alt: 'Corde d\'escalade orange enroulée sur un rocher en falaise',
+    tags: ['Escalade', 'Polyvalente', '50m'], description: 'Corde en excellent état, 30 sorties environ. Aucune chute de facteur 2. Vendue avec sac.',
+    bidsCount: 5, watchers: 17, negotiable: true, shippingAvailable: true, topBidder: 'Arnaud B.',
+  },
+  {
+    id: 'e4', slug: 'suunto-traverse-alpha-montre',
+    title: 'Suunto Traverse Alpha — Montre GPS outdoor',
+    seller: 'Christophe V.', sellerAvatar: 'CV', sellerTrustScore: 85,
+    category: 'Navigation', startingPrice: 150, currentBid: 215, buyNowPrice: 290,
+    condition: 'tres_bon', location: 'Bordeaux, 33', endsAt: '2026-07-14T20:00:00',
+    image: 'https://images.unsplash.com/photo-1697115876539-98f4717cbbc6',
+    alt: 'Montre GPS outdoor robuste noire sur fond de carte topographique',
+    tags: ['GPS', 'Chasse', 'Outdoor'], description: 'Montre GPS avec altimètre, baromètre, boussole. Bracelet neuf. Batterie 100%.',
+    bidsCount: 8, watchers: 26, negotiable: true, shippingAvailable: true, topBidder: 'Sylvie P.',
+  },
+  {
+    id: 'e5', slug: 'mammut-trion-spine-50-sac',
+    title: 'Mammut Trion Spine 50 — Sac alpinisme',
+    seller: 'Julien D.', sellerAvatar: 'JD', sellerTrustScore: 96,
+    category: 'Alpinisme', startingPrice: 180, currentBid: 255, buyNowPrice: 340,
+    condition: 'comme_neuf', location: 'Grenoble, 38', endsAt: '2026-07-22T09:00:00',
+    image: 'https://images.unsplash.com/photo-1723825001909-1e45b76a9555',
+    alt: 'Sac à dos d\'alpinisme rouge 50L posé sur un glacier en haute montagne',
+    tags: ['Alpinisme', '50L', 'Technique'], description: 'Sac alpinisme technique. Utilisé 3 sorties. Toutes les fixations ski/piolet présentes.',
+    bidsCount: 11, watchers: 41, negotiable: false, shippingAvailable: false, topBidder: 'Laure M.',
+  },
+  {
+    id: 'e6', slug: 'nemo-tensor-insulated-matelas',
+    title: 'Nemo Tensor Insulated — Matelas gonflable R4',
+    seller: 'Béatrice C.', sellerAvatar: 'BC', sellerTrustScore: 82,
+    category: 'Couchage', startingPrice: 90, currentBid: 130, buyNowPrice: 180,
+    condition: 'bon', location: 'Toulouse, 31', endsAt: '2026-07-17T16:00:00',
+    image: 'https://images.unsplash.com/photo-1575270430711-3a5788f712bf',
+    alt: 'Matelas de camping gonflable isolé déployé dans une tente de bivouac',
+    tags: ['R-value 4', 'Hiver', 'Léger'], description: 'Matelas 4 saisons. Aucune fuite. Valve Vortex. Sac de compression inclus. 430g.',
+    bidsCount: 4, watchers: 13, negotiable: true, shippingAvailable: true, topBidder: 'Gilles R.',
+  },
+  {
+    id: 'e7', slug: 'patagonia-torrentshell-3l-veste',
+    title: 'Patagonia Torrentshell 3L — Taille L',
+    seller: 'Mathieu F.', sellerAvatar: 'MF', sellerTrustScore: 87,
+    category: 'Vêtements', startingPrice: 100, currentBid: 148, buyNowPrice: 210,
+    condition: 'tres_bon', location: 'Nantes, 44', endsAt: '2026-07-19T12:00:00',
+    image: 'https://images.unsplash.com/photo-1618143928355-3d9afff6ec23',
+    alt: 'Veste imperméable verte Patagonia portée par un randonneur sous la pluie',
+    tags: ['Imperméable', '3 couches', 'Recyclé'], description: 'Veste imperméable 3 couches. Imperméabilisation DWR refaite. Taille L. Aucun défaut.',
+    bidsCount: 7, watchers: 22, negotiable: true, shippingAvailable: true, topBidder: 'Hélène V.',
+  },
+  {
+    id: 'e8', slug: 'camp-corsa-nanotech-piolet',
+    title: 'CAMP Corsa Nanotech 55cm — Piolet ultra-léger',
+    seller: 'Stéphane L.', sellerAvatar: 'SL', sellerTrustScore: 94,
+    category: 'Alpinisme', startingPrice: 70, currentBid: 102, buyNowPrice: 145,
+    condition: 'comme_neuf', location: 'Chamonix, 74', endsAt: '2026-07-21T08:00:00',
+    image: 'https://images.unsplash.com/photo-1665091995671-e72b1b848a77',
+    alt: 'Piolet ultra-léger en carbone posé sur une arête neigeuse en haute montagne',
+    tags: ['Carbone', 'Ultra-léger', '245g'], description: 'Piolet le plus léger du marché (245g). Utilisé une saison. Lame parfaite. Protège-pique inclus.',
+    bidsCount: 5, watchers: 19, negotiable: false, shippingAvailable: true, topBidder: 'Cécile B.',
+  },
+  {
+    id: 'e9', slug: 'jetboil-minimo-kit-cuisine',
+    title: 'Jetboil MiniMo — Kit cuisine complet',
+    seller: 'Aurore D.', sellerAvatar: 'AD', sellerTrustScore: 79,
+    category: 'Cuisine', startingPrice: 60, currentBid: 88, buyNowPrice: 120,
+    condition: 'tres_bon', location: 'Lyon, 69', endsAt: '2026-07-15T22:00:00',
+    image: 'https://images.unsplash.com/photo-1662148460486-c8ca9372e13e',
+    alt: 'Réchaud Jetboil MiniMo avec casserole et cartouche de gaz sur rocher',
+    tags: ['Cuisine', 'Régulation', 'Compact'], description: 'Réchaud avec régulation de flamme. Casserole 1L. Vendu avec 2 cartouches neuves.',
+    bidsCount: 3, watchers: 11, negotiable: true, shippingAvailable: true, topBidder: 'Nicolas T.',
+  },
+  {
+    id: 'e10', slug: 'rab-kinetic-alpine-pantalon',
+    title: 'Rab Kinetic Alpine 2.0 — Pantalon imperméable M',
+    seller: 'Delphine R.', sellerAvatar: 'DR', sellerTrustScore: 83,
+    category: 'Vêtements', startingPrice: 80, currentBid: 115, buyNowPrice: 165,
+    condition: 'bon', location: 'Clermont-Ferrand, 63', endsAt: '2026-07-23T14:00:00',
+    image: 'https://images.unsplash.com/photo-1618143928355-3d9afff6ec23',
+    alt: 'Randonneur portant un pantalon imperméable gris en montagne sous la pluie',
+    tags: ['Imperméable', 'Stretch', 'Randonnée'], description: 'Pantalon imperméable stretch 4 voies. Taille M. Quelques traces d\'usure aux genoux.',
+    bidsCount: 4, watchers: 14, negotiable: true, shippingAvailable: true,
+  },
+  {
+    id: 'e11', slug: 'black-diamond-helio-175-skis',
+    title: 'Black Diamond Helio 175 — Skis rando 175cm',
+    seller: 'Bertrand C.', sellerAvatar: 'BC', sellerTrustScore: 90,
+    category: 'Ski de rando', startingPrice: 250, currentBid: 345, buyNowPrice: 480,
+    condition: 'tres_bon', location: 'Albertville, 73', endsAt: '2026-07-25T10:00:00',
+    image: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256',
+    alt: 'Skis de randonnée légers noirs posés dans la neige en montagne',
+    tags: ['Ski de rando', '175cm', 'Carbone'], description: 'Skis carbone ultra-légers. 2 saisons. Carres en bon état. Fixations non incluses.',
+    bidsCount: 12, watchers: 47, negotiable: false, shippingAvailable: false, topBidder: 'Pauline G.',
+  },
+  {
+    id: 'e12', slug: 'katadyn-pocket-filtre-expedition',
+    title: 'Katadyn Pocket — Filtre à eau expédition',
+    seller: 'Olivier B.', sellerAvatar: 'OB', sellerTrustScore: 86,
+    category: 'Eau', startingPrice: 120, currentBid: 168, buyNowPrice: 230,
+    condition: 'comme_neuf', location: 'Strasbourg, 67', endsAt: '2026-07-24T16:00:00',
+    image: 'https://images.unsplash.com/photo-1606339777002-71a53b059c36',
+    alt: 'Filtre à eau Katadyn Pocket argenté posé sur un rocher au bord d\'un torrent',
+    tags: ['Eau', 'Expédition', '20 ans garantie'], description: 'Filtre céramique argent. Cartouche neuve (0 litre filtrés). Garantie 20 ans. Idéal expédition.',
+    bidsCount: 6, watchers: 20, negotiable: false, shippingAvailable: true, topBidder: 'Élodie M.',
+  },
+];
 
 function getTimeLeft(endsAt: string): string {
   const now = new Date();
@@ -178,7 +179,7 @@ function getTimeLeft(endsAt: string): string {
   const diff = end.getTime() - now.getTime();
   if (diff <= 0) return 'Terminée';
   const hours = Math.floor(diff / (1000 * 60 * 60));
-  const minutes = Math.floor(diff % (1000 * 60 * 60) / (1000 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
   if (hours > 24) return `${Math.floor(hours / 24)}j ${hours % 24}h`;
   if (hours > 0) return `${hours}h ${minutes}min`;
   return `${minutes} min`;
@@ -210,9 +211,7 @@ export default function EncheresPage() {
 
   const categories = ['all', ...Array.from(new Set(LISTINGS.map((l) => l.category)))];
 
-  const filteredListings = LISTINGS.
-  filter((l) => filterCategory === 'all' || l.category === filterCategory).
-  sort((a, b) => {
+  const filteredListings = LISTINGS.filter((l) => filterCategory === 'all' || l.category === filterCategory).sort((a, b) => {
     if (sortBy === 'ending') return new Date(a.endsAt).getTime() - new Date(b.endsAt).getTime();
     if (sortBy === 'bids') return b.bidsCount - a.bidsCount;
     if (sortBy === 'price') return a.currentBid - b.currentBid;
@@ -225,13 +224,13 @@ export default function EncheresPage() {
     if (amount <= selectedListing.currentBid) return;
     setPlacedBids((prev) => ({ ...prev, [selectedListing.id]: amount }));
     setBidSuccess(true);
-    setTimeout(() => {setBidSuccess(false);setShowBidModal(false);setBidAmount('');}, 2000);
+    setTimeout(() => { setBidSuccess(false); setShowBidModal(false); setBidAmount(''); }, 2000);
   };
 
   const handleMakeOffer = () => {
     if (!selectedListing || !offerAmount) return;
     setOfferSuccess(true);
-    setTimeout(() => {setOfferSuccess(false);setShowOfferModal(false);setOfferAmount('');}, 2000);
+    setTimeout(() => { setOfferSuccess(false); setShowOfferModal(false); setOfferAmount(''); }, 2000);
   };
 
   const toggleWatchlist = (id: string) => {
@@ -254,9 +253,8 @@ export default function EncheresPage() {
                 <h1 className="text-2xl font-display font-800 tracking-tight">Enchères & Négociation</h1>
               </div>
             </div>
-            <p className="text-white/60 text-sm max-w-xl">Enchérissez sur du matériel d&apos;occasion ou négociez directement avec les vendeurs. Les meilleures affaires en temps réel.</p>
-
-            <div className="grid grid-cols-3 gap-3 max-w-sm">
+            <p className="text-white/60 text-sm max-w-xl">Enchérissez sur du matériel outdoor rare ou haut de gamme. Les meilleures affaires en temps réel.</p>
+            <div className="grid grid-cols-3 gap-3 max-w-sm mt-4">
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
                 <p className="text-xl font-display font-700 text-primary">{LISTINGS.length}</p>
                 <p className="text-xs text-white/50">Enchères actives</p>
@@ -277,24 +275,22 @@ export default function EncheresPage() {
           {/* Filters */}
           <div className="flex flex-wrap gap-3 mb-6">
             <div className="flex flex-wrap gap-2">
-              {categories.map((cat) =>
-              <button
-                key={cat}
-                onClick={() => setFilterCategory(cat)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                filterCategory === cat ? 'bg-primary text-white' : 'bg-card border border-border text-muted-foreground hover:text-foreground'}`
-                }>
-                
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setFilterCategory(cat)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${filterCategory === cat ? 'bg-primary text-white' : 'bg-card border border-border text-muted-foreground hover:text-foreground'}`}
+                >
                   {cat === 'all' ? 'Toutes' : cat}
                 </button>
-              )}
+              ))}
             </div>
             <div className="ml-auto flex gap-2">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="px-3 py-1.5 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
-                
+                className="px-3 py-1.5 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
                 <option value="ending">Fin imminente</option>
                 <option value="bids">Plus d&apos;offres</option>
                 <option value="price">Prix croissant</option>
@@ -315,42 +311,32 @@ export default function EncheresPage() {
                 return (
                   <div
                     key={listing.id}
-                    className={`bg-card rounded-xl border overflow-hidden cursor-pointer transition-all hover:shadow-md ${
-                    selectedListing?.id === listing.id ? 'border-primary shadow-md' : 'border-border hover:border-primary/40'}`
-                    }
-                    onClick={() => setSelectedListing(listing)}>
-                    
+                    className={`bg-card rounded-xl border overflow-hidden cursor-pointer transition-all hover:shadow-md ${selectedListing?.id === listing.id ? 'border-primary shadow-md' : 'border-border hover:border-primary/40'}`}
+                    onClick={() => setSelectedListing(listing)}
+                  >
                     <div className="relative h-40 overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={listing.image} alt={listing.alt} className="w-full h-full object-cover" />
-                      {/* Timer badge */}
-                      <div className={`absolute top-2 left-2 px-2 py-1 rounded-lg text-xs font-mono font-bold ${
-                      endingSoon ? 'bg-red-500 text-white animate-pulse' : 'bg-dark-bg/80 text-white'}`
-                      }>
+                      <div className={`absolute top-2 left-2 px-2 py-1 rounded-lg text-xs font-mono font-bold ${endingSoon ? 'bg-red-500 text-white animate-pulse' : 'bg-dark-bg/80 text-white'}`}>
                         ⏱ {timeLeft}
                       </div>
-                      {/* Watchlist */}
                       <button
-                        onClick={(e) => {e.stopPropagation();toggleWatchlist(listing.id);}}
-                        className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                        isWatched ? 'bg-primary text-white' : 'bg-dark-bg/60 text-white hover:bg-dark-bg/80'}`
-                        }>
-                        
-                        <Icon name={isWatched ? 'HeartIcon' : 'HeartIcon'} size={16} variant={isWatched ? 'solid' : 'outline'} />
+                        onClick={(e) => { e.stopPropagation(); toggleWatchlist(listing.id); }}
+                        className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${isWatched ? 'bg-primary text-white' : 'bg-dark-bg/60 text-white hover:bg-dark-bg/80'}`}
+                      >
+                        <Icon name="HeartIcon" size={16} variant={isWatched ? 'solid' : 'outline'} />
                       </button>
-                      {myBid &&
-                      <div className="absolute bottom-2 left-2 bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-lg font-medium">
+                      {myBid && (
+                        <div className="absolute bottom-2 left-2 bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-lg font-medium">
                           Votre offre: {myBid} €
                         </div>
-                      }
+                      )}
                     </div>
-
                     <div className="p-3">
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <h3 className="text-sm font-semibold leading-tight flex-1">{listing.title}</h3>
                         <span className={`text-xs px-1.5 py-0.5 rounded border flex-shrink-0 ${cond.color}`}>{cond.label}</span>
                       </div>
-
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-5 h-5 rounded-full bg-secondary text-secondary-foreground text-xs flex items-center justify-center font-bold">
                           {listing.sellerAvatar}
@@ -358,7 +344,6 @@ export default function EncheresPage() {
                         <span className="text-xs text-muted-foreground">{listing.seller}</span>
                         <span className="text-xs text-emerald-600 font-mono">{listing.sellerTrustScore}%</span>
                       </div>
-
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-xs text-muted-foreground">Enchère actuelle</p>
@@ -369,20 +354,27 @@ export default function EncheresPage() {
                           <p className="text-xs text-muted-foreground">{listing.watchers} 👁</p>
                         </div>
                       </div>
-
-                      {listing.buyNowPrice &&
-                      <p className="text-xs text-muted-foreground mt-1">Achat immédiat: <span className="font-mono font-semibold">{listing.buyNowPrice} €</span></p>
-                      }
+                      {listing.buyNowPrice && (
+                        <p className="text-xs text-muted-foreground mt-1">Achat immédiat: <span className="font-mono font-semibold">{listing.buyNowPrice} €</span></p>
+                      )}
+                      {/* Link to product detail page */}
+                      <Link
+                        href={`/produit/${listing.slug}?type=enchere`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="mt-2 block w-full text-center py-1.5 rounded-lg text-xs font-medium text-primary border border-primary/30 hover:bg-primary/10 transition-colors"
+                      >
+                        Voir la fiche enchère →
+                      </Link>
                     </div>
-                  </div>);
-
+                  </div>
+                );
               })}
             </div>
 
             {/* Detail Panel */}
             <div className="space-y-4">
-              {selectedListing ?
-              <div className="bg-card rounded-xl border border-border overflow-hidden sticky top-24">
+              {selectedListing ? (
+                <div className="bg-card rounded-xl border border-border overflow-hidden sticky top-24">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={selectedListing.image} alt={selectedListing.alt} className="w-full h-44 object-cover" />
                   <div className="p-4">
@@ -396,9 +388,7 @@ export default function EncheresPage() {
                         Trust {selectedListing.sellerTrustScore}%
                       </span>
                     </div>
-
                     <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{selectedListing.description}</p>
-
                     <div className="space-y-2 text-xs border-t border-border pt-3 mb-3">
                       <div className="flex justify-between"><span className="text-muted-foreground">Enchère actuelle</span><span className="font-mono font-bold text-primary text-base">{selectedListing.currentBid} €</span></div>
                       <div className="flex justify-between"><span className="text-muted-foreground">Enchère de départ</span><span className="font-mono">{selectedListing.startingPrice} €</span></div>
@@ -408,53 +398,52 @@ export default function EncheresPage() {
                       <div className="flex justify-between"><span className="text-muted-foreground">Localisation</span><span>{selectedListing.location}</span></div>
                       <div className="flex justify-between"><span className="text-muted-foreground">Expédition</span><span>{selectedListing.shippingAvailable ? '✅ Disponible' : '❌ Remise en main'}</span></div>
                     </div>
-
-                    {selectedListing.topBidder &&
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3">
+                    {selectedListing.topBidder && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3">
                         <p className="text-xs text-amber-700">🏆 Meilleur enchérisseur: <span className="font-semibold">{selectedListing.topBidder}</span></p>
                       </div>
-                  }
-
+                    )}
                     <div className="space-y-2">
-                      <button
-                      onClick={() => setShowBidModal(true)}
-                      className="w-full py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity">
-                      
+                      <button onClick={() => setShowBidModal(true)} className="w-full py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity">
                         🔨 Enchérir
                       </button>
-                      {selectedListing.negotiable &&
-                    <button
-                      onClick={() => setShowOfferModal(true)}
-                      className="w-full py-2.5 rounded-xl border border-secondary text-secondary text-sm font-medium hover:bg-secondary/5 transition-colors">
-                      
+                      {selectedListing.negotiable && (
+                        <button onClick={() => setShowOfferModal(true)} className="w-full py-2.5 rounded-xl border border-secondary text-secondary text-sm font-medium hover:bg-secondary/5 transition-colors">
                           💬 Faire une offre
                         </button>
-                    }
-                      {selectedListing.buyNowPrice &&
-                    <button className="w-full py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:opacity-90 transition-opacity">
+                      )}
+                      {selectedListing.buyNowPrice && (
+                        <button className="w-full py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:opacity-90 transition-opacity">
                           ⚡ Acheter maintenant — {selectedListing.buyNowPrice} €
                         </button>
-                    }
+                      )}
+                      <Link
+                        href={`/produit/${selectedListing.slug}?type=enchere`}
+                        className="w-full py-2.5 rounded-xl border border-primary/40 text-primary text-sm font-medium hover:bg-primary/5 transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        <Icon name="ArrowTopRightOnSquareIcon" size={14} variant="outline" />
+                        Fiche produit enchère
+                      </Link>
                     </div>
                   </div>
-                </div> :
-
-              <div className="bg-card rounded-xl border border-border p-8 text-center">
+                </div>
+              ) : (
+                <div className="bg-card rounded-xl border border-border p-8 text-center">
                   <Icon name="BoltIcon" size={32} variant="outline" className="mx-auto mb-3 text-muted-foreground opacity-50" />
                   <p className="text-sm text-muted-foreground">Sélectionnez une enchère pour voir les détails et placer une offre</p>
                 </div>
-              }
+              )}
 
               {/* Watchlist */}
-              {watchlist.length > 0 &&
-              <div className="bg-card rounded-xl border border-border p-4">
+              {watchlist.length > 0 && (
+                <div className="bg-card rounded-xl border border-border p-4">
                   <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
                     <Icon name="HeartIcon" size={16} variant="solid" className="text-primary" />
                     Mes favoris ({watchlist.length})
                   </h3>
                   <div className="space-y-2">
-                    {LISTINGS.filter((l) => watchlist.includes(l.id)).map((l) =>
-                  <div key={l.id} className="flex items-center gap-2 text-xs cursor-pointer hover:text-primary transition-colors" onClick={() => setSelectedListing(l)}>
+                    {LISTINGS.filter((l) => watchlist.includes(l.id)).map((l) => (
+                      <div key={l.id} className="flex items-center gap-2 text-xs cursor-pointer hover:text-primary transition-colors" onClick={() => setSelectedListing(l)}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={l.image} alt={l.alt} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
                         <div className="flex-1 min-w-0">
@@ -462,27 +451,27 @@ export default function EncheresPage() {
                           <p className="text-muted-foreground">{l.currentBid} € · {getTimeLeft(l.endsAt)}</p>
                         </div>
                       </div>
-                  )}
+                    ))}
                   </div>
                 </div>
-              }
+              )}
             </div>
           </div>
         </div>
       </main>
 
       {/* Bid Modal */}
-      {showBidModal && selectedListing &&
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      {showBidModal && selectedListing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-card rounded-2xl border border-border p-6 w-full max-w-sm shadow-2xl">
-            {bidSuccess ?
-          <div className="text-center py-4">
+            {bidSuccess ? (
+              <div className="text-center py-4">
                 <div className="text-5xl mb-3">🎉</div>
                 <h3 className="text-lg font-display font-700 text-emerald-600">Enchère placée !</h3>
                 <p className="text-sm text-muted-foreground mt-1">Vous êtes maintenant le meilleur enchérisseur.</p>
-              </div> :
-
-          <>
+              </div>
+            ) : (
+              <>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-display font-700">Placer une enchère</h2>
                   <button onClick={() => setShowBidModal(false)} className="p-2 hover:bg-muted rounded-lg">
@@ -494,77 +483,77 @@ export default function EncheresPage() {
                 <div className="mb-4">
                   <label className="text-xs font-medium text-muted-foreground block mb-1">Votre enchère (min. {selectedListing.currentBid + 5} €)</label>
                   <input
-                type="number"
-                value={bidAmount}
-                onChange={(e) => setBidAmount(e.target.value)}
-                min={selectedListing.currentBid + 5}
-                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder={`Min. ${selectedListing.currentBid + 5} €`} />
-              
+                    type="number"
+                    value={bidAmount}
+                    onChange={(e) => setBidAmount(e.target.value)}
+                    min={selectedListing.currentBid + 5}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    placeholder={`Min. ${selectedListing.currentBid + 5} €`}
+                  />
                 </div>
                 <div className="flex gap-3">
                   <button onClick={() => setShowBidModal(false)} className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors">Annuler</button>
                   <button
-                onClick={handlePlaceBid}
-                disabled={!bidAmount || Number(bidAmount) <= selectedListing.currentBid}
-                className="flex-1 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
-                
+                    onClick={handlePlaceBid}
+                    disabled={!bidAmount || Number(bidAmount) <= selectedListing.currentBid}
+                    className="flex-1 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                  >
                     Confirmer
                   </button>
                 </div>
               </>
-          }
+            )}
           </div>
         </div>
-      }
+      )}
 
       {/* Offer Modal */}
-      {showOfferModal && selectedListing &&
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      {showOfferModal && selectedListing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-card rounded-2xl border border-border p-6 w-full max-w-sm shadow-2xl">
-            {offerSuccess ?
-          <div className="text-center py-4">
+            {offerSuccess ? (
+              <div className="text-center py-4">
                 <div className="text-5xl mb-3">📨</div>
                 <h3 className="text-lg font-display font-700 text-blue-600">Offre envoyée !</h3>
                 <p className="text-sm text-muted-foreground mt-1">Le vendeur recevra votre proposition et vous répondra sous 24h.</p>
-              </div> :
-
-          <>
+              </div>
+            ) : (
+              <>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-display font-700">Faire une offre</h2>
                   <button onClick={() => setShowOfferModal(false)} className="p-2 hover:bg-muted rounded-lg">
                     <Icon name="XMarkIcon" size={20} variant="outline" />
                   </button>
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">Proposez un prix directement au vendeur. Il pourra accepter, refuser ou contre-proposer.</p>
+                <p className="text-sm text-muted-foreground mb-4">Proposez un prix directement au vendeur.</p>
                 <div className="mb-4">
                   <label className="text-xs font-medium text-muted-foreground block mb-1">Votre offre (€)</label>
                   <input
-                type="number"
-                value={offerAmount}
-                onChange={(e) => setOfferAmount(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder={`Ex: ${Math.round(selectedListing.currentBid * 0.9)} €`} />
-              
+                    type="number"
+                    value={offerAmount}
+                    onChange={(e) => setOfferAmount(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    placeholder={`Ex: ${Math.round(selectedListing.currentBid * 0.9)} €`}
+                  />
                   <p className="text-xs text-muted-foreground mt-1">Prix actuel: {selectedListing.currentBid} €</p>
                 </div>
                 <div className="flex gap-3">
                   <button onClick={() => setShowOfferModal(false)} className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors">Annuler</button>
                   <button
-                onClick={handleMakeOffer}
-                disabled={!offerAmount}
-                className="flex-1 py-2.5 rounded-xl bg-secondary text-secondary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
-                
+                    onClick={handleMakeOffer}
+                    disabled={!offerAmount}
+                    className="flex-1 py-2.5 rounded-xl bg-secondary text-secondary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                  >
                     Envoyer l&apos;offre
                   </button>
                 </div>
               </>
-          }
+            )}
           </div>
         </div>
-      }
+      )}
 
       <Footer />
-    </div>);
-
+    </div>
+  );
 }

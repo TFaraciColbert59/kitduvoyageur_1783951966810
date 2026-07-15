@@ -8,6 +8,7 @@ import Link from 'next/link';
 
 interface RentalListing {
   id: string;
+  slug: string;
   title: string;
   owner: string;
   ownerAvatar: string;
@@ -30,283 +31,159 @@ interface RentalListing {
 }
 
 const LISTINGS: RentalListing[] = [
-{
-  id: 'r1',
-  title: 'Tente MSR Hubba Hubba NX 2P',
-  owner: 'Thomas V.',
-  ownerAvatar: 'TV',
-  ownerTrustScore: 94,
-  category: 'Tentes',
-  pricePerDay: 12,
-  pricePerWeek: 65,
-  deposit: 150,
-  weightG: 1720,
-  condition: 'excellent',
-  location: 'Lyon, 69',
-  distance: 2.4,
-  available: true,
-  image: "https://img.rocket.new/generatedImages/rocket_gen_img_10c4b4fa4-1783676147611.png",
-  alt: 'Tente MSR Hubba Hubba montée dans un paysage alpin au coucher du soleil',
-  tags: ['Bivouac', 'Haute montagne', 'Légère'],
-  reviewCount: 12,
-  rating: 4.9
-},
-{
-  id: 'r2',
-  title: 'Sac à dos Osprey Atmos 65L',
-  owner: 'Camille R.',
-  ownerAvatar: 'CR',
-  ownerTrustScore: 87,
-  category: 'Sacs à dos',
-  pricePerDay: 8,
-  pricePerWeek: 42,
-  deposit: 80,
-  weightG: 2180,
-  condition: 'bon',
-  location: 'Grenoble, 38',
-  distance: 5.1,
-  available: true,
-  image: "https://img.rocket.new/generatedImages/rocket_gen_img_1de5a8766-1772222096368.png",
-  alt: 'Sac à dos de randonnée Osprey vert posé sur un rocher en montagne',
-  tags: ['Trek', 'Multi-jours', 'Confort'],
-  reviewCount: 8,
-  rating: 4.7
-},
-{
-  id: 'r3',
-  title: 'Kit Cuisine Jetboil Flash + Popcan',
-  owner: 'Marc D.',
-  ownerAvatar: 'MD',
-  ownerTrustScore: 91,
-  category: 'Cuisine',
-  pricePerDay: 5,
-  pricePerWeek: 25,
-  deposit: 40,
-  weightG: 450,
-  condition: 'excellent',
-  location: 'Annecy, 74',
-  distance: 8.3,
-  available: false,
-  nextAvailable: '2026-07-18',
-  image: "https://images.unsplash.com/photo-1662148460486-c8ca9372e13e",
-  alt: 'Réchaud Jetboil avec casserole sur rocher en plein air',
-  tags: ['Cuisine', 'Légère', 'Bivouac'],
-  reviewCount: 15,
-  rating: 5.0
-},
-{
-  id: 'r4',
-  title: 'Sac de couchage Cumulus Panyam 450',
-  owner: 'Sophie L.',
-  ownerAvatar: 'SL',
-  ownerTrustScore: 78,
-  category: 'Couchage',
-  pricePerDay: 9,
-  pricePerWeek: 48,
-  deposit: 100,
-  weightG: 890,
-  condition: 'bon',
-  location: 'Chamonix, 74',
-  distance: 12.0,
-  available: true,
-  image: "https://images.unsplash.com/photo-1722495274040-463c786b09b6",
-  alt: 'Sac de couchage duvet bleu déroulé dans une tente avec vue sur montagne',
-  tags: ['Duvet', '-10°C', 'Légère'],
-  reviewCount: 6,
-  rating: 4.8
-},
-{
-  id: 'r5',
-  title: 'Crampons Petzl Vasak 10 pointes',
-  owner: 'Antoine B.',
-  ownerAvatar: 'AB',
-  ownerTrustScore: 96,
-  category: 'Alpinisme',
-  pricePerDay: 7,
-  pricePerWeek: 35,
-  deposit: 60,
-  weightG: 1100,
-  condition: 'excellent',
-  location: 'Bourg-Saint-Maurice, 73',
-  distance: 18.5,
-  available: true,
-  image: "https://img.rocket.new/generatedImages/rocket_gen_img_1145575d0-1772781724676.png",
-  alt: 'Alpiniste avec crampons sur glacier en haute montagne',
-  tags: ['Alpinisme', 'Glace', 'Technique'],
-  reviewCount: 22,
-  rating: 4.9
-},
-{
-  id: 'r6',
-  title: 'Filtre à eau Katadyn BeFree 1L',
-  owner: 'Léa M.',
-  ownerAvatar: 'LM',
-  ownerTrustScore: 82,
-  category: 'Eau',
-  pricePerDay: 3,
-  pricePerWeek: 15,
-  deposit: 25,
-  weightG: 55,
-  condition: 'neuf',
-  location: 'Grenoble, 38',
-  distance: 5.8,
-  available: true,
-  image: "https://img.rocket.new/generatedImages/rocket_gen_img_1bba8898e-1773112388210.png",
-  alt: 'Filtre à eau portable utilisé au bord d\'un ruisseau de montagne',
-  tags: ['Eau', 'Légère', 'Survie'],
-  reviewCount: 4,
-  rating: 4.6
-},
-{
-  id: 'r7',
-  title: 'Veste Hardshell Mammut Nordwand Pro',
-  owner: 'Romain C.',
-  ownerAvatar: 'RC',
-  ownerTrustScore: 89,
-  category: 'Vêtements',
-  pricePerDay: 14,
-  pricePerWeek: 72,
-  deposit: 200,
-  weightG: 490,
-  condition: 'excellent',
-  location: 'Chambéry, 73',
-  distance: 9.2,
-  available: true,
-  image: 'https://images.unsplash.com/photo-1618143928355-3d9afff6ec23',
-  alt: 'Veste hardshell imperméable rouge portée par un alpiniste en montagne enneigée',
-  tags: ['Gore-Tex', 'Alpinisme', 'Imperméable'],
-  reviewCount: 9,
-  rating: 4.8
-},
-{
-  id: 'r8',
-  title: 'Tente Hilleberg Nallo 2 GT',
-  owner: 'Isabelle P.',
-  ownerAvatar: 'IP',
-  ownerTrustScore: 93,
-  category: 'Tentes',
-  pricePerDay: 18,
-  pricePerWeek: 95,
-  deposit: 250,
-  weightG: 2100,
-  condition: 'excellent',
-  location: 'Albertville, 73',
-  distance: 14.7,
-  available: true,
-  image: 'https://images.unsplash.com/photo-1571364588707-8638d6c49fea',
-  alt: 'Tente quatre saisons rouge Hilleberg installée sur un plateau enneigé en haute montagne',
-  tags: ['4 saisons', 'Expédition', 'Résistante'],
-  reviewCount: 17,
-  rating: 5.0
-},
-{
-  id: 'r9',
-  title: 'Baudrier Black Diamond Momentum',
-  owner: 'Kevin L.',
-  ownerAvatar: 'KL',
-  ownerTrustScore: 85,
-  category: 'Alpinisme',
-  pricePerDay: 4,
-  pricePerWeek: 20,
-  deposit: 35,
-  weightG: 350,
-  condition: 'bon',
-  location: 'Grenoble, 38',
-  distance: 6.0,
-  available: false,
-  nextAvailable: '2026-07-20',
-  image: 'https://images.unsplash.com/photo-1665091995671-e72b1b848a77',
-  alt: 'Grimpeur portant un baudrier d\'escalade rouge sur une paroi rocheuse',
-  tags: ['Escalade', 'Polyvalent', 'Confort'],
-  reviewCount: 11,
-  rating: 4.7
-},
-{
-  id: 'r10',
-  title: 'Chaussures Salomon X Ultra 4 GTX — 43',
-  owner: 'Aurélie D.',
-  ownerAvatar: 'AD',
-  ownerTrustScore: 80,
-  category: 'Chaussures',
-  pricePerDay: 6,
-  pricePerWeek: 30,
-  deposit: 50,
-  weightG: 960,
-  condition: 'bon',
-  location: 'Valence, 26',
-  distance: 22.3,
-  available: true,
-  image: 'https://images.unsplash.com/photo-1573543794198-73ff121c0a8f',
-  alt: 'Chaussures de randonnée imperméables grises et vertes Salomon posées sur un sentier',
-  tags: ['Randonnée', 'GTX', 'Polyvalent'],
-  reviewCount: 5,
-  rating: 4.5
-},
-{
-  id: 'r11',
-  title: 'Bâtons de randonnée Black Diamond Distance Carbon',
-  owner: 'François M.',
-  ownerAvatar: 'FM',
-  ownerTrustScore: 88,
-  category: 'Bâtons',
-  pricePerDay: 4,
-  pricePerWeek: 18,
-  deposit: 30,
-  weightG: 420,
-  condition: 'excellent',
-  location: 'Annecy, 74',
-  distance: 7.5,
-  available: true,
-  image: 'https://images.unsplash.com/photo-1698778508401-d07840925aeb',
-  alt: 'Bâtons de randonnée en carbone noirs posés contre un rocher en montagne',
-  tags: ['Carbone', 'Ultra-légère', 'Trail'],
-  reviewCount: 7,
-  rating: 4.9
-},
-{
-  id: 'r12',
-  title: 'Lampe frontale Petzl Nao RL 1500lm',
-  owner: 'Chloé B.',
-  ownerAvatar: 'CB',
-  ownerTrustScore: 76,
-  category: 'Éclairage',
-  pricePerDay: 3,
-  pricePerWeek: 14,
-  deposit: 20,
-  weightG: 165,
-  condition: 'neuf',
-  location: 'Lyon, 69',
-  distance: 3.1,
-  available: true,
-  image: 'https://images.unsplash.com/photo-1602884347998-8320464ae9cd',
-  alt: 'Randonneur avec lampe frontale puissante dans une forêt de nuit',
-  tags: ['Éclairage', 'Rechargeable', '1500lm'],
-  reviewCount: 3,
-  rating: 4.7
-}];
+  {
+    id: 'l1', slug: 'snowpeak-landlock-tente-4p',
+    title: 'Snow Peak Land Lock — Tente 4 personnes',
+    owner: 'Fabrice D.', ownerAvatar: 'FD', ownerTrustScore: 96,
+    category: 'Tentes', pricePerDay: 22, pricePerWeek: 110, deposit: 300,
+    weightG: 6800, condition: 'excellent', location: 'Annecy, 74', distance: 3.2,
+    available: true,
+    image: 'https://images.unsplash.com/photo-1571364588707-8638d6c49fea',
+    alt: 'Grande tente familiale Snow Peak installée dans un camping en forêt',
+    tags: ['Famille', '4 personnes', 'Confort'], reviewCount: 18, rating: 4.9,
+  },
+  {
+    id: 'l2', slug: 'deuter-aircontact-lite-65-sac',
+    title: 'Deuter Aircontact Lite 65+10 — Taille L',
+    owner: 'Sandrine P.', ownerAvatar: 'SP', ownerTrustScore: 84,
+    category: 'Sacs à dos', pricePerDay: 9, pricePerWeek: 46, deposit: 90,
+    weightG: 2100, condition: 'bon', location: 'Grenoble, 38', distance: 6.8,
+    available: true,
+    image: 'https://images.unsplash.com/photo-1723825001909-1e45b76a9555',
+    alt: 'Sac à dos de trekking Deuter bleu 65L posé sur un sentier de montagne',
+    tags: ['Trek', '65L', 'Dos ventilé'], reviewCount: 9, rating: 4.6,
+  },
+  {
+    id: 'l3', slug: 'primus-eta-spider-kit-cuisine',
+    title: 'Primus EtaSpider — Kit cuisine 2 personnes',
+    owner: 'Yannick B.', ownerAvatar: 'YB', ownerTrustScore: 90,
+    category: 'Cuisine', pricePerDay: 6, pricePerWeek: 28, deposit: 45,
+    weightG: 380, condition: 'excellent', location: 'Chambéry, 73', distance: 11.4,
+    available: false, nextAvailable: '2026-07-19',
+    image: 'https://images.unsplash.com/photo-1662148460486-c8ca9372e13e',
+    alt: 'Kit cuisine de camping Primus avec réchaud et casseroles sur rocher',
+    tags: ['Cuisine', 'Duo', 'Compact'], reviewCount: 14, rating: 4.8,
+  },
+  {
+    id: 'l4', slug: 'western-mountaineering-ultralite-sac-couchage',
+    title: 'Western Mountaineering UltraLite — Sac de couchage',
+    owner: 'Corinne M.', ownerAvatar: 'CM', ownerTrustScore: 92,
+    category: 'Couchage', pricePerDay: 14, pricePerWeek: 72, deposit: 180,
+    weightG: 680, condition: 'excellent', location: 'Bourg-Saint-Maurice, 73', distance: 16.0,
+    available: true,
+    image: 'https://images.unsplash.com/photo-1722495274040-463c786b09b6',
+    alt: 'Sac de couchage duvet haut de gamme déployé dans une tente de bivouac',
+    tags: ['Duvet', '-7°C', 'Ultra-léger'], reviewCount: 7, rating: 5.0,
+  },
+  {
+    id: 'l5', slug: 'petzl-sitta-baudrier-escalade',
+    title: 'Petzl Sitta — Baudrier escalade/alpinisme',
+    owner: 'Grégoire L.', ownerAvatar: 'GL', ownerTrustScore: 88,
+    category: 'Escalade', pricePerDay: 5, pricePerWeek: 24, deposit: 40,
+    weightG: 290, condition: 'excellent', location: 'Grenoble, 38', distance: 7.1,
+    available: true,
+    image: 'https://images.unsplash.com/photo-1665091995671-e72b1b848a77',
+    alt: 'Baudrier d\'escalade Petzl rouge sur paroi rocheuse en falaise',
+    tags: ['Escalade', 'Alpinisme', 'Léger'], reviewCount: 20, rating: 4.9,
+  },
+  {
+    id: 'l6', slug: 'sawyer-squeeze-filtre-eau',
+    title: 'Sawyer Squeeze — Filtre à eau ultra-léger',
+    owner: 'Nadia F.', ownerAvatar: 'NF', ownerTrustScore: 78,
+    category: 'Eau', pricePerDay: 3, pricePerWeek: 14, deposit: 20,
+    weightG: 85, condition: 'neuf', location: 'Lyon, 69', distance: 4.5,
+    available: true,
+    image: 'https://images.unsplash.com/photo-1606339777002-71a53b059c36',
+    alt: 'Filtre à eau Sawyer Squeeze bleu utilisé au bord d\'un ruisseau de montagne',
+    tags: ['Eau', 'Ultra-léger', 'Survie'], reviewCount: 5, rating: 4.7,
+  },
+  {
+    id: 'l7', slug: 'haglofs-spitz-jacket-veste',
+    title: 'Haglöfs Spitz Jacket — Veste hardshell L',
+    owner: 'Thierry C.', ownerAvatar: 'TC', ownerTrustScore: 91,
+    category: 'Vêtements', pricePerDay: 13, pricePerWeek: 68, deposit: 190,
+    weightG: 520, condition: 'excellent', location: 'Albertville, 73', distance: 13.6,
+    available: true,
+    image: 'https://images.unsplash.com/photo-1618143928355-3d9afff6ec23',
+    alt: 'Veste hardshell imperméable bleue Haglöfs portée par un randonneur en montagne',
+    tags: ['Gore-Tex', 'Hardshell', 'Imperméable'], reviewCount: 11, rating: 4.8,
+  },
+  {
+    id: 'l8', slug: 'hilleberg-staika-tente-expedition',
+    title: 'Hilleberg Staika — Tente expédition 2P',
+    owner: 'Véronique A.', ownerAvatar: 'VA', ownerTrustScore: 97,
+    category: 'Tentes', pricePerDay: 25, pricePerWeek: 130, deposit: 350,
+    weightG: 2400, condition: 'excellent', location: 'Chamonix, 74', distance: 19.2,
+    available: true,
+    image: 'https://images.unsplash.com/photo-1571364588707-8638d6c49fea',
+    alt: 'Tente d\'expédition rouge Hilleberg installée sur un plateau enneigé en haute montagne',
+    tags: ['Expédition', '4 saisons', 'Arctique'], reviewCount: 23, rating: 5.0,
+  },
+  {
+    id: 'l9', slug: 'black-diamond-cosmo-casque',
+    title: 'Black Diamond Cosmo — Casque polyvalent',
+    owner: 'Jérôme V.', ownerAvatar: 'JV', ownerTrustScore: 83,
+    category: 'Sécurité', pricePerDay: 4, pricePerWeek: 19, deposit: 30,
+    weightG: 235, condition: 'bon', location: 'Grenoble, 38', distance: 5.3,
+    available: false, nextAvailable: '2026-07-21',
+    image: 'https://images.unsplash.com/photo-1665091995671-e72b1b848a77',
+    alt: 'Casque d\'escalade et d\'alpinisme Black Diamond blanc sur paroi rocheuse',
+    tags: ['Escalade', 'Alpinisme', 'Léger'], reviewCount: 13, rating: 4.7,
+  },
+  {
+    id: 'l10', slug: 'la-sportiva-nepal-cube-chaussures',
+    title: 'La Sportiva Nepal Cube GTX — 44',
+    owner: 'Muriel B.', ownerAvatar: 'MB', ownerTrustScore: 86,
+    category: 'Chaussures', pricePerDay: 10, pricePerWeek: 52, deposit: 120,
+    weightG: 1480, condition: 'bon', location: 'Bourg-Saint-Maurice, 73', distance: 24.1,
+    available: true,
+    image: 'https://images.unsplash.com/photo-1573543794198-73ff121c0a8f',
+    alt: 'Chaussures d\'alpinisme La Sportiva noires et rouges sur rocher enneigé',
+    tags: ['Alpinisme', 'Cramponnable', 'GTX'], reviewCount: 6, rating: 4.6,
+  },
+  {
+    id: 'l11', slug: 'komperdell-carbon-c3-batons',
+    title: 'Komperdell Carbon C3 — Bâtons télescopiques',
+    owner: 'Patrick S.', ownerAvatar: 'PS', ownerTrustScore: 80,
+    category: 'Bâtons', pricePerDay: 4, pricePerWeek: 17, deposit: 25,
+    weightG: 390, condition: 'excellent', location: 'Annecy, 74', distance: 8.9,
+    available: true,
+    image: 'https://images.unsplash.com/photo-1698778508401-d07840925aeb',
+    alt: 'Bâtons de randonnée télescopiques en carbone Komperdell sur sentier alpin',
+    tags: ['Carbone', 'Télescopique', 'Trail'], reviewCount: 8, rating: 4.8,
+  },
+  {
+    id: 'l12', slug: 'petzl-actik-core-frontale',
+    title: 'Petzl Actik Core 450lm — Lampe frontale',
+    owner: 'Lucie G.', ownerAvatar: 'LG', ownerTrustScore: 75,
+    category: 'Éclairage', pricePerDay: 3, pricePerWeek: 13, deposit: 18,
+    weightG: 95, condition: 'neuf', location: 'Grenoble, 38', distance: 4.0,
+    available: true,
+    image: 'https://images.unsplash.com/photo-1602884347998-8320464ae9cd',
+    alt: 'Lampe frontale Petzl Actik Core rouge allumée dans une grotte de montagne',
+    tags: ['Éclairage', 'Rechargeable', '450lm'], reviewCount: 4, rating: 4.6,
+  },
+];
 
-
-const CATEGORIES = ['Tout', 'Tentes', 'Sacs à dos', 'Couchage', 'Cuisine', 'Alpinisme', 'Eau', 'Vêtements', 'Chaussures', 'Bâtons', 'Éclairage'];
+const CATEGORIES = ['Tout', 'Tentes', 'Sacs à dos', 'Couchage', 'Cuisine', 'Escalade', 'Eau', 'Vêtements', 'Chaussures', 'Bâtons', 'Éclairage', 'Sécurité'];
 
 const conditionConfig = {
   neuf: { label: 'Neuf', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
   excellent: { label: 'Excellent', color: 'text-blue-700 bg-blue-50 border-blue-200' },
   bon: { label: 'Bon état', color: 'text-amber-700 bg-amber-50 border-amber-200' },
-  correct: { label: 'Correct', color: 'text-gray-600 bg-gray-50 border-gray-200' }
+  correct: { label: 'Correct', color: 'text-gray-600 bg-gray-50 border-gray-200' },
 };
 
 const DAYS_OF_WEEK = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
-function MiniCalendar({ available }: {available: boolean;}) {
-  const today = new Date(2026, 6, 10); // July 2026
+function MiniCalendar({ available }: { available: boolean }) {
+  const today = new Date(2026, 6, 10);
   const year = today.getFullYear();
   const month = today.getMonth();
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const offset = firstDay === 0 ? 6 : firstDay - 1;
-
   const bookedDays = available ? [14, 15, 16, 22, 23, 24, 25] : [10, 11, 12, 13, 14, 15, 16, 17];
-
   const cells: (number | null)[] = [];
   for (let i = 0; i < offset; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
@@ -321,23 +198,24 @@ function MiniCalendar({ available }: {available: boolean;}) {
         </div>
       </div>
       <div className="grid grid-cols-7 gap-0.5">
-        {DAYS_OF_WEEK.map((d, i) =>
-        <div key={i} className="text-center text-[10px] font-mono-data text-muted-foreground py-1">{d}</div>
-        )}
-        {cells.map((day, i) =>
-        <div
-          key={i}
-          className={`text-center text-xs py-1 rounded-md transition-colors ${
-          day === null ? '' : bookedDays.includes(day) ? 'bg-red-50 text-red-400 border border-red-100' :
-          day < 10 ? 'text-muted-foreground/40' : 'bg-emerald-50 text-emerald-700 border border-emerald-100 cursor-pointer hover:bg-emerald-100'}`
-          }>
-          
+        {DAYS_OF_WEEK.map((d, i) => (
+          <div key={i} className="text-center text-[10px] font-mono text-muted-foreground py-1">{d}</div>
+        ))}
+        {cells.map((day, i) => (
+          <div
+            key={i}
+            className={`text-center text-xs py-1 rounded-md transition-colors ${
+              day === null ? '' : bookedDays.includes(day)
+                ? 'bg-red-50 text-red-400 border border-red-100'
+                : day < 10 ? 'text-muted-foreground/40' :'bg-emerald-50 text-emerald-700 border border-emerald-100 cursor-pointer hover:bg-emerald-100'
+            }`}
+          >
             {day || ''}
           </div>
-        )}
+        ))}
       </div>
-    </div>);
-
+    </div>
+  );
 }
 
 function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClose: () => void }) {
@@ -355,15 +233,15 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card z-10">
-          <h2 className="font-display font-700 text-foreground text-base line-clamp-1" style={{ fontFamily: 'var(--font-display)' }}>{listing.title}</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors flex-shrink-0"><Icon name="XMarkIcon" size={18} /></button>
+          <h2 className="font-display font-700 text-foreground text-base line-clamp-1">{listing.title}</h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors flex-shrink-0">
+            <Icon name="XMarkIcon" size={18} />
+          </button>
         </div>
 
         {!reserved ? (
           <div className="p-5 space-y-5">
-            {/* Image */}
             <div className="relative rounded-xl overflow-hidden aspect-video">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={listing.image} alt={listing.alt} className="w-full h-full object-cover" />
@@ -378,30 +256,27 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
               </div>
             </div>
 
-            {/* Pricing */}
             <div className="grid grid-cols-3 gap-3">
               <div className="bg-background rounded-xl p-3 border border-border text-center">
-                <p className="font-display font-700 text-foreground text-xl" style={{ fontFamily: 'var(--font-display)' }}>{listing.pricePerDay}€</p>
+                <p className="font-display font-700 text-foreground text-xl">{listing.pricePerDay}€</p>
                 <p className="text-xs text-muted-foreground">par jour</p>
               </div>
               <div className="bg-background rounded-xl p-3 border border-border text-center">
-                <p className="font-display font-700 text-foreground text-xl" style={{ fontFamily: 'var(--font-display)' }}>{listing.pricePerWeek}€</p>
+                <p className="font-display font-700 text-foreground text-xl">{listing.pricePerWeek}€</p>
                 <p className="text-xs text-muted-foreground">par semaine</p>
               </div>
               <div className="bg-background rounded-xl p-3 border border-border text-center">
-                <p className="font-display font-700 text-amber-500 text-xl" style={{ fontFamily: 'var(--font-display)' }}>{listing.deposit}€</p>
+                <p className="font-display font-700 text-amber-500 text-xl">{listing.deposit}€</p>
                 <p className="text-xs text-muted-foreground">caution</p>
               </div>
             </div>
 
-            {/* Tags */}
             <div className="flex flex-wrap gap-2">
               {listing.tags.map((tag) => (
                 <span key={tag} className="px-2.5 py-1 bg-muted rounded-full text-xs text-muted-foreground border border-border">{tag}</span>
               ))}
             </div>
 
-            {/* Rating */}
             <div className="flex items-center gap-2">
               <div className="flex gap-0.5">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -412,7 +287,6 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
               <span className="text-muted-foreground text-sm">({listing.reviewCount} avis)</span>
             </div>
 
-            {/* Date picker */}
             {listing.available && (
               <div>
                 <h3 className="font-semibold text-foreground mb-3 text-sm">Choisir les dates</h3>
@@ -432,13 +306,12 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
                       <p className="text-sm font-medium text-foreground">{days} jour{days > 1 ? 's' : ''} de location</p>
                       <p className="text-xs text-muted-foreground">+ {listing.deposit}€ de caution (remboursée)</p>
                     </div>
-                    <p className="font-display font-700 text-primary text-xl" style={{ fontFamily: 'var(--font-display)' }}>{totalPrice}€</p>
+                    <p className="font-display font-700 text-primary text-xl">{totalPrice}€</p>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Calendar toggle */}
             <button
               onClick={() => setShowCalendar(!showCalendar)}
               className="w-full text-xs text-muted-foreground hover:text-foreground flex items-center justify-center gap-1.5 py-2 border border-border rounded-xl hover:border-foreground/30 transition-all"
@@ -448,7 +321,6 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
             </button>
             {showCalendar && <MiniCalendar available={listing.available} />}
 
-            {/* Owner */}
             <div className="bg-background rounded-xl p-4 border border-border">
               <h3 className="font-semibold text-foreground mb-3 text-sm">Propriétaire</h3>
               <div className="flex items-center gap-3">
@@ -466,14 +338,11 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
               </div>
             </div>
 
-            {/* CTA */}
             <button
               disabled={!listing.available}
               onClick={() => listing.available && setReserved(true)}
               className={`w-full py-3 rounded-xl text-sm font-600 transition-all ${
-                listing.available
-                  ? 'btn-primary justify-center'
-                  : 'bg-muted text-muted-foreground cursor-not-allowed'
+                listing.available ? 'btn-primary justify-center' : 'bg-muted text-muted-foreground cursor-not-allowed'
               }`}
             >
               {listing.available
@@ -481,6 +350,14 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
                 : `Indisponible${listing.nextAvailable ? ` — Dispo le ${new Date(listing.nextAvailable).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}` : ''}`
               }
             </button>
+
+            <Link
+              href={`/produit/${listing.slug}?type=location`}
+              className="w-full py-2.5 rounded-xl border border-primary/40 text-primary text-sm font-medium hover:bg-primary/5 transition-colors flex items-center justify-center gap-1.5"
+            >
+              <Icon name="ArrowTopRightOnSquareIcon" size={14} variant="outline" />
+              Voir la fiche location complète
+            </Link>
           </div>
         ) : (
           <div className="p-8 text-center">
@@ -507,29 +384,21 @@ function RentalCard({ listing }: { listing: RentalListing }) {
       <div className="topo-card group flex flex-col cursor-pointer hover:border-primary/20 transition-all" onClick={() => setShowDetail(true)}>
         <div className="relative overflow-hidden aspect-[4/3]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={listing.image}
-            alt={listing.alt}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
+          <img src={listing.image} alt={listing.alt} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
           <div className="absolute top-3 left-3 flex gap-2">
-            <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full border ${cond.color}`}>
-              {cond.label}
-            </span>
+            <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full border ${cond.color}`}>{cond.label}</span>
             {!listing.available && (
-              <span className="text-[10px] font-600 px-2 py-0.5 rounded-full border text-red-600 bg-red-50 border-red-200">
-                Indisponible
-              </span>
+              <span className="text-[10px] font-600 px-2 py-0.5 rounded-full border text-red-600 bg-red-50 border-red-200">Indisponible</span>
             )}
           </div>
           <div className="absolute top-3 right-3 bg-dark-bg/80 backdrop-blur-sm rounded-lg px-2 py-1">
-            <span className="font-mono-data text-white text-xs">{(listing.weightG / 1000).toFixed(2)} kg</span>
+            <span className="font-mono text-white text-xs">{(listing.weightG / 1000).toFixed(2)} kg</span>
           </div>
         </div>
 
         <div className="p-4 flex flex-col flex-1 gap-3">
           <div>
-            <p className="text-[11px] font-mono-data text-muted-foreground uppercase tracking-wider mb-1">{listing.category}</p>
+            <p className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider mb-1">{listing.category}</p>
             <h3 className="font-display font-700 text-foreground text-base leading-tight">{listing.title}</h3>
           </div>
 
@@ -570,16 +439,23 @@ function RentalCard({ listing }: { listing: RentalListing }) {
               )}
             </div>
 
-            <button
-              disabled={!listing.available}
-              className={`w-full py-2.5 rounded-xl text-sm font-600 transition-all ${
-                listing.available
-                  ? 'btn-primary justify-center'
-                  : 'bg-muted text-muted-foreground cursor-not-allowed'
-              }`}
-            >
-              {listing.available ? 'Voir & Réserver' : 'Indisponible'}
-            </button>
+            <div className="flex gap-2">
+              <button
+                disabled={!listing.available}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-600 transition-all ${
+                  listing.available ? 'btn-primary justify-center' : 'bg-muted text-muted-foreground cursor-not-allowed'
+                }`}
+              >
+                {listing.available ? 'Voir & Réserver' : 'Indisponible'}
+              </button>
+              <Link
+                href={`/produit/${listing.slug}?type=location`}
+                onClick={(e) => e.stopPropagation()}
+                className="px-3 py-2.5 rounded-xl border border-primary/30 text-primary text-xs font-medium hover:bg-primary/10 transition-colors flex items-center"
+              >
+                <Icon name="ArrowTopRightOnSquareIcon" size={14} variant="outline" />
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -593,13 +469,13 @@ export default function LocationPage() {
   const [showListModal, setShowListModal] = useState(false);
   const [sortBy, setSortBy] = useState<'distance' | 'price' | 'rating'>('distance');
 
-  const filtered = LISTINGS.
-  filter((l) => activeCategory === 'Tout' || l.category === activeCategory).
-  sort((a, b) => {
-    if (sortBy === 'distance') return a.distance - b.distance;
-    if (sortBy === 'price') return a.pricePerDay - b.pricePerDay;
-    return b.rating - a.rating;
-  });
+  const filtered = LISTINGS
+    .filter((l) => activeCategory === 'Tout' || l.category === activeCategory)
+    .sort((a, b) => {
+      if (sortBy === 'distance') return a.distance - b.distance;
+      if (sortBy === 'price') return a.pricePerDay - b.pricePerDay;
+      return b.rating - a.rating;
+    });
 
   return (
     <main className="min-h-screen bg-background">
@@ -616,7 +492,7 @@ export default function LocationPage() {
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <span className="tag-badge bg-primary/20 text-primary border border-primary/30 text-[10px]">PHASE 2</span>
-                  <span className="text-white/50 text-xs font-mono-data">LOCATION P2P</span>
+                  <span className="text-white/50 text-xs font-mono">LOCATION P2P</span>
                 </div>
                 <h1 className="text-section-title text-white mb-3">
                   Louez l&apos;équipement<br />de vos voisins aventuriers
@@ -626,10 +502,7 @@ export default function LocationPage() {
                 </p>
               </div>
               <div className="flex gap-3 flex-shrink-0">
-                <button
-                  onClick={() => setShowListModal(true)}
-                  className="btn-primary py-3 px-6">
-                  
+                <button onClick={() => setShowListModal(true)} className="btn-primary py-3 px-6">
                   <Icon name="PlusIcon" size={16} />
                   Proposer mon matériel
                 </button>
@@ -639,18 +512,17 @@ export default function LocationPage() {
               </div>
             </div>
 
-            {/* Stats */}
             <div className="grid grid-cols-3 gap-4 mt-10 max-w-lg">
               {[
-              { value: '247', label: 'Annonces actives', icon: 'TagIcon' },
-              { value: '4.8★', label: 'Note moyenne', icon: 'StarIcon' },
-              { value: '48h', label: 'Délai moyen', icon: 'ClockIcon' }].
-              map((stat) =>
-              <div key={stat.label} className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
+                { value: '247', label: 'Annonces actives', icon: 'TagIcon' },
+                { value: '4.8★', label: 'Note moyenne', icon: 'StarIcon' },
+                { value: '48h', label: 'Délai moyen', icon: 'ClockIcon' },
+              ].map((stat) => (
+                <div key={stat.label} className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
                   <p className="font-display font-800 text-white text-xl">{stat.value}</p>
                   <p className="text-white/50 text-[10px] mt-0.5">{stat.label}</p>
                 </div>
-              )}
+              ))}
             </div>
           </div>
         </section>
@@ -659,23 +531,23 @@ export default function LocationPage() {
         <section className="sticky top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border">
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3 overflow-x-auto scrollbar-hide">
             <div className="flex gap-2 flex-1 overflow-x-auto">
-              {CATEGORIES.map((cat) =>
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`category-pill flex-shrink-0 ${activeCategory === cat ? 'active' : ''}`}>
-                
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`category-pill flex-shrink-0 ${activeCategory === cat ? 'active' : ''}`}
+                >
                   {cat}
                 </button>
-              )}
+              ))}
             </div>
             <div className="flex-shrink-0 flex items-center gap-2 border-l border-border pl-3">
               <span className="text-xs text-muted-foreground whitespace-nowrap">Trier par</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="text-xs border border-border rounded-lg px-2 py-1.5 bg-background text-foreground outline-none cursor-pointer">
-                
+                className="text-xs border border-border rounded-lg px-2 py-1.5 bg-background text-foreground outline-none cursor-pointer"
+              >
                 <option value="distance">Distance</option>
                 <option value="price">Prix</option>
                 <option value="rating">Note</option>
@@ -697,9 +569,9 @@ export default function LocationPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((listing) =>
-            <RentalCard key={listing.id} listing={listing} />
-            )}
+            {filtered.map((listing) => (
+              <RentalCard key={listing.id} listing={listing} />
+            ))}
           </div>
         </section>
 
@@ -709,28 +581,28 @@ export default function LocationPage() {
             <h2 className="text-section-title text-foreground mb-10 text-center">Comment ça marche ?</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-              { step: '01', icon: 'MagnifyingGlassIcon', title: 'Cherchez', desc: 'Filtrez par catégorie, lieu et disponibilité' },
-              { step: '02', icon: 'CalendarIcon', title: 'Réservez', desc: 'Choisissez vos dates et payez la caution en ligne' },
-              { step: '03', icon: 'HandRaisedIcon', title: 'Récupérez', desc: 'Rencontrez le propriétaire ou recevez par colis' },
-              { step: '04', icon: 'StarIcon', title: 'Évaluez', desc: 'Laissez un avis et construisez votre Trust Score' }].
-              map((item) =>
-              <div key={item.step} className="topo-card p-5 text-center">
+                { step: '01', icon: 'MagnifyingGlassIcon', title: 'Cherchez', desc: 'Filtrez par catégorie, lieu et disponibilité' },
+                { step: '02', icon: 'CalendarIcon', title: 'Réservez', desc: 'Choisissez vos dates et payez la caution en ligne' },
+                { step: '03', icon: 'HandRaisedIcon', title: 'Récupérez', desc: 'Rencontrez le propriétaire ou recevez par colis' },
+                { step: '04', icon: 'StarIcon', title: 'Évaluez', desc: 'Laissez un avis et construisez votre Trust Score' },
+              ].map((item) => (
+                <div key={item.step} className="topo-card p-5 text-center">
                   <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                     <Icon name={item.icon} size={22} className="text-primary" />
                   </div>
-                  <p className="font-mono-data text-primary text-xs mb-1">{item.step}</p>
+                  <p className="font-mono text-primary text-xs mb-1">{item.step}</p>
                   <h3 className="font-display font-700 text-foreground mb-2">{item.title}</h3>
                   <p className="text-sm text-muted-foreground">{item.desc}</p>
                 </div>
-              )}
+              ))}
             </div>
           </div>
         </section>
       </div>
 
       {/* List Modal */}
-      {showListModal &&
-      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowListModal(false)}>
+      {showListModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowListModal(false)}>
           <div className="bg-card rounded-2xl border border-border p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-display font-700 text-foreground text-lg">Proposer mon matériel</h3>
@@ -741,7 +613,7 @@ export default function LocationPage() {
             <div className="space-y-4">
               <div>
                 <label className="text-xs font-600 text-muted-foreground uppercase tracking-wider block mb-1.5">Titre de l&apos;annonce</label>
-                <input className="input-field" placeholder="Ex: Tente MSR Hubba Hubba 2P" />
+                <input className="input-field" placeholder="Ex: Tente Snow Peak Land Lock 4P" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -776,9 +648,9 @@ export default function LocationPage() {
             </div>
           </div>
         </div>
-      }
+      )}
 
       <Footer />
-    </main>);
-
+    </main>
+  );
 }

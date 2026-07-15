@@ -4,10 +4,11 @@ import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
-
+import Link from 'next/link';
 
 interface OccasionItem {
   id: string;
+  slug: string;
   title: string;
   seller: string;
   sellerAvatar: string;
@@ -34,88 +35,137 @@ interface OccasionItem {
 
 const LISTINGS: OccasionItem[] = [
   {
-    id: 'o1', title: "Arc'teryx Beta AR Jacket — Taille M", seller: 'Julien F.', sellerAvatar: 'JF', sellerTrustScore: 92, sellerSales: 14,
-    category: 'Vêtements', price: 280, originalPrice: 650, condition: 'tres_bon', location: 'Paris, 75', postedAt: '2026-07-08',
-    image: 'https://images.unsplash.com/photo-1618143928355-3d9afff6ec23', alt: 'Veste de randonnée imperméable rouge portée par un randonneur en montagne',
-    tags: ['Gore-Tex', 'Imperméable', 'Alpinisme'], description: 'Veste portée 3 saisons, aucun défaut. Lavée et imperméabilisée avant vente. Gore-Tex Pro 3 couches. Toutes les fermetures éclair fonctionnent parfaitement. Capuche ajustable compatible casque.',
-    negotiable: true, shippingAvailable: true, shippingCost: 8, brand: "Arc'teryx", purchaseYear: '2023', weight: '380g', dimensions: 'Taille M (tour de poitrine 91–96cm)',
+    id: 'oc1', slug: 'msr-windburner-duo-system',
+    title: 'MSR WindBurner Duo System — Kit complet',
+    seller: 'Gaëlle P.', sellerAvatar: 'GP', sellerTrustScore: 89, sellerSales: 12,
+    category: 'Cuisine', price: 95, originalPrice: 220, condition: 'tres_bon',
+    location: 'Grenoble, 38', postedAt: '2026-07-10',
+    image: 'https://images.unsplash.com/photo-1662148460486-c8ca9372e13e',
+    alt: 'Kit cuisine MSR WindBurner avec réchaud et casseroles sur rocher en plein air',
+    tags: ['Cuisine', 'Duo', 'Coupe-vent'],
+    description: 'Système de cuisson intégré pour 2 personnes. Casserole 1.8L + poêle inclus. Aucun défaut. Idéal randonnée et bivouac.',
+    negotiable: true, shippingAvailable: true, shippingCost: 9, brand: 'MSR', purchaseYear: '2024', weight: '490g',
   },
   {
-    id: 'o2', title: 'Chaussures Scarpa Ribelle HD — 42', seller: 'Marie C.', sellerAvatar: 'MC', sellerTrustScore: 85, sellerSales: 7,
-    category: 'Chaussures', price: 145, originalPrice: 320, condition: 'bon', location: 'Grenoble, 38', postedAt: '2026-07-05',
-    image: 'https://img.rocket.new/generatedImages/rocket_gen_img_10af066f4-1767116872202.png', alt: 'Chaussures de randonnée techniques orange et noires sur fond blanc',
-    tags: ['Randonnée', 'Technique', 'Vibram'], description: 'Semelles encore bonnes, quelques égratignures superficielles sur le dessus. Taille 42. Utilisées environ 200km. Imperméabilisation à refaire. Semelle Vibram en bon état.',
-    negotiable: false, shippingAvailable: true, shippingCost: 10, brand: 'Scarpa', purchaseYear: '2024', weight: '1.1kg (la paire)',
+    id: 'oc2', slug: 'salomon-quest-4d-3-gtx-chaussures',
+    title: 'Salomon Quest 4D 3 GTX — Taille 43',
+    seller: 'Florian B.', sellerAvatar: 'FB', sellerTrustScore: 84, sellerSales: 6,
+    category: 'Chaussures', price: 130, originalPrice: 280, condition: 'bon',
+    location: 'Toulouse, 31', postedAt: '2026-07-07',
+    image: 'https://images.unsplash.com/photo-1573543794198-73ff121c0a8f',
+    alt: 'Chaussures de randonnée haute Salomon Quest marron et noires sur sentier',
+    tags: ['Randonnée', 'GTX', 'Haute'], description: 'Chaussures hautes imperméables. Semelle Contagrip en bon état. ~150km d\'utilisation. Taille 43.',
+    negotiable: false, shippingAvailable: true, shippingCost: 11, brand: 'Salomon', purchaseYear: '2023', weight: '1.2kg (la paire)',
   },
   {
-    id: 'o3', title: 'Piolet Black Diamond Raven Pro 60cm', seller: 'Pierre A.', sellerAvatar: 'PA', sellerTrustScore: 97, sellerSales: 31,
-    category: 'Alpinisme', price: 65, originalPrice: 130, condition: 'comme_neuf', location: 'Chamonix, 74', postedAt: '2026-07-09',
-    image: 'https://images.unsplash.com/photo-1665091995671-e72b1b848a77', alt: 'Alpiniste avec piolet sur arête neigeuse en haute montagne',
-    tags: ['Alpinisme', 'Glace', 'Technique'], description: 'Utilisé 2 fois seulement. Comme neuf. Vendu avec protège-pique. Manche en aluminium 7075. Lame en acier inoxydable. Aucune rayure.',
-    negotiable: false, shippingAvailable: false, brand: 'Black Diamond', purchaseYear: '2025', weight: '520g', dimensions: '60cm',
+    id: 'oc3', slug: 'big-agnes-copper-spur-ul2-tente',
+    title: 'Big Agnes Copper Spur HV UL2 — Tente',
+    seller: 'Amandine C.', sellerAvatar: 'AC', sellerTrustScore: 93, sellerSales: 21,
+    category: 'Tentes', price: 380, originalPrice: 750, condition: 'comme_neuf',
+    location: 'Annecy, 74', postedAt: '2026-07-11',
+    image: 'https://images.unsplash.com/photo-1571364588707-8638d6c49fea',
+    alt: 'Tente ultra-légère Big Agnes orange installée dans un pré alpin au coucher du soleil',
+    tags: ['Ultra-légère', '2 places', 'Bivouac'], description: 'Tente ultra-légère 2P. Utilisée 2 fois. Toile propre, aucun trou. Sardines et tendeurs inclus. 1.02kg.',
+    negotiable: false, shippingAvailable: true, shippingCost: 14, brand: 'Big Agnes', purchaseYear: '2025', weight: '1.02kg', dimensions: '213x127cm',
   },
   {
-    id: 'o4', title: 'Lampe frontale Petzl Nao+ 750lm', seller: 'Emma T.', sellerAvatar: 'ET', sellerTrustScore: 79, sellerSales: 3,
-    category: 'Éclairage', price: 55, originalPrice: 120, condition: 'tres_bon', location: 'Lyon, 69', postedAt: '2026-07-07',
-    image: 'https://images.unsplash.com/photo-1602884347998-8320464ae9cd', alt: 'Randonneur avec lampe frontale dans une forêt de nuit',
-    tags: ['Éclairage', 'Rechargeable', 'Réactif'], description: 'Batterie à 90% de capacité. Chargeur USB inclus. Fonctionne parfaitement. Éclairage réactif automatique. Portée 140m. Autonomie jusqu\'à 7h en mode boost.',
-    negotiable: true, shippingAvailable: true, shippingCost: 6, brand: 'Petzl', purchaseYear: '2024', weight: '175g (avec batterie)',
+    id: 'oc4', slug: 'black-diamond-spot-400-frontale',
+    title: 'Black Diamond Spot 400 — Lampe frontale',
+    seller: 'Quentin L.', sellerAvatar: 'QL', sellerTrustScore: 76, sellerSales: 3,
+    category: 'Éclairage', price: 28, originalPrice: 65, condition: 'tres_bon',
+    location: 'Rennes, 35', postedAt: '2026-07-06',
+    image: 'https://images.unsplash.com/photo-1602884347998-8320464ae9cd',
+    alt: 'Lampe frontale Black Diamond Spot noire allumée dans une grotte',
+    tags: ['400lm', 'Étanche', 'Trail'], description: 'Frontale 400 lumens. Piles neuves incluses. Fonctionne parfaitement. Idéale trail et bivouac.',
+    negotiable: true, shippingAvailable: true, shippingCost: 5, brand: 'Black Diamond', purchaseYear: '2024', weight: '91g',
   },
   {
-    id: 'o5', title: 'Tapis de sol Therm-a-Rest NeoAir XLite', seller: 'Lucas B.', sellerAvatar: 'LB', sellerTrustScore: 88, sellerSales: 9,
-    category: 'Couchage', price: 90, originalPrice: 200, condition: 'bon', location: 'Toulouse, 31', postedAt: '2026-07-03',
-    image: 'https://images.unsplash.com/photo-1575270430711-3a5788f712bf', alt: 'Matelas de camping gonflable argenté déployé dans une tente',
-    tags: ['Légère', 'Isolation', 'Bivouac'], description: 'Aucune fuite, valve en parfait état. Sac de rangement inclus. R-value 4.2. Dimensions déployées : 183x51cm. Épaisseur 6.3cm.',
-    negotiable: true, shippingAvailable: true, shippingCost: 8, brand: 'Therm-a-Rest', purchaseYear: '2023', weight: '354g',
+    id: 'oc5', slug: 'sea-to-summit-reactor-extreme-sac-couchage',
+    title: 'Sea to Summit Reactor Extreme — Sac de couchage',
+    seller: 'Isabelle M.', sellerAvatar: 'IM', sellerTrustScore: 91, sellerSales: 16,
+    category: 'Couchage', price: 160, originalPrice: 340, condition: 'tres_bon',
+    location: 'Bordeaux, 33', postedAt: '2026-07-09',
+    image: 'https://images.unsplash.com/photo-1722495274040-463c786b09b6',
+    alt: 'Sac de couchage léger bleu déployé dans une tente de bivouac en montagne',
+    tags: ['Duvet', '-5°C', 'Compressible'], description: 'Sac de couchage duvet 750+ cuin. Lavé professionnellement. Sac de compression inclus. Taille Regular.',
+    negotiable: true, shippingAvailable: true, shippingCost: 8, brand: 'Sea to Summit', purchaseYear: '2024', weight: '780g', dimensions: 'Regular (183cm)',
   },
   {
-    id: 'o6', title: 'Bâtons Black Diamond Trail Pro — 120cm', seller: 'Nathalie R.', sellerAvatar: 'NR', sellerTrustScore: 83, sellerSales: 5,
-    category: 'Bâtons', price: 40, originalPrice: 90, condition: 'acceptable', location: 'Bordeaux, 33', postedAt: '2026-07-01',
-    image: 'https://images.unsplash.com/photo-1698778508401-d07840925aeb', alt: 'Randonneur avec bâtons de marche sur sentier de montagne',
-    tags: ['Randonnée', 'Réglable', 'Léger'], description: 'Quelques rayures sur les tubes. Embouts usés mais fonctionnels. Poignées en liège en bon état. Réglage de 105 à 125cm. Prix négociable.',
-    negotiable: true, shippingAvailable: true, shippingCost: 12, brand: 'Black Diamond', purchaseYear: '2022', weight: '520g (la paire)',
+    id: 'oc6', slug: 'leki-micro-vario-carbon-batons',
+    title: 'Leki Micro Vario Carbon — Bâtons 100–130cm',
+    seller: 'Sébastien D.', sellerAvatar: 'SD', sellerTrustScore: 80, sellerSales: 7,
+    category: 'Bâtons', price: 85, originalPrice: 190, condition: 'bon',
+    location: 'Strasbourg, 67', postedAt: '2026-07-03',
+    image: 'https://images.unsplash.com/photo-1698778508401-d07840925aeb',
+    alt: 'Bâtons de randonnée pliables en carbone Leki posés sur un sentier de montagne',
+    tags: ['Carbone', 'Pliable', 'Trail'], description: 'Bâtons pliables ultra-légers. Poignées liège. Sangles réglables. Quelques rayures superficielles.',
+    negotiable: true, shippingAvailable: true, shippingCost: 10, brand: 'Leki', purchaseYear: '2023', weight: '500g (la paire)',
   },
   {
-    id: 'o7', title: 'Tente Nemo Hornet Elite 2P', seller: 'Alexis M.', sellerAvatar: 'AM', sellerTrustScore: 91, sellerSales: 18,
-    category: 'Tentes', price: 320, originalPrice: 700, condition: 'tres_bon', location: 'Annecy, 74', postedAt: '2026-07-10',
-    image: 'https://images.unsplash.com/photo-1571364588707-8638d6c49fea', alt: 'Tente légère orange installée dans un pré alpin avec vue sur les montagnes',
-    tags: ['Ultra-légère', 'Bivouac', '2 places'], description: 'Tente ultra-légère utilisée 4 sorties. Toile propre, aucun trou. Sardines et tendeurs inclus. Poids total 1.08kg.',
-    negotiable: false, shippingAvailable: true, shippingCost: 12, brand: 'Nemo', purchaseYear: '2024', weight: '1.08kg', dimensions: '213x127cm déployée',
+    id: 'oc7', slug: 'osprey-exos-58-sac-a-dos',
+    title: 'Osprey Exos 58 — Sac à dos ultralight M',
+    seller: 'Clémence R.', sellerAvatar: 'CR', sellerTrustScore: 87, sellerSales: 14,
+    category: 'Sacs à dos', price: 155, originalPrice: 340, condition: 'tres_bon',
+    location: 'Lyon, 69', postedAt: '2026-07-12',
+    image: 'https://images.unsplash.com/photo-1723825001909-1e45b76a9555',
+    alt: 'Sac à dos ultraléger Osprey Exos vert posé sur un rocher en montagne',
+    tags: ['58L', 'Ultralight', 'Randonnée'], description: 'Sac ultraléger 58L. Dos ventilé ExoForm. Quelques traces d\'usure sur le fond. Housse de pluie incluse.',
+    negotiable: false, shippingAvailable: true, shippingCost: 9, brand: 'Osprey', purchaseYear: '2023', weight: '1.1kg', dimensions: 'Taille M',
   },
   {
-    id: 'o8', title: 'Sac à dos Gregory Baltoro 65L — Taille M', seller: 'Céline D.', sellerAvatar: 'CD', sellerTrustScore: 86, sellerSales: 11,
-    category: 'Sacs à dos', price: 175, originalPrice: 380, condition: 'bon', location: 'Montpellier, 34', postedAt: '2026-07-06',
-    image: 'https://img.rocket.new/generatedImages/rocket_gen_img_1de5a8766-1772222096368.png', alt: 'Sac à dos de trekking bleu Gregory posé sur un rocher en montagne',
-    tags: ['65L', 'Trekking', 'Confort'], description: 'Sac en bon état général. Quelques traces d\'usure sur le fond. Toutes les poches fonctionnelles. Housse de pluie incluse.',
-    negotiable: true, shippingAvailable: true, shippingCost: 10, brand: 'Gregory', purchaseYear: '2022', weight: '2.1kg', dimensions: 'Taille M (torse 43–50cm)',
+    id: 'oc8', slug: 'garmin-inreach-mini-2-gps',
+    title: 'Garmin inReach Mini 2 — GPS satellite',
+    seller: 'Thibault F.', sellerAvatar: 'TF', sellerTrustScore: 94, sellerSales: 28,
+    category: 'Navigation', price: 220, originalPrice: 420, condition: 'comme_neuf',
+    location: 'Paris, 75', postedAt: '2026-07-13',
+    image: 'https://images.unsplash.com/photo-1697115876539-98f4717cbbc6',
+    alt: 'GPS satellite Garmin inReach Mini orange posé sur une carte topographique',
+    tags: ['Satellite', 'SOS', 'Messagerie'], description: 'Acheté en 2025, utilisé 3 fois. Comme neuf. Abonnement non inclus. Câble USB-C inclus.',
+    negotiable: false, shippingAvailable: true, shippingCost: 7, brand: 'Garmin', purchaseYear: '2025', weight: '100g',
   },
   {
-    id: 'o9', title: 'Réchaud Primus Lite+ Duo', seller: 'Théo L.', sellerAvatar: 'TL', sellerTrustScore: 74, sellerSales: 2,
-    category: 'Cuisine', price: 45, originalPrice: 100, condition: 'comme_neuf', location: 'Rennes, 35', postedAt: '2026-07-11',
-    image: 'https://images.unsplash.com/photo-1662148460486-c8ca9372e13e', alt: 'Réchaud de camping compact avec casserole sur un rocher en plein air',
-    tags: ['Cuisine', 'Légère', 'Duo'], description: 'Utilisé une seule fois. Comme neuf. Vendu avec casserole 1L et couvercle. Poids total 320g. Idéal pour 2 personnes.',
-    negotiable: false, shippingAvailable: true, shippingCost: 7, brand: 'Primus', purchaseYear: '2025', weight: '320g (avec casserole)',
+    id: 'oc9', slug: 'rab-neutrino-pro-400-doudoune',
+    title: 'Rab Neutrino Pro 400 — Doudoune duvet L',
+    seller: 'Margaux V.', sellerAvatar: 'MV', sellerTrustScore: 82, sellerSales: 5,
+    category: 'Vêtements', price: 185, originalPrice: 400, condition: 'tres_bon',
+    location: 'Chamonix, 74', postedAt: '2026-07-05',
+    image: 'https://images.unsplash.com/photo-1618143928355-3d9afff6ec23',
+    alt: 'Doudoune duvet Rab bleue portée par un alpiniste en haute montagne',
+    tags: ['Duvet', 'Expédition', 'Chaud'], description: 'Doudoune duvet 800+ cuin. Portée 2 saisons. Lavée professionnellement. Taille L. Idéale expédition.',
+    negotiable: true, shippingAvailable: true, shippingCost: 7, brand: 'Rab', purchaseYear: '2023', weight: '490g', dimensions: 'Taille L',
   },
   {
-    id: 'o10', title: 'Veste softshell Salomon Wayfarer — Taille L', seller: 'Margot P.', sellerAvatar: 'MP', sellerTrustScore: 82, sellerSales: 6,
-    category: 'Vêtements', price: 70, originalPrice: 160, condition: 'bon', location: 'Strasbourg, 67', postedAt: '2026-07-04',
-    image: 'https://images.unsplash.com/photo-1618143928355-3d9afff6ec23', alt: 'Randonneuse portant une veste softshell verte dans une forêt de montagne',
-    tags: ['Softshell', 'Randonnée', 'Coupe-vent'], description: 'Veste légère et respirante. Quelques petites traces d\'usure aux coudes. Fermetures éclair impeccables. Taille L.',
-    negotiable: true, shippingAvailable: true, shippingCost: 6, brand: 'Salomon', purchaseYear: '2023', weight: '340g', dimensions: 'Taille L',
+    id: 'oc10', slug: 'petzl-grigri-plus-assureur',
+    title: 'Petzl GriGri+ — Assureur avec anti-panique',
+    seller: 'Alexis B.', sellerAvatar: 'AB', sellerTrustScore: 96, sellerSales: 33,
+    category: 'Escalade', price: 55, originalPrice: 120, condition: 'comme_neuf',
+    location: 'Fontainebleau, 77', postedAt: '2026-07-14',
+    image: 'https://images.unsplash.com/photo-1665091995671-e72b1b848a77',
+    alt: 'Assureur Petzl GriGri rouge sur paroi d\'escalade en falaise',
+    tags: ['Escalade', 'Sécurité', 'Anti-panique'], description: 'Assureur assisté avec mode anti-panique. Utilisé 5 sorties. Comme neuf. Compatible cordes 8.5–11mm.',
+    negotiable: false, shippingAvailable: true, shippingCost: 5, brand: 'Petzl', purchaseYear: '2025', weight: '175g',
   },
   {
-    id: 'o11', title: 'Sac de couchage Valandré Shocking Blue 600', seller: 'Renaud C.', sellerAvatar: 'RC', sellerTrustScore: 95, sellerSales: 24,
-    category: 'Couchage', price: 280, originalPrice: 580, condition: 'comme_neuf', location: 'Grenoble, 38', postedAt: '2026-07-12',
-    image: 'https://images.unsplash.com/photo-1722495274040-463c786b09b6', alt: 'Sac de couchage duvet rouge déployé dans une tente de bivouac en montagne',
-    tags: ['Duvet', '-15°C', 'Expédition'], description: 'Sac de couchage haut de gamme. Duvet 800+ cuin. Utilisé 3 nuits. Lavé professionnellement. Sac de compression inclus.',
-    negotiable: false, shippingAvailable: true, shippingCost: 9, brand: 'Valandré', purchaseYear: '2025', weight: '1.05kg', dimensions: 'Taille Regular (185cm)',
+    id: 'oc11', slug: 'therm-a-rest-prolite-apex-matelas',
+    title: 'Therm-a-Rest ProLite Apex — Matelas autogonflant',
+    seller: 'Nadège C.', sellerAvatar: 'NC', sellerTrustScore: 78, sellerSales: 4,
+    category: 'Couchage', price: 65, originalPrice: 150, condition: 'bon',
+    location: 'Nantes, 44', postedAt: '2026-07-02',
+    image: 'https://images.unsplash.com/photo-1575270430711-3a5788f712bf',
+    alt: 'Matelas autogonflant Therm-a-Rest déployé dans une tente de camping',
+    tags: ['Autogonflant', 'R-value 3.2', 'Confort'], description: 'Matelas autogonflant 3 saisons. Aucune fuite. Valve en parfait état. Sac de rangement inclus.',
+    negotiable: true, shippingAvailable: true, shippingCost: 7, brand: 'Therm-a-Rest', purchaseYear: '2022', weight: '680g', dimensions: '183x51cm',
   },
   {
-    id: 'o12', title: 'GPS Garmin eTrex 32x', seller: 'Bertrand F.', sellerAvatar: 'BF', sellerTrustScore: 80, sellerSales: 8,
-    category: 'Navigation', price: 110, originalPrice: 230, condition: 'tres_bon', location: 'Nantes, 44', postedAt: '2026-07-02',
-    image: 'https://images.unsplash.com/photo-1697115876539-98f4717cbbc6', alt: 'GPS de randonnée Garmin jaune posé sur une carte topographique',
-    tags: ['GPS', 'Navigation', 'Cartographie'], description: 'GPS en très bon état. Cartes topo Europe incluses. Batterie AA. Résistant à l\'eau IPX7. Vendu avec câble USB.',
-    negotiable: true, shippingAvailable: true, shippingCost: 6, brand: 'Garmin', purchaseYear: '2023', weight: '142g',
+    id: 'oc12', slug: 'mammut-barryvox-s-dvva',
+    title: 'Mammut Barryvox S — DVA avalanche',
+    seller: 'Éric T.', sellerAvatar: 'ET', sellerTrustScore: 97, sellerSales: 40,
+    category: 'Sécurité', price: 240, originalPrice: 500, condition: 'tres_bon',
+    location: 'Grenoble, 38', postedAt: '2026-07-08',
+    image: 'https://images.unsplash.com/photo-1697115876539-98f4717cbbc6',
+    alt: 'DVA avalanche Mammut Barryvox S orange posé dans la neige en montagne',
+    tags: ['DVA', 'Avalanche', '3 antennes'], description: 'DVA 3 antennes avec analyse de signal. Batterie neuve. Révisé par Mammut. Harnais inclus.',
+    negotiable: false, shippingAvailable: true, shippingCost: 8, brand: 'Mammut', purchaseYear: '2024', weight: '255g',
   },
 ];
 
@@ -179,14 +229,12 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
     <>
       <div className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
         <div className="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-          {/* Header */}
           <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card z-10">
-            <h2 className="font-display font-700 text-foreground text-base line-clamp-1" style={{ fontFamily: 'var(--font-display)' }}>{item.title}</h2>
+            <h2 className="font-display font-700 text-foreground text-base line-clamp-1">{item.title}</h2>
             <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors flex-shrink-0"><Icon name="XMarkIcon" size={18} /></button>
           </div>
 
           <div className="p-5 space-y-5">
-            {/* Image */}
             <div className="relative rounded-xl overflow-hidden aspect-video">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={item.image} alt={item.alt} className="w-full h-full object-cover" />
@@ -198,38 +246,31 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
               </div>
             </div>
 
-            {/* Price & Actions */}
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-baseline gap-2">
-                  <span className="font-display font-800 text-3xl text-foreground" style={{ fontFamily: 'var(--font-display)' }}>{item.price}€</span>
+                  <span className="font-display font-800 text-3xl text-foreground">{item.price}€</span>
                   <span className="text-muted-foreground line-through text-sm">{item.originalPrice}€</span>
                 </div>
                 {item.negotiable && <p className="text-xs text-green-500 mt-0.5">Prix négociable</p>}
               </div>
-              <button
-                onClick={() => setShowContact(true)}
-                className="btn-primary flex items-center gap-2"
-              >
+              <button onClick={() => setShowContact(true)} className="btn-primary flex items-center gap-2">
                 <Icon name="ChatBubbleLeftIcon" size={16} variant="outline" />
                 Contacter
               </button>
             </div>
 
-            {/* Tags */}
             <div className="flex flex-wrap gap-2">
               {item.tags.map((tag) => (
                 <span key={tag} className="px-2.5 py-1 bg-muted rounded-full text-xs text-muted-foreground border border-border">{tag}</span>
               ))}
             </div>
 
-            {/* Description */}
             <div>
               <h3 className="font-semibold text-foreground mb-2 text-sm">Description</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
             </div>
 
-            {/* Details grid */}
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: 'Marque', value: item.brand },
@@ -246,7 +287,6 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
               ))}
             </div>
 
-            {/* Seller */}
             <div className="bg-background rounded-xl p-4 border border-border">
               <h3 className="font-semibold text-foreground mb-3 text-sm">Vendeur</h3>
               <div className="flex items-center gap-3">
@@ -263,6 +303,15 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
                 </div>
               </div>
             </div>
+
+            {/* Link to product detail */}
+            <Link
+              href={`/produit/${item.slug}?type=occasion`}
+              className="w-full py-3 rounded-xl border border-primary/40 text-primary text-sm font-medium hover:bg-primary/5 transition-colors flex items-center justify-center gap-1.5"
+            >
+              <Icon name="ArrowTopRightOnSquareIcon" size={14} variant="outline" />
+              Voir la fiche produit occasion
+            </Link>
           </div>
         </div>
       </div>
@@ -271,7 +320,7 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
   );
 }
 
-const CATEGORIES = ['Tout', 'Vêtements', 'Chaussures', 'Alpinisme', 'Éclairage', 'Couchage', 'Bâtons', 'Tentes', 'Sacs à dos', 'Cuisine', 'Navigation'];
+const CATEGORIES = ['Tout', 'Cuisine', 'Chaussures', 'Tentes', 'Éclairage', 'Couchage', 'Bâtons', 'Sacs à dos', 'Navigation', 'Vêtements', 'Escalade', 'Sécurité'];
 
 export default function OccasionPage() {
   const [selectedItem, setSelectedItem] = useState<OccasionItem | null>(null);
@@ -404,7 +453,7 @@ export default function OccasionPage() {
                     <div className="p-4 flex flex-col flex-1 gap-3">
                       <div>
                         <p className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider mb-1">{item.category}</p>
-                        <h3 className="font-display font-700 text-foreground text-base leading-tight" style={{ fontFamily: 'var(--font-display)' }}>{item.title}</h3>
+                        <h3 className="font-display font-700 text-foreground text-base leading-tight">{item.title}</h3>
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
                       <div className="flex items-center gap-2 mt-auto">
@@ -416,7 +465,7 @@ export default function OccasionPage() {
                           <p className="text-[10px] text-muted-foreground">{item.location}</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-display font-700 text-foreground text-lg" style={{ fontFamily: 'var(--font-display)' }}>{item.price}€</p>
+                          <p className="font-display font-700 text-foreground text-lg">{item.price}€</p>
                           <p className="text-[10px] text-muted-foreground line-through">{item.originalPrice}€</p>
                         </div>
                       </div>
@@ -427,6 +476,13 @@ export default function OccasionPage() {
                         >
                           Voir l&apos;annonce
                         </button>
+                        <Link
+                          href={`/produit/${item.slug}?type=occasion`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="px-3 py-2 rounded-lg border border-primary/30 text-primary text-xs font-medium hover:bg-primary/10 transition-colors flex items-center"
+                        >
+                          <Icon name="ArrowTopRightOnSquareIcon" size={13} variant="outline" />
+                        </Link>
                         {item.shippingAvailable && (
                           <div className="flex items-center gap-1 px-2 py-1 bg-muted rounded-lg">
                             <Icon name="TruckIcon" size={12} variant="outline" className="text-muted-foreground" />
