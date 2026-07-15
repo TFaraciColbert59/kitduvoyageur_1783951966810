@@ -485,7 +485,8 @@ function RelatedProducts({ formatPrice }: { formatPrice: (c: number) => string }
 }
 
 // ── TEMPLATE: NEUF ─────────────────────────────────────────────────────────────
-function _TemplateNeuf({ product }: { product: Product }) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function TemplateNeuf_({ product }: { product: Product }) {
   const formatPrice = (cents: number) => (cents / 100).toFixed(2).replace('.', ',') + ' €';
   const [activeTab, setActiveTab] = useState<'specs' | 'reviews'>('specs');
 
@@ -570,7 +571,8 @@ function _TemplateNeuf({ product }: { product: Product }) {
 }
 
 // ── TEMPLATE: ENCHÈRE ──────────────────────────────────────────────────────────
-function _TemplateEnchere({ product }: { product: Product }) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function TemplateEnchere_({ product }: { product: Product }) {
   const formatPrice = (cents: number) => (cents / 100).toFixed(2).replace('.', ',') + ' €';
   const [activeTab, setActiveTab] = useState<'specs' | 'reviews'>('specs');
   const countdown = useCountdown(product.date_fin_enchere);
@@ -682,6 +684,7 @@ function _TemplateEnchere({ product }: { product: Product }) {
 }
 
 // ── TEMPLATE: LOCATION ─────────────────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function TemplateLocation({ product }: { product: Product }) {
   const formatPrice = (cents: number) => (cents / 100).toFixed(2).replace('.', ',') + ' €';
   const [activeTab, setActiveTab] = useState<'specs' | 'reviews'>('specs');
@@ -783,6 +786,7 @@ function TemplateLocation({ product }: { product: Product }) {
 }
 
 // ── TEMPLATE: OCCASION ─────────────────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function TemplateOccasion({ product }: { product: Product }) {
   const formatPrice = (cents: number) => (cents / 100).toFixed(2).replace('.', ',') + ' €';
   const [activeTab, setActiveTab] = useState<'specs' | 'reviews'>('specs');

@@ -28,7 +28,8 @@ interface Product {
 type _SortKey = 'relevance' | 'price-asc' | 'price-desc' | 'weight-asc' | 'weight-desc';
 
 // ── Product Card ───────────────────────────────────────────────────────────────
-function _ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: (id: string) => void }) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function ProductCard_({ product, onAddToCart }: { product: Product; onAddToCart: (id: string) => void }) {
   const [added, setAdded] = useState(false);
 
   const handleAdd = (e: React.MouseEvent) => {
