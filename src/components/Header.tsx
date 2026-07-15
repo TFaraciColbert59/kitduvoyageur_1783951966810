@@ -57,6 +57,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Commandes', href: '/compte#commandes', desc: 'Historique & suivi', icon: 'ShoppingBagIcon' },
       { label: 'Documents', href: '/compte#documents', desc: 'Passeports, visas, assurances', icon: 'FolderIcon' },
       { label: 'Configurateur IA', href: '/ai-configurator', desc: 'Kit personnalisé en 2 min', icon: 'CpuChipIcon' },
+      { label: 'Rapport Kit', href: '/rapport-kit', desc: 'Rapport personnalisé IA', icon: 'DocumentChartBarIcon' },
     ],
   },
 ];
