@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AppLogo from '@/components/ui/AppLogo';
 import Icon from '@/components/ui/AppIcon';
@@ -47,9 +47,14 @@ const LANGUAGES = [
 export default function Footer() {
   const [lang, setLang] = useState('fr');
   const [langOpen, setLangOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
-    <footer className="bg-[#1C2620] text-white/70" role="contentinfo">
+    <footer className="bg-[#1C2620] text-white/70" role="contentinfo" suppressHydrationWarning>
       {/* Top CTA band */}
       <div className="border-b border-white/8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col sm:flex-row items-center justify-between gap-6">
@@ -157,9 +162,9 @@ export default function Footer() {
               >
                 <Icon name="GlobeAltIcon" size={12} variant="outline" />
                 {LANGUAGES.find(l => l.code === lang)?.label}
-                <Icon name="ChevronDownIcon" size={10} variant="outline" className={`transition-transform ${langOpen ? 'rotate-180' : ''}`} />
+                <Icon name="ChevronDownIcon" size={10} variant="outline" className={`transition-transform ${mounted && langOpen ? 'rotate-180' : ''}`} />
               </button>
-              {langOpen && (
+              {mounted && langOpen && (
                 <div className="absolute bottom-full right-0 mb-2 bg-[#243028] border border-white/10 rounded-xl shadow-xl overflow-hidden z-50 min-w-[130px]">
                   {LANGUAGES.map(l => (
                     <button
