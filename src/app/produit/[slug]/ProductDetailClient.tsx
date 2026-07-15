@@ -9,6 +9,7 @@ import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
 import { saveCart, getCart } from '@/lib/cart';
 import AuctionZone from '@/components/AuctionZone';
+import NewProductZone from '@/components/NewProductZone';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type ListingType = 'neuf' | 'kit' | 'occasion' | 'enchere' | 'location';
@@ -53,6 +54,10 @@ interface Product {
   specs: ProductSpec[];
   tags: string[];
   stock: number;
+  /** Explicit stock status — overrides stock count when set */
+  stock_statut?: 'en_stock' | 'rupture' | 'reappro';
+  /** ISO date — shown when stock_statut === 'reappro' */
+  reappro_date?: string;
   note: number;
   avis_count: number;
   reviews: ProductReview[];
@@ -115,6 +120,7 @@ const mockProduct: Product = {
   ],
   tags: ['Randonnée', 'Trekking', 'Multi-jours', 'Montagne'],
   stock: 8,
+  stock_statut: 'en_stock',
   note: 4.8,
   avis_count: 247,
   reviews: [
@@ -122,11 +128,7 @@ const mockProduct: Product = {
     { author: 'Thomas R.', rating: 5, comment: "Confort incroyable même en longue journée. L'accès bas est très pratique.", date: '2024-07-03', verified: true },
     { author: 'Sophie M.', rating: 4, comment: 'Excellent sac, léger pour sa capacité. Juste un peu cher mais la qualité justifie le prix.', date: '2024-06-18', verified: false },
   ],
-  listing_type: 'enchere',
-  prix_depart_cents: 18000,
-  enchere_actuelle_cents: 26500,
-  date_fin_enchere: new Date(Date.now() + 2 * 3600000 + 15 * 60000).toISOString(), // ends in ~2h15 (ending soon)
-  nombre_encherisseurs: 7,
+  listing_type: 'neuf',
 };
 
 const relatedProducts = [
@@ -788,7 +790,30 @@ export default function ProductDetailClient() {
               </div>
 
               {/* ── CONDITIONAL ACTION ZONE ── */}
-              {listingType === 'neuf' && <ActionZoneNeuf product={product} onAddToCart={handleAddToCart} added={addedToCart} />}
+              {listingType === 'neuf' && (
+                <NewProductZone
+                  product={{
+                    id: product.id,
+                    slug: product.slug,
+                    nom: product.nom,
+                    marque: product.marque,
+                    reference: product.reference,
+                    categorie: product.categorie,
+                    prix_cents: product.prix_cents,
+                    poids_g: product.poids_g,
+                    stock: product.stock,
+                    stock_statut: product.stock_statut,
+                    reappro_date: product.reappro_date,
+                    description: product.description,
+                    specs: product.specs,
+                    tags: product.tags,
+                    note: product.note,
+                    avis_count: product.avis_count,
+                    reviews: product.reviews,
+                    images: product.images,
+                  }}
+                />
+              )}
               {listingType === 'kit' && <ActionZoneKit product={product} />}
               {listingType === 'occasion' && <ActionZoneOccasion product={product} />}
               {listingType === 'enchere' && (
@@ -811,19 +836,21 @@ export default function ProductDetailClient() {
           </div>
         </section>
 
-        {/* ── AI PANELS (all types) ── */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-          <div className="mb-4 flex items-center gap-2">
-            <Icon name="SparklesIcon" size={16} variant="outline" className="text-info" />
-            <h2 className="font-display font-700 text-lg text-foreground" style={{ fontFamily: 'var(--font-display)' }}>Intelligence artificielle</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <AIDescriptionPanel product={product} />
-            <AIComparatorPanel product={product} />
-            <AIFAQPanel product={product} />
-            <AIReviewSummaryPanel product={product} />
-          </div>
-        </section>
+        {/* ── AI PANELS (non-neuf types only — neuf has its own AI panels in NewProductZone) ── */}
+        {listingType !== 'neuf' && (
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+            <div className="mb-4 flex items-center gap-2">
+              <Icon name="SparklesIcon" size={16} variant="outline" className="text-info" />
+              <h2 className="font-display font-700 text-lg text-foreground" style={{ fontFamily: 'var(--font-display)' }}>Intelligence artificielle</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <AIDescriptionPanel product={product} />
+              <AIComparatorPanel product={product} />
+              <AIFAQPanel product={product} />
+              <AIReviewSummaryPanel product={product} />
+            </div>
+          </section>
+        )}
 
         <TopoSeparator />
 
