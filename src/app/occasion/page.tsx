@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 
 interface OccasionItem {
   id: string;
@@ -342,13 +343,57 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
 }
 
 export default function OccasionPage() {
-  const [listings] = useState<OccasionItem[]>(STATIC_LISTINGS);
+  const [listings, setListings] = useState<OccasionItem[]>(STATIC_LISTINGS);
   const [selectedItem, setSelectedItem] = useState<OccasionItem | null>(null);
   const [category, setCategory] = useState('Tout');
   const [sortBy, setSortBy] = useState<'recent' | 'price_asc' | 'price_desc' | 'discount'>('recent');
   const [search, setSearch] = useState('');
   const [showSellModal, setShowSellModal] = useState(false);
   const [sellSent, setSellSent] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from('listings')
+      .select('id, produit_id, prix_cents, etat, faire_offre_active, products(name, slug, category, image, image_alt, description, price_eur)')
+      .eq('listing_type', 'occasion')
+      .eq('statut', 'actif')
+      .then(({ data }) => {
+        if (!data || data.length === 0) return;
+        const condMap: Record<string, OccasionItem['condition']> = {
+          comme_neuf: 'comme_neuf',
+          bon_etat: 'bon',
+          etat_correct: 'acceptable',
+        };
+        const dbListings: OccasionItem[] = data.map((l) => {
+          const p = (l.products as unknown) as { name: string; slug: string; category: string; image: string; image_alt: string; description: string; price_eur: number } | null;
+          const price = Math.round((l.prix_cents ?? 0) / 100);
+          const originalPrice = p?.price_eur ?? 0;
+          return {
+            id: l.id,
+            slug: p?.slug ?? l.id,
+            title: p?.name ?? 'Produit',
+            seller: 'Vendeur vérifié',
+            sellerAvatar: 'V',
+            sellerTrustScore: 88,
+            sellerSales: 0,
+            category: p?.category ?? 'Autre',
+            price,
+            originalPrice,
+            condition: condMap[l.etat ?? 'bon_etat'] ?? 'bon',
+            location: 'France',
+            postedAt: new Date().toISOString(),
+            image: p?.image ?? 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600',
+            alt: p?.image_alt ?? p?.name ?? 'Produit outdoor',
+            tags: [p?.category ?? 'Outdoor'],
+            description: p?.description ?? '',
+            negotiable: l.faire_offre_active ?? false,
+            shippingAvailable: true,
+          };
+        });
+        setListings([...dbListings, ...STATIC_LISTINGS]);
+      });
+  }, []);
 
   const filtered = listings
     .filter((item) => {

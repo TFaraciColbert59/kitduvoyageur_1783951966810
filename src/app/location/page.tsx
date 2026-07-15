@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 
 interface RentalListing {
   id: string;
@@ -435,13 +436,52 @@ function RentalCard({ listing, onClick }: { listing: RentalListing; onClick: () 
 }
 
 export default function LocationPage() {
-  const [listings] = useState<RentalListing[]>(STATIC_LISTINGS);
+  const [listings, setListings] = useState<RentalListing[]>(STATIC_LISTINGS);
   const [selectedListing, setSelectedListing] = useState<RentalListing | null>(null);
   const [category, setCategory] = useState('Tout');
   const [sortBy, setSortBy] = useState<'distance' | 'price' | 'rating'>('distance');
   const [search, setSearch] = useState('');
   const [showListModal, setShowListModal] = useState(false);
   const [listSent, setListSent] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from('listings')
+      .select('id, produit_id, prix_jour_cents, caution_cents, products(name, slug, category, image, image_alt, description, weight_g)')
+      .eq('listing_type', 'location')
+      .eq('statut', 'actif')
+      .then(({ data }) => {
+        if (!data || data.length === 0) return;
+        const dbListings: RentalListing[] = data.map((l) => {
+          const p = (l.products as unknown) as { name: string; slug: string; category: string; image: string; image_alt: string; description: string; weight_g: number } | null;
+          const priceDay = Math.round((l.prix_jour_cents ?? 0) / 100);
+          return {
+            id: l.id,
+            slug: p?.slug ?? l.id,
+            title: p?.name ?? 'Produit',
+            owner: 'Propriétaire vérifié',
+            ownerAvatar: 'V',
+            ownerTrustScore: 90,
+            category: p?.category ?? 'Autre',
+            pricePerDay: priceDay,
+            pricePerWeek: priceDay * 6,
+            deposit: Math.round((l.caution_cents ?? 0) / 100),
+            weightG: p?.weight_g ?? 0,
+            condition: 'excellent' as RentalListing['condition'],
+            location: 'France',
+            distance: 0,
+            available: true,
+            image: p?.image ?? 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600',
+            alt: p?.image_alt ?? p?.name ?? 'Produit outdoor',
+            tags: [p?.category ?? 'Outdoor'],
+            reviewCount: 0,
+            rating: 4.5,
+          };
+        });
+        setListings([...dbListings, ...STATIC_LISTINGS]);
+      });
+  }, []);
 
   const filtered = listings
     .filter((item) => {

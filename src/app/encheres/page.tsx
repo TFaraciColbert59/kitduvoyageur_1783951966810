@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
+import { createClient } from '@/lib/supabase/client';
 
 
 interface BidListing {
@@ -176,7 +177,7 @@ function isEndingSoon(endsAt: string): boolean {
 }
 
 export default function EncheresPage() {
-  const [listings] = useState<BidListing[]>(STATIC_LISTINGS);
+  const [listings, setListings] = useState<BidListing[]>(STATIC_LISTINGS);
   const [selectedListing, setSelectedListing] = useState<BidListing | null>(null);
   const [bidAmount, setBidAmount] = useState('');
   const [offerAmount, setOfferAmount] = useState('');
@@ -193,6 +194,50 @@ export default function EncheresPage() {
   useEffect(() => {
     const interval = setInterval(() => forceUpdate((n) => n + 1), 60000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from('listings')
+      .select('id, produit_id, prix_depart_cents, enchere_actuelle_cents, date_fin_enchere, nombre_encherisseurs, etat, products(name, slug, category, image, image_alt, description)')
+      .eq('listing_type', 'enchere')
+      .eq('statut', 'actif')
+      .then(({ data }) => {
+        if (!data || data.length === 0) return;
+        const dbListings: BidListing[] = data.map((l) => {
+          const p = (l.products as unknown) as { name: string; slug: string; category: string; image: string; image_alt: string; description: string } | null;
+          const endsAt = l.date_fin_enchere ?? new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+          const condMap: Record<string, BidListing['condition']> = {
+            comme_neuf: 'comme_neuf',
+            bon_etat: 'bon',
+            etat_correct: 'acceptable',
+          };
+          return {
+            id: l.id,
+            slug: p?.slug ?? l.id,
+            title: p?.name ?? 'Produit',
+            seller: 'Vendeur vérifié',
+            sellerAvatar: 'V',
+            sellerTrustScore: 90,
+            category: p?.category ?? 'Autre',
+            startingPrice: Math.round((l.prix_depart_cents ?? 0) / 100),
+            currentBid: Math.round((l.enchere_actuelle_cents ?? l.prix_depart_cents ?? 0) / 100),
+            condition: condMap[l.etat ?? 'bon_etat'] ?? 'bon',
+            location: 'France',
+            endsAt,
+            image: p?.image ?? 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600',
+            alt: p?.image_alt ?? p?.name ?? 'Produit outdoor',
+            tags: [p?.category ?? 'Outdoor'],
+            description: p?.description ?? '',
+            bidsCount: l.nombre_encherisseurs ?? 0,
+            watchers: 0,
+            negotiable: false,
+            shippingAvailable: true,
+          };
+        });
+        setListings([...dbListings, ...STATIC_LISTINGS]);
+      });
   }, []);
 
   const categories = ['all', ...Array.from(new Set(listings.map((l) => l.category)))];
