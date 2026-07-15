@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { saveCart, getCart } from '@/lib/cart';
 import AuctionZone from '@/components/AuctionZone';
 import NewProductZone from '@/components/NewProductZone';
+import OccasionProductZone from '@/components/OccasionProductZone';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type ListingType = 'neuf' | 'kit' | 'occasion' | 'enchere' | 'location';
@@ -73,6 +74,30 @@ interface Product {
   composition?: KitItem[];
   vendeur_nom?: string;
   vendeur_trust_score?: number;
+  // Occasion extended fields
+  listing_id?: string;
+  occasion_statut?: 'en_attente_moderation' | 'active' | 'vendue' | 'retiree' | 'litige';
+  faire_offre_active?: boolean;
+  historique_produit?: {
+    date_achat_origine?: string;
+    nombre_proprietaires?: number;
+    usage_declare?: string;
+  };
+  certificat_authenticite?: {
+    numero?: string;
+    date_emission?: string;
+    verifie_par?: string;
+  };
+  photos_defauts?: { url: string; alt: string; description?: string }[];
+  vendeur?: {
+    id: string;
+    nom: string;
+    trust_score: number;
+    nb_ventes: number;
+    delai_reponse_heures?: number;
+    avatar?: string;
+  };
+  produit_id?: string;
 }
 
 const ETAT_LABELS: Record<string, { label: string; cls: string }> = {
@@ -815,7 +840,36 @@ export default function ProductDetailClient() {
                 />
               )}
               {listingType === 'kit' && <ActionZoneKit product={product} />}
-              {listingType === 'occasion' && <ActionZoneOccasion product={product} />}
+              {listingType === 'occasion' && (
+                <OccasionProductZone
+                  product={{
+                    id: product.id,
+                    listing_id: product.listing_id ?? product.id,
+                    slug: product.slug,
+                    nom: product.nom,
+                    marque: product.marque,
+                    reference: product.reference,
+                    categorie: product.categorie,
+                    prix_cents: product.prix_cents,
+                    poids_g: product.poids_g,
+                    description: product.description,
+                    specs: product.specs,
+                    tags: product.tags,
+                    note: product.note,
+                    avis_count: product.avis_count,
+                    reviews: product.reviews,
+                    images: product.images,
+                    etat: product.etat ?? 'bon_etat',
+                    statut: product.occasion_statut ?? 'active',
+                    faire_offre_active: product.faire_offre_active ?? false,
+                    historique: product.historique_produit,
+                    certificat: product.certificat_authenticite,
+                    photos_defauts: product.photos_defauts,
+                    vendeur: product.vendeur,
+                    produit_id: product.produit_id,
+                  }}
+                />
+              )}
               {listingType === 'enchere' && (
                 <AuctionZone
                   listing={{
