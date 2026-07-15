@@ -871,7 +871,7 @@ function ConfiguratorForm({ onGenerate }: { onGenerate: (params: SessionParams, 
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function KitReportPage() {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [report, setReport] = useState<KitReport | null>(null);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);

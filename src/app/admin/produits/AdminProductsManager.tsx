@@ -296,7 +296,7 @@ Réponds en JSON: {"points_forts": ["..."], "lacunes": ["..."], "recommandations
         </div>
 
         {!parsedAnalysis && !aiAnalysisLoading && !analysisLoading && (
-          <p className="text-xs text-white/30 italic">Cliquez sur "Analyser le catalogue" pour obtenir une analyse IA complète avec recommandations prioritaires.</p>
+          <p className="text-xs text-white/30 italic">Cliquez sur &quot;Analyser le catalogue&quot; pour obtenir une analyse IA complète avec recommandations prioritaires.</p>
         )}
 
         {(aiAnalysisLoading || analysisLoading) && (
@@ -465,7 +465,7 @@ function ProductListSection({
   const toggleSelect = (id: string) => {
     setSelected(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   };
@@ -485,7 +485,7 @@ function ProductListSection({
     const toExport = selected.size > 0 ? filtered.filter(p => selected.has(p.id)) : filtered;
     const headers = ['product_id', 'name', 'brand', 'model', 'category_main', 'category_sub', 'price_eur', 'weight_g', 'score_kdv', 'essentiality', 'cabin_compatible', 'available_europe', 'available_usa', 'score_quality', 'score_price', 'score_durability'];
     const rows = toExport.map(p => headers.map(h => {
-      const v = (p as Record<string, unknown>)[h];
+      const v = (p as unknown as Record<string, unknown>)[h];
       if (typeof v === 'boolean') return v ? 'true' : 'false';
       if (typeof v === 'string' && v.includes(',')) return `"${v}"`;
       return v ?? '';

@@ -191,23 +191,23 @@ export default function CheckoutPage() {
       // Award loyalty points
       if (user) {
         const pointsEarned = Math.floor(grandTotal * 10);
-        await supabase.rpc('increment_loyalty_points' as never, {
-          p_user_id: user.id,
-          p_points: pointsEarned,
-        }).catch(() => {
+        try {
+          await supabase.rpc('increment_loyalty_points' as never, {
+            p_user_id: user.id,
+            p_points: pointsEarned,
+          });
+        } catch {
           // Fallback: direct update
-          supabase.from('user_profiles')
+          const { data } = await supabase.from('user_profiles')
             .select('loyalty_points')
             .eq('id', user.id)
-            .single()
-            .then(({ data }) => {
-              if (data) {
-                supabase.from('user_profiles').update({
-                  loyalty_points: (data.loyalty_points ?? 0) + pointsEarned,
-                }).eq('id', user.id);
-              }
-            });
-        });
+            .single();
+          if (data) {
+            await supabase.from('user_profiles').update({
+              loyalty_points: ((data as { loyalty_points?: number }).loyalty_points ?? 0) + pointsEarned,
+            }).eq('id', user.id);
+          }
+        }
 
         await supabase.from('loyalty_history').insert({
           user_id: user.id,
