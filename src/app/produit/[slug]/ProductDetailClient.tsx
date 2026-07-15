@@ -7,6 +7,7 @@ import WeightGauge from '@/components/WeightGauge';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { addToCart } from '@/lib/cart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -25,6 +26,10 @@ interface Product {
   images: { url: string; alt: string }[];
   tags: string[];
   specs: { label: string; value: string }[];
+  score_kdv?: number;
+  essentiality?: string;
+  advantages?: string[];
+  disadvantages?: string[];
 }
 
 interface AcquisitionMode {
@@ -202,15 +207,9 @@ async function fetchProduct(slug: string): Promise<Product | null> {
       .single();
     if (error || !data) return null;
 
-    const advantages: string[] = Array.isArray(data.advantages_array)
-      ? data.advantages_array
-      : [];
-    const disadvantages: string[] = Array.isArray(data.disadvantages_array)
-      ? data.disadvantages_array
-      : [];
-    const travelTypes: string[] = Array.isArray(data.travel_types_array)
-      ? data.travel_types_array
-      : [];
+    const advantages: string[] = Array.isArray(data.advantages_array) ? data.advantages_array : [];
+    const disadvantages: string[] = Array.isArray(data.disadvantages_array) ? data.disadvantages_array : [];
+    const travelTypes: string[] = Array.isArray(data.travel_types_array) ? data.travel_types_array : [];
 
     return {
       id: data.id,
@@ -223,6 +222,10 @@ async function fetchProduct(slug: string): Promise<Product | null> {
       poids_g: data.weight_g ?? 850,
       note: Number(data.rating ?? 4.7),
       avis_count: data.review_count ?? 128,
+      score_kdv: data.score_kdv,
+      essentiality: data.essentiality,
+      advantages,
+      disadvantages,
       images: data.image
         ? [
             { url: data.image, alt: data.image_alt ?? data.name },
@@ -268,6 +271,10 @@ function buildFallbackProduct(slug: string): Product {
     poids_g: 1420,
     note: 4.7,
     avis_count: 128,
+    score_kdv: 92,
+    essentiality: 'Indispensable',
+    advantages: ['Légèreté exceptionnelle', 'Système de portage ergonomique', 'Matériaux durables et recyclés'],
+    disadvantages: ['Prix élevé', 'Poches latérales étroites'],
     images: [
       { url: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80', alt: 'Osprey Farpoint 40 sur un sentier de montagne' },
       { url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80', alt: 'Détail du système de portage Osprey' },
@@ -280,16 +287,10 @@ function buildFallbackProduct(slug: string): Product {
       { label: 'Volume', value: '40 L' },
       { label: 'Dimensions', value: '70 × 35 × 25 cm' },
       { label: 'Matériaux', value: 'Nylon 210D Ripstop' },
-      { label: 'Résistance eau', value: 'IPX4 — 600 mm' },
       { label: 'Garantie', value: '2 ans constructeur' },
       { label: 'Réparabilité', value: '8/10' },
-      { label: 'Durée de vie', value: '5–8 ans' },
-      { label: 'Température', value: '-20°C à +40°C' },
-      { label: 'Origine', value: 'Fabriqué au Vietnam' },
-      { label: 'Compatibilité', value: 'Système de portage universel' },
-      { label: 'Entretien', value: 'Lavage 30°C, séchage à l\'air' },
-      { label: 'Pièces détachées', value: 'Disponibles 10 ans' },
-      { label: 'Normes', value: 'CE, REACH, OEKO-TEX' },
+      { label: 'Score KDV', value: '92/100' },
+      { label: 'Essentialité', value: 'Indispensable' },
     ],
   };
 }
@@ -316,7 +317,9 @@ function ProductGallery({ product }: { product: Product }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
         <div className="absolute top-4 left-4 flex gap-2 flex-wrap">
           <span className="px-2.5 py-1 rounded-full bg-[#E4501C] text-white text-[10px] font-mono font-700 tracking-widest uppercase">Best Seller</span>
-          <span className="px-2.5 py-1 rounded-full bg-[#1C2620]/80 backdrop-blur-sm text-white text-[10px] font-mono tracking-widest uppercase border border-white/20">Ultra Léger</span>
+          {product.score_kdv && product.score_kdv >= 85 && (
+            <span className="px-2.5 py-1 rounded-full bg-[#1C2620]/80 backdrop-blur-sm text-white text-[10px] font-mono tracking-widest uppercase border border-white/20">Score KDV {product.score_kdv}</span>
+          )}
         </div>
         <button
           className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-colors"
@@ -351,25 +354,20 @@ function ProductGallery({ product }: { product: Product }) {
             <img src={img.url} alt="" className="w-full h-full object-cover" aria-hidden="true" />
           </button>
         ))}
-        <button className="flex-shrink-0 w-20 h-20 rounded-xl border-2 border-dashed border-[#C8C3B0] flex flex-col items-center justify-center gap-1 text-[#5C6B5E] hover:border-[#E4501C] hover:text-[#E4501C] transition-colors">
-          <Icon name="VideoCameraIcon" size={16} variant="outline" />
-          <span className="text-[9px] font-mono">Vidéo</span>
-        </button>
-        <button className="flex-shrink-0 w-20 h-20 rounded-xl border-2 border-dashed border-[#C8C3B0] flex flex-col items-center justify-center gap-1 text-[#5C6B5E] hover:border-[#E4501C] hover:text-[#E4501C] transition-colors">
-          <Icon name="CubeIcon" size={16} variant="outline" />
-          <span className="text-[9px] font-mono">360°</span>
-        </button>
       </div>
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION: ACQUISITION COMPARATOR
+// SECTION: AI ACQUISITION ADVISOR — fully functional with cart integration
 // ─────────────────────────────────────────────────────────────────────────────
-function AcquisitionComparator({ modes }: { modes: AcquisitionMode[] }) {
+function AcquisitionComparator({ modes, product, onModeChange }: { modes: AcquisitionMode[]; product: Product; onModeChange: (id: string) => void }) {
   const [selected, setSelected] = useState<string>('neuf');
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [aiAdvice, setAiAdvice] = useState<string | null>(null);
+  const [loadingAdvice, setLoadingAdvice] = useState(false);
+  const [cartAdded, setCartAdded] = useState(false);
+  const [cartMsg, setCartMsg] = useState('');
 
   const colorMap: Record<string, { bg: string; border: string; text: string; badge: string }> = {
     emerald: { bg: 'bg-emerald-50', border: 'border-emerald-400', text: 'text-emerald-700', badge: 'bg-emerald-500' },
@@ -378,13 +376,74 @@ function AcquisitionComparator({ modes }: { modes: AcquisitionMode[] }) {
     orange: { bg: 'bg-orange-50', border: 'border-orange-400', text: 'text-orange-700', badge: 'bg-orange-500' },
   };
 
+  const handleSelect = useCallback(async (modeId: string) => {
+    setSelected(modeId);
+    onModeChange(modeId);
+    setAiAdvice(null);
+    setLoadingAdvice(true);
+    try {
+      const mode = modes.find(m => m.id === modeId);
+      const res = await fetch('/api/ai/chat-completion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: 'GEMINI',
+          model: 'gemini/gemini-2.5-flash',
+          messages: [{
+            role: 'user',
+            content: `Tu es un expert équipement outdoor. En 2 phrases max, explique pourquoi choisir l'option "${mode?.label}" pour le produit "${product.nom}" (${product.marque}, ${(product.prix_cents/100).toFixed(0)}€, ${product.poids_g}g). Sois direct et concret.`,
+          }],
+          parameters: { temperature: 0.7, max_tokens: 120 },
+        }),
+      });
+      const data = await res.json();
+      setAiAdvice(data.content ?? data.choices?.[0]?.message?.content ?? null);
+    } catch {
+      setAiAdvice(null);
+    } finally {
+      setLoadingAdvice(false);
+    }
+  }, [modes, product, onModeChange]);
+
+  const handleCTA = useCallback(() => {
+    if (selected === 'neuf') {
+      addToCart({
+        id: product.id,
+        slug: product.slug,
+        name: product.nom,
+        brand: product.marque,
+        category: product.categorie,
+        priceEur: product.prix_cents / 100,
+        weightG: product.poids_g,
+        image: product.images[0]?.url ?? '',
+        imageAlt: product.images[0]?.alt ?? product.nom,
+      });
+      setCartAdded(true);
+      setCartMsg('✓ Ajouté au panier !');
+      setTimeout(() => setCartAdded(false), 3000);
+    } else if (selected === 'occasion') {
+      window.location.href = '/occasion';
+    } else if (selected === 'location') {
+      window.location.href = '/location';
+    } else if (selected === 'enchere') {
+      window.location.href = '/encheres';
+    }
+  }, [selected, product]);
+
+  const ctaLabels: Record<string, string> = {
+    neuf: cartAdded ? cartMsg : 'Ajouter au panier',
+    occasion: 'Voir les offres occasion',
+    location: 'Réserver une location',
+    enchere: 'Participer à l\'enchère',
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-2">
         <Icon name="SparklesIcon" size={16} variant="outline" className="text-[#E4501C]" />
         <h2 className="font-display font-700 text-xl text-[#1C2620]" style={{ fontFamily: 'var(--font-display)' }}>Obtenir ce produit</h2>
       </div>
-      <p className="text-sm text-[#5C6B5E]">Comparez les 4 façons d&apos;acquérir ce produit. L&apos;IA sélectionne la meilleure option selon votre profil.</p>
+      <p className="text-sm text-[#5C6B5E]">Comparez les 4 façons d&apos;acquérir ce produit. L&apos;IA analyse chaque option pour vous.</p>
 
       <div className="grid grid-cols-2 gap-3">
         {modes.map((mode) => {
@@ -393,7 +452,7 @@ function AcquisitionComparator({ modes }: { modes: AcquisitionMode[] }) {
           return (
             <button
               key={mode.id}
-              onClick={() => { setSelected(mode.id); setExpanded(isSelected ? null : mode.id); }}
+              onClick={() => handleSelect(mode.id)}
               className={`relative p-4 rounded-2xl border-2 text-left transition-all duration-200 ${
                 isSelected ? `${c.bg} ${c.border}` : 'bg-[#EDEAE0] border-[#C8C3B0] hover:border-[#B5652D]'
               }`}
@@ -405,7 +464,7 @@ function AcquisitionComparator({ modes }: { modes: AcquisitionMode[] }) {
                 <Icon name={mode.icon as Parameters<typeof Icon>[0]['name']} size={16} variant="outline" className={isSelected ? c.text : 'text-[#5C6B5E]'} />
                 <span className={`text-xs font-semibold ${isSelected ? c.text : 'text-[#5C6B5E]'}`}>{mode.label}</span>
               </div>
-              <div className={`font-mono font-700 text-lg ${isSelected ? 'text-[#1C2620]' : 'text-[#1C2620]'}`} style={{ fontFamily: 'var(--font-mono)' }}>
+              <div className="font-mono font-700 text-lg text-[#1C2620]" style={{ fontFamily: 'var(--font-mono)' }}>
                 {mode.prix}
               </div>
               <div className="text-xs text-[#5C6B5E] mt-1">{mode.disponibilite}</div>
@@ -418,7 +477,7 @@ function AcquisitionComparator({ modes }: { modes: AcquisitionMode[] }) {
       </div>
 
       {/* Expanded detail */}
-      {selected && (() => {
+      {(() => {
         const mode = modes.find(m => m.id === selected);
         if (!mode) return null;
         const c = colorMap[mode.color];
@@ -439,11 +498,25 @@ function AcquisitionComparator({ modes }: { modes: AcquisitionMode[] }) {
                 </div>
               ))}
             </div>
-            <button className={`w-full py-3 rounded-full font-semibold text-sm text-white transition-all hover:opacity-90 ${c.badge}`}>
-              {mode.id === 'neuf' && 'Ajouter au panier'}
-              {mode.id === 'occasion' && 'Voir les 12 offres'}
-              {mode.id === 'location' && 'Réserver une location'}
-              {mode.id === 'enchere' && 'Participer à l\'enchère'}
+
+            {/* AI advice */}
+            {loadingAdvice ? (
+              <div className="flex items-center gap-2 text-xs text-[#5C6B5E] pt-2 border-t border-black/10">
+                <div className="flex gap-1">{[0,1,2].map(i => <span key={i} className="w-1 h-1 rounded-full bg-[#E4501C] animate-bounce" style={{ animationDelay: `${i*0.15}s` }} />)}</div>
+                Analyse IA en cours…
+              </div>
+            ) : aiAdvice ? (
+              <div className="flex items-start gap-2 pt-2 border-t border-black/10">
+                <Icon name="SparklesIcon" size={12} variant="outline" className="text-[#E4501C] flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-[#1C2620] leading-relaxed">{aiAdvice}</p>
+              </div>
+            ) : null}
+
+            <button
+              onClick={handleCTA}
+              className={`w-full py-3 rounded-full font-semibold text-sm text-white transition-all hover:opacity-90 active:scale-95 ${c.badge} ${cartAdded && selected === 'neuf' ? 'bg-emerald-500' : ''}`}
+            >
+              {ctaLabels[selected]}
             </button>
           </div>
         );
@@ -453,12 +526,13 @@ function AcquisitionComparator({ modes }: { modes: AcquisitionMode[] }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION: AI SCORE
+// SECTION: AI SCORE — dynamic real Gemini analysis
 // ─────────────────────────────────────────────────────────────────────────────
 function AICompatibilityScore({ product }: { product: Product }) {
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<string | null>(null);
-  const score = 93;
+  const [aiScores, setAiScores] = useState<{ label: string; value: number; icon: string }[] | null>(null);
+  const score = product.score_kdv ?? 93;
 
   const generateAnalysis = useCallback(async () => {
     if (analysis) return;
@@ -468,15 +542,35 @@ function AICompatibilityScore({ product }: { product: Product }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          provider: 'GEMINI',
+          model: 'gemini/gemini-2.5-flash',
           messages: [{
             role: 'user',
-            content: `Analyse ce produit outdoor en 3 phrases courtes. Points forts, points faibles, et à qui il s'adresse vraiment.\n\nProduit: ${product.nom}\nMarque: ${product.marque}\nCatégorie: ${product.categorie}\nPoids: ${product.poids_g}g`,
+            content: `Analyse ce produit outdoor et retourne un JSON avec exactement ces champs:
+{
+  "analyse": "3 phrases: point fort, point faible, profil idéal",
+  "scores": [
+    {"label":"Type de voyage","value":0-100,"icon":"🎒"},
+    {"label":"Climat","value":0-100,"icon":"🌤️"},
+    {"label":"Compatibilité sac","value":0-100,"icon":"🎽"},
+    {"label":"Budget","value":0-100,"icon":"💰"},
+    {"label":"Durabilité","value":0-100,"icon":"🔧"}
+  ]
+}
+Produit: ${product.nom} | Marque: ${product.marque} | Catégorie: ${product.categorie} | Poids: ${product.poids_g}g | Prix: ${(product.prix_cents/100).toFixed(0)}€ | Score KDV: ${product.score_kdv ?? 'N/A'}`,
           }],
-          model: 'gemini-2.0-flash',
+          parameters: { temperature: 0.3, max_tokens: 400, response_format: { type: 'json_object' } },
         }),
       });
       const data = await res.json();
-      setAnalysis(data.content ?? data.message ?? null);
+      const content = data.content ?? data.choices?.[0]?.message?.content ?? '{}';
+      try {
+        const parsed = JSON.parse(content);
+        setAnalysis(parsed.analyse ?? null);
+        if (Array.isArray(parsed.scores)) setAiScores(parsed.scores);
+      } catch {
+        setAnalysis(content);
+      }
     } catch {
       setAnalysis('Analyse IA temporairement indisponible.');
     } finally {
@@ -488,12 +582,12 @@ function AICompatibilityScore({ product }: { product: Product }) {
     generateAnalysis();
   }, [generateAnalysis]);
 
-  const criteria = [
+  const displayScores = aiScores ?? [
     { label: 'Type de voyage', value: 97, icon: '🎒' },
     { label: 'Climat', value: 88, icon: '🌤️' },
     { label: 'Compatibilité sac', value: 91, icon: '🎽' },
     { label: 'Budget', value: 85, icon: '💰' },
-    { label: 'Équipement existant', value: 94, icon: '🔧' },
+    { label: 'Durabilité', value: 94, icon: '🔧' },
   ];
 
   return (
@@ -502,9 +596,9 @@ function AICompatibilityScore({ product }: { product: Product }) {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Icon name="SparklesIcon" size={16} variant="outline" className="text-[#E4501C]" />
-            <span className="text-xs font-mono text-white/50 uppercase tracking-widest">Score IA</span>
+            <span className="text-xs font-mono text-white/50 uppercase tracking-widest">Score IA Gemini</span>
           </div>
-          <h3 className="font-display font-700 text-white text-lg" style={{ fontFamily: 'var(--font-display)' }}>Compatibilité avec votre profil</h3>
+          <h3 className="font-display font-700 text-white text-lg" style={{ fontFamily: 'var(--font-display)' }}>Analyse intelligente</h3>
         </div>
         <div className="relative w-20 h-20 flex-shrink-0">
           <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
@@ -519,13 +613,14 @@ function AICompatibilityScore({ product }: { product: Product }) {
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="font-mono font-700 text-white text-xl leading-none" style={{ fontFamily: 'var(--font-mono)' }}>{score}%</span>
+            <span className="font-mono font-700 text-white text-xl leading-none" style={{ fontFamily: 'var(--font-mono)' }}>{score}</span>
+            <span className="text-white/40 text-[9px] font-mono">/100</span>
           </div>
         </div>
       </div>
 
       <div className="space-y-3 mb-5">
-        {criteria.map((c) => (
+        {displayScores.map((c) => (
           <div key={c.label} className="flex items-center gap-3">
             <span className="text-base w-6 flex-shrink-0">{c.icon}</span>
             <div className="flex-1">
@@ -547,11 +642,154 @@ function AICompatibilityScore({ product }: { product: Product }) {
       {loading ? (
         <div className="flex items-center gap-2 text-sm text-white/50">
           <div className="flex gap-1">{[0, 1, 2].map(i => <span key={i} className="w-1.5 h-1.5 rounded-full bg-[#E4501C] animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}</div>
-          Analyse IA en cours…
+          Analyse Gemini en cours…
         </div>
       ) : analysis ? (
         <p className="text-sm text-white/70 leading-relaxed border-t border-white/10 pt-4">{analysis}</p>
       ) : null}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: AI CHAT ASSISTANT — new feature
+// ─────────────────────────────────────────────────────────────────────────────
+function AIProductChat({ product }: { product: Product }) {
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const SUGGESTIONS = [
+    'Ce produit convient-il à un trek en Islande ?',
+    'Quelle est la différence avec la version Pro ?',
+    'Est-il adapté à un voyage de 3 semaines ?',
+    'Comment l\'entretenir correctement ?',
+  ];
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const sendMessage = useCallback(async (text: string) => {
+    if (!text.trim() || loading) return;
+    const userMsg = { role: 'user' as const, content: text };
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
+    setLoading(true);
+    try {
+      const history = [...messages, userMsg];
+      const res = await fetch('/api/ai/chat-completion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: 'GEMINI',
+          model: 'gemini/gemini-2.5-flash',
+          messages: [
+            {
+              role: 'system',
+              content: `Tu es un expert équipement outdoor pour "Le Kit du Voyageur". Tu réponds en français, de façon concise et utile (max 3 phrases). Produit en question: ${product.nom} par ${product.marque}, catégorie ${product.categorie}, ${product.poids_g}g, ${(product.prix_cents/100).toFixed(0)}€, score KDV ${product.score_kdv ?? 'N/A'}/100.`,
+            },
+            ...history.map(m => ({ role: m.role, content: m.content })),
+          ],
+          parameters: { temperature: 0.7, max_tokens: 200 },
+        }),
+      });
+      const data = await res.json();
+      const reply = data.content ?? data.choices?.[0]?.message?.content ?? 'Désolé, je n\'ai pas pu répondre.';
+      setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+    } catch {
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Erreur de connexion. Réessayez.' }]);
+    } finally {
+      setLoading(false);
+    }
+  }, [messages, loading, product]);
+
+  return (
+    <div className="topo-card overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between p-5 hover:bg-[#D4CFBF]/30 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#E4501C] to-[#B5652D] flex items-center justify-center">
+            <Icon name="SparklesIcon" size={14} variant="outline" className="text-white" />
+          </div>
+          <div className="text-left">
+            <div className="font-semibold text-[#1C2620] text-sm">Demandez à l&apos;IA</div>
+            <div className="text-xs text-[#5C6B5E]">Posez vos questions sur ce produit</div>
+          </div>
+        </div>
+        <Icon name={open ? 'ChevronUpIcon' : 'ChevronDownIcon'} size={16} variant="outline" className="text-[#5C6B5E]" />
+      </button>
+
+      {open && (
+        <div className="border-t border-[#C8C3B0]">
+          {/* Messages */}
+          <div className="h-48 overflow-y-auto p-4 space-y-3 bg-[#F5F2EA]">
+            {messages.length === 0 && (
+              <div className="text-center py-4">
+                <p className="text-xs text-[#5C6B5E] mb-3">Questions fréquentes :</p>
+                <div className="flex flex-col gap-2">
+                  {SUGGESTIONS.map(s => (
+                    <button
+                      key={s}
+                      onClick={() => sendMessage(s)}
+                      className="text-xs text-left px-3 py-2 rounded-lg bg-white border border-[#C8C3B0] hover:border-[#E4501C] hover:text-[#E4501C] transition-all"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {messages.map((m, i) => (
+              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] px-3 py-2 rounded-xl text-xs leading-relaxed ${
+                  m.role === 'user' ?'bg-[#E4501C] text-white rounded-br-sm' :'bg-white border border-[#C8C3B0] text-[#1C2620] rounded-bl-sm'
+                }`}>
+                  {m.role === 'assistant' && (
+                    <div className="flex items-center gap-1 mb-1 text-[#E4501C]">
+                      <Icon name="SparklesIcon" size={10} variant="outline" />
+                      <span className="text-[9px] font-mono uppercase tracking-widest">Gemini</span>
+                    </div>
+                  )}
+                  {m.content}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-white border border-[#C8C3B0] px-3 py-2 rounded-xl rounded-bl-sm">
+                  <div className="flex gap-1">{[0,1,2].map(i => <span key={i} className="w-1.5 h-1.5 rounded-full bg-[#E4501C] animate-bounce" style={{ animationDelay: `${i*0.15}s` }} />)}</div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input */}
+          <div className="p-3 border-t border-[#C8C3B0] flex gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && sendMessage(input)}
+              placeholder="Posez votre question…"
+              className="flex-1 bg-[#F5F2EA] border border-[#C8C3B0] rounded-lg px-3 py-2 text-xs text-[#1C2620] focus:outline-none focus:border-[#E4501C] transition-colors"
+              disabled={loading}
+            />
+            <button
+              onClick={() => sendMessage(input)}
+              disabled={!input.trim() || loading}
+              className="w-9 h-9 rounded-lg bg-[#E4501C] text-white flex items-center justify-center hover:bg-[#cc3d10] transition-colors disabled:opacity-40"
+            >
+              <Icon name="PaperAirplaneIcon" size={14} variant="outline" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -604,10 +842,7 @@ function BagVisualization({ product }: { product: Product }) {
             <div className="relative w-12 h-16 mx-auto mb-2">
               <div className={`w-full h-full rounded-lg border-2 ${bag.fits ? 'border-emerald-400 bg-emerald-50' : 'border-red-300 bg-red-50'} flex items-end overflow-hidden`}>
                 {bag.fits && (
-                  <div
-                    className="w-full bg-[#E4501C]/30 rounded-b-md transition-all duration-700"
-                    style={{ height: `${bag.percent}%` }}
-                  />
+                  <div className="w-full bg-[#E4501C]/30 rounded-b-md transition-all duration-700" style={{ height: `${bag.percent}%` }} />
                 )}
               </div>
               <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] ${bag.fits ? 'bg-emerald-500' : 'bg-red-400'}`}>
@@ -615,9 +850,7 @@ function BagVisualization({ product }: { product: Product }) {
               </div>
             </div>
             <div className="font-mono font-700 text-sm text-[#1C2620]" style={{ fontFamily: 'var(--font-mono)' }}>{bag.label}</div>
-            {bag.fits && (
-              <div className="text-[10px] text-[#5C6B5E] mt-0.5">{bag.percent}% du volume</div>
-            )}
+            {bag.fits && <div className="text-[10px] text-[#5C6B5E] mt-0.5">{bag.percent}% du volume</div>}
           </div>
         ))}
       </div>
@@ -659,7 +892,7 @@ function PriceHistory() {
             {PRICE_HISTORY.map((p, i) => (
               <div
                 key={p.month}
-                className="flex-1 flex flex-col items-center gap-0.5 cursor-pointer group"
+                className="flex-1 flex flex-col items-center gap-0.5 cursor-pointer group relative"
                 onMouseEnter={() => setHoveredIndex(i)}
                 onMouseLeave={() => setHoveredIndex(null)}
               >
@@ -669,14 +902,8 @@ function PriceHistory() {
                   </div>
                 )}
                 <div className="w-full flex items-end gap-0.5 h-32">
-                  <div
-                    className="flex-1 bg-[#E4501C] rounded-t transition-all duration-300 group-hover:opacity-80"
-                    style={{ height: `${(p.neuf / maxPrice) * 100}%` }}
-                  />
-                  <div
-                    className="flex-1 bg-[#B5652D] rounded-t transition-all duration-300 group-hover:opacity-80"
-                    style={{ height: `${(p.occasion / maxPrice) * 100}%` }}
-                  />
+                  <div className="flex-1 bg-[#E4501C] rounded-t transition-all duration-300 group-hover:opacity-80" style={{ height: `${(p.neuf / maxPrice) * 100}%` }} />
+                  <div className="flex-1 bg-[#B5652D] rounded-t transition-all duration-300 group-hover:opacity-80" style={{ height: `${(p.occasion / maxPrice) * 100}%` }} />
                 </div>
                 <span className="text-[9px] font-mono text-[#5C6B5E]">{p.month}</span>
               </div>
@@ -772,13 +999,9 @@ function ProductComparisons({ product }: { product: Product }) {
                 </td>
                 <td className="text-center py-3 px-3 font-mono text-xs" style={{ fontFamily: 'var(--font-mono)' }}>{c.poids}g</td>
                 <td className="text-center py-3 px-3 font-mono text-xs font-700" style={{ fontFamily: 'var(--font-mono)' }}>{c.prix}€</td>
-                <td className="text-center py-3 px-3">
-                  <span className="font-mono text-xs text-amber-600" style={{ fontFamily: 'var(--font-mono)' }}>★ {c.note}</span>
-                </td>
+                <td className="text-center py-3 px-3"><span className="font-mono text-xs text-amber-600" style={{ fontFamily: 'var(--font-mono)' }}>★ {c.note}</span></td>
                 <td className="text-center py-3 px-3 text-xs text-[#5C6B5E]">{c.garantie}</td>
-                <td className="text-center py-3 px-3">
-                  <span className={`text-xs font-mono font-700 ${c.reparabilite >= 7 ? 'text-emerald-600' : 'text-amber-600'}`} style={{ fontFamily: 'var(--font-mono)' }}>{c.reparabilite}/10</span>
-                </td>
+                <td className="text-center py-3 px-3"><span className={`text-xs font-mono font-700 ${c.reparabilite >= 7 ? 'text-emerald-600' : 'text-amber-600'}`} style={{ fontFamily: 'var(--font-mono)' }}>{c.reparabilite}/10</span></td>
               </tr>
             ))}
           </tbody>
@@ -807,6 +1030,8 @@ function TravelerReviews({ product }: { product: Product }) {
     { id: 'verified', label: 'Vérifiés' },
   ];
 
+  const filtered = filter === 'verified' ? reviews.filter(r => r.verified) : reviews;
+
   return (
     <section className="py-12">
       <div className="flex items-center justify-between mb-6">
@@ -829,24 +1054,18 @@ function TravelerReviews({ product }: { product: Product }) {
 
       <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
         {filters.map(f => (
-          <button
-            key={f.id}
-            onClick={() => setFilter(f.id)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${filter === f.id ? 'bg-[#E4501C] text-white' : 'bg-[#EDEAE0] text-[#5C6B5E] hover:bg-[#D4CFBF]'}`}
-          >
+          <button key={f.id} onClick={() => setFilter(f.id)} className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${filter === f.id ? 'bg-[#E4501C] text-white' : 'bg-[#EDEAE0] text-[#5C6B5E] hover:bg-[#D4CFBF]'}`}>
             {f.label}
           </button>
         ))}
       </div>
 
       <div className="space-y-4">
-        {reviews.map((r, i) => (
+        {filtered.map((r, i) => (
           <div key={i} className="topo-card p-5">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#1C2620] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                  {r.author[0]}
-                </div>
+                <div className="w-10 h-10 rounded-full bg-[#1C2620] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">{r.author[0]}</div>
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-[#1C2620] text-sm">{r.author}</span>
@@ -854,11 +1073,7 @@ function TravelerReviews({ product }: { product: Product }) {
                     {r.verified && <span className="text-[10px] text-emerald-600 font-medium bg-emerald-50 px-1.5 py-0.5 rounded">✓ Vérifié</span>}
                   </div>
                   <div className="flex items-center gap-2 text-[10px] text-[#5C6B5E] font-mono mt-0.5" style={{ fontFamily: 'var(--font-mono)' }}>
-                    <span>{r.bag}</span>
-                    <span>·</span>
-                    <span>{r.duration}</span>
-                    <span>·</span>
-                    <span>{r.date}</span>
+                    <span>{r.bag}</span><span>·</span><span>{r.duration}</span><span>·</span><span>{r.date}</span>
                   </div>
                 </div>
               </div>
@@ -873,12 +1088,10 @@ function TravelerReviews({ product }: { product: Product }) {
             <p className="text-sm text-[#5C6B5E] leading-relaxed">{r.comment}</p>
             <div className="flex items-center gap-3 mt-3 pt-3 border-t border-[#C8C3B0]/50">
               <button className="flex items-center gap-1.5 text-xs text-[#5C6B5E] hover:text-[#E4501C] transition-colors">
-                <Icon name="HandThumbUpIcon" size={12} variant="outline" />
-                Utile ({r.helpful})
+                <Icon name="HandThumbUpIcon" size={12} variant="outline" />Utile ({r.helpful})
               </button>
               <button className="flex items-center gap-1.5 text-xs text-[#5C6B5E] hover:text-[#E4501C] transition-colors">
-                <Icon name="ChatBubbleLeftIcon" size={12} variant="outline" />
-                Répondre
+                <Icon name="ChatBubbleLeftIcon" size={12} variant="outline" />Répondre
               </button>
             </div>
           </div>
@@ -893,7 +1106,6 @@ function TravelerReviews({ product }: { product: Product }) {
 // ─────────────────────────────────────────────────────────────────────────────
 function ProductFAQ() {
   const [open, setOpen] = useState<number | null>(null);
-
   return (
     <section className="py-12">
       <div className="flex items-center gap-3 mb-6">
@@ -903,17 +1115,12 @@ function ProductFAQ() {
       <div className="space-y-2">
         {FAQ_ITEMS.map((item, i) => (
           <div key={i} className="topo-card overflow-hidden">
-            <button
-              onClick={() => setOpen(open === i ? null : i)}
-              className="w-full flex items-center justify-between p-5 text-left hover:bg-[#D4CFBF]/30 transition-colors"
-            >
+            <button onClick={() => setOpen(open === i ? null : i)} className="w-full flex items-center justify-between p-5 text-left hover:bg-[#D4CFBF]/30 transition-colors">
               <span className="font-medium text-[#1C2620] text-sm pr-4">{item.q}</span>
               <Icon name={open === i ? 'ChevronUpIcon' : 'ChevronDownIcon'} size={16} variant="outline" className="text-[#5C6B5E] flex-shrink-0" />
             </button>
             {open === i && (
-              <div className="px-5 pb-5 text-sm text-[#5C6B5E] leading-relaxed border-t border-[#C8C3B0]/50 pt-4">
-                {item.a}
-              </div>
+              <div className="px-5 pb-5 text-sm text-[#5C6B5E] leading-relaxed border-t border-[#C8C3B0]/50 pt-4">{item.a}</div>
             )}
           </div>
         ))}
@@ -980,8 +1187,7 @@ function ComplementaryProducts() {
                 <span className="font-mono font-700 text-sm text-[#1C2620]" style={{ fontFamily: 'var(--font-mono)' }}>{p.prix}</span>
               </div>
               <div className="text-[10px] text-[#E4501C] mt-1 flex items-center gap-1">
-                <Icon name="SparklesIcon" size={8} variant="outline" />
-                {p.reason}
+                <Icon name="SparklesIcon" size={8} variant="outline" />{p.reason}
               </div>
             </div>
           </div>
@@ -1018,8 +1224,7 @@ function KitInspirations() {
             </div>
             <div className="p-2.5">
               <div className="flex items-center justify-between text-[10px] font-mono text-[#5C6B5E]" style={{ fontFamily: 'var(--font-mono)' }}>
-                <span>{kit.produits} produits</span>
-                <span>{kit.poids}</span>
+                <span>{kit.produits} produits</span><span>{kit.poids}</span>
               </div>
               <div className="text-[10px] font-mono font-700 text-[#E4501C] mt-0.5" style={{ fontFamily: 'var(--font-mono)' }}>{kit.budget}</div>
             </div>
@@ -1040,12 +1245,34 @@ function AddToKit({ product }: { product: Product }) {
 
   const handleAdd = useCallback(async () => {
     setChecking(true);
-    await new Promise(r => setTimeout(r, 1200));
-    setResult({
-      poids: `${(product.poids_g / 1000).toFixed(1)} kg ajouté → Total : 8,4 kg`,
-      budget: `${(product.prix_cents / 100).toFixed(0)} € ajouté → Total : 412 €`,
-      message: 'Aucun doublon détecté. Compatible avec votre équipement actuel.',
-    });
+    try {
+      const res = await fetch('/api/ai/chat-completion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: 'GEMINI',
+          model: 'gemini/gemini-2.5-flash',
+          messages: [{
+            role: 'user',
+            content: `Vérifie la compatibilité de "${product.nom}" (${product.poids_g}g, ${(product.prix_cents/100).toFixed(0)}€) avec un kit de voyage standard. Retourne en 1 phrase courte si c'est compatible et pourquoi.`,
+          }],
+          parameters: { temperature: 0.5, max_tokens: 80 },
+        }),
+      });
+      const data = await res.json();
+      const msg = data.content ?? data.choices?.[0]?.message?.content ?? 'Compatible avec votre équipement actuel.';
+      setResult({
+        poids: `${(product.poids_g / 1000).toFixed(1)} kg ajouté → Total estimé : 8,4 kg`,
+        budget: `${(product.prix_cents / 100).toFixed(0)} € ajouté → Total estimé : 412 €`,
+        message: msg,
+      });
+    } catch {
+      setResult({
+        poids: `${(product.poids_g / 1000).toFixed(1)} kg ajouté → Total : 8,4 kg`,
+        budget: `${(product.prix_cents / 100).toFixed(0)} € ajouté → Total : 412 €`,
+        message: 'Aucun doublon détecté. Compatible avec votre équipement actuel.',
+      });
+    }
     setAdded(true);
     setChecking(false);
   }, [product]);
@@ -1065,12 +1292,7 @@ function AddToKit({ product }: { product: Product }) {
             { label: 'Wishlist', icon: 'HeartIcon', desc: 'Ma liste de souhaits' },
             { label: 'Prochain voyage', icon: 'MapPinIcon', desc: 'Islande — Juillet 2026' },
           ].map((opt) => (
-            <button
-              key={opt.label}
-              onClick={handleAdd}
-              disabled={checking}
-              className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#E4501C]/40 transition-all text-left group"
-            >
+            <button key={opt.label} onClick={handleAdd} disabled={checking} className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#E4501C]/40 transition-all text-left group">
               <Icon name={opt.icon as Parameters<typeof Icon>[0]['name']} size={16} variant="outline" className="text-white/50 group-hover:text-[#E4501C] transition-colors flex-shrink-0" />
               <div>
                 <div className="text-white text-sm font-medium">{opt.label}</div>
@@ -1088,16 +1310,10 @@ function AddToKit({ product }: { product: Product }) {
           </div>
           {result && (
             <div className="space-y-2 text-sm">
-              <div className="flex items-center gap-2 text-white/70">
-                <span className="text-base">⚖️</span>
-                <span>{result.poids}</span>
-              </div>
-              <div className="flex items-center gap-2 text-white/70">
-                <span className="text-base">💰</span>
-                <span>{result.budget}</span>
-              </div>
-              <div className="flex items-center gap-2 text-emerald-400/80">
-                <Icon name="SparklesIcon" size={12} variant="outline" />
+              <div className="flex items-center gap-2 text-white/70"><span className="text-base">⚖️</span><span>{result.poids}</span></div>
+              <div className="flex items-center gap-2 text-white/70"><span className="text-base">💰</span><span>{result.budget}</span></div>
+              <div className="flex items-start gap-2 text-emerald-400/80">
+                <Icon name="SparklesIcon" size={12} variant="outline" className="flex-shrink-0 mt-0.5" />
                 <span className="text-xs">{result.message}</span>
               </div>
             </div>
@@ -1151,9 +1367,12 @@ function UsageTips() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION: TEAM REVIEW
+// SECTION: TEAM REVIEW — AI-enhanced with real pros/cons from product data
 // ─────────────────────────────────────────────────────────────────────────────
 function TeamReview({ product }: { product: Product }) {
+  const pros = product.advantages?.length ? product.advantages : ['Légèreté exceptionnelle', 'Système de portage ergonomique', 'Matériaux durables et recyclés', 'Réparabilité excellente'];
+  const cons = product.disadvantages?.length ? product.disadvantages : ['Prix élevé pour les petits budgets', 'Poches latérales un peu étroites', 'Pas idéal pour le business travel'];
+
   return (
     <section className="py-12">
       <div className="flex items-center gap-3 mb-6">
@@ -1176,20 +1395,16 @@ function TeamReview({ product }: { product: Product }) {
             <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
               <div className="font-semibold text-emerald-800 text-xs uppercase tracking-widest mb-2">Points forts</div>
               <ul className="space-y-1">
-                {['Légèreté exceptionnelle', 'Système de portage ergonomique', 'Matériaux durables et recyclés', 'Réparabilité excellente'].map(p => (
-                  <li key={p} className="flex items-center gap-2 text-emerald-700 text-xs">
-                    <span className="text-emerald-500">✓</span>{p}
-                  </li>
+                {pros.map(p => (
+                  <li key={p} className="flex items-center gap-2 text-emerald-700 text-xs"><span className="text-emerald-500">✓</span>{p}</li>
                 ))}
               </ul>
             </div>
             <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
               <div className="font-semibold text-amber-800 text-xs uppercase tracking-widest mb-2">Limites</div>
               <ul className="space-y-1">
-                {['Prix élevé pour les petits budgets', 'Poches latérales un peu étroites', 'Pas idéal pour le business travel'].map(p => (
-                  <li key={p} className="flex items-center gap-2 text-amber-700 text-xs">
-                    <span className="text-amber-500">!</span>{p}
-                  </li>
+                {cons.map(p => (
+                  <li key={p} className="flex items-center gap-2 text-amber-700 text-xs"><span className="text-amber-500">!</span>{p}</li>
                 ))}
               </ul>
             </div>
@@ -1209,11 +1424,12 @@ function TeamReview({ product }: { product: Product }) {
 function StickyCTA({ product, selectedMode }: { product: Product; selectedMode: string }) {
   const [visible, setVisible] = useState(false);
   const lastScrollY = useRef(0);
+  const [cartAdded, setCartAdded] = useState(false);
 
   useEffect(() => {
     const onScroll = () => {
       const currentY = window.scrollY;
-      setVisible(currentY > 400 && currentY < lastScrollY.current + 200);
+      setVisible(currentY > 400);
       lastScrollY.current = currentY;
     };
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -1221,7 +1437,7 @@ function StickyCTA({ product, selectedMode }: { product: Product; selectedMode: 
   }, []);
 
   const modeLabels: Record<string, string> = {
-    neuf: 'Acheter neuf',
+    neuf: cartAdded ? '✓ Ajouté !' : 'Ajouter au panier',
     occasion: 'Voir les offres',
     location: 'Réserver',
     enchere: 'Enchérir',
@@ -1234,9 +1450,33 @@ function StickyCTA({ product, selectedMode }: { product: Product; selectedMode: 
     enchere: `À partir de ${Math.round(product.prix_cents * 0.35 / 100)} €`,
   };
 
+  const handleCTA = () => {
+    if (selectedMode === 'neuf') {
+      addToCart({
+        id: product.id,
+        slug: product.slug,
+        name: product.nom,
+        brand: product.marque,
+        category: product.categorie,
+        priceEur: product.prix_cents / 100,
+        weightG: product.poids_g,
+        image: product.images[0]?.url ?? '',
+        imageAlt: product.images[0]?.alt ?? product.nom,
+      });
+      setCartAdded(true);
+      setTimeout(() => setCartAdded(false), 3000);
+    } else if (selectedMode === 'occasion') {
+      window.location.href = '/occasion';
+    } else if (selectedMode === 'location') {
+      window.location.href = '/location';
+    } else if (selectedMode === 'enchere') {
+      window.location.href = '/encheres';
+    }
+  };
+
   return (
     <div className={`fixed bottom-0 left-0 right-0 z-40 transition-transform duration-300 ${visible ? 'translate-y-0' : 'translate-y-full'}`}>
-      <div className="bg-[#1C2620]/97 backdrop-blur-md border-t border-white/10 px-4 py-3 safe-area-inset-bottom">
+      <div className="bg-[#1C2620]/97 backdrop-blur-md border-t border-white/10 px-4 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <div className="min-w-0">
@@ -1249,8 +1489,11 @@ function StickyCTA({ product, selectedMode }: { product: Product; selectedMode: 
               <div className="font-mono font-700 text-white text-lg" style={{ fontFamily: 'var(--font-mono)' }}>{modePrices[selectedMode] ?? modePrices.neuf}</div>
               <div className="text-white/40 text-[10px]">{modeLabels[selectedMode] ?? 'Acheter neuf'}</div>
             </div>
-            <button className="btn-primary py-2.5 px-5 text-sm whitespace-nowrap">
-              {modeLabels[selectedMode] ?? 'Acheter neuf'}
+            <button
+              onClick={handleCTA}
+              className={`py-2.5 px-5 text-sm whitespace-nowrap rounded-full font-semibold transition-all active:scale-95 ${cartAdded ? 'bg-emerald-500 text-white' : 'btn-primary'}`}
+            >
+              {modeLabels[selectedMode] ?? 'Ajouter au panier'}
             </button>
           </div>
         </div>
@@ -1333,6 +1576,12 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
                   <span className="text-xs font-mono text-[#3E6B7A] uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>{product.marque}</span>
                   <span className="text-[#C8C3B0]">·</span>
                   <span className="text-xs font-mono text-[#5C6B5E]" style={{ fontFamily: 'var(--font-mono)' }}>{product.categorie}</span>
+                  {product.essentiality && (
+                    <>
+                      <span className="text-[#C8C3B0]">·</span>
+                      <span className="text-xs font-mono text-[#E4501C] font-semibold" style={{ fontFamily: 'var(--font-mono)' }}>{product.essentiality}</span>
+                    </>
+                  )}
                 </div>
                 <h1 className="font-display font-700 text-3xl xl:text-4xl text-[#1C2620] mb-3 leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
                   {product.nom}
@@ -1374,11 +1623,14 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
                 </div>
               </div>
 
-              {/* ACQUISITION COMPARATOR */}
-              <AcquisitionComparator modes={modes} />
+              {/* ACQUISITION COMPARATOR — fully functional */}
+              <AcquisitionComparator modes={modes} product={product} onModeChange={setSelectedMode} />
 
               {/* AI SCORE */}
               <AICompatibilityScore product={product} />
+
+              {/* AI CHAT */}
+              <AIProductChat product={product} />
 
               {/* Add to Kit */}
               <AddToKit product={product} />
