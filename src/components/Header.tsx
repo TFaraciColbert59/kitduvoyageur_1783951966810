@@ -52,10 +52,10 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Mon compte',
     items: [
       { label: 'Mon compte', href: '/compte', desc: 'Profil & paramètres', icon: 'UserIcon' },
-      { label: 'Inventaire', href: '/compte', desc: 'Mon équipement', icon: 'ArchiveBoxIcon' },
-      { label: 'Fidélité & Défis', href: '/compte', desc: 'Points & badges', icon: 'TrophyIcon' },
-      { label: 'Commandes', href: '/compte', desc: 'Historique & suivi', icon: 'ShoppingBagIcon' },
-      { label: 'Documents', href: '/compte', desc: 'Passeports, visas, assurances', icon: 'FolderIcon' },
+      { label: 'Inventaire', href: '/inventaire', desc: 'Mon équipement', icon: 'ArchiveBoxIcon' },
+      { label: 'Fidélité & Défis', href: '/fidelite', desc: 'Points & badges', icon: 'TrophyIcon' },
+      { label: 'Commandes', href: '/compte#commandes', desc: 'Historique & suivi', icon: 'ShoppingBagIcon' },
+      { label: 'Documents', href: '/compte#documents', desc: 'Passeports, visas, assurances', icon: 'FolderIcon' },
       { label: 'Configurateur IA', href: '/ai-configurator', desc: 'Kit personnalisé en 2 min', icon: 'CpuChipIcon' },
     ],
   },
@@ -432,7 +432,7 @@ export default function Header() {
                   <div className="space-y-1">
                     {group.items.map((item) => (
                       <Link
-                        key={item.label}
+                        key={`${group.label}-${item.label}`}
                         href={item.href}
                         onClick={() => setMenuOpen(false)}
                         className="flex items-center gap-3 px-3 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/8 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] min-h-[44px]"

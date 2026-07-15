@@ -359,11 +359,26 @@ Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes sp�
         const response = await getChatCompletion('GEMINI', 'gemini/gemini-2.5-flash', [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
-        ], { temperature: 0.7, max_tokens: 2000 }) as any;
+        ], { temperature: 0.7, max_tokens: 4000 }) as any;
 
         const content = response?.choices?.[0]?.message?.content ?? '';
         const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        const parsed: AIResult = JSON.parse(cleaned);
+
+        // Attempt to repair truncated JSON before parsing
+        let jsonString = cleaned;
+        try {
+          JSON.parse(jsonString);
+        } catch {
+          // Try to close any unterminated arrays/objects
+          const openBraces = (jsonString.match(/\{/g) || []).length - (jsonString.match(/\}/g) || []).length;
+          const openBrackets = (jsonString.match(/\[/g) || []).length - (jsonString.match(/\]/g) || []).length;
+          // Remove trailing incomplete item (last comma or partial object)
+          jsonString = jsonString.replace(/,\s*$/, '').replace(/,\s*\{[^}]*$/, '');
+          for (let i = 0; i < openBrackets; i++) jsonString += ']';
+          for (let i = 0; i < openBraces; i++) jsonString += '}';
+        }
+
+        const parsed: AIResult = JSON.parse(jsonString);
 
         if (!parsed.liste_equipement || !Array.isArray(parsed.liste_equipement)) {
           throw new Error('Format de réponse invalide');
