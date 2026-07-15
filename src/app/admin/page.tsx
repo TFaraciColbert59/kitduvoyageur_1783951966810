@@ -300,78 +300,22 @@ function OverviewSection() {
 
 // ─── Section: Products ─────────────────────────────────────────────────────────
 function ProductsSection() {
-  const [search, setSearch] = useState('');
-  const [products, setProducts] = useState<{ id: string; name: string; brand: string; category: string; price_eur: number; weight_g: number; stock: number; slug: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const supabase = useMemo(() => createClient(), []);
-
-  useEffect(() => {
-    supabase.from('products').select('id, name, brand, category, price_eur, weight_g, stock, slug').order('created_at', { ascending: false }).limit(50).then(({ data }) => {
-      setProducts(data ?? []);
-      setLoading(false);
-    });
-  }, [supabase]);
-
-  const filtered = products.filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.brand?.toLowerCase().includes(search.toLowerCase()));
-
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="flex-1 relative">
-          <Icon name="MagnifyingGlassIcon" size={14} variant="outline" className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-          <input
-            type="text"
-            placeholder="Rechercher un produit..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full bg-[#1E2B25] border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#E4501C]/50 transition-colors"
-          />
+      <div className="bg-[#1E2B25] border border-white/8 rounded-xl p-6 text-center">
+        <div className="w-12 h-12 rounded-2xl bg-[#E4501C]/15 flex items-center justify-center mx-auto mb-4">
+          <Icon name="ArchiveBoxIcon" size={22} variant="outline" className="text-[#E4501C]" />
         </div>
-        <span className="text-xs text-white/30 font-mono px-3">{products.length} produits</span>
+        <h3 className="font-semibold text-white mb-2">Gestion complète des produits</h3>
+        <p className="text-sm text-white/40 mb-5 max-w-sm mx-auto">
+          Vue liste, formulaire 29 champs, IA Gemini, médias, relations, import/export CSV, logs d&apos;audit.
+        </p>
+        <Link href="/admin/produits"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#E4501C] text-white text-sm font-medium hover:bg-[#cc3d10] transition-all">
+          <Icon name="ArrowTopRightOnSquareIcon" size={14} variant="outline" />
+          Ouvrir la gestion produits
+        </Link>
       </div>
-
-      {loading ? (
-        <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="bg-[#1E2B25] border border-white/8 rounded-xl h-12 animate-pulse" />)}</div>
-      ) : (
-        <div className="bg-[#1E2B25] border border-white/8 rounded-xl overflow-hidden">
-          <table className="w-full text-xs">
-            <thead className="bg-white/3 border-b border-white/8">
-              <tr>
-                {['Produit', 'Marque', 'Prix', 'Poids', 'Stock', 'Actions'].map(h => (
-                  <th key={h} className="text-left font-mono text-white/30 uppercase tracking-wider px-4 py-3" style={{ fontFamily: 'var(--font-mono)' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {filtered.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-white/30">Aucun produit trouvé</td></tr>
-              ) : (
-                filtered.map(p => (
-                  <tr key={p.id} className="hover:bg-white/3 transition-colors">
-                    <td className="px-4 py-3">
-                      <p className="text-sm font-medium text-white/85">{p.name}</p>
-                      <p className="text-white/30 mt-0.5">{p.category}</p>
-                    </td>
-                    <td className="px-4 py-3 text-white/40">{p.brand || '—'}</td>
-                    <td className="px-4 py-3 font-mono font-700 text-[#E4501C]" style={{ fontFamily: 'var(--font-mono)' }}>{p.price_eur}€</td>
-                    <td className="px-4 py-3 font-mono text-white/50" style={{ fontFamily: 'var(--font-mono)' }}>{p.weight_g}g</td>
-                    <td className="px-4 py-3">
-                      <span className={`font-mono font-700 ${(p.stock ?? 0) === 0 ? 'text-red-400' : (p.stock ?? 0) < 10 ? 'text-amber-400' : 'text-white/70'}`} style={{ fontFamily: 'var(--font-mono)' }}>
-                        {(p.stock ?? 0) === 0 ? 'Rupture' : p.stock}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Link href={`/produit/${p.slug}`} className="p-1.5 rounded-lg hover:bg-white/8 text-white/40 hover:text-white transition-all inline-block">
-                        <Icon name="EyeIcon" size={13} variant="outline" />
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
     </div>
   );
 }
