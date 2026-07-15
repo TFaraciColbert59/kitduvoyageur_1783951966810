@@ -196,22 +196,33 @@ async function fetchProduct(slug: string): Promise<Product | null> {
   try {
     const supabase = createClient();
     const { data, error } = await supabase
-      .from('products')
+      .from('shop_products')
       .select('*')
       .eq('slug', slug)
       .single();
     if (error || !data) return null;
+
+    const advantages: string[] = Array.isArray(data.advantages_array)
+      ? data.advantages_array
+      : [];
+    const disadvantages: string[] = Array.isArray(data.disadvantages_array)
+      ? data.disadvantages_array
+      : [];
+    const travelTypes: string[] = Array.isArray(data.travel_types_array)
+      ? data.travel_types_array
+      : [];
+
     return {
       id: data.id,
       slug: data.slug,
       nom: data.name,
       marque: data.brand ?? 'Marque',
-      categorie: data.category ?? 'Équipement',
-      description: data.description ?? '',
+      categorie: data.category_main ?? data.category ?? 'Équipement',
+      description: data.description_why ?? data.justification_ai ?? '',
       prix_cents: Math.round(Number(data.price_eur ?? 89) * 100),
       poids_g: data.weight_g ?? 850,
-      note: 4.7,
-      avis_count: 128,
+      note: Number(data.rating ?? 4.7),
+      avis_count: data.review_count ?? 128,
       images: data.image
         ? [
             { url: data.image, alt: data.image_alt ?? data.name },
@@ -222,22 +233,22 @@ async function fetchProduct(slug: string): Promise<Product | null> {
             { url: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80', alt: 'Produit outdoor en montagne' },
             { url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80', alt: 'Détail du produit' },
           ],
-      tags: data.activity ?? ['Trek', 'Backpacking'],
+      tags: travelTypes.length > 0 ? travelTypes : ['Trek', 'Backpacking'],
       specs: [
         { label: 'Poids', value: `${data.weight_g ?? 850} g` },
-        { label: 'Volume', value: '40 L' },
-        { label: 'Dimensions', value: '70 × 35 × 25 cm' },
-        { label: 'Matériaux', value: 'Nylon 210D Ripstop' },
-        { label: 'Résistance eau', value: 'IPX4 — 600 mm' },
-        { label: 'Garantie', value: '2 ans constructeur' },
-        { label: 'Réparabilité', value: '8/10' },
-        { label: 'Durée de vie', value: '5–8 ans' },
-        { label: 'Température', value: '-20°C à +40°C' },
-        { label: 'Origine', value: 'Fabriqué au Vietnam' },
-        { label: 'Compatibilité', value: 'Système de portage universel' },
-        { label: 'Entretien', value: 'Lavage 30°C, séchage à l\'air' },
-        { label: 'Pièces détachées', value: 'Disponibles 10 ans' },
-        { label: 'Normes', value: 'CE, REACH, OEKO-TEX' },
+        ...(data.dimensions ? [{ label: 'Dimensions', value: data.dimensions }] : []),
+        ...(data.materials ? [{ label: 'Matériaux', value: data.materials }] : []),
+        ...(data.warranty ? [{ label: 'Garantie', value: data.warranty }] : []),
+        ...(data.model ? [{ label: 'Modèle', value: data.model }] : []),
+        ...(data.category_sub ? [{ label: 'Sous-catégorie', value: data.category_sub }] : []),
+        ...(data.score_kdv ? [{ label: 'Score KDV', value: `${data.score_kdv}/100` }] : []),
+        ...(data.essentiality ? [{ label: 'Essentialité', value: data.essentiality }] : []),
+        ...(data.score_quality ? [{ label: 'Note qualité', value: `${data.score_quality}/10` }] : []),
+        ...(data.score_durability ? [{ label: 'Note durabilité', value: `${data.score_durability}/10` }] : []),
+        ...(data.repairability_10 ? [{ label: 'Réparabilité', value: `${data.repairability_10}/10` }] : []),
+        { label: 'Cabine avion', value: data.cabin_compatible ? '✅ Compatible' : '❌ Non compatible' },
+        ...(data.available_europe !== undefined ? [{ label: 'Dispo Europe', value: data.available_europe ? '✅ Oui' : '❌ Non' }] : []),
+        ...(data.source_review ? [{ label: 'Source', value: data.source_review }] : []),
       ],
     };
   } catch {

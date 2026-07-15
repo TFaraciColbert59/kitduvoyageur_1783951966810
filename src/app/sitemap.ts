@@ -1,10 +1,12 @@
 import { MetadataRoute } from 'next';
 import { getPublishedCountries } from '@/lib/countries';
+import { createClient } from '@/lib/supabase/server';
 
-const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.com';
+const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
 const staticRoutes = [
   { url: '/', priority: 1.0, changeFrequency: 'daily' as const },
+  { url: '/boutique', priority: 0.95, changeFrequency: 'daily' as const },
   { url: '/kits', priority: 0.9, changeFrequency: 'weekly' as const },
   { url: '/pays', priority: 0.8, changeFrequency: 'weekly' as const },
   { url: '/guides', priority: 0.8, changeFrequency: 'weekly' as const },
@@ -41,7 +43,7 @@ const OUTILS_SLUGS = [
   'calculateur-calories', 'planificateur-itineraire',
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const staticEntries: MetadataRoute.Sitemap = staticRoutes.map(({ url, priority, changeFrequency }) => ({
@@ -74,10 +76,32 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }));
 
+  // Produits dynamiques depuis Supabase
+  let productEntries: MetadataRoute.Sitemap = [];
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from('shop_products')
+      .select('slug, updated_at')
+      .order('score_kdv', { ascending: false });
+
+    if (data && data.length > 0) {
+      productEntries = data.map((p) => ({
+        url: `${base}/produit/${p.slug}`,
+        lastModified: p.updated_at ? new Date(p.updated_at) : now,
+        changeFrequency: 'weekly' as const,
+        priority: 0.85,
+      }));
+    }
+  } catch {
+    // sitemap sans produits si erreur
+  }
+
   return [
     ...staticEntries,
     ...countryEntries,
     ...kitEntries,
     ...outilsEntries,
+    ...productEntries,
   ];
 }

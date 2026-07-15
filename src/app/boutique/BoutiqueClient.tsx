@@ -50,7 +50,7 @@ const TRANSACTION_BADGE: Record<TransactionType, { label: string; cls: string; d
   enchere:  { label: 'ENCHÈRE',  cls: 'bg-orange-500/15 text-orange-600 border border-orange-500/30',   dot: 'bg-orange-500' },
 };
 
-const CATEGORIES = ['Tout', 'Sacs à dos', 'Tentes', 'Couchage', 'Vêtements', 'Chaussures', 'Cuisine', 'Éclairage', 'Sécurité', 'Eau', 'Navigation'];
+const CATEGORIES = ['Tout', 'Sacs à dos', 'Tentes', 'Couchage', 'Vêtements', 'Chaussures', 'Cuisine', 'Éclairage', 'Sécurité', 'Eau', 'Navigation', 'Électronique', 'Accessoires'];
 
 const PRESET_KITS = [
   { label: 'Kit Islande', budget: 300, weight: 10, icon: '🇮🇸' },
@@ -359,7 +359,11 @@ export default function BoutiqueClient() {
       setLoading(true);
       try {
         const supabase = createClient();
-        const { data } = await supabase.from('shop_products').select('*').limit(100);
+        const { data } = await supabase
+          .from('shop_products')
+          .select('id, slug, name, brand, category, category_main, weight_g, price_eur, image, image_alt, rating, review_count, available, transaction_type, price_per_day, original_price, condition, starting_bid, ends_at, savings, score_kdv, essentiality, cabin_compatible, versatility_10, product_id')
+          .order('score_kdv', { ascending: false })
+          .limit(200);
         if (data && data.length > 0) setProducts(data as ShopProduct[]);
       } catch {
         // keep mock data
