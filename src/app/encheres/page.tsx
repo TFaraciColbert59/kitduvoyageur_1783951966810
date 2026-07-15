@@ -103,6 +103,72 @@ const LISTINGS: BidListing[] = [
   alt: 'GPS de randonnée orange Garmin posé sur une carte topographique',
   tags: ['Satellite', 'SOS', 'Navigation'], description: 'Acheté en 2025, utilisé 2 fois. Abonnement non inclus.',
   bidsCount: 9, watchers: 31, negotiable: false, shippingAvailable: true, topBidder: 'Camille B.'
+},
+{
+  id: 'b7',
+  title: 'Sac de couchage Rab Neutrino 400 — Taille Regular',
+  seller: 'Nathalie V.', sellerAvatar: 'NV', sellerTrustScore: 90,
+  category: 'Couchage', startingPrice: 150, currentBid: 210, buyNowPrice: 290,
+  condition: 'tres_bon', location: 'Annecy, 74', endsAt: '2026-07-17T14:00:00',
+  image: 'https://images.unsplash.com/photo-1722495274040-463c786b09b6',
+  alt: 'Sac de couchage duvet bleu nuit déroulé dans une tente avec vue sur les étoiles',
+  tags: ['Duvet', '-10°C', 'Compressible'], description: 'Duvet 800+ cuin. Lavé et séché correctement. Sac de compression inclus.',
+  bidsCount: 6, watchers: 19, negotiable: true, shippingAvailable: true, topBidder: 'Hugo T.'
+},
+{
+  id: 'b8',
+  title: 'Piolet Grivel Air Tech Evo 60cm',
+  seller: 'Maxime F.', sellerAvatar: 'MF', sellerTrustScore: 94,
+  category: 'Alpinisme', startingPrice: 60, currentBid: 88, buyNowPrice: 120,
+  condition: 'comme_neuf', location: 'Chamonix, 74', endsAt: '2026-07-18T09:00:00',
+  image: 'https://images.unsplash.com/photo-1665091995671-e72b1b848a77',
+  alt: 'Alpiniste avec piolet technique sur arête glacée en haute montagne',
+  tags: ['Alpinisme', 'Glace', 'Technique'], description: 'Utilisé une seule saison. Lame parfaite. Protège-pique inclus.',
+  bidsCount: 4, watchers: 14, negotiable: false, shippingAvailable: true, topBidder: 'Lucie M.'
+},
+{
+  id: 'b9',
+  title: 'Matelas gonflable Therm-a-Rest NeoAir XTherm',
+  seller: 'Pauline G.', sellerAvatar: 'PG', sellerTrustScore: 83,
+  category: 'Couchage', startingPrice: 100, currentBid: 145, buyNowPrice: 200,
+  condition: 'bon', location: 'Clermont-Ferrand, 63', endsAt: '2026-07-19T16:00:00',
+  image: 'https://images.unsplash.com/photo-1575270430711-3a5788f712bf',
+  alt: 'Matelas de camping gonflable argenté déployé à côté d\'un sac de couchage dans une tente',
+  tags: ['R-value 7.3', 'Hiver', 'Légère'], description: 'Aucune fuite. R-value 7.3 idéal pour l\'hiver. Sac de compression inclus.',
+  bidsCount: 8, watchers: 27, negotiable: true, shippingAvailable: true, topBidder: 'Bastien R.'
+},
+{
+  id: 'b10',
+  title: 'Veste doudoune Patagonia Nano Puff — Taille L',
+  seller: 'Clément B.', sellerAvatar: 'CB', sellerTrustScore: 87,
+  category: 'Vêtements', startingPrice: 80, currentBid: 118, buyNowPrice: 160,
+  condition: 'tres_bon', location: 'Marseille, 13', endsAt: '2026-07-20T12:00:00',
+  image: 'https://images.unsplash.com/photo-1572698846920-cb1e563bbb30',
+  alt: 'Randonneur portant une veste doudoune légère bleue dans un paysage montagneux',
+  tags: ['Doudoune', 'Légère', 'Polyvalent'], description: 'Portée 2 saisons, aucun défaut. Isolation PrimaLoft Gold. Taille L.',
+  bidsCount: 5, watchers: 16, negotiable: true, shippingAvailable: true, topBidder: 'Anaïs D.'
+},
+{
+  id: 'b11',
+  title: 'Lampe frontale Black Diamond Spot 400',
+  seller: 'Élodie C.', sellerAvatar: 'EC', sellerTrustScore: 77,
+  category: 'Navigation', startingPrice: 20, currentBid: 32, buyNowPrice: 50,
+  condition: 'bon', location: 'Nantes, 44', endsAt: '2026-07-21T10:00:00',
+  image: 'https://images.unsplash.com/photo-1602884347998-8320464ae9cd',
+  alt: 'Randonneur avec lampe frontale noire Black Diamond dans une grotte',
+  tags: ['400lm', 'Étanche', 'Légère'], description: 'Fonctionne parfaitement. Piles neuves incluses. Idéale pour le trail.',
+  bidsCount: 2, watchers: 7, negotiable: true, shippingAvailable: true
+},
+{
+  id: 'b12',
+  title: 'Bâtons Leki Micro Vario Carbon — 100–130cm',
+  seller: 'Olivier T.', sellerAvatar: 'OT', sellerTrustScore: 86,
+  category: 'Sacs', startingPrice: 70, currentBid: 105, buyNowPrice: 150,
+  condition: 'tres_bon', location: 'Strasbourg, 67', endsAt: '2026-07-22T18:00:00',
+  image: 'https://images.unsplash.com/photo-1698778508401-d07840925aeb',
+  alt: 'Bâtons de randonnée pliables en carbone Leki posés sur un sentier de montagne',
+  tags: ['Carbone', 'Pliable', 'Trail'], description: 'Bâtons pliables ultra-légers. Poignées liège. Sangles réglables. Parfait état.',
+  bidsCount: 7, watchers: 22, negotiable: false, shippingAvailable: true, topBidder: 'Sébastien L.'
 }];
 
 
@@ -190,7 +256,7 @@ export default function EncheresPage() {
             </div>
             <p className="text-white/60 text-sm max-w-xl">Enchérissez sur du matériel d&apos;occasion ou négociez directement avec les vendeurs. Les meilleures affaires en temps réel.</p>
 
-            <div className="grid grid-cols-3 gap-3 mt-6 max-w-sm">
+            <div className="grid grid-cols-3 gap-3 max-w-sm">
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
                 <p className="text-xl font-display font-700 text-primary">{LISTINGS.length}</p>
                 <p className="text-xs text-white/50">Enchères actives</p>

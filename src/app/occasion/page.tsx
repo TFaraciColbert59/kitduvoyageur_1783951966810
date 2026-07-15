@@ -75,6 +75,48 @@ const LISTINGS: OccasionItem[] = [
     tags: ['Randonnée', 'Réglable', 'Léger'], description: 'Quelques rayures sur les tubes. Embouts usés mais fonctionnels. Poignées en liège en bon état. Réglage de 105 à 125cm. Prix négociable.',
     negotiable: true, shippingAvailable: true, shippingCost: 12, brand: 'Black Diamond', purchaseYear: '2022', weight: '520g (la paire)',
   },
+  {
+    id: 'o7', title: 'Tente Nemo Hornet Elite 2P', seller: 'Alexis M.', sellerAvatar: 'AM', sellerTrustScore: 91, sellerSales: 18,
+    category: 'Tentes', price: 320, originalPrice: 700, condition: 'tres_bon', location: 'Annecy, 74', postedAt: '2026-07-10',
+    image: 'https://images.unsplash.com/photo-1571364588707-8638d6c49fea', alt: 'Tente légère orange installée dans un pré alpin avec vue sur les montagnes',
+    tags: ['Ultra-légère', 'Bivouac', '2 places'], description: 'Tente ultra-légère utilisée 4 sorties. Toile propre, aucun trou. Sardines et tendeurs inclus. Poids total 1.08kg.',
+    negotiable: false, shippingAvailable: true, shippingCost: 12, brand: 'Nemo', purchaseYear: '2024', weight: '1.08kg', dimensions: '213x127cm déployée',
+  },
+  {
+    id: 'o8', title: 'Sac à dos Gregory Baltoro 65L — Taille M', seller: 'Céline D.', sellerAvatar: 'CD', sellerTrustScore: 86, sellerSales: 11,
+    category: 'Sacs à dos', price: 175, originalPrice: 380, condition: 'bon', location: 'Montpellier, 34', postedAt: '2026-07-06',
+    image: 'https://img.rocket.new/generatedImages/rocket_gen_img_1de5a8766-1772222096368.png', alt: 'Sac à dos de trekking bleu Gregory posé sur un rocher en montagne',
+    tags: ['65L', 'Trekking', 'Confort'], description: 'Sac en bon état général. Quelques traces d\'usure sur le fond. Toutes les poches fonctionnelles. Housse de pluie incluse.',
+    negotiable: true, shippingAvailable: true, shippingCost: 10, brand: 'Gregory', purchaseYear: '2022', weight: '2.1kg', dimensions: 'Taille M (torse 43–50cm)',
+  },
+  {
+    id: 'o9', title: 'Réchaud Primus Lite+ Duo', seller: 'Théo L.', sellerAvatar: 'TL', sellerTrustScore: 74, sellerSales: 2,
+    category: 'Cuisine', price: 45, originalPrice: 100, condition: 'comme_neuf', location: 'Rennes, 35', postedAt: '2026-07-11',
+    image: 'https://images.unsplash.com/photo-1662148460486-c8ca9372e13e', alt: 'Réchaud de camping compact avec casserole sur un rocher en plein air',
+    tags: ['Cuisine', 'Légère', 'Duo'], description: 'Utilisé une seule fois. Comme neuf. Vendu avec casserole 1L et couvercle. Poids total 320g. Idéal pour 2 personnes.',
+    negotiable: false, shippingAvailable: true, shippingCost: 7, brand: 'Primus', purchaseYear: '2025', weight: '320g (avec casserole)',
+  },
+  {
+    id: 'o10', title: 'Veste softshell Salomon Wayfarer — Taille L', seller: 'Margot P.', sellerAvatar: 'MP', sellerTrustScore: 82, sellerSales: 6,
+    category: 'Vêtements', price: 70, originalPrice: 160, condition: 'bon', location: 'Strasbourg, 67', postedAt: '2026-07-04',
+    image: 'https://images.unsplash.com/photo-1618143928355-3d9afff6ec23', alt: 'Randonneuse portant une veste softshell verte dans une forêt de montagne',
+    tags: ['Softshell', 'Randonnée', 'Coupe-vent'], description: 'Veste légère et respirante. Quelques petites traces d\'usure aux coudes. Fermetures éclair impeccables. Taille L.',
+    negotiable: true, shippingAvailable: true, shippingCost: 6, brand: 'Salomon', purchaseYear: '2023', weight: '340g', dimensions: 'Taille L',
+  },
+  {
+    id: 'o11', title: 'Sac de couchage Valandré Shocking Blue 600', seller: 'Renaud C.', sellerAvatar: 'RC', sellerTrustScore: 95, sellerSales: 24,
+    category: 'Couchage', price: 280, originalPrice: 580, condition: 'comme_neuf', location: 'Grenoble, 38', postedAt: '2026-07-12',
+    image: 'https://images.unsplash.com/photo-1722495274040-463c786b09b6', alt: 'Sac de couchage duvet rouge déployé dans une tente de bivouac en montagne',
+    tags: ['Duvet', '-15°C', 'Expédition'], description: 'Sac de couchage haut de gamme. Duvet 800+ cuin. Utilisé 3 nuits. Lavé professionnellement. Sac de compression inclus.',
+    negotiable: false, shippingAvailable: true, shippingCost: 9, brand: 'Valandré', purchaseYear: '2025', weight: '1.05kg', dimensions: 'Taille Regular (185cm)',
+  },
+  {
+    id: 'o12', title: 'GPS Garmin eTrex 32x', seller: 'Bertrand F.', sellerAvatar: 'BF', sellerTrustScore: 80, sellerSales: 8,
+    category: 'Navigation', price: 110, originalPrice: 230, condition: 'tres_bon', location: 'Nantes, 44', postedAt: '2026-07-02',
+    image: 'https://images.unsplash.com/photo-1697115876539-98f4717cbbc6', alt: 'GPS de randonnée Garmin jaune posé sur une carte topographique',
+    tags: ['GPS', 'Navigation', 'Cartographie'], description: 'GPS en très bon état. Cartes topo Europe incluses. Batterie AA. Résistant à l\'eau IPX7. Vendu avec câble USB.',
+    negotiable: true, shippingAvailable: true, shippingCost: 6, brand: 'Garmin', purchaseYear: '2023', weight: '142g',
+  },
 ];
 
 const conditionConfig = {
@@ -229,7 +271,7 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
   );
 }
 
-const CATEGORIES = ['Tout', 'Vêtements', 'Chaussures', 'Alpinisme', 'Éclairage', 'Couchage', 'Bâtons'];
+const CATEGORIES = ['Tout', 'Vêtements', 'Chaussures', 'Alpinisme', 'Éclairage', 'Couchage', 'Bâtons', 'Tentes', 'Sacs à dos', 'Cuisine', 'Navigation'];
 
 export default function OccasionPage() {
   const [selectedItem, setSelectedItem] = useState<OccasionItem | null>(null);
