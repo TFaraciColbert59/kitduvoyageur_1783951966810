@@ -333,7 +333,7 @@ export default function Header() {
                 href="/connexion"
                 className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-[#E4501C] hover:bg-[#cc3d10] text-white text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] min-h-[44px]"
                 suppressHydrationWarning
-                style={{ display: mounted && user ? 'none' : undefined }}
+                style={mounted ? { display: user ? 'none' : undefined } : undefined}
               >
                 <Icon name="ArrowRightOnRectangleIcon" size={16} variant="outline" />
                 Connexion
@@ -343,7 +343,7 @@ export default function Header() {
                 className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px]"
                 aria-label="Mon compte"
                 suppressHydrationWarning
-                style={{ display: mounted && user ? undefined : 'none' }}
+                style={mounted ? { display: user ? undefined : 'none' } : { display: 'none' }}
               >
                 <Icon name="UserCircleIcon" size={18} variant="outline" />
                 <span className="hidden md:block">Mon compte</span>
@@ -481,7 +481,7 @@ export default function Header() {
                   onClick={() => setMenuOpen(false)}
                   className="flex items-center gap-3 px-3 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/8 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] min-h-[44px]"
                   suppressHydrationWarning
-                  style={{ display: mounted && user ? undefined : 'none' }}
+                  style={mounted ? { display: user ? undefined : 'none' } : { display: 'none' }}
                 >
                   <Icon name="UserCircleIcon" size={18} variant="outline" className="text-[#E4501C]" />
                   <span className="text-sm font-medium">Mon compte</span>
@@ -491,7 +491,7 @@ export default function Header() {
                   onClick={() => setMenuOpen(false)}
                   className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-[#E4501C] hover:bg-[#cc3d10] text-white text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] min-h-[44px]"
                   suppressHydrationWarning
-                  style={{ display: mounted && user ? 'none' : undefined }}
+                  style={mounted ? { display: user ? 'none' : undefined } : undefined}
                 >
                   <Icon name="ArrowRightOnRectangleIcon" size={16} variant="outline" />
                   Connexion
