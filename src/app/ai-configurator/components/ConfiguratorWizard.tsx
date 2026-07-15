@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import WeightGauge from '@/components/WeightGauge';
 import { getChatCompletion } from '@/lib/ai/chatCompletion';
+import { getCart, saveCart } from '@/lib/cart';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface WizardState {
@@ -418,6 +419,29 @@ Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes sp�
   const categories = Array.from(new Set((aiResult?.liste_equipement ?? []).map((i) => i.category)));
 
   const handleAddToCart = () => {
+    const itemsToAdd = (aiResult?.liste_equipement ?? []).filter((i) => selectedItems.has(i.id));
+    if (itemsToAdd.length === 0) return;
+    const existing = getCart();
+    itemsToAdd.forEach((item) => {
+      const idx = existing.findIndex((e) => e.id === item.id);
+      if (idx >= 0) {
+        existing[idx].quantity += 1;
+      } else {
+        existing.push({
+          id: item.id,
+          slug: item.id,
+          name: item.name,
+          brand: '',
+          category: item.category,
+          priceEur: item.priceEur,
+          weightG: item.weightG,
+          image: '',
+          imageAlt: item.name,
+          quantity: 1,
+        });
+      }
+    });
+    saveCart(existing);
     setToast(true);
     setTimeout(() => setToast(false), 3000);
   };

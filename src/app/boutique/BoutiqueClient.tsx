@@ -9,6 +9,7 @@ import TopoSeparator from '@/components/TopoSeparator';
 import Icon from '@/components/ui/AppIcon';
 import AppImage from '@/components/ui/AppImage';
 import { createClient } from '@/lib/supabase/client';
+import { addToCart } from '@/lib/cart';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -169,6 +170,25 @@ function ProductCard({ product, isOptimized = false }: { product: ShopProduct; i
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (product.transaction_type === 'achat' || product.transaction_type === 'occasion') {
+      addToCart({
+        id: product.id,
+        slug: product.slug,
+        name: product.name,
+        brand: product.brand,
+        category: product.category,
+        priceEur: product.price_eur,
+        weightG: product.weight_g,
+        image: product.image,
+        imageAlt: product.image_alt,
+      });
+    } else if (product.transaction_type === 'enchere') {
+      window.location.href = '/encheres';
+      return;
+    } else if (product.transaction_type === 'location') {
+      window.location.href = '/location';
+      return;
+    }
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
