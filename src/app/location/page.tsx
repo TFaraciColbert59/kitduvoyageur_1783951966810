@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 
 interface RentalListing {
   id: string;
@@ -29,8 +30,6 @@ interface RentalListing {
   reviewCount: number;
   rating: number;
 }
-
-const LISTINGS: RentalListing[] = [];
 
 const CATEGORIES = ['Tout', 'Tentes', 'Sacs à dos', 'Couchage', 'Cuisine', 'Escalade', 'Eau', 'Vêtements', 'Chaussures', 'Bâtons', 'Éclairage', 'Sécurité'];
 
@@ -74,7 +73,7 @@ function MiniCalendar({ available }: { available: boolean }) {
             className={`text-center text-xs py-1 rounded-md transition-colors ${
               day === null ? '' : bookedDays.includes(day)
                 ? 'bg-red-50 text-red-400 border border-red-100'
-                : day < 10 ? 'text-muted-foreground/40' :'bg-emerald-50 text-emerald-700 border border-emerald-100 cursor-pointer hover:bg-emerald-100'
+                : day < 10 ? 'text-muted-foreground/40' : 'bg-emerald-50 text-emerald-700 border border-emerald-100 cursor-pointer hover:bg-emerald-100'
             }`}
           >
             {day || ''}
@@ -118,9 +117,6 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
                   <span className="text-xs font-600 px-2 py-1 rounded-full border text-red-600 bg-red-50 border-red-200">Indisponible</span>
                 )}
               </div>
-              <div className="absolute top-3 right-3 bg-dark-bg/80 backdrop-blur-sm rounded-lg px-2 py-1">
-                <span className="text-white text-xs font-mono">{(listing.weightG / 1000).toFixed(2)} kg</span>
-              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
@@ -138,11 +134,13 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {listing.tags.map((tag) => (
-                <span key={tag} className="px-2.5 py-1 bg-muted rounded-full text-xs text-muted-foreground border border-border">{tag}</span>
-              ))}
-            </div>
+            {listing.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {listing.tags.map((tag) => (
+                  <span key={tag} className="px-2.5 py-1 bg-muted rounded-full text-xs text-muted-foreground border border-border">{tag}</span>
+                ))}
+              </div>
+            )}
 
             <div className="flex items-center gap-2">
               <div className="flex gap-0.5">
@@ -196,7 +194,7 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-foreground text-sm">{listing.owner}</p>
-                  <p className="text-xs text-muted-foreground">{listing.location} · {listing.distance} km</p>
+                  <p className="text-xs text-muted-foreground">{listing.location}</p>
                 </div>
                 <div className="flex items-center gap-1 bg-primary/10 rounded-lg px-2 py-1">
                   <Icon name="ShieldCheckIcon" size={12} className="text-primary" />
@@ -258,9 +256,6 @@ function RentalCard({ listing }: { listing: RentalListing }) {
               <span className="text-[10px] font-600 px-2 py-0.5 rounded-full border text-red-600 bg-red-50 border-red-200">Indisponible</span>
             )}
           </div>
-          <div className="absolute top-3 right-3 bg-dark-bg/80 backdrop-blur-sm rounded-lg px-2 py-1">
-            <span className="font-mono text-white text-xs">{(listing.weightG / 1000).toFixed(2)} kg</span>
-          </div>
         </div>
 
         <div className="p-4 flex flex-col flex-1 gap-3">
@@ -275,7 +270,7 @@ function RentalCard({ listing }: { listing: RentalListing }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs text-foreground font-500 truncate">{listing.owner}</p>
-              <p className="text-[10px] text-muted-foreground">{listing.location} · {listing.distance} km</p>
+              <p className="text-[10px] text-muted-foreground">{listing.location}</p>
             </div>
             <div className="flex items-center gap-1 bg-primary/10 rounded-lg px-2 py-1">
               <Icon name="ShieldCheckIcon" size={12} className="text-primary" />
@@ -283,11 +278,13 @@ function RentalCard({ listing }: { listing: RentalListing }) {
             </div>
           </div>
 
-          <div className="flex gap-1 flex-wrap">
-            {listing.tags.map((tag) => (
-              <span key={tag} className="tag-badge tag-activity">{tag}</span>
-            ))}
-          </div>
+          {listing.tags.length > 0 && (
+            <div className="flex gap-1 flex-wrap">
+              {listing.tags.map((tag) => (
+                <span key={tag} className="tag-badge tag-activity">{tag}</span>
+              ))}
+            </div>
+          )}
 
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Icon name="StarIcon" size={12} className="text-amber-500 fill-amber-500" />
@@ -301,9 +298,6 @@ function RentalCard({ listing }: { listing: RentalListing }) {
                 <p className="text-xl font-display font-800 text-foreground">{listing.pricePerDay}€<span className="text-sm font-400 text-muted-foreground">/jour</span></p>
                 <p className="text-xs text-muted-foreground">{listing.pricePerWeek}€/semaine · Caution {listing.deposit}€</p>
               </div>
-              {!listing.available && listing.nextAvailable && (
-                <p className="text-xs text-muted-foreground text-right">Dispo le<br /><span className="font-600 text-foreground">{new Date(listing.nextAvailable).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span></p>
-              )}
             </div>
 
             <div className="flex gap-2">
@@ -332,11 +326,58 @@ function RentalCard({ listing }: { listing: RentalListing }) {
 }
 
 export default function LocationPage() {
+  const [listings, setListings] = useState<RentalListing[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('Tout');
   const [showListModal, setShowListModal] = useState(false);
   const [sortBy, setSortBy] = useState<'distance' | 'price' | 'rating'>('distance');
 
-  const filtered = LISTINGS
+  const supabase = useMemo(() => createClient(), []);
+
+  useEffect(() => {
+    supabase
+      .from('rental_items')
+      .select('*, owner:user_profiles!rental_items_owner_id_fkey(full_name, trust_score)')
+      .eq('status', 'available')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        const mapped: RentalListing[] = (data ?? []).map((row: Record<string, unknown>) => {
+          const owner = row.owner as { full_name?: string; trust_score?: number } | null;
+          const ownerName = owner?.full_name ?? 'Propriétaire';
+          const condRaw = (row.condition as string) ?? 'bon';
+          const validConditions = ['neuf', 'excellent', 'bon', 'correct'] as const;
+          const condition = validConditions.includes(condRaw as typeof validConditions[number])
+            ? (condRaw as RentalListing['condition'])
+            : 'bon';
+          return {
+            id: row.id as string,
+            slug: `location-${row.id as string}`,
+            title: row.title as string,
+            owner: ownerName,
+            ownerAvatar: ownerName[0]?.toUpperCase() ?? 'P',
+            ownerTrustScore: owner?.trust_score ?? 70,
+            category: 'Matériel',
+            pricePerDay: Number(row.price_per_day ?? 0),
+            pricePerWeek: Number(row.price_per_week ?? 0),
+            deposit: Number(row.deposit ?? 0),
+            weightG: 0,
+            condition,
+            location: (row.location as string) ?? '',
+            distance: 0,
+            available: Boolean(row.available),
+            image: (row.image as string) ?? '',
+            alt: (row.alt as string) ?? (row.title as string),
+            tags: [],
+            reviewCount: Number(row.reviews_count ?? 0),
+            rating: Number(row.rating ?? 0),
+          };
+        });
+        setListings(mapped);
+        setLoading(false);
+      });
+  }, [supabase]);
+
+  const filtered = listings
     .filter((l) => activeCategory === 'Tout' || l.category === activeCategory)
     .sort((a, b) => {
       if (sortBy === 'distance') return a.distance - b.distance;
@@ -381,7 +422,7 @@ export default function LocationPage() {
 
             <div className="grid grid-cols-3 gap-4 mt-10 max-w-lg">
               {[
-                { value: '247', label: 'Annonces actives', icon: 'TagIcon' },
+                { value: String(listings.length), label: 'Annonces actives', icon: 'TagIcon' },
                 { value: '4.8★', label: 'Note moyenne', icon: 'StarIcon' },
                 { value: '48h', label: 'Délai moyen', icon: 'ClockIcon' },
               ].map((stat) => (
@@ -429,17 +470,26 @@ export default function LocationPage() {
             <p className="text-sm text-muted-foreground">
               <span className="font-600 text-foreground">{filtered.length}</span> annonces trouvées
             </p>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Icon name="MapPinIcon" size={12} />
-              <span>Autour de Lyon</span>
-            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((listing) => (
-              <RentalCard key={listing.id} listing={listing} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-80 bg-card border border-border rounded-2xl animate-pulse" />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-16 text-muted-foreground">
+              <Icon name="KeyIcon" size={32} variant="outline" className="mx-auto mb-3 opacity-30" />
+              <p>Aucune annonce de location disponible</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filtered.map((listing) => (
+                <RentalCard key={listing.id} listing={listing} />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* How it works */}

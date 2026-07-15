@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 
 interface OccasionItem {
   id: string;
@@ -32,8 +33,6 @@ interface OccasionItem {
   brand?: string;
   purchaseYear?: string;
 }
-
-const LISTINGS: OccasionItem[] = [];
 
 const conditionConfig = {
   comme_neuf: { label: 'Comme neuf', color: 'text-emerald-700 bg-emerald-50 border-emerald-200', badge: 'bg-emerald-500' },
@@ -89,7 +88,7 @@ function ContactModal({ item, onClose }: { item: OccasionItem; onClose: () => vo
 function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () => void }) {
   const [showContact, setShowContact] = useState(false);
   const cond = conditionConfig[item.condition];
-  const discount = Math.round((1 - item.price / item.originalPrice) * 100);
+  const discount = item.originalPrice > 0 ? Math.round((1 - item.price / item.originalPrice) * 100) : 0;
 
   return (
     <>
@@ -107,16 +106,18 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
               <div className="absolute top-3 left-3 flex gap-2">
                 <span className={`text-xs font-600 px-2 py-1 rounded-full border ${cond.color}`}>{cond.label}</span>
               </div>
-              <div className="absolute top-3 right-3 bg-primary rounded-lg px-2 py-1">
-                <span className="text-white text-xs font-700">-{discount}%</span>
-              </div>
+              {discount > 0 && (
+                <div className="absolute top-3 right-3 bg-primary rounded-lg px-2 py-1">
+                  <span className="text-white text-xs font-700">-{discount}%</span>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-baseline gap-2">
                   <span className="font-display font-800 text-3xl text-foreground">{item.price}€</span>
-                  <span className="text-muted-foreground line-through text-sm">{item.originalPrice}€</span>
+                  {item.originalPrice > 0 && <span className="text-muted-foreground line-through text-sm">{item.originalPrice}€</span>}
                 </div>
                 {item.negotiable && <p className="text-xs text-green-500 mt-0.5">Prix négociable</p>}
               </div>
@@ -126,11 +127,13 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {item.tags.map((tag) => (
-                <span key={tag} className="px-2.5 py-1 bg-muted rounded-full text-xs text-muted-foreground border border-border">{tag}</span>
-              ))}
-            </div>
+            {item.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {item.tags.map((tag) => (
+                  <span key={tag} className="px-2.5 py-1 bg-muted rounded-full text-xs text-muted-foreground border border-border">{tag}</span>
+                ))}
+              </div>
+            )}
 
             <div>
               <h3 className="font-semibold text-foreground mb-2 text-sm">Description</h3>
@@ -143,7 +146,7 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
                 { label: 'Année d\'achat', value: item.purchaseYear },
                 { label: 'Poids', value: item.weight },
                 { label: 'Dimensions', value: item.dimensions },
-                { label: 'Livraison', value: item.shippingAvailable ? `Disponible (${item.shippingCost}€)` : 'Remise en main propre' },
+                { label: 'Livraison', value: item.shippingAvailable ? `Disponible${item.shippingCost ? ` (${item.shippingCost}€)` : ''}` : 'Remise en main propre' },
                 { label: 'Localisation', value: item.location },
               ].filter((d) => d.value).map((detail) => (
                 <div key={detail.label} className="bg-background rounded-xl p-3 border border-border">
@@ -170,7 +173,6 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
               </div>
             </div>
 
-            {/* Link to product detail */}
             <Link
               href={`/produit/${item.slug}?type=occasion`}
               className="w-full py-3 rounded-xl border border-primary/40 text-primary text-sm font-medium hover:bg-primary/5 transition-colors flex items-center justify-center gap-1.5"
@@ -189,6 +191,8 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
 const CATEGORIES = ['Tout', 'Cuisine', 'Chaussures', 'Tentes', 'Éclairage', 'Couchage', 'Bâtons', 'Sacs à dos', 'Navigation', 'Vêtements', 'Escalade', 'Sécurité'];
 
 export default function OccasionPage() {
+  const [listings, setListings] = useState<OccasionItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<OccasionItem | null>(null);
   const [category, setCategory] = useState('Tout');
   const [sortBy, setSortBy] = useState<'recent' | 'price_asc' | 'price_desc' | 'discount'>('recent');
@@ -196,16 +200,64 @@ export default function OccasionPage() {
   const [showSellModal, setShowSellModal] = useState(false);
   const [sellSent, setSellSent] = useState(false);
 
-  const filtered = LISTINGS
+  const supabase = useMemo(() => createClient(), []);
+
+  useEffect(() => {
+    supabase
+      .from('occasion_items')
+      .select('*, seller:user_profiles!occasion_items_seller_id_fkey(full_name, trust_score)')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        const mapped: OccasionItem[] = (data ?? []).map((row: Record<string, unknown>) => {
+          const seller = row.seller as { full_name?: string; trust_score?: number } | null;
+          const sellerName = seller?.full_name ?? 'Vendeur';
+          const condRaw = (row.condition as string) ?? 'bon';
+          const validConditions = ['comme_neuf', 'tres_bon', 'bon', 'acceptable'] as const;
+          const condition = validConditions.includes(condRaw as typeof validConditions[number])
+            ? (condRaw as OccasionItem['condition'])
+            : 'bon';
+          return {
+            id: row.id as string,
+            slug: `occasion-${row.id as string}`,
+            title: row.title as string,
+            seller: sellerName,
+            sellerAvatar: sellerName[0]?.toUpperCase() ?? 'V',
+            sellerTrustScore: seller?.trust_score ?? 70,
+            sellerSales: 0,
+            category: 'Matériel',
+            price: Number(row.price ?? 0),
+            originalPrice: Number(row.original_price ?? 0),
+            condition,
+            location: (row.location as string) ?? '',
+            postedAt: (row.created_at as string) ?? new Date().toISOString(),
+            image: (row.image as string) ?? '',
+            alt: (row.alt as string) ?? (row.title as string),
+            tags: [],
+            description: (row.description as string) ?? '',
+            negotiable: Boolean(row.negotiable),
+            shippingAvailable: Boolean(row.shipping),
+          };
+        });
+        setListings(mapped);
+        setLoading(false);
+      });
+  }, [supabase]);
+
+  const filtered = listings
     .filter((l) => category === 'Tout' || l.category === category)
     .filter((l) => !search || l.title.toLowerCase().includes(search.toLowerCase()) || l.tags.some((t) => t.toLowerCase().includes(search.toLowerCase())))
     .sort((a, b) => {
       if (sortBy === 'recent') return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime();
       if (sortBy === 'price_asc') return a.price - b.price;
       if (sortBy === 'price_desc') return b.price - a.price;
-      if (sortBy === 'discount') return (1 - a.price / a.originalPrice) - (1 - b.price / b.originalPrice);
+      if (sortBy === 'discount') return (b.originalPrice > 0 ? (1 - b.price / b.originalPrice) : 0) - (a.originalPrice > 0 ? (1 - a.price / a.originalPrice) : 0);
       return 0;
     });
+
+  const avgDiscount = listings.length > 0
+    ? Math.round(listings.filter(l => l.originalPrice > 0).reduce((s, l) => s + (1 - l.price / l.originalPrice) * 100, 0) / Math.max(listings.filter(l => l.originalPrice > 0).length, 1))
+    : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -238,15 +290,15 @@ export default function OccasionPage() {
 
             <div className="grid grid-cols-3 gap-3 mt-6 max-w-sm">
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-xl font-display font-700 text-emerald-400">{LISTINGS.length}</p>
+                <p className="text-xl font-display font-700 text-emerald-400">{listings.length}</p>
                 <p className="text-xs text-white/50">Annonces</p>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-xl font-display font-700 text-amber-400">{Math.round(LISTINGS.reduce((s, l) => s + (1 - l.price / l.originalPrice) * 100, 0) / LISTINGS.length)}%</p>
+                <p className="text-xl font-display font-700 text-amber-400">{avgDiscount}%</p>
                 <p className="text-xs text-white/50">Remise moy.</p>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-xl font-display font-700 text-blue-400">{LISTINGS.filter((l) => l.condition === 'comme_neuf' || l.condition === 'tres_bon').length}</p>
+                <p className="text-xl font-display font-700 text-blue-400">{listings.filter((l) => l.condition === 'comme_neuf' || l.condition === 'tres_bon').length}</p>
                 <p className="text-xs text-white/50">Très bon état</p>
               </div>
             </div>
@@ -290,7 +342,13 @@ export default function OccasionPage() {
           </div>
 
           {/* Grid */}
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-72 bg-card border border-border rounded-2xl animate-pulse" />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
               <Icon name="MagnifyingGlassIcon" size={32} variant="outline" className="mx-auto mb-3 opacity-30" />
               <p>Aucun article trouvé</p>
@@ -299,7 +357,7 @@ export default function OccasionPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {filtered.map((item) => {
                 const cond = conditionConfig[item.condition];
-                const discount = Math.round((1 - item.price / item.originalPrice) * 100);
+                const discount = item.originalPrice > 0 ? Math.round((1 - item.price / item.originalPrice) * 100) : 0;
                 return (
                   <div
                     key={item.id}
@@ -312,9 +370,11 @@ export default function OccasionPage() {
                       <div className="absolute top-3 left-3">
                         <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full border ${cond.color}`}>{cond.label}</span>
                       </div>
-                      <div className="absolute top-3 right-3 bg-primary rounded-lg px-2 py-1">
-                        <span className="text-white text-xs font-700">-{discount}%</span>
-                      </div>
+                      {discount > 0 && (
+                        <div className="absolute top-3 right-3 bg-primary rounded-lg px-2 py-1">
+                          <span className="text-white text-xs font-700">-{discount}%</span>
+                        </div>
+                      )}
                     </div>
                     <div className="p-4 flex flex-col flex-1 gap-3">
                       <div>
@@ -332,7 +392,7 @@ export default function OccasionPage() {
                         </div>
                         <div className="text-right">
                           <p className="font-display font-700 text-foreground text-lg">{item.price}€</p>
-                          <p className="text-[10px] text-muted-foreground line-through">{item.originalPrice}€</p>
+                          {item.originalPrice > 0 && <p className="text-[10px] text-muted-foreground line-through">{item.originalPrice}€</p>}
                         </div>
                       </div>
                       <div className="flex gap-2">
@@ -352,7 +412,7 @@ export default function OccasionPage() {
                         {item.shippingAvailable && (
                           <div className="flex items-center gap-1 px-2 py-1 bg-muted rounded-lg">
                             <Icon name="TruckIcon" size={12} variant="outline" className="text-muted-foreground" />
-                            <span className="text-[10px] text-muted-foreground">{item.shippingCost}€</span>
+                            {item.shippingCost && <span className="text-[10px] text-muted-foreground">{item.shippingCost}€</span>}
                           </div>
                         )}
                       </div>

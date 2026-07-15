@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 
 interface BidListing {
   id: string;
@@ -38,8 +39,6 @@ const CONDITION_CONFIG = {
   acceptable: { label: 'Acceptable', color: 'text-amber-600 bg-amber-50 border-amber-200' },
 };
 
-const LISTINGS: BidListing[] = [];
-
 function getTimeLeft(endsAt: string): string {
   const now = new Date();
   const end = new Date(endsAt);
@@ -58,6 +57,8 @@ function isEndingSoon(endsAt: string): boolean {
 }
 
 export default function EncheresPage() {
+  const [listings, setListings] = useState<BidListing[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedListing, setSelectedListing] = useState<BidListing | null>(null);
   const [bidAmount, setBidAmount] = useState('');
   const [offerAmount, setOfferAmount] = useState('');
@@ -71,14 +72,60 @@ export default function EncheresPage() {
   const [offerSuccess, setOfferSuccess] = useState(false);
   const [, forceUpdate] = useState(0);
 
+  const supabase = useMemo(() => createClient(), []);
+
+  useEffect(() => {
+    supabase
+      .from('auction_items')
+      .select('*, seller:user_profiles!auction_items_seller_id_fkey(full_name, trust_score)')
+      .eq('status', 'active')
+      .order('ends_at', { ascending: true })
+      .then(({ data }) => {
+        const mapped: BidListing[] = (data ?? []).map((row: Record<string, unknown>) => {
+          const seller = row.seller as { full_name?: string; trust_score?: number } | null;
+          const sellerName = seller?.full_name ?? 'Vendeur';
+          const condRaw = (row.condition as string) ?? 'bon';
+          const validConditions = ['comme_neuf', 'tres_bon', 'bon', 'acceptable'] as const;
+          const condition = validConditions.includes(condRaw as typeof validConditions[number])
+            ? (condRaw as BidListing['condition'])
+            : 'bon';
+          return {
+            id: row.id as string,
+            slug: `enchere-${row.id as string}`,
+            title: row.title as string,
+            seller: sellerName,
+            sellerAvatar: sellerName[0]?.toUpperCase() ?? 'V',
+            sellerTrustScore: seller?.trust_score ?? 70,
+            category: 'Matériel',
+            startingPrice: Number(row.start_price ?? 0),
+            currentBid: Number(row.current_bid ?? 0),
+            buyNowPrice: row.buy_now_price ? Number(row.buy_now_price) : undefined,
+            condition,
+            location: '',
+            endsAt: (row.ends_at as string) ?? new Date(Date.now() + 86400000).toISOString(),
+            image: (row.image as string) ?? '',
+            alt: (row.alt as string) ?? (row.title as string),
+            tags: [],
+            description: (row.description as string) ?? '',
+            bidsCount: Number(row.bids_count ?? 0),
+            watchers: Number(row.watchers_count ?? 0),
+            negotiable: false,
+            shippingAvailable: false,
+          };
+        });
+        setListings(mapped);
+        setLoading(false);
+      });
+  }, [supabase]);
+
   useEffect(() => {
     const interval = setInterval(() => forceUpdate((n) => n + 1), 60000);
     return () => clearInterval(interval);
   }, []);
 
-  const categories = ['all', ...Array.from(new Set(LISTINGS.map((l) => l.category)))];
+  const categories = ['all', ...Array.from(new Set(listings.map((l) => l.category)))];
 
-  const filteredListings = LISTINGS.filter((l) => filterCategory === 'all' || l.category === filterCategory).sort((a, b) => {
+  const filteredListings = listings.filter((l) => filterCategory === 'all' || l.category === filterCategory).sort((a, b) => {
     if (sortBy === 'ending') return new Date(a.endsAt).getTime() - new Date(b.endsAt).getTime();
     if (sortBy === 'bids') return b.bidsCount - a.bidsCount;
     if (sortBy === 'price') return a.currentBid - b.currentBid;
@@ -117,21 +164,21 @@ export default function EncheresPage() {
               </div>
               <div>
                 <p className="text-xs font-mono text-primary/80 tracking-widest uppercase">Phase 3 · Marketplace Avancée</p>
-                <h1 className="text-2xl font-display font-800 tracking-tight">Enchères & Négociation</h1>
+                <h1 className="text-2xl font-display font-800 tracking-tight">Enchères &amp; Négociation</h1>
               </div>
             </div>
             <p className="text-white/60 text-sm max-w-xl">Enchérissez sur du matériel outdoor rare ou haut de gamme. Les meilleures affaires en temps réel.</p>
             <div className="grid grid-cols-3 gap-3 max-w-sm mt-4">
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-xl font-display font-700 text-primary">{LISTINGS.length}</p>
+                <p className="text-xl font-display font-700 text-primary">{listings.length}</p>
                 <p className="text-xs text-white/50">Enchères actives</p>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-xl font-display font-700 text-amber-400">{LISTINGS.reduce((s, l) => s + l.bidsCount, 0)}</p>
+                <p className="text-xl font-display font-700 text-amber-400">{listings.reduce((s, l) => s + l.bidsCount, 0)}</p>
                 <p className="text-xs text-white/50">Offres placées</p>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-xl font-display font-700 text-emerald-400">{LISTINGS.filter((l) => isEndingSoon(l.endsAt)).length}</p>
+                <p className="text-xl font-display font-700 text-emerald-400">{listings.filter((l) => isEndingSoon(l.endsAt)).length}</p>
                 <p className="text-xs text-white/50">Se terminent bientôt</p>
               </div>
             </div>
@@ -165,165 +212,165 @@ export default function EncheresPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Listings Grid */}
-            <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {filteredListings.map((listing) => {
-                const timeLeft = getTimeLeft(listing.endsAt);
-                const endingSoon = isEndingSoon(listing.endsAt);
-                const myBid = placedBids[listing.id];
-                const isWatched = watchlist.includes(listing.id);
-                const cond = CONDITION_CONFIG[listing.condition];
-
-                return (
-                  <div
-                    key={listing.id}
-                    className={`bg-card rounded-xl border overflow-hidden cursor-pointer transition-all hover:shadow-md ${selectedListing?.id === listing.id ? 'border-primary shadow-md' : 'border-border hover:border-primary/40'}`}
-                    onClick={() => setSelectedListing(listing)}
-                  >
-                    <div className="relative h-40 overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={listing.image} alt={listing.alt} className="w-full h-full object-cover" />
-                      <div className={`absolute top-2 left-2 px-2 py-1 rounded-lg text-xs font-mono font-bold ${endingSoon ? 'bg-red-500 text-white animate-pulse' : 'bg-dark-bg/80 text-white'}`}>
-                        ⏱ {timeLeft}
-                      </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleWatchlist(listing.id); }}
-                        className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${isWatched ? 'bg-primary text-white' : 'bg-dark-bg/60 text-white hover:bg-dark-bg/80'}`}
-                      >
-                        <Icon name="HeartIcon" size={16} variant={isWatched ? 'solid' : 'outline'} />
-                      </button>
-                      {myBid && (
-                        <div className="absolute bottom-2 left-2 bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-lg font-medium">
-                          Votre offre: {myBid} €
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-3">
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <h3 className="text-sm font-semibold leading-tight flex-1">{listing.title}</h3>
-                        <span className={`text-xs px-1.5 py-0.5 rounded border flex-shrink-0 ${cond.color}`}>{cond.label}</span>
-                      </div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-5 h-5 rounded-full bg-secondary text-secondary-foreground text-xs flex items-center justify-center font-bold">
-                          {listing.sellerAvatar}
-                        </div>
-                        <span className="text-xs text-muted-foreground">{listing.seller}</span>
-                        <span className="text-xs text-emerald-600 font-mono">{listing.sellerTrustScore}%</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-muted-foreground">Enchère actuelle</p>
-                          <p className="text-lg font-display font-700 text-primary">{listing.currentBid} €</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-muted-foreground">{listing.bidsCount} offres</p>
-                          <p className="text-xs text-muted-foreground">{listing.watchers} 👁</p>
-                        </div>
-                      </div>
-                      {listing.buyNowPrice && (
-                        <p className="text-xs text-muted-foreground mt-1">Achat immédiat: <span className="font-mono font-semibold">{listing.buyNowPrice} €</span></p>
-                      )}
-                      {/* Link to product detail page */}
-                      <Link
-                        href={`/produit/${listing.slug}?type=enchere`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="mt-2 block w-full text-center py-1.5 rounded-lg text-xs font-medium text-primary border border-primary/30 hover:bg-primary/10 transition-colors"
-                      >
-                        Voir la fiche enchère →
-                      </Link>
-                    </div>
-                  </div>
-                );
-              })}
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-64 bg-card border border-border rounded-xl animate-pulse" />
+              ))}
             </div>
-
-            {/* Detail Panel */}
-            <div className="space-y-4">
-              {selectedListing ? (
-                <div className="bg-card rounded-xl border border-border overflow-hidden sticky top-24">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={selectedListing.image} alt={selectedListing.alt} className="w-full h-44 object-cover" />
-                  <div className="p-4">
-                    <h3 className="font-display font-700 text-base mb-1">{selectedListing.title}</h3>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 rounded-full bg-secondary text-secondary-foreground text-xs flex items-center justify-center font-bold">
-                        {selectedListing.sellerAvatar}
-                      </div>
-                      <span className="text-sm text-muted-foreground">{selectedListing.seller}</span>
-                      <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded-full">
-                        Trust {selectedListing.sellerTrustScore}%
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{selectedListing.description}</p>
-                    <div className="space-y-2 text-xs border-t border-border pt-3 mb-3">
-                      <div className="flex justify-between"><span className="text-muted-foreground">Enchère actuelle</span><span className="font-mono font-bold text-primary text-base">{selectedListing.currentBid} €</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Enchère de départ</span><span className="font-mono">{selectedListing.startingPrice} €</span></div>
-                      {selectedListing.buyNowPrice && <div className="flex justify-between"><span className="text-muted-foreground">Achat immédiat</span><span className="font-mono font-semibold">{selectedListing.buyNowPrice} €</span></div>}
-                      <div className="flex justify-between"><span className="text-muted-foreground">Offres</span><span>{selectedListing.bidsCount} enchères</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Fin</span><span className={isEndingSoon(selectedListing.endsAt) ? 'text-red-500 font-semibold' : ''}>{getTimeLeft(selectedListing.endsAt)}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Localisation</span><span>{selectedListing.location}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Expédition</span><span>{selectedListing.shippingAvailable ? '✅ Disponible' : '❌ Remise en main'}</span></div>
-                    </div>
-                    {selectedListing.topBidder && (
-                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3">
-                        <p className="text-xs text-amber-700">🏆 Meilleur enchérisseur: <span className="font-semibold">{selectedListing.topBidder}</span></p>
-                      </div>
-                    )}
-                    <div className="space-y-2">
-                      <button onClick={() => setShowBidModal(true)} className="w-full py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity">
-                        🔨 Enchérir
-                      </button>
-                      {selectedListing.negotiable && (
-                        <button onClick={() => setShowOfferModal(true)} className="w-full py-2.5 rounded-xl border border-secondary text-secondary text-sm font-medium hover:bg-secondary/5 transition-colors">
-                          💬 Faire une offre
-                        </button>
-                      )}
-                      {selectedListing.buyNowPrice && (
-                        <button className="w-full py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:opacity-90 transition-opacity">
-                          ⚡ Acheter maintenant — {selectedListing.buyNowPrice} €
-                        </button>
-                      )}
-                      <Link
-                        href={`/produit/${selectedListing.slug}?type=enchere`}
-                        className="w-full py-2.5 rounded-xl border border-primary/40 text-primary text-sm font-medium hover:bg-primary/5 transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <Icon name="ArrowTopRightOnSquareIcon" size={14} variant="outline" />
-                        Fiche produit enchère
-                      </Link>
-                    </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Listings Grid */}
+              <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {filteredListings.length === 0 ? (
+                  <div className="col-span-2 text-center py-16 text-muted-foreground">
+                    <Icon name="BoltIcon" size={32} variant="outline" className="mx-auto mb-3 opacity-30" />
+                    <p>Aucune enchère active</p>
                   </div>
-                </div>
-              ) : (
-                <div className="bg-card rounded-xl border border-border p-8 text-center">
-                  <Icon name="BoltIcon" size={32} variant="outline" className="mx-auto mb-3 text-muted-foreground opacity-50" />
-                  <p className="text-sm text-muted-foreground">Sélectionnez une enchère pour voir les détails et placer une offre</p>
-                </div>
-              )}
+                ) : filteredListings.map((listing) => {
+                  const timeLeft = getTimeLeft(listing.endsAt);
+                  const endingSoon = isEndingSoon(listing.endsAt);
+                  const myBid = placedBids[listing.id];
+                  const isWatched = watchlist.includes(listing.id);
+                  const cond = CONDITION_CONFIG[listing.condition];
 
-              {/* Watchlist */}
-              {watchlist.length > 0 && (
-                <div className="bg-card rounded-xl border border-border p-4">
-                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                    <Icon name="HeartIcon" size={16} variant="solid" className="text-primary" />
-                    Mes favoris ({watchlist.length})
-                  </h3>
-                  <div className="space-y-2">
-                    {LISTINGS.filter((l) => watchlist.includes(l.id)).map((l) => (
-                      <div key={l.id} className="flex items-center gap-2 text-xs cursor-pointer hover:text-primary transition-colors" onClick={() => setSelectedListing(l)}>
+                  return (
+                    <div
+                      key={listing.id}
+                      className={`bg-card rounded-xl border overflow-hidden cursor-pointer transition-all hover:shadow-md ${selectedListing?.id === listing.id ? 'border-primary shadow-md' : 'border-border hover:border-primary/40'}`}
+                      onClick={() => setSelectedListing(listing)}
+                    >
+                      <div className="relative h-40 overflow-hidden">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={l.image} alt={l.alt} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{l.title}</p>
-                          <p className="text-muted-foreground">{l.currentBid} € · {getTimeLeft(l.endsAt)}</p>
+                        <img src={listing.image} alt={listing.alt} className="w-full h-full object-cover" />
+                        <div className={`absolute top-2 left-2 px-2 py-1 rounded-lg text-xs font-mono font-bold ${endingSoon ? 'bg-red-500 text-white animate-pulse' : 'bg-dark-bg/80 text-white'}`}>
+                          ⏱ {timeLeft}
                         </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleWatchlist(listing.id); }}
+                          className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${isWatched ? 'bg-primary text-white' : 'bg-dark-bg/60 text-white hover:bg-dark-bg/80'}`}
+                        >
+                          <Icon name="HeartIcon" size={16} variant={isWatched ? 'solid' : 'outline'} />
+                        </button>
+                        {myBid && (
+                          <div className="absolute bottom-2 left-2 bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-lg font-medium">
+                            Votre offre: {myBid} €
+                          </div>
+                        )}
                       </div>
-                    ))}
+                      <div className="p-3">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <h3 className="text-sm font-semibold leading-tight flex-1">{listing.title}</h3>
+                          <span className={`text-xs px-1.5 py-0.5 rounded border flex-shrink-0 ${cond.color}`}>{cond.label}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-5 h-5 rounded-full bg-secondary text-secondary-foreground text-xs flex items-center justify-center font-bold">
+                            {listing.sellerAvatar}
+                          </div>
+                          <span className="text-xs text-muted-foreground">{listing.seller}</span>
+                          <span className="text-xs text-emerald-600 font-mono">{listing.sellerTrustScore}%</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Enchère actuelle</p>
+                            <p className="text-lg font-display font-700 text-primary">{listing.currentBid} €</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-muted-foreground">{listing.bidsCount} offres</p>
+                            <p className="text-xs text-muted-foreground">{listing.watchers} 👁</p>
+                          </div>
+                        </div>
+                        {listing.buyNowPrice && (
+                          <p className="text-xs text-muted-foreground mt-1">Achat immédiat: <span className="font-mono font-semibold">{listing.buyNowPrice} €</span></p>
+                        )}
+                        <Link
+                          href={`/produit/${listing.slug}?type=enchere`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="mt-2 block w-full text-center py-1.5 rounded-lg text-xs font-medium text-primary border border-primary/30 hover:bg-primary/10 transition-colors"
+                        >
+                          Voir la fiche enchère →
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Detail Panel */}
+              <div className="space-y-4">
+                {selectedListing ? (
+                  <div className="bg-card rounded-xl border border-border overflow-hidden sticky top-24">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={selectedListing.image} alt={selectedListing.alt} className="w-full h-44 object-cover" />
+                    <div className="p-4">
+                      <h3 className="font-display font-700 text-base mb-1">{selectedListing.title}</h3>
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-6 h-6 rounded-full bg-secondary text-secondary-foreground text-xs flex items-center justify-center font-bold">
+                          {selectedListing.sellerAvatar}
+                        </div>
+                        <span className="text-sm text-muted-foreground">{selectedListing.seller}</span>
+                        <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded-full">
+                          Trust {selectedListing.sellerTrustScore}%
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{selectedListing.description}</p>
+                      <div className="space-y-2 text-xs border-t border-border pt-3 mb-3">
+                        <div className="flex justify-between"><span className="text-muted-foreground">Enchère actuelle</span><span className="font-mono font-bold text-primary text-base">{selectedListing.currentBid} €</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Enchère de départ</span><span className="font-mono">{selectedListing.startingPrice} €</span></div>
+                        {selectedListing.buyNowPrice && <div className="flex justify-between"><span className="text-muted-foreground">Achat immédiat</span><span className="font-mono font-semibold">{selectedListing.buyNowPrice} €</span></div>}
+                        <div className="flex justify-between"><span className="text-muted-foreground">Offres</span><span>{selectedListing.bidsCount} enchères</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Fin</span><span className={isEndingSoon(selectedListing.endsAt) ? 'text-red-500 font-semibold' : ''}>{getTimeLeft(selectedListing.endsAt)}</span></div>
+                      </div>
+                      <div className="space-y-2">
+                        <button onClick={() => setShowBidModal(true)} className="w-full py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity">
+                          🔨 Enchérir
+                        </button>
+                        {selectedListing.buyNowPrice && (
+                          <button className="w-full py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:opacity-90 transition-opacity">
+                            ⚡ Acheter maintenant — {selectedListing.buyNowPrice} €
+                          </button>
+                        )}
+                        <Link
+                          href={`/produit/${selectedListing.slug}?type=enchere`}
+                          className="w-full py-2.5 rounded-xl border border-primary/40 text-primary text-sm font-medium hover:bg-primary/5 transition-colors flex items-center justify-center gap-1.5"
+                        >
+                          <Icon name="ArrowTopRightOnSquareIcon" size={14} variant="outline" />
+                          Fiche produit enchère
+                        </Link>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="bg-card rounded-xl border border-border p-8 text-center">
+                    <Icon name="BoltIcon" size={32} variant="outline" className="mx-auto mb-3 text-muted-foreground opacity-50" />
+                    <p className="text-sm text-muted-foreground">Sélectionnez une enchère pour voir les détails et placer une offre</p>
+                  </div>
+                )}
+
+                {/* Watchlist */}
+                {watchlist.length > 0 && (
+                  <div className="bg-card rounded-xl border border-border p-4">
+                    <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                      <Icon name="HeartIcon" size={16} variant="solid" className="text-primary" />
+                      Mes favoris ({watchlist.length})
+                    </h3>
+                    <div className="space-y-2">
+                      {listings.filter((l) => watchlist.includes(l.id)).map((l) => (
+                        <div key={l.id} className="flex items-center gap-2 text-xs cursor-pointer hover:text-primary transition-colors" onClick={() => setSelectedListing(l)}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={l.image} alt={l.alt} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{l.title}</p>
+                            <p className="text-muted-foreground">{l.currentBid} € · {getTimeLeft(l.endsAt)}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </main>
 
