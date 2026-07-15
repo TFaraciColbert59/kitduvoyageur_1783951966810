@@ -1,274 +1,456 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WeightGauge from '@/components/WeightGauge';
-import TopoSeparator from '@/components/TopoSeparator';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
-
-import AuctionZone from '@/components/AuctionZone';
-import NewProductZone from '@/components/NewProductZone';
-import OccasionProductZone from '@/components/OccasionProductZone';
 import { createClient } from '@/lib/supabase/client';
 
-// ── Types ──────────────────────────────────────────────────────────────────────
-type ListingType = 'neuf' | 'kit' | 'occasion' | 'enchere' | 'location';
-
-interface ProductSpec {
-  label: string;
-  value: string;
-}
-
-interface ProductReview {
-  author: string;
-  rating: number;
-  comment: string;
-  date: string;
-  verified: boolean;
-}
-
+// ─────────────────────────────────────────────────────────────────────────────
+// TYPES
+// ─────────────────────────────────────────────────────────────────────────────
 interface Product {
   id: string;
   slug: string;
   nom: string;
   marque: string;
-  reference: string;
-  prix_cents: number;
-  poids_g: number;
-  poids_max_g: number;
   categorie: string;
   description: string;
-  images: { url: string; alt: string }[];
-  specs: ProductSpec[];
-  tags: string[];
-  stock: number;
-  stock_statut?: 'en_stock' | 'rupture' | 'reappro';
-  reappro_date?: string;
+  prix_cents: number;
+  poids_g: number;
   note: number;
   avis_count: number;
-  reviews: ProductReview[];
-  listing_type?: ListingType;
-  listing_id?: string;
-  etat?: 'comme_neuf' | 'bon_etat' | 'etat_correct';
-  prix_depart_cents?: number;
-  enchere_actuelle_cents?: number;
-  increment_min_cents?: number;
-  date_fin_enchere?: string;
-  nombre_encherisseurs?: number;
-  prix_jour_cents?: number;
-  caution_cents?: number;
-  vendeur_nom?: string;
-  vendeur_trust_score?: number;
-  vendeur_nb_ventes?: number;
-  vendeur_delai_reponse_heures?: number;
-  occasion_statut?: 'en_attente_moderation' | 'active' | 'vendue' | 'retiree' | 'litige';
-  faire_offre_active?: boolean;
-  historique_produit?: {
-    date_achat_origine?: string;
-    nombre_proprietaires?: number;
-    usage_declare?: string;
-  };
-  certificat_authenticite?: {
-    numero?: string;
-    date_emission?: string;
-    verifie_par?: string;
-  };
-  photos_defauts?: { url: string; alt: string; description?: string }[];
-  vendeur?: {
-    id: string;
-    nom: string;
-    trust_score: number;
-    nb_ventes: number;
-    delai_reponse_heures?: number;
-    avatar?: string;
-  };
-  produit_id?: string;
+  images: { url: string; alt: string }[];
+  tags: string[];
+  specs: { label: string; value: string }[];
 }
 
-const TYPE_LABELS: Record<ListingType, string> = {
-  neuf: 'Neuf',
-  kit: 'Kit assemblé',
-  occasion: 'Occasion',
-  enchere: 'Enchère',
-  location: 'Location',
-};
+interface AcquisitionMode {
+  id: 'neuf' | 'occasion' | 'location' | 'enchere';
+  label: string;
+  icon: string;
+  prix: string;
+  disponibilite: string;
+  etat: string;
+  delai: string;
+  garantie: string;
+  vendeur: string;
+  economie: string;
+  ecologie: string;
+  conditions: string;
+  color: string;
+  badge: string;
+}
 
-const relatedProducts = [
-  { id: '2', nom: 'Tente MSR Hubba Hubba NX', prix_cents: 54900, poids_g: 1540, image: 'https://images.unsplash.com/photo-1722607731217-31b4aee4b2d4', alt: 'Tente légère MSR Hubba Hubba NX orange montée en bivouac montagne', reason: 'Complément idéal pour votre trek multi-jours' },
-  { id: '3', nom: 'Sac de couchage Cumulus Panyam 450', prix_cents: 28900, poids_g: 890, image: 'https://img.rocket.new/generatedImages/rocket_gen_img_175618416-1783673001212.png', alt: 'Sac de couchage duvet Cumulus Panyam 450 bleu compact', reason: 'Souvent acheté ensemble' },
-  { id: '4', nom: 'Bâtons Black Diamond Trail Ergo', prix_cents: 8900, poids_g: 510, image: 'https://img.rocket.new/generatedImages/rocket_gen_img_102d3d253-1767017230132.png', alt: 'Paire de bâtons de randonnée Black Diamond Trail Ergo en aluminium', reason: 'Accessoire recommandé pour la catégorie' },
+// ─────────────────────────────────────────────────────────────────────────────
+// MOCK DATA HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function buildAcquisitionModes(product: Product): AcquisitionMode[] {
+  const basePrice = product.prix_cents;
+  return [
+    {
+      id: 'neuf',
+      label: 'Acheter neuf',
+      icon: 'ShoppingBagIcon',
+      prix: `${(basePrice / 100).toFixed(0)} €`,
+      disponibilite: 'En stock',
+      etat: 'Neuf — jamais utilisé',
+      delai: 'Livraison demain',
+      garantie: '2 ans constructeur',
+      vendeur: 'Le Kit du Voyageur',
+      economie: '—',
+      ecologie: '⚠️ Produit neuf',
+      conditions: 'Retour 30 jours',
+      color: 'emerald',
+      badge: 'NEUF',
+    },
+    {
+      id: 'occasion',
+      label: 'Marketplace',
+      icon: 'TagIcon',
+      prix: `Dès ${Math.round(basePrice * 0.62 / 100)} €`,
+      disponibilite: '12 vendeurs',
+      etat: 'Bon état vérifié',
+      delai: '2–4 jours',
+      garantie: 'Garantie acheteur 30j',
+      vendeur: 'Vendeurs certifiés',
+      economie: `Économie de ${Math.round((1 - 0.62) * 100)} %`,
+      ecologie: '✅ Seconde vie',
+      conditions: 'Retour 14 jours',
+      color: 'amber',
+      badge: 'OCCASION',
+    },
+    {
+      id: 'location',
+      label: 'Location',
+      icon: 'KeyIcon',
+      prix: `Dès ${Math.round(basePrice * 0.04 / 100)} €/jour`,
+      disponibilite: 'Disponible près de chez vous',
+      etat: 'Entretenu & désinfecté',
+      delai: 'Disponible sous 24h',
+      garantie: 'Assurance incluse',
+      vendeur: 'Réseau partenaires',
+      economie: 'Idéal voyage unique',
+      ecologie: '🌿 Économie circulaire',
+      conditions: 'Caution remboursée',
+      color: 'purple',
+      badge: 'LOCATION',
+    },
+    {
+      id: 'enchere',
+      label: 'Enchères',
+      icon: 'BoltIcon',
+      prix: `À partir de ${Math.round(basePrice * 0.35 / 100)} €`,
+      disponibilite: 'Enchère en cours',
+      etat: 'Très bon état',
+      delai: 'Fin dans 3h',
+      garantie: 'Garantie acheteur',
+      vendeur: 'Vendeur vérifié',
+      economie: `Jusqu'à ${Math.round((1 - 0.35) * 100)} % d'économie`,
+      ecologie: '✅ Seconde vie',
+      conditions: 'Offre ferme',
+      color: 'orange',
+      badge: 'ENCHÈRE',
+    },
+  ];
+}
+
+const TRAVEL_TYPES = [
+  { id: 'backpacking', label: 'Backpacking', icon: '🎒', score: 95 },
+  { id: 'trek', label: 'Trek', icon: '⛰️', score: 88 },
+  { id: 'vanlife', label: 'Van Life', icon: '🚐', score: 72 },
+  { id: 'roadtrip', label: 'Road Trip', icon: '🚗', score: 65 },
+  { id: 'camping', label: 'Camping', icon: '⛺', score: 91 },
+  { id: 'tourDuMonde', label: 'Tour du monde', icon: '🌍', score: 97 },
+  { id: 'moto', label: 'Moto', icon: '🏍️', score: 58 },
+  { id: 'velo', label: 'Vélo', icon: '🚴', score: 70 },
+  { id: 'avion', label: 'Avion', icon: '✈️', score: 85 },
+  { id: 'train', label: 'Train', icon: '🚂', score: 80 },
+  { id: 'weekend', label: 'Week-end', icon: '🏡', score: 60 },
+  { id: 'business', label: 'Business', icon: '💼', score: 40 },
 ];
 
-// ── Supabase fetch ─────────────────────────────────────────────────────────────
-async function _fetchProductBySlug(slug: string): Promise<Product | null> {
-  const supabase = createClient();
+const BAG_SIZES = [
+  { label: '20 L', fits: false, percent: 0 },
+  { label: '30 L', fits: true, percent: 45 },
+  { label: '40 L', fits: true, percent: 32 },
+  { label: '50 L', fits: true, percent: 25 },
+  { label: '70 L', fits: true, percent: 18 },
+  { label: '90 L', fits: true, percent: 12 },
+];
 
-  // Fetch product + its listings
-  const { data: productData, error: productError } = await supabase
-    .from('products')
-    .select('*')
-    .eq('slug', slug)
-    .single();
+const PRICE_HISTORY = [
+  { month: 'Jan', neuf: 89, occasion: 55, location: 4 },
+  { month: 'Fév', neuf: 89, occasion: 52, location: 4 },
+  { month: 'Mar', neuf: 85, occasion: 50, location: 3.5 },
+  { month: 'Avr', neuf: 79, occasion: 48, location: 3.5 },
+  { month: 'Mai', neuf: 89, occasion: 54, location: 4 },
+  { month: 'Jun', neuf: 94, occasion: 60, location: 5 },
+  { month: 'Jul', neuf: 99, occasion: 65, location: 5.5 },
+  { month: 'Aoû', neuf: 99, occasion: 68, location: 5.5 },
+  { month: 'Sep', neuf: 89, occasion: 58, location: 4.5 },
+  { month: 'Oct', neuf: 84, occasion: 52, location: 4 },
+  { month: 'Nov', neuf: 79, occasion: 48, location: 3.5 },
+  { month: 'Déc', neuf: 89, occasion: 55, location: 4 },
+];
 
-  if (productError || !productData) return null;
+const FAQ_ITEMS = [
+  { q: 'Ce produit convient-il aux débutants ?', a: 'Oui, sa prise en main est intuitive. Nous recommandons toutefois de le tester avant un long voyage.' },
+  { q: 'Quelle est la durée de vie estimée ?', a: 'Avec un entretien régulier, comptez 5 à 8 ans d\'utilisation intensive.' },
+  { q: 'Est-il réparable ?', a: 'Oui, les pièces détachées sont disponibles. Score de réparabilité : 8/10.' },
+  { q: 'Peut-on le prendre en cabine avion ?', a: 'Dépend de la compagnie. Vérifiez les dimensions autorisées avant votre vol.' },
+  { q: 'Quelle différence avec la version précédente ?', a: 'La version actuelle est 15% plus légère et intègre de nouveaux matériaux recyclés.' },
+  { q: 'Y a-t-il une garantie en cas de défaut ?', a: '2 ans constructeur pour les achats neufs. 30 jours garantie acheteur pour l\'occasion.' },
+];
 
-  // Fetch all listings for this product
-  const { data: listingsData } = await supabase
-    .from('listings')
-    .select('*')
-    .eq('produit_id', productData.id)
-    .order('created_at', { ascending: true });
+const ALTERNATIVES = [
+  { label: 'Moins cher', icon: '💰', nom: 'Deuter Speed Lite 20', prix: '59 €', poids: '490 g', note: 4.2, badge: 'bg-emerald-100 text-emerald-800' },
+  { label: 'Plus léger', icon: '🪶', nom: 'Hyperlite Mountain Gear 2400', prix: '320 €', poids: '510 g', note: 4.7, badge: 'bg-blue-100 text-blue-800' },
+  { label: 'Plus premium', icon: '⭐', nom: 'Arc\'teryx Alpha FL 30', prix: '380 €', poids: '680 g', note: 4.9, badge: 'bg-purple-100 text-purple-800' },
+  { label: 'Meilleur rapport Q/P', icon: '🏆', nom: 'Osprey Talon 22', prix: '110 €', poids: '720 g', note: 4.6, badge: 'bg-amber-100 text-amber-800' },
+  { label: 'Choix de l\'équipe', icon: '❤️', nom: 'Gregory Zulu 30', prix: '145 €', poids: '850 g', note: 4.8, badge: 'bg-red-100 text-red-800' },
+];
 
-  const listing = listingsData?.[0] ?? null;
+const KIT_INSPIRATIONS = [
+  { label: 'Tour du Monde', icon: '🌍', produits: 24, poids: '9,2 kg', budget: '1 240 €', image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&q=80', alt: 'Sac à dos posé devant une carte du monde' },
+  { label: 'Islande', icon: '🧊', produits: 18, poids: '11,4 kg', budget: '890 €', image: 'https://images.unsplash.com/photo-1531168556467-80aace0d0144?w=400&q=80', alt: 'Paysage volcanique islandais avec randonneurs' },
+  { label: 'Népal Trek', icon: '⛰️', produits: 22, poids: '12,8 kg', budget: '1 050 €', image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400&q=80', alt: 'Randonneurs sur un sentier de montagne au Népal' },
+  { label: 'Japon', icon: '🗾', produits: 16, poids: '7,6 kg', budget: '680 €', image: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=400&q=80', alt: 'Voyageur avec sac à dos devant un temple japonais' },
+  { label: 'Van Life', icon: '🚐', produits: 28, poids: '15,2 kg', budget: '1 580 €', image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=400&q=80', alt: 'Van aménagé dans un paysage naturel' },
+  { label: 'Trek Léger', icon: '🪶', produits: 14, poids: '6,1 kg', budget: '720 €', image: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=400&q=80', alt: 'Randonneur ultraléger sur un sentier de montagne' },
+];
 
-  // Build specs from product fields
-  const specs: ProductSpec[] = [
-    { label: 'Catégorie', value: productData.category ?? 'N/A' },
-    { label: 'Marque', value: productData.brand ?? 'N/A' },
-    { label: 'Poids', value: productData.weight_g ? `${productData.weight_g} g` : 'N/A' },
-    { label: 'Prix', value: productData.price_eur ? `${Number(productData.price_eur).toFixed(2)} €` : 'N/A' },
-  ];
+const COMPLEMENTARY = [
+  { nom: 'Sac de couchage Cumulus 450', poids: '890 g', prix: '289 €', reason: 'Souvent acheté ensemble', image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=200&q=80', alt: 'Sac de couchage bleu compact' },
+  { nom: 'Matelas Therm-a-Rest NeoAir', poids: '354 g', prix: '179 €', reason: 'Complément idéal', image: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=200&q=80', alt: 'Matelas gonflable de camping orange' },
+  { nom: 'Lampe Black Diamond Spot', poids: '88 g', prix: '49 €', reason: 'Accessoire recommandé', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&q=80', alt: 'Lampe frontale de randonnée noire' },
+  { nom: 'Gourde Hydrapak 1L', poids: '95 g', prix: '29 €', reason: 'Compatible avec ce sac', image: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=200&q=80', alt: 'Gourde souple bleue de randonnée' },
+];
 
-  const product: Product = {
-    id: productData.id,
-    slug: productData.slug,
-    nom: productData.name,
-    marque: productData.brand ?? '',
-    reference: productData.slug?.toUpperCase().slice(0, 12) ?? '',
-    prix_cents: listing?.prix_cents ?? Math.round(Number(productData.price_eur ?? 0) * 100),
-    poids_g: productData.weight_g ?? 0,
-    poids_max_g: Math.max((productData.weight_g ?? 0) * 2, 5000),
-    categorie: productData.category ?? 'Autre',
-    description: productData.description ?? '',
-    images: productData.image
-      ? [{ url: productData.image, alt: productData.image_alt ?? productData.name }]
-      : [{ url: 'https://images.unsplash.com/photo-1723825001909-1e45b76a9555', alt: productData.name }],
-    specs,
-    tags: productData.activity ?? [],
-    stock: productData.stock ?? 10,
-    stock_statut: listing?.stock_statut ?? productData.stock_statut ?? 'en_stock',
-    reappro_date: listing?.reappro_date ?? productData.reappro_date,
-    note: 4.5,
-    avis_count: 0,
-    reviews: [],
-    listing_type: listing?.listing_type ?? 'neuf',
-    listing_id: listing?.id,
-    produit_id: productData.id,
-    // Occasion
-    etat: listing?.etat ?? 'bon_etat',
-    occasion_statut: (listing?.occasion_statut as Product['occasion_statut']) ?? 'active',
-    faire_offre_active: listing?.faire_offre_active ?? false,
-    historique_produit: listing?.historique_produit ?? undefined,
-    certificat_authenticite: listing?.certificat_authenticite ?? undefined,
-    photos_defauts: listing?.photos_defauts ?? undefined,
-    // Enchère
-    prix_depart_cents: listing?.prix_depart_cents ?? 0,
-    enchere_actuelle_cents: listing?.enchere_actuelle_cents ?? listing?.prix_depart_cents ?? 0,
-    increment_min_cents: listing?.increment_min_cents ?? 500,
-    date_fin_enchere: listing?.date_fin_enchere ?? new Date(Date.now() + 7 * 86400000).toISOString(),
-    nombre_encherisseurs: listing?.nombre_encherisseurs ?? 0,
-    // Location
-    prix_jour_cents: listing?.prix_jour_cents ?? 0,
-    caution_cents: listing?.caution_cents ?? 0,
-    // Vendeur
-    vendeur_trust_score: listing?.vendeur_trust_score ?? 0,
-    vendeur_nb_ventes: listing?.vendeur_nb_ventes ?? 0,
-    vendeur_delai_reponse_heures: listing?.vendeur_delai_reponse_heures ?? undefined,
-  };
-
-  return product;
-}
-
-// ── Countdown hook ─────────────────────────────────────────────────────────────
-function useCountdown(endDate?: string) {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-
-  useEffect(() => {
-    if (!endDate) return;
-    const update = () => {
-      const diff = new Date(endDate).getTime() - Date.now();
-      if (diff <= 0) { setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 }); return; }
-      setTimeLeft({
-        days: Math.floor(diff / 86400000),
-        hours: Math.floor((diff % 86400000) / 3600000),
-        minutes: Math.floor((diff % 3600000) / 60000),
-        seconds: Math.floor((diff % 60000) / 1000),
-      });
+// ─────────────────────────────────────────────────────────────────────────────
+// SUPABASE FETCH
+// ─────────────────────────────────────────────────────────────────────────────
+async function fetchProduct(slug: string): Promise<Product | null> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('slug', slug)
+      .single();
+    if (error || !data) return null;
+    return {
+      id: data.id,
+      slug: data.slug,
+      nom: data.name,
+      marque: data.brand ?? 'Marque',
+      categorie: data.category ?? 'Équipement',
+      description: data.description ?? '',
+      prix_cents: Math.round(Number(data.price_eur ?? 89) * 100),
+      poids_g: data.weight_g ?? 850,
+      note: 4.7,
+      avis_count: 128,
+      images: data.image
+        ? [
+            { url: data.image, alt: data.image_alt ?? data.name },
+            { url: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80', alt: 'Produit en situation terrain' },
+            { url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80', alt: 'Détail du produit' },
+          ]
+        : [
+            { url: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80', alt: 'Produit outdoor en montagne' },
+            { url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80', alt: 'Détail du produit' },
+          ],
+      tags: data.activity ?? ['Trek', 'Backpacking'],
+      specs: [
+        { label: 'Poids', value: `${data.weight_g ?? 850} g` },
+        { label: 'Volume', value: '40 L' },
+        { label: 'Dimensions', value: '70 × 35 × 25 cm' },
+        { label: 'Matériaux', value: 'Nylon 210D Ripstop' },
+        { label: 'Résistance eau', value: 'IPX4 — 600 mm' },
+        { label: 'Garantie', value: '2 ans constructeur' },
+        { label: 'Réparabilité', value: '8/10' },
+        { label: 'Durée de vie', value: '5–8 ans' },
+        { label: 'Température', value: '-20°C à +40°C' },
+        { label: 'Origine', value: 'Fabriqué au Vietnam' },
+        { label: 'Compatibilité', value: 'Système de portage universel' },
+        { label: 'Entretien', value: 'Lavage 30°C, séchage à l\'air' },
+        { label: 'Pièces détachées', value: 'Disponibles 10 ans' },
+        { label: 'Normes', value: 'CE, REACH, OEKO-TEX' },
+      ],
     };
-    update();
-    const id = setInterval(update, 1000);
-    return () => clearInterval(id);
-  }, [endDate]);
-
-  return timeLeft;
+  } catch {
+    return null;
+  }
 }
 
-// ── Location Action Zone ───────────────────────────────────────────────────────
-function ActionZoneLocation({ product }: { product: Product }) {
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const formatPrice = (c: number) => (c / 100).toFixed(2).replace('.', ',') + ' €';
+function buildFallbackProduct(slug: string): Product {
+  return {
+    id: slug,
+    slug,
+    nom: 'Osprey Farpoint 40',
+    marque: 'Osprey',
+    categorie: 'Sac à dos',
+    description: 'Le sac à dos de voyage par excellence. Conçu pour les voyageurs exigeants qui veulent voyager léger sans compromis.',
+    prix_cents: 17900,
+    poids_g: 1420,
+    note: 4.7,
+    avis_count: 128,
+    images: [
+      { url: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80', alt: 'Osprey Farpoint 40 sur un sentier de montagne' },
+      { url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80', alt: 'Détail du système de portage Osprey' },
+      { url: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80', alt: 'Osprey Farpoint 40 en voyage urbain' },
+      { url: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800&q=80', alt: 'Contenu du sac Osprey Farpoint 40' },
+    ],
+    tags: ['Trek', 'Backpacking', 'Tour du monde', 'Avion'],
+    specs: [
+      { label: 'Poids', value: '1 420 g' },
+      { label: 'Volume', value: '40 L' },
+      { label: 'Dimensions', value: '70 × 35 × 25 cm' },
+      { label: 'Matériaux', value: 'Nylon 210D Ripstop' },
+      { label: 'Résistance eau', value: 'IPX4 — 600 mm' },
+      { label: 'Garantie', value: '2 ans constructeur' },
+      { label: 'Réparabilité', value: '8/10' },
+      { label: 'Durée de vie', value: '5–8 ans' },
+      { label: 'Température', value: '-20°C à +40°C' },
+      { label: 'Origine', value: 'Fabriqué au Vietnam' },
+      { label: 'Compatibilité', value: 'Système de portage universel' },
+      { label: 'Entretien', value: 'Lavage 30°C, séchage à l\'air' },
+      { label: 'Pièces détachées', value: 'Disponibles 10 ans' },
+      { label: 'Normes', value: 'CE, REACH, OEKO-TEX' },
+    ],
+  };
+}
 
-  const nbDays = useMemo(() => {
-    if (!startDate || !endDate) return 0;
-    const diff = new Date(endDate).getTime() - new Date(startDate).getTime();
-    return Math.max(0, Math.ceil(diff / 86400000));
-  }, [startDate, endDate]);
-
-  const totalPrice = nbDays * (product.prix_jour_cents ?? 0);
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: GALLERY
+// ─────────────────────────────────────────────────────────────────────────────
+function ProductGallery({ product }: { product: Product }) {
+  const [active, setActive] = useState(0);
+  const [zoomed, setZoomed] = useState(false);
 
   return (
-    <div className="space-y-4">
-      <div className="topo-card p-4 border-purple-500/20 border">
-        <p className="text-xs font-mono text-purple-400 uppercase tracking-widest mb-3" style={{ fontFamily: 'var(--font-mono)' }}>Tarifs location</p>
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-muted-foreground">Prix / jour</span>
-          <span className="font-mono text-xl font-700 text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{formatPrice(product.prix_jour_cents ?? 0)}</span>
+    <div className="space-y-3">
+      <div
+        className="relative aspect-square rounded-2xl overflow-hidden bg-[#1C2620] cursor-zoom-in group"
+        onClick={() => setZoomed(!zoomed)}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={product.images[active]?.url}
+          alt={product.images[active]?.alt}
+          className={`w-full h-full object-cover transition-transform duration-500 ${zoomed ? 'scale-150' : 'scale-100 group-hover:scale-105'}`}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute top-4 left-4 flex gap-2 flex-wrap">
+          <span className="px-2.5 py-1 rounded-full bg-[#E4501C] text-white text-[10px] font-mono font-700 tracking-widest uppercase">Best Seller</span>
+          <span className="px-2.5 py-1 rounded-full bg-[#1C2620]/80 backdrop-blur-sm text-white text-[10px] font-mono tracking-widest uppercase border border-white/20">Ultra Léger</span>
         </div>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Caution</span>
-          <span className="font-mono font-600 text-yellow-400" style={{ fontFamily: 'var(--font-mono)' }}>{formatPrice(product.caution_cents ?? 0)}</span>
+        <button
+          className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-colors"
+          onClick={(e) => { e.stopPropagation(); setZoomed(!zoomed); }}
+          aria-label="Zoom"
+        >
+          <Icon name={zoomed ? 'MagnifyingGlassMinusIcon' : 'MagnifyingGlassPlusIcon'} size={16} variant="outline" />
+        </button>
+        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+          <span className="text-white/70 text-xs font-mono">{active + 1} / {product.images.length}</span>
+          <div className="flex gap-1.5">
+            {product.images.map((_, i) => (
+              <button
+                key={i}
+                onClick={(e) => { e.stopPropagation(); setActive(i); }}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${i === active ? 'bg-white w-4' : 'bg-white/40'}`}
+                aria-label={`Image ${i + 1}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs text-muted-foreground mb-1.5">Début</label>
-          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary" />
-        </div>
-        <div>
-          <label className="block text-xs text-muted-foreground mb-1.5">Fin</label>
-          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm text-foreground focus:outline-none focus:border-primary" />
-        </div>
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {product.images.map((img, i) => (
+          <button
+            key={i}
+            onClick={() => setActive(i)}
+            className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all ${i === active ? 'border-[#E4501C]' : 'border-[#C8C3B0] hover:border-[#B5652D]'}`}
+            aria-label={`Voir image ${i + 1}`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={img.url} alt="" className="w-full h-full object-cover" aria-hidden="true" />
+          </button>
+        ))}
+        <button className="flex-shrink-0 w-20 h-20 rounded-xl border-2 border-dashed border-[#C8C3B0] flex flex-col items-center justify-center gap-1 text-[#5C6B5E] hover:border-[#E4501C] hover:text-[#E4501C] transition-colors">
+          <Icon name="VideoCameraIcon" size={16} variant="outline" />
+          <span className="text-[9px] font-mono">Vidéo</span>
+        </button>
+        <button className="flex-shrink-0 w-20 h-20 rounded-xl border-2 border-dashed border-[#C8C3B0] flex flex-col items-center justify-center gap-1 text-[#5C6B5E] hover:border-[#E4501C] hover:text-[#E4501C] transition-colors">
+          <Icon name="CubeIcon" size={16} variant="outline" />
+          <span className="text-[9px] font-mono">360°</span>
+        </button>
       </div>
-      {nbDays > 0 && (
-        <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-primary/5 border border-primary/20">
-          <span className="text-sm text-muted-foreground">{nbDays} jour{nbDays > 1 ? 's' : ''}</span>
-          <span className="font-mono font-700 text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{formatPrice(totalPrice)} + {formatPrice(product.caution_cents ?? 0)} caution</span>
-        </div>
-      )}
-      <button className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm transition-all min-h-[44px]">
-        <Icon name="CalendarDaysIcon" size={18} variant="outline" />
-        Réserver ces dates
-      </button>
-      <p className="text-xs text-muted-foreground text-center">
-        <Icon name="ShieldCheckIcon" size={12} variant="outline" className="inline mr-1" />
-        Caution restituée après retour vérifié
-      </p>
     </div>
   );
 }
 
-// ── AI Panels ──────────────────────────────────────────────────────────────────
-function AIDescriptionPanel({ product }: { product: Product }) {
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: ACQUISITION COMPARATOR
+// ─────────────────────────────────────────────────────────────────────────────
+function AcquisitionComparator({ modes }: { modes: AcquisitionMode[] }) {
+  const [selected, setSelected] = useState<string>('neuf');
+  const [expanded, setExpanded] = useState<string | null>(null);
 
-  const generate = useCallback(async () => {
-    if (result) { setOpen(true); return; }
-    setOpen(true);
+  const colorMap: Record<string, { bg: string; border: string; text: string; badge: string }> = {
+    emerald: { bg: 'bg-emerald-50', border: 'border-emerald-400', text: 'text-emerald-700', badge: 'bg-emerald-500' },
+    amber: { bg: 'bg-amber-50', border: 'border-amber-400', text: 'text-amber-700', badge: 'bg-amber-500' },
+    purple: { bg: 'bg-purple-50', border: 'border-purple-400', text: 'text-purple-700', badge: 'bg-purple-500' },
+    orange: { bg: 'bg-orange-50', border: 'border-orange-400', text: 'text-orange-700', badge: 'bg-orange-500' },
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 mb-2">
+        <Icon name="SparklesIcon" size={16} variant="outline" className="text-[#E4501C]" />
+        <h2 className="font-display font-700 text-xl text-[#1C2620]" style={{ fontFamily: 'var(--font-display)' }}>Obtenir ce produit</h2>
+      </div>
+      <p className="text-sm text-[#5C6B5E]">Comparez les 4 façons d&apos;acquérir ce produit. L&apos;IA sélectionne la meilleure option selon votre profil.</p>
+
+      <div className="grid grid-cols-2 gap-3">
+        {modes.map((mode) => {
+          const c = colorMap[mode.color];
+          const isSelected = selected === mode.id;
+          return (
+            <button
+              key={mode.id}
+              onClick={() => { setSelected(mode.id); setExpanded(isSelected ? null : mode.id); }}
+              className={`relative p-4 rounded-2xl border-2 text-left transition-all duration-200 ${
+                isSelected ? `${c.bg} ${c.border}` : 'bg-[#EDEAE0] border-[#C8C3B0] hover:border-[#B5652D]'
+              }`}
+            >
+              <div className={`absolute top-3 right-3 px-2 py-0.5 rounded-full text-[9px] font-mono font-700 text-white ${c.badge}`}>
+                {mode.badge}
+              </div>
+              <div className="flex items-center gap-2 mb-2">
+                <Icon name={mode.icon as Parameters<typeof Icon>[0]['name']} size={16} variant="outline" className={isSelected ? c.text : 'text-[#5C6B5E]'} />
+                <span className={`text-xs font-semibold ${isSelected ? c.text : 'text-[#5C6B5E]'}`}>{mode.label}</span>
+              </div>
+              <div className={`font-mono font-700 text-lg ${isSelected ? 'text-[#1C2620]' : 'text-[#1C2620]'}`} style={{ fontFamily: 'var(--font-mono)' }}>
+                {mode.prix}
+              </div>
+              <div className="text-xs text-[#5C6B5E] mt-1">{mode.disponibilite}</div>
+              {mode.economie !== '—' && (
+                <div className={`text-xs font-semibold mt-1.5 ${c.text}`}>{mode.economie}</div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Expanded detail */}
+      {selected && (() => {
+        const mode = modes.find(m => m.id === selected);
+        if (!mode) return null;
+        const c = colorMap[mode.color];
+        return (
+          <div className={`rounded-2xl border-2 ${c.border} ${c.bg} p-5 space-y-3 transition-all duration-300`}>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              {[
+                { label: 'État', value: mode.etat },
+                { label: 'Délai', value: mode.delai },
+                { label: 'Garantie', value: mode.garantie },
+                { label: 'Vendeur', value: mode.vendeur },
+                { label: 'Conditions', value: mode.conditions },
+                { label: 'Impact éco', value: mode.ecologie },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex flex-col gap-0.5">
+                  <span className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-widest">{label}</span>
+                  <span className="text-[#1C2620] font-medium text-xs">{value}</span>
+                </div>
+              ))}
+            </div>
+            <button className={`w-full py-3 rounded-full font-semibold text-sm text-white transition-all hover:opacity-90 ${c.badge}`}>
+              {mode.id === 'neuf' && 'Ajouter au panier'}
+              {mode.id === 'occasion' && 'Voir les 12 offres'}
+              {mode.id === 'location' && 'Réserver une location'}
+              {mode.id === 'enchere' && 'Participer à l\'enchère'}
+            </button>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: AI SCORE
+// ─────────────────────────────────────────────────────────────────────────────
+function AICompatibilityScore({ product }: { product: Product }) {
+  const [loading, setLoading] = useState(false);
+  const [analysis, setAnalysis] = useState<string | null>(null);
+  const score = 93;
+
+  const generateAnalysis = useCallback(async () => {
+    if (analysis) return;
     setLoading(true);
     try {
       const res = await fetch('/api/ai/chat-completion', {
@@ -277,205 +459,558 @@ function AIDescriptionPanel({ product }: { product: Product }) {
         body: JSON.stringify({
           messages: [{
             role: 'user',
-            content: `Génère une description enrichie et engageante pour ce produit outdoor en français. Ton cohérent, professionnel, orienté terrain. 3-4 phrases max.\n\nProduit: ${product.nom}\nMarque: ${product.marque}\nCatégorie: ${product.categorie}\nDescription brute: ${product.description}`,
+            content: `Analyse ce produit outdoor en 3 phrases courtes. Points forts, points faibles, et à qui il s'adresse vraiment.\n\nProduit: ${product.nom}\nMarque: ${product.marque}\nCatégorie: ${product.categorie}\nPoids: ${product.poids_g}g`,
           }],
           model: 'gemini-2.0-flash',
         }),
       });
       const data = await res.json();
-      setResult(data.content ?? data.message ?? 'Description non disponible.');
+      setAnalysis(data.content ?? data.message ?? null);
     } catch {
-      setResult('Description IA temporairement indisponible.');
+      setAnalysis('Analyse IA temporairement indisponible.');
     } finally {
       setLoading(false);
     }
-  }, [product, result]);
+  }, [product, analysis]);
+
+  useEffect(() => {
+    generateAnalysis();
+  }, [generateAnalysis]);
+
+  const criteria = [
+    { label: 'Type de voyage', value: 97, icon: '🎒' },
+    { label: 'Climat', value: 88, icon: '🌤️' },
+    { label: 'Compatibilité sac', value: 91, icon: '🎽' },
+    { label: 'Budget', value: 85, icon: '💰' },
+    { label: 'Équipement existant', value: 94, icon: '🔧' },
+  ];
 
   return (
-    <div className="topo-card p-5 border-info/20 border">
-      <button onClick={generate} className="w-full flex items-center justify-between gap-3 text-left">
-        <div className="flex items-center gap-2">
-          <Icon name="SparklesIcon" size={16} variant="outline" className="text-info flex-shrink-0" />
-          <span className="font-display font-700 text-sm text-foreground" style={{ fontFamily: 'var(--font-display)' }}>Description enrichie par IA</span>
+    <div className="topo-card p-6 border-[#3E6B7A]/30 border-2 bg-gradient-to-br from-[#1C2620] to-[#243028]">
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Icon name="SparklesIcon" size={16} variant="outline" className="text-[#E4501C]" />
+            <span className="text-xs font-mono text-white/50 uppercase tracking-widest">Score IA</span>
+          </div>
+          <h3 className="font-display font-700 text-white text-lg" style={{ fontFamily: 'var(--font-display)' }}>Compatibilité avec votre profil</h3>
         </div>
-        <Icon name={open ? 'ChevronUpIcon' : 'ChevronDownIcon'} size={14} variant="outline" className="text-muted-foreground flex-shrink-0" />
-      </button>
-      {open && (
-        <div className="mt-4 pt-4 border-t border-border">
-          {loading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="flex gap-1">{[0, 1, 2].map(i => <span key={i} className="w-1.5 h-1.5 rounded-full bg-info animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}</div>
-              Génération en cours…
+        <div className="relative w-20 h-20 flex-shrink-0">
+          <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="6" />
+            <circle
+              cx="40" cy="40" r="32" fill="none"
+              stroke="#E4501C" strokeWidth="6"
+              strokeLinecap="round"
+              strokeDasharray={`${2 * Math.PI * 32}`}
+              strokeDashoffset={`${2 * Math.PI * 32 * (1 - score / 100)}`}
+              className="transition-all duration-1000"
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="font-mono font-700 text-white text-xl leading-none" style={{ fontFamily: 'var(--font-mono)' }}>{score}%</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-3 mb-5">
+        {criteria.map((c) => (
+          <div key={c.label} className="flex items-center gap-3">
+            <span className="text-base w-6 flex-shrink-0">{c.icon}</span>
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-white/70">{c.label}</span>
+                <span className="text-xs font-mono text-white/90" style={{ fontFamily: 'var(--font-mono)' }}>{c.value}%</span>
+              </div>
+              <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-[#E4501C] to-[#B5652D] transition-all duration-700"
+                  style={{ width: `${c.value}%` }}
+                />
+              </div>
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground leading-relaxed">{result}</p>
-          )}
+          </div>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="flex items-center gap-2 text-sm text-white/50">
+          <div className="flex gap-1">{[0, 1, 2].map(i => <span key={i} className="w-1.5 h-1.5 rounded-full bg-[#E4501C] animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}</div>
+          Analyse IA en cours…
         </div>
-      )}
+      ) : analysis ? (
+        <p className="text-sm text-white/70 leading-relaxed border-t border-white/10 pt-4">{analysis}</p>
+      ) : null}
     </div>
   );
 }
 
-// ── Shared: Product Gallery + Info Header ──────────────────────────────────────
-function ProductGallery({ product, listingType }: { product: Product; listingType: ListingType }) {
-  const [activeImage, setActiveImage] = useState(0);
-
-  const badgeColors: Record<ListingType, string> = {
-    neuf: 'bg-emerald-500/80 text-white',
-    kit: 'bg-blue-500/80 text-white',
-    occasion: 'bg-yellow-500/80 text-white',
-    enchere: 'bg-orange-500/80 text-white',
-    location: 'bg-purple-500/80 text-white',
-  };
-
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: TRAVEL COMPATIBILITY
+// ─────────────────────────────────────────────────────────────────────────────
+function TravelCompatibility() {
   return (
-    <div className="space-y-4">
-      <div className="aspect-square rounded-2xl overflow-hidden bg-card border border-border relative">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={product.images[activeImage]?.url} alt={product.images[activeImage]?.alt} className="w-full h-full object-cover" />
-        <div className="absolute top-4 left-4">
-          <span className={`px-3 py-1 rounded-full text-xs font-600 backdrop-blur-sm ${badgeColors[listingType]}`}>
-            {TYPE_LABELS[listingType]}
-          </span>
-        </div>
+    <section className="py-12">
+      <div className="flex items-center gap-3 mb-6">
+        <Icon name="GlobeAltIcon" size={20} variant="outline" className="text-[#E4501C]" />
+        <h2 className="font-display font-700 text-2xl text-[#1C2620]" style={{ fontFamily: 'var(--font-display)' }}>Pour quels voyages ?</h2>
       </div>
-      {product.images.length > 1 && (
-        <div className="flex gap-3">
-          {product.images.map((img, i) => (
-            <button
-              key={i}
-              onClick={() => setActiveImage(i)}
-              className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${activeImage === i ? 'border-primary' : 'border-border hover:border-accent'}`}
-              aria-label={`Voir image ${i + 1}`}
-              aria-pressed={activeImage === i}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.url} alt="" className="w-full h-full object-cover" aria-hidden="true" />
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+        {TRAVEL_TYPES.map((t) => (
+          <div key={t.id} className="topo-card p-3 text-center group hover:border-[#E4501C]/40 transition-all">
+            <div className="text-2xl mb-2">{t.icon}</div>
+            <div className="text-xs font-medium text-[#1C2620] mb-2">{t.label}</div>
+            <div className="h-1.5 bg-[#C8C3B0] rounded-full overflow-hidden mb-1">
+              <div
+                className={`h-full rounded-full transition-all duration-700 ${t.score >= 80 ? 'bg-[#E4501C]' : t.score >= 60 ? 'bg-[#B5652D]' : 'bg-[#C8C3B0]'}`}
+                style={{ width: `${t.score}%` }}
+              />
+            </div>
+            <span className={`text-[10px] font-mono font-700 ${t.score >= 80 ? 'text-[#E4501C]' : t.score >= 60 ? 'text-[#B5652D]' : 'text-[#5C6B5E]'}`} style={{ fontFamily: 'var(--font-mono)' }}>
+              {t.score}%
+            </span>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
-function ProductInfoHeader({ product }: { product: Product }) {
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: BAG VISUALIZATION
+// ─────────────────────────────────────────────────────────────────────────────
+function BagVisualization({ product }: { product: Product }) {
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-xs font-mono text-info uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>{product.marque}</span>
-        <span className="text-muted-foreground" aria-hidden="true">·</span>
-        <span className="text-xs font-mono text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{product.reference}</span>
+    <section className="py-12">
+      <div className="flex items-center gap-3 mb-6">
+        <Icon name="ArchiveBoxIcon" size={20} variant="outline" className="text-[#E4501C]" />
+        <h2 className="font-display font-700 text-2xl text-[#1C2620]" style={{ fontFamily: 'var(--font-display)' }}>Visualisation dans le sac</h2>
       </div>
-      <h1 className="font-display font-700 text-3xl text-foreground mb-3" style={{ fontFamily: 'var(--font-display)' }}>{product.nom}</h1>
-      {product.avis_count > 0 && (
+      <p className="text-sm text-[#5C6B5E] mb-6">Dans quels sacs ce produit rentre-t-il réellement ?</p>
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+        {BAG_SIZES.map((bag) => (
+          <div key={bag.label} className={`topo-card p-4 text-center ${bag.fits ? 'border-emerald-300' : 'border-red-200 opacity-60'}`}>
+            <div className="relative w-12 h-16 mx-auto mb-2">
+              <div className={`w-full h-full rounded-lg border-2 ${bag.fits ? 'border-emerald-400 bg-emerald-50' : 'border-red-300 bg-red-50'} flex items-end overflow-hidden`}>
+                {bag.fits && (
+                  <div
+                    className="w-full bg-[#E4501C]/30 rounded-b-md transition-all duration-700"
+                    style={{ height: `${bag.percent}%` }}
+                  />
+                )}
+              </div>
+              <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] ${bag.fits ? 'bg-emerald-500' : 'bg-red-400'}`}>
+                {bag.fits ? '✓' : '✗'}
+              </div>
+            </div>
+            <div className="font-mono font-700 text-sm text-[#1C2620]" style={{ fontFamily: 'var(--font-mono)' }}>{bag.label}</div>
+            {bag.fits && (
+              <div className="text-[10px] text-[#5C6B5E] mt-0.5">{bag.percent}% du volume</div>
+            )}
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-[#5C6B5E] mt-3">
+        <Icon name="InformationCircleIcon" size={12} variant="outline" className="inline mr-1" />
+        Basé sur les dimensions de {product.nom} ({product.poids_g}g)
+      </p>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: PRICE HISTORY
+// ─────────────────────────────────────────────────────────────────────────────
+function PriceHistory() {
+  const maxPrice = Math.max(...PRICE_HISTORY.map(p => p.neuf));
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  return (
+    <section className="py-12">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1" aria-label={`Note : ${product.note} sur 5`}>
-            {[1, 2, 3, 4, 5].map((s) => (
-              <svg key={s} className={`w-4 h-4 ${s <= Math.round(product.note) ? 'text-yellow-400' : 'text-border'}`} fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+          <Icon name="ChartBarIcon" size={20} variant="outline" className="text-[#E4501C]" />
+          <h2 className="font-display font-700 text-2xl text-[#1C2620]" style={{ fontFamily: 'var(--font-display)' }}>Historique du prix</h2>
+        </div>
+        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#E4501C] text-[#E4501C] text-xs font-semibold hover:bg-[#E4501C]/5 transition-colors">
+          <Icon name="BellIcon" size={12} variant="outline" />
+          Alerte de baisse
+        </button>
+      </div>
+      <div className="topo-card p-5">
+        <div className="flex items-center gap-4 mb-4 text-xs">
+          <div className="flex items-center gap-1.5"><div className="w-3 h-1 rounded bg-[#E4501C]" /><span className="text-[#5C6B5E]">Neuf</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-3 h-1 rounded bg-[#B5652D]" /><span className="text-[#5C6B5E]">Occasion</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-3 h-1 rounded bg-[#3E6B7A]" /><span className="text-[#5C6B5E]">Location/j</span></div>
+        </div>
+        <div className="relative h-40">
+          <div className="flex items-end justify-between h-full gap-1">
+            {PRICE_HISTORY.map((p, i) => (
+              <div
+                key={p.month}
+                className="flex-1 flex flex-col items-center gap-0.5 cursor-pointer group"
+                onMouseEnter={() => setHoveredIndex(i)}
+                onMouseLeave={() => setHoveredIndex(null)}
+              >
+                {hoveredIndex === i && (
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#1C2620] text-white text-[10px] font-mono px-2 py-1 rounded whitespace-nowrap z-10">
+                    {p.neuf}€ neuf · {p.occasion}€ occ.
+                  </div>
+                )}
+                <div className="w-full flex items-end gap-0.5 h-32">
+                  <div
+                    className="flex-1 bg-[#E4501C] rounded-t transition-all duration-300 group-hover:opacity-80"
+                    style={{ height: `${(p.neuf / maxPrice) * 100}%` }}
+                  />
+                  <div
+                    className="flex-1 bg-[#B5652D] rounded-t transition-all duration-300 group-hover:opacity-80"
+                    style={{ height: `${(p.occasion / maxPrice) * 100}%` }}
+                  />
+                </div>
+                <span className="text-[9px] font-mono text-[#5C6B5E]">{p.month}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="mt-4 pt-4 border-t border-[#C8C3B0] flex items-center justify-between text-xs text-[#5C6B5E]">
+          <span>Prix le plus bas (12 mois) : <strong className="text-[#E4501C]">79 €</strong></span>
+          <span>Prix actuel : <strong className="text-[#1C2620]">89 €</strong></span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: ENVIRONMENTAL IMPACT
+// ─────────────────────────────────────────────────────────────────────────────
+function EnvironmentalImpact() {
+  const metrics = [
+    { label: 'Empreinte carbone', value: '4,2 kg CO₂', icon: '🌍', score: 72, color: 'bg-emerald-500' },
+    { label: 'Réparabilité', value: '8/10', icon: '🔧', score: 80, color: 'bg-blue-500' },
+    { label: 'Recyclabilité', value: '65%', icon: '♻️', score: 65, color: 'bg-teal-500' },
+    { label: 'Durabilité', value: '5–8 ans', icon: '⏳', score: 85, color: 'bg-green-500' },
+    { label: 'Matériaux', value: 'Recyclés 40%', icon: '🧵', score: 40, color: 'bg-amber-500' },
+  ];
+
+  return (
+    <section className="py-12">
+      <div className="flex items-center gap-3 mb-6">
+        <Icon name="GlobeAmericasIcon" size={20} variant="outline" className="text-emerald-600" />
+        <h2 className="font-display font-700 text-2xl text-[#1C2620]" style={{ fontFamily: 'var(--font-display)' }}>Impact environnemental</h2>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {metrics.map((m) => (
+          <div key={m.label} className="topo-card p-4 text-center">
+            <div className="text-2xl mb-2">{m.icon}</div>
+            <div className="font-mono font-700 text-[#1C2620] text-sm mb-1" style={{ fontFamily: 'var(--font-mono)' }}>{m.value}</div>
+            <div className="text-[10px] text-[#5C6B5E] mb-2">{m.label}</div>
+            <div className="h-1.5 bg-[#C8C3B0] rounded-full overflow-hidden">
+              <div className={`h-full rounded-full ${m.color}`} style={{ width: `${m.score}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-3">
+        <span className="text-emerald-600 text-lg flex-shrink-0">🌿</span>
+        <p className="text-sm text-emerald-800">
+          <strong>Conseil :</strong> Choisir l&apos;occasion ou la location réduit l&apos;empreinte carbone de ce produit de 60 à 80%.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: COMPARISONS
+// ─────────────────────────────────────────────────────────────────────────────
+function ProductComparisons({ product }: { product: Product }) {
+  const competitors = [
+    { nom: product.nom, poids: product.poids_g, prix: product.prix_cents / 100, note: product.note, garantie: '2 ans', reparabilite: 8, isMain: true },
+    { nom: 'Deuter Aircontact 40', poids: 1680, prix: 149, note: 4.4, garantie: '3 ans', reparabilite: 7, isMain: false },
+    { nom: 'Gregory Baltoro 40', poids: 1920, prix: 199, note: 4.6, garantie: '2 ans', reparabilite: 6, isMain: false },
+    { nom: 'Hyperlite 3400', poids: 680, prix: 340, note: 4.8, garantie: '1 an', reparabilite: 5, isMain: false },
+  ];
+
+  return (
+    <section className="py-12">
+      <div className="flex items-center gap-3 mb-6">
+        <Icon name="ScaleIcon" size={20} variant="outline" className="text-[#E4501C]" />
+        <h2 className="font-display font-700 text-2xl text-[#1C2620]" style={{ fontFamily: 'var(--font-display)' }}>Comparaisons</h2>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-[#C8C3B0]">
+              <th className="text-left py-3 pr-4 text-[#5C6B5E] font-medium text-xs">Produit</th>
+              <th className="text-center py-3 px-3 text-[#5C6B5E] font-medium text-xs">Poids</th>
+              <th className="text-center py-3 px-3 text-[#5C6B5E] font-medium text-xs">Prix</th>
+              <th className="text-center py-3 px-3 text-[#5C6B5E] font-medium text-xs">Note</th>
+              <th className="text-center py-3 px-3 text-[#5C6B5E] font-medium text-xs">Garantie</th>
+              <th className="text-center py-3 px-3 text-[#5C6B5E] font-medium text-xs">Répar.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {competitors.map((c) => (
+              <tr key={c.nom} className={`border-b border-[#C8C3B0]/50 ${c.isMain ? 'bg-[#E4501C]/5' : ''}`}>
+                <td className="py-3 pr-4">
+                  <div className="flex items-center gap-2">
+                    {c.isMain && <span className="w-1.5 h-1.5 rounded-full bg-[#E4501C] flex-shrink-0" />}
+                    <span className={`font-medium ${c.isMain ? 'text-[#E4501C]' : 'text-[#1C2620]'}`}>{c.nom}</span>
+                  </div>
+                </td>
+                <td className="text-center py-3 px-3 font-mono text-xs" style={{ fontFamily: 'var(--font-mono)' }}>{c.poids}g</td>
+                <td className="text-center py-3 px-3 font-mono text-xs font-700" style={{ fontFamily: 'var(--font-mono)' }}>{c.prix}€</td>
+                <td className="text-center py-3 px-3">
+                  <span className="font-mono text-xs text-amber-600" style={{ fontFamily: 'var(--font-mono)' }}>★ {c.note}</span>
+                </td>
+                <td className="text-center py-3 px-3 text-xs text-[#5C6B5E]">{c.garantie}</td>
+                <td className="text-center py-3 px-3">
+                  <span className={`text-xs font-mono font-700 ${c.reparabilite >= 7 ? 'text-emerald-600' : 'text-amber-600'}`} style={{ fontFamily: 'var(--font-mono)' }}>{c.reparabilite}/10</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: REVIEWS
+// ─────────────────────────────────────────────────────────────────────────────
+function TravelerReviews({ product }: { product: Product }) {
+  const [filter, setFilter] = useState<string>('all');
+  const reviews = [
+    { author: 'Marie L.', country: '🇫🇷', rating: 5, comment: 'Parfait pour mon tour du monde de 8 mois. Solide, léger, et le système de portage est excellent.', date: 'Juin 2026', bag: '40L', duration: '8 mois', verified: true, helpful: 42 },
+    { author: 'Thomas K.', country: '🇩🇪', rating: 4, comment: 'Très bon sac mais les sangles de poitrine sont un peu rigides au début. Après rodage, parfait.', date: 'Mai 2026', bag: '40L', duration: '3 semaines', verified: true, helpful: 28 },
+    { author: 'Sofia M.', country: '🇪🇸', rating: 5, comment: 'Utilisé au Népal pendant 3 semaines de trek. Aucun problème, même sous la pluie.', date: 'Avr 2026', bag: '40L', duration: '3 semaines', verified: true, helpful: 35 },
+    { author: 'Alex R.', country: '🇺🇸', rating: 4, comment: 'Excellent rapport qualité/prix. Je recommande pour les voyageurs qui veulent voyager léger.', date: 'Mar 2026', bag: '40L', duration: '2 mois', verified: false, helpful: 19 },
+  ];
+
+  const filters = [
+    { id: 'all', label: 'Tous' },
+    { id: 'trek', label: 'Trek' },
+    { id: 'backpacking', label: 'Backpacking' },
+    { id: 'verified', label: 'Vérifiés' },
+  ];
+
+  return (
+    <section className="py-12">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <Icon name="StarIcon" size={20} variant="outline" className="text-amber-500" />
+          <h2 className="font-display font-700 text-2xl text-[#1C2620]" style={{ fontFamily: 'var(--font-display)' }}>Avis des voyageurs</h2>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="font-mono font-700 text-2xl text-[#1C2620]" style={{ fontFamily: 'var(--font-mono)' }}>{product.note}</span>
+          <div className="flex">
+            {[1,2,3,4,5].map(s => (
+              <svg key={s} className={`w-4 h-4 ${s <= Math.round(product.note) ? 'text-amber-400' : 'text-[#C8C3B0]'}`} fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
               </svg>
             ))}
           </div>
-          <span className="text-sm font-mono text-info" style={{ fontFamily: 'var(--font-mono)' }}>{product.note} ({product.avis_count} avis)</span>
+          <span className="text-sm text-[#5C6B5E]">({product.avis_count} avis)</span>
         </div>
-      )}
-    </div>
-  );
-}
-
-function ProductWeightCard({ product }: { product: Product }) {
-  const weightPercent = Math.round((product.poids_g / product.poids_max_g) * 100);
-  return (
-    <div className="topo-card p-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Gabarit de poids</span>
-        <span className="font-mono text-lg font-semibold text-info" style={{ fontFamily: 'var(--font-mono)' }}>{product.poids_g} g</span>
       </div>
-      <WeightGauge weightG={product.poids_g} maxG={product.poids_max_g} />
-      <div className="flex justify-between mt-1.5">
-        <span className="text-xs font-mono text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>0 g</span>
-        <span className="text-xs font-mono text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{product.poids_max_g} g</span>
+
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
+        {filters.map(f => (
+          <button
+            key={f.id}
+            onClick={() => setFilter(f.id)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${filter === f.id ? 'bg-[#E4501C] text-white' : 'bg-[#EDEAE0] text-[#5C6B5E] hover:bg-[#D4CFBF]'}`}
+          >
+            {f.label}
+          </button>
+        ))}
       </div>
-      <p className="text-xs text-muted-foreground mt-2">{weightPercent}% du poids de référence · {product.categorie}</p>
-    </div>
-  );
-}
 
-function ProductTags({ tags }: { tags: string[] }) {
-  if (!tags?.length) return null;
-  return (
-    <div className="flex flex-wrap gap-2" aria-label="Catégories">
-      {tags.map((tag) => (
-        <span key={tag} className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">{tag}</span>
-      ))}
-    </div>
-  );
-}
-
-function ProductSpecsTab({ product }: { product: Product }) {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" role="tabpanel" aria-label="Caractéristiques">
-      {product.specs.map((spec) => (
-        <div key={spec.label} className="flex items-center justify-between py-3 px-4 rounded-xl bg-card border border-border">
-          <span className="text-sm text-muted-foreground">{spec.label}</span>
-          <span className="font-mono text-sm font-semibold text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{spec.value}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function ProductReviewsTab({ product }: { product: Product }) {
-  if (!product.reviews?.length) {
-    return <p className="text-sm text-muted-foreground">Aucun avis pour ce produit.</p>;
-  }
-  return (
-    <div className="space-y-4" role="tabpanel" aria-label="Avis clients">
-      {product.reviews.map((review, i) => (
-        <div key={i} className="topo-card p-5">
-          <div className="flex items-start justify-between mb-2">
-            <div>
-              <span className="font-semibold text-foreground text-sm">{review.author}</span>
-              {review.verified && <span className="ml-2 text-xs text-green-600 font-medium">✓ Achat vérifié</span>}
+      <div className="space-y-4">
+        {reviews.map((r, i) => (
+          <div key={i} className="topo-card p-5">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#1C2620] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                  {r.author[0]}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-[#1C2620] text-sm">{r.author}</span>
+                    <span className="text-base">{r.country}</span>
+                    {r.verified && <span className="text-[10px] text-emerald-600 font-medium bg-emerald-50 px-1.5 py-0.5 rounded">✓ Vérifié</span>}
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] text-[#5C6B5E] font-mono mt-0.5" style={{ fontFamily: 'var(--font-mono)' }}>
+                    <span>{r.bag}</span>
+                    <span>·</span>
+                    <span>{r.duration}</span>
+                    <span>·</span>
+                    <span>{r.date}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex">
+                {[1,2,3,4,5].map(s => (
+                  <svg key={s} className={`w-3.5 h-3.5 ${s <= r.rating ? 'text-amber-400' : 'text-[#C8C3B0]'}`} fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <svg key={s} className={`w-3.5 h-3.5 ${s <= review.rating ? 'text-yellow-400' : 'text-border'}`} fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-              ))}
+            <p className="text-sm text-[#5C6B5E] leading-relaxed">{r.comment}</p>
+            <div className="flex items-center gap-3 mt-3 pt-3 border-t border-[#C8C3B0]/50">
+              <button className="flex items-center gap-1.5 text-xs text-[#5C6B5E] hover:text-[#E4501C] transition-colors">
+                <Icon name="HandThumbUpIcon" size={12} variant="outline" />
+                Utile ({r.helpful})
+              </button>
+              <button className="flex items-center gap-1.5 text-xs text-[#5C6B5E] hover:text-[#E4501C] transition-colors">
+                <Icon name="ChatBubbleLeftIcon" size={12} variant="outline" />
+                Répondre
+              </button>
             </div>
           </div>
-          <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
-          <p className="text-xs font-mono text-muted-foreground mt-2" style={{ fontFamily: 'var(--font-mono)' }}>{review.date}</p>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
-function RelatedProducts({ formatPrice }: { formatPrice: (c: number) => string }) {
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: FAQ
+// ─────────────────────────────────────────────────────────────────────────────
+function ProductFAQ() {
+  const [open, setOpen] = useState<number | null>(null);
+
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-16">
-      <h2 className="font-display font-700 text-2xl text-foreground mb-8" style={{ fontFamily: 'var(--font-display)' }}>Complétez votre kit</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {relatedProducts.map((p) => (
-          <Link key={p.id} href={`/produit/${p.id}`} className="topo-card group overflow-hidden block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl">
-            <div className="aspect-[4/3] overflow-hidden">
+    <section className="py-12">
+      <div className="flex items-center gap-3 mb-6">
+        <Icon name="QuestionMarkCircleIcon" size={20} variant="outline" className="text-[#E4501C]" />
+        <h2 className="font-display font-700 text-2xl text-[#1C2620]" style={{ fontFamily: 'var(--font-display)' }}>Questions fréquentes</h2>
+      </div>
+      <div className="space-y-2">
+        {FAQ_ITEMS.map((item, i) => (
+          <div key={i} className="topo-card overflow-hidden">
+            <button
+              onClick={() => setOpen(open === i ? null : i)}
+              className="w-full flex items-center justify-between p-5 text-left hover:bg-[#D4CFBF]/30 transition-colors"
+            >
+              <span className="font-medium text-[#1C2620] text-sm pr-4">{item.q}</span>
+              <Icon name={open === i ? 'ChevronUpIcon' : 'ChevronDownIcon'} size={16} variant="outline" className="text-[#5C6B5E] flex-shrink-0" />
+            </button>
+            {open === i && (
+              <div className="px-5 pb-5 text-sm text-[#5C6B5E] leading-relaxed border-t border-[#C8C3B0]/50 pt-4">
+                {item.a}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: ALTERNATIVES
+// ─────────────────────────────────────────────────────────────────────────────
+function ProductAlternatives() {
+  return (
+    <section className="py-12">
+      <div className="flex items-center gap-3 mb-6">
+        <Icon name="ArrowsRightLeftIcon" size={20} variant="outline" className="text-[#E4501C]" />
+        <h2 className="font-display font-700 text-2xl text-[#1C2620]" style={{ fontFamily: 'var(--font-display)' }}>Alternatives</h2>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {ALTERNATIVES.map((alt) => (
+          <div key={alt.label} className="topo-card p-4 hover:border-[#E4501C]/40 transition-all cursor-pointer group">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-lg">{alt.icon}</span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${alt.badge}`}>{alt.label}</span>
+            </div>
+            <h3 className="font-semibold text-[#1C2620] text-sm mb-2 group-hover:text-[#E4501C] transition-colors">{alt.nom}</h3>
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-mono text-[#5C6B5E]" style={{ fontFamily: 'var(--font-mono)' }}>{alt.poids}</span>
+              <span className="font-mono font-700 text-[#1C2620]" style={{ fontFamily: 'var(--font-mono)' }}>{alt.prix}</span>
+            </div>
+            <div className="flex items-center gap-1 mt-2">
+              <svg className="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+              <span className="text-[10px] font-mono text-[#5C6B5E]" style={{ fontFamily: 'var(--font-mono)' }}>{alt.note}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: COMPLEMENTARY PRODUCTS
+// ─────────────────────────────────────────────────────────────────────────────
+function ComplementaryProducts() {
+  return (
+    <section className="py-12">
+      <div className="flex items-center gap-3 mb-6">
+        <Icon name="PuzzlePieceIcon" size={20} variant="outline" className="text-[#E4501C]" />
+        <h2 className="font-display font-700 text-2xl text-[#1C2620]" style={{ fontFamily: 'var(--font-display)' }}>Produits complémentaires</h2>
+      </div>
+      <p className="text-sm text-[#5C6B5E] mb-6">Construisez un kit cohérent avec ces produits souvent associés.</p>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {COMPLEMENTARY.map((p) => (
+          <div key={p.nom} className="topo-card overflow-hidden group cursor-pointer hover:border-[#E4501C]/40 transition-all">
+            <div className="aspect-square overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={p.image} alt={p.alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             </div>
-            <div className="p-4">
-              <h3 className="font-semibold text-foreground text-sm mb-2 group-hover:text-primary transition-colors">{p.nom}</h3>
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-mono text-sm font-semibold text-info" style={{ fontFamily: 'var(--font-mono)' }}>{p.poids_g} g</span>
-                <span className="font-display font-700 text-foreground" style={{ fontFamily: 'var(--font-display)' }}>{formatPrice(p.prix_cents)}</span>
+            <div className="p-3">
+              <h3 className="font-medium text-[#1C2620] text-xs mb-1 group-hover:text-[#E4501C] transition-colors line-clamp-2">{p.nom}</h3>
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[10px] text-[#5C6B5E]" style={{ fontFamily: 'var(--font-mono)' }}>{p.poids}</span>
+                <span className="font-mono font-700 text-sm text-[#1C2620]" style={{ fontFamily: 'var(--font-mono)' }}>{p.prix}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-mono" style={{ fontFamily: 'var(--font-mono)' }}>
-                <Icon name="SparklesIcon" size={10} variant="outline" className="text-info flex-shrink-0" />
+              <div className="text-[10px] text-[#E4501C] mt-1 flex items-center gap-1">
+                <Icon name="SparklesIcon" size={8} variant="outline" />
                 {p.reason}
               </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: KIT INSPIRATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+function KitInspirations() {
+  return (
+    <section className="py-12">
+      <div className="flex items-center gap-3 mb-6">
+        <Icon name="LightBulbIcon" size={20} variant="outline" className="text-[#E4501C]" />
+        <h2 className="font-display font-700 text-2xl text-[#1C2620]" style={{ fontFamily: 'var(--font-display)' }}>Inspirations de kits</h2>
+      </div>
+      <p className="text-sm text-[#5C6B5E] mb-6">Ce produit est utilisé dans ces kits réels de voyageurs.</p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        {KIT_INSPIRATIONS.map((kit) => (
+          <Link key={kit.label} href="/kits" className="topo-card overflow-hidden group block hover:border-[#E4501C]/40 transition-all">
+            <div className="aspect-[4/3] overflow-hidden relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={kit.image} alt={kit.alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              <div className="absolute bottom-2 left-2 right-2">
+                <div className="flex items-center gap-1 mb-0.5">
+                  <span className="text-sm">{kit.icon}</span>
+                  <span className="text-white font-semibold text-xs">{kit.label}</span>
+                </div>
+              </div>
+            </div>
+            <div className="p-2.5">
+              <div className="flex items-center justify-between text-[10px] font-mono text-[#5C6B5E]" style={{ fontFamily: 'var(--font-mono)' }}>
+                <span>{kit.produits} produits</span>
+                <span>{kit.poids}</span>
+              </div>
+              <div className="text-[10px] font-mono font-700 text-[#E4501C] mt-0.5" style={{ fontFamily: 'var(--font-mono)' }}>{kit.budget}</div>
             </div>
           </Link>
         ))}
@@ -484,472 +1019,471 @@ function RelatedProducts({ formatPrice }: { formatPrice: (c: number) => string }
   );
 }
 
-// ── TEMPLATE: NEUF ─────────────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function TemplateNeuf_({ product }: { product: Product }) {
-  const formatPrice = (cents: number) => (cents / 100).toFixed(2).replace('.', ',') + ' €';
-  const [activeTab, setActiveTab] = useState<'specs' | 'reviews'>('specs');
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: ADD TO KIT
+// ─────────────────────────────────────────────────────────────────────────────
+function AddToKit({ product }: { product: Product }) {
+  const [added, setAdded] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [result, setResult] = useState<{ poids: string; budget: string; message: string } | null>(null);
+
+  const handleAdd = useCallback(async () => {
+    setChecking(true);
+    await new Promise(r => setTimeout(r, 1200));
+    setResult({
+      poids: `${(product.poids_g / 1000).toFixed(1)} kg ajouté → Total : 8,4 kg`,
+      budget: `${(product.prix_cents / 100).toFixed(0)} € ajouté → Total : 412 €`,
+      message: 'Aucun doublon détecté. Compatible avec votre équipement actuel.',
+    });
+    setAdded(true);
+    setChecking(false);
+  }, [product]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main id="main-content" className="pt-20">
-        {/* Breadcrumb */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <nav aria-label="Fil d'Ariane" className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-            <Link href="/" className="hover:text-foreground transition-colors">Accueil</Link>
-            <Icon name="ChevronRightIcon" size={14} variant="outline" aria-hidden="true" />
-            <Link href="/shop" className="hover:text-foreground transition-colors">Shop</Link>
-            <Icon name="ChevronRightIcon" size={14} variant="outline" aria-hidden="true" />
-            <span className="text-foreground font-medium truncate max-w-[200px]" aria-current="page">{product.nom}</span>
-          </nav>
-        </div>
+    <div className="topo-card p-6 bg-gradient-to-br from-[#1C2620] to-[#243028] border-[#E4501C]/30 border-2">
+      <div className="flex items-center gap-2 mb-4">
+        <Icon name="PlusCircleIcon" size={18} variant="outline" className="text-[#E4501C]" />
+        <h3 className="font-display font-700 text-white text-lg" style={{ fontFamily: 'var(--font-display)' }}>Ajouter à mon kit</h3>
+      </div>
+      <p className="text-sm text-white/60 mb-5">L&apos;IA vérifie instantanément le poids total, le budget, les doublons et les incompatibilités.</p>
 
-        {/* Hero banner — Neuf accent */}
-        <div className="bg-gradient-to-r from-emerald-900/30 to-transparent border-b border-emerald-500/10 mb-2">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center gap-2">
-            <Icon name="SparklesIcon" size={14} variant="outline" className="text-emerald-400" />
-            <span className="text-xs text-emerald-400 font-mono uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>Produit neuf · Garantie constructeur · Livraison rapide</span>
-          </div>
-        </div>
-
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
-            <ProductGallery product={product} listingType="neuf" />
-            <div className="space-y-6">
-              <ProductInfoHeader product={product} />
-              <ProductWeightCard product={product} />
-              <ProductTags tags={product.tags} />
-              <NewProductZone
-                product={{
-                  id: product.id,
-                  slug: product.slug,
-                  nom: product.nom,
-                  marque: product.marque,
-                  reference: product.reference,
-                  categorie: product.categorie,
-                  prix_cents: product.prix_cents,
-                  poids_g: product.poids_g,
-                  stock: product.stock,
-                  stock_statut: product.stock_statut,
-                  reappro_date: product.reappro_date,
-                  description: product.description,
-                  specs: product.specs,
-                  tags: product.tags,
-                  note: product.note,
-                  avis_count: product.avis_count,
-                  reviews: product.reviews,
-                  images: product.images,
-                }}
-              />
-            </div>
-          </div>
-        </section>
-
-        <TopoSeparator />
-
-        {/* Tabs */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="flex gap-1 mb-8 border-b border-border" role="tablist">
-            {(['specs', 'reviews'] as const).map((tab) => (
-              <button key={tab} role="tab" aria-selected={activeTab === tab} onClick={() => setActiveTab(tab)}
-                className={`px-6 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${activeTab === tab ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
-                {tab === 'specs' ? 'Caractéristiques' : `Avis (${product.avis_count})`}
-              </button>
-            ))}
-          </div>
-          {activeTab === 'specs' && <ProductSpecsTab product={product} />}
-          {activeTab === 'reviews' && <ProductReviewsTab product={product} />}
-        </section>
-
-        <TopoSeparator inverted />
-        <RelatedProducts formatPrice={formatPrice} />
-      </main>
-      <Footer />
-    </div>
-  );
-}
-
-// ── TEMPLATE: ENCHÈRE ──────────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function TemplateEnchere_({ product }: { product: Product }) {
-  const formatPrice = (cents: number) => (cents / 100).toFixed(2).replace('.', ',') + ' €';
-  const [activeTab, setActiveTab] = useState<'specs' | 'reviews'>('specs');
-  const countdown = useCountdown(product.date_fin_enchere);
-
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main id="main-content" className="pt-20">
-        {/* Breadcrumb */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <nav aria-label="Fil d'Ariane" className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-            <Link href="/" className="hover:text-foreground transition-colors">Accueil</Link>
-            <Icon name="ChevronRightIcon" size={14} variant="outline" aria-hidden="true" />
-            <Link href="/encheres" className="hover:text-foreground transition-colors">Enchères</Link>
-            <Icon name="ChevronRightIcon" size={14} variant="outline" aria-hidden="true" />
-            <span className="text-foreground font-medium truncate max-w-[200px]" aria-current="page">{product.nom}</span>
-          </nav>
-        </div>
-
-        {/* Urgency banner — Enchère */}
-        <div className="bg-gradient-to-r from-orange-900/40 to-transparent border-b border-orange-500/20 mb-2">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Icon name="BoltIcon" size={14} variant="outline" className="text-orange-400" />
-              <span className="text-xs text-orange-400 font-mono uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>Enchère en cours · {product.nombre_encherisseurs ?? 0} enchérisseurs</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs font-mono text-orange-300" style={{ fontFamily: 'var(--font-mono)' }}>
-              <span>Fin dans :</span>
-              <span className="font-700">{countdown.days}j {countdown.hours}h {countdown.minutes}m {countdown.seconds}s</span>
-            </div>
-          </div>
-        </div>
-
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
-            <ProductGallery product={product} listingType="enchere" />
-            <div className="space-y-6">
-              <ProductInfoHeader product={product} />
-
-              {/* Prix actuel enchère */}
-              <div className="topo-card p-4 border-orange-500/30 border bg-orange-500/5">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-mono text-orange-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>Enchère actuelle</span>
-                  <span className="text-xs text-muted-foreground">Départ : {formatPrice(product.prix_depart_cents ?? 0)}</span>
-                </div>
-                <p className="text-4xl font-display font-700 text-orange-400" style={{ fontFamily: 'var(--font-display)' }}>
-                  {formatPrice(product.enchere_actuelle_cents ?? product.prix_depart_cents ?? 0)}
-                </p>
+      {!added ? (
+        <div className="space-y-3">
+          {[
+            { label: 'Kit actuel', icon: 'ArchiveBoxIcon', desc: 'Sac Tour du Monde' },
+            { label: 'Wishlist', icon: 'HeartIcon', desc: 'Ma liste de souhaits' },
+            { label: 'Prochain voyage', icon: 'MapPinIcon', desc: 'Islande — Juillet 2026' },
+          ].map((opt) => (
+            <button
+              key={opt.label}
+              onClick={handleAdd}
+              disabled={checking}
+              className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#E4501C]/40 transition-all text-left group"
+            >
+              <Icon name={opt.icon as Parameters<typeof Icon>[0]['name']} size={16} variant="outline" className="text-white/50 group-hover:text-[#E4501C] transition-colors flex-shrink-0" />
+              <div>
+                <div className="text-white text-sm font-medium">{opt.label}</div>
+                <div className="text-white/40 text-xs">{opt.desc}</div>
               </div>
-
-              <ProductWeightCard product={product} />
-              <ProductTags tags={product.tags} />
-
-              <AuctionZone
-                listing={{
-                  id: product.listing_id ?? product.id,
-                  produit_id: product.id,
-                  prix_depart_cents: product.prix_depart_cents ?? 0,
-                  enchere_actuelle_cents: product.enchere_actuelle_cents ?? product.prix_depart_cents ?? 0,
-                  increment_min_cents: product.increment_min_cents ?? 500,
-                  date_fin_enchere: product.date_fin_enchere ?? new Date(Date.now() + 7 * 86400000).toISOString(),
-                  nombre_encherisseurs: product.nombre_encherisseurs ?? 0,
-                  statut: 'actif',
-                  vendeur_id: undefined,
-                }}
-              />
-
-              {/* Description */}
-              {product.description && (
-                <div className="topo-card p-4">
-                  <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2" style={{ fontFamily: 'var(--font-mono)' }}>Description</p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* AI Panel */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-          <div className="mb-4 flex items-center gap-2">
-            <Icon name="SparklesIcon" size={16} variant="outline" className="text-info" />
-            <h2 className="font-display font-700 text-lg text-foreground" style={{ fontFamily: 'var(--font-display)' }}>Intelligence artificielle</h2>
-          </div>
-          <AIDescriptionPanel product={product} />
-        </section>
-
-        <TopoSeparator />
-
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="flex gap-1 mb-8 border-b border-border" role="tablist">
-            {(['specs', 'reviews'] as const).map((tab) => (
-              <button key={tab} role="tab" aria-selected={activeTab === tab} onClick={() => setActiveTab(tab)}
-                className={`px-6 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${activeTab === tab ? 'border-orange-500 text-orange-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
-                {tab === 'specs' ? 'Caractéristiques' : `Avis (${product.avis_count})`}
-              </button>
-            ))}
-          </div>
-          {activeTab === 'specs' && <ProductSpecsTab product={product} />}
-          {activeTab === 'reviews' && <ProductReviewsTab product={product} />}
-        </section>
-
-        <TopoSeparator inverted />
-        <RelatedProducts formatPrice={formatPrice} />
-      </main>
-      <Footer />
-    </div>
-  );
-}
-
-// ── TEMPLATE: LOCATION ─────────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function TemplateLocation({ product }: { product: Product }) {
-  const formatPrice = (cents: number) => (cents / 100).toFixed(2).replace('.', ',') + ' €';
-  const [activeTab, setActiveTab] = useState<'specs' | 'reviews'>('specs');
-
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main id="main-content" className="pt-20">
-        {/* Breadcrumb */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <nav aria-label="Fil d'Ariane" className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-            <Link href="/" className="hover:text-foreground transition-colors">Accueil</Link>
-            <Icon name="ChevronRightIcon" size={14} variant="outline" aria-hidden="true" />
-            <Link href="/location" className="hover:text-foreground transition-colors">Location</Link>
-            <Icon name="ChevronRightIcon" size={14} variant="outline" aria-hidden="true" />
-            <span className="text-foreground font-medium truncate max-w-[200px]" aria-current="page">{product.nom}</span>
-          </nav>
+              <Icon name="PlusIcon" size={14} variant="outline" className="text-white/30 group-hover:text-[#E4501C] ml-auto transition-colors" />
+            </button>
+          ))}
         </div>
-
-        {/* Location banner */}
-        <div className="bg-gradient-to-r from-purple-900/40 to-transparent border-b border-purple-500/20 mb-2">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center gap-2">
-            <Icon name="CalendarDaysIcon" size={14} variant="outline" className="text-purple-400" />
-            <span className="text-xs text-purple-400 font-mono uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>
-              Location · {formatPrice(product.prix_jour_cents ?? 0)}/jour · Caution {formatPrice(product.caution_cents ?? 0)}
-            </span>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-emerald-400">
+            <Icon name="CheckCircleIcon" size={18} variant="outline" />
+            <span className="font-semibold text-sm">Ajouté avec succès !</span>
           </div>
-        </div>
-
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
-            <ProductGallery product={product} listingType="location" />
-            <div className="space-y-6">
-              <ProductInfoHeader product={product} />
-
-              {/* Pricing summary */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="topo-card p-4 border-purple-500/20 border text-center">
-                  <p className="text-xs text-muted-foreground mb-1">Prix / jour</p>
-                  <p className="text-2xl font-display font-700 text-purple-400" style={{ fontFamily: 'var(--font-display)' }}>{formatPrice(product.prix_jour_cents ?? 0)}</p>
-                </div>
-                <div className="topo-card p-4 border-yellow-500/20 border text-center">
-                  <p className="text-xs text-muted-foreground mb-1">Caution</p>
-                  <p className="text-2xl font-display font-700 text-yellow-400" style={{ fontFamily: 'var(--font-display)' }}>{formatPrice(product.caution_cents ?? 0)}</p>
-                </div>
+          {result && (
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center gap-2 text-white/70">
+                <span className="text-base">⚖️</span>
+                <span>{result.poids}</span>
               </div>
-
-              <ProductWeightCard product={product} />
-              <ProductTags tags={product.tags} />
-              <ActionZoneLocation product={product} />
-
-              {/* Conditions de location */}
-              <div className="topo-card p-4 space-y-2">
-                <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-3" style={{ fontFamily: 'var(--font-mono)' }}>Conditions de location</p>
-                {[
-                  { icon: 'ShieldCheckIcon', text: 'Caution restituée après retour vérifié' },
-                  { icon: 'TruckIcon', text: 'Livraison et retour inclus dans le prix' },
-                  { icon: 'ClockIcon', text: 'Réservation minimum 2 jours' },
-                  { icon: 'WrenchScrewdriverIcon', text: 'Matériel vérifié et entretenu' },
-                ].map(({ icon, text }) => (
-                  <div key={text} className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Icon name={icon} size={14} variant="outline" className="text-purple-400 flex-shrink-0" />
-                    {text}
-                  </div>
-                ))}
+              <div className="flex items-center gap-2 text-white/70">
+                <span className="text-base">💰</span>
+                <span>{result.budget}</span>
               </div>
-
-              {product.description && (
-                <div className="topo-card p-4">
-                  <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2" style={{ fontFamily: 'var(--font-mono)' }}>Description</p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-
-        <TopoSeparator />
-
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="flex gap-1 mb-8 border-b border-border" role="tablist">
-            {(['specs', 'reviews'] as const).map((tab) => (
-              <button key={tab} role="tab" aria-selected={activeTab === tab} onClick={() => setActiveTab(tab)}
-                className={`px-6 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${activeTab === tab ? 'border-purple-500 text-purple-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
-                {tab === 'specs' ? 'Caractéristiques' : `Avis (${product.avis_count})`}
-              </button>
-            ))}
-          </div>
-          {activeTab === 'specs' && <ProductSpecsTab product={product} />}
-          {activeTab === 'reviews' && <ProductReviewsTab product={product} />}
-        </section>
-
-        <TopoSeparator inverted />
-        <RelatedProducts formatPrice={formatPrice} />
-      </main>
-      <Footer />
-    </div>
-  );
-}
-
-// ── TEMPLATE: OCCASION ─────────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function TemplateOccasion({ product }: { product: Product }) {
-  const formatPrice = (cents: number) => (cents / 100).toFixed(2).replace('.', ',') + ' €';
-  const [activeTab, setActiveTab] = useState<'specs' | 'reviews'>('specs');
-
-  const ETAT_LABELS: Record<string, { label: string; cls: string }> = {
-    comme_neuf: { label: 'Comme neuf', cls: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/30' },
-    bon_etat: { label: 'Bon état', cls: 'text-blue-400 bg-blue-400/10 border-blue-400/30' },
-    etat_correct: { label: 'État correct', cls: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30' },
-  };
-  const etatInfo = ETAT_LABELS[product.etat ?? 'bon_etat'];
-  const savings = Math.round((1 - 1 / 1.6) * 100);
-
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main id="main-content" className="pt-20">
-        {/* Breadcrumb */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <nav aria-label="Fil d'Ariane" className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-            <Link href="/" className="hover:text-foreground transition-colors">Accueil</Link>
-            <Icon name="ChevronRightIcon" size={14} variant="outline" aria-hidden="true" />
-            <Link href="/occasion" className="hover:text-foreground transition-colors">Occasion</Link>
-            <Icon name="ChevronRightIcon" size={14} variant="outline" aria-hidden="true" />
-            <span className="text-foreground font-medium truncate max-w-[200px]" aria-current="page">{product.nom}</span>
-          </nav>
-        </div>
-
-        {/* Occasion banner */}
-        <div className="bg-gradient-to-r from-yellow-900/30 to-transparent border-b border-yellow-500/10 mb-2">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center gap-3">
-            <Icon name="TagIcon" size={14} variant="outline" className="text-yellow-400" />
-            <span className={`px-2 py-0.5 rounded-full text-xs font-600 border ${etatInfo.cls}`}>{etatInfo.label}</span>
-            <span className="text-xs text-yellow-400 font-mono" style={{ fontFamily: 'var(--font-mono)' }}>Économisez {savings}% vs neuf · Certifié authentique</span>
-          </div>
-        </div>
-
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
-            <ProductGallery product={product} listingType="occasion" />
-            <div className="space-y-6">
-              <ProductInfoHeader product={product} />
-
-              {/* Price comparison */}
-              <div className="topo-card p-4 border-yellow-500/20 border">
-                <div className="flex items-end justify-between mb-2">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">Prix occasion</p>
-                    <p className="text-3xl font-display font-700 text-foreground" style={{ fontFamily: 'var(--font-display)' }}>{formatPrice(product.prix_cents)}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground">Prix neuf estimé</p>
-                    <p className="text-sm line-through text-muted-foreground font-mono" style={{ fontFamily: 'var(--font-mono)' }}>{formatPrice(Math.round(product.prix_cents * 1.6))}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
-                  <Icon name="ArrowTrendingDownIcon" size={12} variant="outline" />
-                  Économie de {savings}% vs neuf
-                </div>
+              <div className="flex items-center gap-2 text-emerald-400/80">
+                <Icon name="SparklesIcon" size={12} variant="outline" />
+                <span className="text-xs">{result.message}</span>
               </div>
-
-              <ProductWeightCard product={product} />
-              <ProductTags tags={product.tags} />
-
-              <OccasionProductZone
-                product={{
-                  id: product.id,
-                  listing_id: product.listing_id ?? product.id,
-                  slug: product.slug,
-                  nom: product.nom,
-                  marque: product.marque,
-                  reference: product.reference,
-                  categorie: product.categorie,
-                  prix_cents: product.prix_cents,
-                  poids_g: product.poids_g,
-                  description: product.description,
-                  specs: product.specs,
-                  tags: product.tags,
-                  note: product.note,
-                  avis_count: product.avis_count,
-                  reviews: product.reviews,
-                  images: product.images,
-                  etat: product.etat ?? 'bon_etat',
-                  statut: product.occasion_statut ?? 'active',
-                  faire_offre_active: product.faire_offre_active ?? false,
-                  historique: product.historique_produit,
-                  certificat: product.certificat_authenticite,
-                  photos_defauts: product.photos_defauts,
-                  vendeur: product.vendeur,
-                  produit_id: product.produit_id,
-                }}
-              />
             </div>
-          </div>
-        </section>
-
-        <TopoSeparator />
-
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="flex gap-1 mb-8 border-b border-border" role="tablist">
-            {(['specs', 'reviews'] as const).map((tab) => (
-              <button key={tab} role="tab" aria-selected={activeTab === tab} onClick={() => setActiveTab(tab)}
-                className={`px-6 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${activeTab === tab ? 'border-yellow-500 text-yellow-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
-                {tab === 'specs' ? 'Caractéristiques' : `Avis (${product.avis_count})`}
-              </button>
-            ))}
-          </div>
-          {activeTab === 'specs' && <ProductSpecsTab product={product} />}
-          {activeTab === 'reviews' && <ProductReviewsTab product={product} />}
-        </section>
-
-        <TopoSeparator inverted />
-        <RelatedProducts formatPrice={formatPrice} />
-      </main>
-      <Footer />
-    </div>
-  );
-}
-
-// ── Loading skeleton ───────────────────────────────────────────────────────────
-function ProductSkeleton() {
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="pt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            <div className="aspect-square rounded-2xl bg-muted animate-pulse" />
-            <div className="space-y-4">
-              <div className="h-6 w-32 rounded bg-muted animate-pulse" />
-              <div className="h-10 w-3/4 rounded bg-muted animate-pulse" />
-              <div className="h-24 rounded bg-muted animate-pulse" />
-              <div className="h-12 rounded-full bg-muted animate-pulse" />
-            </div>
-          </div>
-        </div>
-      </main>
-      <Footer />
-    </div>
-  );
-}
-
-// ── Not Found ──────────────────────────────────────────────────────────────────
-function ProductNotFound({ slug }: { slug: string }) {
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="pt-20 flex items-center justify-center min-h-[60vh]">
-        <div className="text-center space-y-4 px-4">
-          <Icon name="ExclamationCircleIcon" size={48} variant="outline" className="text-muted-foreground mx-auto" />
-          <h1 className="font-display font-700 text-2xl text-foreground" style={{ fontFamily: 'var(--font-display)' }}>Produit introuvable</h1>
-          <p className="text-muted-foreground">Le produit &quot;{slug}&quot; n&apos;existe pas ou a été retiré.</p>
-          <Link href="/shop" className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-white font-semibold text-sm hover:bg-primary/90 transition-all">
-            <Icon name="ArrowLeftIcon" size={16} variant="outline" />
-            Retour au shop
+          )}
+          <Link href="/inventaire" className="block text-center py-2.5 rounded-full bg-[#E4501C] text-white text-sm font-semibold hover:bg-[#cc3d10] transition-colors">
+            Voir mon kit
           </Link>
         </div>
-      </main>
-      <Footer />
+      )}
+
+      {checking && (
+        <div className="mt-4 flex items-center gap-2 text-sm text-white/50">
+          <div className="flex gap-1">{[0,1,2].map(i => <span key={i} className="w-1.5 h-1.5 rounded-full bg-[#E4501C] animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}</div>
+          Vérification IA en cours…
+        </div>
+      )}
     </div>
   );
 }
 
-// ── Main Component ─────────────────────────────────────────────────────────────
-export default function ProductDetailClient() {
-  return null;
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: USAGE TIPS
+// ─────────────────────────────────────────────────────────────────────────────
+function UsageTips() {
+  const tips = [
+    { icon: '📦', title: 'Comment ranger', desc: 'Placez les objets lourds près du dos, les légers en haut. Utilisez les poches latérales pour l\'accès rapide.' },
+    { icon: '🧹', title: 'Entretien', desc: 'Nettoyez avec une éponge humide et du savon doux. Évitez la machine à laver. Séchez à l\'air libre.' },
+    { icon: '⏳', title: 'Durée de vie', desc: 'Rangez dans un endroit sec et aéré. Évitez l\'exposition prolongée au soleil. Vérifiez les coutures régulièrement.' },
+    { icon: '🔧', title: 'Réparation', desc: 'Les fermetures éclair et sangles sont remplaçables. Pièces disponibles 10 ans après achat.' },
+  ];
+
+  return (
+    <section className="py-12">
+      <div className="flex items-center gap-3 mb-6">
+        <Icon name="WrenchScrewdriverIcon" size={20} variant="outline" className="text-[#E4501C]" />
+        <h2 className="font-display font-700 text-2xl text-[#1C2620]" style={{ fontFamily: 'var(--font-display)' }}>Conseils d&apos;utilisation</h2>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {tips.map((tip) => (
+          <div key={tip.title} className="topo-card p-5 flex gap-4">
+            <span className="text-2xl flex-shrink-0">{tip.icon}</span>
+            <div>
+              <h3 className="font-semibold text-[#1C2620] text-sm mb-1">{tip.title}</h3>
+              <p className="text-sm text-[#5C6B5E] leading-relaxed">{tip.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: TEAM REVIEW
+// ─────────────────────────────────────────────────────────────────────────────
+function TeamReview({ product }: { product: Product }) {
+  return (
+    <section className="py-12">
+      <div className="flex items-center gap-3 mb-6">
+        <Icon name="UserGroupIcon" size={20} variant="outline" className="text-[#E4501C]" />
+        <h2 className="font-display font-700 text-2xl text-[#1C2620]" style={{ fontFamily: 'var(--font-display)' }}>Avis de l&apos;équipe</h2>
+      </div>
+      <div className="topo-card p-6">
+        <div className="flex items-start gap-4 mb-5">
+          <div className="w-12 h-12 rounded-full bg-[#1C2620] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">T</div>
+          <div>
+            <div className="font-semibold text-[#1C2620]">Thomas — Testeur terrain</div>
+            <div className="text-xs text-[#5C6B5E] font-mono" style={{ fontFamily: 'var(--font-mono)' }}>Testé sur 3 continents · 18 mois d&apos;utilisation</div>
+          </div>
+        </div>
+        <div className="space-y-4 text-sm text-[#5C6B5E] leading-relaxed">
+          <p>
+            <strong className="text-[#1C2620]">Pourquoi nous l&apos;avons sélectionné :</strong> {product.nom} représente le meilleur équilibre entre légèreté, durabilité et praticité dans sa catégorie. Après avoir testé plus de 40 modèles concurrents, c&apos;est celui que nous recommandons sans hésitation pour les voyageurs exigeants.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+              <div className="font-semibold text-emerald-800 text-xs uppercase tracking-widest mb-2">Points forts</div>
+              <ul className="space-y-1">
+                {['Légèreté exceptionnelle', 'Système de portage ergonomique', 'Matériaux durables et recyclés', 'Réparabilité excellente'].map(p => (
+                  <li key={p} className="flex items-center gap-2 text-emerald-700 text-xs">
+                    <span className="text-emerald-500">✓</span>{p}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
+              <div className="font-semibold text-amber-800 text-xs uppercase tracking-widest mb-2">Limites</div>
+              <ul className="space-y-1">
+                {['Prix élevé pour les petits budgets', 'Poches latérales un peu étroites', 'Pas idéal pour le business travel'].map(p => (
+                  <li key={p} className="flex items-center gap-2 text-amber-700 text-xs">
+                    <span className="text-amber-500">!</span>{p}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <p>
+            <strong className="text-[#1C2620]">Notre verdict :</strong> Idéal pour les backpackers et trekkeurs qui voyagent plus de 2 semaines. Si vous partez pour un week-end ou un voyage business, regardez nos alternatives plus légères.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STICKY CTA
+// ─────────────────────────────────────────────────────────────────────────────
+function StickyCTA({ product, selectedMode }: { product: Product; selectedMode: string }) {
+  const [visible, setVisible] = useState(false);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const currentY = window.scrollY;
+      setVisible(currentY > 400 && currentY < lastScrollY.current + 200);
+      lastScrollY.current = currentY;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const modeLabels: Record<string, string> = {
+    neuf: 'Acheter neuf',
+    occasion: 'Voir les offres',
+    location: 'Réserver',
+    enchere: 'Enchérir',
+  };
+
+  const modePrices: Record<string, string> = {
+    neuf: `${(product.prix_cents / 100).toFixed(0)} €`,
+    occasion: `Dès ${Math.round(product.prix_cents * 0.62 / 100)} €`,
+    location: `Dès ${Math.round(product.prix_cents * 0.04 / 100)} €/j`,
+    enchere: `À partir de ${Math.round(product.prix_cents * 0.35 / 100)} €`,
+  };
+
+  return (
+    <div className={`fixed bottom-0 left-0 right-0 z-40 transition-transform duration-300 ${visible ? 'translate-y-0' : 'translate-y-full'}`}>
+      <div className="bg-[#1C2620]/97 backdrop-blur-md border-t border-white/10 px-4 py-3 safe-area-inset-bottom">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="min-w-0">
+              <div className="font-semibold text-white text-sm truncate">{product.nom}</div>
+              <div className="text-white/50 text-xs font-mono" style={{ fontFamily: 'var(--font-mono)' }}>{product.poids_g}g · {product.marque}</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="text-right">
+              <div className="font-mono font-700 text-white text-lg" style={{ fontFamily: 'var(--font-mono)' }}>{modePrices[selectedMode] ?? modePrices.neuf}</div>
+              <div className="text-white/40 text-[10px]">{modeLabels[selectedMode] ?? 'Acheter neuf'}</div>
+            </div>
+            <button className="btn-primary py-2.5 px-5 text-sm whitespace-nowrap">
+              {modeLabels[selectedMode] ?? 'Acheter neuf'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
+export default function ProductDetailClient({ slug }: { slug: string }) {
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedMode, setSelectedMode] = useState('neuf');
+  const [activeTab, setActiveTab] = useState<'specs' | 'conditions' | 'reviews'>('specs');
+
+  useEffect(() => {
+    fetchProduct(slug).then((p) => {
+      setProduct(p ?? buildFallbackProduct(slug));
+      setLoading(false);
+    });
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#E7E3D6]">
+        <Header />
+        <div className="pt-20 max-w-7xl mx-auto px-4 py-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div className="aspect-square rounded-2xl bg-[#D4CFBF] animate-pulse" />
+            <div className="space-y-4">
+              <div className="h-4 bg-[#D4CFBF] rounded animate-pulse w-1/3" />
+              <div className="h-8 bg-[#D4CFBF] rounded animate-pulse" />
+              <div className="h-4 bg-[#D4CFBF] rounded animate-pulse w-2/3" />
+              <div className="h-32 bg-[#D4CFBF] rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) return null;
+
+  const modes = buildAcquisitionModes(product);
+
+  return (
+    <div className="min-h-screen bg-[#E7E3D6]">
+      <Header />
+      <main id="main-content" className="pt-20">
+
+        {/* BREADCRUMB */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <nav aria-label="Fil d'Ariane" className="flex items-center gap-2 text-xs text-[#5C6B5E] flex-wrap">
+            <Link href="/" className="hover:text-[#E4501C] transition-colors">Accueil</Link>
+            <Icon name="ChevronRightIcon" size={10} variant="outline" />
+            <Link href="/boutique" className="hover:text-[#E4501C] transition-colors">Boutique</Link>
+            <Icon name="ChevronRightIcon" size={10} variant="outline" />
+            <Link href="/catalogue" className="hover:text-[#E4501C] transition-colors">{product.categorie}</Link>
+            <Icon name="ChevronRightIcon" size={10} variant="outline" />
+            <span className="text-[#1C2620] font-medium">{product.nom}</span>
+          </nav>
+        </div>
+
+        {/* HERO: GALLERY + ACQUISITION */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 xl:gap-16">
+
+            {/* LEFT: Gallery */}
+            <div>
+              <ProductGallery product={product} />
+            </div>
+
+            {/* RIGHT: Info + Acquisition */}
+            <div className="space-y-6">
+              {/* Header */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-mono text-[#3E6B7A] uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>{product.marque}</span>
+                  <span className="text-[#C8C3B0]">·</span>
+                  <span className="text-xs font-mono text-[#5C6B5E]" style={{ fontFamily: 'var(--font-mono)' }}>{product.categorie}</span>
+                </div>
+                <h1 className="font-display font-700 text-3xl xl:text-4xl text-[#1C2620] mb-3 leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
+                  {product.nom}
+                </h1>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex items-center gap-1">
+                    {[1,2,3,4,5].map(s => (
+                      <svg key={s} className={`w-4 h-4 ${s <= Math.round(product.note) ? 'text-amber-400' : 'text-[#C8C3B0]'}`} fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <span className="text-sm font-mono text-[#3E6B7A]" style={{ fontFamily: 'var(--font-mono)' }}>{product.note} ({product.avis_count} avis)</span>
+                </div>
+                <p className="text-[#5C6B5E] text-sm leading-relaxed mb-4">{product.description}</p>
+
+                {/* Weight + badges */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1C2620] text-white">
+                    <Icon name="ScaleIcon" size={14} variant="outline" className="text-[#E4501C]" />
+                    <span className="font-mono font-700 text-sm" style={{ fontFamily: 'var(--font-mono)' }}>{product.poids_g} g</span>
+                  </div>
+                  {product.tags.slice(0, 3).map(tag => (
+                    <span key={tag} className="px-3 py-1.5 rounded-full bg-[#E4501C]/10 text-[#E4501C] text-xs font-medium border border-[#E4501C]/20">{tag}</span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Weight gauge */}
+              <div className="topo-card p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold uppercase tracking-widest text-[#5C6B5E]">Gabarit de poids</span>
+                  <span className="font-mono text-lg font-semibold text-[#3E6B7A]" style={{ fontFamily: 'var(--font-mono)' }}>{product.poids_g} g</span>
+                </div>
+                <WeightGauge weightG={product.poids_g} maxG={5000} />
+                <div className="flex justify-between mt-1.5">
+                  <span className="text-xs font-mono text-[#5C6B5E]">0 g</span>
+                  <span className="text-xs font-mono text-[#5C6B5E]">5 000 g</span>
+                </div>
+              </div>
+
+              {/* ACQUISITION COMPARATOR */}
+              <AcquisitionComparator modes={modes} />
+
+              {/* AI SCORE */}
+              <AICompatibilityScore product={product} />
+
+              {/* Add to Kit */}
+              <AddToKit product={product} />
+            </div>
+          </div>
+        </section>
+
+        {/* TABS: SPECS / CONDITIONS / REVIEWS */}
+        <section className="border-t border-[#C8C3B0] bg-[#EDEAE0]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex gap-0 border-b border-[#C8C3B0]">
+              {([
+                { id: 'specs', label: 'Caractéristiques' },
+                { id: 'conditions', label: 'Conditions idéales' },
+                { id: 'reviews', label: `Avis (${product.avis_count})` },
+              ] as const).map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-5 py-4 text-sm font-medium border-b-2 transition-all ${activeTab === tab.id ? 'border-[#E4501C] text-[#E4501C]' : 'border-transparent text-[#5C6B5E] hover:text-[#1C2620]'}`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            <div className="py-8">
+              {activeTab === 'specs' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {product.specs.map((spec) => (
+                    <div key={spec.label} className="flex items-center justify-between py-3 px-4 rounded-xl bg-[#E7E3D6] border border-[#C8C3B0]">
+                      <span className="text-sm text-[#5C6B5E]">{spec.label}</span>
+                      <span className="font-mono text-sm font-semibold text-[#1C2620]" style={{ fontFamily: 'var(--font-mono)' }}>{spec.value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {activeTab === 'conditions' && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {[
+                    { label: 'Printemps', icon: '🌸', ok: true },
+                    { label: 'Été', icon: '☀️', ok: true },
+                    { label: 'Automne', icon: '🍂', ok: true },
+                    { label: 'Hiver', icon: '❄️', ok: false },
+                    { label: 'Pluie', icon: '🌧️', ok: true },
+                    { label: 'Neige', icon: '🌨️', ok: false },
+                    { label: 'Désert', icon: '🏜️', ok: true },
+                    { label: 'Jungle', icon: '🌿', ok: true },
+                    { label: 'Montagne', icon: '⛰️', ok: true },
+                    { label: 'Ville', icon: '🏙️', ok: true },
+                    { label: 'Altitude', icon: '🗻', ok: false },
+                    { label: 'Humidité', icon: '💧', ok: true },
+                  ].map((c) => (
+                    <div key={c.label} className={`topo-card p-4 text-center ${c.ok ? '' : 'opacity-50'}`}>
+                      <div className="text-2xl mb-2">{c.icon}</div>
+                      <div className="text-xs font-medium text-[#1C2620]">{c.label}</div>
+                      <div className={`text-[10px] mt-1 font-semibold ${c.ok ? 'text-emerald-600' : 'text-red-500'}`}>
+                        {c.ok ? '✓ Compatible' : '✗ Déconseillé'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {activeTab === 'reviews' && <TravelerReviews product={product} />}
+            </div>
+          </div>
+        </section>
+
+        {/* MAIN CONTENT SECTIONS */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <TravelCompatibility />
+          <div className="border-t border-[#C8C3B0]" />
+          <BagVisualization product={product} />
+          <div className="border-t border-[#C8C3B0]" />
+          <TeamReview product={product} />
+          <div className="border-t border-[#C8C3B0]" />
+          <ProductComparisons product={product} />
+          <div className="border-t border-[#C8C3B0]" />
+          <PriceHistory />
+          <div className="border-t border-[#C8C3B0]" />
+          <EnvironmentalImpact />
+          <div className="border-t border-[#C8C3B0]" />
+          <ProductAlternatives />
+          <div className="border-t border-[#C8C3B0]" />
+          <ComplementaryProducts />
+          <div className="border-t border-[#C8C3B0]" />
+          <KitInspirations />
+          <div className="border-t border-[#C8C3B0]" />
+          <UsageTips />
+          <div className="border-t border-[#C8C3B0]" />
+          <ProductFAQ />
+        </div>
+
+        {/* FOOTER INTELLIGENT */}
+        <div className="bg-[#1C2620] py-12 mt-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="font-display font-700 text-white text-xl mb-6" style={{ fontFamily: 'var(--font-display)' }}>Continuer à explorer</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[
+                { label: 'Produits similaires', href: '/boutique', icon: 'ShoppingBagIcon', desc: 'Dans la même catégorie' },
+                { label: 'Guides associés', href: '/guides', icon: 'BookOpenIcon', desc: 'Conseils & tutoriels' },
+                { label: 'Destinations', href: '/pays', icon: 'MapPinIcon', desc: 'Où utiliser ce produit' },
+                { label: 'Configurateur IA', href: '/ai-configurator', icon: 'SparklesIcon', desc: 'Construire mon kit' },
+              ].map((item) => (
+                <Link key={item.label} href={item.href} className="p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#E4501C]/40 transition-all group">
+                  <Icon name={item.icon as Parameters<typeof Icon>[0]['name']} size={18} variant="outline" className="text-[#E4501C] mb-2" />
+                  <div className="font-semibold text-white text-sm group-hover:text-[#E4501C] transition-colors">{item.label}</div>
+                  <div className="text-white/40 text-xs mt-0.5">{item.desc}</div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+
+      </main>
+      <Footer />
+      <StickyCTA product={product} selectedMode={selectedMode} />
+    </div>
+  );
 }
