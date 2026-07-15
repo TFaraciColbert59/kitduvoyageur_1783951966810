@@ -481,7 +481,7 @@ export default function BoutiqueClient() {
                 <span style={{ color: 'var(--primary)' }}>équipement pour vous</span>
               </h1>
               <p className="text-white/60 mt-3 text-base max-w-xl">
-                Pas une boutique. Un moteur d'optimisation. Définissez vos contraintes, le système trouve la meilleure solution.
+                Pas une boutique. Un moteur d&apos;optimisation. Définissez vos contraintes, le système trouve la meilleure solution.
               </p>
             </div>
 
@@ -750,7 +750,7 @@ export default function BoutiqueClient() {
               Aucun équipement dans ces contraintes
             </h3>
             <p className="text-muted-foreground mb-6">
-              Augmentez votre budget ou votre poids maximal pour voir plus d'options.
+              Augmentez votre budget ou votre poids maximal pour voir plus d&apos;options.
             </p>
             <button
               onClick={() => { setBudget(500); setMaxWeight(15); setActiveCategory('Tout'); }}

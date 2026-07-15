@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 
 
 import AppImage from '@/components/ui/AppImage';
@@ -25,10 +25,10 @@ interface Product {
   badge?: string;
 }
 
-type SortKey = 'relevance' | 'price-asc' | 'price-desc' | 'weight-asc' | 'weight-desc';
+type _SortKey = 'relevance' | 'price-asc' | 'price-desc' | 'weight-asc' | 'weight-desc';
 
 // ── Product Card ───────────────────────────────────────────────────────────────
-function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: (id: string) => void }) {
+function _ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: (id: string) => void }) {
   const [added, setAdded] = useState(false);
 
   const handleAdd = (e: React.MouseEvent) => {
@@ -97,7 +97,7 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
   );
 }
 
-function SkeletonCard() {
+function _SkeletonCard() {
   return (
     <div className="topo-card overflow-hidden" aria-hidden="true">
       <div className="skeleton aspect-[4/3]" />

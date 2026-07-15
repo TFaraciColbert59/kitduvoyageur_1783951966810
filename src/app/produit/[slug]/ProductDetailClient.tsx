@@ -102,7 +102,7 @@ const relatedProducts = [
 ];
 
 // ── Supabase fetch ─────────────────────────────────────────────────────────────
-async function fetchProductBySlug(slug: string): Promise<Product | null> {
+async function _fetchProductBySlug(slug: string): Promise<Product | null> {
   const supabase = createClient();
 
   // Fetch product + its listings
@@ -485,7 +485,7 @@ function RelatedProducts({ formatPrice }: { formatPrice: (c: number) => string }
 }
 
 // ── TEMPLATE: NEUF ─────────────────────────────────────────────────────────────
-function TemplateNeuf({ product }: { product: Product }) {
+function _TemplateNeuf({ product }: { product: Product }) {
   const formatPrice = (cents: number) => (cents / 100).toFixed(2).replace('.', ',') + ' €';
   const [activeTab, setActiveTab] = useState<'specs' | 'reviews'>('specs');
 
@@ -570,7 +570,7 @@ function TemplateNeuf({ product }: { product: Product }) {
 }
 
 // ── TEMPLATE: ENCHÈRE ──────────────────────────────────────────────────────────
-function TemplateEnchere({ product }: { product: Product }) {
+function _TemplateEnchere({ product }: { product: Product }) {
   const formatPrice = (cents: number) => (cents / 100).toFixed(2).replace('.', ',') + ' €';
   const [activeTab, setActiveTab] = useState<'specs' | 'reviews'>('specs');
   const countdown = useCountdown(product.date_fin_enchere);
