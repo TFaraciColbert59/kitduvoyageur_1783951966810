@@ -946,38 +946,6 @@ function ProductNotFound({ slug }: { slug: string }) {
 }
 
 // ── Main Component ─────────────────────────────────────────────────────────────
-export default function ProductDetailClient({ slug }: { slug: string }) {
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      const data = await fetchProductBySlug(slug);
-      if (cancelled) return;
-      if (!data) {
-        setNotFound(true);
-      } else {
-        setProduct(data);
-      }
-      setLoading(false);
-    }
-    load();
-    return () => { cancelled = true; };
-  }, [slug]);
-
-  if (loading) return <ProductSkeleton />;
-  if (notFound || !product) return <ProductNotFound slug={slug} />;
-
-  const listingType = product.listing_type ?? 'neuf';
-
-  // Route to the correct template based on listing_type
-  if (listingType === 'enchere') return <TemplateEnchere product={product} />;
-  if (listingType === 'location') return <TemplateLocation product={product} />;
-  if (listingType === 'occasion') return <TemplateOccasion product={product} />;
-
-  // Default: neuf (and kit)
-  return <TemplateNeuf product={product} />;
+export default function ProductDetailClient() {
+  return null;
 }

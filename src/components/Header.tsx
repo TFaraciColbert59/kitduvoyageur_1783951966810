@@ -27,17 +27,6 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'Boutique',
-    items: [
-      { label: 'Shop', href: '/shop', desc: 'Tout l\'équipement', icon: 'ShoppingBagIcon' },
-      { label: 'Neuf', href: '/shop?type=neuf', desc: '500+ produits outdoor', icon: 'ArchiveBoxIcon' },
-      { label: 'Kit assemblé', href: '/shop?type=kit', desc: 'Kits complets par destination', icon: 'CubeIcon' },
-      { label: 'Occasion', href: '/shop?type=occasion', desc: 'Matériel d\'occasion vérifié', icon: 'TagIcon' },
-      { label: 'Enchères', href: '/shop?type=enchere', desc: 'Ventes aux enchères', icon: 'BoltIcon' },
-      { label: 'Location', href: '/shop?type=location', desc: 'Louer entre particuliers', icon: 'KeyIcon' },
-    ],
-  },
-  {
     label: 'Communauté',
     items: [
       { label: 'Communauté', href: '/communaute', desc: 'Hub communautaire complet', icon: 'UsersIcon' },
@@ -167,7 +156,7 @@ export default function Header() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/shop?q=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(`/kits?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchOpen(false);
       setSearchQuery('');
     }
