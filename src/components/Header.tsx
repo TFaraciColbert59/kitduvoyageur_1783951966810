@@ -73,6 +73,7 @@ export default function Header() {
   const [cartCount, setCartCount] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [mounted, setMounted] = useState(false);
   const megaRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -80,6 +81,10 @@ export default function Header() {
   const router = useRouter();
   const { user } = useAuth();
   const { count: wishlistCount } = useWishlist();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fixed: useCallback for scroll handler to prevent re-renders
   const onScroll = useCallback(() => setScrolled(window.scrollY > 40), []);
@@ -291,10 +296,10 @@ export default function Header() {
               <Link
                 href="/compte"
                 className="relative hidden sm:flex p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px] min-w-[44px] items-center justify-center"
-                aria-label={`Favoris${wishlistCount > 0 ? ` (${wishlistCount})` : ''}`}
+                aria-label={mounted && wishlistCount > 0 ? `Favoris (${wishlistCount})` : 'Favoris'}
               >
                 <Icon name="HeartIcon" size={18} variant="outline" />
-                {wishlistCount > 0 && (
+                {mounted && wishlistCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#E4501C] text-white text-[9px] font-mono font-700 rounded-full flex items-center justify-center" aria-hidden="true">
                     {wishlistCount > 9 ? '9+' : wishlistCount}
                   </span>
@@ -305,10 +310,10 @@ export default function Header() {
               <Link
                 href="/panier"
                 className="relative flex p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px] min-w-[44px] items-center justify-center"
-                aria-label={`Panier${cartCount > 0 ? ` (${cartCount} article${cartCount > 1 ? 's' : ''})` : ' vide'}`}
+                aria-label={mounted && cartCount > 0 ? `Panier (${cartCount} article${cartCount > 1 ? 's' : ''})` : 'Panier vide'}
               >
                 <Icon name="ShoppingBagIcon" size={18} variant="outline" />
-                {cartCount > 0 && (
+                {mounted && cartCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#E4501C] text-white text-[9px] font-mono font-700 rounded-full flex items-center justify-center" aria-hidden="true">
                     {cartCount > 9 ? '9+' : cartCount}
                   </span>
@@ -316,7 +321,7 @@ export default function Header() {
               </Link>
 
               {/* Auth */}
-              {user ? (
+              {mounted && user ? (
                 <Link
                   href="/compte"
                   className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px]"
@@ -462,7 +467,7 @@ export default function Header() {
               </div>
 
               <div className="border-t border-white/10 pt-4 mt-4">
-                {user ? (
+                {mounted && user ? (
                   <Link
                     href="/compte"
                     onClick={() => setMenuOpen(false)}
