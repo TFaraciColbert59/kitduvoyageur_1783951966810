@@ -184,8 +184,8 @@ export default function Header() {
         }`}
         role="banner"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" suppressHydrationWarning>
+          <div className="flex items-center justify-between h-16" suppressHydrationWarning>
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] rounded-lg" aria-label="Le Kit du Voyageur — Accueil">
               <AppLogo size={30} className="flex-shrink-0" />
