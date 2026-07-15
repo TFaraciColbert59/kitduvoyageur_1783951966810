@@ -321,7 +321,9 @@ export default function Header() {
               </Link>
 
               {/* Auth */}
-              {mounted && user ? (
+              {!mounted ? (
+                <div className="hidden sm:flex min-h-[44px] min-w-[44px] w-[120px]" aria-hidden="true" />
+              ) : user ? (
                 <Link
                   href="/compte"
                   className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px]"
