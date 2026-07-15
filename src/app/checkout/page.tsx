@@ -5,7 +5,9 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
-import { getCart, getCartTotals, CartItem } from '@/lib/cart';
+import { getCart, getCartTotals, clearCart, CartItem } from '@/lib/cart';
+import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 type Step = 'livraison' | 'paiement' | 'confirmation';
 type PaymentMethod = 'card' | 'paypal' | 'apple_pay' | 'google_pay' | 'virement';
@@ -29,6 +31,9 @@ export default function CheckoutPage() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const { user } = useAuth();
+  const supabase = createClient();
 
   useEffect(() => {
     setItems(getCart());
@@ -106,7 +111,8 @@ export default function CheckoutPage() {
           return;
         }
       }
-      // For non-card methods or Stripe fallback
+      // Save order to Supabase
+      await saveOrderToSupabase();
       const num = `KDV-2026-${Math.floor(Math.random() * 9000 + 1000)}`;
       setOrderNumber(num);
       setStep('confirmation');
@@ -118,6 +124,103 @@ export default function CheckoutPage() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setProcessing(false);
+    }
+  };
+
+  const saveOrderToSupabase = async () => {
+    try {
+      const num = `KDV-2026-${Math.floor(Math.random() * 9000 + 1000)}`;
+      const orderItems = items.map((i) => ({
+        name: i.name,
+        quantity: i.quantity,
+        unit_price_eur: i.priceEur,
+        slug: i.slug,
+      }));
+
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user?.id ?? null,
+          order_number: num,
+          status: 'confirmed',
+          payment_method: paymentMethod,
+          shipping_address: shipping,
+          items: orderItems,
+          subtotal_eur: totalPriceEur,
+          shipping_eur: shippingEur,
+          total_eur: grandTotal,
+          loyalty_points_earned: Math.floor(grandTotal * 10),
+        })
+        .select('id')
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Decrement stock for each product
+      for (const item of items) {
+        if (!item.slug) continue;
+        const { data: productData } = await supabase
+          .from('shop_products')
+          .select('id, stock, name, slug')
+          .eq('slug', item.slug)
+          .single();
+
+        if (productData) {
+          const newStock = Math.max(0, (productData.stock ?? 0) - item.quantity);
+          await supabase.from('shop_products').update({
+            stock: newStock,
+            updated_at: new Date().toISOString(),
+          }).eq('id', productData.id);
+
+          await supabase.from('stock_movements').insert({
+            product_id: productData.id,
+            product_slug: productData.slug,
+            product_name: productData.name,
+            movement_type: 'sale',
+            quantity_change: -item.quantity,
+            quantity_before: productData.stock ?? 0,
+            quantity_after: newStock,
+            reference_type: 'order',
+            reference_id: orderData?.id ?? null,
+            user_id: user?.id ?? null,
+            notes: `Vente via commande ${num}`,
+          });
+        }
+      }
+
+      // Award loyalty points
+      if (user) {
+        const pointsEarned = Math.floor(grandTotal * 10);
+        await supabase.rpc('increment_loyalty_points' as never, {
+          p_user_id: user.id,
+          p_points: pointsEarned,
+        }).catch(() => {
+          // Fallback: direct update
+          supabase.from('user_profiles')
+            .select('loyalty_points')
+            .eq('id', user.id)
+            .single()
+            .then(({ data }) => {
+              if (data) {
+                supabase.from('user_profiles').update({
+                  loyalty_points: (data.loyalty_points ?? 0) + pointsEarned,
+                }).eq('id', user.id);
+              }
+            });
+        });
+
+        await supabase.from('loyalty_history').insert({
+          user_id: user.id,
+          action: `Commande ${num}`,
+          points: Math.floor(grandTotal * 10),
+          type: 'earned',
+        });
+      }
+
+      // Clear cart after successful order
+      clearCart();
+    } catch (err) {
+      console.error('Order save error:', err);
     }
   };
 
