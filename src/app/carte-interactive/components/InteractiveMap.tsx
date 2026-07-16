@@ -13,6 +13,7 @@ interface Trail {
   id: string;
   name: string;
   trail_type: string;
+  activity_type: string;
   difficulty: string;
   distance_km: number;
   elevation_gain: number;
@@ -30,7 +31,7 @@ interface Trail {
   geojson: GeoJSONLineString | null;
   description: string | null;
   surface: string | null;
-  metadata: Record<string, unknown> | null;
+  metadata?: Record<string, unknown> | null;
   gps_points_count?: number;
 }
 
@@ -184,18 +185,10 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
   const loadData = useCallback(async (bbox?: { minLat: number; minLng: number; maxLat: number; maxLng: number }) => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ limit: '300' });
+      const params = new URLSearchParams({ limit: '200', page: '0' });
       if (filters.difficulty) params.set('difficulty', filters.difficulty);
       if (filters.trailType) params.set('type', filters.trailType);
       if (filters.search) params.set('q', filters.search);
-      if (filters.minDistance > 0) params.set('min_distance', String(filters.minDistance));
-      if (filters.maxDistance < 200) params.set('max_distance', String(filters.maxDistance));
-      if (filters.minElevation > 0) params.set('min_elevation', String(filters.minElevation));
-      if (filters.maxElevation < 5000) params.set('max_elevation', String(filters.maxElevation));
-
-      const dur = getDurationFilter(filters.durationMode);
-      if (dur.min > 0) params.set('min_duration', String(dur.min));
-      if (dur.max < 99999) params.set('max_duration', String(dur.max));
 
       if (bbox) {
         params.set('min_lat', String(bbox.minLat));
@@ -203,11 +196,6 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
         params.set('max_lat', String(bbox.maxLat));
         params.set('max_lng', String(bbox.maxLng));
       }
-
-      const activeCats = Object.entries(activeCategories)
-        .filter(([, v]) => v)
-        .map(([k]) => k);
-      if (activeCats.length > 0) params.set('categories', activeCats.join(','));
 
       const res = await fetch(`/api/map/explore?${params}`);
       const data = await res.json();
@@ -219,7 +207,7 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
     } finally {
       setLoading(false);
     }
-  }, [filters, activeCategories]);
+  }, [filters]);
 
   useEffect(() => {
     loadData();
@@ -348,57 +336,52 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
     // ── Trails ──────────────────────────────────────────────
     if (showT) {
       trailData.forEach(trail => {
-        if (!trail.start_lat || !trail.start_lng) return;
-        const color = DIFFICULTY_COLORS[trail.difficulty] || '#6b7280';
+        // Only render trails that have real GPS geometry
+        if (!trail.geojson?.coordinates || trail.geojson.coordinates.length < 2) return;
 
-        const hasRealGPS = trail.geojson?.coordinates && trail.geojson.coordinates.length >= 10;
+        const color = DIFFICULTY_COLORS[trail.difficulty] || '#E4501C';
 
-        if (!hasRealGPS) {
-          // No GPS: show start marker only
-          const startIcon = Lx.divIcon({
-            html: `<div style="background:${color};width:10px;height:10px;border-radius:50%;border:2.5px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.6);opacity:0.75"></div>`,
-            className: '',
-            iconSize: [10, 10],
-            iconAnchor: [5, 5],
-          });
-          const marker = Lx.marker([trail.start_lat, trail.start_lng], { icon: startIcon }).addTo(mapx);
-          marker.on('click', () => { setSelectedTrail(trail); onTrailSelect?.(trail); });
-          markersRef.current.push(marker);
-          return;
-        }
-
-        // Real GPS trace: render with outline + fill for visibility
-        const coords: [number, number][] = trail.geojson!.coordinates.map(
-          c => [c[1], c[0]] as [number, number]
+        // Convert GeoJSON [lng, lat] → Leaflet [lat, lng]
+        const coords: [number, number][] = trail.geojson.coordinates.map(
+          (point) => [point[1], point[0]] as [number, number]
         );
 
-        // Outer contour (dark border for contrast)
-        const outline = Lx.polyline(coords, {
-          color: 'rgba(0,0,0,0.55)',
-          weight: 9,
+        // Outer shadow for depth and contrast
+        const shadow = Lx.polyline(coords, {
+          color: 'rgba(0,0,0,0.45)',
+          weight: 10,
           opacity: 1,
           lineJoin: 'round',
           lineCap: 'round',
+          interactive: false,
         }).addTo(mapx);
 
-        // Inner colored trail
+        // Main colored trail line — premium outdoor style
         const polyline = Lx.polyline(coords, {
           color,
           weight: 5,
-          opacity: 0.95,
+          opacity: 0.92,
           lineJoin: 'round',
           lineCap: 'round',
-          dashArray: trail.is_loop ? '10,5' : undefined,
+          dashArray: trail.is_loop ? '12,6' : undefined,
         }).addTo(mapx);
 
-        // Start marker
+        // Highlight on hover
+        polyline.on('mouseover', () => {
+          polyline.setStyle({ weight: 8, opacity: 1 });
+        });
+        polyline.on('mouseout', () => {
+          polyline.setStyle({ weight: 5, opacity: 0.92 });
+        });
+
+        // Start dot marker
         const startIcon = Lx.divIcon({
-          html: `<div style="background:${color};width:13px;height:13px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.7)"></div>`,
+          html: `<div style="background:${color};width:12px;height:12px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.7)"></div>`,
           className: '',
-          iconSize: [13, 13],
+          iconSize: [12, 12],
           iconAnchor: [6, 6],
         });
-        const marker = Lx.marker([trail.start_lat, trail.start_lng], { icon: startIcon }).addTo(mapx);
+        const marker = Lx.marker(coords[0], { icon: startIcon }).addTo(mapx);
 
         const handleClick = () => {
           setSelectedTrail(trail);
@@ -406,9 +389,9 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
         };
         marker.on('click', handleClick);
         polyline.on('click', handleClick);
-        outline.on('click', handleClick);
+        shadow.on('click', handleClick);
 
-        polylinesRef.current.push(outline, polyline);
+        polylinesRef.current.push(shadow, polyline);
         markersRef.current.push(marker);
       });
     }
@@ -857,8 +840,9 @@ interface TrailDetailPanelProps {
 }
 
 function TrailDetailPanel({ trail, isSaved, isSaving, onClose, onSave, onShare, onDownloadGPX }: TrailDetailPanelProps) {
-  const color = DIFFICULTY_COLORS[trail.difficulty] || '#6b7280';
+  const color = DIFFICULTY_COLORS[trail.difficulty] || '#E4501C';
   const diffLabel = DIFFICULTY_LABELS[trail.difficulty] || trail.difficulty;
+  const activityType = trail.activity_type || trail.trail_type || 'hiking';
 
   const handleCreateAdventure = () => {
     const event = new CustomEvent('createAdventureFromTrail', {
@@ -869,7 +853,7 @@ function TrailDetailPanel({ trail, isSaved, isSaving, onClose, onSave, onShare, 
         elevation: trail.elevation_gain,
         difficulty: trail.difficulty,
         duration: trail.duration_hours,
-        trailType: trail.trail_type,
+        trailType: activityType,
       },
     });
     window.dispatchEvent(event);
@@ -883,7 +867,41 @@ function TrailDetailPanel({ trail, isSaved, isSaving, onClose, onSave, onShare, 
     cycling: '🚴 Vélo',
     bivouac: '⛺ Bivouac',
     alpinisme: '🧗 Alpinisme',
+    foot: '🚶 Pédestre',
+    path: '🌿 Chemin',
+    track: '🛤 Piste',
   };
+
+  // Compute distance from GPS coordinates if not available
+  const gpsCoords = trail.geojson?.coordinates;
+  const gpsDistance = (() => {
+    if (trail.distance_km) return null; // already have it
+    if (!gpsCoords || gpsCoords.length < 2) return null;
+    let total = 0;
+    for (let i = 1; i < gpsCoords.length; i++) {
+      const [lng1, lat1] = gpsCoords[i - 1];
+      const [lng2, lat2] = gpsCoords[i];
+      const R = 6371;
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLng = ((lng2 - lng1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos((lat1 * Math.PI) / 180) *
+          Math.cos((lat2 * Math.PI) / 180) *
+          Math.sin(dLng / 2) ** 2;
+      total += R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+    return Math.round(total * 10) / 10;
+  })();
+
+  const displayDistance = trail.distance_km ?? gpsDistance;
+
+  const sourceLabel = (() => {
+    const s = (trail.source || '').toLowerCase();
+    if (s.includes('openstreetmap') || s.includes('osm') || s === 'openstreetmap') return 'OpenStreetMap';
+    if (s.includes('overpass')) return 'OpenStreetMap';
+    return trail.source || 'OpenStreetMap';
+  })();
 
   return (
     <div className="absolute bottom-0 left-0 right-0 z-[2000] bg-[#141e1a] border-t border-white/10 shadow-2xl rounded-t-2xl">
@@ -904,9 +922,9 @@ function TrailDetailPanel({ trail, isSaved, isSaving, onClose, onSave, onShare, 
               <span className="text-xs font-bold px-2.5 py-0.5 rounded-full" style={{ background: `${color}25`, color, border: `1px solid ${color}50` }}>
                 {diffLabel}
               </span>
-              {trail.trail_type && (
+              {activityType && (
                 <span className="text-xs text-white/60 bg-white/8 px-2 py-0.5 rounded-full">
-                  {trailTypeLabel[trail.trail_type] || trail.trail_type}
+                  {trailTypeLabel[activityType] || activityType}
                 </span>
               )}
               {trail.is_loop && (
@@ -922,9 +940,9 @@ function TrailDetailPanel({ trail, isSaved, isSaving, onClose, onSave, onShare, 
         </div>
 
         {/* Stats grid */}
-        <div className="grid grid-cols-4 gap-2 mb-4">
+        <div className="grid grid-cols-4 gap-2 mb-3">
           {[
-            { icon: '📏', label: 'Distance', value: trail.distance_km ? `${trail.distance_km} km` : '—' },
+            { icon: '📏', label: 'Distance', value: displayDistance ? `${displayDistance} km` : '—' },
             { icon: '⬆️', label: 'D+', value: trail.elevation_gain ? `${trail.elevation_gain}m` : '—' },
             { icon: '⏱', label: 'Durée', value: trail.duration_hours ? `${trail.duration_hours}h` : '—' },
             { icon: '⛰', label: 'Alt. max', value: trail.altitude_max ? `${trail.altitude_max}m` : '—' },
@@ -939,11 +957,22 @@ function TrailDetailPanel({ trail, isSaved, isSaving, onClose, onSave, onShare, 
 
         {/* Location */}
         {(trail.region || trail.country) && (
-          <div className="flex items-center gap-1.5 text-white/50 text-xs mb-3">
+          <div className="flex items-center gap-1.5 text-white/50 text-xs mb-2">
             <span>📍</span>
             <span>{[trail.region, trail.country].filter(Boolean).join(' · ')}</span>
           </div>
         )}
+
+        {/* Source OpenStreetMap */}
+        <div className="flex items-center gap-1.5 text-xs mb-3 bg-blue-500/8 border border-blue-500/20 rounded-xl px-3 py-2">
+          <svg className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+          </svg>
+          <span className="text-blue-300 font-medium">Source : {sourceLabel}</span>
+          {gpsCoords && gpsCoords.length > 0 && (
+            <span className="ml-auto text-blue-400/60">{gpsCoords.length} pts GPS</span>
+          )}
+        </div>
 
         {/* Description */}
         {trail.description && (
@@ -952,28 +981,35 @@ function TrailDetailPanel({ trail, isSaved, isSaving, onClose, onSave, onShare, 
           </p>
         )}
 
-        {/* GPS trace indicator */}
-        {trail.geojson?.coordinates && trail.geojson.coordinates.length > 2 && (
-          <div className="flex items-center gap-1.5 text-xs mb-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-2">
-            <span className="text-emerald-400">✓</span>
-            <span className="text-emerald-400 font-medium">Trace GPS complète · {trail.geojson.coordinates.length} points</span>
-          </div>
-        )}
-
-        {/* Quick actions row */}
-        <div className="grid grid-cols-4 gap-2 mb-4">
+        {/* Actions: Save + Favorite */}
+        <div className="grid grid-cols-2 gap-2 mb-3">
           <button
             onClick={onSave}
             disabled={isSaving}
-            className={`flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium transition-all border ${
+            className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all border ${
               isSaved
-                ? 'bg-amber-500/15 border-amber-500/30 text-amber-400' :'bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:text-white'
+                ? 'bg-amber-500/15 border-amber-500/30 text-amber-400' :'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
             }`}
           >
             <span className="text-base">{isSaving ? '⏳' : isSaved ? '⭐' : '☆'}</span>
-            <span>{isSaved ? 'Sauvegardé' : 'Sauvegarder'}</span>
+            <span>{isSaved ? 'Sauvegardé' : 'Enregistrer'}</span>
           </button>
 
+          <button
+            onClick={onSave}
+            disabled={isSaving}
+            className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all border ${
+              isSaved
+                ? 'bg-rose-500/15 border-rose-500/30 text-rose-400' :'bg-white/5 border-white/10 text-white/70 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/20'
+            }`}
+          >
+            <span className="text-base">{isSaved ? '❤️' : '🤍'}</span>
+            <span>{isSaved ? 'Favori' : 'Ajouter aux favoris'}</span>
+          </button>
+        </div>
+
+        {/* Secondary actions */}
+        <div className="grid grid-cols-3 gap-2 mb-4">
           <button
             onClick={onShare}
             className="flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 hover:text-white transition-all"
