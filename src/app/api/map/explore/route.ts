@@ -147,7 +147,14 @@ export async function GET(request: NextRequest) {
       if (trailType) fb = fb.filter(t => t.trail_type === trailType);
       if (search) fb = fb.filter(t => t.name.toLowerCase().includes(search.toLowerCase()));
       if (region) fb = fb.filter(t => t.region.toLowerCase().includes(region.toLowerCase()));
+      // AllTrails: never show private trails in fallback
       finalTrails = [...dbTrails, ...fb].slice(0, limit);
+    } else {
+      // AllTrails: filter out private trails from DB results
+      finalTrails = dbTrails.filter((t: Record<string, unknown>) => {
+        const meta = t.metadata as Record<string, unknown> | null;
+        return !meta?.is_private;
+      });
     }
 
     if (dbPoints.length < 5) {
@@ -158,6 +165,14 @@ export async function GET(request: NextRequest) {
       finalPoints = [...dbPoints, ...fb].slice(0, limit);
     }
 
+    // AllTrails difficulty label mapping for display
+    const difficultyLabels: Record<string, string> = {
+      easy: 'Facile',
+      moderate: 'Modéré',
+      hard: 'Difficile',
+      expert: 'Expert',
+    };
+
     return NextResponse.json({
       trails: finalTrails,
       outdoor_points: finalPoints,
@@ -165,6 +180,8 @@ export async function GET(request: NextRequest) {
         trails_count: finalTrails.length,
         pois_count: finalPoints.length,
         source: dbTrails.length >= 5 ? 'database' : 'fallback+database',
+        methodology: 'alltrails-osm-derivation',
+        difficulty_labels: difficultyLabels,
       },
     });
 

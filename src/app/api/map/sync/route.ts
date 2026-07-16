@@ -8,6 +8,7 @@ import {
   fetchCamping,
   transformTrailElement,
   transformPOIElement,
+  getTilesForBBox,
   WORLD_REGIONS,
   type BBox,
 } from '@/lib/overpass';
@@ -84,21 +85,34 @@ export async function POST(request: NextRequest) {
     let totalFetched = 0;
 
     try {
-      // Fetch trails
+      // Fetch trails — AllTrails methodology: process per 2×2 degree tile
       if (syncType === 'all' || syncType === 'trails') {
-        const trailElements = await fetchHikingTrails(bbox, 50);
-        totalFetched += trailElements.length;
+        // Split bbox into AllTrails-style 2×2 degree tiles
+        const tiles = getTilesForBBox(bbox);
+        const tilesToProcess = tiles.slice(0, 4); // max 4 tiles per sync to avoid timeout
 
-        const trailsToInsert = trailElements
-          .filter(el => el.center?.lat || el.lat)
-          .map(el => transformTrailElement(el))
-          .filter(t => t.name && t.start_lat && t.start_lng);
+        for (const tile of tilesToProcess) {
+          const trailElements = await fetchHikingTrails(tile, 50);
+          totalFetched += trailElements.length;
 
-        if (trailsToInsert.length > 0) {
-          await supabase
-            .from('trails')
-            .upsert(trailsToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
-          totalInserted += trailsToInsert.length;
+          const trailsToInsert = trailElements
+            .filter(el => {
+              // AllTrails: filter private access
+              const tags = el.tags || {};
+              const access = tags['access'] || '';
+              if (access === 'private' || access === 'no') return false;
+              // Must have a position
+              return !!(el.center?.lat || el.lat || (el.geometry && el.geometry.length > 0));
+            })
+            .map(el => transformTrailElement(el))
+            .filter(t => t.name && (t.start_lat != null) && (t.start_lng != null));
+
+          if (trailsToInsert.length > 0) {
+            await supabase
+              .from('trails')
+              .upsert(trailsToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
+            totalInserted += trailsToInsert.length;
+          }
         }
       }
 
