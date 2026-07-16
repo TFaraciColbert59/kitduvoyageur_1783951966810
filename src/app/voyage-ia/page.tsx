@@ -247,18 +247,28 @@ export default function VoyageIAPage() {
   const [activeResultTab, setActiveResultTab] = useState<'fiche' | 'itineraire' | 'logistique' | 'kit'>('fiche');
   const resultRef = useRef<HTMLDivElement>(null);
 
-  const { response, isLoading, sendMessage } = useChat('GEMINI', 'gemini/gemini-2.0-flash', true);
+  const { response, isLoading, error, sendMessage } = useChat('GEMINI', 'gemini/gemini-2.0-flash', true);
 
   // Stream result into state
   useEffect(() => {
-    if (response && phase === 'generating') {
+    if (phase !== 'generating') return;
+
+    // Update result as chunks arrive
+    if (response) {
       setResult({ raw: response });
-      if (!isLoading) {
-        setPhase('result');
-        setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-      }
     }
-  }, [response, isLoading, phase]);
+
+    // Transition to result when loading finishes
+    if (!isLoading && (response || error)) {
+      if (error && !response) {
+        // Show error state — go back to interview
+        setPhase('interview');
+        return;
+      }
+      setPhase('result');
+      setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    }
+  }, [response, isLoading, error, phase]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const update = (field: keyof InterviewData, value: any) => {

@@ -26,6 +26,14 @@ export async function getStreamingChatCompletion(
   onError: (error: Error) => void,
   parameters: object = {}
 ) {
+  let completeCalled = false;
+  const safeComplete = () => {
+    if (!completeCalled) {
+      completeCalled = true;
+      onComplete();
+    }
+  };
+
   try {
     const response = await fetch(ENDPOINT, {
       method: 'POST',
@@ -46,7 +54,25 @@ export async function getStreamingChatCompletion(
 
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
+
+      if (done) {
+        // Stream ended — flush remaining buffer and mark complete
+        if (buffer.trim()) {
+          const lines = buffer.split('\n');
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                if (data.type === 'chunk' && data.chunk) onChunk(data.chunk);
+              } catch {
+                // Skip invalid JSON
+              }
+            }
+          }
+        }
+        safeComplete();
+        break;
+      }
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
@@ -58,8 +84,9 @@ export async function getStreamingChatCompletion(
             const data = JSON.parse(line.slice(6));
             if (data.type === 'chunk' && data.chunk) {
               onChunk(data.chunk);
-            } else if (data.type === 'done') onComplete();
-            else if (data.type === 'error') {
+            } else if (data.type === 'done') {
+              safeComplete();
+            } else if (data.type === 'error') {
               console.error('API Route Error:', {
                 error: data.error,
                 details: data.details,
