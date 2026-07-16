@@ -232,15 +232,15 @@ export default function InteractiveMap() {
         const popup = `
           <div style="min-width:220px;font-family:sans-serif;font-size:13px">
             <div style="background:${color};color:white;padding:8px 12px;border-radius:6px 6px 0 0;margin:-12px -12px 8px -12px">
-              <strong>🥾 ${trail.name}</strong>
+              <strong>🥾 ${trail.name || 'Sentier'}</strong>
             </div>
             <div style="padding:0 2px;line-height:1.7;color:#374151">
-              <span style="background:${color}22;color:${color};padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">${DIFFICULTY_LABELS[trail.difficulty] || trail.difficulty}</span>
+              <span style="background:${color}22;color:${color};padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">${DIFFICULTY_LABELS[trail.difficulty] || trail.difficulty || 'Modéré'}</span>
               <br/>
               ${trail.distance_km ? `📏 <strong>${trail.distance_km} km</strong>` : ''}
               ${trail.elevation_gain ? ` &nbsp;⬆️ <strong>${trail.elevation_gain}m D+</strong>` : ''}
               ${trail.duration_hours ? `<br/>⏱ <strong>${trail.duration_hours}h</strong>` : ''}
-              ${trail.country ? `<br/>📍 ${trail.region || ''} ${trail.country}` : ''}
+              ${trail.country ? `<br/>📍 ${trail.region ? trail.region + ' ' : ''}${trail.country}` : ''}
               ${trail.trail_type ? `<br/>🏷 ${trail.trail_type}` : ''}
             </div>
           </div>`;
@@ -308,7 +308,7 @@ export default function InteractiveMap() {
           </div>
           <div style="line-height:1.7;color:#374151">
             ${popupBody}
-            ${pt.region || pt.country ? `<br/>📍 ${[pt.region, pt.country].filter(Boolean).join(', ')}` : ''}
+            ${(pt.region || pt.country) ? `<br/>📍 ${[pt.region, pt.country].filter(v => v != null && v !== 'undefined').join(', ')}` : ''}
             ${pt.description ? `<br/><em style="color:#6b7280;font-size:11px">${pt.description.slice(0, 80)}${pt.description.length > 80 ? '…' : ''}</em>` : ''}
           </div>
         </div>`, { maxWidth: 260 });

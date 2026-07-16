@@ -189,8 +189,8 @@ export function transformTrailElement(el: OverpassElement) {
     surface: tags['surface'] || null,
     waymarking: tags['osmc:symbol'] || tags['marked_trail'] || null,
     description: tags['description'] || null,
-    start_lat: lat,
-    start_lng: lng,
+    start_lat: lat ?? null,
+    start_lng: lng ?? null,
     source: 'overpass',
   };
 }
@@ -214,7 +214,7 @@ export function transformPOIElement(el: OverpassElement, category: string) {
     metadata.is_seasonal = tags['seasonal'] === 'yes';
   } else if (category === 'summit') {
     metadata.prominence = tags['prominence'] ? parseInt(tags['prominence']) : null;
-    metadata.difficulty = mapOsmDifficulty(tags['sac_scale']);
+    metadata.difficulty = mapOsmDifficulty(tags['sac_scale']) || null;
     metadata.massif = tags['massif'] || null;
   } else if (category === 'viewpoint') {
     metadata.direction = tags['direction'] || null;
@@ -230,8 +230,8 @@ export function transformPOIElement(el: OverpassElement, category: string) {
     category,
     name: tags['name'] || null,
     description: tags['description'] || null,
-    lat,
-    lng,
+    lat: lat ?? null,
+    lng: lng ?? null,
     altitude: tags['ele'] ? parseInt(tags['ele']) : null,
     country: tags['addr:country'] || null,
     region: tags['addr:state'] || null,
