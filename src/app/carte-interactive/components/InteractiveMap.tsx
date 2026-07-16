@@ -320,24 +320,53 @@ export default function InteractiveMap() {
   const syncRegion = async (regionName: string) => {
     setSyncing(true);
     setSyncMsg(`Synchronisation de ${regionName}…`);
+
+    // Client-side timeout: abort after 55s to avoid infinite spin
+    const controller = new AbortController();
+    const clientTimeout = setTimeout(() => {
+      controller.abort();
+    }, 55000);
+
     try {
       const res = await fetch('/api/map/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ region: regionName }),
+        body: JSON.stringify({ region: regionName, force: true }),
+        signal: controller.signal,
       });
+      clearTimeout(clientTimeout);
+
       const data = await res.json();
+
+      if (!res.ok) {
+        // Overpass unreachable — map still shows fallback data
+        setSyncMsg(`⚠️ Overpass indisponible — données de secours affichées`);
+        return;
+      }
+
       if (data.cached) {
         setSyncMsg(`✅ ${regionName} déjà synchronisé`);
-      } else {
-        setSyncMsg(`✅ ${data.records_inserted} éléments ajoutés depuis OSM`);
+      } else if (data.success) {
+        const inserted = data.records_inserted ?? 0;
+        const fetched = data.records_fetched ?? 0;
+        if (inserted > 0) {
+          setSyncMsg(`✅ ${inserted} éléments ajoutés (${fetched} récupérés)`);
+        } else if (fetched > 0) {
+          setSyncMsg(`✅ Données à jour (${fetched} éléments vérifiés)`);
+        } else {
+          setSyncMsg(`✅ Synchronisation terminée`);
+        }
         await loadData();
+      } else {
+        setSyncMsg(`⚠️ Overpass indisponible — données de secours affichées`);
       }
-    } catch {
-      setSyncMsg('❌ Erreur de synchronisation');
+    } catch (err) {
+      clearTimeout(clientTimeout);
+      const isAbort = (err as Error).name === 'AbortError';
+      setSyncMsg(isAbort ? '⏱ Délai dépassé — données de secours affichées' : '❌ Erreur de synchronisation');
     } finally {
       setSyncing(false);
-      setTimeout(() => setSyncMsg(''), 4000);
+      setTimeout(() => setSyncMsg(''), 5000);
     }
   };
 

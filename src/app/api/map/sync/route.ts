@@ -23,7 +23,8 @@ export async function POST(request: NextRequest) {
     const regionName = body.region as string | undefined;
     const bboxParam = body.bbox as BBox | undefined;
     const syncType = body.type as string || 'all';
-    const force = body.force === true; // bypass 24h cache when force=true
+    // Always force=true to avoid cache blocking re-sync after a failed/stuck attempt
+    const force = true;
 
     // Determine bbox
     let bbox: BBox;
@@ -50,7 +51,15 @@ export async function POST(request: NextRequest) {
       region = defaultRegion.name;
     }
 
-    // Check if recently synced (cache: 24h) — skip if force=true
+    // Cleanup stuck 'running' entries older than 5 minutes
+    await supabase
+      .from('overpass_sync_log')
+      .update({ status: 'error', error_message: 'Timed out (auto-cleanup)', completed_at: new Date().toISOString() })
+      .eq('region', region)
+      .eq('status', 'running')
+      .lt('started_at', new Date(Date.now() - 5 * 60 * 1000).toISOString());
+
+    // Check if recently synced (cache: 24h) — only when force=false
     if (!force) {
       const { data: recentSync } = await supabase
         .from('overpass_sync_log')
@@ -89,24 +98,23 @@ export async function POST(request: NextRequest) {
     const errors: string[] = [];
 
     try {
-      // Fetch trails — AllTrails methodology: process per 2×2 degree tile
+      // Fetch trails — process max 2 tiles to stay within 60s budget
       if (syncType === 'all' || syncType === 'trails') {
-        // Split bbox into AllTrails-style 2×2 degree tiles
         const tiles = getTilesForBBox(bbox);
-        const tilesToProcess = tiles.slice(0, 4); // max 4 tiles per sync to avoid timeout
+        // Limit to 2 tiles max to avoid timeout (each tile ~15s max)
+        const tilesToProcess = tiles.slice(0, 2);
 
         for (const tile of tilesToProcess) {
           try {
-            const trailElements = await fetchHikingTrails(tile, 50);
+            // Reduced limit: 30 trails per tile to keep queries fast
+            const trailElements = await fetchHikingTrails(tile, 30);
             totalFetched += trailElements.length;
 
             const trailsToInsert = trailElements
               .filter(el => {
-                // AllTrails: filter private access
                 const tags = el.tags || {};
                 const access = tags['access'] || '';
                 if (access === 'private' || access === 'no') return false;
-                // Must have a position
                 return !!(el.center?.lat || el.lat || (el.geometry && el.geometry.length > 0));
               })
               .map(el => transformTrailElement(el))
@@ -129,7 +137,7 @@ export async function POST(request: NextRequest) {
       // Fetch refuges
       if (syncType === 'all' || syncType === 'pois') {
         try {
-          const refugeElements = await fetchRefuges(bbox, 100);
+          const refugeElements = await fetchRefuges(bbox, 50);
           totalFetched += refugeElements.length;
 
           const refugesToInsert = refugeElements
@@ -149,7 +157,7 @@ export async function POST(request: NextRequest) {
 
         // Fetch water points
         try {
-          const waterElements = await fetchWaterPoints(bbox, 150);
+          const waterElements = await fetchWaterPoints(bbox, 50);
           totalFetched += waterElements.length;
 
           const waterToInsert = waterElements
@@ -167,9 +175,9 @@ export async function POST(request: NextRequest) {
           errors.push(`Water: ${String(err)}`);
         }
 
-        // Fetch natural features (summits, viewpoints, waterfalls, etc.)
+        // Fetch natural features
         try {
-          const naturalElements = await fetchNaturalFeatures(bbox, 100);
+          const naturalElements = await fetchNaturalFeatures(bbox, 50);
           totalFetched += naturalElements.length;
 
           const naturalToInsert = naturalElements
@@ -198,7 +206,7 @@ export async function POST(request: NextRequest) {
 
         // Fetch camping
         try {
-          const campingElements = await fetchCamping(bbox, 50);
+          const campingElements = await fetchCamping(bbox, 30);
           totalFetched += campingElements.length;
 
           const campingToInsert = campingElements
@@ -217,12 +225,9 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Determine final status
-      const hasPartialSuccess = totalInserted > 0;
       const allFailed = errors.length > 0 && totalFetched === 0;
       const finalStatus = allFailed ? 'error' : 'success';
 
-      // Update sync log
       if (syncId) {
         await supabase
           .from('overpass_sync_log')

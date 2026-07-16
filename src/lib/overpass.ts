@@ -86,7 +86,7 @@ function getNextEndpoint(): string {
  * Query Overpass API with automatic retry across all endpoints.
  * Tries each endpoint once before giving up.
  */
-async function queryOverpass(query: string, timeoutMs = 45000): Promise<OverpassResult> {
+async function queryOverpass(query: string, timeoutMs = 20000): Promise<OverpassResult> {
   const errors: string[] = [];
 
   // Try each endpoint in sequence
@@ -337,7 +337,7 @@ export async function fetchHikingTrails(bbox: BBox, limit = 100): Promise<Overpa
   // AllTrails uses: highway=path|track|footway|steps|bridleway|cycleway
   // Ways with full geometry (out geom) — relations use center only to avoid huge payloads
   const query = `
-[out:json][timeout:45];
+[out:json][timeout:18];
 (
   way["highway"="path"]["access"!="private"]["access"!="no"](${bboxStr});
   way["highway"="track"]["access"!="private"]["access"!="no"](${bboxStr});
@@ -362,7 +362,7 @@ export async function fetchRefuges(bbox: BBox, limit = 200): Promise<OverpassEle
   const bboxStr = `${south},${west},${north},${east}`;
 
   const query = `
-[out:json][timeout:30];
+[out:json][timeout:15];
 (
   node["tourism"="alpine_hut"](${bboxStr});
   node["tourism"="wilderness_hut"](${bboxStr});
@@ -372,7 +372,7 @@ export async function fetchRefuges(bbox: BBox, limit = 200): Promise<OverpassEle
 out center ${limit};
 `;
 
-  const result = await queryOverpass(query);
+  const result = await queryOverpass(query, 18000);
   return result.elements;
 }
 
@@ -383,7 +383,7 @@ export async function fetchWaterPoints(bbox: BBox, limit = 300): Promise<Overpas
   const bboxStr = `${south},${west},${north},${east}`;
 
   const query = `
-[out:json][timeout:30];
+[out:json][timeout:15];
 (
   node["natural"="spring"](${bboxStr});
   node["amenity"="drinking_water"](${bboxStr});
@@ -392,7 +392,7 @@ export async function fetchWaterPoints(bbox: BBox, limit = 300): Promise<Overpas
 out center ${limit};
 `;
 
-  const result = await queryOverpass(query);
+  const result = await queryOverpass(query, 18000);
   return result.elements;
 }
 
@@ -403,7 +403,7 @@ export async function fetchNaturalFeatures(bbox: BBox, limit = 200): Promise<Ove
   const bboxStr = `${south},${west},${north},${east}`;
 
   const query = `
-[out:json][timeout:30];
+[out:json][timeout:15];
 (
   node["natural"="peak"](${bboxStr});
   node["mountain_pass"="yes"](${bboxStr});
@@ -415,7 +415,7 @@ export async function fetchNaturalFeatures(bbox: BBox, limit = 200): Promise<Ove
 out center ${limit};
 `;
 
-  const result = await queryOverpass(query);
+  const result = await queryOverpass(query, 18000);
   return result.elements;
 }
 
@@ -426,7 +426,7 @@ export async function fetchCamping(bbox: BBox, limit = 100): Promise<OverpassEle
   const bboxStr = `${south},${west},${north},${east}`;
 
   const query = `
-[out:json][timeout:30];
+[out:json][timeout:15];
 (
   node["tourism"="camp_site"](${bboxStr});
   node["tourism"="camp_pitch"](${bboxStr});
@@ -435,7 +435,7 @@ export async function fetchCamping(bbox: BBox, limit = 100): Promise<OverpassEle
 out center ${limit};
 `;
 
-  const result = await queryOverpass(query);
+  const result = await queryOverpass(query, 18000);
   return result.elements;
 }
 
