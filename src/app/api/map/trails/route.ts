@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ trails: data || [] });
-  } catch (err) {
+  } catch (_err) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

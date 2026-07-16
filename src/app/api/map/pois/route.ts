@@ -5,7 +5,6 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
-    const region = searchParams.get('region');
     const limit = parseInt(searchParams.get('limit') || '100');
 
     const [trailsRes, refugesRes, waterRes, summitsRes] = await Promise.all([
@@ -33,7 +32,7 @@ export async function GET(request: NextRequest) {
       waterPoints: waterRes.data || [],
       summits: summitsRes.data || [],
     });
-  } catch (err) {
+  } catch (_err) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

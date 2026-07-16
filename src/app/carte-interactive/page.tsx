@@ -143,11 +143,11 @@ export default function CarteInteractivePage() {
 
                   {/* POIs */}
                   <div>
-                    <h4 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-2">Points d'intérêt</h4>
+                    <h4 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-2">Points d&apos;intérêt</h4>
                     <div className="space-y-2">
                       {[
                         { icon: '🏠', color: '#1e40af', label: 'Refuge / Gîte', desc: 'Hébergement en montagne' },
-                        { icon: '💧', color: '#0891b2', label: 'Point d\'eau', desc: 'Source, torrent, lac' },
+                        { icon: '💧', color: '#0891b2', label: 'Point d\u2019eau', desc: 'Source, torrent, lac' },
                         { icon: '▲', color: '#ef4444', label: 'Sommet', desc: 'Pic et altitude' },
                         { icon: '🥾', color: '#f59e0b', label: 'Départ sentier', desc: 'Point de départ' },
                       ].map(({ icon, color, label, desc }) => (
@@ -190,12 +190,12 @@ export default function CarteInteractivePage() {
                   <div className="bg-[#E4501C]/10 border border-[#E4501C]/20 rounded-xl p-3">
                     <h4 className="text-[#E4501C] text-xs font-semibold mb-2 flex items-center gap-1.5">
                       <Icon name="LightBulbIcon" className="w-3.5 h-3.5" />
-                      Conseils d'utilisation
+                      Conseils d&apos;utilisation
                     </h4>
                     <ul className="space-y-1 text-white/60 text-xs">
                       <li>• Cliquez sur un marqueur pour les détails</li>
-                      <li>• Utilisez les couches pour filtrer l'affichage</li>
-                      <li>• L'IA génère des aventures basées sur les données réelles</li>
+                      <li>• Utilisez les couches pour filtrer l&apos;affichage</li>
+                      <li>• L&apos;IA génère des aventures basées sur les données réelles</li>
                       <li>• Zoomez pour explorer les détails locaux</li>
                     </ul>
                   </div>

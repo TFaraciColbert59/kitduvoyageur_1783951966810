@@ -109,7 +109,7 @@ export default function AdventureGenerator({ mapData }: AdventureGeneratorProps)
     if (phase !== 'generating') return;
     const interval = setInterval(() => setTipIndex(i => (i + 1) % TIPS.length), 2500);
     return () => clearInterval(interval);
-  }, [phase]);
+  }, [phase, TIPS.length]);
 
   useEffect(() => {
     if (response && !isLoading && phase === 'generating') {
@@ -275,7 +275,7 @@ Sois très concret, utilise des noms réels de lieux, donne des chiffres précis
       <div className="p-4 border-b border-white/10">
         <div className="flex items-center gap-2 mb-1">
           <Icon name="SparklesIcon" className="w-5 h-5 text-[#E4501C]" />
-          <h3 className="text-white font-bold">Générateur d'aventures IA</h3>
+          <h3 className="text-white font-bold">Générateur d&apos;aventures IA</h3>
         </div>
         <p className="text-white/50 text-xs">Gemini analyse les données cartographiques pour créer votre aventure sur mesure</p>
       </div>
