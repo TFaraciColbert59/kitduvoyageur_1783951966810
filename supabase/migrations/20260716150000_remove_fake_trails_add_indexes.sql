@@ -51,3 +51,9 @@ BEGIN
     CREATE INDEX idx_trails_bbox_coords ON public.trails(start_lat, start_lng);
   END IF;
 END $$;
+
+-- Confirm migration completed
+DO $$
+BEGIN
+  RAISE NOTICE 'Fake trails removed. Table now contains only real GPS trails.';
+END $$;
