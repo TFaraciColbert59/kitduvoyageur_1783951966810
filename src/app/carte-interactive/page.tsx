@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import Icon from '@/components/ui/AppIcon';
 import AdventureGenerator from './components/AdventureGenerator';
@@ -82,6 +83,13 @@ export default function CarteInteractivePage() {
 
           {/* Panel toggles */}
           <div className="flex items-center gap-2 flex-shrink-0">
+            <Link
+              href="/mes-aventures"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
+            >
+              <span>⭐</span>
+              <span className="hidden sm:inline">Mes aventures</span>
+            </Link>
             <button
               onClick={() => setActivePanel(activePanel === 'generator' ? null : 'generator')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${

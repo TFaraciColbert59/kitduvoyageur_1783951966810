@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { createClient } from '@/lib/supabase/client';
 
 interface GeoJSONLineString {
   type: 'LineString';
@@ -15,6 +17,7 @@ interface Trail {
   distance_km: number;
   elevation_gain: number;
   altitude_max: number;
+  altitude_min?: number;
   duration_hours: number;
   country: string;
   region: string;
@@ -28,6 +31,7 @@ interface Trail {
   description: string | null;
   surface: string | null;
   metadata: Record<string, unknown> | null;
+  gps_points_count?: number;
 }
 
 interface OutdoorPoint {
@@ -51,8 +55,10 @@ interface MapFilters {
   maxDistance: number;
   minElevation: number;
   maxElevation: number;
-  durationMode: string; // 'all' | 'half' | 'day' | 'multi'
+  durationMode: string;
 }
+
+type MapMode = 'exploration' | 'navigation' | 'preparation';
 
 interface InteractiveMapProps {
   onTrailSelect?: (trail: Trail | null) => void;
@@ -87,12 +93,39 @@ const CATEGORY_CONFIG: Record<string, { icon: string; color: string; label: stri
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_CONFIG);
 
+const MAP_TILE_LAYERS: Record<MapMode, { url: string; attribution: string; label: string; icon: string; desc: string }> = {
+  exploration: {
+    url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
+    label: 'Exploration',
+    icon: '🗺',
+    desc: 'Topo · Relief · Courbes',
+  },
+  navigation: {
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    label: 'Navigation',
+    icon: '🧭',
+    desc: 'Routes · Chemins · Clair',
+  },
+  preparation: {
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: '&copy; Esri',
+    label: 'Préparation',
+    icon: '🛰',
+    desc: 'Satellite · Terrain réel',
+  },
+};
+
 export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
+  const { user } = useAuth();
+  const supabase = createClient();
+
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<unknown>(null);
   const markersRef = useRef<unknown[]>([]);
   const polylinesRef = useRef<unknown[]>([]);
-  const clusterGroupRef = useRef<unknown>(null);
+  const tileLayerRef = useRef<unknown>(null);
   const mapInitialized = useRef(false);
   const lastBboxRef = useRef<string>('');
 
@@ -104,6 +137,11 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [stats, setStats] = useState({ trails: 0, points: 0 });
   const [selectedTrail, setSelectedTrail] = useState<Trail | null>(null);
+  const [mapMode, setMapMode] = useState<MapMode>('exploration');
+  const [showModePanel, setShowModePanel] = useState(false);
+  const [savedTrailIds, setSavedTrailIds] = useState<Set<string>>(new Set());
+  const [savingTrailId, setSavingTrailId] = useState<string | null>(null);
+  const [shareMsg, setShareMsg] = useState('');
 
   const [filters, setFilters] = useState<MapFilters>({
     difficulty: '',
@@ -120,6 +158,19 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
     ALL_CATEGORIES.reduce((acc, c) => ({ ...acc, [c]: true }), {})
   );
   const [showTrails, setShowTrails] = useState(true);
+
+  // Load saved trails for current user
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('saved_trails')
+      .select('trail_id')
+      .eq('user_id', user.id)
+      .then(({ data }) => {
+        if (data) setSavedTrailIds(new Set(data.map((r: { trail_id: string }) => r.trail_id)));
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const getDurationFilter = (mode: string): { min: number; max: number } => {
     switch (mode) {
@@ -199,18 +250,17 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
 
       L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-      // OpenTopoMap for outdoor feel
-      L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
+      // Default tile layer
+      const tileLayer = L.tileLayer(MAP_TILE_LAYERS.exploration.url, {
+        attribution: MAP_TILE_LAYERS.exploration.attribution,
         maxZoom: 17,
         opacity: 0.9,
       }).addTo(map);
 
+      tileLayerRef.current = tileLayer;
       mapRef.current = map;
 
-      // Auto-sync when map moves to new zone (debounced)
       let moveTimer: ReturnType<typeof setTimeout>;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       map.on('moveend', () => {
         clearTimeout(moveTimer);
         moveTimer = setTimeout(() => {
@@ -219,7 +269,7 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
           const bboxKey = `${bounds.getSouth().toFixed(1)},${bounds.getWest().toFixed(1)},${bounds.getNorth().toFixed(1)},${bounds.getEast().toFixed(1)}`;
           if (bboxKey !== lastBboxRef.current) {
             lastBboxRef.current = bboxKey;
-            // Reload data for new viewport
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const zoom = (map as any).getZoom();
             if (zoom >= 7) {
               loadData({
@@ -245,6 +295,27 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Switch tile layer when mapMode changes
+  useEffect(() => {
+    if (!mapRef.current) return;
+    import('leaflet').then((leafletModule) => {
+      const L = leafletModule.default;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const map = mapRef.current as any;
+      if (tileLayerRef.current) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (tileLayerRef.current as any).remove();
+      }
+      const cfg = MAP_TILE_LAYERS[mapMode];
+      const newLayer = L.tileLayer(cfg.url, {
+        attribution: cfg.attribution,
+        maxZoom: 17,
+        opacity: 0.9,
+      }).addTo(map);
+      tileLayerRef.current = newLayer;
+    });
+  }, [mapMode]);
+
   // Re-render when data or filters change
   useEffect(() => {
     if (!mapRef.current) return;
@@ -269,7 +340,6 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mapx = map as any;
 
-    // Clear existing layers
     markersRef.current.forEach((m) => (m as { remove: () => void }).remove());
     polylinesRef.current.forEach((p) => (p as { remove: () => void }).remove());
     markersRef.current = [];
@@ -281,54 +351,54 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
         if (!trail.start_lat || !trail.start_lng) return;
         const color = DIFFICULTY_COLORS[trail.difficulty] || '#6b7280';
 
-        // CRITICAL FIX: Only render trails with real GPS geometry (≥10 points).
-        // Never draw a straight line between start and end — that's not a real trail.
         const hasRealGPS = trail.geojson?.coordinates && trail.geojson.coordinates.length >= 10;
 
         if (!hasRealGPS) {
-          // No valid GPS trace: show only a start marker (no polyline)
+          // No GPS: show start marker only
           const startIcon = Lx.divIcon({
-            html: `<div style="background:${color};width:8px;height:8px;border-radius:50%;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.5);opacity:0.6"></div>`,
+            html: `<div style="background:${color};width:10px;height:10px;border-radius:50%;border:2.5px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.6);opacity:0.75"></div>`,
             className: '',
-            iconSize: [8, 8],
-            iconAnchor: [4, 4],
+            iconSize: [10, 10],
+            iconAnchor: [5, 5],
           });
           const marker = Lx.marker([trail.start_lat, trail.start_lng], { icon: startIcon }).addTo(mapx);
-          const popupHtml = buildTrailPopup(trail, color);
-          marker.bindPopup(popupHtml, { maxWidth: 280 });
           marker.on('click', () => { setSelectedTrail(trail); onTrailSelect?.(trail); });
           markersRef.current.push(marker);
           return;
         }
 
-        // Real GPS trace: render full polyline
-        // GeoJSON is [lng, lat] — Leaflet needs [lat, lng]
+        // Real GPS trace: render with outline + fill for visibility
         const coords: [number, number][] = trail.geojson!.coordinates.map(
           c => [c[1], c[0]] as [number, number]
         );
 
-        const polyline = Lx.polyline(coords, {
-          color,
-          weight: 4,
-          opacity: 0.85,
+        // Outer contour (dark border for contrast)
+        const outline = Lx.polyline(coords, {
+          color: 'rgba(0,0,0,0.55)',
+          weight: 9,
+          opacity: 1,
           lineJoin: 'round',
           lineCap: 'round',
-          dashArray: trail.is_loop ? '8,4' : undefined,
         }).addTo(mapx);
 
+        // Inner colored trail
+        const polyline = Lx.polyline(coords, {
+          color,
+          weight: 5,
+          opacity: 0.95,
+          lineJoin: 'round',
+          lineCap: 'round',
+          dashArray: trail.is_loop ? '10,5' : undefined,
+        }).addTo(mapx);
+
+        // Start marker
         const startIcon = Lx.divIcon({
-          html: `<div style="background:${color};width:10px;height:10px;border-radius:50%;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.5)"></div>`,
+          html: `<div style="background:${color};width:13px;height:13px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.7)"></div>`,
           className: '',
-          iconSize: [10, 10],
-          iconAnchor: [5, 5],
+          iconSize: [13, 13],
+          iconAnchor: [6, 6],
         });
-
         const marker = Lx.marker([trail.start_lat, trail.start_lng], { icon: startIcon }).addTo(mapx);
-
-        const popupHtml = buildTrailPopup(trail, color);
-
-        marker.bindPopup(popupHtml, { maxWidth: 280 });
-        polyline.bindPopup(popupHtml, { maxWidth: 280 });
 
         const handleClick = () => {
           setSelectedTrail(trail);
@@ -336,8 +406,9 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
         };
         marker.on('click', handleClick);
         polyline.on('click', handleClick);
+        outline.on('click', handleClick);
 
-        polylinesRef.current.push(polyline);
+        polylinesRef.current.push(outline, polyline);
         markersRef.current.push(marker);
       });
     }
@@ -351,10 +422,10 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
       const meta = pt.metadata || {};
 
       const icon = Lx.divIcon({
-        html: `<div style="background:${cfg.color};color:white;width:26px;height:26px;border-radius:${pt.category === 'summit' ? '4px' : '50%'};display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 5px rgba(0,0,0,0.4);border:2px solid rgba(255,255,255,0.8)">${cfg.icon}</div>`,
+        html: `<div style="background:${cfg.color};color:white;width:28px;height:28px;border-radius:${pt.category === 'summit' ? '5px' : '50%'};display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.5);border:2.5px solid rgba(255,255,255,0.9)">${cfg.icon}</div>`,
         className: '',
-        iconSize: [26, 26],
-        iconAnchor: [13, 13],
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
       });
 
       let popupBody = '';
@@ -379,9 +450,6 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
           ${m.is_potable !== undefined ? (m.is_potable ? '✅ Potable' : '⚠️ Non potable') : ''}
           ${m.is_seasonal ? ' &nbsp;|&nbsp; 🌸 Saisonnier' : ''}
           ${pt.altitude ? `<br/>⛰ ${pt.altitude}m` : ''}`;
-      } else if (pt.category === 'waterfall') {
-        const m = meta as { height_m?: number };
-        popupBody = `${m.height_m ? `Hauteur: <strong>${m.height_m}m</strong>` : ''}`;
       } else {
         popupBody = `${pt.altitude ? `⛰ ${pt.altitude}m` : ''}`;
       }
@@ -403,32 +471,11 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
     });
   }
 
-  function buildTrailPopup(trail: Trail, color: string): string {
-    return `
-      <div style="min-width:220px;font-family:sans-serif;font-size:13px">
-        <div style="background:${color};color:white;padding:8px 12px;border-radius:6px 6px 0 0;margin:-12px -12px 8px -12px">
-          <strong>🥾 ${trail.name || 'Sentier'}</strong>
-        </div>
-        <div style="padding:0 2px;line-height:1.7;color:#374151">
-          <span style="background:${color}22;color:${color};padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">${DIFFICULTY_LABELS[trail.difficulty] || trail.difficulty || 'Modéré'}</span>
-          <br/>
-          ${trail.distance_km ? `📏 <strong>${trail.distance_km} km</strong>` : ''}
-          ${trail.elevation_gain ? ` &nbsp;⬆️ <strong>${trail.elevation_gain}m D+</strong>` : ''}
-          ${trail.duration_hours ? `<br/>⏱ <strong>${trail.duration_hours}h</strong>` : ''}
-          ${trail.country ? `<br/>📍 ${trail.region ? trail.region + ' · ' : ''}${trail.country}` : ''}
-          ${trail.trail_type ? `<br/>🏷 ${trail.trail_type}` : ''}
-          <br/><em style="color:#6b7280;font-size:11px">Cliquez pour voir les détails</em>
-        </div>
-      </div>`;
-  }
-
   const syncRegion = async (regionName: string) => {
     setSyncing(true);
     setSyncMsg(`Synchronisation de ${regionName}…`);
-
     const controller = new AbortController();
     const clientTimeout = setTimeout(() => controller.abort(), 55000);
-
     try {
       const res = await fetch('/api/map/sync', {
         method: 'POST',
@@ -437,31 +484,24 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
         signal: controller.signal,
       });
       clearTimeout(clientTimeout);
-
       const data = await res.json();
-
       if (!res.ok) {
-        setSyncMsg(`⚠️ Overpass indisponible — données de secours affichées`);
+        setSyncMsg(`⚠️ Overpass indisponible`);
         return;
       }
-
       if (data.cached) {
         setSyncMsg(`✅ ${regionName} déjà synchronisé`);
       } else if (data.success) {
         const inserted = data.records_inserted ?? 0;
-        if (inserted > 0) {
-          setSyncMsg(`✅ ${inserted} éléments ajoutés`);
-        } else {
-          setSyncMsg(`✅ Synchronisation terminée`);
-        }
+        setSyncMsg(inserted > 0 ? `✅ ${inserted} éléments ajoutés` : `✅ Synchronisation terminée`);
         await loadData();
       } else {
-        setSyncMsg(`⚠️ Overpass indisponible — données de secours affichées`);
+        setSyncMsg(`⚠️ Overpass indisponible`);
       }
     } catch (err) {
       clearTimeout(clientTimeout);
       const isAbort = (err as Error).name === 'AbortError';
-      setSyncMsg(isAbort ? '⏱ Délai dépassé — données de secours affichées' : '❌ Erreur de synchronisation');
+      setSyncMsg(isAbort ? '⏱ Délai dépassé' : '❌ Erreur de synchronisation');
     } finally {
       setSyncing(false);
       setTimeout(() => setSyncMsg(''), 5000);
@@ -470,6 +510,83 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
 
   const toggleCategory = (cat: string) => {
     setActiveCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
+  };
+
+  // Save / unsave trail
+  const toggleSaveTrail = async (trail: Trail) => {
+    if (!user) {
+      setShareMsg('Connectez-vous pour sauvegarder');
+      setTimeout(() => setShareMsg(''), 3000);
+      return;
+    }
+    setSavingTrailId(trail.id);
+    const isSaved = savedTrailIds.has(trail.id);
+    try {
+      if (isSaved) {
+        await supabase.from('saved_trails').delete().eq('user_id', user.id).eq('trail_id', trail.id);
+        setSavedTrailIds(prev => { const n = new Set(prev); n.delete(trail.id); return n; });
+      } else {
+        await supabase.from('saved_trails').insert({
+          user_id: user.id,
+          trail_id: trail.id,
+          trail_name: trail.name,
+          trail_data: {
+            difficulty: trail.difficulty,
+            distance_km: trail.distance_km,
+            elevation_gain: trail.elevation_gain,
+            duration_hours: trail.duration_hours,
+            country: trail.country,
+            region: trail.region,
+            trail_type: trail.trail_type,
+          },
+        });
+        setSavedTrailIds(prev => new Set([...prev, trail.id]));
+      }
+    } catch {
+      // silent
+    } finally {
+      setSavingTrailId(null);
+    }
+  };
+
+  // Share trail
+  const shareTrail = (trail: Trail) => {
+    const text = `${trail.name} — ${trail.distance_km}km, ${trail.elevation_gain}m D+ | Le Kit du Voyageur`;
+    if (navigator.share) {
+      navigator.share({ title: trail.name, text, url: window.location.href }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(`${text}\n${window.location.href}`).then(() => {
+        setShareMsg('Lien copié !');
+        setTimeout(() => setShareMsg(''), 2500);
+      });
+    }
+  };
+
+  // Download GPX
+  const downloadGPX = (trail: Trail) => {
+    if (!trail.geojson?.coordinates) {
+      setShareMsg('Pas de trace GPS disponible');
+      setTimeout(() => setShareMsg(''), 3000);
+      return;
+    }
+    const coords = trail.geojson.coordinates;
+    const trkpts = coords.map(c => `    <trkpt lat="${c[1]}" lon="${c[0]}"></trkpt>`).join('\n');
+    const gpx = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Le Kit du Voyageur" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>${trail.name || 'Sentier'}</name>
+    <trkseg>
+${trkpts}
+    </trkseg>
+  </trk>
+</gpx>`;
+    const blob = new Blob([gpx], { type: 'application/gpx+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${(trail.name || 'sentier').replace(/\s+/g, '-').toLowerCase()}.gpx`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -482,7 +599,7 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
         <div className="absolute inset-0 flex items-center justify-center bg-[#1C2620]/80 z-[1000]">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-[#E4501C] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-white text-sm font-medium">Chargement des données mondiales…</p>
+            <p className="text-white text-sm font-medium">Chargement des données…</p>
           </div>
         </div>
       )}
@@ -492,7 +609,7 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
         <div className="flex-1 relative">
           <input
             type="text"
-            placeholder="Rechercher sentiers, sommets, refuges, pays…"
+            placeholder="Rechercher sentiers, sommets, refuges…"
             value={filters.search}
             onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
             className="w-full bg-[#1C2620]/95 backdrop-blur-sm text-white placeholder-white/40 text-sm px-4 py-2.5 pl-9 rounded-xl border border-white/10 focus:outline-none focus:border-[#E4501C] shadow-xl"
@@ -519,7 +636,6 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
             <button onClick={() => setFilters({ difficulty: '', trailType: '', search: '', minDistance: 0, maxDistance: 200, minElevation: 0, maxElevation: 5000, durationMode: 'all' })} className="text-white/40 text-xs hover:text-white">Réinitialiser</button>
           </div>
 
-          {/* Trail toggle */}
           <div className="flex items-center justify-between mb-3">
             <span className="text-white text-sm">Sentiers de randonnée</span>
             <button
@@ -530,7 +646,6 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
             </button>
           </div>
 
-          {/* Difficulty */}
           <div className="mb-3">
             <label className="text-white/50 text-xs mb-1.5 block">Difficulté</label>
             <div className="grid grid-cols-3 gap-1">
@@ -543,7 +658,6 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
             </div>
           </div>
 
-          {/* Trail type */}
           <div className="mb-3">
             <label className="text-white/50 text-xs mb-1.5 block">Activité</label>
             <div className="grid grid-cols-3 gap-1">
@@ -556,11 +670,10 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
             </div>
           </div>
 
-          {/* Duration */}
           <div className="mb-3">
             <label className="text-white/50 text-xs mb-1.5 block">Durée</label>
             <div className="grid grid-cols-2 gap-1">
-              {[{ id: 'all', label: 'Toutes' }, { id: 'half', label: '< 4h (demi-journée)' }, { id: 'day', label: '4–12h (journée)' }, { id: 'multi', label: '> 12h (multi-jours)' }].map(d => (
+              {[{ id: 'all', label: 'Toutes' }, { id: 'half', label: '< 4h' }, { id: 'day', label: '4–12h' }, { id: 'multi', label: '> 12h' }].map(d => (
                 <button key={d.id} onClick={() => setFilters(f => ({ ...f, durationMode: d.id }))}
                   className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${filters.durationMode === d.id ? 'bg-[#E4501C] text-white' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}>
                   {d.label}
@@ -569,7 +682,6 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
             </div>
           </div>
 
-          {/* Distance slider */}
           <div className="mb-3">
             <label className="text-white/50 text-xs mb-1.5 flex justify-between">
               <span>Distance</span>
@@ -585,7 +697,6 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
             </div>
           </div>
 
-          {/* Elevation slider */}
           <div className="mb-3">
             <label className="text-white/50 text-xs mb-1.5 flex justify-between">
               <span>Dénivelé</span>
@@ -601,7 +712,6 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
             </div>
           </div>
 
-          {/* POI categories */}
           <div>
             <label className="text-white/50 text-xs mb-1.5 block">Points d&apos;intérêt</label>
             <div className="grid grid-cols-2 gap-1">
@@ -617,8 +727,48 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
         </div>
       )}
 
-      {/* Layer controls (right side) */}
-      <div className="absolute top-16 right-3 z-[1000] bg-[#1C2620]/95 backdrop-blur-sm rounded-xl p-3 shadow-xl border border-white/10 space-y-1.5 min-w-[150px]">
+      {/* Map Mode Switcher */}
+      <div className="absolute top-16 right-3 z-[1000]">
+        <div className="relative">
+          <button
+            onClick={() => setShowModePanel(v => !v)}
+            className="flex items-center gap-2 bg-[#1C2620]/95 backdrop-blur-sm text-white text-xs px-3 py-2 rounded-xl border border-white/10 shadow-xl hover:border-[#E4501C]/40 transition-all"
+          >
+            <span>{MAP_TILE_LAYERS[mapMode].icon}</span>
+            <span className="font-medium">{MAP_TILE_LAYERS[mapMode].label}</span>
+            <svg className={`w-3 h-3 text-white/40 transition-transform ${showModePanel ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {showModePanel && (
+            <div className="absolute top-full right-0 mt-1.5 bg-[#1C2620]/97 backdrop-blur-sm rounded-xl border border-white/10 shadow-2xl overflow-hidden w-52">
+              <div className="px-3 pt-2.5 pb-1">
+                <p className="text-white/40 text-[10px] font-semibold uppercase tracking-wider">Mode carte</p>
+              </div>
+              {(Object.entries(MAP_TILE_LAYERS) as [MapMode, typeof MAP_TILE_LAYERS[MapMode]][]).map(([mode, cfg]) => (
+                <button
+                  key={mode}
+                  onClick={() => { setMapMode(mode); setShowModePanel(false); }}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-all ${mapMode === mode ? 'bg-[#E4501C]/15 text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'}`}
+                >
+                  <span className="text-lg">{cfg.icon}</span>
+                  <div>
+                    <div className="text-xs font-semibold">{cfg.label}</div>
+                    <div className="text-[10px] text-white/40">{cfg.desc}</div>
+                  </div>
+                  {mapMode === mode && (
+                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#E4501C]" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Layer controls */}
+      <div className="absolute top-28 right-3 z-[1000] bg-[#1C2620]/95 backdrop-blur-sm rounded-xl p-3 shadow-xl border border-white/10 space-y-1.5 min-w-[150px]">
         <p className="text-white/50 text-[10px] font-semibold uppercase tracking-wider mb-2">Couches OSM</p>
         {Object.entries(CATEGORY_CONFIG).slice(0, 6).map(([cat, cfg]) => (
           <button key={cat} onClick={() => toggleCategory(cat)}
@@ -662,7 +812,7 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
           <div className="bg-[#1C2620]/90 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-1.5">
             <span className="text-[#E4501C]">📍</span>
             <strong>{stats.points}</strong>
-            <span className="text-white/50">points d&apos;intérêt</span>
+            <span className="text-white/50">POI</span>
           </div>
           <div className="bg-[#E4501C]/20 backdrop-blur-sm text-[#E4501C] text-xs px-3 py-1.5 rounded-full border border-[#E4501C]/20 flex items-center gap-1.5">
             <span>🌍</span>
@@ -671,11 +821,23 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
         </div>
       )}
 
-      {/* Trail detail panel (bottom slide-up) */}
+      {/* Share/save toast */}
+      {shareMsg && (
+        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-[3000] bg-[#1C2620] border border-white/20 text-white text-xs px-4 py-2 rounded-full shadow-2xl">
+          {shareMsg}
+        </div>
+      )}
+
+      {/* Trail detail panel */}
       {selectedTrail && (
         <TrailDetailPanel
           trail={selectedTrail}
+          isSaved={savedTrailIds.has(selectedTrail.id)}
+          isSaving={savingTrailId === selectedTrail.id}
           onClose={() => { setSelectedTrail(null); onTrailSelect?.(null); }}
+          onSave={() => toggleSaveTrail(selectedTrail)}
+          onShare={() => shareTrail(selectedTrail)}
+          onDownloadGPX={() => downloadGPX(selectedTrail)}
         />
       )}
     </div>
@@ -686,15 +848,19 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
 
 interface TrailDetailPanelProps {
   trail: Trail;
+  isSaved: boolean;
+  isSaving: boolean;
   onClose: () => void;
+  onSave: () => void;
+  onShare: () => void;
+  onDownloadGPX: () => void;
 }
 
-function TrailDetailPanel({ trail, onClose }: TrailDetailPanelProps) {
+function TrailDetailPanel({ trail, isSaved, isSaving, onClose, onSave, onShare, onDownloadGPX }: TrailDetailPanelProps) {
   const color = DIFFICULTY_COLORS[trail.difficulty] || '#6b7280';
   const diffLabel = DIFFICULTY_LABELS[trail.difficulty] || trail.difficulty;
 
   const handleCreateAdventure = () => {
-    // Dispatch custom event to trigger AdventureGenerator with trail context
     const event = new CustomEvent('createAdventureFromTrail', {
       detail: {
         trailName: trail.name,
@@ -710,34 +876,45 @@ function TrailDetailPanel({ trail, onClose }: TrailDetailPanelProps) {
     onClose();
   };
 
+  const trailTypeLabel: Record<string, string> = {
+    hiking: '🥾 Randonnée',
+    trek: '🏔 Trek',
+    trail_running: '🏃 Trail',
+    cycling: '🚴 Vélo',
+    bivouac: '⛺ Bivouac',
+    alpinisme: '🧗 Alpinisme',
+  };
+
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-[2000] bg-[#1a2420] border-t border-white/10 shadow-2xl rounded-t-2xl">
+    <div className="absolute bottom-0 left-0 right-0 z-[2000] bg-[#141e1a] border-t border-white/10 shadow-2xl rounded-t-2xl">
       {/* Handle */}
       <div className="flex justify-center pt-2 pb-1">
         <div className="w-10 h-1 bg-white/20 rounded-full" />
       </div>
 
-      <div className="px-4 pb-4 max-h-80 overflow-y-auto">
+      <div className="px-4 pb-5 max-h-[85vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-lg">🥾</span>
-              <h3 className="text-white font-bold text-base truncate">{trail.name}</h3>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-xl">🥾</span>
+              <h3 className="text-white font-bold text-base leading-tight">{trail.name || 'Sentier sans nom'}</h3>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: `${color}22`, color }}>
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full" style={{ background: `${color}25`, color, border: `1px solid ${color}50` }}>
                 {diffLabel}
               </span>
               {trail.trail_type && (
-                <span className="text-xs text-white/50 bg-white/5 px-2 py-0.5 rounded-full">{trail.trail_type}</span>
+                <span className="text-xs text-white/60 bg-white/8 px-2 py-0.5 rounded-full">
+                  {trailTypeLabel[trail.trail_type] || trail.trail_type}
+                </span>
               )}
               {trail.is_loop && (
                 <span className="text-xs text-white/50 bg-white/5 px-2 py-0.5 rounded-full">🔄 Boucle</span>
               )}
             </div>
           </div>
-          <button onClick={onClose} className="text-white/40 hover:text-white ml-3 flex-shrink-0">
+          <button onClick={onClose} className="text-white/30 hover:text-white ml-3 flex-shrink-0 p-1">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -745,61 +922,92 @@ function TrailDetailPanel({ trail, onClose }: TrailDetailPanelProps) {
         </div>
 
         {/* Stats grid */}
-        <div className="grid grid-cols-4 gap-2 mb-3">
+        <div className="grid grid-cols-4 gap-2 mb-4">
           {[
             { icon: '📏', label: 'Distance', value: trail.distance_km ? `${trail.distance_km} km` : '—' },
-            { icon: '⬆️', label: 'Dénivelé', value: trail.elevation_gain ? `${trail.elevation_gain}m` : '—' },
+            { icon: '⬆️', label: 'D+', value: trail.elevation_gain ? `${trail.elevation_gain}m` : '—' },
             { icon: '⏱', label: 'Durée', value: trail.duration_hours ? `${trail.duration_hours}h` : '—' },
-            { icon: '⛰', label: 'Altitude max', value: trail.altitude_max ? `${trail.altitude_max}m` : '—' },
+            { icon: '⛰', label: 'Alt. max', value: trail.altitude_max ? `${trail.altitude_max}m` : '—' },
           ].map(stat => (
-            <div key={stat.label} className="bg-white/5 rounded-xl p-2 text-center">
+            <div key={stat.label} className="bg-white/5 rounded-xl p-2.5 text-center border border-white/5">
               <div className="text-base mb-0.5">{stat.icon}</div>
               <div className="text-white font-bold text-xs">{stat.value}</div>
-              <div className="text-white/40 text-[10px]">{stat.label}</div>
+              <div className="text-white/35 text-[10px] mt-0.5">{stat.label}</div>
             </div>
           ))}
         </div>
 
         {/* Location */}
         {(trail.region || trail.country) && (
-          <div className="flex items-center gap-1.5 text-white/50 text-xs mb-2">
+          <div className="flex items-center gap-1.5 text-white/50 text-xs mb-3">
             <span>📍</span>
             <span>{[trail.region, trail.country].filter(Boolean).join(' · ')}</span>
           </div>
         )}
 
-        {/* Surface */}
-        {trail.surface && (
-          <div className="flex items-center gap-1.5 text-white/50 text-xs mb-2">
-            <span>🏔</span>
-            <span>Surface : {trail.surface}</span>
-          </div>
-        )}
-
         {/* Description */}
         {trail.description && (
-          <p className="text-white/60 text-xs leading-relaxed mb-3 bg-white/5 rounded-xl p-3">
+          <p className="text-white/55 text-xs leading-relaxed mb-3 bg-white/4 rounded-xl p-3 border border-white/5">
             {trail.description}
           </p>
         )}
 
         {/* GPS trace indicator */}
         {trail.geojson?.coordinates && trail.geojson.coordinates.length > 2 && (
-          <div className="flex items-center gap-1.5 text-xs mb-3 bg-green-500/10 border border-green-500/20 rounded-xl px-3 py-2">
-            <span className="text-green-400">✓</span>
-            <span className="text-green-400">Trace GPS complète disponible ({trail.geojson.coordinates.length} points)</span>
+          <div className="flex items-center gap-1.5 text-xs mb-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-2">
+            <span className="text-emerald-400">✓</span>
+            <span className="text-emerald-400 font-medium">Trace GPS complète · {trail.geojson.coordinates.length} points</span>
           </div>
         )}
 
-        {/* CTA: Create adventure with AI */}
+        {/* Quick actions row */}
+        <div className="grid grid-cols-4 gap-2 mb-4">
+          <button
+            onClick={onSave}
+            disabled={isSaving}
+            className={`flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium transition-all border ${
+              isSaved
+                ? 'bg-amber-500/15 border-amber-500/30 text-amber-400' :'bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:text-white'
+            }`}
+          >
+            <span className="text-base">{isSaving ? '⏳' : isSaved ? '⭐' : '☆'}</span>
+            <span>{isSaved ? 'Sauvegardé' : 'Sauvegarder'}</span>
+          </button>
+
+          <button
+            onClick={onShare}
+            className="flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 hover:text-white transition-all"
+          >
+            <span className="text-base">📤</span>
+            <span>Partager</span>
+          </button>
+
+          <button
+            onClick={onDownloadGPX}
+            className="flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 hover:text-white transition-all"
+          >
+            <span className="text-base">⬇</span>
+            <span>GPX</span>
+          </button>
+
+          <button
+            onClick={handleCreateAdventure}
+            className="flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium bg-[#E4501C]/15 border border-[#E4501C]/30 text-[#E4501C] hover:bg-[#E4501C]/25 transition-all"
+          >
+            <span className="text-base">🤖</span>
+            <span>IA</span>
+          </button>
+        </div>
+
+        {/* Main CTA */}
         <button
           onClick={handleCreateAdventure}
-          className="w-full bg-gradient-to-r from-[#E4501C] to-[#f97316] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-lg shadow-[#E4501C]/20"
+          className="w-full bg-gradient-to-r from-[#E4501C] to-[#f97316] text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2.5 hover:opacity-90 transition-opacity shadow-lg shadow-[#E4501C]/25 text-sm"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l14 9-14 9V3z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
           </svg>
-          Créer cette aventure avec l&apos;IA
+          Créer mon aventure avec l&apos;IA
         </button>
       </div>
     </div>
