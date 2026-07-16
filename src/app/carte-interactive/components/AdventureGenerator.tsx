@@ -5,36 +5,48 @@ import Icon from '@/components/ui/AppIcon';
 import { useChat } from '@/lib/hooks/useChat';
 import { useAuth } from '@/contexts/AuthContext';
 
-interface MapData {
-  trails: Array<{ id: string; name: string; difficulty: string; distance_km: number; elevation_gain_m: number; duration_hours: number; region: string; tags: string[] }>;
-  refuges: Array<{ id: string; name: string; altitude_m: number; capacity: number; is_staffed: boolean; price_per_night: number; region: string }>;
-  waterPoints: Array<{ id: string; name: string; water_type: string; is_potable: boolean; region: string }>;
-  summits: Array<{ id: string; name: string; altitude_m: number; difficulty: string; region: string; massif: string }>;
-}
-
 interface AdventureGeneratorProps {
-  mapData: MapData;
+  onAdventureGenerated?: (text: string) => void;
 }
 
-interface AdventureParams {
+interface AdventureIntent {
+  freeText: string;
   region: string;
   duration: string;
   difficulty: string;
-  objectives: string[];
+  activities: string[];
   groupSize: string;
   budget: string;
+  conditions: string[];
 }
 
-const OBJECTIVES = [
-  { id: 'randonnee', label: '🥾 Randonnée', desc: 'Sentiers et chemins' },
-  { id: 'sommet', label: '▲ Sommet', desc: 'Atteindre un pic' },
-  { id: 'bivouac', label: '⛺ Bivouac', desc: 'Nuit en pleine nature' },
-  { id: 'refuge', label: '🏠 Refuge', desc: 'Nuit en refuge gardé' },
-  { id: 'photo', label: '📸 Photo', desc: 'Paysages & nature' },
-  { id: 'famille', label: '👨‍👩‍👧 Famille', desc: 'Accessible à tous' },
+const ACTIVITIES = [
+  { id: 'randonnee', label: '🥾 Randonnée' },
+  { id: 'trek', label: '🏔 Trek multi-jours' },
+  { id: 'bivouac', label: '⛺ Bivouac' },
+  { id: 'sommet', label: '▲ Sommet' },
+  { id: 'trail', label: '🏃 Trail running' },
+  { id: 'velo', label: '🚴 Vélo/VTT' },
+  { id: 'kayak', label: '🛶 Kayak' },
+  { id: 'alpinisme', label: '🧗 Alpinisme' },
 ];
 
-const REGIONS = ['Alpes', 'Pyrénées', 'Vosges', 'Massif Central', 'Corse', 'Jura', 'Provence'];
+const CONDITIONS = [
+  { id: 'famille', label: '👨‍👩‍👧 Famille' },
+  { id: 'solo', label: '🧍 Solo' },
+  { id: 'debutant', label: '🌱 Débutant' },
+  { id: 'sportif', label: '💪 Sportif' },
+  { id: 'sauvage', label: '🌿 Sauvage' },
+  { id: 'extreme', label: '⚡ Extrême' },
+];
+
+const EXAMPLE_INTENTS = [
+  'Je veux partir 5 jours seul dans un endroit sauvage avec un sac léger',
+  'Randonnée de 3 jours en famille avec enfants de 8 ans dans les Alpes',
+  'Trek de 7 jours avec bivouac en Norvège, niveau intermédiaire',
+  'Aventure de 2 semaines dans les Andes, budget serré',
+  'Escapade week-end trail running en montagne, niveau expert',
+];
 
 function renderMarkdown(text: string): React.ReactNode[] {
   const lines = text.split('\n');
@@ -43,23 +55,22 @@ function renderMarkdown(text: string): React.ReactNode[] {
 
   while (i < lines.length) {
     const line = lines[i];
-
     if (line.startsWith('### ')) {
-      elements.push(<h3 key={i} className="text-base font-bold text-[#E4501C] mt-4 mb-1">{line.slice(4)}</h3>);
+      elements.push(<h3 key={i} className="text-sm font-bold text-[#E4501C] mt-4 mb-1.5 flex items-center gap-1.5">{line.slice(4)}</h3>);
     } else if (line.startsWith('## ')) {
-      elements.push(<h2 key={i} className="text-lg font-bold text-white mt-5 mb-2 border-b border-white/10 pb-1">{line.slice(3)}</h2>);
+      elements.push(<h2 key={i} className="text-base font-bold text-white mt-5 mb-2 border-b border-white/10 pb-1.5">{line.slice(3)}</h2>);
     } else if (line.startsWith('# ')) {
-      elements.push(<h1 key={i} className="text-xl font-bold text-white mt-4 mb-2">{line.slice(2)}</h1>);
+      elements.push(<h1 key={i} className="text-lg font-bold text-white mt-4 mb-2">{line.slice(2)}</h1>);
     } else if (line.startsWith('- ') || line.startsWith('* ')) {
-      elements.push(<li key={i} className="text-white/80 text-sm ml-4 list-disc">{formatInline(line.slice(2))}</li>);
+      elements.push(<li key={i} className="text-white/80 text-xs ml-4 list-disc leading-relaxed">{formatInline(line.slice(2))}</li>);
     } else if (/^\d+\.\s/.test(line)) {
-      elements.push(<li key={i} className="text-white/80 text-sm ml-4 list-decimal">{formatInline(line.replace(/^\d+\.\s/, ''))}</li>);
+      elements.push(<li key={i} className="text-white/80 text-xs ml-4 list-decimal leading-relaxed">{formatInline(line.replace(/^\d+\.\s/, ''))}</li>);
     } else if (line.startsWith('> ')) {
-      elements.push(<blockquote key={i} className="border-l-2 border-[#E4501C] pl-3 text-white/60 text-sm italic my-1">{line.slice(2)}</blockquote>);
+      elements.push(<blockquote key={i} className="border-l-2 border-[#E4501C] pl-3 text-white/60 text-xs italic my-1">{line.slice(2)}</blockquote>);
     } else if (line.trim() === '') {
-      elements.push(<div key={i} className="h-2" />);
+      elements.push(<div key={i} className="h-1.5" />);
     } else {
-      elements.push(<p key={i} className="text-white/80 text-sm leading-relaxed">{formatInline(line)}</p>);
+      elements.push(<p key={i} className="text-white/80 text-xs leading-relaxed">{formatInline(line)}</p>);
     }
     i++;
   }
@@ -79,115 +90,113 @@ function formatInline(text: string): React.ReactNode[] {
   });
 }
 
-export default function AdventureGenerator({ mapData }: AdventureGeneratorProps) {
+export default function AdventureGenerator({ onAdventureGenerated }: AdventureGeneratorProps) {
   const { user } = useAuth();
-  const [params, setParams] = useState<AdventureParams>({
+  const [intent, setIntent] = useState<AdventureIntent>({
+    freeText: '',
     region: '',
     duration: '3',
     difficulty: 'moderate',
-    objectives: [],
+    activities: [],
     groupSize: '2',
     budget: 'moyen',
+    conditions: [],
   });
-  const [phase, setPhase] = useState<'form' | 'generating' | 'result'>('form');
+  const [phase, setPhase] = useState<'intent' | 'params' | 'generating' | 'result'>('intent');
   const [savedMsg, setSavedMsg] = useState('');
   const [tipIndex, setTipIndex] = useState(0);
 
   const { response, isLoading, error, sendMessage } = useChat('GEMINI', 'gemini/gemini-2.5-flash', false);
 
   const TIPS = [
-    'Analyse des sentiers disponibles dans la région…',
-    'Sélection des refuges et points d\'eau…',
-    'Construction de l\'itinéraire jour par jour…',
+    'Analyse de votre intention de voyage…',
+    'Recherche des meilleures régions correspondantes…',
+    'Sélection des sentiers et itinéraires…',
+    'Identification des refuges et bivouacs…',
     'Calcul des dénivelés et distances…',
     'Préparation de la liste d\'équipement…',
-    'Estimation du budget et alternatives…',
-    'Finalisation de votre aventure personnalisée…',
+    'Estimation du budget et des transports…',
+    'Finalisation de votre aventure sur mesure…',
   ];
 
   useEffect(() => {
     if (phase !== 'generating') return;
-    const interval = setInterval(() => setTipIndex(i => (i + 1) % TIPS.length), 2500);
+    const interval = setInterval(() => setTipIndex(i => (i + 1) % TIPS.length), 2800);
     return () => clearInterval(interval);
   }, [phase, TIPS.length]);
 
   useEffect(() => {
     if (response && !isLoading && phase === 'generating') {
       setPhase('result');
+      onAdventureGenerated?.(response);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [response, isLoading, phase]);
 
-  const toggleObjective = (id: string) => {
-    setParams(prev => ({
+  const toggleActivity = (id: string) => {
+    setIntent(prev => ({
       ...prev,
-      objectives: prev.objectives.includes(id)
-        ? prev.objectives.filter(o => o !== id)
-        : [...prev.objectives, id],
+      activities: prev.activities.includes(id)
+        ? prev.activities.filter(a => a !== id)
+        : [...prev.activities, id],
     }));
   };
 
-  const buildContext = () => {
-    const regionTrails = mapData.trails.filter(t => !params.region || t.region.toLowerCase().includes(params.region.toLowerCase()));
-    const regionRefuges = mapData.refuges.filter(r => !params.region || r.region.toLowerCase().includes(params.region.toLowerCase()));
-    const regionSummits = mapData.summits.filter(s => !params.region || s.region.toLowerCase().includes(params.region.toLowerCase()));
-
-    return {
-      trails: regionTrails.slice(0, 5).map(t => `${t.name} (${t.difficulty}, ${t.distance_km}km, ${t.elevation_gain_m}m D+, ${t.duration_hours}h)`).join('\n'),
-      refuges: regionRefuges.slice(0, 4).map(r => `${r.name} (${r.altitude_m}m, ${r.capacity} places, ${r.is_staffed ? 'gardé' : 'non gardé'}, ${r.price_per_night}€/nuit)`).join('\n'),
-      summits: regionSummits.slice(0, 4).map(s => `${s.name} (${s.altitude_m}m, ${s.difficulty}, massif ${s.massif})`).join('\n'),
-    };
+  const toggleCondition = (id: string) => {
+    setIntent(prev => ({
+      ...prev,
+      conditions: prev.conditions.includes(id)
+        ? prev.conditions.filter(c => c !== id)
+        : [...prev.conditions, id],
+    }));
   };
 
   const generateAdventure = async () => {
-    if (!params.region && !params.objectives.length) return;
     setPhase('generating');
     setTipIndex(0);
 
-    const ctx = buildContext();
+    const systemPrompt = `Tu es le meilleur guide de montagne et planificateur d'aventures outdoor au monde. Tu connais parfaitement tous les massifs, sentiers, refuges et itinéraires de la planète. Tu génères des plans d'aventure ultra-détaillés, concrets et réalisables avec des noms réels de lieux, refuges, sentiers et équipements. Tu parles toujours en français.`;
 
-    const systemPrompt = `Tu es un guide de montagne expert et planificateur d'aventures outdoor. Tu connais parfaitement les Alpes, Pyrénées, Vosges, Massif Central, Corse et toutes les montagnes françaises. Tu génères des plans d'aventure ultra-détaillés, concrets et réalisables avec des noms réels de lieux, refuges, sentiers et équipements.`;
+    const userPrompt = `Génère un plan d'aventure outdoor COMPLET et ULTRA-DÉTAILLÉ basé sur cette demande :
 
-    const userPrompt = `Génère un plan d'aventure outdoor complet et détaillé avec ces paramètres :
+INTENTION DE L'UTILISATEUR : "${intent.freeText || `Aventure ${intent.duration} jours en ${intent.region || 'France'}`}"
 
-**Région :** ${params.region || 'France (au choix)'}
-**Durée :** ${params.duration} jours
-**Difficulté :** ${params.difficulty}
-**Objectifs :** ${params.objectives.join(', ') || 'randonnée générale'}
-**Groupe :** ${params.groupSize} personne(s)
-**Budget :** ${params.budget}
+PARAMÈTRES DÉTAILLÉS :
+- Région souhaitée : ${intent.region || 'Au choix selon la demande'}
+- Durée : ${intent.duration} jours
+- Difficulté : ${intent.difficulty}
+- Activités : ${intent.activities.join(', ') || 'randonnée générale'}
+- Groupe : ${intent.groupSize} personne(s)
+- Budget : ${intent.budget}
+- Conditions : ${intent.conditions.join(', ') || 'standard'}
 
-**Données cartographiques disponibles :**
-Sentiers : ${ctx.trails || 'données générales'}
-Refuges : ${ctx.refuges || 'données générales'}
-Sommets : ${ctx.summits || 'données générales'}
+Génère un plan structuré COMPLET avec ces sections :
 
-Génère un plan structuré avec ces sections :
-
-## 🗺️ Vue d'ensemble de l'aventure Résumé de l'aventure, points forts, pourquoi cette région est idéale.
+## 🌍 Destination recommandée
+Pourquoi cette destination est parfaite pour cette demande. Points forts uniques.
 
 ## 📅 Itinéraire jour par jour
-Pour chaque jour : matin / après-midi / soir avec distances, dénivelés, durées, noms de lieux réels.
+Pour CHAQUE jour : heure de départ, matin/après-midi/soir, distances précises, dénivelés, noms de lieux réels, durées, points de passage clés.
 
 ## 🏠 Hébergements & Bivouac
-Refuges recommandés avec noms, altitudes, prix, réservation. Spots bivouac si applicable.
+Refuges avec noms exacts, altitudes, prix, contact/réservation. Spots bivouac GPS si applicable.
 
-## 💧 Points d'eau & Ravitaillement
-Sources, fontaines, refuges avec ravitaillement sur le parcours.
-
-## 🎒 Liste d'équipement essentiel
-Équipement indispensable avec marques recommandées, poids indicatifs, priorités.
+## 💧 Points d'eau & Ravitaillement Sources, fontaines, refuges avec ravitaillement. Distances entre chaque point d'eau. ## 🎒 Liste d'équipement complète
+Équipement indispensable organisé par catégorie (vêtements, navigation, sécurité, bivouac, nourriture). Poids indicatifs.
 
 ## 💶 Budget détaillé
-Transport, hébergement, nourriture, équipement, total estimé.
+Transport aller/retour, hébergement/nuit, nourriture/jour, équipement, total estimé par personne.
 
-## ⚠️ Conseils de sécurité & Météo
-Précautions, période idéale, numéros d'urgence, équipement de sécurité.
+## 🚗 Comment y aller
+Transport depuis Paris et depuis les grandes villes proches. Parking, navettes, transports en commun.
 
-## 🌟 Alternatives & Options
-Version plus facile, plus difficile, variantes selon météo.
+## ⚠️ Sécurité & Météo
+Période idéale, risques spécifiques, équipement de sécurité obligatoire, numéros d'urgence locaux.
 
-Sois très concret, utilise des noms réels de lieux, donne des chiffres précis.`;
+## 🌟 Alternatives
+Version plus facile, plus difficile, variante mauvais temps, option week-end court.
+
+Sois TRÈS concret : utilise des noms réels de lieux, donne des chiffres précis, des altitudes exactes, des distances réelles.`;
 
     sendMessage([
       { role: 'system', content: systemPrompt },
@@ -202,13 +211,13 @@ Sois très concret, utilise des noms réels de lieux, donne des chiffres précis
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: `Aventure ${params.region || 'France'} — ${params.duration}j`,
-          description: `${params.objectives.join(', ')} · ${params.difficulty}`,
-          adventure_data: { content: response, params },
-          map_context: { region: params.region },
-          duration_days: parseInt(params.duration),
-          difficulty: params.difficulty,
-          region: params.region,
+          title: intent.freeText ? intent.freeText.slice(0, 80) : `Aventure ${intent.region || 'France'} — ${intent.duration}j`,
+          description: `${intent.activities.join(', ')} · ${intent.difficulty} · ${intent.duration}j`,
+          adventure_data: { content: response, intent },
+          map_context: { region: intent.region },
+          duration_days: parseInt(intent.duration),
+          difficulty: intent.difficulty,
+          region: intent.region,
         }),
       });
       if (res.ok) setSavedMsg('✅ Aventure sauvegardée !');
@@ -218,192 +227,214 @@ Sois très concret, utilise des noms réels de lieux, donne des chiffres précis
     setTimeout(() => setSavedMsg(''), 3000);
   };
 
+  // ── Generating phase ──────────────────────────────────────────
   if (phase === 'generating') {
     return (
       <div className="flex flex-col items-center justify-center h-full py-12 px-6 text-center">
-        <div className="w-16 h-16 border-4 border-[#E4501C] border-t-transparent rounded-full animate-spin mb-6" />
-        <h3 className="text-white font-bold text-lg mb-2">Génération en cours…</h3>
-        <p className="text-white/60 text-sm animate-pulse">{TIPS[tipIndex]}</p>
-        <div className="mt-6 flex gap-1">
+        <div className="relative mb-6">
+          <div className="w-16 h-16 border-4 border-[#E4501C]/20 rounded-full" />
+          <div className="w-16 h-16 border-4 border-[#E4501C] border-t-transparent rounded-full animate-spin absolute inset-0" />
+          <div className="absolute inset-0 flex items-center justify-center text-2xl">🌍</div>
+        </div>
+        <h3 className="text-white font-bold text-base mb-2">Création de votre aventure…</h3>
+        <p className="text-white/60 text-xs animate-pulse mb-4">{TIPS[tipIndex]}</p>
+        <div className="flex gap-1">
           {TIPS.map((_, i) => (
-            <div key={i} className={`w-1.5 h-1.5 rounded-full transition-all ${i === tipIndex ? 'bg-[#E4501C] w-4' : 'bg-white/20'}`} />
+            <div key={i} className={`h-1 rounded-full transition-all ${i === tipIndex ? 'bg-[#E4501C] w-5' : 'bg-white/20 w-1.5'}`} />
           ))}
         </div>
+        {intent.freeText && (
+          <div className="mt-6 bg-white/5 rounded-xl p-3 max-w-xs">
+            <p className="text-white/50 text-xs italic">&ldquo;{intent.freeText}&rdquo;</p>
+          </div>
+        )}
       </div>
     );
   }
 
+  // ── Result phase ──────────────────────────────────────────────
   if (phase === 'result' && response) {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between p-4 border-b border-white/10">
-          <div>
-            <h3 className="text-white font-bold">Votre aventure personnalisée</h3>
-            <p className="text-white/50 text-xs">{params.region} · {params.duration} jours · {params.difficulty}</p>
+        <div className="flex items-center justify-between p-3 border-b border-white/10 flex-shrink-0">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-white font-bold text-sm truncate">Votre aventure personnalisée</h3>
+            <p className="text-white/40 text-xs truncate">{intent.freeText || `${intent.region} · ${intent.duration}j · ${intent.difficulty}`}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5 flex-shrink-0 ml-2">
             {user && (
               <button
                 onClick={saveAdventure}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#E4501C]/20 hover:bg-[#E4501C]/30 text-[#E4501C] rounded-lg text-xs font-medium transition-all"
+                className="flex items-center gap-1 px-2.5 py-1.5 bg-[#E4501C]/20 hover:bg-[#E4501C]/30 text-[#E4501C] rounded-lg text-xs font-medium transition-all"
               >
-                <Icon name="BookmarkIcon" className="w-3.5 h-3.5" />
-                Sauvegarder
+                <Icon name="BookmarkIcon" className="w-3 h-3" />
+                <span className="hidden sm:inline">Sauver</span>
               </button>
             )}
             <button
-              onClick={() => setPhase('form')}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-medium transition-all"
+              onClick={() => setPhase('intent')}
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-medium transition-all"
             >
-              <Icon name="ArrowPathIcon" className="w-3.5 h-3.5" />
-              Nouvelle
+              <Icon name="ArrowPathIcon" className="w-3 h-3" />
+              <span className="hidden sm:inline">Nouvelle</span>
             </button>
           </div>
         </div>
         {savedMsg && (
-          <div className="mx-4 mt-2 px-3 py-2 bg-green-500/20 text-green-400 rounded-lg text-xs text-center">{savedMsg}</div>
+          <div className="mx-3 mt-2 px-3 py-2 bg-green-500/20 text-green-400 rounded-lg text-xs text-center flex-shrink-0">{savedMsg}</div>
         )}
-        <div className="flex-1 overflow-y-auto p-4 space-y-1">
+        <div className="flex-1 overflow-y-auto p-3 space-y-0.5">
           {renderMarkdown(response)}
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="flex flex-col h-full overflow-y-auto">
-      <div className="p-4 border-b border-white/10">
-        <div className="flex items-center gap-2 mb-1">
-          <Icon name="SparklesIcon" className="w-5 h-5 text-[#E4501C]" />
-          <h3 className="text-white font-bold">Générateur d&apos;aventures IA</h3>
-        </div>
-        <p className="text-white/50 text-xs">Gemini analyse les données cartographiques pour créer votre aventure sur mesure</p>
-      </div>
-
-      <div className="p-4 space-y-5 flex-1">
-        {/* Region */}
-        <div>
-          <label className="text-white/70 text-xs font-semibold uppercase tracking-wider block mb-2">Région</label>
-          <div className="grid grid-cols-2 gap-1.5">
-            {REGIONS.map(r => (
-              <button
-                key={r}
-                onClick={() => setParams(p => ({ ...p, region: p.region === r ? '' : r }))}
-                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                  params.region === r
-                    ? 'bg-[#E4501C] text-white'
-                    : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                {r}
-              </button>
-            ))}
+  // ── Intent phase (free text) ──────────────────────────────────
+  if (phase === 'intent') {
+    return (
+      <div className="flex flex-col h-full overflow-y-auto">
+        <div className="p-4 border-b border-white/10 flex-shrink-0">
+          <div className="flex items-center gap-2 mb-1">
+            <Icon name="SparklesIcon" className="w-5 h-5 text-[#E4501C]" />
+            <h3 className="text-white font-bold text-sm">Créateur d&apos;aventure IA</h3>
           </div>
+          <p className="text-white/40 text-xs">Décrivez votre envie, l&apos;IA construit votre aventure complète</p>
         </div>
 
-        {/* Duration */}
-        <div>
-          <label className="text-white/70 text-xs font-semibold uppercase tracking-wider block mb-2">
-            Durée — <span className="text-[#E4501C]">{params.duration} jours</span>
-          </label>
-          <input
-            type="range" min="1" max="14" value={params.duration}
-            onChange={e => setParams(p => ({ ...p, duration: e.target.value }))}
-            className="w-full accent-[#E4501C]"
-          />
-          <div className="flex justify-between text-white/30 text-xs mt-1">
-            <span>1j</span><span>7j</span><span>14j</span>
-          </div>
-        </div>
-
-        {/* Difficulty */}
-        <div>
-          <label className="text-white/70 text-xs font-semibold uppercase tracking-wider block mb-2">Difficulté</label>
-          <div className="grid grid-cols-2 gap-1.5">
-            {[
-              { id: 'easy', label: '🟢 Facile' },
-              { id: 'moderate', label: '🟡 Modéré' },
-              { id: 'hard', label: '🔴 Difficile' },
-              { id: 'expert', label: '⚫ Expert' },
-            ].map(d => (
-              <button
-                key={d.id}
-                onClick={() => setParams(p => ({ ...p, difficulty: d.id }))}
-                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                  params.difficulty === d.id
-                    ? 'bg-[#E4501C] text-white'
-                    : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                {d.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Objectives */}
-        <div>
-          <label className="text-white/70 text-xs font-semibold uppercase tracking-wider block mb-2">Objectifs</label>
-          <div className="grid grid-cols-2 gap-1.5">
-            {OBJECTIVES.map(obj => (
-              <button
-                key={obj.id}
-                onClick={() => toggleObjective(obj.id)}
-                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all text-left ${
-                  params.objectives.includes(obj.id)
-                    ? 'bg-[#E4501C]/20 text-[#E4501C] border border-[#E4501C]/40'
-                    : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white border border-transparent'
-                }`}
-              >
-                <div>{obj.label}</div>
-                <div className="text-white/30 text-[10px] mt-0.5">{obj.desc}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Group size & Budget */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="p-4 space-y-4 flex-1">
+          {/* Free text intent */}
           <div>
-            <label className="text-white/70 text-xs font-semibold uppercase tracking-wider block mb-2">Groupe</label>
-            <select
-              value={params.groupSize}
-              onChange={e => setParams(p => ({ ...p, groupSize: e.target.value }))}
-              className="w-full bg-white/5 border border-white/10 text-white text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-[#E4501C]"
-            >
-              {['1','2','3','4','5','6','8','10'].map(n => (
-                <option key={n} value={n} className="bg-[#1C2620]">{n} pers.</option>
+            <label className="text-white/60 text-xs font-semibold uppercase tracking-wider block mb-2">Décrivez votre envie</label>
+            <textarea
+              value={intent.freeText}
+              onChange={e => setIntent(p => ({ ...p, freeText: e.target.value }))}
+              placeholder="Ex: Je veux partir 5 jours seul dans un endroit sauvage avec un sac léger..."
+              rows={3}
+              className="w-full bg-white/5 border border-white/10 text-white text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#E4501C] placeholder-white/25 resize-none"
+            />
+          </div>
+
+          {/* Example intents */}
+          <div>
+            <label className="text-white/40 text-xs block mb-2">Exemples d&apos;intentions</label>
+            <div className="space-y-1.5">
+              {EXAMPLE_INTENTS.map((ex, i) => (
+                <button
+                  key={i}
+                  onClick={() => setIntent(p => ({ ...p, freeText: ex }))}
+                  className="w-full text-left px-3 py-2 bg-white/3 hover:bg-white/8 border border-white/5 hover:border-[#E4501C]/30 rounded-lg text-white/50 hover:text-white/80 text-xs transition-all"
+                >
+                  {ex}
+                </button>
               ))}
-            </select>
+            </div>
           </div>
+
+          {/* Quick params */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-white/50 text-xs block mb-1.5">Durée</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="range" min="1" max="21" value={intent.duration}
+                  onChange={e => setIntent(p => ({ ...p, duration: e.target.value }))}
+                  className="flex-1 accent-[#E4501C]"
+                />
+                <span className="text-[#E4501C] text-xs font-bold w-8 text-right">{intent.duration}j</span>
+              </div>
+            </div>
+            <div>
+              <label className="text-white/50 text-xs block mb-1.5">Groupe</label>
+              <select
+                value={intent.groupSize}
+                onChange={e => setIntent(p => ({ ...p, groupSize: e.target.value }))}
+                className="w-full bg-white/5 border border-white/10 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#E4501C]"
+              >
+                {['1','2','3','4','5','6','8','10'].map(n => (
+                  <option key={n} value={n} className="bg-[#1C2620]">{n} pers.</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-white/50 text-xs block mb-1.5">Difficulté</label>
+              <select
+                value={intent.difficulty}
+                onChange={e => setIntent(p => ({ ...p, difficulty: e.target.value }))}
+                className="w-full bg-white/5 border border-white/10 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#E4501C]"
+              >
+                <option value="easy" className="bg-[#1C2620]">🟢 Facile</option>
+                <option value="moderate" className="bg-[#1C2620]">🟡 Modéré</option>
+                <option value="hard" className="bg-[#1C2620]">🔴 Difficile</option>
+                <option value="expert" className="bg-[#1C2620]">⚫ Expert</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-white/50 text-xs block mb-1.5">Budget</label>
+              <select
+                value={intent.budget}
+                onChange={e => setIntent(p => ({ ...p, budget: e.target.value }))}
+                className="w-full bg-white/5 border border-white/10 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#E4501C]"
+              >
+                <option value="serré" className="bg-[#1C2620]">💰 Serré</option>
+                <option value="moyen" className="bg-[#1C2620]">💶 Moyen</option>
+                <option value="confortable" className="bg-[#1C2620]">💎 Confortable</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Activities */}
           <div>
-            <label className="text-white/70 text-xs font-semibold uppercase tracking-wider block mb-2">Budget</label>
-            <select
-              value={params.budget}
-              onChange={e => setParams(p => ({ ...p, budget: e.target.value }))}
-              className="w-full bg-white/5 border border-white/10 text-white text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-[#E4501C]"
-            >
-              <option value="serré" className="bg-[#1C2620]">💰 Serré</option>
-              <option value="moyen" className="bg-[#1C2620]">💶 Moyen</option>
-              <option value="confortable" className="bg-[#1C2620]">💎 Confortable</option>
-            </select>
+            <label className="text-white/50 text-xs block mb-1.5">Activités</label>
+            <div className="grid grid-cols-2 gap-1">
+              {ACTIVITIES.map(a => (
+                <button
+                  key={a.id}
+                  onClick={() => toggleActivity(a.id)}
+                  className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all text-left ${intent.activities.includes(a.id) ? 'bg-[#E4501C]/20 text-[#E4501C] border border-[#E4501C]/30' : 'bg-white/5 text-white/50 hover:bg-white/10 border border-transparent'}`}
+                >
+                  {a.label}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* Conditions */}
+          <div>
+            <label className="text-white/50 text-xs block mb-1.5">Conditions</label>
+            <div className="grid grid-cols-3 gap-1">
+              {CONDITIONS.map(c => (
+                <button
+                  key={c.id}
+                  onClick={() => toggleCondition(c.id)}
+                  className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${intent.conditions.includes(c.id) ? 'bg-[#E4501C]/20 text-[#E4501C] border border-[#E4501C]/30' : 'bg-white/5 text-white/50 hover:bg-white/10 border border-transparent'}`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Generate button */}
+          <button
+            onClick={generateAdventure}
+            disabled={isLoading || (!intent.freeText && !intent.activities.length)}
+            className="w-full py-3 bg-gradient-to-r from-[#E4501C] to-[#c43d15] hover:from-[#c43d15] hover:to-[#a33210] disabled:opacity-40 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#E4501C]/20"
+          >
+            <Icon name="SparklesIcon" className="w-4 h-4" />
+            Créer mon aventure
+          </button>
+
+          {error && (
+            <p className="text-red-400 text-xs text-center">{error.message}</p>
+          )}
         </div>
-
-        {/* Generate button */}
-        <button
-          onClick={generateAdventure}
-          disabled={isLoading}
-          className="w-full py-3 bg-[#E4501C] hover:bg-[#c43d15] disabled:opacity-50 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#E4501C]/20"
-        >
-          <Icon name="SparklesIcon" className="w-4 h-4" />
-          Générer mon aventure
-        </button>
-
-        {error && (
-          <p className="text-red-400 text-xs text-center">{error.message}</p>
-        )}
       </div>
-    </div>
-  );
+    );
+  }
+
+  return null;
 }
