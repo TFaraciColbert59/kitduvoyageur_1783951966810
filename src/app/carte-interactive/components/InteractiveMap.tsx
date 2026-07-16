@@ -128,7 +128,7 @@ export default function InteractiveMap() {
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainerRef.current || loading) return;
+    if (!mapContainerRef.current) return;
     if (mapInitialized.current) return;
     mapInitialized.current = true;
 
@@ -159,8 +159,6 @@ export default function InteractiveMap() {
       }).addTo(map);
 
       mapRef.current = map;
-
-      renderMapData(L, map, trails, points, showTrails, activeCategories);
     });
 
     return () => {
@@ -172,11 +170,11 @@ export default function InteractiveMap() {
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading]);
+  }, []);
 
   // Re-render when data or filters change
   useEffect(() => {
-    if (!mapRef.current || loading) return;
+    if (!mapRef.current) return;
     import('leaflet').then((leafletModule) => {
       const L = leafletModule.default;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
