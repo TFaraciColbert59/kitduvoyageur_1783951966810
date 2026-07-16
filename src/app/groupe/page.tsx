@@ -176,7 +176,9 @@ function GroupePageInner() {
   const [aiAsked, setAiAsked] = useState(false);
   const [conseilAsked, setConseilAsked] = useState(false);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (aiError) toast(aiError.message, 'error'); }, [aiError]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (conseilError) toast(conseilError.message, 'error'); }, [conseilError]);
 
   // Update AI response as streaming chunks arrive
@@ -193,7 +195,9 @@ function GroupePageInner() {
     }
   }, [conseilResponse, conseilAsked]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadMyGroups(); }, [user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (selectedGroup) {
       loadGroupData(selectedGroup.id);

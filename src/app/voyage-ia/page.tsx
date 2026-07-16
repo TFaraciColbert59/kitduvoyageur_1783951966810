@@ -463,7 +463,7 @@ Génère un plan d'aventure complet structuré EXACTEMENT comme suit :
             <span className="text-[#E4501C]">en aventure complète</span>
           </h1>
           <p className="text-white/60 text-lg max-w-2xl mx-auto">
-            Donnez une idée, un rêve ou une destination. L'IA construit l'intégralité de votre expérience — itinéraire, logistique, kit idéal.
+            Donnez une idée, un rêve ou une destination. L&apos;IA construit l&apos;intégralité de votre expérience — itinéraire, logistique, kit idéal.
           </p>
         </div>
       </section>
@@ -501,7 +501,7 @@ Génère un plan d'aventure complet structuré EXACTEMENT comme suit :
 
             {/* Examples */}
             <div>
-              <p className="text-xs text-white/40 uppercase tracking-wider mb-3">Exemples d'aventures</p>
+              <p className="text-xs text-white/40 uppercase tracking-wider mb-3">Exemples d&apos;aventures</p>
               <div className="flex flex-wrap gap-2">
                 {EXAMPLE_DESTINATIONS.map((ex) => (
                   <button
@@ -775,7 +775,7 @@ Génère un plan d'aventure complet structuré EXACTEMENT comme suit :
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-white mb-2">Création de votre aventure en cours…</h3>
-                <p className="text-sm text-white/50">L'IA analyse votre profil et construit votre plan complet</p>
+                <p className="text-sm text-white/50">L&apos;IA analyse votre profil et construit votre plan complet</p>
               </div>
               {result && (
                 <div className="w-full text-left bg-white/5 rounded-xl p-4 max-h-48 overflow-y-auto">
