@@ -199,11 +199,15 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
 
       const res = await fetch(`/api/map/explore?${params}`);
       const data = await res.json();
+
+      console.log("TRAILS RECEIVED:", (data.trails || []).length);
+      console.log("FIRST MAP TRAIL:", data.trails?.[0]);
+
       setTrails(data.trails || []);
       setPoints(data.outdoor_points || []);
       setStats({ trails: data.trails?.length || 0, points: data.outdoor_points?.length || 0 });
-    } catch {
-      // silent
+    } catch (err) {
+      console.error("loadData error:", err);
     } finally {
       setLoading(false);
     }
@@ -335,6 +339,7 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
 
     // ── Trails ──────────────────────────────────────────────
     if (showT) {
+      let rendered = 0;
       trailData.forEach(trail => {
         // Only render trails that have real GPS geometry
         if (!trail.geojson?.coordinates || trail.geojson.coordinates.length < 2) return;
@@ -343,7 +348,7 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
 
         // Convert GeoJSON [lng, lat] → Leaflet [lat, lng]
         const coords: [number, number][] = trail.geojson.coordinates.map(
-          (point) => [point[1], point[0]] as [number, number]
+          (coordinate) => [coordinate[1], coordinate[0]] as [number, number]
         );
 
         // Outer shadow for depth and contrast
@@ -393,7 +398,10 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
 
         polylinesRef.current.push(shadow, polyline);
         markersRef.current.push(marker);
+        rendered++;
       });
+
+      console.log("TRAILS RENDERED ON MAP:", rendered);
     }
 
     // ── Outdoor Points ────────────────────────────────────────
