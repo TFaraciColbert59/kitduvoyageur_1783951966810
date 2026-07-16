@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
     let trailsQuery = supabase
       .from('trails')
       .select('id, name, trail_type, country, region, distance_km, duration_hours, difficulty, elevation_gain, altitude_max, start_lat, start_lng, end_lat, end_lng, is_loop, source, geojson, description, surface, metadata, gps_points_count')
+      .not('geojson', 'is', null)
+      .gte('gps_points_count', 20)
       .limit(limit);
 
     if (hasBbox) {

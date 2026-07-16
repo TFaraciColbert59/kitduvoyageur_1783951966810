@@ -19,7 +19,7 @@ const InteractiveMap = dynamic(() => import('./components/InteractiveMap'), {
   ),
 });
 
-type ActivePanel = 'generator' | 'legend' | null;
+type ActivePanel = 'generator' | 'legend' | 'sync' | null;
 
 const WORLD_STATS = [
   { icon: '🥾', label: 'Sentiers', value: '15M+', desc: 'dans le monde' },
@@ -28,9 +28,38 @@ const WORLD_STATS = [
   { icon: '💧', label: 'Sources', value: '2M+', desc: 'points d\'eau' },
 ];
 
+const SYNC_ZONES = [
+  { key: 'chamonix', label: '🏔 Chamonix / Mont-Blanc', desc: 'Zone test recommandée' },
+  { key: 'alpes_nord', label: '⛰ Alpes du Nord', desc: 'Savoie, Isère' },
+  { key: 'alpes_sud', label: '🌄 Alpes du Sud', desc: 'Hautes-Alpes' },
+  { key: 'mercantour', label: '🦅 Mercantour', desc: 'Alpes-Maritimes' },
+  { key: 'pyrenees', label: '🏕 Pyrénées', desc: 'Pyrénées centrales' },
+  { key: 'vercors', label: '🌲 Vercors', desc: 'Drôme, Isère' },
+  { key: 'belledonne', label: '🗻 Belledonne', desc: 'Isère' },
+];
+
+interface SyncResult {
+  success: boolean;
+  label?: string;
+  trails_inserted?: number;
+  stats?: {
+    ways_fetched: number;
+    relations_fetched: number;
+    valid_gps_trails: number;
+    rejected_insufficient_gps: number;
+  };
+  message?: string;
+  error?: string;
+  sample?: Array<{ name: string; gps_points: number; distance_km: number }>;
+}
+
 export default function CarteInteractivePage() {
   const [activePanel, setActivePanel] = useState<ActivePanel>('generator');
   const [lastAdventure, setLastAdventure] = useState('');
+  const [syncing, setSyncing] = useState(false);
+  const [syncingZone, setSyncingZone] = useState('');
+  const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
+  const [dbTrailsCount, setDbTrailsCount] = useState<number | null>(null);
 
   // Inject Leaflet CSS
   useEffect(() => {
@@ -53,6 +82,39 @@ export default function CarteInteractivePage() {
     window.addEventListener('createAdventureFromTrail', handleTrailEvent);
     return () => window.removeEventListener('createAdventureFromTrail', handleTrailEvent);
   }, []);
+
+  // Load DB trails count when sync panel opens
+  useEffect(() => {
+    if (activePanel === 'sync') {
+      fetch('/api/map/sync-trails')
+        .then(r => r.json())
+        .then(d => setDbTrailsCount(d.trails_in_db ?? 0))
+        .catch(() => {});
+    }
+  }, [activePanel]);
+
+  const syncZone = async (zoneKey: string, zoneLabel: string) => {
+    setSyncing(true);
+    setSyncingZone(zoneLabel);
+    setSyncResult(null);
+    try {
+      const res = await fetch('/api/map/sync-trails', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ zone: zoneKey }),
+      });
+      const data: SyncResult = await res.json();
+      setSyncResult(data);
+      if (data.success) {
+        setDbTrailsCount(prev => (prev ?? 0) + (data.trails_inserted ?? 0));
+      }
+    } catch (err) {
+      setSyncResult({ success: false, error: String(err) });
+    } finally {
+      setSyncing(false);
+      setSyncingZone('');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#1C2620] flex flex-col">
@@ -91,9 +153,20 @@ export default function CarteInteractivePage() {
               <span className="hidden sm:inline">Mes aventures</span>
             </Link>
             <button
+              onClick={() => setActivePanel(activePanel === 'sync' ? null : 'sync')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                activePanel === 'sync' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'
+              }`}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span className="hidden sm:inline">Importer OSM</span>
+            </button>
+            <button
               onClick={() => setActivePanel(activePanel === 'generator' ? null : 'generator')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                activePanel === 'generator' ?'bg-[#E4501C] text-white shadow-lg shadow-[#E4501C]/20' :'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'
+                activePanel === 'generator' ? 'bg-[#E4501C] text-white shadow-lg shadow-[#E4501C]/20' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'
               }`}
             >
               <Icon name="SparklesIcon" className="w-3.5 h-3.5" />
@@ -102,7 +175,7 @@ export default function CarteInteractivePage() {
             <button
               onClick={() => setActivePanel(activePanel === 'legend' ? null : 'legend')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                activePanel === 'legend' ?'bg-white/20 text-white' :'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'
+                activePanel === 'legend' ? 'bg-white/20 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'
               }`}
             >
               <Icon name="InformationCircleIcon" className="w-3.5 h-3.5" />
@@ -125,6 +198,116 @@ export default function CarteInteractivePage() {
         {/* Side panel */}
         {activePanel && (
           <div className="w-80 xl:w-96 flex-shrink-0 border-l border-white/10 bg-[#1a2420] flex flex-col overflow-hidden">
+
+            {/* ── OSM Import Panel ── */}
+            {activePanel === 'sync' && (
+              <div className="p-4 overflow-y-auto flex-1">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-white font-bold text-sm flex items-center gap-2">
+                    <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Importer les randonnées OSM
+                  </h3>
+                  {dbTrailsCount !== null && (
+                    <span className="text-xs bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                      {dbTrailsCount} en base
+                    </span>
+                  )}
+                </div>
+
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 mb-4">
+                  <p className="text-blue-300 text-xs leading-relaxed">
+                    <strong>Pipeline :</strong> Overpass API → Ways+Nodes → Coordonnées GPS → GeoJSON LineString → Supabase<br/>
+                    <span className="text-blue-300/70 mt-1 block">Minimum 20 points GPS par sentier. Les lignes droites sont rejetées.</span>
+                  </p>
+                </div>
+
+                {/* Sync result */}
+                {syncResult && (
+                  <div className={`rounded-xl p-3 mb-4 border ${syncResult.success ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-red-500/10 border-red-500/20'}`}>
+                    {syncResult.success ? (
+                      <div>
+                        <p className="text-emerald-400 text-xs font-semibold mb-2">✅ {syncResult.message}</p>
+                        {syncResult.stats && (
+                          <div className="grid grid-cols-2 gap-1.5 text-xs">
+                            <div className="bg-white/5 rounded-lg p-2">
+                              <div className="text-white font-bold">{syncResult.stats.ways_fetched}</div>
+                              <div className="text-white/40">Ways OSM</div>
+                            </div>
+                            <div className="bg-white/5 rounded-lg p-2">
+                              <div className="text-white font-bold">{syncResult.stats.relations_fetched}</div>
+                              <div className="text-white/40">Relations OSM</div>
+                            </div>
+                            <div className="bg-emerald-500/10 rounded-lg p-2">
+                              <div className="text-emerald-400 font-bold">{syncResult.stats.valid_gps_trails}</div>
+                              <div className="text-white/40">GPS valides</div>
+                            </div>
+                            <div className="bg-white/5 rounded-lg p-2">
+                              <div className="text-white/60 font-bold">{syncResult.stats.rejected_insufficient_gps}</div>
+                              <div className="text-white/40">Rejetés</div>
+                            </div>
+                          </div>
+                        )}
+                        {syncResult.sample && syncResult.sample.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1">Exemples importés</p>
+                            {syncResult.sample.map((s, i) => (
+                              <div key={i} className="text-xs text-white/60 py-0.5 flex justify-between">
+                                <span className="truncate flex-1">{s.name}</span>
+                                <span className="text-emerald-400 ml-2 flex-shrink-0">{s.gps_points} pts</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-red-400 text-xs font-semibold mb-1">❌ Erreur</p>
+                        <p className="text-red-300/70 text-xs">{syncResult.error || 'Overpass API indisponible'}</p>
+                        <p className="text-white/40 text-[10px] mt-1">Réessayez dans quelques minutes.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Zone buttons */}
+                <p className="text-white/40 text-[10px] uppercase tracking-wider mb-2">Zones disponibles</p>
+                <div className="space-y-2">
+                  {SYNC_ZONES.map(zone => (
+                    <button
+                      key={zone.key}
+                      onClick={() => syncZone(zone.key, zone.label)}
+                      disabled={syncing}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-left transition-all ${
+                        syncing && syncingZone === zone.label
+                          ? 'bg-emerald-500/20 border-emerald-500/40 text-white' :'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white hover:border-emerald-500/30 disabled:opacity-40'
+                      }`}
+                    >
+                      <div>
+                        <div className="text-xs font-medium">{zone.label}</div>
+                        <div className="text-[10px] text-white/40">{zone.desc}</div>
+                      </div>
+                      {syncing && syncingZone === zone.label ? (
+                        <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                      ) : (
+                        <svg className="w-4 h-4 text-white/30 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-4 bg-white/5 rounded-xl p-3">
+                  <p className="text-white/40 text-[10px] leading-relaxed">
+                    💡 <strong className="text-white/60">Commencez par Chamonix</strong> — zone petite, garantie de fonctionner.<br/>
+                    Après import, zoomez sur la zone pour voir les vrais sentiers GPS.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {activePanel === 'generator' && (
               <AdventureGenerator onAdventureGenerated={setLastAdventure} />
             )}
@@ -210,8 +393,8 @@ export default function CarteInteractivePage() {
                   <div className="bg-white/5 rounded-xl p-3">
                     <h4 className="text-white text-xs font-semibold mb-2">🔄 Synchronisation OSM</h4>
                     <p className="text-white/50 text-xs leading-relaxed">
-                      Cliquez sur &ldquo;Sync OSM&rdquo; sur la carte pour importer les données réelles
-                      d&apos;OpenStreetMap pour la région affichée. Cache 24h pour éviter la surcharge.
+                      Cliquez sur &ldquo;Importer OSM&rdquo; pour importer les vraies randonnées
+                      d&apos;OpenStreetMap. Chaque sentier possède une trace GPS complète (≥20 points).
                     </p>
                   </div>
                 </div>
