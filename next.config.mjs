@@ -66,6 +66,7 @@ const nextConfig = {
         /src[/\\]app[/\\]profil[/\\]/,
         /src[/\\]app[/\\]compte[/\\]/,
         /src[/\\]app[/\\]evenements[/\\]/,
+        /src[/\\]app[/\\]carte-interactive[/\\]/,
       ],
       use: [{
         loader: '@dhiwise/component-tagger/nextLoader',

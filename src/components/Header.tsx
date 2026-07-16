@@ -35,6 +35,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Empreinte carbone', href: '/carbone', desc: 'Calculer & compenser', icon: 'GlobeAmericasIcon' },
       { label: 'Copilote IA', href: '/copilote', desc: 'Assistant voyage Gemini', icon: 'SparklesIcon' },
       { label: 'Créateur de Voyage IA', href: '/voyage-ia', desc: 'Plan d\'aventure complet en IA', icon: 'MapIcon' },
+      { label: 'Carte Interactive', href: '/carte-interactive', desc: 'Sentiers, refuges & sommets', icon: 'MapPinIcon' },
     ],
   },
   {
