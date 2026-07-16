@@ -146,26 +146,53 @@ function GroupePageInner() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [showExpenseModal, setShowExpenseModal] = useState(false);
-  const [expenseForm, setExpenseForm] = useState({ title: '', amount: '', category: 'Divers' });
+  const [expenseForm, setExpenseForm] = useState({ title: '', amount: '', category: 'Divers', paid_by: '' });
+  const [addingExpense, setAddingExpense] = useState(false);
 
   const [showKitModal, setShowKitModal] = useState(false);
   const [kitForm, setKitForm] = useState({ name: '', weight_grams: '', category: 'Divers', quantity: '1', assigned_to: '' });
+  const [addingKit, setAddingKit] = useState(false);
 
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [taskForm, setTaskForm] = useState({ title: '', due_date: '', assigned_to: '' });
+  const [addingTask, setAddingTask] = useState(false);
 
   const [showPollModal, setShowPollModal] = useState(false);
   const [pollForm, setPollForm] = useState({ question: '', options: ['', '', ''] });
+  const [addingPoll, setAddingPoll] = useState(false);
 
   const [joinCode, setJoinCode] = useState('');
   const [joining, setJoining] = useState(false);
 
   const [aiPrompt, setAiPrompt] = useState('');
+  const [aiConseils, setAiConseils] = useState('');
+  const [loadingConseils, setLoadingConseils] = useState(false);
+
+  // Use streaming for real-time AI responses
+  const { response: chatResponse, isLoading: aiLoading, error: aiError, sendMessage: sendAiMessage } = useChat('GEMINI', 'gemini/gemini-2.5-flash', true);
+  const { response: conseilResponse, isLoading: conseilLoading, error: conseilError, sendMessage: sendConseilMessage } = useChat('GEMINI', 'gemini/gemini-2.5-flash', true);
+
   const [aiResponse, setAiResponse] = useState('');
-  const { response: chatResponse, isLoading: aiLoading, error: aiError, sendMessage: sendAiMessage } = useChat('GEMINI', 'gemini/gemini-2.5-flash', false);
+  const [aiAsked, setAiAsked] = useState(false);
+  const [conseilAsked, setConseilAsked] = useState(false);
 
   useEffect(() => { if (aiError) toast(aiError.message, 'error'); }, [aiError]);
-  useEffect(() => { if (chatResponse) setAiResponse(chatResponse); }, [chatResponse]);
+  useEffect(() => { if (conseilError) toast(conseilError.message, 'error'); }, [conseilError]);
+
+  // Update AI response as streaming chunks arrive
+  useEffect(() => {
+    if (aiAsked && chatResponse) {
+      setAiResponse(chatResponse);
+    }
+  }, [chatResponse, aiAsked]);
+
+  // Update conseils as streaming chunks arrive
+  useEffect(() => {
+    if (conseilAsked && conseilResponse) {
+      setAiConseils(conseilResponse);
+    }
+  }, [conseilResponse, conseilAsked]);
+
   useEffect(() => { loadMyGroups(); }, [user]);
   useEffect(() => {
     if (selectedGroup) {
@@ -237,7 +264,11 @@ function GroupePageInner() {
     const channel = supabase.channel(`group_chat_${groupId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'group_messages', filter: `group_id=eq.${groupId}` }, async (payload) => {
         const { data } = await supabase.from('group_messages').select('*, user_profiles(full_name, avatar_url)').eq('id', payload.new.id).single();
-        if (data) setMessages(prev => [...prev, data]);
+        if (data) setMessages(prev => {
+          // Avoid duplicates
+          if (prev.find(m => m.id === data.id)) return prev;
+          return [...prev, data];
+        });
       }).subscribe();
     return () => { supabase.removeChannel(channel); };
   }
@@ -254,14 +285,15 @@ function GroupePageInner() {
         budget_target: parseFloat(createForm.budget_target) || 0, max_members: parseInt(createForm.max_members) || 20, owner_id: user.id,
       }).select().single();
       if (error) throw error;
-      await supabase.from('group_members').insert({ group_id: group.id, user_id: user.id, role: 'organizer', status: 'active' });
+      const { error: memberError } = await supabase.from('group_members').insert({ group_id: group.id, user_id: user.id, role: 'organizer', status: 'active' });
+      if (memberError) console.error('Member insert error:', memberError);
       toast('Groupe créé avec succès !', 'success');
       setShowCreateModal(false);
       setCreateForm({ name: '', description: '', destination: '', theme: 'Trek', visibility: 'public', departure_date: '', return_date: '', budget_target: '', max_members: '20' });
       await loadMyGroups();
       setSelectedGroup(group);
       router.replace(`/groupe?group=${group.id}`, { scroll: false });
-    } catch (err: unknown) { toast((err as Error).message || 'Erreur', 'error'); }
+    } catch (err: unknown) { toast((err as Error).message || 'Erreur lors de la création', 'error'); }
     finally { setCreating(false); }
   }
 
@@ -314,7 +346,8 @@ function GroupePageInner() {
     if (!user || !selectedGroup) return;
     if (!confirm('Quitter ce groupe ?')) return;
     try {
-      await supabase.from('group_members').delete().eq('group_id', selectedGroup.id).eq('user_id', user.id);
+      const { error } = await supabase.from('group_members').delete().eq('group_id', selectedGroup.id).eq('user_id', user.id);
+      if (error) throw error;
       toast('Vous avez quitté le groupe', 'success');
       setSelectedGroup(null);
       await loadMyGroups();
@@ -323,86 +356,196 @@ function GroupePageInner() {
 
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();
-    if (!user || !selectedGroup || !newMessage.trim()) return;
+    if (!user) { toast('Connectez-vous pour envoyer un message', 'error'); return; }
+    if (!selectedGroup) { toast('Aucun groupe sélectionné', 'error'); return; }
+    if (!newMessage.trim()) return;
     setSendingMsg(true);
+    const msgContent = newMessage.trim();
+    setNewMessage('');
     try {
-      await supabase.from('group_messages').insert({ group_id: selectedGroup.id, user_id: user.id, content: newMessage.trim() });
-      setNewMessage('');
-    } catch { toast('Erreur envoi message', 'error'); }
-    finally { setSendingMsg(false); }
+      const { error } = await supabase.from('group_messages').insert({
+        group_id: selectedGroup.id,
+        user_id: user.id,
+        content: msgContent,
+      });
+      if (error) {
+        setNewMessage(msgContent);
+        throw error;
+      }
+    } catch (err: unknown) {
+      toast((err as Error).message || 'Erreur lors de l\'envoi', 'error');
+    } finally {
+      setSendingMsg(false);
+    }
   }
 
   async function handleAddExpense(e: React.FormEvent) {
     e.preventDefault();
-    if (!user || !selectedGroup) return;
+    if (!user || !selectedGroup) { toast('Connectez-vous pour ajouter une dépense', 'error'); return; }
+    if (!expenseForm.title.trim() || !expenseForm.amount) { toast('Remplissez tous les champs obligatoires', 'error'); return; }
+    setAddingExpense(true);
     try {
-      await supabase.from('group_expenses').insert({ group_id: selectedGroup.id, paid_by: user.id, title: expenseForm.title, amount: parseFloat(expenseForm.amount), category: expenseForm.category, split_between: members.map(m => m.user_id) });
-      toast('Dépense ajoutée', 'success');
+      const payerId = expenseForm.paid_by || user.id;
+      const { error } = await supabase.from('group_expenses').insert({
+        group_id: selectedGroup.id,
+        paid_by: payerId,
+        title: expenseForm.title.trim(),
+        amount: parseFloat(expenseForm.amount),
+        category: expenseForm.category,
+        split_between: members.map(m => m.user_id),
+        status: 'pending',
+      });
+      if (error) throw error;
+      toast('Dépense ajoutée !', 'success');
       setShowExpenseModal(false);
-      setExpenseForm({ title: '', amount: '', category: 'Divers' });
-      loadGroupData(selectedGroup.id);
-    } catch { toast('Erreur', 'error'); }
+      setExpenseForm({ title: '', amount: '', category: 'Divers', paid_by: '' });
+      await loadGroupData(selectedGroup.id);
+    } catch (err: unknown) {
+      toast((err as Error).message || 'Erreur lors de l\'ajout de la dépense', 'error');
+    } finally {
+      setAddingExpense(false);
+    }
   }
 
   async function handleAddKitItem(e: React.FormEvent) {
     e.preventDefault();
-    if (!user || !selectedGroup) return;
+    if (!user || !selectedGroup) { toast('Connectez-vous pour ajouter un article', 'error'); return; }
+    if (!kitForm.name.trim()) { toast('Le nom de l\'article est requis', 'error'); return; }
+    setAddingKit(true);
     try {
-      await supabase.from('group_kit_items').insert({ group_id: selectedGroup.id, assigned_to: kitForm.assigned_to || user.id, name: kitForm.name, weight_grams: parseInt(kitForm.weight_grams) || 0, category: kitForm.category, quantity: parseInt(kitForm.quantity) || 1 });
-      toast('Article ajouté', 'success');
+      const { error } = await supabase.from('group_kit_items').insert({
+        group_id: selectedGroup.id,
+        assigned_to: kitForm.assigned_to || user.id,
+        name: kitForm.name.trim(),
+        weight_grams: parseInt(kitForm.weight_grams) || 0,
+        category: kitForm.category,
+        quantity: parseInt(kitForm.quantity) || 1,
+      });
+      if (error) throw error;
+      toast('Article ajouté au kit !', 'success');
       setShowKitModal(false);
       setKitForm({ name: '', weight_grams: '', category: 'Divers', quantity: '1', assigned_to: '' });
-      loadGroupData(selectedGroup.id);
-    } catch { toast('Erreur', 'error'); }
+      await loadGroupData(selectedGroup.id);
+    } catch (err: unknown) {
+      toast((err as Error).message || 'Erreur lors de l\'ajout au kit', 'error');
+    } finally {
+      setAddingKit(false);
+    }
   }
 
   async function handleAddTask(e: React.FormEvent) {
     e.preventDefault();
-    if (!user || !selectedGroup) return;
+    if (!user || !selectedGroup) { toast('Connectez-vous pour créer une tâche', 'error'); return; }
+    if (!taskForm.title.trim()) { toast('Le titre de la tâche est requis', 'error'); return; }
+    setAddingTask(true);
     try {
-      await supabase.from('group_tasks').insert({ group_id: selectedGroup.id, created_by: user.id, assigned_to: taskForm.assigned_to || null, title: taskForm.title, due_date: taskForm.due_date || null, status: 'todo' });
-      toast('Tâche ajoutée', 'success');
+      const { error } = await supabase.from('group_tasks').insert({
+        group_id: selectedGroup.id,
+        created_by: user.id,
+        assigned_to: taskForm.assigned_to || null,
+        title: taskForm.title.trim(),
+        due_date: taskForm.due_date || null,
+        status: 'todo',
+      });
+      if (error) throw error;
+      toast('Tâche créée !', 'success');
       setShowTaskModal(false);
       setTaskForm({ title: '', due_date: '', assigned_to: '' });
-      loadGroupData(selectedGroup.id);
-    } catch { toast('Erreur', 'error'); }
+      await loadGroupData(selectedGroup.id);
+    } catch (err: unknown) {
+      toast((err as Error).message || 'Erreur lors de la création de la tâche', 'error');
+    } finally {
+      setAddingTask(false);
+    }
   }
 
   async function handleUpdateTaskStatus(taskId: string, status: string) {
-    await supabase.from('group_tasks').update({ status }).eq('id', taskId);
-    if (selectedGroup) loadGroupData(selectedGroup.id);
+    try {
+      const { error } = await supabase.from('group_tasks').update({ status }).eq('id', taskId);
+      if (error) throw error;
+      if (selectedGroup) await loadGroupData(selectedGroup.id);
+    } catch (err: unknown) {
+      toast((err as Error).message || 'Erreur', 'error');
+    }
   }
 
   async function handleVotePoll(pollId: string, optionIndex: number) {
     if (!user) { toast('Connectez-vous pour voter', 'error'); return; }
     try {
-      await supabase.from('group_poll_votes').upsert({ poll_id: pollId, user_id: user.id, option_index: optionIndex }, { onConflict: 'poll_id,user_id' });
-      if (selectedGroup) loadGroupData(selectedGroup.id);
-    } catch { toast('Erreur vote', 'error'); }
+      const { error } = await supabase.from('group_poll_votes').upsert(
+        { poll_id: pollId, user_id: user.id, option_index: optionIndex },
+        { onConflict: 'poll_id,user_id' }
+      );
+      if (error) throw error;
+      if (selectedGroup) await loadGroupData(selectedGroup.id);
+    } catch (err: unknown) {
+      toast((err as Error).message || 'Erreur lors du vote', 'error');
+    }
   }
 
   async function handleCreatePoll(e: React.FormEvent) {
     e.preventDefault();
-    if (!user || !selectedGroup) return;
+    if (!user || !selectedGroup) { toast('Connectez-vous pour créer un sondage', 'error'); return; }
+    if (!pollForm.question.trim()) { toast('La question est requise', 'error'); return; }
     const validOptions = pollForm.options.filter(o => o.trim());
-    if (validOptions.length < 2) { toast('Minimum 2 options', 'error'); return; }
+    if (validOptions.length < 2) { toast('Minimum 2 options requises', 'error'); return; }
+    setAddingPoll(true);
     try {
-      await supabase.from('group_polls').insert({ group_id: selectedGroup.id, created_by: user.id, question: pollForm.question, options: validOptions, status: 'open' });
-      toast('Sondage créé', 'success');
+      const { error } = await supabase.from('group_polls').insert({
+        group_id: selectedGroup.id,
+        created_by: user.id,
+        question: pollForm.question.trim(),
+        options: validOptions,
+        status: 'open',
+      });
+      if (error) throw error;
+      toast('Sondage créé !', 'success');
       setShowPollModal(false);
       setPollForm({ question: '', options: ['', '', ''] });
-      loadGroupData(selectedGroup.id);
-    } catch { toast('Erreur', 'error'); }
+      await loadGroupData(selectedGroup.id);
+    } catch (err: unknown) {
+      toast((err as Error).message || 'Erreur lors de la création du sondage', 'error');
+    } finally {
+      setAddingPoll(false);
+    }
   }
 
   async function handleAiAnalysis() {
     if (!selectedGroup || !aiPrompt.trim()) return;
     const totalWeight = kitItems.reduce((s, i) => s + i.weight_grams * i.quantity, 0);
     const context = `Groupe: ${selectedGroup.name}, Destination: ${selectedGroup.destination}, Membres: ${members.length}, Kit total: ${formatWeight(totalWeight)}, Articles: ${kitItems.map(i => i.name).join(', ')}, Budget: ${selectedGroup.budget_target}€, Dépenses: ${expenses.reduce((s, e) => s + e.amount, 0)}€`;
+    setAiResponse('');
+    setAiAsked(true);
     sendAiMessage([
       { role: 'system', content: 'Tu es un expert en voyages d\'aventure et optimisation d\'équipement. Réponds en français de manière concise et pratique.' },
       { role: 'user', content: `Contexte du groupe: ${context}\n\nQuestion: ${aiPrompt}` }
     ], { temperature: 0.7, max_tokens: 800 });
+  }
+
+  async function handleGenerateConseils() {
+    if (!selectedGroup) return;
+    const totalWeight = kitItems.reduce((s, i) => s + i.weight_grams * i.quantity, 0);
+    const tasksDoneCount = tasks.filter(t => t.status === 'done').length;
+    const totalBudgetSpent = expenses.reduce((s, e) => s + e.amount, 0);
+    const context = `
+Groupe: ${selectedGroup.name}
+Destination: ${selectedGroup.destination}
+Thème: ${selectedGroup.theme}
+Membres: ${members.length}
+Kit total: ${formatWeight(totalWeight)} (${kitItems.length} articles)
+Budget objectif: ${selectedGroup.budget_target}€, Dépensé: ${totalBudgetSpent.toFixed(0)}€
+Tâches: ${tasksDoneCount}/${tasks.length} complétées
+Score d'optimisation: ${selectedGroup.optimization_score}/100
+${selectedGroup.departure_date ? `Départ: ${new Date(selectedGroup.departure_date).toLocaleDateString('fr-FR')}` : ''}
+    `.trim();
+    setAiConseils('');
+    setConseilAsked(true);
+    setLoadingConseils(true);
+    sendConseilMessage([
+      { role: 'system', content: 'Tu es un expert en voyages d\'aventure. Génère des conseils personnalisés, pratiques et actionnables pour ce groupe de voyage. Réponds en français avec des emojis pour rendre les conseils visuels et engageants. Structure ta réponse avec 4-5 conseils clés.' },
+      { role: 'user', content: `Génère des conseils personnalisés pour notre groupe de voyage:\n\n${context}\n\nDonne-nous des conseils pratiques pour optimiser notre préparation, notre kit, notre budget et notre organisation.` }
+    ], { temperature: 0.8, max_tokens: 600 });
+    setLoadingConseils(false);
   }
 
   const totalBudget = expenses.reduce((s, e) => s + e.amount, 0);
@@ -410,7 +553,7 @@ function GroupePageInner() {
   const tasksDone = tasks.filter(t => t.status === 'done').length;
   const isOrganizer = selectedGroup?.my_role === 'organizer' || selectedGroup?.my_role === 'co_organizer' || selectedGroup?.owner_id === user?.id;
 
-  const TABS = [
+  const GROUP_TABS = [
     { id: 'overview', label: 'Vue d\'ensemble', icon: 'HomeIcon' },
     { id: 'chat', label: 'Chat', icon: 'ChatBubbleLeftRightIcon' },
     { id: 'kit', label: 'Kit groupe', icon: 'ArchiveBoxIcon' },
@@ -604,7 +747,7 @@ function GroupePageInner() {
 
                 {/* Tabs */}
                 <div className="flex gap-1 bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-1 mb-4 overflow-x-auto">
-                  {TABS.map(tab => (
+                  {GROUP_TABS.map(tab => (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id as typeof activeTab)}
@@ -751,23 +894,35 @@ function GroupePageInner() {
                       })}
                       {messages.length === 0 && (
                         <div className="flex items-center justify-center h-full">
-                          <p className="text-sm text-[#5C6B5E]">Soyez le premier à écrire !</p>
+                          <div className="text-center">
+                            <p className="text-3xl mb-2">💬</p>
+                            <p className="text-sm text-[#5C6B5E]">Soyez le premier à écrire !</p>
+                          </div>
                         </div>
                       )}
                       <div ref={messagesEndRef} />
                     </div>
-                    <form onSubmit={handleSendMessage} className="p-4 border-t border-[#C8C3B0] flex gap-2">
-                      <input
-                        value={newMessage}
-                        onChange={e => setNewMessage(e.target.value)}
-                        placeholder={user ? 'Écrire un message...' : 'Connectez-vous pour écrire'}
-                        disabled={!user || sendingMsg}
-                        className="flex-1 bg-white border border-[#C8C3B0] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 transition-colors"
-                      />
-                      <button type="submit" disabled={!user || sendingMsg || !newMessage.trim()} className="bg-[#E4501C] hover:bg-[#E4501C]/90 text-white px-4 py-2 rounded-xl transition-colors disabled:opacity-50">
-                        <Icon name="PaperAirplaneIcon" size={14} />
-                      </button>
-                    </form>
+                    {!user && (
+                      <div className="p-4 border-t border-[#C8C3B0] bg-amber-50">
+                        <p className="text-xs text-amber-700 text-center">
+                          <Link href="/connexion" className="font-600 underline">Connectez-vous</Link> pour participer au chat
+                        </p>
+                      </div>
+                    )}
+                    {user && (
+                      <form onSubmit={handleSendMessage} className="p-4 border-t border-[#C8C3B0] flex gap-2">
+                        <input
+                          value={newMessage}
+                          onChange={e => setNewMessage(e.target.value)}
+                          placeholder="Écrire un message..."
+                          disabled={sendingMsg}
+                          className="flex-1 bg-white border border-[#C8C3B0] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 transition-colors"
+                        />
+                        <button type="submit" disabled={sendingMsg || !newMessage.trim()} className="bg-[#E4501C] hover:bg-[#E4501C]/90 text-white px-4 py-2 rounded-xl transition-colors disabled:opacity-50">
+                          {sendingMsg ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Icon name="PaperAirplaneIcon" size={14} />}
+                        </button>
+                      </form>
+                    )}
                   </div>
                 )}
 
@@ -981,12 +1136,58 @@ function GroupePageInner() {
                 {/* TAB: AI */}
                 {activeTab === 'ai' && (
                   <div className="space-y-4">
+                    {/* AI Conseils Section */}
+                    <div className="bg-gradient-to-br from-[#1C2620] to-[#2A3830] rounded-2xl p-5 border border-white/10">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-xl bg-[#E4501C]/20 flex items-center justify-center">
+                            <Icon name="LightBulbIcon" size={16} className="text-[#E4501C]" />
+                          </div>
+                          <div>
+                            <h3 className="font-display font-700 text-base text-white">Conseils IA pour votre groupe</h3>
+                            <p className="text-xs text-white/40">Générés par Gemini selon votre contexte</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={handleGenerateConseils}
+                          disabled={conseilLoading || loadingConseils}
+                          className="flex items-center gap-2 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white py-2 px-4 rounded-xl text-xs font-600 transition-colors disabled:opacity-50"
+                        >
+                          {(conseilLoading || loadingConseils) ? (
+                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <Icon name="SparklesIcon" size={13} />
+                          )}
+                          {(conseilLoading || loadingConseils) ? 'Génération...' : 'Générer des conseils'}
+                        </button>
+                      </div>
+                      {(conseilLoading || loadingConseils) && !aiConseils && (
+                        <div className="flex items-center gap-3 py-4">
+                          <div className="w-5 h-5 border-2 border-[#E4501C] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                          <p className="text-sm text-white/60 animate-pulse">Gemini analyse votre groupe et génère des conseils personnalisés...</p>
+                        </div>
+                      )}
+                      {aiConseils ? (
+                        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                          <div className="text-sm text-white/90 leading-relaxed whitespace-pre-wrap">{aiConseils}</div>
+                          {(conseilLoading) && (
+                            <span className="inline-block w-1.5 h-4 bg-[#E4501C] animate-pulse ml-1 rounded-sm" />
+                          )}
+                        </div>
+                      ) : !conseilLoading && !loadingConseils && (
+                        <div className="text-center py-6">
+                          <p className="text-sm text-white/40">Cliquez sur &quot;Générer des conseils&quot; pour obtenir des recommandations IA personnalisées pour votre groupe.</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* AI Chat Section */}
                     <div className="bg-[#1C2620] rounded-2xl p-5">
                       <div className="flex items-center gap-2 mb-3">
                         <Icon name="SparklesIcon" size={18} className="text-[#E4501C]" />
                         <h3 className="font-display font-700 text-base text-white">Assistant IA Gemini pour votre groupe</h3>
                       </div>
-                      <p className="text-sm text-white/50 mb-4">Analysez votre kit, obtenez des recommandations d'itinéraire, optimisez votre budget et évaluez la compatibilité de votre équipe.</p>
+                      <p className="text-sm text-white/50 mb-4">Analysez votre kit, obtenez des recommandations d&apos;itinéraire, optimisez votre budget et évaluez la compatibilité de votre équipe.</p>
                       <div className="flex flex-wrap gap-2 mb-4">
                         {['Optimise la répartition du kit', 'Analyse les risques du voyage', 'Suggère un itinéraire détaillé', 'Évalue la compatibilité du groupe', 'Calcule le budget optimal'].map(prompt => (
                           <button key={prompt} onClick={() => setAiPrompt(prompt)} className="text-xs px-3 py-1.5 rounded-full border border-white/20 text-white/70 hover:border-[#E4501C]/60 hover:text-white transition-colors">
@@ -1000,7 +1201,7 @@ function GroupePageInner() {
                           onChange={e => setAiPrompt(e.target.value)}
                           placeholder="Posez une question sur votre groupe..."
                           className="flex-1 bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#E4501C]/60 transition-colors"
-                          onKeyDown={e => e.key === 'Enter' && handleAiAnalysis()}
+                          onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleAiAnalysis()}
                         />
                         <button onClick={handleAiAnalysis} disabled={aiLoading || !aiPrompt.trim()} className="flex items-center gap-2 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white py-2.5 px-4 rounded-xl text-sm font-600 transition-colors disabled:opacity-50">
                           {aiLoading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Icon name="SparklesIcon" size={14} />}
@@ -1008,15 +1209,30 @@ function GroupePageInner() {
                         </button>
                       </div>
                     </div>
-                    {aiResponse && (
+
+                    {/* AI Response */}
+                    {(aiResponse || aiLoading) && (
                       <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5">
                         <div className="flex items-center gap-2 mb-3">
                           <Icon name="SparklesIcon" size={14} className="text-[#E4501C]" />
                           <span className="font-display font-700 text-sm text-[#1C2620]">Analyse Gemini</span>
+                          {aiLoading && <div className="w-3 h-3 border-2 border-[#E4501C] border-t-transparent rounded-full animate-spin ml-auto" />}
                         </div>
-                        <div className="text-sm text-[#1C2620] leading-relaxed whitespace-pre-wrap">{aiResponse}</div>
+                        {aiLoading && !aiResponse && (
+                          <div className="flex items-center gap-2 py-2">
+                            <div className="w-4 h-4 border-2 border-[#E4501C] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                            <p className="text-sm text-[#5C6B5E] animate-pulse">Gemini analyse votre groupe...</p>
+                          </div>
+                        )}
+                        {aiResponse && (
+                          <div className="text-sm text-[#1C2620] leading-relaxed whitespace-pre-wrap">
+                            {aiResponse}
+                            {aiLoading && <span className="inline-block w-1.5 h-4 bg-[#E4501C] animate-pulse ml-1 rounded-sm" />}
+                          </div>
+                        )}
                       </div>
                     )}
+
                     <div className="grid grid-cols-2 gap-3">
                       <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4">
                         <h4 className="font-display font-700 text-xs text-[#5C6B5E] mb-2 uppercase tracking-wider">Contexte groupe</h4>
@@ -1060,7 +1276,7 @@ function GroupePageInner() {
                 <div className="text-center">
                   <p className="text-6xl mb-4">🗺️</p>
                   <h3 className="font-display font-700 text-lg text-[#1C2620] mb-2">Aucun groupe sélectionné</h3>
-                  <p className="text-sm text-[#5C6B5E] mb-4">Créez un groupe ou rejoignez-en un avec un code d'invitation</p>
+                  <p className="text-sm text-[#5C6B5E] mb-4">Créez un groupe ou rejoignez-en un avec un code d&apos;invitation</p>
                   <div className="flex gap-3 justify-center">
                     <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white px-4 py-2.5 rounded-xl text-sm font-600 transition-colors">
                       <Icon name="PlusIcon" size={14} /> Créer un groupe
@@ -1148,7 +1364,7 @@ function GroupePageInner() {
         </div>
       )}
 
-      {/* Expense Modal */}
+      {/* Expense Modal — with payer selection */}
       {showExpenseModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-md p-6 shadow-2xl">
@@ -1159,10 +1375,28 @@ function GroupePageInner() {
             <form onSubmit={handleAddExpense} className="space-y-4">
               <div><label className={labelCls}>Description *</label><input required value={expenseForm.title} onChange={e => setExpenseForm({ ...expenseForm, title: e.target.value })} className={inputCls} placeholder="Nuit refuge Namche" /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className={labelCls}>Montant (€) *</label><input required type="number" step="0.01" value={expenseForm.amount} onChange={e => setExpenseForm({ ...expenseForm, amount: e.target.value })} className={inputCls} /></div>
+                <div><label className={labelCls}>Montant (€) *</label><input required type="number" step="0.01" min="0.01" value={expenseForm.amount} onChange={e => setExpenseForm({ ...expenseForm, amount: e.target.value })} className={inputCls} placeholder="45.00" /></div>
                 <div><label className={labelCls}>Catégorie</label><select value={expenseForm.category} onChange={e => setExpenseForm({ ...expenseForm, category: e.target.value })} className={selectCls}>{EXPENSE_CATEGORIES.map(c => <option key={c}>{c}</option>)}</select></div>
               </div>
-              <button type="submit" className="w-full py-3 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white rounded-xl font-700 transition-colors">Ajouter</button>
+              <div>
+                <label className={labelCls}>Payé par *</label>
+                <select
+                  value={expenseForm.paid_by}
+                  onChange={e => setExpenseForm({ ...expenseForm, paid_by: e.target.value })}
+                  className={selectCls}
+                >
+                  <option value="">Moi-même ({user?.email?.split('@')[0]})</option>
+                  {members.filter(m => m.user_id !== user?.id).map(m => (
+                    <option key={m.user_id} value={m.user_id}>
+                      {m.user_profiles?.full_name || 'Membre'}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-[#5C6B5E] mt-1">La dépense sera répartie entre tous les membres</p>
+              </div>
+              <button type="submit" disabled={addingExpense} className="w-full py-3 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white rounded-xl font-700 transition-colors disabled:opacity-50">
+                {addingExpense ? 'Ajout...' : 'Ajouter la dépense'}
+              </button>
             </form>
           </div>
         </div>
@@ -1177,14 +1411,24 @@ function GroupePageInner() {
               <button onClick={() => setShowKitModal(false)} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
             </div>
             <form onSubmit={handleAddKitItem} className="space-y-4">
-              <div><label className={labelCls}>Nom de l&apos;article *</label><input required value={kitForm.name} onChange={e => setKitForm({ ...kitForm, name: e.target.value })} className={inputCls} /></div>
+              <div><label className={labelCls}>Nom de l&apos;article *</label><input required value={kitForm.name} onChange={e => setKitForm({ ...kitForm, name: e.target.value })} className={inputCls} placeholder="Tente 2 places" /></div>
               <div className="grid grid-cols-3 gap-3">
-                <div><label className={labelCls}>Poids (g)</label><input type="number" value={kitForm.weight_grams} onChange={e => setKitForm({ ...kitForm, weight_grams: e.target.value })} className={inputCls} /></div>
+                <div><label className={labelCls}>Poids (g)</label><input type="number" min="0" value={kitForm.weight_grams} onChange={e => setKitForm({ ...kitForm, weight_grams: e.target.value })} className={inputCls} placeholder="1200" /></div>
                 <div><label className={labelCls}>Qté</label><input type="number" min={1} value={kitForm.quantity} onChange={e => setKitForm({ ...kitForm, quantity: e.target.value })} className={inputCls} /></div>
                 <div><label className={labelCls}>Catégorie</label><select value={kitForm.category} onChange={e => setKitForm({ ...kitForm, category: e.target.value })} className={selectCls}>{KIT_CATEGORIES.map(c => <option key={c}>{c}</option>)}</select></div>
               </div>
-              <div><label className={labelCls}>Assigné à</label><select value={kitForm.assigned_to} onChange={e => setKitForm({ ...kitForm, assigned_to: e.target.value })} className={selectCls}><option value="">Moi-même</option>{members.map(m => <option key={m.user_id} value={m.user_id}>{m.user_profiles?.full_name || 'Membre'}</option>)}</select></div>
-              <button type="submit" className="w-full py-3 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white rounded-xl font-700 transition-colors">Ajouter au kit</button>
+              <div>
+                <label className={labelCls}>Assigné à</label>
+                <select value={kitForm.assigned_to} onChange={e => setKitForm({ ...kitForm, assigned_to: e.target.value })} className={selectCls}>
+                  <option value="">Moi-même</option>
+                  {members.filter(m => m.user_id !== user?.id).map(m => (
+                    <option key={m.user_id} value={m.user_id}>{m.user_profiles?.full_name || 'Membre'}</option>
+                  ))}
+                </select>
+              </div>
+              <button type="submit" disabled={addingKit} className="w-full py-3 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white rounded-xl font-700 transition-colors disabled:opacity-50">
+                {addingKit ? 'Ajout...' : 'Ajouter au kit'}
+              </button>
             </form>
           </div>
         </div>
@@ -1195,16 +1439,26 @@ function GroupePageInner() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-md p-6 shadow-2xl">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-display font-700 text-lg text-[#1C2620]">Ajouter une tâche</h3>
+              <h3 className="font-display font-700 text-lg text-[#1C2620]">Créer une tâche</h3>
               <button onClick={() => setShowTaskModal(false)} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
             </div>
             <form onSubmit={handleAddTask} className="space-y-4">
               <div><label className={labelCls}>Titre *</label><input required value={taskForm.title} onChange={e => setTaskForm({ ...taskForm, title: e.target.value })} className={inputCls} placeholder="Réserver les vols" /></div>
               <div className="grid grid-cols-2 gap-3">
                 <div><label className={labelCls}>Échéance</label><input type="date" value={taskForm.due_date} onChange={e => setTaskForm({ ...taskForm, due_date: e.target.value })} className={inputCls} /></div>
-                <div><label className={labelCls}>Assigné à</label><select value={taskForm.assigned_to} onChange={e => setTaskForm({ ...taskForm, assigned_to: e.target.value })} className={selectCls}><option value="">Non assigné</option>{members.map(m => <option key={m.user_id} value={m.user_id}>{m.user_profiles?.full_name || 'Membre'}</option>)}</select></div>
+                <div>
+                  <label className={labelCls}>Assigné à</label>
+                  <select value={taskForm.assigned_to} onChange={e => setTaskForm({ ...taskForm, assigned_to: e.target.value })} className={selectCls}>
+                    <option value="">Non assigné</option>
+                    {members.map(m => (
+                      <option key={m.user_id} value={m.user_id}>{m.user_profiles?.full_name || 'Membre'}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <button type="submit" className="w-full py-3 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white rounded-xl font-700 transition-colors">Créer la tâche</button>
+              <button type="submit" disabled={addingTask} className="w-full py-3 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white rounded-xl font-700 transition-colors disabled:opacity-50">
+                {addingTask ? 'Création...' : 'Créer la tâche'}
+              </button>
             </form>
           </div>
         </div>
@@ -1221,15 +1475,33 @@ function GroupePageInner() {
             <form onSubmit={handleCreatePoll} className="space-y-4">
               <div><label className={labelCls}>Question *</label><input required value={pollForm.question} onChange={e => setPollForm({ ...pollForm, question: e.target.value })} className={inputCls} placeholder="Quelle date préférez-vous ?" /></div>
               <div>
-                <label className={labelCls}>Options</label>
+                <label className={labelCls}>Options (minimum 2)</label>
                 <div className="space-y-2">
                   {pollForm.options.map((opt, i) => (
-                    <input key={i} value={opt} onChange={e => { const opts = [...pollForm.options]; opts[i] = e.target.value; setPollForm({ ...pollForm, options: opts }); }} className={inputCls} placeholder={`Option ${i + 1}`} />
+                    <div key={i} className="flex gap-2">
+                      <input
+                        value={opt}
+                        onChange={e => { const opts = [...pollForm.options]; opts[i] = e.target.value; setPollForm({ ...pollForm, options: opts }); }}
+                        className={inputCls}
+                        placeholder={`Option ${i + 1}`}
+                      />
+                      {pollForm.options.length > 2 && (
+                        <button type="button" onClick={() => { const opts = pollForm.options.filter((_, idx) => idx !== i); setPollForm({ ...pollForm, options: opts }); }} className="p-2 text-red-400 hover:text-red-600 transition-colors flex-shrink-0">
+                          <Icon name="XMarkIcon" size={16} />
+                        </button>
+                      )}
+                    </div>
                   ))}
-                  <button type="button" onClick={() => setPollForm({ ...pollForm, options: [...pollForm.options, ''] })} className="text-xs text-[#E4501C] hover:underline">+ Ajouter une option</button>
+                  {pollForm.options.length < 6 && (
+                    <button type="button" onClick={() => setPollForm({ ...pollForm, options: [...pollForm.options, ''] })} className="text-xs text-[#E4501C] hover:underline flex items-center gap-1">
+                      <Icon name="PlusIcon" size={12} /> Ajouter une option
+                    </button>
+                  )}
                 </div>
               </div>
-              <button type="submit" className="w-full py-3 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white rounded-xl font-700 transition-colors">Créer le sondage</button>
+              <button type="submit" disabled={addingPoll} className="w-full py-3 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white rounded-xl font-700 transition-colors disabled:opacity-50">
+                {addingPoll ? 'Création...' : 'Créer le sondage'}
+              </button>
             </form>
           </div>
         </div>
