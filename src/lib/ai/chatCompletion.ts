@@ -74,7 +74,9 @@ export async function getStreamingChatCompletion(
         break;
       }
 
-      buffer += decoder.decode(value, { stream: true });
+      if (value) {
+        buffer += decoder.decode(value, { stream: true });
+      }
       const lines = buffer.split('\n');
       buffer = lines.pop() || '';
 

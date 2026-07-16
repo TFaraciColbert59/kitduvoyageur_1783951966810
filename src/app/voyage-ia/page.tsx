@@ -249,6 +249,9 @@ export default function VoyageIAPage() {
 
   const { response, isLoading, error, sendMessage } = useChat('GEMINI', 'gemini/gemini-2.0-flash', true);
 
+  // Track previous isLoading to detect the true→false transition
+  const wasLoadingRef = useRef(false);
+
   // Stream result into state
   useEffect(() => {
     if (phase !== 'generating') return;
@@ -258,16 +261,24 @@ export default function VoyageIAPage() {
       setResult({ raw: response });
     }
 
-    // Transition to result when loading finishes
-    if (!isLoading && (response || error)) {
-      if (error && !response) {
-        // Show error state — go back to interview
-        setPhase('interview');
-        return;
-      }
-      setPhase('result');
-      setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    // Detect the moment loading finishes (true → false transition)
+    if (isLoading) {
+      wasLoadingRef.current = true;
+      return;
     }
+
+    // Only act on the transition, not on every render where isLoading is already false
+    if (!wasLoadingRef.current) return;
+    wasLoadingRef.current = false;
+
+    // Transition to result when loading finishes
+    if (error && !response) {
+      // Show error state — go back to interview
+      setPhase('interview');
+      return;
+    }
+    setPhase('result');
+    setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
   }, [response, isLoading, error, phase]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
