@@ -346,7 +346,7 @@ function ClubDetailModal({
         </div>
 
         {/* Tabs */}
-        <div className="flex overflow-x-auto border-b border-border bg-card">
+        <div className="flex overflow-x-auto border-b border-border bg-card scrollbar-hide">
           {tabs.map((tab) => (
             <button
               key={tab.id}

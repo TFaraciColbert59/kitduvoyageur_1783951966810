@@ -898,6 +898,7 @@ function CategoriesSection() {
 export default function AdminPage() {
   const [activeSection, setActiveSection] = useState<AdminSection>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const groups = [...new Set(SIDEBAR_ITEMS.map(i => i.group))];
 
@@ -918,9 +919,20 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-[#151F1A] text-white flex" style={{ paddingTop: 0 }}>
+      {/* Mobile sidebar overlay */}
+      {mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 lg:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Fixed Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full bg-[#1C2620] border-r border-white/8 flex flex-col z-40 transition-all duration-300 ${sidebarCollapsed ? 'w-14' : 'w-56'}`}
+        className={`fixed top-0 left-0 h-full bg-[#1C2620] border-r border-white/8 flex flex-col z-50 transition-all duration-300
+          ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          ${sidebarCollapsed ? 'lg:w-14' : 'lg:w-56'} w-64`}
       >
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-4 py-4 border-b border-white/8 flex-shrink-0">
@@ -992,19 +1004,29 @@ export default function AdminPage() {
       </aside>
 
       {/* Main content */}
-      <main className={`flex-1 min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'ml-14' : 'ml-56'}`}>
+      <main className={`flex-1 min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-14' : 'lg:ml-56'} ml-0`}>
         {/* Top bar */}
-        <div className="sticky top-0 z-30 bg-[#151F1A]/95 backdrop-blur-md border-b border-white/6 px-6 py-3.5 flex items-center justify-between">
-          <div>
-            <h1 className="font-display font-700 text-white text-base" style={{ fontFamily: 'var(--font-display)' }}>
-              {SECTION_TITLES[activeSection]}
-            </h1>
-            <p className="text-[10px] font-mono text-white/25 mt-0.5" style={{ fontFamily: 'var(--font-mono)' }}>
-              Admin · Le Kit du Voyageur
-            </p>
+        <div className="sticky top-0 z-30 bg-[#151F1A]/95 backdrop-blur-md border-b border-white/6 px-4 sm:px-6 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Mobile menu toggle */}
+            <button
+              onClick={() => setMobileSidebarOpen(true)}
+              className="lg:hidden p-2 rounded-xl bg-white/8 text-white/60 hover:text-white transition-colors"
+              aria-label="Ouvrir le menu"
+            >
+              <Icon name="Bars3Icon" size={18} variant="outline" />
+            </button>
+            <div>
+              <h1 className="font-display font-700 text-white text-base" style={{ fontFamily: 'var(--font-display)' }}>
+                {SECTION_TITLES[activeSection]}
+              </h1>
+              <p className="text-[10px] font-mono text-white/25 mt-0.5 hidden sm:block" style={{ fontFamily: 'var(--font-mono)' }}>
+                Admin · Le Kit du Voyageur
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
+            <div className="hidden sm:flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-[10px] font-mono text-white/30" style={{ fontFamily: 'var(--font-mono)' }}>Live</span>
             </div>
@@ -1015,7 +1037,7 @@ export default function AdminPage() {
         </div>
 
         {/* Section content */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {activeSection === 'overview' && <OverviewSection />}
           {activeSection === 'products' && <ProductsSection />}
           {activeSection === 'kits' && <KitsSection />}

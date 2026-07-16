@@ -1270,7 +1270,7 @@ export default function CommunautePage() {
           </div>
 
           {/* Tab bar */}
-          <div className="flex items-center gap-0.5 overflow-x-auto pb-px">
+          <div className="flex items-center gap-0.5 overflow-x-auto pb-px scrollbar-hide">
             {TABS.map((tab) => (
               <button
                 key={tab.id}

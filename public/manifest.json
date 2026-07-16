@@ -1,24 +1,32 @@
 {
-    "name": "Kit du Voyageur",
+    "name": "Le Kit du Voyageur",
     "short_name": "KdV",
-    "description": "Pr\u00e9parez vos aventures avec le configurateur IA, l'inventaire mat\u00e9riel et le jumeau num\u00e9rique 3D.",
+    "description": "Préparez vos aventures avec le configurateur IA, l'inventaire matériel et la carte interactive mondiale.",
     "start_url": "/",
+    "scope": "/",
     "display": "standalone",
     "background_color": "#1C2620",
     "theme_color": "#E4501C",
     "orientation": "portrait-primary",
+    "lang": "fr",
     "icons": [
         {
             "src": "/assets/images/app_logo.png",
             "sizes": "192x192",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "any"
         },
         {
             "src": "/assets/images/app_logo.png",
             "sizes": "512x512",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "any"
+        },
+        {
+            "src": "/assets/images/app_logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
         }
     ],
     "categories": [
@@ -30,7 +38,7 @@
         {
             "name": "Configurateur IA",
             "short_name": "Config",
-            "description": "Cr\u00e9er un kit personnalis\u00e9",
+            "description": "Créer un kit personnalisé",
             "url": "/ai-configurator",
             "icons": [
                 {
@@ -42,7 +50,7 @@
         {
             "name": "Mon Inventaire",
             "short_name": "Inventaire",
-            "description": "G\u00e9rer mon mat\u00e9riel",
+            "description": "Gérer mon matériel",
             "url": "/inventaire",
             "icons": [
                 {
@@ -52,10 +60,10 @@
             ]
         },
         {
-            "name": "Jumeau 3D",
-            "short_name": "3D",
-            "description": "Visualiser mon sac en 3D",
-            "url": "/jumeau-3d",
+            "name": "Carte Interactive",
+            "short_name": "Carte",
+            "description": "Explorer les sentiers du monde",
+            "url": "/carte-interactive",
             "icons": [
                 {
                     "src": "/assets/images/app_logo.png",

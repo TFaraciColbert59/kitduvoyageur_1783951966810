@@ -523,7 +523,7 @@ export default function ProfilPage() {
           {/* Tabs */}
           {profile && (
             <div className="mb-6">
-              <div className="flex items-center gap-0 overflow-x-auto border-b border-[#C8C3B0]">
+              <div className="flex items-center gap-0 overflow-x-auto border-b border-[#C8C3B0] scrollbar-hide">
                 {PROFILE_TABS.map((tab) => (
                   <button
                     key={tab.id}

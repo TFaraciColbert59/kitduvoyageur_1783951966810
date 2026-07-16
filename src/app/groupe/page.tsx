@@ -619,8 +619,8 @@ ${selectedGroup.departure_date ? `Départ: ${new Date(selectedGroup.departure_da
           </div>
         ) : (
           <div className="flex gap-5">
-            {/* Sidebar */}
-            <div className="w-60 flex-shrink-0 space-y-2">
+            {/* Sidebar — hidden on mobile when group selected, shown as drawer */}
+            <div className={`${selectedGroup ? 'hidden md:block' : 'block'} w-full md:w-60 flex-shrink-0 space-y-2`}>
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider">Mes groupes ({myGroups.length})</p>
                 <Link href="/groupes" className="text-[10px] text-[#E4501C] hover:underline flex items-center gap-0.5">
@@ -676,6 +676,14 @@ ${selectedGroup.departure_date ? `Départ: ${new Date(selectedGroup.departure_da
             {/* Main content */}
             {selectedGroup ? (
               <div className="flex-1 min-w-0">
+                {/* Back button on mobile */}
+                <button
+                  onClick={() => setSelectedGroup(null)}
+                  className="md:hidden flex items-center gap-2 text-sm text-[#5C6B5E] hover:text-[#1C2620] mb-3 transition-colors"
+                >
+                  <Icon name="ChevronLeftIcon" size={16} />
+                  Mes groupes
+                </button>
                 {/* Group header */}
                 <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5 mb-4">
                   <div className="flex items-start justify-between gap-4">
@@ -750,7 +758,7 @@ ${selectedGroup.departure_date ? `Départ: ${new Date(selectedGroup.departure_da
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-1 bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-1 mb-4 overflow-x-auto">
+                <div className="flex gap-1 bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-1 mb-4 overflow-x-auto scrollbar-hide">
                   {GROUP_TABS.map(tab => (
                     <button
                       key={tab.id}

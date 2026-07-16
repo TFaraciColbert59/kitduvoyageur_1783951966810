@@ -519,7 +519,7 @@ export default function EvenementsPage() {
 
         <section className="sticky top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border">
           <div className="max-w-7xl mx-auto px-4">
-            <div className="flex items-center gap-1 py-3 overflow-x-auto">
+            <div className="flex items-center gap-1 py-3 overflow-x-auto scrollbar-hide">
               {[
                 { id: 'all', label: 'Toutes les sorties' },
                 { id: 'rando', label: '🥾 Randonnée' },

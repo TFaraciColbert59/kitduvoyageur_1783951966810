@@ -288,7 +288,7 @@ export default function Header() {
             <div className="flex items-center gap-1.5" suppressHydrationWarning>
               {/* Search */}
               <button
-                className="hidden sm:flex p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px] min-w-[44px] items-center justify-center"
+                className="flex p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px] min-w-[44px] items-center justify-center"
                 aria-label="Ouvrir la recherche"
                 onClick={() => setSearchOpen(true)}
               >
@@ -298,7 +298,7 @@ export default function Header() {
               {/* Wishlist */}
               <Link
                 href="/compte"
-                className="relative hidden sm:flex p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px] min-w-[44px] items-center justify-center"
+                className="relative flex p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px] min-w-[44px] items-center justify-center"
                 aria-label="Favoris"
                 suppressHydrationWarning
               >
@@ -504,6 +504,34 @@ export default function Header() {
           </div>
         </div>
       )}
+
+      {/* Bottom Navigation Bar — mobile only */}
+      <nav
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#1C2620]/97 backdrop-blur-md border-t border-white/10 flex items-center justify-around px-2 pb-safe"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        aria-label="Navigation rapide"
+      >
+        <Link href="/" className="flex flex-col items-center gap-0.5 py-2 px-3 text-white/50 hover:text-white transition-colors min-w-[44px]">
+          <Icon name="HomeIcon" size={20} variant="outline" />
+          <span className="text-[9px] font-mono tracking-wide">Accueil</span>
+        </Link>
+        <Link href="/boutique" className="flex flex-col items-center gap-0.5 py-2 px-3 text-white/50 hover:text-white transition-colors min-w-[44px]">
+          <Icon name="ShoppingBagIcon" size={20} variant="outline" />
+          <span className="text-[9px] font-mono tracking-wide">Boutique</span>
+        </Link>
+        <Link href="/carte-interactive" className="flex flex-col items-center gap-0.5 py-2 px-3 text-white/50 hover:text-white transition-colors min-w-[44px]">
+          <Icon name="MapIcon" size={20} variant="outline" />
+          <span className="text-[9px] font-mono tracking-wide">Carte</span>
+        </Link>
+        <Link href="/communaute" className="flex flex-col items-center gap-0.5 py-2 px-3 text-white/50 hover:text-white transition-colors min-w-[44px]">
+          <Icon name="UsersIcon" size={20} variant="outline" />
+          <span className="text-[9px] font-mono tracking-wide">Communauté</span>
+        </Link>
+        <Link href="/compte" className="flex flex-col items-center gap-0.5 py-2 px-3 text-white/50 hover:text-white transition-colors min-w-[44px]">
+          <Icon name="UserCircleIcon" size={20} variant="outline" />
+          <span className="text-[9px] font-mono tracking-wide">Compte</span>
+        </Link>
+      </nav>
     </>
   );
 }

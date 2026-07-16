@@ -186,18 +186,18 @@ export default function CarteInteractivePage() {
       </div>
 
       {/* Main layout */}
-      <div className="flex-1 flex overflow-hidden" style={{ height: 'calc(100vh - 118px)' }}>
+      <div className="flex-1 flex overflow-hidden" style={{ height: 'calc(100dvh - 118px)' }}>
 
         {/* Map area */}
-        <div className="flex-1 relative p-2">
+        <div className="flex-1 relative p-1 sm:p-2 min-w-0">
           <div className="w-full h-full rounded-xl overflow-hidden shadow-2xl border border-white/10">
             <InteractiveMap />
           </div>
         </div>
 
-        {/* Side panel */}
+        {/* Side panel — slides over map on mobile */}
         {activePanel && (
-          <div className="w-80 xl:w-96 flex-shrink-0 border-l border-white/10 bg-[#1a2420] flex flex-col overflow-hidden">
+          <div className="absolute inset-0 z-20 lg:relative lg:inset-auto lg:z-auto w-full lg:w-80 xl:w-96 flex-shrink-0 border-l border-white/10 bg-[#1a2420] flex flex-col overflow-hidden">
 
             {/* ── OSM Import Panel ── */}
             {activePanel === 'sync' && (

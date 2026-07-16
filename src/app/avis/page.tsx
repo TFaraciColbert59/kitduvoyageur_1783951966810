@@ -293,7 +293,7 @@ export default function AvisPage() {
 
         {/* Filters */}
         <section className="sticky top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border">
-          <div className="max-w-7xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto scrollbar-hide">
             {[
               { id: 'tous', label: 'Tous les avis' },
               { id: 'produit', label: 'Produits' },

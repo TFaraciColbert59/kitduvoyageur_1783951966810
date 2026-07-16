@@ -635,15 +635,15 @@ export default function BoutiqueClient() {
         {/* ── Filters bar ── */}
         <div className="flex flex-col gap-4 mb-8">
           {/* Transaction type toggles */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-xs text-muted-foreground uppercase tracking-widest mr-1" style={{ fontFamily: 'var(--font-mono)' }}>
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
+            <span className="font-mono text-xs text-muted-foreground uppercase tracking-widest mr-1 flex-shrink-0" style={{ fontFamily: 'var(--font-mono)' }}>
               Type :
             </span>
             {(Object.entries(TRANSACTION_BADGE) as [TransactionType, typeof TRANSACTION_BADGE[TransactionType]][]).map(([type, cfg]) => (
               <button
                 key={type}
                 onClick={() => toggleType(type)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-600 transition-all duration-200 border ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-600 transition-all duration-200 border whitespace-nowrap flex-shrink-0 ${
                   activeTypes.has(type)
                     ? cfg.cls
                     : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30'
@@ -656,12 +656,12 @@ export default function BoutiqueClient() {
           </div>
 
           {/* Category pills */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`category-pill text-xs py-1.5 px-3 ${activeCategory === cat ? 'active' : ''}`}
+                className={`category-pill text-xs py-1.5 px-3 whitespace-nowrap flex-shrink-0 ${activeCategory === cat ? 'active' : ''}`}
               >
                 {cat}
               </button>

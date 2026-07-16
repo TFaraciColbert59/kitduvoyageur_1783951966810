@@ -167,6 +167,7 @@ function AuthForm() {
               <input
                 id="email"
                 type="email"
+                inputMode="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="vous@exemple.com"
@@ -190,6 +191,7 @@ function AuthForm() {
               <input
                 id="password"
                 type="password"
+                inputMode="text"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={mode === 'inscription' ? 'Minimum 8 caractères' : '••••••••'}

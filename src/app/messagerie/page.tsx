@@ -357,9 +357,9 @@ export default function MessageriePage() {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
       <main className="pt-16 flex-1 flex flex-col">
-        <div className="flex-1 flex overflow-hidden" style={{ height: 'calc(100vh - 64px)' }}>
-          {/* Sidebar */}
-          <div className="w-80 flex-shrink-0 border-r border-border flex flex-col bg-card">
+        <div className="flex-1 flex overflow-hidden" style={{ height: 'calc(100dvh - 64px)' }}>
+          {/* Sidebar — hidden on mobile when a conversation is active */}
+          <div className={`${activeConv ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-shrink-0 border-r border-border flex-col bg-card`}>
             <div className="p-4 border-b border-border">
               <div className="flex items-center justify-between mb-3">
                 <h1 className="font-display font-700 text-lg">Messagerie</h1>
@@ -432,8 +432,8 @@ export default function MessageriePage() {
             </div>
           </div>
 
-          {/* Chat area */}
-          <div className="flex-1 flex flex-col min-w-0">
+          {/* Chat area — full width on mobile */}
+          <div className={`${!activeConv ? 'hidden md:flex' : 'flex'} flex-1 flex-col min-w-0`}>
             {!conv ? (
               <div className="flex-1 flex items-center justify-center text-muted-foreground">
                 <div className="text-center">
@@ -446,6 +446,14 @@ export default function MessageriePage() {
               <>
                 {/* Chat header */}
                 <div className="flex items-center gap-3 p-4 border-b border-border bg-card">
+                  {/* Back button on mobile */}
+                  <button
+                    onClick={() => setActiveConv(null)}
+                    className="md:hidden p-2 -ml-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    aria-label="Retour à la liste"
+                  >
+                    <Icon name="ChevronLeftIcon" size={20} variant="outline" />
+                  </button>
                   <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center text-sm font-700">
                     {conv.avatar}
                   </div>
