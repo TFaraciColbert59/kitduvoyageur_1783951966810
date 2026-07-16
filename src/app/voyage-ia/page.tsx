@@ -89,8 +89,10 @@ const EXAMPLE_DESTINATIONS = [
 
 const LOADING_TIPS = [
   "Analyse de votre profil aventurier…",
+  // eslint-disable-next-line no-useless-escape
   "Construction de l\'itinéraire jour par jour…",
   "Calcul des options logistiques et transport…",
+  // eslint-disable-next-line no-useless-escape
   "Sélection du kit d\'équipement idéal…",
   "Estimation des budgets et alternatives…",
   "Vérification des conditions et saisons…",

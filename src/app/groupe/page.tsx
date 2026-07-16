@@ -197,7 +197,6 @@ function GroupePageInner() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadMyGroups(); }, [user]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (selectedGroup) {
       loadGroupData(selectedGroup.id);
@@ -205,6 +204,7 @@ function GroupePageInner() {
       return cleanup;
     }
     return undefined;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedGroup?.id]);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
