@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -85,6 +85,16 @@ const EXAMPLE_DESTINATIONS = [
   'Je veux une aventure sauvage de 5 jours',
   'Je veux faire un road trip en Islande',
   'Je veux gravir le Mont Blanc',
+];
+
+const LOADING_TIPS = [
+  "Analyse de votre profil aventurier…",
+  "Construction de l\'itinéraire jour par jour…",
+  "Calcul des options logistiques et transport…",
+  "Sélection du kit d\'équipement idéal…",
+  "Estimation des budgets et alternatives…",
+  "Vérification des conditions et saisons…",
+  "Finalisation de votre plan complet…",
 ];
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -200,41 +210,142 @@ function InputField({
   );
 }
 
+// Robust section parser — strips emojis and accents for matching
 function parseSection(raw: string, marker: string): string {
+  if (!raw) return '';
   const lines = raw.split('\n');
-  const idx = lines.findIndex((l) => l.toLowerCase().includes(marker.toLowerCase()));
+
+  const normalize = (s: string) =>
+    s
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const normMarker = normalize(marker);
+
+  const idx = lines.findIndex((l) => {
+    const norm = normalize(l);
+    return norm.includes(normMarker);
+  });
+
   if (idx === -1) return '';
+
   const section: string[] = [];
   for (let i = idx + 1; i < lines.length; i++) {
     const line = lines[i];
-    if (line.match(/^#{1,3}\s/) && i !== idx + 1) break;
+    // Stop at next top-level heading (# or ##) that is NOT the current section
+    if (line.match(/^#{1,2}\s/) && i !== idx + 1 && section.length > 0) break;
     section.push(line);
   }
   return section.join('\n').trim();
 }
 
+// Render inline bold/italic within a text string
+function renderInline(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} className="font-semibold text-white">{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return <em key={i} className="italic text-white/80">{part.slice(1, -1)}</em>;
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
 function MarkdownBlock({ text }: { text: string }) {
-  if (!text) return null;
+  if (!text) return <p className="text-sm text-white/40 italic">Aucun contenu disponible pour cette section.</p>;
   const lines = text.split('\n');
-  return (
-    <div className="space-y-1.5">
-      {lines.map((line, i) => {
-        if (!line.trim()) return <div key={i} className="h-1" />;
-        if (line.startsWith('### ')) return <h4 key={i} className="text-sm font-semibold text-white/90 mt-3">{line.replace('### ', '')}</h4>;
-        if (line.startsWith('## ')) return <h3 key={i} className="text-base font-bold text-white mt-4">{line.replace('## ', '')}</h3>;
-        if (line.startsWith('# ')) return <h2 key={i} className="text-lg font-bold text-[#E4501C] mt-4">{line.replace('# ', '')}</h2>;
-        if (line.startsWith('**') && line.endsWith('**')) return <p key={i} className="text-sm font-semibold text-white">{line.replace(/\*\*/g, '')}</p>;
-        if (line.startsWith('- ') || line.startsWith('• ')) return (
-          <p key={i} className="text-sm text-white/75 pl-3 flex gap-2">
-            <span className="text-[#E4501C] flex-shrink-0">•</span>
-            <span>{line.replace(/^[-•]\s/, '')}</span>
-          </p>
-        );
-        if (line.match(/^\d+\.\s/)) return <p key={i} className="text-sm text-white/75 pl-3">{line}</p>;
-        return <p key={i} className="text-sm text-white/75 leading-relaxed">{line}</p>;
-      })}
-    </div>
-  );
+  const elements: React.ReactNode[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (!trimmed) {
+      elements.push(<div key={i} className="h-2" />);
+      i++;
+      continue;
+    }
+
+    if (trimmed.startsWith('#### ')) {
+      elements.push(<h5 key={i} className="text-xs font-bold text-white/70 uppercase tracking-wider mt-3 mb-1">{trimmed.replace('#### ', '')}</h5>);
+    } else if (trimmed.startsWith('### ')) {
+      elements.push(<h4 key={i} className="text-sm font-bold text-[#E4501C]/90 mt-4 mb-1.5 flex items-center gap-1.5">{trimmed.replace('### ', '')}</h4>);
+    } else if (trimmed.startsWith('## ')) {
+      elements.push(<h3 key={i} className="text-base font-bold text-white mt-5 mb-2 border-b border-white/10 pb-1">{trimmed.replace('## ', '')}</h3>);
+    } else if (trimmed.startsWith('# ')) {
+      elements.push(<h2 key={i} className="text-lg font-bold text-[#E4501C] mt-5 mb-3">{trimmed.replace('# ', '')}</h2>);
+    } else if (trimmed.startsWith('---')) {
+      elements.push(<hr key={i} className="border-white/10 my-4" />);
+    } else if (trimmed.startsWith('- ') || trimmed.startsWith('• ') || trimmed.startsWith('* ')) {
+      // Collect consecutive list items
+      const listItems: string[] = [];
+      while (i < lines.length) {
+        const lt = lines[i].trim();
+        if (lt.startsWith('- ') || lt.startsWith('• ') || lt.startsWith('* ')) {
+          listItems.push(lt.replace(/^[-•*]\s/, ''));
+          i++;
+        } else {
+          break;
+        }
+      }
+      elements.push(
+        <ul key={`ul-${i}`} className="space-y-1.5 my-2">
+          {listItems.map((item, j) => (
+            <li key={j} className="flex gap-2 text-sm text-white/75 leading-relaxed">
+              <span className="text-[#E4501C] flex-shrink-0 mt-0.5">▸</span>
+              <span>{renderInline(item)}</span>
+            </li>
+          ))}
+        </ul>
+      );
+      continue;
+    } else if (trimmed.match(/^\d+\.\s/)) {
+      // Collect consecutive numbered items
+      const listItems: string[] = [];
+      while (i < lines.length) {
+        const lt = lines[i].trim();
+        if (lt.match(/^\d+\.\s/)) {
+          listItems.push(lt.replace(/^\d+\.\s/, ''));
+          i++;
+        } else {
+          break;
+        }
+      }
+      elements.push(
+        <ol key={`ol-${i}`} className="space-y-1.5 my-2 list-none">
+          {listItems.map((item, j) => (
+            <li key={j} className="flex gap-2 text-sm text-white/75 leading-relaxed">
+              <span className="text-[#E4501C] font-bold flex-shrink-0 w-5">{j + 1}.</span>
+              <span>{renderInline(item)}</span>
+            </li>
+          ))}
+        </ol>
+      );
+      continue;
+    } else if (trimmed.startsWith('> ')) {
+      elements.push(
+        <blockquote key={i} className="border-l-2 border-[#E4501C]/50 pl-4 py-1 my-2 bg-white/3 rounded-r-lg">
+          <p className="text-sm text-white/70 italic">{renderInline(trimmed.replace('> ', ''))}</p>
+        </blockquote>
+      );
+    } else {
+      elements.push(
+        <p key={i} className="text-sm text-white/75 leading-relaxed">
+          {renderInline(trimmed)}
+        </p>
+      );
+    }
+    i++;
+  }
+
+  return <div className="space-y-0.5">{elements}</div>;
 }
 
 // ── Main Component ────────────────────────────────────────────────────────────
@@ -246,7 +357,17 @@ export default function VoyageIAPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
   const [activeResultTab, setActiveResultTab] = useState<'fiche' | 'itineraire' | 'logistique' | 'kit'>('fiche');
+  const [loadingTipIndex, setLoadingTipIndex] = useState(0);
   const resultRef = useRef<HTMLDivElement>(null);
+
+  // Rotate loading tips
+  useEffect(() => {
+    if (phase !== 'generating') return;
+    const interval = setInterval(() => {
+      setLoadingTipIndex((prev) => (prev + 1) % LOADING_TIPS.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [phase]);
 
   const update = (field: keyof InterviewData, value: string | string[]) => {
     setData((prev) => ({ ...prev, [field]: value }));
@@ -267,6 +388,7 @@ export default function VoyageIAPage() {
     setIsGenerating(false);
     setInterviewStep(0);
     setData(DEFAULT_DATA);
+    setLoadingTipIndex(0);
   };
 
   const generateAdventure = async () => {
@@ -276,58 +398,194 @@ export default function VoyageIAPage() {
     setPhase('generating');
     setRawResult('');
     setGenError(null);
+    setLoadingTipIndex(0);
 
-    const systemPrompt = `Tu es un expert voyage et aventure. Tu crées des plans d'aventure complets et personnalisés. Réponds UNIQUEMENT en français avec du markdown structuré. Sois concis et précis.`;
+    const groupeDesc = data.voyageSeul === 'seul' ?'voyageur solo'
+      : `groupe de ${data.nbParticipants} personnes${data.compositionGroupe.length ? ' (' + data.compositionGroupe.join(', ') + ')' : ''}`;
 
-    const userPrompt = `Crée un plan d'aventure pour ce voyageur :
+    const experienceDesc = [
+      data.experienceOutdoor ? `outdoor: ${data.experienceOutdoor}` : '',
+      data.experienceRandonnee ? `randonnée: ${data.experienceRandonnee}` : '',
+      data.experienceBivouac ? `bivouac: ${data.experienceBivouac}` : '',
+    ].filter(Boolean).join(' | ');
 
-PROFIL : ${data.age} ans, niveau ${data.niveauSportif}, ${data.voyageSeul === 'seul' ? 'seul(e)' : `groupe de ${data.nbParticipants}${data.compositionGroupe.length ? ' (' + data.compositionGroupe.join(', ') + ')' : ''}`}
-OBJECTIFS : ${data.objectifs.join(', ')} | CONFORT : ${data.niveauConfort}
-CONTRAINTES : ${data.duree} jours, départ ${data.paysDepart}${data.budget ? ', budget ' + data.budget : ''}${data.datesSouhaitees ? ', ' + data.datesSouhaitees : ''}
-AVENTURE : ${data.destination}
-${data.materielActuel ? 'MATÉRIEL EXISTANT : ' + data.materielActuel : ''}
+    const systemPrompt = `Tu es un expert voyage, aventure outdoor et équipement de randonnée de niveau mondial. Tu travailles pour "Le Kit du Voyageur", la référence française de l'équipement outdoor.
 
-Structure ta réponse avec ces 4 sections exactes :
+Ton rôle : créer des plans d'aventure ULTRA-DÉTAILLÉS, personnalisés, pratiques et immédiatement actionnables.
 
-# 🏔️ FICHE AVENTURE
+RÈGLES ABSOLUES :
+- Réponds UNIQUEMENT en français
+- Utilise du markdown structuré avec titres, sous-titres, listes et séparateurs
+- Chaque section doit être TRÈS développée — minimum 300 mots par section
+- Donne des informations CONCRÈTES : noms de lieux réels, distances en km, dénivelés, durées précises, prix indicatifs en euros, noms d'hébergements ou refuges réels - Pour l'itinéraire : décris chaque journée avec le matin, midi et soir, les points GPS clés, les difficultés, les alternatives
+- Pour la logistique : donne des compagnies de transport réelles, des fourchettes de prix, des sites de réservation
+- Pour le kit : liste des produits avec marques reconnues, poids, prix indicatifs, et ce qui est disponible sur lekitduvoyageur.fr
+- Adapte TOUT au profil exact du voyageur (âge, niveau, budget, groupe)
+- Inclus des conseils de sécurité, des alternatives météo, des astuces locales
+- Sois précis, exhaustif et enthousiaste`;
+
+    const userPrompt = `Crée un plan d'aventure COMPLET et ULTRA-DÉTAILLÉ pour ce voyageur :
+
+═══════════════════════════════════════
+PROFIL COMPLET DU VOYAGEUR
+═══════════════════════════════════════
+- Âge : ${data.age} ans
+- Niveau sportif : ${data.niveauSportif}
+- Expériences : ${experienceDesc || 'non précisé'}
+- Configuration : ${groupeDesc}
+- Objectifs : ${data.objectifs.join(', ')}
+- Niveau de confort souhaité : ${data.niveauConfort}
+- Budget total : ${data.budget || 'non précisé'}
+- Dates souhaitées : ${data.datesSouhaitees || 'flexible'}
+- Durée : ${data.duree} jours
+- Pays de départ : ${data.paysDepart}
+- Transports disponibles : ${data.transportDisponible.join(', ') || 'non précisé'}
+- Aventure souhaitée : ${data.destination}
+- Matériel déjà possédé : ${data.materielActuel || 'rien de spécifique'}
+═══════════════════════════════════════
+
+Génère une réponse TRÈS LONGUE et TRÈS DÉTAILLÉE avec exactement ces 4 sections. Chaque section doit être exhaustive.
+
+# FICHE AVENTURE
+
 ## Nom de l'aventure
-## Concept
+[Donne un nom inspirant et mémorable à cette aventure]
+
+## Concept & Esprit
+[Décris en 3-4 paragraphes l'essence de cette aventure, pourquoi elle correspond parfaitement à ce profil, ce que le voyageur va ressentir, les moments clés qui l'attendent]
+
 ## Niveau de difficulté
-## Durée idéale
-## Meilleure période
+[Évalue sur 5 étoiles chaque critère : physique, technique, orientation, altitude, météo. Explique pourquoi.]
+
+## Durée idéale & variantes
+[Durée recommandée, version courte, version longue, version express]
+
+## Meilleure période & météo
+[Mois idéaux, conditions météo typiques, températures min/max, précipitations, risques saisonniers, fenêtres météo]
+
 ## Pourquoi cette aventure vous correspond
-## Points forts
-## Points d'attention
+[Analyse personnalisée basée sur le profil : âge, niveau, objectifs, groupe]
+
+## Points forts incontournables
+[Liste de 8-10 highlights avec description de chacun]
+
+## Points d'attention & risques
+[Difficultés réelles, risques spécifiques, ce qu'il ne faut pas sous-estimer]
+
+## Réglementation & autorisations
+[Permis nécessaires, zones protégées, règles locales, réservations obligatoires]
 
 ---
 
-# 🗺️ ITINÉRAIRE DÉTAILLÉ
+# ITINÉRAIRE DÉTAILLÉ
+
 ## Vue d'ensemble
-## Jour par jour
-### Jour 1 — [Titre]
-## Hébergements recommandés
-## Points dangereux / Précautions
+[Carte narrative du trajet, distance totale, dénivelé cumulé, points de passage clés]
+
+## Jour par jour — Programme complet
+[Pour CHAQUE jour de ${data.duree} jours, décris en détail :]
+
+### Jour 1 — [Titre évocateur]
+**Matin :** [activité, lieu précis, distance, durée]
+**Midi :** [pause déjeuner, lieu, options restauration]
+**Après-midi :** [activité, lieu précis, distance, durée]
+**Soir :** [hébergement précis avec nom, prix indicatif, ambiance]
+**Infos pratiques :** [dénivelé, difficulté du jour, points GPS importants]
+**Conseil du jour :** [astuce locale ou technique]
+
+[Répète ce format pour chaque jour jusqu'au jour ${data.duree}]
+
+## Hébergements recommandés — Liste complète
+[Pour chaque nuit : nom de l'hébergement, type, prix/nuit, contact/réservation, ambiance, alternatives]
+
+## Variantes & alternatives
+[Version mauvais temps, version plus facile, version plus sportive, jours de repos possibles]
+
+## Points dangereux & précautions
+[Zones à risque, passages techniques, conseils de sécurité spécifiques]
 
 ---
 
-# ✈️ PLAN LOGISTIQUE
-## Depuis ${data.paysDepart}
-### Option économique
-### Option rapide
-### Option liberté
-## Formalités essentielles
-## Budget estimé total
+# PLAN LOGISTIQUE
+
+## Depuis ${data.paysDepart} — Comment y aller
+
+### Option 1 — La plus économique
+[Compagnies, trajets précis, prix indicatifs, durée, sites de réservation]
+
+### Option 2 — La plus rapide
+[Compagnies, trajets précis, prix indicatifs, durée, sites de réservation]
+
+### Option 3 — La plus flexible
+[Compagnies, trajets précis, prix indicatifs, durée, sites de réservation]
+
+## Transport sur place
+[Location voiture, navettes, transports en commun locaux, prix, conseils]
+
+## Formalités & documents
+[Visa, assurance voyage recommandée, vaccins si nécessaire, carte européenne santé, documents à emporter]
+
+## Budget détaillé estimé
+[Tableau complet : transport aller/retour, hébergements, nourriture/jour, activités/entrées, équipement manquant, imprévus. Total par personne et pour le groupe]
+
+## Ravitaillement & alimentation
+[Supermarchés sur le trajet, refuges avec restauration, eau potable, spécialités locales à goûter, régimes alimentaires]
+
+## Connectivité & communication
+[Couverture réseau, cartes SIM locales, zones sans réseau, applications utiles hors ligne]
+
+## Santé & urgences
+[Hôpitaux/médecins proches, numéros d'urgence locaux, pharmacies, altitude et acclimatation si nécessaire]
 
 ---
 
-# 🎒 KIT IDÉAL RECOMMANDÉ
+# KIT IDÉAL RECOMMANDÉ
+
+## Analyse du kit selon votre profil
+[Explique la philosophie du kit pour ce profil spécifique : poids cible, priorités, compromis]
+
 ## Abri & Couchage
-## Vêtements
-## Navigation
+[Pour chaque item : nom du produit avec marque, poids, prix indicatif, pourquoi ce choix, disponible sur lekitduvoyageur.fr]
+- Tente / Bivouac
+- Sac de couchage
+- Matelas / Tapis de sol
+- Oreiller de voyage
+
+## Vêtements & Chaussures
+[Liste complète adaptée à la saison et au terrain]
+- Couche de base
+- Couche intermédiaire
+- Coupe-vent / Imperméable
+- Chaussures de randonnée
+- Chaussettes techniques
+- Accessoires (bonnet, gants, buff)
+
+## Sac à dos & Organisation
+[Sac principal, sac de jour, housses imperméables, organisation interne]
+
+## Navigation & Orientation
+[GPS, carte papier, boussole, applications recommandées, points de repère]
+
 ## Hydratation & Alimentation
-## Sécurité
+[Gourde, filtre à eau, réchaud, gamelle, nourriture lyophilisée, barres énergétiques]
+
+## Sécurité & Premiers secours
+[Trousse de secours détaillée, couverture de survie, sifflet, lampe frontale, batterie externe]
+
+## Hygiène & Confort
+[Produits essentiels, poids minimal, solutions légères]
+
+## Électronique & Photo
+[Appareil photo, batteries, adaptateurs, protections]
+
 ## Poids total estimé
-## Produits disponibles sur Le Kit du Voyageur (/boutique)`;
+[Poids du sac chargé, poids à vide, répartition par catégorie, conseils pour alléger]
+
+## Ce que vous possédez déjà
+[Analyse de : ${data.materielActuel || 'rien de précisé'} — ce qui est réutilisable, ce qui doit être remplacé]
+
+## Budget équipement
+[Total estimé pour compléter le kit, priorités d'achat, où trouver les meilleures offres]`;
 
     try {
       const response = await getChatCompletion(
@@ -337,7 +595,7 @@ Structure ta réponse avec ces 4 sections exactes :
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        { temperature: 0.7, max_tokens: 3000 }
+        { temperature: 0.8, max_tokens: 8000 }
       );
 
       const content: string = (response as any)?.choices?.[0]?.message?.content ?? '';
@@ -384,7 +642,7 @@ Structure ta réponse avec ces 4 sections exactes :
             <span className="text-[#E4501C]">en aventure complète</span>
           </h1>
           <p className="text-white/60 text-lg max-w-2xl mx-auto">
-            Donnez une idée, un rêve ou une destination. L&apos;IA construit l&apos;intégralité de votre expérience — itinéraire, logistique, kit idéal.
+            Donnez une idée, un rêve ou une destination. L&apos;IA construit l&apos;intégralité de votre expérience — itinéraire détaillé, logistique, kit idéal.
           </p>
         </div>
       </section>
@@ -680,17 +938,41 @@ Structure ta réponse avec ces 4 sections exactes :
 
         {/* ── GENERATING PHASE ── */}
         {phase === 'generating' && (
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-10 text-center">
-            <div className="flex flex-col items-center gap-6">
-              <div className="relative">
-                <div className="w-16 h-16 rounded-full border-2 border-[#E4501C]/30 border-t-[#E4501C] animate-spin" />
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-12 text-center">
+            <div className="flex flex-col items-center gap-8">
+              {/* Animated rings */}
+              <div className="relative w-24 h-24">
+                <div className="absolute inset-0 rounded-full border-2 border-[#E4501C]/10 animate-ping" />
+                <div className="absolute inset-2 rounded-full border-2 border-[#E4501C]/20 animate-ping" style={{ animationDelay: '0.3s' }} />
+                <div className="absolute inset-0 rounded-full border-2 border-[#E4501C]/30 border-t-[#E4501C] animate-spin" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Icon name="SparklesIcon" size={20} variant="solid" className="text-[#E4501C]" />
+                  <Icon name="SparklesIcon" size={28} variant="solid" className="text-[#E4501C]" />
                 </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-2">Création de votre aventure en cours…</h3>
-                <p className="text-sm text-white/50">L&apos;IA analyse votre profil et construit votre plan complet</p>
+
+              <div className="space-y-3">
+                <h3 className="text-xl font-bold text-white">Création de votre aventure…</h3>
+                <p className="text-sm text-white/40 max-w-sm mx-auto">
+                  Gemini analyse votre profil et construit un plan complet et personnalisé. Cela peut prendre 20 à 40 secondes.
+                </p>
+              </div>
+
+              {/* Rotating tips */}
+              <div className="bg-white/5 border border-white/10 rounded-xl px-6 py-4 max-w-sm w-full">
+                <p className="text-xs text-white/40 uppercase tracking-wider mb-1">En cours</p>
+                <p className="text-sm text-white/80 transition-all duration-500">{LOADING_TIPS[loadingTipIndex]}</p>
+              </div>
+
+              {/* Progress dots */}
+              <div className="flex gap-2">
+                {LOADING_TIPS.map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                      i === loadingTipIndex ? 'bg-[#E4501C] w-4' : 'bg-white/20'
+                    }`}
+                  />
+                ))}
               </div>
             </div>
           </div>
@@ -702,7 +984,7 @@ Structure ta réponse avec ces 4 sections exactes :
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-white">Votre aventure est prête ✨</h2>
-                <p className="text-sm text-white/50 mt-0.5">Plan complet généré par Gemini AI</p>
+                <p className="text-sm text-white/50 mt-0.5">Plan complet et détaillé généré par Gemini AI</p>
               </div>
               <button
                 onClick={resetToIntro}
@@ -713,6 +995,7 @@ Structure ta réponse avec ces 4 sections exactes :
               </button>
             </div>
 
+            {/* Tabs */}
             <div className="flex gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
               {[
                 { id: 'fiche', label: '📋 Fiche' },
@@ -734,45 +1017,45 @@ Structure ta réponse avec ces 4 sections exactes :
               ))}
             </div>
 
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 min-h-64">
+            {/* Content */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 min-h-96">
               {activeResultTab === 'fiche' && (
                 <div>
-                  <h3 className="text-base font-bold text-[#E4501C] mb-4 flex items-center gap-2">
-                    <Icon name="DocumentTextIcon" size={16} variant="outline" />
-                    Fiche Aventure
-                  </h3>
-                  <MarkdownBlock text={parseSection(rawResult, 'FICHE AVENTURE') || rawResult.split('ITINÉRAIRE')[0] || rawResult} />
+                  <div className="flex items-center gap-2 mb-5 pb-3 border-b border-white/10">
+                    <Icon name="DocumentTextIcon" size={18} variant="outline" className="text-[#E4501C]" />
+                    <h3 className="text-base font-bold text-white">Fiche Aventure</h3>
+                  </div>
+                  <MarkdownBlock text={parseSection(rawResult, 'FICHE AVENTURE')} />
                 </div>
               )}
               {activeResultTab === 'itineraire' && (
                 <div>
-                  <h3 className="text-base font-bold text-[#E4501C] mb-4 flex items-center gap-2">
-                    <Icon name="MapIcon" size={16} variant="outline" />
-                    Itinéraire Détaillé
-                  </h3>
-                  <MarkdownBlock text={parseSection(rawResult, 'ITINÉRAIRE DÉTAILLÉ') || parseSection(rawResult, 'ITINERAIRE')} />
+                  <div className="flex items-center gap-2 mb-5 pb-3 border-b border-white/10">
+                    <Icon name="MapIcon" size={18} variant="outline" className="text-[#E4501C]" />
+                    <h3 className="text-base font-bold text-white">Itinéraire Détaillé</h3>
+                  </div>
+                  <MarkdownBlock text={parseSection(rawResult, 'ITINERAIRE DETAILLE') || parseSection(rawResult, 'ITINERAIRE')} />
                 </div>
               )}
               {activeResultTab === 'logistique' && (
                 <div>
-                  <h3 className="text-base font-bold text-[#E4501C] mb-4 flex items-center gap-2">
-                    <Icon name="TruckIcon" size={16} variant="outline" />
-                    Plan Logistique
-                  </h3>
+                  <div className="flex items-center gap-2 mb-5 pb-3 border-b border-white/10">
+                    <Icon name="TruckIcon" size={18} variant="outline" className="text-[#E4501C]" />
+                    <h3 className="text-base font-bold text-white">Plan Logistique</h3>
+                  </div>
                   <MarkdownBlock text={parseSection(rawResult, 'PLAN LOGISTIQUE') || parseSection(rawResult, 'LOGISTIQUE')} />
                 </div>
               )}
               {activeResultTab === 'kit' && (
                 <div>
-                  <h3 className="text-base font-bold text-[#E4501C] mb-4 flex items-center gap-2">
-                    <Icon name="ArchiveBoxIcon" size={16} variant="outline" />
-                    Kit Idéal Recommandé
-                  </h3>
-                  <MarkdownBlock text={parseSection(rawResult, 'KIT IDÉAL') || parseSection(rawResult, 'KIT IDEAL')} />
-                  <div className="mt-6 p-4 bg-[#E4501C]/10 border border-[#E4501C]/20 rounded-xl">
-                    <p className="text-sm text-white/80 mb-3">
-                      🛒 Trouvez tous ces équipements sur la boutique <strong>Le Kit du Voyageur</strong>
-                    </p>
+                  <div className="flex items-center gap-2 mb-5 pb-3 border-b border-white/10">
+                    <Icon name="ArchiveBoxIcon" size={18} variant="outline" className="text-[#E4501C]" />
+                    <h3 className="text-base font-bold text-white">Kit Idéal Recommandé</h3>
+                  </div>
+                  <MarkdownBlock text={parseSection(rawResult, 'KIT IDEAL RECOMMANDE') || parseSection(rawResult, 'KIT IDEAL') || parseSection(rawResult, 'KIT')} />
+                  <div className="mt-8 p-5 bg-[#E4501C]/10 border border-[#E4501C]/20 rounded-xl">
+                    <p className="text-sm font-semibold text-white mb-1">🛒 Trouvez tout l&apos;équipement sur Le Kit du Voyageur</p>
+                    <p className="text-xs text-white/50 mb-4">Tous les produits recommandés sont disponibles dans notre boutique.</p>
                     <div className="flex flex-wrap gap-2">
                       <Link href="/boutique" className="bg-[#E4501C] hover:bg-[#c93d14] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                         Voir la boutique
@@ -789,6 +1072,7 @@ Structure ta réponse avec ces 4 sections exactes :
               )}
             </div>
 
+            {/* Raw output (collapsed) */}
             <details className="bg-white/3 border border-white/8 rounded-xl overflow-hidden">
               <summary className="px-5 py-3 text-sm text-white/40 cursor-pointer hover:text-white/60 transition-colors select-none">
                 Voir le plan complet brut
@@ -800,6 +1084,7 @@ Structure ta réponse avec ces 4 sections exactes :
               </div>
             </details>
 
+            {/* Quick links */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
                 { href: '/copilote', label: 'Copilote IA', icon: 'SparklesIcon', desc: "Affiner avec l'IA" },
