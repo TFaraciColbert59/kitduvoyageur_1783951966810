@@ -247,7 +247,7 @@ export default function VoyageIAPage() {
   const [activeResultTab, setActiveResultTab] = useState<'fiche' | 'itineraire' | 'logistique' | 'kit'>('fiche');
   const resultRef = useRef<HTMLDivElement>(null);
 
-  const { response, isLoading, sendMessage } = useChat('GEMINI', 'gemini/gemini-2.5-pro', true);
+  const { response, isLoading, sendMessage } = useChat('GEMINI', 'gemini/gemini-2.0-flash', true);
 
   // Stream result into state
   useEffect(() => {
@@ -277,168 +277,65 @@ export default function VoyageIAPage() {
     setPhase('generating');
     setResult(null);
 
-    const systemPrompt = `Tu es un architecte d'expériences de voyage et d'aventure de niveau professionnel. Tu crées des plans d'aventure ultra-complets, personnalisés et immédiatement réalisables. Tu réponds UNIQUEMENT en français. Tu structures ta réponse avec des sections claires en markdown.`;
+    const systemPrompt = `Tu es un expert voyage et aventure. Tu crées des plans d'aventure complets et personnalisés. Réponds UNIQUEMENT en français avec du markdown structuré. Sois concis et précis.`;
 
-    const userPrompt = `Crée un plan d'aventure complet et professionnel pour ce voyageur :
+    const userPrompt = `Crée un plan d'aventure pour ce voyageur :
 
-**PROFIL VOYAGEUR :**
-- Âge : ${data.age} ans
-- Niveau sportif : ${data.niveauSportif}
-- Expérience outdoor : ${data.experienceOutdoor || 'Non précisé'}
-- Expérience randonnée : ${data.experienceRandonnee || 'Non précisé'}
-- Expérience bivouac : ${data.experienceBivouac || 'Non précisé'}
-- Voyage : ${data.voyageSeul === 'seul' ? 'Seul(e)' : `En groupe (${data.nbParticipants} personnes${data.compositionGroupe.length ? ', ' + data.compositionGroupe.join(', ') : ''})`}
+PROFIL : ${data.age} ans, niveau ${data.niveauSportif}, ${data.voyageSeul === 'seul' ? 'seul(e)' : `groupe de ${data.nbParticipants}${data.compositionGroupe.length ? ' (' + data.compositionGroupe.join(', ') + ')' : ''}`}
+OBJECTIFS : ${data.objectifs.join(', ')} | CONFORT : ${data.niveauConfort}
+CONTRAINTES : ${data.duree} jours, départ ${data.paysDepart}${data.budget ? ', budget ' + data.budget : ''}${data.datesSouhaitees ? ', ' + data.datesSouhaitees : ''}
+AVENTURE : ${data.destination}
+${data.materielActuel ? 'MATÉRIEL EXISTANT : ' + data.materielActuel : ''}
 
-**OBJECTIFS :** ${data.objectifs.join(', ')}
-**NIVEAU DE CONFORT :** ${data.niveauConfort}
-
-**CONTRAINTES :**
-- Budget : ${data.budget || 'Non précisé'}
-- Dates : ${data.datesSouhaitees || 'Flexibles'}
-- Durée : ${data.duree} jours
-- Départ depuis : ${data.paysDepart}
-- Transports disponibles : ${data.transportDisponible.length ? data.transportDisponible.join(', ') : 'Tous'}
-
-**DESTINATION / AVENTURE SOUHAITÉE :** ${data.destination}
-**MATÉRIEL ACTUEL :** ${data.materielActuel || 'Non précisé'}
-
----
-
-Génère un plan d'aventure complet structuré EXACTEMENT comme suit :
+Structure ta réponse avec ces 4 sections exactes :
 
 # 🏔️ FICHE AVENTURE
-
 ## Nom de l'aventure
-[Donne un nom évocateur et inspirant]
-
 ## Concept
-[2-3 phrases décrivant l'essence de cette aventure]
-
 ## Niveau de difficulté
-[Débutant / Intermédiaire / Avancé / Expert + justification]
-
 ## Durée idéale
-[Durée recommandée]
-
 ## Meilleure période
-[Mois recommandés + pourquoi]
-
 ## Pourquoi cette aventure vous correspond
-[Explication personnalisée basée sur le profil]
-
 ## Points forts
-- [Point fort 1]
-- [Point fort 2]
-- [Point fort 3]
-- [Point fort 4]
-
 ## Points d'attention
-- [Point d'attention 1]
-- [Point d'attention 2]
 
 ---
 
 # 🗺️ ITINÉRAIRE DÉTAILLÉ
-
 ## Vue d'ensemble
-[Distance totale, dénivelé, temps de marche si randonnée / km si road trip]
-
 ## Jour par jour
 ### Jour 1 — [Titre]
-[Description détaillée : étape, points d'intérêt, hébergement, distance, durée]
-
-### Jour 2 — [Titre]
-[...]
-
-[Continue pour chaque jour]
-
-## Points d'eau / Ravitaillement
-[Informations pratiques]
-
-## Zones de bivouac / Hébergements recommandés
-[Liste avec détails]
-
+[etc. pour chaque jour]
+## Hébergements recommandés
 ## Points dangereux / Précautions
-[Informations de sécurité]
-
-## Alternatives météo
-[Plans B selon les conditions]
 
 ---
 
 # ✈️ PLAN LOGISTIQUE
-
 ## Depuis ${data.paysDepart}
-
 ### Option économique
-[Train + bus : détails, durée, coût estimé]
-
 ### Option rapide
-[Avion : détails, durée, coût estimé]
-
 ### Option liberté
-[Voiture : détails, durée, coût estimé]
-
-### Option aventure
-[Van / autre : détails si pertinent]
-
-## Réservations nécessaires
-- [Réservation 1]
-- [Réservation 2]
-
-## Formalités
-[Visa, vaccins, assurance, monnaie, sécurité, applications utiles]
-
+## Formalités essentielles
 ## Budget estimé total
-[Décomposition : transport + hébergement + nourriture + équipement + divers]
 
 ---
 
 # 🎒 KIT IDÉAL RECOMMANDÉ
-
-## Nom du kit
-[Ex: KIT RANDONNÉE ALPINE 7 JOURS]
-
-## Abri
-- [Tente / tarp recommandé + caractéristiques]
-- [Matelas de sol]
-- [Sac de couchage + température]
-
+## Abri & Couchage
 ## Vêtements
-- [Couche de base]
-- [Couche intermédiaire]
-- [Couche imperméable]
-- [Accessoires : gants, bonnet, etc.]
-
 ## Navigation
-- [GPS / carte / application]
-- [Batterie externe]
-
 ## Hydratation & Alimentation
-- [Gourde / poche à eau]
-- [Filtre à eau si nécessaire]
-- [Réchaud + combustible]
-- [Nourriture : type et quantité estimée]
-
 ## Sécurité
-- [Pharmacie de base]
-- [Lampe frontale]
-- [Couverture de survie]
-- [Couteau / multi-outil]
-- [Sifflet / miroir de signalisation]
-
 ## Poids total estimé
-[Poids du sac en kg]
-
-## Produits disponibles sur Le Kit du Voyageur
-[Mentionner que ces produits sont disponibles sur la boutique KDV avec lien /boutique]`;
+## Produits disponibles sur Le Kit du Voyageur (/boutique)`;
 
     await sendMessage(
       [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      { temperature: 0.7, max_tokens: 4000 }
+      { temperature: 0.7, max_tokens: 2500 }
     );
   };
 
