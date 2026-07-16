@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
     // ── Try DB first ──────────────────────────────────────────
     let trailsQuery = supabase
       .from('trails')
-      .select('id, name, trail_type, country, region, distance_km, duration_hours, difficulty, elevation_gain, altitude_max, start_lat, start_lng, end_lat, end_lng, is_loop, source, geojson, description, surface, metadata')
+      .select('id, name, trail_type, country, region, distance_km, duration_hours, difficulty, elevation_gain, altitude_max, start_lat, start_lng, end_lat, end_lng, is_loop, source, geojson, description, surface, metadata, gps_points_count')
       .limit(limit);
 
     if (hasBbox) {
@@ -185,6 +185,9 @@ export async function GET(request: NextRequest) {
         pois_count: finalPoints.length,
         source: dbTrails.length >= 5 ? 'database' : 'fallback+database',
         methodology: 'alltrails-osm-derivation',
+        gps_valid_trails: finalTrails.filter((t: Record<string, unknown>) =>
+          (t.gps_points_count as number) >= 10 || ((t.geojson as { coordinates?: unknown[] } | null)?.coordinates?.length ?? 0) >= 10
+        ).length,
         difficulty_labels: difficultyLabels,
       },
     });

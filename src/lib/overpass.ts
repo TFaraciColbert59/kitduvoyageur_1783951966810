@@ -12,6 +12,7 @@
  * 5. Calculate cartesian distance per segment
  * 6. Compute bounding box per segment
  * 7. AllTrails-style difficulty scoring (sac_scale + elevation + surface)
+ * 8. CRITICAL: Reconstruct full GPS LineString from relation→ways→nodes
  */
 
 export interface OverpassElement {
@@ -114,7 +115,6 @@ async function queryOverpass(query: string, timeoutMs = 20000): Promise<Overpass
       if (!res.ok) {
         const text = await res.text().catch(() => '');
         errors.push(`${endpoint}: HTTP ${res.status} — ${text.slice(0, 200)}`);
-        // Wait before trying next endpoint
         if (attempt < OVERPASS_ENDPOINTS.length - 1) {
           await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
         }
@@ -123,7 +123,6 @@ async function queryOverpass(query: string, timeoutMs = 20000): Promise<Overpass
 
       const data = await res.json();
 
-      // Validate response structure
       if (!data || !Array.isArray(data.elements)) {
         errors.push(`${endpoint}: Invalid response structure`);
         continue;
@@ -136,7 +135,6 @@ async function queryOverpass(query: string, timeoutMs = 20000): Promise<Overpass
       const msg = err instanceof Error ? err.message : String(err);
       errors.push(`${endpoint}: ${msg}`);
 
-      // Wait before trying next endpoint (exponential backoff)
       if (attempt < OVERPASS_ENDPOINTS.length - 1) {
         await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
       }
@@ -180,12 +178,6 @@ export function getTilesForBBox(bbox: BBox): BBox[] {
 // ── AllTrails Highway Tag Set ─────────────────────────────────
 
 /**
- * AllTrails uses this exact set of highway tags (from their Overpass query):
- * highway=path|track|footway|steps|bridleway|cycleway
- */
-const ALLTRAILS_HIGHWAY_TAGS = ['path', 'track', 'footway', 'steps', 'bridleway', 'cycleway'];
-
-/**
  * Map highway tag to AllTrails trail_type classification
  */
 function classifyTrailType(tags: Record<string, string>): string {
@@ -194,12 +186,10 @@ function classifyTrailType(tags: Record<string, string>): string {
   const bicycle = tags['bicycle'] || '';
   const foot = tags['foot'] || '';
 
-  // Route relations take priority
   if (route === 'hiking' || route === 'foot') return 'hiking';
   if (route === 'bicycle' || route === 'mtb') return 'cycling';
   if (route === 'running') return 'trail_running';
 
-  // Highway-based classification
   if (highway === 'cycleway') return 'cycling';
   if (highway === 'bridleway') return 'equestrian';
   if (highway === 'steps') return 'hiking';
@@ -234,7 +224,6 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
 
 /**
  * Calculate total distance of a geometry (array of lat/lng points)
- * using the AllTrails cartesian summation method.
  */
 function calculateSegmentDistance(geometry: Array<{ lat: number; lon: number }>): number {
   if (geometry.length < 2) return 0;
@@ -250,7 +239,6 @@ function calculateSegmentDistance(geometry: Array<{ lat: number; lon: number }>)
 
 /**
  * Calculate bounding box of a geometry segment
- * (AllTrails step 7: min/max lat/lng of all points)
  */
 function calculateSegmentBBox(geometry: Array<{ lat: number; lon: number }>): {
   south: number; west: number; north: number; east: number;
@@ -267,19 +255,107 @@ function calculateSegmentBBox(geometry: Array<{ lat: number; lon: number }>): {
   return { south, west, north, east };
 }
 
-// ── AllTrails Difficulty Scoring ──────────────────────────────
+// ── GPS Geometry Validation ───────────────────────────────────
 
 /**
- * AllTrails difficulty: Easy / Moderate / Hard / Strenuous (Expert)
- * Based on: sac_scale (primary), surface, estimated elevation from tags
+ * CRITICAL: Validate that a GPS geometry is a real trail trace.
+ * Rejects straight lines between 2 points and degenerate geometries.
+ * Minimum 10 GPS points required for a valid trail.
  */
+export function validateGPSGeometry(coords: number[][]): boolean {
+  if (!coords || coords.length < 10) return false;
+
+  // Check all coordinates are valid numbers
+  for (const c of coords) {
+    if (!Array.isArray(c) || c.length < 2) return false;
+    if (isNaN(c[0]) || isNaN(c[1])) return false;
+    // Valid lng/lat ranges
+    if (c[0] < -180 || c[0] > 180) return false;
+    if (c[1] < -90 || c[1] > 90) return false;
+  }
+
+  // Check it's not a degenerate straight line (all points collinear)
+  // A real trail should have some variance in direction
+  const first = coords[0];
+  const last = coords[coords.length - 1];
+  const totalDist = haversineKm(first[1], first[0], last[1], last[0]);
+
+  // Calculate actual path length
+  let pathLength = 0;
+  for (let i = 1; i < coords.length; i++) {
+    pathLength += haversineKm(coords[i-1][1], coords[i-1][0], coords[i][1], coords[i][0]);
+  }
+
+  // If path length is essentially equal to straight-line distance, it's a fake trace
+  // Real trails have sinuosity > 1.05 (at least 5% longer than straight line)
+  if (totalDist > 0.1 && pathLength / totalDist < 1.02) return false;
+
+  return true;
+}
+
+// ── Relation GPS Reconstruction ───────────────────────────────
+
+/**
+ * CRITICAL FIX: Reconstruct full GPS LineString from a relation's member ways.
+ *
+ * Overpass returns relations with members (way refs) and separately returns
+ * the way elements with their geometry. This function assembles them in order.
+ *
+ * relation.members = [{ type: 'way', ref: 12345, role: '' }, ...]
+ * wayMap = Map<wayId, geometry: [{lat, lon}, ...]>
+ */
+export function reconstructRelationGeometry(
+  relation: OverpassElement,
+  wayMap: Map<number, Array<{ lat: number; lon: number }>>
+): Array<{ lat: number; lon: number }> {
+  if (!relation.members) return [];
+
+  const wayMembers = relation.members.filter(m => m.type === 'way');
+  if (wayMembers.length === 0) return [];
+
+  const segments: Array<Array<{ lat: number; lon: number }>> = [];
+
+  for (const member of wayMembers) {
+    const wayGeom = wayMap.get(member.ref);
+    if (wayGeom && wayGeom.length >= 2) {
+      segments.push(wayGeom);
+    }
+  }
+
+  if (segments.length === 0) return [];
+
+  // Chain segments: connect them end-to-end, reversing if needed
+  const result: Array<{ lat: number; lon: number }> = [...segments[0]];
+
+  for (let i = 1; i < segments.length; i++) {
+    const seg = segments[i];
+    const lastPt = result[result.length - 1];
+    const segFirst = seg[0];
+    const segLast = seg[seg.length - 1];
+
+    // Check if segment connects forward or needs to be reversed
+    const distForward = haversineKm(lastPt.lat, lastPt.lon, segFirst.lat, segFirst.lon);
+    const distReverse = haversineKm(lastPt.lat, lastPt.lon, segLast.lat, segLast.lon);
+
+    if (distReverse < distForward) {
+      // Reverse the segment
+      result.push(...[...seg].reverse());
+    } else {
+      result.push(...seg);
+    }
+  }
+
+  return result;
+}
+
+// ── AllTrails Difficulty Scoring ──────────────────────────────
+
 function computeAllTrailsDifficulty(tags: Record<string, string>, distanceKm: number): string {
   const sacScale = tags['sac_scale'] || '';
   const surface = tags['surface'] || '';
   const trailVisibility = tags['trail_visibility'] || '';
   const incline = parseFloat(tags['incline'] || '0');
 
-  // Primary: OSM sac_scale maps directly to AllTrails difficulty
   const sacMap: Record<string, string> = {
     hiking: 'easy',
     mountain_hiking: 'moderate',
@@ -290,23 +366,17 @@ function computeAllTrailsDifficulty(tags: Record<string, string>, distanceKm: nu
   };
   if (sacScale && sacMap[sacScale]) return sacMap[sacScale];
 
-  // Secondary: surface difficulty modifier
   const hardSurfaces = ['rock', 'scree', 'snow', 'ice', 'mud'];
   const isHardSurface = hardSurfaces.some(s => surface.includes(s));
-
-  // Visibility modifier
   const poorVisibility = ['bad', 'horrible', 'no'].includes(trailVisibility);
 
-  // Distance-based baseline (AllTrails: Easy < 8km, Moderate 8-20km, Hard > 20km)
   let base = 'easy';
   if (distanceKm > 20) base = 'hard';
   else if (distanceKm > 8) base = 'moderate';
 
-  // Incline modifier
   if (Math.abs(incline) > 30) base = 'expert';
   else if (Math.abs(incline) > 15 && base !== 'hard') base = 'hard';
 
-  // Surface/visibility upgrades
   if (isHardSurface || poorVisibility) {
     if (base === 'easy') base = 'moderate';
     else if (base === 'moderate') base = 'hard';
@@ -314,8 +384,6 @@ function computeAllTrailsDifficulty(tags: Record<string, string>, distanceKm: nu
 
   return base;
 }
-
-// ── Private Access Filter (AllTrails step 8) ─────────────────
 
 function isPrivateAccess(tags: Record<string, string>): boolean {
   const access = tags['access'] || '';
@@ -328,31 +396,92 @@ function isBicycleAccessible(tags: Record<string, string>): boolean {
   return bicycle === 'yes' || bicycle === 'designated' || highway === 'cycleway';
 }
 
-// ── Hiking Trails (AllTrails full tag set) ────────────────────
+// ── Hiking Trails — CORRECTED QUERY ──────────────────────────
 
-export async function fetchHikingTrails(bbox: BBox, limit = 100): Promise<OverpassElement[]> {
+/**
+ * CRITICAL FIX: Fetch hiking trails with COMPLETE GPS geometry.
+ *
+ * Previous bug: used "out center geom" for relations — this only returns
+ * the center point, not the actual GPS trace.
+ *
+ * Fix: Use "out body geom" for ways (gets all node coordinates inline),
+ * and for relations use ">;" to recurse into member ways with their geometry.
+ *
+ * The result contains:
+ * - way elements with geometry: [{lat, lon}, ...] (full GPS trace)
+ * - relation elements with members: [{type:'way', ref:...}, ...]
+ * - the member ways (also with geometry) for relation reconstruction
+ */
+export async function fetchHikingTrails(bbox: BBox, limit = 50): Promise<{
+  ways: OverpassElement[];
+  relations: OverpassElement[];
+  wayMap: Map<number, Array<{ lat: number; lon: number }>>;
+}> {
   const { south, west, north, east } = bbox;
   const bboxStr = `${south},${west},${north},${east}`;
 
-  // AllTrails uses: highway=path|track|footway|steps|bridleway|cycleway
-  // Ways with full geometry (out geom) — relations use center only to avoid huge payloads
-  const query = `
-[out:json][timeout:18];
+  // Query 1: Ways with FULL geometry (out body geom = all node coordinates inline)
+  // This is the key fix — "out geom" gives us the actual GPS coordinates for each way
+  const waysQuery = `
+[out:json][timeout:20];
 (
   way["highway"="path"]["access"!="private"]["access"!="no"](${bboxStr});
   way["highway"="track"]["access"!="private"]["access"!="no"](${bboxStr});
   way["highway"="footway"]["access"!="private"]["access"!="no"](${bboxStr});
   way["highway"="bridleway"]["access"!="private"]["access"!="no"](${bboxStr});
-  way["highway"="cycleway"]["access"!="private"]["access"!="no"](${bboxStr});
   way["highway"="steps"]["access"!="private"]["access"!="no"](${bboxStr});
+);
+out body geom ${limit};
+`;
+
+  // Query 2: Named hiking relations with member ways resolved
+  // ">;" recurses into members, giving us the way geometries
+  const relationsQuery = `
+[out:json][timeout:20];
+(
   relation["route"="hiking"]["name"](${bboxStr});
   relation["route"="foot"]["name"](${bboxStr});
 );
-out center geom ${limit};
+out body;
+>;
+out body geom;
 `;
 
-  const result = await queryOverpass(query);
-  return result.elements;
+  const [waysResult, relationsResult] = await Promise.allSettled([
+    queryOverpass(waysQuery, 22000),
+    queryOverpass(relationsQuery, 22000),
+  ]);
+
+  const ways: OverpassElement[] = [];
+  const relations: OverpassElement[] = [];
+  const wayMap = new Map<number, Array<{ lat: number; lon: number }>>();
+
+  // Process ways result
+  if (waysResult.status === 'fulfilled') {
+    for (const el of waysResult.value.elements) {
+      if (el.type === 'way' && el.geometry && el.geometry.length >= 2) {
+        ways.push(el);
+        // Also add to wayMap for potential relation reconstruction
+        wayMap.set(el.id, el.geometry);
+      }
+    }
+  }
+
+  // Process relations result — extract relations and build wayMap from member ways
+  if (relationsResult.status === 'fulfilled') {
+    for (const el of relationsResult.value.elements) {
+      if (el.type === 'relation') {
+        relations.push(el);
+      } else if (el.type === 'way' && el.geometry && el.geometry.length >= 2) {
+        // These are the member ways with their geometry — critical for reconstruction
+        wayMap.set(el.id, el.geometry);
+      }
+    }
+  }
+
+  console.log(`[Overpass] Fetched: ${ways.length} ways, ${relations.length} relations, ${wayMap.size} way geometries in map`);
+
+  return { ways, relations, wayMap };
 }
 
 // ── Mountain Refuges ──────────────────────────────────────────
@@ -441,10 +570,6 @@ out center ${limit};
 
 // ── Connectivity Test ─────────────────────────────────────────
 
-/**
- * Test Overpass API connectivity with a minimal query.
- * Returns which endpoint responded and how long it took.
- */
 export async function testOverpassConnectivity(): Promise<{
   success: boolean;
   endpoint?: string;
@@ -507,60 +632,44 @@ export async function testOverpassConnectivity(): Promise<{
   };
 }
 
-// ── AllTrails-style Data Transformers ─────────────────────────
+// ── Trail Transformers ────────────────────────────────────────
 
 /**
- * Transform an OSM way/relation element into a trail record
- * following the AllTrails derivation methodology:
- * - Segment-based distance calculation
- * - Bounding box per segment
- * - Private access filtering
- * - AllTrails difficulty scoring
+ * Transform an OSM WAY element into a trail record.
+ * Ways have geometry directly: el.geometry = [{lat, lon}, ...]
  */
-export function transformTrailElement(el: OverpassElement): ReturnType<typeof buildTrailRecord> {
+export function transformWayElement(el: OverpassElement): ReturnType<typeof buildTrailRecord> | null {
   const tags = el.tags || {};
-
-  // Geometry: prefer full geometry (from out geom), fallback to center/lat
   const geometry = el.geometry || [];
-  const centerLat = el.center?.lat ?? el.lat;
-  const centerLng = el.center?.lon ?? el.lon;
 
-  // AllTrails step 6: calculate distance from geometry points
-  let distanceKm: number | null = null;
-  if (geometry.length >= 2) {
-    distanceKm = calculateSegmentDistance(geometry);
-  } else {
-    const distanceStr = tags['distance'] || tags['length'] || '';
-    distanceKm = distanceStr ? parseFloat(distanceStr.replace(/[^0-9.]/g, '')) || null : null;
-  }
+  if (geometry.length < 2) return null;
 
-  // AllTrails step 7: bounding box from geometry
-  const segBBox = geometry.length >= 2 ? calculateSegmentBBox(geometry) : null;
+  const distanceKm = calculateSegmentDistance(geometry);
+  const segBBox = calculateSegmentBBox(geometry);
 
-  // Start/end points from geometry or center
-  const startLat = geometry.length > 0 ? geometry[0].lat : (centerLat ?? null);
-  const startLng = geometry.length > 0 ? geometry[0].lon : (centerLng ?? null);
-  const endLat = geometry.length > 1 ? geometry[geometry.length - 1].lat : startLat;
-  const endLng = geometry.length > 1 ? geometry[geometry.length - 1].lon : startLng;
+  const startLat = geometry[0].lat;
+  const startLng = geometry[0].lon;
+  const endLat = geometry[geometry.length - 1].lat;
+  const endLng = geometry[geometry.length - 1].lon;
 
-  // AllTrails difficulty scoring
   const difficulty = computeAllTrailsDifficulty(tags, distanceKm ?? 0);
-
-  // AllTrails step 8: private access flag
   const isPrivate = isPrivateAccess(tags);
   const isBicycle = isBicycleAccessible(tags);
-
-  // Trail type classification
   const trailType = classifyTrailType(tags);
-  const highwayTag = tags['highway'] || tags['route'] || 'path';
+  const highwayTag = tags['highway'] || 'path';
 
-  // Build GeoJSON LineString from geometry for full GPS trace rendering
-  const geojson = geometry.length >= 2 ? {
-    type: 'LineString',
-    coordinates: geometry.map(pt => [pt.lon, pt.lat]),
+  // Build GeoJSON LineString — [lng, lat] format (GeoJSON standard)
+  const coordinates = geometry.map(pt => [pt.lon, pt.lat]);
+  const geojson = coordinates.length >= 2 ? {
+    type: 'LineString' as const,
+    coordinates,
   } : null;
 
-  // Estimate duration: AllTrails formula ~3.5 km/h + 1h per 300m gain
+  // Validate GPS geometry — must have at least 10 points and not be a straight line
+  if (!geojson || !validateGPSGeometry(coordinates)) {
+    return null;
+  }
+
   const elevGain = tags['ascent'] ? parseInt(tags['ascent']) : null;
   let durationHours: number | null = null;
   if (distanceKm) {
@@ -582,10 +691,10 @@ export function transformTrailElement(el: OverpassElement): ReturnType<typeof bu
     surface: tags['surface'] || null,
     waymarking: tags['osmc:symbol'] || tags['marked_trail'] || tags['ref'] || null,
     description: tags['description'] || null,
-    start_lat: startLat ?? null,
-    start_lng: startLng ?? null,
-    end_lat: endLat ?? null,
-    end_lng: endLng ?? null,
+    start_lat: startLat,
+    start_lng: startLng,
+    end_lat: endLat,
+    end_lng: endLng,
     bbox_south: segBBox?.south ?? null,
     bbox_west: segBBox?.west ?? null,
     bbox_north: segBBox?.north ?? null,
@@ -599,7 +708,109 @@ export function transformTrailElement(el: OverpassElement): ReturnType<typeof bu
   });
 }
 
-function buildTrailRecord(data: TrailSegment & { geojson?: { type: string; coordinates: number[][] } | null; duration_hours?: number | null }) {
+/**
+ * Transform an OSM RELATION element into a trail record.
+ * Relations don't have geometry directly — we reconstruct it from member ways.
+ *
+ * CRITICAL: This is the fix for straight-line display.
+ * Previously, relations had no geometry so they fell back to start→end line.
+ * Now we reconstruct the full GPS trace from member way geometries.
+ */
+export function transformRelationElement(
+  el: OverpassElement,
+  wayMap: Map<number, Array<{ lat: number; lon: number }>>
+): ReturnType<typeof buildTrailRecord> | null {
+  const tags = el.tags || {};
+
+  // Reconstruct full GPS geometry from member ways
+  const geometry = reconstructRelationGeometry(el, wayMap);
+
+  if (geometry.length < 10) {
+    console.log(`[Overpass] Relation ${el.id} "${tags['name']}" skipped: only ${geometry.length} GPS points (need ≥10)`);
+    return null;
+  }
+
+  const distanceKm = calculateSegmentDistance(geometry);
+  const segBBox = calculateSegmentBBox(geometry);
+
+  const startLat = geometry[0].lat;
+  const startLng = geometry[0].lon;
+  const endLat = geometry[geometry.length - 1].lat;
+  const endLng = geometry[geometry.length - 1].lon;
+
+  // Detect loop: start and end within 100m
+  const isLoop = haversineKm(startLat, startLng, endLat, endLng) < 0.1;
+
+  const difficulty = computeAllTrailsDifficulty(tags, distanceKm ?? 0);
+  const trailType = classifyTrailType(tags);
+
+  // Build GeoJSON LineString
+  const coordinates = geometry.map(pt => [pt.lon, pt.lat]);
+  const geojson = {
+    type: 'LineString' as const,
+    coordinates,
+  };
+
+  // Validate GPS geometry
+  if (!validateGPSGeometry(coordinates)) {
+    console.log(`[Overpass] Relation ${el.id} "${tags['name']}" failed GPS validation`);
+    return null;
+  }
+
+  const elevGain = tags['ascent'] ? parseInt(tags['ascent']) : null;
+  let durationHours: number | null = null;
+  if (distanceKm) {
+    const baseHours = distanceKm / 3.5;
+    const elevHours = elevGain ? elevGain / 300 : 0;
+    durationHours = Math.round((baseHours + elevHours) * 10) / 10;
+  }
+
+  console.log(`[Overpass] Relation ${el.id} "${tags['name']}": ${geometry.length} GPS points, ${distanceKm?.toFixed(1)}km`);
+
+  return buildTrailRecord({
+    osm_id: el.id,
+    segment_index: 0,
+    name: tags['name'] || tags['ref'] || `Route OSM ${el.id}`,
+    trail_type: trailType,
+    highway_tag: tags['route'] || 'hiking',
+    country: tags['addr:country'] || tags['is_in:country'] || null,
+    region: tags['addr:state'] || tags['addr:region'] || tags['is_in:state'] || null,
+    distance_km: distanceKm,
+    difficulty,
+    surface: tags['surface'] || null,
+    waymarking: tags['osmc:symbol'] || tags['marked_trail'] || tags['ref'] || null,
+    description: tags['description'] || null,
+    start_lat: startLat,
+    start_lng: startLng,
+    end_lat: endLat,
+    end_lng: endLng,
+    bbox_south: segBBox?.south ?? null,
+    bbox_west: segBBox?.west ?? null,
+    bbox_north: segBBox?.north ?? null,
+    bbox_east: segBBox?.east ?? null,
+    is_private: false,
+    is_bicycle_accessible: isBicycleAccessible(tags),
+    elevation_gain: elevGain,
+    duration_hours: durationHours,
+    geojson,
+    source: 'overpass',
+    is_loop: isLoop,
+  });
+}
+
+/**
+ * Legacy transformer for backward compatibility with sync route.
+ * Delegates to transformWayElement.
+ */
+export function transformTrailElement(el: OverpassElement): ReturnType<typeof buildTrailRecord> | null {
+  return transformWayElement(el);
+}
+
+function buildTrailRecord(data: TrailSegment & {
+  geojson?: { type: string; coordinates: number[][] } | null;
+  duration_hours?: number | null;
+  is_loop?: boolean;
+}) {
   return {
     osm_id: data.osm_id,
     name: data.name,
@@ -617,8 +828,8 @@ function buildTrailRecord(data: TrailSegment & { geojson?: { type: string; coord
     end_lng: data.end_lng,
     geojson: data.geojson ?? null,
     duration_hours: data.duration_hours ?? null,
+    is_loop: data.is_loop ?? false,
     source: data.source,
-    // Extended AllTrails fields stored in metadata
     metadata: {
       highway_tag: data.highway_tag,
       bbox: data.bbox_south != null ? {
@@ -681,7 +892,6 @@ export function transformPOIElement(el: OverpassElement, category: string) {
 }
 
 // ── Predefined World Regions for Sync ────────────────────────
-// Regions are aligned to the AllTrails 2×2 degree tile grid
 
 export const WORLD_REGIONS: Array<{ name: string; country: string; bbox: BBox }> = [
   { name: 'Alpes françaises', country: 'France', bbox: { south: 44.0, west: 5.5, north: 46.5, east: 7.5 } },

@@ -281,22 +281,38 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
         if (!trail.start_lat || !trail.start_lng) return;
         const color = DIFFICULTY_COLORS[trail.difficulty] || '#6b7280';
 
-        // Use full GeoJSON geometry if available, otherwise start→end line
-        let coords: [number, number][] = [];
-        if (trail.geojson?.coordinates && trail.geojson.coordinates.length >= 2) {
-          // GeoJSON is [lng, lat] — Leaflet needs [lat, lng]
-          coords = trail.geojson.coordinates.map(c => [c[1], c[0]] as [number, number]);
-        } else {
-          coords = [[trail.start_lat, trail.start_lng]];
-          if (trail.end_lat && trail.end_lng && !trail.is_loop) {
-            coords.push([trail.end_lat, trail.end_lng]);
-          }
+        // CRITICAL FIX: Only render trails with real GPS geometry (≥10 points).
+        // Never draw a straight line between start and end — that's not a real trail.
+        const hasRealGPS = trail.geojson?.coordinates && trail.geojson.coordinates.length >= 10;
+
+        if (!hasRealGPS) {
+          // No valid GPS trace: show only a start marker (no polyline)
+          const startIcon = Lx.divIcon({
+            html: `<div style="background:${color};width:8px;height:8px;border-radius:50%;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.5);opacity:0.6"></div>`,
+            className: '',
+            iconSize: [8, 8],
+            iconAnchor: [4, 4],
+          });
+          const marker = Lx.marker([trail.start_lat, trail.start_lng], { icon: startIcon }).addTo(mapx);
+          const popupHtml = buildTrailPopup(trail, color);
+          marker.bindPopup(popupHtml, { maxWidth: 280 });
+          marker.on('click', () => { setSelectedTrail(trail); onTrailSelect?.(trail); });
+          markersRef.current.push(marker);
+          return;
         }
+
+        // Real GPS trace: render full polyline
+        // GeoJSON is [lng, lat] — Leaflet needs [lat, lng]
+        const coords: [number, number][] = trail.geojson!.coordinates.map(
+          c => [c[1], c[0]] as [number, number]
+        );
 
         const polyline = Lx.polyline(coords, {
           color,
-          weight: coords.length > 2 ? 4 : 3,
+          weight: 4,
           opacity: 0.85,
+          lineJoin: 'round',
+          lineCap: 'round',
           dashArray: trail.is_loop ? '8,4' : undefined,
         }).addTo(mapx);
 
@@ -314,7 +330,6 @@ export default function InteractiveMap({ onTrailSelect }: InteractiveMapProps) {
         marker.bindPopup(popupHtml, { maxWidth: 280 });
         polyline.bindPopup(popupHtml, { maxWidth: 280 });
 
-        // Click on trail → select it for detail panel
         const handleClick = () => {
           setSelectedTrail(trail);
           onTrailSelect?.(trail);

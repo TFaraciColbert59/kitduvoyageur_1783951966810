@@ -6,7 +6,8 @@ import {
   fetchWaterPoints,
   fetchNaturalFeatures,
   fetchCamping,
-  transformTrailElement,
+  transformWayElement,
+  transformRelationElement,
   transformPOIElement,
   getTilesForBBox,
   WORLD_REGIONS,
@@ -23,10 +24,8 @@ export async function POST(request: NextRequest) {
     const regionName = body.region as string | undefined;
     const bboxParam = body.bbox as BBox | undefined;
     const syncType = body.type as string || 'all';
-    // Always force=true to avoid cache blocking re-sync after a failed/stuck attempt
     const force = true;
 
-    // Determine bbox
     let bbox: BBox;
     let country = 'Unknown';
     let region = 'Unknown';
@@ -44,7 +43,6 @@ export async function POST(request: NextRequest) {
       country = found.country;
       region = found.name;
     } else {
-      // Default: French Alps
       const defaultRegion = WORLD_REGIONS[0];
       bbox = defaultRegion.bbox;
       country = defaultRegion.country;
@@ -59,7 +57,6 @@ export async function POST(request: NextRequest) {
       .eq('status', 'running')
       .lt('started_at', new Date(Date.now() - 5 * 60 * 1000).toISOString());
 
-    // Check if recently synced (cache: 24h) — only when force=false
     if (!force) {
       const { data: recentSync } = await supabase
         .from('overpass_sync_log')
@@ -79,7 +76,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Log sync start
     const { data: syncLog } = await supabase
       .from('overpass_sync_log')
       .insert({
@@ -95,36 +91,78 @@ export async function POST(request: NextRequest) {
     const syncId = syncLog?.id;
     let totalInserted = 0;
     let totalFetched = 0;
+    let validGPSTrails = 0;
+    let rejectedTrails = 0;
     const errors: string[] = [];
 
     try {
-      // Fetch trails — process max 2 tiles to stay within 60s budget
+      // ── Fetch trails with COMPLETE GPS geometry ──────────────
       if (syncType === 'all' || syncType === 'trails') {
         const tiles = getTilesForBBox(bbox);
-        // Limit to 2 tiles max to avoid timeout (each tile ~15s max)
+        // Process max 2 tiles to stay within 60s budget
         const tilesToProcess = tiles.slice(0, 2);
 
         for (const tile of tilesToProcess) {
           try {
-            // Reduced limit: 30 trails per tile to keep queries fast
-            const trailElements = await fetchHikingTrails(tile, 30);
-            totalFetched += trailElements.length;
+            console.log(`[Sync] Processing tile [${tile.south},${tile.west}→${tile.north},${tile.east}]`);
 
-            const trailsToInsert = trailElements
-              .filter(el => {
-                const tags = el.tags || {};
-                const access = tags['access'] || '';
-                if (access === 'private' || access === 'no') return false;
-                return !!(el.center?.lat || el.lat || (el.geometry && el.geometry.length > 0));
-              })
-              .map(el => transformTrailElement(el))
-              .filter(t => t.name && (t.start_lat != null) && (t.start_lng != null));
+            // FIXED: fetchHikingTrails now returns {ways, relations, wayMap}
+            const { ways, relations, wayMap } = await fetchHikingTrails(tile, 50);
+            totalFetched += ways.length + relations.length;
+
+            console.log(`[Sync] Tile: ${ways.length} ways, ${relations.length} relations, ${wayMap.size} way geometries`);
+
+            const trailsToInsert: ReturnType<typeof transformWayElement>[] = [];
+
+            // Process ways — each has geometry directly
+            for (const way of ways) {
+              const tags = way.tags || {};
+              const access = tags['access'] || '';
+              if (access === 'private' || access === 'no') continue;
+
+              const trail = transformWayElement(way);
+              if (trail && trail.name && trail.start_lat != null && trail.geojson) {
+                // Validate: must have real GPS trace (min 10 points, not straight line)
+                const coords = trail.geojson.coordinates as number[][];
+                if (coords.length >= 10) {
+                  trailsToInsert.push(trail);
+                  validGPSTrails++;
+                } else {
+                  rejectedTrails++;
+                }
+              } else {
+                rejectedTrails++;
+              }
+            }
+
+            // Process relations — reconstruct GPS from member ways
+            for (const relation of relations) {
+              const trail = transformRelationElement(relation, wayMap);
+              if (trail && trail.name && trail.start_lat != null && trail.geojson) {
+                const coords = trail.geojson.coordinates as number[][];
+                if (coords.length >= 10) {
+                  trailsToInsert.push(trail);
+                  validGPSTrails++;
+                } else {
+                  rejectedTrails++;
+                }
+              } else {
+                rejectedTrails++;
+              }
+            }
+
+            console.log(`[Sync] Tile result: ${trailsToInsert.length} valid GPS trails, ${rejectedTrails} rejected`);
 
             if (trailsToInsert.length > 0) {
-              await supabase
+              const { error: upsertErr } = await supabase
                 .from('trails')
-                .upsert(trailsToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
-              totalInserted += trailsToInsert.length;
+                .upsert(trailsToInsert.filter(Boolean) as NonNullable<typeof trailsToInsert[0]>[], { onConflict: 'osm_id', ignoreDuplicates: false });
+
+              if (upsertErr) {
+                errors.push(`Trails upsert: ${upsertErr.message}`);
+              } else {
+                totalInserted += trailsToInsert.length;
+              }
             }
           } catch (tileErr) {
             const msg = `Tile [${tile.south},${tile.west}→${tile.north},${tile.east}]: ${String(tileErr)}`;
@@ -134,7 +172,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Fetch refuges
+      // ── Fetch POIs ───────────────────────────────────────────
       if (syncType === 'all' || syncType === 'pois') {
         try {
           const refugeElements = await fetchRefuges(bbox, 50);
@@ -155,7 +193,6 @@ export async function POST(request: NextRequest) {
           errors.push(`Refuges: ${String(err)}`);
         }
 
-        // Fetch water points
         try {
           const waterElements = await fetchWaterPoints(bbox, 50);
           totalFetched += waterElements.length;
@@ -175,7 +212,6 @@ export async function POST(request: NextRequest) {
           errors.push(`Water: ${String(err)}`);
         }
 
-        // Fetch natural features
         try {
           const naturalElements = await fetchNaturalFeatures(bbox, 50);
           totalFetched += naturalElements.length;
@@ -204,7 +240,6 @@ export async function POST(request: NextRequest) {
           errors.push(`Natural features: ${String(err)}`);
         }
 
-        // Fetch camping
         try {
           const campingElements = await fetchCamping(bbox, 30);
           totalFetched += campingElements.length;
@@ -256,28 +291,31 @@ export async function POST(request: NextRequest) {
         region,
         records_fetched: totalFetched,
         records_inserted: totalInserted,
-        partial_errors: errors.length > 0 ? errors : undefined,
+        valid_gps_trails: validGPSTrails,
+        rejected_trails: rejectedTrails,
+        errors: errors.length > 0 ? errors : undefined,
+        message: `Sync terminée: ${validGPSTrails} sentiers GPS valides (≥10 points), ${rejectedTrails} rejetés (géométrie insuffisante)`,
       });
 
-    } catch (syncError) {
+    } catch (innerErr) {
       if (syncId) {
         await supabase
           .from('overpass_sync_log')
           .update({
             status: 'error',
-            error_message: String(syncError),
+            error_message: String(innerErr),
             completed_at: new Date().toISOString(),
           })
           .eq('id', syncId);
       }
-      throw syncError;
+      throw innerErr;
     }
 
-  } catch (_err) {
+  } catch (err) {
+    console.error('[Sync] Fatal error:', err);
     return NextResponse.json({
-      error: 'Sync failed',
-      details: String(_err),
-      hint: 'Run GET /api/map/test-overpass to diagnose Overpass API connectivity',
+      success: false,
+      error: String(err),
     }, { status: 500 });
   }
 }
