@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
-import { useChat } from '@/lib/hooks/useChat';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Phase = 'intro' | 'interview' | 'generating' | 'result';
@@ -244,42 +243,10 @@ export default function VoyageIAPage() {
     materielActuel: '',
   });
   const [result, setResult] = useState<AdventureResult | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
   const [activeResultTab, setActiveResultTab] = useState<'fiche' | 'itineraire' | 'logistique' | 'kit'>('fiche');
   const resultRef = useRef<HTMLDivElement>(null);
-
-  const { response, isLoading, error, sendMessage } = useChat('GEMINI', 'gemini/gemini-2.0-flash', true);
-
-  // Track previous isLoading to detect the true→false transition
-  const wasLoadingRef = useRef(false);
-
-  // Stream result into state
-  useEffect(() => {
-    if (phase !== 'generating') return;
-
-    // Update result as chunks arrive
-    if (response) {
-      setResult({ raw: response });
-    }
-
-    // Detect the moment loading finishes (true → false transition)
-    if (isLoading) {
-      wasLoadingRef.current = true;
-      return;
-    }
-
-    // Only act on the transition, not on every render where isLoading is already false
-    if (!wasLoadingRef.current) return;
-    wasLoadingRef.current = false;
-
-    // Transition to result when loading finishes
-    if (error && !response) {
-      // Show error state — go back to interview
-      setPhase('interview');
-      return;
-    }
-    setPhase('result');
-    setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-  }, [response, isLoading, error, phase]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const update = (field: keyof InterviewData, value: any) => {
@@ -297,6 +264,8 @@ export default function VoyageIAPage() {
   const generateAdventure = async () => {
     setPhase('generating');
     setResult(null);
+    setGenError(null);
+    setIsGenerating(true);
 
     const systemPrompt = `Tu es un expert voyage et aventure. Tu crées des plans d'aventure complets et personnalisés. Réponds UNIQUEMENT en français avec du markdown structuré. Sois concis et précis.`;
 
@@ -351,13 +320,71 @@ Structure ta réponse avec ces 4 sections exactes :
 ## Poids total estimé
 ## Produits disponibles sur Le Kit du Voyageur (/boutique)`;
 
-    await sendMessage(
-      [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      { temperature: 0.7, max_tokens: 2500 }
-    );
+    try {
+      const response = await fetch('/api/ai/chat-completion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: 'GEMINI',
+          model: 'gemini/gemini-2.0-flash',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          stream: true,
+          parameters: { temperature: 0.7, max_tokens: 2500 },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur serveur: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Réponse non lisible');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let accumulated = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const parsed = JSON.parse(line.slice(6));
+            if (parsed.type === 'chunk' && parsed.chunk) {
+              const content = (parsed.chunk as { choices?: Array<{ delta?: { content?: string } }> })
+                ?.choices?.[0]?.delta?.content;
+              if (content) {
+                accumulated += content;
+                setResult({ raw: accumulated });
+              }
+            } else if (parsed.type === 'error') {
+              throw new Error(parsed.error || 'Erreur de génération');
+            }
+          } catch (parseErr) {
+            // skip malformed lines
+          }
+        }
+      }
+
+      // Stream finished — transition to result
+      setIsGenerating(false);
+      setPhase('result');
+      setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    } catch (err) {
+      setGenError(err instanceof Error ? err.message : 'Erreur inconnue');
+      setIsGenerating(false);
+      setPhase('interview');
+    }
   };
 
   // ── Render ──────────────────────────────────────────────────────────────────
