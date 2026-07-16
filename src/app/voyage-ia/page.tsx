@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
+import { getChatCompletion } from '@/lib/ai/chatCompletion';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Phase = 'intro' | 'interview' | 'generating' | 'result';
@@ -271,10 +272,10 @@ export default function VoyageIAPage() {
   const generateAdventure = async () => {
     if (isGenerating) return;
 
+    setIsGenerating(true);
     setPhase('generating');
     setRawResult('');
     setGenError(null);
-    setIsGenerating(true);
 
     const systemPrompt = `Tu es un expert voyage et aventure. Tu crées des plans d'aventure complets et personnalisés. Réponds UNIQUEMENT en français avec du markdown structuré. Sois concis et précis.`;
 
@@ -329,72 +330,31 @@ Structure ta réponse avec ces 4 sections exactes :
 ## Produits disponibles sur Le Kit du Voyageur (/boutique)`;
 
     try {
-      const response = await fetch('/api/ai/chat-completion', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          provider: 'GEMINI',
-          model: 'gemini/gemini-2.0-flash',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
-          ],
-          stream: true,
-          parameters: { temperature: 0.7, max_tokens: 2500 },
-        }),
-      });
+      const response = await getChatCompletion(
+        'GEMINI',
+        'gemini/gemini-2.5-flash',
+        [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        { temperature: 0.7, max_tokens: 3000 }
+      );
 
-      if (!response.ok) {
-        const errText = await response.text().catch(() => 'Erreur serveur');
-        throw new Error(`Erreur serveur: ${response.status} — ${errText}`);
-      }
+      const content: string = (response as any)?.choices?.[0]?.message?.content ?? '';
 
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('Réponse non lisible');
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-      let accumulated = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() ?? '';
-
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          try {
-            const parsed = JSON.parse(line.slice(6));
-            if (parsed.type === 'chunk' && parsed.chunk) {
-              const content = (parsed.chunk as { choices?: Array<{ delta?: { content?: string } }> })
-                ?.choices?.[0]?.delta?.content;
-              if (content) {
-                accumulated += content;
-                setRawResult(accumulated);
-              }
-            } else if (parsed.type === 'error') {
-              throw new Error(parsed.error || 'Erreur de génération');
-            }
-          } catch {
-            // skip malformed SSE lines
-          }
-        }
-      }
-
-      // Stream complete
-      setIsGenerating(false);
-      if (accumulated.trim().length > 0) {
-        setPhase('result');
-        setTimeout(() => {
-          resultRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-      } else {
-        setGenError('La génération n\'a produit aucun contenu. Veuillez réessayer.');
+      if (!content.trim()) {
+        setGenError("La génération n'a produit aucun contenu. Veuillez réessayer.");
         setPhase('interview');
+        setIsGenerating(false);
+        return;
       }
+
+      setRawResult(content);
+      setIsGenerating(false);
+      setPhase('result');
+      setTimeout(() => {
+        resultRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erreur inconnue';
       setGenError(msg);
@@ -675,7 +635,7 @@ Structure ta réponse avec ces 4 sections exactes :
                     <textarea
                       value={data.materielActuel}
                       onChange={(e) => update('materielActuel', e.target.value)}
-                      placeholder="Ex: J&apos;ai déjà une tente 3 saisons, des chaussures de randonnée…"
+                      placeholder="Ex: J'ai déjà une tente 3 saisons, des chaussures de randonnée…"
                       rows={3}
                       className="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#E4501C] transition-colors text-sm resize-none"
                     />
@@ -732,13 +692,6 @@ Structure ta réponse avec ces 4 sections exactes :
                 <h3 className="text-lg font-semibold text-white mb-2">Création de votre aventure en cours…</h3>
                 <p className="text-sm text-white/50">L&apos;IA analyse votre profil et construit votre plan complet</p>
               </div>
-              {rawResult && (
-                <div className="w-full text-left bg-white/5 rounded-xl p-4 max-h-48 overflow-y-auto">
-                  <p className="text-xs text-white/60 font-mono leading-relaxed whitespace-pre-wrap">
-                    {rawResult.slice(0, 500)}{rawResult.length > 500 ? '…' : ''}
-                  </p>
-                </div>
-              )}
             </div>
           </div>
         )}
