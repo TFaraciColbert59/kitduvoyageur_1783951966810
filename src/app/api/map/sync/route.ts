@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import {
-  fetchHikingTrails,
+  syncTrailsFromOSM,
   fetchRefuges,
   fetchWaterPoints,
   fetchNaturalFeatures,
   fetchCamping,
-  transformWayElement,
-  transformRelationElement,
   transformPOIElement,
-  getTilesForBBox,
   WORLD_REGIONS,
   type BBox,
 } from '@/lib/overpass';
@@ -32,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     if (bboxParam) {
       bbox = bboxParam;
-      region = body.regionName || 'Custom';
+      region = body.regionName || 'Zone visible';
       country = body.country || 'Unknown';
     } else if (regionName) {
       const found = WORLD_REGIONS.find(r => r.name === regionName);
@@ -43,10 +40,10 @@ export async function POST(request: NextRequest) {
       country = found.country;
       region = found.name;
     } else {
-      const defaultRegion = WORLD_REGIONS[0];
-      bbox = defaultRegion.bbox;
-      country = defaultRegion.country;
-      region = defaultRegion.name;
+      // Default: Tour du Mont-Blanc zone
+      bbox = { south: 45.8, west: 5.8, north: 46.2, east: 7.2 };
+      country = 'France/Italie/Suisse';
+      region = 'Tour du Mont-Blanc';
     }
 
     // Cleanup stuck 'running' entries older than 5 minutes
@@ -96,78 +93,29 @@ export async function POST(request: NextRequest) {
     const errors: string[] = [];
 
     try {
-      // ── Fetch trails with COMPLETE GPS geometry ──────────────
+      // ── Fetch trails with COMPLETE GPS geometry via syncTrailsFromOSM ──
       if (syncType === 'all' || syncType === 'trails') {
-        const tiles = getTilesForBBox(bbox);
-        // Process max 2 tiles to stay within 60s budget
-        const tilesToProcess = tiles.slice(0, 2);
+        const { trails: trailsToInsert, stats } = await syncTrailsFromOSM(bbox, 10, 2);
 
-        for (const tile of tilesToProcess) {
-          try {
-            console.log(`[Sync] Processing tile [${tile.south},${tile.west}→${tile.north},${tile.east}]`);
+        totalFetched += stats.ways_found + stats.relations_found;
+        validGPSTrails = stats.valid_trails;
+        rejectedTrails = stats.rejected_trails;
+        errors.push(...stats.errors);
 
-            // FIXED: fetchHikingTrails now returns {ways, relations, wayMap}
-            const { ways, relations, wayMap } = await fetchHikingTrails(tile, 50);
-            totalFetched += ways.length + relations.length;
+        console.log(`[Sync] syncTrailsFromOSM: ${validGPSTrails} valid GPS trails, ${rejectedTrails} rejected`);
 
-            console.log(`[Sync] Tile: ${ways.length} ways, ${relations.length} relations, ${wayMap.size} way geometries`);
+        if (trailsToInsert.length > 0) {
+          const { error: upsertErr } = await supabase
+            .from('trails')
+            .upsert(
+              trailsToInsert.filter(Boolean) as NonNullable<typeof trailsToInsert[0]>[],
+              { onConflict: 'osm_id', ignoreDuplicates: false }
+            );
 
-            const trailsToInsert: ReturnType<typeof transformWayElement>[] = [];
-
-            // Process ways — each has geometry directly
-            for (const way of ways) {
-              const tags = way.tags || {};
-              const access = tags['access'] || '';
-              if (access === 'private' || access === 'no') continue;
-
-              const trail = transformWayElement(way);
-              if (trail && trail.name && trail.start_lat != null && trail.geojson) {
-                // Validate: must have real GPS trace (min 10 points, not straight line)
-                const coords = trail.geojson.coordinates as number[][];
-                if (coords.length >= 10) {
-                  trailsToInsert.push(trail);
-                  validGPSTrails++;
-                } else {
-                  rejectedTrails++;
-                }
-              } else {
-                rejectedTrails++;
-              }
-            }
-
-            // Process relations — reconstruct GPS from member ways
-            for (const relation of relations) {
-              const trail = transformRelationElement(relation, wayMap);
-              if (trail && trail.name && trail.start_lat != null && trail.geojson) {
-                const coords = trail.geojson.coordinates as number[][];
-                if (coords.length >= 10) {
-                  trailsToInsert.push(trail);
-                  validGPSTrails++;
-                } else {
-                  rejectedTrails++;
-                }
-              } else {
-                rejectedTrails++;
-              }
-            }
-
-            console.log(`[Sync] Tile result: ${trailsToInsert.length} valid GPS trails, ${rejectedTrails} rejected`);
-
-            if (trailsToInsert.length > 0) {
-              const { error: upsertErr } = await supabase
-                .from('trails')
-                .upsert(trailsToInsert.filter(Boolean) as NonNullable<typeof trailsToInsert[0]>[], { onConflict: 'osm_id', ignoreDuplicates: false });
-
-              if (upsertErr) {
-                errors.push(`Trails upsert: ${upsertErr.message}`);
-              } else {
-                totalInserted += trailsToInsert.length;
-              }
-            }
-          } catch (tileErr) {
-            const msg = `Tile [${tile.south},${tile.west}→${tile.north},${tile.east}]: ${String(tileErr)}`;
-            errors.push(msg);
-            console.error('[Overpass sync] Trail tile error:', msg);
+          if (upsertErr) {
+            errors.push(`Trails upsert: ${upsertErr.message}`);
+          } else {
+            totalInserted += trailsToInsert.length;
           }
         }
       }
@@ -177,45 +125,32 @@ export async function POST(request: NextRequest) {
         try {
           const refugeElements = await fetchRefuges(bbox, 50);
           totalFetched += refugeElements.length;
-
           const refugesToInsert = refugeElements
             .filter(el => el.center?.lat || el.lat)
             .map(el => transformPOIElement(el, 'refuge'))
             .filter(p => p.lat && p.lng);
-
           if (refugesToInsert.length > 0) {
-            await supabase
-              .from('outdoor_points')
-              .upsert(refugesToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
+            await supabase.from('outdoor_points').upsert(refugesToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
             totalInserted += refugesToInsert.length;
           }
-        } catch (err) {
-          errors.push(`Refuges: ${String(err)}`);
-        }
+        } catch (err) { errors.push(`Refuges: ${String(err)}`); }
 
         try {
           const waterElements = await fetchWaterPoints(bbox, 50);
           totalFetched += waterElements.length;
-
           const waterToInsert = waterElements
             .filter(el => el.center?.lat || el.lat)
             .map(el => transformPOIElement(el, 'water'))
             .filter(p => p.lat && p.lng);
-
           if (waterToInsert.length > 0) {
-            await supabase
-              .from('outdoor_points')
-              .upsert(waterToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
+            await supabase.from('outdoor_points').upsert(waterToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
             totalInserted += waterToInsert.length;
           }
-        } catch (err) {
-          errors.push(`Water: ${String(err)}`);
-        }
+        } catch (err) { errors.push(`Water: ${String(err)}`); }
 
         try {
           const naturalElements = await fetchNaturalFeatures(bbox, 50);
           totalFetched += naturalElements.length;
-
           const naturalToInsert = naturalElements
             .filter(el => el.center?.lat || el.lat)
             .map(el => {
@@ -229,35 +164,24 @@ export async function POST(request: NextRequest) {
               return transformPOIElement(el, cat);
             })
             .filter(p => p.lat && p.lng);
-
           if (naturalToInsert.length > 0) {
-            await supabase
-              .from('outdoor_points')
-              .upsert(naturalToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
+            await supabase.from('outdoor_points').upsert(naturalToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
             totalInserted += naturalToInsert.length;
           }
-        } catch (err) {
-          errors.push(`Natural features: ${String(err)}`);
-        }
+        } catch (err) { errors.push(`Natural features: ${String(err)}`); }
 
         try {
           const campingElements = await fetchCamping(bbox, 30);
           totalFetched += campingElements.length;
-
           const campingToInsert = campingElements
             .filter(el => el.center?.lat || el.lat)
             .map(el => transformPOIElement(el, 'camping'))
             .filter(p => p.lat && p.lng);
-
           if (campingToInsert.length > 0) {
-            await supabase
-              .from('outdoor_points')
-              .upsert(campingToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
+            await supabase.from('outdoor_points').upsert(campingToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
             totalInserted += campingToInsert.length;
           }
-        } catch (err) {
-          errors.push(`Camping: ${String(err)}`);
-        }
+        } catch (err) { errors.push(`Camping: ${String(err)}`); }
       }
 
       const allFailed = errors.length > 0 && totalFetched === 0;
@@ -289,6 +213,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         region,
+        bbox,
         records_fetched: totalFetched,
         records_inserted: totalInserted,
         valid_gps_trails: validGPSTrails,
@@ -313,10 +238,7 @@ export async function POST(request: NextRequest) {
 
   } catch (err) {
     console.error('[Sync] Fatal error:', err);
-    return NextResponse.json({
-      success: false,
-      error: String(err),
-    }, { status: 500 });
+    return NextResponse.json({ success: false, error: String(err) }, { status: 500 });
   }
 }
 
@@ -338,13 +260,21 @@ export async function GET(_request: NextRequest) {
       .from('outdoor_points')
       .select('id', { count: 'exact', head: true });
 
+    // Count trails with real GPS geometry
+    const { count: gpsTrailsCount } = await supabase
+      .from('trails')
+      .select('id', { count: 'exact', head: true })
+      .not('geojson', 'is', null);
+
     return NextResponse.json({
       stats: {
         trails: trailsCount || 0,
+        trails_with_geojson: gpsTrailsCount || 0,
         outdoor_points: poisCount || 0,
       },
-      available_regions: WORLD_REGIONS.map(r => r.name),
+      available_regions: WORLD_REGIONS.map(r => ({ name: r.name, country: r.country, bbox: r.bbox })),
       recent_syncs: logs || [],
+      hint: 'POST to /api/map/sync with { region: "Alpes françaises" } or { bbox: { south, west, north, east } } to import real OSM trails',
     });
   } catch (_err) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

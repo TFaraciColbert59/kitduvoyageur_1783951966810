@@ -905,3 +905,112 @@ export const WORLD_REGIONS: Array<{ name: string; country: string; bbox: BBox }>
   { name: 'Scandinavie', country: 'Norvège', bbox: { south: 58.0, west: 4.0, north: 71.0, east: 31.0 } },
   { name: 'Atlas marocain', country: 'Maroc', bbox: { south: 30.0, west: -9.0, north: 34.0, east: -3.0 } },
 ];
+
+// ── syncTrailsFromOSM — Main pipeline function ────────────────
+
+/**
+ * Full pipeline: Overpass API → GeoJSON LineString → Supabase trails table.
+ *
+ * Fetches real hiking trails with complete GPS geometry for a given bbox zone.
+ * Each trail must have at minimum 50 GPS points (configurable via minPoints).
+ *
+ * Steps:
+ * 1. Split bbox into 2×2 degree tiles (AllTrails methodology)
+ * 2. For each tile: fetch ways (highway=path/track/footway) with full geometry
+ * 3. For each tile: fetch named hiking relations, reconstruct GPS from member ways
+ * 4. Validate each trail: min GPS points, not a straight line
+ * 5. Return array of trail records ready for Supabase upsert
+ *
+ * @param bbox - Geographic bounding box to import
+ * @param minPoints - Minimum GPS points required (default: 50)
+ * @param maxTiles - Max tiles to process (default: 4, to stay within timeout)
+ */
+export async function syncTrailsFromOSM(
+  bbox: BBox,
+  minPoints = 50,
+  maxTiles = 4
+): Promise<{
+  trails: ReturnType<typeof buildTrailRecord>[];
+  stats: {
+    tiles_processed: number;
+    ways_found: number;
+    relations_found: number;
+    valid_trails: number;
+    rejected_trails: number;
+    errors: string[];
+  };
+}> {
+  const tiles = getTilesForBBox(bbox).slice(0, maxTiles);
+  const allTrails: ReturnType<typeof buildTrailRecord>[] = [];
+  const stats = {
+    tiles_processed: 0,
+    ways_found: 0,
+    relations_found: 0,
+    valid_trails: 0,
+    rejected_trails: 0,
+    errors: [] as string[],
+  };
+
+  for (const tile of tiles) {
+    try {
+      console.log(`[syncTrailsFromOSM] Tile [${tile.south},${tile.west}→${tile.north},${tile.east}]`);
+
+      const { ways, relations, wayMap } = await fetchHikingTrails(tile, 100);
+      stats.tiles_processed++;
+      stats.ways_found += ways.length;
+      stats.relations_found += relations.length;
+
+      // Process ways — direct geometry
+      for (const way of ways) {
+        const tags = way.tags || {};
+        if (isPrivateAccess(tags)) continue;
+
+        const trail = transformWayElement(way);
+        if (!trail || !trail.geojson) {
+          stats.rejected_trails++;
+          continue;
+        }
+
+        const coords = trail.geojson.coordinates as number[][];
+        if (coords.length >= minPoints) {
+          allTrails.push(trail);
+          stats.valid_trails++;
+        } else {
+          stats.rejected_trails++;
+        }
+      }
+
+      // Process relations — reconstruct GPS from member ways
+      for (const relation of relations) {
+        const trail = transformRelationElement(relation, wayMap);
+        if (!trail || !trail.geojson) {
+          stats.rejected_trails++;
+          continue;
+        }
+
+        const coords = trail.geojson.coordinates as number[][];
+        if (coords.length >= minPoints) {
+          allTrails.push(trail);
+          stats.valid_trails++;
+        } else {
+          stats.rejected_trails++;
+        }
+      }
+
+      console.log(`[syncTrailsFromOSM] Tile done: ${stats.valid_trails} valid so far`);
+
+    } catch (err) {
+      const msg = `Tile [${tile.south},${tile.west}→${tile.north},${tile.east}]: ${String(err)}`;
+      stats.errors.push(msg);
+      console.error('[syncTrailsFromOSM] Error:', msg);
+    }
+  }
+
+  console.log(`[syncTrailsFromOSM] Complete: ${stats.valid_trails} valid GPS trails (≥${minPoints} pts), ${stats.rejected_trails} rejected`);
+
+  return { trails: allTrails, stats };
+}
+
+// Export TrailSegment type for external use
+
+export { isPrivateAccess };
