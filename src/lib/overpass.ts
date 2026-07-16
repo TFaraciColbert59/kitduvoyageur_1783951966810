@@ -554,6 +554,21 @@ export function transformTrailElement(el: OverpassElement): ReturnType<typeof bu
   const trailType = classifyTrailType(tags);
   const highwayTag = tags['highway'] || tags['route'] || 'path';
 
+  // Build GeoJSON LineString from geometry for full GPS trace rendering
+  const geojson = geometry.length >= 2 ? {
+    type: 'LineString',
+    coordinates: geometry.map(pt => [pt.lon, pt.lat]),
+  } : null;
+
+  // Estimate duration: AllTrails formula ~3.5 km/h + 1h per 300m gain
+  const elevGain = tags['ascent'] ? parseInt(tags['ascent']) : null;
+  let durationHours: number | null = null;
+  if (distanceKm) {
+    const baseHours = distanceKm / 3.5;
+    const elevHours = elevGain ? elevGain / 300 : 0;
+    durationHours = Math.round((baseHours + elevHours) * 10) / 10;
+  }
+
   return buildTrailRecord({
     osm_id: el.id,
     segment_index: 0,
@@ -577,12 +592,14 @@ export function transformTrailElement(el: OverpassElement): ReturnType<typeof bu
     bbox_east: segBBox?.east ?? null,
     is_private: isPrivate,
     is_bicycle_accessible: isBicycle,
-    elevation_gain: tags['ascent'] ? parseInt(tags['ascent']) : null,
+    elevation_gain: elevGain,
+    duration_hours: durationHours,
+    geojson,
     source: 'overpass',
   });
 }
 
-function buildTrailRecord(data: TrailSegment) {
+function buildTrailRecord(data: TrailSegment & { geojson?: { type: string; coordinates: number[][] } | null; duration_hours?: number | null }) {
   return {
     osm_id: data.osm_id,
     name: data.name,
@@ -598,6 +615,8 @@ function buildTrailRecord(data: TrailSegment) {
     start_lng: data.start_lng,
     end_lat: data.end_lat,
     end_lng: data.end_lng,
+    geojson: data.geojson ?? null,
+    duration_hours: data.duration_hours ?? null,
     source: data.source,
     // Extended AllTrails fields stored in metadata
     metadata: {

@@ -44,6 +44,15 @@ export default function CarteInteractivePage() {
     };
   }, []);
 
+  // Listen for trail-to-adventure event: auto-open generator panel
+  useEffect(() => {
+    const handleTrailEvent = () => {
+      setActivePanel('generator');
+    };
+    window.addEventListener('createAdventureFromTrail', handleTrailEvent);
+    return () => window.removeEventListener('createAdventureFromTrail', handleTrailEvent);
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#1C2620] flex flex-col">
       <Header />

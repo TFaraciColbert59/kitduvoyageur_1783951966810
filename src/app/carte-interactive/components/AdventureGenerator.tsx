@@ -90,6 +90,16 @@ function formatInline(text: string): React.ReactNode[] {
   });
 }
 
+interface TrailContext {
+  trailName: string;
+  region: string;
+  distance: number;
+  elevation: number;
+  difficulty: string;
+  duration: number;
+  trailType: string;
+}
+
 export default function AdventureGenerator({ onAdventureGenerated }: AdventureGeneratorProps) {
   const { user } = useAuth();
   const [intent, setIntent] = useState<AdventureIntent>({
@@ -105,8 +115,27 @@ export default function AdventureGenerator({ onAdventureGenerated }: AdventureGe
   const [phase, setPhase] = useState<'intent' | 'params' | 'generating' | 'result'>('intent');
   const [savedMsg, setSavedMsg] = useState('');
   const [tipIndex, setTipIndex] = useState(0);
+  const [trailContext, setTrailContext] = useState<TrailContext | null>(null);
 
   const { response, isLoading, error, sendMessage } = useChat('GEMINI', 'gemini/gemini-2.5-flash', false);
+
+  // Listen for trail selection from map
+  useEffect(() => {
+    const handleTrailEvent = (e: Event) => {
+      const ctx = (e as CustomEvent<TrailContext>).detail;
+      setTrailContext(ctx);
+      setIntent(prev => ({
+        ...prev,
+        freeText: `Aventure basée sur le sentier "${ctx.trailName}" — ${ctx.trailType} de ${ctx.distance}km, ${ctx.elevation}m D+, difficulté ${ctx.difficulty}`,
+        region: ctx.region || prev.region,
+        difficulty: ctx.difficulty || prev.difficulty,
+        activities: ctx.trailType ? [ctx.trailType] : prev.activities,
+      }));
+      setPhase('intent');
+    };
+    window.addEventListener('createAdventureFromTrail', handleTrailEvent);
+    return () => window.removeEventListener('createAdventureFromTrail', handleTrailEvent);
+  }, []);
 
   const TIPS = [
     'Analyse de votre intention de voyage…',
@@ -157,10 +186,24 @@ export default function AdventureGenerator({ onAdventureGenerated }: AdventureGe
 
     const systemPrompt = `Tu es le meilleur guide de montagne et planificateur d'aventures outdoor au monde. Tu connais parfaitement tous les massifs, sentiers, refuges et itinéraires de la planète. Tu génères des plans d'aventure ultra-détaillés, concrets et réalisables avec des noms réels de lieux, refuges, sentiers et équipements. Tu parles toujours en français.`;
 
+    // Build trail-specific context if available
+    const trailContextStr = trailContext ? `
+SENTIER SÉLECTIONNÉ SUR LA CARTE :
+- Nom : ${trailContext.trailName}
+- Type : ${trailContext.trailType}
+- Distance : ${trailContext.distance} km
+- Dénivelé : ${trailContext.elevation}m D+
+- Durée estimée : ${trailContext.duration}h
+- Difficulté : ${trailContext.difficulty}
+- Région : ${trailContext.region}
+
+Construis le plan d'aventure AUTOUR de ce sentier spécifique. Inclus les refuges proches, les points d'eau sur le tracé, les variantes possibles.
+` : '';
+
     const userPrompt = `Génère un plan d'aventure outdoor COMPLET et ULTRA-DÉTAILLÉ basé sur cette demande :
 
 INTENTION DE L'UTILISATEUR : "${intent.freeText || `Aventure ${intent.duration} jours en ${intent.region || 'France'}`}"
-
+${trailContextStr}
 PARAMÈTRES DÉTAILLÉS :
 - Région souhaitée : ${intent.region || 'Au choix selon la demande'}
 - Durée : ${intent.duration} jours
