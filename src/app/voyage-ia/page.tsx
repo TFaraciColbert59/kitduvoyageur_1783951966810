@@ -10,7 +10,6 @@ import Icon from '@/components/ui/AppIcon';
 type Phase = 'intro' | 'interview' | 'generating' | 'result';
 
 interface InterviewData {
-  // Phase 1 – Profil
   age: string;
   niveauSportif: string;
   experienceOutdoor: string;
@@ -19,23 +18,36 @@ interface InterviewData {
   voyageSeul: string;
   nbParticipants: string;
   compositionGroupe: string[];
-  // Phase 2 – Objectifs
   objectifs: string[];
   niveauConfort: string;
-  // Phase 3 – Contraintes
   budget: string;
   datesSouhaitees: string;
   duree: string;
   paysDepart: string;
   transportDisponible: string[];
-  // Phase 4 – Destination & Matériel
   destination: string;
   materielActuel: string;
 }
 
-interface AdventureResult {
-  raw: string;
-}
+const DEFAULT_DATA: InterviewData = {
+  age: '',
+  niveauSportif: '',
+  experienceOutdoor: '',
+  experienceRandonnee: '',
+  experienceBivouac: '',
+  voyageSeul: '',
+  nbParticipants: '1',
+  compositionGroupe: [],
+  objectifs: [],
+  niveauConfort: '',
+  budget: '',
+  datesSouhaitees: '',
+  duree: '',
+  paysDepart: '',
+  transportDisponible: [],
+  destination: '',
+  materielActuel: '',
+};
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const OBJECTIFS_OPTIONS = [
@@ -74,13 +86,14 @@ const EXAMPLE_DESTINATIONS = [
   'Je veux gravir le Mont Blanc',
 ];
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Sub-components ────────────────────────────────────────────────────────────
 function ProgressBar({ step, total }: { step: number; total: number }) {
+  const pct = Math.min(100, Math.max(0, (step / total) * 100));
   return (
     <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
       <div
         className="h-full bg-[#E4501C] rounded-full transition-all duration-500"
-        style={{ width: `${(step / total) * 100}%` }}
+        style={{ width: `${pct}%` }}
       />
     </div>
   );
@@ -186,7 +199,6 @@ function InputField({
   );
 }
 
-// ── Parsing helpers ───────────────────────────────────────────────────────────
 function parseSection(raw: string, marker: string): string {
   const lines = raw.split('\n');
   const idx = lines.findIndex((l) => l.toLowerCase().includes(marker.toLowerCase()));
@@ -211,7 +223,12 @@ function MarkdownBlock({ text }: { text: string }) {
         if (line.startsWith('## ')) return <h3 key={i} className="text-base font-bold text-white mt-4">{line.replace('## ', '')}</h3>;
         if (line.startsWith('# ')) return <h2 key={i} className="text-lg font-bold text-[#E4501C] mt-4">{line.replace('# ', '')}</h2>;
         if (line.startsWith('**') && line.endsWith('**')) return <p key={i} className="text-sm font-semibold text-white">{line.replace(/\*\*/g, '')}</p>;
-        if (line.startsWith('- ') || line.startsWith('• ')) return <p key={i} className="text-sm text-white/75 pl-3 flex gap-2"><span className="text-[#E4501C] flex-shrink-0">•</span><span>{line.replace(/^[-•]\s/, '')}</span></p>;
+        if (line.startsWith('- ') || line.startsWith('• ')) return (
+          <p key={i} className="text-sm text-white/75 pl-3 flex gap-2">
+            <span className="text-[#E4501C] flex-shrink-0">•</span>
+            <span>{line.replace(/^[-•]\s/, '')}</span>
+          </p>
+        );
         if (line.match(/^\d+\.\s/)) return <p key={i} className="text-sm text-white/75 pl-3">{line}</p>;
         return <p key={i} className="text-sm text-white/75 leading-relaxed">{line}</p>;
       })}
@@ -222,48 +239,40 @@ function MarkdownBlock({ text }: { text: string }) {
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function VoyageIAPage() {
   const [phase, setPhase] = useState<Phase>('intro');
-  const [interviewStep, setInterviewStep] = useState(0); // 0-3
-  const [data, setData] = useState<InterviewData>({
-    age: '',
-    niveauSportif: '',
-    experienceOutdoor: '',
-    experienceRandonnee: '',
-    experienceBivouac: '',
-    voyageSeul: '',
-    nbParticipants: '1',
-    compositionGroupe: [],
-    objectifs: [],
-    niveauConfort: '',
-    budget: '',
-    datesSouhaitees: '',
-    duree: '',
-    paysDepart: '',
-    transportDisponible: [],
-    destination: '',
-    materielActuel: '',
-  });
-  const [result, setResult] = useState<AdventureResult | null>(null);
+  const [interviewStep, setInterviewStep] = useState(0);
+  const [data, setData] = useState<InterviewData>(DEFAULT_DATA);
+  const [rawResult, setRawResult] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
   const [activeResultTab, setActiveResultTab] = useState<'fiche' | 'itineraire' | 'logistique' | 'kit'>('fiche');
   const resultRef = useRef<HTMLDivElement>(null);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const update = (field: keyof InterviewData, value: any) => {
+  const update = (field: keyof InterviewData, value: string | string[]) => {
     setData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const canProceedStep = () => {
-    if (interviewStep === 0) return data.age && data.niveauSportif && data.voyageSeul;
-    if (interviewStep === 1) return data.objectifs.length > 0 && data.niveauConfort;
-    if (interviewStep === 2) return data.duree && data.paysDepart;
+  const canProceedStep = (): boolean => {
+    if (interviewStep === 0) return !!(data.age && data.niveauSportif && data.voyageSeul);
+    if (interviewStep === 1) return data.objectifs.length > 0 && !!data.niveauConfort;
+    if (interviewStep === 2) return !!(data.duree && data.paysDepart);
     if (interviewStep === 3) return data.destination.trim().length > 2;
     return true;
   };
 
+  const resetToIntro = () => {
+    setPhase('intro');
+    setRawResult('');
+    setGenError(null);
+    setIsGenerating(false);
+    setInterviewStep(0);
+    setData(DEFAULT_DATA);
+  };
+
   const generateAdventure = async () => {
+    if (isGenerating) return;
+
     setPhase('generating');
-    setResult(null);
+    setRawResult('');
     setGenError(null);
     setIsGenerating(true);
 
@@ -295,7 +304,6 @@ Structure ta réponse avec ces 4 sections exactes :
 ## Vue d'ensemble
 ## Jour par jour
 ### Jour 1 — [Titre]
-[etc. pour chaque jour]
 ## Hébergements recommandés
 ## Points dangereux / Précautions
 
@@ -337,7 +345,8 @@ Structure ta réponse avec ces 4 sections exactes :
       });
 
       if (!response.ok) {
-        throw new Error(`Erreur serveur: ${response.status}`);
+        const errText = await response.text().catch(() => 'Erreur serveur');
+        throw new Error(`Erreur serveur: ${response.status} — ${errText}`);
       }
 
       const reader = response.body?.getReader();
@@ -349,12 +358,11 @@ Structure ta réponse avec ces 4 sections exactes :
 
       while (true) {
         const { done, value } = await reader.read();
-
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+        buffer = lines.pop() ?? '';
 
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
@@ -365,23 +373,31 @@ Structure ta réponse avec ces 4 sections exactes :
                 ?.choices?.[0]?.delta?.content;
               if (content) {
                 accumulated += content;
-                setResult({ raw: accumulated });
+                setRawResult(accumulated);
               }
             } else if (parsed.type === 'error') {
               throw new Error(parsed.error || 'Erreur de génération');
             }
-          } catch (parseErr) {
-            // skip malformed lines
+          } catch {
+            // skip malformed SSE lines
           }
         }
       }
 
-      // Stream finished — transition to result
+      // Stream complete
       setIsGenerating(false);
-      setPhase('result');
-      setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+      if (accumulated.trim().length > 0) {
+        setPhase('result');
+        setTimeout(() => {
+          resultRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      } else {
+        setGenError('La génération n\'a produit aucun contenu. Veuillez réessayer.');
+        setPhase('interview');
+      }
     } catch (err) {
-      setGenError(err instanceof Error ? err.message : 'Erreur inconnue');
+      const msg = err instanceof Error ? err.message : 'Erreur inconnue';
+      setGenError(msg);
       setIsGenerating(false);
       setPhase('interview');
     }
@@ -418,7 +434,6 @@ Structure ta réponse avec ces 4 sections exactes :
         {/* ── INTRO PHASE ── */}
         {phase === 'intro' && (
           <div className="space-y-8">
-            {/* Quick start */}
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
               <h2 className="text-lg font-semibold text-white mb-2">Quelle est votre aventure ?</h2>
               <p className="text-sm text-white/50 mb-4">Entrez votre destination, une activité ou une simple intention.</p>
@@ -444,7 +459,6 @@ Structure ta réponse avec ces 4 sections exactes :
               </div>
             </div>
 
-            {/* Examples */}
             <div>
               <p className="text-xs text-white/40 uppercase tracking-wider mb-3">Exemples d&apos;aventures</p>
               <div className="flex flex-wrap gap-2">
@@ -460,7 +474,6 @@ Structure ta réponse avec ces 4 sections exactes :
               </div>
             </div>
 
-            {/* Features bento */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
                 { icon: 'UserIcon', label: 'Interview intelligente', desc: 'Profil personnalisé' },
@@ -481,7 +494,11 @@ Structure ta réponse avec ces 4 sections exactes :
         {/* ── INTERVIEW PHASE ── */}
         {phase === 'interview' && (
           <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
-            {/* Header */}
+            {genError && (
+              <div className="mx-6 mt-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <p className="text-sm text-red-400">{genError}</p>
+              </div>
+            )}
             <div className="px-6 pt-6 pb-4 border-b border-white/8">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -505,10 +522,7 @@ Structure ta réponse avec ces 4 sections exactes :
               <ProgressBar step={interviewStep + 1} total={4} />
             </div>
 
-            {/* Step content */}
             <div className="p-6 space-y-5">
-
-              {/* Step 0 – Profil voyageur */}
               {interviewStep === 0 && (
                 <>
                   <div className="grid grid-cols-2 gap-4">
@@ -594,7 +608,6 @@ Structure ta réponse avec ces 4 sections exactes :
                 </>
               )}
 
-              {/* Step 1 – Objectifs */}
               {interviewStep === 1 && (
                 <>
                   <div>
@@ -628,7 +641,6 @@ Structure ta réponse avec ces 4 sections exactes :
                 </>
               )}
 
-              {/* Step 2 – Contraintes */}
               {interviewStep === 2 && (
                 <>
                   <div className="grid grid-cols-2 gap-4">
@@ -646,7 +658,6 @@ Structure ta réponse avec ces 4 sections exactes :
                 </>
               )}
 
-              {/* Step 3 – Destination & matériel */}
               {interviewStep === 3 && (
                 <>
                   <div>
@@ -654,7 +665,7 @@ Structure ta réponse avec ces 4 sections exactes :
                     <textarea
                       value={data.destination}
                       onChange={(e) => update('destination', e.target.value)}
-                      placeholder="Ex: Je veux faire le GR20 en Corse, Je veux découvrir les Dolomites, Je veux une aventure sauvage de 5 jours…"
+                      placeholder="Ex: Je veux faire le GR20 en Corse, Je veux découvrir les Dolomites…"
                       rows={3}
                       className="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#E4501C] transition-colors text-sm resize-none"
                     />
@@ -664,7 +675,7 @@ Structure ta réponse avec ces 4 sections exactes :
                     <textarea
                       value={data.materielActuel}
                       onChange={(e) => update('materielActuel', e.target.value)}
-                      placeholder="Ex: J'ai déjà une tente 3 saisons, des chaussures de randonnée, un sac à dos 50L…"
+                      placeholder="Ex: J&apos;ai déjà une tente 3 saisons, des chaussures de randonnée…"
                       rows={3}
                       className="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#E4501C] transition-colors text-sm resize-none"
                     />
@@ -673,7 +684,6 @@ Structure ta réponse avec ces 4 sections exactes :
               )}
             </div>
 
-            {/* Navigation */}
             <div className="px-6 pb-6 flex items-center justify-between">
               <button
                 onClick={() => {
@@ -697,7 +707,7 @@ Structure ta réponse avec ces 4 sections exactes :
               ) : (
                 <button
                   onClick={generateAdventure}
-                  disabled={!canProceedStep()}
+                  disabled={!canProceedStep() || isGenerating}
                   className="flex items-center gap-2 bg-[#E4501C] hover:bg-[#c93d14] disabled:opacity-40 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors"
                 >
                   <Icon name="SparklesIcon" size={14} variant="solid" />
@@ -722,9 +732,11 @@ Structure ta réponse avec ces 4 sections exactes :
                 <h3 className="text-lg font-semibold text-white mb-2">Création de votre aventure en cours…</h3>
                 <p className="text-sm text-white/50">L&apos;IA analyse votre profil et construit votre plan complet</p>
               </div>
-              {result && (
+              {rawResult && (
                 <div className="w-full text-left bg-white/5 rounded-xl p-4 max-h-48 overflow-y-auto">
-                  <p className="text-xs text-white/60 font-mono leading-relaxed whitespace-pre-wrap">{result.raw.slice(0, 500)}…</p>
+                  <p className="text-xs text-white/60 font-mono leading-relaxed whitespace-pre-wrap">
+                    {rawResult.slice(0, 500)}{rawResult.length > 500 ? '…' : ''}
+                  </p>
                 </div>
               )}
             </div>
@@ -732,16 +744,15 @@ Structure ta réponse avec ces 4 sections exactes :
         )}
 
         {/* ── RESULT PHASE ── */}
-        {phase === 'result' && result && (
+        {phase === 'result' && rawResult && (
           <div ref={resultRef} className="space-y-6">
-            {/* Header */}
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-white">Votre aventure est prête ✨</h2>
                 <p className="text-sm text-white/50 mt-0.5">Plan complet généré par Gemini AI</p>
               </div>
               <button
-                onClick={() => { setPhase('intro'); setResult(null); setInterviewStep(0); }}
+                onClick={resetToIntro}
                 className="flex items-center gap-2 bg-white/8 hover:bg-white/12 border border-white/15 text-white/70 hover:text-white px-4 py-2 rounded-lg text-sm transition-all"
               >
                 <Icon name="ArrowPathIcon" size={14} variant="outline" />
@@ -749,13 +760,12 @@ Structure ta réponse avec ces 4 sections exactes :
               </button>
             </div>
 
-            {/* Tabs */}
             <div className="flex gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
               {[
-                { id: 'fiche', label: '📋 Fiche', icon: 'DocumentTextIcon' },
-                { id: 'itineraire', label: '🗺️ Itinéraire', icon: 'MapIcon' },
-                { id: 'logistique', label: '✈️ Logistique', icon: 'TruckIcon' },
-                { id: 'kit', label: '🎒 Kit idéal', icon: 'ArchiveBoxIcon' },
+                { id: 'fiche', label: '📋 Fiche' },
+                { id: 'itineraire', label: '🗺️ Itinéraire' },
+                { id: 'logistique', label: '✈️ Logistique' },
+                { id: 'kit', label: '🎒 Kit idéal' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -771,7 +781,6 @@ Structure ta réponse avec ces 4 sections exactes :
               ))}
             </div>
 
-            {/* Tab content */}
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6 min-h-64">
               {activeResultTab === 'fiche' && (
                 <div>
@@ -779,7 +788,7 @@ Structure ta réponse avec ces 4 sections exactes :
                     <Icon name="DocumentTextIcon" size={16} variant="outline" />
                     Fiche Aventure
                   </h3>
-                  <MarkdownBlock text={parseSection(result.raw, 'FICHE AVENTURE') || result.raw.split('ITINÉRAIRE')[0]} />
+                  <MarkdownBlock text={parseSection(rawResult, 'FICHE AVENTURE') || rawResult.split('ITINÉRAIRE')[0] || rawResult} />
                 </div>
               )}
               {activeResultTab === 'itineraire' && (
@@ -788,7 +797,7 @@ Structure ta réponse avec ces 4 sections exactes :
                     <Icon name="MapIcon" size={16} variant="outline" />
                     Itinéraire Détaillé
                   </h3>
-                  <MarkdownBlock text={parseSection(result.raw, 'ITINÉRAIRE DÉTAILLÉ') || parseSection(result.raw, 'ITINERAIRE')} />
+                  <MarkdownBlock text={parseSection(rawResult, 'ITINÉRAIRE DÉTAILLÉ') || parseSection(rawResult, 'ITINERAIRE')} />
                 </div>
               )}
               {activeResultTab === 'logistique' && (
@@ -797,7 +806,7 @@ Structure ta réponse avec ces 4 sections exactes :
                     <Icon name="TruckIcon" size={16} variant="outline" />
                     Plan Logistique
                   </h3>
-                  <MarkdownBlock text={parseSection(result.raw, 'PLAN LOGISTIQUE') || parseSection(result.raw, 'LOGISTIQUE')} />
+                  <MarkdownBlock text={parseSection(rawResult, 'PLAN LOGISTIQUE') || parseSection(rawResult, 'LOGISTIQUE')} />
                 </div>
               )}
               {activeResultTab === 'kit' && (
@@ -806,7 +815,7 @@ Structure ta réponse avec ces 4 sections exactes :
                     <Icon name="ArchiveBoxIcon" size={16} variant="outline" />
                     Kit Idéal Recommandé
                   </h3>
-                  <MarkdownBlock text={parseSection(result.raw, 'KIT IDÉAL') || parseSection(result.raw, 'KIT IDEAL')} />
+                  <MarkdownBlock text={parseSection(rawResult, 'KIT IDÉAL') || parseSection(rawResult, 'KIT IDEAL')} />
                   <div className="mt-6 p-4 bg-[#E4501C]/10 border border-[#E4501C]/20 rounded-xl">
                     <p className="text-sm text-white/80 mb-3">
                       🛒 Trouvez tous ces équipements sur la boutique <strong>Le Kit du Voyageur</strong>
@@ -827,22 +836,20 @@ Structure ta réponse avec ces 4 sections exactes :
               )}
             </div>
 
-            {/* Full raw output toggle */}
             <details className="bg-white/3 border border-white/8 rounded-xl overflow-hidden">
               <summary className="px-5 py-3 text-sm text-white/40 cursor-pointer hover:text-white/60 transition-colors select-none">
                 Voir le plan complet brut
               </summary>
               <div className="px-5 pb-5">
                 <div className="bg-black/20 rounded-lg p-4 max-h-96 overflow-y-auto">
-                  <pre className="text-xs text-white/60 whitespace-pre-wrap font-mono leading-relaxed">{result.raw}</pre>
+                  <pre className="text-xs text-white/60 whitespace-pre-wrap font-mono leading-relaxed">{rawResult}</pre>
                 </div>
               </div>
             </details>
 
-            {/* CTA links */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
-                { href: '/copilote', label: 'Copilote IA', icon: 'SparklesIcon', desc: 'Affiner avec l\'IA' },
+                { href: '/copilote', label: 'Copilote IA', icon: 'SparklesIcon', desc: "Affiner avec l'IA" },
                 { href: '/pays', label: 'Destinations', icon: 'GlobeAltIcon', desc: 'Fiches pays' },
                 { href: '/guides', label: 'Guides terrain', icon: 'BookOpenIcon', desc: 'Conseils experts' },
                 { href: '/inventaire', label: 'Mon inventaire', icon: 'ArchiveBoxIcon', desc: 'Gérer mon kit' },
