@@ -428,9 +428,7 @@ RÈGLES ABSOLUES :
 
     const userPrompt = `Crée un plan d'aventure COMPLET et ULTRA-DÉTAILLÉ pour ce voyageur :
 
-═══════════════════════════════════════
 PROFIL COMPLET DU VOYAGEUR
-═══════════════════════════════════════
 - Âge : ${data.age} ans
 - Niveau sportif : ${data.niveauSportif}
 - Expériences : ${experienceDesc || 'non précisé'}
@@ -444,7 +442,6 @@ PROFIL COMPLET DU VOYAGEUR
 - Transports disponibles : ${data.transportDisponible.join(', ') || 'non précisé'}
 - Aventure souhaitée : ${data.destination}
 - Matériel déjà possédé : ${data.materielActuel || 'rien de spécifique'}
-═══════════════════════════════════════
 
 Génère une réponse TRÈS LONGUE et TRÈS DÉTAILLÉE avec exactement ces 4 sections. Chaque section doit être exhaustive.
 
@@ -577,7 +574,7 @@ Génère une réponse TRÈS LONGUE et TRÈS DÉTAILLÉE avec exactement ces 4 se
 ## Hygiène & Confort
 [Produits essentiels, poids minimal, solutions légères]
 
-## Électronique & Photo
+## Electronique & Photo
 [Appareil photo, batteries, adaptateurs, protections]
 
 ## Poids total estimé
@@ -597,7 +594,7 @@ Génère une réponse TRÈS LONGUE et TRÈS DÉTAILLÉE avec exactement ces 4 se
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        { temperature: 0.8, max_tokens: 8000 }
+        { temperature: 0.8, max_tokens: 4000 }
       );
 
       const content: string = (response as any)?.choices?.[0]?.message?.content ?? '';
