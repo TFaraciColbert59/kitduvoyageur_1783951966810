@@ -65,43 +65,85 @@ export interface TrailSegment {
   source: string;
 }
 
-// ── Overpass Endpoints (round-robin) ─────────────────────────
+// ── Overpass Endpoints (round-robin with retry) ───────────────
 
 const OVERPASS_ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
   'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+  'https://overpass.openstreetmap.ru/api/interpreter',
 ];
 
 let endpointIndex = 0;
 
-function getEndpoint(): string {
+function getNextEndpoint(): string {
   const ep = OVERPASS_ENDPOINTS[endpointIndex % OVERPASS_ENDPOINTS.length];
   endpointIndex++;
   return ep;
 }
 
-async function queryOverpass(query: string, timeoutMs = 30000): Promise<OverpassResult> {
-  const endpoint = getEndpoint();
-  const body = `data=${encodeURIComponent(query)}`;
+/**
+ * Query Overpass API with automatic retry across all endpoints.
+ * Tries each endpoint once before giving up.
+ */
+async function queryOverpass(query: string, timeoutMs = 45000): Promise<OverpassResult> {
+  const errors: string[] = [];
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  // Try each endpoint in sequence
+  for (let attempt = 0; attempt < OVERPASS_ENDPOINTS.length; attempt++) {
+    const endpoint = getNextEndpoint();
+    const body = `data=${encodeURIComponent(query)}`;
 
-  try {
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body,
-      signal: controller.signal,
-    });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-    if (!res.ok) throw new Error(`Overpass HTTP ${res.status}`);
-    const data = await res.json();
-    return data as OverpassResult;
-  } finally {
-    clearTimeout(timer);
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+          'User-Agent': 'KitDuVoyageur/1.0 (https://lekitduvoyageur.fr)',
+        },
+        body,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timer);
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        errors.push(`${endpoint}: HTTP ${res.status} — ${text.slice(0, 200)}`);
+        // Wait before trying next endpoint
+        if (attempt < OVERPASS_ENDPOINTS.length - 1) {
+          await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+        }
+        continue;
+      }
+
+      const data = await res.json();
+
+      // Validate response structure
+      if (!data || !Array.isArray(data.elements)) {
+        errors.push(`${endpoint}: Invalid response structure`);
+        continue;
+      }
+
+      return data as OverpassResult;
+
+    } catch (err) {
+      clearTimeout(timer);
+      const msg = err instanceof Error ? err.message : String(err);
+      errors.push(`${endpoint}: ${msg}`);
+
+      // Wait before trying next endpoint (exponential backoff)
+      if (attempt < OVERPASS_ENDPOINTS.length - 1) {
+        await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+      }
+    }
   }
+
+  throw new Error(`Overpass API unreachable after ${OVERPASS_ENDPOINTS.length} attempts:\n${errors.join('\n')}`);
 }
 
 // ── AllTrails Tile System ─────────────────────────────────────
@@ -293,20 +335,18 @@ export async function fetchHikingTrails(bbox: BBox, limit = 100): Promise<Overpa
   const bboxStr = `${south},${west},${north},${east}`;
 
   // AllTrails uses: highway=path|track|footway|steps|bridleway|cycleway
-  // Plus route relations for named trails
+  // Ways with full geometry (out geom) — relations use center only to avoid huge payloads
   const query = `
-[out:json][timeout:30];
+[out:json][timeout:45];
 (
-  relation["route"="hiking"](${bboxStr});
-  relation["route"="foot"](${bboxStr});
-  relation["route"="bicycle"](${bboxStr});
-  relation["route"="mtb"](${bboxStr});
   way["highway"="path"]["access"!="private"]["access"!="no"](${bboxStr});
   way["highway"="track"]["access"!="private"]["access"!="no"](${bboxStr});
   way["highway"="footway"]["access"!="private"]["access"!="no"](${bboxStr});
   way["highway"="bridleway"]["access"!="private"]["access"!="no"](${bboxStr});
   way["highway"="cycleway"]["access"!="private"]["access"!="no"](${bboxStr});
   way["highway"="steps"]["access"!="private"]["access"!="no"](${bboxStr});
+  relation["route"="hiking"]["name"](${bboxStr});
+  relation["route"="foot"]["name"](${bboxStr});
 );
 out center geom ${limit};
 `;
@@ -322,7 +362,7 @@ export async function fetchRefuges(bbox: BBox, limit = 200): Promise<OverpassEle
   const bboxStr = `${south},${west},${north},${east}`;
 
   const query = `
-[out:json][timeout:25];
+[out:json][timeout:30];
 (
   node["tourism"="alpine_hut"](${bboxStr});
   node["tourism"="wilderness_hut"](${bboxStr});
@@ -343,7 +383,7 @@ export async function fetchWaterPoints(bbox: BBox, limit = 300): Promise<Overpas
   const bboxStr = `${south},${west},${north},${east}`;
 
   const query = `
-[out:json][timeout:25];
+[out:json][timeout:30];
 (
   node["natural"="spring"](${bboxStr});
   node["amenity"="drinking_water"](${bboxStr});
@@ -363,7 +403,7 @@ export async function fetchNaturalFeatures(bbox: BBox, limit = 200): Promise<Ove
   const bboxStr = `${south},${west},${north},${east}`;
 
   const query = `
-[out:json][timeout:25];
+[out:json][timeout:30];
 (
   node["natural"="peak"](${bboxStr});
   node["mountain_pass"="yes"](${bboxStr});
@@ -386,7 +426,7 @@ export async function fetchCamping(bbox: BBox, limit = 100): Promise<OverpassEle
   const bboxStr = `${south},${west},${north},${east}`;
 
   const query = `
-[out:json][timeout:25];
+[out:json][timeout:30];
 (
   node["tourism"="camp_site"](${bboxStr});
   node["tourism"="camp_pitch"](${bboxStr});
@@ -397,6 +437,74 @@ out center ${limit};
 
   const result = await queryOverpass(query);
   return result.elements;
+}
+
+// ── Connectivity Test ─────────────────────────────────────────
+
+/**
+ * Test Overpass API connectivity with a minimal query.
+ * Returns which endpoint responded and how long it took.
+ */
+export async function testOverpassConnectivity(): Promise<{
+  success: boolean;
+  endpoint?: string;
+  latencyMs?: number;
+  error?: string;
+  allResults: Array<{ endpoint: string; success: boolean; latencyMs?: number; error?: string }>;
+}> {
+  const testQuery = `[out:json][timeout:10];node["natural"="peak"]["name"="Mont Blanc"];out 1;`;
+  const allResults: Array<{ endpoint: string; success: boolean; latencyMs?: number; error?: string }> = [];
+
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    const start = Date.now();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+          'User-Agent': 'KitDuVoyageur/1.0 (https://lekitduvoyageur.fr)',
+        },
+        body: `data=${encodeURIComponent(testQuery)}`,
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+
+      const latencyMs = Date.now() - start;
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.elements)) {
+          allResults.push({ endpoint, success: true, latencyMs });
+        } else {
+          allResults.push({ endpoint, success: false, latencyMs, error: 'Invalid response structure' });
+        }
+      } else {
+        allResults.push({ endpoint, success: false, latencyMs, error: `HTTP ${res.status}` });
+      }
+    } catch (err) {
+      clearTimeout(timer);
+      allResults.push({
+        endpoint,
+        success: false,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  const firstSuccess = allResults.find(r => r.success);
+  if (firstSuccess) {
+    return { success: true, endpoint: firstSuccess.endpoint, latencyMs: firstSuccess.latencyMs, allResults };
+  }
+
+  return {
+    success: false,
+    error: 'All Overpass endpoints unreachable',
+    allResults,
+  };
 }
 
 // ── AllTrails-style Data Transformers ─────────────────────────

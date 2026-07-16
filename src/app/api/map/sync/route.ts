@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
     const regionName = body.region as string | undefined;
     const bboxParam = body.bbox as BBox | undefined;
     const syncType = body.type as string || 'all';
+    const force = body.force === true; // bypass 24h cache when force=true
 
     // Determine bbox
     let bbox: BBox;
@@ -49,22 +50,24 @@ export async function POST(request: NextRequest) {
       region = defaultRegion.name;
     }
 
-    // Check if recently synced (cache: 24h)
-    const { data: recentSync } = await supabase
-      .from('overpass_sync_log')
-      .select('completed_at')
-      .eq('region', region)
-      .eq('status', 'success')
-      .gte('completed_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-      .limit(1)
-      .single();
+    // Check if recently synced (cache: 24h) — skip if force=true
+    if (!force) {
+      const { data: recentSync } = await supabase
+        .from('overpass_sync_log')
+        .select('completed_at')
+        .eq('region', region)
+        .eq('status', 'success')
+        .gte('completed_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+        .limit(1)
+        .single();
 
-    if (recentSync) {
-      return NextResponse.json({
-        cached: true,
-        message: `Region "${region}" already synced recently`,
-        last_sync: recentSync.completed_at,
-      });
+      if (recentSync) {
+        return NextResponse.json({
+          cached: true,
+          message: `Region "${region}" already synced recently`,
+          last_sync: recentSync.completed_at,
+        });
+      }
     }
 
     // Log sync start
@@ -83,6 +86,7 @@ export async function POST(request: NextRequest) {
     const syncId = syncLog?.id;
     let totalInserted = 0;
     let totalFetched = 0;
+    const errors: string[] = [];
 
     try {
       // Fetch trails — AllTrails methodology: process per 2×2 degree tile
@@ -92,116 +96,154 @@ export async function POST(request: NextRequest) {
         const tilesToProcess = tiles.slice(0, 4); // max 4 tiles per sync to avoid timeout
 
         for (const tile of tilesToProcess) {
-          const trailElements = await fetchHikingTrails(tile, 50);
-          totalFetched += trailElements.length;
+          try {
+            const trailElements = await fetchHikingTrails(tile, 50);
+            totalFetched += trailElements.length;
 
-          const trailsToInsert = trailElements
-            .filter(el => {
-              // AllTrails: filter private access
-              const tags = el.tags || {};
-              const access = tags['access'] || '';
-              if (access === 'private' || access === 'no') return false;
-              // Must have a position
-              return !!(el.center?.lat || el.lat || (el.geometry && el.geometry.length > 0));
-            })
-            .map(el => transformTrailElement(el))
-            .filter(t => t.name && (t.start_lat != null) && (t.start_lng != null));
+            const trailsToInsert = trailElements
+              .filter(el => {
+                // AllTrails: filter private access
+                const tags = el.tags || {};
+                const access = tags['access'] || '';
+                if (access === 'private' || access === 'no') return false;
+                // Must have a position
+                return !!(el.center?.lat || el.lat || (el.geometry && el.geometry.length > 0));
+              })
+              .map(el => transformTrailElement(el))
+              .filter(t => t.name && (t.start_lat != null) && (t.start_lng != null));
 
-          if (trailsToInsert.length > 0) {
-            await supabase
-              .from('trails')
-              .upsert(trailsToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
-            totalInserted += trailsToInsert.length;
+            if (trailsToInsert.length > 0) {
+              await supabase
+                .from('trails')
+                .upsert(trailsToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
+              totalInserted += trailsToInsert.length;
+            }
+          } catch (tileErr) {
+            const msg = `Tile [${tile.south},${tile.west}→${tile.north},${tile.east}]: ${String(tileErr)}`;
+            errors.push(msg);
+            console.error('[Overpass sync] Trail tile error:', msg);
           }
         }
       }
 
       // Fetch refuges
       if (syncType === 'all' || syncType === 'pois') {
-        const refugeElements = await fetchRefuges(bbox, 100);
-        totalFetched += refugeElements.length;
+        try {
+          const refugeElements = await fetchRefuges(bbox, 100);
+          totalFetched += refugeElements.length;
 
-        const refugesToInsert = refugeElements
-          .filter(el => el.center?.lat || el.lat)
-          .map(el => transformPOIElement(el, 'refuge'))
-          .filter(p => p.lat && p.lng);
+          const refugesToInsert = refugeElements
+            .filter(el => el.center?.lat || el.lat)
+            .map(el => transformPOIElement(el, 'refuge'))
+            .filter(p => p.lat && p.lng);
 
-        if (refugesToInsert.length > 0) {
-          await supabase
-            .from('outdoor_points')
-            .upsert(refugesToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
-          totalInserted += refugesToInsert.length;
+          if (refugesToInsert.length > 0) {
+            await supabase
+              .from('outdoor_points')
+              .upsert(refugesToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
+            totalInserted += refugesToInsert.length;
+          }
+        } catch (err) {
+          errors.push(`Refuges: ${String(err)}`);
         }
 
         // Fetch water points
-        const waterElements = await fetchWaterPoints(bbox, 150);
-        totalFetched += waterElements.length;
+        try {
+          const waterElements = await fetchWaterPoints(bbox, 150);
+          totalFetched += waterElements.length;
 
-        const waterToInsert = waterElements
-          .filter(el => el.center?.lat || el.lat)
-          .map(el => transformPOIElement(el, 'water'))
-          .filter(p => p.lat && p.lng);
+          const waterToInsert = waterElements
+            .filter(el => el.center?.lat || el.lat)
+            .map(el => transformPOIElement(el, 'water'))
+            .filter(p => p.lat && p.lng);
 
-        if (waterToInsert.length > 0) {
-          await supabase
-            .from('outdoor_points')
-            .upsert(waterToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
-          totalInserted += waterToInsert.length;
+          if (waterToInsert.length > 0) {
+            await supabase
+              .from('outdoor_points')
+              .upsert(waterToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
+            totalInserted += waterToInsert.length;
+          }
+        } catch (err) {
+          errors.push(`Water: ${String(err)}`);
         }
 
         // Fetch natural features (summits, viewpoints, waterfalls, etc.)
-        const naturalElements = await fetchNaturalFeatures(bbox, 100);
-        totalFetched += naturalElements.length;
+        try {
+          const naturalElements = await fetchNaturalFeatures(bbox, 100);
+          totalFetched += naturalElements.length;
 
-        const naturalToInsert = naturalElements
-          .filter(el => el.center?.lat || el.lat)
-          .map(el => {
-            const tags = el.tags || {};
-            let cat = 'viewpoint';
-            if (tags['natural'] === 'peak') cat = 'summit';
-            else if (tags['mountain_pass'] === 'yes') cat = 'col';
-            else if (tags['natural'] === 'waterfall') cat = 'waterfall';
-            else if (tags['natural'] === 'cave_entrance') cat = 'cave';
-            else if (tags['tourism'] === 'viewpoint') cat = 'viewpoint';
-            return transformPOIElement(el, cat);
-          })
-          .filter(p => p.lat && p.lng);
+          const naturalToInsert = naturalElements
+            .filter(el => el.center?.lat || el.lat)
+            .map(el => {
+              const tags = el.tags || {};
+              let cat = 'viewpoint';
+              if (tags['natural'] === 'peak') cat = 'summit';
+              else if (tags['mountain_pass'] === 'yes') cat = 'col';
+              else if (tags['natural'] === 'waterfall') cat = 'waterfall';
+              else if (tags['natural'] === 'cave_entrance') cat = 'cave';
+              else if (tags['tourism'] === 'viewpoint') cat = 'viewpoint';
+              return transformPOIElement(el, cat);
+            })
+            .filter(p => p.lat && p.lng);
 
-        if (naturalToInsert.length > 0) {
-          await supabase
-            .from('outdoor_points')
-            .upsert(naturalToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
-          totalInserted += naturalToInsert.length;
+          if (naturalToInsert.length > 0) {
+            await supabase
+              .from('outdoor_points')
+              .upsert(naturalToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
+            totalInserted += naturalToInsert.length;
+          }
+        } catch (err) {
+          errors.push(`Natural features: ${String(err)}`);
         }
 
         // Fetch camping
-        const campingElements = await fetchCamping(bbox, 50);
-        totalFetched += campingElements.length;
+        try {
+          const campingElements = await fetchCamping(bbox, 50);
+          totalFetched += campingElements.length;
 
-        const campingToInsert = campingElements
-          .filter(el => el.center?.lat || el.lat)
-          .map(el => transformPOIElement(el, 'camping'))
-          .filter(p => p.lat && p.lng);
+          const campingToInsert = campingElements
+            .filter(el => el.center?.lat || el.lat)
+            .map(el => transformPOIElement(el, 'camping'))
+            .filter(p => p.lat && p.lng);
 
-        if (campingToInsert.length > 0) {
-          await supabase
-            .from('outdoor_points')
-            .upsert(campingToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
-          totalInserted += campingToInsert.length;
+          if (campingToInsert.length > 0) {
+            await supabase
+              .from('outdoor_points')
+              .upsert(campingToInsert, { onConflict: 'osm_id', ignoreDuplicates: true });
+            totalInserted += campingToInsert.length;
+          }
+        } catch (err) {
+          errors.push(`Camping: ${String(err)}`);
         }
       }
+
+      // Determine final status
+      const hasPartialSuccess = totalInserted > 0;
+      const allFailed = errors.length > 0 && totalFetched === 0;
+      const finalStatus = allFailed ? 'error' : 'success';
 
       // Update sync log
       if (syncId) {
         await supabase
           .from('overpass_sync_log')
           .update({
-            status: 'success',
+            status: finalStatus,
             records_fetched: totalFetched,
             records_inserted: totalInserted,
+            error_message: errors.length > 0 ? errors.join('\n') : null,
             completed_at: new Date().toISOString(),
           })
           .eq('id', syncId);
+      }
+
+      if (allFailed) {
+        return NextResponse.json({
+          success: false,
+          region,
+          error: 'Overpass API unreachable — all requests failed',
+          details: errors,
+          hint: 'Run GET /api/map/test-overpass to diagnose connectivity',
+        }, { status: 503 });
       }
 
       return NextResponse.json({
@@ -209,6 +251,7 @@ export async function POST(request: NextRequest) {
         region,
         records_fetched: totalFetched,
         records_inserted: totalInserted,
+        partial_errors: errors.length > 0 ? errors : undefined,
       });
 
     } catch (syncError) {
@@ -226,7 +269,11 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (_err) {
-    return NextResponse.json({ error: 'Sync failed', details: String(_err) }, { status: 500 });
+    return NextResponse.json({
+      error: 'Sync failed',
+      details: String(_err),
+      hint: 'Run GET /api/map/test-overpass to diagnose Overpass API connectivity',
+    }, { status: 500 });
   }
 }
 
