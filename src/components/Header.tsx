@@ -35,7 +35,6 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Empreinte carbone', href: '/carbone', desc: 'Calculer & compenser', icon: 'GlobeAmericasIcon' },
       { label: 'Copilote IA', href: '/copilote', desc: 'Assistant voyage Gemini', icon: 'SparklesIcon' },
       { label: 'Créateur de Voyage IA', href: '/voyage-ia', desc: 'Plan d\'aventure complet en IA', icon: 'MapIcon' },
-      { label: 'Carte Interactive', href: '/carte-interactive', desc: 'Sentiers, refuges & sommets', icon: 'MapPinIcon' },
     ],
   },
   {
@@ -518,10 +517,6 @@ export default function Header() {
         <Link href="/boutique" className="flex flex-col items-center gap-0.5 py-2 px-3 text-white/50 hover:text-white transition-colors min-w-[44px]">
           <Icon name="ShoppingBagIcon" size={20} variant="outline" />
           <span className="text-[9px] font-mono tracking-wide">Boutique</span>
-        </Link>
-        <Link href="/carte-interactive" className="flex flex-col items-center gap-0.5 py-2 px-3 text-white/50 hover:text-white transition-colors min-w-[44px]">
-          <Icon name="MapIcon" size={20} variant="outline" />
-          <span className="text-[9px] font-mono tracking-wide">Carte</span>
         </Link>
         <Link href="/communaute" className="flex flex-col items-center gap-0.5 py-2 px-3 text-white/50 hover:text-white transition-colors min-w-[44px]">
           <Icon name="UsersIcon" size={20} variant="outline" />
