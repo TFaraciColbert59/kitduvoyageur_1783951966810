@@ -29,17 +29,7 @@ export default function TrailPanel({ trail, onClose, isMobile = false }: TrailPa
     { icon: '📏', label: 'Distance', value: trail.distance_km > 0 ? `${trail.distance_km} km` : '—' },
     { icon: '⏱', label: 'Durée', value: trail.duration_hours > 0 ? `${trail.duration_hours}h` : '—' },
     { icon: '⬆️', label: 'Dénivelé', value: trail.elevation_gain > 0 ? `+${trail.elevation_gain}m` : '—' },
-    { icon: '🗺', label: 'Terrain', value: trail.terrain_type || '—' },
   ];
-
-  const pois = [
-    { show: trail.water, icon: '💧', label: "Point d'eau" },
-    { show: trail.refuge, icon: '🏕', label: 'Refuge' },
-    { show: trail.camping, icon: '⛺', label: 'Camping' },
-    { show: trail.viewpoint, icon: '📷', label: 'Panorama' },
-    { show: trail.peak, icon: '▲', label: 'Sommet' },
-    { show: trail.parking, icon: '🅿️', label: 'Parking' },
-  ].filter((p) => p.show);
 
   const content = (
     <div ref={panelRef} className="flex flex-col h-full">
@@ -51,16 +41,8 @@ export default function TrailPanel({ trail, onClose, isMobile = false }: TrailPa
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${diffBg}`}>
                 {diffLabel}
               </span>
-              {trail.family_friendly && (
-                <span className="text-[10px] text-emerald-400/70 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-                  👨‍👩‍👧 Famille
-                </span>
-              )}
             </div>
             <h2 className="text-white font-bold text-lg leading-tight">{trail.name}</h2>
-            {trail.season && (
-              <p className="text-white/35 text-xs font-mono mt-1">🗓 {trail.season}</p>
-            )}
           </div>
           <button
             onClick={onClose}
@@ -81,17 +63,6 @@ export default function TrailPanel({ trail, onClose, isMobile = false }: TrailPa
           <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest mb-3">Adventure Score</p>
           <AdventureScore trail={trail} />
         </div>
-
-        {/* AI Description */}
-        {trail.ai_description && (
-          <div className="bg-[#E4501C]/6 rounded-2xl p-4 border border-[#E4501C]/15">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs">✨</span>
-              <p className="text-[10px] font-mono text-[#E4501C]/60 uppercase tracking-widest">Description</p>
-            </div>
-            <p className="text-white/70 text-sm leading-relaxed">{trail.ai_description}</p>
-          </div>
-        )}
 
         {/* Stats grid */}
         <div>
@@ -125,24 +96,6 @@ export default function TrailPanel({ trail, onClose, isMobile = false }: TrailPa
             />
           </div>
         </div>
-
-        {/* POI */}
-        {pois.length > 0 && (
-          <div>
-            <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest mb-3">Points d&apos;intérêt</p>
-            <div className="flex flex-wrap gap-2">
-              {pois.map((p) => (
-                <div
-                  key={p.label}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white/4 border border-white/8 rounded-xl"
-                >
-                  <span className="text-sm">{p.icon}</span>
-                  <span className="text-white/60 text-xs">{p.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* CTA */}

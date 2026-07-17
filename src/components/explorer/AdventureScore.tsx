@@ -5,8 +5,6 @@ import React from 'react';
 export interface ExploreTrail {
   id: string;
   name: string;
-  ref?: string;
-  network?: string;
   geometry: {
     type: string;
     coordinates: number[][];
@@ -15,22 +13,12 @@ export interface ExploreTrail {
   duration_hours: number;
   difficulty: 'easy' | 'moderate' | 'hard' | 'expert';
   elevation_gain: number;
-  terrain_type?: string;
-  family_friendly: boolean;
-  season?: string;
-  ai_description?: string;
   adventure_score: number;
   nature_score: number;
   panorama_score: number;
   accessibility_score: number;
   challenge_score: number;
   services_score: number;
-  water: boolean;
-  refuge: boolean;
-  camping: boolean;
-  peak: boolean;
-  viewpoint: boolean;
-  parking: boolean;
   start_lat?: number;
   start_lng?: number;
   bbox_min_lat?: number;

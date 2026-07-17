@@ -34,9 +34,6 @@ export default function TrailCard({ trail, selected, onClick }: TrailCardProps) 
             <h3 className="text-white font-semibold text-sm leading-tight line-clamp-2 group-hover:text-white/90">
               {trail.name}
             </h3>
-            {trail.terrain_type && (
-              <p className="text-white/35 text-[10px] font-mono mt-0.5 truncate">{trail.terrain_type}</p>
-            )}
           </div>
           <span className={`flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border ${diffBg}`}>
             {diffLabel}
@@ -63,23 +60,10 @@ export default function TrailCard({ trail, selected, onClick }: TrailCardProps) 
               <span className="text-white/70 text-xs font-mono">+{trail.elevation_gain}m</span>
             </div>
           )}
-          {trail.family_friendly && (
-            <span className="text-[10px] text-emerald-400/70">👨‍👩‍👧</span>
-          )}
         </div>
 
         {/* Adventure Score compact */}
         <AdventureScore trail={trail} compact />
-
-        {/* POI badges */}
-        {(trail.water || trail.refuge || trail.viewpoint || trail.peak) && (
-          <div className="flex items-center gap-1.5 mt-2.5 pt-2.5 border-t border-white/5">
-            {trail.water && <span className="text-[10px] text-blue-400/70" title="Point d'eau">💧</span>}
-            {trail.refuge && <span className="text-[10px] text-amber-400/70" title="Refuge">🏕</span>}
-            {trail.viewpoint && <span className="text-[10px] text-purple-400/70" title="Point de vue">📷</span>}
-            {trail.peak && <span className="text-[10px] text-red-400/70" title="Sommet">▲</span>}
-          </div>
-        )}
       </div>
     </button>
   );

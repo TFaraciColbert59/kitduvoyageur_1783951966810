@@ -85,8 +85,7 @@ export default function ExplorerPage() {
     const matchDiff = filterDifficulty === 'all' || t.difficulty === filterDifficulty;
     const matchSearch =
       !searchQuery ||
-      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (t.terrain_type || '').toLowerCase().includes(searchQuery.toLowerCase());
+      t.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchDiff && matchSearch;
   });
 
