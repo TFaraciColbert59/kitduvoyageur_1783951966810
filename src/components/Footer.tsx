@@ -162,9 +162,9 @@ export default function Footer() {
               >
                 <Icon name="GlobeAltIcon" size={12} variant="outline" />
                 {LANGUAGES.find(l => l.code === lang)?.label}
-                <Icon name="ChevronDownIcon" size={10} variant="outline" className={`transition-transform ${mounted && langOpen ? 'rotate-180' : ''}`} />
+                <Icon name="ChevronDownIcon" size={10} variant="outline" className={`transition-transform ${langOpen ? 'rotate-180' : ''}`} suppressHydrationWarning />
               </button>
-              {mounted && langOpen && (
+              {langOpen && (
                 <div className="absolute bottom-full right-0 mb-2 bg-[#243028] border border-white/10 rounded-xl shadow-xl overflow-hidden z-50 min-w-[130px]">
                   {LANGUAGES.map(l => (
                     <button

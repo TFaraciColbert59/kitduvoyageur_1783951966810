@@ -112,10 +112,12 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
+      suppressHydrationWarning
       className={`${publicSans.variable} ${spaceGrotesk.variable} ${ibmPlexMono.variable}`}
     >
       <head>
         <script
+          suppressHydrationWarning
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(organizationSchema),
