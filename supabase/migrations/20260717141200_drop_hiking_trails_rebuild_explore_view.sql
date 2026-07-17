@@ -12,16 +12,24 @@
 -- 1. Drop the old view that depended on hiking_trails
 DROP VIEW IF EXISTS public.explore_trails;
 
--- 2. Drop all RLS policies on hiking_trails
-DROP POLICY IF EXISTS "trails_public_read" ON public.hiking_trails;
-DROP POLICY IF EXISTS "public_read_hiking_trails" ON public.hiking_trails;
-DROP POLICY IF EXISTS "allow_read_hiking_trails" ON public.hiking_trails;
-DROP POLICY IF EXISTS "hiking_trails_public_read" ON public.hiking_trails;
-DROP POLICY IF EXISTS "authenticated_insert_hiking_trails" ON public.hiking_trails;
-DROP POLICY IF EXISTS "authenticated_update_hiking_trails" ON public.hiking_trails;
-DROP POLICY IF EXISTS "authenticated_delete_hiking_trails" ON public.hiking_trails;
+-- 2. Drop RLS policies and indexes on hiking_trails safely
+--    (DROP POLICY IF EXISTS still errors if the table doesn't exist,
+--     so we guard with a DO block)
+DO $$
+BEGIN
+  -- Drop RLS policies
+  DROP POLICY IF EXISTS "trails_public_read"                  ON public.hiking_trails;
+  DROP POLICY IF EXISTS "public_read_hiking_trails"           ON public.hiking_trails;
+  DROP POLICY IF EXISTS "allow_read_hiking_trails"            ON public.hiking_trails;
+  DROP POLICY IF EXISTS "hiking_trails_public_read"           ON public.hiking_trails;
+  DROP POLICY IF EXISTS "authenticated_insert_hiking_trails"  ON public.hiking_trails;
+  DROP POLICY IF EXISTS "authenticated_update_hiking_trails"  ON public.hiking_trails;
+  DROP POLICY IF EXISTS "authenticated_delete_hiking_trails"  ON public.hiking_trails;
+EXCEPTION
+  WHEN undefined_table THEN NULL;
+END $$;
 
--- 3. Drop indexes on hiking_trails
+-- 3. Drop indexes on hiking_trails (IF EXISTS is safe at statement level)
 DROP INDEX IF EXISTS public.idx_hiking_trails_geojson;
 DROP INDEX IF EXISTS public.idx_hiking_trails_difficulty;
 DROP INDEX IF EXISTS public.idx_hiking_trails_distance;
