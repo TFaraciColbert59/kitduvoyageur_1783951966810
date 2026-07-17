@@ -47,13 +47,8 @@ export default function Hero() {
       className="relative min-h-[85vh] md:min-h-screen flex flex-col justify-center overflow-hidden"
       aria-labelledby="hero-heading"
     >
-      {/* Map background — lighter version on mobile */}
-      <div className="hidden md:block">
-        <HeroMapBackground isMobile={false} />
-      </div>
-      <div className="block md:hidden">
-        <HeroMapBackground isMobile={true} />
-      </div>
+      {/* Map background — isMobile handled inside the component via CSS */}
+      <HeroMapBackground />
 
       {/* Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-20 pt-28 md:pt-32 w-full">

@@ -15,18 +15,28 @@ const STATIC_POINTS: PulsePoint[] = [
   { x: 72, y: 28, label: 'Vosges' },
 ];
 
-export default function HeroMapBackground({ isMobile = false }: { isMobile?: boolean }) {
+export default function HeroMapBackground() {
   const [prefersReduced, setPrefersReduced] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReduced(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setPrefersReduced(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
+    const motionMq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReduced(motionMq.matches);
+    const motionHandler = (e: MediaQueryListEvent) => setPrefersReduced(e.matches);
+    motionMq.addEventListener('change', motionHandler);
+
+    const mobileMq = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mobileMq.matches);
+    const mobileHandler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mobileMq.addEventListener('change', mobileHandler);
+
+    return () => {
+      motionMq.removeEventListener('change', motionHandler);
+      mobileMq.removeEventListener('change', mobileHandler);
+    };
   }, []);
 
   const shouldAnimate = mounted && !prefersReduced && !isMobile;
