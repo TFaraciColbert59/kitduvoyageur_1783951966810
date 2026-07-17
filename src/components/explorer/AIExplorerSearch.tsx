@@ -22,10 +22,22 @@ export default function AIExplorerSearch({ onSearch }: AIExplorerSearchProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim() && onSearch) {
+    if (onSearch) {
       onSearch(query.trim());
     }
     setFocused(false);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setQuery(val);
+    if (onSearch) onSearch(val.trim());
+  };
+
+  const handleClear = () => {
+    setQuery('');
+    if (onSearch) onSearch('');
+    inputRef.current?.focus();
   };
 
   const handleSuggestion = (s: string) => {
@@ -75,17 +87,17 @@ export default function AIExplorerSearch({ onSearch }: AIExplorerSearchProps) {
             ref={inputRef}
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={handleChange}
             onFocus={() => setFocused(true)}
             onBlur={() => setTimeout(() => setFocused(false), 150)}
-            placeholder="Quelle aventure recherches-tu ?"
+            placeholder="Rechercher une randonnée…"
             className="flex-1 bg-transparent text-white placeholder-white/30 text-sm focus:outline-none"
           />
 
           {query && (
             <button
               type="button"
-              onClick={() => setQuery('')}
+              onClick={handleClear}
               className="text-white/30 hover:text-white/60 transition-colors flex-shrink-0"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -106,7 +118,7 @@ export default function AIExplorerSearch({ onSearch }: AIExplorerSearchProps) {
       </form>
 
       {/* Suggestions dropdown */}
-      {focused && (
+      {focused && !query && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-[#141e1a]/98 border border-white/10 rounded-2xl overflow-hidden shadow-2xl z-50 backdrop-blur-md">
           <div className="px-4 pt-3 pb-1">
             <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Suggestions</p>
@@ -123,11 +135,6 @@ export default function AIExplorerSearch({ onSearch }: AIExplorerSearchProps) {
               <span className="text-sm">{s}</span>
             </button>
           ))}
-          <div className="px-4 py-2.5 border-t border-white/5">
-            <p className="text-[10px] text-white/20 font-mono">
-              ✨ Recherche IA — Bientôt disponible
-            </p>
-          </div>
         </div>
       )}
     </div>

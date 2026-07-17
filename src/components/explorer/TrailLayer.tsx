@@ -71,8 +71,8 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
           {
             style: () => ({
               color,
-              weight: isSelected ? 5 : 3,
-              opacity: isSelected ? 1 : 0.75,
+              weight: isSelected ? 7 : 4,
+              opacity: isSelected ? 1 : 0.9,
               lineCap: 'round',
               lineJoin: 'round',
             }),
@@ -81,11 +81,11 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
 
         layer.on('click', () => onTrailClick(trail));
         layer.on('mouseover', () => {
-          layer.setStyle({ weight: 5, opacity: 1 });
+          layer.setStyle({ weight: 6, opacity: 1 });
         });
         layer.on('mouseout', () => {
           if (trail.id !== selectedTrailId) {
-            layer.setStyle({ weight: 3, opacity: 0.75 });
+            layer.setStyle({ weight: 4, opacity: 0.9 });
           }
         });
 

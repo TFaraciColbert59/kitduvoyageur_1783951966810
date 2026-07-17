@@ -85,7 +85,7 @@ export default function ExplorerPage() {
     const matchDiff = filterDifficulty === 'all' || t.difficulty === filterDifficulty;
     const matchSearch =
       !searchQuery ||
-      t.name.toLowerCase().includes(searchQuery.toLowerCase());
+      (t.name || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchDiff && matchSearch;
   });
 
@@ -152,7 +152,7 @@ export default function ExplorerPage() {
             transition-all duration-300 overflow-hidden
             ${isMobile
               ? `fixed inset-y-0 left-0 z-[1400] w-[85vw] max-w-sm ${sidebarOpen && !selectedTrail ? 'translate-x-0' : '-translate-x-full'}`
-              : `w-80 xl:w-96 ${selectedTrail ? 'hidden' : 'flex'}`
+              : 'w-72 xl:w-80 flex'
             }
           `}
         >

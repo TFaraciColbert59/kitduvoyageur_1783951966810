@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { ExploreTrail, DIFFICULTY_COLORS, DIFFICULTY_LABELS, DIFFICULTY_BG } from './AdventureScore';
 import AdventureScore from './AdventureScore';
 
@@ -100,11 +101,13 @@ export default function TrailPanel({ trail, onClose, isMobile = false }: TrailPa
 
       {/* CTA */}
       <div className="flex-shrink-0 px-5 pb-5 pt-3 border-t border-white/8">
-        <button className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-[#E4501C] hover:bg-[#cc3d10] text-white font-semibold text-sm transition-all duration-200 hover:shadow-lg hover:shadow-[#E4501C]/25 active:scale-[0.98]">
+        <Link
+          href={`/ai-configurator?trail=${encodeURIComponent(trail.name)}&difficulty=${trail.difficulty}&distance=${trail.distance_km}&elevation=${trail.elevation_gain}`}
+          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-[#E4501C] hover:bg-[#cc3d10] text-white font-semibold text-sm transition-all duration-200 hover:shadow-lg hover:shadow-[#E4501C]/25 active:scale-[0.98]"
+        >
           <span>🎒</span>
           Préparer cette aventure
-        </button>
-        <p className="text-center text-[10px] text-white/20 font-mono mt-2">Bientôt disponible</p>
+        </Link>
       </div>
     </div>
   );
