@@ -28,7 +28,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Explorer',
     items: [
-      { label: 'Explorer', href: '/explorer', desc: 'Destinations, guides & outils', icon: 'GlobeAltIcon' },
+      { label: 'Carte des aventures', href: '/explorer', desc: 'Carte interactive des randonnées', icon: 'MapIcon' },
       { label: 'Destinations', href: '/pays', desc: 'Fiches pays & sécurité', icon: 'MapPinIcon' },
       { label: 'Guides terrain', href: '/guides', desc: 'Conseils & tutoriels', icon: 'BookOpenIcon' },
       { label: 'Outils', href: '/outils', desc: 'Calculateurs & planners', icon: 'WrenchScrewdriverIcon' },
