@@ -7,7 +7,7 @@ export interface ExploreTrail {
   name: string;
   geometry: {
     type: string;
-    coordinates: number[][];
+    coordinates: number[][] | number[][][] | number[][][][];
   } | null;
   distance_km: number;
   duration_hours: number;
@@ -25,6 +25,13 @@ export interface ExploreTrail {
   bbox_min_lng?: number;
   bbox_max_lat?: number;
   bbox_max_lng?: number;
+  // Extra metadata from OSM tables
+  ref?: string | null;
+  network?: string | null;
+  terrain_type?: string | null;
+  family_friendly?: boolean | null;
+  season?: string | null;
+  ai_description?: string | null;
 }
 
 export const DIFFICULTY_COLORS: Record<string, string> = {
