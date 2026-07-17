@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import type { Map as LeafletMap } from 'leaflet';
 import type { ExploreTrail } from './AdventureScore';
 import { DIFFICULTY_COLORS } from './AdventureScore';
-import type GeoJSON from 'geojson';
 
 interface TrailLayerProps {
   map: LeafletMap;
@@ -13,28 +12,70 @@ interface TrailLayerProps {
   onTrailClick: (trail: ExploreTrail) => void;
 }
 
+type AnyGeometry = {
+  type: string;
+  coordinates?: unknown;
+  geometries?: AnyGeometry[];
+};
+
+/** Returns true if the geometry has drawable line coordinates */
+function isValidGeometry(geom: AnyGeometry | null | undefined): boolean {
+  if (!geom || !geom.type) return false;
+  if (geom.type === 'GeometryCollection') {
+    return Array.isArray(geom.geometries) && geom.geometries.length > 0;
+  }
+  return Array.isArray((geom as { coordinates?: unknown }).coordinates) &&
+    ((geom as { coordinates: unknown[] }).coordinates as unknown[]).length > 0;
+}
+
+/** Converts any geometry to a GeoJSON FeatureCollection Leaflet can render */
+function toFeatureCollection(geom: AnyGeometry): object {
+  if (geom.type === 'FeatureCollection') return geom as object;
+  if (geom.type === 'Feature') return { type: 'FeatureCollection', features: [geom] };
+  if (geom.type === 'GeometryCollection') {
+    // Flatten each sub-geometry into its own Feature
+    const features = (geom.geometries || []).map((g) => ({
+      type: 'Feature',
+      geometry: g,
+      properties: {},
+    }));
+    return { type: 'FeatureCollection', features };
+  }
+  // LineString, MultiLineString, Polygon, etc.
+  return {
+    type: 'FeatureCollection',
+    features: [{ type: 'Feature', geometry: geom, properties: {} }],
+  };
+}
+
 // This component manages Leaflet GeoJSON layers imperatively
 export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick }: TrailLayerProps) {
   const layersRef = useRef<Map<string, import('leaflet').GeoJSON>>(new Map());
 
   const addLayer = useCallback(
     (trail: ExploreTrail, L: typeof import('leaflet')) => {
-      if (!map || !trail.geometry || !trail.geometry.coordinates?.length) return;
+      if (!map) return;
+
+      const geom = trail.geometry as AnyGeometry | null;
+      if (!isValidGeometry(geom)) return;
 
       const isSelected = trail.id === selectedTrailId;
       const color = DIFFICULTY_COLORS[trail.difficulty] || '#94a3b8';
 
       try {
+        const featureCollection = toFeatureCollection(geom!);
+
         const layer = L.geoJSON(
-          { type: 'Feature', geometry: trail.geometry, properties: {} } as GeoJSON.Feature,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          featureCollection as any,
           {
-            style: {
+            style: () => ({
               color,
               weight: isSelected ? 5 : 3,
               opacity: isSelected ? 1 : 0.75,
               lineCap: 'round',
               lineJoin: 'round',
-            },
+            }),
           }
         );
 
@@ -51,7 +92,7 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
         layer.addTo(map);
         layersRef.current.set(trail.id, layer);
       } catch {
-        // Skip invalid geometries
+        // Skip invalid geometries silently
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
