@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React from 'react';
 
 
 
@@ -35,7 +35,7 @@ interface Trail {
   gps_points_count?: number;
 }
 
-interface OutdoorPoint {
+type _OutdoorPoint = {
   id: string;
   category: string;
   name: string;
@@ -46,9 +46,9 @@ interface OutdoorPoint {
   country: string;
   region: string;
   metadata: Record<string, unknown>;
-}
+};
 
-interface MapFilters {
+type _MapFilters = {
   difficulty: string;
   trailType: string;
   search: string;
@@ -57,13 +57,13 @@ interface MapFilters {
   minElevation: number;
   maxElevation: number;
   durationMode: string;
-}
+};
 
 type MapMode = 'exploration' | 'navigation' | 'preparation';
 
-interface InteractiveMapProps {
+type _InteractiveMapProps = {
   onTrailSelect?: (trail: Trail | null) => void;
-}
+};
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   easy: '#22c55e',
@@ -92,9 +92,9 @@ const CATEGORY_CONFIG: Record<string, { icon: string; color: string; label: stri
   spring: { icon: '💦', color: '#06b6d4', label: 'Sources' },
 };
 
-const ALL_CATEGORIES = Object.keys(CATEGORY_CONFIG);
+const _ALL_CATEGORIES = Object.keys(CATEGORY_CONFIG);
 
-const MAP_TILE_LAYERS: Record<MapMode, { url: string; attribution: string; label: string; icon: string; desc: string }> = {
+const _MAP_TILE_LAYERS: Record<MapMode, { url: string; attribution: string; label: string; icon: string; desc: string }> = {
   exploration: {
     url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
     attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
@@ -134,7 +134,7 @@ interface TrailDetailPanelProps {
   onDownloadGPX: () => void;
 }
 
-function TrailDetailPanel({ trail, isSaved, isSaving, onClose, onSave, onShare, onDownloadGPX }: TrailDetailPanelProps) {
+function _TrailDetailPanel({ trail, isSaved, isSaving, onClose, onSave, onShare, onDownloadGPX }: TrailDetailPanelProps) {
   const color = DIFFICULTY_COLORS[trail.difficulty] || '#E4501C';
   const diffLabel = DIFFICULTY_LABELS[trail.difficulty] || trail.difficulty;
   const activityType = trail.activity_type || trail.trail_type || 'hiking';

@@ -14,7 +14,7 @@ export const maxDuration = 60;
  *   { zone: "all" }                          — all predefined zones
  */
 
-const ALL_ZONES = [
+const _ALL_ZONES = [
   'chamonix',
   'vercors',
   'belledonne',
