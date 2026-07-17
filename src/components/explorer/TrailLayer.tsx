@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import type { Map as LeafletMap } from 'leaflet';
 import type { ExploreTrail } from './AdventureScore';
 import { DIFFICULTY_COLORS } from './AdventureScore';
@@ -118,14 +118,15 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
     });
 
     return () => {
-      layersRef.current.forEach((layer) => {
+      const layers = layersRef.current;
+      layers.forEach((layer) => {
         try {
           map.removeLayer(layer);
         } catch {
           // ignore
         }
       });
-      layersRef.current.clear();
+      layers.clear();
     };
   }, [map, trails, selectedTrailId, addLayer]);
 

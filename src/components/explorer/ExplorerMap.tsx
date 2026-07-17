@@ -20,7 +20,7 @@ const TOPO_TILE = {
   attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
 };
 
-const OUTDOOR_TILE = {
+const _OUTDOOR_TILE = {
   url: 'https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png',
   attribution: '&copy; <a href="https://hiking.waymarkedtrails.org">Waymarked Trails</a>',
 };

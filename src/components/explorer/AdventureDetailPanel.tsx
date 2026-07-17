@@ -238,7 +238,7 @@ Donne-moi :
                       onClick={() => { setAiRequested(false); setAiResponse(''); }}
                       className="text-[#8BAF7C]/40 text-[10px] font-mono hover:text-[#8BAF7C]/70 transition-colors mt-2"
                     >
-                      Relancer l'analyse →
+                      Relancer l&apos;analyse →
                     </button>
                   </div>
                 )}

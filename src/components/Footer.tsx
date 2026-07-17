@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import AppLogo from '@/components/ui/AppLogo';
 import Icon from '@/components/ui/AppIcon';
@@ -47,11 +47,6 @@ const LANGUAGES = [
 export default function Footer() {
   const [lang, setLang] = useState('fr');
   const [langOpen, setLangOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   return (
     <footer className="bg-[#1C2620] text-white/70" role="contentinfo" suppressHydrationWarning>
