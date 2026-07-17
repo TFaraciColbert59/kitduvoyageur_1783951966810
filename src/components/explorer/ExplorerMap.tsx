@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import 'leaflet/dist/leaflet.css';
 import type { Map as LeafletMap } from 'leaflet';
 import type { ExploreTrail } from './AdventureScore';
 import TrailLayer from './TrailLayer';
