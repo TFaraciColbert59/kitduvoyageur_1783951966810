@@ -10,35 +10,41 @@ interface ExplorerMapProps {
   trails: ExploreTrail[];
   selectedTrailId: string | null;
   onTrailClick: (trail: ExploreTrail) => void;
+  userLocation?: [number, number] | null;
   onMapReady?: () => void;
 }
 
+// Premium outdoor topo tile
 const TOPO_TILE = {
   url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-  attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> contributors',
+  attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
+};
+
+const OUTDOOR_TILE = {
+  url: 'https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png',
+  attribution: '&copy; <a href="https://hiking.waymarkedtrails.org">Waymarked Trails</a>',
 };
 
 const OSM_TILE = {
   url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 };
 
 type TileMode = 'topo' | 'osm';
 
-export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, onMapReady }: ExplorerMapProps) {
+export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, userLocation, onMapReady }: ExplorerMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const tileLayerRef = useRef<ReturnType<typeof import('leaflet')['tileLayer']> | null>(null);
+  const userMarkerRef = useRef<import('leaflet').Marker | null>(null);
   const [mapInstance, setMapInstance] = useState<LeafletMap | null>(null);
   const [tileMode, setTileMode] = useState<TileMode>('topo');
   const [mapReady, setMapReady] = useState(false);
 
-  // Initialize map
   useEffect(() => {
     if (!containerRef.current || mapRef.current || typeof window === 'undefined') return;
 
     import('leaflet').then((L) => {
-      // Fix default icon paths
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
@@ -54,6 +60,7 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, onM
         attributionControl: true,
       });
 
+      // Custom zoom control position (avoid bottom sheet)
       L.control.zoom({ position: 'topright' }).addTo(map);
 
       const tile = L.tileLayer(TOPO_TILE.url, {
@@ -72,11 +79,7 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, onM
 
     return () => {
       if (mapRef.current) {
-        try {
-          mapRef.current.remove();
-        } catch {
-          // ignore
-        }
+        try { mapRef.current.remove(); } catch { /* ignore */ }
         mapRef.current = null;
         setMapInstance(null);
         setMapReady(false);
@@ -90,11 +93,7 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, onM
     if (!mapRef.current || !mapReady) return;
     import('leaflet').then((L) => {
       if (tileLayerRef.current) {
-        try {
-          mapRef.current!.removeLayer(tileLayerRef.current as unknown as import('leaflet').Layer);
-        } catch {
-          // ignore
-        }
+        try { mapRef.current!.removeLayer(tileLayerRef.current as unknown as import('leaflet').Layer); } catch { /* ignore */ }
       }
       const cfg = tileMode === 'topo' ? TOPO_TILE : OSM_TILE;
       const tile = L.tileLayer(cfg.url, { attribution: cfg.attribution, maxZoom: 17 });
@@ -103,6 +102,26 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, onM
       tileLayerRef.current = tile as any;
     });
   }, [tileMode, mapReady]);
+
+  // User location marker
+  useEffect(() => {
+    if (!mapRef.current || !mapReady || !userLocation) return;
+    import('leaflet').then((L) => {
+      if (userMarkerRef.current) {
+        try { mapRef.current!.removeLayer(userMarkerRef.current); } catch { /* ignore */ }
+      }
+      const icon = L.divIcon({
+        html: `<div style="width:14px;height:14px;background:#2D5A27;border:3px solid #8BAF7C;border-radius:50%;box-shadow:0 0 0 4px #2D5A2740"></div>`,
+        className: '',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+      });
+      const marker = L.marker(userLocation, { icon });
+      marker.addTo(mapRef.current!);
+      userMarkerRef.current = marker;
+      mapRef.current!.setView(userLocation, 12, { animate: true });
+    });
+  }, [userLocation, mapReady]);
 
   // Auto-zoom to selected trail
   const fitToTrail = useCallback((trail: ExploreTrail) => {
@@ -113,14 +132,13 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, onM
           [trail.bbox_min_lat, trail.bbox_min_lng],
           [trail.bbox_max_lat, trail.bbox_max_lng]
         );
-        mapRef.current!.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
+        mapRef.current!.fitBounds(bounds, { padding: [80, 80], maxZoom: 14, animate: true });
       } else if (trail.start_lat && trail.start_lng) {
-        mapRef.current!.setView([trail.start_lat, trail.start_lng], 12);
+        mapRef.current!.setView([trail.start_lat, trail.start_lng], 12, { animate: true });
       }
     });
   }, []);
 
-  // Fit to selected trail
   useEffect(() => {
     if (!selectedTrailId || !mapReady) return;
     const trail = trails.find((t) => t.id === selectedTrailId);
@@ -151,7 +169,7 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, onM
       {/* Map container */}
       <div ref={containerRef} className="w-full h-full" />
 
-      {/* Trail layers (imperative) */}
+      {/* Trail layers */}
       {mapReady && mapInstance && (
         <TrailLayer
           map={mapInstance}
@@ -161,12 +179,12 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, onM
         />
       )}
 
-      {/* Tile switcher */}
-      <div className="absolute bottom-6 right-4 z-[1000] flex flex-col gap-1.5">
+      {/* Tile switcher — positioned to not overlap bottom sheet */}
+      <div className="absolute z-[1000] flex flex-col gap-1.5" style={{ bottom: '34vh', right: '12px' }}>
         <button
           onClick={() => setTileMode('topo')}
-          className={`w-10 h-10 rounded-xl border text-sm transition-all ${
-            tileMode === 'topo' ?'bg-[#E4501C] border-[#E4501C] text-white shadow-lg' :'bg-[#0f1a16]/90 border-white/15 text-white/60 hover:border-white/30'
+          className={`w-10 h-10 rounded-xl border text-sm transition-all shadow-md shadow-black/20 ${
+            tileMode === 'topo' ?'bg-[#2D5A27] border-[#4A8A3F] text-white' :'bg-[#0d1a12]/90 border-[#2D5A27]/30 text-[#8BAF7C]/60 hover:border-[#2D5A27]/60'
           }`}
           title="Carte topographique"
         >
@@ -174,8 +192,8 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, onM
         </button>
         <button
           onClick={() => setTileMode('osm')}
-          className={`w-10 h-10 rounded-xl border text-sm transition-all ${
-            tileMode === 'osm' ?'bg-[#E4501C] border-[#E4501C] text-white shadow-lg' :'bg-[#0f1a16]/90 border-white/15 text-white/60 hover:border-white/30'
+          className={`w-10 h-10 rounded-xl border text-sm transition-all shadow-md shadow-black/20 ${
+            tileMode === 'osm' ?'bg-[#2D5A27] border-[#4A8A3F] text-white' :'bg-[#0d1a12]/90 border-[#2D5A27]/30 text-[#8BAF7C]/60 hover:border-[#2D5A27]/60'
           }`}
           title="OpenStreetMap"
         >
@@ -183,9 +201,12 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, onM
         </button>
       </div>
 
-      {/* Difficulty legend */}
-      <div className="absolute bottom-6 left-4 z-[1000] bg-[#0f1a16]/90 border border-white/10 rounded-xl px-3 py-2.5 backdrop-blur-sm">
-        <p className="text-[9px] font-mono text-white/30 uppercase tracking-widest mb-1.5">Difficulté</p>
+      {/* Difficulty legend — positioned above bottom sheet */}
+      <div
+        className="absolute left-3 z-[1000] bg-[#0d1a12]/85 border border-[#2D5A27]/20 rounded-xl px-3 py-2.5 backdrop-blur-sm shadow-md shadow-black/20"
+        style={{ bottom: '34vh' }}
+      >
+        <p className="text-[8px] font-mono text-[#8BAF7C]/30 uppercase tracking-widest mb-1.5">Difficulté</p>
         {[
           { key: 'easy', label: 'Facile', color: '#22c55e' },
           { key: 'moderate', label: 'Modérée', color: '#f97316' },
@@ -194,7 +215,7 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, onM
         ].map((d) => (
           <div key={d.key} className="flex items-center gap-1.5 mb-0.5">
             <div className="w-4 h-0.5 rounded-full" style={{ backgroundColor: d.color }} />
-            <span className="text-[10px] text-white/50">{d.label}</span>
+            <span className="text-[9px] text-[#8BAF7C]/50">{d.label}</span>
           </div>
         ))}
       </div>
