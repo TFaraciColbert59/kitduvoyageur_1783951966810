@@ -2,18 +2,7 @@
 
 import { useState, useId } from 'react';
 import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
-
-const HeroMapBackground = dynamic(() => import('./HeroMapBackground'), {
-  ssr: false,
-  loading: () => (
-    <div
-      className="absolute inset-0"
-      style={{ background: 'linear-gradient(160deg, #0d1a14 0%, #1C2620 40%, #0f1e18 100%)' }}
-      aria-hidden="true"
-    />
-  ),
-});
+import HeroMapBackground from './HeroMapBackground';
 
 const SUGGESTIONS = [
   'Randonnée facile près de Lyon',
