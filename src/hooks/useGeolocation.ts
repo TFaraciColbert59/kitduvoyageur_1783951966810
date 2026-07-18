@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useCallback } from 'react';
 
 interface GeolocationState {
@@ -15,7 +13,7 @@ export function useGeolocation(): GeolocationState {
   const [loading, setLoading] = useState(false);
 
   const requestPermission = useCallback(() => {
-    if (!navigator.geolocation) return;
+    if (typeof navigator === 'undefined' || !navigator.geolocation) return;
     setLoading(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => { setPosition(pos); setLoading(false); },

@@ -29,8 +29,8 @@ function SOSModal({
     setStep('sent');
   };
 
-  const lat = position?.coords.latitude?.toFixed(5);
-  const lng = position?.coords.longitude?.toFixed(5);
+  const lat = position?.coords.latitude.toFixed(5);
+  const lng = position?.coords.longitude.toFixed(5);
 
   return (
     <div
