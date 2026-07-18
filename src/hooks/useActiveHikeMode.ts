@@ -50,7 +50,7 @@ export function useActiveHikeMode(): ActiveHikeModeState {
     try {
       const saved = localStorage.getItem(CONTACT_KEY);
       if (saved) setEmergencyContactState(saved);
-    } catch {}
+    } catch (_e) { /* ignore */ }
 
     // Restore active hike if app was closed mid-hike
     try {
@@ -62,7 +62,7 @@ export function useActiveHikeMode(): ActiveHikeModeState {
           startTimeRef.current = parsed.startTime;
         }
       }
-    } catch {}
+    } catch (_e) { /* ignore */ }
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -112,14 +112,14 @@ export function useActiveHikeMode(): ActiveHikeModeState {
 
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({ isActive: true, startTime: startTimeRef.current }));
-      } catch {}
+      } catch (_e) { /* ignore */ }
     } else {
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
       if (watchIdRef.current !== null && typeof navigator !== 'undefined') {
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
       }
-      try { localStorage.removeItem(STORAGE_KEY); } catch {}
+      try { localStorage.removeItem(STORAGE_KEY); } catch (_e) { /* ignore */ }
     }
   }, [isActive]);
 
@@ -136,7 +136,7 @@ export function useActiveHikeMode(): ActiveHikeModeState {
 
   const setEmergencyContact = useCallback((contact: string) => {
     setEmergencyContactState(contact);
-    try { localStorage.setItem(CONTACT_KEY, contact); } catch {}
+    try { localStorage.setItem(CONTACT_KEY, contact); } catch (_e) { /* ignore */ }
   }, []);
 
   return { isActive, stats, startHike, stopHike, emergencyContact, setEmergencyContact };

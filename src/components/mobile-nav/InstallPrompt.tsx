@@ -66,7 +66,7 @@ export default function InstallPrompt() {
 
   const handleDismiss = () => {
     setShow(false);
-    try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch {}
+    try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch (_e) { /* ignore */ }
   };
 
   if (!show || isStandalone) return null;
