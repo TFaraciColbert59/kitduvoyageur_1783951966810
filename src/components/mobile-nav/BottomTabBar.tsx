@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -43,9 +43,45 @@ const ProfileIcon = ({ active }: { active: boolean }) => (
   </svg>
 );
 
+// All 5 tabs in order (Naviguer is index 2, the central one)
+const ALL_TABS = ['/explorer', '/mon-kit', '/naviguer', '/activite', '/profil'];
+
 export default function BottomTabBar() {
   const pathname = usePathname();
   const { loading } = useAuth();
+  const prevIndexRef = useRef<number>(-1);
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: '0%', opacity: 0 });
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    }
+  }, []);
+
+  const getActiveIndex = (): number => {
+    if (pathname === '/explorer' || pathname === '/') return 0;
+    if (pathname.startsWith('/mon-kit')) return 1;
+    if (pathname.startsWith('/naviguer')) return 2;
+    if (pathname.startsWith('/activite')) return 3;
+    if (pathname.startsWith('/profil')) return 4;
+    return -1;
+  };
+
+  const activeIndex = getActiveIndex();
+
+  // Update indicator position
+  useEffect(() => {
+    if (activeIndex < 0) {
+      setIndicatorStyle((s) => ({ ...s, opacity: 0 }));
+      return;
+    }
+    // Each tab is 1/5 of the width; Naviguer (index 2) is centered
+    const tabWidth = 100 / 5;
+    const left = activeIndex * tabWidth + tabWidth / 2;
+    setIndicatorStyle({ left: `${left}%`, opacity: 1 });
+    prevIndexRef.current = activeIndex;
+  }, [activeIndex]);
 
   const isActive = (href: string) => {
     if (href === '/explorer') return pathname === '/explorer' || pathname === '/';
@@ -93,19 +129,38 @@ export default function BottomTabBar() {
       role="navigation"
       aria-label="Navigation principale"
       className="md:hidden fixed bottom-0 left-0 right-0 z-50"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      {/* Backdrop blur bar */}
+      {/* Main bar — covers safe area with background color */}
       <div
-        className="flex items-center justify-around"
+        className="relative flex items-center justify-around"
         style={{
-          height: '56px',
-          background: 'rgba(231, 227, 214, 0.95)',
+          height: 'calc(56px + env(safe-area-inset-bottom))',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          background: 'rgba(231, 227, 214, 0.97)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           borderTop: '1px solid rgba(28, 38, 32, 0.1)',
         }}
       >
+        {/* Animated indicator — sliding pill/dot */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: '6px',
+            width: '28px',
+            height: '3px',
+            borderRadius: '2px',
+            background: '#E4501C',
+            transform: 'translateX(-50%)',
+            left: indicatorStyle.left,
+            opacity: indicatorStyle.opacity,
+            transition: reducedMotion
+              ? 'none' :'left 250ms cubic-bezier(0.19, 1, 0.22, 1), opacity 150ms ease',
+            pointerEvents: 'none',
+          }}
+        />
+
         {/* Left 2 tabs */}
         {tabs.map((tab) => {
           const active = isActive(tab.href);
@@ -115,7 +170,7 @@ export default function BottomTabBar() {
               href={tab.href}
               aria-label={tab.ariaLabel}
               aria-current={active ? 'page' : undefined}
-              className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full min-w-[44px] min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-inset rounded-sm transition-colors duration-100"
+              className="flex flex-col items-center justify-center gap-0.5 flex-1 h-[56px] min-w-[44px] min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-inset rounded-sm"
               style={{ color: active ? '#E4501C' : '#7A8A7D' }}
             >
               {active ? tab.activeIcon : tab.icon}
@@ -130,7 +185,7 @@ export default function BottomTabBar() {
         })}
 
         {/* Central Naviguer button — elevated */}
-        <div className="flex flex-col items-center justify-center flex-1 relative" style={{ marginTop: '-20px' }}>
+        <div className="flex flex-col items-center justify-center flex-1 relative h-[56px]" style={{ marginTop: '-20px' }}>
           <NaviguerButton isActive={isActive('/naviguer')} />
         </div>
 
@@ -143,7 +198,7 @@ export default function BottomTabBar() {
               href={tab.href}
               aria-label={tab.ariaLabel}
               aria-current={active ? 'page' : undefined}
-              className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full min-w-[44px] min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-inset rounded-sm transition-colors duration-100"
+              className="flex flex-col items-center justify-center gap-0.5 flex-1 h-[56px] min-w-[44px] min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-inset rounded-sm"
               style={{ color: active ? '#E4501C' : '#7A8A7D' }}
             >
               {active ? tab.activeIcon : tab.icon}

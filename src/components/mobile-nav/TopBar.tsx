@@ -2,12 +2,49 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 interface TopBarProps {
   cartCount?: number;
   notifCount?: number;
+  showBack?: boolean;
+  title?: string;
 }
+
+const ROOT_TABS = ['/explorer', '/mon-kit', '/naviguer', '/activite', '/profil'];
+
+// Map sub-routes to their parent tab for fallback navigation
+const PARENT_TAB: Record<string, string> = {
+  '/carnets': '/activite',
+  '/carnet': '/activite',
+  '/clubs': '/activite',
+  '/communaute': '/activite',
+  '/groupes': '/activite',
+  '/evenements': '/activite',
+  '/feed': '/activite',
+  '/boutique': '/mon-kit',
+  '/shop': '/mon-kit',
+  '/inventaire': '/mon-kit',
+  '/jumeau-3d': '/mon-kit',
+  '/kits': '/mon-kit',
+  '/catalogue': '/mon-kit',
+  '/ai-configurator': '/mon-kit',
+  '/produit': '/mon-kit',
+  '/occasion': '/mon-kit',
+  '/location': '/mon-kit',
+  '/encheres': '/mon-kit',
+  '/pays': '/explorer',
+  '/guides': '/explorer',
+  '/carte-interactive': '/explorer',
+  '/profil': '/profil',
+  '/compte': '/profil',
+  '/abonnements': '/profil',
+  '/fidelite': '/profil',
+  '/gamification': '/profil',
+  '/alertes': '/profil',
+  '/mes-aventures': '/activite',
+  '/rapport-expedition': '/activite',
+};
 
 const PAGE_TITLES: Record<string, string> = {
   '/explorer': 'Explorer',
@@ -15,19 +52,75 @@ const PAGE_TITLES: Record<string, string> = {
   '/naviguer': 'Naviguer',
   '/activite': 'Activité',
   '/profil': 'Profil',
+  '/carnets': 'Carnets',
+  '/boutique': 'Boutique',
+  '/shop': 'Boutique',
+  '/inventaire': 'Inventaire',
+  '/jumeau-3d': 'Jumeau 3D',
+  '/kits': 'Mes Kits',
+  '/catalogue': 'Catalogue',
+  '/ai-configurator': 'Configurateur IA',
+  '/occasion': 'Occasion',
+  '/location': 'Location',
+  '/encheres': 'Enchères',
+  '/clubs': 'Clubs',
+  '/communaute': 'Communauté',
+  '/groupes': 'Groupes',
+  '/evenements': 'Événements',
+  '/pays': 'Pays',
+  '/guides': 'Guides',
+  '/carte-interactive': 'Carte',
+  '/compte': 'Mon Compte',
+  '/abonnements': 'Abonnements',
+  '/fidelite': 'Fidélité',
+  '/gamification': 'Récompenses',
+  '/alertes': 'Alertes',
+  '/mes-aventures': 'Mes Aventures',
+  '/rapport-expedition': 'Rapport',
+  '/panier': 'Panier',
+  '/checkout': 'Commande',
+  '/connexion': 'Connexion',
+  '/inscription': 'Inscription',
 };
 
 function getTitle(pathname: string): string {
+  // Exact match first
+  if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
+  // Prefix match
   for (const [key, val] of Object.entries(PAGE_TITLES)) {
-    if (pathname.startsWith(key)) return val;
+    if (pathname.startsWith(key + '/') || pathname.startsWith(key)) return val;
   }
   return 'Le Kit du Voyageur';
 }
 
-export default function TopBar({ cartCount = 0, notifCount = 0 }: TopBarProps) {
+function isRootTab(pathname: string): boolean {
+  return ROOT_TABS.some((tab) => pathname === tab || (tab !== '/' && pathname === tab));
+}
+
+function getParentTab(pathname: string): string {
+  for (const [prefix, parent] of Object.entries(PARENT_TAB)) {
+    if (pathname.startsWith(prefix)) return parent;
+  }
+  return '/explorer';
+}
+
+export default function TopBar({ cartCount = 0, notifCount = 0, showBack, title }: TopBarProps) {
   const pathname = usePathname();
-  const title = getTitle(pathname);
+  const router = useRouter();
+  const displayTitle = title || getTitle(pathname);
   const showNotif = pathname.startsWith('/activite');
+
+  // Show back arrow on non-root pages (or when explicitly requested)
+  const shouldShowBack = showBack !== undefined ? showBack : !isRootTab(pathname);
+
+  const handleBack = () => {
+    // Try browser history first; if empty, go to parent tab
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push(getParentTab(pathname));
+    }
+  };
 
   return (
     <header
@@ -42,14 +135,34 @@ export default function TopBar({ cartCount = 0, notifCount = 0 }: TopBarProps) {
       }}
       aria-label="Barre de navigation contextuelle"
     >
-      {/* Logo / Title */}
-      <span className="font-display font-bold text-[#1C2620] text-base tracking-tight">
-        {title}
-      </span>
+      {/* Left: back arrow or logo */}
+      <div className="flex items-center gap-2 min-w-[44px]">
+        {shouldShowBack ? (
+          <button
+            onClick={handleBack}
+            aria-label="Retour"
+            className="flex items-center justify-center w-11 h-11 -ml-2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] active:bg-[#1C2620]/10 transition-colors"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1C2620" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M19 12H5M12 5l-7 7 7 7" />
+            </svg>
+          </button>
+        ) : (
+          <span className="font-display font-bold text-[#1C2620] text-base tracking-tight">
+            {displayTitle}
+          </span>
+        )}
+      </div>
+
+      {/* Center title (only when back arrow is shown) */}
+      {shouldShowBack && (
+        <span className="absolute left-1/2 -translate-x-1/2 font-display font-bold text-[#1C2620] text-base tracking-tight max-w-[55vw] truncate text-center">
+          {displayTitle}
+        </span>
+      )}
 
       {/* Right actions */}
-      <div className="flex items-center gap-3">
-        {/* Cart icon — only when cart has items */}
+      <div className="flex items-center gap-3 min-w-[44px] justify-end">
         {cartCount > 0 && (
           <Link
             href="/panier"
@@ -71,7 +184,6 @@ export default function TopBar({ cartCount = 0, notifCount = 0 }: TopBarProps) {
           </Link>
         )}
 
-        {/* Notification bell — only on Activité tab */}
         {showNotif && (
           <button
             aria-label={notifCount > 0 ? `${notifCount} notification${notifCount > 1 ? 's' : ''} non lue${notifCount > 1 ? 's' : ''}` : 'Notifications'}

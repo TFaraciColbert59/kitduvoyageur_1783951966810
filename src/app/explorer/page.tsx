@@ -65,6 +65,10 @@ export default function ExplorerPage() {
     );
   }, []);
 
+  const handleLocationUpdate = useCallback((loc: [number, number]) => {
+    setUserLocation(loc);
+  }, []);
+
   const handleTrailClick = useCallback((trail: ExploreTrail) => {
     setSelectedTrail(trail);
     setDetailOpen(true);
@@ -102,6 +106,7 @@ export default function ExplorerPage() {
           selectedTrailId={selectedTrail?.id || null}
           onTrailClick={handleTrailClick}
           userLocation={userLocation}
+          onLocationUpdate={handleLocationUpdate}
         />
       </div>
 
@@ -136,7 +141,7 @@ export default function ExplorerPage() {
         onChange={setFilters}
       />
 
-      {/* Adventure detail panel */}
+      {/* Adventure detail panel — max 50vh */}
       {detailOpen && selectedTrail && (
         <AdventureDetailPanel
           trail={selectedTrail}
