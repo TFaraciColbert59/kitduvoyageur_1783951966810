@@ -7,6 +7,9 @@ import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
+import BottomTabBar from '@/components/mobile-nav/BottomTabBar';
+import TopBar from '@/components/mobile-nav/TopBar';
+import InstallPrompt from '@/components/mobile-nav/InstallPrompt';
 
 // Only load weights actually used in the app
 const publicSans = Public_Sans({
@@ -37,6 +40,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
 };
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.com';
@@ -141,7 +145,11 @@ export default function RootLayout({
                 >
                   Aller au contenu principal
                 </a>
+                {/* Mobile navigation — hidden on desktop (md+) */}
+                <TopBar />
                 {children}
+                <BottomTabBar />
+                <InstallPrompt />
               </ErrorBoundary>
             </ToastProvider>
           </WishlistProvider>
