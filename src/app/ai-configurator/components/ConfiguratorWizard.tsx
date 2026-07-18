@@ -6,6 +6,8 @@ import Icon from '@/components/ui/AppIcon';
 import WeightGauge from '@/components/WeightGauge';
 import { getChatCompletion } from '@/lib/ai/chatCompletion';
 import { getCart, saveCart } from '@/lib/cart';
+import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface WizardState {
@@ -318,11 +320,57 @@ function StepResult({ state }: { state: WizardState }) {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [autoSaved, setAutoSaved] = useState(false);
+  const { user } = useAuth();
+
+  const autoSaveKit = async (result: AIResult, selected: Set<string>) => {
+    if (!user) return;
+    try {
+      const supabase = createClient();
+      const kitName = `Kit ${state.destination || 'Voyage'} — ${state.season || 'Toutes saisons'}`;
+      const { data: kit, error: kitError } = await supabase
+        .from('kits')
+        .insert({
+          user_id: user.id,
+          name: kitName,
+          destination: state.destination,
+          season: state.season,
+          activity: state.activity,
+          total_weight_g: result.liste_equipement.filter(i => selected.has(i.id)).reduce((s, i) => s + i.weightG, 0),
+          total_price_eur: result.liste_equipement.filter(i => selected.has(i.id)).reduce((s, i) => s + i.priceEur, 0),
+          bag_recommended: result.sac_recommande,
+          source: 'ai_configurator',
+        })
+        .select('id')
+        .single();
+
+      if (kitError || !kit) return;
+
+      const kitItems = result.liste_equipement
+        .filter(i => selected.has(i.id))
+        .map(item => ({
+          kit_id: kit.id,
+          name: item.name,
+          category: item.category,
+          weight_g: item.weightG,
+          price_eur: item.priceEur,
+          essential: item.essential,
+        }));
+
+      if (kitItems.length > 0) {
+        await supabase.from('kit_items').insert(kitItems);
+      }
+      setAutoSaved(true);
+    } catch (_e) {
+      // Silent fail — auto-save is best-effort
+    }
+  };
 
   useEffect(() => {
     const fetchAI = async () => {
       setLoading(true);
       setAiError(null);
+      setAutoSaved(false);
 
       const systemPrompt = `Tu es un expert en équipement outdoor et randonnée. Tu génères des listes d'équipement optimisées pour les voyageurs. 
 Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans texte avant ou après.
@@ -365,15 +413,12 @@ Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes sp�
         const content = response?.choices?.[0]?.message?.content ?? '';
         const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
-        // Attempt to repair truncated JSON before parsing
         let jsonString = cleaned;
         try {
           JSON.parse(jsonString);
         } catch {
-          // Try to close any unterminated arrays/objects
           const openBraces = (jsonString.match(/\{/g) || []).length - (jsonString.match(/\}/g) || []).length;
           const openBrackets = (jsonString.match(/\[/g) || []).length - (jsonString.match(/\]/g) || []).length;
-          // Remove trailing incomplete item (last comma or partial object)
           jsonString = jsonString.replace(/,\s*$/, '').replace(/,\s*\{[^}]*$/, '');
           for (let i = 0; i < openBrackets; i++) jsonString += ']';
           for (let i = 0; i < openBraces; i++) jsonString += '}';
@@ -385,8 +430,12 @@ Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes sp�
           throw new Error('Format de réponse invalide');
         }
 
+        const essentialIds = new Set(parsed.liste_equipement.filter((i) => i.essential).map((i) => i.id));
         setAiResult(parsed);
-        setSelectedItems(new Set(parsed.liste_equipement.filter((i) => i.essential).map((i) => i.id)));
+        setSelectedItems(essentialIds);
+
+        // Auto-save for connected users
+        await autoSaveKit(parsed, essentialIds);
       } catch (err) {
         console.error('AI configurator error:', err);
         setAiError('Impossible de générer la liste. Veuillez réessayer.');
@@ -467,6 +516,22 @@ Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes sp�
 
   return (
     <div className="space-y-6">
+      {/* Auto-save confirmation */}
+      {autoSaved && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: 'rgba(51,70,60,0.1)', border: '1px solid rgba(51,70,60,0.2)' }}>
+          <Icon name="CheckCircleIcon" size={16} variant="outline" className="text-secondary flex-shrink-0" />
+          <p className="text-sm text-secondary font-500">Kit enregistré automatiquement dans vos kits</p>
+        </div>
+      )}
+      {!autoSaved && !user && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: 'rgba(228,80,28,0.06)', border: '1px solid rgba(228,80,28,0.15)' }}>
+          <Icon name="InformationCircleIcon" size={16} variant="outline" className="text-primary flex-shrink-0" />
+          <p className="text-sm text-muted-foreground">
+            <Link href="/connexion" className="text-primary font-600 hover:underline">Connectez-vous</Link> pour sauvegarder ce kit automatiquement.
+          </p>
+        </div>
+      )}
+
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[

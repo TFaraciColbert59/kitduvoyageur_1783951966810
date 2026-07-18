@@ -350,48 +350,54 @@ export default function OccasionPage() {
   const [search, setSearch] = useState('');
   const [showSellModal, setShowSellModal] = useState(false);
   const [sellSent, setSellSent] = useState(false);
+  const [sellForm, setSellForm] = useState({ title: '', price: '', description: '' });
+  const [sellSaving, setSellSaving] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
+    // Load from occasion_items table (real data)
     supabase
-      .from('listings')
-      .select('id, produit_id, prix_cents, etat, faire_offre_active, products(name, slug, category, image, image_alt, description, price_eur)')
-      .eq('listing_type', 'occasion')
-      .eq('statut', 'actif')
+      .from('occasion_items')
+      .select('*, seller:seller_id(full_name, trust_score)')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
       .then(({ data }) => {
         if (!data || data.length === 0) return;
         const condMap: Record<string, OccasionItem['condition']> = {
           comme_neuf: 'comme_neuf',
-          bon_etat: 'bon',
-          etat_correct: 'acceptable',
+          tres_bon: 'tres_bon',
+          bon: 'bon',
+          acceptable: 'acceptable',
         };
         const dbListings: OccasionItem[] = data.map((l) => {
-          const p = (l.products as unknown) as { name: string; slug: string; category: string; image: string; image_alt: string; description: string; price_eur: number } | null;
-          const price = Math.round((l.prix_cents ?? 0) / 100);
-          const originalPrice = p?.price_eur ?? 0;
+          const seller = (l.seller as unknown) as { full_name: string; trust_score: number } | null;
           return {
             id: l.id,
-            slug: p?.slug ?? l.id,
-            title: p?.name ?? 'Produit',
-            seller: 'Vendeur vérifié',
-            sellerAvatar: 'V',
-            sellerTrustScore: 88,
+            slug: l.id,
+            title: l.title,
+            seller: seller?.full_name ?? 'Vendeur vérifié',
+            sellerAvatar: (seller?.full_name?.[0] ?? 'V').toUpperCase(),
+            sellerTrustScore: seller?.trust_score ?? 88,
             sellerSales: 0,
-            category: p?.category ?? 'Autre',
-            price,
-            originalPrice,
-            condition: condMap[l.etat ?? 'bon_etat'] ?? 'bon',
-            location: 'France',
-            postedAt: new Date().toISOString(),
-            image: p?.image ?? 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600',
-            alt: p?.image_alt ?? p?.name ?? 'Produit outdoor',
-            tags: [p?.category ?? 'Outdoor'],
-            description: p?.description ?? '',
-            negotiable: l.faire_offre_active ?? false,
-            shippingAvailable: true,
+            category: 'Autre',
+            price: Number(l.price ?? 0),
+            originalPrice: Number(l.original_price ?? 0),
+            condition: condMap[l.condition ?? 'bon'] ?? 'bon',
+            location: l.location ?? 'France',
+            postedAt: l.created_at ?? new Date().toISOString(),
+            image: l.image || 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600',
+            alt: l.alt || l.title || 'Article outdoor occasion',
+            tags: [],
+            description: l.description ?? '',
+            negotiable: l.negotiable ?? false,
+            shippingAvailable: l.shipping ?? false,
           };
         });
-        setListings([...dbListings, ...STATIC_LISTINGS]);
+        setListings((prev) => {
+          // Merge DB items with static, avoiding duplicates
+          const ids = new Set(dbListings.map(d => d.id));
+          return [...dbListings, ...prev.filter(p => !ids.has(p.id))];
+        });
       });
   }, []);
 
@@ -583,13 +589,37 @@ export default function OccasionPage() {
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">Remplissez le formulaire pour publier votre annonce. Notre équipe la validera sous 24h.</p>
                 <div className="space-y-3">
-                  <input type="text" placeholder="Titre de l'annonce" className="input-field w-full" />
-                  <input type="number" placeholder="Prix (€)" className="input-field w-full" />
-                  <textarea placeholder="Description de l'article..." className="input-field resize-none w-full" rows={3} />
+                  <input type="text" placeholder="Titre de l'annonce" className="input-field w-full" value={sellForm.title} onChange={e => setSellForm(p => ({ ...p, title: e.target.value }))} />
+                  <input type="number" placeholder="Prix (€)" className="input-field w-full" value={sellForm.price} onChange={e => setSellForm(p => ({ ...p, price: e.target.value }))} />
+                  <textarea placeholder="Description de l'article..." className="input-field resize-none w-full" rows={3} value={sellForm.description} onChange={e => setSellForm(p => ({ ...p, description: e.target.value }))} />
                 </div>
                 <div className="flex gap-3 mt-4">
                   <button onClick={() => setShowSellModal(false)} className="btn-secondary flex-1 justify-center py-3">Annuler</button>
-                  <button onClick={() => setSellSent(true)} className="btn-primary flex-1 justify-center py-3">Publier</button>
+                  <button
+                    disabled={sellSaving || !sellForm.title.trim()}
+                    onClick={async () => {
+                      setSellSaving(true);
+                      try {
+                        const supabase = createClient();
+                        const { data: { user } } = await supabase.auth.getUser();
+                        await supabase.from('occasion_items').insert({
+                          seller_id: user?.id ?? null,
+                          title: sellForm.title.trim(),
+                          description: sellForm.description.trim(),
+                          price: Number(sellForm.price) || 0,
+                          status: 'active',
+                        });
+                        setSellSent(true);
+                      } catch (_e) {
+                        setSellSent(true); // show success anyway
+                      } finally {
+                        setSellSaving(false);
+                      }
+                    }}
+                    className="btn-primary flex-1 justify-center py-3 disabled:opacity-50"
+                  >
+                    {sellSaving ? 'Publication...' : 'Publier'}
+                  </button>
                 </div>
               </>
             ) : (

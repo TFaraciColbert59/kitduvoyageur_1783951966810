@@ -604,3 +604,13 @@
     animation: none;
   }
 }
+
+/* ─── Mobile bottom bar padding ───────────────────────────────────────────── */
+/* Applied to all page main containers on mobile to prevent content hidden behind bottom bar */
+@media (max-width: 767px) {
+  main#main-content,
+  main.mobile-page-content,
+  .mobile-page-content {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom) + 1rem);
+  }
+}

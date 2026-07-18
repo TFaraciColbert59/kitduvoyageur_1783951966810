@@ -4,6 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useActiveHikeMode } from '@/hooks/useActiveHikeMode';
 import { useGeolocation } from '@/hooks/useGeolocation';
+import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 // ─── SOS Modal ────────────────────────────────────────────────────────────────
 function SOSModal({
@@ -196,9 +198,11 @@ function formatPace(pace: number): string {
 export default function NaviguerPage() {
   const { isActive, stats, startHike, stopHike, emergencyContact, setEmergencyContact } = useActiveHikeMode();
   const { position, requestPermission } = useGeolocation();
+  const { user } = useAuth();
   const [showSOS, setShowSOS] = useState(false);
   const [showStop, setShowStop] = useState(false);
   const [geoRequested, setGeoRequested] = useState(false);
+  const [currentActivityId, setCurrentActivityId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!geoRequested) {
@@ -207,15 +211,48 @@ export default function NaviguerPage() {
     }
   }, [geoRequested, requestPermission]);
 
-  const handleStartHike = useCallback(() => {
+  const handleStartHike = useCallback(async () => {
     if (!position) requestPermission();
     startHike();
-  }, [position, requestPermission, startHike]);
 
-  const handleStopConfirm = useCallback(() => {
+    // Insert activity row in Supabase if user is connected
+    if (user) {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('activities')
+          .insert({
+            user_id: user.id,
+            title: 'Randonnée',
+            started_at: new Date().toISOString(),
+          })
+          .select('id')
+          .single();
+        if (data?.id) setCurrentActivityId(data.id);
+      } catch (_e) { /* ignore */ }
+    }
+  }, [position, requestPermission, startHike, user]);
+
+  const handleStopConfirm = useCallback(async () => {
     stopHike();
     setShowStop(false);
-  }, [stopHike]);
+
+    // Update activity row with end stats
+    if (user && currentActivityId) {
+      try {
+        const supabase = createClient();
+        await supabase
+          .from('activities')
+          .update({
+            ended_at: new Date().toISOString(),
+            distance_km: stats.distanceKm,
+            duration_seconds: stats.durationSeconds,
+          })
+          .eq('id', currentActivityId);
+      } catch (_e) { /* ignore */ }
+      setCurrentActivityId(null);
+    }
+  }, [stopHike, user, currentActivityId, stats]);
 
   return (
     <main

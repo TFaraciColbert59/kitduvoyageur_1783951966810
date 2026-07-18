@@ -876,13 +876,32 @@ export default function ClubsPage() {
             <div className="text-center py-20">
               <div className="text-5xl mb-4">👥</div>
               <p className="font-display font-700 text-foreground text-xl mb-2">
-                {activeTab === 'mes-clubs' ? 'Aucun club rejoint' : 'Aucun club'}
+                {activeTab === 'mes-clubs' ? 'Aucun club rejoint' : 'Aucun club pour l\'instant'}
               </p>
               <p className="text-muted-foreground text-sm mb-6">
-                {activeTab === 'mes-clubs' ? 'Rejoignez un club pour accéder à son fil dédié.' : 'Soyez le premier à créer un club !'}
+                {activeTab === 'mes-clubs' ?'Rejoignez un club pour accéder à son fil dédié, ses événements et ses défis.' :'Soyez le premier à créer un club et rassemblez votre communauté !'}
               </p>
-              {!user && activeTab === 'mes-clubs' && (
-                <p className="text-sm text-muted-foreground">Connectez-vous pour voir vos clubs.</p>
+              {activeTab !== 'mes-clubs' && (
+                <button
+                  onClick={() => { setEditClub(null); setShowCreateModal(true); }}
+                  className="btn-primary inline-flex items-center gap-2 px-6 py-3"
+                >
+                  <Icon name="PlusIcon" size={16} />
+                  Créer le premier club
+                </button>
+              )}
+              {activeTab === 'mes-clubs' && !user && (
+                <a href="/connexion" className="btn-primary inline-flex items-center gap-2 px-6 py-3">
+                  Se connecter pour rejoindre un club
+                </a>
+              )}
+              {activeTab === 'mes-clubs' && user && (
+                <button
+                  onClick={() => setActiveTab('activite')}
+                  className="btn-secondary inline-flex items-center gap-2 px-6 py-3"
+                >
+                  Parcourir les clubs
+                </button>
               )}
             </div>
           ) : (

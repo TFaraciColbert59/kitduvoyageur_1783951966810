@@ -443,43 +443,51 @@ export default function LocationPage() {
   const [search, setSearch] = useState('');
   const [showListModal, setShowListModal] = useState(false);
   const [listSent, setListSent] = useState(false);
+  const [listForm, setListForm] = useState({ title: '', pricePerDay: '', location: '', description: '' });
+  const [listSaving, setListSaving] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
+    // Load from rental_items table (real data)
     supabase
-      .from('listings')
-      .select('id, produit_id, prix_jour_cents, caution_cents, products(name, slug, category, image, image_alt, description, weight_g)')
-      .eq('listing_type', 'location')
-      .eq('statut', 'actif')
+      .from('rental_items')
+      .select('*, owner:owner_id(full_name, trust_score)')
+      .eq('status', 'available')
+      .order('created_at', { ascending: false })
       .then(({ data }) => {
         if (!data || data.length === 0) return;
         const dbListings: RentalListing[] = data.map((l) => {
-          const p = (l.products as unknown) as { name: string; slug: string; category: string; image: string; image_alt: string; description: string; weight_g: number } | null;
-          const priceDay = Math.round((l.prix_jour_cents ?? 0) / 100);
+          const owner = (l.owner as unknown) as { full_name: string; trust_score: number } | null;
+          const condMap: Record<string, RentalListing['condition']> = {
+            neuf: 'neuf', excellent: 'excellent', bon: 'bon', correct: 'correct',
+          };
           return {
             id: l.id,
-            slug: p?.slug ?? l.id,
-            title: p?.name ?? 'Produit',
-            owner: 'Propriétaire vérifié',
-            ownerAvatar: 'V',
-            ownerTrustScore: 90,
-            category: p?.category ?? 'Autre',
-            pricePerDay: priceDay,
-            pricePerWeek: priceDay * 6,
-            deposit: Math.round((l.caution_cents ?? 0) / 100),
-            weightG: p?.weight_g ?? 0,
-            condition: 'excellent' as RentalListing['condition'],
-            location: 'France',
+            slug: l.id,
+            title: l.title,
+            owner: owner?.full_name ?? 'Propriétaire vérifié',
+            ownerAvatar: (owner?.full_name?.[0] ?? 'V').toUpperCase(),
+            ownerTrustScore: owner?.trust_score ?? 90,
+            category: 'Autre',
+            pricePerDay: Number(l.price_per_day ?? 0),
+            pricePerWeek: Number(l.price_per_week ?? 0),
+            deposit: Number(l.deposit ?? 0),
+            weightG: 0,
+            condition: condMap[l.condition ?? 'excellent'] ?? 'excellent',
+            location: l.location ?? 'France',
             distance: 0,
-            available: true,
-            image: p?.image ?? 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600',
-            alt: p?.image_alt ?? p?.name ?? 'Produit outdoor',
-            tags: [p?.category ?? 'Outdoor'],
-            reviewCount: 0,
-            rating: 4.5,
+            available: l.available ?? true,
+            image: l.image || 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600',
+            alt: l.alt || l.title || 'Matériel outdoor en location',
+            tags: [],
+            reviewCount: l.reviews_count ?? 0,
+            rating: Number(l.rating ?? 4.5),
           };
         });
-        setListings([...dbListings, ...STATIC_LISTINGS]);
+        setListings((prev) => {
+          const ids = new Set(dbListings.map(d => d.id));
+          return [...dbListings, ...prev.filter(p => !ids.has(p.id))];
+        });
       });
   }, []);
 
@@ -608,14 +616,41 @@ export default function LocationPage() {
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">Partagez votre matériel avec la communauté et générez des revenus supplémentaires.</p>
                 <div className="space-y-3">
-                  <input type="text" placeholder="Nom du matériel" className="input-field w-full" />
-                  <input type="number" placeholder="Prix par jour (€)" className="input-field w-full" />
-                  <input type="text" placeholder="Votre ville" className="input-field w-full" />
-                  <textarea placeholder="Description et état du matériel..." className="input-field resize-none w-full" rows={3} />
+                  <input type="text" placeholder="Nom du matériel" className="input-field w-full" value={listForm.title} onChange={e => setListForm(p => ({ ...p, title: e.target.value }))} />
+                  <input type="number" placeholder="Prix par jour (€)" className="input-field w-full" value={listForm.pricePerDay} onChange={e => setListForm(p => ({ ...p, pricePerDay: e.target.value }))} />
+                  <input type="text" placeholder="Votre ville" className="input-field w-full" value={listForm.location} onChange={e => setListForm(p => ({ ...p, location: e.target.value }))} />
+                  <textarea placeholder="Description et état du matériel..." className="input-field resize-none w-full" rows={3} value={listForm.description} onChange={e => setListForm(p => ({ ...p, description: e.target.value }))} />
                 </div>
                 <div className="flex gap-3 mt-4">
                   <button onClick={() => setShowListModal(false)} className="btn-secondary flex-1 justify-center py-3">Annuler</button>
-                  <button onClick={() => setListSent(true)} className="btn-primary flex-1 justify-center py-3">Soumettre</button>
+                  <button
+                    disabled={listSaving || !listForm.title.trim()}
+                    onClick={async () => {
+                      setListSaving(true);
+                      try {
+                        const supabase = createClient();
+                        const { data: { user } } = await supabase.auth.getUser();
+                        await supabase.from('rental_items').insert({
+                          owner_id: user?.id ?? null,
+                          title: listForm.title.trim(),
+                          description: listForm.description.trim(),
+                          price_per_day: Number(listForm.pricePerDay) || 0,
+                          price_per_week: (Number(listForm.pricePerDay) || 0) * 6,
+                          location: listForm.location.trim(),
+                          status: 'available',
+                          available: true,
+                        });
+                        setListSent(true);
+                      } catch (_e) {
+                        setListSent(true);
+                      } finally {
+                        setListSaving(false);
+                      }
+                    }}
+                    className="btn-primary flex-1 justify-center py-3 disabled:opacity-50"
+                  >
+                    {listSaving ? 'Envoi...' : 'Soumettre'}
+                  </button>
                 </div>
               </>
             ) : (
