@@ -240,9 +240,62 @@ function ContactModal({ item, onClose }: { item: OccasionItem; onClose: () => vo
 function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () => void }) {
   const [showContact, setShowContact] = useState(false);
   const [showOffer, setShowOffer] = useState(false);
+  const [confirmingReceipt, setConfirmingReceipt] = useState(false);
+  const [receiptConfirmed, setReceiptConfirmed] = useState(false);
   const cond = conditionConfig[item.condition];
   const discount = item.originalPrice > 0 ? Math.round((1 - item.price / item.originalPrice) * 100) : 0;
   const isVerifiedPurchase = item.gearItemSource === 'achat' || item.gearItemSource === 'kit';
+  const { user } = useAuth();
+
+  const handleConfirmReceipt = async () => {
+    if (!user || !item.id) return;
+    setConfirmingReceipt(true);
+    try {
+      const supabase = createClient();
+
+      // F6: Mark item as sold, set sold_at, schedule payout 48h later
+      const now = new Date().toISOString();
+      const payoutAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+      await supabase
+        .from('occasion_items')
+        .update({
+          status: 'vendu',
+          buyer_id: user.id,
+          sold_at: now,
+          payout_released_at: payoutAt,
+        })
+        .eq('id', item.id);
+
+      // F7: Create gear_items entry for the buyer
+      await supabase.from('gear_items').insert({
+        user_id: user.id,
+        name: item.title,
+        category: item.category || 'autre',
+        weight_g: 0,
+        condition: item.condition === 'comme_neuf' ? 'neuf' : item.condition === 'tres_bon' ? 'bon' : 'usé',
+        source: 'occasion',
+        gear_item_id: item.gearItemId ?? null,
+        acquired_at: new Date().toISOString().split('T')[0],
+      });
+
+      // F7: Mark seller's gear_item as transferred (if linked)
+      if (item.gearItemId) {
+        await supabase
+          .from('gear_items')
+          .update({
+            transferred_to_user_id: user.id,
+            is_listed_for_sale: false,
+          })
+          .eq('id', item.gearItemId);
+      }
+
+      setReceiptConfirmed(true);
+    } catch {
+      // Silent fail
+    } finally {
+      setConfirmingReceipt(false);
+    }
+  };
 
   return (
     <>
@@ -350,6 +403,39 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
                 </div>
               </div>
             </div>
+
+            {/* F6/F7: Confirm receipt button (shown to logged-in buyers) */}
+            {user && user.id !== item.sellerId && (
+              <div className="border border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800 rounded-xl p-4">
+                {receiptConfirmed ? (
+                  <div className="flex items-center gap-3">
+                    <Icon name="CheckCircleIcon" size={20} variant="outline" className="text-emerald-600 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-emerald-700 dark:text-emerald-400 text-sm">Réception confirmée !</p>
+                      <p className="text-xs text-emerald-600/80 dark:text-emerald-500">L&apos;article a été ajouté à votre inventaire. Le vendeur sera payé dans 48h.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="font-semibold text-emerald-700 dark:text-emerald-400 text-sm mb-1">Avez-vous reçu cet article ?</p>
+                    <p className="text-xs text-emerald-600/80 dark:text-emerald-500 mb-3">
+                      En confirmant la réception, l&apos;article sera ajouté à votre inventaire et le vendeur sera payé dans 48h.
+                    </p>
+                    <button
+                      onClick={handleConfirmReceipt}
+                      disabled={confirmingReceipt}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all"
+                    >
+                      {confirmingReceipt ? (
+                        <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Confirmation…</>
+                      ) : (
+                        <><Icon name="CheckCircleIcon" size={16} variant="outline" /> Confirmer la réception</>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

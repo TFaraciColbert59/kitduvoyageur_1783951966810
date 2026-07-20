@@ -10,6 +10,7 @@ import GoogleAnalytics from '@/components/GoogleAnalytics';
 import BottomTabBar from '@/components/mobile-nav/BottomTabBar';
 import TopBar from '@/components/mobile-nav/TopBar';
 import InstallPrompt from '@/components/mobile-nav/InstallPrompt';
+import CookieConsentBanner from '@/components/CookieConsentBanner';
 
 // Only load weights actually used in the app
 const publicSans = Public_Sans({
@@ -150,6 +151,7 @@ export default function RootLayout({
                 {children}
                 <BottomTabBar />
                 <InstallPrompt />
+                <CookieConsentBanner />
               </ErrorBoundary>
             </ToastProvider>
           </WishlistProvider>

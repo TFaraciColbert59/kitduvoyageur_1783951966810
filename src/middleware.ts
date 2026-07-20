@@ -1,14 +1,78 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 import { getCountryCodeByName, getCountryByCode } from '@/lib/countries';
 
-/**
- * Middleware for:
- * 1. Country page redirects: /pays/islande → /pays/is (301)
- * 2. Shop redirects: /catalogue/* → /shop/* (301)
- * 3. Kits redirects: /kits → /shop?type=kit (301)
- */
-export function middleware(request: NextRequest) {
+const PROTECTED_ROUTES = ['/admin', '/checkout', '/compte', '/messagerie'];
+const ADMIN_ROUTES = ['/admin'];
+
+function isProtected(pathname: string) {
+  return PROTECTED_ROUTES.some(
+    (r) => pathname === r || pathname.startsWith(r + '/')
+  );
+}
+
+function isAdmin(pathname: string) {
+  return ADMIN_ROUTES.some(
+    (r) => pathname === r || pathname.startsWith(r + '/')
+  );
+}
+
+export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+
+  // ─── Auth protection ──────────────────────────────────────────────────────
+  if (isProtected(pathname)) {
+    let response = NextResponse.next({ request });
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value }) =>
+              request.cookies.set(name, value)
+            );
+            response = NextResponse.next({ request });
+            cookiesToSet.forEach(({ name, value, options }) =>
+              response.cookies.set(name, value, options)
+            );
+          },
+        },
+      }
+    );
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = '/connexion';
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Admin routes: verify role
+    if (isAdmin(pathname)) {
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile || profile.role !== 'admin') {
+        const homeUrl = request.nextUrl.clone();
+        homeUrl.pathname = '/';
+        return NextResponse.redirect(homeUrl);
+      }
+    }
+
+    return response;
+  }
 
   // ─── /catalogue → /shop redirects (301) ──────────────────────────────────
   if (pathname === '/catalogue' || pathname.startsWith('/catalogue/')) {
@@ -49,5 +113,13 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/catalogue/:path*', '/kits', '/pays/:path*'],
+  matcher: [
+    '/admin/:path*',
+    '/checkout/:path*',
+    '/compte/:path*',
+    '/messagerie/:path*',
+    '/catalogue/:path*',
+    '/kits',
+    '/pays/:path*',
+  ],
 };

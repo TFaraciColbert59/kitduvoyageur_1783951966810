@@ -132,11 +132,11 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-white/30">
             © 2026 Le Kit du Voyageur ·{' '}
-            <Link href="#privacy" className="hover:text-white/60 transition-colors">Confidentialité</Link>
+            <Link href="/politique-confidentialite" className="hover:text-white/60 transition-colors">Confidentialité</Link>
             {' '}·{' '}
-            <Link href="#terms" className="hover:text-white/60 transition-colors">CGU</Link>
+            <Link href="/cgu" className="hover:text-white/60 transition-colors">CGU</Link>
             {' '}·{' '}
-            <Link href="/admin" className="hover:text-white/60 transition-colors">Admin</Link>
+            <Link href="/mentions-legales" className="hover:text-white/60 transition-colors">Mentions légales</Link>
           </p>
 
           <div className="flex items-center gap-3">

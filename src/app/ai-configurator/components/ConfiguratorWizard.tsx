@@ -544,6 +544,39 @@ Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes sp�
     saveCart(existing);
     setToast(true);
     setTimeout(() => setToast(false), 3000);
+
+    // B2: Auto-fill gear_items from kit validation (best-effort, async)
+    if (user && autoSaved) {
+      const supabase = createClient();
+      // Find the kit we just saved (most recent for this user)
+      supabase
+        .from('kits')
+        .select('id')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+        .then(({ data: kit }) => {
+          if (!kit) return;
+          // Add all selected items (including already_owned) to gear_items with source='kit'
+          const allSelected = (aiResult?.liste_equipement ?? []).filter(i => selectedItems.has(i.id));
+          const gearInserts = allSelected.map(item => ({
+            user_id: user.id,
+            name: item.name,
+            category: item.category,
+            weight_g: item.weightG,
+            condition: 'neuf' as const,
+            source: 'kit',
+            origin_kit_id: kit.id,
+            acquired_at: new Date().toISOString().split('T')[0],
+          }));
+          if (gearInserts.length > 0) {
+            supabase.from('gear_items').insert(gearInserts).then(() => {
+              // Silent — best-effort
+            });
+          }
+        });
+    }
   };
 
   if (loading) return <AltimeterLoader active />;

@@ -131,7 +131,7 @@ export default function HeroSection() {
             </h1>
 
             <p className="text-white/55 text-base sm:text-lg font-light leading-relaxed max-w-lg mb-8">
-              L&apos;IA compose votre kit optimal en 2 minutes — poids, budget, destination. 12 847 voyageurs équipés.
+              L&apos;IA compose votre kit optimal en 2 minutes — poids, budget, destination.
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
