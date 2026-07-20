@@ -892,7 +892,7 @@ export default function ConfiguratorWizard() {
           <div className="flex items-center gap-2 justify-center mb-4">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse-orange" />
             <span className="text-xs font-mono-data text-primary uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>
-              IA RACE MODE
+              Génération en cours
             </span>
           </div>
           <h1 className="text-section-title text-white mb-3">

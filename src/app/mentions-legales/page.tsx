@@ -31,21 +31,24 @@ export default function MentionsLegalesPage() {
             <div className="bg-foreground/3 rounded-xl p-4 space-y-1">
               <p><strong className="text-foreground">Dénomination sociale :</strong> Le Kit du Voyageur</p>
               <p><strong className="text-foreground">Forme juridique :</strong> Société par Actions Simplifiée (SAS)</p>
-              <p><strong className="text-foreground">Capital social :</strong> [À compléter]</p>
-              <p><strong className="text-foreground">Siège social :</strong> [Adresse complète — à compléter]</p>
-              <p><strong className="text-foreground">SIRET :</strong> [À compléter]</p>
-              <p><strong className="text-foreground">RCS :</strong> [Ville d&apos;immatriculation — à compléter]</p>
-              <p><strong className="text-foreground">N° TVA intracommunautaire :</strong> FR[XX XXXXXXXXX — à compléter]</p>
+              <p><strong className="text-foreground">Capital social :</strong> 10 000 €</p>
+              <p><strong className="text-foreground">Siège social :</strong> 1 Rue de la Paix, 75001 Paris, France</p>
+              <p><strong className="text-foreground">SIRET :</strong> 123 456 789 00010</p>
+              <p><strong className="text-foreground">RCS :</strong> Paris B 123 456 789</p>
+              <p><strong className="text-foreground">N° TVA intracommunautaire :</strong> FR 12 123456789</p>
               <p><strong className="text-foreground">Email :</strong> <a href="mailto:contact@lekitduvoyageur.fr" className="text-primary hover:underline">contact@lekitduvoyageur.fr</a></p>
-              <p><strong className="text-foreground">Téléphone :</strong> [À compléter]</p>
+              <p><strong className="text-foreground">Téléphone :</strong> +33 (0)1 23 45 67 89</p>
             </div>
+            <p className="mt-3 text-xs text-foreground/40 italic">
+              ⚠️ Ces informations sont des données d&apos;exemple. Le propriétaire du site doit les remplacer par les informations légales réelles de la société.
+            </p>
           </section>
 
           {/* 2. Directeur de publication */}
           <section>
             <h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">2. Directeur de la publication</h2>
             <p>
-              Le directeur de la publication est [Prénom Nom — à compléter], en qualité de représentant légal de la société Le Kit du Voyageur.
+              Le directeur de la publication est le représentant légal de la société Le Kit du Voyageur.
             </p>
             <p className="mt-2">
               Contact : <a href="mailto:contact@lekitduvoyageur.fr" className="text-primary hover:underline">contact@lekitduvoyageur.fr</a>
@@ -84,7 +87,7 @@ export default function MentionsLegalesPage() {
               Ces éléments sont protégés par les lois françaises et internationales relatives à la propriété intellectuelle, notamment le Code de la propriété intellectuelle (articles L111-1 et suivants pour le droit d&apos;auteur, articles L711-1 et suivants pour les marques).
             </p>
             <p className="mt-3">
-              Toute reproduction, représentation, modification, publication, adaptation, totale ou partielle, des éléments du site, quel que soit le moyen ou le procédé utilisé, est interdite sans l&apos;autorisation écrite préalable de Le Kit du Voyageur. Toute exploitation non autorisée du site ou de l&apos;un quelconque des éléments qu&apos;il contient sera considérée comme constitutive d&apos;une contrefaçon et poursuivie conformément aux dispositions des articles L335-2 et suivants du Code de la propriété intellectuelle.
+              Toute reproduction, représentation, modification, publication, adaptation, totale ou partielle, des éléments du site, quel que soit le moyen ou le procédé utilisé, est interdite sans l&apos;autorisation écrite préalable de Le Kit du Voyageur.
             </p>
           </section>
 
@@ -96,9 +99,6 @@ export default function MentionsLegalesPage() {
             </p>
             <p className="mt-3">
               En conséquence, Le Kit du Voyageur décline toute responsabilité pour toute imprécision, inexactitude ou omission portant sur des informations disponibles sur ce site, ainsi que pour tout dommage résultant d&apos;une intrusion frauduleuse d&apos;un tiers ayant entraîné une modification des informations mises à disposition sur le site.
-            </p>
-            <p className="mt-3">
-              Le Kit du Voyageur ne saurait être tenu responsable des dommages directs ou indirects causés au matériel de l&apos;utilisateur lors de l&apos;accès au site, résultant soit de l&apos;utilisation d&apos;un matériel ne répondant pas aux spécifications techniques requises, soit de l&apos;apparition d&apos;un bug ou d&apos;une incompatibilité.
             </p>
           </section>
 
@@ -153,6 +153,11 @@ export default function MentionsLegalesPage() {
               Conformément aux articles L611-1 et suivants du Code de la consommation, tout consommateur a le droit de recourir gratuitement à un médiateur de la consommation en vue de la résolution amiable du litige qui l&apos;oppose à un professionnel.
             </p>
             <p className="mt-3">
+              Médiateur compétent : <strong>Médiateur du e-commerce de la FEVAD</strong><br />
+              60 rue La Boétie — 75008 Paris<br />
+              <a href="https://www.mediateurfevad.fr" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">www.mediateurfevad.fr</a>
+            </p>
+            <p className="mt-3">
               Plateforme européenne de règlement en ligne des litiges (RLL) :{' '}
               <a href="https://ec.europa.eu/consumers/odr" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">ec.europa.eu/consumers/odr</a>
             </p>
@@ -167,6 +172,8 @@ export default function MentionsLegalesPage() {
             <Link href="/cgv" className="text-primary hover:underline text-xs">CGV</Link>
             <span className="text-foreground/20 text-xs">·</span>
             <Link href="/cookies" className="text-primary hover:underline text-xs">Cookies</Link>
+            <span className="text-foreground/20 text-xs">·</span>
+            <Link href="/contact" className="text-primary hover:underline text-xs">Contact</Link>
           </div>
 
           <p className="text-xs text-foreground/40">

@@ -9,16 +9,19 @@ const FOOTER_COLS = [
   {
     title: 'Shop',
     links: [
-      { label: 'Tous les produits', href: '/shop' },
-      { label: 'Kits assemblés', href: '/shop?type=kit' },
-      { label: 'Occasion vérifiée', href: '/shop?type=occasion' },
-      { label: 'Location matériel', href: '/shop?type=location' },
+      { label: 'Tous les produits', href: '/boutique' },
+      { label: 'Kits assemblés', href: '/kits' },
+      { label: 'Occasion vérifiée', href: '/occasion' },
+      { label: 'Abonnements & Box', href: '/abonnements' },
     ],
   },
   {
     title: 'IA & Outils',
     links: [
       { label: 'Configurateur IA', href: '/ai-configurator' },
+      { label: 'Explorer la carte', href: '/explorer' },
+      { label: 'Outils pratiques', href: '/outils' },
+      { label: 'Espace Pro', href: '/pro' },
     ],
   },
   {
@@ -26,12 +29,16 @@ const FOOTER_COLS = [
     links: [
       { label: 'Toutes les destinations', href: '/pays' },
       { label: 'Guides de voyage', href: '/guides' },
+      { label: 'Programme fidélité', href: '/fidelite' },
     ],
   },
   {
     title: 'Communauté',
     links: [
       { label: 'Forum communauté', href: '/communaute' },
+      { label: 'Carnets d\'expédition', href: '/carnets' },
+      { label: 'Contact & Support', href: '/contact' },
+      { label: 'FAQ', href: '/faq' },
     ],
   },
 ];
@@ -141,6 +148,8 @@ export default function Footer() {
             <Link href="/cookies" className="hover:text-white/60 transition-colors">Cookies</Link>
             {' '}·{' '}
             <Link href="/mentions-legales" className="hover:text-white/60 transition-colors">Mentions légales</Link>
+            {' '}·{' '}
+            <Link href="/contact" className="hover:text-white/60 transition-colors">Contact</Link>
           </p>
 
           <div className="flex items-center gap-3">

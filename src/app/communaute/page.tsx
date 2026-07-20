@@ -313,7 +313,20 @@ function FeedTab() {
       const { data: likes } = await supabase.from('post_likes').select('post_id').eq('user_id', user.id);
       likedIds = likes?.map((l) => l.post_id) ?? [];
     }
-    setPosts((data ?? []).map((p) => ({ ...p, user_liked: likedIds.includes(p.id) })));
+    // Filter out spam/test posts: content must be at least 20 chars and not look like keyboard mashing
+    const filtered = (data ?? []).filter((p) => {
+      const content = (p.content ?? '').trim();
+      const title = (p.title ?? '').trim();
+      if (content.length < 20) return false;
+      // Detect keyboard mashing: high ratio of repeated chars or no spaces in long strings
+      const hasNoSpaces = content.length > 15 && !content.includes(' ');
+      if (hasNoSpaces) return false;
+      // Detect test/spam titles
+      const spamPatterns = /^(test|spam|ezf|aaa|bbb|xxx|zzz|asdf|qwerty)/i;
+      if (spamPatterns.test(title) || spamPatterns.test(content)) return false;
+      return true;
+    });
+    setPosts(filtered.map((p) => ({ ...p, user_liked: likedIds.includes(p.id) })));
     setLoading(false);
   }, [supabase, user, feedFilter]);
 

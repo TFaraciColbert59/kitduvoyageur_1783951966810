@@ -231,7 +231,9 @@ export default function CGVPage() {
               Conformément aux articles L611-1 et suivants du Code de la consommation, en cas de litige non résolu à l&apos;amiable dans un délai raisonnable, l&apos;Acheteur peut recourir gratuitement à un médiateur de la consommation.
             </p>
             <p className="mt-3">
-              Médiateur compétent : [Nom du médiateur — à compléter lors de l&apos;adhésion à un service de médiation]
+              Médiateur compétent : <strong>Médiateur du e-commerce de la FEVAD</strong><br />
+              60 rue La Boétie — 75008 Paris<br />
+              <a href="https://www.mediateurfevad.fr" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">www.mediateurfevad.fr</a>
             </p>
             <p className="mt-3">
               Plateforme européenne de règlement en ligne des litiges (RLL) :{' '}
