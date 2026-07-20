@@ -58,7 +58,7 @@ export default function Hero() {
                 style={{ animation: 'pulse 2s cubic-bezier(0.4,0,0.6,1) infinite' }}
                 aria-hidden="true"
               />
-              1 169 sentiers disponibles
+              Configurateur IA · Bêta ouverte
             </span>
           </div>
 

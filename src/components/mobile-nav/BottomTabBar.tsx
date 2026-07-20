@@ -4,35 +4,25 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import NaviguerButton from './NaviguerButton';
 
-interface Tab {
-  href: string;
-  label: string;
-  icon: React.ReactNode;
-  activeIcon: React.ReactNode;
-  ariaLabel: string;
-}
-
-const SearchIcon = ({ active }: { active: boolean }) => (
+const ExploreIcon = ({ active }: { active: boolean }) => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8" />
-    <path d="m21 21-4.35-4.35" />
+    <circle cx="12" cy="12" r="10" />
+    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
   </svg>
 );
 
-const BackpackIcon = ({ active }: { active: boolean }) => (
+const ShopIcon = ({ active }: { active: boolean }) => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-    <path d="M4 10a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v10H4V10z" />
-    <path d="M9 6V5a3 3 0 0 1 6 0v1" />
-    <path d="M8 16h8" />
-    <path d="M8 12h8" />
+    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+    <line x1="3" y1="6" x2="21" y2="6" />
+    <path d="M16 10a4 4 0 0 1-8 0" />
   </svg>
 );
 
-const ActivityIcon = ({ active }: { active: boolean }) => (
+const AIIcon = ({ active }: { active: boolean }) => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+    <path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7z" />
   </svg>
 );
 
@@ -43,14 +33,18 @@ const ProfileIcon = ({ active }: { active: boolean }) => (
   </svg>
 );
 
-// All 5 tabs in order (Naviguer is index 2, the central one)
-const ALL_TABS = ['/explorer', '/mon-kit', '/naviguer', '/activite', '/profil'];
+interface Tab {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  activeIcon: React.ReactNode;
+  ariaLabel: string;
+  matchPaths?: string[];
+}
 
 export default function BottomTabBar() {
   const pathname = usePathname();
   const { loading } = useAuth();
-  const prevIndexRef = useRef<number>(-1);
-  const [indicatorStyle, setIndicatorStyle] = useState({ left: '0%', opacity: 0 });
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -59,68 +53,59 @@ export default function BottomTabBar() {
     }
   }, []);
 
-  const getActiveIndex = (): number => {
-    if (pathname === '/explorer' || pathname === '/') return 0;
-    if (pathname.startsWith('/mon-kit')) return 1;
-    if (pathname.startsWith('/naviguer')) return 2;
-    if (pathname.startsWith('/activite')) return 3;
-    if (pathname.startsWith('/profil')) return 4;
-    return -1;
-  };
-
-  const activeIndex = getActiveIndex();
-
-  // Update indicator position
-  useEffect(() => {
-    if (activeIndex < 0) {
-      setIndicatorStyle((s) => ({ ...s, opacity: 0 }));
-      return;
-    }
-    // Each tab is 1/5 of the width; Naviguer (index 2) is centered
-    const tabWidth = 100 / 5;
-    const left = activeIndex * tabWidth + tabWidth / 2;
-    setIndicatorStyle({ left: `${left}%`, opacity: 1 });
-    prevIndexRef.current = activeIndex;
-  }, [activeIndex]);
-
-  const isActive = (href: string) => {
-    if (href === '/explorer') return pathname === '/explorer' || pathname === '/';
-    return pathname.startsWith(href);
-  };
-
   const tabs: Tab[] = [
     {
       href: '/explorer',
       label: 'Explorer',
-      icon: <SearchIcon active={false} />,
-      activeIcon: <SearchIcon active={true} />,
+      icon: <ExploreIcon active={false} />,
+      activeIcon: <ExploreIcon active={true} />,
       ariaLabel: 'Explorer les sentiers et destinations',
+      matchPaths: ['/explorer', '/pays'],
     },
     {
-      href: '/mon-kit',
-      label: 'Mon Kit',
-      icon: <BackpackIcon active={false} />,
-      activeIcon: <BackpackIcon active={true} />,
-      ariaLabel: 'Mon kit et inventaire',
+      href: '/boutique',
+      label: 'Boutique',
+      icon: <ShopIcon active={false} />,
+      activeIcon: <ShopIcon active={true} />,
+      ariaLabel: 'Boutique et produits',
+      matchPaths: ['/boutique', '/kits', '/occasion', '/produit'],
     },
-  ];
-
-  const rightTabs: Tab[] = [
     {
-      href: '/activite',
-      label: 'Activité',
-      icon: <ActivityIcon active={false} />,
-      activeIcon: <ActivityIcon active={true} />,
-      ariaLabel: 'Activité et communauté',
+      href: '/ai-configurator',
+      label: 'Kit IA',
+      icon: <AIIcon active={false} />,
+      activeIcon: <AIIcon active={true} />,
+      ariaLabel: 'Configurateur de kit IA',
+      matchPaths: ['/ai-configurator'],
     },
     {
       href: '/profil',
       label: 'Profil',
       icon: <ProfileIcon active={false} />,
       activeIcon: <ProfileIcon active={true} />,
-      ariaLabel: 'Mon profil',
+      ariaLabel: 'Mon profil et compte',
+      matchPaths: ['/profil', '/compte', '/inventaire'],
     },
   ];
+
+  const isActive = (tab: Tab): boolean => {
+    if (!tab.matchPaths) return pathname === tab.href;
+    return tab.matchPaths.some(p => pathname === p || pathname.startsWith(p + '/'));
+  };
+
+  const activeIndex = tabs.findIndex(t => isActive(t));
+
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: '0%', opacity: 0 });
+
+  useEffect(() => {
+    if (activeIndex < 0) {
+      setIndicatorStyle(s => ({ ...s, opacity: 0 }));
+      return;
+    }
+    const tabWidth = 100 / tabs.length;
+    const left = activeIndex * tabWidth + tabWidth / 2;
+    setIndicatorStyle({ left: `${left}%`, opacity: 1 });
+  }, [activeIndex, tabs.length]);
 
   if (loading) return null;
 
@@ -130,7 +115,6 @@ export default function BottomTabBar() {
       aria-label="Navigation principale"
       className="md:hidden fixed bottom-0 left-0 right-0 z-50"
     >
-      {/* Main bar — covers safe area with background color */}
       <div
         className="relative flex items-center justify-around"
         style={{
@@ -142,7 +126,7 @@ export default function BottomTabBar() {
           borderTop: '1px solid rgba(28, 38, 32, 0.1)',
         }}
       >
-        {/* Animated indicator — sliding pill/dot */}
+        {/* Animated indicator */}
         <div
           aria-hidden="true"
           style={{
@@ -161,37 +145,8 @@ export default function BottomTabBar() {
           }}
         />
 
-        {/* Left 2 tabs */}
         {tabs.map((tab) => {
-          const active = isActive(tab.href);
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              aria-label={tab.ariaLabel}
-              aria-current={active ? 'page' : undefined}
-              className="flex flex-col items-center justify-center gap-0.5 flex-1 h-[56px] min-w-[44px] min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-inset rounded-sm"
-              style={{ color: active ? '#E4501C' : '#7A8A7D' }}
-            >
-              {active ? tab.activeIcon : tab.icon}
-              <span
-                className="text-[10px] font-medium leading-none"
-                style={{ color: active ? '#E4501C' : '#7A8A7D' }}
-              >
-                {tab.label}
-              </span>
-            </Link>
-          );
-        })}
-
-        {/* Central Naviguer button — elevated */}
-        <div className="flex flex-col items-center justify-center flex-1 relative h-[56px]" style={{ marginTop: '-20px' }}>
-          <NaviguerButton isActive={isActive('/naviguer')} />
-        </div>
-
-        {/* Right 2 tabs */}
-        {rightTabs.map((tab) => {
-          const active = isActive(tab.href);
+          const active = isActive(tab);
           return (
             <Link
               key={tab.href}

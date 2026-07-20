@@ -9,62 +9,48 @@ import { getCart, getCartTotals } from '@/lib/cart';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 
-interface NavGroup {
+interface NavItem {
   label: string;
-  items: { label: string; href: string; desc?: string; icon?: string }[];
+  href: string;
+  desc?: string;
+  icon?: string;
 }
 
+interface NavGroup {
+  label: string;
+  href?: string;
+  items?: NavItem[];
+}
+
+// 4 items max in desktop header
 const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Boutique',
     items: [
-      { label: 'Boutique', href: '/boutique', desc: 'Moteur d\'optimisation voyage', icon: 'ShoppingBagIcon' },
+      { label: 'Tous les produits', href: '/boutique', desc: 'Équipement outdoor sélectionné', icon: 'ShoppingBagIcon' },
       { label: 'Kits assemblés', href: '/kits', desc: 'Kits prêts à l\'emploi', icon: 'CubeIcon' },
-      { label: 'Location', href: '/location', desc: 'Louer du matériel', icon: 'KeyIcon' },
-      { label: 'Occasion', href: '/occasion', desc: 'Matériel d\'occasion', icon: 'TagIcon' },
+      { label: 'Occasion vérifiée', href: '/occasion', desc: 'Matériel d\'occasion certifié', icon: 'TagIcon' },
     ],
   },
   {
-    label: 'Explorer',
+    label: 'Destinations',
     items: [
-      { label: 'Carte des aventures', href: '/explorer', desc: 'Carte interactive des randonnées', icon: 'MapIcon' },
-      { label: 'Destinations', href: '/pays', desc: 'Fiches pays & sécurité', icon: 'MapPinIcon' },
-      { label: 'Guides terrain', href: '/guides', desc: 'Conseils & tutoriels', icon: 'BookOpenIcon' },
-      { label: 'Outils', href: '/outils', desc: 'Calculateurs & planners', icon: 'WrenchScrewdriverIcon' },
-      { label: 'Empreinte carbone', href: '/carbone', desc: 'Calculer & compenser', icon: 'GlobeAmericasIcon' },
-      { label: 'Copilote IA', href: '/copilote', desc: 'Assistant voyage Gemini', icon: 'SparklesIcon' },
-      { label: 'Créateur de Voyage IA', href: '/voyage-ia', desc: 'Plan d\'aventure complet en IA', icon: 'MapIcon' },
+      { label: 'Toutes les destinations', href: '/pays', desc: 'Fiches pays & conseils terrain', icon: 'MapPinIcon' },
+      { label: 'Explorer la carte', href: '/explorer', desc: 'Sentiers & aventures', icon: 'MapIcon' },
+      { label: 'Guides de voyage', href: '/guides', desc: 'Conseils & tutoriels', icon: 'BookOpenIcon' },
     ],
+  },
+  {
+    label: 'Configurateur IA',
+    href: '/ai-configurator',
   },
   {
     label: 'Communauté',
     items: [
-      { label: 'Communauté', href: '/communaute', desc: 'Hub communautaire complet', icon: 'UsersIcon' },
       { label: 'Carnets d\'expédition', href: '/carnets', desc: 'Récits de voyage vérifiés', icon: 'BookOpenIcon' },
-      { label: 'Clubs', href: '/clubs', desc: 'Clubs activité & destination', icon: 'UserGroupIcon' },
-      { label: 'Groupes de voyage', href: '/groupes', desc: 'Voyages collaboratifs en groupe', icon: 'MapIcon' },
-      { label: 'Événements', href: '/evenements', desc: 'Sorties organisées', icon: 'CalendarIcon' },
-      { label: 'Entraide SOS', href: '/entraide', desc: 'Réseau d\'entraide géolocalisé', icon: 'HandRaisedIcon' },
-      { label: 'Créateurs', href: '/createurs', desc: 'Guides & itinéraires vérifiés', icon: 'SparklesIcon' },
+      { label: 'Forum', href: '/communaute', desc: 'Échanges entre voyageurs', icon: 'UsersIcon' },
     ],
   },
-  {
-    label: 'Mon compte',
-    items: [
-      { label: 'Mon compte', href: '/compte', desc: 'Profil & paramètres', icon: 'UserIcon' },
-      { label: 'Inventaire', href: '/inventaire', desc: 'Mon équipement', icon: 'ArchiveBoxIcon' },
-      { label: 'Mes groupes', href: '/groupes', desc: 'Groupes de voyage', icon: 'MapIcon' },
-      { label: 'Fidélité & Défis', href: '/fidelite', desc: 'Points & badges', icon: 'TrophyIcon' },
-      { label: 'Commandes', href: '/compte#commandes', desc: 'Historique & suivi', icon: 'ShoppingBagIcon' },
-      { label: 'Documents', href: '/compte#documents', desc: 'Passeports, visas, assurances', icon: 'FolderIcon' },
-      { label: 'Configurateur IA', href: '/ai-configurator', desc: 'Kit personnalisé en 2 min', icon: 'CpuChipIcon' },
-      { label: 'Rapport Kit', href: '/rapport-kit', desc: 'Rapport personnalisé IA', icon: 'DocumentChartBarIcon' },
-    ],
-  },
-];
-
-const QUICK_LINKS = [
-  { label: 'Pass Voyageur', href: '/abonnements' },
 ];
 
 export default function Header() {
@@ -87,7 +73,6 @@ export default function Header() {
     setMounted(true);
   }, []);
 
-  // Fixed: useCallback for scroll handler to prevent re-renders
   const onScroll = useCallback(() => setScrolled(window.scrollY > 40), []);
 
   useEffect(() => {
@@ -111,14 +96,12 @@ export default function Header() {
     return () => { document.body.style.overflow = ''; };
   }, [menuOpen]);
 
-  // Focus search input when opened
   useEffect(() => {
     if (searchOpen) {
       setTimeout(() => searchInputRef.current?.focus(), 50);
     }
   }, [searchOpen]);
 
-  // Keyboard: close mega menu on Escape
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -131,7 +114,6 @@ export default function Header() {
     return () => document.removeEventListener('keydown', handleKey);
   }, [menuOpen]);
 
-  // Focus trap for mobile menu
   useEffect(() => {
     if (!menuOpen || !mobileMenuRef.current) return;
     const focusable = mobileMenuRef.current.querySelectorAll<HTMLElement>(
@@ -200,46 +182,56 @@ export default function Header() {
               </div>
             </Link>
 
-            {/* Desktop Nav — grouped with keyboard support */}
+            {/* Desktop Nav — 4 items max */}
             <nav className="hidden lg:flex items-center gap-0.5" aria-label="Navigation principale">
               {NAV_GROUPS.map((group) => (
                 <div
                   key={group.label}
                   className="relative"
-                  onMouseEnter={() => handleGroupEnter(group.label)}
-                  onMouseLeave={handleGroupLeave}
+                  onMouseEnter={() => group.items ? handleGroupEnter(group.label) : undefined}
+                  onMouseLeave={group.items ? handleGroupLeave : undefined}
                 >
-                  <button
-                    className={`flex items-center gap-1 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px] ${
-                      activeGroup === group.label
-                        ? 'text-white bg-white/10' : 'text-white/75 hover:text-white hover:bg-white/8'
-                    }`}
-                    aria-expanded={activeGroup === group.label}
-                    aria-haspopup="true"
-                    onFocus={() => handleGroupEnter(group.label)}
-                    onBlur={handleGroupLeave}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        setActiveGroup(activeGroup === group.label ? null : group.label);
-                      }
-                      if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        setActiveGroup(group.label);
-                      }
-                    }}
-                  >
-                    {group.label}
-                    <Icon
-                      name="ChevronDownIcon"
-                      size={12}
-                      variant="outline"
-                      className={`transition-transform duration-200 ${activeGroup === group.label ? 'rotate-180' : ''}`}
-                    />
-                  </button>
+                  {group.href ? (
+                    <Link
+                      href={group.href}
+                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px] bg-[#E4501C]/10 text-[#E4501C] hover:bg-[#E4501C]/20"
+                    >
+                      <Icon name="SparklesIcon" size={14} variant="outline" />
+                      {group.label}
+                    </Link>
+                  ) : (
+                    <button
+                      className={`flex items-center gap-1 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px] ${
+                        activeGroup === group.label
+                          ? 'text-white bg-white/10' : 'text-white/75 hover:text-white hover:bg-white/8'
+                      }`}
+                      aria-expanded={activeGroup === group.label}
+                      aria-haspopup="true"
+                      onFocus={() => group.items ? handleGroupEnter(group.label) : undefined}
+                      onBlur={group.items ? handleGroupLeave : undefined}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setActiveGroup(activeGroup === group.label ? null : group.label);
+                        }
+                        if (e.key === 'ArrowDown') {
+                          e.preventDefault();
+                          setActiveGroup(group.label);
+                        }
+                      }}
+                    >
+                      {group.label}
+                      <Icon
+                        name="ChevronDownIcon"
+                        size={12}
+                        variant="outline"
+                        className={`transition-transform duration-200 ${activeGroup === group.label ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                  )}
 
-                  {/* Mega menu dropdown */}
-                  {activeGroup === group.label && (
+                  {/* Dropdown */}
+                  {group.items && activeGroup === group.label && (
                     <div
                       ref={megaRef}
                       className="absolute top-full left-0 mt-1 w-64 bg-[#1C2620] border border-white/10 rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-50"
@@ -248,284 +240,246 @@ export default function Header() {
                       role="menu"
                       aria-label={`Menu ${group.label}`}
                     >
-                      {group.items.map((item) => (
-                        <Link
-                          key={item.label}
-                          href={item.href}
-                          role="menuitem"
-                          className="flex items-start gap-3 px-4 py-3 hover:bg-white/8 transition-colors focus-visible:outline-none focus-visible:bg-white/10 focus-visible:ring-inset focus-visible:ring-2 focus-visible:ring-[#E4501C]"
-                          onClick={() => setActiveGroup(null)}
-                        >
-                          {item.icon && (
-                            <Icon name={item.icon as Parameters<typeof Icon>[0]['name']} size={16} variant="outline" className="text-[#E4501C] flex-shrink-0 mt-0.5" />
-                          )}
-                          <div>
-                            <p className="text-sm font-medium text-white">{item.label}</p>
-                            {item.desc && <p className="text-xs text-white/45 mt-0.5">{item.desc}</p>}
-                          </div>
-                        </Link>
-                      ))}
+                      <div className="p-1.5">
+                        {group.items.map((item) => (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            role="menuitem"
+                            onClick={() => setActiveGroup(null)}
+                            className="flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-white/8 transition-colors group/item focus-visible:outline-none focus-visible:bg-white/8"
+                          >
+                            {item.icon && (
+                              <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-white/6 flex items-center justify-center mt-0.5">
+                                <Icon name={item.icon} size={14} variant="outline" className="text-white/50 group-hover/item:text-[#E4501C] transition-colors" />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-white/85 group-hover/item:text-white transition-colors leading-tight">
+                                {item.label}
+                              </p>
+                              {item.desc && (
+                                <p className="text-xs text-white/35 mt-0.5 leading-snug">{item.desc}</p>
+                              )}
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
               ))}
-              {/* Quick links */}
-              <div className="w-px h-4 bg-white/15 mx-1" aria-hidden="true" />
-              {QUICK_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="px-3 py-2 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/8 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px] flex items-center"
-                >
-                  {link.label}
-                </Link>
-              ))}
             </nav>
 
-            {/* Right Actions */}
-            <div className="flex items-center gap-1.5" suppressHydrationWarning>
+            {/* Right actions */}
+            <div className="flex items-center gap-1" suppressHydrationWarning>
               {/* Search */}
               <button
-                className="flex p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px] min-w-[44px] items-center justify-center"
-                aria-label="Ouvrir la recherche"
-                onClick={() => setSearchOpen(true)}
+                onClick={() => setSearchOpen(!searchOpen)}
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-white/60 hover:text-white hover:bg-white/8 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620]"
+                aria-label="Rechercher"
               >
                 <Icon name="MagnifyingGlassIcon" size={18} variant="outline" />
               </button>
 
               {/* Wishlist */}
-              <Link
-                href="/compte"
-                className="relative flex p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px] min-w-[44px] items-center justify-center"
-                aria-label="Favoris"
-                suppressHydrationWarning
-              >
-                <Icon name="HeartIcon" size={18} variant="outline" />
-                <span
-                  className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#E4501C] text-white text-[9px] font-mono font-700 rounded-full flex items-center justify-center"
-                  aria-hidden="true"
-                  suppressHydrationWarning
-                  style={{ display: mounted && wishlistCount > 0 ? 'flex' : 'none' }}
+              {mounted && (
+                <Link
+                  href="/compte#wishlist"
+                  className="relative w-9 h-9 rounded-lg flex items-center justify-center text-white/60 hover:text-white hover:bg-white/8 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620]"
+                  aria-label={`Liste de souhaits${wishlistCount > 0 ? ` (${wishlistCount})` : ''}`}
                 >
-                  {mounted ? (wishlistCount > 9 ? '9+' : wishlistCount) : ''}
-                </span>
-              </Link>
+                  <Icon name="HeartIcon" size={18} variant="outline" />
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#E4501C] text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                      {wishlistCount > 9 ? '9+' : wishlistCount}
+                    </span>
+                  )}
+                </Link>
+              )}
 
               {/* Cart */}
-              <Link
-                href="/panier"
-                className="relative flex p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px] min-w-[44px] items-center justify-center"
-                aria-label="Panier"
-                suppressHydrationWarning
-              >
-                <Icon name="ShoppingBagIcon" size={18} variant="outline" />
-                <span
-                  className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#E4501C] text-white text-[9px] font-mono font-700 rounded-full flex items-center justify-center"
-                  aria-hidden="true"
-                  suppressHydrationWarning
-                  style={{ display: mounted && cartCount > 0 ? 'flex' : 'none' }}
+              {mounted && (
+                <Link
+                  href="/panier"
+                  className="relative w-9 h-9 rounded-lg flex items-center justify-center text-white/60 hover:text-white hover:bg-white/8 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620]"
+                  aria-label={`Panier${cartCount > 0 ? ` (${cartCount} article${cartCount > 1 ? 's' : ''})` : ''}`}
                 >
-                  {mounted ? (cartCount > 9 ? '9+' : cartCount) : ''}
-                </span>
-              </Link>
+                  <Icon name="ShoppingBagIcon" size={18} variant="outline" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#E4501C] text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                      {cartCount > 9 ? '9+' : cartCount}
+                    </span>
+                  )}
+                </Link>
+              )}
 
-              {/* Auth — always render both, toggle visibility after mount */}
+              {/* Account */}
               <Link
-                href="/connexion"
-                className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-[#E4501C] hover:bg-[#cc3d10] text-white text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] min-h-[44px]"
-                suppressHydrationWarning
-                style={mounted ? { display: user ? 'none' : undefined } : undefined}
+                href={user ? '/compte' : '/connexion'}
+                className="ml-1 flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px] bg-white/8 text-white/80 hover:bg-white/14 hover:text-white"
+                aria-label={user ? 'Mon compte' : 'Se connecter'}
               >
-                <Icon name="ArrowRightOnRectangleIcon" size={16} variant="outline" />
-                Connexion
+                <Icon name="UserIcon" size={15} variant="outline" />
+                <span className="hidden xl:inline">{user ? 'Mon compte' : 'Connexion'}</span>
               </Link>
-              <Link
-                href="/compte"
-                className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px]"
-                aria-label="Mon compte"
-                suppressHydrationWarning
-                style={mounted ? { display: user ? undefined : 'none' } : { display: 'none' }}
-              >
-                <Icon name="UserCircleIcon" size={18} variant="outline" />
-                <span className="hidden md:block">Mon compte</span>
-              </Link>
-
-              {/* Mobile menu toggle */}
-              <button
-                className="lg:hidden flex p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1C2620] min-h-[44px] min-w-[44px] items-center justify-center"
-                aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
-                aria-expanded={menuOpen}
-                aria-controls="mobile-menu"
-                onClick={() => setMenuOpen(!menuOpen)}
-              >
-                <Icon name={menuOpen ? 'XMarkIcon' : 'Bars3Icon'} size={22} variant="outline" />
-              </button>
             </div>
           </div>
         </div>
 
-        {/* Search overlay */}
+        {/* Search bar */}
         {searchOpen && (
-          <div className="absolute inset-x-0 top-0 bg-[#1C2620] border-b border-white/10 z-50" role="search">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-3">
-              <Icon name="MagnifyingGlassIcon" size={18} variant="outline" className="text-white/40 flex-shrink-0" aria-hidden="true" />
-              <form onSubmit={handleSearch} className="flex-1" role="search" aria-label="Recherche de produits">
+          <div className="border-t border-white/8 bg-[#1C2620]">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+              <form onSubmit={handleSearch} className="flex items-center gap-3">
+                <Icon name="MagnifyingGlassIcon" size={18} variant="outline" className="text-white/40 flex-shrink-0" />
                 <input
                   ref={searchInputRef}
                   type="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Rechercher un produit, une destination…"
-                  className="w-full bg-transparent text-white placeholder:text-white/30 text-sm focus:outline-none"
-                  aria-label="Rechercher"
+                  placeholder="Rechercher un kit, une destination, un produit…"
+                  className="flex-1 bg-transparent text-white placeholder-white/30 text-sm outline-none min-h-[44px]"
+                  aria-label="Recherche"
                 />
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(false)}
+                  className="text-white/40 hover:text-white transition-colors p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] rounded"
+                  aria-label="Fermer la recherche"
+                >
+                  <Icon name="XMarkIcon" size={18} variant="outline" />
+                </button>
               </form>
-              <button
-                onClick={() => { setSearchOpen(false); setSearchQuery(''); }}
-                className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] min-h-[44px] min-w-[44px] flex items-center justify-center"
-                aria-label="Fermer la recherche"
-              >
-                <Icon name="XMarkIcon" size={18} variant="outline" />
-              </button>
             </div>
           </div>
         )}
       </header>
 
-      {/* Mobile menu */}
+      {/* Mobile header */}
+      <header
+        suppressHydrationWarning
+        className={`md:hidden fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled ? 'bg-[#1C2620]/97 backdrop-blur-md shadow-lg' : 'bg-[#1C2620]'
+        }`}
+        role="banner"
+      >
+        <div className="flex items-center justify-between h-14 px-4">
+          <Link href="/" className="flex items-center gap-2" aria-label="Le Kit du Voyageur">
+            <AppLogo size={26} />
+            <span className="font-display font-800 text-white text-[15px] tracking-tight" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>
+              VOYAGEUR
+            </span>
+          </Link>
+          <div className="flex items-center gap-1">
+            <Link href="/panier" className="relative w-9 h-9 flex items-center justify-center text-white/60" aria-label="Panier">
+              <Icon name="ShoppingBagIcon" size={18} variant="outline" />
+              {mounted && cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#E4501C] text-white text-[9px] font-bold flex items-center justify-center">
+                  {cartCount > 9 ? '9+' : cartCount}
+                </span>
+              )}
+            </Link>
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="w-9 h-9 flex items-center justify-center text-white/70 hover:text-white"
+              aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+              aria-expanded={menuOpen}
+            >
+              <Icon name={menuOpen ? 'XMarkIcon' : 'Bars3Icon'} size={22} variant="outline" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile menu overlay — 4 sections max */}
       {menuOpen && (
         <div
-          id="mobile-menu"
           ref={mobileMenuRef}
-          className="fixed inset-0 z-40 lg:hidden"
+          className="md:hidden fixed inset-0 z-40 bg-[#1C2620] overflow-y-auto"
+          style={{ paddingTop: '56px' }}
           role="dialog"
           aria-modal="true"
-          aria-label="Menu de navigation mobile"
+          aria-label="Menu de navigation"
         >
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setMenuOpen(false)}
-            aria-hidden="true"
-          />
+          <div className="px-4 py-6 space-y-6">
+            {/* Primary CTA */}
+            <Link
+              href="/ai-configurator"
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-[#E4501C] text-white font-semibold text-base"
+            >
+              <Icon name="SparklesIcon" size={18} variant="outline" />
+              Configurer mon kit IA
+            </Link>
 
-          {/* Panel */}
-          <div className="absolute top-0 right-0 bottom-0 w-full max-w-sm bg-[#1C2620] shadow-2xl overflow-y-auto">
-            <div className="flex items-center justify-between px-4 h-16 border-b border-white/10">
-              <span className="font-display font-700 text-white text-base" style={{ fontFamily: 'var(--font-display)' }}>Menu</span>
-              <button
-                onClick={() => setMenuOpen(false)}
-                className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] min-h-[44px] min-w-[44px] flex items-center justify-center"
-                aria-label="Fermer le menu"
-              >
-                <Icon name="XMarkIcon" size={20} variant="outline" />
-              </button>
-            </div>
-
-            {/* Mobile search */}
-            <div className="px-4 py-3 border-b border-white/10">
-              <form onSubmit={(e) => { handleSearch(e); setMenuOpen(false); }} role="search" aria-label="Recherche mobile">
-                <div className="flex items-center gap-2 bg-white/8 rounded-xl px-3 py-2.5">
-                  <Icon name="MagnifyingGlassIcon" size={16} variant="outline" className="text-white/40" aria-hidden="true" />
-                  <input
-                    type="search"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Rechercher…"
-                    className="flex-1 bg-transparent text-white placeholder:text-white/30 text-sm focus:outline-none"
-                    aria-label="Rechercher"
-                  />
-                </div>
-              </form>
-            </div>
-
-            <nav className="px-4 py-4" aria-label="Navigation mobile">
-              {NAV_GROUPS.map((group) => (
-                <div key={group.label} className="mb-4">
-                  <p className="text-[10px] font-mono text-white/30 tracking-[0.2em] uppercase mb-2" style={{ fontFamily: 'var(--font-mono)' }}>
-                    {group.label}
-                  </p>
-                  <div className="space-y-1">
-                    {group.items.map((item) => (
-                      <Link
-                        key={`${group.label}-${item.label}`}
-                        href={item.href}
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-3 px-3 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/8 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] min-h-[44px]"
-                      >
-                        {item.icon && (
-                          <Icon name={item.icon as Parameters<typeof Icon>[0]['name']} size={16} variant="outline" className="text-[#E4501C] flex-shrink-0" />
-                        )}
-                        <span className="text-sm font-medium">{item.label}</span>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-              <div className="border-t border-white/10 pt-4 mt-2 space-y-1">
-                {QUICK_LINKS.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center px-3 py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/8 transition-all text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] min-h-[44px]"
-                  >
+            {/* Section: Boutique */}
+            <div>
+              <p className="text-[10px] font-mono text-white/30 tracking-[0.2em] uppercase mb-3" style={{ fontFamily: 'var(--font-mono)' }}>Boutique</p>
+              <div className="space-y-1">
+                {[
+                  { label: 'Tous les produits', href: '/boutique' },
+                  { label: 'Kits assemblés', href: '/kits' },
+                  { label: 'Occasion vérifiée', href: '/occasion' },
+                ].map(link => (
+                  <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)}
+                    className="flex items-center justify-between px-3 py-3 rounded-xl text-white/75 hover:text-white hover:bg-white/6 transition-colors text-sm font-medium min-h-[44px]">
                     {link.label}
+                    <Icon name="ChevronRightIcon" size={14} variant="outline" className="text-white/25" />
                   </Link>
                 ))}
               </div>
+            </div>
 
-              <div className="border-t border-white/10 pt-4 mt-4" suppressHydrationWarning>
-                <Link
-                  href="/compte"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/8 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] min-h-[44px]"
-                  suppressHydrationWarning
-                  style={mounted ? { display: user ? undefined : 'none' } : { display: 'none' }}
-                >
-                  <Icon name="UserCircleIcon" size={18} variant="outline" className="text-[#E4501C]" />
-                  <span className="text-sm font-medium">Mon compte</span>
-                </Link>
-                <Link
-                  href="/connexion"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-[#E4501C] hover:bg-[#cc3d10] text-white text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] min-h-[44px]"
-                  suppressHydrationWarning
-                  style={mounted ? { display: user ? 'none' : undefined } : undefined}
-                >
-                  <Icon name="ArrowRightOnRectangleIcon" size={16} variant="outline" />
-                  Connexion
-                </Link>
+            {/* Section: Destinations */}
+            <div>
+              <p className="text-[10px] font-mono text-white/30 tracking-[0.2em] uppercase mb-3" style={{ fontFamily: 'var(--font-mono)' }}>Destinations</p>
+              <div className="space-y-1">
+                {[
+                  { label: 'Toutes les destinations', href: '/pays' },
+                  { label: 'Explorer la carte', href: '/explorer' },
+                  { label: 'Guides de voyage', href: '/guides' },
+                ].map(link => (
+                  <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)}
+                    className="flex items-center justify-between px-3 py-3 rounded-xl text-white/75 hover:text-white hover:bg-white/6 transition-colors text-sm font-medium min-h-[44px]">
+                    {link.label}
+                    <Icon name="ChevronRightIcon" size={14} variant="outline" className="text-white/25" />
+                  </Link>
+                ))}
               </div>
-            </nav>
+            </div>
+
+            {/* Section: Communauté */}
+            <div>
+              <p className="text-[10px] font-mono text-white/30 tracking-[0.2em] uppercase mb-3" style={{ fontFamily: 'var(--font-mono)' }}>Communauté</p>
+              <div className="space-y-1">
+                {[
+                  { label: 'Carnets d\'expédition', href: '/carnets' },
+                  { label: 'Forum', href: '/communaute' },
+                ].map(link => (
+                  <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)}
+                    className="flex items-center justify-between px-3 py-3 rounded-xl text-white/75 hover:text-white hover:bg-white/6 transition-colors text-sm font-medium min-h-[44px]">
+                    {link.label}
+                    <Icon name="ChevronRightIcon" size={14} variant="outline" className="text-white/25" />
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Account */}
+            <div className="border-t border-white/8 pt-4">
+              <Link
+                href={user ? '/compte' : '/connexion'}
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl text-white/75 hover:text-white hover:bg-white/6 transition-colors text-sm font-medium min-h-[44px]"
+              >
+                <Icon name="UserIcon" size={16} variant="outline" />
+                {user ? 'Mon compte' : 'Se connecter'}
+              </Link>
+            </div>
           </div>
         </div>
       )}
-
-      {/* Bottom Navigation Bar — mobile only */}
-      <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#1C2620]/97 backdrop-blur-md border-t border-white/10 flex items-center justify-around px-2 pb-safe"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-        aria-label="Navigation rapide"
-      >
-        <Link href="/" className="flex flex-col items-center gap-0.5 py-2 px-3 text-white/50 hover:text-white transition-colors min-w-[44px]">
-          <Icon name="HomeIcon" size={20} variant="outline" />
-          <span className="text-[9px] font-mono tracking-wide">Accueil</span>
-        </Link>
-        <Link href="/boutique" className="flex flex-col items-center gap-0.5 py-2 px-3 text-white/50 hover:text-white transition-colors min-w-[44px]">
-          <Icon name="ShoppingBagIcon" size={20} variant="outline" />
-          <span className="text-[9px] font-mono tracking-wide">Boutique</span>
-        </Link>
-        <Link href="/communaute" className="flex flex-col items-center gap-0.5 py-2 px-3 text-white/50 hover:text-white transition-colors min-w-[44px]">
-          <Icon name="UsersIcon" size={20} variant="outline" />
-          <span className="text-[9px] font-mono tracking-wide">Communauté</span>
-        </Link>
-        <Link href="/compte" className="flex flex-col items-center gap-0.5 py-2 px-3 text-white/50 hover:text-white transition-colors min-w-[44px]">
-          <Icon name="UserCircleIcon" size={20} variant="outline" />
-          <span className="text-[9px] font-mono tracking-wide">Compte</span>
-        </Link>
-      </nav>
     </>
   );
 }

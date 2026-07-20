@@ -12,13 +12,6 @@ const DESTINATIONS = [
 { name: 'Sahara', tag: 'Désert', img: "https://images.unsplash.com/photo-1728408828574-70a460530093", alt: 'Dunes de sable rouge du Sahara au coucher du soleil avec caravane de chameaux', color: '#E4501C' }];
 
 
-const STATS = [
-{ value: '12 847', label: 'Kits configurés', icon: 'SparklesIcon' },
-{ value: '94', label: 'Destinations', icon: 'GlobeAltIcon' },
-{ value: '4.9', label: 'Note moyenne', icon: 'StarIcon' },
-{ value: 'Expédition', label: 'sous 48h', icon: 'BoltIcon' }];
-
-
 const _FEATURES = [
 {
   icon: 'SparklesIcon',
@@ -90,7 +83,6 @@ export default function HeroSection() {
     <section
       className="relative w-full min-h-screen overflow-hidden bg-[#1C2620] flex items-end"
       aria-label="Section héros — Kit du Voyageur">
-      
       {/* Full-bleed background — CSS parallax via will-change */}
       <div
         className="absolute inset-0 w-full"
@@ -107,7 +99,6 @@ export default function HeroSection() {
         <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, rgba(28,38,32,0.72) 0%, rgba(28,38,32,0.45) 45%, rgba(28,38,32,0.15) 100%)' }} />
         <div className="absolute bottom-0 left-0 right-0 h-64" style={{ background: 'linear-gradient(to top, #1C2620, transparent)' }} />
       </div>
-
       {/* Content */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
@@ -167,33 +158,20 @@ export default function HeroSection() {
                 </svg>
               </div>
             </div>
-
-            {/* Stats row */}
-            <div className="flex flex-wrap items-center gap-6 mt-10">
-              {STATS.map((stat) =>
-              <div key={stat.label} className="flex items-center gap-2">
-                  <Icon name={stat.icon as string} size={14} variant="outline" className="text-[#E4501C]" />
-                  <div>
-                    <span className="font-mono font-700 text-white text-sm" style={{ fontFamily: 'var(--font-mono)' }}>{stat.value}</span>
-                    <span className="text-white/35 text-xs ml-1.5">{stat.label}</span>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Right — destination cards */}
           <div className="lg:col-span-5 hidden lg:grid grid-cols-2 gap-2.5">
-            {DESTINATIONS.map((dest, i) =>
+            {DESTINATIONS?.map((dest, i) =>
             <Link
-              key={dest.name}
-              href={`/pays/${dest.name.toLowerCase()}`}
+              key={dest?.name}
+              href={`/pays/${dest?.name?.toLowerCase()}`}
               className={`relative overflow-hidden rounded-2xl group cursor-pointer ${i === 0 ? 'row-span-2' : ''}`}
               style={{ height: i === 0 ? '280px' : '130px' }}>
               
                 <AppImage
-                src={dest.img}
-                alt={dest.alt}
+                src={dest?.img}
+                alt={dest?.alt}
                 fill
                 sizes="(max-width: 1024px) 0px, 200px"
                 loading="lazy"
@@ -201,8 +179,8 @@ export default function HeroSection() {
               
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-3 left-3">
-                  <span className="text-[9px] font-mono text-white/60 tracking-widest uppercase" style={{ fontFamily: 'var(--font-mono)' }}>{dest.tag}</span>
-                  <p className="font-display font-700 text-white text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>{dest.name}</p>
+                  <span className="text-[9px] font-mono text-white/60 tracking-widest uppercase" style={{ fontFamily: 'var(--font-mono)' }}>{dest?.tag}</span>
+                  <p className="font-display font-700 text-white text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>{dest?.name}</p>
                 </div>
                 <div className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <Icon name="ArrowRightIcon" size={10} variant="outline" className="text-white" />
@@ -212,6 +190,7 @@ export default function HeroSection() {
           </div>
         </div>
       </div>
-    </section>);
+    </section>
+  );
 
 }

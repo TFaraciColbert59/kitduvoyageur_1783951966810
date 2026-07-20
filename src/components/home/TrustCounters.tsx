@@ -5,43 +5,55 @@ import type { TrustStats } from '@/lib/home-queries';
 
 interface Counter {
   label: string;
-  value: number;
+  value: number | string;
   suffix: string;
   prefix?: string;
   icon: string;
   color: string;
+  isNumeric: boolean;
+  sub?: string;
 }
 
 function buildCounters(stats: TrustStats): Counter[] {
+  const hasRealUsers = stats.userCount > 0;
+  const hasRealRoutes = stats.routeCount > 0;
+
   return [
     {
-      label: 'Voyageurs équipés',
-      value: Math.max(stats.userCount, 14),
-      suffix: '+',
+      label: hasRealUsers ? 'Voyageurs inscrits' : 'Rejoignez les premiers',
+      value: hasRealUsers ? stats.userCount : 0,
+      suffix: hasRealUsers ? '+' : '',
       icon: '🧭',
       color: '#E4501C',
+      isNumeric: hasRealUsers,
+      sub: hasRealUsers ? undefined : 'Bêta ouverte',
     },
     {
       label: 'Sentiers référencés',
-      value: Math.max(stats.routeCount, 1169),
+      value: hasRealRoutes ? stats.routeCount : 1169,
       suffix: '',
       icon: '🥾',
       color: '#5C8A3A',
+      isNumeric: true,
+      sub: 'GR, GRP, PR en France',
     },
     {
-      label: 'Note moyenne',
-      value: 4.91,
+      label: 'IA de génération',
+      value: 'Gemini',
       suffix: '',
-      prefix: '',
-      icon: '⭐',
+      icon: '🤖',
       color: '#3A6EA5',
+      isNumeric: false,
+      sub: 'Google Gemini Pro',
     },
     {
-      label: 'Satisfaction terrain',
-      value: 98,
-      suffix: '%',
-      icon: '✅',
+      label: 'Paiement sécurisé',
+      value: 'Stripe',
+      suffix: '',
+      icon: '🔒',
       color: '#B5652D',
+      isNumeric: false,
+      sub: 'Certifié PCI-DSS',
     },
   ];
 }
@@ -52,14 +64,12 @@ function AnimatedCounter({
   prefix,
   duration = 1500,
   shouldAnimate,
-  isDecimal,
 }: {
   target: number;
   suffix: string;
   prefix?: string;
   duration?: number;
   shouldAnimate: boolean;
-  isDecimal?: boolean;
 }) {
   const [current, setCurrent] = useState(shouldAnimate ? 0 : target);
   const rafRef = useRef<number>(0);
@@ -74,7 +84,6 @@ function AnimatedCounter({
     const animate = (now: number) => {
       const elapsed = now - startRef.current;
       const progress = Math.min(elapsed / duration, 1);
-      // ease-out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       setCurrent(eased * target);
       if (progress < 1) {
@@ -85,7 +94,7 @@ function AnimatedCounter({
     return () => cancelAnimationFrame(rafRef.current);
   }, [target, duration, shouldAnimate]);
 
-  const display = isDecimal ? current.toFixed(2) : Math.floor(current).toLocaleString('fr-FR');
+  const display = Math.floor(current).toLocaleString('fr-FR');
 
   return (
     <span>
@@ -119,7 +128,6 @@ export default function TrustCounters({ stats }: { stats: TrustStats }) {
           observer.disconnect();
         }
       },
-      // More generous rootMargin on mobile (smaller viewport)
       { rootMargin: '0px 0px -10% 0px', threshold: 0.1 }
     );
     observer.observe(el);
@@ -148,12 +156,11 @@ export default function TrustCounters({ stats }: { stats: TrustStats }) {
             id="trust-heading"
             className="text-section-title text-white"
           >
-            Des chiffres qui<br />
-            <span style={{ color: '#E4501C' }}>parlent d&apos;eux-mêmes.</span>
+            Construit pour<br />
+            <span style={{ color: '#E4501C' }}>durer.</span>
           </h2>
         </div>
 
-        {/* Counters grid — 4 in a row desktop, 2x2 mobile */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {counters.map((counter) => (
             <div
@@ -168,24 +175,33 @@ export default function TrustCounters({ stats }: { stats: TrustStats }) {
                 {counter.icon}
               </div>
               <div
-                className="font-mono font-bold text-2xl md:text-3xl mb-2"
+                className="font-mono font-bold text-2xl md:text-3xl mb-1"
                 style={{ color: counter.color, fontFamily: 'var(--font-mono)' }}
-                aria-label={`${counter.value}${counter.suffix} ${counter.label}`}
               >
-                <AnimatedCounter
-                  target={counter.value}
-                  suffix={counter.suffix}
-                  prefix={counter.prefix}
-                  shouldAnimate={shouldAnimate}
-                  isDecimal={counter.value % 1 !== 0}
-                />
+                {counter.isNumeric ? (
+                  <AnimatedCounter
+                    target={counter.value as number}
+                    suffix={counter.suffix}
+                    prefix={counter.prefix}
+                    shouldAnimate={shouldAnimate}
+                  />
+                ) : (
+                  <span>{counter.value}{counter.suffix}</span>
+                )}
               </div>
               <div
-                className="text-xs font-mono uppercase tracking-wide"
-                style={{ color: 'rgba(231,227,214,0.45)', fontFamily: 'var(--font-mono)' }}
+                className="text-xs font-semibold text-white/70 mb-0.5"
               >
                 {counter.label}
               </div>
+              {counter.sub && (
+                <div
+                  className="text-[10px] font-mono"
+                  style={{ color: 'rgba(231,227,214,0.3)', fontFamily: 'var(--font-mono)' }}
+                >
+                  {counter.sub}
+                </div>
+              )}
             </div>
           ))}
         </div>

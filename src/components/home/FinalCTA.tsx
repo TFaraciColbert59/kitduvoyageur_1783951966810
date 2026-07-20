@@ -21,14 +21,12 @@ export default function FinalCTA() {
           <rect width="100%" height="100%" fill="url(#cta-topo)"/>
         </svg>
       </div>
-      {/* Glow */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 100%, rgba(228,80,28,0.1) 0%, transparent 70%)' }}
         aria-hidden="true"
       />
       <div className="relative z-10 max-w-4xl mx-auto px-5 sm:px-8 lg:px-12 text-center">
-        {/* Eyebrow */}
         <p
           className="text-xs font-mono uppercase tracking-widest mb-6"
           style={{ color: 'rgba(231,227,214,0.4)', fontFamily: 'var(--font-mono)' }}
@@ -36,7 +34,6 @@ export default function FinalCTA() {
           — Prêt pour l&apos;aventure ?
         </p>
 
-        {/* Headline */}
         <h2
           id="final-cta-heading"
           className="text-hero text-white mb-6"
@@ -51,11 +48,10 @@ export default function FinalCTA() {
           className="text-base md:text-lg leading-relaxed mb-10 max-w-xl mx-auto"
           style={{ color: 'rgba(231,227,214,0.55)' }}
         >
-          Configurez votre kit en 2 minutes, explorez 1 169 sentiers
-          et rejoignez une communauté de voyageurs passionnés.
+          Configurez votre kit en 2 minutes. Gratuit, sans inscription requise.
+          Rejoignez les premiers voyageurs de la bêta.
         </p>
 
-        {/* CTAs — thumb-friendly on mobile, safe-area respected */}
         <div
           className="flex flex-col sm:flex-row gap-4 justify-center items-center"
           style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
@@ -75,23 +71,23 @@ export default function FinalCTA() {
           </Link>
 
           <Link
-            href="/explorer"
+            href="/pays"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-semibold text-base transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] min-h-[52px]"
             style={{
               border: '1.5px solid rgba(231,227,214,0.2)',
               color: 'rgba(231,227,214,0.8)',
             }}
           >
-            Explorer les sentiers
+            Explorer les destinations
           </Link>
         </div>
 
-        {/* Social proof micro-strip */}
+        {/* Honest trust strip — no fake numbers */}
         <div className="flex flex-wrap justify-center gap-6 mt-10">
           {[
-            { icon: '🧭', text: '14+ voyageurs actifs' },
-            { icon: '🥾', text: '1 169 sentiers GR/GRP/PR' },
-            { icon: '⭐', text: 'Note 4.91 / 5' },
+            { icon: '🔒', text: 'Paiement Stripe sécurisé' },
+            { icon: '↩️', text: 'Retour gratuit 30 jours' },
+            { icon: '🇪🇺', text: 'Hébergé en Europe' },
           ]?.map((item) => (
             <div key={item?.text} className="flex items-center gap-2">
               <span className="text-lg" aria-hidden="true">{item?.icon}</span>
