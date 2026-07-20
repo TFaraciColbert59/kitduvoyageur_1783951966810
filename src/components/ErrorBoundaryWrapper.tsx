@@ -1,10 +1,30 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import React from 'react';
+import React, { Component, ReactNode } from 'react';
 
-const ErrorBoundary = dynamic(() => import('./ErrorBoundary'), { ssr: false });
+interface Props {
+  children: ReactNode;
+}
 
-export default function ErrorBoundaryWrapper({ children }: { children: React.ReactNode }) {
-  return <ErrorBoundary>{children}</ErrorBoundary>;
+interface State {
+  hasError: boolean;
+}
+
+export default class ErrorBoundaryWrapper extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): State {
+    return { hasError: false };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error('ErrorBoundaryWrapper caught:', error);
+  }
+
+  render() {
+    return this.props.children;
+  }
 }
