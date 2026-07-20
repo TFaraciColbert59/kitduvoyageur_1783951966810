@@ -5,7 +5,7 @@ import '../styles/tailwind.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
-import ErrorBoundary from '@/components/ErrorBoundary';
+import ErrorBoundaryWrapper from '@/components/ErrorBoundaryWrapper';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import BottomTabBar from '@/components/mobile-nav/BottomTabBar';
 import TopBar from '@/components/mobile-nav/TopBar';
@@ -187,7 +187,7 @@ export default function RootLayout({
         <AuthProvider>
           <WishlistProvider>
             <ToastProvider>
-              <ErrorBoundary>
+              <ErrorBoundaryWrapper>
                 <Suspense fallback={null}>
                   <GoogleAnalytics />
                 </Suspense>
@@ -204,7 +204,7 @@ export default function RootLayout({
                 <BottomTabBar />
                 <InstallPrompt />
                 <CookieConsentBanner />
-              </ErrorBoundary>
+              </ErrorBoundaryWrapper>
             </ToastProvider>
           </WishlistProvider>
         </AuthProvider>
