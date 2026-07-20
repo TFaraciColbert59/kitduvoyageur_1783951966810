@@ -14,6 +14,7 @@ import { addToCart } from '@/lib/cart';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type TransactionType = 'achat' | 'location' | 'occasion' | 'enchere';
+type SortOption = 'pertinence' | 'prix_asc' | 'prix_desc' | 'poids_asc' | 'note_desc';
 
 interface ShopProduct {
   id: string;
@@ -35,6 +36,7 @@ interface ShopProduct {
   starting_bid?: number;
   ends_at?: string;
   savings?: number;
+  score_kdv?: number;
 }
 
 interface OptimizedKit {
@@ -52,6 +54,16 @@ const TRANSACTION_BADGE: Record<TransactionType, { label: string; cls: string; d
 };
 
 const CATEGORIES = ['Tout', 'Sacs à dos', 'Tentes', 'Couchage', 'Vêtements', 'Chaussures', 'Cuisine', 'Éclairage', 'Sécurité', 'Eau', 'Navigation', 'Électronique', 'Accessoires'];
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: 'pertinence', label: 'Pertinence' },
+  { value: 'prix_asc',   label: 'Prix croissant' },
+  { value: 'prix_desc',  label: 'Prix décroissant' },
+  { value: 'poids_asc',  label: 'Plus léger' },
+  { value: 'note_desc',  label: 'Mieux noté' },
+];
+
+const PAGE_SIZE = 24;
 
 const PRESET_KITS = [
   { label: 'Kit Islande', budget: 300, weight: 10, icon: '🇮🇸' },
@@ -117,14 +129,11 @@ function PremiumSlider({ label, unit, value, min, max, step, onChange, formatVal
         </span>
       </div>
       <div className="relative h-8 flex items-center">
-        {/* Track background */}
         <div className="absolute inset-x-0 h-[3px] rounded-full" style={{ background: 'var(--border)' }} />
-        {/* Track fill */}
         <div
           className="absolute left-0 h-[3px] rounded-full transition-all duration-75"
           style={{ width: `${pct}%`, background: accentColor }}
         />
-        {/* Range input */}
         <input
           type="range"
           min={min}
@@ -139,7 +148,6 @@ function PremiumSlider({ label, unit, value, min, max, step, onChange, formatVal
           aria-valuemax={max}
           aria-valuetext={display}
         />
-        {/* Thumb */}
         <div
           className="absolute w-5 h-5 rounded-full border-2 border-white shadow-lg transition-all duration-75 pointer-events-none"
           style={{
@@ -198,7 +206,7 @@ function ProductCard({ product, isOptimized = false }: { product: ShopProduct; i
       case 'enchere':  return 'Enchérir';
       case 'location': return 'Réserver';
       case 'occasion': return 'Acheter';
-      default:         return product.available ? 'Ajouter' : 'Épuisé';
+      default:         return product.available ? 'Ajouter au panier' : 'Épuisé';
     }
   };
 
@@ -308,8 +316,8 @@ function ProductCard({ product, isOptimized = false }: { product: ShopProduct; i
                 : !product.available && product.transaction_type === 'achat' ?'bg-muted text-muted-foreground cursor-not-allowed' :'bg-primary text-white hover:bg-primary/90 active:scale-95'
             }`}
           >
-            <Icon name={added ? 'CheckIcon' : 'PlusIcon'} size={14} variant="outline" />
-            {added ? 'Ajouté' : actionLabel()}
+            <Icon name={added ? 'CheckIcon' : 'ShoppingCartIcon'} size={14} variant="outline" />
+            {added ? 'Ajouté ✓' : actionLabel()}
           </button>
         </div>
       </div>
@@ -366,27 +374,67 @@ interface MobileFilterSheetProps {
   setActiveCategory: (v: string) => void;
   activeTypes: Set<TransactionType>;
   toggleType: (t: TransactionType) => void;
+  searchQuery: string;
+  setSearchQuery: (v: string) => void;
+  activeBrand: string;
+  setActiveBrand: (v: string) => void;
+  brands: string[];
+  minPrice: number;
+  setMinPrice: (v: number) => void;
+  maxPrice: number;
+  setMaxPrice: (v: number) => void;
+  sortBy: SortOption;
+  setSortBy: (v: SortOption) => void;
 }
 
 function MobileFilterSheet({
   open, onClose, budget, setBudget, maxWeight, setMaxWeight,
   activeCategory, setActiveCategory, activeTypes, toggleType,
+  searchQuery, setSearchQuery, activeBrand, setActiveBrand, brands,
+  minPrice, setMinPrice, maxPrice, setMaxPrice, sortBy, setSortBy,
 }: MobileFilterSheetProps) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 md:hidden">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="absolute inset-x-0 bottom-0 bg-[#1a1a1a] rounded-t-3xl p-6 max-h-[85vh] overflow-y-auto"
+      <div className="absolute inset-x-0 bottom-0 bg-[#1a1a1a] rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto"
         style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
         <div className="flex items-center justify-between mb-6">
-          <h3 className="font-display font-bold text-white text-lg">Filtres</h3>
+          <h3 className="font-display font-bold text-white text-lg">Filtres & Tri</h3>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
           </button>
         </div>
 
+        {/* Search */}
+        <div className="mb-5">
+          <p className="text-white/60 text-sm mb-2">Recherche</p>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Nom, marque, catégorie…"
+            className="w-full px-3 py-2 rounded-xl bg-white/10 text-white placeholder-white/30 border border-white/20 text-sm focus:outline-none focus:border-white/50"
+          />
+        </div>
+
+        {/* Sort */}
+        <div className="mb-5">
+          <p className="text-white/60 text-sm mb-2">Trier par</p>
+          <div className="flex flex-wrap gap-2">
+            {SORT_OPTIONS.map((opt) => (
+              <button key={opt.value} onClick={() => setSortBy(opt.value)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                  sortBy === opt.value ? 'bg-[#E4501C] text-white border-[#E4501C]' : 'bg-transparent text-white/60 border-white/20'
+                }`}>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Budget */}
-        <div className="mb-6">
+        <div className="mb-5">
           <div className="flex justify-between mb-2">
             <span className="text-white/60 text-sm">Budget max</span>
             <span className="text-[#E4501C] font-mono font-bold">{budget} €</span>
@@ -396,8 +444,23 @@ function MobileFilterSheet({
             className="w-full accent-[#E4501C]" />
         </div>
 
+        {/* Price range */}
+        <div className="mb-5">
+          <p className="text-white/60 text-sm mb-2">Fourchette de prix</p>
+          <div className="flex items-center gap-2">
+            <input type="number" min={0} max={maxPrice} value={minPrice}
+              onChange={(e) => setMinPrice(Number(e.target.value))}
+              className="w-full px-2 py-1.5 rounded-lg bg-white/10 text-white border border-white/20 text-sm text-center focus:outline-none" />
+            <span className="text-white/40 text-sm flex-shrink-0">—</span>
+            <input type="number" min={minPrice} max={2000} value={maxPrice}
+              onChange={(e) => setMaxPrice(Number(e.target.value))}
+              className="w-full px-2 py-1.5 rounded-lg bg-white/10 text-white border border-white/20 text-sm text-center focus:outline-none" />
+            <span className="text-white/40 text-sm flex-shrink-0">€</span>
+          </div>
+        </div>
+
         {/* Weight */}
-        <div className="mb-6">
+        <div className="mb-5">
           <div className="flex justify-between mb-2">
             <span className="text-white/60 text-sm">Poids max</span>
             <span className="text-blue-400 font-mono font-bold">{maxWeight} kg</span>
@@ -408,7 +471,7 @@ function MobileFilterSheet({
         </div>
 
         {/* Transaction types */}
-        <div className="mb-6">
+        <div className="mb-5">
           <p className="text-white/60 text-sm mb-3">Type de transaction</p>
           <div className="flex flex-wrap gap-2">
             {(Object.entries(TRANSACTION_BADGE) as [TransactionType, typeof TRANSACTION_BADGE[TransactionType]][]).map(([type, cfg]) => (
@@ -422,6 +485,29 @@ function MobileFilterSheet({
             ))}
           </div>
         </div>
+
+        {/* Brands */}
+        {brands.length > 0 && (
+          <div className="mb-5">
+            <p className="text-white/60 text-sm mb-3">Marque</p>
+            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+              <button onClick={() => setActiveBrand('Toutes')}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                  activeBrand === 'Toutes' ? 'bg-[#E4501C] text-white border-[#E4501C]' : 'bg-transparent text-white/60 border-white/20'
+                }`}>
+                Toutes
+              </button>
+              {brands.map((b) => (
+                <button key={b} onClick={() => setActiveBrand(b)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                    activeBrand === b ? 'bg-[#E4501C] text-white border-[#E4501C]' : 'bg-transparent text-white/60 border-white/20'
+                  }`}>
+                  {b}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Categories */}
         <div className="mb-6">
@@ -484,7 +570,7 @@ function MobileProductCard({ product }: { product: ShopProduct }) {
       case 'enchere': return 'Enchérir';
       case 'location': return 'Réserver';
       case 'occasion': return 'Acheter';
-      default: return product.available ? 'Ajouter' : 'Épuisé';
+      default: return product.available ? '🛒 Panier' : 'Épuisé';
     }
   };
 
@@ -524,10 +610,56 @@ function MobileProductCard({ product }: { product: ShopProduct }) {
             'bg-primary text-white hover:bg-primary/90 active:scale-95'
           }`}
         >
-          {added ? '✓' : actionLabel()}
+          {added ? '✓ Ajouté' : actionLabel()}
         </button>
       </div>
     </article>
+  );
+}
+
+// ─── Pagination ───────────────────────────────────────────────────────────────
+
+function Pagination({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (p: number) => void }) {
+  if (totalPages <= 1) return null;
+  const pages = Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+    if (totalPages <= 7) return i + 1;
+    if (page <= 4) return i + 1;
+    if (page >= totalPages - 3) return totalPages - 6 + i;
+    return page - 3 + i;
+  });
+
+  return (
+    <nav className="flex items-center justify-center gap-2 mt-10" aria-label="Pagination">
+      <button
+        onClick={() => onChange(page - 1)}
+        disabled={page === 1}
+        className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:border-primary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        aria-label="Page précédente"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      {pages.map((p) => (
+        <button
+          key={p}
+          onClick={() => onChange(p)}
+          className={`w-9 h-9 rounded-lg border text-sm font-mono font-600 transition-all ${
+            p === page
+              ? 'bg-primary text-white border-primary' :'border-border text-muted-foreground hover:border-primary hover:text-primary'
+          }`}
+          aria-current={p === page ? 'page' : undefined}
+        >
+          {p}
+        </button>
+      ))}
+      <button
+        onClick={() => onChange(page + 1)}
+        disabled={page === totalPages}
+        className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:border-primary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        aria-label="Page suivante"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </nav>
   );
 }
 
@@ -545,11 +677,24 @@ export default function BoutiqueClient() {
   const [activePresetKit, setActivePresetKit] = useState<string | null>(null);
   const [animKey, setAnimKey] = useState(0);
 
+  // New filter/sort/pagination state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeBrand, setActiveBrand] = useState('Toutes');
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(2000);
+  const [sortBy, setSortBy] = useState<SortOption>('pertinence');
+  const [currentPage, setCurrentPage] = useState(1);
+
   // Trigger card animation on slider change
   useEffect(() => {
     const t = setTimeout(() => setAnimKey((k) => k + 1), 50);
     return () => clearTimeout(t);
   }, [budget, maxWeight, activeCategory]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [budget, maxWeight, activeCategory, activeTypes, searchQuery, activeBrand, minPrice, maxPrice, sortBy]);
 
   // Try to load from Supabase, fall back to mock
   useEffect(() => {
@@ -557,7 +702,6 @@ export default function BoutiqueClient() {
       setLoading(true);
       try {
         const supabase = createClient();
-        // Add a 5-second timeout to prevent infinite skeleton state
         const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000));
         const fetchPromise = supabase
           .from('shop_products')
@@ -569,7 +713,6 @@ export default function BoutiqueClient() {
         if (result && 'data' in result && result.data && result.data.length > 0) {
           setProducts(result.data as ShopProduct[]);
         }
-        // else: keep mock data (already set as default state)
       } catch {
         // keep mock data
       } finally {
@@ -579,16 +722,45 @@ export default function BoutiqueClient() {
     load();
   }, []);
 
-  // ── Filtered products ──
+  // Derive unique brands from products
+  const brands = useMemo(() => {
+    const set = new Set(products.map((p) => p.brand).filter(Boolean));
+    return Array.from(set).sort();
+  }, [products]);
+
+  // ── Filtered + sorted products ──
   const filtered = useMemo(() => {
-    return products.filter((p) => {
+    let list = products.filter((p) => {
       const withinBudget = p.price_eur <= budget;
       const withinWeight = p.weight_g <= maxWeight * 1000;
       const matchCat = activeCategory === 'Tout' || p.category === activeCategory;
       const matchType = activeTypes.has(p.transaction_type);
-      return withinBudget && withinWeight && matchCat && matchType;
+      const matchBrand = activeBrand === 'Toutes' || p.brand === activeBrand;
+      const matchMinPrice = p.price_eur >= minPrice;
+      const matchMaxPrice = p.price_eur <= maxPrice;
+      const q = searchQuery.toLowerCase().trim();
+      const matchSearch = !q || p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q) || p.category.toLowerCase().includes(q);
+      return withinBudget && withinWeight && matchCat && matchType && matchBrand && matchMinPrice && matchMaxPrice && matchSearch;
     });
-  }, [products, budget, maxWeight, activeCategory, activeTypes]);
+
+    // Sort
+    switch (sortBy) {
+      case 'prix_asc':  list = [...list].sort((a, b) => a.price_eur - b.price_eur); break;
+      case 'prix_desc': list = [...list].sort((a, b) => b.price_eur - a.price_eur); break;
+      case 'poids_asc': list = [...list].sort((a, b) => a.weight_g - b.weight_g); break;
+      case 'note_desc': list = [...list].sort((a, b) => b.rating - a.rating); break;
+      default: break; // pertinence = keep score_kdv order from Supabase
+    }
+
+    return list;
+  }, [products, budget, maxWeight, activeCategory, activeTypes, activeBrand, minPrice, maxPrice, searchQuery, sortBy]);
+
+  // ── Pagination ──
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, currentPage]);
 
   // ── Dynamic summary stats ──
   const stats = useMemo(() => {
@@ -632,7 +804,6 @@ export default function BoutiqueClient() {
     setOptimizedResult(null);
     await new Promise((r) => setTimeout(r, 1200));
 
-    // Group products by name, pick cheapest option per group
     const groups = new Map<string, ShopProduct[]>();
     products.forEach((p) => {
       const key = p.name;
@@ -644,21 +815,19 @@ export default function BoutiqueClient() {
     let remainingBudget = budget;
     let remainingWeight = maxWeight * 1000;
 
-    // Sort groups by weight ascending (lightest first)
     const sortedGroups = Array.from(groups.entries()).sort(([, a], [, b]) => a[0].weight_g - b[0].weight_g);
 
     for (const [, variants] of sortedGroups) {
       if (result.length >= 6) break;
-      // Pick cheapest variant that fits
       const sorted = [...variants].sort((a, b) => a.price_eur - b.price_eur);
       const best = sorted.find((p) => p.price_eur <= remainingBudget && p.weight_g <= remainingWeight);
       if (best) {
-        const maxPrice = Math.max(...variants.map((v) => v.price_eur));
+        const maxPriceV = Math.max(...variants.map((v) => v.price_eur));
         result.push({
           product: best,
           chosen_type: best.transaction_type,
           chosen_price: best.price_eur,
-          savings: maxPrice - best.price_eur,
+          savings: maxPriceV - best.price_eur,
         });
         remainingBudget -= best.price_eur;
         remainingWeight -= best.weight_g;
@@ -680,6 +849,18 @@ export default function BoutiqueClient() {
 
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
+  const resetFilters = useCallback(() => {
+    setBudget(500);
+    setMaxWeight(15);
+    setActiveCategory('Tout');
+    setActiveBrand('Toutes');
+    setMinPrice(0);
+    setMaxPrice(2000);
+    setSearchQuery('');
+    setSortBy('pertinence');
+    setCurrentPage(1);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
@@ -696,6 +877,17 @@ export default function BoutiqueClient() {
         setActiveCategory={setActiveCategory}
         activeTypes={activeTypes}
         toggleType={toggleType}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        activeBrand={activeBrand}
+        setActiveBrand={setActiveBrand}
+        brands={brands}
+        minPrice={minPrice}
+        setMinPrice={setMinPrice}
+        maxPrice={maxPrice}
+        setMaxPrice={setMaxPrice}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
       />
 
       {/* ── MOBILE LAYOUT ── */}
@@ -706,6 +898,17 @@ export default function BoutiqueClient() {
           <h1 className="font-display font-bold text-white text-2xl leading-tight">
             Équipement <span style={{ color: 'var(--primary)' }}>optimisé</span>
           </h1>
+          {/* Search bar */}
+          <div className="relative mt-3">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Rechercher un produit…"
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white/10 text-white placeholder-white/30 border border-white/20 text-sm focus:outline-none focus:border-white/50"
+            />
+          </div>
           {/* Preset kits horizontal scroll */}
           <div className="flex gap-2 overflow-x-auto mt-3 pb-1 scrollbar-hide">
             {PRESET_KITS.map((kit) => (
@@ -755,9 +958,12 @@ export default function BoutiqueClient() {
               </button>
             </div>
           ) : (
-            filtered.map((product) => (
-              <MobileProductCard key={product.id} product={product} />
-            ))
+            <>
+              {paginated.map((product) => (
+                <MobileProductCard key={product.id} product={product} />
+              ))}
+              <Pagination page={currentPage} totalPages={totalPages} onChange={(p) => { setCurrentPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
+            </>
           )}
         </div>
 
@@ -775,7 +981,7 @@ export default function BoutiqueClient() {
         </div>
       </div>
 
-      {/* ── DESKTOP LAYOUT (unchanged) ── */}
+      {/* ── DESKTOP LAYOUT ── */}
       <div className="hidden md:block">
         {/* ── Hero ── */}
         <section className="pt-24 pb-8 px-4" style={{ background: 'var(--dark-bg)' }}>
@@ -855,19 +1061,56 @@ export default function BoutiqueClient() {
 
         {/* ── Main content ── */}
         <main className="max-w-7xl mx-auto px-4 py-8">
-          <div className="flex flex-col gap-4 mb-8">
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
-              <span className="font-mono text-xs text-muted-foreground uppercase tracking-widest mr-1 flex-shrink-0" style={{ fontFamily: 'var(--font-mono)' }}>Type :</span>
-              {(Object.entries(TRANSACTION_BADGE) as [TransactionType, typeof TRANSACTION_BADGE[TransactionType]][]).map(([type, cfg]) => (
-                <button key={type} onClick={() => toggleType(type)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-600 transition-all duration-200 border whitespace-nowrap flex-shrink-0 ${
-                    activeTypes.has(type) ? cfg.cls : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30'
-                  }`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${activeTypes.has(type) ? cfg.dot : 'bg-muted-foreground'}`} />
-                  {cfg.label}
-                </button>
-              ))}
+
+          {/* ── Search bar ── */}
+          <div className="relative mb-5">
+            <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Rechercher par nom, marque ou catégorie…"
+              className="w-full pl-11 pr-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder-muted-foreground text-sm focus:outline-none focus:border-primary transition-colors"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            )}
+          </div>
+
+          {/* ── Filter row ── */}
+          <div className="flex flex-col gap-3 mb-6">
+            {/* Transaction type + Sort */}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                <span className="font-mono text-xs text-muted-foreground uppercase tracking-widest mr-1 flex-shrink-0" style={{ fontFamily: 'var(--font-mono)' }}>Type :</span>
+                {(Object.entries(TRANSACTION_BADGE) as [TransactionType, typeof TRANSACTION_BADGE[TransactionType]][]).map(([type, cfg]) => (
+                  <button key={type} onClick={() => toggleType(type)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-600 transition-all duration-200 border whitespace-nowrap flex-shrink-0 ${
+                      activeTypes.has(type) ? cfg.cls : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30'
+                    }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${activeTypes.has(type) ? cfg.dot : 'bg-muted-foreground'}`} />
+                    {cfg.label}
+                  </button>
+                ))}
+              </div>
+              <div className="ml-auto flex items-center gap-2 flex-shrink-0">
+                <span className="font-mono text-xs text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>Trier :</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  className="px-3 py-1.5 rounded-lg border border-border bg-card text-foreground text-xs font-mono focus:outline-none focus:border-primary cursor-pointer"
+                  style={{ fontFamily: 'var(--font-mono)' }}
+                >
+                  {SORT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
             </div>
+
+            {/* Category pills */}
             <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
               {CATEGORIES.map((cat) => (
                 <button key={cat} onClick={() => setActiveCategory(cat)}
@@ -876,11 +1119,64 @@ export default function BoutiqueClient() {
                 </button>
               ))}
             </div>
+
+            {/* Brand filter + Price range */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Brand select */}
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>Marque :</span>
+                <select
+                  value={activeBrand}
+                  onChange={(e) => setActiveBrand(e.target.value)}
+                  className="px-3 py-1.5 rounded-lg border border-border bg-card text-foreground text-xs font-mono focus:outline-none focus:border-primary cursor-pointer max-w-[160px]"
+                  style={{ fontFamily: 'var(--font-mono)' }}
+                >
+                  <option value="Toutes">Toutes les marques</option>
+                  {brands.map((b) => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+
+              {/* Price range */}
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>Prix :</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={maxPrice}
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(Number(e.target.value))}
+                  className="w-20 px-2 py-1.5 rounded-lg border border-border bg-card text-foreground text-xs font-mono text-center focus:outline-none focus:border-primary"
+                  style={{ fontFamily: 'var(--font-mono)' }}
+                  aria-label="Prix minimum"
+                />
+                <span className="text-muted-foreground text-xs">—</span>
+                <input
+                  type="number"
+                  min={minPrice}
+                  max={2000}
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(Number(e.target.value))}
+                  className="w-20 px-2 py-1.5 rounded-lg border border-border bg-card text-foreground text-xs font-mono text-center focus:outline-none focus:border-primary"
+                  style={{ fontFamily: 'var(--font-mono)' }}
+                  aria-label="Prix maximum"
+                />
+                <span className="font-mono text-xs text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>€</span>
+              </div>
+
+              {/* Reset filters */}
+              {(searchQuery || activeBrand !== 'Toutes' || minPrice > 0 || maxPrice < 2000 || activeCategory !== 'Tout' || sortBy !== 'pertinence') && (
+                <button onClick={resetFilters} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  Réinitialiser
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
             <p className="font-mono text-sm text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>
-              <span className="font-700 text-foreground">{stats.count}</span> équipements dans vos contraintes
+              <span className="font-700 text-foreground">{stats.count}</span> équipements
+              {totalPages > 1 && <span className="ml-1">— page {currentPage}/{totalPages}</span>}
             </p>
             <button onClick={runOptimization} disabled={optimizing}
               className="flex items-center gap-2 px-5 py-3 rounded-xl font-600 text-sm transition-all duration-200 text-white shadow-lg active:scale-95"
@@ -948,15 +1244,18 @@ export default function BoutiqueClient() {
               <div className="text-5xl mb-4">🎒</div>
               <h3 className="font-display font-700 text-xl text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>Aucun équipement dans ces contraintes</h3>
               <p className="text-muted-foreground mb-6">Augmentez votre budget ou votre poids maximal pour voir plus d&apos;options.</p>
-              <button onClick={() => { setBudget(500); setMaxWeight(15); setActiveCategory('Tout'); }} className="btn-primary">Réinitialiser les filtres</button>
+              <button onClick={resetFilters} className="btn-primary">Réinitialiser les filtres</button>
             </div>
           ) : (
-            <div key={animKey} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {filtered.map((product) => (
-                <ProductCard key={`${product.id}-${animKey}`} product={product}
-                  isOptimized={optimizedResult?.some((r) => r.product.id === product.id) ?? false} />
-              ))}
-            </div>
+            <>
+              <div key={animKey} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                {paginated.map((product) => (
+                  <ProductCard key={`${product.id}-${animKey}`} product={product}
+                    isOptimized={optimizedResult?.some((r) => r.product.id === product.id) ?? false} />
+                ))}
+              </div>
+              <Pagination page={currentPage} totalPages={totalPages} onChange={(p) => { setCurrentPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
+            </>
           )}
         </main>
 

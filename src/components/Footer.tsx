@@ -29,6 +29,7 @@ const FOOTER_COLS = [
     links: [
       { label: 'Toutes les destinations', href: '/pays' },
       { label: 'Guides de voyage', href: '/guides' },
+      { label: 'Blog & Conseils', href: '/blog' },
       { label: 'Programme fidélité', href: '/fidelite' },
     ],
   },

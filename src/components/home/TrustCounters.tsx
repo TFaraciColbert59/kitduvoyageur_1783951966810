@@ -16,34 +16,36 @@ interface Counter {
 
 function buildCounters(stats: TrustStats): Counter[] {
   const hasRealRoutes = stats.routeCount > 0;
+  const hasRealUsers = stats.userCount > 0;
+  const hasRealKits = stats.kitCount > 0;
 
   return [
     {
-      label: 'Bêta ouverte',
-      value: 'Beta',
-      suffix: '',
+      label: 'Voyageurs inscrits',
+      value: hasRealUsers ? stats.userCount : 0,
+      suffix: hasRealUsers ? '+' : '',
       icon: '🧭',
       color: '#E4501C',
-      isNumeric: false,
-      sub: 'Rejoignez les premiers explorateurs',
+      isNumeric: true,
+      sub: hasRealUsers ? 'Membres actifs' : 'Bêta ouverte — rejoignez-nous',
     },
     {
       label: 'Sentiers référencés',
-      value: hasRealRoutes ? stats.routeCount : 1169,
-      suffix: '+',
+      value: hasRealRoutes ? stats.routeCount : 0,
+      suffix: hasRealRoutes ? '+' : '',
       icon: '🥾',
       color: '#5C8A3A',
       isNumeric: true,
-      sub: 'GR, GRP, PR en France',
+      sub: hasRealRoutes ? 'GR, GRP, PR en France' : 'Données en cours d\'import',
     },
     {
-      label: 'IA de génération',
-      value: 'Gemini',
-      suffix: '',
-      icon: '🤖',
+      label: 'Kits configurés',
+      value: hasRealKits ? stats.kitCount : 0,
+      suffix: hasRealKits ? '+' : '',
+      icon: '🎒',
       color: '#3A6EA5',
-      isNumeric: false,
-      sub: 'Google Gemini Pro',
+      isNumeric: true,
+      sub: hasRealKits ? 'Kits optimisés par l\'IA' : 'Configurateur disponible',
     },
     {
       label: 'Livraison express',
@@ -93,13 +95,13 @@ function AnimatedCounter({
     return () => cancelAnimationFrame(rafRef.current);
   }, [target, duration, shouldAnimate]);
 
-  const display = Math.floor(current).toLocaleString('fr-FR');
+  const display = target === 0 ? '—' : Math.floor(current).toLocaleString('fr-FR');
 
   return (
     <span>
-      {prefix}
+      {target > 0 && prefix}
       {display}
-      {suffix}
+      {target > 0 && suffix}
     </span>
   );
 }
