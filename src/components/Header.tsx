@@ -45,10 +45,13 @@ const NAV_GROUPS: NavGroup[] = [
     href: '/ai-configurator',
   },
   {
-    label: 'Communauté',
+    label: 'Outils & Plus',
     items: [
+      { label: 'Outils pratiques', href: '/outils', desc: 'Calculateurs, convertisseurs, checklist', icon: 'WrenchScrewdriverIcon' },
+      { label: 'Communauté', href: '/communaute', desc: 'Échanges entre voyageurs', icon: 'UsersIcon' },
       { label: 'Carnets d\'expédition', href: '/carnets', desc: 'Récits de voyage vérifiés', icon: 'BookOpenIcon' },
-      { label: 'Forum', href: '/communaute', desc: 'Échanges entre voyageurs', icon: 'UsersIcon' },
+      { label: 'Abonnements', href: '/abonnements', desc: 'Box mensuelle & accès premium', icon: 'StarIcon' },
+      { label: 'Espace Pro', href: '/pro', desc: 'Solutions B2B & revendeurs', icon: 'BriefcaseIcon' },
     ],
   },
 ];
@@ -456,6 +459,25 @@ export default function Header() {
                 {[
                   { label: 'Carnets d\'expédition', href: '/carnets' },
                   { label: 'Forum', href: '/communaute' },
+                ].map(link => (
+                  <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)}
+                    className="flex items-center justify-between px-3 py-3 rounded-xl text-white/75 hover:text-white hover:bg-white/6 transition-colors text-sm font-medium min-h-[44px]">
+                    {link.label}
+                    <Icon name="ChevronRightIcon" size={14} variant="outline" className="text-white/25" />
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Section: Outils & Services */}
+            <div>
+              <p className="text-[10px] font-mono text-white/30 tracking-[0.2em] uppercase mb-3" style={{ fontFamily: 'var(--font-mono)' }}>Outils & Services</p>
+              <div className="space-y-1">
+                {[
+                  { label: 'Outils pratiques', href: '/outils' },
+                  { label: 'Abonnements', href: '/abonnements' },
+                  { label: 'Espace Pro', href: '/pro' },
+                  { label: 'Programme fidélité', href: '/fidelite' },
                 ].map(link => (
                   <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)}
                     className="flex items-center justify-between px-3 py-3 rounded-xl text-white/75 hover:text-white hover:bg-white/6 transition-colors text-sm font-medium min-h-[44px]">

@@ -110,20 +110,17 @@ export async function generateMetadata(
 export default async function ProduitPage({ params }: Props) {
   const { slug } = await params;
 
-  let product: any = null;
   let schemaOrg: Record<string, unknown> | null = null;
 
   try {
     const supabase = await createClient();
-    const { data } = await supabase
+    const { data: product } = await supabase
       .from('shop_products')
       .select(
         'id, slug, name, brand, description_why, price_eur, weight_g, image, image_alt, category_main, score_kdv, rating, review_count'
       )
       .eq('slug', slug)
       .single();
-
-    product = data;
 
     if (product) {
       const canonicalUrl = `${siteUrl}/produit/${slug}`;
@@ -196,10 +193,12 @@ export default async function ProduitPage({ params }: Props) {
       };
     }
   } catch {
-    // Silent fail, render client component without schema
+    // Silent fail — client component will handle with its own fallback
   }
 
-  if (!product) {
+  // Always render the client component — it has its own Supabase fetch + fallback
+  // Only call notFound() for clearly invalid slugs (empty or malformed)
+  if (!slug || slug.length < 2) {
     notFound();
   }
 
