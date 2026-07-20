@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
@@ -32,6 +32,9 @@ interface GearItem {
   image: string;
   alt: string;
   tags: string[];
+  source?: string;
+  is_listed_for_sale?: boolean;
+  product_id?: string;
 }
 
 interface ShopProduct {
@@ -93,7 +96,6 @@ const MOVEMENT_CONFIG: Record<string, { label: string; color: string; icon: stri
   purchase: { label: 'Achat', color: 'text-emerald-600 bg-emerald-50', icon: '📦' },
   restock: { label: 'Réappro', color: 'text-blue-600 bg-blue-50', icon: '🔄' },
   rental: { label: 'Location', color: 'text-purple-600 bg-purple-50', icon: '🔑' },
-  auction: { label: 'Enchère', color: 'text-amber-600 bg-amber-50', icon: '🔨' },
   adjustment: { label: 'Ajustement', color: 'text-gray-600 bg-gray-50', icon: '⚙️' },
   return: { label: 'Retour', color: 'text-teal-600 bg-teal-50', icon: '↩️' },
 };
@@ -131,6 +133,315 @@ function getMaintenanceStatus(item: GearItem) {
   if (daysLeft < 0) return { label: 'Entretien en retard', color: 'text-red-600 bg-red-50 border-red-200', urgent: true };
   if (daysLeft <= 30) return { label: `Entretien dans ${daysLeft}j`, color: 'text-amber-600 bg-amber-50 border-amber-200', urgent: true };
   return null;
+}
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+
+function Toast({ message, onDone }: { message: string; onDone: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 3000);
+    return () => clearTimeout(t);
+  }, [onDone]);
+  return (
+    <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl text-white text-sm font-medium"
+      style={{ background: 'var(--secondary)', maxWidth: '90vw' }}
+      role="alert" aria-live="polite">
+      <Icon name="CheckCircleIcon" size={18} variant="outline" className="text-white flex-shrink-0" />
+      {message}
+    </div>
+  );
+}
+
+// ─── Photo Recognition Modal ──────────────────────────────────────────────────
+
+function PhotoRecognitionModal({ onClose, onAdd }: {
+  onClose: () => void;
+  onAdd: (data: typeof EMPTY_FORM) => Promise<void>;
+}) {
+  const [step, setStep] = useState<'upload' | 'preview' | 'confirm' | 'saving'>('upload');
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [recognized, setRecognized] = useState<Partial<typeof EMPTY_FORM>>({});
+  const [error, setError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = (f: File) => {
+    setFile(f);
+    const url = URL.createObjectURL(f);
+    setPreviewUrl(url);
+    setStep('preview');
+  };
+
+  const handleRecognize = async () => {
+    if (!file) return;
+    setStep('confirm');
+    setError(null);
+    try {
+      const supabase = createClient();
+      // Upload to gear-photos bucket
+      const ext = file.name.split('.').pop() ?? 'jpg';
+      const path = `recognition/${Date.now()}.${ext}`;
+      const { error: uploadErr } = await supabase.storage.from('gear-photos').upload(path, file, { upsert: true });
+      if (uploadErr) throw uploadErr;
+      const { data: urlData } = supabase.storage.from('gear-photos').getPublicUrl(path);
+      const publicUrl = urlData.publicUrl;
+
+      // Call AI recognition via chat-completion
+      const res = await fetch('/api/ai/chat-completion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: 'GEMINI',
+          model: 'gemini/gemini-2.5-flash',
+          messages: [{
+            role: 'user',
+            content: `Analyse cette image d'équipement outdoor et réponds UNIQUEMENT avec un JSON valide (sans markdown) : {"name":"string","category":"string","estimated_weight_grams":number}. Catégories possibles: sac, abri, couchage, vêtement, chaussure, cuisine, eau, navigation, sécurité, électronique, autre. Image: ${publicUrl}`,
+          }],
+          parameters: { temperature: 0.3, max_tokens: 200 },
+        }),
+      });
+      const data = await res.json();
+      const content = data.content ?? data.choices?.[0]?.message?.content ?? '{}';
+      const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      try {
+        const parsed = JSON.parse(cleaned);
+        setRecognized({
+          name: parsed.name ?? '',
+          category: (parsed.category as Category) ?? 'autre',
+          weight_g: parsed.estimated_weight_grams ?? 0,
+          image: publicUrl,
+          alt: parsed.name ?? 'Équipement reconnu par IA',
+        });
+      } catch {
+        setRecognized({ image: publicUrl, alt: 'Équipement' });
+      }
+    } catch {
+      setError('Reconnaissance impossible. Remplissez manuellement.');
+      setRecognized({});
+    }
+  };
+
+  const [form, setForm] = useState<typeof EMPTY_FORM>(EMPTY_FORM);
+  useEffect(() => {
+    if (step === 'confirm') {
+      setForm({ ...EMPTY_FORM, ...recognized });
+    }
+  }, [step, recognized]);
+
+  const handleSave = async () => {
+    setStep('saving');
+    await onAdd(form);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-card rounded-2xl border border-border w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card z-10">
+          <h2 className="text-lg font-display font-700">Ajouter par photo</h2>
+          <button type="button" onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors">
+            <Icon name="XMarkIcon" size={20} variant="outline" />
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          {step === 'upload' && (
+            <>
+              <div
+                className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                onClick={() => fileRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
+              >
+                <Icon name="CameraIcon" size={32} variant="outline" className="mx-auto mb-3 text-muted-foreground" />
+                <p className="text-sm font-medium text-foreground mb-1">Prendre ou importer une photo</p>
+                <p className="text-xs text-muted-foreground">L&apos;IA identifiera l&apos;équipement automatiquement</p>
+                <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+              </div>
+              <button type="button" onClick={onClose} className="w-full py-2.5 rounded-xl border border-border text-sm text-muted-foreground">
+                Annuler
+              </button>
+            </>
+          )}
+          {step === 'preview' && previewUrl && (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={previewUrl} alt="Aperçu" className="w-full rounded-xl object-cover max-h-64" />
+              <div className="flex gap-3">
+                <button type="button" onClick={() => setStep('upload')} className="flex-1 py-2.5 rounded-xl border border-border text-sm text-muted-foreground">
+                  Changer
+                </button>
+                <button type="button" onClick={handleRecognize} className="flex-1 py-2.5 rounded-xl bg-primary text-white text-sm font-medium">
+                  Analyser avec l&apos;IA
+                </button>
+              </div>
+            </>
+          )}
+          {step === 'confirm' && (
+            <>
+              {error && <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-3">{error}</p>}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">Nom *</label>
+                  <input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">Catégorie</label>
+                    <select value={form.category} onChange={(e) => setForm(f => ({ ...f, category: e.target.value as Category }))}
+                      className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+                      {Object.entries(CATEGORY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">Poids (g)</label>
+                    <input type="number" min={0} value={form.weight_g} onChange={(e) => setForm(f => ({ ...f, weight_g: Number(e.target.value) }))}
+                      className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">État</label>
+                  <select value={form.condition} onChange={(e) => setForm(f => ({ ...f, condition: e.target.value as Condition }))}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+                    {Object.entries(CONDITION_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setStep('preview')} className="flex-1 py-2.5 rounded-xl border border-border text-sm text-muted-foreground">Retour</button>
+                <button type="button" onClick={handleSave} disabled={!form.name.trim()} className="flex-1 py-2.5 rounded-xl bg-primary text-white text-sm font-medium disabled:opacity-50">
+                  Ajouter à l&apos;inventaire
+                </button>
+              </div>
+            </>
+          )}
+          {step === 'saving' && (
+            <div className="text-center py-8">
+              <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">Enregistrement en cours…</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Sell from Inventory Modal ────────────────────────────────────────────────
+
+function SellFromInventoryModal({ item, onClose, onSold }: {
+  item: GearItem;
+  onClose: () => void;
+  onSold: () => void;
+}) {
+  const conditionDecote: Record<string, number> = { neuf: 0.9, excellent: 0.75, bon: 0.7, usé: 0.5, à_remplacer: 0.3 };
+  const suggestedPrice = item.purchase_price > 0
+    ? Math.round(item.purchase_price * (conditionDecote[item.condition] ?? 0.7))
+    : 0;
+
+  const [price, setPrice] = useState(suggestedPrice > 0 ? String(suggestedPrice) : '');
+  const [description, setDescription] = useState(`${item.name} en état ${CONDITION_CONFIG[item.condition]?.label ?? item.condition}. ${item.notes || ''}`.trim());
+  const [negotiable, setNegotiable] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+
+  const handlePublish = async () => {
+    if (!user || !price) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const supabase = createClient();
+      const { data: occ, error: occErr } = await supabase.from('occasion_items').insert({
+        seller_id: user.id,
+        title: item.name,
+        description,
+        price: Number(price),
+        original_price: item.purchase_price || null,
+        condition: item.condition === 'à_remplacer' ? 'acceptable' : item.condition === 'usé' ? 'bon' : item.condition,
+        image: item.image || null,
+        alt: item.alt || item.name,
+        negotiable,
+        shipping: true,
+        status: 'active',
+        gear_item_id: item.id,
+      }).select('id').single();
+      if (occErr) throw occErr;
+      // Mark gear item as listed
+      await supabase.from('gear_items').update({ is_listed_for_sale: true }).eq('id', item.id);
+      onSold();
+      onClose();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Erreur lors de la publication');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-card rounded-2xl border border-border w-full max-w-md shadow-2xl">
+        <div className="flex items-center justify-between p-5 border-b border-border">
+          <h2 className="text-lg font-display font-700">Vendre cet article</h2>
+          <button type="button" onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors">
+            <Icon name="XMarkIcon" size={20} variant="outline" />
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="flex items-center gap-3 p-3 bg-muted rounded-xl">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={item.image || 'https://images.unsplash.com/photo-1572698846920-cb1e563bbb30'} alt={item.alt || item.name} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+            <div>
+              <p className="text-sm font-semibold">{item.name}</p>
+              <p className="text-xs text-muted-foreground">{CONDITION_CONFIG[item.condition]?.label} · {item.weight_g}g</p>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-medium text-muted-foreground">Prix de vente (€) *</label>
+              {suggestedPrice > 0 && (
+                <span className="text-xs text-primary cursor-pointer hover:underline" onClick={() => setPrice(String(suggestedPrice))}>
+                  Suggestion IA : {suggestedPrice} €
+                </span>
+              )}
+            </div>
+            <input
+              type="number" min={1} value={price} onChange={(e) => setPrice(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              placeholder="Ex: 45"
+            />
+            {item.purchase_price > 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Prix d&apos;achat : {item.purchase_price} € · Décote {CONDITION_CONFIG[item.condition]?.label} appliquée
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">Description</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
+          </div>
+
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" checked={negotiable} onChange={(e) => setNegotiable(e.target.checked)} className="w-4 h-4 rounded accent-primary" />
+            <span className="text-sm text-foreground">Prix négociable (activer les offres)</span>
+          </label>
+
+          {error && <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">{error}</p>}
+
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-border text-sm text-muted-foreground">Annuler</button>
+            <button type="button" onClick={handlePublish} disabled={saving || !price} className="flex-1 py-2.5 rounded-xl bg-primary text-white text-sm font-medium disabled:opacity-50">
+              {saving ? 'Publication…' : 'Publier l\'annonce'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ─── GearFormModal ────────────────────────────────────────────────────────────
@@ -332,7 +643,9 @@ export default function InventairePage() {
   const [gearLoading, setGearLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<GearItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [editingItem, setEditingItem] = useState<GearItem | null>(null);
+  const [sellingItem, setSellingItem] = useState<GearItem | null>(null);
   const [gearSaving, setGearSaving] = useState(false);
   const [gearSearch, setGearSearch] = useState('');
   const [gearFilterCat, setGearFilterCat] = useState<Category | 'all'>('all');
@@ -357,11 +670,11 @@ export default function InventairePage() {
 
   // Global
   const [error, setError] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
   const { user } = useAuth();
   const supabase = useMemo(() => createClient(), []);
 
-  const showSuccess = (msg: string) => { setSuccessMsg(msg); setTimeout(() => setSuccessMsg(null), 3000); };
+  const showToast = (msg: string) => setToastMsg(msg);
 
   // ─── Gear CRUD ──────────────────────────────────────────────────────────────
 
@@ -406,10 +719,11 @@ export default function InventairePage() {
         usage_count: data.usage_count,
         image: data.image || 'https://images.unsplash.com/photo-1572698846920-cb1e563bbb30',
         alt: data.alt || data.name, tags: data.tags,
+        source: 'manuel',
       });
       if (e) throw e;
       setShowAddModal(false);
-      showSuccess('Équipement ajouté !');
+      showToast('Équipement ajouté !');
       await loadGear();
     } catch (err: unknown) { setError(err instanceof Error ? err.message : 'Erreur ajout'); }
     finally { setGearSaving(false); }
@@ -427,11 +741,10 @@ export default function InventairePage() {
         next_maintenance_date: data.next_maintenance_date || null, notes: data.notes,
         serial_number: data.serial_number || null, usage_count: data.usage_count,
         image: data.image, alt: data.alt || data.name, tags: data.tags,
-        updated_at: new Date().toISOString(),
       }).eq('id', editingItem.id).eq('user_id', user!.id);
       if (e) throw e;
       setEditingItem(null); setSelectedItem(null);
-      showSuccess('Équipement modifié !');
+      showToast('Équipement modifié !');
       await loadGear();
     } catch (err: unknown) { setError(err instanceof Error ? err.message : 'Erreur modification'); }
     finally { setGearSaving(false); }
@@ -446,6 +759,64 @@ export default function InventairePage() {
       await loadGear();
     } catch (err: unknown) { setError(err instanceof Error ? err.message : 'Erreur suppression'); }
   };
+
+  // ─── B1: Auto-fill from confirmed orders ────────────────────────────────────
+
+  const autoFillFromOrders = useCallback(async () => {
+    if (!user) return;
+    try {
+      // Get confirmed/delivered orders that haven't been imported yet
+      const { data: ordersData } = await supabase
+        .from('orders')
+        .select('id, items')
+        .eq('user_id', user.id)
+        .in('status', ['confirmed', 'delivered', 'shipped']);
+
+      if (!ordersData || ordersData.length === 0) return;
+
+      // Get already imported order IDs
+      const { data: existingImports } = await supabase
+        .from('gear_items')
+        .select('origin_order_id')
+        .eq('user_id', user.id)
+        .not('origin_order_id', 'is', null);
+
+      const importedOrderIds = new Set((existingImports ?? []).map(e => e.origin_order_id));
+
+      let totalAdded = 0;
+      for (const order of ordersData) {
+        if (importedOrderIds.has(order.id)) continue;
+        const items = Array.isArray(order.items) ? order.items : [];
+        for (const item of items) {
+          if (!item.name) continue;
+          await supabase.from('gear_items').insert({
+            user_id: user.id,
+            name: item.name,
+            category: 'autre',
+            condition: 'neuf',
+            source: 'achat',
+            origin_order_id: order.id,
+            purchase_price: item.unit_price_eur ?? 0,
+            weight_g: 0,
+            brand: '',
+            model: '',
+            notes: `Importé automatiquement depuis la commande`,
+            image: 'https://images.unsplash.com/photo-1572698846920-cb1e563bbb30',
+            alt: item.name,
+            tags: [],
+            acquired_at: new Date().toISOString().split('T')[0],
+          });
+          totalAdded++;
+        }
+      }
+      if (totalAdded > 0) {
+        showToast(`+ ${totalAdded} objet${totalAdded > 1 ? 's' : ''} ajouté${totalAdded > 1 ? 's' : ''} à ton inventaire depuis tes commandes`);
+        await loadGear();
+      }
+    } catch {
+      // Silent fail — auto-fill is best-effort
+    }
+  }, [user, supabase, loadGear]);
 
   // ─── Stock ──────────────────────────────────────────────────────────────────
 
@@ -478,7 +849,7 @@ export default function InventairePage() {
         user_id: user?.id ?? null, notes: notes || 'Ajustement manuel',
       });
       if (e2) throw e2;
-      showSuccess('Stock mis à jour !');
+      showToast('Stock mis à jour !');
       await loadProducts();
       if (activeTab === 'movements') await loadMovements();
     } catch (err: unknown) { setError(err instanceof Error ? err.message : 'Erreur ajustement stock'); }
@@ -528,6 +899,13 @@ export default function InventairePage() {
     if (activeTab === 'movements') loadMovements();
   }, [activeTab, loadProducts, loadOrders, loadMovements]);
 
+  // Auto-fill from orders when gear tab is active and user is logged in
+  useEffect(() => {
+    if (activeTab === 'gear' && user) {
+      autoFillFromOrders();
+    }
+  }, [activeTab, user, autoFillFromOrders]);
+
   // ─── Derived ─────────────────────────────────────────────────────────────────
 
   const alerts = gear.filter((item) => {
@@ -540,7 +918,7 @@ export default function InventairePage() {
     .filter((item) => {
       if (gearFilterCat !== 'all' && item.category !== gearFilterCat) return false;
       if (gearFilterCond !== 'all' && item.condition !== gearFilterCond) return false;
-      if (gearSearch && !item.name.toLowerCase().includes(gearSearch.toLowerCase()) && !item.brand.toLowerCase().includes(gearSearch.toLowerCase())) return false;
+      if (gearSearch && !item.name.toLowerCase().includes(gearSearch.toLowerCase()) && !(item.brand ?? '').toLowerCase().includes(gearSearch.toLowerCase())) return false;
       return true;
     })
     .sort((a, b) => {
@@ -560,8 +938,8 @@ export default function InventairePage() {
     movementsFilter === 'all' || m.movement_type === movementsFilter
   );
 
-  const totalGearValue = gear.reduce((s, i) => s + i.purchase_price, 0);
-  const totalGearWeight = gear.reduce((s, i) => s + i.weight_g, 0);
+  const totalGearValue = gear.reduce((s, i) => s + (i.purchase_price ?? 0), 0);
+  const totalGearWeight = gear.reduce((s, i) => s + (i.weight_g ?? 0), 0);
   const lowStockCount = products.filter((p) => p.stock <= 3 && p.is_active).length;
   const totalStockValue = products.reduce((s, p) => s + p.price_eur * p.stock, 0);
 
@@ -625,12 +1003,6 @@ export default function InventairePage() {
           </div>
 
           {/* Notifications */}
-          {successMsg && (
-            <div className="mb-4 flex items-center gap-3 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm">
-              <Icon name="CheckCircleIcon" size={16} className="text-green-600" />
-              {successMsg}
-            </div>
-          )}
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center justify-between">
               <span>{error}</span>
@@ -700,6 +1072,11 @@ export default function InventairePage() {
                         <Icon name="ListBulletIcon" size={16} variant="outline" />
                       </button>
                     </div>
+                    {/* Add buttons */}
+                    <button type="button" onClick={() => setShowPhotoModal(true)} className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+                      <Icon name="CameraIcon" size={16} variant="outline" />
+                      Par photo
+                    </button>
                     <button type="button" onClick={() => setShowAddModal(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
                       <Icon name="PlusIcon" size={16} variant="outline" />
                       Ajouter
@@ -723,13 +1100,18 @@ export default function InventairePage() {
                                   <div className="relative h-36 rounded-t-xl overflow-hidden">
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img src={item.image || 'https://images.unsplash.com/photo-1572698846920-cb1e563bbb30'} alt={item.alt || item.name} className="w-full h-full object-cover" />
-                                    <div className="absolute top-2 left-2">
+                                    <div className="absolute top-2 left-2 flex gap-1 flex-wrap">
                                       <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${cond.bg} ${cond.color}`}>{cond.label}</span>
+                                      {item.source === 'achat' && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 font-medium">Acheté</span>}
+                                      {item.source === 'kit' && <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 border border-purple-200 text-purple-700 font-medium">Kit</span>}
                                     </div>
                                     {(expiry?.urgent || getMaintenanceStatus(item)?.urgent) && (
                                       <div className="absolute top-2 right-2 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center">
                                         <Icon name="ExclamationTriangleIcon" size={12} variant="solid" className="text-white" />
                                       </div>
+                                    )}
+                                    {item.is_listed_for_sale && (
+                                      <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-emerald-500 rounded-full text-white text-xs font-medium">En vente</div>
                                     )}
                                   </div>
                                   <div className="p-3">
@@ -741,6 +1123,17 @@ export default function InventairePage() {
                                       <span className="text-xs font-mono font-semibold">{item.purchase_price} €</span>
                                     </div>
                                     {expiry && <div className={`mt-2 text-xs px-2 py-1 rounded-lg border ${expiry.color}`}>📅 {expiry.label}</div>}
+                                    {/* Sell button */}
+                                    {!item.is_listed_for_sale && (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); setSellingItem(item); }}
+                                        className="mt-2 w-full py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium hover:bg-amber-100 transition-colors flex items-center justify-center gap-1"
+                                      >
+                                        <Icon name="TagIcon" size={12} variant="outline" />
+                                        Vendre
+                                      </button>
+                                    )}
                                   </div>
                                 </div>
                               );
@@ -763,9 +1156,18 @@ export default function InventairePage() {
                                     <p className="text-xs text-muted-foreground">{item.brand} · {CATEGORY_LABELS[item.category as Category]}</p>
                                     {expiry?.urgent && <p className={`text-xs mt-0.5 ${expiry.color.split(' ')[0]}`}>⚠️ {expiry.label}</p>}
                                   </div>
-                                  <div className="text-right flex-shrink-0">
+                                  <div className="text-right flex-shrink-0 flex flex-col items-end gap-1">
                                     <p className="text-xs font-mono font-semibold">{item.purchase_price} €</p>
                                     <p className="text-xs text-muted-foreground">{item.weight_g}g</p>
+                                    {!item.is_listed_for_sale && (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); setSellingItem(item); }}
+                                        className="px-2 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium hover:bg-amber-100 transition-colors"
+                                      >
+                                        Vendre
+                                      </button>
+                                    )}
                                   </div>
                                 </div>
                               );
@@ -798,6 +1200,13 @@ export default function InventairePage() {
                                   {CONDITION_CONFIG[selectedItem.condition].label}
                                 </span>
                               </div>
+                              {selectedItem.source && (
+                                <div className="mb-3 flex items-center gap-2">
+                                  {selectedItem.source === 'achat' && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700">🛒 Acheté sur LKDV</span>}
+                                  {selectedItem.source === 'kit' && <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 border border-purple-200 text-purple-700">📦 Depuis un kit</span>}
+                                  {selectedItem.source === 'occasion' && <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700">♻️ Occasion</span>}
+                                </div>
+                              )}
                               <div className="space-y-2 text-xs border-t border-border pt-3">
                                 {selectedItem.purchase_date && <div className="flex justify-between"><span className="text-muted-foreground">Acheté le</span><span>{new Date(selectedItem.purchase_date).toLocaleDateString('fr-FR')}</span></div>}
                                 <div className="flex justify-between"><span className="text-muted-foreground">Prix d&apos;achat</span><span className="font-mono font-semibold">{selectedItem.purchase_price} €</span></div>
@@ -829,6 +1238,21 @@ export default function InventairePage() {
                                   <Icon name="TrashIcon" size={14} variant="outline" />
                                 </button>
                               </div>
+                              {!selectedItem.is_listed_for_sale && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSellingItem(selectedItem)}
+                                  className="mt-2 w-full py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium hover:bg-amber-100 transition-colors flex items-center justify-center gap-1"
+                                >
+                                  <Icon name="TagIcon" size={12} variant="outline" />
+                                  Vendre cet article
+                                </button>
+                              )}
+                              {selectedItem.is_listed_for_sale && (
+                                <div className="mt-2 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium text-center">
+                                  ✓ Annonce active sur la marketplace
+                                </div>
+                              )}
                             </div>
                           </div>
                         ) : (
@@ -1020,7 +1444,7 @@ export default function InventairePage() {
             <div>
               <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <div className="flex gap-2 flex-wrap">
-                  {['all', 'sale', 'restock', 'purchase', 'rental', 'auction', 'adjustment', 'return'].map((type) => (
+                  {['all', 'sale', 'restock', 'purchase', 'rental', 'adjustment', 'return'].map((type) => (
                     <button
                       key={type}
                       type="button"
@@ -1102,11 +1526,14 @@ export default function InventairePage() {
       {showAddModal && (
         <GearFormModal title="Ajouter un équipement" initial={EMPTY_FORM} onSave={handleAddItem} onClose={() => setShowAddModal(false)} saving={gearSaving} />
       )}
+      {showPhotoModal && (
+        <PhotoRecognitionModal onClose={() => setShowPhotoModal(false)} onAdd={handleAddItem} />
+      )}
       {editingItem && (
         <GearFormModal
           title="Modifier l'équipement"
           initial={{
-            name: editingItem.name, brand: editingItem.brand, model: editingItem.model,
+            name: editingItem.name, brand: editingItem.brand ?? '', model: editingItem.model ?? '',
             category: editingItem.category, condition: editingItem.condition,
             purchase_date: editingItem.purchase_date || '', purchase_price: editingItem.purchase_price,
             weight_g: editingItem.weight_g, expiry_date: editingItem.expiry_date || '',
@@ -1128,6 +1555,17 @@ export default function InventairePage() {
           onSave={handleStockAdjust}
         />
       )}
+      {sellingItem && (
+        <SellFromInventoryModal
+          item={sellingItem}
+          onClose={() => setSellingItem(null)}
+          onSold={() => { showToast('Annonce publiée sur la marketplace !'); loadGear(); }}
+        />
+      )}
+
+      {/* Toast */}
+      {toastMsg && <Toast message={toastMsg} onDone={() => setToastMsg(null)} />}
+
       <Footer />
     </div>
   );

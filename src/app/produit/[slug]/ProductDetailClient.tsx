@@ -8,6 +8,7 @@ import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { addToCart } from '@/lib/cart';
+import { useAuth } from '@/contexts/AuthContext';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -102,22 +103,6 @@ function buildAcquisitionModes(product: Product): AcquisitionMode[] {
       conditions: 'Caution remboursée',
       color: 'purple',
       badge: 'LOCATION',
-    },
-    {
-      id: 'enchere',
-      label: 'Enchères',
-      icon: 'BoltIcon',
-      prix: `À partir de ${Math.round(basePrice * 0.35 / 100)} €`,
-      disponibilite: 'Enchère en cours',
-      etat: 'Très bon état',
-      delai: 'Fin dans 3h',
-      garantie: 'Garantie acheteur',
-      vendeur: 'Vendeur vérifié',
-      economie: `Jusqu'à ${Math.round((1 - 0.35) * 100)} % d'économie`,
-      ecologie: '✅ Seconde vie',
-      conditions: 'Offre ferme',
-      color: 'orange',
-      badge: 'ENCHÈRE',
     },
   ];
 }
@@ -362,6 +347,60 @@ function ProductGallery({ product }: { product: Product }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION: AI ACQUISITION ADVISOR — fully functional with cart integration
 // ─────────────────────────────────────────────────────────────────────────────
+function AlreadyOwnButton({ product }: { product: Product }) {
+  const [added, setAdded] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+
+  const handleAlreadyOwn = async () => {
+    if (!user) { window.location.href = '/connexion'; return; }
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      await supabase.from('gear_items').insert({
+        user_id: user.id,
+        name: product.nom,
+        brand: product.marque,
+        category: 'autre',
+        condition: 'bon',
+        source: 'manuel',
+        product_id: product.id,
+        purchase_price: product.prix_cents / 100,
+        weight_g: product.poids_g,
+        image: product.images[0]?.url ?? '',
+        alt: product.images[0]?.alt ?? product.nom,
+        notes: `Ajouté depuis la fiche produit`,
+        tags: [],
+      });
+      setAdded(true);
+    } catch {
+      // Silent fail
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (added) {
+    return (
+      <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm">
+        <Icon name="CheckCircleIcon" size={16} variant="outline" className="text-emerald-600" />
+        Ajouté à votre inventaire !
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={handleAlreadyOwn}
+      disabled={loading}
+      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-[#C8C3B0] text-[#5C6B5E] text-sm font-medium hover:border-[#B5652D] hover:text-[#1C2620] transition-all disabled:opacity-50"
+    >
+      <Icon name="ArchiveBoxIcon" size={16} variant="outline" />
+      {loading ? 'Ajout en cours…' : 'Je possède déjà cet article'}
+    </button>
+  );
+}
+
 function AcquisitionComparator({ modes, product, onModeChange }: { modes: AcquisitionMode[]; product: Product; onModeChange: (id: string) => void }) {
   const [selected, setSelected] = useState<string>('neuf');
   const [aiAdvice, setAiAdvice] = useState<string | null>(null);
@@ -425,8 +464,6 @@ function AcquisitionComparator({ modes, product, onModeChange }: { modes: Acquis
       window.location.href = '/occasion';
     } else if (selected === 'location') {
       window.location.href = '/location';
-    } else if (selected === 'enchere') {
-      window.location.href = '/encheres';
     }
   }, [selected, product]);
 
@@ -434,7 +471,6 @@ function AcquisitionComparator({ modes, product, onModeChange }: { modes: Acquis
     neuf: cartAdded ? cartMsg : 'Ajouter au panier',
     occasion: 'Voir les offres occasion',
     location: 'Réserver une location',
-    enchere: 'Participer à l\'enchère',
   };
 
   return (
@@ -1440,14 +1476,12 @@ function StickyCTA({ product, selectedMode }: { product: Product; selectedMode: 
     neuf: cartAdded ? '✓ Ajouté !' : 'Ajouter au panier',
     occasion: 'Voir les offres',
     location: 'Réserver',
-    enchere: 'Enchérir',
   };
 
   const modePrices: Record<string, string> = {
     neuf: `${(product.prix_cents / 100).toFixed(0)} €`,
     occasion: `Dès ${Math.round(product.prix_cents * 0.62 / 100)} €`,
     location: `Dès ${Math.round(product.prix_cents * 0.04 / 100)} €/j`,
-    enchere: `À partir de ${Math.round(product.prix_cents * 0.35 / 100)} €`,
   };
 
   const handleCTA = () => {
@@ -1469,8 +1503,6 @@ function StickyCTA({ product, selectedMode }: { product: Product; selectedMode: 
       window.location.href = '/occasion';
     } else if (selectedMode === 'location') {
       window.location.href = '/location';
-    } else if (selectedMode === 'enchere') {
-      window.location.href = '/encheres';
     }
   };
 
@@ -1625,6 +1657,9 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
 
               {/* ACQUISITION COMPARATOR — fully functional */}
               <AcquisitionComparator modes={modes} product={product} onModeChange={setSelectedMode} />
+
+              {/* I already own this */}
+              <AlreadyOwnButton product={product} />
 
               {/* AI SCORE */}
               <AICompatibilityScore product={product} />

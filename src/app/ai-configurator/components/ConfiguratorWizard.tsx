@@ -31,6 +31,7 @@ interface EquipmentItem {
   weightG: number;
   priceEur: number;
   essential: boolean;
+  already_owned?: boolean;
 }
 
 interface AIResult {
@@ -39,6 +40,14 @@ interface AIResult {
   budget_estime_eur: number;
   alertes: string[];
   liste_equipement: EquipmentItem[];
+}
+
+interface GearInventoryItem {
+  id: string;
+  name: string;
+  category: string;
+  condition: string;
+  weight_g: number;
 }
 
 // ── Altimeter Loader ─────────────────────────────────────────────────────────────
@@ -321,7 +330,27 @@ function StepResult({ state }: { state: WizardState }) {
   const [toast, setToast] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [autoSaved, setAutoSaved] = useState(false);
+  const [userInventory, setUserInventory] = useState<GearInventoryItem[]>([]);
   const { user } = useAuth();
+
+  // Load user inventory before generating
+  useEffect(() => {
+    const loadInventory = async () => {
+      if (!user) return;
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('gear_items')
+          .select('id, name, category, condition, weight_g')
+          .eq('user_id', user.id)
+          .neq('condition', 'à_remplacer');
+        setUserInventory(data ?? []);
+      } catch {
+        // Silent fail
+      }
+    };
+    loadInventory();
+  }, [user]);
 
   const autoSaveKit = async (result: AIResult, selected: Set<string>) => {
     if (!user) return;
@@ -336,8 +365,8 @@ function StepResult({ state }: { state: WizardState }) {
           destination: state.destination,
           season: state.season,
           activity: state.activity,
-          total_weight_g: result.liste_equipement.filter(i => selected.has(i.id)).reduce((s, i) => s + i.weightG, 0),
-          total_price_eur: result.liste_equipement.filter(i => selected.has(i.id)).reduce((s, i) => s + i.priceEur, 0),
+          total_weight_g: result.liste_equipement.filter(i => selected.has(i.id) && !i.already_owned).reduce((s, i) => s + i.weightG, 0),
+          total_price_eur: result.liste_equipement.filter(i => selected.has(i.id) && !i.already_owned).reduce((s, i) => s + i.priceEur, 0),
           bag_recommended: result.sac_recommande,
           source: 'ai_configurator',
         })
@@ -372,6 +401,11 @@ function StepResult({ state }: { state: WizardState }) {
       setAiError(null);
       setAutoSaved(false);
 
+      // Build inventory context for the prompt
+      const inventoryContext = userInventory.length > 0
+        ? `\n\nL'utilisateur possède déjà ces équipements (ne pas proposer à l'achat si la catégorie correspond) :\n${userInventory.map(g => `- ${g.name} (catégorie: ${g.category}, état: ${g.condition})`).join('\n')}\n\nPour chaque article nécessaire : si un équivalent existe dans cet inventaire (même catégorie, état pas "à_remplacer"), marque-le "already_owned": true. Ne propose à l'achat que ce qui manque réellement.`
+        : '';
+
       const systemPrompt = `Tu es un expert en équipement outdoor et randonnée. Tu génères des listes d'équipement optimisées pour les voyageurs. 
 Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans texte avant ou après.
 Le JSON doit avoir exactement cette structure:
@@ -387,7 +421,8 @@ Le JSON doit avoir exactement cette structure:
       "category": "string",
       "weightG": number,
       "priceEur": number,
-      "essential": boolean
+      "essential": boolean,
+      "already_owned": boolean
     }
   ]
 }`;
@@ -400,6 +435,7 @@ Le JSON doit avoir exactement cette structure:
 - Poids max du sac: ${(state.maxWeightG / 1000).toFixed(1)} kg
 - Budget max: ${state.budgetEur} €
 ${state.startDate ? `- Dates: ${state.startDate} au ${state.endDate}` : ''}
+${inventoryContext}
 
 Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes spécifiques à la destination et à la saison. Recommande un sac adapté.`;
 
@@ -430,7 +466,12 @@ Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes sp�
           throw new Error('Format de réponse invalide');
         }
 
-        const essentialIds = new Set(parsed.liste_equipement.filter((i) => i.essential).map((i) => i.id));
+        // Pre-select essential items that are NOT already owned
+        const essentialIds = new Set(
+          parsed.liste_equipement
+            .filter((i) => i.essential && !i.already_owned)
+            .map((i) => i.id)
+        );
         setAiResult(parsed);
         setSelectedItems(essentialIds);
 
@@ -446,7 +487,7 @@ Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes sp�
 
     fetchAI();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [retryCount]);
+  }, [retryCount, userInventory]);
 
   const toggleItem = (id: string) => {
     setSelectedItems((prev) => {
@@ -457,18 +498,28 @@ Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes sp�
     });
   };
 
-  const totalWeightG = (aiResult?.liste_equipement ?? [])
+  // Only count items NOT already owned for price/weight
+  const missingItems = (aiResult?.liste_equipement ?? []).filter((i) => !i.already_owned);
+  const ownedItems = (aiResult?.liste_equipement ?? []).filter((i) => i.already_owned);
+
+  const totalWeightG = missingItems
     .filter((i) => selectedItems.has(i.id))
     .reduce((sum, i) => sum + i.weightG, 0);
 
-  const totalPriceEur = (aiResult?.liste_equipement ?? [])
+  const totalPriceEur = missingItems
     .filter((i) => selectedItems.has(i.id))
     .reduce((sum, i) => sum + i.priceEur, 0);
 
   const categories = Array.from(new Set((aiResult?.liste_equipement ?? []).map((i) => i.category)));
 
+  // Readiness score: owned essentials / total essentials
+  const totalEssentials = (aiResult?.liste_equipement ?? []).filter(i => i.essential).length;
+  const ownedEssentials = (aiResult?.liste_equipement ?? []).filter(i => i.essential && i.already_owned).length;
+  const readinessScore = totalEssentials > 0 ? Math.round((ownedEssentials / totalEssentials) * 100) : 0;
+  const missingEssentials = totalEssentials - ownedEssentials;
+
   const handleAddToCart = () => {
-    const itemsToAdd = (aiResult?.liste_equipement ?? []).filter((i) => selectedItems.has(i.id));
+    const itemsToAdd = missingItems.filter((i) => selectedItems.has(i.id));
     if (itemsToAdd.length === 0) return;
     const existing = getCart();
     itemsToAdd.forEach((item) => {
@@ -532,13 +583,53 @@ Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes sp�
         </div>
       )}
 
+      {/* Inventory context banner */}
+      {userInventory.length > 0 && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: 'rgba(62,107,122,0.08)', border: '1px solid rgba(62,107,122,0.2)' }}>
+          <Icon name="ArchiveBoxIcon" size={16} variant="outline" className="text-info flex-shrink-0" />
+          <p className="text-sm text-muted-foreground">
+            L&apos;IA a analysé vos <span className="font-600 text-foreground">{userInventory.length} équipements</span> existants — les articles déjà possédés sont marqués.
+          </p>
+        </div>
+      )}
+
+      {/* Readiness score */}
+      {totalEssentials > 0 && (
+        <div className="topo-card p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-sm font-600 text-foreground">Score &quot;Prêt à partir&quot;</p>
+              <p className="text-xs text-muted-foreground">
+                {readinessScore === 100
+                  ? 'Vous avez tout le nécessaire !'
+                  : `Il vous manque ${missingEssentials} article${missingEssentials > 1 ? 's' : ''} essentiel${missingEssentials > 1 ? 's' : ''}`}
+              </p>
+            </div>
+            <span className={`text-2xl font-display font-800 ${readinessScore >= 80 ? 'text-emerald-600' : readinessScore >= 50 ? 'text-amber-600' : 'text-red-600'}`}
+              style={{ fontFamily: 'var(--font-display)' }}>
+              {readinessScore}%
+            </span>
+          </div>
+          <div className="h-3 bg-muted rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-700 ease-out ${readinessScore >= 80 ? 'bg-emerald-500' : readinessScore >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
+              style={{ width: `${readinessScore}%` }}
+            />
+          </div>
+          <div className="flex justify-between mt-1">
+            <span className="text-xs text-muted-foreground font-mono">{ownedEssentials} possédés</span>
+            <span className="text-xs text-muted-foreground font-mono">{totalEssentials} essentiels</span>
+          </div>
+        </div>
+      )}
+
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: 'Sac recommandé', val: aiResult.sac_recommande, icon: 'ShoppingBagIcon', color: 'var(--secondary)' },
-          { label: 'Poids total', val: `${(totalWeightG / 1000).toFixed(2)} kg`, icon: 'ScaleIcon', color: 'var(--info)', mono: true },
-          { label: 'Budget estimé', val: `${totalPriceEur} €`, icon: 'BanknotesIcon', color: 'var(--accent)', mono: true },
-          { label: 'Articles', val: `${selectedItems.size} / ${aiResult.liste_equipement.length}`, icon: 'ListBulletIcon', color: 'var(--primary)', mono: true },
+          { label: 'Poids à acheter', val: `${(totalWeightG / 1000).toFixed(2)} kg`, icon: 'ScaleIcon', color: 'var(--info)', mono: true },
+          { label: 'Budget manquant', val: `${totalPriceEur} €`, icon: 'BanknotesIcon', color: 'var(--accent)', mono: true },
+          { label: 'À acheter', val: `${missingItems.filter(i => selectedItems.has(i.id)).length} / ${missingItems.length}`, icon: 'ListBulletIcon', color: 'var(--primary)', mono: true },
         ].map(({ label, val, icon, color, mono }) => (
           <div key={label} className="topo-card p-4">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-3" style={{ background: `${color}20` }}>
@@ -555,11 +646,11 @@ Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes sp�
         ))}
       </div>
 
-      {/* Weight gauge */}
+      {/* Animated Weight gauge */}
       <div className="topo-card p-4">
         <WeightGauge weightG={totalWeightG} maxG={state.maxWeightG} size="lg" />
         <p className="font-mono-data text-[10px] text-muted-foreground mt-2" style={{ fontFamily: 'var(--font-mono)' }}>
-          Limite configurée: {(state.maxWeightG / 1000).toFixed(1)} kg
+          Limite configurée: {(state.maxWeightG / 1000).toFixed(1)} kg · Poids déjà possédé non compté
         </p>
       </div>
 
@@ -575,21 +666,54 @@ Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes sp�
         </div>
       )}
 
-      {/* Equipment list by category */}
+      {/* Already owned section */}
+      {ownedItems.length > 0 && (
+        <div>
+          <h3 className="font-display font-700 text-foreground text-base mb-3 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <Icon name="CheckCircleIcon" size={18} variant="outline" className="text-emerald-600" />
+            Déjà dans ton sac ({ownedItems.length} articles)
+          </h3>
+          <div className="space-y-2 opacity-70">
+            {ownedItems.map((item) => (
+              <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl border border-emerald-200 bg-emerald-50">
+                <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 bg-emerald-500">
+                  <Icon name="CheckIcon" size={12} variant="outline" className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-500 text-foreground truncate">{item.name}</p>
+                  <p className="text-xs text-emerald-600">Déjà possédé · {item.category}</p>
+                </div>
+                <div className="flex items-center gap-4 flex-shrink-0">
+                  <span className="font-mono-data text-xs text-info" style={{ fontFamily: 'var(--font-mono)' }}>
+                    {item.weightG} g
+                  </span>
+                  <span className="text-xs text-emerald-600 font-600 line-through">
+                    {item.priceEur} €
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Equipment list by category — missing items only */}
       <div>
-        <h3 className="font-display font-700 text-foreground text-base mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-          Liste d&apos;équipement ({aiResult.liste_equipement.length} articles)
+        <h3 className="font-display font-700 text-foreground text-base mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+          <Icon name="ShoppingBagIcon" size={18} variant="outline" className="text-primary" />
+          Il te manque ({missingItems.length} articles)
         </h3>
         <div className="space-y-4">
-          {categories.map((cat) => (
-            <div key={cat}>
-              <p className="font-mono-data text-[10px] text-muted-foreground uppercase tracking-widest mb-2" style={{ fontFamily: 'var(--font-mono)' }}>
-                {cat}
-              </p>
-              <div className="space-y-2">
-                {aiResult.liste_equipement
-                  .filter((i) => i.category === cat)
-                  .map((item) => (
+          {categories.map((cat) => {
+            const catMissingItems = missingItems.filter((i) => i.category === cat);
+            if (catMissingItems.length === 0) return null;
+            return (
+              <div key={cat}>
+                <p className="font-mono-data text-[10px] text-muted-foreground uppercase tracking-widest mb-2" style={{ fontFamily: 'var(--font-mono)' }}>
+                  {cat}
+                </p>
+                <div className="space-y-2">
+                  {catMissingItems.map((item) => (
                     <div
                       key={item.id}
                       className={`flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 cursor-pointer ${
@@ -629,9 +753,10 @@ Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes sp�
                       </div>
                     </div>
                   ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -640,10 +765,10 @@ Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes sp�
         <button
           onClick={handleAddToCart}
           className="btn-primary flex-1 justify-center py-3.5 text-base"
-          aria-label={`Ajouter ${selectedItems.size} articles au panier pour ${totalPriceEur} €`}
+          aria-label={`Ajouter ${missingItems.filter(i => selectedItems.has(i.id)).length} articles au panier pour ${totalPriceEur} €`}
         >
           <Icon name="ShoppingBagIcon" size={18} variant="outline" />
-          Ajouter le kit au panier — {totalPriceEur} €
+          Ajouter ce qui manque — {totalPriceEur} €
         </button>
         <Link href="/catalogue" className="btn-secondary justify-center py-3.5 text-base px-6">
           Voir le catalogue
@@ -659,7 +784,7 @@ Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes sp�
           aria-live="polite"
         >
           <Icon name="CheckCircleIcon" size={20} variant="outline" className="text-white flex-shrink-0" />
-          <p className="text-sm font-500 text-white">{selectedItems.size} articles ajoutés au panier</p>
+          <p className="text-sm font-500 text-white">{missingItems.filter(i => selectedItems.has(i.id)).length} articles ajoutés au panier</p>
         </div>
       )}
     </div>

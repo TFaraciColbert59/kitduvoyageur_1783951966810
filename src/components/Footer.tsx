@@ -12,7 +12,6 @@ const FOOTER_COLS = [
       { label: 'Tous les produits', href: '/shop' },
       { label: 'Kits assemblés', href: '/shop?type=kit' },
       { label: 'Occasion vérifiée', href: '/shop?type=occasion' },
-      { label: 'Enchères', href: '/shop?type=enchere' },
       { label: 'Location matériel', href: '/shop?type=location' },
     ],
   },

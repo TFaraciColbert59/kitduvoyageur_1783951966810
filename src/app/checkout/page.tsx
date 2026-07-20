@@ -219,6 +219,34 @@ export default function CheckoutPage() {
 
       // Clear cart after successful order
       clearCart();
+
+      // B1: Auto-populate gear_items from this order
+      if (user && orderData?.id) {
+        try {
+          for (const item of orderItems) {
+            if (!item.name) continue;
+            await supabase.from('gear_items').insert({
+              user_id: user.id,
+              name: item.name,
+              category: 'autre',
+              condition: 'neuf',
+              source: 'achat',
+              origin_order_id: orderData.id,
+              purchase_price: item.unit_price_eur ?? 0,
+              weight_g: 0,
+              brand: '',
+              model: '',
+              notes: `Importé automatiquement depuis la commande ${num}`,
+              image: 'https://images.unsplash.com/photo-1572698846920-cb1e563bbb30',
+              alt: item.name,
+              tags: [],
+              acquired_at: new Date().toISOString().split('T')[0],
+            });
+          }
+        } catch {
+          // Silent fail — inventory auto-fill is best-effort
+        }
+      }
     } catch (err) {
       console.error('Order save error:', err);
     }

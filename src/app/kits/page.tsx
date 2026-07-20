@@ -8,6 +8,7 @@ import WeightGauge from '@/components/WeightGauge';
 import TopoSeparator from '@/components/TopoSeparator';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Kit {
   id: string;
@@ -27,6 +28,12 @@ interface Kit {
   featured?: boolean;
 }
 
+interface KitReadiness {
+  kitId: string;
+  score: number;
+  missingEssentials: number;
+}
+
 const activites = ['Tous', 'Trek', 'Randonnée', 'Vanlife', 'Alpinisme', 'Désert', 'Photo'];
 const difficultes = ['Tous', 'Débutant', 'Intermédiaire', 'Expert'];
 
@@ -36,6 +43,29 @@ const difficulteColor: Record<string, string> = {
   Expert: 'text-red-400 bg-red-400/10 border-red-400/30'
 };
 
+function ReadinessBar({ score, missingEssentials }: { score: number; missingEssentials: number }) {
+  const color = score >= 80 ? '#22c55e' : score >= 50 ? '#f59e0b' : '#ef4444';
+  return (
+    <div className="mt-2">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[10px] text-muted-foreground font-mono">Prêt à partir</span>
+        <span className="text-[10px] font-mono font-600" style={{ color }}>{score}%</span>
+      </div>
+      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-700"
+          style={{ width: `${score}%`, backgroundColor: color }}
+        />
+      </div>
+      {missingEssentials > 0 && (
+        <p className="text-[10px] text-muted-foreground mt-0.5">
+          {missingEssentials} essentiel{missingEssentials > 1 ? 's' : ''} manquant{missingEssentials > 1 ? 's' : ''}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function KitsPage() {
   const [kits, setKits] = useState<Kit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,7 +73,9 @@ export default function KitsPage() {
   const [activeActivite, setActiveActivite] = useState('Tous');
   const [activeDifficulte, setActiveDifficulte] = useState('Tous');
   const [sortBy, setSortBy] = useState<'prix' | 'poids' | 'articles'>('prix');
+  const [readinessMap, setReadinessMap] = useState<Record<string, KitReadiness>>({});
   const supabase = useMemo(() => createClient(), []);
+  const { user } = useAuth();
 
   const loadKits = useCallback(async () => {
     setLoading(true);
@@ -63,7 +95,42 @@ export default function KitsPage() {
     }
   }, [supabase]);
 
+  // Compute readiness scores for all kits based on user inventory
+  const computeReadiness = useCallback(async (kitList: Kit[]) => {
+    if (!user || kitList.length === 0) return;
+    try {
+      // Load user inventory categories
+      const { data: inventory } = await supabase
+        .from('gear_items')
+        .select('category, condition')
+        .eq('user_id', user.id)
+        .neq('condition', 'à_remplacer');
+      const ownedCategories = new Set((inventory ?? []).map(i => i.category));
+
+      // Load kit_items for all kits
+      const kitIds = kitList.map(k => k.id);
+      const { data: allKitItems } = await supabase
+        .from('kit_items')
+        .select('kit_id, category, essentiel')
+        .in('kit_id', kitIds);
+
+      const map: Record<string, KitReadiness> = {};
+      for (const kit of kitList) {
+        const items = (allKitItems ?? []).filter(i => i.kit_id === kit.id);
+        const essentials = items.filter(i => i.essentiel);
+        if (essentials.length === 0) continue;
+        const ownedEssentials = essentials.filter(i => ownedCategories.has(i.category)).length;
+        const score = Math.round((ownedEssentials / essentials.length) * 100);
+        map[kit.id] = { kitId: kit.id, score, missingEssentials: essentials.length - ownedEssentials };
+      }
+      setReadinessMap(map);
+    } catch {
+      // Silent fail
+    }
+  }, [user, supabase]);
+
   useEffect(() => { loadKits(); }, [loadKits]);
+  useEffect(() => { if (kits.length > 0) computeReadiness(kits); }, [kits, computeReadiness]);
 
   const filtered = kits
     .filter((k) => activeActivite === 'Tous' || k.activite === activeActivite)
@@ -150,6 +217,9 @@ export default function KitsPage() {
                               </div>
                             </div>
                             <WeightGauge weightG={kit.poids_total_g} maxG={15000} size="sm" />
+                            {readinessMap[kit.id] && (
+                              <ReadinessBar score={readinessMap[kit.id].score} missingEssentials={readinessMap[kit.id].missingEssentials} />
+                            )}
                             <div className="flex items-center justify-between mt-3">
                               <span className="font-mono text-sm text-info font-600" style={{ fontFamily: 'var(--font-mono)' }}>
                                 {(kit.prix_cents / 100).toFixed(2)} €
@@ -247,6 +317,9 @@ export default function KitsPage() {
                             ))}
                           </div>
                           <WeightGauge weightG={kit.poids_total_g} maxG={15000} size="sm" />
+                          {readinessMap[kit.id] && (
+                            <ReadinessBar score={readinessMap[kit.id].score} missingEssentials={readinessMap[kit.id].missingEssentials} />
+                          )}
                           <div className="flex items-center justify-between mt-3 mt-auto">
                             <span className="font-mono text-sm text-info font-600" style={{ fontFamily: 'var(--font-mono)' }}>
                               {(kit.prix_cents / 100).toFixed(2)} €
