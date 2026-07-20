@@ -17,6 +17,8 @@ interface FAQCategory {
   items: FAQItem[];
 }
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
+
 const FAQ_DATA: FAQCategory[] = [
   {
     title: 'Commandes & Livraison',
@@ -139,7 +141,7 @@ function FAQAccordion({ items }: { items: FAQItem[] }) {
   );
 }
 
-export default function FAQPage() {
+function FAQPageContent() {
   const [activeCategory, setActiveCategory] = useState(0);
 
   return (
@@ -197,5 +199,75 @@ export default function FAQPage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+export default function FAQPage() {
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: FAQ_DATA.flatMap((category) =>
+      category.items.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.a,
+        },
+      }))
+    ),
+  };
+
+  const webPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'Questions fréquentes — Le Kit du Voyageur',
+    description: 'Trouvez les réponses à vos questions sur les commandes, livraisons, retours, le configurateur IA et votre compte.',
+    url: `${siteUrl}/faq`,
+    isPartOf: {
+      '@type': 'WebSite',
+      name: 'Le Kit du Voyageur',
+      url: siteUrl,
+    },
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Accueil',
+        item: siteUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Questions fréquentes',
+        item: `${siteUrl}/faq`,
+      },
+    ],
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        suppressHydrationWarning
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
+        suppressHydrationWarning
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        suppressHydrationWarning
+      />
+      <FAQPageContent />
+    </>
   );
 }
