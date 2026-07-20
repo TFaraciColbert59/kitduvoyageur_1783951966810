@@ -4,89 +4,88 @@ import { createClient } from '@/lib/supabase/server';
 
 const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
-const staticRoutes = [
-  { url: '/', priority: 1.0, changeFrequency: 'daily' as const },
-  { url: '/boutique', priority: 0.95, changeFrequency: 'daily' as const },
-  { url: '/kits', priority: 0.9, changeFrequency: 'weekly' as const },
-  { url: '/pays', priority: 0.8, changeFrequency: 'weekly' as const },
-  { url: '/guides', priority: 0.8, changeFrequency: 'weekly' as const },
-  { url: '/ai-configurator', priority: 0.9, changeFrequency: 'monthly' as const },
-  { url: '/copilote', priority: 0.7, changeFrequency: 'monthly' as const },
-  { url: '/outils', priority: 0.7, changeFrequency: 'monthly' as const },
-  { url: '/recommandations', priority: 0.6, changeFrequency: 'monthly' as const },
-  { url: '/abonnements', priority: 0.7, changeFrequency: 'monthly' as const },
-  { url: '/communaute', priority: 0.6, changeFrequency: 'daily' as const },
-  { url: '/experts', priority: 0.6, changeFrequency: 'weekly' as const },
-  { url: '/gamification', priority: 0.5, changeFrequency: 'weekly' as const },
-  { url: '/rapport-expedition', priority: 0.5, changeFrequency: 'monthly' as const },
-  { url: '/pro', priority: 0.6, changeFrequency: 'monthly' as const },
-  { url: '/fidelite', priority: 0.6, changeFrequency: 'monthly' as const },
-  { url: '/carbone', priority: 0.5, changeFrequency: 'monthly' as const },
-  { url: '/avis', priority: 0.6, changeFrequency: 'weekly' as const },
-  { url: '/ambassadeurs', priority: 0.5, changeFrequency: 'monthly' as const },
-  { url: '/alertes', priority: 0.5, changeFrequency: 'monthly' as const },
-  { url: '/inventaire', priority: 0.5, changeFrequency: 'monthly' as const },
-  { url: '/connexion', priority: 0.4, changeFrequency: 'yearly' as const },
-  { url: '/groupe', priority: 0.5, changeFrequency: 'monthly' as const },
-  { url: '/communaute-pro', priority: 0.5, changeFrequency: 'monthly' as const },
-  { url: '/jumeau-3d', priority: 0.5, changeFrequency: 'monthly' as const },
-  { url: '/compte', priority: 0.4, changeFrequency: 'monthly' as const },
-  { url: '/panier', priority: 0.4, changeFrequency: 'monthly' as const },
+const staticRoutes: Array<{
+  url: string;
+  priority: number;
+  changeFrequency: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
+}> = [
+  { url: '/', priority: 1.0, changeFrequency: 'daily' },
+  { url: '/boutique', priority: 0.95, changeFrequency: 'daily' },
+  { url: '/kits', priority: 0.9, changeFrequency: 'weekly' },
+  { url: '/pays', priority: 0.85, changeFrequency: 'weekly' },
+  { url: '/guides', priority: 0.8, changeFrequency: 'weekly' },
+  { url: '/catalogue', priority: 0.85, changeFrequency: 'daily' },
+  { url: '/ai-configurator', priority: 0.8, changeFrequency: 'monthly' },
+  { url: '/explorer', priority: 0.75, changeFrequency: 'weekly' },
+  { url: '/communaute', priority: 0.7, changeFrequency: 'daily' },
+  { url: '/experts', priority: 0.7, changeFrequency: 'weekly' },
+  { url: '/avis', priority: 0.65, changeFrequency: 'weekly' },
+  { url: '/outils', priority: 0.6, changeFrequency: 'monthly' },
+  { url: '/abonnements', priority: 0.6, changeFrequency: 'monthly' },
+  { url: '/pro', priority: 0.6, changeFrequency: 'monthly' },
+  { url: '/fidelite', priority: 0.6, changeFrequency: 'monthly' },
 ];
 
-// Kit slugs
-const KIT_SLUGS = ['islande-trek', 'gr20-corse', 'vanlife-europe'];
-
-// Outils slugs
-const OUTILS_SLUGS = [
-  'poids-du-sac', 'budget-voyage', 'checklist', 'convertisseur-devises',
-  'calculateur-calories', 'planificateur-itineraire',
+const kitSlugs = ['islande-trek', 'gr20-corse', 'vanlife-europe'];
+const outilsSlugs = [
+  'poids-du-sac',
+  'budget-voyage',
+  'checklist',
+  'convertisseur-devises',
+  'calculateur-calories',
+  'planificateur-itineraire',
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
-  const staticEntries: MetadataRoute.Sitemap = staticRoutes.map(({ url, priority, changeFrequency }) => ({
-    url: `${base}${url}`,
-    lastModified: now,
-    changeFrequency,
-    priority,
-  }));
+  // Static routes
+  const staticEntries: MetadataRoute.Sitemap = staticRoutes.map(
+    ({ url, priority, changeFrequency }) => ({
+      url: `${base}${url}`,
+      lastModified: now,
+      changeFrequency,
+      priority,
+    })
+  );
 
-  // Only include published countries in sitemap
+  // Published countries
   const publishedCountries = getPublishedCountries();
   const countryEntries: MetadataRoute.Sitemap = publishedCountries.map((country) => ({
     url: `${base}/pays/${country.code.toLowerCase()}`,
     lastModified: now,
     changeFrequency: 'weekly' as const,
-    priority: 0.7,
+    priority: 0.8,
   }));
 
-  const kitEntries: MetadataRoute.Sitemap = KIT_SLUGS.map((slug) => ({
+  // Kits
+  const kitEntries: MetadataRoute.Sitemap = kitSlugs.map((slug) => ({
     url: `${base}/kits/${slug}`,
     lastModified: now,
     changeFrequency: 'weekly' as const,
     priority: 0.8,
   }));
 
-  const outilsEntries: MetadataRoute.Sitemap = OUTILS_SLUGS.map((slug) => ({
+  // Outils
+  const outilsEntries: MetadataRoute.Sitemap = outilsSlugs.map((slug) => ({
     url: `${base}/outils/${slug}`,
     lastModified: now,
     changeFrequency: 'monthly' as const,
     priority: 0.6,
   }));
 
-  // Produits dynamiques depuis Supabase
+  // Dynamic products from Supabase
   let productEntries: MetadataRoute.Sitemap = [];
   try {
     const supabase = await createClient();
-    const { data } = await supabase
+    const { data: products } = await supabase
       .from('shop_products')
       .select('slug, updated_at')
-      .order('score_kdv', { ascending: false });
+      .order('score_kdv', { ascending: false })
+      .limit(1000);
 
-    if (data && data.length > 0) {
-      productEntries = data.map((p) => ({
+    if (products && products.length > 0) {
+      productEntries = products.map((p) => ({
         url: `${base}/produit/${p.slug}`,
         lastModified: p.updated_at ? new Date(p.updated_at) : now,
         changeFrequency: 'weekly' as const,
@@ -94,7 +93,52 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }));
     }
   } catch {
-    // sitemap sans produits si erreur
+    // Sitemap continues without products if error
+  }
+
+  // Dynamic guides from Supabase
+  let guideEntries: MetadataRoute.Sitemap = [];
+  try {
+    const supabase = await createClient();
+    const { data: guides } = await supabase
+      .from('guides')
+      .select('slug, created_at, featured')
+      .order('featured', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(500);
+
+    if (guides && guides.length > 0) {
+      guideEntries = guides.map((g) => ({
+        url: `${base}/guides/${g.slug}`,
+        lastModified: g.created_at ? new Date(g.created_at) : now,
+        changeFrequency: 'weekly' as const,
+        priority: g.featured ? 0.8 : 0.7,
+      }));
+    }
+  } catch {
+    // Sitemap continues without guides if error
+  }
+
+  // Dynamic categories from Supabase
+  let categoryEntries: MetadataRoute.Sitemap = [];
+  try {
+    const supabase = await createClient();
+    const { data: categories } = await supabase
+      .from('shop_products')
+      .select('category_main')
+      .distinct()
+      .limit(50);
+
+    if (categories && categories.length > 0) {
+      categoryEntries = categories.map((c) => ({
+        url: `${base}/catalogue/${c.category_main.toLowerCase().replace(/\s+/g, '-')}`,
+        lastModified: now,
+        changeFrequency: 'weekly' as const,
+        priority: 0.75,
+      }));
+    }
+  } catch {
+    // Sitemap continues without categories if error
   }
 
   return [
@@ -103,5 +147,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...kitEntries,
     ...outilsEntries,
     ...productEntries,
+    ...guideEntries,
+    ...categoryEntries,
   ];
 }

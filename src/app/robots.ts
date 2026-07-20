@@ -1,27 +1,26 @@
 import { MetadataRoute } from 'next';
 
+const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
+
 export default function robots(): MetadataRoute.Robots {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
   return {
     rules: [
       {
-        // Googlebot : accès explicite aux pages SEO prioritaires
+        // Googlebot: explicit allow for SEO-priority pages
         userAgent: 'Googlebot',
         allow: [
           '/',
           '/pays/',
-          '/shop/',
-          '/boutique/',
           '/produit/',
+          '/boutique/',
           '/catalogue/',
           '/kits/',
           '/guides/',
           '/experts/',
-          '/carnets/',
-          '/evenements/',
           '/communaute/',
           '/explorer/',
           '/avis/',
+          '/outils/',
         ],
         disallow: [
           '/api/',
@@ -37,12 +36,32 @@ export default function robots(): MetadataRoute.Robots {
           '/connexion/',
           '/inscription/',
           '/auth/',
+          '/profil/',
+          '/carnets/',
+          '/mon-kit/',
+          '/mes-aventures/',
+          '/rapport-expedition/',
+          '/rapport-kit/',
         ],
+        crawlDelay: 0,
       },
       {
-        // Tous les autres crawlers
-        userAgent: '*',
-        allow: '/',
+        // Bingbot: similar rules
+        userAgent: 'Bingbot',
+        allow: [
+          '/',
+          '/pays/',
+          '/produit/',
+          '/boutique/',
+          '/catalogue/',
+          '/kits/',
+          '/guides/',
+          '/experts/',
+          '/communaute/',
+          '/explorer/',
+          '/avis/',
+          '/outils/',
+        ],
         disallow: [
           '/api/',
           '/_next/',
@@ -57,9 +76,57 @@ export default function robots(): MetadataRoute.Robots {
           '/connexion/',
           '/inscription/',
           '/auth/',
+          '/profil/',
+          '/carnets/',
+          '/mon-kit/',
+          '/mes-aventures/',
+          '/rapport-expedition/',
+          '/rapport-kit/',
         ],
+        crawlDelay: 1,
+      },
+      {
+        // All other crawlers
+        userAgent: '*',
+        allow: [
+          '/',
+          '/pays/',
+          '/produit/',
+          '/boutique/',
+          '/catalogue/',
+          '/kits/',
+          '/guides/',
+          '/experts/',
+          '/communaute/',
+          '/explorer/',
+          '/avis/',
+          '/outils/',
+        ],
+        disallow: [
+          '/api/',
+          '/_next/',
+          '/admin/',
+          '/checkout/',
+          '/panier/',
+          '/compte/',
+          '/messagerie/',
+          '/groupe/',
+          '/groupes/',
+          '/inventaire/',
+          '/connexion/',
+          '/inscription/',
+          '/auth/',
+          '/profil/',
+          '/carnets/',
+          '/mon-kit/',
+          '/mes-aventures/',
+          '/rapport-expedition/',
+          '/rapport-kit/',
+        ],
+        crawlDelay: 2,
       },
     ],
     sitemap: `${base}/sitemap.xml`,
+    host: base,
   };
 }

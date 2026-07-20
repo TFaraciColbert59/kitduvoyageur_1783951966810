@@ -11,6 +11,7 @@ import BottomTabBar from '@/components/mobile-nav/BottomTabBar';
 import TopBar from '@/components/mobile-nav/TopBar';
 import InstallPrompt from '@/components/mobile-nav/InstallPrompt';
 import CookieConsentBanner from '@/components/CookieConsentBanner';
+import { getOrganizationSchema, getWebsiteSchema } from '@/lib/seo-utils';
 
 // Only load weights actually used in the app
 const publicSans = Public_Sans({
@@ -42,9 +43,14 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  colorScheme: 'light dark',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#000000' },
+  ],
 };
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.com';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -54,7 +60,18 @@ export const metadata: Metadata = {
   },
   description:
     'Configurateur IA, équipement outdoor, fiches pays et outils terrain. La plateforme complète du voyageur et de l\'aventurier.',
-  keywords: ['équipement outdoor', 'kit voyage', 'configurateur IA', 'randonnée', 'trekking', 'matériel aventure'],
+  keywords: [
+    'équipement outdoor',
+    'kit voyage',
+    'configurateur IA',
+    'randonnée',
+    'trekking',
+    'matériel aventure',
+    'équipement randonnée',
+    'sac à dos',
+    'tente',
+    'sac de couchage',
+  ],
   authors: [{ name: 'Le Kit du Voyageur', url: siteUrl }],
   creator: 'Le Kit du Voyageur',
   publisher: 'Le Kit du Voyageur',
@@ -76,6 +93,7 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         alt: 'Le Kit du Voyageur — Équipement outdoor intelligent',
+        type: 'image/png',
       },
     ],
   },
@@ -84,9 +102,13 @@ export const metadata: Metadata = {
     title: 'Le Kit du Voyageur — Équipement & Préparation',
     description: 'Configurez, achetez et préparez chaque voyage en un seul endroit.',
     images: ['/assets/images/og-image.png'],
+    creator: '@lekitduvoyageur',
   },
   alternates: {
     canonical: siteUrl,
+    languages: {
+      'fr-FR': siteUrl,
+    },
   },
   robots: {
     index: true,
@@ -99,20 +121,16 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  verification: {
+    google: 'google-site-verification-code', // Replace with actual code
+  },
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const organizationSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: 'Le Kit du Voyageur',
-    url: siteUrl,
-    logo: `${siteUrl}/assets/images/app_logo.png`,
-    description: 'Configurateur IA, équipement outdoor, fiches pays et outils terrain. La plateforme complète du voyageur et de l\'aventurier.',
-    sameAs: [],
-  };
+  const organizationSchema = getOrganizationSchema(siteUrl);
+  const websiteSchema = getWebsiteSchema(siteUrl);
 
   return (
     <html
@@ -121,6 +139,34 @@ export default function RootLayout({
       className={`${publicSans.variable} ${spaceGrotesk.variable} ${ibmPlexMono.variable}`}
     >
       <head>
+        {/* Preload critical images for LCP optimization */}
+        <link
+          rel="preload"
+          as="image"
+          href="/assets/images/og-image.png"
+          type="image/png"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="/assets/images/app_logo.png"
+          type="image/png"
+        />
+
+        {/* DNS prefetch for external domains */}
+        <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+
+        {/* Preconnect to critical third-party origins */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+
+        {/* JSON-LD Structured Data */}
         <script
           suppressHydrationWarning
           type="application/ld+json"
@@ -128,6 +174,15 @@ export default function RootLayout({
             __html: JSON.stringify(organizationSchema),
           }}
         />
+        <script
+          suppressHydrationWarning
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(websiteSchema),
+          }}
+        />
+
+        {/* Rocket analytics scripts */}
 
         <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fkitduvoyag4153back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.19" />
         <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.2" /></head>
@@ -148,7 +203,7 @@ export default function RootLayout({
                 </a>
                 {/* Mobile navigation — hidden on desktop (md+) */}
                 <TopBar />
-                {children}
+                <main id="main-content">{children}</main>
                 <BottomTabBar />
                 <InstallPrompt />
                 <CookieConsentBanner />
@@ -156,7 +211,7 @@ export default function RootLayout({
             </ToastProvider>
           </WishlistProvider>
         </AuthProvider>
-</body>
+      </body>
     </html>
   );
 }

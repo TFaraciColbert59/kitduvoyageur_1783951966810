@@ -86,15 +86,13 @@ const TABS: { id: TabId; label: string; icon: string }[] = [
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────
 
-export default function CountryPage({ params }: { params: Promise<{ code: string }> }) {
-  const { code: rawCode } = React.use(params);
+export default function CountryPage({ code: rawCode }: { code: string }) {
+  const code = rawCode.toLowerCase();
   const [country, setCountry] = useState<CountryDataV2 | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('apercu');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-
-  const code = rawCode.toLowerCase();
 
   useEffect(() => {
     setLoading(true);
