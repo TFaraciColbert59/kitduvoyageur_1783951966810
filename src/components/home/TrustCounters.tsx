@@ -15,23 +15,22 @@ interface Counter {
 }
 
 function buildCounters(stats: TrustStats): Counter[] {
-  const hasRealUsers = stats.userCount > 0;
   const hasRealRoutes = stats.routeCount > 0;
 
   return [
     {
-      label: hasRealUsers ? 'Voyageurs inscrits' : 'Rejoignez les premiers',
-      value: hasRealUsers ? stats.userCount : 0,
-      suffix: hasRealUsers ? '+' : '',
+      label: 'Bêta ouverte',
+      value: 'Beta',
+      suffix: '',
       icon: '🧭',
       color: '#E4501C',
-      isNumeric: hasRealUsers,
-      sub: hasRealUsers ? undefined : 'Bêta ouverte',
+      isNumeric: false,
+      sub: 'Rejoignez les premiers explorateurs',
     },
     {
       label: 'Sentiers référencés',
       value: hasRealRoutes ? stats.routeCount : 1169,
-      suffix: '',
+      suffix: '+',
       icon: '🥾',
       color: '#5C8A3A',
       isNumeric: true,
@@ -47,13 +46,13 @@ function buildCounters(stats: TrustStats): Counter[] {
       sub: 'Google Gemini Pro',
     },
     {
-      label: 'Paiement sécurisé',
-      value: 'Stripe',
+      label: 'Livraison express',
+      value: '48h',
       suffix: '',
-      icon: '🔒',
+      icon: '📦',
       color: '#B5652D',
       isNumeric: false,
-      sub: 'Certifié PCI-DSS',
+      sub: 'Retour gratuit 30 jours',
     },
   ];
 }

@@ -557,12 +557,19 @@ export default function BoutiqueClient() {
       setLoading(true);
       try {
         const supabase = createClient();
-        const { data } = await supabase
+        // Add a 5-second timeout to prevent infinite skeleton state
+        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000));
+        const fetchPromise = supabase
           .from('shop_products')
           .select('id, slug, name, brand, category, category_main, weight_g, price_eur, image, image_alt, rating, review_count, available, transaction_type, price_per_day, original_price, condition, starting_bid, ends_at, savings, score_kdv, essentiality, cabin_compatible, versatility_10, product_id')
           .order('score_kdv', { ascending: false })
           .limit(200);
-        if (data && data.length > 0) setProducts(data as ShopProduct[]);
+
+        const result = await Promise.race([fetchPromise, timeoutPromise]);
+        if (result && 'data' in result && result.data && result.data.length > 0) {
+          setProducts(result.data as ShopProduct[]);
+        }
+        // else: keep mock data (already set as default state)
       } catch {
         // keep mock data
       } finally {
