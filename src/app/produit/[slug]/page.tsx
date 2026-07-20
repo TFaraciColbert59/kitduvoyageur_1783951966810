@@ -76,7 +76,7 @@ export async function generateMetadata(
         canonical: canonicalUrl,
       },
       openGraph: {
-        type: 'product',
+        type: 'website',
         title: `${product.name} — ${product.brand}`,
         description,
         url: canonicalUrl,
