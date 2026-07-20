@@ -36,23 +36,35 @@ CREATE TABLE IF NOT EXISTS public.occasion_offers (
 
 ALTER TABLE public.occasion_offers ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Acheteur et vendeur voient les offres les concernant"
-  ON public.occasion_offers FOR SELECT
-  USING (
-    auth.uid() = buyer_id
-    OR auth.uid() = (
-      SELECT seller_id FROM public.occasion_items WHERE id = occasion_item_id
-    )
-  );
+DO $$
+BEGIN
+  CREATE POLICY "Acheteur et vendeur voient les offres les concernant"
+    ON public.occasion_offers FOR SELECT
+    USING (
+      auth.uid() = buyer_id
+      OR auth.uid() = (
+        SELECT seller_id FROM public.occasion_items WHERE id = occasion_item_id
+      )
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "L'acheteur crée ses offres"
-  ON public.occasion_offers FOR INSERT
-  WITH CHECK (auth.uid() = buyer_id);
+DO $$
+BEGIN
+  CREATE POLICY "L'acheteur crée ses offres"
+    ON public.occasion_offers FOR INSERT
+    WITH CHECK (auth.uid() = buyer_id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Le vendeur répond aux offres"
-  ON public.occasion_offers FOR UPDATE
-  USING (
-    auth.uid() = (
-      SELECT seller_id FROM public.occasion_items WHERE id = occasion_item_id
-    )
-  );
+DO $$
+BEGIN
+  CREATE POLICY "Le vendeur répond aux offres"
+    ON public.occasion_offers FOR UPDATE
+    USING (
+      auth.uid() = (
+        SELECT seller_id FROM public.occasion_items WHERE id = occasion_item_id
+      )
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
