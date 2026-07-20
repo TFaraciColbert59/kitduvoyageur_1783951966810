@@ -136,6 +136,10 @@ export default function Footer() {
             {' '}·{' '}
             <Link href="/cgu" className="hover:text-white/60 transition-colors">CGU</Link>
             {' '}·{' '}
+            <Link href="/cgv" className="hover:text-white/60 transition-colors">CGV</Link>
+            {' '}·{' '}
+            <Link href="/cookies" className="hover:text-white/60 transition-colors">Cookies</Link>
+            {' '}·{' '}
             <Link href="/mentions-legales" className="hover:text-white/60 transition-colors">Mentions légales</Link>
           </p>
 

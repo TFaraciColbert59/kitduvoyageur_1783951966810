@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
 
 type ConsentState = {
   necessary: true;
@@ -30,7 +29,7 @@ function storeConsent(consent: ConsentState) {
     CONSENT_COOKIE_KEY,
     JSON.stringify({ ...consent, version: CONSENT_VERSION })
   );
-  // Dispatch event so GoogleAnalytics component can react
+  // Dispatch event so GoogleAnalytics component can react immediately
   window.dispatchEvent(new CustomEvent('cookieConsentUpdated', { detail: consent }));
 }
 
@@ -42,6 +41,13 @@ export function useCookieConsent() {
     if (stored) {
       setConsent({ necessary: true, analytics: stored.analytics, marketing: stored.marketing });
     }
+
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<ConsentState>).detail;
+      setConsent(detail);
+    };
+    window.addEventListener('cookieConsentUpdated', handler);
+    return () => window.removeEventListener('cookieConsentUpdated', handler);
   }, []);
 
   return consent;
@@ -56,7 +62,9 @@ export default function CookieConsentBanner() {
   useEffect(() => {
     const stored = getStoredConsent();
     if (!stored || stored.version !== CONSENT_VERSION) {
-      setVisible(true);
+      // Small delay to avoid flash on first render
+      const timer = setTimeout(() => setVisible(true), 500);
+      return () => clearTimeout(timer);
     }
   }, []);
 
@@ -82,19 +90,26 @@ export default function CookieConsentBanner() {
       role="dialog"
       aria-modal="true"
       aria-label="Gestion des cookies"
-      className="fixed bottom-0 left-0 right-0 z-[9999] p-4 sm:p-6"
+      aria-describedby="cookie-banner-desc"
+      className="fixed bottom-0 left-0 right-0 z-[9999] p-3 sm:p-5"
+      style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
     >
-      <div className="max-w-2xl mx-auto bg-[#1C2620] border border-white/10 rounded-2xl shadow-2xl p-5 sm:p-6">
+      <div className="max-w-2xl mx-auto bg-[#1C2620] border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
         {!showDetails ? (
-          <>
+          <div className="p-5 sm:p-6">
             <div className="flex items-start gap-3 mb-4">
-              <Icon name="ShieldCheckIcon" size={20} variant="outline" className="text-[#E4501C] flex-shrink-0 mt-0.5" />
+              <div className="w-8 h-8 rounded-lg bg-[#E4501C]/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-[#E4501C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.955 11.955 0 003 12c0 6.627 5.373 12 12 12s12-5.373 12-12c0-2.017-.5-3.92-1.382-5.593" />
+                </svg>
+              </div>
               <div>
                 <h2 className="font-semibold text-white text-sm mb-1">Nous respectons votre vie privée</h2>
-                <p className="text-white/55 text-xs leading-relaxed">
-                  Nous utilisons des cookies pour le bon fonctionnement du site et, avec votre accord, pour mesurer notre audience (Google Analytics).
+                <p id="cookie-banner-desc" className="text-white/55 text-xs leading-relaxed">
+                  Nous utilisons des cookies nécessaires au fonctionnement du site et, avec votre accord, des cookies analytiques (Google Analytics) pour mesurer notre audience.
+                  Google Analytics est <strong className="text-white/70">bloqué tant que vous n&apos;avez pas donné votre accord</strong>.
                   Aucune donnée n&apos;est vendue à des tiers.{' '}
-                  <Link href="/politique-confidentialite" className="text-[#E4501C] hover:underline">
+                  <Link href="/cookies" className="text-[#E4501C] hover:underline">
                     En savoir plus
                   </Link>
                 </p>
@@ -103,68 +118,86 @@ export default function CookieConsentBanner() {
             <div className="flex flex-col sm:flex-row gap-2">
               <button
                 onClick={acceptAll}
-                className="flex-1 bg-[#E4501C] hover:bg-[#cc3d10] text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                className="flex-1 bg-[#E4501C] hover:bg-[#cc3d10] text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[#E4501C] focus:ring-offset-2 focus:ring-offset-[#1C2620]"
               >
                 Tout accepter
               </button>
               <button
                 onClick={rejectAll}
-                className="flex-1 bg-white/8 hover:bg-white/15 text-white/70 px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
+                className="flex-1 bg-white/8 hover:bg-white/15 text-white/70 px-4 py-2.5 rounded-xl text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-[#1C2620]"
               >
                 Tout refuser
               </button>
               <button
                 onClick={() => setShowDetails(true)}
-                className="flex-1 border border-white/15 hover:border-white/30 text-white/50 hover:text-white/80 px-4 py-2.5 rounded-xl text-sm transition-all"
+                className="flex-1 border border-white/15 hover:border-white/30 text-white/50 hover:text-white/80 px-4 py-2.5 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-[#1C2620]"
               >
                 Personnaliser
               </button>
             </div>
-          </>
+            <p className="text-white/25 text-xs text-center mt-3">
+              Conforme RGPD · Recommandations CNIL 2020 ·{' '}
+              <Link href="/politique-confidentialite" className="hover:text-white/50 transition-colors">
+                Politique de confidentialité
+              </Link>
+            </p>
+          </div>
         ) : (
-          <>
-            <h2 className="font-semibold text-white text-sm mb-4">Personnaliser mes préférences</h2>
-            <div className="space-y-3 mb-5">
+          <div className="p-5 sm:p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <button
+                onClick={() => setShowDetails(false)}
+                className="text-white/40 hover:text-white/70 transition-colors"
+                aria-label="Retour"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <h2 className="font-semibold text-white text-sm">Personnaliser mes préférences</h2>
+            </div>
+
+            <div className="space-y-2 mb-5">
               {/* Necessary — always on */}
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
-                <div>
-                  <p className="text-white text-sm font-medium">Cookies nécessaires</p>
-                  <p className="text-white/40 text-xs">Authentification, panier, sécurité — requis</p>
+                <div className="flex-1 pr-3">
+                  <p className="text-white text-xs font-medium">🔒 Cookies nécessaires</p>
+                  <p className="text-white/40 text-xs mt-0.5">Authentification, panier, sécurité — toujours actifs, exemptés de consentement (CNIL)</p>
                 </div>
-                <div className="w-10 h-5 bg-[#E4501C] rounded-full flex items-center justify-end pr-0.5 cursor-not-allowed opacity-70">
+                <div className="w-10 h-5 bg-[#E4501C] rounded-full flex items-center justify-end pr-0.5 cursor-not-allowed opacity-60 flex-shrink-0">
                   <div className="w-4 h-4 bg-white rounded-full" />
                 </div>
               </div>
 
               {/* Analytics */}
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
-                <div>
-                  <p className="text-white text-sm font-medium">Cookies analytiques</p>
-                  <p className="text-white/40 text-xs">Google Analytics — mesure d&apos;audience anonymisée</p>
+                <div className="flex-1 pr-3">
+                  <p className="text-white text-xs font-medium">📊 Cookies analytiques</p>
+                  <p className="text-white/40 text-xs mt-0.5">Google Analytics — mesure d&apos;audience anonymisée (IP tronquée). Bloqué par défaut.</p>
                 </div>
                 <button
                   onClick={() => setAnalytics(!analytics)}
-                  className={`w-10 h-5 rounded-full flex items-center transition-all ${analytics ? 'bg-[#E4501C] justify-end pr-0.5' : 'bg-white/15 justify-start pl-0.5'}`}
+                  className={`w-10 h-5 rounded-full flex items-center transition-all flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-[#E4501C] focus:ring-offset-1 focus:ring-offset-[#1C2620] ${analytics ? 'bg-[#E4501C] justify-end pr-0.5' : 'bg-white/15 justify-start pl-0.5'}`}
                   aria-pressed={analytics}
                   aria-label="Activer les cookies analytiques"
                 >
-                  <div className="w-4 h-4 bg-white rounded-full" />
+                  <div className="w-4 h-4 bg-white rounded-full shadow-sm" />
                 </button>
               </div>
 
               {/* Marketing */}
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
-                <div>
-                  <p className="text-white text-sm font-medium">Cookies marketing</p>
-                  <p className="text-white/40 text-xs">Publicités personnalisées</p>
+                <div className="flex-1 pr-3">
+                  <p className="text-white text-xs font-medium">🎯 Cookies marketing</p>
+                  <p className="text-white/40 text-xs mt-0.5">Publicités personnalisées et remarketing. Bloqué par défaut.</p>
                 </div>
                 <button
                   onClick={() => setMarketing(!marketing)}
-                  className={`w-10 h-5 rounded-full flex items-center transition-all ${marketing ? 'bg-[#E4501C] justify-end pr-0.5' : 'bg-white/15 justify-start pl-0.5'}`}
+                  className={`w-10 h-5 rounded-full flex items-center transition-all flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-[#E4501C] focus:ring-offset-1 focus:ring-offset-[#1C2620] ${marketing ? 'bg-[#E4501C] justify-end pr-0.5' : 'bg-white/15 justify-start pl-0.5'}`}
                   aria-pressed={marketing}
                   aria-label="Activer les cookies marketing"
                 >
-                  <div className="w-4 h-4 bg-white rounded-full" />
+                  <div className="w-4 h-4 bg-white rounded-full shadow-sm" />
                 </button>
               </div>
             </div>
@@ -172,18 +205,28 @@ export default function CookieConsentBanner() {
             <div className="flex gap-2">
               <button
                 onClick={saveCustom}
-                className="flex-1 bg-[#E4501C] hover:bg-[#cc3d10] text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                className="flex-1 bg-[#E4501C] hover:bg-[#cc3d10] text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[#E4501C] focus:ring-offset-2 focus:ring-offset-[#1C2620]"
               >
                 Enregistrer mes choix
               </button>
               <button
-                onClick={() => setShowDetails(false)}
-                className="border border-white/15 text-white/50 hover:text-white/80 px-4 py-2.5 rounded-xl text-sm transition-all"
+                onClick={rejectAll}
+                className="border border-white/15 hover:border-white/30 text-white/50 hover:text-white/80 px-4 py-2.5 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-[#1C2620]"
               >
-                Retour
+                Tout refuser
               </button>
             </div>
-          </>
+
+            <p className="text-white/25 text-xs text-center mt-3">
+              <Link href="/cookies" className="hover:text-white/50 transition-colors">
+                Politique cookies complète
+              </Link>
+              {' · '}
+              <Link href="/politique-confidentialite" className="hover:text-white/50 transition-colors">
+                Confidentialité
+              </Link>
+            </p>
+          </div>
         )}
       </div>
     </div>
