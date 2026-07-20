@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
-import { Space_Grotesk, Public_Sans, IBM_Plex_Mono } from 'next/font/google';
+import { DM_Sans, Manrope, IBM_Plex_Mono } from 'next/font/google';
 import '../styles/tailwind.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
@@ -14,29 +14,26 @@ import CookieConsentBanner from '@/components/CookieConsentBanner';
 import { getOrganizationSchema, getWebsiteSchema } from '@/lib/seo-utils';
 
 // Only load weights actually used in the app
-const publicSans = Public_Sans({
+const dmSans = DM_Sans({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
   variable: '--font-sans',
   display: 'swap',
-  preload: true,
+  weight: ['300', '400', '500', '600', '700'],
 });
 
-const spaceGrotesk = Space_Grotesk({
+const manrope = Manrope({
   subsets: ['latin'],
-  weight: ['600', '700'],
   variable: '--font-display',
   display: 'swap',
-  preload: true,
+  weight: ['400', '500', '600', '700', '800'],
 });
 
 // Mono font: defer preload — only used for labels/stats, not critical path
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ['latin'],
-  weight: ['400', '500'],
   variable: '--font-mono',
   display: 'swap',
-  preload: false,
+  weight: ['400', '500', '600'],
 });
 
 export const viewport: Viewport = {
@@ -136,7 +133,7 @@ export default function RootLayout({
     <html
       lang="fr"
       suppressHydrationWarning
-      className={`${publicSans.variable} ${spaceGrotesk.variable} ${ibmPlexMono.variable}`}
+      className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable}`}
     >
       <head>
         {/* Preload critical images for LCP optimization */}
@@ -186,7 +183,7 @@ export default function RootLayout({
 
         <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fkitduvoyag4153back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.19" />
         <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.2" /></head>
-      <body className={publicSans.className}>
+      <body className={dmSans.className}>
         <AuthProvider>
           <WishlistProvider>
             <ToastProvider>

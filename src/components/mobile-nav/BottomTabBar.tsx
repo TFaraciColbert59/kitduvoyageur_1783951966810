@@ -5,47 +5,119 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
+/* ── Icons ── */
+const HomeIcon = ({ active }: { active: boolean }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    {active ? (
+      <>
+        <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" fill="currentColor" opacity="0.15"/>
+        <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
+        <path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      </>
+    ) : (
+      <>
+        <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+        <path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      </>
+    )}
+  </svg>
+);
+
 const ExploreIcon = ({ active }: { active: boolean }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" />
-    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    {active ? (
+      <>
+        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8"/>
+        <path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" fill="currentColor" opacity="0.9"/>
+      </>
+    ) : (
+      <>
+        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6"/>
+        <path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+      </>
+    )}
   </svg>
 );
 
-const ShopIcon = ({ active }: { active: boolean }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-    <line x1="3" y1="6" x2="21" y2="6" />
-    <path d="M16 10a4 4 0 0 1-8 0" />
-  </svg>
-);
-
-const AIIcon = ({ active }: { active: boolean }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7z" />
+const KitIcon = ({ active }: { active: boolean }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    {active ? (
+      <>
+        <path d="M4 7h16a1 1 0 011 1v10a2 2 0 01-2 2H5a2 2 0 01-2-2V8a1 1 0 011-1z" fill="currentColor" opacity="0.15"/>
+        <path d="M4 7h16a1 1 0 011 1v10a2 2 0 01-2 2H5a2 2 0 01-2-2V8a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.8"/>
+        <path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+        <path d="M12 12v4M10 14h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+      </>
+    ) : (
+      <>
+        <path d="M4 7h16a1 1 0 011 1v10a2 2 0 01-2 2H5a2 2 0 01-2-2V8a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.6"/>
+        <path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+        <path d="M12 12v4M10 14h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+      </>
+    )}
   </svg>
 );
 
 const ProfileIcon = ({ active }: { active: boolean }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="8" r="4" />
-    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    {active ? (
+      <>
+        <circle cx="12" cy="8" r="4" fill="currentColor" opacity="0.15" stroke="currentColor" strokeWidth="1.8"/>
+        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+      </>
+    ) : (
+      <>
+        <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.6"/>
+        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+      </>
+    )}
   </svg>
 );
 
 interface Tab {
   href: string;
   label: string;
-  icon: React.ReactNode;
-  activeIcon: React.ReactNode;
+  icon: (active: boolean) => React.ReactNode;
   ariaLabel: string;
   matchPaths?: string[];
 }
+
+const TABS: Tab[] = [
+  {
+    href: '/',
+    label: 'Accueil',
+    icon: (active) => <HomeIcon active={active} />,
+    ariaLabel: 'Accueil',
+    matchPaths: ['/'],
+  },
+  {
+    href: '/explorer',
+    label: 'Explorer',
+    icon: (active) => <ExploreIcon active={active} />,
+    ariaLabel: 'Explorer les sentiers et destinations',
+    matchPaths: ['/explorer', '/pays', '/carte-interactive'],
+  },
+  {
+    href: '/ai-configurator',
+    label: 'Mon Kit',
+    icon: (active) => <KitIcon active={active} />,
+    ariaLabel: 'Configurateur de kit IA',
+    matchPaths: ['/ai-configurator', '/boutique', '/kits', '/occasion', '/produit', '/panier', '/checkout'],
+  },
+  {
+    href: '/profil',
+    label: 'Profil',
+    icon: (active) => <ProfileIcon active={active} />,
+    ariaLabel: 'Mon profil et compte',
+    matchPaths: ['/profil', '/compte', '/inventaire', '/carnets', '/fidelite', '/gamification'],
+  },
+];
 
 export default function BottomTabBar() {
   const pathname = usePathname();
   const { loading } = useAuth();
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [pressedIndex, setPressedIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -53,59 +125,13 @@ export default function BottomTabBar() {
     }
   }, []);
 
-  const tabs: Tab[] = [
-    {
-      href: '/explorer',
-      label: 'Explorer',
-      icon: <ExploreIcon active={false} />,
-      activeIcon: <ExploreIcon active={true} />,
-      ariaLabel: 'Explorer les sentiers et destinations',
-      matchPaths: ['/explorer', '/pays'],
-    },
-    {
-      href: '/boutique',
-      label: 'Boutique',
-      icon: <ShopIcon active={false} />,
-      activeIcon: <ShopIcon active={true} />,
-      ariaLabel: 'Boutique et produits',
-      matchPaths: ['/boutique', '/kits', '/occasion', '/produit'],
-    },
-    {
-      href: '/ai-configurator',
-      label: 'Kit IA',
-      icon: <AIIcon active={false} />,
-      activeIcon: <AIIcon active={true} />,
-      ariaLabel: 'Configurateur de kit IA',
-      matchPaths: ['/ai-configurator'],
-    },
-    {
-      href: '/profil',
-      label: 'Profil',
-      icon: <ProfileIcon active={false} />,
-      activeIcon: <ProfileIcon active={true} />,
-      ariaLabel: 'Mon profil et compte',
-      matchPaths: ['/profil', '/compte', '/inventaire'],
-    },
-  ];
-
   const isActive = (tab: Tab): boolean => {
+    if (tab.href === '/') return pathname === '/';
     if (!tab.matchPaths) return pathname === tab.href;
-    return tab.matchPaths.some(p => pathname === p || pathname.startsWith(p + '/'));
+    return tab.matchPaths.some(p => p !== '/' && (pathname === p || pathname.startsWith(p + '/')));
   };
 
-  const activeIndex = tabs.findIndex(t => isActive(t));
-
-  const [indicatorStyle, setIndicatorStyle] = useState({ left: '0%', opacity: 0 });
-
-  useEffect(() => {
-    if (activeIndex < 0) {
-      setIndicatorStyle(s => ({ ...s, opacity: 0 }));
-      return;
-    }
-    const tabWidth = 100 / tabs.length;
-    const left = activeIndex * tabWidth + tabWidth / 2;
-    setIndicatorStyle({ left: `${left}%`, opacity: 1 });
-  }, [activeIndex, tabs.length]);
+  const activeIndex = TABS.findIndex(t => isActive(t));
 
   if (loading) return null;
 
@@ -115,51 +141,81 @@ export default function BottomTabBar() {
       aria-label="Navigation principale"
       className="md:hidden fixed bottom-0 left-0 right-0 z-50"
     >
+      {/* Blur backdrop */}
       <div
-        className="relative flex items-center justify-around"
+        className="absolute inset-0"
         style={{
-          height: 'calc(56px + env(safe-area-inset-bottom))',
+          background: 'rgba(231,227,214,0.88)',
+          backdropFilter: 'blur(28px) saturate(200%)',
+          WebkitBackdropFilter: 'blur(28px) saturate(200%)',
+          borderTop: '0.5px solid rgba(255,255,255,0.6)',
+          boxShadow: '0 -1px 0 rgba(28,38,32,0.06), 0 -8px 32px rgba(14,21,18,0.06)',
+        }}
+      />
+
+      <div
+        className="relative flex items-center"
+        style={{
+          height: 'calc(60px + env(safe-area-inset-bottom))',
           paddingBottom: 'env(safe-area-inset-bottom)',
-          background: 'rgba(231, 227, 214, 0.97)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderTop: '1px solid rgba(28, 38, 32, 0.1)',
+          paddingLeft: 'env(safe-area-inset-left)',
+          paddingRight: 'env(safe-area-inset-right)',
         }}
       >
-        {/* Animated indicator */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            top: '6px',
-            width: '28px',
-            height: '3px',
-            borderRadius: '2px',
-            background: '#E4501C',
-            transform: 'translateX(-50%)',
-            left: indicatorStyle.left,
-            opacity: indicatorStyle.opacity,
-            transition: reducedMotion
-              ? 'none' :'left 250ms cubic-bezier(0.19, 1, 0.22, 1), opacity 150ms ease',
-            pointerEvents: 'none',
-          }}
-        />
-
-        {tabs.map((tab) => {
+        {TABS.map((tab, index) => {
           const active = isActive(tab);
+          const pressed = pressedIndex === index;
+
           return (
             <Link
               key={tab.href}
               href={tab.href}
               aria-label={tab.ariaLabel}
               aria-current={active ? 'page' : undefined}
-              className="flex flex-col items-center justify-center gap-0.5 flex-1 h-[56px] min-w-[44px] min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-inset rounded-sm"
-              style={{ color: active ? '#E4501C' : '#7A8A7D' }}
+              onMouseDown={() => setPressedIndex(index)}
+              onMouseUp={() => setPressedIndex(null)}
+              onTouchStart={() => setPressedIndex(index)}
+              onTouchEnd={() => setPressedIndex(null)}
+              className="flex flex-col items-center justify-center gap-1 flex-1 h-[60px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-inset rounded-sm relative"
+              style={{
+                color: active ? '#E4501C' : '#7A8A7D',
+                transform: pressed && !reducedMotion ? 'scale(0.88)' : 'scale(1)',
+                transition: reducedMotion ? 'none' : `transform 120ms cubic-bezier(0.34,1.56,0.64,1), color 200ms ease`,
+              }}
             >
-              {active ? tab.activeIcon : tab.icon}
+              {/* Active pill background */}
+              {active && (
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    top: '8px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '40px',
+                    height: '32px',
+                    borderRadius: '12px',
+                    background: 'rgba(228,80,28,0.10)',
+                    transition: reducedMotion ? 'none' : 'all 300ms cubic-bezier(0.16,1,0.3,1)',
+                  }}
+                />
+              )}
+
+              {/* Icon */}
+              <span className="relative z-10" style={{ marginTop: active ? '-2px' : '0' }}>
+                {tab.icon(active)}
+              </span>
+
+              {/* Label */}
               <span
-                className="text-[10px] font-medium leading-none"
-                style={{ color: active ? '#E4501C' : '#7A8A7D' }}
+                style={{
+                  fontSize: '10px',
+                  fontWeight: active ? 600 : 500,
+                  letterSpacing: '0.01em',
+                  lineHeight: 1,
+                  color: active ? '#E4501C' : '#7A8A7D',
+                  fontFamily: 'var(--font-sans)',
+                }}
               >
                 {tab.label}
               </span>

@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HomepageV1 from '@/app/components/HomepageV1';
+import MobileHomePage from '@/components/mobile-nav/MobileHomePage';
 
 export default function HomePageClient({
   trail,
@@ -16,6 +17,7 @@ export default function HomePageClient({
 }) {
   return (
     <>
+      {/* Desktop */}
       <div className="hidden md:block">
         <Header />
       </div>
@@ -26,6 +28,11 @@ export default function HomePageClient({
       </main>
       <div className="hidden md:block">
         <Footer />
+      </div>
+
+      {/* Mobile — premium refonte */}
+      <div className="md:hidden">
+        <MobileHomePage />
       </div>
     </>
   );
