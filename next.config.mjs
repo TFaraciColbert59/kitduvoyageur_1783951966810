@@ -17,68 +17,7 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    qualities: [85],
-    // Enable AVIF for better compression
     dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-  },
-  experimental: {
-    optimizePackageImports: [
-      '@heroicons/react',
-      'lucide-react',
-      '@supabase/supabase-js',
-    ],
-  },
-  async headers() {
-    return [
-      {
-        source: '/assets/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-        ],
-      },
-      {
-        source: '/_next/static/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-        ],
-      },
-      {
-        source: '/favicon.ico',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=86400' },
-        ],
-      },
-      {
-        source: '/sitemap.xml',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=3600' },
-          { key: 'Content-Type', value: 'application/xml' },
-        ],
-      },
-      {
-        source: '/robots.txt',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=3600' },
-          { key: 'Content-Type', value: 'text/plain' },
-        ],
-      },
-      // Preload LCP images
-      {
-        source: '/produit/:slug',
-        headers: [
-          { key: 'Link', value: '</assets/images/og-image.png>; rel=preload; as=image; imagesrcset' },
-        ],
-      },
-      {
-        source: '/pays/:code',
-        headers: [
-          { key: 'Link', value: '</assets/images/og-image.png>; rel=preload; as=image; imagesrcset' },
-        ],
-      },
-    ];
   },
   webpack(
     config,

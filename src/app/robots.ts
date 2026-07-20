@@ -6,7 +6,6 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
-        // Googlebot: explicit allow for SEO-priority pages
         userAgent: 'Googlebot',
         allow: [
           '/',
@@ -43,10 +42,8 @@ export default function robots(): MetadataRoute.Robots {
           '/rapport-expedition/',
           '/rapport-kit/',
         ],
-        crawlDelay: 0,
       },
       {
-        // Bingbot: similar rules
         userAgent: 'Bingbot',
         allow: [
           '/',
@@ -83,10 +80,8 @@ export default function robots(): MetadataRoute.Robots {
           '/rapport-expedition/',
           '/rapport-kit/',
         ],
-        crawlDelay: 1,
       },
       {
-        // All other crawlers
         userAgent: '*',
         allow: [
           '/',
@@ -123,10 +118,8 @@ export default function robots(): MetadataRoute.Robots {
           '/rapport-expedition/',
           '/rapport-kit/',
         ],
-        crawlDelay: 2,
       },
     ],
     sitemap: `${base}/sitemap.xml`,
-    host: base,
   };
 }
