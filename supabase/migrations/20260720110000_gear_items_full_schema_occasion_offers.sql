@@ -4,7 +4,7 @@
 
 -- ── PART A: Add missing columns to gear_items ────────────────────────────────
 ALTER TABLE public.gear_items
-  ADD COLUMN IF NOT EXISTS product_id uuid REFERENCES public.products(id),
+  ADD COLUMN IF NOT EXISTS product_id uuid REFERENCES public.shop_products(id),
   ADD COLUMN IF NOT EXISTS source text DEFAULT 'manuel'
     CHECK (source IN ('achat','kit','manuel','occasion')),
   ADD COLUMN IF NOT EXISTS origin_order_id uuid REFERENCES public.orders(id),
