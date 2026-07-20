@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 
 const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
+// Only truly public, indexable routes
 const staticRoutes: Array<{
   url: string;
   priority: number;
@@ -11,10 +12,9 @@ const staticRoutes: Array<{
 }> = [
   { url: '/', priority: 1.0, changeFrequency: 'daily' },
   { url: '/boutique', priority: 0.95, changeFrequency: 'daily' },
-  { url: '/kits', priority: 0.9, changeFrequency: 'weekly' },
   { url: '/pays', priority: 0.85, changeFrequency: 'weekly' },
   { url: '/guides', priority: 0.8, changeFrequency: 'weekly' },
-  { url: '/catalogue', priority: 0.85, changeFrequency: 'daily' },
+  { url: '/blog', priority: 0.8, changeFrequency: 'daily' },
   { url: '/ai-configurator', priority: 0.8, changeFrequency: 'monthly' },
   { url: '/explorer', priority: 0.75, changeFrequency: 'weekly' },
   { url: '/communaute', priority: 0.7, changeFrequency: 'daily' },
@@ -24,6 +24,12 @@ const staticRoutes: Array<{
   { url: '/abonnements', priority: 0.6, changeFrequency: 'monthly' },
   { url: '/pro', priority: 0.6, changeFrequency: 'monthly' },
   { url: '/fidelite', priority: 0.6, changeFrequency: 'monthly' },
+  { url: '/contact', priority: 0.5, changeFrequency: 'monthly' },
+  { url: '/faq', priority: 0.5, changeFrequency: 'monthly' },
+  { url: '/mentions-legales', priority: 0.3, changeFrequency: 'yearly' },
+  { url: '/cgv', priority: 0.3, changeFrequency: 'yearly' },
+  { url: '/politique-confidentialite', priority: 0.3, changeFrequency: 'yearly' },
+  { url: '/cgu', priority: 0.3, changeFrequency: 'yearly' },
 ];
 
 const kitSlugs = ['islande-trek', 'gr20-corse', 'vanlife-europe'];
