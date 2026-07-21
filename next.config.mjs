@@ -30,7 +30,8 @@ config.module.rules.push({
       exclude: [
         /node_modules/,
         /\.next/,
-        /src[\/\\]app[\/\\]page\.tsx$/,
+        /app[\/\\]layout\.tsx$/,
+        /app[\/\\]page\.tsx$/,
         /src[\/\\]app[\/\\]components[\/\\]HomePageContent\.tsx$/,
         /src[\/\\]app[\/\\]components[\/\\]home[\/\\]/,
         /\[id\]/,
