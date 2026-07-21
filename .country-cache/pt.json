@@ -1,0 +1,246 @@
+{
+  "code": "PT",
+  "nom": "République portugaise",
+  "continent": "Europe",
+  "capital": "Lisbonne",
+  "coordonnees": "39.5000° N, 8.0000° O",
+  "fuseau": "UTC+0 (WET/WEST)",
+  "monnaie": "Euro (EUR)",
+  "langues": [
+    "Portugais"
+  ],
+  "population": "10.3 millions hab.",
+  "superficie": "92 212 km²",
+  "danger_global": 2,
+  "danger_details": [
+    {
+      "label": "Sécurité générale",
+      "level": "low",
+      "note": "Le Portugal est un pays sûr. Attention aux pickpockets dans les zones touristiques très fréquentées (Lisbonne, Porto)."
+    },
+    {
+      "label": "Risques naturels",
+      "level": "low",
+      "note": "Risque d'incendies de forêt en été, surtout dans les régions intérieures. Activité sismique mineure possible."
+    },
+    {
+      "label": "Santé",
+      "level": "low",
+      "note": "Bon système de santé. Pas de risques sanitaires particuliers au-delà des précautions habituelles."
+    },
+    {
+      "label": "Zones à éviter",
+      "level": "low",
+      "note": "Pas de zones formellement à éviter. Faire preuve de vigilance habituelle dans les quartiers animés la nuit."
+    }
+  ],
+  "calendrier": [
+    {
+      "month": "Janvier",
+      "short": "Jan",
+      "status": "bad",
+      "temp_min": 8,
+      "temp_max": 15,
+      "rain_mm": 100,
+      "description": "Frais et pluvieux, surtout au nord."
+    },
+    {
+      "month": "Février",
+      "short": "Fév",
+      "status": "bad",
+      "temp_min": 9,
+      "temp_max": 16,
+      "rain_mm": 80,
+      "description": "Encore frais, quelques éclaircies."
+    },
+    {
+      "month": "Mars",
+      "short": "Mar",
+      "status": "medium",
+      "temp_min": 11,
+      "temp_max": 19,
+      "rain_mm": 50,
+      "description": "Début du printemps, températures douces."
+    },
+    {
+      "month": "Avril",
+      "short": "Avr",
+      "status": "good",
+      "temp_min": 12,
+      "temp_max": 20,
+      "rain_mm": 60,
+      "description": "Agréable, idéal pour les visites culturelles."
+    },
+    {
+      "month": "Mai",
+      "short": "Mai",
+      "status": "good",
+      "temp_min": 14,
+      "temp_max": 22,
+      "rain_mm": 40,
+      "description": "Très agréable, ensoleillé et chaud."
+    },
+    {
+      "month": "Juin",
+      "short": "Jun",
+      "status": "good",
+      "temp_min": 17,
+      "temp_max": 26,
+      "rain_mm": 20,
+      "description": "Chaud et ensoleillé, début de la haute saison."
+    },
+    {
+      "month": "Juillet",
+      "short": "Jul",
+      "status": "good",
+      "temp_min": 19,
+      "temp_max": 28,
+      "rain_mm": 10,
+      "description": "Très chaud et sec, idéal pour la plage."
+    },
+    {
+      "month": "Août",
+      "short": "Aoû",
+      "status": "good",
+      "temp_min": 19,
+      "temp_max": 28,
+      "rain_mm": 10,
+      "description": "Pic de chaleur et de fréquentation touristique."
+    },
+    {
+      "month": "Septembre",
+      "short": "Sep",
+      "status": "good",
+      "temp_min": 17,
+      "temp_max": 26,
+      "rain_mm": 30,
+      "description": "Chaud et ensoleillé, moins de foule."
+    },
+    {
+      "month": "Octobre",
+      "short": "Oct",
+      "status": "medium",
+      "temp_min": 14,
+      "temp_max": 22,
+      "rain_mm": 80,
+      "description": "Automne doux, quelques pluies possibles."
+    },
+    {
+      "month": "Novembre",
+      "short": "Nov",
+      "status": "bad",
+      "temp_min": 11,
+      "temp_max": 18,
+      "rain_mm": 100,
+      "description": "Frais et pluvieux, surtout au nord."
+    },
+    {
+      "month": "Décembre",
+      "short": "Déc",
+      "status": "bad",
+      "temp_min": 9,
+      "temp_max": 16,
+      "rain_mm": 100,
+      "description": "Hiver doux mais humide, surtout sur la côte."
+    }
+  ],
+  "infos_pratiques": [
+    {
+      "icon": "IdentificationIcon",
+      "label": "Visa",
+      "value": "Pas de visa requis pour les ressortissants de l'UE pour un séjour de moins de 90 jours. Carte d'identité ou passeport valide."
+    },
+    {
+      "icon": "HeartIcon",
+      "label": "Vaccins",
+      "value": "Aucun vaccin obligatoire. Vérifier les vaccins de routine (ROR, DTP, hépatite B)."
+    },
+    {
+      "icon": "CurrencyEuroIcon",
+      "label": "Monnaie",
+      "value": "Euro (EUR). Taux de change 1 EUR = 1 EUR. Paiement par carte très répandu, distributeurs automatiques nombreux."
+    },
+    {
+      "icon": "BoltIcon",
+      "label": "Prises",
+      "value": "Type F (Schuko) ou C. Voltage 230V, fréquence 50Hz. Adaptateur non nécessaire pour les prises européennes."
+    },
+    {
+      "icon": "BeakerIcon",
+      "label": "Eau",
+      "value": "L'eau du robinet est généralement potable dans les grandes villes et la plupart des régions du Portugal continental."
+    },
+    {
+      "icon": "PhoneIcon",
+      "label": "Urgences",
+      "value": "112 (numéro d'urgence européen unique pour police, ambulance, pompiers)."
+    }
+  ],
+  "lieux": [
+    {
+      "nom": "Lisbonne",
+      "description": "La capitale vibrante, avec ses quartiers historiques (Alfama, Bairro Alto), ses tramways jaunes, la Tour de Belém et le Monastère des Hiéronymites."
+    },
+    {
+      "nom": "Porto",
+      "description": "Célèbre pour son vin, ses ponts emblématiques sur le Douro, le quartier de la Ribeira classé à l'UNESCO et ses caves à vin de Vila Nova de Gaia."
+    },
+    {
+      "nom": "Sintra",
+      "description": "Ville féerique classée à l'UNESCO, abritant des palais magnifiques comme le Palais de Pena, la Quinta da Regaleira et le Château des Maures."
+    },
+    {
+      "nom": "Algarve",
+      "description": "Région côtière du sud, réputée pour ses plages dorées, ses falaises spectaculaires, ses grottes marines et ses stations balnéaires animées."
+    },
+    {
+      "nom": "Vallée du Douro",
+      "description": "Paysage viticole époustouflant, classé à l'UNESCO, où l'on produit le célèbre vin de Porto. Idéal pour des croisières et des dégustations."
+    }
+  ],
+  "kits_recommandes": [
+    {
+      "nom": "Kit Explorateur Urbain Portugal",
+      "poids_g": 8500,
+      "prix_cents": 29900,
+      "slug": "kit-explorateur-urbain-portugal",
+      "description": "Idéal pour découvrir les villes historiques, avec des accessoires pour la marche, la photo et les transports en commun."
+    },
+    {
+      "nom": "Kit Randonnée Côtière Portugal",
+      "poids_g": 5200,
+      "prix_cents": 18900,
+      "slug": "kit-randonnee-cotiere-portugal",
+      "description": "Parfait pour explorer les sentiers côtiers et les plages, incluant protection solaire, gourde et petit sac à dos."
+    },
+    {
+      "nom": "Kit Essentiel Voyageur Portugal",
+      "poids_g": 3100,
+      "prix_cents": 12900,
+      "slug": "kit-essentiel-voyageur-portugal",
+      "description": "Le nécessaire pour tout voyageur, avec adaptateur universel, trousse de premiers secours et petit guide de conversation."
+    }
+  ],
+  "events": [
+    {
+      "mois": "Juin",
+      "titre": "Fêtes de Lisbonne (Santo António)",
+      "type": "festival"
+    },
+    {
+      "mois": "Juin",
+      "titre": "Fêtes de Porto (São João)",
+      "type": "festival"
+    },
+    {
+      "mois": "Juillet-Août",
+      "titre": "Haute saison touristique",
+      "type": "saison"
+    },
+    {
+      "mois": "Novembre-Février",
+      "titre": "Période à éviter si possible pour les plages",
+      "type": "eviter"
+    }
+  ]
+}

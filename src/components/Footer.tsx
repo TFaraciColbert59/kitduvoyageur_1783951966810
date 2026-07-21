@@ -7,25 +7,21 @@ import Icon from '@/components/ui/AppIcon';
 
 const FOOTER_COLS = [
   {
-    title: 'Produits',
+    title: 'Shop',
     links: [
-      { label: 'Catalogue', href: '/catalogue' },
-      { label: 'Kits prêts à partir', href: '/kits' },
-      { label: 'Location matériel', href: '/location' },
-      { label: 'Occasion', href: '/occasion' },
-      { label: 'Enchères', href: '/encheres' },
-      { label: 'Abonnements Box', href: '/abonnements' },
+      { label: 'Tous les produits', href: '/boutique' },
+      { label: 'Kits assemblés', href: '/kits' },
+      { label: 'Occasion vérifiée', href: '/occasion' },
+      { label: 'Abonnements & Box', href: '/abonnements' },
     ],
   },
   {
     title: 'IA & Outils',
     links: [
       { label: 'Configurateur IA', href: '/ai-configurator' },
-      { label: 'Copilote IA', href: '/copilote' },
-      { label: 'Outils voyage', href: '/outils' },
-      { label: 'Recommandations ML', href: '/recommandations' },
-      { label: 'Rapport expédition', href: '/rapport-expedition' },
-      { label: 'Bilan carbone', href: '/carbone' },
+      { label: 'Explorer la carte', href: '/explorer' },
+      { label: 'Outils pratiques', href: '/outils' },
+      { label: 'Espace Pro', href: '/pro' },
     ],
   },
   {
@@ -33,20 +29,17 @@ const FOOTER_COLS = [
     links: [
       { label: 'Toutes les destinations', href: '/pays' },
       { label: 'Guides de voyage', href: '/guides' },
-      { label: 'Inventaire perso', href: '/inventaire' },
-      { label: 'Jumeau 3D', href: '/jumeau-3d' },
-      { label: 'Alertes prix', href: '/alertes' },
+      { label: 'Blog & Conseils', href: '/blog' },
+      { label: 'Programme fidélité', href: '/fidelite' },
     ],
   },
   {
     title: 'Communauté',
     links: [
       { label: 'Forum communauté', href: '/communaute' },
-      { label: 'Experts certifiés', href: '/experts' },
-      { label: 'Gamification', href: '/gamification' },
-      { label: 'Espace Pro', href: '/pro' },
-      { label: 'Ambassadeurs', href: '/ambassadeurs' },
-      { label: 'Programme fidélité', href: '/fidelite' },
+      { label: 'Carnets d\'expédition', href: '/carnets' },
+      { label: 'Contact & Support', href: '/contact' },
+      { label: 'FAQ', href: '/faq' },
     ],
   },
 ];
@@ -63,7 +56,7 @@ export default function Footer() {
   const [langOpen, setLangOpen] = useState(false);
 
   return (
-    <footer className="bg-[#1C2620] text-white/70" role="contentinfo">
+    <footer className="bg-[#1C2620] text-white/70" role="contentinfo" suppressHydrationWarning>
       {/* Top CTA band */}
       <div className="border-b border-white/8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col sm:flex-row items-center justify-between gap-6">
@@ -147,11 +140,17 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-white/30">
             © 2026 Le Kit du Voyageur ·{' '}
-            <Link href="#privacy" className="hover:text-white/60 transition-colors">Confidentialité</Link>
+            <Link href="/politique-confidentialite" className="hover:text-white/60 transition-colors">Confidentialité</Link>
             {' '}·{' '}
-            <Link href="#terms" className="hover:text-white/60 transition-colors">CGU</Link>
+            <Link href="/cgu" className="hover:text-white/60 transition-colors">CGU</Link>
             {' '}·{' '}
-            <Link href="/admin" className="hover:text-white/60 transition-colors">Admin</Link>
+            <Link href="/cgv" className="hover:text-white/60 transition-colors">CGV</Link>
+            {' '}·{' '}
+            <Link href="/cookies" className="hover:text-white/60 transition-colors">Cookies</Link>
+            {' '}·{' '}
+            <Link href="/mentions-legales" className="hover:text-white/60 transition-colors">Mentions légales</Link>
+            {' '}·{' '}
+            <Link href="/contact" className="hover:text-white/60 transition-colors">Contact</Link>
           </p>
 
           <div className="flex items-center gap-3">
@@ -171,7 +170,7 @@ export default function Footer() {
               >
                 <Icon name="GlobeAltIcon" size={12} variant="outline" />
                 {LANGUAGES.find(l => l.code === lang)?.label}
-                <Icon name="ChevronDownIcon" size={10} variant="outline" className={`transition-transform ${langOpen ? 'rotate-180' : ''}`} />
+                <Icon name="ChevronDownIcon" size={10} variant="outline" className={`transition-transform ${langOpen ? 'rotate-180' : ''}`} suppressHydrationWarning />
               </button>
               {langOpen && (
                 <div className="absolute bottom-full right-0 mb-2 bg-[#243028] border border-white/10 rounded-xl shadow-xl overflow-hidden z-50 min-w-[130px]">

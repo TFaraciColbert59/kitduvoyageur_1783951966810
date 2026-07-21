@@ -1,45 +1,53 @@
 import React, { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
-import { Space_Grotesk, Public_Sans, IBM_Plex_Mono } from 'next/font/google';
+import { DM_Sans, Manrope, IBM_Plex_Mono } from 'next/font/google';
 import '../styles/tailwind.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
-import ErrorBoundary from '@/components/ErrorBoundary';
+import ErrorBoundaryWrapper from '@/components/ErrorBoundaryWrapper';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
+import BottomTabBar from '@/components/mobile-nav/BottomTabBar';
+import TopBar from '@/components/mobile-nav/TopBar';
+import InstallPrompt from '@/components/mobile-nav/InstallPrompt';
+import CookieConsentBanner from '@/components/CookieConsentBanner';
+import { getOrganizationSchema, getWebsiteSchema } from '@/lib/seo-utils';
 
 // Only load weights actually used in the app
-const publicSans = Public_Sans({
+const dmSans = DM_Sans({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
   variable: '--font-sans',
   display: 'swap',
-  preload: true,
+  weight: ['300', '400', '500', '600', '700'],
 });
 
-const spaceGrotesk = Space_Grotesk({
+const manrope = Manrope({
   subsets: ['latin'],
-  weight: ['600', '700'],
   variable: '--font-display',
   display: 'swap',
-  preload: true,
+  weight: ['400', '500', '600', '700', '800'],
 });
 
 // Mono font: defer preload — only used for labels/stats, not critical path
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ['latin'],
-  weight: ['400', '500'],
   variable: '--font-mono',
   display: 'swap',
-  preload: false,
+  weight: ['400', '500', '600'],
 });
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
+  colorScheme: 'light dark',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#000000' },
+  ],
 };
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.com';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -49,7 +57,18 @@ export const metadata: Metadata = {
   },
   description:
     'Configurateur IA, équipement outdoor, fiches pays et outils terrain. La plateforme complète du voyageur et de l\'aventurier.',
-  keywords: ['équipement outdoor', 'kit voyage', 'configurateur IA', 'randonnée', 'trekking', 'matériel aventure'],
+  keywords: [
+    'équipement outdoor',
+    'kit voyage',
+    'configurateur IA',
+    'randonnée',
+    'trekking',
+    'matériel aventure',
+    'équipement randonnée',
+    'sac à dos',
+    'tente',
+    'sac de couchage',
+  ],
   authors: [{ name: 'Le Kit du Voyageur', url: siteUrl }],
   creator: 'Le Kit du Voyageur',
   publisher: 'Le Kit du Voyageur',
@@ -71,6 +90,7 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         alt: 'Le Kit du Voyageur — Équipement outdoor intelligent',
+        type: 'image/png',
       },
     ],
   },
@@ -79,9 +99,13 @@ export const metadata: Metadata = {
     title: 'Le Kit du Voyageur — Équipement & Préparation',
     description: 'Configurez, achetez et préparez chaque voyage en un seul endroit.',
     images: ['/assets/images/og-image.png'],
+    creator: '@lekitduvoyageur',
   },
   alternates: {
     canonical: siteUrl,
+    languages: {
+      'fr-FR': siteUrl,
+    },
   },
   robots: {
     index: true,
@@ -94,21 +118,76 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  verification: {
+    google: 'google-site-verification-code', // Replace with actual code
+  },
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const organizationSchema = getOrganizationSchema(siteUrl);
+  const websiteSchema = getWebsiteSchema(siteUrl);
+
   return (
     <html
       lang="fr"
-      className={`${publicSans.variable} ${spaceGrotesk.variable} ${ibmPlexMono.variable}`}
+      suppressHydrationWarning
+      className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable}`}
     >
-      <body className={publicSans.className}>
+      <head>
+        {/* Preload critical images for LCP optimization */}
+        <link
+          rel="preload"
+          as="image"
+          href="/assets/images/og-image.png"
+          type="image/png"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="/assets/images/app_logo.png"
+          type="image/png"
+        />
+
+        {/* DNS prefetch for external domains */}
+        <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+
+        {/* Preconnect to critical third-party origins */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+
+        {/* JSON-LD Structured Data */}
+        <script
+          suppressHydrationWarning
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationSchema),
+          }}
+        />
+        <script
+          suppressHydrationWarning
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(websiteSchema),
+          }}
+        />
+
+        {/* Rocket analytics scripts */}
+
+        <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fkitduvoyag4153back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.19" />
+        <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.2" /></head>
+      <body className={dmSans.className}>
         <AuthProvider>
           <WishlistProvider>
             <ToastProvider>
-              <ErrorBoundary>
+              <ErrorBoundaryWrapper>
                 <Suspense fallback={null}>
                   <GoogleAnalytics />
                 </Suspense>
@@ -119,14 +198,17 @@ export default function RootLayout({
                 >
                   Aller au contenu principal
                 </a>
-                {children}
-              </ErrorBoundary>
+                {/* Mobile navigation — hidden on desktop (md+) */}
+                <TopBar />
+                <main id="main-content">{children}</main>
+                <BottomTabBar />
+                <InstallPrompt />
+                <CookieConsentBanner />
+              </ErrorBoundaryWrapper>
             </ToastProvider>
           </WishlistProvider>
         </AuthProvider>
-
-        <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fkitduvoyag4153back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.19" />
-        <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.2" /></body>
+      </body>
     </html>
   );
 }

@@ -300,78 +300,22 @@ function OverviewSection() {
 
 // ─── Section: Products ─────────────────────────────────────────────────────────
 function ProductsSection() {
-  const [search, setSearch] = useState('');
-  const [products, setProducts] = useState<{ id: string; name: string; brand: string; category: string; price_eur: number; weight_g: number; stock: number; slug: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const supabase = useMemo(() => createClient(), []);
-
-  useEffect(() => {
-    supabase.from('products').select('id, name, brand, category, price_eur, weight_g, stock, slug').order('created_at', { ascending: false }).limit(50).then(({ data }) => {
-      setProducts(data ?? []);
-      setLoading(false);
-    });
-  }, [supabase]);
-
-  const filtered = products.filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.brand?.toLowerCase().includes(search.toLowerCase()));
-
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="flex-1 relative">
-          <Icon name="MagnifyingGlassIcon" size={14} variant="outline" className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-          <input
-            type="text"
-            placeholder="Rechercher un produit..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full bg-[#1E2B25] border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#E4501C]/50 transition-colors"
-          />
+      <div className="bg-[#1E2B25] border border-white/8 rounded-xl p-6 text-center">
+        <div className="w-12 h-12 rounded-2xl bg-[#E4501C]/15 flex items-center justify-center mx-auto mb-4">
+          <Icon name="ArchiveBoxIcon" size={22} variant="outline" className="text-[#E4501C]" />
         </div>
-        <span className="text-xs text-white/30 font-mono px-3">{products.length} produits</span>
+        <h3 className="font-semibold text-white mb-2">Gestion complète des produits</h3>
+        <p className="text-sm text-white/40 mb-5 max-w-sm mx-auto">
+          Vue liste, formulaire 29 champs, IA Gemini, médias, relations, import/export CSV, logs d&apos;audit.
+        </p>
+        <Link href="/admin/produits"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#E4501C] text-white text-sm font-medium hover:bg-[#cc3d10] transition-all">
+          <Icon name="ArrowTopRightOnSquareIcon" size={14} variant="outline" />
+          Ouvrir la gestion produits
+        </Link>
       </div>
-
-      {loading ? (
-        <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="bg-[#1E2B25] border border-white/8 rounded-xl h-12 animate-pulse" />)}</div>
-      ) : (
-        <div className="bg-[#1E2B25] border border-white/8 rounded-xl overflow-hidden">
-          <table className="w-full text-xs">
-            <thead className="bg-white/3 border-b border-white/8">
-              <tr>
-                {['Produit', 'Marque', 'Prix', 'Poids', 'Stock', 'Actions'].map(h => (
-                  <th key={h} className="text-left font-mono text-white/30 uppercase tracking-wider px-4 py-3" style={{ fontFamily: 'var(--font-mono)' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {filtered.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-white/30">Aucun produit trouvé</td></tr>
-              ) : (
-                filtered.map(p => (
-                  <tr key={p.id} className="hover:bg-white/3 transition-colors">
-                    <td className="px-4 py-3">
-                      <p className="text-sm font-medium text-white/85">{p.name}</p>
-                      <p className="text-white/30 mt-0.5">{p.category}</p>
-                    </td>
-                    <td className="px-4 py-3 text-white/40">{p.brand || '—'}</td>
-                    <td className="px-4 py-3 font-mono font-700 text-[#E4501C]" style={{ fontFamily: 'var(--font-mono)' }}>{p.price_eur}€</td>
-                    <td className="px-4 py-3 font-mono text-white/50" style={{ fontFamily: 'var(--font-mono)' }}>{p.weight_g}g</td>
-                    <td className="px-4 py-3">
-                      <span className={`font-mono font-700 ${(p.stock ?? 0) === 0 ? 'text-red-400' : (p.stock ?? 0) < 10 ? 'text-amber-400' : 'text-white/70'}`} style={{ fontFamily: 'var(--font-mono)' }}>
-                        {(p.stock ?? 0) === 0 ? 'Rupture' : p.stock}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Link href={`/produit/${p.slug}`} className="p-1.5 rounded-lg hover:bg-white/8 text-white/40 hover:text-white transition-all inline-block">
-                        <Icon name="EyeIcon" size={13} variant="outline" />
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
     </div>
   );
 }
@@ -954,6 +898,7 @@ function CategoriesSection() {
 export default function AdminPage() {
   const [activeSection, setActiveSection] = useState<AdminSection>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const groups = [...new Set(SIDEBAR_ITEMS.map(i => i.group))];
 
@@ -974,9 +919,20 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-[#151F1A] text-white flex" style={{ paddingTop: 0 }}>
+      {/* Mobile sidebar overlay */}
+      {mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 lg:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Fixed Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full bg-[#1C2620] border-r border-white/8 flex flex-col z-40 transition-all duration-300 ${sidebarCollapsed ? 'w-14' : 'w-56'}`}
+        className={`fixed top-0 left-0 h-full bg-[#1C2620] border-r border-white/8 flex flex-col z-50 transition-all duration-300
+          ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          ${sidebarCollapsed ? 'lg:w-14' : 'lg:w-56'} w-64`}
       >
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-4 py-4 border-b border-white/8 flex-shrink-0">
@@ -1048,19 +1004,29 @@ export default function AdminPage() {
       </aside>
 
       {/* Main content */}
-      <main className={`flex-1 min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'ml-14' : 'ml-56'}`}>
+      <main className={`flex-1 min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-14' : 'lg:ml-56'} ml-0`}>
         {/* Top bar */}
-        <div className="sticky top-0 z-30 bg-[#151F1A]/95 backdrop-blur-md border-b border-white/6 px-6 py-3.5 flex items-center justify-between">
-          <div>
-            <h1 className="font-display font-700 text-white text-base" style={{ fontFamily: 'var(--font-display)' }}>
-              {SECTION_TITLES[activeSection]}
-            </h1>
-            <p className="text-[10px] font-mono text-white/25 mt-0.5" style={{ fontFamily: 'var(--font-mono)' }}>
-              Admin · Le Kit du Voyageur
-            </p>
+        <div className="sticky top-0 z-30 bg-[#151F1A]/95 backdrop-blur-md border-b border-white/6 px-4 sm:px-6 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Mobile menu toggle */}
+            <button
+              onClick={() => setMobileSidebarOpen(true)}
+              className="lg:hidden p-2 rounded-xl bg-white/8 text-white/60 hover:text-white transition-colors"
+              aria-label="Ouvrir le menu"
+            >
+              <Icon name="Bars3Icon" size={18} variant="outline" />
+            </button>
+            <div>
+              <h1 className="font-display font-700 text-white text-base" style={{ fontFamily: 'var(--font-display)' }}>
+                {SECTION_TITLES[activeSection]}
+              </h1>
+              <p className="text-[10px] font-mono text-white/25 mt-0.5 hidden sm:block" style={{ fontFamily: 'var(--font-mono)' }}>
+                Admin · Le Kit du Voyageur
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
+            <div className="hidden sm:flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-[10px] font-mono text-white/30" style={{ fontFamily: 'var(--font-mono)' }}>Live</span>
             </div>
@@ -1071,7 +1037,7 @@ export default function AdminPage() {
         </div>
 
         {/* Section content */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {activeSection === 'overview' && <OverviewSection />}
           {activeSection === 'products' && <ProductsSection />}
           {activeSection === 'kits' && <KitsSection />}

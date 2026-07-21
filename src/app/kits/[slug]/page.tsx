@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import KitDetailPage from './KitDetailPage';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.com';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
 const KIT_META: Record<string, { nom: string; description: string; destination: string }> = {
   'islande-trek': {
@@ -59,20 +59,68 @@ export async function generateMetadata({
         },
       ],
     },
-    other: {
-      'script:ld+json': JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'Product',
-        name: meta.nom,
-        description: meta.description,
-        brand: {
-          '@type': 'Brand',
-          name: 'Le Kit du Voyageur',
-        },
-        url: `${siteUrl}/kits/${slug}`,
-      }),
-    },
   };
 }
 
-export default KitDetailPage;
+export default async function KitDetailPageWrapper({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const meta = KIT_META[slug];
+
+  if (!meta) {
+    return <KitDetailPage params={params} />;
+  }
+
+  const webPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: meta.nom,
+    description: meta.description,
+    url: `${siteUrl}/kits/${slug}`,
+    isPartOf: {
+      '@type': 'WebSite',
+      name: 'Le Kit du Voyageur',
+      url: siteUrl,
+    },
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Accueil',
+        item: siteUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Kits',
+        item: `${siteUrl}/kits`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: meta.nom,
+        item: `${siteUrl}/kits/${slug}`,
+      },
+    ],
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
+        suppressHydrationWarning
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        suppressHydrationWarning
+      />
+      <KitDetailPage params={params} />
+    </>
+  );
+}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
@@ -12,7 +13,7 @@ interface Club {
   id: string;
   slug: string;
   name: string;
-  type: 'activité' | 'pays';
+  type: 'activite' | 'pays';
   emoji: string;
   description: string;
   cover_color: string;
@@ -80,7 +81,7 @@ interface ClubEvent {
 
 interface ClubForm {
   name: string;
-  type: 'activité' | 'pays';
+  type: 'activite' | 'pays';
   emoji: string;
   description: string;
   category: string;
@@ -90,7 +91,7 @@ interface ClubForm {
 
 const EMPTY_CLUB_FORM: ClubForm = {
   name: '',
-  type: 'activité',
+  type: 'activite',
   emoji: '🏕️',
   description: '',
   category: '',
@@ -148,7 +149,7 @@ function ClubFormModal({
           <div>
             <label className="text-xs font-700 text-muted-foreground uppercase tracking-wider block mb-2">Type</label>
             <div className="grid grid-cols-2 gap-2">
-              {[{ v: 'activité', l: '🎯 Activité' }, { v: 'pays', l: '🌍 Destination' }].map((opt) => (
+              {[{ v: 'activite', l: '🎯 Activité' }, { v: 'pays', l: '🌍 Destination' }].map((opt) => (
                 <button key={opt.v} type="button" onClick={() => set('type', opt.v)} className={`py-2 px-3 rounded-xl border-2 text-sm font-600 transition-all ${form.type === opt.v ? 'border-primary bg-primary/5 text-primary' : 'border-border text-muted-foreground hover:border-primary/50'}`}>{opt.l}</button>
               ))}
             </div>
@@ -345,7 +346,7 @@ function ClubDetailModal({
         </div>
 
         {/* Tabs */}
-        <div className="flex overflow-x-auto border-b border-border bg-card">
+        <div className="flex overflow-x-auto border-b border-border bg-card scrollbar-hide">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -597,7 +598,7 @@ function ClubCard({
                 {club.is_verified && <span className="text-[10px] bg-white/20 text-white px-1.5 py-0.5 rounded-full font-700">✓</span>}
               </div>
               <span className="text-white/60 text-[10px] uppercase tracking-wider font-600">
-                {club.type === 'activité' ? 'Club activité' : 'Club destination'}
+                {club.type === 'activite' ? 'Club activité' : 'Club destination'}
                 {club.privacy !== 'open' && ` · ${club.privacy === 'closed' ? '🔒 Fermé' : '🕵️ Secret'}`}
               </span>
             </div>
@@ -641,12 +642,21 @@ function ClubCard({
           </div>
         )}
 
-        <button
-          onClick={() => onOpenDetail(club)}
-          className="btn-secondary justify-center py-2 text-sm mt-auto"
-        >
-          Accéder au club
-        </button>
+        <div className="flex gap-2 mt-auto">
+          <Link
+            href={`/clubs/${club.id}`}
+            className="flex-1 btn-secondary justify-center py-2 text-sm text-center"
+          >
+            Accéder au club
+          </Link>
+          <button
+            onClick={() => onOpenDetail(club)}
+            className="px-3 py-2 border border-border rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            title="Aperçu rapide"
+          >
+            <Icon name="EyeIcon" size={14} />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -654,7 +664,7 @@ function ClubCard({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function ClubsPage() {
-  const [activeTab, setActiveTab] = useState<'activité' | 'pays' | 'mes-clubs'>('activité');
+  const [activeTab, setActiveTab] = useState<'activite' | 'pays' | 'mes-clubs'>('activite');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editClub, setEditClub] = useState<Club | null>(null);
   const [deleteClub, setDeleteClub] = useState<Club | null>(null);
@@ -734,7 +744,7 @@ export default function ClubsPage() {
     setSaving(true);
     try {
       const colorMap: Record<string, string> = {
-        'activité': 'from-emerald-600 to-teal-700',
+        'activite': 'from-emerald-600 to-teal-700',
         'pays': 'from-blue-600 to-indigo-700',
       };
       const payload = {
@@ -783,7 +793,7 @@ export default function ClubsPage() {
     await loadClubs();
   };
 
-  const activityClubs = clubs.filter((c) => c.type === 'activité');
+  const activityClubs = clubs.filter((c) => c.type === 'activite');
   const countryClubs = clubs.filter((c) => c.type === 'pays');
   const myClubs = clubs.filter((c) => c.is_member);
 
@@ -797,7 +807,7 @@ export default function ClubsPage() {
     privacy: editClub.privacy,
   } : undefined;
 
-  const displayedClubs = activeTab === 'activité' ? activityClubs : activeTab === 'pays' ? countryClubs : myClubs;
+  const displayedClubs = activeTab === 'activite' ? activityClubs : activeTab === 'pays' ? countryClubs : myClubs;
 
   return (
     <main className="min-h-screen bg-background">
@@ -836,7 +846,7 @@ export default function ClubsPage() {
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex gap-0">
               {[
-                { id: 'activité', label: 'Clubs activité', icon: 'BoltIcon', count: activityClubs.length },
+                { id: 'activite', label: 'Clubs activité', icon: 'BoltIcon', count: activityClubs.length },
                 { id: 'pays', label: 'Clubs destination', icon: 'GlobeAltIcon', count: countryClubs.length },
                 { id: 'mes-clubs', label: 'Mes clubs', icon: 'UserGroupIcon', count: myClubs.length },
               ].map((tab) => (
@@ -866,13 +876,32 @@ export default function ClubsPage() {
             <div className="text-center py-20">
               <div className="text-5xl mb-4">👥</div>
               <p className="font-display font-700 text-foreground text-xl mb-2">
-                {activeTab === 'mes-clubs' ? 'Aucun club rejoint' : 'Aucun club'}
+                {activeTab === 'mes-clubs' ? 'Aucun club rejoint' : 'Aucun club pour l\'instant'}
               </p>
               <p className="text-muted-foreground text-sm mb-6">
-                {activeTab === 'mes-clubs' ? 'Rejoignez un club pour accéder à son fil dédié.' : 'Soyez le premier à créer un club !'}
+                {activeTab === 'mes-clubs' ?'Rejoignez un club pour accéder à son fil dédié, ses événements et ses défis.' :'Soyez le premier à créer un club et rassemblez votre communauté !'}
               </p>
-              {!user && activeTab === 'mes-clubs' && (
-                <p className="text-sm text-muted-foreground">Connectez-vous pour voir vos clubs.</p>
+              {activeTab !== 'mes-clubs' && (
+                <button
+                  onClick={() => { setEditClub(null); setShowCreateModal(true); }}
+                  className="btn-primary inline-flex items-center gap-2 px-6 py-3"
+                >
+                  <Icon name="PlusIcon" size={16} />
+                  Créer le premier club
+                </button>
+              )}
+              {activeTab === 'mes-clubs' && !user && (
+                <a href="/connexion" className="btn-primary inline-flex items-center gap-2 px-6 py-3">
+                  Se connecter pour rejoindre un club
+                </a>
+              )}
+              {activeTab === 'mes-clubs' && user && (
+                <button
+                  onClick={() => setActiveTab('activite')}
+                  className="btn-secondary inline-flex items-center gap-2 px-6 py-3"
+                >
+                  Parcourir les clubs
+                </button>
               )}
             </div>
           ) : (

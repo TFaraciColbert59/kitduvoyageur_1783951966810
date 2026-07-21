@@ -63,7 +63,195 @@ function TrustRing({ score, size = 36 }: { score: number; size?: number }) {
   );
 }
 
-function EventCard({ event, onToggleRegister }: { event: Event; onToggleRegister: (eventId: string, isRegistered: boolean) => void }) {
+// ─── Event Detail Modal ───────────────────────────────────────────────────────
+function EventDetailModal({
+  event,
+  onClose,
+  onToggleRegister,
+}: {
+  event: Event | null;
+  onClose: () => void;
+  onToggleRegister: (eventId: string, isRegistered: boolean) => void;
+}) {
+  const [registering, setRegistering] = useState(false);
+  const [showKitty, setShowKitty] = useState(false);
+
+  if (!event) return null;
+
+  const cfg = typeConfig[event.type] ?? { color: 'bg-gray-100 text-gray-700', label: event.type };
+  const kittyPct = event.kitty_goal > 0 ? Math.round((event.shared_kitty / event.kitty_goal) * 100) : 0;
+  const spotsLeft = event.max_participants - event.current_participants;
+
+  const formatDate = (d: string) => {
+    const date = new Date(d);
+    return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
+  const handleToggle = async () => {
+    setRegistering(true);
+    await onToggleRegister(event.id, !!event.is_registered);
+    setRegistering(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-card border border-border rounded-2xl w-full max-w-2xl my-4 overflow-hidden">
+        {/* Cover */}
+        <div className="relative h-56 overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={event.cover_image} alt={event.cover_alt} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+          <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-black/40 backdrop-blur-sm rounded-xl hover:bg-black/60 transition-colors">
+            <Icon name="XMarkIcon" size={18} className="text-white" />
+          </button>
+          <div className="absolute top-4 left-4 flex gap-2">
+            <span className={`text-[10px] font-700 px-2.5 py-1 rounded-full ${cfg.color}`}>{event.emoji} {cfg.label}</span>
+            {event.status === 'full' && <span className="text-[10px] font-700 px-2.5 py-1 rounded-full bg-red-100 text-red-700">Complet</span>}
+          </div>
+          <div className="absolute bottom-4 left-5 right-5">
+            <h2 className="font-display font-800 text-white text-xl leading-tight mb-1">{event.title}</h2>
+            <p className="text-white/60 text-sm">{event.location} · {event.duration}</p>
+          </div>
+        </div>
+
+        {/* Scrollable content */}
+        <div className="max-h-[65vh] overflow-y-auto">
+          {/* Key stats */}
+          <div className="grid grid-cols-4 divide-x divide-border border-b border-border">
+            {[
+              { label: 'Date', value: event.event_date ? new Date(event.event_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—', icon: '📅' },
+              { label: 'Durée', value: event.duration || '—', icon: '⏱️' },
+              { label: 'Places', value: `${event.current_participants}/${event.max_participants}`, icon: '👥' },
+              { label: 'Cagnotte', value: `${event.shared_kitty}€`, icon: '💰' },
+            ].map((s) => (
+              <div key={s.label} className="p-4 text-center">
+                <p className="text-base mb-0.5">{s.icon}</p>
+                <p className="font-display font-700 text-foreground text-sm">{s.value}</p>
+                <p className="text-[10px] text-muted-foreground">{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="p-6 space-y-5">
+            {/* Organizer */}
+            {event.organizer && (
+              <div className="flex items-center gap-4 p-4 bg-background rounded-xl border border-border">
+                <div className="w-12 h-12 rounded-xl bg-secondary/20 text-secondary flex items-center justify-center text-lg font-700 flex-shrink-0">
+                  {event.organizer.full_name?.slice(0, 2).toUpperCase() ?? 'OR'}
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground mb-0.5">Organisateur</p>
+                  <p className="font-700 text-foreground">{event.organizer.full_name}</p>
+                  <p className="text-xs text-muted-foreground">Trust Score minimum requis : {event.min_trust_to_organize}</p>
+                </div>
+                <div className="flex flex-col items-center">
+                  <TrustRing score={event.organizer.trust_score ?? 70} size={48} />
+                  <p className="text-[9px] text-muted-foreground mt-1">Trust Score</p>
+                </div>
+              </div>
+            )}
+
+            {/* Date & location */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-4 bg-background rounded-xl border border-border">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600 mb-1.5">📅 Date</p>
+                <p className="font-700 text-foreground text-sm">{event.event_date ? formatDate(event.event_date) : '—'}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{event.duration}</p>
+              </div>
+              <div className="p-4 bg-background rounded-xl border border-border">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600 mb-1.5">📍 Lieu</p>
+                <p className="font-700 text-foreground text-sm">{event.location}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{event.country}</p>
+              </div>
+            </div>
+
+            {/* Spots */}
+            <div className="p-4 bg-background rounded-xl border border-border">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600">Places disponibles</p>
+                <span className={`text-xs font-700 ${spotsLeft <= 2 ? 'text-red-500' : 'text-emerald-600'}`}>
+                  {event.status === 'full' ? 'Complet' : `${spotsLeft} place${spotsLeft > 1 ? 's' : ''} restante${spotsLeft > 1 ? 's' : ''}`}
+                </span>
+              </div>
+              <div className="h-2 bg-border rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${event.current_participants / event.max_participants >= 0.9 ? 'bg-red-500' : 'bg-emerald-500'}`}
+                  style={{ width: `${(event.current_participants / event.max_participants) * 100}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">{event.current_participants} / {event.max_participants} participants</p>
+            </div>
+
+            {/* Description */}
+            {event.description && (
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600 mb-2">Description</p>
+                <p className="text-sm text-foreground leading-relaxed">{event.description}</p>
+              </div>
+            )}
+
+            {/* Kitty */}
+            <div>
+              <button
+                onClick={() => setShowKitty((v) => !v)}
+                className="w-full flex items-center justify-between p-4 bg-background rounded-xl border border-border hover:border-primary/30 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Icon name="BanknotesIcon" size={16} className="text-primary" />
+                  <span className="font-600 text-foreground">Cagnotte groupe</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-700 text-foreground">{event.shared_kitty}€ / {event.kitty_goal}€</span>
+                  <Icon name={showKitty ? 'ChevronUpIcon' : 'ChevronDownIcon'} size={14} className="text-muted-foreground" />
+                </div>
+              </button>
+              <div className="mt-2 px-1">
+                <div className="weight-gauge">
+                  <div className="weight-gauge-fill" style={{ width: `${kittyPct}%` }} />
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">{kittyPct}% collecté</p>
+              </div>
+              {showKitty && event.expenses && event.expenses.length > 0 && (
+                <div className="mt-3 space-y-2 p-4 bg-background rounded-xl border border-border">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600 mb-2">Détail des dépenses</p>
+                  {event.expenses.map((exp) => (
+                    <div key={exp.id} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${exp.paid ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                        <span className="text-foreground">{exp.label}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-700 text-foreground">{exp.amount}€</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${exp.paid ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                          {exp.paid ? 'Payé' : 'En attente'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* CTA */}
+            <button
+              onClick={handleToggle}
+              disabled={registering || (event.status === 'full' && !event.is_registered)}
+              className={`w-full py-3 rounded-xl text-sm font-700 transition-all ${
+                event.status === 'full' && !event.is_registered ?'bg-muted text-muted-foreground cursor-not-allowed'
+                  : event.is_registered
+                  ? 'bg-secondary/10 text-secondary border border-secondary/30' :'btn-primary justify-center'
+              }`}
+            >
+              {registering ? '...' : event.status === 'full' && !event.is_registered ? "Complet — Liste d'attente" : event.is_registered ? "✓ Inscrit — Se désinscrire" : "S'inscrire à la sortie"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; onToggleRegister: (eventId: string, isRegistered: boolean) => void; onViewDetail: (event: Event) => void }) {
   const [showKitty, setShowKitty] = useState(false);
   const [registering, setRegistering] = useState(false);
   const cfg = typeConfig[event.type] ?? { color: 'bg-gray-100 text-gray-700', label: event.type };
@@ -84,9 +272,9 @@ function EventCard({ event, onToggleRegister }: { event: Event; onToggleRegister
 
   return (
     <div className="topo-card overflow-hidden">
-      <div className="relative aspect-[16/7] overflow-hidden">
+      <button onClick={() => onViewDetail(event)} className="w-full relative aspect-[16/7] overflow-hidden block">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={event.cover_image} alt={event.cover_alt} className="w-full h-full object-cover" />
+        <img src={event.cover_image} alt={event.cover_alt} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
         <div className="absolute top-3 left-3 flex items-center gap-2">
           <span className={`text-[10px] font-700 px-2 py-0.5 rounded-full ${cfg.color}`}>
@@ -100,7 +288,13 @@ function EventCard({ event, onToggleRegister }: { event: Event; onToggleRegister
           <h3 className="font-display font-700 text-white text-base leading-tight">{event.title}</h3>
           <p className="text-white/60 text-xs mt-1">{event.location} · {event.duration}</p>
         </div>
-      </div>
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-2">
+            <Icon name="EyeIcon" size={16} className="text-white" />
+            <span className="text-white text-sm font-600">Voir les détails</span>
+          </div>
+        </div>
+      </button>
 
       <div className="p-5">
         {event.organizer && (
@@ -119,7 +313,7 @@ function EventCard({ event, onToggleRegister }: { event: Event; onToggleRegister
           </div>
         )}
 
-        <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{event.description}</p>
+        <p className="text-sm text-muted-foreground mb-4 leading-relaxed line-clamp-2">{event.description}</p>
 
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="bg-background rounded-xl p-3 border border-border">
@@ -177,17 +371,26 @@ function EventCard({ event, onToggleRegister }: { event: Event; onToggleRegister
           )}
         </div>
 
-        <button
-          onClick={handleToggle}
-          disabled={registering || (event.status === 'full' && !event.is_registered)}
-          className={`w-full py-2.5 rounded-xl text-sm font-700 transition-all ${
-            event.status === 'full' && !event.is_registered ?'bg-muted text-muted-foreground cursor-not-allowed'
-              : event.is_registered
-              ? 'bg-secondary/10 text-secondary border border-secondary/30' :'btn-primary justify-center'
-          }`}
-        >
-          {registering ? '...' : event.status === 'full' && !event.is_registered ? "Complet — Liste d'attente" : event.is_registered ? "✓ Inscrit — Se désinscrire" : "S'inscrire à la sortie"}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => onViewDetail(event)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-600 border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all"
+          >
+            <Icon name="EyeIcon" size={14} />
+            Détails
+          </button>
+          <button
+            onClick={handleToggle}
+            disabled={registering || (event.status === 'full' && !event.is_registered)}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-700 transition-all ${
+              event.status === 'full' && !event.is_registered ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                : event.is_registered
+                ? 'bg-secondary/10 text-secondary border border-secondary/30' :'btn-primary justify-center'
+            }`}
+          >
+            {registering ? '...' : event.status === 'full' && !event.is_registered ? "Complet" : event.is_registered ? "✓ Inscrit" : "S'inscrire"}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -200,6 +403,7 @@ export default function EvenementsPage() {
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [detailEvent, setDetailEvent] = useState<Event | null>(null);
   const [createForm, setCreateForm] = useState({
     title: '', type: 'rando', emoji: '🥾', event_date: '', duration: '', location: '', country: 'France',
     max_participants: 10, description: '', cover_image: '', kitty_goal: 0,
@@ -315,7 +519,7 @@ export default function EvenementsPage() {
 
         <section className="sticky top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border">
           <div className="max-w-7xl mx-auto px-4">
-            <div className="flex items-center gap-1 py-3 overflow-x-auto">
+            <div className="flex items-center gap-1 py-3 overflow-x-auto scrollbar-hide">
               {[
                 { id: 'all', label: 'Toutes les sorties' },
                 { id: 'rando', label: '🥾 Randonnée' },
@@ -356,7 +560,7 @@ export default function EvenementsPage() {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {filtered.map((e) => <EventCard key={e.id} event={e} onToggleRegister={handleToggleRegister} />)}
+                  {filtered.map((e) => <EventCard key={e.id} event={e} onToggleRegister={handleToggleRegister} onViewDetail={(event) => setDetailEvent(event)} />)}
                 </div>
               )}
             </div>
@@ -464,6 +668,16 @@ export default function EvenementsPage() {
           </div>
         </div>
       )}
+
+      {/* Event Detail Modal */}
+      <EventDetailModal
+        event={detailEvent}
+        onClose={() => setDetailEvent(null)}
+        onToggleRegister={(eventId, isRegistered) => {
+          handleToggleRegister(eventId, isRegistered);
+          setDetailEvent((prev) => prev ? { ...prev, is_registered: !isRegistered, current_participants: isRegistered ? prev.current_participants - 1 : prev.current_participants + 1 } : null);
+        }}
+      />
 
       <Footer />
     </main>

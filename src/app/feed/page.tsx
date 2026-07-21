@@ -16,6 +16,7 @@ interface GearUsed {
 interface JournalEntry {
   id: string;
   author: string;
+  authorId: string;
   authorAvatar: string;
   authorTrustScore: number;
   authorLevel: 'débutant' | 'confirmé' | 'expert' | 'ambassadeur';
@@ -51,6 +52,7 @@ const JOURNALS: JournalEntry[] = [
 {
   id: 'j1',
   author: 'Thomas Vernet',
+  authorId: 'fake-author-1',
   authorAvatar: 'TV',
   authorTrustScore: 94,
   authorLevel: 'ambassadeur',
@@ -84,6 +86,7 @@ const JOURNALS: JournalEntry[] = [
 {
   id: 'j2',
   author: 'Camille Rousseau',
+  authorId: 'fake-author-2',
   authorAvatar: 'CR',
   authorTrustScore: 87,
   authorLevel: 'expert',
@@ -117,6 +120,7 @@ const JOURNALS: JournalEntry[] = [
 {
   id: 'j3',
   author: 'Erik Lindström',
+  authorId: 'fake-author-3',
   authorAvatar: 'EL',
   authorTrustScore: 79,
   authorLevel: 'expert',
@@ -239,12 +243,12 @@ function JournalCard({ journal }: {journal: JournalEntry;}) {
       <div className="p-5">
         {/* Author */}
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-xl bg-secondary text-white flex items-center justify-center text-sm font-700 flex-shrink-0">
+          <Link href={`/profil/${journal.authorId}`} className="w-9 h-9 rounded-xl bg-secondary text-white flex items-center justify-center text-sm font-700 flex-shrink-0 hover:opacity-80 transition-opacity">
             {journal.authorAvatar}
-          </div>
+          </Link>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-600 text-sm text-foreground">{journal.author}</span>
+              <Link href={`/profil/${journal.authorId}`} className="font-600 text-sm text-foreground hover:text-primary transition-colors">{journal.author}</Link>
               <span className={`text-[10px] font-600 px-1.5 py-0.5 rounded-full ${lvl.color}`}>
                 {lvl.icon} {journal.authorLevel}
               </span>

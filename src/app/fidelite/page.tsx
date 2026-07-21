@@ -192,7 +192,7 @@ export default function FidelitePage() {
         </section>
 
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="flex gap-2 mb-6 border-b border-border pb-4 overflow-x-auto">
+          <div className="flex gap-2 mb-6 border-b border-border pb-4 overflow-x-auto scrollbar-hide">
             {[
               { id: 'overview', label: "Vue d'ensemble", icon: 'HomeIcon' },
               { id: 'rewards', label: 'Récompenses', icon: 'GiftIcon' },

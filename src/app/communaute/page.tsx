@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type MainTab = 'feed' | 'profils' | 'qa' | 'ama';
+type MainTab = 'feed' | 'profils' | 'groupes' | 'qa' | 'ama';
 
 interface CommunityPost {
   id: string;
@@ -313,7 +313,20 @@ function FeedTab() {
       const { data: likes } = await supabase.from('post_likes').select('post_id').eq('user_id', user.id);
       likedIds = likes?.map((l) => l.post_id) ?? [];
     }
-    setPosts((data ?? []).map((p) => ({ ...p, user_liked: likedIds.includes(p.id) })));
+    // Filter out spam/test posts: content must be at least 20 chars and not look like keyboard mashing
+    const filtered = (data ?? []).filter((p) => {
+      const content = (p.content ?? '').trim();
+      const title = (p.title ?? '').trim();
+      if (content.length < 20) return false;
+      // Detect keyboard mashing: high ratio of repeated chars or no spaces in long strings
+      const hasNoSpaces = content.length > 15 && !content.includes(' ');
+      if (hasNoSpaces) return false;
+      // Detect test/spam titles
+      const spamPatterns = /^(test|spam|ezf|aaa|bbb|xxx|zzz|asdf|qwerty)/i;
+      if (spamPatterns.test(title) || spamPatterns.test(content)) return false;
+      return true;
+    });
+    setPosts(filtered.map((p) => ({ ...p, user_liked: likedIds.includes(p.id) })));
     setLoading(false);
   }, [supabase, user, feedFilter]);
 
@@ -427,12 +440,12 @@ function FeedTab() {
             <div key={post.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4">
               {/* Author */}
               <div className="flex items-start gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-[#E4501C]/20 flex items-center justify-center font-700 text-[#E4501C] flex-shrink-0">
+                <Link href={`/profil/${post.author_id}`} className="w-10 h-10 rounded-xl bg-[#E4501C]/20 flex items-center justify-center font-700 text-[#E4501C] flex-shrink-0 hover:bg-[#E4501C]/30 transition-colors">
                   {post.author?.full_name?.[0] ?? '?'}
-                </div>
+                </Link>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-700 text-[#1C2620] text-sm">{post.author?.full_name ?? 'Anonyme'}</p>
+                    <Link href={`/profil/${post.author_id}`} className="font-700 text-[#1C2620] text-sm hover:text-[#E4501C] transition-colors">{post.author?.full_name ?? 'Anonyme'}</Link>
                     <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${lvl.color}`}>{lvl.icon} {post.author?.loyalty_level}</span>
                     <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${typeCfg.color}`}>{typeCfg.emoji} {typeCfg.label}</span>
                     {post.is_trending && <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-700">🔥 Trending</span>}
@@ -1047,6 +1060,186 @@ function AMATab() {
   );
 }
 
+// ─── Groups Tab ───────────────────────────────────────────────────────────────
+function GroupesTab() {
+  const [publicGroups, setPublicGroups] = useState<{ id: string; name: string; destination: string; theme: string; visibility: string; group_level: number; optimization_score: number; max_members: number; budget_target: number; departure_date: string | null; member_count?: number; owner?: { full_name: string } | null }[]>([]);
+  const [myGroupIds, setMyGroupIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [joining, setJoining] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const { user } = useAuth();
+  const supabase = useMemo(() => createClient(), []);
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
+
+  const THEME_EMOJI: Record<string, string> = {
+    Trek: '🏔️', 'Van Life': '🚐', Randonnée: '🥾', Expédition: '🧭', 'Tour du monde': '🌍',
+    Plage: '🏖️', Ski: '⛷️', Vélo: '🚴', Moto: '🏍️', Autre: '🎒',
+  };
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from('travel_groups')
+        .select('*, owner:user_profiles!travel_groups_owner_id_fkey(full_name)')
+        .eq('visibility', 'public')
+        .order('created_at', { ascending: false })
+        .limit(12);
+      const enriched = await Promise.all((data || []).map(async (g) => {
+        const { count } = await supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('group_id', g.id).eq('status', 'active');
+        return { ...g, member_count: count || 0 };
+      }));
+      setPublicGroups(enriched);
+      if (user) {
+        const { data: memberData } = await supabase.from('group_members').select('group_id').eq('user_id', user.id).eq('status', 'active');
+        setMyGroupIds((memberData || []).map(m => m.group_id));
+      }
+      setLoading(false);
+    };
+    load();
+  }, [supabase, user]);
+
+  const handleJoin = async (groupId: string, groupName: string) => {
+    if (!user) { showToast('Connectez-vous pour rejoindre un groupe'); return; }
+    setJoining(groupId);
+    try {
+      const { error } = await supabase.from('group_members').insert({ group_id: groupId, user_id: user.id, role: 'member', status: 'active' });
+      if (error && error.code !== '23505') throw error;
+      setMyGroupIds(prev => [...prev, groupId]);
+      showToast(`Vous avez rejoint "${groupName}" !`);
+    } catch { showToast('Erreur lors de la tentative'); }
+    finally { setJoining(null); }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-display font-700 text-xl text-[#1C2620]">Groupes de voyage</h2>
+          <p className="text-xs text-[#5C6B5E] mt-0.5">Rejoignez des aventuriers qui partagent vos destinations</p>
+        </div>
+        <div className="flex gap-2">
+          <Link href="/groupes" className="flex items-center gap-2 px-4 py-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl text-sm font-600 hover:text-[#1C2620] transition-colors">
+            <Icon name="UserGroupIcon" size={14} /> Mes groupes
+          </Link>
+          <Link href="/groupes?tab=decouvrir" className="flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors">
+            <Icon name="MagnifyingGlassIcon" size={14} /> Explorer tout
+          </Link>
+        </div>
+      </div>
+
+      {/* CTA for non-logged users */}
+      {!user && (
+        <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5 text-center">
+          <p className="text-3xl mb-2">🗺️</p>
+          <p className="font-display font-700 text-[#1C2620] mb-1">Voyagez en groupe</p>
+          <p className="text-sm text-[#5C6B5E] mb-4">Connectez-vous pour créer ou rejoindre des groupes de voyage</p>
+          <Link href="/connexion" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors">
+            <Icon name="ArrowRightOnRectangleIcon" size={14} /> Se connecter
+          </Link>
+        </div>
+      )}
+
+      {/* Groups grid */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl h-48 animate-pulse" />)}
+        </div>
+      ) : publicGroups.length === 0 ? (
+        <div className="text-center py-16 text-[#5C6B5E]">
+          <p className="text-4xl mb-3">🗺️</p>
+          <p className="font-display font-700 text-[#1C2620] text-lg mb-1">Aucun groupe public</p>
+          <p className="text-sm mb-4">Soyez le premier à créer un groupe de voyage !</p>
+          <Link href="/groupes" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors">
+            <Icon name="PlusIcon" size={14} /> Créer un groupe
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {publicGroups.map(group => {
+            const isMember = myGroupIds.includes(group.id);
+            return (
+              <div key={group.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl overflow-hidden hover:shadow-md hover:border-[#E4501C]/30 transition-all">
+                <div className="bg-[#1C2620] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-xl flex-shrink-0">
+                        {THEME_EMOJI[group.theme] || '🎒'}
+                      </div>
+                      <div>
+                        <h3 className="font-display font-700 text-white text-sm leading-tight">{group.name}</h3>
+                        <p className="text-white/50 text-[10px] flex items-center gap-1 mt-0.5">
+                          <Icon name="MapPinIcon" size={9} /> {group.destination}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className="font-mono font-700 text-[#E4501C] text-base">{group.optimization_score}</div>
+                      <div className="text-[10px] text-white/40">score</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    <div className="text-center p-1.5 bg-white/60 rounded-xl border border-[#C8C3B0]/50">
+                      <p className="font-mono font-700 text-[#1C2620] text-sm">{group.member_count || 0}</p>
+                      <p className="text-[10px] text-[#5C6B5E]">membres</p>
+                    </div>
+                    <div className="text-center p-1.5 bg-white/60 rounded-xl border border-[#C8C3B0]/50">
+                      <p className="font-mono font-700 text-[#1C2620] text-sm">{group.budget_target > 0 ? `${group.budget_target}€` : '—'}</p>
+                      <p className="text-[10px] text-[#5C6B5E]">budget</p>
+                    </div>
+                    <div className="text-center p-1.5 bg-white/60 rounded-xl border border-[#C8C3B0]/50">
+                      <p className="font-mono font-700 text-[#1C2620] text-sm">Niv.{group.group_level}</p>
+                      <p className="text-[10px] text-[#5C6B5E]">niveau</p>
+                    </div>
+                  </div>
+                  {group.departure_date && (
+                    <p className="text-[10px] text-[#5C6B5E] flex items-center gap-1 mb-3">
+                      <Icon name="CalendarIcon" size={9} />
+                      {new Date(group.departure_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                  )}
+                  {group.owner && (
+                    <p className="text-[10px] text-[#5C6B5E] mb-3">Par <span className="font-600 text-[#1C2620]">{group.owner.full_name}</span></p>
+                  )}
+                  <div className="flex gap-2">
+                    {isMember ? (
+                      <Link href={`/groupe?group=${group.id}`} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#1C2620] hover:bg-[#1C2620]/80 text-white rounded-xl text-xs font-700 transition-colors">
+                        <Icon name="ArrowRightIcon" size={11} /> Ouvrir
+                      </Link>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleJoin(group.id, group.name)}
+                          disabled={joining === group.id || (group.member_count || 0) >= group.max_members}
+                          className="flex-1 py-2 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white rounded-xl text-xs font-700 transition-colors disabled:opacity-50"
+                        >
+                          {joining === group.id ? '...' : (group.member_count || 0) >= group.max_members ? 'Complet' : 'Rejoindre'}
+                        </button>
+                        <Link href={`/groupe?group=${group.id}`} className="p-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl hover:border-[#1C2620]/30 hover:text-[#1C2620] transition-colors">
+                          <Icon name="EyeIcon" size={12} />
+                        </Link>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1C2620] text-white px-5 py-3 rounded-xl text-sm font-600 shadow-xl">
+          {toast}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function CommunautePage() {
   const [activeTab, setActiveTab] = useState<MainTab>('feed');
@@ -1054,6 +1247,7 @@ export default function CommunautePage() {
   const TABS: { id: MainTab; label: string; icon: string }[] = [
     { id: 'feed', label: 'Feed', icon: 'RssIcon' },
     { id: 'profils', label: 'Profils', icon: 'UsersIcon' },
+    { id: 'groupes', label: 'Groupes', icon: 'MapIcon' },
     { id: 'qa', label: 'Q&R', icon: 'QuestionMarkCircleIcon' },
     { id: 'ama', label: 'AMA', icon: 'MicrophoneIcon' },
   ];
@@ -1070,7 +1264,7 @@ export default function CommunautePage() {
             La communauté des voyageurs équipés
           </h1>
           <p className="text-white/50 text-sm max-w-xl mb-6">
-            Feed global, profils publics, Q&R entre voyageurs et AMAs avec les experts — tout en un seul endroit.
+            Feed global, profils publics, groupes de voyage, Q&R entre voyageurs et AMAs avec les experts.
           </p>
 
           <div className="flex items-center gap-3 mb-8 flex-wrap">
@@ -1080,10 +1274,16 @@ export default function CommunautePage() {
             <Link href="/clubs" className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-600 transition-colors">
               <Icon name="UserGroupIcon" size={14} /> Clubs
             </Link>
+            <Link href="/groupes" className="flex items-center gap-2 px-4 py-2 bg-[#E4501C]/20 hover:bg-[#E4501C]/30 border border-[#E4501C]/40 text-white rounded-xl text-sm font-600 transition-colors">
+              <Icon name="MapIcon" size={14} /> Mes groupes
+            </Link>
+            <Link href="/groupes?tab=decouvrir" className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-600 transition-colors">
+              <Icon name="MagnifyingGlassIcon" size={14} /> Découvrir des groupes
+            </Link>
           </div>
 
           {/* Tab bar */}
-          <div className="flex items-center gap-0.5 overflow-x-auto pb-px">
+          <div className="flex items-center gap-0.5 overflow-x-auto pb-px scrollbar-hide">
             {TABS.map((tab) => (
               <button
                 key={tab.id}
@@ -1102,6 +1302,7 @@ export default function CommunautePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'feed' && <FeedTab />}
         {activeTab === 'profils' && <ProfilsTab />}
+        {activeTab === 'groupes' && <GroupesTab />}
         {activeTab === 'qa' && <QATab />}
         {activeTab === 'ama' && <AMATab />}
       </div>

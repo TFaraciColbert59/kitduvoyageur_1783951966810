@@ -4,6 +4,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import WeightGauge from '@/components/WeightGauge';
+import { getChatCompletion } from '@/lib/ai/chatCompletion';
+import { getCart, saveCart } from '@/lib/cart';
+import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface WizardState {
@@ -27,30 +31,24 @@ interface EquipmentItem {
   weightG: number;
   priceEur: number;
   essential: boolean;
+  already_owned?: boolean;
 }
 
-// ── Mock AI Result ──────────────────────────────────────────────────────────────
-const mockResult = {
-  sac_recommande: 'Osprey Exos 58 L',
-  poids_total_g: 9_200,
-  budget_estime_eur: 485,
-  alertes: [
-    'Conditions météo imprévisibles en juillet — emportez une couche imperméable',
-    'Eau potable rare sur certains tronçons — filtration obligatoire',
-  ],
-  liste_equipement: [
-    { id: 'e1', name: 'Tente ultralégère 2P', category: 'Abri', weightG: 1_100, priceEur: 189, essential: true },
-    { id: 'e2', name: 'Sac de couchage -5°C', category: 'Sommeil', weightG: 850, priceEur: 145, essential: true },
-    { id: 'e3', name: 'Réchaud à gaz compact', category: 'Cuisine', weightG: 87, priceEur: 38, essential: true },
-    { id: 'e4', name: 'Filtre à eau Sawyer', category: 'Eau', weightG: 57, priceEur: 32, essential: true },
-    { id: 'e5', name: 'Veste imperméable 2.5L', category: 'Vêtements', weightG: 320, priceEur: 95, essential: true },
-    { id: 'e6', name: 'Bâtons de trekking', category: 'Matériel', weightG: 480, priceEur: 55, essential: false },
-    { id: 'e7', name: 'Lampe frontale 400lm', category: 'Éclairage', weightG: 95, priceEur: 28, essential: true },
-    { id: 'e8', name: 'Kit premiers secours', category: 'Sécurité', weightG: 210, priceEur: 24, essential: true },
-    { id: 'e9', name: 'Tapis de sol isolant', category: 'Sommeil', weightG: 340, priceEur: 42, essential: false },
-    { id: 'e10', name: 'Gourde 1L inox', category: 'Eau', weightG: 175, priceEur: 18, essential: false },
-  ] as EquipmentItem[],
-};
+interface AIResult {
+  sac_recommande: string;
+  poids_total_g: number;
+  budget_estime_eur: number;
+  alertes: string[];
+  liste_equipement: EquipmentItem[];
+}
+
+interface GearInventoryItem {
+  id: string;
+  name: string;
+  category: string;
+  condition: string;
+  weight_g: number;
+}
 
 // ── Altimeter Loader ─────────────────────────────────────────────────────────────
 function AltimeterLoader({ active }: { active: boolean }) {
@@ -83,22 +81,15 @@ function AltimeterLoader({ active }: { active: boolean }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-6" role="status" aria-live="polite" aria-label="Génération de votre liste en cours">
       <div className="flex items-center gap-1">
-        <span className="font-mono-data text-4xl font-600" style={{ color: 'var(--info)', fontFamily: 'var(--font-mono)' }}>
-          {digits[0]}
-        </span>
-        <span className="font-mono-data text-4xl font-600" style={{ color: 'var(--info)', fontFamily: 'var(--font-mono)' }}>
-          {digits[1]}
-        </span>
-        <span className="font-mono-data text-4xl font-600" style={{ color: 'var(--info)', fontFamily: 'var(--font-mono)' }}>
-          {digits[2]}
-        </span>
-        <span className="font-mono-data text-4xl font-600" style={{ color: 'var(--info)', fontFamily: 'var(--font-mono)' }}>
-          {digits[3]}
-        </span>
+        {digits.map((d, i) => (
+          <span key={i} className="font-mono-data text-4xl font-600" style={{ color: 'var(--info)', fontFamily: 'var(--font-mono)' }}>
+            {d}
+          </span>
+        ))}
         <span className="font-mono-data text-2xl text-muted-foreground ml-1" style={{ fontFamily: 'var(--font-mono)' }}>m</span>
       </div>
       <p className="text-sm text-muted-foreground font-mono-data uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>
-        Analyse de la destination…
+        Analyse IA en cours…
       </p>
       <div className="flex gap-1.5">
         {[0, 1, 2].map((i) => (
@@ -211,7 +202,7 @@ function StepDates({ state, onChange }: { state: WizardState; onChange: (k: keyo
               onClick={() => onChange('season', s.id)}
               className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
                 state.season === s.id
-                  ? 'border-primary bg-primary/5' :'border-border hover:border-muted-foreground'
+                  ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground'
               }`}
               aria-pressed={state.season === s.id}
             >
@@ -262,7 +253,7 @@ function StepProfile({ state, onChange }: { state: WizardState; onChange: (k: ke
               onClick={() => onChange('level', lv.id)}
               className={`flex flex-col gap-1 p-4 rounded-xl border-2 text-left transition-all duration-200 ${
                 state.level === lv.id
-                  ? 'border-primary bg-primary/5' :'border-border hover:border-muted-foreground'
+                  ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground'
               }`}
               aria-pressed={state.level === lv.id}
             >
@@ -330,17 +321,173 @@ function StepProfile({ state, onChange }: { state: WizardState; onChange: (k: ke
   );
 }
 
+// ── Step Result with Gemini AI ──────────────────────────────────────────────────
 function StepResult({ state }: { state: WizardState }) {
   const [loading, setLoading] = useState(true);
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(
-    new Set(mockResult.liste_equipement.filter((i) => i.essential).map((i) => i.id))
-  );
+  const [aiResult, setAiResult] = useState<AIResult | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [autoSaved, setAutoSaved] = useState(false);
+  const [userInventory, setUserInventory] = useState<GearInventoryItem[]>([]);
+  const { user } = useAuth();
+
+  // Load user inventory before generating
+  useEffect(() => {
+    const loadInventory = async () => {
+      if (!user) return;
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('gear_items')
+          .select('id, name, category, condition, weight_g')
+          .eq('user_id', user.id)
+          .neq('condition', 'à_remplacer');
+        setUserInventory(data ?? []);
+      } catch {
+        // Silent fail
+      }
+    };
+    loadInventory();
+  }, [user]);
+
+  const autoSaveKit = async (result: AIResult, selected: Set<string>) => {
+    if (!user) return;
+    try {
+      const supabase = createClient();
+      const kitName = `Kit ${state.destination || 'Voyage'} — ${state.season || 'Toutes saisons'}`;
+      const { data: kit, error: kitError } = await supabase
+        .from('kits')
+        .insert({
+          user_id: user.id,
+          name: kitName,
+          destination: state.destination,
+          season: state.season,
+          activity: state.activity,
+          total_weight_g: result.liste_equipement.filter(i => selected.has(i.id) && !i.already_owned).reduce((s, i) => s + i.weightG, 0),
+          total_price_eur: result.liste_equipement.filter(i => selected.has(i.id) && !i.already_owned).reduce((s, i) => s + i.priceEur, 0),
+          bag_recommended: result.sac_recommande,
+          source: 'ai_configurator',
+        })
+        .select('id')
+        .single();
+
+      if (kitError || !kit) return;
+
+      const kitItems = result.liste_equipement
+        .filter(i => selected.has(i.id))
+        .map(item => ({
+          kit_id: kit.id,
+          name: item.name,
+          category: item.category,
+          weight_g: item.weightG,
+          price_eur: item.priceEur,
+          essential: item.essential,
+        }));
+
+      if (kitItems.length > 0) {
+        await supabase.from('kit_items').insert(kitItems);
+      }
+      setAutoSaved(true);
+    } catch (_e) {
+      // Silent fail — auto-save is best-effort
+    }
+  };
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(t);
-  }, []);
+    const fetchAI = async () => {
+      setLoading(true);
+      setAiError(null);
+      setAutoSaved(false);
+
+      // Build inventory context for the prompt
+      const inventoryContext = userInventory.length > 0
+        ? `\n\nL'utilisateur possède déjà ces équipements (ne pas proposer à l'achat si la catégorie correspond) :\n${userInventory.map(g => `- ${g.name} (catégorie: ${g.category}, état: ${g.condition})`).join('\n')}\n\nPour chaque article nécessaire : si un équivalent existe dans cet inventaire (même catégorie, état pas "à_remplacer"), marque-le "already_owned": true. Ne propose à l'achat que ce qui manque réellement.`
+        : '';
+
+      const systemPrompt = `Tu es un expert en équipement outdoor et randonnée. Tu génères des listes d'équipement optimisées pour les voyageurs. 
+Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans texte avant ou après.
+Le JSON doit avoir exactement cette structure:
+{
+  "sac_recommande": "string",
+  "poids_total_g": number,
+  "budget_estime_eur": number,
+  "alertes": ["string"],
+  "liste_equipement": [
+    {
+      "id": "string",
+      "name": "string",
+      "category": "string",
+      "weightG": number,
+      "priceEur": number,
+      "essential": boolean,
+      "already_owned": boolean
+    }
+  ]
+}`;
+
+      const userPrompt = `Génère une liste d'équipement optimisée pour:
+- Destination: ${state.destination}
+- Saison: ${state.season}
+- Activité: ${state.activity}
+- Niveau: ${state.level}
+- Poids max du sac: ${(state.maxWeightG / 1000).toFixed(1)} kg
+- Budget max: ${state.budgetEur} €
+${state.startDate ? `- Dates: ${state.startDate} au ${state.endDate}` : ''}
+${inventoryContext}
+
+Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes spécifiques à la destination et à la saison. Recommande un sac adapté.`;
+
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const response = await getChatCompletion('GEMINI', 'gemini/gemini-2.5-flash', [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ], { temperature: 0.7, max_tokens: 4000 }) as any;
+
+        const content = response?.choices?.[0]?.message?.content ?? '';
+        const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+        let jsonString = cleaned;
+        try {
+          JSON.parse(jsonString);
+        } catch {
+          const openBraces = (jsonString.match(/\{/g) || []).length - (jsonString.match(/\}/g) || []).length;
+          const openBrackets = (jsonString.match(/\[/g) || []).length - (jsonString.match(/\]/g) || []).length;
+          jsonString = jsonString.replace(/,\s*$/, '').replace(/,\s*\{[^}]*$/, '');
+          for (let i = 0; i < openBrackets; i++) jsonString += ']';
+          for (let i = 0; i < openBraces; i++) jsonString += '}';
+        }
+
+        const parsed: AIResult = JSON.parse(jsonString);
+
+        if (!parsed.liste_equipement || !Array.isArray(parsed.liste_equipement)) {
+          throw new Error('Format de réponse invalide');
+        }
+
+        // Pre-select essential items that are NOT already owned
+        const essentialIds = new Set(
+          parsed.liste_equipement
+            .filter((i) => i.essential && !i.already_owned)
+            .map((i) => i.id)
+        );
+        setAiResult(parsed);
+        setSelectedItems(essentialIds);
+
+        // Auto-save for connected users
+        await autoSaveKit(parsed, essentialIds);
+      } catch (err) {
+        console.error('AI configurator error:', err);
+        setAiError('Impossible de générer la liste. Veuillez réessayer.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAI();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [retryCount, userInventory]);
 
   const toggleItem = (id: string) => {
     setSelectedItems((prev) => {
@@ -351,32 +498,171 @@ function StepResult({ state }: { state: WizardState }) {
     });
   };
 
-  const totalWeightG = mockResult.liste_equipement
+  // Only count items NOT already owned for price/weight
+  const missingItems = (aiResult?.liste_equipement ?? []).filter((i) => !i.already_owned);
+  const ownedItems = (aiResult?.liste_equipement ?? []).filter((i) => i.already_owned);
+
+  const totalWeightG = missingItems
     .filter((i) => selectedItems.has(i.id))
     .reduce((sum, i) => sum + i.weightG, 0);
 
-  const totalPriceEur = mockResult.liste_equipement
+  const totalPriceEur = missingItems
     .filter((i) => selectedItems.has(i.id))
     .reduce((sum, i) => sum + i.priceEur, 0);
 
-  const categories = Array.from(new Set(mockResult.liste_equipement.map((i) => i.category)));
+  const categories = Array.from(new Set((aiResult?.liste_equipement ?? []).map((i) => i.category)));
+
+  // Readiness score: owned essentials / total essentials
+  const totalEssentials = (aiResult?.liste_equipement ?? []).filter(i => i.essential).length;
+  const ownedEssentials = (aiResult?.liste_equipement ?? []).filter(i => i.essential && i.already_owned).length;
+  const readinessScore = totalEssentials > 0 ? Math.round((ownedEssentials / totalEssentials) * 100) : 0;
+  const missingEssentials = totalEssentials - ownedEssentials;
 
   const handleAddToCart = () => {
+    const itemsToAdd = missingItems.filter((i) => selectedItems.has(i.id));
+    if (itemsToAdd.length === 0) return;
+    const existing = getCart();
+    itemsToAdd.forEach((item) => {
+      const idx = existing.findIndex((e) => e.id === item.id);
+      if (idx >= 0) {
+        existing[idx].quantity += 1;
+      } else {
+        existing.push({
+          id: item.id,
+          slug: item.id,
+          name: item.name,
+          brand: '',
+          category: item.category,
+          priceEur: item.priceEur,
+          weightG: item.weightG,
+          image: '',
+          imageAlt: item.name,
+          quantity: 1,
+        });
+      }
+    });
+    saveCart(existing);
     setToast(true);
     setTimeout(() => setToast(false), 3000);
+
+    // B2: Auto-fill gear_items from kit validation (best-effort, async)
+    if (user && autoSaved) {
+      const supabase = createClient();
+      // Find the kit we just saved (most recent for this user)
+      supabase
+        .from('kits')
+        .select('id')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+        .then(({ data: kit }) => {
+          if (!kit) return;
+          // Add all selected items (including already_owned) to gear_items with source='kit'
+          const allSelected = (aiResult?.liste_equipement ?? []).filter(i => selectedItems.has(i.id));
+          const gearInserts = allSelected.map(item => ({
+            user_id: user.id,
+            name: item.name,
+            category: item.category,
+            weight_g: item.weightG,
+            condition: 'neuf' as const,
+            source: 'kit',
+            origin_kit_id: kit.id,
+            acquired_at: new Date().toISOString().split('T')[0],
+          }));
+          if (gearInserts.length > 0) {
+            supabase.from('gear_items').insert(gearInserts).then(() => {
+              // Silent — best-effort
+            });
+          }
+        });
+    }
   };
 
   if (loading) return <AltimeterLoader active />;
 
+  if (aiError) {
+    return (
+      <div className="text-center py-16 space-y-4">
+        <div className="text-4xl">⚠️</div>
+        <p className="text-foreground font-600">{aiError}</p>
+        <button
+          onClick={() => { setAiError(null); setRetryCount((c) => c + 1); }}
+          className="btn-primary px-6 py-2.5"
+        >
+          Réessayer
+        </button>
+      </div>
+    );
+  }
+
+  if (!aiResult) return null;
+
   return (
     <div className="space-y-6">
+      {/* Auto-save confirmation */}
+      {autoSaved && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: 'rgba(51,70,60,0.1)', border: '1px solid rgba(51,70,60,0.2)' }}>
+          <Icon name="CheckCircleIcon" size={16} variant="outline" className="text-secondary flex-shrink-0" />
+          <p className="text-sm text-secondary font-500">Kit enregistré automatiquement dans vos kits</p>
+        </div>
+      )}
+      {!autoSaved && !user && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: 'rgba(228,80,28,0.06)', border: '1px solid rgba(228,80,28,0.15)' }}>
+          <Icon name="InformationCircleIcon" size={16} variant="outline" className="text-primary flex-shrink-0" />
+          <p className="text-sm text-muted-foreground">
+            <Link href="/connexion" className="text-primary font-600 hover:underline">Connectez-vous</Link> pour sauvegarder ce kit automatiquement.
+          </p>
+        </div>
+      )}
+
+      {/* Inventory context banner */}
+      {userInventory.length > 0 && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: 'rgba(62,107,122,0.08)', border: '1px solid rgba(62,107,122,0.2)' }}>
+          <Icon name="ArchiveBoxIcon" size={16} variant="outline" className="text-info flex-shrink-0" />
+          <p className="text-sm text-muted-foreground">
+            L&apos;IA a analysé vos <span className="font-600 text-foreground">{userInventory.length} équipements</span> existants — les articles déjà possédés sont marqués.
+          </p>
+        </div>
+      )}
+
+      {/* Readiness score */}
+      {totalEssentials > 0 && (
+        <div className="topo-card p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-sm font-600 text-foreground">Score &quot;Prêt à partir&quot;</p>
+              <p className="text-xs text-muted-foreground">
+                {readinessScore === 100
+                  ? 'Vous avez tout le nécessaire !'
+                  : `Il vous manque ${missingEssentials} article${missingEssentials > 1 ? 's' : ''} essentiel${missingEssentials > 1 ? 's' : ''}`}
+              </p>
+            </div>
+            <span className={`text-2xl font-display font-800 ${readinessScore >= 80 ? 'text-emerald-600' : readinessScore >= 50 ? 'text-amber-600' : 'text-red-600'}`}
+              style={{ fontFamily: 'var(--font-display)' }}>
+              {readinessScore}%
+            </span>
+          </div>
+          <div className="h-3 bg-muted rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-700 ease-out ${readinessScore >= 80 ? 'bg-emerald-500' : readinessScore >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
+              style={{ width: `${readinessScore}%` }}
+            />
+          </div>
+          <div className="flex justify-between mt-1">
+            <span className="text-xs text-muted-foreground font-mono">{ownedEssentials} possédés</span>
+            <span className="text-xs text-muted-foreground font-mono">{totalEssentials} essentiels</span>
+          </div>
+        </div>
+      )}
+
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Sac recommandé', val: mockResult.sac_recommande, icon: 'ShoppingBagIcon', color: 'var(--secondary)' },
-          { label: 'Poids total', val: `${(totalWeightG / 1000).toFixed(2)} kg`, icon: 'ScaleIcon', color: 'var(--info)', mono: true },
-          { label: 'Budget estimé', val: `${totalPriceEur} €`, icon: 'BanknotesIcon', color: 'var(--accent)', mono: true },
-          { label: 'Articles', val: `${selectedItems.size} / ${mockResult.liste_equipement.length}`, icon: 'ListBulletIcon', color: 'var(--primary)', mono: true },
+          { label: 'Sac recommandé', val: aiResult.sac_recommande, icon: 'ShoppingBagIcon', color: 'var(--secondary)' },
+          { label: 'Poids à acheter', val: `${(totalWeightG / 1000).toFixed(2)} kg`, icon: 'ScaleIcon', color: 'var(--info)', mono: true },
+          { label: 'Budget manquant', val: `${totalPriceEur} €`, icon: 'BanknotesIcon', color: 'var(--accent)', mono: true },
+          { label: 'À acheter', val: `${missingItems.filter(i => selectedItems.has(i.id)).length} / ${missingItems.length}`, icon: 'ListBulletIcon', color: 'var(--primary)', mono: true },
         ].map(({ label, val, icon, color, mono }) => (
           <div key={label} className="topo-card p-4">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-3" style={{ background: `${color}20` }}>
@@ -393,18 +679,18 @@ function StepResult({ state }: { state: WizardState }) {
         ))}
       </div>
 
-      {/* Weight gauge */}
+      {/* Animated Weight gauge */}
       <div className="topo-card p-4">
         <WeightGauge weightG={totalWeightG} maxG={state.maxWeightG} size="lg" />
         <p className="font-mono-data text-[10px] text-muted-foreground mt-2" style={{ fontFamily: 'var(--font-mono)' }}>
-          Limite configurée: {(state.maxWeightG / 1000).toFixed(1)} kg
+          Limite configurée: {(state.maxWeightG / 1000).toFixed(1)} kg · Poids déjà possédé non compté
         </p>
       </div>
 
       {/* Alerts */}
-      {mockResult.alertes.length > 0 && (
+      {aiResult.alertes.length > 0 && (
         <div className="space-y-2">
-          {mockResult.alertes.map((alert, idx) => (
+          {aiResult.alertes.map((alert, idx) => (
             <div key={idx} className="flex items-start gap-3 p-3 rounded-xl" style={{ background: 'rgba(228,80,28,0.08)', border: '1px solid rgba(228,80,28,0.2)' }}>
               <Icon name="ExclamationTriangleIcon" size={16} variant="outline" className="text-primary flex-shrink-0 mt-0.5" />
               <p className="text-sm text-foreground">{alert}</p>
@@ -413,26 +699,59 @@ function StepResult({ state }: { state: WizardState }) {
         </div>
       )}
 
-      {/* Equipment list by category */}
+      {/* Already owned section */}
+      {ownedItems.length > 0 && (
+        <div>
+          <h3 className="font-display font-700 text-foreground text-base mb-3 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <Icon name="CheckCircleIcon" size={18} variant="outline" className="text-emerald-600" />
+            Déjà dans ton sac ({ownedItems.length} articles)
+          </h3>
+          <div className="space-y-2 opacity-70">
+            {ownedItems.map((item) => (
+              <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl border border-emerald-200 bg-emerald-50">
+                <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 bg-emerald-500">
+                  <Icon name="CheckIcon" size={12} variant="outline" className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-500 text-foreground truncate">{item.name}</p>
+                  <p className="text-xs text-emerald-600">Déjà possédé · {item.category}</p>
+                </div>
+                <div className="flex items-center gap-4 flex-shrink-0">
+                  <span className="font-mono-data text-xs text-info" style={{ fontFamily: 'var(--font-mono)' }}>
+                    {item.weightG} g
+                  </span>
+                  <span className="text-xs text-emerald-600 font-600 line-through">
+                    {item.priceEur} €
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Equipment list by category — missing items only */}
       <div>
-        <h3 className="font-display font-700 text-foreground text-base mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-          Liste d&apos;équipement ({mockResult.liste_equipement.length} articles)
+        <h3 className="font-display font-700 text-foreground text-base mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+          <Icon name="ShoppingBagIcon" size={18} variant="outline" className="text-primary" />
+          Il te manque ({missingItems.length} articles)
         </h3>
         <div className="space-y-4">
-          {categories.map((cat) => (
-            <div key={cat}>
-              <p className="font-mono-data text-[10px] text-muted-foreground uppercase tracking-widest mb-2" style={{ fontFamily: 'var(--font-mono)' }}>
-                {cat}
-              </p>
-              <div className="space-y-2">
-                {mockResult.liste_equipement
-                  .filter((i) => i.category === cat)
-                  .map((item) => (
+          {categories.map((cat) => {
+            const catMissingItems = missingItems.filter((i) => i.category === cat);
+            if (catMissingItems.length === 0) return null;
+            return (
+              <div key={cat}>
+                <p className="font-mono-data text-[10px] text-muted-foreground uppercase tracking-widest mb-2" style={{ fontFamily: 'var(--font-mono)' }}>
+                  {cat}
+                </p>
+                <div className="space-y-2">
+                  {catMissingItems.map((item) => (
                     <div
                       key={item.id}
                       className={`flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 cursor-pointer ${
                         selectedItems.has(item.id)
-                          ? 'border-secondary/40 bg-secondary/5' :'border-border opacity-50'
+                          ? 'border-secondary/40 bg-secondary/5' : 'border-border opacity-50'
                       }`}
                       onClick={() => toggleItem(item.id)}
                       role="checkbox"
@@ -467,21 +786,22 @@ function StepResult({ state }: { state: WizardState }) {
                       </div>
                     </div>
                   ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      {/* Addto cart CTA */}
+      {/* Add to cart CTA */}
       <div className="flex flex-col sm:flex-row gap-3 pt-2">
         <button
           onClick={handleAddToCart}
           className="btn-primary flex-1 justify-center py-3.5 text-base"
-          aria-label={`Ajouter ${selectedItems.size} articles au panier pour ${totalPriceEur} €`}
+          aria-label={`Ajouter ${missingItems.filter(i => selectedItems.has(i.id)).length} articles au panier pour ${totalPriceEur} €`}
         >
           <Icon name="ShoppingBagIcon" size={18} variant="outline" />
-          Ajouter le kit au panier — {totalPriceEur} €
+          Ajouter ce qui manque — {totalPriceEur} €
         </button>
         <Link href="/catalogue" className="btn-secondary justify-center py-3.5 text-base px-6">
           Voir le catalogue
@@ -491,13 +811,13 @@ function StepResult({ state }: { state: WizardState }) {
       {/* Toast */}
       {toast && (
         <div
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl toast-enter"
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl"
           style={{ background: 'var(--secondary)', color: 'var(--secondary-foreground)', border: '1px solid rgba(255,255,255,0.1)' }}
           role="alert"
           aria-live="polite"
         >
           <Icon name="CheckCircleIcon" size={20} variant="outline" className="text-white flex-shrink-0" />
-          <p className="text-sm font-500 text-white">{selectedItems.size} articles ajoutés au panier</p>
+          <p className="text-sm font-500 text-white">{missingItems.filter(i => selectedItems.has(i.id)).length} articles ajoutés au panier</p>
         </div>
       )}
     </div>
@@ -572,7 +892,7 @@ export default function ConfiguratorWizard() {
           <div className="flex items-center gap-2 justify-center mb-4">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse-orange" />
             <span className="text-xs font-mono-data text-primary uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>
-              IA RACE MODE
+              Génération en cours
             </span>
           </div>
           <h1 className="text-section-title text-white mb-3">
@@ -584,7 +904,7 @@ export default function ConfiguratorWizard() {
         </div>
       </div>
 
-      {/* Mono data band — contextual sidebar info on mobile as horizontal band */}
+      {/* Mono data band */}
       {state.destination && (
         <div
           className="border-b border-border py-2 px-4 sm:px-6 overflow-x-auto"

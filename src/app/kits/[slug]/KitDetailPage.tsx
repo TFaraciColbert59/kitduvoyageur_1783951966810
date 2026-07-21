@@ -47,6 +47,97 @@ const difficulteColor: Record<string, string> = {
   Expert: 'text-red-400 bg-red-400/10 border-red-400/30',
 };
 
+const FALLBACK_KITS: Record<string, KitData> = {
+  'islande-trek': {
+    id: 'islande-trek',
+    slug: 'islande-trek',
+    nom: 'Kit Islande — Trek & Volcans',
+    description: 'Équipement complet pour affronter les conditions extrêmes islandaises : vent violent, pluie horizontale, froid et terrains volcaniques. Ce kit a été conçu avec des guides locaux pour garantir sécurité et confort dans l\'une des destinations les plus sauvages d\'Europe.',
+    destination: 'Islande',
+    saison: 'Juin – Août',
+    poids_total_g: 11400,
+    prix_cents: 189000,
+    difficulte: 'Intermédiaire',
+    activite: 'Trek',
+    image: 'https://images.unsplash.com/photo-1531168556467-80aace0d0144?w=1200&q=80',
+    alt: 'Paysage volcanique islandais avec randonneurs sous les aurores boréales',
+    conseils: [
+      'Prévoyez des couches imperméables même en été — la météo change en 10 minutes',
+      'Les vents peuvent dépasser 100 km/h sur les hauts plateaux',
+      'Emportez un filtre à eau : les rivières glaciaires sont potables',
+      'Réservez vos refuges (huts) 6 mois à l\'avance pour le Laugavegur',
+      'Chargeur solaire indispensable — les journées sont longues mais les prises rares',
+    ],
+    items: [
+      { id: '1', nom: 'Veste imperméable Gore-Tex', categorie: 'Vêtements', poids_g: 380, prix_cents: 32000, quantite: 1, essentiel: true, slug: 'veste-gore-tex', image: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=400&q=80', alt: 'Veste imperméable rouge Gore-Tex' },
+      { id: '2', nom: 'Sac à dos 50L Osprey', categorie: 'Sac à dos', poids_g: 1650, prix_cents: 22000, quantite: 1, essentiel: true, slug: 'osprey-farpoint-40', image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400&q=80', alt: 'Sac à dos Osprey 50L vert' },
+      { id: '3', nom: 'Tente 3 saisons MSR', categorie: 'Bivouac', poids_g: 1800, prix_cents: 45000, quantite: 1, essentiel: true, slug: 'msr-hubba-hubba', image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=400&q=80', alt: 'Tente MSR orange montée dans un paysage volcanique' },
+      { id: '4', nom: 'Sac de couchage -10°C', categorie: 'Bivouac', poids_g: 1100, prix_cents: 28000, quantite: 1, essentiel: true, slug: 'sac-couchage-10', image: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=400&q=80', alt: 'Sac de couchage bleu compact' },
+      { id: '5', nom: 'Chaussures de trek Salomon', categorie: 'Chaussures', poids_g: 720, prix_cents: 18000, quantite: 1, essentiel: true, slug: 'salomon-x-ultra-4', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80', alt: 'Chaussures de randonnée Salomon grises' },
+      { id: '6', nom: 'Filtre à eau Katadyn', categorie: 'Eau', poids_g: 64, prix_cents: 4500, quantite: 1, essentiel: true, slug: 'katadyn-befree', image: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=400&q=80', alt: 'Filtre à eau Katadyn bleu' },
+      { id: '7', nom: 'Réchaud MSR PocketRocket', categorie: 'Cuisine', poids_g: 73, prix_cents: 5500, quantite: 1, essentiel: false, slug: 'msr-pocketrocket', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80', alt: 'Réchaud compact MSR PocketRocket' },
+      { id: '8', nom: 'Bâtons de randonnée Leki', categorie: 'Accessoires', poids_g: 480, prix_cents: 12000, quantite: 1, essentiel: false, slug: 'leki-micro-vario', image: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=400&q=80', alt: 'Bâtons de randonnée Leki pliables' },
+    ],
+  },
+  'gr20-corse': {
+    id: 'gr20-corse',
+    slug: 'gr20-corse',
+    nom: 'Kit GR20 — Corse Intégrale',
+    description: 'Le kit optimisé pour le GR20, l\'un des sentiers les plus exigeants d\'Europe. 180 km en autonomie complète à travers les montagnes corses. Chaque gramme compte sur ce parcours légendaire.',
+    destination: 'Corse',
+    saison: 'Juin – Septembre',
+    poids_total_g: 9800,
+    prix_cents: 145000,
+    difficulte: 'Expert',
+    activite: 'Trek',
+    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80',
+    alt: 'Sentier de montagne en Corse avec vue sur les crêtes granitiques',
+    conseils: [
+      'Partez du nord (Calenzana) pour avoir le vent dans le dos',
+      'Réservez les refuges PNRC dès janvier — complets en juillet',
+      'Poids cible : 10 kg max sac chargé pour préserver les genoux',
+      'Emportez des crampons légers pour les névés en juin',
+      'La chaleur peut être intense en juillet — partez à l\'aube',
+    ],
+    items: [
+      { id: '1', nom: 'Sac à dos 35L ultraléger', categorie: 'Sac à dos', poids_g: 890, prix_cents: 28000, quantite: 1, essentiel: true, slug: 'sac-ultralight-35', image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400&q=80', alt: 'Sac à dos ultraléger 35L orange' },
+      { id: '2', nom: 'Tente ultralight 1 personne', categorie: 'Bivouac', poids_g: 980, prix_cents: 55000, quantite: 1, essentiel: true, slug: 'tente-ultralight', image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=400&q=80', alt: 'Tente ultraléger verte dans un paysage montagneux' },
+      { id: '3', nom: 'Sac de couchage 0°C plume', categorie: 'Bivouac', poids_g: 680, prix_cents: 38000, quantite: 1, essentiel: true, slug: 'sac-plume-0', image: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=400&q=80', alt: 'Sac de couchage en plume compact' },
+      { id: '4', nom: 'Chaussures trail La Sportiva', categorie: 'Chaussures', poids_g: 580, prix_cents: 22000, quantite: 1, essentiel: true, slug: 'la-sportiva-trango', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80', alt: 'Chaussures de trail La Sportiva jaunes' },
+      { id: '5', nom: 'Filtre à eau Sawyer Squeeze', categorie: 'Eau', poids_g: 85, prix_cents: 3500, quantite: 1, essentiel: true, slug: 'sawyer-squeeze', image: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=400&q=80', alt: 'Filtre à eau Sawyer Squeeze bleu' },
+      { id: '6', nom: 'Veste coupe-vent légère', categorie: 'Vêtements', poids_g: 120, prix_cents: 8500, quantite: 1, essentiel: true, slug: 'veste-coupe-vent', image: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=400&q=80', alt: 'Veste coupe-vent légère bleue' },
+    ],
+  },
+  'vanlife-europe': {
+    id: 'vanlife-europe',
+    slug: 'vanlife-europe',
+    nom: 'Kit Vanlife — Europe',
+    description: 'Tout ce qu\'il faut pour vivre et dormir dans son van à travers l\'Europe. Compact, fonctionnel, durable. Ce kit a été testé sur 50 000 km de routes européennes.',
+    destination: 'Europe',
+    saison: 'Toute l\'année',
+    poids_total_g: 15200,
+    prix_cents: 210000,
+    difficulte: 'Débutant',
+    activite: 'Vanlife',
+    image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=1200&q=80',
+    alt: 'Van aménagé garé dans un paysage naturel européen au coucher du soleil',
+    conseils: [
+      'Investissez dans un bon matelas — vous y passerez 1/3 de votre temps',
+      'Panneau solaire 200W + batterie 100Ah = autonomie électrique complète',
+      'Abonnement iOverlander ou Park4Night pour trouver les spots',
+      'Douche solaire 20L suffit pour 2 personnes en été',
+      'Assurance van aménagé : vérifiez la couverture "habitation mobile"',
+    ],
+    items: [
+      { id: '1', nom: 'Matelas van mousse haute densité', categorie: 'Couchage', poids_g: 4500, prix_cents: 18000, quantite: 1, essentiel: true, slug: 'matelas-van', image: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=400&q=80', alt: 'Matelas confortable dans un van aménagé' },
+      { id: '2', nom: 'Réchaud 2 feux camping-gaz', categorie: 'Cuisine', poids_g: 1200, prix_cents: 8500, quantite: 1, essentiel: true, slug: 'rechaud-2-feux', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80', alt: 'Réchaud 2 feux camping-gaz compact' },
+      { id: '3', nom: 'Glacière électrique 40L', categorie: 'Cuisine', poids_g: 8500, prix_cents: 35000, quantite: 1, essentiel: false, slug: 'glaciere-electrique', image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=400&q=80', alt: 'Glacière électrique portable blanche' },
+      { id: '4', nom: 'Panneau solaire 200W', categorie: 'Électronique', poids_g: 5200, prix_cents: 28000, quantite: 1, essentiel: true, slug: 'panneau-solaire-200w', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80', alt: 'Panneau solaire flexible sur toit de van' },
+      { id: '5', nom: 'Douche solaire 20L', categorie: 'Hygiène', poids_g: 450, prix_cents: 2500, quantite: 1, essentiel: false, slug: 'douche-solaire', image: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=400&q=80', alt: 'Douche solaire noire suspendue à un van' },
+    ],
+  },
+};
+
 export default function KitDetailPage() {
   const params = useParams();
   const slug = params?.slug as string;
@@ -79,8 +170,15 @@ export default function KitDetailPage() {
       const fullKit = { ...kitData, items: itemsData ?? [] };
       setKit(fullKit);
       setSelectedItems(new Set((itemsData ?? []).filter((i: KitItem) => i.essentiel).map((i: KitItem) => i.id)));
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Kit introuvable');
+    } catch {
+      // Supabase failed — use static fallback data
+      const fallback = FALLBACK_KITS[slug];
+      if (fallback) {
+        setKit(fallback);
+        setSelectedItems(new Set((fallback.items ?? []).filter((i) => i.essentiel).map((i) => i.id)));
+      } else {
+        setError('Kit introuvable');
+      }
     } finally {
       setLoading(false);
     }

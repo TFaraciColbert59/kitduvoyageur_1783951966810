@@ -12,14 +12,7 @@ const DESTINATIONS = [
 { name: 'Sahara', tag: 'Désert', img: "https://images.unsplash.com/photo-1728408828574-70a460530093", alt: 'Dunes de sable rouge du Sahara au coucher du soleil avec caravane de chameaux', color: '#E4501C' }];
 
 
-const STATS = [
-{ value: '12 847', label: 'Kits configurés', icon: 'SparklesIcon' },
-{ value: '94', label: 'Destinations', icon: 'GlobeAltIcon' },
-{ value: '4.9', label: 'Note moyenne', icon: 'StarIcon' },
-{ value: '48h', label: 'Livraison express', icon: 'BoltIcon' }];
-
-
-const FEATURES = [
+const _FEATURES = [
 {
   icon: 'SparklesIcon',
   title: 'Configurateur IA',
@@ -46,7 +39,7 @@ const FEATURES = [
 }];
 
 
-const KITS = [
+const _KITS = [
 {
   name: 'Kit Népal Trekking',
   tag: 'Best-seller',
@@ -90,7 +83,6 @@ export default function HeroSection() {
     <section
       className="relative w-full min-h-screen overflow-hidden bg-[#1C2620] flex items-end"
       aria-label="Section héros — Kit du Voyageur">
-      
       {/* Full-bleed background — CSS parallax via will-change */}
       <div
         className="absolute inset-0 w-full"
@@ -101,14 +93,12 @@ export default function HeroSection() {
           alt="Forêt de conifères vue du ciel, lumière dorée traversant la cime des arbres, atmosphère brumeuse"
           fill
           priority
-          fetchPriority="high"
           sizes="100vw"
           className="object-cover object-center" />
         
         <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, rgba(28,38,32,0.72) 0%, rgba(28,38,32,0.45) 45%, rgba(28,38,32,0.15) 100%)' }} />
         <div className="absolute bottom-0 left-0 right-0 h-64" style={{ background: 'linear-gradient(to top, #1C2620, transparent)' }} />
       </div>
-
       {/* Content */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
@@ -132,7 +122,7 @@ export default function HeroSection() {
             </h1>
 
             <p className="text-white/55 text-base sm:text-lg font-light leading-relaxed max-w-lg mb-8">
-              L&apos;IA compose votre kit optimal en 2 minutes — poids, budget, destination. 12 847 voyageurs équipés.
+              L&apos;IA compose votre kit optimal en 2 minutes — poids, budget, destination.
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -140,38 +130,48 @@ export default function HeroSection() {
                 <Icon name="SparklesIcon" size={16} variant="outline" />
                 Configurer mon kit
               </Link>
-              <Link href="/catalogue" className="flex items-center gap-2 border border-white/20 text-white/80 hover:text-white hover:border-white/40 hover:bg-white/5 px-6 py-3.5 rounded-xl font-medium text-sm transition-all">
-                Voir le catalogue
-                <Icon name="ArrowRightIcon" size={14} variant="outline" />
-              </Link>
             </div>
 
-            {/* Stats row */}
-            <div className="flex flex-wrap items-center gap-6 mt-10">
-              {STATS.map((stat) =>
-              <div key={stat.label} className="flex items-center gap-2">
-                  <Icon name={stat.icon as string} size={14} variant="outline" className="text-[#E4501C]" />
-                  <div>
-                    <span className="font-mono font-700 text-white text-sm" style={{ fontFamily: 'var(--font-mono)' }}>{stat.value}</span>
-                    <span className="text-white/35 text-xs ml-1.5">{stat.label}</span>
-                  </div>
-                </div>
-              )}
+            {/* Reassurance block */}
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <span className="text-white/40 text-xs" style={{ fontFamily: 'var(--font-display)' }}>
+                🔒 Paiement sécurisé par Stripe | Chiffrement SSL
+              </span>
+              <div className="flex items-center gap-2 opacity-40">
+                {/* Visa */}
+                <svg width="34" height="22" viewBox="0 0 34 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Visa">
+                  <rect width="34" height="22" rx="3" fill="white" fillOpacity="0.15"/>
+                  <text x="5" y="15" fontSize="9" fontWeight="700" fill="white" fontFamily="Arial, sans-serif" letterSpacing="0.5">VISA</text>
+                </svg>
+                {/* Mastercard */}
+                <svg width="34" height="22" viewBox="0 0 34 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Mastercard">
+                  <rect width="34" height="22" rx="3" fill="white" fillOpacity="0.15"/>
+                  <circle cx="13" cy="11" r="6" fill="white" fillOpacity="0.6"/>
+                  <circle cx="21" cy="11" r="6" fill="white" fillOpacity="0.4"/>
+                </svg>
+                {/* Apple Pay */}
+                <svg width="40" height="22" viewBox="0 0 40 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Apple Pay">
+                  <rect width="40" height="22" rx="3" fill="white" fillOpacity="0.15"/>
+                  <text x="5" y="15" fontSize="8" fontWeight="600" fill="white" fontFamily="Arial, sans-serif" letterSpacing="0.3">Pay</text>
+                  <path d="M4 8.5C4.6 7.8 5 6.9 4.9 6C4.1 6.1 3.1 6.6 2.5 7.3C1.9 7.9 1.5 8.8 1.6 9.7C2.4 9.7 3.4 9.2 4 8.5Z" transform="translate(22, 3) scale(0.9)" fill="white"/>
+                  <path d="M4.9 9.8C3.7 9.7 2.7 10.5 2.1 10.5C1.5 10.5 0.7 9.8 -0.2 9.8C-1.4 9.8 -2.5 10.5 -3.1 11.6C-4.3 13.8 -3.4 17.1 -2.2 18.9C-1.6 19.8 -0.9 20.8 0 20.8C0.9 20.7 1.2 20.2 2.3 20.2C3.4 20.2 3.7 20.8 4.6 20.7C5.5 20.7 6.1 19.8 6.7 18.9C7.4 17.9 7.7 16.9 7.7 16.9C7.7 16.9 5.8 16.1 5.8 13.9C5.8 12 7.4 11.1 7.4 11.1C6.5 9.8 5.1 9.8 4.9 9.8Z" transform="translate(22, 3) scale(0.45)" fill="white"/>
+                </svg>
+              </div>
             </div>
           </div>
 
           {/* Right — destination cards */}
           <div className="lg:col-span-5 hidden lg:grid grid-cols-2 gap-2.5">
-            {DESTINATIONS.map((dest, i) =>
+            {DESTINATIONS?.map((dest, i) =>
             <Link
-              key={dest.name}
-              href={`/pays/${dest.name.toLowerCase()}`}
+              key={dest?.name}
+              href={`/pays/${dest?.name?.toLowerCase()}`}
               className={`relative overflow-hidden rounded-2xl group cursor-pointer ${i === 0 ? 'row-span-2' : ''}`}
               style={{ height: i === 0 ? '280px' : '130px' }}>
               
                 <AppImage
-                src={dest.img}
-                alt={dest.alt}
+                src={dest?.img}
+                alt={dest?.alt}
                 fill
                 sizes="(max-width: 1024px) 0px, 200px"
                 loading="lazy"
@@ -179,8 +179,8 @@ export default function HeroSection() {
               
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-3 left-3">
-                  <span className="text-[9px] font-mono text-white/60 tracking-widest uppercase" style={{ fontFamily: 'var(--font-mono)' }}>{dest.tag}</span>
-                  <p className="font-display font-700 text-white text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>{dest.name}</p>
+                  <span className="text-[9px] font-mono text-white/60 tracking-widest uppercase" style={{ fontFamily: 'var(--font-mono)' }}>{dest?.tag}</span>
+                  <p className="font-display font-700 text-white text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>{dest?.name}</p>
                 </div>
                 <div className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <Icon name="ArrowRightIcon" size={10} variant="outline" className="text-white" />
@@ -190,155 +190,7 @@ export default function HeroSection() {
           </div>
         </div>
       </div>
-    </section>);
-
-}
-
-// ─── Features Section ──────────────────────────────────────────────────────────
-export function FeaturesSection() {
-  return (
-    <section className="bg-[#E7E3D6] py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
-          <div>
-            <p className="text-[10px] font-mono text-[#E4501C] tracking-[0.2em] uppercase mb-2" style={{ fontFamily: 'var(--font-mono)' }}>Fonctionnalités clés</p>
-            <h2 className="font-display font-800 text-[#1C2620] text-3xl sm:text-4xl tracking-tight" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>
-              Tout pour votre<br />prochaine expédition.
-            </h2>
-          </div>
-          <Link href="/catalogue" className="text-sm font-medium text-[#1C2620]/60 hover:text-[#1C2620] flex items-center gap-1.5 transition-colors">
-            Voir tout <Icon name="ArrowRightIcon" size={14} variant="outline" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {FEATURES.map((feat, i) =>
-          <div
-            key={feat.title}
-            className={`relative rounded-2xl overflow-hidden p-7 flex flex-col justify-between min-h-[260px] ${
-            i === 0 ? 'md:col-span-1 md:row-span-1' : ''}`
-            }
-            style={{ background: i === 0 ? '#1C2620' : i === 1 ? '#33463C' : '#243028' }}>
-            
-              <div>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-5" style={{ background: `${feat.accent}25` }}>
-                  <Icon name={feat.icon as string} size={20} variant="outline" style={{ color: feat.accent }} />
-                </div>
-                <h3 className="font-display font-700 text-white text-xl mb-2.5" style={{ fontFamily: 'var(--font-display)' }}>{feat.title}</h3>
-                <p className="text-white/50 text-sm leading-relaxed">{feat.desc}</p>
-              </div>
-              <Link
-              href={feat.href}
-              className="mt-6 inline-flex items-center gap-2 text-sm font-medium transition-all"
-              style={{ color: feat.accent }}>
-              
-                {feat.cta}
-                <Icon name="ArrowRightIcon" size={13} variant="outline" />
-              </Link>
-            </div>
-          )}
-        </div>
-      </div>
-    </section>);
-
-}
-
-// ─── Popular Kits Section ──────────────────────────────────────────────────────
-export function PopularKitsSection() {
-  return (
-    <section className="bg-[#EDEAE0] py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
-          <div>
-            <p className="text-[10px] font-mono text-[#E4501C] tracking-[0.2em] uppercase mb-2" style={{ fontFamily: 'var(--font-mono)' }}>Kits populaires</p>
-            <h2 className="font-display font-800 text-[#1C2620] text-3xl sm:text-4xl tracking-tight" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>
-              Prêts à partir.
-            </h2>
-          </div>
-          <Link href="/kits" className="text-sm font-medium text-[#1C2620]/60 hover:text-[#1C2620] flex items-center gap-1.5 transition-colors">
-            Tous les kits <Icon name="ArrowRightIcon" size={14} variant="outline" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {KITS.map((kit) =>
-          <Link key={kit.name} href="/kits" className="group bg-[#E7E3D6] rounded-2xl overflow-hidden border border-[#C8C3B0] hover:border-[#E4501C]/40 hover:shadow-lg hover:shadow-[#1C2620]/10 transition-all">
-              <div className="relative h-48 overflow-hidden">
-                <AppImage
-                src={kit.img}
-                alt={kit.alt}
-                fill
-                sizes="(max-width: 640px) 100vw, 33vw"
-                className="object-cover group-hover:scale-105 transition-transform duration-500" />
-              
-                <div className="absolute top-3 left-3">
-                  <span className="text-[10px] font-mono font-600 px-2 py-1 rounded-full bg-[#E4501C] text-white" style={{ fontFamily: 'var(--font-mono)' }}>
-                    {kit.tag}
-                  </span>
-                </div>
-              </div>
-              <div className="p-5">
-                <h3 className="font-display font-700 text-[#1C2620] text-base mb-3" style={{ fontFamily: 'var(--font-display)' }}>{kit.name}</h3>
-                <div className="flex items-center gap-3 text-xs text-[#5C6B5E] mb-4">
-                  <span className="flex items-center gap-1"><Icon name="CubeIcon" size={11} variant="outline" />{kit.items} articles</span>
-                  <span className="flex items-center gap-1"><Icon name="ScaleIcon" size={11} variant="outline" />{kit.weight}</span>
-                  <span className="flex items-center gap-1"><Icon name="StarIcon" size={11} variant="solid" className="text-amber-500" />{kit.rating} ({kit.reviews})</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-mono font-700 text-[#E4501C] text-lg" style={{ fontFamily: 'var(--font-mono)' }}>{kit.price}</span>
-                  <span className="text-xs font-medium text-[#1C2620]/50 group-hover:text-[#E4501C] transition-colors flex items-center gap-1">
-                    Voir le kit <Icon name="ArrowRightIcon" size={12} variant="outline" />
-                  </span>
-                </div>
-              </div>
-            </Link>
-          )}
-        </div>
-      </div>
-    </section>);
-
-}
-
-// ─── Social Proof Section ──────────────────────────────────────────────────────
-export function SocialProofSection() {
-  const REVIEWS = [
-  { name: 'Marie L.', dest: 'Népal 2025', text: 'Le configurateur IA a composé un kit parfait pour mon trek. Rien de superflu, rien d\'oublié.', rating: 5, avatar: 'ML' },
-  { name: 'Thomas B.', dest: 'Patagonie 2025', text: 'La fiche pays Patagonie est incroyablement détaillée. J\'ai économisé des heures de recherche.', rating: 5, avatar: 'TB' },
-  { name: 'Camille R.', dest: 'Islande 2026', text: 'Le copilote IA a répondu à toutes mes questions sur les conditions météo. Service exceptionnel.', rating: 5, avatar: 'CR' }];
-
-
-  return (
-    <section className="bg-[#1C2620] py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12">
-          <p className="text-[10px] font-mono text-[#E4501C] tracking-[0.2em] uppercase mb-3" style={{ fontFamily: 'var(--font-mono)' }}>Ils nous font confiance</p>
-          <h2 className="font-display font-800 text-white text-3xl sm:text-4xl tracking-tight" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>
-            12 847 voyageurs équipés.
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {REVIEWS.map((review) =>
-          <div key={review.name} className="bg-white/5 border border-white/8 rounded-2xl p-6">
-              <div className="flex items-center gap-1 mb-4">
-                {Array.from({ length: review.rating }).map((_, i) =>
-              <Icon key={i} name="StarIcon" size={13} variant="solid" className="text-amber-400" />
-              )}
-              </div>
-              <p className="text-white/70 text-sm leading-relaxed mb-5">&ldquo;{review.text}&rdquo;</p>
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-[#E4501C]/20 flex items-center justify-center">
-                  <span className="font-mono text-xs font-700 text-[#E4501C]" style={{ fontFamily: 'var(--font-mono)' }}>{review.avatar}</span>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-white">{review.name}</p>
-                  <p className="text-xs text-white/35">{review.dest}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </section>);
+    </section>
+  );
 
 }

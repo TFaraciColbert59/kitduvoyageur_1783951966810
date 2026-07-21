@@ -1,0 +1,333 @@
+{
+  "version": "v2",
+  "generated_at": "2026-07-14T18:10:03.858Z",
+  "valid_until": "2026-07-16T18:10:03.858Z",
+  "data": {
+    "pays": {
+      "nom": "Japon",
+      "code_iso": "JP",
+      "continent": "Asie"
+    },
+    "meteo": {
+      "calendrier_12_mois": [
+        {
+          "mois": "Janvier",
+          "temp_min_c": 2,
+          "temp_max_c": 9,
+          "precipitations_mm": 50,
+          "niveau": "deconseille",
+          "affluence": "faible"
+        },
+        {
+          "mois": "Février",
+          "temp_min_c": 2,
+          "temp_max_c": 10,
+          "precipitations_mm": 60,
+          "niveau": "deconseille",
+          "affluence": "faible"
+        },
+        {
+          "mois": "Mars",
+          "temp_min_c": 5,
+          "temp_max_c": 13,
+          "precipitations_mm": 100,
+          "niveau": "bon",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Avril",
+          "temp_min_c": 10,
+          "temp_max_c": 19,
+          "precipitations_mm": 120,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Mai",
+          "temp_min_c": 15,
+          "temp_max_c": 23,
+          "precipitations_mm": 120,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Juin",
+          "temp_min_c": 19,
+          "temp_max_c": 26,
+          "precipitations_mm": 170,
+          "niveau": "moyen",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Juillet",
+          "temp_min_c": 23,
+          "temp_max_c": 29,
+          "precipitations_mm": 160,
+          "niveau": "moyen",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Août",
+          "temp_min_c": 24,
+          "temp_max_c": 31,
+          "precipitations_mm": 150,
+          "niveau": "moyen",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Septembre",
+          "temp_min_c": 20,
+          "temp_max_c": 27,
+          "precipitations_mm": 200,
+          "niveau": "bon",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Octobre",
+          "temp_min_c": 14,
+          "temp_max_c": 22,
+          "precipitations_mm": 130,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Novembre",
+          "temp_min_c": 8,
+          "temp_max_c": 16,
+          "precipitations_mm": 80,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Décembre",
+          "temp_min_c": 4,
+          "temp_max_c": 12,
+          "precipitations_mm": 50,
+          "niveau": "bon",
+          "affluence": "moyenne"
+        }
+      ],
+      "source": "Données climatiques officielles / estimation climatique générale",
+      "derniere_maj": "2024-07-14"
+    },
+    "securite": {
+      "zones": [
+        {
+          "nom_zone": "Ensemble du territoire",
+          "niveau": "sur",
+          "description": "Le Japon est un pays très sûr avec un taux de criminalité extrêmement bas. Les risques majeurs sont liés aux catastrophes naturelles (tremblements de terre, tsunamis, éruptions volcaniques, typhons), pour lesquelles il est essentiel de suivre les consignes des autorités locales."
+        }
+      ],
+      "source_officielle": {
+        "nom": "France Diplomatie",
+        "url": "https://www.diplomatie.gouv.fr/fr/conseils-aux-voyageurs/conseils-par-pays-destination/japon/"
+      },
+      "derniere_synchronisation": "2024-07-14",
+      "statut": "verifie",
+      "ambassade_consulat": {
+        "nom": "Ambassade de France à Tokyo",
+        "telephone": "+81 3 5798 6000",
+        "url": "https://jp.ambafrance.org/"
+      }
+    },
+    "sante": {
+      "risques": [
+        "Grippe saisonnière (particulièrement en hiver)",
+        "Encéphalite japonaise (risque faible, principalement en zones rurales et agricoles de juin à octobre)",
+        "Dengue (cas sporadiques, principalement à Tokyo)"
+      ],
+      "vaccins_recommandes": [
+        "Hépatite A",
+        "Hépatite B",
+        "Encéphalite japonaise (pour séjours prolongés en zone rurale)"
+      ],
+      "vaccins_obligatoires": [],
+      "eau_potable": "oui",
+      "source": "Institut Pasteur / OMS / Santé Voyageurs",
+      "derniere_maj": "2024-07-14",
+      "statut": "verifie"
+    },
+    "connectivite": {
+      "couverture_mobile": "bonne",
+      "wifi_disponibilite": "Le WiFi est largement disponible dans les hôtels, cafés, gares, aéroports et de nombreux lieux publics. La location de boîtiers WiFi portables est très populaire et recommandée pour une connectivité constante.",
+      "statut": "verifie"
+    },
+    "pratique": {
+      "visa": {
+        "nationalite": "France",
+        "regle": "Les ressortissants français n'ont pas besoin de visa pour un séjour touristique de moins de 90 jours.",
+        "duree_sejour_sans_visa": "90 jours"
+      },
+      "monnaie": "Yen japonais (JPY)",
+      "prise_electrique": {
+        "type": "Type A et B",
+        "voltage": "100V 50Hz/60Hz"
+      },
+      "langues": [
+        "Japonais"
+      ],
+      "phrases_survie": [
+        {
+          "fr": "Bonjour",
+          "locale": "Konnichiwa"
+        },
+        {
+          "fr": "Merci",
+          "locale": "Arigato gozaimasu"
+        },
+        {
+          "fr": "Au revoir",
+          "locale": "Sayonara"
+        },
+        {
+          "fr": "Où sont les toilettes ?",
+          "locale": "Toire wa doko desu ka?"
+        },
+        {
+          "fr": "Combien ça coûte ?",
+          "locale": "Ikura desu ka?"
+        }
+      ],
+      "decalage_horaire_utc": "UTC+9 (heure de Paris : +7 ou +8 heures selon la saison)",
+      "budget_quotidien_repere_eur": {
+        "petit": {
+          "logement": 40,
+          "nourriture": 25,
+          "transport": 15
+        },
+        "moyen": {
+          "logement": 100,
+          "nourriture": 50,
+          "transport": 25
+        },
+        "gros": {
+          "logement": 200,
+          "nourriture": 100,
+          "transport": 40
+        }
+      }
+    },
+    "vols": {
+      "tendance_par_saison": [
+        {
+          "periode": "Haute saison (Avril-Mai, Juillet-Août, Octobre-Novembre)",
+          "niveau_prix": "haut"
+        },
+        {
+          "periode": "Basse saison (Janvier-Février, Juin)",
+          "niveau_prix": "bas"
+        },
+        {
+          "periode": "Épaule (Mars, Septembre, Décembre)",
+          "niveau_prix": "moyen"
+        }
+      ],
+      "statut": "indicatif"
+    },
+    "carbone": {
+      "vol_paris_kg_co2_estime": 4947,
+      "methodologie": "Distance Paris–Tokyo (environ 9700 km) × 2 (aller-retour) × 0.255 kg CO2/km/passager (facteur ADEME aviation moyen-courrier/long-courrier)",
+      "statut": "estimation"
+    },
+    "evenements": [
+      {
+        "nom": "Hanami (Floraison des cerisiers)",
+        "periode": "Fin Mars - Début Avril",
+        "description": "Célébration de la beauté éphémère des fleurs de cerisier dans tout le pays, avec des pique-niques sous les arbres."
+      },
+      {
+        "nom": "Gion Matsuri",
+        "periode": "Juillet",
+        "description": "L'un des festivals les plus célèbres du Japon, se déroulant à Kyoto, avec des processions de chars décorés et des célébrations traditionnelles."
+      },
+      {
+        "nom": "Koyo (Feuilles d'automne)",
+        "periode": "Octobre - Novembre",
+        "description": "Période où les feuilles des arbres prennent des couleurs éclatantes, attirant les visiteurs dans les parcs et montagnes pour admirer les paysages."
+      }
+    ],
+    "lieux_incontournables": [
+      {
+        "nom": "Mont Fuji",
+        "description": "Symbole emblématique du Japon, volcan sacré et point culminant du pays, offrant des vues spectaculaires et des opportunités de randonnée.",
+        "lat": 35.3606,
+        "lng": 138.7292
+      },
+      {
+        "nom": "Sanctuaire Fushimi Inari-taisha",
+        "description": "Situé à Kyoto, célèbre pour ses milliers de torii (portails shinto) vermillons formant des tunnels sur les sentiers de la montagne sacrée Inari.",
+        "lat": 34.9671,
+        "lng": 135.7727
+      },
+      {
+        "nom": "Shibuya Crossing",
+        "description": "Le carrefour le plus fréquenté du monde, situé à Tokyo, un spectacle fascinant de la vie urbaine japonaise moderne.",
+        "lat": 35.6591,
+        "lng": 139.7004
+      },
+      {
+        "nom": "Parc du Mémorial de la Paix d'Hiroshima",
+        "description": "Dédié à la mémoire des victimes de la bombe atomique, incluant le Dôme de Genbaku et le Musée de la Paix, un lieu de réflexion et d'espoir.",
+        "lat": 34.3955,
+        "lng": 132.452
+      },
+      {
+        "nom": "Château de Himeji",
+        "description": "Un des plus beaux exemples d'architecture de château japonais, classé au patrimoine mondial de l'UNESCO, surnommé le 'Château du Héron Blanc'.",
+        "lat": 34.8394,
+        "lng": 134.6875
+      }
+    ],
+    "coutumes": "Le respect est primordial au Japon. Il est courant de s'incliner pour saluer, remercier ou s'excuser. Retirez toujours vos chaussures avant d'entrer dans une maison, un temple ou certains restaurants. La ponctualité est très appréciée. Évitez de parler fort dans les transports en commun et de laisser des pourboires, cela peut être perçu comme impoli. Mangez avec discrétion et ne plantez jamais vos baguettes verticalement dans votre riz.",
+    "kits_recommandes_tags_climat": [
+      "urbain",
+      "montagne",
+      "pluie",
+      "froid",
+      "chaud"
+    ],
+    "gabarit_poids_recommande": {
+      "poids_total_kg": 18,
+      "justification": "Le Japon a un climat varié avec quatre saisons distinctes, nécessitant des vêtements adaptés (couches pour le printemps/automne, vêtements légers pour l'été humide, chauds pour l'hiver). Les achats de souvenirs sont également fréquents."
+    },
+    "pays_similaires": [
+      {
+        "code_iso": "KR",
+        "nom": "Corée du Sud",
+        "raison": "Similarités culturelles, villes modernes dynamiques, paysages variés et climat tempéré avec quatre saisons distinctes."
+      },
+      {
+        "code_iso": "TW",
+        "nom": "Taïwan",
+        "raison": "Culture insulaire riche, mélange de tradition et de modernité, paysages montagneux et villes animées, avec un climat subtropical à tempéré."
+      },
+      {
+        "code_iso": "CA",
+        "nom": "Canada",
+        "raison": "Vastes paysages naturels diversifiés (montagnes, côtes), villes modernes, et un climat tempéré avec des hivers froids et des étés chauds, offrant des activités de plein air variées."
+      }
+    ],
+    "faq": [
+      {
+        "question": "Ai-je besoin d'un visa pour visiter le Japon en tant que citoyen français ?",
+        "reponse": "Non, les citoyens français n'ont pas besoin de visa pour un séjour touristique de moins de 90 jours au Japon."
+      },
+      {
+        "question": "Quelle est la meilleure période pour visiter le Japon ?",
+        "reponse": "Les périodes idéales sont le printemps (Avril-Mai) pour la floraison des cerisiers et l'automne (Octobre-Novembre) pour les couleurs des feuilles. L'été est chaud et humide, et l'hiver est froid mais ensoleillé."
+      },
+      {
+        "question": "L'eau du robinet est-elle potable au Japon ?",
+        "reponse": "Oui, l'eau du robinet est généralement potable et de bonne qualité dans tout le Japon."
+      },
+      {
+        "question": "Quel budget quotidien dois-je prévoir pour un voyage au Japon ?",
+        "reponse": "Pour un budget moyen, prévoyez environ 175 EUR par jour, incluant 100 EUR pour le logement, 50 EUR pour la nourriture et 25 EUR pour le transport. Les prix peuvent varier considérablement selon les villes et le style de voyage."
+      }
+    ],
+    "meta": {
+      "genere_le": "2024-07-14T12:00:00.000Z",
+      "cache_valide_jusqu_au": "2024-07-16T12:00:00.000Z"
+    }
+  }
+}

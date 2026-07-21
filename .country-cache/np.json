@@ -1,253 +1,344 @@
 {
-  "code": "NP",
-  "nom": "Népal",
-  "continent": "Asie",
-  "capital": "Katmandou",
-  "coordonnees": "28.3949° N, 84.1240° E",
-  "fuseau": "UTC+5:45 (NPT)",
-  "monnaie": "Roupie népalaise (NPR)",
-  "langues": [
-    "Népalais",
-    "Maithili",
-    "Bhojpuri"
-  ],
-  "population": "30 millions hab.",
-  "superficie": "147 181 km²",
-  "danger_global": 6,
-  "danger_details": [
-    {
-      "label": "Sécurité générale",
-      "level": "medium",
-      "note": "Risques de petite délinquance et d'incidents liés à l'instabilité politique locale."
+  "version": "v2",
+  "generated_at": "2026-07-13T23:23:11.538Z",
+  "valid_until": "2026-07-15T23:23:11.538Z",
+  "data": {
+    "pays": {
+      "nom": "Népal",
+      "code_iso": "NP",
+      "continent": "Asie"
     },
-    {
-      "label": "Risques naturels",
-      "level": "high",
-      "note": "Fort risque sismique, glissements de terrain et inondations pendant la mousson."
+    "meteo": {
+      "calendrier_12_mois": [
+        {
+          "mois": "Janvier",
+          "temp_min_c": 2,
+          "temp_max_c": 18,
+          "precipitations_mm": 15,
+          "niveau": "bon",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Février",
+          "temp_min_c": 4,
+          "temp_max_c": 20,
+          "precipitations_mm": 18,
+          "niveau": "bon",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Mars",
+          "temp_min_c": 8,
+          "temp_max_c": 25,
+          "precipitations_mm": 30,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Avril",
+          "temp_min_c": 12,
+          "temp_max_c": 28,
+          "precipitations_mm": 50,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Mai",
+          "temp_min_c": 16,
+          "temp_max_c": 30,
+          "precipitations_mm": 100,
+          "niveau": "bon",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Juin",
+          "temp_min_c": 19,
+          "temp_max_c": 29,
+          "precipitations_mm": 250,
+          "niveau": "deconseille",
+          "affluence": "faible"
+        },
+        {
+          "mois": "Juillet",
+          "temp_min_c": 20,
+          "temp_max_c": 28,
+          "precipitations_mm": 350,
+          "niveau": "deconseille",
+          "affluence": "faible"
+        },
+        {
+          "mois": "Août",
+          "temp_min_c": 20,
+          "temp_max_c": 28,
+          "precipitations_mm": 300,
+          "niveau": "deconseille",
+          "affluence": "faible"
+        },
+        {
+          "mois": "Septembre",
+          "temp_min_c": 18,
+          "temp_max_c": 27,
+          "precipitations_mm": 150,
+          "niveau": "bon",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Octobre",
+          "temp_min_c": 13,
+          "temp_max_c": 26,
+          "precipitations_mm": 40,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Novembre",
+          "temp_min_c": 8,
+          "temp_max_c": 22,
+          "precipitations_mm": 10,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Décembre",
+          "temp_min_c": 3,
+          "temp_max_c": 19,
+          "precipitations_mm": 10,
+          "niveau": "bon",
+          "affluence": "moyenne"
+        }
+      ],
+      "source": "Données climatiques officielles / estimation climatique générale (Kathmandu)",
+      "derniere_maj": "2024-07-13"
     },
-    {
-      "label": "Santé",
-      "level": "medium",
-      "note": "Conditions sanitaires précaires, risques de maladies hydriques et d'altitude."
+    "securite": {
+      "zones": [
+        {
+          "nom_zone": "Ensemble du territoire",
+          "niveau": "vigilance",
+          "description": "Une vigilance renforcée est recommandée sur l'ensemble du territoire népalais en raison de risques liés à la criminalité, aux accidents de la route et aux manifestations politiques parfois violentes. Les zones frontalières avec l'Inde (Terai) peuvent être plus sensibles."
+        }
+      ],
+      "source_officielle": {
+        "nom": "France Diplomatie",
+        "url": "https://www.diplomatie.gouv.fr/fr/conseils-aux-voyageurs/conseils-par-pays-destination/nepal/"
+      },
+      "derniere_synchronisation": "2024-07-13",
+      "statut": "verifie",
+      "ambassade_consulat": {
+        "nom": "Ambassade de France à Katmandou",
+        "telephone": "+977 1 441 4709",
+        "url": "https://np.ambafrance.org/"
+      }
     },
-    {
-      "label": "Zones à éviter",
-      "level": "medium",
-      "note": "Certaines zones frontalières et sentiers de trekking isolés sans guide expérimenté."
+    "sante": {
+      "risques": [
+        "Mal d'altitude (AMS) en haute montagne",
+        "Infections gastro-intestinales (diarrhée du voyageur)",
+        "Dengue (particulièrement dans le Terai)",
+        "Rage (animaux errants)",
+        "Hépatites A et B"
+      ],
+      "vaccins_recommandes": [
+        "Hépatite A",
+        "Hépatite B",
+        "Typhoïde",
+        "Rage (si séjour prolongé ou activités à risque)",
+        "Encéphalite japonaise (si séjour prolongé en zone rurale)"
+      ],
+      "vaccins_obligatoires": [],
+      "eau_potable": "a_traiter",
+      "source": "Institut Pasteur / OMS / Santé Voyageurs",
+      "derniere_maj": "2024-07-13",
+      "statut": "verifie"
+    },
+    "connectivite": {
+      "couverture_mobile": "moyenne",
+      "wifi_disponibilite": "Bonne disponibilité dans les grandes villes et zones touristiques comme Katmandou et Pokhara. Sur les itinéraires de trekking populaires, le Wi-Fi est souvent disponible dans les lodges, mais peut être lent et payant.",
+      "statut": "estimation"
+    },
+    "pratique": {
+      "visa": {
+        "nationalite": "France",
+        "regle": "Un visa est obligatoire pour les citoyens français. Il peut être obtenu à l'arrivée à l'aéroport international de Katmandou (Tribhuvan International Airport - TIA) ou aux postes frontières terrestres. Il est également possible de l'obtenir en ligne avant le départ via le site du Département de l'Immigration népalais.",
+        "duree_sejour_sans_visa": "visa requis"
+      },
+      "monnaie": "Roupie népalaise (NPR)",
+      "prise_electrique": {
+        "type": "Type C, D, M",
+        "voltage": "230V 50Hz"
+      },
+      "langues": [
+        "Népalais",
+        "Anglais (couramment parlé dans les zones touristiques)"
+      ],
+      "phrases_survie": [
+        {
+          "fr": "Bonjour",
+          "locale": "Namaste (नमस्ते)"
+        },
+        {
+          "fr": "Merci",
+          "locale": "Dhanyabad (धन्यवाद)"
+        },
+        {
+          "fr": "Au revoir",
+          "locale": "Pheri bhetaula (फेरि भेटौला)"
+        },
+        {
+          "fr": "Où sont les toilettes ?",
+          "locale": "Shauchalaya kaha chha? (शौचालय कहाँ छ?)"
+        },
+        {
+          "fr": "Combien ça coûte ?",
+          "locale": "Kati ho? (कति हो?)"
+        }
+      ],
+      "decalage_horaire_utc": "UTC+5:45 (heure de Paris : +3h45 en été, +4h45 en hiver)",
+      "budget_quotidien_repere_eur": {
+        "petit": {
+          "logement": 12,
+          "nourriture": 12,
+          "transport": 8
+        },
+        "moyen": {
+          "logement": 40,
+          "nourriture": 25,
+          "transport": 20
+        },
+        "gros": {
+          "logement": 100,
+          "nourriture": 50,
+          "transport": 40
+        }
+      }
+    },
+    "vols": {
+      "tendance_par_saison": [
+        {
+          "periode": "Haute saison (Mars-Mai, Septembre-Novembre)",
+          "niveau_prix": "haut"
+        },
+        {
+          "periode": "Basse saison (Juin-Août - Mousson)",
+          "niveau_prix": "bas"
+        },
+        {
+          "periode": "Épaule (Décembre-Février)",
+          "niveau_prix": "moyen"
+        }
+      ],
+      "statut": "indicatif"
+    },
+    "carbone": {
+      "vol_paris_kg_co2_estime": 3825,
+      "methodologie": "Distance Paris–Katmandou (env. 7500 km) × 2 (aller-retour) × 0.255 kg CO2/km/passager (facteur ADEME aviation moyen-courrier/long-courrier)",
+      "statut": "estimation"
+    },
+    "evenements": [
+      {
+        "nom": "Dashain",
+        "periode": "Septembre/Octobre",
+        "description": "La plus grande et la plus longue fête hindoue du Népal, célébrée pendant 15 jours avec des rituels, des réunions de famille et des bénédictions."
+      },
+      {
+        "nom": "Tihar (Deepawali)",
+        "periode": "Octobre/Novembre",
+        "description": "Fête des lumières de 5 jours, dédiée à la déesse Lakshmi, où les maisons sont décorées de lampes à huile et de guirlandes, et les animaux sont vénérés."
+      },
+      {
+        "nom": "Holi (Fagu Purnima)",
+        "periode": "Février/Mars",
+        "description": "La fête des couleurs, célébrée avec enthousiasme en jetant des poudres colorées et de l'eau sur les amis et la famille."
+      },
+      {
+        "nom": "Buddha Jayanti",
+        "periode": "Mai",
+        "description": "Célébration de l'anniversaire de Bouddha, particulièrement importante à Lumbini (son lieu de naissance) et dans les stupas bouddhistes du pays."
+      }
+    ],
+    "lieux_incontournables": [
+      {
+        "nom": "Kathmandu Durbar Square",
+        "description": "Un site classé au patrimoine mondial de l'UNESCO, abritant des palais royaux, des temples et des cours intérieures qui témoignent de l'architecture Newar et de l'histoire du royaume de Katmandou.",
+        "lat": 27.7049,
+        "lng": 85.3075
+      },
+      {
+        "nom": "Swayambhunath Stupa (Monkey Temple)",
+        "description": "Un ancien complexe religieux perché sur une colline à l'ouest de Katmandou, célèbre pour son stupa blanc et doré, ses yeux de Bouddha et ses nombreux singes sacrés.",
+        "lat": 27.7142,
+        "lng": 85.287
+      },
+      {
+        "nom": "Pokhara",
+        "description": "Ville lacustre au pied de l'Annapurna, connue pour ses vues imprenables sur les montagnes, le lac Phewa, et ses activités d'aventure comme le parapente et le trekking.",
+        "lat": 28.2096,
+        "lng": 83.9667
+      },
+      {
+        "nom": "Parc National de Chitwan",
+        "description": "Un parc national classé à l'UNESCO dans le Terai, offrant des safaris pour observer la faune sauvage, notamment les rhinocéros unicorne, les tigres du Bengale et de nombreuses espèces d'oiseaux.",
+        "lat": 27.55,
+        "lng": 84.4
+      },
+      {
+        "nom": "Lumbini",
+        "description": "Le lieu de naissance de Siddhartha Gautama, le Bouddha, un site de pèlerinage majeur pour les bouddhistes du monde entier, avec le temple de Maya Devi et de nombreux monastères internationaux.",
+        "lat": 27.4699,
+        "lng": 83.2797
+      }
+    ],
+    "coutumes": "Au Népal, le respect est primordial. Saluez avec un 'Namaste' et les mains jointes. Enlevez vos chaussures avant d'entrer dans les temples et les maisons. Ne touchez pas la tête des gens, considérée comme sacrée, et évitez de pointer du doigt. Utilisez toujours votre main droite pour manger, donner ou recevoir, la main gauche étant considérée comme impure. La tenue vestimentaire doit être modeste, surtout dans les lieux de culte.",
+    "kits_recommandes_tags_climat": [
+      "trekking",
+      "montagne",
+      "culturel",
+      "mousson",
+      "froid",
+      "aventure"
+    ],
+    "gabarit_poids_recommande": {
+      "poids_total_kg": 18,
+      "justification": "Pour un voyage au Népal combinant trekking en montagne et exploration culturelle, un poids de 18 kg permet d'emporter l'équipement de base pour le trekking (vêtements techniques, chaussures de marche) et des affaires pour les visites culturelles, tout en laissant de la place pour des souvenirs. Il est souvent possible de louer du matériel de trekking sur place."
+    },
+    "pays_similaires": [
+      {
+        "code_iso": "BT",
+        "nom": "Bhoutan",
+        "raison": "Similitudes culturelles himalayennes, bouddhisme, paysages montagneux et opportunités de trekking spirituel."
+      },
+      {
+        "code_iso": "IN",
+        "nom": "Inde",
+        "raison": "Proximité géographique, influences culturelles et religieuses partagées, et présence de la chaîne de l'Himalaya."
+      },
+      {
+        "code_iso": "PE",
+        "nom": "Pérou",
+        "raison": "Offre des expériences de trekking en haute altitude similaires, une riche culture ancienne et une spiritualité profonde, bien que sur un continent différent."
+      }
+    ],
+    "faq": [
+      {
+        "question": "Un visa est-il nécessaire pour les citoyens français voyageant au Népal ?",
+        "reponse": "Oui, un visa est obligatoire pour les citoyens français. Il peut être obtenu à l'arrivée à l'aéroport de Katmandou ou aux postes frontières terrestres, ou en ligne avant le départ."
+      },
+      {
+        "question": "Quelle est la meilleure période pour faire du trekking dans l'Himalaya népalais ?",
+        "reponse": "Les périodes idéales sont le printemps (mars-mai) et l'automne (octobre-novembre). Ces mois offrent un ciel clair, des températures agréables et une faible pluviométrie, parfaites pour les vues sur les montagnes et les randonnées."
+      },
+      {
+        "question": "Quels sont les principaux risques sanitaires au Népal et quels vaccins sont recommandés ?",
+        "reponse": "Les risques incluent le mal d'altitude, les infections gastro-intestinales, la dengue et la rage. Les vaccins recommandés sont l'Hépatite A et B, la Typhoïde, la Rage et l'Encéphalite japonaise (selon le type de séjour)."
+      },
+      {
+        "question": "Quel budget quotidien prévoir pour un voyage au Népal ?",
+        "reponse": "Pour un petit budget, comptez environ 25-40€ par jour. Un budget moyen se situe entre 65-105€, et un budget plus élevé peut dépasser 150€ par jour, selon le niveau de confort et les activités choisies."
+      }
+    ],
+    "meta": {
+      "genere_le": "2024-07-13T23:22:38.704Z",
+      "cache_valide_jusqu_au": "2024-07-15T23:22:38.704Z"
     }
-  ],
-  "calendrier": [
-    {
-      "month": "Janvier",
-      "short": "Jan",
-      "status": "bad",
-      "temp_min": 0,
-      "temp_max": 18,
-      "rain_mm": 15,
-      "description": "Froid et sec, surtout en montagne. Brouillard dans le Terai."
-    },
-    {
-      "month": "Février",
-      "short": "Fév",
-      "status": "bad",
-      "temp_min": 2,
-      "temp_max": 20,
-      "rain_mm": 20,
-      "description": "Encore froid, mais les températures commencent à monter."
-    },
-    {
-      "month": "Mars",
-      "short": "Mar",
-      "status": "medium",
-      "temp_min": 6,
-      "temp_max": 25,
-      "rain_mm": 30,
-      "description": "Printemps agréable, idéal pour le trekking à basse altitude."
-    },
-    {
-      "month": "Avril",
-      "short": "Avr",
-      "status": "good",
-      "temp_min": 10,
-      "temp_max": 29,
-      "rain_mm": 40,
-      "description": "Très agréable, floraison des rhododendrons. Haute saison de trekking."
-    },
-    {
-      "month": "Mai",
-      "short": "Mai",
-      "status": "medium",
-      "temp_min": 15,
-      "temp_max": 30,
-      "rain_mm": 100,
-      "description": "Chaud et humide, début de la pré-mousson avec averses."
-    },
-    {
-      "month": "Juin",
-      "short": "Jun",
-      "status": "bad",
-      "temp_min": 18,
-      "temp_max": 29,
-      "rain_mm": 250,
-      "description": "Début de la mousson, pluies intenses, glissements de terrain."
-    },
-    {
-      "month": "Juillet",
-      "short": "Jul",
-      "status": "bad",
-      "temp_min": 19,
-      "temp_max": 28,
-      "rain_mm": 350,
-      "description": "Pleine mousson, fortes pluies, trekking difficile et vues limitées."
-    },
-    {
-      "month": "Août",
-      "short": "Aoû",
-      "status": "bad",
-      "temp_min": 19,
-      "temp_max": 28,
-      "rain_mm": 300,
-      "description": "Mousson continue, mais les rizières sont luxuriantes."
-    },
-    {
-      "month": "Septembre",
-      "short": "Sep",
-      "status": "good",
-      "temp_min": 16,
-      "temp_max": 27,
-      "rain_mm": 150,
-      "description": "Fin de la mousson, ciel dégagé, verdure éclatante. Excellente période."
-    },
-    {
-      "month": "Octobre",
-      "short": "Oct",
-      "status": "good",
-      "temp_min": 10,
-      "temp_max": 25,
-      "rain_mm": 50,
-      "description": "Meilleure période pour visiter, ciel clair, températures douces. Haute saison."
-    },
-    {
-      "month": "Novembre",
-      "short": "Nov",
-      "status": "good",
-      "temp_min": 5,
-      "temp_max": 22,
-      "rain_mm": 10,
-      "description": "Clair et frais, idéal pour le trekking avant l'arrivée du froid hivernal."
-    },
-    {
-      "month": "Décembre",
-      "short": "Déc",
-      "status": "bad",
-      "temp_min": 1,
-      "temp_max": 19,
-      "rain_mm": 10,
-      "description": "Froid et sec, particulièrement en altitude. Vues claires sur les montagnes."
-    }
-  ],
-  "infos_pratiques": [
-    {
-      "icon": "IdentificationIcon",
-      "label": "Visa",
-      "value": "Visa obligatoire pour les ressortissants français, délivré à l'arrivée (aéroport de Katmandou) ou en ligne avant le départ. Passeport valide 6 mois après la date de retour."
-    },
-    {
-      "icon": "HeartIcon",
-      "label": "Vaccins",
-      "value": "Vaccins universels (DTCP, hépatite B) à jour. Recommandés : hépatite A, typhoïde, encéphalite japonaise (si séjour prolongé en zone rurale), rage (si contact avec animaux)."
-    },
-    {
-      "icon": "CurrencyEuroIcon",
-      "label": "Monnaie",
-      "value": "La Roupie népalaise (NPR). 1 EUR ≈ 140-150 NPR. Les distributeurs automatiques sont courants dans les villes, mais prévoyez des espèces pour les zones rurales. Les cartes de crédit sont acceptées dans les grands hôtels et magasins."
-    },
-    {
-      "icon": "BoltIcon",
-      "label": "Prises",
-      "value": "Types C, D et M. Le voltage est de 230 V et la fréquence de 50 Hz. Un adaptateur universel est fortement recommandé."
-    },
-    {
-      "icon": "BeakerIcon",
-      "label": "Eau",
-      "value": "L'eau du robinet n'est pas potable. Il est impératif de boire de l'eau en bouteille capsulée, de l'eau filtrée ou purifiée (pastilles, filtre UV). Évitez les glaçons."
-    },
-    {
-      "icon": "PhoneIcon",
-      "label": "Urgences",
-      "value": "Police : 100, Ambulance : 102, Pompiers : 101. Pour les urgences en montagne, contactez votre agence de trekking ou l'ambassade."
-    }
-  ],
-  "lieux": [
-    {
-      "nom": "Katmandou Durbar Square",
-      "description": "Cœur historique de Katmandou, classé au patrimoine mondial de l'UNESCO, avec ses temples anciens, palais et cours royales. Témoin de l'architecture Newar."
-    },
-    {
-      "nom": "Swayambhunath Stupa (Monkey Temple)",
-      "description": "Un ancien complexe religieux perché sur une colline à l'ouest de Katmandou, offrant une vue panoramique sur la vallée. Célèbre pour ses singes sacrés et son stupa emblématique."
-    },
-    {
-      "nom": "Boudhanath Stupa",
-      "description": "L'un des plus grands stupas bouddhistes du monde, centre du bouddhisme tibétain au Népal. Son immense dôme blanc est entouré de monastères et de boutiques."
-    },
-    {
-      "nom": "Pokhara",
-      "description": "Ville lacustre pittoresque au pied de l'Annapurna, point de départ de nombreux treks. Offre des vues imprenables sur les montagnes, des activités nautiques sur le lac Phewa et une ambiance relaxante."
-    },
-    {
-      "nom": "Parc National de Sagarmatha (Everest)",
-      "description": "Abritant le mont Everest, ce parc est un site du patrimoine mondial de l'UNESCO. Il offre des paysages himalayens spectaculaires, des cultures sherpas uniques et des treks légendaires vers le camp de base de l'Everest."
-    }
-  ],
-  "kits_recommandes": [
-    {
-      "nom": "Kit Trekking Himalaya",
-      "poids_g": 8500,
-      "prix_cents": 29900,
-      "slug": "kit-trekking-himalaya",
-      "description": "Équipement essentiel pour les treks en haute altitude : vêtements techniques, sac de couchage chaud, trousse de premiers secours spécifique, purificateur d'eau."
-    },
-    {
-      "nom": "Kit Culturel Népal",
-      "poids_g": 5200,
-      "prix_cents": 18900,
-      "slug": "kit-culturel-nepal",
-      "description": "Pour explorer les villes et sites culturels : adaptateur universel, petit sac à dos, foulard, désinfectant pour les mains, guide de conversation."
-    },
-    {
-      "nom": "Kit Essentiel Aventure",
-      "poids_g": 3100,
-      "prix_cents": 12900,
-      "slug": "kit-essentiel-aventure",
-      "description": "Base pour tout voyage : trousse de toilette compacte, lampe frontale, batterie externe, petit cadenas, kit de couture de voyage."
-    }
-  ],
-  "events": [
-    {
-      "mois": "Septembre/Octobre",
-      "titre": "Dashain",
-      "type": "festival"
-    },
-    {
-      "mois": "Octobre/Novembre",
-      "titre": "Tihar (Deepawali)",
-      "type": "festival"
-    },
-    {
-      "mois": "Octobre-Novembre & Mars-Avril",
-      "titre": "Haute saison touristique",
-      "type": "saison"
-    },
-    {
-      "mois": "Juin-Août",
-      "titre": "Période de mousson (à éviter pour le trekking)",
-      "type": "eviter"
-    },
-    {
-      "mois": "Mars",
-      "titre": "Holi (Festival des Couleurs)",
-      "type": "festival"
-    }
-  ]
+  }
 }

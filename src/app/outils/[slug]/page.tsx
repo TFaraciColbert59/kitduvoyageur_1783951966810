@@ -828,17 +828,185 @@ function ToolRations() {
   );
 }
 
+// ─── TOOL: Planificateur d'itinéraire ────────────────────────────────────────
+function ToolPlanificateur() {
+  const [destination, setDestination] = useState('');
+  const [duree, setDuree] = useState(7);
+  const [budget, setBudget] = useState<'petit' | 'moyen' | 'grand'>('moyen');
+  const [style, setStyle] = useState<'aventure' | 'culture' | 'detente' | 'mixte'>('mixte');
+  const [etapes, setEtapes] = useState<{ jour: number; activite: string; lieu: string; conseil: string }[]>([]);
+  const [generated, setGenerated] = useState(false);
+
+  const TEMPLATES: Record<string, { activite: string; lieu: string; conseil: string }[]> = {
+    aventure: [
+      { activite: 'Arrivée & acclimatation', lieu: 'Ville principale', conseil: 'Reposez-vous — le décalage horaire est réel' },
+      { activite: 'Randonnée d\'orientation', lieu: 'Parc naturel proche', conseil: 'Partez tôt le matin pour éviter la chaleur' },
+      { activite: 'Trek en autonomie', lieu: 'Sentier principal', conseil: 'Vérifiez la météo la veille' },
+      { activite: 'Bivouac en altitude', lieu: 'Refuge ou camping', conseil: 'Emportez 2L d\'eau minimum' },
+      { activite: 'Descente & exploration', lieu: 'Vallée', conseil: 'Profitez des marchés locaux' },
+      { activite: 'Activité nautique', lieu: 'Lac ou rivière', conseil: 'Vérifiez les conditions de sécurité' },
+      { activite: 'Retour & bilan', lieu: 'Ville principale', conseil: 'Notez vos impressions pour votre carnet' },
+    ],
+    culture: [
+      { activite: 'Arrivée & orientation', lieu: 'Centre historique', conseil: 'Achetez un city pass si disponible' },
+      { activite: 'Musées & monuments', lieu: 'Quartier historique', conseil: 'Réservez en ligne pour éviter les files' },
+      { activite: 'Gastronomie locale', lieu: 'Marché central', conseil: 'Déjeunez où mangent les locaux' },
+      { activite: 'Excursion journée', lieu: 'Site classé UNESCO', conseil: 'Partez tôt, retour avant 17h' },
+      { activite: 'Quartiers alternatifs', lieu: 'Quartier artiste', conseil: 'Les meilleures adresses ne sont pas dans les guides' },
+      { activite: 'Spectacle ou festival', lieu: 'Salle de spectacle', conseil: 'Réservez à l\'avance en haute saison' },
+      { activite: 'Départ & souvenirs', lieu: 'Boutiques artisanales', conseil: 'Privilégiez l\'artisanat local au plastique importé' },
+    ],
+    detente: [
+      { activite: 'Arrivée & check-in', lieu: 'Hébergement', conseil: 'Prenez le temps de vous installer' },
+      { activite: 'Plage ou spa', lieu: 'Zone balnéaire', conseil: 'Crème solaire SPF 50+ indispensable' },
+      { activite: 'Balade tranquille', lieu: 'Promenade locale', conseil: 'Pas d\'objectif — juste flâner' },
+      { activite: 'Gastronomie & repos', lieu: 'Restaurant vue mer', conseil: 'Réservez pour le coucher de soleil' },
+      { activite: 'Activité douce', lieu: 'Yoga ou snorkeling', conseil: 'Hydratez-vous régulièrement' },
+      { activite: 'Journée libre', lieu: 'Au choix', conseil: 'Laissez-vous guider par l\'envie du moment' },
+      { activite: 'Retour serein', lieu: 'Aéroport / gare', conseil: 'Prévoyez 3h avant le départ' },
+    ],
+    mixte: [
+      { activite: 'Arrivée & découverte', lieu: 'Centre-ville', conseil: 'Première impression — notez tout' },
+      { activite: 'Nature & randonnée', lieu: 'Parc naturel', conseil: 'Chaussures imperméables recommandées' },
+      { activite: 'Culture & histoire', lieu: 'Site historique', conseil: 'Guide local pour le contexte' },
+      { activite: 'Gastronomie locale', lieu: 'Marché ou restaurant', conseil: 'Osez les spécialités locales' },
+      { activite: 'Aventure douce', lieu: 'Activité outdoor', conseil: 'Vérifiez les conditions météo' },
+      { activite: 'Détente & bilan', lieu: 'Café ou parc', conseil: 'Écrivez vos impressions' },
+      { activite: 'Retour', lieu: 'Aéroport / gare', conseil: 'Dernier regard sur la ville' },
+    ],
+  };
+
+  const generate = () => {
+    const template = TEMPLATES[style];
+    const result = Array.from({ length: duree }, (_, i) => {
+      const base = template[i % template.length];
+      return {
+        jour: i + 1,
+        activite: base.activite,
+        lieu: destination ? `${base.lieu} — ${destination}` : base.lieu,
+        conseil: base.conseil,
+      };
+    });
+    setEtapes(result);
+    setGenerated(true);
+  };
+
+  const budgetLabels = { petit: '🎒 Petit budget (< 50€/j)', moyen: '🏨 Budget moyen (50–150€/j)', grand: '⭐ Confort (> 150€/j)' };
+  const styleLabels = { aventure: '⛰️ Aventure', culture: '🏛️ Culture', detente: '🌴 Détente', mixte: '🗺️ Mixte' };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+        <div>
+          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>DESTINATION</label>
+          <input
+            type="text"
+            placeholder="Ex : Islande, Japon, Maroc..."
+            value={destination}
+            onChange={(e) => setDestination(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary"
+            aria-label="Destination"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>DURÉE (jours)</label>
+            <input
+              type="number" min={1} max={30} value={duree}
+              onChange={(e) => setDuree(Math.max(1, Math.min(30, parseInt(e.target.value) || 7)))}
+              className="w-full px-3 py-2 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary"
+              style={{ fontFamily: 'var(--font-mono)' }}
+            />
+          </div>
+          <div>
+            <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>BUDGET</label>
+            <select value={budget} onChange={(e) => setBudget(e.target.value as 'petit' | 'moyen' | 'grand')}
+              className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary"
+              aria-label="Budget">
+              {(Object.entries(budgetLabels) as [string, string][]).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>STYLE DE VOYAGE</label>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {(Object.entries(styleLabels) as [string, string][]).map(([k, v]) => (
+              <button key={k} onClick={() => setStyle(k as 'aventure' | 'culture' | 'detente' | 'mixte')}
+                className={`py-2.5 rounded-lg text-sm font-medium transition-all ${style === k ? 'bg-primary text-white' : 'bg-background border border-border text-muted-foreground hover:text-foreground'}`}>
+                {v}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button onClick={generate} className="w-full btn-primary py-3 text-base font-semibold">
+          🗺️ Générer mon itinéraire
+        </button>
+      </div>
+
+      {generated && etapes.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>
+              ITINÉRAIRE — {duree} JOUR{duree > 1 ? 'S' : ''}{destination ? ` · ${destination.toUpperCase()}` : ''}
+            </p>
+            <span className="text-xs text-muted-foreground">{budgetLabels[budget]}</span>
+          </div>
+          {etapes.map((etape) => (
+            <div key={etape.jour} className="bg-card border border-border rounded-xl p-4 flex gap-4">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
+                <span className="font-mono font-700 text-sm text-primary" style={{ fontFamily: 'var(--font-mono)' }}>J{etape.jour}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm text-foreground">{etape.activite}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">📍 {etape.lieu}</p>
+                <p className="text-xs text-info mt-1.5 flex items-start gap-1">
+                  <span>💡</span>
+                  <span>{etape.conseil}</span>
+                </p>
+              </div>
+            </div>
+          ))}
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 text-center">
+            <p className="text-sm text-muted-foreground mb-3">Pour un itinéraire personnalisé avec équipement recommandé :</p>
+            <a href="/ai-configurator" className="btn-primary py-2 px-6 text-sm inline-flex items-center gap-2">
+              ✨ Configurateur IA complet
+            </a>
+          </div>
+        </div>
+      )}
+
+      {!generated && (
+        <div className="text-center py-12 text-muted-foreground">
+          <p className="text-4xl mb-3">🗺️</p>
+          <p>Remplissez les informations ci-dessus et cliquez sur &quot;Générer&quot;</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── TOOL REGISTRY ────────────────────────────────────────────────────────────
 const toolRegistry: Record<string, { nom: string; icon: string; description: string; component: React.FC }> = {
   'poids-sac': { nom: 'Calculateur de poids du sac', icon: '⚖️', description: 'Pesez votre sac par catégorie avec jauge visuelle.', component: ToolPoidssSac },
+  // Sitemap alias
+  'poids-du-sac': { nom: 'Calculateur de poids du sac', icon: '⚖️', description: 'Pesez votre sac par catégorie avec jauge visuelle.', component: ToolPoidssSac },
   'budget-voyage': { nom: 'Budget voyage', icon: '💰', description: 'Planifiez votre budget par jour et par poste.', component: ToolBudget },
   'convertisseur': { nom: 'Convertisseur universel', icon: '🔄', description: 'Convertissez distances, poids, températures et devises.', component: ToolConvertisseur },
+  // Sitemap alias
+  'convertisseur-devises': { nom: 'Convertisseur universel', icon: '🔄', description: 'Convertissez distances, poids, températures et devises.', component: ToolConvertisseur },
   'checklist': { nom: 'Checklist interactive', icon: '✅', description: 'Créez et personnalisez vos listes de voyage.', component: ToolChecklist },
   'tailles': { nom: 'Convertisseur de tailles', icon: '👟', description: 'Vêtements et chaussures par pays.', component: ToolTailles },
   'fuseaux': { nom: 'Fuseaux horaires', icon: '🕐', description: 'Comparez les heures entre pays.', component: ToolFuseaux },
   'boussole': { nom: 'Boussole & Niveau', icon: '🧭', description: 'Boussole et niveau à bulle via capteurs.', component: ToolBoussole },
   'chronometre': { nom: 'Chronomètre rando', icon: '⏱️', description: 'Minuteur et chronomètre pour vos sorties.', component: ToolChronometre },
   'rations': { nom: 'Rations eau & nourriture', icon: '💧', description: 'Calculez vos besoins en eau et nourriture.', component: ToolRations },
+  // Sitemap alias for rations
+  'calculateur-calories': { nom: 'Rations eau & nourriture', icon: '💧', description: 'Calculez vos besoins en eau, nourriture et calories.', component: ToolRations },
+  // Planificateur d'itinéraire — redirects to configurateur
+  'planificateur-itineraire': { nom: 'Planificateur d\'itinéraire IA', icon: '🗺️', description: 'Planifiez votre itinéraire avec l\'aide de l\'IA.', component: ToolPlanificateur },
 };
 
 // ─── PAGE WRAPPER ─────────────────────────────────────────────────────────────
