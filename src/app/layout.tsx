@@ -1,39 +1,20 @@
 import React, { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
-import { DM_Sans, Manrope, IBM_Plex_Mono } from 'next/font/google';
+import { DM_Sans } from 'next/font/google';
 import '../styles/tailwind.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
 import ErrorBoundaryWrapper from '@/components/ErrorBoundaryWrapper';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
-import BottomTabBar from '@/components/mobile-nav/BottomTabBar';
-import TopBar from '@/components/mobile-nav/TopBar';
-import InstallPrompt from '@/components/mobile-nav/InstallPrompt';
 import CookieConsentBanner from '@/components/CookieConsentBanner';
 import { getOrganizationSchema, getWebsiteSchema } from '@/lib/seo-utils';
 
-// Only load weights actually used in the app
 const dmSans = DM_Sans({
   subsets: ['latin'],
   variable: '--font-sans',
   display: 'swap',
   weight: ['300', '400', '500', '600', '700'],
-});
-
-const manrope = Manrope({
-  subsets: ['latin'],
-  variable: '--font-display',
-  display: 'swap',
-  weight: ['400', '500', '600', '700', '800'],
-});
-
-// Mono font: defer preload — only used for labels/stats, not critical path
-const ibmPlexMono = IBM_Plex_Mono({
-  subsets: ['latin'],
-  variable: '--font-mono',
-  display: 'swap',
-  weight: ['400', '500', '600'],
 });
 
 export const viewport: Viewport = {
@@ -133,9 +114,16 @@ export default function RootLayout({
     <html
       lang="fr"
       suppressHydrationWarning
-      className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable}`}
+      className={dmSans.variable}
     >
       <head>
+        {/* Google Fonts — General Sans via Bunny Fonts (GDPR) */}
+        <link rel="preconnect" href="https://fonts.bunny.net" />
+        <link
+          href="https://fonts.bunny.net/css?family=fraunces:300i,400i,500i,600i,700i&display=swap"
+          rel="stylesheet"
+        />
+
         {/* Preload critical images for LCP optimization */}
         <link
           rel="preload"
@@ -143,15 +131,8 @@ export default function RootLayout({
           href="/assets/images/og-image.png"
           type="image/png"
         />
-        <link
-          rel="preload"
-          as="image"
-          href="/assets/images/app_logo.png"
-          type="image/png"
-        />
 
         {/* DNS prefetch for external domains */}
-        <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
 
@@ -180,10 +161,10 @@ export default function RootLayout({
         />
 
         {/* Rocket analytics scripts */}
-
-        <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fkitduvoyag4153back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.19" />
-        <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.2" /></head>
-      <body className={dmSans.className}>
+      
+      <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fkitduvoyag4153back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.19" />
+      <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.2" /></head>
+      <body className={dmSans.className} style={{ fontFamily: '"General Sans", "DM Sans", system-ui, sans-serif' }}>
         <AuthProvider>
           <WishlistProvider>
             <ToastProvider>
@@ -191,18 +172,13 @@ export default function RootLayout({
                 <Suspense fallback={null}>
                   <GoogleAnalytics />
                 </Suspense>
-                {/* Skip navigation for accessibility */}
                 <a
                   href="#main-content"
-                  className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-[#E4501C] focus:text-white focus:rounded-lg focus:font-semibold focus:text-sm"
+                  className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-[#1C2620] focus:text-white focus:rounded focus:font-semibold focus:text-sm"
                 >
                   Aller au contenu principal
                 </a>
-                {/* Mobile navigation — hidden on desktop (md+) */}
-                <TopBar />
                 <main id="main-content">{children}</main>
-                <BottomTabBar />
-                <InstallPrompt />
                 <CookieConsentBanner />
               </ErrorBoundaryWrapper>
             </ToastProvider>

@@ -4,128 +4,73 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import WeightGauge from '@/components/WeightGauge';
-import Icon from '@/components/ui/AppIcon';
-import { getCart, updateQuantity, removeFromCart, getCartTotals, applyLoyaltyFree, removeLoyaltyFree, CartItem } from '@/lib/cart';
-import { createClient } from '@/lib/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { getCart, updateQuantity, removeFromCart, getCartTotals, CartItem } from '@/lib/cart';
+
+const SUGGESTED = {
+  id: 'lampe-frontale',
+  slug: 'lampe-frontale-350lm',
+  category: 'ÉCLAIRAGE',
+  name: 'Lampe frontale',
+  nameItalic: '350 lumens.',
+  desc: 'Autonomie 45 h, batterie rechargeable. Souvent oubliée, jamais regrettée.',
+  price: 84,
+  image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&q=80',
+  alt: 'Lampe frontale 350 lumens rechargeable pour la randonnée nocturne',
+  weightG: 95,
+  brand: 'Le Kit du Voyageur',
+};
 
 export default function PanierPage() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [mounted, setMounted] = useState(false);
-  const [removingId, setRemovingId] = useState<string | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
-  const [loyaltyLevel, setLoyaltyLevel] = useState('Explorateur');
-  const [applyingLoyalty, setApplyingLoyalty] = useState<string | null>(null);
-  const { user } = useAuth();
-  const supabase = createClient();
+  const [promoCode, setPromoCode] = useState('');
+  const [addedSuggested, setAddedSuggested] = useState(false);
 
   useEffect(() => {
-    const cart = getCart();
-    setItems(cart);
+    setItems(getCart());
     setMounted(true);
   }, []);
-
-  useEffect(() => {
-    if (!user) return;
-    supabase.from('user_profiles').select('loyalty_points, loyalty_level').eq('id', user.id).single().then(({ data }) => {
-      if (data) {
-        setLoyaltyPoints(data.loyalty_points ?? 0);
-        setLoyaltyLevel(data.loyalty_level ?? 'Explorateur');
-      }
-    });
-  }, [user, supabase]);
-
-  // Loyalty discount thresholds by level
-  const getLoyaltyDiscount = () => {
-    if (loyaltyLevel === 'Légende du Voyage') return 0.20;
-    if (loyaltyLevel === 'Guide de Montagne') return 0.15;
-    if (loyaltyLevel === 'Randonneur Expert') return 0.10;
-    if (loyaltyLevel === 'Aventurier') return 0.05;
-    return 0;
-  };
-
-  // Points needed to make an item free (100 pts per 10€)
-  const pointsNeededForFree = (priceEur: number) => Math.ceil(priceEur * 10);
 
   const handleQuantity = (id: string, qty: number) => {
     const updated = updateQuantity(id, qty);
     setItems(updated);
+    window.dispatchEvent(new Event('storage'));
   };
 
-  const handleRemoveRequest = (id: string) => {
-    setConfirmDeleteId(id);
-  };
-
-  const handleRemoveConfirm = () => {
-    if (!confirmDeleteId) return;
-    setRemovingId(confirmDeleteId);
-    setConfirmDeleteId(null);
-    setTimeout(() => {
-      const updated = removeFromCart(confirmDeleteId);
-      setItems(updated);
-      setRemovingId(null);
-    }, 300);
-  };
-
-  const handleRemoveCancel = () => {
-    setConfirmDeleteId(null);
-  };
-
-  const handleApplyLoyaltyFree = async (itemId: string, itemPrice: number) => {
-    if (!user) return;
-    const needed = pointsNeededForFree(itemPrice);
-    if (loyaltyPoints < needed) return;
-    setApplyingLoyalty(itemId);
-    try {
-      // Deduct points from DB
-      const newPoints = loyaltyPoints - needed;
-      await supabase.from('user_profiles').update({ loyalty_points: newPoints }).eq('id', user.id);
-      await supabase.from('loyalty_history').insert({
-        user_id: user.id,
-        action: `Article offert via fidélité (panier)`,
-        points: -needed,
-        type: 'spent',
-      });
-      setLoyaltyPoints(newPoints);
-      const updated = applyLoyaltyFree(itemId);
-      setItems(updated);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setApplyingLoyalty(null);
-    }
-  };
-
-  const handleRemoveLoyaltyFree = async (itemId: string, originalPrice: number) => {
-    if (!user) return;
-    const needed = pointsNeededForFree(originalPrice);
-    // Refund points
-    const newPoints = loyaltyPoints + needed;
-    await supabase.from('user_profiles').update({ loyalty_points: newPoints }).eq('id', user.id);
-    await supabase.from('loyalty_history').insert({
-      user_id: user.id,
-      action: `Remboursement points — article retiré du panier`,
-      points: needed,
-      type: 'earned',
-    });
-    setLoyaltyPoints(newPoints);
-    const updated = removeLoyaltyFree(itemId);
+  const handleRemove = (id: string) => {
+    const updated = removeFromCart(id);
     setItems(updated);
+    window.dispatchEvent(new Event('storage'));
   };
 
-  const { totalItems, totalPriceEur, totalWeightG, savedEur } = getCartTotals(items);
-  const shippingEur = totalPriceEur >= 99 ? 0 : 5.9;
-  const grandTotal = totalPriceEur + shippingEur;
-  const loyaltyDiscount = getLoyaltyDiscount();
+  const handleAddSuggested = () => {
+    const { addToCart } = require('@/lib/cart');
+    addToCart({
+      id: SUGGESTED.id,
+      slug: SUGGESTED.slug,
+      name: `${SUGGESTED.name} ${SUGGESTED.nameItalic}`,
+      priceEur: SUGGESTED.price,
+      image: SUGGESTED.image,
+      imageAlt: SUGGESTED.alt,
+      quantity: 1,
+      weightG: SUGGESTED.weightG,
+      brand: SUGGESTED.brand,
+      category: SUGGESTED.category,
+    });
+    setItems(getCart());
+    setAddedSuggested(true);
+    window.dispatchEvent(new Event('storage'));
+  };
+
+  const { totalItems, totalPriceEur, totalWeightG } = getCartTotals(items);
+  const shippingFree = totalPriceEur >= 99;
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen" style={{ backgroundColor: '#F5F3EE' }}>
         <Header />
         <div className="pt-24 flex items-center justify-center min-h-[60vh]">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-label="Chargement du panier" />
+          <div className="w-6 h-6 border-2 border-[#1C2620] border-t-transparent rounded-full animate-spin" />
         </div>
         <Footer />
       </div>
@@ -133,217 +78,281 @@ export default function PanierPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen" style={{ backgroundColor: '#F5F3EE' }}>
       <Header />
 
-      {confirmDeleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="confirm-delete-title">
-          <div className="bg-background border border-border rounded-2xl p-6 max-w-sm w-full shadow-2xl">
-            <h2 id="confirm-delete-title" className="font-display font-700 text-lg text-foreground mb-2">Retirer cet article ?</h2>
-            <p className="text-sm text-muted-foreground mb-5">
-              {items.find((i) => i.id === confirmDeleteId)?.name} sera retiré de votre panier.
+      {/* Breadcrumb */}
+      <div className="pt-14 md:pt-14 bg-white border-b border-[#E0DDD0]">
+        <div className="max-w-6xl mx-auto px-6 lg:px-8 py-3">
+          <nav className="flex items-center gap-2 text-xs text-[#4A6355]">
+            <Link href="/" className="hover:text-[#0E1512] transition-colors">Accueil</Link>
+            <span>/</span>
+            <Link href="/boutique" className="hover:text-[#0E1512] transition-colors">Boutique</Link>
+            <span>/</span>
+            <span className="font-semibold text-[#0E1512]">Panier</span>
+          </nav>
+        </div>
+      </div>
+
+      <main className="max-w-6xl mx-auto px-6 lg:px-8 py-12">
+        {/* Page title */}
+        <div className="mb-8">
+          <h1 style={{ fontFamily: '"General Sans", "DM Sans", sans-serif', fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 600, letterSpacing: '-0.03em', color: '#0E1512' }}>
+            Votre{' '}
+            <em style={{ fontFamily: 'Fraunces, Georgia, serif', fontStyle: 'italic', fontWeight: 400 }}>panier.</em>
+          </h1>
+          {items.length > 0 && (
+            <p className="mt-2 text-sm text-[#4A6355]">
+              {totalItems} article{totalItems > 1 ? 's' : ''} · {(totalWeightG / 1000).toFixed(1)} kg · sous-total {totalPriceEur} €
             </p>
-            <div className="flex gap-3">
-              <button onClick={handleRemoveCancel} className="flex-1 px-4 py-2.5 rounded-xl border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors min-h-[44px]" autoFocus>Annuler</button>
-              <button onClick={handleRemoveConfirm} className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors min-h-[44px]">Retirer</button>
-            </div>
-          </div>
+          )}
         </div>
-      )}
 
-      <section className="pt-20 pb-0 bg-dark-bg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="flex items-start gap-4">
-            <div className="w-1 h-10 bg-primary flex-shrink-0 mt-1" aria-hidden="true" />
-            <div>
-              <p className="font-mono text-xs text-primary tracking-widest uppercase mb-1">PANIER — {totalItems} ARTICLE{totalItems !== 1 ? 'S' : ''}</p>
-              <h1 className="font-display font-800 text-3xl md:text-4xl text-white tracking-tight">MON PANIER</h1>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-6 text-center">
-            <div className="w-20 h-20 rounded-full bg-card border border-border flex items-center justify-center">
-              <Icon name="ShoppingBagIcon" size={36} variant="outline" className="text-muted-foreground" />
+            <div className="w-16 h-16 border border-[#E0DDD0] flex items-center justify-center" style={{ borderRadius: '2px' }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9AAD9E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+              </svg>
             </div>
             <div>
-              <p className="font-display font-700 text-2xl text-foreground mb-2">Votre panier est vide</p>
-              <p className="text-muted-foreground">Explorez notre catalogue pour trouver votre équipement.</p>
+              <p style={{ fontFamily: '"General Sans", "DM Sans", sans-serif', fontSize: '1.25rem', fontWeight: 600, color: '#0E1512' }}>Votre panier est vide</p>
+              <p className="text-sm text-[#4A6355] mt-1">Explorez notre catalogue pour trouver votre équipement.</p>
             </div>
-            <Link href="/catalogue" className="btn-primary">
-              <Icon name="MagnifyingGlassIcon" size={16} variant="outline" />
-              Voir le catalogue
+            <Link
+              href="/boutique"
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-[#1C2620] hover:bg-[#0E1512] transition-all"
+              style={{ borderRadius: '2px' }}
+            >
+              Voir la boutique
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 flex flex-col gap-4">
-              {/* Loyalty banner */}
-              {user && loyaltyPoints > 0 && (
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3">
-                  <Icon name="StarIcon" size={20} variant="solid" className="text-amber-500 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-sm font-700 text-amber-800">Vous avez {loyaltyPoints.toLocaleString()} points fidélité</p>
-                    <p className="text-xs text-amber-700">Utilisez vos points pour rendre des articles gratuits (100 pts = 10€)</p>
-                  </div>
-                  <Link href="/fidelite" className="text-xs font-600 text-amber-700 hover:text-amber-900 underline flex-shrink-0">Gérer</Link>
-                </div>
-              )}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            {/* Cart items */}
+            <div className="lg:col-span-2">
+              {/* Items list */}
+              <div className="bg-white border border-[#E0DDD0]" style={{ borderRadius: '2px' }}>
+                {items.map((item, i) => (
+                  <div
+                    key={item.id}
+                    className={`flex gap-4 p-5 ${i < items.length - 1 ? 'border-b border-[#E0DDD0]' : ''}`}
+                  >
+                    {/* Image */}
+                    <div className="w-20 h-20 flex-shrink-0 overflow-hidden bg-[#EBF0EB]" style={{ borderRadius: '2px' }}>
+                      <img src={item.image} alt={item.imageAlt} className="w-full h-full object-cover" />
+                    </div>
 
-              {/* Weight summary bar */}
-              <div className="p-4 bg-dark-bg rounded-xl border border-white/10">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono text-xs text-white/50 uppercase tracking-wider">POIDS TOTAL DU PANIER</span>
-                  <span className="font-mono text-sm font-600 text-info">
-                    {totalWeightG >= 1000 ? `${(totalWeightG / 1000).toFixed(2)} kg` : `${totalWeightG} g`}
-                  </span>
-                </div>
-                <WeightGauge weightG={totalWeightG} maxG={20000} showLabel={false} size="lg" />
-              </div>
-
-              {/* Cart items */}
-              {items.map((item) => (
-                <div key={item.id} className={`topo-card p-4 flex gap-4 transition-all duration-300 ${removingId === item.id ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-                  <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={item.image} alt={item.imageAlt} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">{item.brand} · {item.category}</p>
-                        <Link href={`/produit/${item.slug}`} className="font-display font-700 text-foreground text-base hover:text-primary transition-colors leading-tight">
-                          {item.name}
-                        </Link>
-                        {item.loyaltyFree && (
-                          <span className="ml-2 text-[10px] font-700 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">🎁 Offert (fidélité)</span>
-                        )}
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p
+                            className="text-[#4A6355] mb-0.5"
+                            style={{ fontFamily: '"General Sans", "DM Sans", sans-serif', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}
+                          >
+                            {item.category}
+                          </p>
+                          <p style={{ fontFamily: '"General Sans", "DM Sans", sans-serif', fontSize: '0.9375rem', fontWeight: 600, color: '#0E1512' }}>
+                            {item.name}
+                          </p>
+                          <p className="text-xs text-[#4A6355] mt-0.5">TVA incluse</p>
+                        </div>
+                        <button
+                          onClick={() => handleRemove(item.id)}
+                          className="p-1.5 text-[#9AAD9E] hover:text-[#0E1512] transition-colors flex-shrink-0"
+                          aria-label={`Retirer ${item.name}`}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                          </svg>
+                        </button>
                       </div>
-                      <button onClick={() => handleRemoveRequest(item.id)} className="p-2 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-all flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label={`Retirer ${item.name} du panier`}>
-                        <Icon name="TrashIcon" size={16} variant="outline" />
+
+                      <div className="flex items-center justify-between mt-3">
+                        {/* Quantity */}
+                        <div className="flex items-center border border-[#E0DDD0]" style={{ borderRadius: '2px' }}>
+                          <button
+                            onClick={() => handleQuantity(item.id, item.quantity - 1)}
+                            className="w-8 h-8 flex items-center justify-center text-[#4A6355] hover:text-[#0E1512] hover:bg-[#F5F3EE] transition-colors"
+                            aria-label="Diminuer"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                              <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                          </button>
+                          <span className="w-8 text-center text-sm font-semibold text-[#0E1512] border-x border-[#E0DDD0]">{item.quantity}</span>
+                          <button
+                            onClick={() => handleQuantity(item.id, item.quantity + 1)}
+                            className="w-8 h-8 flex items-center justify-center text-[#4A6355] hover:text-[#0E1512] hover:bg-[#F5F3EE] transition-colors"
+                            aria-label="Augmenter"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                              <line x1="12" y1="5" x2="12" y2="19"/>
+                              <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                          </button>
+                        </div>
+
+                        {/* Price */}
+                        <span style={{ fontFamily: '"General Sans", "DM Sans", sans-serif', fontSize: '1rem', fontWeight: 600, color: '#0E1512' }}>
+                          {item.priceEur * item.quantity} €
+                        </span>
+                      </div>
+
+                      {/* Save link */}
+                      <button className="mt-2 text-xs text-[#4A6355] hover:text-[#0E1512] transition-colors flex items-center gap-1">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                        </svg>
+                        Enregistrer
                       </button>
                     </div>
+                  </div>
+                ))}
+              </div>
 
-                    <div className="mt-2 mb-3">
-                      <WeightGauge weightG={item.weightG * item.quantity} maxG={5000} size="sm" />
-                    </div>
-
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <div className="flex items-center gap-1 bg-background border border-border rounded-lg overflow-hidden">
-                        <button onClick={() => handleQuantity(item.id, item.quantity - 1)} className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all" aria-label="Diminuer la quantité">
-                          <Icon name="MinusIcon" size={14} variant="outline" />
-                        </button>
-                        <span className="w-8 text-center font-mono text-sm font-600 text-foreground" aria-live="polite">{item.quantity}</span>
-                        <button onClick={() => handleQuantity(item.id, item.quantity + 1)} className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all" aria-label="Augmenter la quantité">
-                          <Icon name="PlusIcon" size={14} variant="outline" />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        {/* Loyalty free button */}
-                        {user && !item.loyaltyFree && item.priceEur > 0 && (
-                          <button
-                            onClick={() => handleApplyLoyaltyFree(item.id, item.priceEur)}
-                            disabled={loyaltyPoints < pointsNeededForFree(item.priceEur) || applyingLoyalty === item.id}
-                            className="text-[10px] font-600 px-2 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                            title={`${pointsNeededForFree(item.priceEur)} pts nécessaires`}
-                          >
-                            {applyingLoyalty === item.id ? '...' : `🎁 Gratuit (${pointsNeededForFree(item.priceEur)} pts)`}
-                          </button>
-                        )}
-                        {item.loyaltyFree && (
-                          <button
-                            onClick={() => handleRemoveLoyaltyFree(item.id, item.originalPriceEur ?? item.priceEur)}
-                            className="text-[10px] font-600 px-2 py-1 rounded-lg bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200 transition-colors"
-                          >
-                            ✕ Annuler offre
-                          </button>
-                        )}
-
-                        <div className="text-right">
-                          {item.loyaltyFree ? (
-                            <div>
-                              <p className="font-mono font-700 text-emerald-600 text-base line-through text-muted-foreground text-xs">{((item.originalPriceEur ?? 0) * item.quantity).toFixed(2)} €</p>
-                              <p className="font-mono font-700 text-emerald-600 text-base">0,00 € 🎁</p>
-                            </div>
-                          ) : (
-                            <div>
-                              <p className="font-mono font-700 text-foreground text-base">{(item.priceEur * item.quantity).toFixed(2)} €</p>
-                              {item.quantity > 1 && <p className="font-mono text-[10px] text-muted-foreground">{item.priceEur.toFixed(2)} € / unité</p>}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+              {/* Suggested product */}
+              <div className="mt-6 bg-white border border-[#E0DDD0] p-5" style={{ borderRadius: '2px' }}>
+                <p
+                  className="mb-4 text-[#4A6355]"
+                  style={{ fontFamily: '"General Sans", "DM Sans", sans-serif', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}
+                >
+                  ON A PENSÉ POUR VOUS
+                </p>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 flex-shrink-0 overflow-hidden bg-[#EBF0EB]" style={{ borderRadius: '2px' }}>
+                    <img src={SUGGESTED.image} alt={SUGGESTED.alt} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1">
+                    <p style={{ fontFamily: '"General Sans", "DM Sans", sans-serif', fontSize: '0.9375rem', fontWeight: 600, color: '#0E1512' }}>
+                      {SUGGESTED.name}{' '}
+                      <em style={{ fontFamily: 'Fraunces, Georgia, serif', fontStyle: 'italic', fontWeight: 400 }}>{SUGGESTED.nameItalic}</em>
+                    </p>
+                    <p className="text-xs text-[#4A6355] mt-0.5">{SUGGESTED.desc}</p>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span style={{ fontFamily: '"General Sans", "DM Sans", sans-serif', fontSize: '0.9375rem', fontWeight: 600, color: '#0E1512' }}>{SUGGESTED.price} €</span>
+                    <button
+                      onClick={handleAddSuggested}
+                      disabled={addedSuggested}
+                      className="w-8 h-8 flex items-center justify-center text-white bg-[#1C2620] hover:bg-[#0E1512] transition-colors disabled:bg-[#6B8A7A]"
+                      style={{ borderRadius: '2px' }}
+                      aria-label="Ajouter au panier"
+                    >
+                      {addedSuggested ? (
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      ) : (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                          <line x1="12" y1="5" x2="12" y2="19"/>
+                          <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                      )}
+                    </button>
                   </div>
                 </div>
-              ))}
-
-              <Link href="/catalogue" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mt-2 w-fit">
-                <Icon name="ArrowLeftIcon" size={14} variant="outline" />
-                Continuer les achats
-              </Link>
+              </div>
             </div>
 
             {/* Order summary */}
             <div className="lg:col-span-1">
-              <div className="sticky top-24">
-                <div className="topo-card p-6">
-                  <h2 className="font-display font-700 text-lg text-foreground mb-5 tracking-tight">Récapitulatif</h2>
+              <div className="bg-white border border-[#E0DDD0] p-6 sticky top-20" style={{ borderRadius: '2px' }}>
+                <h2 className="mb-5" style={{ fontFamily: '"General Sans", "DM Sans", sans-serif', fontSize: '1rem', fontWeight: 700, color: '#0E1512', letterSpacing: '-0.01em' }}>
+                  Récapitulatif
+                </h2>
 
-                  <div className="space-y-3 mb-5">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Sous-total ({totalItems} article{totalItems !== 1 ? 's' : ''})</span>
-                      <span className="font-mono font-600 text-foreground">{totalPriceEur.toFixed(2)} €</span>
-                    </div>
-                    {savedEur > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-emerald-600 flex items-center gap-1"><Icon name="StarIcon" size={12} variant="solid" className="text-amber-500" />Économies fidélité</span>
-                        <span className="font-mono font-600 text-emerald-600">-{savedEur.toFixed(2)} €</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Livraison</span>
-                      <span className={`font-mono font-600 ${shippingEur === 0 ? 'text-emerald-600' : 'text-foreground'}`}>
-                        {shippingEur === 0 ? 'Gratuite' : `${shippingEur.toFixed(2)} €`}
-                      </span>
-                    </div>
-                    {shippingEur > 0 && (
-                      <p className="text-[11px] text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
-                        Livraison gratuite dès 99 € d&apos;achat — il vous manque {(99 - totalPriceEur).toFixed(2)} €
-                      </p>
-                    )}
-                    {loyaltyDiscount > 0 && (
-                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                        <p className="text-xs font-700 text-amber-800">🏆 Niveau {loyaltyLevel}</p>
-                        <p className="text-xs text-amber-700">{(loyaltyDiscount * 100).toFixed(0)}% de réduction permanente appliquée</p>
-                      </div>
-                    )}
-                    <div className="border-t border-border pt-3 flex justify-between">
-                      <span className="font-display font-700 text-foreground">Total</span>
-                      <span className="font-mono font-700 text-xl text-primary">{grandTotal.toFixed(2)} €</span>
-                    </div>
+                {/* Lines */}
+                <div className="flex flex-col gap-3 mb-5">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-[#4A6355]">Sous-total ({totalItems} article{totalItems > 1 ? 's' : ''})</span>
+                    <span className="font-semibold text-[#0E1512]">{totalPriceEur} €</span>
                   </div>
-
-                  <div className="mb-5 p-3 bg-background rounded-lg border border-border">
-                    <WeightGauge weightG={totalWeightG} maxG={20000} size="sm" />
-                    <p className="text-[10px] text-muted-foreground mt-1.5 font-mono">
-                      {items.length} référence{items.length !== 1 ? 's' : ''} · {totalItems} article{totalItems !== 1 ? 's' : ''}
-                    </p>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-[#4A6355]">Poids total</span>
+                    <span className="font-semibold text-[#0E1512]">{(totalWeightG / 1000).toFixed(1)} kg</span>
                   </div>
-
-                  <Link href="/checkout" className="btn-primary w-full justify-center py-3.5 text-base min-h-[44px]">
-                    <Icon name="LockClosedIcon" size={16} variant="outline" />
-                    Commander — {grandTotal.toFixed(2)} €
-                  </Link>
-
-                  <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-                    <Icon name="ShieldCheckIcon" size={12} variant="outline" aria-hidden="true" />
-                    Paiement 100% sécurisé
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-[#4A6355]">Livraison suivie</span>
+                    <span className="font-semibold text-[#1C2620]">{shippingFree ? 'Offerte' : '5,90 €'}</span>
                   </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-[#4A6355]">Estimation TVA</span>
+                    <span className="text-[#4A6355]">Incluse</span>
+                  </div>
+                </div>
+
+                {/* Promo */}
+                <div className="flex gap-2 mb-5">
+                  <input
+                    type="text"
+                    placeholder="Code promo"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    className="flex-1 px-3 py-2 text-sm border border-[#E0DDD0] text-[#0E1512] placeholder-[#9AAD9E] focus:outline-none focus:border-[#1C2620] transition-colors"
+                    style={{ borderRadius: '2px', fontFamily: '"General Sans", "DM Sans", sans-serif' }}
+                  />
+                  <button
+                    className="px-4 py-2 text-sm font-semibold text-[#1C2620] border border-[#1C2620] hover:bg-[#1C2620] hover:text-white transition-all"
+                    style={{ borderRadius: '2px' }}
+                  >
+                    Appliquer
+                  </button>
+                </div>
+
+                {/* Total */}
+                <div className="flex items-center justify-between py-4 border-t border-[#E0DDD0] mb-5">
+                  <span style={{ fontFamily: '"General Sans", "DM Sans", sans-serif', fontSize: '1rem', fontWeight: 700, color: '#0E1512' }}>Total à payer</span>
+                  <span style={{ fontFamily: '"General Sans", "DM Sans", sans-serif', fontSize: '1.25rem', fontWeight: 700, color: '#0E1512' }}>{totalPriceEur} €</span>
+                </div>
+
+                {/* CTA */}
+                <Link
+                  href="/checkout"
+                  className="flex items-center justify-center w-full py-3 text-sm font-semibold text-white bg-[#1C2620] hover:bg-[#0E1512] transition-all"
+                  style={{ borderRadius: '2px', minHeight: '48px' }}
+                >
+                  Passer au paiement
+                </Link>
+
+                {/* Security */}
+                <div className="flex items-center justify-center gap-1.5 mt-3">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4A6355" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  <span className="text-xs text-[#4A6355]">Paiement sécurisé Stripe</span>
+                </div>
+
+                {/* Payment logos */}
+                <div className="flex items-center justify-center gap-3 mt-4">
+                  {['VISA', 'MC', 'AMEX', 'PayPal'].map((logo) => (
+                    <span
+                      key={logo}
+                      className="px-2 py-1 text-[9px] font-bold text-[#4A6355] border border-[#E0DDD0]"
+                      style={{ borderRadius: '2px', letterSpacing: '0.05em' }}
+                    >
+                      {logo}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Trust badges */}
+                <div className="flex items-center justify-between mt-5 pt-4 border-t border-[#E0DDD0]">
+                  {[
+                    { icon: '☆', label: 'Garantie à vie' },
+                    { icon: '↶', label: 'Retour 30 j.' },
+                    { icon: '◡', label: '100 % Europe' },
+                  ].map(({ icon, label }) => (
+                    <div key={label} className="flex flex-col items-center gap-1">
+                      <span className="text-[#4A6355] text-sm">{icon}</span>
+                      <span className="text-[9px] text-[#4A6355] text-center" style={{ letterSpacing: '0.05em' }}>{label}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
