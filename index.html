@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Le Kit du Voyageur — Refuges, sentiers, équipement</title>
+  <link rel="stylesheet" href="styles/tokens.css"/>
+  <link rel="stylesheet" href="styles/global.css"/>
+  <link rel="stylesheet" href="styles/home.css"/>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar" id="navbar">
+    <div class="navbar-container">
+      <a href="/" class="navbar-logo">
+        <svg class="logo-icon" viewBox="0 0 32 32" width="24" height="24" fill="none">
+          <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+        </svg>
+        <span>Le Kit du Voyageur</span>
+      </a>
+      <button class="navbar-toggle" id="navbarToggle" aria-label="Basculer menu">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="navbar-menu" id="navbarMenu">
+        <a href="/aventures" class="navbar-link">Aventures</a>
+        <a href="/refuges" class="navbar-link">Refuges</a>
+        <a href="/boutique" class="navbar-link">Boutique</a>
+        <a href="/journal" class="navbar-link">Journal</a>
+        <a href="/communaute" class="navbar-link">Communauté</a>
+      </div>
+      <div class="navbar-actions">
+        <button class="icon-btn" aria-label="Recherche">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        </button>
+        <a href="/login" class="btn btn-primary btn-sm">Se connecter</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero" id="hero">
+    <div class="hero-bg" id="heroBg"></div>
+    <div class="hero-overlay"></div>
+    
+    <div class="hero-content">
+      <div class="hero-text">
+        <div class="eyebrow">Édition automne · 47 refuges partenaires</div>
+        <h1 class="hero-title">
+          <span id="titleText">Là où la carte</span><br>
+          <em id="titleEmphasis">se termine.</em>
+        </h1>
+        <p class="hero-lead">
+          Refuges bruts, sentiers oubliés, matériel choisi à la main. Le Kit du Voyageur assemble ce qu'il faut, exactement, pour partir léger — sans rien laisser au hasard.
+        </p>
+        <div class="hero-cta">
+          <button class="btn btn-light btn-lg">Composer mon sac</button>
+          <button class="btn btn-ghost-light btn-lg">Voir les aventures</button>
+        </div>
+
+        <div class="hero-rating">
+          <svg class="star-icon" viewBox="0 0 24 24" width="20" height="20">
+            <path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/>
+          </svg>
+          <span class="rating-number">4,9</span>
+          <span class="rating-text">1&nbsp;800+ voyageurs racontent leur séjour</span>
+        </div>
+      </div>
+
+      <div class="hero-booking">
+        <div class="booking-card">
+          <div class="booking-label">Refuge en vedette</div>
+          <h2 class="booking-title">Cabane du Grand Vaneau</h2>
+          
+          <div class="booking-dates">
+            <div class="date-field">
+              <label>Arrivée</label>
+              <span>Ven. 14 sept.</span>
+            </div>
+            <div class="date-field">
+              <label>Départ</label>
+              <span>Lun. 17 sept.</span>
+            </div>
+          </div>
+
+          <div class="booking-price">
+            <span class="price-main">248 €</span>
+            <span class="price-unit">/ nuit</span>
+          </div>
+
+          <button class="btn btn-booking">Réserver ces dates</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating chips -->
+    <div class="floating-chips">
+      <div class="chip chip-float"><span class="dot"></span>Wi-Fi 100 Mbps</div>
+      <div class="chip chip-float"><span class="dot warm"></span>Bivouac autorisé</div>
+      <div class="chip chip-float">Chien accepté</div>
+    </div>
+  </header>
+
+  <!-- Adventures Grid -->
+  <section class="adventures">
+    <div class="container">
+      <div class="section-header">
+        <h2>Trois façons<br>de se <em>perdre.</em></h2>
+        <p>Trois cartes qui suivent la même règle : moins d'équipement, plus de silence. Choisissez celle qui vous ressemble aujourd'hui.</p>
+      </div>
+
+      <div class="adventures-grid" id="adventuresGrid">
+        <!-- Chargé dynamiquement via JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Editorial Section -->
+  <section class="editorial">
+    <div class="container editorial-inner">
+      <div class="editorial-text">
+        <div class="eyebrow-light">Notre promesse</div>
+        <h2>Un sac. Une carte.<br>Le <em>reste</em> vient de vous.</h2>
+        <p>Nous testons chaque objet en conditions réelles pendant six semaines minimum. Ceux qui restent trouvent leur place dans le kit. Les autres retournent d'où ils viennent.</p>
+        <button class="btn btn-light">Lire notre méthode</button>
+
+        <div class="editorial-stats">
+          <div class="stat">
+            <div class="stat-number">47<em>+</em></div>
+            <div class="stat-label">Refuges partenaires</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number">1<em>,4</em> kg</div>
+            <div class="stat-label">Sac de base à sec</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number">6<em> sem.</em></div>
+            <div class="stat-label">Test terrain minimum</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number">100<em>%</em></div>
+            <div class="stat-label">Fabriqué en Europe</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="editorial-visual"></div>
+    </div>
+  </section>
+
+  <!-- Product Showcase -->
+  <section class="product-showcase">
+    <div class="container product-grid">
+      <div class="product-visual"></div>
+      <div class="product-info">
+        <div class="eyebrow">Le sac essentiel</div>
+        <h2>45 L, <em>toile cirée,</em><br>rien de superflu.</h2>
+        <p>Trois compartiments, une bandoulière ventrale, un point d'accroche pour tapis de sol. Fabriqué dans les Alpes-de-Haute-Provence, réparable à vie.</p>
+
+        <div class="product-specs">
+          <div class="spec">
+            <div class="spec-label">Volume</div>
+            <div class="spec-value">45 litres</div>
+          </div>
+          <div class="spec">
+            <div class="spec-label">Poids à sec</div>
+            <div class="spec-value">1,4 kg</div>
+          </div>
+          <div class="spec">
+            <div class="spec-label">Toile</div>
+            <div class="spec-value">Coton huilé 12 oz</div>
+          </div>
+          <div class="spec">
+            <div class="spec-label">Garantie</div>
+            <div class="spec-value">À vie</div>
+          </div>
+        </div>
+
+        <div class="product-price">340 €</div>
+
+        <div class="product-cta">
+          <button class="btn btn-primary btn-lg">Ajouter au sac</button>
+          <button class="btn btn-ghost btn-lg">Voir la fiche</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Newsletter -->
+  <section class="newsletter">
+    <div class="container newsletter-inner">
+      <h2>Recevez le journal</h2>
+      <p>Un envoi par saison. Refuges, sentiers, matériel. Rien d'autre.</p>
+      <form class="newsletter-form" id="newsletterForm">
+        <input type="email" placeholder="votre@email.fr" required>
+        <button type="submit" class="btn btn-secondary">S'abonner</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-section">
+        <h3>Le Kit du Voyageur</h3>
+        <p>Ce que vous emportez, c'est votre voyage.</p>
+        <div class="footer-meta">Grenoble, France · Fabriqué en Europe</div>
+      </div>
+      <div class="footer-section">
+        <h4>Découvrir</h4>
+        <ul>
+          <li><a href="/aventures">Aventures</a></li>
+          <li><a href="/refuges">Refuges</a></li>
+          <li><a href="/guides">Guides</a></li>
+          <li><a href="/communaute">Communauté</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Boutique</h4>
+        <ul>
+          <li><a href="/boutique/sacs">Le sac</a></li>
+          <li><a href="/boutique/bivouac">Bivouac</a></li>
+          <li><a href="/boutique/vetements">Vêtements</a></li>
+          <li><a href="/boutique/livres">Livres & cartes</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Maison</h4>
+        <ul>
+          <li><a href="/methode">Notre méthode</a></li>
+          <li><a href="/ateliers">Ateliers</a></li>
+          <li><a href="/emploi">Emploi</a></li>
+          <li><a href="/contact">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 Le Kit du Voyageur</div>
+      <div>
+        <a href="/mentions">Mentions</a> · 
+        <a href="/confidentialite">Confidentialité</a> · 
+        <a href="/cookies">Cookies</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/home.js"></script>
+</body>
+</html>
