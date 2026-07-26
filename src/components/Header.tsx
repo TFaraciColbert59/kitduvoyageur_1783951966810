@@ -36,6 +36,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Destinations',
     items: [
       { label: 'Toutes les destinations', href: '/pays', desc: 'Fiches pays & conseils terrain', icon: 'MapPinIcon' },
+      { label: 'Aventures', href: '/aventures', desc: 'Itinéraires & refuges sélectionnés', icon: 'MapIcon' },
       { label: 'Explorer la carte', href: '/explorer', desc: 'Sentiers & aventures', icon: 'MapIcon' },
       { label: 'Guides de voyage', href: '/guides', desc: 'Conseils & tutoriels', icon: 'BookOpenIcon' },
     ],

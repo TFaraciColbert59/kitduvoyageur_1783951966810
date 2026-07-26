@@ -294,25 +294,25 @@ export default function CountryPage({ code: rawCode }: { code: string }) {
     : undefined;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen" style={{ background: 'var(--background)' }}>
       <Header />
       <main id="main-content" className="pt-20">
         {/* Breadcrumb */}
-        <nav aria-label="Fil d'Ariane" className="bg-dark-bg border-b border-white/5">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-            <ol className="flex items-center gap-2 text-xs text-white/40">
+        <nav aria-label="Fil d'Ariane" style={{ background: 'var(--background)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 py-3">
+            <ol className="flex items-center gap-2" style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'rgba(231,227,214,0.35)', letterSpacing: '0.08em' }}>
               <li><Link href="/" className="hover:text-white/70 transition-colors">Accueil</Link></li>
-              <li aria-hidden="true"><Icon name="ChevronRightIcon" size={12} variant="outline" /></li>
+              <li style={{ color: 'rgba(231,227,214,0.15)' }}>›</li>
               <li><Link href="/pays" className="hover:text-white/70 transition-colors">Pays</Link></li>
-              <li aria-hidden="true"><Icon name="ChevronRightIcon" size={12} variant="outline" /></li>
-              <li className="text-white/70">{country?.pays.nom || code.toUpperCase()}</li>
+              <li style={{ color: 'rgba(231,227,214,0.15)' }}>›</li>
+              <li style={{ color: 'rgba(231,227,214,0.6)' }}>{country?.pays.nom || code.toUpperCase()}</li>
             </ol>
           </div>
         </nav>
 
         {/* Hero */}
-        <section className="bg-dark-bg border-b border-white/5">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <section style={{ background: 'var(--background)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 py-10">
             {loading ? (
               <SkeletonCountry />
             ) : error ? (

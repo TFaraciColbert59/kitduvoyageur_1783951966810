@@ -2,10 +2,10 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import TopoSeparator from '@/components/TopoSeparator';
+import NewFooterSection from '@/app/components/home/NewFooterSection';
 import Link from 'next/link';
 import { getAllCountries } from '@/lib/countries';
+import AppImage from '@/components/ui/AppImage';
 
 const ALL_COUNTRIES = getAllCountries();
 
@@ -15,33 +15,230 @@ function getFlagEmoji(code: string): string {
 }
 
 const continents = ['Tous', 'Europe', 'Asie', 'Afrique', 'Amérique du Nord', 'Amérique du Sud', 'Océanie'];
-const continentEmojis: Record<string, string> = {
-  'Tous': '🌍',
-  'Europe': '🏔️',
-  'Asie': '🗺️',
-  'Afrique': '🦁',
-  'Amérique du Nord': '🦅',
-  'Amérique du Sud': '🌿',
-  'Océanie': '🌊',
+
+const dangerConfig: Record<string, { label: string; color: string; bg: string }> = {
+  low: { label: 'Sûr', color: '#059669', bg: 'rgba(5,150,105,0.1)' },
+  medium: { label: 'Vigilance', color: '#D97706', bg: 'rgba(217,119,6,0.1)' },
+  high: { label: 'Risqué', color: '#DC2626', bg: 'rgba(220,38,38,0.1)' },
 };
 
-const dangerLabels: Record<string, string> = { low: 'Sûr', medium: 'Vigilance', high: 'Risqué' };
-const dangerColors: Record<string, string> = {
-  low: 'text-green-600 bg-green-50 border-green-200',
-  medium: 'text-amber-600 bg-amber-50 border-amber-200',
-  high: 'text-red-600 bg-red-50 border-red-200',
-};
-
-const ALL_TAGS = Array.from(new Set(ALL_COUNTRIES.flatMap((c) => c.tags))).sort();
-const FEATURED = ALL_COUNTRIES.filter((c) => c.published);
+const FEATURED = ALL_COUNTRIES.filter((c) => c.published).slice(0, 4);
 const PAGE_SIZE = 60;
+
+// ─── Country Card ─────────────────────────────────────────────────────────────
+
+function CountryCard({ country }: { country: ReturnType<typeof getAllCountries>[0] }) {
+  const danger = dangerConfig[country.danger_level] || dangerConfig.medium;
+
+  return (
+    <Link
+      href={`/pays/${country.code.toLowerCase()}`}
+      className="group block"
+      style={{
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(231,227,214,0.07)',
+        borderRadius: '14px',
+        padding: '20px',
+        transition: 'all 0.25s ease',
+      }}
+    >
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <span className="text-3xl" role="img" aria-label={`Drapeau ${country.nom}`}>
+            {getFlagEmoji(country.code)}
+          </span>
+          <div>
+            <h3
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 700,
+                fontSize: '1rem',
+                color: '#E7E3D6',
+                lineHeight: '1.2',
+                marginBottom: '2px',
+              }}
+            >
+              {country.nom}
+            </h3>
+            <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'rgba(231,227,214,0.35)', letterSpacing: '0.08em' }}>
+              {country.capital}
+            </p>
+          </div>
+        </div>
+        <span
+          className="px-2 py-1 text-xs font-medium flex-shrink-0"
+          style={{
+            background: danger.bg,
+            color: danger.color,
+            borderRadius: '6px',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '10px',
+            letterSpacing: '0.08em',
+          }}
+        >
+          {danger.label}
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between mb-3">
+        <p style={{ fontSize: '11px', color: 'rgba(231,227,214,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
+          Meilleure saison
+        </p>
+        <p style={{ fontSize: '11px', color: 'rgba(231,227,214,0.6)', fontFamily: 'var(--font-sans)' }}>
+          {country.meilleure_saison}
+        </p>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5">
+        {country.tags.slice(0, 3).map((tag) => (
+          <span
+            key={tag}
+            className="px-2 py-0.5"
+            style={{
+              background: 'rgba(231,227,214,0.05)',
+              border: '1px solid rgba(231,227,214,0.08)',
+              borderRadius: '5px',
+              fontSize: '10px',
+              color: 'rgba(231,227,214,0.4)',
+              fontFamily: 'var(--font-mono)',
+              letterSpacing: '0.05em',
+            }}
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+
+      {!country.published && (
+        <div
+          className="mt-3 px-2.5 py-1.5"
+          style={{
+            background: 'rgba(217,119,6,0.08)',
+            border: '1px solid rgba(217,119,6,0.15)',
+            borderRadius: '6px',
+          }}
+        >
+          <p style={{ fontSize: '10px', color: '#D97706', fontFamily: 'var(--font-mono)' }}>⚠ En cours de vérification</p>
+        </div>
+      )}
+    </Link>
+  );
+}
+
+// ─── Featured Card ────────────────────────────────────────────────────────────
+
+const COUNTRY_IMAGES: Record<string, { src: string; alt: string }> = {
+  JP: { src: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800&q=80', alt: 'Mont Fuji enneigé reflété dans un lac japonais au lever du soleil' },
+  NP: { src: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80', alt: 'Panorama de l\'Himalaya avec les sommets enneigés du Népal' },
+  IS: { src: 'https://images.unsplash.com/photo-1504893524553-b855bce32c67?w=800&q=80', alt: 'Paysage volcanique islandais avec vapeurs géothermiques et montagnes colorées' },
+  NO: { src: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&q=80', alt: 'Fjord norvégien avec montagnes enneigées et reflets dans l\'eau calme' },
+  NZ: { src: 'https://images.unsplash.com/photo-1507699622108-4be3abd695ad?w=800&q=80', alt: 'Paysage verdoyant de Nouvelle-Zélande avec collines et ciel dramatique' },
+  MA: { src: 'https://images.unsplash.com/photo-1539020140153-e479b8c22e70?w=800&q=80', alt: 'Médina de Marrakech avec ses ruelles colorées et architecture traditionnelle' },
+  IN: { src: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800&q=80', alt: 'Taj Mahal au lever du soleil avec ses reflets dans le bassin d\'eau' },
+  PT: { src: 'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=800&q=80', alt: 'Lisbonne avec ses toits de tuiles oranges et le Tage en arrière-plan' },
+  SE: { src: 'https://images.unsplash.com/photo-1509356843151-3e7d96241e11?w=800&q=80', alt: 'Forêt suédoise automnale avec lac et reflets dorés' },
+  MH: { src: 'https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=800&q=80', alt: 'Atoll des Îles Marshall avec lagon turquoise et plage de sable blanc' },
+};
+
+function FeaturedCountryCard({ country }: { country: ReturnType<typeof getAllCountries>[0] }) {
+  const img = COUNTRY_IMAGES[country.code.toUpperCase()];
+  const danger = dangerConfig[country.danger_level] || dangerConfig.medium;
+
+  return (
+    <Link
+      href={`/pays/${country.code.toLowerCase()}`}
+      className="group relative overflow-hidden block"
+      style={{ borderRadius: '14px', height: '260px' }}
+    >
+      {img ? (
+        <>
+          <AppImage
+            src={img.src}
+            alt={img.alt}
+            fill
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, 25vw"
+          />
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(to top, rgba(14,21,18,0.9) 0%, rgba(14,21,18,0.3) 60%, transparent 100%)' }}
+          />
+        </>
+      ) : (
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{ background: '#1C2620' }}
+        >
+          <span className="text-6xl">{getFlagEmoji(country.code)}</span>
+        </div>
+      )}
+
+      <div className="absolute inset-0 flex flex-col justify-between p-5">
+        <div className="flex justify-between items-start">
+          <span className="text-3xl">{getFlagEmoji(country.code)}</span>
+          <span
+            className="px-2 py-1"
+            style={{
+              background: 'rgba(14,21,18,0.7)',
+              border: '1px solid rgba(231,227,214,0.15)',
+              borderRadius: '6px',
+              fontSize: '10px',
+              color: danger.color,
+              fontFamily: 'var(--font-mono)',
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            {danger.label}
+          </span>
+        </div>
+
+        <div>
+          <p style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'rgba(231,227,214,0.4)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '4px' }}>
+            {country.continent}
+          </p>
+          <h3
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: '1.3rem',
+              color: '#FFFFFF',
+              lineHeight: '1.1',
+              marginBottom: '6px',
+            }}
+          >
+            {country.nom}
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
+            {country.tags.slice(0, 2).map((tag) => (
+              <span
+                key={tag}
+                className="px-2 py-0.5"
+                style={{
+                  background: 'rgba(14,21,18,0.6)',
+                  border: '1px solid rgba(231,227,214,0.12)',
+                  borderRadius: '5px',
+                  fontSize: '10px',
+                  color: 'rgba(231,227,214,0.6)',
+                  fontFamily: 'var(--font-mono)',
+                  backdropFilter: 'blur(4px)',
+                }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function PaysPage() {
   const [search, setSearch] = useState('');
   const [continent, setContinent] = useState('Tous');
-  const [dangerFilter, setDangerFilter] = useState<string>('Tous');
-  const [tagFilter, setTagFilter] = useState<string>('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [dangerFilter, setDangerFilter] = useState('Tous');
   const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
@@ -52,218 +249,308 @@ export default function PaysPage() {
         c.tags.some((tag) => tag.toLowerCase().includes(search.toLowerCase()));
       const matchContinent = continent === 'Tous' || c.continent === continent;
       const matchDanger = dangerFilter === 'Tous' || c.danger_level === dangerFilter;
-      const matchTag = tagFilter === '' || c.tags.includes(tagFilter);
-      return matchSearch && matchContinent && matchDanger && matchTag;
+      return matchSearch && matchContinent && matchDanger;
     });
-  }, [search, continent, dangerFilter, tagFilter]);
+  }, [search, continent, dangerFilter]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [search, continent, dangerFilter, tagFilter]);
+  useEffect(() => { setPage(1); }, [search, continent, dangerFilter]);
 
-  const _totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const displayItems = filtered.slice(0, page * PAGE_SIZE);
   const hasMore = page * PAGE_SIZE < filtered.length;
 
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-white">
-        <div id="main-content" className="container mx-auto px-4 py-12">
-          {/* Hero */}
-          <section className="mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold text-[#1C2620] mb-4">Fiches Pays</h1>
-            <p className="text-lg text-gray-600 max-w-2xl">
-              Explorez {ALL_COUNTRIES.length} destinations avec informations pratiques, météo, visa et équipement recommandé.
-            </p>
-          </section>
+      <main style={{ background: 'var(--background)', minHeight: '100vh' }}>
 
-          {/* Featured */}
-          {FEATURED.length > 0 && (
-            <section className="mb-12">
-              <h2 className="text-2xl font-bold text-[#1C2620] mb-6">Destinations Phares</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {FEATURED.map((country) => (
-                  <Link
-                    key={country.code}
-                    href={`/pays/${country.code.toLowerCase()}`}
-                    className="group p-4 border border-gray-200 rounded-lg hover:border-[#E4501C] hover:shadow-lg transition-all"
-                  >
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl">{getFlagEmoji(country.code)}</span>
-                      <span className="font-semibold text-[#1C2620]">{country.nom}</span>
-                    </div>
-                    <p className="text-sm text-gray-600">{country.capital}</p>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
-
-          <TopoSeparator />
-
-          {/* Filters */}
-          <section className="mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-[#1C2620] mb-2">Rechercher</label>
-                <input
-                  type="text"
-                  placeholder="Pays, capitale, tag..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#E4501C]"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-[#1C2620] mb-2">Continent</label>
-                <select
-                  value={continent}
-                  onChange={(e) => setContinent(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#E4501C]"
-                >
-                  {continents.map((c) => (
-                    <option key={c} value={c}>{continentEmojis[c]} {c}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-[#1C2620] mb-2">Sécurité</label>
-                <select
-                  value={dangerFilter}
-                  onChange={(e) => setDangerFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#E4501C]"
-                >
-                  <option value="Tous">Tous</option>
-                  <option value="low">Sûr</option>
-                  <option value="medium">Vigilance</option>
-                  <option value="high">Risqué</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-[#1C2620] mb-2">Activité</label>
-                <select
-                  value={tagFilter}
-                  onChange={(e) => setTagFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#E4501C]"
-                >
-                  <option value="">Tous</option>
-                  {ALL_TAGS.map((tag) => (
-                    <option key={tag} value={tag}>{tag}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </section>
-
-          {/* View Mode Toggle */}
-          <div className="flex justify-between items-center mb-6">
-            <p className="text-sm text-gray-600">{filtered.length} résultats</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`px-3 py-2 rounded-lg transition-colors ${
-                  viewMode === 'grid' ? 'bg-[#E4501C] text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Grille
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`px-3 py-2 rounded-lg transition-colors ${
-                  viewMode === 'list' ? 'bg-[#E4501C] text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Liste
-              </button>
-            </div>
+        {/* ── HERO ── */}
+        <section
+          className="relative overflow-hidden"
+          style={{ paddingTop: '120px', paddingBottom: '80px' }}
+        >
+          {/* Background */}
+          <div className="absolute inset-0">
+            <AppImage
+              src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1920&q=80"
+              alt="Vue aérienne d'une chaîne de montagnes enneigées avec nuages et ciel bleu"
+              fill
+              className="object-cover"
+              priority
+            />
+            <div
+              className="absolute inset-0"
+              style={{ background: 'linear-gradient(to bottom, rgba(14,21,18,0.65) 0%, rgba(14,21,18,0.5) 50%, rgba(14,21,18,0.88) 100%)' }}
+            />
           </div>
 
-          {/* Results */}
-          {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {displayItems.map((country) => (
-                <Link
-                  key={country.code}
-                  href={`/pays/${country.code.toLowerCase()}`}
-                  className="group block p-6 border border-gray-200 rounded-lg hover:border-[#E4501C] hover:shadow-lg transition-all"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-3xl">{getFlagEmoji(country.code)}</span>
-                        <h3 className="text-xl font-bold text-[#1C2620]">{country.nom}</h3>
-                      </div>
-                      <p className="text-sm text-gray-600">{country.capital}</p>
-                    </div>
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full border ${dangerColors[country.danger_level]}`}>
-                      {dangerLabels[country.danger_level]}
-                    </span>
-                  </div>
-                  <div className="mb-4">
-                    <p className="text-xs text-gray-500 mb-2">Meilleure saison: {country.meilleure_saison}</p>
-                    <p className="text-xs text-gray-500">Devise: {country.monnaie}</p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {country.tags.map((tag) => (
-                      <span key={tag} className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full">{tag}</span>
-                    ))}
-                  </div>
-                  {!country.published && (
-                    <div className="mt-4 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">
-                      ⚠️ Contenu en cours de vérification
-                    </div>
-                  )}
-                </Link>
+          <div className="relative max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 xl:px-16">
+            {/* Breadcrumb */}
+            <nav className="mb-10">
+              <ol className="flex items-center gap-2" style={{ fontSize: '12px', fontFamily: 'var(--font-mono)', color: 'rgba(231,227,214,0.4)', letterSpacing: '0.08em' }}>
+                <li><a href="/" className="hover:text-white/70 transition-colors">Accueil</a></li>
+                <li style={{ color: 'rgba(231,227,214,0.2)' }}>›</li>
+                <li style={{ color: 'rgba(231,227,214,0.7)' }}>Fiches pays</li>
+              </ol>
+            </nav>
+
+            <p
+              className="mb-4"
+              style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'rgba(231,227,214,0.5)', letterSpacing: '0.2em', textTransform: 'uppercase' }}
+            >
+              Destinations
+            </p>
+
+            <h1
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 800,
+                fontSize: 'clamp(2.8rem, 6vw, 5rem)',
+                lineHeight: '1.0',
+                letterSpacing: '-0.04em',
+                color: '#FFFFFF',
+                maxWidth: '700px',
+                marginBottom: '20px',
+              }}
+            >
+              Le monde,{' '}
+              <em style={{ fontStyle: 'italic', color: 'rgba(231,227,214,0.5)' }}>pays par pays.</em>
+            </h1>
+
+            <p
+              style={{
+                fontSize: 'clamp(1rem, 1.5vw, 1.15rem)',
+                color: 'rgba(231,227,214,0.6)',
+                fontFamily: 'var(--font-sans)',
+                lineHeight: '1.6',
+                maxWidth: '520px',
+                marginBottom: '40px',
+              }}
+            >
+              {ALL_COUNTRIES.length} fiches pays avec informations pratiques, météo, visa, santé et équipement recommandé.
+            </p>
+
+            {/* Stats */}
+            <div className="flex items-center gap-8 flex-wrap">
+              {[
+                { value: `${ALL_COUNTRIES.length}`, label: 'pays' },
+                { value: `${ALL_COUNTRIES.filter(c => c.danger_level === 'low').length}`, label: 'destinations sûres' },
+                { value: `${ALL_COUNTRIES.filter(c => c.published).length}`, label: 'fiches vérifiées' },
+              ].map((stat) => (
+                <div key={stat.label}>
+                  <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', color: '#FFFFFF', lineHeight: '1', letterSpacing: '-0.03em' }}>
+                    {stat.value}
+                  </p>
+                  <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'rgba(231,227,214,0.4)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                    {stat.label}
+                  </p>
+                </div>
               ))}
             </div>
-          ) : (
-            <div className="space-y-3">
-              {displayItems.map((country) => (
-                <Link
-                  key={country.code}
-                  href={`/pays/${country.code.toLowerCase()}`}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-[#E4501C] hover:bg-gray-50 transition-all"
+          </div>
+        </section>
+
+        {/* ── FEATURED ── */}
+        {FEATURED.length > 0 && (
+          <section className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 py-12 sm:py-16">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <p style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: '#4A6355', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  Destinations phares
+                </p>
+                <h2
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 800,
+                    fontSize: 'clamp(1.6rem, 3vw, 2.2rem)',
+                    color: '#E7E3D6',
+                    lineHeight: '1.1',
+                    letterSpacing: '-0.03em',
+                  }}
                 >
-                  <div className="flex items-center gap-4 flex-1">
-                    <span className="text-2xl">{getFlagEmoji(country.code)}</span>
-                    <div>
-                      <h3 className="font-semibold text-[#1C2620]">{country.nom}</h3>
-                      <p className="text-sm text-gray-600">{country.capital}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-xs text-gray-500">{country.meilleure_saison}</span>
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full border ${dangerColors[country.danger_level]}`}>
-                      {dangerLabels[country.danger_level]}
-                    </span>
-                  </div>
-                </Link>
+                  Les incontournables.
+                </h2>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {FEATURED.map((country) => (
+                <FeaturedCountryCard key={country.code} country={country} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── FILTERS ── */}
+        <section
+          style={{
+            background: 'var(--background)',
+            borderTop: '1px solid rgba(255,255,255,0.05)',
+            borderBottom: '1px solid rgba(255,255,255,0.05)',
+            position: 'sticky',
+            top: '64px',
+            zIndex: 30,
+          }}
+        >
+          <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 py-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-wrap">
+              {/* Search */}
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Rechercher un pays…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="outline-none"
+                  style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '10px',
+                    padding: '8px 14px',
+                    fontSize: '13px',
+                    color: '#E7E3D6',
+                    fontFamily: 'var(--font-sans)',
+                    width: '220px',
+                  }}
+                />
+              </div>
+
+              {/* Continent */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {continents.slice(0, 5).map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setContinent(c)}
+                    className="transition-all duration-200"
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      fontFamily: 'var(--font-mono)',
+                      letterSpacing: '0.04em',
+                      border: continent === c ? '1px solid rgba(231,227,214,0.3)' : '1px solid rgba(255,255,255,0.08)',
+                      background: continent === c ? 'rgba(231,227,214,0.1)' : 'transparent',
+                      color: continent === c ? '#E7E3D6' : 'rgba(231,227,214,0.4)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+
+              {/* Danger filter */}
+              <div className="flex items-center gap-2">
+                {['Tous', 'low', 'medium', 'high'].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setDangerFilter(d)}
+                    className="transition-all duration-200"
+                    style={{
+                      padding: '5px 10px',
+                      borderRadius: '6px',
+                      fontSize: '11px',
+                      fontFamily: 'var(--font-mono)',
+                      border: dangerFilter === d ? '1px solid rgba(231,227,214,0.2)' : '1px solid rgba(255,255,255,0.06)',
+                      background: dangerFilter === d ? 'rgba(231,227,214,0.08)' : 'transparent',
+                      color: d === 'Tous' ? (dangerFilter === d ? '#E7E3D6' : 'rgba(231,227,214,0.35)') : (dangerFilter === d ? dangerConfig[d]?.color : 'rgba(231,227,214,0.35)'),
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {d === 'Tous' ? 'Tous' : dangerConfig[d]?.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Count */}
+              <p
+                className="sm:ml-auto"
+                style={{ fontSize: '12px', fontFamily: 'var(--font-mono)', color: 'rgba(231,227,214,0.3)', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}
+              >
+                {filtered.length} pays
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ── GRID ── */}
+        <section className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 py-10 sm:py-12">
+          {displayItems.length === 0 ? (
+            <div className="text-center py-24">
+              <p style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', color: 'rgba(231,227,214,0.3)' }}>
+                Aucun pays trouvé.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {displayItems.map((country) => (
+                <CountryCard key={country.code} country={country} />
               ))}
             </div>
           )}
 
-          {/* Load more */}
           {hasMore && (
             <div className="flex justify-center mt-10">
               <button
                 onClick={() => setPage((p) => p + 1)}
-                className="px-8 py-3 bg-[#1C2620] text-white rounded-xl font-semibold hover:bg-[#1C2620]/80 transition-colors"
+                className="font-medium transition-all duration-200 hover:opacity-80"
+                style={{
+                  background: 'rgba(231,227,214,0.06)',
+                  border: '1px solid rgba(231,227,214,0.12)',
+                  borderRadius: '10px',
+                  padding: '12px 28px',
+                  fontSize: '13px',
+                  fontFamily: 'var(--font-sans)',
+                  color: 'rgba(231,227,214,0.6)',
+                  cursor: 'pointer',
+                }}
               >
-                Charger plus ({filtered.length - displayItems.length} restants)
+                Voir plus · {filtered.length - displayItems.length} pays restants
               </button>
             </div>
           )}
+        </section>
 
-          {filtered.length === 0 && (
-            <div className="text-center py-20">
-              <p className="text-2xl mb-2">🌍</p>
-              <p className="text-gray-600">Aucun pays ne correspond à vos filtres.</p>
+        {/* ── CTA CONFIGURATEUR ── */}
+        <section className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 pb-16 sm:pb-20">
+          <div
+            className="relative overflow-hidden"
+            style={{ background: '#1C2620', borderRadius: '20px', padding: 'clamp(40px, 5vw, 64px)' }}
+          >
+            <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+              <div>
+                <p style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'rgba(231,227,214,0.4)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '12px' }}>
+                  Kit sur mesure
+                </p>
+                <h2
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 800,
+                    fontSize: 'clamp(1.8rem, 3vw, 2.5rem)',
+                    lineHeight: '1.1',
+                    letterSpacing: '-0.03em',
+                    color: '#FFFFFF',
+                    marginBottom: '12px',
+                  }}
+                >
+                  Composez votre kit{' '}
+                  <em style={{ fontStyle: 'italic', color: 'rgba(231,227,214,0.45)' }}>pour cette destination.</em>
+                </h2>
+                <p style={{ fontSize: '15px', color: 'rgba(231,227,214,0.5)', fontFamily: 'var(--font-sans)', lineHeight: '1.6', maxWidth: '480px' }}>
+                  4 questions. Un kit optimisé pour votre pays, votre durée et votre saison.
+                </p>
+              </div>
+              <Link
+                href="/ai-configurator"
+                className="flex-shrink-0 font-semibold transition-all duration-200 hover:opacity-90"
+                style={{ background: '#E7E3D6', color: '#1C2620', borderRadius: '12px', padding: '14px 28px', fontSize: '14px', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}
+              >
+                Configurer mon kit →
+              </Link>
             </div>
-          )}
-        </div>
+          </div>
+        </section>
+
+        <NewFooterSection />
       </main>
-      <Footer />
     </>
   );
 }
