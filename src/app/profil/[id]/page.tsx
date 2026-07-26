@@ -3,12 +3,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import Image from 'next/image';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import NewFooterSection from '@/app/components/home/NewFooterSection';
 
 interface Profile {
   id: string;
@@ -21,15 +21,6 @@ interface Profile {
   location: string;
   xp: number;
   level: number;
-  created_at: string;
-}
-
-interface Post {
-  id: string;
-  content: string;
-  post_type: string;
-  likes_count: number;
-  comments_count: number;
   created_at: string;
 }
 
@@ -55,20 +46,6 @@ interface Carnet {
   created_at: string;
 }
 
-interface ClubMembership {
-  id: string;
-  club_id: string;
-  role: string;
-  joined_at: string;
-  club?: { name: string; emoji: string; category: string; members_count: number; type: string };
-}
-
-interface EventParticipation {
-  id: string;
-  event_id: string;
-  event?: { title: string; emoji: string; event_date: string; location: string; type: string; status: string };
-}
-
 interface Badge {
   id: string;
   name: string;
@@ -76,243 +53,146 @@ interface Badge {
   rarity: string;
 }
 
-interface UserGroup {
+interface GearItem {
   id: string;
   name: string;
-  destination: string;
-  theme: string;
-  departure_date: string | null;
-  return_date: string | null;
-  visibility: string;
-  group_level: number;
-  optimization_score: number;
-  my_role?: string;
-  member_count?: number;
+  category: string;
+  weight_g: number;
+  brand: string;
+  condition: string;
 }
 
-const LEVEL_CFG: Record<string, { color: string; icon: string; bg: string }> = {
-  Explorateur: { color: 'text-stone-600', icon: '🥾', bg: 'bg-stone-100 border-stone-300' },
-  Aventurier: { color: 'text-emerald-700', icon: '🏕️', bg: 'bg-emerald-50 border-emerald-300' },
-  'Randonneur Expert': { color: 'text-blue-700', icon: '🧗', bg: 'bg-blue-50 border-blue-300' },
-  'Guide de Montagne': { color: 'text-purple-700', icon: '🏔️', bg: 'bg-purple-50 border-purple-300' },
-  'Légende du Voyage': { color: 'text-amber-700', icon: '🌍', bg: 'bg-amber-50 border-amber-300' },
-};
+type ProfileTab = 'aventures' | 'photos' | 'recommandations';
 
-const POST_TYPE_CFG: Record<string, { label: string; color: string; emoji: string }> = {
-  post: { label: 'Post', color: 'bg-gray-100 text-gray-700', emoji: '💬' },
-  tip: { label: 'Conseil', color: 'bg-emerald-100 text-emerald-700', emoji: '💡' },
-  question: { label: 'Question', color: 'bg-blue-100 text-blue-700', emoji: '❓' },
-  share: { label: 'Partage', color: 'bg-purple-100 text-purple-700', emoji: '🔗' },
-};
+const HERO_IMAGES = [
+  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1600&q=80',
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80',
+  'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1600&q=80',
+];
 
-// ─── Carnet Detail Modal ──────────────────────────────────────────────────────
-function CarnetDetailModal({ carnet, onClose }: { carnet: Carnet | null; onClose: () => void }) {
-  if (!carnet) return null;
-  const durationDays = carnet.start_date && carnet.end_date
-    ? Math.ceil((new Date(carnet.end_date).getTime() - new Date(carnet.start_date).getTime()) / 86400000)
-    : null;
+const PHOTO_JOURNAL = [
+  { src: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&q=80', alt: 'Randonneur au sommet des montagnes au coucher du soleil' },
+  { src: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=600&q=80', alt: 'Vue aérienne de forêt de pins dans la brume matinale' },
+  { src: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&q=80', alt: 'Bivouac sous un ciel étoilé en montagne' },
+  { src: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&q=80', alt: 'Lac de montagne aux eaux turquoise entouré de sommets' },
+  { src: 'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=600&q=80', alt: 'Tente de camping installée sur un plateau rocheux' },
+];
 
+const MOCK_BADGES = [
+  { id: '1', name: 'Sommet 3000', icon: '⛰️', rarity: 'Or', unlocked: true, desc: '2 ans' },
+  { id: '2', name: '10 bivouacs', icon: '🏕️', rarity: 'Argent', unlocked: true, desc: '2 ans' },
+  { id: '3', name: 'Écolo', icon: '🌿', rarity: 'Commun', unlocked: true, desc: '2 ans' },
+  { id: '4', name: 'Guide', icon: '🧭', rarity: 'Or', unlocked: true, desc: 'Kit' },
+  { id: '5', name: 'Boussole', icon: '🔵', rarity: 'Commun', unlocked: true, desc: 'Orienteur' },
+  { id: '6', name: '6 h/jour', icon: '⏱️', rarity: 'Argent', unlocked: true, desc: 'Marcheur' },
+  { id: '7', name: 'Verrouillé', icon: '🔒', rarity: 'Rare', unlocked: false, desc: '—' },
+  { id: '8', name: 'Verrouillé', icon: '🔒', rarity: 'Épique', unlocked: false, desc: '—' },
+  { id: '9', name: 'Verrouillé', icon: '🔒', rarity: 'Légendaire', unlocked: false, desc: '—' },
+];
+
+const MOCK_KIT = [
+  { id: '1', name: 'Sac 45 L', detail: 'Vert forêt · 3 ans d\'usage', weight: '1,4 kg', src: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=80&q=80', alt: 'Sac à dos de randonnée vert 45 litres' },
+  { id: '2', name: 'Duvet 3 saisons', detail: '-10 °C', weight: '920 g', src: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=80&q=80', alt: 'Duvet de camping trois saisons compressé' },
+  { id: '3', name: 'Veste 3 couches', detail: 'Forêt · 2 ans', weight: '480 g', src: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=80&q=80', alt: 'Veste imperméable trois couches verte' },
+  { id: '4', name: 'Gourde titane', detail: '1 L · rouge', weight: '188 g', src: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=80&q=80', alt: 'Gourde en titane rouge de 1 litre' },
+];
+
+const MOCK_ADVENTURES = [
+  { id: '1', title: 'Cabane du Grand Vaneau', subtitle: '3 nuits · Chartreuse · 27,4 km', date: '14–17 août', src: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=600&q=80', alt: 'Cabane en bois dans une forêt de pins brumeuse' },
+  { id: '2', title: 'Bivouac étoilé · Vercors', subtitle: '2 nuits · Plateau haut · 18,6 km', date: '2–4 août', src: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&q=80', alt: 'Tente sous un ciel étoilé dans le Vercors' },
+  { id: '3', title: 'Traversée des Écrins', subtitle: '6 jours · Alpes · 62 km', date: 'Juillet', src: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&q=80', alt: 'Traversée des massifs des Écrins en été' },
+  { id: '4', title: 'Kayak · Serre-Ponçon', subtitle: '1 jour · Hautes-Alpes · 14 km', date: 'Juin', src: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&q=80', alt: 'Kayak sur le lac de Serre-Ponçon' },
+];
+
+// Simple SVG world map dots for visited countries
+function WorldMapDots({ countries }: { countries: string[] }) {
+  const dots = [
+    { x: 48, y: 38, code: 'FR', label: 'France' },
+    { x: 52, y: 35, code: 'NO', label: 'Norvège' },
+    { x: 55, y: 42, code: 'IT', label: 'Italie' },
+    { x: 60, y: 50, code: 'MA', label: 'Maroc' },
+    { x: 72, y: 38, code: 'NP', label: 'Népal' },
+    { x: 80, y: 42, code: 'JP', label: 'Japon' },
+    { x: 25, y: 45, code: 'CA', label: 'Canada' },
+    { x: 20, y: 55, code: 'MX', label: 'Mexique' },
+    { x: 30, y: 60, code: 'PE', label: 'Pérou' },
+    { x: 35, y: 65, code: 'CL', label: 'Chili' },
+    { x: 58, y: 55, code: 'TZ', label: 'Tanzanie' },
+    { x: 85, y: 70, code: 'NZ', label: 'N.-Zélande' },
+  ];
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-2xl my-4 overflow-hidden">
-        {/* Cover */}
-        <div className="relative h-56 overflow-hidden bg-[#1C2620]">
-          {carnet.cover_image ? (
-            <Image src={carnet.cover_image} alt={carnet.cover_image_alt || carnet.title} fill className="object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-6xl">🗺️</div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-2 bg-black/40 backdrop-blur-sm rounded-xl hover:bg-black/60 transition-colors"
-          >
-            <Icon name="XMarkIcon" size={18} className="text-white" />
-          </button>
-          <div className="absolute top-4 left-4 flex gap-2 flex-wrap">
-            {carnet.verified && <span className="text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-700">✓ Vérifié</span>}
-            {carnet.is_collaborative && <span className="text-[10px] bg-blue-500 text-white px-2 py-0.5 rounded-full font-700">👥 Collaboratif</span>}
-          </div>
-          <div className="absolute bottom-4 left-5 right-5">
-            <p className="text-[10px] font-mono text-white/60 uppercase tracking-wider mb-1">{carnet.destination}</p>
-            <h2 className="font-display font-800 text-white text-xl leading-tight">{carnet.title}</h2>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-5 max-h-[60vh] overflow-y-auto">
-          {/* Stats row */}
-          <div className="grid grid-cols-4 gap-3">
-            {[
-              { label: 'Note', value: `${carnet.route_rating}/10`, icon: '⭐' },
-              { label: 'Durée', value: durationDays ? `${durationDays}j` : '—', icon: '📅' },
-              { label: 'Vues', value: carnet.views_count ?? 0, icon: '👁️' },
-              { label: 'Favoris', value: carnet.favorites_count ?? 0, icon: '🔖' },
-            ].map((s) => (
-              <div key={s.label} className="bg-white/60 rounded-xl p-3 text-center">
-                <p className="text-base mb-0.5">{s.icon}</p>
-                <p className="font-display font-700 text-[#1C2620] text-sm">{s.value}</p>
-                <p className="text-[10px] text-[#5C6B5E]">{s.label}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Dates */}
-          {(carnet.start_date || carnet.end_date) && (
-            <div className="flex items-center gap-4 p-4 bg-[#1C2620] rounded-xl">
-              <Icon name="CalendarDaysIcon" size={18} className="text-[#E4501C] flex-shrink-0" />
-              <div className="flex items-center gap-3 text-sm">
-                {carnet.start_date && (
-                  <span className="text-white/70">
-                    Départ : <span className="text-white font-600">{new Date(carnet.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                  </span>
-                )}
-                {carnet.start_date && carnet.end_date && <span className="text-white/30">→</span>}
-                {carnet.end_date && (
-                  <span className="text-white/70">
-                    Retour : <span className="text-white font-600">{new Date(carnet.end_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                  </span>
-                )}
-              </div>
+    <div className="relative w-full" style={{ paddingBottom: '50%' }}>
+      <div className="absolute inset-0 rounded-xl overflow-hidden" style={{ background: '#1C2620' }}>
+        <svg viewBox="0 0 100 50" className="w-full h-full opacity-20">
+          <rect width="100" height="50" fill="none" />
+          {/* Simplified continent shapes */}
+          <ellipse cx="48" cy="38" rx="8" ry="6" fill="#4A6741" opacity="0.6" />
+          <ellipse cx="60" cy="50" rx="6" ry="4" fill="#4A6741" opacity="0.5" />
+          <ellipse cx="72" cy="40" rx="10" ry="7" fill="#4A6741" opacity="0.5" />
+          <ellipse cx="25" cy="42" rx="7" ry="9" fill="#4A6741" opacity="0.5" />
+          <ellipse cx="30" cy="60" rx="4" ry="7" fill="#4A6741" opacity="0.4" />
+          <ellipse cx="85" cy="68" rx="4" ry="3" fill="#4A6741" opacity="0.4" />
+        </svg>
+        {dots.map((dot) => {
+          const visited = countries.includes(dot.code);
+          return (
+            <div
+              key={dot.code}
+              className="absolute group"
+              style={{ left: `${dot.x}%`, top: `${dot.y}%`, transform: 'translate(-50%, -50%)' }}
+            >
+              <div
+                className={`w-2 h-2 rounded-full transition-all ${visited ? 'bg-[#E4501C] shadow-[0_0_6px_rgba(228,80,28,0.8)]' : 'bg-white/20'}`}
+              />
+              {visited && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-1.5 py-0.5 bg-[#E4501C] text-white text-[8px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  {dot.label}
+                </div>
+              )}
             </div>
-          )}
-
-          {/* Description */}
-          {carnet.description && (
-            <div>
-              <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider mb-2">Récit d&apos;expédition</p>
-              <p className="text-sm text-[#1C2620] leading-relaxed">{carnet.description}</p>
-            </div>
-          )}
-
-          {/* Weather */}
-          {carnet.weather && (
-            <div className="flex items-center gap-3 p-3 bg-[#E7E3D6] rounded-xl border border-[#C8C3B0]">
-              <Icon name="CloudIcon" size={16} className="text-[#5C6B5E] flex-shrink-0" />
-              <div>
-                <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider">Conditions météo</p>
-                <p className="text-sm text-[#1C2620] font-500">{carnet.weather}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Tags */}
-          {carnet.tags?.length > 0 && (
-            <div>
-              <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider mb-2">Tags</p>
-              <div className="flex flex-wrap gap-2">
-                {carnet.tags.map((tag) => (
-                  <span key={tag} className="text-xs bg-[#1C2620] text-white/70 px-3 py-1 rounded-full">#{tag}</span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Engagement */}
-          <div className="flex items-center gap-4 pt-3 border-t border-[#C8C3B0]">
-            <span className="flex items-center gap-1.5 text-sm text-[#5C6B5E]">
-              <Icon name="HeartIcon" size={14} /> {carnet.likes_count} réactions
-            </span>
-            <span className="flex items-center gap-1.5 text-sm text-[#5C6B5E]">
-              <Icon name="ChatBubbleLeftIcon" size={14} /> {carnet.comments_count} commentaires
-            </span>
-            <span className="flex items-center gap-1.5 text-sm text-[#5C6B5E]">
-              <Icon name="BookmarkIcon" size={14} /> {carnet.favorites_count} favoris
-            </span>
-          </div>
-        </div>
-
-        <div className="p-5 border-t border-[#C8C3B0]">
-          <Link
-            href="/carnets"
-            className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors"
-          >
-            <Icon name="ArrowTopRightOnSquareIcon" size={14} />
-            Voir tous les carnets
-          </Link>
-        </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-type ProfileTab = 'publications' | 'carnets' | 'clubs' | 'evenements' | 'badges' | 'groupes';
-
-export default function ProfilPage() {
+export default function ProfilDetailPage() {
   const params = useParams();
   const profileId = params?.id as string;
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
   const [carnets, setCarnets] = useState<Carnet[]>([]);
-  const [clubs, setClubs] = useState<ClubMembership[]>([]);
-  const [events, setEvents] = useState<EventParticipation[]>([]);
   const [badges, setBadges] = useState<Badge[]>([]);
-  const [groups, setGroups] = useState<UserGroup[]>([]);
+  const [gearItems, setGearItems] = useState<GearItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<ProfileTab>('publications');
+  const [activeTab, setActiveTab] = useState<ProfileTab>('aventures');
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
-  const [toast, setToast] = useState<string | null>(null);
-  const [selectedCarnet, setSelectedCarnet] = useState<Carnet | null>(null);
   const { user } = useAuth();
   const supabase = useMemo(() => createClient(), []);
-
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
 
   useEffect(() => {
     if (!profileId) return;
     const load = async () => {
       setLoading(true);
-      const [profileRes, postsRes, carnetsRes, clubsRes, eventsRes, badgesRes] = await Promise.all([
+      const [profileRes, carnetsRes, badgesRes, gearRes] = await Promise.all([
         supabase.from('user_profiles').select('*').eq('id', profileId).single(),
-        supabase.from('community_posts').select('id, content, post_type, likes_count, comments_count, created_at').eq('author_id', profileId).order('created_at', { ascending: false }).limit(10),
-        supabase.from('carnets').select('*').eq('author_id', profileId).eq('visibility', 'public').order('created_at', { ascending: false }).limit(12),
-        supabase.from('club_members').select('id, club_id, role, joined_at, club:clubs(name, emoji, category, members_count, type)').eq('user_id', profileId).eq('status', 'active').limit(8),
-        supabase.from('event_participants').select('id, event_id, event:events(title, emoji, event_date, location, type, status)').eq('user_id', profileId).limit(8),
-        supabase.from('user_badges').select('badge_id, badge:badges(id, name, icon, rarity)').eq('user_id', profileId).limit(12),
+        supabase.from('carnets').select('*').eq('author_id', profileId).eq('visibility', 'public').order('created_at', { ascending: false }).limit(8),
+        supabase.from('user_badges').select('badge_id, badge:badges(id, name, icon, rarity)').eq('user_id', profileId).limit(9),
+        supabase.from('gear_items').select('id, name, category, weight_g, brand, condition').eq('user_id', profileId).limit(4),
       ]);
-
       setProfile(profileRes.data ?? null);
-      setPosts(postsRes.data ?? []);
       setCarnets((carnetsRes.data ?? []) as Carnet[]);
-      setClubs((clubsRes.data ?? []) as unknown as ClubMembership[]);
-      setEvents((eventsRes.data ?? []) as unknown as EventParticipation[]);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setBadges(((badgesRes.data ?? []) as any[]).map((b) => b.badge).filter(Boolean));
-
-      // Load groups
-      const { data: memberData } = await supabase
-        .from('group_members')
-        .select('group_id, role')
-        .eq('user_id', profileId)
-        .eq('status', 'active');
-
-      if (memberData?.length) {
-        const groupIds = memberData.map(m => m.group_id);
-        const { data: groupsData } = await supabase
-          .from('travel_groups')
-          .select('id, name, destination, theme, departure_date, return_date, visibility, group_level, optimization_score')
-          .in('id', groupIds)
-          .order('created_at', { ascending: false })
-          .limit(8);
-
-        const enriched = await Promise.all((groupsData || []).map(async (g) => {
-          const { count } = await supabase
-            .from('group_members').select('*', { count: 'exact', head: true })
-            .eq('group_id', g.id).eq('status', 'active');
-          return { ...g, member_count: count || 0, my_role: memberData.find(m => m.group_id === g.id)?.role };
-        }));
-        setGroups(enriched);
-      }
-
+      setGearItems((gearRes.data ?? []) as GearItem[]);
       const [fwersRes, fwingRes] = await Promise.all([
         supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('following_id', profileId),
         supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('follower_id', profileId),
       ]);
       setFollowersCount(fwersRes.count ?? 0);
       setFollowingCount(fwingRes.count ?? 0);
-
       if (user) {
         const { data: followData } = await supabase.from('user_follows').select('id').eq('follower_id', user.id).eq('following_id', profileId).maybeSingle();
         setIsFollowing(!!followData);
@@ -323,504 +203,402 @@ export default function ProfilPage() {
   }, [profileId, supabase, user]);
 
   const handleFollow = async () => {
-    if (!user) { showToast('Connectez-vous pour suivre'); return; }
-    if (user.id === profileId) return;
+    if (!user) return;
     if (isFollowing) {
       await supabase.from('user_follows').delete().eq('follower_id', user.id).eq('following_id', profileId);
       setIsFollowing(false);
       setFollowersCount((c) => Math.max(0, c - 1));
-      showToast('Abonnement annulé');
     } else {
       await supabase.from('user_follows').insert({ follower_id: user.id, following_id: profileId });
       setIsFollowing(true);
       setFollowersCount((c) => c + 1);
-      showToast('Abonné !');
     }
   };
 
-  const levelCfg = LEVEL_CFG[profile?.loyalty_level ?? 'Explorateur'] ?? LEVEL_CFG.Explorateur;
-  const initials = profile?.full_name ? profile.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() : '?';
   const isOwnProfile = user?.id === profileId;
+  const initials = profile?.full_name ? profile.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() : '?';
+  const heroImg = HERO_IMAGES[0];
 
-  const PROFILE_TABS: { id: ProfileTab; label: string; icon: string; count?: number }[] = [
-    { id: 'publications', label: 'Publications', icon: 'ChatBubbleLeftRightIcon', count: posts.length },
-    { id: 'carnets', label: 'Carnets', icon: 'BookOpenIcon', count: carnets.length },
-    { id: 'groupes', label: 'Groupes', icon: 'MapIcon', count: groups.length },
-    { id: 'clubs', label: 'Clubs', icon: 'UserGroupIcon', count: clubs.length },
-    { id: 'evenements', label: 'Événements', icon: 'CalendarDaysIcon', count: events.length },
-    { id: 'badges', label: 'Badges', icon: 'TrophyIcon', count: badges.length },
+  const displayCarnets = carnets.length > 0 ? carnets : MOCK_ADVENTURES.map(a => ({
+    id: a.id, title: a.title, destination: a.subtitle, description: '', cover_image: a.src, cover_image_alt: a.alt,
+    start_date: null, end_date: null, weather: '', route_rating: 8, visibility: 'public', tags: [],
+    likes_count: 0, comments_count: 0, favorites_count: 0, views_count: 0, verified: false, is_collaborative: false, created_at: '',
+  }));
+
+  const displayBadges = badges.length > 0
+    ? MOCK_BADGES.map((mb, i) => ({ ...mb, unlocked: i < badges.length }))
+    : MOCK_BADGES;
+
+  const displayKit = gearItems.length > 0
+    ? gearItems.map((g) => ({ id: g.id, name: g.name, detail: g.brand || g.condition, weight: g.weight_g ? `${g.weight_g} g` : '—', src: MOCK_KIT[0].src, alt: `Équipement ${g.name}` }))
+    : MOCK_KIT;
+
+  const TABS: { id: ProfileTab; label: string; count: number }[] = [
+    { id: 'aventures', label: 'Aventures', count: displayCarnets.length },
+    { id: 'photos', label: 'Photos', count: PHOTO_JOURNAL.length },
+    { id: 'recommandations', label: 'Recommandations', count: 46 },
   ];
 
-  const RARITY_CFG: Record<string, string> = {
-    Commun: 'text-stone-600 bg-stone-100',
-    Rare: 'text-blue-600 bg-blue-100',
-    Épique: 'text-purple-600 bg-purple-100',
-    Légendaire: 'text-amber-600 bg-amber-100',
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen" style={{ background: '#F5F2EC' }}>
+        <Header />
+        <div className="pt-20 flex items-center justify-center min-h-[60vh]">
+          <div className="w-8 h-8 border-2 border-[#1C2620] border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#F5F2E8]">
+    <div className="min-h-screen" style={{ background: '#F5F2EC', fontFamily: 'var(--font-sans)' }}>
       <Header />
-      <main className="pt-20">
-        {/* Hero Banner */}
-        <div className="bg-[#1C2620] h-44 relative overflow-hidden">
-          <div className="absolute inset-0 opacity-20 bg-gradient-to-br from-[#E4501C] via-transparent to-[#1C2620]" />
-          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(228,80,28,0.15) 0%, transparent 60%), radial-gradient(circle at 80% 20%, rgba(92,107,94,0.2) 0%, transparent 50%)' }} />
+
+      {/* ── HERO PLEIN ÉCRAN ── */}
+      <div className="relative h-[55vh] min-h-[360px] overflow-hidden">
+        <Image
+          src={heroImg}
+          alt={`Paysage de montagne — profil de ${profile?.full_name ?? 'voyageur'}`}
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/70" />
+        {/* Badge rôle */}
+        <div className="absolute top-24 left-6 md:left-10">
+          <span className="text-[10px] font-mono tracking-[0.2em] uppercase bg-[#E4501C]/90 text-white px-3 py-1.5 rounded-full backdrop-blur-sm">
+            + Gardienne des lieux · Chartreuse
+          </span>
         </div>
+        {/* Nom sur hero */}
+        <div className="absolute bottom-8 left-6 md:left-10 right-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-white leading-none tracking-tight">
+            {profile?.full_name?.split(' ')[0] ?? 'Marceline'}{' '}
+            <em className="font-light italic" style={{ fontFamily: 'Georgia, serif' }}>
+              {profile?.full_name?.split(' ').slice(1).join(' ') ?? 'Chevrier'}
+            </em>
+          </h1>
+        </div>
+      </div>
 
-        <div className="max-w-4xl mx-auto px-4">
-          {/* Profile Card */}
-          <div className="relative -mt-20 mb-6">
-            <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-6">
-              {loading ? (
-                <div className="space-y-3">
-                  <div className="w-24 h-24 rounded-2xl bg-[#C8C3B0]/30 animate-pulse" />
-                  <div className="h-6 w-48 bg-[#C8C3B0]/30 rounded animate-pulse" />
-                  <div className="h-4 w-64 bg-[#C8C3B0]/30 rounded animate-pulse" />
-                </div>
-              ) : !profile ? (
-                <div className="text-center py-8">
-                  <p className="text-[#5C6B5E]">Profil introuvable</p>
-                  <Link href="/communaute" className="text-[#E4501C] text-sm mt-2 inline-block">← Retour à la communauté</Link>
-                </div>
+      {/* ── AVATAR + ACTIONS ── */}
+      <div className="max-w-5xl mx-auto px-4 md:px-8">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 -mt-12 mb-8 relative z-10">
+          <div className="flex items-end gap-4">
+            {/* Avatar */}
+            <div className="relative flex-shrink-0">
+              {profile?.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={profile.avatar_url}
+                  alt={`Photo de profil de ${profile.full_name}`}
+                  className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-xl"
+                />
               ) : (
-                <div className="flex flex-col sm:flex-row gap-6">
-                  {/* Avatar */}
-                  <div className="flex-shrink-0">
-                    {profile.avatar_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={profile.avatar_url} alt={`Photo de profil de ${profile.full_name}`} className="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-lg" />
-                    ) : (
-                      <div className="w-24 h-24 rounded-2xl bg-[#E4501C]/20 flex items-center justify-center text-3xl font-700 text-[#E4501C] border-4 border-white shadow-lg">
-                        {initials}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
-                      <div>
-                        <h1 className="font-display font-800 text-2xl text-[#1C2620] tracking-tight">{profile.full_name || 'Aventurier'}</h1>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <span className={`text-xs font-600 px-2.5 py-1 rounded-full border ${levelCfg.bg} ${levelCfg.color}`}>
-                            {levelCfg.icon} {profile.loyalty_level}
-                          </span>
-                          {profile.location && (
-                            <span className="text-xs text-[#5C6B5E] flex items-center gap-1">
-                              <Icon name="MapPinIcon" size={12} /> {profile.location}
-                            </span>
-                          )}
-                          <span className="text-xs text-[#5C6B5E]">
-                            Membre depuis {new Date(profile.created_at).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        {isOwnProfile ? (
-                          <>
-                            <Link href="/compte" className="flex items-center gap-2 px-4 py-2 border border-[#C8C3B0] rounded-xl text-sm font-600 text-[#5C6B5E] hover:text-[#1C2620] hover:border-[#1C2620]/30 transition-all">
-                              <Icon name="PencilIcon" size={14} /> Modifier
-                            </Link>
-                            <Link href="/groupes" className="flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600 hover:bg-[#E4501C]/90 transition-all">
-                              <Icon name="UserGroupIcon" size={14} /> Mes groupes
-                            </Link>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              onClick={handleFollow}
-                              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-600 transition-all ${isFollowing ? 'border border-[#C8C3B0] text-[#5C6B5E] hover:border-red-300 hover:text-red-500' : 'bg-[#E4501C] text-white hover:bg-[#E4501C]/90'}`}
-                            >
-                              <Icon name={isFollowing ? 'UserMinusIcon' : 'UserPlusIcon'} size={14} />
-                              {isFollowing ? 'Abonné' : 'Suivre'}
-                            </button>
-                            <Link href="/messagerie" className="flex items-center gap-2 px-4 py-2 border border-[#C8C3B0] rounded-xl text-sm font-600 text-[#5C6B5E] hover:text-[#1C2620] transition-all">
-                              <Icon name="ChatBubbleLeftIcon" size={14} /> Message
-                            </Link>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {profile.bio && <p className="text-sm text-[#5C6B5E] mb-4 leading-relaxed">{profile.bio}</p>}
-
-                    {/* Stats */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {[
-                        { label: 'Trust Score', value: profile.trust_score ?? 50, icon: '🛡️' },
-                        { label: 'Points fidélité', value: profile.loyalty_points ?? 0, icon: '⭐' },
-                        { label: 'Abonnés', value: followersCount, icon: '👥' },
-                        { label: 'Abonnements', value: followingCount, icon: '🔔' },
-                      ].map((stat) => (
-                        <div key={stat.label} className="bg-white/60 rounded-xl p-3 text-center">
-                          <p className="text-lg">{stat.icon}</p>
-                          <p className="font-display font-700 text-[#1C2620] text-lg">{stat.value.toLocaleString()}</p>
-                          <p className="text-[10px] text-[#5C6B5E]">{stat.label}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                <div className="w-24 h-24 rounded-full bg-[#1C2620] flex items-center justify-center text-2xl font-bold text-white border-4 border-white shadow-xl">
+                  {initials}
                 </div>
               )}
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#4A6741] rounded-full border-2 border-white flex items-center justify-center">
+                <Icon name="CheckIcon" size={10} className="text-white" />
+              </div>
+            </div>
+            <div className="pb-1">
+              <p className="text-xs text-[#7A7A6E]">
+                {profile?.location ?? 'Chartreuse'} · Membre depuis {profile?.created_at ? new Date(profile.created_at).getFullYear() : 2019}
+              </p>
             </div>
           </div>
+          <div className="flex gap-2 pb-1">
+            {isOwnProfile ? (
+              <Link href="/compte" className="flex items-center gap-2 px-5 py-2.5 bg-[#1C2620] text-white rounded-full text-sm font-semibold hover:bg-[#1C2620]/80 transition-all">
+                <Icon name="PencilIcon" size={14} className="text-white" /> Modifier
+              </Link>
+            ) : (
+              <>
+                <button
+                  onClick={handleFollow}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${isFollowing ? 'border border-[#C8C3B0] text-[#1C2620] hover:border-[#1C2620]' : 'bg-[#1C2620] text-white hover:bg-[#1C2620]/80'}`}
+                >
+                  <Icon name={isFollowing ? 'CheckIcon' : 'PlusIcon'} size={14} className={isFollowing ? 'text-[#1C2620]' : 'text-white'} />
+                  {isFollowing ? 'Abonné' : '+ Suivre'}
+                </button>
+                <Link href="/messagerie" className="flex items-center gap-2 px-5 py-2.5 border border-[#C8C3B0] rounded-full text-sm font-semibold text-[#1C2620] hover:border-[#1C2620] transition-all">
+                  <Icon name="ChatBubbleLeftIcon" size={14} /> Message
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
 
-          {/* Trust Score + Level Cards */}
-          {profile && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-[#1C2620] rounded-2xl p-5">
-                <p className="text-[10px] font-mono text-white/40 tracking-[0.2em] uppercase mb-3">Trust Score</p>
-                <div className="flex items-center gap-4">
-                  <div className="relative flex-shrink-0">
-                    <svg width={64} height={64} className="-rotate-90">
-                      <circle cx={32} cy={32} r={26} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={4} />
-                      <circle cx={32} cy={32} r={26} fill="none" stroke="#E4501C" strokeWidth={4}
-                        strokeDasharray={2 * Math.PI * 26}
-                        strokeDashoffset={2 * Math.PI * 26 * (1 - (profile.trust_score ?? 50) / 100)}
-                        strokeLinecap="round" />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="font-mono font-700 text-white text-base">{profile.trust_score ?? 50}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="font-display font-700 text-white text-sm">
-                      {(profile.trust_score ?? 50) >= 80 ? 'Confirmé 🏔️' : (profile.trust_score ?? 50) >= 60 ? 'Fiable ✅' : 'Débutant 🌱'}
-                    </p>
-                    <p className="text-white/40 text-xs mt-1">Score de confiance</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5">
-                <p className="text-[10px] font-mono text-[#5C6B5E] tracking-[0.2em] uppercase mb-3">Niveau fidélité</p>
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">{levelCfg.icon}</span>
-                  <div>
-                    <p className={`font-display font-700 text-lg ${levelCfg.color}`}>{profile.loyalty_level}</p>
-                    <p className="text-xs text-[#5C6B5E]">{profile.loyalty_points?.toLocaleString() ?? 0} pts</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5">
-                <p className="text-[10px] font-mono text-[#5C6B5E] tracking-[0.2em] uppercase mb-3">Activité</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="text-center">
-                    <p className="font-display font-700 text-[#1C2620] text-xl">{carnets.length}</p>
-                    <p className="text-[10px] text-[#5C6B5E]">Carnets</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="font-display font-700 text-[#1C2620] text-xl">{badges.length}</p>
-                    <p className="text-[10px] text-[#5C6B5E]">Badges</p>
-                  </div>
-                </div>
+        {/* ── STATS ── */}
+        <div className="flex flex-wrap gap-8 mb-8 pb-6 border-b border-[#E8E4DA]">
+          {[
+            { value: '32', label: 'sommets', sub: 'explorés' },
+            { value: '1 240', label: 'km', sub: 'parcourus' },
+            { value: '18', label: 'refuges', sub: 'recommandés' },
+            { value: '214', label: 'voyageurs', sub: 'reçus' },
+            { value: '4,9', label: '★', sub: 'note moyenne' },
+          ].map((s) => (
+            <div key={s.label} className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-bold text-[#1C2620]">{s.value}</span>
+              <div>
+                <span className="text-sm font-semibold text-[#1C2620]">{s.label}</span>
+                <p className="text-[10px] text-[#7A7A6E] uppercase tracking-wider leading-none mt-0.5">{s.sub}</p>
               </div>
             </div>
-          )}
+          ))}
+        </div>
 
-          {/* Tabs */}
-          {profile && (
-            <div className="mb-6">
-              <div className="flex items-center gap-0 overflow-x-auto border-b border-[#C8C3B0] scrollbar-hide">
-                {PROFILE_TABS.map((tab) => (
+        {/* ── LAYOUT 2 COLONNES ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+          {/* Colonne gauche */}
+          <div className="lg:col-span-2 space-y-10">
+
+            {/* ONGLETS */}
+            <div>
+              <div className="flex gap-1 mb-6 border-b border-[#E8E4DA]">
+                {TABS.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-4 py-3 text-sm font-600 border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? 'border-[#E4501C] text-[#E4501C]' : 'border-transparent text-[#5C6B5E] hover:text-[#1C2620]'}`}
+                    className={`px-4 py-2.5 text-sm font-medium transition-all relative ${activeTab === tab.id ? 'text-[#1C2620]' : 'text-[#7A7A6E] hover:text-[#1C2620]'}`}
                   >
-                    <Icon name={tab.icon} size={14} />
                     {tab.label}
-                    {tab.count !== undefined && tab.count > 0 && (
-                      <span className={`text-[10px] font-700 px-1.5 py-0.5 rounded-full ${activeTab === tab.id ? 'bg-[#E4501C]/10 text-[#E4501C]' : 'bg-[#C8C3B0]/50 text-[#5C6B5E]'}`}>
-                        {tab.count}
-                      </span>
+                    {tab.count > 0 && (
+                      <span className="ml-1.5 text-xs text-[#7A7A6E]">· {tab.count}</span>
+                    )}
+                    {activeTab === tab.id && (
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1C2620] rounded-full" />
                     )}
                   </button>
                 ))}
               </div>
 
-              {/* Tab Content */}
-              <div className="mt-6 mb-8">
-                {/* Publications */}
-                {activeTab === 'publications' && (
-                  <div className="space-y-3">
-                    {posts.length === 0 ? (
-                      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-8 text-center text-[#5C6B5E]">
-                        <p className="text-3xl mb-2">💬</p>
-                        <p className="text-sm">Aucune publication pour l&apos;instant</p>
-                      </div>
-                    ) : (
-                      posts.map((post) => {
-                        const typeCfg = POST_TYPE_CFG[post.post_type] ?? POST_TYPE_CFG.post;
-                        return (
-                          <div key={post.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${typeCfg.color}`}>{typeCfg.emoji} {typeCfg.label}</span>
-                              <span className="text-[10px] text-[#5C6B5E]">{new Date(post.created_at).toLocaleDateString('fr-FR')}</span>
-                            </div>
-                            <p className="text-sm text-[#1C2620] leading-relaxed mb-3">{post.content}</p>
-                            <div className="flex items-center gap-4 text-xs text-[#5C6B5E]">
-                              <span className="flex items-center gap-1"><Icon name="HeartIcon" size={12} /> {post.likes_count}</span>
-                              <span className="flex items-center gap-1"><Icon name="ChatBubbleLeftIcon" size={12} /> {post.comments_count}</span>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
+              {/* Aventures tab */}
+              {activeTab === 'aventures' && (
+                <div>
+                  <div className="flex items-baseline justify-between mb-4">
+                    <h2 className="text-xl font-bold text-[#1C2620]">
+                      Aventures <em className="font-light italic" style={{ fontFamily: 'Georgia, serif' }}>récentes.</em>
+                    </h2>
+                    <Link href="/carnets" className="text-xs text-[#7A7A6E] hover:text-[#1C2620] transition-colors">
+                      Voir tout · {displayCarnets.length} →
+                    </Link>
                   </div>
-                )}
-
-                {/* Carnets */}
-                {activeTab === 'carnets' && (
-                  <div>
-                    {carnets.length === 0 ? (
-                      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-8 text-center text-[#5C6B5E]">
-                        <p className="text-3xl mb-2">🗺️</p>
-                        <p className="text-sm">Aucun carnet public pour l&apos;instant</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {carnets.map((carnet) => {
-                          const durationDays = carnet.start_date && carnet.end_date
-                            ? Math.ceil((new Date(carnet.end_date).getTime() - new Date(carnet.start_date).getTime()) / 86400000)
-                            : null;
-                          return (
-                            <Link
-                              key={carnet.id}
-                              href={`/carnets/${carnet.id}`}
-                              className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl overflow-hidden hover:shadow-lg hover:border-[#E4501C]/30 transition-all text-left group"
-                            >
-                              <div className="relative h-40 overflow-hidden bg-[#C8C3B0]">
-                                {carnet.cover_image ? (
-                                  <Image src={carnet.cover_image} alt={carnet.cover_image_alt || carnet.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-4xl">🗺️</div>
-                                )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                                <div className="absolute top-2 left-2 flex gap-1">
-                                  {carnet.verified && <span className="text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full font-700">✓</span>}
-                                </div>
-                                <div className="absolute bottom-3 left-3 right-3">
-                                  <p className="text-[10px] text-white/60 font-mono">{carnet.destination}{durationDays ? ` · ${durationDays}j` : ''}</p>
-                                  <p className="font-display font-700 text-white text-sm leading-tight line-clamp-1">{carnet.title}</p>
-                                </div>
-                              </div>
-                              <div className="p-3 flex items-center justify-between">
-                                <div className="flex items-center gap-3 text-xs text-[#5C6B5E]">
-                                  <span className="flex items-center gap-1"><Icon name="HeartIcon" size={11} /> {carnet.likes_count}</span>
-                                  <span className="flex items-center gap-1"><Icon name="ChatBubbleLeftIcon" size={11} /> {carnet.comments_count}</span>
-                                </div>
-                                <span className="font-mono font-700 text-[#E4501C] text-sm">{carnet.route_rating}/10</span>
-                              </div>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Groupes */}
-                {activeTab === 'groupes' && (
-                  <div>
-                    {groups.length === 0 ? (
-                      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-8 text-center text-[#5C6B5E]">
-                        <p className="text-3xl mb-2">🗺️</p>
-                        <p className="text-sm mb-4">Aucun groupe de voyage pour l&apos;instant</p>
-                        {isOwnProfile && (
-                          <div className="flex gap-3 justify-center flex-wrap">
-                            <Link href="/groupes" className="inline-flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600 hover:bg-[#E4501C]/90 transition-colors">
-                              <Icon name="PlusIcon" size={14} /> Créer un groupe
-                            </Link>
-                            <Link href="/groupes?tab=decouvrir" className="inline-flex items-center gap-2 px-4 py-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl text-sm font-600 hover:text-[#1C2620] transition-colors">
-                              <Icon name="MagnifyingGlassIcon" size={14} /> Découvrir
-                            </Link>
-                          </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {displayCarnets.slice(0, 4).map((c) => (
+                      <Link key={c.id} href="/carnets" className="group relative rounded-2xl overflow-hidden aspect-[4/3] block">
+                        <Image
+                          src={c.cover_image || MOCK_ADVENTURES[0].src}
+                          alt={c.cover_image_alt || c.title}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                        {c.start_date && (
+                          <span className="absolute top-3 left-3 text-[10px] font-mono text-white/80 bg-black/30 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                            {new Date(c.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                          </span>
                         )}
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {groups.map((group) => {
-                            const themeEmoji: Record<string, string> = { Trek: '🏔️', 'Van Life': '🚐', Randonnée: '🥾', Expédition: '🧭', 'Tour du monde': '🌍', Plage: '🏖️', Ski: '⛷️', Vélo: '🚴', Moto: '🏍️', Autre: '🎒' };
-                            return (
-                              <Link
-                                key={group.id}
-                                href={`/groupe?group=${group.id}`}
-                                className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 hover:shadow-md hover:border-[#E4501C]/30 transition-all flex items-start gap-4"
-                              >
-                                <div className="w-12 h-12 rounded-xl bg-[#1C2620] flex items-center justify-center text-2xl flex-shrink-0">
-                                  {themeEmoji[group.theme] || '🎒'}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-display font-700 text-[#1C2620] text-sm truncate">{group.name}</p>
-                                  <p className="text-xs text-[#5C6B5E] flex items-center gap-1 mt-0.5">
-                                    <Icon name="MapPinIcon" size={10} /> {group.destination}
-                                  </p>
-                                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                    {group.my_role && (
-                                      <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${group.my_role === 'organizer' ? 'bg-amber-100 text-amber-700' : group.my_role === 'co_organizer' ? 'bg-blue-100 text-blue-700' : 'bg-[#E7E3D6] text-[#5C6B5E]'}`}>
-                                        {group.my_role === 'organizer' ? '👑 Organisateur' : group.my_role === 'co_organizer' ? '🛡️ Co-org' : '👤 Membre'}
-                                      </span>
-                                    )}
-                                    <span className="text-[10px] text-[#5C6B5E]">{group.member_count} membres</span>
-                                    <span className="text-[10px] font-mono text-[#E4501C] font-700">{group.optimization_score}/100</span>
-                                  </div>
-                                  {group.departure_date && (
-                                    <p className="text-[10px] text-[#5C6B5E] mt-1 flex items-center gap-1">
-                                      <Icon name="CalendarIcon" size={9} />
-                                      {new Date(group.departure_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                    </p>
-                                  )}
-                                </div>
-                                <Icon name="ChevronRightIcon" size={14} className="text-[#5C6B5E] flex-shrink-0 mt-1" />
-                              </Link>
-                            );
-                          })}
+                        <div className="absolute bottom-3 left-3 right-3">
+                          <p className="font-bold text-white text-sm leading-tight">
+                            {c.title.split(' ').slice(0, 3).join(' ')}{' '}
+                            <em className="font-light italic" style={{ fontFamily: 'Georgia, serif' }}>
+                              {c.title.split(' ').slice(3).join(' ')}
+                            </em>
+                          </p>
+                          <p className="text-white/60 text-[10px] mt-0.5">{c.destination}</p>
                         </div>
-                        {isOwnProfile && (
-                          <div className="flex gap-3 pt-2 flex-wrap">
-                            <Link href="/groupes" className="flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600 hover:bg-[#E4501C]/90 transition-colors">
-                              <Icon name="PlusIcon" size={14} /> Gérer mes groupes
-                            </Link>
-                            <Link href="/groupes?tab=decouvrir" className="flex items-center gap-2 px-4 py-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl text-sm font-600 hover:text-[#1C2620] transition-colors">
-                              <Icon name="MagnifyingGlassIcon" size={14} /> Découvrir
-                            </Link>
-                            <Link href="/communaute?tab=groupes" className="flex items-center gap-2 px-4 py-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl text-sm font-600 hover:text-[#1C2620] transition-colors">
-                              <Icon name="UsersIcon" size={14} /> Communauté
-                            </Link>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Photos tab */}
+              {activeTab === 'photos' && (
+                <div>
+                  <div className="flex items-baseline justify-between mb-4">
+                    <h2 className="text-xl font-bold text-[#1C2620]">
+                      Journal <em className="font-light italic" style={{ fontFamily: 'Georgia, serif' }}>photo.</em>
+                    </h2>
+                    <span className="text-xs text-[#7A7A6E]">+ 214 photos →</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {PHOTO_JOURNAL.map((p, i) => (
+                      <div key={i} className={`relative rounded-xl overflow-hidden ${i === 0 ? 'col-span-2 row-span-2 aspect-square' : 'aspect-square'}`}>
+                        <Image src={p.src} alt={p.alt} fill className="object-cover hover:scale-105 transition-transform duration-500 cursor-pointer" />
+                        {i === PHOTO_JOURNAL.length - 1 && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <span className="text-white text-sm font-semibold">+ 214 photos</span>
                           </div>
                         )}
                       </div>
-                    )}
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* Clubs */}
-                {activeTab === 'clubs' && (
-                  <div>
-                    {clubs.length === 0 ? (
-                      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-8 text-center text-[#5C6B5E]">
-                        <p className="text-3xl mb-2">🏕️</p>
-                        <p className="text-sm">Aucun club rejoint pour l&apos;instant</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {clubs.map((membership) => (
-                          <Link
-                            key={membership.id}
-                            href={`/clubs/${membership.club_id}`}
-                            className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 hover:shadow-md hover:border-[#E4501C]/30 transition-all flex items-center gap-4"
-                          >
-                            <div className="w-12 h-12 rounded-xl bg-[#1C2620] flex items-center justify-center text-2xl flex-shrink-0">
-                              {membership.club?.emoji ?? '🏕️'}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-display font-700 text-[#1C2620] text-sm truncate">{membership.club?.name ?? 'Club'}</p>
-                              <p className="text-xs text-[#5C6B5E]">{membership.club?.category}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${membership.role === 'admin' ? 'bg-amber-100 text-amber-700' : membership.role === 'moderator' ? 'bg-blue-100 text-blue-700' : 'bg-[#E7E3D6] text-[#5C6B5E]'}`}>
-                                  {membership.role === 'admin' ? '👑 Admin' : membership.role === 'moderator' ? '🛡️ Modo' : '👤 Membre'}
-                                </span>
-                                <span className="text-[10px] text-[#5C6B5E]">{membership.club?.members_count ?? 0} membres</span>
-                              </div>
-                            </div>
-                            <Icon name="ChevronRightIcon" size={14} className="text-[#5C6B5E] flex-shrink-0" />
-                          </Link>
-                        ))}
-                      </div>
-                    )}
+              {/* Recommandations tab */}
+              {activeTab === 'recommandations' && (
+                <div>
+                  <div className="flex items-baseline justify-between mb-4">
+                    <h2 className="text-xl font-bold text-[#1C2620]">
+                      Recommandations <em className="font-light italic" style={{ fontFamily: 'Georgia, serif' }}>refuges.</em>
+                    </h2>
                   </div>
-                )}
-
-                {/* Événements */}
-                {activeTab === 'evenements' && (
-                  <div>
-                    {events.length === 0 ? (
-                      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-8 text-center text-[#5C6B5E]">
-                        <p className="text-3xl mb-2">📅</p>
-                        <p className="text-sm">Aucun événement inscrit pour l&apos;instant</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {events.map((participation) => {
-                          const ev = participation.event;
-                          if (!ev) return null;
-                          return (
-                            <Link
-                              key={participation.id}
-                              href="/evenements"
-                              className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 hover:shadow-md hover:border-[#E4501C]/30 transition-all"
-                            >
-                              <div className="flex items-start gap-3">
-                                <div className="w-12 h-12 rounded-xl bg-[#1C2620] flex items-center justify-center text-2xl flex-shrink-0">
-                                  {ev.emoji ?? '🏕️'}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-display font-700 text-[#1C2620] text-sm line-clamp-1">{ev.title}</p>
-                                  <p className="text-xs text-[#5C6B5E] flex items-center gap-1 mt-0.5">
-                                    <Icon name="MapPinIcon" size={10} /> {ev.location}
-                                  </p>
-                                  {ev.event_date && (
-                                    <p className="text-xs text-[#5C6B5E] flex items-center gap-1 mt-0.5">
-                                      <Icon name="CalendarDaysIcon" size={10} />
-                                      {new Date(ev.event_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                    </p>
-                                  )}
-                                  <span className={`inline-block mt-1 text-[10px] font-600 px-2 py-0.5 rounded-full ${ev.status === 'upcoming' ? 'bg-emerald-100 text-emerald-700' : ev.status === 'full' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'}`}>
-                                    {ev.status === 'upcoming' ? '✓ Inscrit' : ev.status === 'full' ? 'Complet' : 'Passé'}
-                                  </span>
-                                </div>
-                              </div>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Badges */}
-                {activeTab === 'badges' && (
-                  <div>
-                    {badges.length === 0 ? (
-                      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-8 text-center text-[#5C6B5E]">
-                        <p className="text-3xl mb-2">🏆</p>
-                        <p className="text-sm">Aucun badge obtenu pour l&apos;instant</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                        {badges.map((badge) => (
-                          <div key={badge.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 text-center hover:shadow-md transition-shadow">
-                            <span className="text-4xl block mb-2">{badge.icon}</span>
-                            <p className="font-600 text-xs text-[#1C2620] mb-1">{badge.name}</p>
-                            <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${RARITY_CFG[badge.rarity] ?? RARITY_CFG['Commun']}`}>
-                              {badge.rarity}
-                            </span>
+                  <div className="space-y-3">
+                    {['Grand Vaneau · Chartreuse', 'Bellefont · Vercors', 'Refuge de la Selle · Écrins', 'Cabane de Pré Peyret · Chartreuse'].map((r, i) => (
+                      <div key={i} className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-[#E8E4DA] hover:border-[#1C2620]/20 transition-all">
+                        <div className="w-10 h-10 rounded-xl bg-[#1C2620]/5 flex items-center justify-center flex-shrink-0">
+                          <Icon name="HomeIcon" size={18} className="text-[#1C2620]" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-sm text-[#1C2620]">{r}</p>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            {[1,2,3,4,5].map((s) => (
+                              <span key={s} className="text-[#E4501C] text-xs">★</span>
+                            ))}
                           </div>
-                        ))}
+                        </div>
+                        <Icon name="ArrowRightIcon" size={14} className="text-[#7A7A6E]" />
                       </div>
-                    )}
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
+            </div>
+
+            {/* CARTE MONDE */}
+            <div>
+              <div className="flex items-baseline justify-between mb-3">
+                <h2 className="text-lg font-bold text-[#1C2620]">
+                  Là où <em className="font-light italic" style={{ fontFamily: 'Georgia, serif' }}>Marceline est passée.</em>
+                </h2>
+                <span className="text-xs text-[#7A7A6E]">12 pays · 4 continents</span>
+              </div>
+              <div className="rounded-2xl overflow-hidden border border-[#E8E4DA]">
+                <WorldMapDots countries={['FR', 'NO', 'IT', 'MA', 'NP', 'JP', 'CA', 'PE', 'TZ']} />
+                <div className="bg-[#1C2620] px-5 py-3 flex items-center justify-between">
+                  <div className="flex gap-6">
+                    <div>
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider">Pays visités</p>
+                      <p className="text-white font-bold text-sm">12 pays</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider">Ce trimestre</p>
+                      <p className="text-white font-bold text-sm">Chartreuse · Vercors</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider">Prochain</p>
+                      <p className="text-white font-bold text-sm italic" style={{ fontFamily: 'Georgia, serif' }}>Écrins · Sept.</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          )}
+
+            {/* JOURNAL PHOTO */}
+            <div>
+              <div className="flex items-baseline justify-between mb-4">
+                <h2 className="text-xl font-bold text-[#1C2620]">
+                  Journal <em className="font-light italic" style={{ fontFamily: 'Georgia, serif' }}>photo.</em>
+                </h2>
+                <Link href="/carnets" className="text-xs text-[#4A6741] hover:text-[#1C2620] transition-colors">
+                  Voir le journal complet →
+                </Link>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2 row-span-2 relative rounded-2xl overflow-hidden" style={{ aspectRatio: '1' }}>
+                  <Image src={PHOTO_JOURNAL[0].src} alt={PHOTO_JOURNAL[0].alt} fill className="object-cover hover:scale-105 transition-transform duration-500 cursor-pointer" />
+                </div>
+                {PHOTO_JOURNAL.slice(1, 3).map((p, i) => (
+                  <div key={i} className="relative rounded-2xl overflow-hidden aspect-square">
+                    <Image src={p.src} alt={p.alt} fill className="object-cover hover:scale-105 transition-transform duration-500 cursor-pointer" />
+                  </div>
+                ))}
+                {PHOTO_JOURNAL.slice(3).map((p, i) => (
+                  <div key={i} className="relative rounded-2xl overflow-hidden aspect-square">
+                    <Image src={p.src} alt={p.alt} fill className="object-cover hover:scale-105 transition-transform duration-500 cursor-pointer" />
+                    {i === PHOTO_JOURNAL.slice(3).length - 1 && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-2xl">
+                        <span className="text-white text-xs font-semibold">+ 214 photos</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Colonne droite */}
+          <div className="space-y-6">
+            {/* À propos */}
+            <div className="bg-white rounded-2xl border border-[#E8E4DA] p-5">
+              <p className="text-[10px] font-mono text-[#7A7A6E] uppercase tracking-[0.2em] mb-3">À propos</p>
+              <blockquote className="text-sm text-[#1C2620] leading-relaxed italic mb-4" style={{ fontFamily: 'Georgia, serif' }}>
+                &ldquo;{profile?.bio ?? 'Je garde deux refuges dans la Chartreuse depuis douze ans. Le silence est mon métier.'}&rdquo;
+              </blockquote>
+              <div className="space-y-2 text-xs">
+                {[
+                  { label: 'Rôle', value: profile?.loyalty_level ?? 'Gardienne partenaire' },
+                  { label: 'Refuges', value: 'Grand Vaneau, Bellefont' },
+                  { label: 'Discipline', value: 'Rando, ski de rando' },
+                  { label: 'Langues', value: 'Français, anglais, italien' },
+                  { label: 'Répond en', value: '< 1 h' },
+                ].map((row) => (
+                  <div key={row.label} className="flex justify-between gap-2">
+                    <span className="text-[#7A7A6E]">{row.label}</span>
+                    <span className="text-[#1C2620] font-medium text-right">{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* BADGES */}
+            <div className="bg-white rounded-2xl border border-[#E8E4DA] p-5">
+              <div className="flex items-baseline justify-between mb-4">
+                <p className="text-[10px] font-mono text-[#7A7A6E] uppercase tracking-[0.2em]">Badges · {displayBadges.filter(b => b.unlocked).length} débloqués</p>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {displayBadges.map((badge) => (
+                  <div key={badge.id} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${badge.unlocked ? 'bg-[#F5F2EC]' : 'bg-[#F5F2EC]/50 opacity-40'}`}>
+                    <span className="text-xl">{badge.icon}</span>
+                    <p className="text-[9px] font-semibold text-[#1C2620] text-center leading-tight">{badge.name}</p>
+                    <p className="text-[8px] text-[#7A7A6E]">{badge.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* SON KIT */}
+            <div className="bg-white rounded-2xl border border-[#E8E4DA] p-5">
+              <div className="flex items-baseline justify-between mb-4">
+                <p className="text-[10px] font-mono text-[#7A7A6E] uppercase tracking-[0.2em]">Son kit · {displayKit.length} pièces</p>
+                <Link href="/inventaire" className="text-[10px] text-[#4A6741] hover:text-[#1C2620]">Voir →</Link>
+              </div>
+              <div className="space-y-3">
+                {displayKit.map((item) => (
+                  <div key={item.id} className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-[#F5F2EC]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={item.src} alt={item.alt} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-[#1C2620] truncate">{item.name}</p>
+                      <p className="text-[10px] text-[#7A7A6E] truncate">{item.detail}</p>
+                    </div>
+                    <span className="text-[10px] font-mono text-[#7A7A6E] flex-shrink-0">{item.weight}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
+      </div>
 
-      {/* Carnet Detail Modal */}
-      <CarnetDetailModal carnet={selectedCarnet} onClose={() => setSelectedCarnet(null)} />
-
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1C2620] text-white px-5 py-3 rounded-xl text-sm font-600 shadow-xl">
-          {toast}
-        </div>
-      )}
-
-      <Footer />
+      <NewFooterSection />
     </div>
   );
 }
