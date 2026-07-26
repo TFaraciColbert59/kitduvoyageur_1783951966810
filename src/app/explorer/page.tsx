@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 import TrailPanel from '@/components/explorer/TrailPanel';
+import ExplorerFilterSheet from '@/components/explorer/ExplorerFilterSheet';
 import type { ExploreTrail } from '@/components/explorer/AdventureScore';
+import type { FilterState } from '@/components/explorer/types';
+import { DEFAULT_FILTERS } from '@/components/explorer/types';
 import { createClient } from '@/lib/supabase/client';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -157,12 +160,21 @@ function ListingCard({
   listing,
   selected,
   onClick,
+  onFavoriteToggle,
 }: {
   listing: Listing;
   selected: boolean;
   onClick: () => void;
+  onFavoriteToggle?: (id: string, fav: boolean) => void;
 }) {
   const [fav, setFav] = useState(listing.isFavorite || false);
+
+  const handleFav = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = !fav;
+    setFav(next);
+    onFavoriteToggle?.(listing.id, next);
+  };
 
   return (
     <button
@@ -183,7 +195,6 @@ function ListingCard({
           className="object-cover transition-transform duration-300 group-hover:scale-105"
           sizes="380px"
         />
-        {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
 
         {/* Type badge */}
@@ -196,10 +207,7 @@ function ListingCard({
         {/* Favorite button */}
         <button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setFav(!fav);
-          }}
+          onClick={handleFav}
           className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-colors"
           aria-label={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
         >
@@ -227,7 +235,6 @@ function ListingCard({
 
       {/* Content */}
       <div className="p-3">
-        {/* Location */}
         <p className="text-[10px] font-medium text-[#1C2620]/45 uppercase tracking-wide mb-1 flex items-center gap-1">
           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
@@ -236,7 +243,6 @@ function ListingCard({
           {listing.subtype}
         </p>
 
-        {/* Name */}
         <h3 className="text-sm font-semibold text-[#1C2620] leading-snug line-clamp-1 mb-2.5">
           {listing.name}
         </h3>
@@ -263,10 +269,8 @@ function ListingCard({
           </span>
         </div>
 
-        {/* Divider */}
         <div className="h-px bg-[#F0EDE6] mb-2.5" />
 
-        {/* Price row */}
         <div className="flex items-center justify-between">
           <div>
             <span className="text-base font-bold text-[#1C2620]">{listing.price} €</span>
@@ -349,10 +353,267 @@ function TrailMiniCard({
   );
 }
 
+// ─── Price Range Dropdown ──────────────────────────────────────────────────────
+
+function PriceDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const options = [
+    { label: 'Tous les prix', value: '' },
+    { label: '< 100 €', value: '0-100' },
+    { label: '100 – 200 €', value: '100-200' },
+    { label: '200 – 300 €', value: '200-300' },
+    { label: '> 300 €', value: '300+' },
+  ];
+
+  const current = options.find((o) => o.value === value) || options[0];
+
+  return (
+    <div ref={ref} className="relative flex-shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-150 ${
+          value
+            ? 'bg-[#1C2620] text-white border-[#1C2620]'
+            : 'bg-white text-[#1C2620] border-[#E8E4DA] hover:border-[#1C2620]/30'
+        }`}
+      >
+        {current.label}
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-1 bg-white border border-[#E8E4DA] rounded-xl shadow-lg z-50 min-w-[140px] overflow-hidden">
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => { onChange(opt.value); setOpen(false); }}
+              className={`w-full text-left px-3 py-2 text-xs hover:bg-[#F5F2EC] transition-colors ${
+                opt.value === value ? 'font-semibold text-[#1C2620]' : 'text-[#1C2620]/70'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Altitude Range Dropdown ───────────────────────────────────────────────────
+
+function AltitudeDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const options = [
+    { label: 'Toute altitude', value: '' },
+    { label: '< 500 m', value: '0-500' },
+    { label: '500 – 1000 m', value: '500-1000' },
+    { label: '1000 – 2000 m', value: '1000-2000' },
+    { label: '> 2000 m', value: '2000+' },
+  ];
+
+  const current = options.find((o) => o.value === value) || options[0];
+
+  return (
+    <div ref={ref} className="relative flex-shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-150 ${
+          value
+            ? 'bg-[#1C2620] text-white border-[#1C2620]'
+            : 'bg-white text-[#1C2620] border-[#E8E4DA] hover:border-[#1C2620]/30'
+        }`}
+      >
+        {current.label}
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-1 bg-white border border-[#E8E4DA] rounded-xl shadow-lg z-50 min-w-[150px] overflow-hidden">
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => { onChange(opt.value); setOpen(false); }}
+              className={`w-full text-left px-3 py-2 text-xs hover:bg-[#F5F2EC] transition-colors ${
+                opt.value === value ? 'font-semibold text-[#1C2620]' : 'text-[#1C2620]/70'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Travelers Dropdown ────────────────────────────────────────────────────────
+
+function TravelersDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const options = [
+    '1 adulte',
+    '2 adultes',
+    '3 adultes',
+    '4 adultes',
+    '2 adultes · 1 enfant',
+    '2 adultes · 2 enfants',
+    'Groupe (6+)',
+  ];
+
+  return (
+    <div ref={ref} className="relative flex-1 min-w-0">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full text-left bg-transparent outline-none"
+      >
+        <p className="text-[9px] font-semibold text-[#1C2620]/40 uppercase tracking-widest">Voyageurs</p>
+        <p className="text-sm font-medium text-[#1C2620] truncate">{value || 'Voyageurs…'}</p>
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-1 bg-white border border-[#E8E4DA] rounded-xl shadow-lg z-50 min-w-[180px] overflow-hidden">
+          {options.map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => { onChange(opt); setOpen(false); }}
+              className={`w-full text-left px-3 py-2 text-sm hover:bg-[#F5F2EC] transition-colors ${
+                opt === value ? 'font-semibold text-[#1C2620]' : 'text-[#1C2620]/70'
+              }`}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Activity Dropdown ─────────────────────────────────────────────────────────
+
+function ActivityDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const options = [
+    'Toutes activités',
+    'Rando · Bivouac',
+    'Randonnée',
+    'Trek',
+    'Bivouac',
+    'Vélo / VTT',
+    'Escalade',
+    'Ski de randonnée',
+    'Kayak / Canoë',
+    'Famille',
+  ];
+
+  return (
+    <div ref={ref} className="relative flex-1 min-w-0">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full text-left bg-transparent outline-none"
+      >
+        <p className="text-[9px] font-semibold text-[#1C2620]/40 uppercase tracking-widest">Activité</p>
+        <p className="text-sm font-medium text-[#1C2620] truncate">{value || 'Activité…'}</p>
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-1 bg-white border border-[#E8E4DA] rounded-xl shadow-lg z-50 min-w-[180px] overflow-hidden">
+          {options.map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => { onChange(opt); setOpen(false); }}
+              className={`w-full text-left px-3 py-2 text-sm hover:bg-[#F5F2EC] transition-colors ${
+                opt === value ? 'font-semibold text-[#1C2620]' : 'text-[#1C2620]/70'
+              }`}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+
+function matchesSearch(text: string, query: string): boolean {
+  if (!query.trim()) return true;
+  return text.toLowerCase().includes(query.toLowerCase().trim());
+}
+
+function parsePriceRange(range: string): [number, number] {
+  if (!range) return [0, Infinity];
+  if (range === '300+') return [300, Infinity];
+  const [min, max] = range.split('-').map(Number);
+  return [min, max];
+}
+
+function parseAltitudeRange(range: string): [number, number] {
+  if (!range) return [0, Infinity];
+  if (range === '2000+') return [2000, Infinity];
+  const [min, max] = range.split('-').map(Number);
+  return [min, max];
+}
+
+function parseTravelersCount(travelers: string): number {
+  const match = travelers.match(/(\d+)\s*adulte/);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function ExplorerPage() {
-  const [activeCategories, setActiveCategories] = useState<FilterCategory[]>(['Refuges']);
+  const [activeCategories, setActiveCategories] = useState<FilterCategory[]>([]);
   const [activeDuration, setActiveDuration] = useState<DurationFilter | null>(null);
   const [dogFilter, setDogFilter] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
@@ -362,16 +623,22 @@ export default function ExplorerPage() {
   const [mobileView, setMobileView] = useState<'map' | 'list'>('map');
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
   const [panelMode, setPanelMode] = useState<PanelMode>('listings');
-  const [searchWhere, setSearchWhere] = useState('Massif de la Chartreuse');
-  const [searchWhen, setSearchWhen] = useState('14 – 17 sept.');
-  const [searchActivity, setSearchActivity] = useState('Rando · Bivouac');
+  const [searchWhere, setSearchWhere] = useState('');
+  const [searchWhen, setSearchWhen] = useState('');
+  const [searchActivity, setSearchActivity] = useState('');
   const [searchTravelers, setSearchTravelers] = useState('2 adultes');
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [trails, setTrails] = useState<ExploreTrail[]>(MOCK_TRAILS);
   const [trailsLoading, setTrailsLoading] = useState(true);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  const [priceRange, setPriceRange] = useState('');
+  const [altitudeRange, setAltitudeRange] = useState('');
+  const [locating, setLocating] = useState(false);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   // Fetch real trails from Supabase explore_trails view
-  React.useEffect(() => {
+  useEffect(() => {
     const supabase = createClient();
     supabase
       .from('explore_trails')
@@ -381,10 +648,119 @@ export default function ExplorerPage() {
         if (!error && data && data.length > 0) {
           setTrails(data as ExploreTrail[]);
         }
-        // If error or empty, keep MOCK_TRAILS as fallback
         setTrailsLoading(false);
       });
   }, []);
+
+  // ── Filtered listings ──────────────────────────────────────────────────────
+  const filteredListings = useMemo(() => {
+    let result = MOCK_LISTINGS;
+
+    // Where filter
+    if (searchWhere.trim()) {
+      result = result.filter(
+        (l) =>
+          matchesSearch(l.name, searchWhere) ||
+          matchesSearch(l.subtype, searchWhere) ||
+          matchesSearch(l.type, searchWhere)
+      );
+    }
+
+    // Category filter
+    if (activeCategories.length > 0) {
+      result = result.filter((l) => {
+        const typeNorm = l.type.toLowerCase();
+        return activeCategories.some((cat) => {
+          if (cat === 'Refuges') return typeNorm.includes('refuge');
+          if (cat === 'Bivouac') return typeNorm.includes('bivouac');
+          if (cat === 'Cabanes') return typeNorm.includes('cabane');
+          if (cat === 'Vans') return typeNorm.includes('van');
+          if (cat === 'Gîtes') return typeNorm.includes('gîte') || typeNorm.includes('gite');
+          return false;
+        });
+      });
+    }
+
+    // Price filter
+    if (priceRange) {
+      const [minP, maxP] = parsePriceRange(priceRange);
+      result = result.filter((l) => l.price >= minP && l.price <= maxP);
+    }
+
+    // Altitude filter
+    if (altitudeRange) {
+      const [minA, maxA] = parseAltitudeRange(altitudeRange);
+      result = result.filter((l) => l.altitude >= minA && l.altitude <= maxA);
+    }
+
+    // Travelers filter (capacity)
+    if (searchTravelers) {
+      const count = parseTravelersCount(searchTravelers);
+      if (count > 0) {
+        result = result.filter((l) => l.capacity >= count);
+      }
+    }
+
+    // Duration filter (price proxy for nuit)
+    if (activeDuration === '1 nuit') {
+      result = result.filter((l) => l.price < 150);
+    } else if (activeDuration === '2–3 nuits') {
+      result = result.filter((l) => l.price >= 100 && l.price < 300);
+    } else if (activeDuration === 'Semaine') {
+      result = result.filter((l) => l.price >= 200);
+    }
+
+    return result;
+  }, [searchWhere, activeCategories, priceRange, altitudeRange, searchTravelers, activeDuration]);
+
+  // ── Filtered trails ────────────────────────────────────────────────────────
+  const filteredTrails = useMemo(() => {
+    let result = trails;
+
+    // Where filter
+    if (searchWhere.trim()) {
+      result = result.filter((t) => matchesSearch(t.name, searchWhere));
+    }
+
+    // Activity filter → maps to difficulty/type
+    if (searchActivity && searchActivity !== 'Toutes activités') {
+      const act = searchActivity.toLowerCase();
+      if (act.includes('facile') || act.includes('famille')) {
+        result = result.filter((t) => t.difficulty === 'easy');
+      } else if (act.includes('trek')) {
+        result = result.filter((t) => t.difficulty === 'hard' || t.difficulty === 'expert');
+      } else if (act.includes('bivouac')) {
+        result = result.filter((t) => t.duration_hours >= 6);
+      }
+    }
+
+    // Advanced filters (from filter sheet)
+    if (advancedFilters.difficulty.length > 0) {
+      result = result.filter((t) => advancedFilters.difficulty.includes(t.difficulty));
+    }
+
+    if (advancedFilters.duration.length > 0) {
+      result = result.filter((t) => {
+        return advancedFilters.duration.some((d) => {
+          if (d === '2h') return t.duration_hours <= 2;
+          if (d === 'half') return t.duration_hours > 2 && t.duration_hours <= 4;
+          if (d === 'day') return t.duration_hours > 4 && t.duration_hours <= 10;
+          if (d === 'multi') return t.duration_hours > 10;
+          return false;
+        });
+      });
+    }
+
+    return result;
+  }, [trails, searchWhere, searchActivity, advancedFilters]);
+
+  const activeFilterCount = useMemo(() => {
+    return Object.values(advancedFilters).flat().length +
+      (priceRange ? 1 : 0) +
+      (altitudeRange ? 1 : 0) +
+      activeCategories.length +
+      (activeDuration ? 1 : 0);
+  }, [advancedFilters, priceRange, altitudeRange, activeCategories, activeDuration]);
 
   const categories: FilterCategory[] = ['Refuges', 'Bivouac', 'Cabanes', 'Vans', 'Gîtes'];
   const durations: DurationFilter[] = ['1 nuit', '2–3 nuits', 'Semaine'];
@@ -422,6 +798,52 @@ export default function ExplorerPage() {
     setUserLocation(loc);
   }, []);
 
+  const handleLocate = useCallback(() => {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const loc: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        setUserLocation(loc);
+        setLocating(false);
+      },
+      () => {
+        setLocating(false);
+      },
+      { timeout: 10000 }
+    );
+  }, []);
+
+  const handleFavoriteToggle = useCallback((id: string, fav: boolean) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (fav) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    // Filters are reactive via useMemo — just close any open dropdowns
+    // and switch to list view on mobile to show results
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setMobileView('list');
+      setBottomSheetOpen(true);
+    }
+  }, []);
+
+  const handleClearAllFilters = useCallback(() => {
+    setActiveCategories([]);
+    setActiveDuration(null);
+    setDogFilter(false);
+    setPriceRange('');
+    setAltitudeRange('');
+    setAdvancedFilters(DEFAULT_FILTERS);
+    setSearchWhere('');
+    setSearchWhen('');
+    setSearchActivity('');
+  }, []);
+
   return (
     <div
       className="flex flex-col h-screen bg-[#F5F2EC] overflow-hidden"
@@ -430,23 +852,15 @@ export default function ExplorerPage() {
       {/* ── Search Header ─────────────────────────────────────────────────── */}
       <header className="flex-shrink-0 bg-white border-b border-[#E8E4DA] shadow-sm z-30">
         <div className="flex items-center h-14 px-4 gap-3">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition-opacity">
-            <div className="w-7 h-7 bg-[#1C2620] rounded-md flex items-center justify-center">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M3 17l4-8 4 4 4-6 4 10" />
-              </svg>
-            </div>
-            <span className="text-sm font-semibold text-[#1C2620] hidden sm:block">Le Kit</span>
+          {/* Back arrow */}
+          <Link
+            href="/"
+            className="flex-shrink-0 w-9 h-9 rounded-full border border-[#E8E4DA] flex items-center justify-center hover:bg-[#F5F2EC] transition-colors"
+            aria-label="Retour"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1C2620" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 19l-7-7 7-7" />
+            </svg>
           </Link>
 
           {/* Divider */}
@@ -460,8 +874,9 @@ export default function ExplorerPage() {
               <input
                 value={searchWhere}
                 onChange={(e) => setSearchWhere(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="text-sm font-medium text-[#1C2620] bg-transparent outline-none w-full truncate"
-                placeholder="Destination…"
+                placeholder="Destination, massif…"
               />
             </div>
             {/* Quand */}
@@ -470,59 +885,57 @@ export default function ExplorerPage() {
               <input
                 value={searchWhen}
                 onChange={(e) => setSearchWhen(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="text-sm font-medium text-[#1C2620] bg-transparent outline-none w-full truncate"
                 placeholder="Dates…"
               />
             </div>
             {/* Activité */}
             <div className="flex-1 px-3 min-w-0 hidden lg:block">
-              <p className="text-[9px] font-semibold text-[#1C2620]/40 uppercase tracking-widest">Activité</p>
-              <input
-                value={searchActivity}
-                onChange={(e) => setSearchActivity(e.target.value)}
-                className="text-sm font-medium text-[#1C2620] bg-transparent outline-none w-full truncate"
-                placeholder="Activité…"
-              />
+              <ActivityDropdown value={searchActivity} onChange={setSearchActivity} />
             </div>
             {/* Voyageurs */}
             <div className="flex-1 px-3 min-w-0 hidden lg:block">
-              <p className="text-[9px] font-semibold text-[#1C2620]/40 uppercase tracking-widest">Voyageurs</p>
-              <input
-                value={searchTravelers}
-                onChange={(e) => setSearchTravelers(e.target.value)}
-                className="text-sm font-medium text-[#1C2620] bg-transparent outline-none w-full truncate"
-                placeholder="Voyageurs…"
-              />
+              <TravelersDropdown value={searchTravelers} onChange={setSearchTravelers} />
             </div>
           </div>
 
           {/* Search button */}
           <button
             type="button"
-            className="flex-shrink-0 w-9 h-9 bg-[#1C2620] rounded-full flex items-center justify-center hover:bg-[#2d3d35] transition-colors"
+            onClick={handleSearch}
+            className="flex-shrink-0 w-9 h-9 bg-[#1C2620] rounded-full flex items-center justify-center hover:bg-[#2d3d35] transition-colors active:scale-95"
             aria-label="Rechercher"
           >
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8" />
               <path d="m21 21-4.35-4.35" />
             </svg>
           </button>
 
+          {/* Géolocalisation */}
+          <button
+            type="button"
+            onClick={handleLocate}
+            disabled={locating}
+            className={`flex-shrink-0 w-9 h-9 rounded-full border flex items-center justify-center transition-all active:scale-95 ${
+              locating
+                ? 'border-[#4A6741] bg-[#4A6741]/10 animate-pulse'
+                : userLocation
+                ? 'border-[#4A6741] bg-[#4A6741]/10'
+                : 'border-[#E8E4DA] hover:bg-[#F5F2EC]'
+            }`}
+            aria-label="Ma position"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={userLocation ? '#4A6741' : '#1C2620'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 2v2M12 20v2M2 12h2M20 12h2" />
+            </svg>
+          </button>
+
           {/* Journal + Avatar */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Link
-              href="/carnets"
-              className="text-sm text-[#1C2620]/60 hover:text-[#1C2620] transition-colors hidden sm:block"
-            >
+            <Link href="/carnets" className="text-sm text-[#1C2620]/60 hover:text-[#1C2620] transition-colors hidden sm:block">
               Journal
             </Link>
             <Link href="/compte" aria-label="Mon compte">
@@ -540,23 +953,24 @@ export default function ExplorerPage() {
           {/* All filters button */}
           <button
             type="button"
-            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1C2620] text-white text-xs font-medium hover:bg-[#2d3d35] transition-colors"
+            onClick={() => setFilterSheetOpen(true)}
+            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors relative ${
+              activeFilterCount > 0
+                ? 'bg-[#1C2620] text-white'
+                : 'bg-[#1C2620] text-white hover:bg-[#2d3d35]'
+            }`}
           >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="4" y1="6" x2="20" y2="6" />
               <line x1="8" y1="12" x2="16" y2="12" />
               <line x1="11" y1="18" x2="13" y2="18" />
             </svg>
             Tous les filtres
+            {activeFilterCount > 0 && (
+              <span className="ml-0.5 bg-white text-[#1C2620] rounded-full w-4 h-4 text-[9px] font-bold flex items-center justify-center">
+                {activeFilterCount}
+              </span>
+            )}
           </button>
 
           <div className="w-px h-5 bg-[#E8E4DA] flex-shrink-0" />
@@ -607,63 +1021,18 @@ export default function ExplorerPage() {
                 : 'bg-white text-[#1C2620] border-[#E8E4DA] hover:border-[#1C2620]/30'
             }`}
           >
-            Chien accepté
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
+            🐕 Chien accepté
           </button>
 
           {/* Prix filter */}
-          <button
-            type="button"
-            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-[#E8E4DA] bg-white text-[#1C2620] hover:border-[#1C2620]/30 transition-all duration-150"
-          >
-            Prix
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
+          <PriceDropdown value={priceRange} onChange={setPriceRange} />
 
           {/* Altitude filter */}
-          <button
-            type="button"
-            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-[#E8E4DA] bg-white text-[#1C2620] hover:border-[#1C2620]/30 transition-all duration-150"
-          >
-            Altitude
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
+          <AltitudeDropdown value={altitudeRange} onChange={setAltitudeRange} />
+
+          <div className="w-px h-5 bg-[#E8E4DA] flex-shrink-0" />
 
           {/* Randonnées toggle */}
-          <div className="w-px h-5 bg-[#E8E4DA] flex-shrink-0" />
           <button
             type="button"
             onClick={() => setPanelMode(panelMode === 'trails' ? 'listings' : 'trails')}
@@ -673,6 +1042,21 @@ export default function ExplorerPage() {
           >
             🥾 Randonnées
           </button>
+
+          {/* Clear all filters */}
+          {activeFilterCount > 0 && (
+            <button
+              type="button"
+              onClick={handleClearAllFilters}
+              className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium text-red-500 border border-red-200 hover:bg-red-50 transition-colors"
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+              Effacer
+            </button>
+          )}
         </div>
       </div>
 
@@ -687,53 +1071,73 @@ export default function ExplorerPage() {
               type="button"
               onClick={() => setPanelMode('listings')}
               className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${
-                panelMode === 'listings' ?'text-[#1C2620] border-b-2 border-[#1C2620]' :'text-[#1C2620]/40 hover:text-[#1C2620]/70'
+                panelMode === 'listings' ? 'text-[#1C2620] border-b-2 border-[#1C2620]' : 'text-[#1C2620]/40 hover:text-[#1C2620]/70'
               }`}
             >
-              🏠 {MOCK_LISTINGS.length} hébergements
+              🏠 {filteredListings.length} hébergements
             </button>
             <button
               type="button"
               onClick={() => setPanelMode('trails')}
               className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${
-                panelMode === 'trails' ?'text-[#4A6741] border-b-2 border-[#4A6741]' :'text-[#1C2620]/40 hover:text-[#1C2620]/70'
+                panelMode === 'trails' ? 'text-[#4A6741] border-b-2 border-[#4A6741]' : 'text-[#1C2620]/40 hover:text-[#1C2620]/70'
               }`}
             >
-              🥾 {trails.length} randonnées
+              🥾 {filteredTrails.length} randonnées
             </button>
           </div>
 
           {/* Trail detail panel (desktop inline) */}
           {panelMode === 'trails' && selectedTrail ? (
             <div className="flex-1 overflow-hidden">
-              <TrailPanel
-                trail={selectedTrail}
-                onClose={handleCloseTrailPanel}
-              />
+              <TrailPanel trail={selectedTrail} onClose={handleCloseTrailPanel} />
             </div>
           ) : panelMode === 'trails' ? (
-            /* Trails list */
             <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
-              {trails.map((trail) => (
-                <TrailMiniCard
-                  key={trail.id}
-                  trail={trail}
-                  selected={selectedTrailId === trail.id}
-                  onClick={() => handleTrailClick(trail)}
-                />
-              ))}
+              {trailsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="w-6 h-6 border-2 border-[#4A6741]/30 border-t-[#4A6741] rounded-full animate-spin" />
+                </div>
+              ) : filteredTrails.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3 text-center px-4">
+                  <span className="text-3xl">🔍</span>
+                  <p className="text-sm font-medium text-[#1C2620]/60">Aucune randonnée trouvée</p>
+                  <button type="button" onClick={handleClearAllFilters} className="text-xs text-[#4A6741] underline">
+                    Effacer les filtres
+                  </button>
+                </div>
+              ) : (
+                filteredTrails.map((trail) => (
+                  <TrailMiniCard
+                    key={trail.id}
+                    trail={trail}
+                    selected={selectedTrailId === trail.id}
+                    onClick={() => handleTrailClick(trail)}
+                  />
+                ))
+              )}
             </div>
           ) : (
-            /* Listings list */
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-              {MOCK_LISTINGS.map((listing) => (
-                <ListingCard
-                  key={listing.id}
-                  listing={listing}
-                  selected={selectedListingId === listing.id}
-                  onClick={() => handleListingClick(listing)}
-                />
-              ))}
+              {filteredListings.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3 text-center px-4">
+                  <span className="text-3xl">🔍</span>
+                  <p className="text-sm font-medium text-[#1C2620]/60">Aucun hébergement trouvé</p>
+                  <button type="button" onClick={handleClearAllFilters} className="text-xs text-[#4A6741] underline">
+                    Effacer les filtres
+                  </button>
+                </div>
+              ) : (
+                filteredListings.map((listing) => (
+                  <ListingCard
+                    key={listing.id}
+                    listing={listing}
+                    selected={selectedListingId === listing.id}
+                    onClick={() => handleListingClick(listing)}
+                    onFavoriteToggle={handleFavoriteToggle}
+                  />
+                ))
+              )}
             </div>
           )}
         </div>
@@ -741,7 +1145,7 @@ export default function ExplorerPage() {
         {/* ── Map ──────────────────────────────────────────────────────── */}
         <div className="flex-1 relative">
           <ExplorerMap
-            trails={trails}
+            trails={filteredTrails}
             selectedTrailId={selectedTrailId}
             onTrailClick={handleTrailClick}
             userLocation={userLocation}
@@ -750,27 +1154,32 @@ export default function ExplorerPage() {
 
           {/* Location label overlay */}
           <div className="absolute top-3 left-3 z-[1000] bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-sm border border-[#E8E4DA]">
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#1C2620"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1C2620" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
               <circle cx="12" cy="10" r="3" />
             </svg>
-            <span className="text-xs font-medium text-[#1C2620]">{searchWhere}</span>
+            <span className="text-xs font-medium text-[#1C2620]">
+              {searchWhere || 'France'}
+            </span>
+            {searchWhere && (
+              <button
+                type="button"
+                onClick={() => setSearchWhere('')}
+                className="text-[#1C2620]/40 hover:text-[#1C2620] transition-colors"
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            )}
           </div>
 
           {/* Count badge */}
           <div className="absolute bottom-4 left-3 z-[1000] flex items-center gap-2">
             <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-sm border border-[#E8E4DA]">
               <span className="text-xs font-medium text-[#1C2620]">
-                {MOCK_LISTINGS.length} lieux · {trails.length} randonnées
+                {filteredListings.length} lieux · {filteredTrails.length} randonnées
               </span>
             </div>
           </div>
@@ -784,29 +1193,14 @@ export default function ExplorerPage() {
                 className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-white/80 flex items-center justify-center text-[#1C2620]/50 hover:text-[#1C2620] transition-colors"
                 aria-label="Fermer"
               >
-                <svg
-                  width="10"
-                  height="10"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
               <div className="flex gap-3 p-3">
                 <div className="relative w-[80px] h-[70px] rounded-xl overflow-hidden flex-shrink-0">
-                  <Image
-                    src={popupListing.image}
-                    alt={popupListing.alt}
-                    fill
-                    className="object-cover"
-                    sizes="80px"
-                  />
+                  <Image src={popupListing.image} alt={popupListing.alt} fill className="object-cover" sizes="80px" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] text-[#1C2620]/50 mb-0.5">
@@ -843,7 +1237,7 @@ export default function ExplorerPage() {
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex bg-[#1C2620] rounded-full p-1 shadow-lg">
           <button
             type="button"
-            onClick={() => setMobileView('map')}
+            onClick={() => { setMobileView('map'); setBottomSheetOpen(false); }}
             className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
               mobileView === 'map' ? 'bg-white text-[#1C2620]' : 'text-white/70'
             }`}
@@ -852,7 +1246,7 @@ export default function ExplorerPage() {
           </button>
           <button
             type="button"
-            onClick={() => setMobileView('list')}
+            onClick={() => { setMobileView('list'); setBottomSheetOpen(true); }}
             className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
               mobileView === 'list' ? 'bg-white text-[#1C2620]' : 'text-white/70'
             }`}
@@ -878,7 +1272,7 @@ export default function ExplorerPage() {
             <div className="w-10 h-1 bg-[#E8E4DA] rounded-full mb-2" />
             <div className="flex items-center justify-between w-full px-4">
               <span className="text-sm font-semibold text-[#1C2620]">
-                {MOCK_LISTINGS.length} hébergements · {trails.length} randonnées
+                {filteredListings.length} hébergements · {filteredTrails.length} randonnées
               </span>
               <span className="text-xs text-[#1C2620]/50">Coup de cœur ▾</span>
             </div>
@@ -890,7 +1284,7 @@ export default function ExplorerPage() {
               type="button"
               onClick={() => setPanelMode('listings')}
               className={`flex-1 py-2 text-xs font-semibold transition-colors ${
-                panelMode === 'listings' ?'text-[#1C2620] border-b-2 border-[#1C2620]' :'text-[#1C2620]/40'
+                panelMode === 'listings' ? 'text-[#1C2620] border-b-2 border-[#1C2620]' : 'text-[#1C2620]/40'
               }`}
             >
               🏠 Hébergements
@@ -899,7 +1293,7 @@ export default function ExplorerPage() {
               type="button"
               onClick={() => setPanelMode('trails')}
               className={`flex-1 py-2 text-xs font-semibold transition-colors ${
-                panelMode === 'trails' ?'text-[#4A6741] border-b-2 border-[#4A6741]' :'text-[#1C2620]/40'
+                panelMode === 'trails' ? 'text-[#4A6741] border-b-2 border-[#4A6741]' : 'text-[#1C2620]/40'
               }`}
             >
               🥾 Randonnées
@@ -907,39 +1301,61 @@ export default function ExplorerPage() {
           </div>
 
           {/* List */}
-          <div
-            className="overflow-y-auto px-4 pb-20 space-y-3"
-            style={{ maxHeight: 'calc(75vh - 100px)' }}
-          >
+          <div className="overflow-y-auto px-4 pb-20 space-y-3" style={{ maxHeight: 'calc(75vh - 100px)' }}>
             {panelMode === 'listings'
-              ? MOCK_LISTINGS.map((listing) => (
+              ? filteredListings.length === 0
+                ? (
+                  <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
+                    <span className="text-3xl">🔍</span>
+                    <p className="text-sm font-medium text-[#1C2620]/60">Aucun hébergement trouvé</p>
+                    <button type="button" onClick={handleClearAllFilters} className="text-xs text-[#4A6741] underline">
+                      Effacer les filtres
+                    </button>
+                  </div>
+                )
+                : filteredListings.map((listing) => (
                   <ListingCard
                     key={listing.id}
                     listing={listing}
                     selected={selectedListingId === listing.id}
                     onClick={() => handleListingClick(listing)}
+                    onFavoriteToggle={handleFavoriteToggle}
                   />
                 ))
-              : trails.map((trail) => (
-                  <TrailMiniCard
-                    key={trail.id}
-                    trail={trail}
-                    selected={selectedTrailId === trail.id}
-                    onClick={() => handleTrailClick(trail)}
-                  />
-                ))}
+              : filteredTrails.length === 0
+              ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
+                  <span className="text-3xl">🔍</span>
+                  <p className="text-sm font-medium text-[#1C2620]/60">Aucune randonnée trouvée</p>
+                  <button type="button" onClick={handleClearAllFilters} className="text-xs text-[#4A6741] underline">
+                    Effacer les filtres
+                  </button>
+                </div>
+              )
+              : filteredTrails.map((trail) => (
+                <TrailMiniCard
+                  key={trail.id}
+                  trail={trail}
+                  selected={selectedTrailId === trail.id}
+                  onClick={() => handleTrailClick(trail)}
+                />
+              ))}
           </div>
         </div>
 
         {/* Mobile Trail Panel */}
         {selectedTrail && (
-          <TrailPanel
-            trail={selectedTrail}
-            onClose={handleCloseTrailPanel}
-            isMobile
-          />
+          <TrailPanel trail={selectedTrail} onClose={handleCloseTrailPanel} isMobile />
         )}
       </div>
+
+      {/* ── Filter Sheet ──────────────────────────────────────────────────── */}
+      <ExplorerFilterSheet
+        open={filterSheetOpen}
+        onClose={() => setFilterSheetOpen(false)}
+        filters={advancedFilters}
+        onChange={setAdvancedFilters}
+      />
     </div>
   );
 }
