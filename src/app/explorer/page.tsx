@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -409,6 +410,11 @@ function FixedDropdown({
   minWidth?: number;
 }) {
   const [pos, setPos] = useState({ top: 0, left: 0 });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (open && anchorRef.current) {
@@ -417,20 +423,213 @@ function FixedDropdown({
     }
   }, [open, anchorRef]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div
       style={{
         position: 'fixed',
         top: pos.top,
         left: pos.left,
         minWidth,
-        zIndex: 99999,
+        zIndex: 999999,
       }}
       className="bg-white border border-[#E8E4DA] rounded-xl shadow-xl overflow-hidden"
     >
       {children}
+    </div>,
+    document.body
+  );
+}
+
+// ─── Date Picker Dropdown ──────────────────────────────────────────────────────
+
+function DatePickerDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [viewDate, setViewDate] = useState(() => {
+    const now = new Date();
+    return { year: now.getFullYear(), month: now.getMonth() };
+  });
+  const [startDate, setStartDate] = useState<string | null>(null);
+  const [endDate, setEndDate] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        // Check if click is inside the portal
+        const target = e.target as Node;
+        const portal = document.getElementById('date-picker-portal');
+        if (portal && portal.contains(target)) return;
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const MONTHS_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+  const DAYS_FR = ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'];
+
+  const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (year: number, month: number) => {
+    const day = new Date(year, month, 1).getDay();
+    return day === 0 ? 6 : day - 1; // Monday = 0
+  };
+
+  const formatDate = (dateStr: string) => {
+    let d = new Date(dateStr);
+    return `${d.getDate()} ${MONTHS_FR[d.getMonth()].slice(0, 3)}`;
+  };
+
+  const handleDayClick = (dateStr: string) => {
+    if (!startDate || (startDate && endDate)) {
+      setStartDate(dateStr);
+      setEndDate(null);
+    } else {
+      if (dateStr < startDate) {
+        setEndDate(startDate);
+        setStartDate(dateStr);
+      } else {
+        setEndDate(dateStr);
+        const label = `${formatDate(startDate)} – ${formatDate(dateStr)}`;
+        onChange(label);
+        setOpen(false);
+      }
+    }
+  };
+
+  const isInRange = (dateStr: string) => {
+    if (!startDate || !endDate) return false;
+    return dateStr > startDate && dateStr < endDate;
+  };
+
+  const isStart = (dateStr: string) => dateStr === startDate;
+  const isEnd = (dateStr: string) => dateStr === endDate;
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const renderCalendar = () => {
+    const { year, month } = viewDate;
+    const daysInMonth = getDaysInMonth(year, month);
+    const firstDay = getFirstDayOfMonth(year, month);
+    const cells: React.ReactNode[] = [];
+
+    for (let i = 0; i < firstDay; i++) {
+      cells.push(<div key={`empty-${i}`} />);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const isPast = dateStr < today;
+      const start = isStart(dateStr);
+      const end = isEnd(dateStr);
+      const inRange = isInRange(dateStr);
+
+      cells.push(
+        <button
+          key={dateStr}
+          type="button"
+          disabled={isPast}
+          onClick={() => handleDayClick(dateStr)}
+          className={`w-8 h-8 text-xs rounded-full flex items-center justify-center transition-colors font-medium
+            ${isPast ? 'text-[#1C2620]/20 cursor-not-allowed' : ''}
+            ${start || end ? 'bg-[#1C2620] text-white' : ''}
+            ${inRange ? 'bg-[#1C2620]/10 text-[#1C2620] rounded-none' : ''}
+            ${!isPast && !start && !end && !inRange ? 'hover:bg-[#F5F2EC] text-[#1C2620]' : ''}
+          `}
+        >
+          {d}
+        </button>
+      );
+    }
+
+    return cells;
+  };
+
+  const prevMonth = () => {
+    setViewDate(({ year, month }) => {
+      if (month === 0) return { year: year - 1, month: 11 };
+      return { year, month: month - 1 };
+    });
+  };
+
+  const nextMonth = () => {
+    setViewDate(({ year, month }) => {
+      if (month === 11) return { year: year + 1, month: 0 };
+      return { year, month: month + 1 };
+    });
+  };
+
+  const displayValue = value || (startDate ? formatDate(startDate) : '');
+
+  return (
+    <div ref={ref} className="flex-1 px-3 min-w-0 hidden md:block relative">
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full text-left bg-transparent outline-none"
+      >
+        <p className="text-[9px] font-semibold text-[#1C2620]/40 uppercase tracking-widest">Quand</p>
+        <p className="text-sm font-medium text-[#1C2620] truncate">{displayValue || 'Dates…'}</p>
+      </button>
+      <FixedDropdown open={open} anchorRef={btnRef} minWidth={280}>
+        <div id="date-picker-portal" className="p-3">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-3">
+            <button
+              type="button"
+              onClick={prevMonth}
+              className="w-7 h-7 rounded-full hover:bg-[#F5F2EC] flex items-center justify-center transition-colors"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1C2620" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <span className="text-sm font-semibold text-[#1C2620]">
+              {MONTHS_FR[viewDate.month]} {viewDate.year}
+            </span>
+            <button
+              type="button"
+              onClick={nextMonth}
+              className="w-7 h-7 rounded-full hover:bg-[#F5F2EC] flex items-center justify-center transition-colors"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1C2620" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+          {/* Day headers */}
+          <div className="grid grid-cols-7 mb-1">
+            {DAYS_FR.map((d) => (
+              <div key={d} className="w-8 h-6 flex items-center justify-center text-[10px] font-semibold text-[#1C2620]/40">
+                {d}
+              </div>
+            ))}
+          </div>
+          {/* Days grid */}
+          <div className="grid grid-cols-7 gap-y-0.5">
+            {renderCalendar()}
+          </div>
+          {/* Footer */}
+          <div className="mt-3 pt-2 border-t border-[#E8E4DA] flex items-center justify-between">
+            <span className="text-xs text-[#1C2620]/50">
+              {startDate && !endDate ? `Départ: ${formatDate(startDate)}` : value ? value : 'Sélectionnez les dates'}
+            </span>
+            {(startDate || value) && (
+              <button
+                type="button"
+                onClick={() => { setStartDate(null); setEndDate(null); onChange(''); setOpen(false); }}
+                className="text-xs text-red-400 hover:text-red-600 transition-colors"
+              >
+                Effacer
+              </button>
+            )}
+          </div>
+        </div>
+      </FixedDropdown>
     </div>
   );
 }
@@ -962,16 +1161,7 @@ export default function ExplorerPage() {
               />
             </div>
             {/* Quand */}
-            <div className="flex-1 px-3 min-w-0 hidden md:block">
-              <p className="text-[9px] font-semibold text-[#1C2620]/40 uppercase tracking-widest">Quand</p>
-              <input
-                value={searchWhen}
-                onChange={(e) => setSearchWhen(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="text-sm font-medium text-[#1C2620] bg-transparent outline-none w-full truncate"
-                placeholder="Dates…"
-              />
-            </div>
+            <DatePickerDropdown value={searchWhen} onChange={setSearchWhen} />
             {/* Activité */}
             <div className="flex-1 px-3 min-w-0 hidden lg:block">
               <ActivityDropdown value={searchActivity} onChange={setSearchActivity} />
