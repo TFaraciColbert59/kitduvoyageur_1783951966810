@@ -139,7 +139,144 @@ const MOCK_LISTINGS: Listing[] = [
 
 // ─── Mock Trails ──────────────────────────────────────────────────────────────
 
-const MOCK_TRAILS: ExploreTrail[] = [];
+const MOCK_TRAILS: ExploreTrail[] = [
+  {
+    id: 'trail-1',
+    name: 'Tour du Mont Blanc – Étape Chamonix',
+    geometry: null,
+    distance_km: 19.5,
+    duration_hours: 7,
+    difficulty: 'hard',
+    elevation_gain: 1400,
+    adventure_score: 92,
+    nature_score: 95,
+    panorama_score: 98,
+    accessibility_score: 35,
+    challenge_score: 85,
+    services_score: 70,
+    start_lat: 45.9237,
+    start_lng: 6.8694,
+  },
+  {
+    id: 'trail-2',
+    name: 'Sentier des Gorges du Verdon',
+    geometry: null,
+    distance_km: 14.2,
+    duration_hours: 5,
+    difficulty: 'moderate',
+    elevation_gain: 620,
+    adventure_score: 78,
+    nature_score: 88,
+    panorama_score: 90,
+    accessibility_score: 60,
+    challenge_score: 55,
+    services_score: 55,
+    start_lat: 43.7396,
+    start_lng: 6.3847,
+  },
+  {
+    id: 'trail-3',
+    name: 'Lac Blanc – Massif des Écrins',
+    geometry: null,
+    distance_km: 10.8,
+    duration_hours: 4,
+    difficulty: 'moderate',
+    elevation_gain: 780,
+    adventure_score: 74,
+    nature_score: 92,
+    panorama_score: 88,
+    accessibility_score: 65,
+    challenge_score: 50,
+    services_score: 40,
+    start_lat: 44.9243,
+    start_lng: 6.3521,
+  },
+  {
+    id: 'trail-4',
+    name: 'Chemin de la Vallée de la Clarée',
+    geometry: null,
+    distance_km: 8.3,
+    duration_hours: 3,
+    difficulty: 'easy',
+    elevation_gain: 280,
+    adventure_score: 58,
+    nature_score: 85,
+    panorama_score: 75,
+    accessibility_score: 88,
+    challenge_score: 28,
+    services_score: 60,
+    start_lat: 44.9612,
+    start_lng: 6.5874,
+  },
+  {
+    id: 'trail-5',
+    name: 'Traversée du Mercantour – Vallée des Merveilles',
+    geometry: null,
+    distance_km: 22.1,
+    duration_hours: 9,
+    difficulty: 'expert',
+    elevation_gain: 1850,
+    adventure_score: 96,
+    nature_score: 94,
+    panorama_score: 97,
+    accessibility_score: 20,
+    challenge_score: 95,
+    services_score: 30,
+    start_lat: 44.0612,
+    start_lng: 7.4023,
+  },
+  {
+    id: 'trail-6',
+    name: 'Boucle du Puy de Dôme',
+    geometry: null,
+    distance_km: 6.5,
+    duration_hours: 2.5,
+    difficulty: 'easy',
+    elevation_gain: 320,
+    adventure_score: 55,
+    nature_score: 80,
+    panorama_score: 82,
+    accessibility_score: 90,
+    challenge_score: 25,
+    services_score: 75,
+    start_lat: 45.7733,
+    start_lng: 2.9653,
+  },
+  {
+    id: 'trail-7',
+    name: 'GR20 – Étape Vizzavona–Bocognano',
+    geometry: null,
+    distance_km: 16.4,
+    duration_hours: 6.5,
+    difficulty: 'hard',
+    elevation_gain: 1100,
+    adventure_score: 88,
+    nature_score: 96,
+    panorama_score: 93,
+    accessibility_score: 30,
+    challenge_score: 82,
+    services_score: 45,
+    start_lat: 42.1167,
+    start_lng: 9.1167,
+  },
+  {
+    id: 'trail-8',
+    name: 'Sentier du Littoral – Calanques de Marseille',
+    geometry: null,
+    distance_km: 12.0,
+    duration_hours: 4.5,
+    difficulty: 'moderate',
+    elevation_gain: 450,
+    adventure_score: 72,
+    nature_score: 87,
+    panorama_score: 91,
+    accessibility_score: 55,
+    challenge_score: 48,
+    services_score: 65,
+    start_lat: 43.2148,
+    start_lng: 5.4432,
+  },
+];
 
 // ─── Dynamic Map Import ────────────────────────────────────────────────────────
 
@@ -937,7 +1074,7 @@ export default function ExplorerPage() {
   const [locating, setLocating] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
-  // Fetch real trails from Supabase explore_trails view
+  // Fetch real trails from Supabase explore_trails view, fallback to mock data
   useEffect(() => {
     const supabase = createClient();
     supabase
@@ -947,6 +1084,9 @@ export default function ExplorerPage() {
       .then(({ data, error }) => {
         if (!error && data && data.length > 0) {
           setTrails(data as ExploreTrail[]);
+        } else {
+          // Fallback to mock trails when DB is unavailable or empty
+          setTrails(MOCK_TRAILS);
         }
         setTrailsLoading(false);
       });
