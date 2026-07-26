@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import NewFooterSection from '@/app/components/home/NewFooterSection';
 import Icon from '@/components/ui/AppIcon';
 
 export default function ContactPage() {
@@ -13,144 +13,117 @@ export default function ContactPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    // Simulate submission
     await new Promise((r) => setTimeout(r, 800));
     setSubmitted(true);
     setSubmitting(false);
   };
 
   const contacts = [
-    {
-      icon: 'EnvelopeIcon',
-      title: 'Support client',
-      desc: 'Questions sur vos commandes, retours, garanties',
-      value: 'sav@lekitduvoyageur.fr',
-      href: 'mailto:sav@lekitduvoyageur.fr',
-    },
-    {
-      icon: 'ArrowPathIcon',
-      title: 'Retours & remboursements',
-      desc: 'Initier un retour ou suivre un remboursement',
-      value: 'retour@lekitduvoyageur.fr',
-      href: 'mailto:retour@lekitduvoyageur.fr',
-    },
-    {
-      icon: 'ShieldCheckIcon',
-      title: 'DPO — Données personnelles',
-      desc: 'Exercer vos droits RGPD, demandes de suppression',
-      value: 'dpo@lekitduvoyageur.fr',
-      href: 'mailto:dpo@lekitduvoyageur.fr',
-    },
-    {
-      icon: 'BuildingOfficeIcon',
-      title: 'Partenariats & B2B',
-      desc: 'Offres Pro, revendeurs, agences de voyage',
-      value: 'contact@lekitduvoyageur.fr',
-      href: 'mailto:contact@lekitduvoyageur.fr',
-    },
+    { icon: 'EnvelopeIcon', title: 'Support client', desc: 'Questions sur vos commandes, retours, garanties', value: 'sav@lekitduvoyageur.fr', href: 'mailto:sav@lekitduvoyageur.fr' },
+    { icon: 'ArrowPathIcon', title: 'Retours & remboursements', desc: 'Initier un retour ou suivre un remboursement', value: 'retour@lekitduvoyageur.fr', href: 'mailto:retour@lekitduvoyageur.fr' },
+    { icon: 'ShieldCheckIcon', title: 'DPO — Données personnelles', desc: 'Exercer vos droits RGPD, demandes de suppression', value: 'dpo@lekitduvoyageur.fr', href: 'mailto:dpo@lekitduvoyageur.fr' },
+    { icon: 'BuildingOfficeIcon', title: 'Partenariats & B2B', desc: 'Offres Pro, revendeurs, agences de voyage', value: 'contact@lekitduvoyageur.fr', href: 'mailto:contact@lekitduvoyageur.fr' },
   ];
 
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Header />
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
-        <p className="text-xs font-mono text-primary tracking-widest uppercase mb-3" style={{ fontFamily: 'var(--font-mono)' }}>
-          Support & Contact
-        </p>
-        <h1 className="font-display text-3xl md:text-4xl text-foreground mb-3" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>
-          Contactez-nous
-        </h1>
-        <p className="text-foreground/60 mb-10 max-w-xl">
-          Notre équipe répond sous 48 heures ouvrées. Pour les urgences, utilisez directement l&apos;email du service concerné.
-        </p>
+  const inputStyle = { background: '#fff', border: '1px solid #C8C3B0', color: '#1C2620' };
+  const labelStyle = { color: '#5C6B5E' };
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+  return (
+    <div className="min-h-screen" style={{ background: '#F5F2EC' }}>
+      <Header />
+
+      {/* Hero */}
+      <section className="relative overflow-hidden pt-20" style={{ background: '#1C2620' }}>
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <nav className="flex items-center gap-2 text-xs font-mono mb-8" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <a href="/" className="hover:text-white transition-colors">Accueil</a>
+            <span>/</span>
+            <span style={{ color: '#E4501C' }}>Contact</span>
+          </nav>
+          <p className="text-xs font-mono tracking-[0.2em] uppercase mb-4" style={{ color: '#4A6741' }}>Support & Contact</p>
+          <h1 className="font-display text-5xl md:text-6xl text-white mb-4 leading-tight" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 800 }}>
+            Contactez<br /><em>notre équipe.</em>
+          </h1>
+          <p className="text-white/60 text-lg max-w-xl">
+            Réponse garantie sous 48 heures ouvrées. Pour les urgences, utilisez directement l&apos;email du service concerné.
+          </p>
+        </div>
+      </section>
+
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Contact cards */}
           <div className="space-y-4">
-            <h2 className="font-semibold text-foreground text-base mb-4">Nos équipes</h2>
+            <p className="text-xs font-mono tracking-[0.2em] uppercase mb-6" style={{ color: '#4A6741' }}>Nos équipes</p>
             {contacts.map((c) => (
               <a
                 key={c.href}
                 href={c.href}
-                className="flex items-start gap-4 p-4 bg-card border border-border rounded-xl hover:border-primary/40 transition-all group"
+                className="flex items-start gap-4 p-5 rounded-2xl transition-all group"
+                style={{ background: '#fff', border: '1px solid #E8E4DA' }}
               >
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
-                  <Icon name={c.icon} size={18} className="text-primary" variant="outline" />
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors" style={{ background: 'rgba(74,103,65,0.1)' }}>
+                  <Icon name={c.icon} size={18} variant="outline" style={{ color: '#4A6741' } as React.CSSProperties} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground text-sm">{c.title}</p>
-                  <p className="text-xs text-foreground/50 mb-1">{c.desc}</p>
-                  <p className="text-xs text-primary font-mono truncate" style={{ fontFamily: 'var(--font-mono)' }}>{c.value}</p>
+                  <p className="font-semibold text-sm mb-0.5" style={{ color: '#1C2620' }}>{c.title}</p>
+                  <p className="text-xs mb-1" style={{ color: '#7A7A6E' }}>{c.desc}</p>
+                  <p className="text-xs font-mono truncate" style={{ color: '#4A6741' }}>{c.value}</p>
                 </div>
-                <Icon name="ArrowTopRightOnSquareIcon" size={14} className="text-foreground/30 group-hover:text-primary transition-colors flex-shrink-0 mt-1" variant="outline" />
+                <Icon name="ArrowTopRightOnSquareIcon" size={14} variant="outline" className="flex-shrink-0 mt-1 transition-colors" style={{ color: '#C8C3B0' } as React.CSSProperties} />
               </a>
             ))}
 
-            <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-xl">
+            <div className="mt-6 p-5 rounded-2xl" style={{ background: 'rgba(74,103,65,0.08)', border: '1px solid rgba(74,103,65,0.2)' }}>
               <div className="flex items-center gap-2 mb-2">
-                <Icon name="ClockIcon" size={14} className="text-primary" variant="outline" />
-                <span className="text-sm font-semibold text-foreground">Délai de réponse</span>
+                <Icon name="ClockIcon" size={14} variant="outline" style={{ color: '#4A6741' } as React.CSSProperties} />
+                <span className="text-sm font-semibold" style={{ color: '#1C2620' }}>Délai de réponse</span>
               </div>
-              <p className="text-xs text-foreground/60">
+              <p className="text-xs" style={{ color: '#5C6B5E' }}>
                 Lundi – Vendredi : 9h – 18h (heure de Paris)<br />
-                Réponse garantie sous <strong className="text-foreground">48 heures ouvrées</strong>
+                Réponse garantie sous <strong style={{ color: '#1C2620' }}>48 heures ouvrées</strong>
               </p>
             </div>
           </div>
 
           {/* Contact form */}
           <div>
-            <h2 className="font-semibold text-foreground text-base mb-4">Envoyer un message</h2>
+            <p className="text-xs font-mono tracking-[0.2em] uppercase mb-6" style={{ color: '#4A6741' }}>Envoyer un message</p>
             {submitted ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center bg-card border border-border rounded-xl">
-                <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center mb-4">
-                  <Icon name="CheckCircleIcon" size={28} className="text-emerald-500" variant="outline" />
+              <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl" style={{ background: '#fff', border: '1px solid #E8E4DA' }}>
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5" style={{ background: '#4A6741' }}>
+                  <Icon name="CheckCircleIcon" size={28} className="text-white" variant="outline" />
                 </div>
-                <h3 className="font-semibold text-foreground mb-2">Message envoyé !</h3>
-                <p className="text-sm text-foreground/60 max-w-xs">
+                <h3 className="font-display font-700 text-xl mb-2" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', color: '#1C2620' }}>Message envoyé !</h3>
+                <p className="text-sm max-w-xs" style={{ color: '#5C6B5E' }}>
                   Nous avons bien reçu votre message et vous répondrons sous 48 heures ouvrées.
                 </p>
                 <button
                   onClick={() => { setSubmitted(false); setForm({ name: '', email: '', subject: '', message: '' }); }}
-                  className="mt-6 text-sm text-primary hover:underline"
+                  className="mt-6 text-sm font-semibold hover:underline"
+                  style={{ color: '#4A6741' }}
                 >
                   Envoyer un autre message
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4 bg-card border border-border rounded-xl p-6">
+              <form onSubmit={handleSubmit} className="space-y-4 p-7 rounded-2xl" style={{ background: '#fff', border: '1px solid #E8E4DA' }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-foreground/70 mb-1.5">Nom complet *</label>
-                    <input
-                      type="text"
-                      required
-                      value={form.name}
-                      onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      placeholder="Jean Dupont"
-                      className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/60 transition-colors"
-                    />
+                    <label className="block text-xs font-semibold mb-1.5" style={labelStyle}>Nom complet *</label>
+                    <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Jean Dupont"
+                      className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all" style={inputStyle} />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-foreground/70 mb-1.5">Email *</label>
-                    <input
-                      type="email"
-                      required
-                      value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      placeholder="jean@exemple.fr"
-                      className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/60 transition-colors"
-                    />
+                    <label className="block text-xs font-semibold mb-1.5" style={labelStyle}>Email *</label>
+                    <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="jean@exemple.fr"
+                      className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all" style={inputStyle} />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-foreground/70 mb-1.5">Sujet *</label>
-                  <select
-                    required
-                    value={form.subject}
-                    onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary/60 transition-colors"
-                  >
+                  <label className="block text-xs font-semibold mb-1.5" style={labelStyle}>Sujet *</label>
+                  <select required value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all" style={inputStyle}>
                     <option value="">Sélectionner un sujet</option>
                     <option value="commande">Question sur ma commande</option>
                     <option value="retour">Retour / Remboursement</option>
@@ -161,31 +134,17 @@ export default function ContactPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-foreground/70 mb-1.5">Message *</label>
-                  <textarea
-                    required
-                    rows={5}
-                    value={form.message}
-                    onChange={(e) => setForm({ ...form, message: e.target.value })}
-                    placeholder="Décrivez votre demande en détail..."
-                    className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/60 transition-colors resize-none"
-                  />
+                  <label className="block text-xs font-semibold mb-1.5" style={labelStyle}>Message *</label>
+                  <textarea required rows={5} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Décrivez votre demande en détail..."
+                    className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all resize-none" style={inputStyle} />
                 </div>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 disabled:opacity-60 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all"
-                >
+                <button type="submit" disabled={submitting}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm transition-all"
+                  style={{ background: '#1C2620', color: '#fff' }}>
                   {submitting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Envoi en cours…
-                    </>
+                    <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Envoi en cours…</>
                   ) : (
-                    <>
-                      <Icon name="PaperAirplaneIcon" size={16} variant="outline" />
-                      Envoyer le message
-                    </>
+                    <><Icon name="PaperAirplaneIcon" size={16} variant="outline" />Envoyer le message</>
                   )}
                 </button>
               </form>
@@ -193,7 +152,8 @@ export default function ContactPage() {
           </div>
         </div>
       </main>
-      <Footer />
+
+      <NewFooterSection />
     </div>
   );
 }

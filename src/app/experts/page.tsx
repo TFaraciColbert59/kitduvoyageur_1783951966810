@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import NewFooterSection from '@/app/components/home/NewFooterSection';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -155,19 +155,24 @@ export default function ExpertsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen" style={{ background: '#F5F2EC' }}>
       <Header />
 
       {/* Hero */}
-      <section className="pt-20 bg-dark-bg">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <p className="font-mono text-xs text-primary tracking-widest uppercase mb-3" style={{ fontFamily: 'var(--font-mono)' }}>RÉSEAU D&apos;EXPERTS TERRAIN</p>
-          <h1 className="font-display font-800 text-4xl md:text-5xl text-white tracking-tight mb-3" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>
-            Consultez des guides<br />certifiés avant de partir
+      <section className="pt-20" style={{ background: '#1C2620' }}>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <nav className="flex items-center gap-2 text-xs font-mono mb-8" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <a href="/" className="hover:text-white transition-colors">Accueil</a>
+            <span>/</span>
+            <span style={{ color: '#E4501C' }}>Experts</span>
+          </nav>
+          <p className="font-mono text-xs tracking-[0.2em] uppercase mb-4" style={{ color: '#4A6741' }}>Réseau d&apos;experts terrain</p>
+          <h1 className="font-display font-800 text-5xl md:text-6xl text-white tracking-tight mb-3 leading-tight" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 800 }}>
+            Consultez des guides<br /><em>certifiés.</em>
           </h1>
           <p className="text-white/60 text-lg max-w-xl">Accédez à l&apos;expertise de guides professionnels certifiés pour préparer votre expédition en toute sécurité.</p>
 
-          <div className="flex flex-wrap gap-8 mt-8 pt-8 border-t border-white/10">
+          <div className="flex flex-wrap gap-8 mt-8 pt-8" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
             {[
               { value: experts.length.toString(), label: 'Experts certifiés' },
               { value: experts.length > 0 ? (experts.reduce((s, e) => s + e.rating, 0) / experts.length).toFixed(2) : '—', label: 'Note moyenne' },
@@ -175,8 +180,8 @@ export default function ExpertsPage() {
               { value: experts.length > 0 ? Math.min(...experts.map((e) => e.price_per_hour)) + '€' : '—', label: 'À partir de / heure' },
             ].map((s) => (
               <div key={s.label}>
-                <div className="font-mono text-2xl font-700 text-white" style={{ fontFamily: 'var(--font-mono)' }}>{s.value}</div>
-                <div className="text-xs text-white/40 mt-0.5">{s.label}</div>
+                <div className="font-mono text-2xl font-700 text-white">{s.value}</div>
+                <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -184,14 +189,19 @@ export default function ExpertsPage() {
       </section>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {error && <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{error}</div>}
+        {error && <div className="mb-6 p-4 rounded-xl text-red-700 text-sm" style={{ background: '#FEF2F2', border: '1px solid #FECACA' }}>{error}</div>}
 
         {/* Filters */}
         <div className="flex flex-wrap gap-3 mb-6">
           <div className="flex gap-1.5 flex-wrap">
-            <span className="text-xs font-mono text-muted-foreground self-center mr-1" style={{ fontFamily: 'var(--font-mono)' }}>DESTINATION:</span>
+            <span className="text-xs font-mono self-center mr-1" style={{ color: '#7A7A6E' }}>DESTINATION:</span>
             {DESTINATIONS_FILTER.map((d) => (
-              <button key={d} onClick={() => setDestFilter(d)} className={`category-pill text-xs py-1.5 px-3 ${destFilter === d ? 'active' : ''}`}>
+              <button key={d} onClick={() => setDestFilter(d)}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
+                style={destFilter === d
+                  ? { background: '#1C2620', color: '#fff' }
+                  : { background: '#fff', border: '1px solid #C8C3B0', color: '#5C6B5E' }
+                }>
                 {d}
               </button>
             ))}
@@ -373,7 +383,7 @@ export default function ExpertsPage() {
         </div>
       )}
 
-      <Footer />
+      <NewFooterSection />
     </div>
   );
 }

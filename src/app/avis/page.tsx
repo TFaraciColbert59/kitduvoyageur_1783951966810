@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import NewFooterSection from '@/app/components/home/NewFooterSection';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -283,84 +283,64 @@ export default function AvisPage() {
   const avgRating = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : '0.0';
 
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen" style={{ background: '#F5F2EC' }}>
       <Header />
-      <div className="pt-16 lg:pt-18">
-        {/* Header */}
-        <section className="bg-dark-bg text-white py-16 px-4 relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-0 left-1/2 w-96 h-96 rounded-full bg-amber-500 blur-3xl" />
-          </div>
-          <div className="max-w-7xl mx-auto relative">
-            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="tag-badge bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px]">PHASE 2</span>
-                  <span className="text-white/50 text-xs font-mono-data">AVIS & ÉVALUATIONS</span>
-                </div>
-                <h1 className="text-section-title text-white mb-3">Les avis de la<br />communauté</h1>
-                <p className="text-white/60 text-base max-w-xl">Avis vérifiés sur les produits, kits, locations et articles d&apos;occasion. Chaque avis contribue au Trust Score de son auteur.</p>
-              </div>
-              <button onClick={() => setShowWriteModal(true)} className="btn-primary py-3 px-6 flex-shrink-0">
-                <Icon name="PencilSquareIcon" size={16} />
-                Laisser un avis
-              </button>
-            </div>
 
-            <div className="flex items-center gap-8 mt-10">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-display font-800 text-white text-4xl">{avgRating}</span>
-                  <div>
-                    <StarRating rating={Math.round(parseFloat(avgRating))} size={16} />
-                    <p className="text-white/50 text-xs mt-0.5">{reviews.length} avis</p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col gap-1">
-                {[5, 4, 3, 2, 1].map((star) => {
-                  const count = reviews.filter((r) => r.rating === star).length;
-                  const pct = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
-                  return (
-                    <div key={star} className="flex items-center gap-2">
-                      <span className="text-white/50 text-xs w-3">{star}</span>
-                      <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                        <div className="h-full bg-amber-400 rounded-full" style={{ width: `${pct}%` }} />
-                      </div>
-                      <span className="text-white/30 text-xs">{count}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Filters */}
-        <section className="sticky top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border">
-          <div className="max-w-7xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto scrollbar-hide">
+      {/* Hero */}
+      <section className="pt-20" style={{ background: '#1C2620' }}>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <nav className="flex items-center gap-2 text-xs font-mono mb-8" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <a href="/" className="hover:text-white transition-colors">Accueil</a>
+            <span>/</span>
+            <span style={{ color: '#E4501C' }}>Avis</span>
+          </nav>
+          <p className="text-xs font-mono tracking-[0.2em] uppercase mb-4" style={{ color: '#4A6741' }}>Avis vérifiés</p>
+          <h1 className="font-display font-800 text-5xl md:text-6xl text-white mb-3 leading-tight" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 800 }}>
+            Avis de la<br /><em>communauté.</em>
+          </h1>
+          <p className="text-white/60 text-lg max-w-xl">Découvrez les retours d&apos;expérience de nos voyageurs sur les produits, kits et locations.</p>
+          <div className="flex flex-wrap gap-8 mt-8 pt-8" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
             {[
-              { id: 'tous', label: 'Tous les avis' },
-              { id: 'produit', label: 'Produits' },
-              { id: 'kit', label: 'Kits' },
-              { id: 'location', label: 'Locations' },
-              { id: 'occasion', label: 'Occasion' },
-            ].map((f) => (
-              <button key={f.id} onClick={() => setActiveFilter(f.id as typeof activeFilter)} className={`category-pill flex-shrink-0 ${activeFilter === f.id ? 'active' : ''}`}>
-                {f.label}
+              { value: reviews.length.toString(), label: 'Avis publiés' },
+              { value: reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) + '★' : '—', label: 'Note moyenne' },
+              { value: reviews.filter((r) => r.verified).length.toString(), label: 'Achats vérifiés' },
+            ].map((s) => (
+              <div key={s.label}>
+                <div className="font-mono text-2xl font-700 text-white">{s.value}</div>
+                <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {error && <div className="mb-6 p-4 rounded-xl text-red-700 text-sm" style={{ background: '#FEF2F2', border: '1px solid #FECACA' }}>{error}</div>}
+
+        {/* Filters + CTA */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+          <div className="flex gap-2 flex-wrap">
+            {(['tous', 'produit', 'kit', 'location', 'occasion'] as const).map((f) => (
+              <button key={f} onClick={() => setActiveFilter(f)}
+                className="px-4 py-2 rounded-xl text-sm font-semibold transition-all capitalize"
+                style={activeFilter === f
+                  ? { background: '#1C2620', color: '#fff' }
+                  : { background: '#fff', border: '1px solid #C8C3B0', color: '#5C6B5E' }
+                }>
+                {f === 'tous' ? 'Tous' : f}
               </button>
             ))}
           </div>
-        </section>
+          <button onClick={() => setShowWriteModal(true)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-all"
+            style={{ background: '#4A6741' }}>
+            <Icon name="PencilSquareIcon" size={16} variant="outline" />
+            Laisser un avis
+          </button>
+        </div>
 
         {/* Reviews */}
-        <section className="max-w-7xl mx-auto px-4 py-10">
-          {error && <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{error}</div>}
-          <div className="flex items-center justify-between mb-6">
-            <p className="text-sm text-muted-foreground">
-              <span className="font-600 text-foreground">{filtered.length}</span> avis
-            </p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {[1, 2, 3, 4].map((i) => <div key={i} className="h-48 rounded-2xl bg-muted animate-pulse" />)}
@@ -378,11 +358,11 @@ export default function AvisPage() {
               ))}
             </div>
           )}
-        </section>
+        </div>
       </div>
 
       {showWriteModal && <WriteReviewModal onClose={() => setShowWriteModal(false)} onSubmit={handleSubmitReview} />}
-      <Footer />
-    </main>
+      <NewFooterSection />
+    </div>
   );
 }

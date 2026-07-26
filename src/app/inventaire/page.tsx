@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import NewFooterSection from '@/app/components/home/NewFooterSection';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -1566,7 +1566,7 @@ export default function InventairePage() {
       {/* Toast */}
       {toastMsg && <Toast message={toastMsg} onDone={() => setToastMsg(null)} />}
 
-      <Footer />
+      <NewFooterSection />
     </div>
   );
 }

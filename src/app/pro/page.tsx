@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+
 import Icon from '@/components/ui/AppIcon';
+import NewFooterSection from '@/app/components/home/NewFooterSection';
+
 
 
 interface ProPlan {
@@ -172,76 +174,78 @@ export default function B2BPage() {
   const cartSavings = cart.reduce((s, i) => s + (i.product.unitPrice - i.product.proPrice) * i.qty, 0);
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen" style={{ background: '#F5F2EC' }}>
       <Header />
       <div className="pt-16 lg:pt-18">
         {/* Hero */}
-        <section className="bg-dark-bg text-white py-20 px-4 relative overflow-hidden">
+        <section className="relative overflow-hidden text-white py-20 px-4" style={{ background: '#1C2620' }}>
           <div className="absolute inset-0">
-            <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-primary/10 blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full bg-secondary/20 blur-3xl" />
+            <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full opacity-10 blur-3xl" style={{ background: '#4A6741' }} />
+            <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full opacity-20 blur-3xl" style={{ background: '#E4501C' }} />
           </div>
           <div className="max-w-7xl mx-auto relative">
+            <nav className="flex items-center gap-2 text-xs font-mono mb-8" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              <a href="/" className="hover:text-white transition-colors">Accueil</a>
+              <span>/</span>
+              <span style={{ color: '#E4501C' }}>Espace Pro</span>
+            </nav>
             <div className="max-w-2xl">
-              <div className="flex items-center gap-2 mb-5">
-                <span className="tag-badge bg-primary/20 text-primary border border-primary/30 text-[10px]">PHASE 2</span>
-                <span className="text-white/50 text-xs font-mono-data">ESPACE PROFESSIONNEL B2B</span>
-              </div>
-              <h1 className="text-hero text-white mb-4">
-                L&apos;équipement outdoor<br />pour les pros
+              <p className="text-xs font-mono tracking-[0.2em] uppercase mb-4" style={{ color: '#4A6741' }}>Espace Professionnel B2B</p>
+              <h1 className="font-display text-5xl md:text-6xl text-white mb-4 leading-tight" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 800 }}>
+                L&apos;équipement outdoor<br /><em>pour les pros.</em>
               </h1>
               <p className="text-white/60 text-lg max-w-xl mb-8">
                 Tarifs préférentiels, commandes groupées et outils dédiés pour les guides, agences de voyage et revendeurs professionnels.
               </p>
               <div className="flex gap-4">
-                <button onClick={() => setShowContactModal(true)} className="btn-primary py-3.5 px-7">
+                <button onClick={() => setShowContactModal(true)} className="flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-sm text-white transition-all" style={{ background: '#4A6741' }}>
                   <Icon name="BuildingOfficeIcon" size={18} />
                   Demander un accès pro
                 </button>
-                <button onClick={() => setActiveTab('catalogue')} className="btn-ghost-white py-3.5 px-7">
+                <button onClick={() => setActiveTab('catalogue')} className="flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-sm transition-all" style={{ border: '1px solid rgba(255,255,255,0.2)', color: '#fff' }}>
                   Voir le catalogue pro
                 </button>
               </div>
             </div>
-
-            {/* Pro stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-14">
               {[
-              { value: '340+', label: 'Professionnels actifs', icon: 'UsersIcon' },
-              { value: '-35%', label: 'Remise max revendeurs', icon: 'TagIcon' },
-              { value: '48h', label: 'Livraison pro garantie', icon: 'TruckIcon' },
-              { value: '30j', label: 'Paiement différé', icon: 'CreditCardIcon' }].
-              map((stat) =>
-              <div key={stat.label} className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                  <Icon name={stat.icon} size={20} className="text-primary mb-2" />
+                { value: '340+', label: 'Professionnels actifs', icon: 'UsersIcon' },
+                { value: '-35%', label: 'Remise max revendeurs', icon: 'TagIcon' },
+                { value: '48h', label: 'Livraison pro garantie', icon: 'TruckIcon' },
+                { value: '30j', label: 'Paiement différé', icon: 'CreditCardIcon' },
+              ].map((stat) => (
+                <div key={stat.label} className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <Icon name={stat.icon} size={20} className="mb-2" style={{ color: '#4A6741' } as React.CSSProperties} />
                   <p className="font-display font-800 text-white text-2xl">{stat.value}</p>
-                  <p className="text-white/50 text-xs mt-0.5">{stat.label}</p>
+                  <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>{stat.label}</p>
                 </div>
-              )}
+              ))}
             </div>
           </div>
         </section>
 
         {/* Tabs */}
-        <section className="sticky top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border">
+        <section className="sticky top-16 z-30 backdrop-blur-md" style={{ background: 'rgba(245,242,236,0.95)', borderBottom: '1px solid #E8E4DA' }}>
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex gap-0">
               {[
-              { id: 'plans', label: 'Offres pro', icon: 'SparklesIcon' },
-              { id: 'catalogue', label: 'Catalogue B2B', icon: 'TagIcon' },
-              { id: 'dashboard', label: 'Dashboard pro', icon: 'ChartBarIcon' }].
-              map((tab) =>
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={`flex items-center gap-2 px-5 py-4 text-sm font-600 border-b-2 transition-all ${
-                activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`
-                }>
-                
+                { id: 'plans', label: 'Offres pro', icon: 'SparklesIcon' },
+                { id: 'catalogue', label: 'Catalogue B2B', icon: 'TagIcon' },
+                { id: 'dashboard', label: 'Dashboard pro', icon: 'ChartBarIcon' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                  className="flex items-center gap-2 px-5 py-4 text-sm font-600 border-b-2 transition-all"
+                  style={activeTab === tab.id
+                    ? { borderBottomColor: '#4A6741', color: '#4A6741' }
+                    : { borderBottomColor: 'transparent', color: '#7A7A6E' }
+                  }
+                >
                   <Icon name={tab.icon} size={16} />
                   {tab.label}
                 </button>
-              )}
+              ))}
             </div>
           </div>
         </section>
@@ -498,7 +502,7 @@ export default function B2BPage() {
         </div>
       }
 
-      <Footer />
+      <NewFooterSection />
     </main>);
 
 }

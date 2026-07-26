@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import NewFooterSection from '@/app/components/home/NewFooterSection';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -135,42 +135,42 @@ export default function FidelitePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen" style={{ background: '#F5F2EC' }}>
       <Header />
       <main className="pt-20">
-        <section className="bg-dark-bg text-white py-12 px-4 relative overflow-hidden">
+        <section className="relative overflow-hidden text-white py-14 px-4" style={{ background: '#1C2620' }}>
           <div className="absolute inset-0 opacity-5">
             {Array.from({ length: 20 }).map((_, i) => (
               <div key={i} className="absolute text-4xl" style={{ left: `${i * 17 % 100}%`, top: `${i * 23 % 100}%`, transform: 'rotate(15deg)' }}>⭐</div>
             ))}
           </div>
           <div className="max-w-7xl mx-auto relative">
+            <nav className="flex items-center gap-2 text-xs font-mono mb-6" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              <a href="/" className="hover:text-white transition-colors">Accueil</a>
+              <span>/</span>
+              <span style={{ color: '#E4501C' }}>Fidélité</span>
+            </nav>
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
               <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                    <Icon name="StarIcon" size={22} variant="solid" className="text-amber-400" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-mono text-amber-400/80 tracking-widest uppercase">Phase 3 · Programme Fidélité</p>
-                    <h1 className="text-2xl font-display font-800 tracking-tight">Programme Voyageur</h1>
-                  </div>
-                </div>
+                <p className="text-xs font-mono tracking-[0.2em] uppercase mb-3" style={{ color: '#4A6741' }}>Programme Fidélité</p>
+                <h1 className="font-display text-4xl md:text-5xl text-white mb-3 leading-tight" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 800 }}>
+                  Programme<br /><em>Voyageur.</em>
+                </h1>
                 <p className="text-white/60 text-sm max-w-lg">Gagnez des points à chaque achat, partagez vos aventures et débloquez des récompenses exclusives.</p>
               </div>
 
-              <div className="bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/30 rounded-2xl p-5 min-w-64">
+              <div className="rounded-2xl p-6 min-w-64" style={{ background: 'linear-gradient(135deg, rgba(228,80,28,0.2), rgba(74,103,65,0.15))', border: '1px solid rgba(228,80,28,0.3)' }}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-white/60 uppercase tracking-wider font-mono">Vos points</span>
+                  <span className="text-xs uppercase tracking-wider font-mono" style={{ color: 'rgba(255,255,255,0.6)' }}>Vos points</span>
                   <span className="text-2xl">{currentLevel.badge}</span>
                 </div>
                 {!user ? (
                   <p className="text-white/60 text-sm">Connectez-vous pour voir vos points</p>
                 ) : loading ? (
-                  <div className="h-10 bg-white/10 rounded animate-pulse" />
+                  <div className="h-10 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.1)' }} />
                 ) : (
                   <>
-                    <p className="text-4xl font-display font-800 text-amber-400">{formatPoints(userPoints)}</p>
+                    <p className="text-4xl font-display font-800" style={{ fontFamily: 'var(--font-display)', color: '#E4501C' }}>{formatPoints(userPoints)}</p>
                     <p className="text-sm text-white/70 mt-1">{currentLevel.name}</p>
                     {nextLevel && (
                       <div className="mt-3">
@@ -178,8 +178,8 @@ export default function FidelitePage() {
                           <span>{formatPoints(userPoints)} pts</span>
                           <span>{formatPoints(nextLevel.minPoints)} pts</span>
                         </div>
-                        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                          <div className="h-full bg-amber-400 rounded-full transition-all" style={{ width: `${progressToNext}%` }} />
+                        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                          <div className="h-full rounded-full transition-all" style={{ width: `${progressToNext}%`, background: '#E4501C' }} />
                         </div>
                         <p className="text-xs text-white/50 mt-1">{formatPoints(nextLevel.minPoints - userPoints)} pts pour {nextLevel.name}</p>
                       </div>
@@ -192,14 +192,19 @@ export default function FidelitePage() {
         </section>
 
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="flex gap-2 mb-6 border-b border-border pb-4 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-2 mb-6 pb-4 overflow-x-auto scrollbar-hide" style={{ borderBottom: '1px solid #E8E4DA' }}>
             {[
               { id: 'overview', label: "Vue d'ensemble", icon: 'HomeIcon' },
               { id: 'rewards', label: 'Récompenses', icon: 'GiftIcon' },
               { id: 'history', label: 'Historique', icon: 'ClockIcon' },
               { id: 'earn', label: 'Gagner des points', icon: 'PlusCircleIcon' },
             ].map((tab) => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id as typeof activeTab)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${activeTab === tab.id ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>
+              <button key={tab.id} onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all"
+                style={activeTab === tab.id
+                  ? { background: '#1C2620', color: '#fff' }
+                  : { color: '#5C6B5E' }
+                }>
                 <Icon name={tab.icon as string} size={16} variant="outline" />
                 {tab.label}
               </button>
@@ -415,7 +420,7 @@ export default function FidelitePage() {
           )}
         </div>
       </main>
-      <Footer />
+      <NewFooterSection />
     </div>
   );
 }
