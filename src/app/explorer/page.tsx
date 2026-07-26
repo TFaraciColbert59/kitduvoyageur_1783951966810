@@ -330,31 +330,44 @@ function ListingCard({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full text-left flex gap-3 p-3 rounded-xl transition-all duration-150 group ${
-        selected ? 'bg-[#1C2620]/8 ring-1 ring-[#1C2620]/20' : 'hover:bg-[#1C2620]/4'
-      }`}
+      className={`w-full text-left rounded-2xl overflow-hidden transition-all duration-200 group ${
+        selected
+          ? 'ring-2 ring-[#1C2620] shadow-lg shadow-[#1C2620]/10'
+          : 'shadow-sm hover:shadow-md hover:-translate-y-0.5'
+      } bg-white`}
     >
       {/* Image */}
-      <div className="relative flex-shrink-0 w-[88px] h-[72px] rounded-lg overflow-hidden">
+      <div className="relative w-full h-[140px] overflow-hidden">
         <Image
           src={listing.image}
           alt={listing.alt}
           fill
-          className="object-cover"
-          sizes="88px"
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          sizes="380px"
         />
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+
+        {/* Type badge */}
+        <div className="absolute top-2.5 left-2.5">
+          <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[#1C2620] shadow-sm">
+            {listing.type}
+          </span>
+        </div>
+
+        {/* Favorite button */}
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             setFav(!fav);
           }}
-          className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-white/80 flex items-center justify-center shadow-sm hover:bg-white transition-colors"
+          className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-colors"
           aria-label={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
         >
           <svg
-            width="12"
-            height="12"
+            width="13"
+            height="13"
             viewBox="0 0 24 24"
             fill={fav ? '#E4501C' : 'none'}
             stroke={fav ? '#E4501C' : '#666'}
@@ -363,28 +376,66 @@ function ListingCard({
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
         </button>
+
+        {/* Rating badge bottom-right */}
+        <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-2 py-0.5 shadow-sm">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="#F59E0B" stroke="none">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+          <span className="text-[11px] font-bold text-[#1C2620]">{listing.rating}</span>
+          <span className="text-[10px] text-[#1C2620]/50">({listing.reviewCount})</span>
+        </div>
       </div>
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <p className="text-[11px] text-[#1C2620]/50 mb-0.5">
-          {listing.type} · {listing.subtype}
+      {/* Content */}
+      <div className="p-3">
+        {/* Location */}
+        <p className="text-[10px] font-medium text-[#1C2620]/45 uppercase tracking-wide mb-1 flex items-center gap-1">
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+          {listing.subtype}
         </p>
-        <h3 className="text-sm font-semibold text-[#1C2620] leading-tight line-clamp-1 mb-1">
+
+        {/* Name */}
+        <h3 className="text-sm font-semibold text-[#1C2620] leading-snug line-clamp-1 mb-2.5">
           {listing.name}
         </h3>
-        <div className="flex items-center gap-2 text-[11px] text-[#1C2620]/50">
-          <span>▲ {listing.altitude.toLocaleString()} m</span>
-          <span>· {listing.capacity} pers.</span>
-          <span>· {listing.heatingType}</span>
-        </div>
-        <div className="flex items-center justify-between mt-1.5">
-          <span className="text-sm font-bold text-[#1C2620]">
-            {listing.price} €{' '}
-            <span className="font-normal text-[#1C2620]/50 text-xs">/ nuit</span>
+
+        {/* Stats pills */}
+        <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#4A6741] bg-[#4A6741]/8 rounded-full px-2 py-0.5">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            </svg>
+            {listing.altitude.toLocaleString()} m
           </span>
-          <span className="text-[11px] text-amber-500">
-            ★ {listing.rating} · {listing.reviewCount}
+          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#1C2620]/60 bg-[#1C2620]/5 rounded-full px-2 py-0.5">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+            {listing.capacity} pers.
+          </span>
+          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#1C2620]/60 bg-[#1C2620]/5 rounded-full px-2 py-0.5">
+            {listing.heatingType}
+          </span>
+        </div>
+
+        {/* Divider */}
+        <div className="h-px bg-[#F0EDE6] mb-2.5" />
+
+        {/* Price row */}
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-base font-bold text-[#1C2620]">{listing.price} €</span>
+            <span className="text-[11px] text-[#1C2620]/45 ml-1">/ nuit</span>
+          </div>
+          <span className="text-[11px] font-medium text-[#1C2620]/50 bg-[#F5F2EC] rounded-lg px-2 py-1">
+            Voir le détail →
           </span>
         </div>
       </div>
@@ -818,7 +869,7 @@ export default function ExplorerPage() {
             </div>
           ) : (
             /* Listings list */
-            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
               {MOCK_LISTINGS.map((listing) => (
                 <ListingCard
                   key={listing.id}
@@ -1001,7 +1052,7 @@ export default function ExplorerPage() {
 
           {/* List */}
           <div
-            className="overflow-y-auto px-3 pb-20 space-y-1"
+            className="overflow-y-auto px-4 pb-20 space-y-3"
             style={{ maxHeight: 'calc(75vh - 100px)' }}
           >
             {panelMode === 'listings'
