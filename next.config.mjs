@@ -24,33 +24,21 @@ const nextConfig = {
     qualities: [75, 80, 85, 90, 95],
   },
 
-  webpack(config) {
-config.module.rules.push({
-      test: /\.(jsx|tsx)$/,
-      exclude: [
-        /node_modules/,
-        /\.next/,
-        /app[\/\\]layout\.tsx$/,
-        /app[\/\\]page\.tsx$/,
-        /src[\/\\]app[\/\\]components[\/\\]HomePageContent\.tsx$/,
-        /src[\/\\]app[\/\\]components[\/\\]home[\/\\]/,
-        /\[id\]/,
-        /src[\/\\]app[\/\\]carnets[\/\\]/,
-        /src[\/\\]app[\/\\]clubs[\/\\]/,
-        /src[\/\\]app[\/\\]pays[\/\\]/,
-        /src[\/\\]app[\/\\]ai-configurator[\/\\]/,
-        /src[\/\\]app[\/\\]profil[\/\\]/,
-        /src[\/\\]app[\/\\]compte[\/\\]/,
-        /src[\/\\]app[\/\\]evenements[\/\\]/,
-        /src[\/\\]app[\/\\]carte-interactive[\/\\]/,
-        /src[\/\\]app[\/\\]naviguer[\/\\]/,
-        /src[\/\\]app[\/\\]mon-kit[\/\\]/,
-        /src[\/\\]app[\/\\]activite[\/\\]/,
-        /src[\/\\]components[\/\\]mobile-nav[\/\\]/,
-        /src[\/\\]components[\/\\]/,
-      ],
-      use: [{ loader: '@dhiwise/component-tagger/nextLoader' }],
-    });
+  webpack(
+    config,
+    {
+      dev: dev
+    }
+  ) {
+    if (dev) {
+      config.module.rules.push({
+        test: /\.(jsx|tsx)$/,
+        exclude: [/node_modules/],
+        use: [{
+          loader: '@dhiwise/component-tagger/nextLoader',
+        }],
+      });
+    }
 
     return config;
   }

@@ -2,9 +2,8 @@
 
 import { Suspense } from 'react';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import HomepageV1 from '@/app/components/HomepageV1';
-import MobileHomePage from '@/components/mobile-nav/MobileHomePage';
+import NewHomepage from '@/app/components/NewHomepage';
+import NewMobileHomepage from '@/app/components/NewMobileHomepage';
 import type { TrailOfDay, TrustStats, FeaturedCarnet } from '@/lib/home-queries';
 
 interface HomePageClientProps {
@@ -22,16 +21,13 @@ export default function HomePageClient({ trail, stats, carnets }: HomePageClient
       </div>
       <main id="main-content" className="min-h-screen hidden md:block" style={{ background: 'var(--background)' }}>
         <Suspense fallback={null}>
-          <HomepageV1 stats={stats} carnets={carnets} />
+          <NewHomepage stats={stats} carnets={carnets} />
         </Suspense>
       </main>
-      <div className="hidden md:block">
-        <Footer />
-      </div>
 
-      {/* Mobile — premium refonte */}
+      {/* Mobile */}
       <div className="md:hidden">
-        <MobileHomePage />
+        <NewMobileHomepage />
       </div>
     </>
   );
