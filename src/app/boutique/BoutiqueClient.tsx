@@ -3,13 +3,10 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import WeightGauge from '@/components/WeightGauge';
-import TopoSeparator from '@/components/TopoSeparator';
-import Icon from '@/components/ui/AppIcon';
 import AppImage from '@/components/ui/AppImage';
 import { createClient } from '@/lib/supabase/client';
 import { addToCart } from '@/lib/cart';
+import NewFooterSection from '@/app/components/home/NewFooterSection';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -46,574 +43,312 @@ interface OptimizedKit {
   savings: number;
 }
 
-const TRANSACTION_BADGE: Record<TransactionType, { label: string; cls: string; dot: string }> = {
-  achat:    { label: 'ACHAT',    cls: 'bg-emerald-500/15 text-emerald-600 border border-emerald-500/30', dot: 'bg-emerald-500' },
-  location: { label: 'LOCATION', cls: 'bg-purple-500/15 text-purple-600 border border-purple-500/30',   dot: 'bg-purple-500' },
-  occasion: { label: 'OCCASION', cls: 'bg-yellow-500/15 text-yellow-700 border border-yellow-500/30',   dot: 'bg-yellow-500' },
-  enchere:  { label: 'ENCHÈRE',  cls: 'bg-orange-500/15 text-orange-600 border border-orange-500/30',   dot: 'bg-orange-500' },
-};
-
-const CATEGORIES = ['Tout', 'Sacs à dos', 'Tentes', 'Couchage', 'Vêtements', 'Chaussures', 'Cuisine', 'Éclairage', 'Sécurité', 'Eau', 'Navigation', 'Électronique', 'Accessoires'];
+const CATEGORIES_BOUTIQUE = ['Tout', 'Portage', 'Couchage', 'Vêtements', 'Éclairage', 'Hydratation'];
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: 'pertinence', label: 'Pertinence' },
-  { value: 'prix_asc',   label: 'Prix croissant' },
-  { value: 'prix_desc',  label: 'Prix décroissant' },
-  { value: 'poids_asc',  label: 'Plus léger' },
-  { value: 'note_desc',  label: 'Mieux noté' },
+  { value: 'pertinence', label: 'Coup de cœur' },
+  { value: 'prix_asc', label: 'Prix croissant' },
+  { value: 'prix_desc', label: 'Prix décroissant' },
+  { value: 'poids_asc', label: 'Plus léger' },
+  { value: 'note_desc', label: 'Mieux noté' },
 ];
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 6;
 
-const PRESET_KITS = [
-  { label: 'Kit Islande', budget: 300, weight: 10, icon: '🇮🇸' },
-  { label: 'Kit Trek Léger', budget: 200, weight: 7, icon: '🏔️' },
-  { label: 'Kit Désert', budget: 250, weight: 9, icon: '🏜️' },
-  { label: 'Kit Minimaliste', budget: 150, weight: 5, icon: '🎒' },
-];
-
-// ─── Mock data (used when Supabase has no products) ───────────────────────────
+// ─── Mock data ────────────────────────────────────────────────────────────────
 
 const MOCK_PRODUCTS: ShopProduct[] = [
-  { id: '1', slug: 'osprey-farpoint-40', name: 'Osprey Farpoint 40', brand: 'Osprey', category: 'Sacs à dos', weight_g: 1420, price_eur: 179, image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80', image_alt: 'Sac à dos Osprey Farpoint 40 gris anthracite', rating: 4.8, review_count: 312, available: true, transaction_type: 'achat', savings: 0 },
-  { id: '2', slug: 'osprey-farpoint-40-loc', name: 'Osprey Farpoint 40', brand: 'Osprey', category: 'Sacs à dos', weight_g: 1420, price_eur: 9, image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80', image_alt: 'Sac à dos Osprey Farpoint 40 gris anthracite en location', rating: 4.7, review_count: 89, available: true, transaction_type: 'location', price_per_day: 9, savings: 0 },
-  { id: '3', slug: 'osprey-farpoint-40-occ', name: 'Osprey Farpoint 40', brand: 'Osprey', category: 'Sacs à dos', weight_g: 1420, price_eur: 112, image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80', image_alt: 'Sac à dos Osprey Farpoint 40 occasion très bon état', rating: 4.6, review_count: 45, available: true, transaction_type: 'occasion', original_price: 179, condition: 'Très bon état', savings: 67 },
-  { id: '4', slug: 'osprey-farpoint-40-enc', name: 'Osprey Farpoint 40', brand: 'Osprey', category: 'Sacs à dos', weight_g: 1420, price_eur: 78, image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80', image_alt: 'Sac à dos Osprey Farpoint 40 enchère en cours', rating: 4.5, review_count: 12, available: true, transaction_type: 'enchere', starting_bid: 78, savings: 101 },
-  { id: '5', slug: 'msr-hubba-hubba', name: 'MSR Hubba Hubba NX 2P', brand: 'MSR', category: 'Tentes', weight_g: 1720, price_eur: 549, image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600&q=80', image_alt: 'Tente MSR Hubba Hubba NX 2 places orange montée en montagne', rating: 4.9, review_count: 198, available: true, transaction_type: 'achat', savings: 0 },
-  { id: '6', slug: 'msr-hubba-hubba-loc', name: 'MSR Hubba Hubba NX 2P', brand: 'MSR', category: 'Tentes', weight_g: 1720, price_eur: 18, image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600&q=80', image_alt: 'Tente MSR Hubba Hubba NX 2 places en location', rating: 4.8, review_count: 67, available: true, transaction_type: 'location', price_per_day: 18, savings: 0 },
-  { id: '7', slug: 'msr-hubba-hubba-occ', name: 'MSR Hubba Hubba NX 2P', brand: 'MSR', category: 'Tentes', weight_g: 1720, price_eur: 320, image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600&q=80', image_alt: 'Tente MSR Hubba Hubba NX occasion bon état', rating: 4.7, review_count: 23, available: true, transaction_type: 'occasion', original_price: 549, condition: 'Bon état', savings: 229 },
-  { id: '8', slug: 'sea-to-summit-spark', name: 'Sea to Summit Spark SP1', brand: 'Sea to Summit', category: 'Couchage', weight_g: 490, price_eur: 299, image: 'https://images.unsplash.com/photo-1445308394109-4ec2920981b1?w=600&q=80', image_alt: 'Sac de couchage Sea to Summit Spark SP1 ultra léger bleu', rating: 4.7, review_count: 156, available: true, transaction_type: 'achat', savings: 0 },
-  { id: '9', slug: 'sea-to-summit-spark-loc', name: 'Sea to Summit Spark SP1', brand: 'Sea to Summit', category: 'Couchage', weight_g: 490, price_eur: 12, image: 'https://images.unsplash.com/photo-1445308394109-4ec2920981b1?w=600&q=80', image_alt: 'Sac de couchage Sea to Summit Spark SP1 en location', rating: 4.6, review_count: 34, available: true, transaction_type: 'location', price_per_day: 12, savings: 0 },
-  { id: '10', slug: 'petzl-actik-core', name: 'Petzl Actik Core', brand: 'Petzl', category: 'Éclairage', weight_g: 85, price_eur: 49, image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80', image_alt: 'Lampe frontale Petzl Actik Core rouge sur fond blanc', rating: 4.6, review_count: 423, available: true, transaction_type: 'achat', savings: 0 },
-  { id: '11', slug: 'petzl-actik-occ', name: 'Petzl Actik Core', brand: 'Petzl', category: 'Éclairage', weight_g: 85, price_eur: 28, image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80', image_alt: 'Lampe frontale Petzl Actik Core occasion', rating: 4.4, review_count: 18, available: true, transaction_type: 'occasion', original_price: 49, condition: 'Très bon état', savings: 21 },
-  { id: '12', slug: 'nemo-tensor', name: 'NEMO Tensor Insulated', brand: 'NEMO', category: 'Couchage', weight_g: 510, price_eur: 189, image: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=600&q=80', image_alt: 'Matelas gonflable NEMO Tensor Insulated orange déplié', rating: 4.8, review_count: 201, available: true, transaction_type: 'achat', savings: 0 },
-  { id: '13', slug: 'nemo-tensor-occ', name: 'NEMO Tensor Insulated', brand: 'NEMO', category: 'Couchage', weight_g: 510, price_eur: 95, image: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=600&q=80', image_alt: 'Matelas gonflable NEMO Tensor occasion', rating: 4.6, review_count: 14, available: true, transaction_type: 'occasion', original_price: 189, condition: 'Comme neuf', savings: 94 },
-  { id: '14', slug: 'black-diamond-spot', name: 'Black Diamond Spot 400', brand: 'Black Diamond', category: 'Éclairage', weight_g: 91, price_eur: 39, image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80', image_alt: 'Lampe frontale Black Diamond Spot 400 lumens noire', rating: 4.5, review_count: 287, available: true, transaction_type: 'achat', savings: 0 },
-  { id: '15', slug: 'katadyn-befree', name: 'Katadyn BeFree 1L', brand: 'Katadyn', category: 'Eau', weight_g: 56, price_eur: 44, image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&q=80', image_alt: 'Filtre à eau Katadyn BeFree 1 litre bleu transparent', rating: 4.7, review_count: 334, available: true, transaction_type: 'achat', savings: 0 },
-  { id: '16', slug: 'garmin-inreach-mini', name: 'Garmin inReach Mini 2', brand: 'Garmin', category: 'Navigation', weight_g: 100, price_eur: 349, image: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=600&q=80', image_alt: 'Communicateur satellite Garmin inReach Mini 2 orange', rating: 4.9, review_count: 178, available: true, transaction_type: 'achat', savings: 0 },
-  { id: '17', slug: 'garmin-inreach-loc', name: 'Garmin inReach Mini 2', brand: 'Garmin', category: 'Navigation', weight_g: 100, price_eur: 15, image: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=600&q=80', image_alt: 'Communicateur satellite Garmin inReach Mini 2 en location', rating: 4.8, review_count: 42, available: true, transaction_type: 'location', price_per_day: 15, savings: 0 },
-  { id: '18', slug: 'arc-teryx-beta', name: "Arc'teryx Beta AR", brand: "Arc'teryx", category: 'Vêtements', weight_g: 485, price_eur: 699, image: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=600&q=80', image_alt: "Veste de randonnée Arc'teryx Beta AR rouge imperméable", rating: 4.9, review_count: 89, available: true, transaction_type: 'achat', savings: 0 },
-  { id: '19', slug: 'arc-teryx-beta-occ', name: "Arc'teryx Beta AR", brand: "Arc'teryx", category: 'Vêtements', weight_g: 485, price_eur: 380, image: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=600&q=80', image_alt: "Veste Arc'teryx Beta AR occasion très bon état", rating: 4.7, review_count: 31, available: true, transaction_type: 'occasion', original_price: 699, condition: 'Très bon état', savings: 319 },
-  { id: '20', slug: 'arc-teryx-beta-enc', name: "Arc'teryx Beta AR", brand: "Arc'teryx", category: 'Vêtements', weight_g: 485, price_eur: 290, image: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=600&q=80', image_alt: "Veste Arc'teryx Beta AR enchère en cours", rating: 4.6, review_count: 8, available: true, transaction_type: 'enchere', starting_bid: 290, savings: 409 },
+  {
+    id: '1', slug: 'sac-45l-toile-ciree', name: 'Le sac 45 L', brand: 'Le Kit du Voyageur', category: 'Portage',
+    weight_g: 1200, price_eur: 340, original_price: 395,
+    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&q=85',
+    image_alt: 'Sac à dos 45L en toile cirée verte, trois compartiments, bandoulière ventrale',
+    rating: 4.9, review_count: 47, available: true, transaction_type: 'achat', savings: 55,
+  },
+  {
+    id: '2', slug: 'duvet-plumes-trois-saisons', name: 'Duvet en plumes', brand: 'Le Kit du Voyageur', category: 'Couchage',
+    weight_g: 680, price_eur: 248,
+    image: 'https://images.unsplash.com/photo-1445308394109-4ec2920981b1?w=600&q=80',
+    image_alt: 'Sac de couchage en duvet vert foncé compressé sur tissu beige',
+    rating: 4.8, review_count: 31, available: true, transaction_type: 'achat', savings: 0,
+  },
+  {
+    id: '3', slug: 'tente-legere-deux-places', name: 'Tente légère', brand: 'Le Kit du Voyageur', category: 'Couchage',
+    weight_g: 1100, price_eur: 418,
+    image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600&q=80',
+    image_alt: 'Tente légère orange compressée sur tissu beige, deux places',
+    rating: 4.7, review_count: 28, available: true, transaction_type: 'achat', savings: 0,
+  },
+  {
+    id: '4', slug: 'gourde-titane-1l', name: 'Gourde titane', brand: 'Le Kit du Voyageur', category: 'Hydratation',
+    weight_g: 95, price_eur: 68,
+    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&q=80',
+    image_alt: 'Gourde en titane vert sauge posée sur tissu beige',
+    rating: 4.9, review_count: 62, available: true, transaction_type: 'achat', savings: 0,
+  },
+  {
+    id: '5', slug: 'veste-3-couches', name: 'Veste 3 couches', brand: 'Le Kit du Voyageur', category: 'Vêtements',
+    weight_g: 485, price_eur: 312,
+    image: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=600&q=80',
+    image_alt: 'Veste imperméable verte pliée sur tissu beige, toutes saisons',
+    rating: 4.8, review_count: 19, available: true, transaction_type: 'achat', savings: 0,
+  },
+  {
+    id: '6', slug: 'lampe-frontale-240-lumens', name: 'Lampe frontale', brand: 'Le Kit du Voyageur', category: 'Éclairage',
+    weight_g: 91, price_eur: 84,
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
+    image_alt: 'Lampe frontale noire 240 lumens posée sur tissu beige',
+    rating: 4.6, review_count: 44, available: true, transaction_type: 'achat', savings: 0,
+  },
 ];
 
-// ─── Dual Range Slider ────────────────────────────────────────────────────────
+// ─── Editorial Product Card ───────────────────────────────────────────────────
 
-interface SliderProps {
-  label: string;
-  unit: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  onChange: (v: number) => void;
-  formatValue?: (v: number) => string;
-  accentColor?: string;
-}
-
-function PremiumSlider({ label, unit, value, min, max, step, onChange, formatValue, accentColor = 'var(--primary)' }: SliderProps) {
-  const pct = ((value - min) / (max - min)) * 100;
-  const display = formatValue ? formatValue(value) : `${value} ${unit}`;
-
-  return (
-    <div className="w-full">
-      <div className="flex items-center justify-between mb-3">
-        <span className="font-mono text-xs text-muted-foreground uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>
-          {label}
-        </span>
-        <span
-          className="font-mono text-lg font-700 transition-all duration-150"
-          style={{ fontFamily: 'var(--font-mono)', color: accentColor }}
-        >
-          {display}
-        </span>
-      </div>
-      <div className="relative h-8 flex items-center">
-        <div className="absolute inset-x-0 h-[3px] rounded-full" style={{ background: 'var(--border)' }} />
-        <div
-          className="absolute left-0 h-[3px] rounded-full transition-all duration-75"
-          style={{ width: `${pct}%`, background: accentColor }}
-        />
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="absolute inset-0 w-full opacity-0 cursor-pointer h-8"
-          aria-label={label}
-          aria-valuenow={value}
-          aria-valuemin={min}
-          aria-valuemax={max}
-          aria-valuetext={display}
-        />
-        <div
-          className="absolute w-5 h-5 rounded-full border-2 border-white shadow-lg transition-all duration-75 pointer-events-none"
-          style={{
-            left: `calc(${pct}% - 10px)`,
-            background: accentColor,
-            boxShadow: `0 0 0 4px ${accentColor}25, 0 2px 8px rgba(0,0,0,0.2)`,
-          }}
-        />
-      </div>
-      <div className="flex justify-between mt-1">
-        <span className="font-mono text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>
-          {min} {unit}
-        </span>
-        <span className="font-mono text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>
-          {max} {unit}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-// ─── Product Card ─────────────────────────────────────────────────────────────
-
-function ProductCard({ product, isOptimized = false }: { product: ShopProduct; isOptimized?: boolean }) {
+function EditorialProductCard({ product }: { product: ShopProduct }) {
+  const [wished, setWished] = useState(false);
   const [added, setAdded] = useState(false);
-  const badge = TRANSACTION_BADGE[product.transaction_type];
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (product.transaction_type === 'achat' || product.transaction_type === 'occasion') {
-      addToCart({
-        id: product.id,
-        slug: product.slug,
-        name: product.name,
-        brand: product.brand,
-        category: product.category,
-        priceEur: product.price_eur,
-        weightG: product.weight_g,
-        image: product.image,
-        imageAlt: product.image_alt,
-      });
-    } else if (product.transaction_type === 'enchere') {
-      window.location.href = '/encheres';
-      return;
-    } else if (product.transaction_type === 'location') {
-      window.location.href = '/location';
-      return;
-    }
+    addToCart({
+      id: product.id, slug: product.slug, name: product.name, brand: product.brand,
+      category: product.category, priceEur: product.price_eur, weightG: product.weight_g,
+      image: product.image, imageAlt: product.image_alt,
+    });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
 
-  const actionLabel = () => {
-    switch (product.transaction_type) {
-      case 'enchere':  return 'Enchérir';
-      case 'location': return 'Réserver';
-      case 'occasion': return 'Acheter';
-      default:         return product.available ? 'Ajouter au panier' : 'Épuisé';
-    }
-  };
-
-  const priceDisplay = () => {
-    if (product.transaction_type === 'location') return `${product.price_eur} €/j`;
-    if (product.transaction_type === 'enchere')  return `dès ${product.price_eur} €`;
-    return `${product.price_eur} €`;
+  const categoryLabel = () => {
+    const map: Record<string, string> = {
+      'Portage': 'PORTAGE', 'Couchage': 'COUCHAGE', 'Vêtements': 'VÊTEMENTS',
+      'Éclairage': 'ÉCLAIRAGE', 'Hydratation': 'HYDRATATION',
+    };
+    return map[product.category] || product.category.toUpperCase();
   };
 
   return (
-    <article
-      className={`topo-card group overflow-hidden transition-all duration-300 ${isOptimized ? 'ring-2 ring-primary/40' : ''}`}
-      aria-label={`${product.name} — ${priceDisplay()}`}
-    >
+    <article className="group" aria-label={`${product.name} — ${product.price_eur} €`}>
       <Link href={`/produit/${product.slug}`} className="block">
-        <div className="relative aspect-[4/3] overflow-hidden">
+        {/* Image */}
+        <div
+          className="relative overflow-hidden"
+          style={{ borderRadius: '12px', aspectRatio: '4/3', background: '#F5F2EC' }}
+        >
           <AppImage
             src={product.image}
             alt={product.image_alt}
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
           />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(28,38,32,0.25) 0%, transparent 50%)' }} />
-
-          {/* Transaction badge */}
-          <div className="absolute top-3 left-3">
-            <span className={`inline-flex items-center gap-1 text-[9px] font-mono px-2 py-0.5 rounded-full font-700 tracking-widest ${badge.cls}`} style={{ fontFamily: 'var(--font-mono)' }}>
-              <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
-              {badge.label}
-            </span>
-          </div>
-
-          {/* Savings badge */}
-          {product.savings && product.savings > 0 ? (
-            <div className="absolute top-3 right-3">
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full font-700 bg-primary text-white" style={{ fontFamily: 'var(--font-mono)' }}>
-                −{product.savings} €
-              </span>
-            </div>
-          ) : null}
-
-          {/* Optimized badge */}
-          {isOptimized && (
-            <div className="absolute bottom-3 left-3">
-              <span className="text-[9px] font-mono px-2 py-0.5 rounded-full font-700 bg-primary text-white flex items-center gap-1" style={{ fontFamily: 'var(--font-mono)' }}>
-                ✨ OPTIMISÉ
+          {/* Wishlist button */}
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setWished((w) => !w); }}
+            className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200"
+            style={{
+              background: 'rgba(255,255,255,0.9)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(0,0,0,0.06)',
+            }}
+            aria-label={wished ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill={wished ? '#1C2620' : 'none'} stroke="#1C2620" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+          </button>
+          {/* Nouveauté badge */}
+          {product.id === '4' && (
+            <div className="absolute top-3 left-3">
+              <span
+                style={{
+                  background: '#1C2620',
+                  color: '#FFFFFF',
+                  fontSize: '9px',
+                  fontFamily: 'var(--font-mono)',
+                  letterSpacing: '0.12em',
+                  padding: '3px 8px',
+                  borderRadius: '999px',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Nouveauté
               </span>
             </div>
           )}
         </div>
-
-        <div className="px-4 pt-4">
-          <div className="mb-1">
-            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>
-              {product.brand}
-            </p>
-            <h3 className="font-display font-700 text-foreground text-sm leading-tight mt-0.5 line-clamp-2 hover:text-primary transition-colors" style={{ fontFamily: 'var(--font-display)' }}>
-              {product.name}
-            </h3>
-          </div>
-
-          <span className="inline-block text-[10px] font-mono px-2 py-0.5 rounded-full bg-muted text-muted-foreground mt-1 mb-3" style={{ fontFamily: 'var(--font-mono)' }}>
-            {product.category}
-          </span>
-        </div>
       </Link>
 
-      <div className="px-4 pb-4">
-        {/* Weight gauge */}
-        <div className="mb-3">
-          <WeightGauge weightG={product.weight_g} maxG={3000} size="sm" />
-        </div>
-
-        {/* Rating */}
-        <div className="flex items-center gap-1 mb-3">
-          <div className="flex">
-            {[1,2,3,4,5].map((s) => (
-              <svg key={s} className={`w-3 h-3 ${s <= Math.round(product.rating) ? 'text-yellow-400' : 'text-muted'}`} fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            ))}
-          </div>
-          <span className="font-mono text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>
-            {product.rating} ({product.review_count})
-          </span>
-        </div>
-
-        {/* Price + CTA */}
-        <div className="flex items-center justify-between gap-2">
+      {/* Info */}
+      <div className="pt-3">
+        <p
+          style={{
+            fontSize: '10px',
+            fontFamily: 'var(--font-mono)',
+            color: '#9BA89F',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            marginBottom: '3px',
+          }}
+        >
+          {categoryLabel()}
+        </p>
+        <div className="flex items-start justify-between gap-2">
           <div>
-            <span className="font-mono text-lg font-700 text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>
-              {priceDisplay()}
-            </span>
-            {product.original_price && (
-              <span className="font-mono text-xs text-muted-foreground line-through ml-2" style={{ fontFamily: 'var(--font-mono)' }}>
-                {product.original_price} €
-              </span>
+            <Link href={`/produit/${product.slug}`}>
+              <h3
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 700,
+                  fontSize: '15px',
+                  color: '#1C2620',
+                  lineHeight: '1.25',
+                  marginBottom: '1px',
+                }}
+              >
+                {product.name}{' '}
+                {product.id === '3' && (
+                  <em style={{ fontStyle: 'italic', fontWeight: 400, color: '#6B8A7A' }}>deux places.</em>
+                )}
+                {product.id === '6' && (
+                  <em style={{ fontStyle: 'italic', fontWeight: 400, color: '#6B8A7A' }}>240 lumens.</em>
+                )}
+              </h3>
+            </Link>
+            {(product.id === '2') && (
+              <p style={{ fontSize: '12px', fontStyle: 'italic', color: '#9BA89F', fontFamily: 'var(--font-sans)' }}>trois saisons.</p>
+            )}
+            {(product.id === '5') && (
+              <p style={{ fontSize: '12px', fontStyle: 'italic', color: '#9BA89F', fontFamily: 'var(--font-sans)' }}>toutes saisons.</p>
             )}
           </div>
+          {/* Quick add */}
           <button
             onClick={handleAdd}
-            disabled={!product.available && product.transaction_type === 'achat'}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-600 transition-all duration-200 min-h-[36px] ${
-              added
-                ? 'bg-secondary text-white'
-                : !product.available && product.transaction_type === 'achat' ?'bg-muted text-muted-foreground cursor-not-allowed' :'bg-primary text-white hover:bg-primary/90 active:scale-95'
-            }`}
+            className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
+            style={{
+              background: added ? '#1C2620' : 'rgba(28,38,32,0.08)',
+              border: '1px solid rgba(28,38,32,0.12)',
+            }}
+            aria-label={added ? 'Ajouté au panier' : 'Ajouter au panier'}
           >
-            <Icon name={added ? 'CheckIcon' : 'ShoppingCartIcon'} size={14} variant="outline" />
-            {added ? 'Ajouté ✓' : actionLabel()}
+            {added ? (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            ) : (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1C2620" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            )}
           </button>
         </div>
-      </div>
-    </article>
-  );
-}
-
-// ─── Optimization Result Card ─────────────────────────────────────────────────
-
-function OptimizationResultCard({ item }: { item: OptimizedKit }) {
-  const badge = TRANSACTION_BADGE[item.chosen_type];
-  return (
-    <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card">
-      <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
-        <AppImage src={item.product.image} alt={item.product.image_alt} fill className="object-cover" sizes="48px" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-display font-600 text-sm text-foreground truncate" style={{ fontFamily: 'var(--font-display)' }}>
-          {item.product.name}
-        </p>
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded-full font-700 tracking-widest ${badge.cls}`} style={{ fontFamily: 'var(--font-mono)' }}>
-            {badge.label}
-          </span>
-          <span className="font-mono text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>
-            {item.product.weight_g >= 1000 ? `${(item.product.weight_g / 1000).toFixed(2)} kg` : `${item.product.weight_g} g`}
-          </span>
-        </div>
-      </div>
-      <div className="text-right flex-shrink-0">
-        <p className="font-mono font-700 text-foreground text-sm" style={{ fontFamily: 'var(--font-mono)' }}>
-          {item.chosen_price} €
-        </p>
-        {item.savings > 0 && (
-          <p className="font-mono text-[10px] text-primary" style={{ fontFamily: 'var(--font-mono)' }}>
-            −{item.savings} €
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Mobile Filter Bottom Sheet ───────────────────────────────────────────────
-
-interface MobileFilterSheetProps {
-  open: boolean;
-  onClose: () => void;
-  budget: number;
-  setBudget: (v: number) => void;
-  maxWeight: number;
-  setMaxWeight: (v: number) => void;
-  activeCategory: string;
-  setActiveCategory: (v: string) => void;
-  activeTypes: Set<TransactionType>;
-  toggleType: (t: TransactionType) => void;
-  searchQuery: string;
-  setSearchQuery: (v: string) => void;
-  activeBrand: string;
-  setActiveBrand: (v: string) => void;
-  brands: string[];
-  minPrice: number;
-  setMinPrice: (v: number) => void;
-  maxPrice: number;
-  setMaxPrice: (v: number) => void;
-  sortBy: SortOption;
-  setSortBy: (v: SortOption) => void;
-}
-
-function MobileFilterSheet({
-  open, onClose, budget, setBudget, maxWeight, setMaxWeight,
-  activeCategory, setActiveCategory, activeTypes, toggleType,
-  searchQuery, setSearchQuery, activeBrand, setActiveBrand, brands,
-  minPrice, setMinPrice, maxPrice, setMaxPrice, sortBy, setSortBy,
-}: MobileFilterSheetProps) {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-50 md:hidden">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="absolute inset-x-0 bottom-0 bg-[#1a1a1a] rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto"
-        style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}>
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="font-display font-bold text-white text-lg">Filtres & Tri</h3>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
-          </button>
-        </div>
-
-        {/* Search */}
-        <div className="mb-5">
-          <p className="text-white/60 text-sm mb-2">Recherche</p>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Nom, marque, catégorie…"
-            className="w-full px-3 py-2 rounded-xl bg-white/10 text-white placeholder-white/30 border border-white/20 text-sm focus:outline-none focus:border-white/50"
-          />
-        </div>
-
-        {/* Sort */}
-        <div className="mb-5">
-          <p className="text-white/60 text-sm mb-2">Trier par</p>
-          <div className="flex flex-wrap gap-2">
-            {SORT_OPTIONS.map((opt) => (
-              <button key={opt.value} onClick={() => setSortBy(opt.value)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                  sortBy === opt.value ? 'bg-[#E4501C] text-white border-[#E4501C]' : 'bg-transparent text-white/60 border-white/20'
-                }`}>
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Budget */}
-        <div className="mb-5">
-          <div className="flex justify-between mb-2">
-            <span className="text-white/60 text-sm">Budget max</span>
-            <span className="text-[#E4501C] font-mono font-bold">{budget} €</span>
-          </div>
-          <input type="range" min={0} max={1500} step={10} value={budget}
-            onChange={(e) => setBudget(Number(e.target.value))}
-            className="w-full accent-[#E4501C]" />
-        </div>
-
-        {/* Price range */}
-        <div className="mb-5">
-          <p className="text-white/60 text-sm mb-2">Fourchette de prix</p>
-          <div className="flex items-center gap-2">
-            <input type="number" min={0} max={maxPrice} value={minPrice}
-              onChange={(e) => setMinPrice(Number(e.target.value))}
-              className="w-full px-2 py-1.5 rounded-lg bg-white/10 text-white border border-white/20 text-sm text-center focus:outline-none" />
-            <span className="text-white/40 text-sm flex-shrink-0">—</span>
-            <input type="number" min={minPrice} max={2000} value={maxPrice}
-              onChange={(e) => setMaxPrice(Number(e.target.value))}
-              className="w-full px-2 py-1.5 rounded-lg bg-white/10 text-white border border-white/20 text-sm text-center focus:outline-none" />
-            <span className="text-white/40 text-sm flex-shrink-0">€</span>
-          </div>
-        </div>
-
-        {/* Weight */}
-        <div className="mb-5">
-          <div className="flex justify-between mb-2">
-            <span className="text-white/60 text-sm">Poids max</span>
-            <span className="text-blue-400 font-mono font-bold">{maxWeight} kg</span>
-          </div>
-          <input type="range" min={1} max={25} step={0.5} value={maxWeight}
-            onChange={(e) => setMaxWeight(Number(e.target.value))}
-            className="w-full accent-blue-400" />
-        </div>
-
-        {/* Transaction types */}
-        <div className="mb-5">
-          <p className="text-white/60 text-sm mb-3">Type de transaction</p>
-          <div className="flex flex-wrap gap-2">
-            {(Object.entries(TRANSACTION_BADGE) as [TransactionType, typeof TRANSACTION_BADGE[TransactionType]][]).map(([type, cfg]) => (
-              <button key={type} onClick={() => toggleType(type)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
-                  activeTypes.has(type) ? cfg.cls : 'bg-transparent text-white/40 border-white/20'
-                }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${activeTypes.has(type) ? cfg.dot : 'bg-white/30'}`} />
-                {cfg.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Brands */}
-        {brands.length > 0 && (
-          <div className="mb-5">
-            <p className="text-white/60 text-sm mb-3">Marque</p>
-            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-              <button onClick={() => setActiveBrand('Toutes')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                  activeBrand === 'Toutes' ? 'bg-[#E4501C] text-white border-[#E4501C]' : 'bg-transparent text-white/60 border-white/20'
-                }`}>
-                Toutes
-              </button>
-              {brands.map((b) => (
-                <button key={b} onClick={() => setActiveBrand(b)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                    activeBrand === b ? 'bg-[#E4501C] text-white border-[#E4501C]' : 'bg-transparent text-white/60 border-white/20'
-                  }`}>
-                  {b}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Categories */}
-        <div className="mb-6">
-          <p className="text-white/60 text-sm mb-3">Catégorie</p>
-          <div className="flex flex-wrap gap-2">
-            {CATEGORIES.map((cat) => (
-              <button key={cat} onClick={() => setActiveCategory(cat)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                  activeCategory === cat
-                    ? 'bg-[#E4501C] text-white border-[#E4501C]'
-                    : 'bg-transparent text-white/60 border-white/20 hover:border-white/40'
-                }`}>
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <button onClick={onClose}
-          className="w-full py-3.5 bg-[#E4501C] text-white rounded-2xl font-bold text-sm">
-          Appliquer les filtres
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ─── Mobile Product Card ──────────────────────────────────────────────────────
-
-function MobileProductCard({ product }: { product: ShopProduct }) {
-  const [added, setAdded] = useState(false);
-  const badge = TRANSACTION_BADGE[product.transaction_type];
-
-  const handleAdd = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (product.transaction_type === 'achat' || product.transaction_type === 'occasion') {
-      addToCart({
-        id: product.id, slug: product.slug, name: product.name, brand: product.brand,
-        category: product.category, priceEur: product.price_eur, weightG: product.weight_g,
-        image: product.image, imageAlt: product.image_alt,
-      });
-      setAdded(true);
-      setTimeout(() => setAdded(false), 2000);
-    } else if (product.transaction_type === 'enchere') {
-      window.location.href = '/encheres';
-    } else if (product.transaction_type === 'location') {
-      window.location.href = '/location';
-    }
-  };
-
-  const priceDisplay = () => {
-    if (product.transaction_type === 'location') return `${product.price_eur} €/j`;
-    if (product.transaction_type === 'enchere') return `dès ${product.price_eur} €`;
-    return `${product.price_eur} €`;
-  };
-
-  const actionLabel = () => {
-    switch (product.transaction_type) {
-      case 'enchere': return 'Enchérir';
-      case 'location': return 'Réserver';
-      case 'occasion': return 'Acheter';
-      default: return product.available ? '🛒 Panier' : 'Épuisé';
-    }
-  };
-
-  return (
-    <article className="flex items-center gap-3 bg-card border border-border rounded-2xl p-3 overflow-hidden">
-      <Link href={`/produit/${product.slug}`} className="flex-shrink-0">
-        <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-muted">
-          <AppImage src={product.image} alt={product.image_alt} fill sizes="80px" className="object-cover" />
-          {product.savings && product.savings > 0 ? (
-            <div className="absolute top-1 right-1">
-              <span className="text-[8px] font-mono px-1 py-0.5 rounded-full font-bold bg-[#E4501C] text-white">−{product.savings}€</span>
-            </div>
-          ) : null}
-        </div>
-      </Link>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 mb-0.5">
-          <span className={`text-[8px] font-mono px-1.5 py-0.5 rounded-full font-bold border ${badge.cls}`}>{badge.label}</span>
-        </div>
-        <Link href={`/produit/${product.slug}`}>
-          <p className="font-mono text-[10px] text-muted-foreground">{product.brand}</p>
-          <h3 className="font-display font-bold text-foreground text-sm leading-tight line-clamp-1">{product.name}</h3>
-        </Link>
-        <p className="text-[10px] text-muted-foreground mt-0.5">{product.weight_g >= 1000 ? `${(product.weight_g/1000).toFixed(1)} kg` : `${product.weight_g} g`}</p>
-      </div>
-      <div className="flex-shrink-0 flex flex-col items-end gap-2">
-        <span className="font-mono font-bold text-foreground text-base">{priceDisplay()}</span>
-        {product.original_price && (
-          <span className="font-mono text-[10px] text-muted-foreground line-through">{product.original_price} €</span>
-        )}
-        <button
-          onClick={handleAdd}
-          disabled={!product.available && product.transaction_type === 'achat'}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all min-h-[36px] min-w-[72px] ${
-            added ? 'bg-secondary text-white' :
-            !product.available && product.transaction_type === 'achat' ? 'bg-muted text-muted-foreground cursor-not-allowed' :
-            'bg-primary text-white hover:bg-primary/90 active:scale-95'
-          }`}
+        <p
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontWeight: 700,
+            fontSize: '15px',
+            color: '#1C2620',
+            marginTop: '6px',
+          }}
         >
-          {added ? '✓ Ajouté' : actionLabel()}
-        </button>
+          {product.price_eur} €
+        </p>
       </div>
     </article>
+  );
+}
+
+// ─── Configurator CTA Card ────────────────────────────────────────────────────
+
+function ConfiguratorCard() {
+  return (
+    <Link href="/ai-configurator" className="group block h-full">
+      <div
+        className="h-full flex flex-col items-center justify-center transition-all duration-300 group-hover:opacity-90"
+        style={{
+          background: '#1C2620',
+          borderRadius: '12px',
+          minHeight: '260px',
+          padding: '32px 24px',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Subtle texture */}
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E")`,
+          }}
+          aria-hidden="true"
+        />
+        <div className="relative z-10 text-center">
+          {/* Lock icon */}
+          <div
+            className="mx-auto mb-5 flex items-center justify-center"
+            style={{
+              width: '48px',
+              height: '48px',
+              border: '1.5px solid rgba(255,255,255,0.2)',
+              borderRadius: '12px',
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+          <p
+            style={{
+              fontSize: '9px',
+              fontFamily: 'var(--font-mono)',
+              color: 'rgba(255,255,255,0.4)',
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase',
+              marginBottom: '8px',
+            }}
+          >
+            Assistant
+          </p>
+          <p
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: '16px',
+              color: '#FFFFFF',
+              lineHeight: '1.3',
+              marginBottom: '6px',
+            }}
+          >
+            Composer votre sac
+          </p>
+          <p
+            style={{
+              fontSize: '12px',
+              color: 'rgba(255,255,255,0.4)',
+              fontFamily: 'var(--font-sans)',
+              lineHeight: '1.5',
+              marginBottom: '20px',
+            }}
+          >
+            4 questions · résultat sur mesure
+          </p>
+          <div
+            className="inline-flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 group-hover:scale-110"
+            style={{
+              background: 'rgba(255,255,255,0.1)',
+              border: '1px solid rgba(255,255,255,0.15)',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </Link>
   );
 }
 
@@ -621,31 +356,29 @@ function MobileProductCard({ product }: { product: ShopProduct }) {
 
 function Pagination({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (p: number) => void }) {
   if (totalPages <= 1) return null;
-  const pages = Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-    if (totalPages <= 7) return i + 1;
-    if (page <= 4) return i + 1;
-    if (page >= totalPages - 3) return totalPages - 6 + i;
-    return page - 3 + i;
-  });
-
   return (
-    <nav className="flex items-center justify-center gap-2 mt-10" aria-label="Pagination">
+    <nav className="flex items-center justify-center gap-2 mt-12" aria-label="Pagination">
       <button
         onClick={() => onChange(page - 1)}
         disabled={page === 1}
-        className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:border-primary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        className="w-9 h-9 rounded-full flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+        style={{ border: '1px solid rgba(28,38,32,0.15)', color: '#1C2620' }}
         aria-label="Page précédente"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
       </button>
-      {pages.map((p) => (
+      {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((p) => (
         <button
           key={p}
           onClick={() => onChange(p)}
-          className={`w-9 h-9 rounded-lg border text-sm font-mono font-600 transition-all ${
-            p === page
-              ? 'bg-primary text-white border-primary' :'border-border text-muted-foreground hover:border-primary hover:text-primary'
-          }`}
+          className="w-9 h-9 rounded-full text-sm transition-all"
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontWeight: p === page ? 700 : 400,
+            background: p === page ? '#1C2620' : 'transparent',
+            color: p === page ? '#FFFFFF' : '#1C2620',
+            border: p === page ? '1px solid #1C2620' : '1px solid rgba(28,38,32,0.15)',
+          }}
           aria-current={p === page ? 'page' : undefined}
         >
           {p}
@@ -654,10 +387,11 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
       <button
         onClick={() => onChange(page + 1)}
         disabled={page === totalPages}
-        className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:border-primary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        className="w-9 h-9 rounded-full flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+        style={{ border: '1px solid rgba(28,38,32,0.15)', color: '#1C2620' }}
         aria-label="Page suivante"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
       </button>
     </nav>
   );
@@ -666,35 +400,17 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function BoutiqueClient() {
-  const [budget, setBudget] = useState(300);
-  const [maxWeight, setMaxWeight] = useState(10);
   const [activeCategory, setActiveCategory] = useState('Tout');
-  const [activeTypes, setActiveTypes] = useState<Set<TransactionType>>(new Set(['achat', 'location', 'occasion', 'enchere']));
+  const [sortBy, setSortBy] = useState<SortOption>('pertinence');
   const [products, setProducts] = useState<ShopProduct[]>(MOCK_PRODUCTS);
   const [loading, setLoading] = useState(false);
-  const [optimizing, setOptimizing] = useState(false);
-  const [optimizedResult, setOptimizedResult] = useState<OptimizedKit[] | null>(null);
-  const [activePresetKit, setActivePresetKit] = useState<string | null>(null);
-  const [animKey, setAnimKey] = useState(0);
-
-  // New filter/sort/pagination state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeBrand, setActiveBrand] = useState('Toutes');
-  const [minPrice, setMinPrice] = useState(0);
-  const [maxPrice, setMaxPrice] = useState(2000);
-  const [sortBy, setSortBy] = useState<SortOption>('pertinence');
   const [currentPage, setCurrentPage] = useState(1);
-
-  // Trigger card animation on slider change
-  useEffect(() => {
-    const t = setTimeout(() => setAnimKey((k) => k + 1), 50);
-    return () => clearTimeout(t);
-  }, [budget, maxWeight, activeCategory]);
+  const [featuredAdded, setFeaturedAdded] = useState(false);
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [budget, maxWeight, activeCategory, activeTypes, searchQuery, activeBrand, minPrice, maxPrice, sortBy]);
+  }, [activeCategory, sortBy]);
 
   // Try to load from Supabase, fall back to mock
   useEffect(() => {
@@ -705,7 +421,7 @@ export default function BoutiqueClient() {
         const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000));
         const fetchPromise = supabase
           .from('shop_products')
-          .select('id, slug, name, brand, category, category_main, weight_g, price_eur, image, image_alt, rating, review_count, available, transaction_type, price_per_day, original_price, condition, starting_bid, ends_at, savings, score_kdv, essentiality, cabin_compatible, versatility_10, product_id')
+          .select('id, slug, name, brand, category, weight_g, price_eur, image, image_alt, rating, review_count, available, transaction_type, price_per_day, original_price, condition, starting_bid, ends_at, savings, score_kdv')
           .order('score_kdv', { ascending: false })
           .limit(200);
 
@@ -722,546 +438,634 @@ export default function BoutiqueClient() {
     load();
   }, []);
 
-  // Derive unique brands from products
-  const brands = useMemo(() => {
-    const set = new Set(products.map((p) => p.brand).filter(Boolean));
-    return Array.from(set).sort();
-  }, [products]);
+  // Featured product = first product (highest score_kdv)
+  const featuredProduct = products[0];
 
-  // ── Filtered + sorted products ──
+  // Filtered + sorted products (excluding featured)
   const filtered = useMemo(() => {
-    let list = products.filter((p) => {
-      const withinBudget = p.price_eur <= budget;
-      const withinWeight = p.weight_g <= maxWeight * 1000;
-      const matchCat = activeCategory === 'Tout' || p.category === activeCategory;
-      const matchType = activeTypes.has(p.transaction_type);
-      const matchBrand = activeBrand === 'Toutes' || p.brand === activeBrand;
-      const matchMinPrice = p.price_eur >= minPrice;
-      const matchMaxPrice = p.price_eur <= maxPrice;
-      const q = searchQuery.toLowerCase().trim();
-      const matchSearch = !q || p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q) || p.category.toLowerCase().includes(q);
-      return withinBudget && withinWeight && matchCat && matchType && matchBrand && matchMinPrice && matchMaxPrice && matchSearch;
+    let list = products.slice(1).filter((p) => {
+      const catMap: Record<string, string[]> = {
+        'Portage': ['Sacs à dos', 'Portage'],
+        'Couchage': ['Couchage', 'Tentes'],
+        'Vêtements': ['Vêtements', 'Chaussures'],
+        'Éclairage': ['Éclairage'],
+        'Hydratation': ['Eau', 'Hydratation'],
+      };
+      if (activeCategory === 'Tout') return true;
+      const mapped = catMap[activeCategory] || [activeCategory];
+      return mapped.includes(p.category);
     });
 
-    // Sort
     switch (sortBy) {
-      case 'prix_asc':  list = [...list].sort((a, b) => a.price_eur - b.price_eur); break;
+      case 'prix_asc': list = [...list].sort((a, b) => a.price_eur - b.price_eur); break;
       case 'prix_desc': list = [...list].sort((a, b) => b.price_eur - a.price_eur); break;
       case 'poids_asc': list = [...list].sort((a, b) => a.weight_g - b.weight_g); break;
       case 'note_desc': list = [...list].sort((a, b) => b.rating - a.rating); break;
-      default: break; // pertinence = keep score_kdv order from Supabase
+      default: break;
     }
-
     return list;
-  }, [products, budget, maxWeight, activeCategory, activeTypes, activeBrand, minPrice, maxPrice, searchQuery, sortBy]);
+  }, [products, activeCategory, sortBy]);
 
-  // ── Pagination ──
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
     return filtered.slice(start, start + PAGE_SIZE);
   }, [filtered, currentPage]);
 
-  // ── Dynamic summary stats ──
-  const stats = useMemo(() => {
-    const totalWeight = filtered.reduce((sum, p) => sum + p.weight_g, 0);
-    const totalPrice = filtered.reduce((sum, p) => sum + p.price_eur, 0);
-    const totalSavings = filtered.reduce((sum, p) => sum + (p.savings || 0), 0);
-    return {
-      count: filtered.length,
-      totalWeight: totalWeight / 1000,
-      totalPrice,
-      totalSavings,
-      budgetUsed: Math.min(totalPrice, budget),
-      weightUsed: Math.min(totalWeight / 1000, maxWeight),
-    };
-  }, [filtered, budget, maxWeight]);
-
-  // ── Toggle transaction type ──
-  const toggleType = useCallback((type: TransactionType) => {
-    setActiveTypes((prev) => {
-      const next = new Set(prev);
-      if (next.has(type)) {
-        if (next.size > 1) next.delete(type);
-      } else {
-        next.add(type);
-      }
-      return next;
+  const handleFeaturedAdd = useCallback(() => {
+    if (!featuredProduct) return;
+    addToCart({
+      id: featuredProduct.id, slug: featuredProduct.slug, name: featuredProduct.name,
+      brand: featuredProduct.brand, category: featuredProduct.category,
+      priceEur: featuredProduct.price_eur, weightG: featuredProduct.weight_g,
+      image: featuredProduct.image, imageAlt: featuredProduct.image_alt,
     });
-  }, []);
+    setFeaturedAdded(true);
+    setTimeout(() => setFeaturedAdded(false), 2500);
+  }, [featuredProduct]);
 
-  // ── Apply preset kit ──
-  const applyPreset = useCallback((preset: typeof PRESET_KITS[0]) => {
-    setBudget(preset.budget);
-    setMaxWeight(preset.weight);
-    setActivePresetKit(preset.label);
-    setOptimizedResult(null);
-  }, []);
-
-  // ── Optimization algorithm ──
-  const runOptimization = useCallback(async () => {
-    setOptimizing(true);
-    setOptimizedResult(null);
-    await new Promise((r) => setTimeout(r, 1200));
-
-    const groups = new Map<string, ShopProduct[]>();
-    products.forEach((p) => {
-      const key = p.name;
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(p);
-    });
-
-    const result: OptimizedKit[] = [];
-    let remainingBudget = budget;
-    let remainingWeight = maxWeight * 1000;
-
-    const sortedGroups = Array.from(groups.entries()).sort(([, a], [, b]) => a[0].weight_g - b[0].weight_g);
-
-    for (const [, variants] of sortedGroups) {
-      if (result.length >= 6) break;
-      const sorted = [...variants].sort((a, b) => a.price_eur - b.price_eur);
-      const best = sorted.find((p) => p.price_eur <= remainingBudget && p.weight_g <= remainingWeight);
-      if (best) {
-        const maxPriceV = Math.max(...variants.map((v) => v.price_eur));
-        result.push({
-          product: best,
-          chosen_type: best.transaction_type,
-          chosen_price: best.price_eur,
-          savings: maxPriceV - best.price_eur,
-        });
-        remainingBudget -= best.price_eur;
-        remainingWeight -= best.weight_g;
-      }
-    }
-
-    setOptimizedResult(result);
-    setOptimizing(false);
-  }, [products, budget, maxWeight]);
-
-  const optimizationStats = useMemo(() => {
-    if (!optimizedResult) return null;
-    return {
-      total: optimizedResult.reduce((s, i) => s + i.chosen_price, 0),
-      weight: optimizedResult.reduce((s, i) => s + i.product.weight_g, 0) / 1000,
-      savings: optimizedResult.reduce((s, i) => s + i.savings, 0),
-    };
-  }, [optimizedResult]);
-
-  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
-
-  const resetFilters = useCallback(() => {
-    setBudget(500);
-    setMaxWeight(15);
-    setActiveCategory('Tout');
-    setActiveBrand('Toutes');
-    setMinPrice(0);
-    setMaxPrice(2000);
-    setSearchQuery('');
-    setSortBy('pertinence');
-    setCurrentPage(1);
-  }, []);
+  const totalCount = products.length;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen" style={{ background: '#F7F4EE', fontFamily: 'var(--font-sans)' }}>
       <Header />
 
-      {/* Mobile filter sheet */}
-      <MobileFilterSheet
-        open={mobileFilterOpen}
-        onClose={() => setMobileFilterOpen(false)}
-        budget={budget}
-        setBudget={(v) => { setBudget(v); setActivePresetKit(null); setOptimizedResult(null); }}
-        maxWeight={maxWeight}
-        setMaxWeight={(v) => { setMaxWeight(v); setActivePresetKit(null); setOptimizedResult(null); }}
-        activeCategory={activeCategory}
-        setActiveCategory={setActiveCategory}
-        activeTypes={activeTypes}
-        toggleType={toggleType}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        activeBrand={activeBrand}
-        setActiveBrand={setActiveBrand}
-        brands={brands}
-        minPrice={minPrice}
-        setMinPrice={setMinPrice}
-        maxPrice={maxPrice}
-        setMaxPrice={setMaxPrice}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-      />
+      {/* ══════════════════════════════════════════════
+          HERO — dark green editorial header
+      ══════════════════════════════════════════════ */}
+      <section
+        style={{ background: '#F7F4EE', paddingTop: '80px' }}
+        aria-labelledby="boutique-title"
+      >
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 pt-10 pb-6 sm:pt-14 sm:pb-8">
+          {/* Breadcrumb */}
+          <p
+            style={{
+              fontSize: '10px',
+              fontFamily: 'var(--font-mono)',
+              color: '#9BA89F',
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase',
+              marginBottom: '16px',
+            }}
+          >
+            Boutique · Édition Automne 2026
+          </p>
 
-      {/* ── MOBILE LAYOUT ── */}
-      <div className="md:hidden">
-        {/* Mobile hero — compact */}
-        <div className="pt-16 pb-4 px-4" style={{ background: 'var(--dark-bg)' }}>
-          <p className="font-mono text-[10px] text-primary uppercase tracking-widest mb-1">Boutique</p>
-          <h1 className="font-display font-bold text-white text-2xl leading-tight">
-            Équipement <span style={{ color: 'var(--primary)' }}>optimisé</span>
-          </h1>
-          {/* Search bar */}
-          <div className="relative mt-3">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher un produit…"
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white/10 text-white placeholder-white/30 border border-white/20 text-sm focus:outline-none focus:border-white/50"
-            />
-          </div>
-          {/* Preset kits horizontal scroll */}
-          <div className="flex gap-2 overflow-x-auto mt-3 pb-1 scrollbar-hide">
-            {PRESET_KITS.map((kit) => (
-              <button key={kit.label} onClick={() => applyPreset(kit)}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
-                  activePresetKit === kit.label ? 'bg-primary text-white border-primary' : 'bg-white/10 text-white/70 border-white/20'
-                }`}>
-                <span>{kit.icon}</span>{kit.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Mobile sticky filter bar */}
-        <div className="sticky top-[52px] z-30 flex items-center gap-3 px-4 py-3 border-b border-border" style={{ background: 'var(--dark-bg)' }}>
-          <button onClick={() => setMobileFilterOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 text-white text-sm font-bold border border-white/20 flex-shrink-0">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-            Filtrer
-          </button>
-          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide flex-1">
-            {CATEGORIES.slice(0, 8).map((cat) => (
-              <button key={cat} onClick={() => setActiveCategory(cat)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                  activeCategory === cat ? 'bg-[#E4501C] text-white border-[#E4501C]' : 'bg-transparent text-white/60 border-white/20'
-                }`}>
-                {cat}
-              </button>
-            ))}
-          </div>
-          <span className="flex-shrink-0 font-mono text-xs text-white/50">{stats.count}</span>
-        </div>
-
-        {/* Mobile product list */}
-        <div className="px-4 py-4 space-y-3">
-          {loading ? (
-            Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-24 bg-card border border-border rounded-2xl animate-pulse" />
-            ))
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-4xl mb-3">🎒</p>
-              <p className="font-display font-bold text-foreground mb-1">Aucun équipement</p>
-              <p className="text-muted-foreground text-sm mb-4">Ajustez vos filtres pour voir plus d&apos;options.</p>
-              <button onClick={() => setMobileFilterOpen(true)} className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold">
-                Modifier les filtres
-              </button>
-            </div>
-          ) : (
-            <>
-              {paginated.map((product) => (
-                <MobileProductCard key={product.id} product={product} />
-              ))}
-              <Pagination page={currentPage} totalPages={totalPages} onChange={(p) => { setCurrentPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
-            </>
-          )}
-        </div>
-
-        {/* Mobile optimize FAB */}
-        <div className="fixed left-4 right-4 z-30" style={{ bottom: 'calc(56px + env(safe-area-inset-bottom) + 12px)' }}>
-          <button onClick={runOptimization} disabled={optimizing}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm text-white shadow-xl transition-all active:scale-[0.98]"
-            style={{ background: optimizing ? 'var(--muted)' : 'linear-gradient(135deg, var(--primary), var(--accent))' }}>
-            {optimizing ? (
-              <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Optimisation…</>
-            ) : (
-              <><span>✨</span>Optimiser mon kit</>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* ── DESKTOP LAYOUT ── */}
-      <div className="hidden md:block">
-        {/* ── Hero ── */}
-        <section className="pt-24 pb-8 px-4" style={{ background: 'var(--dark-bg)' }}>
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-              <div>
-                <p className="font-mono text-xs text-primary uppercase tracking-widest mb-2" style={{ fontFamily: 'var(--font-mono)' }}>
-                  Travel Operating System
-                </p>
-                <h1 className="font-display font-800 text-white text-4xl lg:text-5xl leading-tight tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
-                  Trouvez le meilleur<br />
-                  <span style={{ color: 'var(--primary)' }}>équipement pour vous</span>
-                </h1>
-                <p className="text-white/60 mt-3 text-base max-w-xl">
-                  Pas une boutique. Un moteur d&apos;optimisation. Définissez vos contraintes, le système trouve la meilleure solution.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {PRESET_KITS.map((kit) => (
-                  <button key={kit.label} onClick={() => applyPreset(kit)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-600 transition-all duration-200 border ${
-                      activePresetKit === kit.label ? 'bg-primary text-white border-primary' : 'bg-white/8 text-white/70 border-white/15 hover:bg-white/15 hover:text-white'
-                    }`}>
-                    <span>{kit.icon}</span><span>{kit.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Dual Sliders ── */}
-        <section className="sticky top-16 z-30 border-b border-border shadow-lg" style={{ background: 'var(--dark-bg)' }}>
-          <div className="max-w-7xl mx-auto px-4 py-5">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12">
-              <PremiumSlider label="Budget maximal" unit="€" value={budget} min={0} max={1500} step={10}
-                onChange={(v) => { setBudget(v); setActivePresetKit(null); setOptimizedResult(null); }}
-                accentColor="var(--primary)" />
-              <PremiumSlider label="Poids maximal" unit="kg" value={maxWeight} min={1} max={25} step={0.5}
-                onChange={(v) => { setMaxWeight(v); setActivePresetKit(null); setOptimizedResult(null); }}
-                formatValue={(v) => `${v} kg`} accentColor="var(--info)" />
-            </div>
-          </div>
-        </section>
-
-        {/* ── Dynamic Summary Card ── */}
-        <section className="px-4 py-6" style={{ background: 'var(--dark-bg)' }}>
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
-                <p className="font-mono font-800 text-3xl text-white transition-all duration-300" style={{ fontFamily: 'var(--font-mono)' }}>{stats.count}</p>
-                <p className="font-mono text-[10px] text-white/50 uppercase tracking-widest mt-1" style={{ fontFamily: 'var(--font-mono)' }}>Équipements compatibles</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
-                <p className="font-mono font-800 text-3xl transition-all duration-300" style={{ fontFamily: 'var(--font-mono)', color: 'var(--primary)' }}>{stats.budgetUsed.toFixed(0)} €</p>
-                <p className="font-mono text-[10px] text-white/50 uppercase tracking-widest mt-1" style={{ fontFamily: 'var(--font-mono)' }}>/ {budget} € budget</p>
-                <div className="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${Math.min(100, (stats.budgetUsed / budget) * 100)}%`, background: 'var(--primary)' }} />
-                </div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
-                <p className="font-mono font-800 text-3xl transition-all duration-300" style={{ fontFamily: 'var(--font-mono)', color: 'var(--info)' }}>{stats.weightUsed.toFixed(1)} kg</p>
-                <p className="font-mono text-[10px] text-white/50 uppercase tracking-widest mt-1" style={{ fontFamily: 'var(--font-mono)' }}>/ {maxWeight} kg poids</p>
-                <div className="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${Math.min(100, (stats.weightUsed / maxWeight) * 100)}%`, background: 'var(--info)' }} />
-                </div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
-                <p className="font-mono font-800 text-3xl text-emerald-400 transition-all duration-300" style={{ fontFamily: 'var(--font-mono)' }}>{stats.totalSavings > 0 ? `${stats.totalSavings} €` : '—'}</p>
-                <p className="font-mono text-[10px] text-white/50 uppercase tracking-widest mt-1" style={{ fontFamily: 'var(--font-mono)' }}>Économie réalisée</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <TopoSeparator />
-
-        {/* ── Main content ── */}
-        <main className="max-w-7xl mx-auto px-4 py-8">
-
-          {/* ── Search bar ── */}
-          <div className="relative mb-5">
-            <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher par nom, marque ou catégorie…"
-              className="w-full pl-11 pr-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder-muted-foreground text-sm focus:outline-none focus:border-primary transition-colors"
-            />
-            {searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-              </button>
-            )}
-          </div>
-
-          {/* ── Filter row ── */}
-          <div className="flex flex-col gap-3 mb-6">
-            {/* Transaction type + Sort */}
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-                <span className="font-mono text-xs text-muted-foreground uppercase tracking-widest mr-1 flex-shrink-0" style={{ fontFamily: 'var(--font-mono)' }}>Type :</span>
-                {(Object.entries(TRANSACTION_BADGE) as [TransactionType, typeof TRANSACTION_BADGE[TransactionType]][]).map(([type, cfg]) => (
-                  <button key={type} onClick={() => toggleType(type)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-600 transition-all duration-200 border whitespace-nowrap flex-shrink-0 ${
-                      activeTypes.has(type) ? cfg.cls : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30'
-                    }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${activeTypes.has(type) ? cfg.dot : 'bg-muted-foreground'}`} />
-                    {cfg.label}
-                  </button>
-                ))}
-              </div>
-              <div className="ml-auto flex items-center gap-2 flex-shrink-0">
-                <span className="font-mono text-xs text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>Trier :</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="px-3 py-1.5 rounded-lg border border-border bg-card text-foreground text-xs font-mono focus:outline-none focus:border-primary cursor-pointer"
-                  style={{ fontFamily: 'var(--font-mono)' }}
-                >
-                  {SORT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
+          {/* Headline + stats */}
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 lg:gap-12 mb-8 sm:mb-10">
+            <div className="flex-1">
+              <h1
+                id="boutique-title"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 800,
+                  fontSize: 'clamp(2.8rem, 6vw, 5rem)',
+                  lineHeight: '1.0',
+                  letterSpacing: '-0.04em',
+                  color: '#1C2620',
+                  marginBottom: '4px',
+                }}
+              >
+                Six objets,
+              </h1>
+              <h1
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 800,
+                  fontSize: 'clamp(2.8rem, 6vw, 5rem)',
+                  lineHeight: '1.0',
+                  letterSpacing: '-0.04em',
+                  color: '#1C2620',
+                  fontStyle: 'italic',
+                  marginBottom: '20px',
+                }}
+                aria-hidden="true"
+              >
+                rien de plus.
+              </h1>
+              <p
+                style={{
+                  fontSize: 'clamp(13px, 1.5vw, 15px)',
+                  color: '#6B8A7A',
+                  lineHeight: '1.65',
+                  maxWidth: '420px',
+                  fontFamily: 'var(--font-sans)',
+                }}
+              >
+                Testés six semaines minimum sur le terrain. Ce qui reste, on le garde. Ce qui casse retourne d&apos;où ça vient.
+              </p>
             </div>
 
+            {/* Stats */}
+            <div className="flex-shrink-0 text-right">
+              <p
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 800,
+                  fontSize: 'clamp(2rem, 3.5vw, 3rem)',
+                  color: '#1C2620',
+                  lineHeight: '1',
+                  letterSpacing: '-0.03em',
+                }}
+              >
+                {totalCount} pièces
+              </p>
+              <p
+                style={{
+                  fontSize: '12px',
+                  color: '#9BA89F',
+                  fontFamily: 'var(--font-sans)',
+                  marginTop: '4px',
+                }}
+              >
+                Testés en Chartreuse, Vercors et Écrins
+                <br />par 47 voyageurs partenaires
+              </p>
+            </div>
+          </div>
+
+          {/* Category filters + sort */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             {/* Category pills */}
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-              {CATEGORIES.map((cat) => (
-                <button key={cat} onClick={() => setActiveCategory(cat)}
-                  className={`category-pill text-xs py-1.5 px-3 whitespace-nowrap flex-shrink-0 ${activeCategory === cat ? 'active' : ''}`}>
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
+              {CATEGORIES_BOUTIQUE.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className="flex-shrink-0 transition-all duration-200"
+                  style={{
+                    padding: '7px 16px',
+                    borderRadius: '999px',
+                    fontSize: '13px',
+                    fontFamily: 'var(--font-sans)',
+                    fontWeight: activeCategory === cat ? 600 : 400,
+                    background: activeCategory === cat ? '#1C2620' : 'transparent',
+                    color: activeCategory === cat ? '#FFFFFF' : '#6B8A7A',
+                    border: activeCategory === cat ? '1px solid #1C2620' : '1px solid rgba(28,38,32,0.18)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
                   {cat}
                 </button>
               ))}
             </div>
 
-            {/* Brand filter + Price range */}
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Brand select */}
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>Marque :</span>
-                <select
-                  value={activeBrand}
-                  onChange={(e) => setActiveBrand(e.target.value)}
-                  className="px-3 py-1.5 rounded-lg border border-border bg-card text-foreground text-xs font-mono focus:outline-none focus:border-primary cursor-pointer max-w-[160px]"
-                  style={{ fontFamily: 'var(--font-mono)' }}
+            {/* Sort */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span
+                style={{
+                  fontSize: '12px',
+                  fontFamily: 'var(--font-mono)',
+                  color: '#9BA89F',
+                  letterSpacing: '0.08em',
+                }}
+              >
+                Trier par
+              </span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="focus:outline-none cursor-pointer"
+                style={{
+                  fontSize: '13px',
+                  fontFamily: 'var(--font-sans)',
+                  color: '#1C2620',
+                  background: 'transparent',
+                  border: 'none',
+                  fontWeight: 500,
+                  padding: '4px 0',
+                }}
+              >
+                {SORT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9BA89F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="4" y1="6" x2="20" y2="6" />
+                <line x1="8" y1="12" x2="16" y2="12" />
+                <line x1="11" y1="18" x2="13" y2="18" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════
+          FEATURED PRODUCT — dark green hero card
+      ══════════════════════════════════════════════ */}
+      {featuredProduct && (
+        <section aria-label="Produit vedette">
+          <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 pb-6">
+            <div
+              className="overflow-hidden"
+              style={{
+                background: '#1C2620',
+                borderRadius: '20px',
+              }}
+            >
+              <div className="flex flex-col lg:flex-row">
+                {/* Product image */}
+                <div
+                  className="relative flex-shrink-0"
+                  style={{
+                    width: '100%',
+                    maxWidth: '420px',
+                    aspectRatio: '4/3',
+                    background: '#F5F2EC',
+                  }}
                 >
-                  <option value="Toutes">Toutes les marques</option>
-                  {brands.map((b) => <option key={b} value={b}>{b}</option>)}
-                </select>
-              </div>
+                  <AppImage
+                    src={featuredProduct.image}
+                    alt={featuredProduct.image_alt}
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 420px"
+                    className="object-cover"
+                  />
+                </div>
 
-              {/* Price range */}
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>Prix :</span>
-                <input
-                  type="number"
-                  min={0}
-                  max={maxPrice}
-                  value={minPrice}
-                  onChange={(e) => setMinPrice(Number(e.target.value))}
-                  className="w-20 px-2 py-1.5 rounded-lg border border-border bg-card text-foreground text-xs font-mono text-center focus:outline-none focus:border-primary"
-                  style={{ fontFamily: 'var(--font-mono)' }}
-                  aria-label="Prix minimum"
-                />
-                <span className="text-muted-foreground text-xs">—</span>
-                <input
-                  type="number"
-                  min={minPrice}
-                  max={2000}
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(Number(e.target.value))}
-                  className="w-20 px-2 py-1.5 rounded-lg border border-border bg-card text-foreground text-xs font-mono text-center focus:outline-none focus:border-primary"
-                  style={{ fontFamily: 'var(--font-mono)' }}
-                  aria-label="Prix maximum"
-                />
-                <span className="font-mono text-xs text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>€</span>
-              </div>
+                {/* Product info */}
+                <div
+                  className="flex-1 flex flex-col justify-center"
+                  style={{ padding: 'clamp(28px, 5vw, 56px)' }}
+                >
+                  {/* Tags */}
+                  <div className="flex items-center gap-2 mb-5">
+                    <span
+                      style={{
+                        fontSize: '9px',
+                        fontFamily: 'var(--font-mono)',
+                        color: 'rgba(255,255,255,0.5)',
+                        letterSpacing: '0.16em',
+                        textTransform: 'uppercase',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        padding: '3px 10px',
+                        borderRadius: '999px',
+                      }}
+                    >
+                      ✦ Nouveauté
+                    </span>
+                    <span
+                      style={{
+                        fontSize: '9px',
+                        fontFamily: 'var(--font-mono)',
+                        color: 'rgba(255,255,255,0.5)',
+                        letterSpacing: '0.16em',
+                        textTransform: 'uppercase',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        padding: '3px 10px',
+                        borderRadius: '999px',
+                      }}
+                    >
+                      Le sac essentiel
+                    </span>
+                  </div>
 
-              {/* Reset filters */}
-              {(searchQuery || activeBrand !== 'Toutes' || minPrice > 0 || maxPrice < 2000 || activeCategory !== 'Tout' || sortBy !== 'pertinence') && (
-                <button onClick={resetFilters} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                  Réinitialiser
-                </button>
-              )}
+                  {/* Name */}
+                  <h2
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: 800,
+                      fontSize: 'clamp(2rem, 4vw, 3.2rem)',
+                      lineHeight: '1.05',
+                      letterSpacing: '-0.03em',
+                      color: '#FFFFFF',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    {featuredProduct.name}
+                  </h2>
+                  <p
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: 400,
+                      fontStyle: 'italic',
+                      fontSize: 'clamp(1.5rem, 3vw, 2.4rem)',
+                      color: 'rgba(255,255,255,0.45)',
+                      lineHeight: '1.1',
+                      marginBottom: '20px',
+                    }}
+                  >
+                    toile cirée.
+                  </p>
+
+                  {/* Description */}
+                  <p
+                    style={{
+                      fontSize: '14px',
+                      color: 'rgba(255,255,255,0.55)',
+                      lineHeight: '1.7',
+                      maxWidth: '380px',
+                      fontFamily: 'var(--font-sans)',
+                      marginBottom: '24px',
+                    }}
+                  >
+                    Trois compartiments, une bandoulière ventrale, un point d&apos;accroche pour tapis de sol, fabriqué dans les Alpes-de-Haute-Provence, réparable à vie.
+                  </p>
+
+                  {/* Price */}
+                  <div className="flex items-center gap-3 mb-8">
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 800,
+                        fontSize: 'clamp(1.8rem, 3vw, 2.4rem)',
+                        color: '#FFFFFF',
+                        letterSpacing: '-0.02em',
+                      }}
+                    >
+                      {featuredProduct.price_eur} €
+                    </span>
+                    {featuredProduct.original_price && (
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '14px',
+                          color: 'rgba(255,255,255,0.35)',
+                          textDecoration: 'line-through',
+                        }}
+                      >
+                        {featuredProduct.original_price} €
+                      </span>
+                    )}
+                    {featuredProduct.savings && featuredProduct.savings > 0 && (
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          fontFamily: 'var(--font-mono)',
+                          background: '#4A6355',
+                          color: '#FFFFFF',
+                          padding: '3px 8px',
+                          borderRadius: '999px',
+                          fontWeight: 700,
+                        }}
+                      >
+                        −{Math.round((featuredProduct.savings / (featuredProduct.original_price || featuredProduct.price_eur)) * 100)}%
+                      </span>
+                    )}
+                  </div>
+
+                  {/* CTAs */}
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Link
+                      href={`/produit/${featuredProduct.slug}`}
+                      className="inline-flex items-center gap-2 font-semibold transition-all duration-200 hover:-translate-y-0.5"
+                      style={{
+                        background: '#FFFFFF',
+                        color: '#1C2620',
+                        borderRadius: '12px',
+                        padding: '13px 22px',
+                        fontSize: '14px',
+                        fontFamily: 'var(--font-sans)',
+                      }}
+                    >
+                      Découvrir le sac
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                    <button
+                      onClick={handleFeaturedAdd}
+                      className="inline-flex items-center gap-2 font-semibold transition-all duration-200 hover:bg-white/10"
+                      style={{
+                        background: 'rgba(255,255,255,0.08)',
+                        color: '#FFFFFF',
+                        borderRadius: '12px',
+                        padding: '13px 22px',
+                        fontSize: '14px',
+                        fontFamily: 'var(--font-sans)',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                      }}
+                    >
+                      {featuredAdded ? '✓ Ajouté' : 'Ajouter au panier'}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+        </section>
+      )}
 
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-            <p className="font-mono text-sm text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>
-              <span className="font-700 text-foreground">{stats.count}</span> équipements
-              {totalPages > 1 && <span className="ml-1">— page {currentPage}/{totalPages}</span>}
-            </p>
-            <button onClick={runOptimization} disabled={optimizing}
-              className="flex items-center gap-2 px-5 py-3 rounded-xl font-600 text-sm transition-all duration-200 text-white shadow-lg active:scale-95"
-              style={{ background: optimizing ? 'var(--muted)' : 'linear-gradient(135deg, var(--primary), var(--accent))', color: optimizing ? 'var(--muted-foreground)' : 'white' }}>
-              {optimizing ? (
-                <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Optimisation en cours…</>
-              ) : (
-                <><span>✨</span>Optimiser automatiquement</>
-              )}
-            </button>
+      {/* ══════════════════════════════════════════════
+          PRODUCT GRID — "Le reste du kit."
+      ══════════════════════════════════════════════ */}
+      <section
+        style={{ background: '#F7F4EE', paddingTop: '48px', paddingBottom: '64px' }}
+        aria-labelledby="grid-title"
+      >
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 xl:px-16">
+          {/* Section header */}
+          <div className="flex items-end justify-between mb-8 sm:mb-10">
+            <h2
+              id="grid-title"
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 800,
+                fontSize: 'clamp(1.6rem, 3vw, 2.4rem)',
+                color: '#1C2620',
+                letterSpacing: '-0.03em',
+                lineHeight: '1.1',
+              }}
+            >
+              Le <em style={{ fontStyle: 'italic', fontWeight: 400 }}>reste</em> du kit.
+            </h2>
+            <Link
+              href="/catalogue"
+              className="flex items-center gap-1.5 transition-all duration-200 hover:gap-2.5"
+              style={{
+                fontSize: '13px',
+                fontFamily: 'var(--font-sans)',
+                color: '#6B8A7A',
+                fontWeight: 500,
+              }}
+            >
+              Voir tout · {filtered.length + 1} pièces
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </Link>
           </div>
 
-          {optimizedResult && optimizationStats && (
-            <div className="mb-10 rounded-2xl border border-primary/30 overflow-hidden" style={{ background: 'var(--card)' }}>
-              <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">✨</span>
-                  <h2 className="font-display font-700 text-foreground" style={{ fontFamily: 'var(--font-display)' }}>Kit optimisé pour vous</h2>
-                </div>
-                <button onClick={() => setOptimizedResult(null)} className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Fermer">
-                  <Icon name="XMarkIcon" size={20} variant="outline" />
-                </button>
-              </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
-                  {optimizedResult.map((item) => (<OptimizationResultCard key={item.product.id} item={item} />))}
-                </div>
-                <div className="grid grid-cols-3 gap-4 p-4 rounded-xl border border-border bg-background">
-                  <div className="text-center">
-                    <p className="font-mono font-700 text-xl text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{optimizationStats.total} €</p>
-                    <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5" style={{ fontFamily: 'var(--font-mono)' }}>Budget final</p>
-                  </div>
-                  <div className="text-center border-x border-border">
-                    <p className="font-mono font-700 text-xl" style={{ fontFamily: 'var(--font-mono)', color: 'var(--info)' }}>{optimizationStats.weight.toFixed(1)} kg</p>
-                    <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5" style={{ fontFamily: 'var(--font-mono)' }}>Poids total</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="font-mono font-700 text-xl text-emerald-600" style={{ fontFamily: 'var(--font-mono)' }}>{optimizationStats.savings} €</p>
-                    <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5" style={{ fontFamily: 'var(--font-mono)' }}>Économie réalisée</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
+          {/* Grid */}
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="topo-card overflow-hidden" aria-hidden="true">
-                  <div className="skeleton aspect-[4/3]" />
-                  <div className="p-4 space-y-3">
-                    <div className="skeleton h-3 w-20 rounded" />
-                    <div className="skeleton h-4 w-3/4 rounded" />
-                    <div className="skeleton h-3 w-full rounded" />
-                    <div className="flex justify-between items-center">
-                      <div className="skeleton h-5 w-16 rounded" />
-                      <div className="skeleton h-8 w-20 rounded-lg" />
-                    </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} aria-hidden="true">
+                  <div
+                    className="animate-pulse"
+                    style={{ borderRadius: '12px', aspectRatio: '4/3', background: '#E8E4DC' }}
+                  />
+                  <div className="pt-3 space-y-2">
+                    <div className="h-2.5 w-16 rounded" style={{ background: '#E8E4DC' }} />
+                    <div className="h-4 w-3/4 rounded" style={{ background: '#E8E4DC' }} />
+                    <div className="h-4 w-12 rounded" style={{ background: '#E8E4DC' }} />
                   </div>
                 </div>
               ))}
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-20">
-              <div className="text-5xl mb-4">🎒</div>
-              <h3 className="font-display font-700 text-xl text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>Aucun équipement dans ces contraintes</h3>
-              <p className="text-muted-foreground mb-6">Augmentez votre budget ou votre poids maximal pour voir plus d&apos;options.</p>
-              <button onClick={resetFilters} className="btn-primary">Réinitialiser les filtres</button>
+              <p style={{ fontSize: '40px', marginBottom: '12px' }}>🎒</p>
+              <h3
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 700,
+                  fontSize: '20px',
+                  color: '#1C2620',
+                  marginBottom: '8px',
+                }}
+              >
+                Aucun équipement dans cette catégorie
+              </h3>
+              <p style={{ color: '#9BA89F', fontSize: '14px', marginBottom: '20px' }}>
+                Essayez une autre catégorie.
+              </p>
+              <button
+                onClick={() => setActiveCategory('Tout')}
+                className="transition-all duration-200 hover:opacity-80"
+                style={{
+                  background: '#1C2620',
+                  color: '#FFFFFF',
+                  borderRadius: '10px',
+                  padding: '10px 20px',
+                  fontSize: '14px',
+                  fontFamily: 'var(--font-sans)',
+                  fontWeight: 600,
+                }}
+              >
+                Voir tout
+              </button>
             </div>
           ) : (
             <>
-              <div key={animKey} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                 {paginated.map((product) => (
-                  <ProductCard key={`${product.id}-${animKey}`} product={product}
-                    isOptimized={optimizedResult?.some((r) => r.product.id === product.id) ?? false} />
+                  <EditorialProductCard key={product.id} product={product} />
                 ))}
+                {/* Configurator CTA card — always last in first page */}
+                {currentPage === 1 && (
+                  <ConfiguratorCard />
+                )}
               </div>
-              <Pagination page={currentPage} totalPages={totalPages} onChange={(p) => { setCurrentPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
+              <Pagination
+                page={currentPage}
+                totalPages={totalPages}
+                onChange={(p) => {
+                  setCurrentPage(p);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
             </>
           )}
-        </main>
+        </div>
+      </section>
 
-        <TopoSeparator />
-        <Footer />
-      </div>
+      {/* ══════════════════════════════════════════════
+          METHOD SECTION — "Six semaines en Chartreuse."
+      ══════════════════════════════════════════════ */}
+      <section
+        style={{ background: '#F7F4EE', paddingBottom: '80px' }}
+        aria-labelledby="method-title"
+      >
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 xl:px-16">
+          <div
+            className="overflow-hidden"
+            style={{ borderRadius: '20px', background: '#FFFFFF' }}
+          >
+            <div className="flex flex-col lg:flex-row">
+              {/* Image */}
+              <div
+                className="relative flex-shrink-0"
+                style={{
+                  width: '100%',
+                  maxWidth: '400px',
+                  minHeight: '320px',
+                  background: '#E8E4DC',
+                }}
+              >
+                <AppImage
+                  src="https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800&q=80"
+                  alt="Atelier de réparation d'équipement outdoor en Chartreuse, outils accrochés au mur en bois"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 400px"
+                  className="object-cover"
+                />
+              </div>
+
+              {/* Text */}
+              <div
+                className="flex-1 flex flex-col justify-center"
+                style={{ padding: 'clamp(32px, 5vw, 64px)' }}
+              >
+                <p
+                  style={{
+                    fontSize: '10px',
+                    fontFamily: 'var(--font-mono)',
+                    color: '#9BA89F',
+                    letterSpacing: '0.18em',
+                    textTransform: 'uppercase',
+                    marginBottom: '16px',
+                  }}
+                >
+                  Notre méthode
+                </p>
+                <h2
+                  id="method-title"
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 800,
+                    fontSize: 'clamp(1.8rem, 3.5vw, 3rem)',
+                    lineHeight: '1.1',
+                    letterSpacing: '-0.03em',
+                    color: '#1C2620',
+                    marginBottom: '20px',
+                  }}
+                >
+                  Six semaines
+                  <br />
+                  en <em style={{ fontStyle: 'italic', fontWeight: 400 }}>Chartreuse.</em>
+                </h2>
+                <p
+                  style={{
+                    fontSize: '14px',
+                    color: '#6B8A7A',
+                    lineHeight: '1.75',
+                    maxWidth: '380px',
+                    fontFamily: 'var(--font-sans)',
+                    marginBottom: '28px',
+                  }}
+                >
+                  Chaque objet passe six semaines dans le sac de trois testeurs. On note ce qui casse, ce qui use, ce qui étonne. Puis on décide.
+                </p>
+                <Link
+                  href="/guides"
+                  className="inline-flex items-center gap-2 font-semibold transition-all duration-200 hover:-translate-y-0.5 self-start"
+                  style={{
+                    background: '#1C2620',
+                    color: '#FFFFFF',
+                    borderRadius: '12px',
+                    padding: '12px 22px',
+                    fontSize: '14px',
+                    fontFamily: 'var(--font-sans)',
+                  }}
+                >
+                  Lire notre méthode
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════
+          FOOTER — identical to homepage
+      ══════════════════════════════════════════════ */}
+      <NewFooterSection />
     </div>
   );
 }
