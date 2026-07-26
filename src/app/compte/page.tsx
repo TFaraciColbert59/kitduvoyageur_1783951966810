@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import NewFooterSection from '@/app/components/home/NewFooterSection';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,11 +13,11 @@ import { useChat } from '@/lib/hooks/useChat';
 type Tab = 'posts' | 'carnets' | 'inventaire' | 'groupes' | 'commandes' | 'documents' | 'securite';
 
 const LOYALTY_LEVELS = [
-  { name: 'Explorateur', min: 0, badge: '🥾', color: 'text-stone-600' },
-  { name: 'Aventurier', min: 500, badge: '🏕️', color: 'text-emerald-600' },
-  { name: 'Randonneur Expert', min: 1500, badge: '🧗', color: 'text-blue-600' },
-  { name: 'Guide de Montagne', min: 3500, badge: '🏔️', color: 'text-purple-600' },
-  { name: 'Légende du Voyage', min: 7500, badge: '🌍', color: 'text-amber-600' },
+  { name: 'Explorateur', min: 0, badge: '🥾', color: '#5C6B5E' },
+  { name: 'Aventurier', min: 500, badge: '🏕️', color: '#4A6741' },
+  { name: 'Randonneur Expert', min: 1500, badge: '🧗', color: '#3B82F6' },
+  { name: 'Guide de Montagne', min: 3500, badge: '🏔️', color: '#8B5CF6' },
+  { name: 'Légende du Voyage', min: 7500, badge: '🌍', color: '#D97706' },
 ];
 
 // ─── Posts Tab ─────────────────────────────────────────────────────────────────
@@ -46,29 +46,29 @@ function PostsTab({ userId }: { userId: string }) {
   };
 
   const TYPE_CFG: Record<string, { label: string; color: string; emoji: string }> = {
-    post: { label: 'Post', color: 'bg-[#E7E3D6] text-[#5C6B5E]', emoji: '💬' },
-    tip: { label: 'Conseil', color: 'bg-emerald-100 text-emerald-700', emoji: '💡' },
-    question: { label: 'Question', color: 'bg-blue-100 text-blue-700', emoji: '❓' },
-    share: { label: 'Partage', color: 'bg-purple-100 text-purple-700', emoji: '🔗' },
+    post: { label: 'Post', color: 'bg-[#F5F2EC] text-[#5C6B5E] border-[#E8E4DA]', emoji: '💬' },
+    tip: { label: 'Conseil', color: 'bg-emerald-50 text-emerald-700 border-emerald-200', emoji: '💡' },
+    question: { label: 'Question', color: 'bg-blue-50 text-blue-700 border-blue-200', emoji: '❓' },
+    share: { label: 'Partage', color: 'bg-purple-50 text-purple-700 border-purple-200', emoji: '🔗' },
   };
 
   return (
     <div className="space-y-4">
       {/* Compose */}
-      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4">
+      <div className="bg-white border border-[#E8E4DA] rounded-2xl p-5 shadow-sm">
         <div className="flex gap-2 mb-3 flex-wrap">
           {Object.entries(TYPE_CFG).map(([id, cfg]) => (
-            <button key={id} onClick={() => setPostType(id as typeof postType)} className={`text-xs font-600 px-3 py-1.5 rounded-full border-2 transition-all ${postType === id ? 'border-[#E4501C] ' + cfg.color : 'border-[#C8C3B0] text-[#5C6B5E]'}`}>
+            <button key={id} onClick={() => setPostType(id as typeof postType)} className={`text-xs font-semibold px-3 py-1.5 rounded-full border-2 transition-all ${postType === id ? 'border-[#E4501C] ' + cfg.color : 'border-[#E8E4DA] text-[#5C6B5E] bg-[#F5F2EC]'}`}>
               {cfg.emoji} {cfg.label}
             </button>
           ))}
         </div>
-        <textarea rows={3} value={newPost} onChange={e => setNewPost(e.target.value)} placeholder="Partagez une astuce, posez une question, racontez votre aventure..." className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-3 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 resize-none mb-3" />
+        <textarea rows={3} value={newPost} onChange={e => setNewPost(e.target.value)} placeholder="Partagez une astuce, posez une question, racontez votre aventure..." className="w-full bg-[#F5F2EC] border border-[#E8E4DA] rounded-xl px-4 py-3 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/20 resize-none mb-3" />
         <div className="flex items-center justify-between">
           <span className="text-xs text-[#5C6B5E]">{newPost.length}/500</span>
           <div className="flex items-center gap-2">
-            {successMsg && <span className="text-xs text-emerald-600 font-600">✓ {successMsg}</span>}
-            <button onClick={handlePublish} disabled={submitting || !newPost.trim() || newPost.length > 500} className="flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors disabled:opacity-50">
+            {successMsg && <span className="text-xs text-emerald-600 font-semibold">✓ {successMsg}</span>}
+            <button onClick={handlePublish} disabled={submitting || !newPost.trim() || newPost.length > 500} className="flex items-center gap-2 px-4 py-2 bg-[#1C2620] text-white rounded-xl text-sm font-semibold hover:bg-[#1C2620]/90 transition-colors disabled:opacity-50">
               <Icon name="PaperAirplaneIcon" size={13} variant="outline" />
               {submitting ? 'Publication...' : 'Publier'}
             </button>
@@ -77,7 +77,7 @@ function PostsTab({ userId }: { userId: string }) {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{[1,2,3,4].map(i => <div key={i} className="h-28 bg-[#C8C3B0]/30 rounded-2xl animate-pulse" />)}</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{[1,2,3,4].map(i => <div key={i} className="h-28 bg-[#E8E4DA] rounded-2xl animate-pulse" />)}</div>
       ) : posts.length === 0 ? (
         <div className="text-center py-12 text-[#5C6B5E]">
           <p className="text-3xl mb-2">✍️</p>
@@ -88,9 +88,9 @@ function PostsTab({ userId }: { userId: string }) {
           {posts.map(post => {
             const cfg = TYPE_CFG[post.post_type] ?? TYPE_CFG['post'];
             return (
-              <div key={post.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 hover:border-[#E4501C]/30 transition-all">
+              <div key={post.id} className="bg-white border border-[#E8E4DA] rounded-2xl p-4 hover:border-[#1C2620]/20 hover:shadow-sm transition-all">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${cfg.color}`}>{cfg.emoji} {cfg.label}</span>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${cfg.color}`}>{cfg.emoji} {cfg.label}</span>
                   <span className="text-[10px] text-[#5C6B5E] ml-auto">{new Date(post.created_at).toLocaleDateString('fr-FR')}</span>
                 </div>
                 <p className="text-sm text-[#1C2620] leading-relaxed line-clamp-3 mb-3">{post.content}</p>
@@ -120,13 +120,13 @@ function CarnetsTab({ userId }: { userId: string }) {
     });
   }, [userId, supabase]);
 
-  if (loading) return <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{[1,2,3,4,5,6].map(i => <div key={i} className="aspect-square bg-[#C8C3B0]/30 rounded-2xl animate-pulse" />)}</div>;
+  if (loading) return <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{[1,2,3,4,5,6].map(i => <div key={i} className="aspect-square bg-[#E8E4DA] rounded-2xl animate-pulse" />)}</div>;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-[#5C6B5E]">{carnets.length} carnet{carnets.length !== 1 ? 's' : ''}</p>
-        <Link href="/carnets" className="flex items-center gap-1.5 text-xs text-[#E4501C] hover:underline font-600">
+        <Link href="/carnets" className="flex items-center gap-1.5 text-xs text-[#E4501C] hover:underline font-semibold">
           <Icon name="PlusIcon" size={12} /> Nouveau carnet
         </Link>
       </div>
@@ -134,27 +134,27 @@ function CarnetsTab({ userId }: { userId: string }) {
         <div className="text-center py-12 text-[#5C6B5E]">
           <p className="text-3xl mb-2">🗺️</p>
           <p className="text-sm mb-3">Aucun carnet d&apos;expédition</p>
-          <Link href="/carnets" className="inline-flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600">
+          <Link href="/carnets" className="inline-flex items-center gap-2 px-4 py-2 bg-[#1C2620] text-white rounded-xl text-sm font-semibold">
             <Icon name="PlusIcon" size={13} /> Créer un carnet
           </Link>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {carnets.map(c => (
-            <Link key={c.id} href="/carnets" className="group relative aspect-square bg-[#C8C3B0] rounded-2xl overflow-hidden hover:opacity-90 transition-opacity">
+            <Link key={c.id} href="/carnets" className="group relative aspect-square bg-[#E8E4DA] rounded-2xl overflow-hidden hover:opacity-90 transition-opacity">
               {c.cover_image ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={c.cover_image} alt={c.title} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-4xl bg-[#E7E3D6]">🗺️</div>
+                <div className="w-full h-full flex items-center justify-center text-4xl bg-[#F5F2EC]">🗺️</div>
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform">
-                <p className="text-white text-xs font-700 line-clamp-1">{c.title}</p>
+                <p className="text-white text-xs font-bold line-clamp-1">{c.title}</p>
                 <p className="text-white/70 text-[10px]">{c.destination}</p>
               </div>
               <div className="absolute top-2 right-2">
-                <span className="bg-black/50 text-white text-[10px] font-700 px-1.5 py-0.5 rounded-full">{c.route_rating}/10</span>
+                <span className="bg-black/50 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{c.route_rating}/10</span>
               </div>
             </Link>
           ))}
@@ -192,25 +192,25 @@ function InventaireTab({ userId }: { userId: string }) {
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-3">
         {[{ label: 'Articles', value: gear.length }, { label: 'Poids total', value: `${(totalWeight / 1000).toFixed(1)} kg` }, { label: 'Valeur', value: `${totalValue.toLocaleString()}€` }].map(s => (
-          <div key={s.label} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 text-center">
-            <p className="font-display font-700 text-[#1C2620] text-xl">{s.value}</p>
+          <div key={s.label} className="bg-white border border-[#E8E4DA] rounded-2xl p-4 text-center shadow-sm">
+            <p className="font-bold text-[#1C2620] text-xl">{s.value}</p>
             <p className="text-xs text-[#5C6B5E] mt-0.5">{s.label}</p>
           </div>
         ))}
       </div>
       <div className="flex items-center justify-between">
         <p className="text-sm text-[#5C6B5E]">{gear.length} équipement{gear.length !== 1 ? 's' : ''}</p>
-        <Link href="/inventaire" className="flex items-center gap-1.5 text-xs text-[#E4501C] hover:underline font-600">
+        <Link href="/inventaire" className="flex items-center gap-1.5 text-xs text-[#E4501C] hover:underline font-semibold">
           <Icon name="ArrowTopRightOnSquareIcon" size={12} /> Gérer l&apos;inventaire
         </Link>
       </div>
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{[1,2,3,4].map(i => <div key={i} className="h-20 bg-[#C8C3B0]/30 rounded-2xl animate-pulse" />)}</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{[1,2,3,4].map(i => <div key={i} className="h-20 bg-[#E8E4DA] rounded-2xl animate-pulse" />)}</div>
       ) : gear.length === 0 ? (
         <div className="text-center py-12 text-[#5C6B5E]">
           <p className="text-3xl mb-2">🎒</p>
           <p className="text-sm mb-3">Aucun équipement</p>
-          <Link href="/inventaire" className="inline-flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600">
+          <Link href="/inventaire" className="inline-flex items-center gap-2 px-4 py-2 bg-[#1C2620] text-white rounded-xl text-sm font-semibold">
             <Icon name="PlusIcon" size={13} /> Ajouter du matériel
           </Link>
         </div>
@@ -219,20 +219,20 @@ function InventaireTab({ userId }: { userId: string }) {
           {gear.map(g => {
             const cond = CONDITION_CFG[g.condition] || CONDITION_CFG['bon'];
             return (
-              <div key={g.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl overflow-hidden flex hover:border-[#E4501C]/30 transition-all">
-                <div className="w-20 h-20 flex-shrink-0 overflow-hidden bg-[#E7E3D6]">
+              <div key={g.id} className="bg-white border border-[#E8E4DA] rounded-2xl overflow-hidden flex hover:border-[#1C2620]/20 hover:shadow-sm transition-all">
+                <div className="w-20 h-20 flex-shrink-0 overflow-hidden bg-[#F5F2EC]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={g.image || 'https://images.unsplash.com/photo-1572698846920-cb1e563bbb30'} alt={g.alt || g.name} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 p-3">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="font-600 text-sm text-[#1C2620] line-clamp-1">{g.name}</p>
-                    <span className={`text-[10px] font-600 px-1.5 py-0.5 rounded-full border flex-shrink-0 ${cond.color}`}>{cond.label}</span>
+                    <p className="font-semibold text-sm text-[#1C2620] line-clamp-1">{g.name}</p>
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border flex-shrink-0 ${cond.color}`}>{cond.label}</span>
                   </div>
                   <p className="text-xs text-[#5C6B5E] mt-0.5">{g.brand} · {g.weight_g}g</p>
                   <div className="flex items-center gap-3 mt-1.5 text-xs text-[#5C6B5E]">
                     <span>{g.usage_count} utilisations</span>
-                    <span className="font-mono font-600 text-[#1C2620]">{g.purchase_price}€</span>
+                    <span className="font-mono font-semibold text-[#1C2620]">{g.purchase_price}€</span>
                   </div>
                 </div>
               </div>
@@ -260,15 +260,15 @@ function GroupesTab({ userId }: { userId: string }) {
 
   const THEME_EMOJI: Record<string, string> = { Trek: '🏔️', 'Van Life': '🚐', Randonnée: '🥾', Expédition: '🧭', 'Tour du monde': '🌍', Plage: '🏖️', Ski: '⛷️', Vélo: '🚴', Moto: '🏍️', Autre: '🎒' };
 
-  if (loading) return <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 bg-[#C8C3B0]/30 rounded-2xl animate-pulse" />)}</div>;
+  if (loading) return <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 bg-[#E8E4DA] rounded-2xl animate-pulse" />)}</div>;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-[#5C6B5E]">{groups.length} groupe{groups.length !== 1 ? 's' : ''}</p>
         <div className="flex gap-2">
-          <Link href="/groupes?tab=decouvrir" className="text-xs text-[#5C6B5E] hover:text-[#1C2620] border border-[#C8C3B0] px-3 py-1.5 rounded-xl transition-colors">Découvrir</Link>
-          <Link href="/groupe" className="flex items-center gap-1.5 text-xs text-white bg-[#E4501C] hover:bg-[#E4501C]/90 px-3 py-1.5 rounded-xl transition-colors font-600">
+          <Link href="/groupes?tab=decouvrir" className="text-xs text-[#5C6B5E] hover:text-[#1C2620] border border-[#E8E4DA] bg-white px-3 py-1.5 rounded-xl transition-colors">Découvrir</Link>
+          <Link href="/groupe" className="flex items-center gap-1.5 text-xs text-white bg-[#1C2620] hover:bg-[#1C2620]/90 px-3 py-1.5 rounded-xl transition-colors font-semibold">
             <Icon name="PlusIcon" size={12} /> Créer
           </Link>
         </div>
@@ -277,22 +277,22 @@ function GroupesTab({ userId }: { userId: string }) {
         <div className="text-center py-12 text-[#5C6B5E]">
           <p className="text-3xl mb-2">🗺️</p>
           <p className="text-sm mb-3">Aucun groupe de voyage</p>
-          <Link href="/groupe" className="inline-flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600">
+          <Link href="/groupe" className="inline-flex items-center gap-2 px-4 py-2 bg-[#1C2620] text-white rounded-xl text-sm font-semibold">
             <Icon name="PlusIcon" size={13} /> Créer un groupe
           </Link>
         </div>
       ) : (
         <div className="space-y-3">
           {groups.map(m => (
-            <Link key={m.id} href={`/groupe?group=${m.group_id}`} className="flex items-center gap-3 bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 hover:border-[#E4501C]/30 hover:shadow-sm transition-all">
+            <Link key={m.id} href={`/groupe?group=${m.group_id}`} className="flex items-center gap-3 bg-white border border-[#E8E4DA] rounded-2xl p-4 hover:border-[#1C2620]/20 hover:shadow-sm transition-all">
               <div className="w-11 h-11 rounded-xl bg-[#1C2620] flex items-center justify-center text-xl flex-shrink-0">
                 {THEME_EMOJI[m.group?.theme || ''] || '🎒'}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-600 text-sm text-[#1C2620] truncate">{m.group?.name || 'Groupe'}</p>
+                <p className="font-semibold text-sm text-[#1C2620] truncate">{m.group?.name || 'Groupe'}</p>
                 <p className="text-xs text-[#5C6B5E] truncate">{m.group?.destination}</p>
               </div>
-              <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full flex-shrink-0 ${m.role === 'organizer' ? 'bg-amber-100 text-amber-700' : m.role === 'co_organizer' ? 'bg-blue-100 text-blue-700' : 'bg-[#E7E3D6] text-[#5C6B5E]'}`}>
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${m.role === 'organizer' ? 'bg-amber-100 text-amber-700' : m.role === 'co_organizer' ? 'bg-blue-100 text-blue-700' : 'bg-[#F5F2EC] text-[#5C6B5E]'}`}>
                 {m.role === 'organizer' ? '👑 Organisateur' : m.role === 'co_organizer' ? '🛡️ Co-org.' : '👤 Membre'}
               </span>
             </Link>
@@ -317,7 +317,7 @@ function CommandesTab({ userId }: { userId: string }) {
   }, [userId, supabase]);
 
   const STATUS_CFG: Record<string, { label: string; cls: string }> = {
-    livré: { label: 'Livré', cls: 'text-emerald-700 bg-emerald-100 border-emerald-200' },
+    livré: { label: 'Livré', cls: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
     en_transit: { label: 'En transit', cls: 'text-blue-600 bg-blue-50 border-blue-200' },
     en_preparation: { label: 'En préparation', cls: 'text-amber-600 bg-amber-50 border-amber-200' },
     annulé: { label: 'Annulé', cls: 'text-red-500 bg-red-50 border-red-200' },
@@ -330,32 +330,32 @@ function CommandesTab({ userId }: { userId: string }) {
         <Link href="/shop" className="text-xs text-[#E4501C] hover:underline">Boutique →</Link>
       </div>
       {loading ? (
-        <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-24 bg-[#C8C3B0]/30 rounded-2xl animate-pulse" />)}</div>
+        <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-24 bg-[#E8E4DA] rounded-2xl animate-pulse" />)}</div>
       ) : orders.length === 0 ? (
         <div className="text-center py-12 text-[#5C6B5E]">
           <p className="text-3xl mb-2">🛍️</p>
           <p className="text-sm mb-3">Aucune commande</p>
-          <Link href="/shop" className="inline-flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600">Explorer la boutique</Link>
+          <Link href="/shop" className="inline-flex items-center gap-2 px-4 py-2 bg-[#1C2620] text-white rounded-xl text-sm font-semibold">Explorer la boutique</Link>
         </div>
       ) : (
         orders.map(order => {
           const cfg = STATUS_CFG[order.status] ?? STATUS_CFG['en_preparation'];
           return (
-            <div key={order.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5">
+            <div key={order.id} className="bg-white border border-[#E8E4DA] rounded-2xl p-5 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                 <div>
-                  <p className="font-mono font-600 text-[#1C2620] text-sm">{order.order_number}</p>
+                  <p className="font-mono font-semibold text-[#1C2620] text-sm">{order.order_number}</p>
                   <p className="text-xs text-[#5C6B5E] mt-0.5">{new Date(order.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })} · {order.items_count} article{order.items_count !== 1 ? 's' : ''}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${cfg.cls}`}>{cfg.label}</span>
-                  <span className="font-mono font-700 text-[#1C2620]">{order.total_eur.toFixed(2)} €</span>
+                  <span className="font-mono font-bold text-[#1C2620]">{order.total_eur.toFixed(2)} €</span>
                 </div>
               </div>
               {order.tracking_number && (
-                <div className="flex items-center gap-2 bg-[#E7E3D6] rounded-xl px-3 py-2">
+                <div className="flex items-center gap-2 bg-[#F5F2EC] rounded-xl px-3 py-2">
                   <Icon name="TruckIcon" size={14} className="text-[#5C6B5E]" />
-                  <span className="text-xs text-[#5C6B5E]">Suivi : <span className="font-mono font-600 text-[#1C2620]">{order.tracking_number}</span></span>
+                  <span className="text-xs text-[#5C6B5E]">Suivi : <span className="font-mono font-semibold text-[#1C2620]">{order.tracking_number}</span></span>
                 </div>
               )}
             </div>
@@ -410,12 +410,12 @@ function DocumentsTab({ userId }: { userId: string }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-[#5C6B5E]">{documents.length} document{documents.length !== 1 ? 's' : ''}</p>
-        <button onClick={() => setShowAddModal(true)} className="flex items-center gap-1.5 text-xs text-white bg-[#E4501C] hover:bg-[#E4501C]/90 px-3 py-1.5 rounded-xl transition-colors font-600">
+        <button onClick={() => setShowAddModal(true)} className="flex items-center gap-1.5 text-xs text-white bg-[#1C2620] hover:bg-[#1C2620]/90 px-3 py-1.5 rounded-xl transition-colors font-semibold">
           <Icon name="PlusIcon" size={12} /> Ajouter
         </button>
       </div>
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{[1,2,3].map(i => <div key={i} className="h-28 bg-[#C8C3B0]/30 rounded-2xl animate-pulse" />)}</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{[1,2,3].map(i => <div key={i} className="h-28 bg-[#E8E4DA] rounded-2xl animate-pulse" />)}</div>
       ) : documents.length === 0 ? (
         <div className="text-center py-12 text-[#5C6B5E]">
           <p className="text-3xl mb-2">📁</p>
@@ -427,12 +427,12 @@ function DocumentsTab({ userId }: { userId: string }) {
             const daysLeft = now > 0 && d.expiry ? Math.ceil((new Date(d.expiry).getTime() - now) / 86400000) : 999;
             const urgent = d.expiry ? daysLeft < 90 : false;
             return (
-              <div key={d.id} className={`bg-[#EDEAE0] border rounded-2xl p-4 ${urgent ? 'border-amber-300' : 'border-[#C8C3B0]'}`}>
+              <div key={d.id} className={`bg-white border rounded-2xl p-4 shadow-sm ${urgent ? 'border-amber-300' : 'border-[#E8E4DA]'}`}>
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{typeIcon[d.type] || '📄'}</span>
                     <div>
-                      <p className="font-600 text-sm text-[#1C2620]">{d.name}</p>
+                      <p className="font-semibold text-sm text-[#1C2620]">{d.name}</p>
                       <p className="text-xs text-[#5C6B5E]">{d.destination}</p>
                     </div>
                   </div>
@@ -441,7 +441,7 @@ function DocumentsTab({ userId }: { userId: string }) {
                   </button>
                 </div>
                 {d.expiry && (
-                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-600 ${urgent ? 'bg-amber-50 border border-amber-200 text-amber-700' : 'bg-emerald-50 border border-emerald-200 text-emerald-700'}`}>
+                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold ${urgent ? 'bg-amber-50 border border-amber-200 text-amber-700' : 'bg-emerald-50 border border-emerald-200 text-emerald-700'}`}>
                     <Icon name={urgent ? 'ExclamationTriangleIcon' : 'CheckCircleIcon'} size={12} />
                     Expire le {new Date(d.expiry).toLocaleDateString('fr-FR')} ({daysLeft}j)
                   </div>
@@ -454,19 +454,19 @@ function DocumentsTab({ userId }: { userId: string }) {
 
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#EDEAE0] rounded-2xl border border-[#C8C3B0] w-full max-w-md shadow-2xl p-6">
+          <div className="bg-white rounded-2xl border border-[#E8E4DA] w-full max-w-md shadow-2xl p-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-display font-700 text-[#1C2620]">Ajouter un document</h2>
-              <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-[#E7E3D6] rounded-lg"><Icon name="XMarkIcon" size={20} variant="outline" /></button>
+              <h2 className="text-lg font-bold text-[#1C2620]" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>Ajouter un document</h2>
+              <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-[#F5F2EC] rounded-lg"><Icon name="XMarkIcon" size={20} variant="outline" /></button>
             </div>
             <form onSubmit={handleAddDoc} className="space-y-4">
-              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Nom *</label><input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Passeport FR" className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#E4501C]" /></div>
-              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Type</label><select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#E4501C]">{Object.entries(typeIcon).map(([k, v]) => <option key={k} value={k}>{v} {k.charAt(0).toUpperCase() + k.slice(1)}</option>)}</select></div>
-              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Destination</label><input value={form.destination} onChange={e => setForm({ ...form, destination: e.target.value })} placeholder="Monde entier" className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#E4501C]" /></div>
-              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Expiration</label><input type="date" value={form.expiry} onChange={e => setForm({ ...form, expiry: e.target.value })} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#E4501C]" /></div>
+              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Nom *</label><input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Passeport FR" className="w-full bg-[#F5F2EC] border border-[#E8E4DA] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#1C2620]" /></div>
+              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Type</label><select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className="w-full bg-[#F5F2EC] border border-[#E8E4DA] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#1C2620]">{Object.entries(typeIcon).map(([k, v]) => <option key={k} value={k}>{v} {k.charAt(0).toUpperCase() + k.slice(1)}</option>)}</select></div>
+              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Destination</label><input value={form.destination} onChange={e => setForm({ ...form, destination: e.target.value })} placeholder="Monde entier" className="w-full bg-[#F5F2EC] border border-[#E8E4DA] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#1C2620]" /></div>
+              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Expiration</label><input type="date" value={form.expiry} onChange={e => setForm({ ...form, expiry: e.target.value })} className="w-full bg-[#F5F2EC] border border-[#E8E4DA] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#1C2620]" /></div>
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-2.5 rounded-xl border border-[#C8C3B0] text-sm font-medium text-[#5C6B5E]">Annuler</button>
-                <button type="submit" disabled={saving} className="flex-1 py-2.5 rounded-xl bg-[#E4501C] text-white text-sm font-medium disabled:opacity-50">{saving ? 'Ajout...' : 'Ajouter'}</button>
+                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-2.5 rounded-xl border border-[#E8E4DA] text-sm font-medium text-[#5C6B5E] bg-[#F5F2EC]">Annuler</button>
+                <button type="submit" disabled={saving} className="flex-1 py-2.5 rounded-xl bg-[#1C2620] text-white text-sm font-medium disabled:opacity-50">{saving ? 'Ajout...' : 'Ajouter'}</button>
               </div>
             </form>
           </div>
@@ -522,36 +522,36 @@ function SecuriteTab() {
       {exportMsg && <div className="p-3 rounded-xl border bg-emerald-50 border-emerald-200 text-emerald-700 flex items-center gap-2 text-sm"><Icon name="CheckCircleIcon" size={16} />{exportMsg}</div>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {[
-          { icon: 'LockClosedIcon', title: 'Mot de passe', desc: 'Modifier votre mot de passe', action: () => setShowPasswordModal(true), label: 'Modifier', color: 'bg-emerald-100' },
-          { icon: 'DocumentArrowDownIcon', title: 'Données personnelles', desc: 'Exporter vos données RGPD', action: handleExport, label: 'Exporter', color: 'bg-blue-100' },
-          { icon: 'ArrowRightOnRectangleIcon', title: 'Déconnexion', desc: 'Se déconnecter de l\'application', action: () => signOut(), label: 'Déconnecter', color: 'bg-red-100' },
+          { icon: 'LockClosedIcon', title: 'Mot de passe', desc: 'Modifier votre mot de passe', action: () => setShowPasswordModal(true), label: 'Modifier', bg: 'bg-emerald-50' },
+          { icon: 'DocumentArrowDownIcon', title: 'Données personnelles', desc: 'Exporter vos données RGPD', action: handleExport, label: 'Exporter', bg: 'bg-blue-50' },
+          { icon: 'ArrowRightOnRectangleIcon', title: 'Déconnexion', desc: 'Se déconnecter de l\'application', action: () => signOut(), label: 'Déconnecter', bg: 'bg-red-50' },
         ].map(item => (
-          <div key={item.title} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5 flex items-center gap-4">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${item.color}`}>
+          <div key={item.title} className="bg-white border border-[#E8E4DA] rounded-2xl p-5 flex items-center gap-4 shadow-sm">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${item.bg}`}>
               <Icon name={item.icon} size={18} className="text-[#1C2620]" variant="outline" />
             </div>
             <div className="flex-1">
-              <p className="font-600 text-sm text-[#1C2620]">{item.title}</p>
+              <p className="font-semibold text-sm text-[#1C2620]">{item.title}</p>
               <p className="text-xs text-[#5C6B5E]">{item.desc}</p>
             </div>
-            <button onClick={item.action} className="px-3 py-1.5 border border-[#C8C3B0] rounded-xl text-xs font-600 text-[#5C6B5E] hover:text-[#1C2620] hover:border-[#1C2620]/30 transition-all flex-shrink-0">{item.label}</button>
+            <button onClick={item.action} className="px-3 py-1.5 border border-[#E8E4DA] rounded-xl text-xs font-semibold text-[#5C6B5E] hover:text-[#1C2620] hover:border-[#1C2620]/30 transition-all flex-shrink-0 bg-[#F5F2EC]">{item.label}</button>
           </div>
         ))}
       </div>
 
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#EDEAE0] rounded-2xl border border-[#C8C3B0] w-full max-w-sm shadow-2xl p-6">
+          <div className="bg-white rounded-2xl border border-[#E8E4DA] w-full max-w-sm shadow-2xl p-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-display font-700 text-[#1C2620]">Modifier le mot de passe</h2>
-              <button onClick={() => setShowPasswordModal(false)} className="p-2 hover:bg-[#E7E3D6] rounded-lg"><Icon name="XMarkIcon" size={20} variant="outline" /></button>
+              <h2 className="text-lg font-bold text-[#1C2620]" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>Modifier le mot de passe</h2>
+              <button onClick={() => setShowPasswordModal(false)} className="p-2 hover:bg-[#F5F2EC] rounded-lg"><Icon name="XMarkIcon" size={20} variant="outline" /></button>
             </div>
             <form onSubmit={handlePasswordChange} className="space-y-4">
-              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Nouveau mot de passe</label><input required type="password" value={passwordForm.newPwd} onChange={e => setPasswordForm({ ...passwordForm, newPwd: e.target.value })} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#E4501C]" /></div>
-              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Confirmer</label><input required type="password" value={passwordForm.confirm} onChange={e => setPasswordForm({ ...passwordForm, confirm: e.target.value })} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#E4501C]" /></div>
+              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Nouveau mot de passe</label><input required type="password" value={passwordForm.newPwd} onChange={e => setPasswordForm({ ...passwordForm, newPwd: e.target.value })} className="w-full bg-[#F5F2EC] border border-[#E8E4DA] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#1C2620]" /></div>
+              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Confirmer</label><input required type="password" value={passwordForm.confirm} onChange={e => setPasswordForm({ ...passwordForm, confirm: e.target.value })} className="w-full bg-[#F5F2EC] border border-[#E8E4DA] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#1C2620]" /></div>
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowPasswordModal(false)} className="flex-1 py-2.5 rounded-xl border border-[#C8C3B0] text-sm font-medium text-[#5C6B5E]">Annuler</button>
-                <button type="submit" disabled={changingPwd} className="flex-1 py-2.5 rounded-xl bg-[#E4501C] text-white text-sm font-medium disabled:opacity-50">{changingPwd ? 'Modification...' : 'Modifier'}</button>
+                <button type="button" onClick={() => setShowPasswordModal(false)} className="flex-1 py-2.5 rounded-xl border border-[#E8E4DA] text-sm font-medium text-[#5C6B5E] bg-[#F5F2EC]">Annuler</button>
+                <button type="submit" disabled={changingPwd} className="flex-1 py-2.5 rounded-xl bg-[#1C2620] text-white text-sm font-medium disabled:opacity-50">{changingPwd ? 'Modification...' : 'Modifier'}</button>
               </div>
             </form>
           </div>
@@ -567,7 +567,6 @@ export default function ComptePage() {
   const supabase = useMemo(() => createClient(), []);
   const [activeTab, setActiveTab] = useState<Tab>('posts');
 
-  // Profile state
   const [profile, setProfile] = useState({ full_name: '', email: '', trust_score: 50, loyalty_points: 0, loyalty_level: 'Explorateur', bio: '', location: '', avatar_url: '' });
   const [editMode, setEditMode] = useState(false);
   const [editName, setEditName] = useState('');
@@ -577,14 +576,12 @@ export default function ComptePage() {
   const [saved, setSaved] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
 
-  // Stats
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
   const [postsCount, setPostsCount] = useState(0);
   const [carnetsCount, setCarnetsCount] = useState(0);
   const [groupsCount, setGroupsCount] = useState(0);
 
-  // AI Conseil
   const [aiConseil, setAiConseil] = useState('');
   const [conseilAsked, setConseilAsked] = useState(false);
   const { response: conseilResponse, isLoading: conseilLoading, sendMessage: sendConseil } = useChat('GEMINI', 'gemini/gemini-2.5-flash', true);
@@ -596,7 +593,6 @@ export default function ComptePage() {
   useEffect(() => {
     if (!user) { setProfileLoading(false); return; }
     const load = async () => {
-      // Load profile
       if (ctxProfile) {
         setProfile(ctxProfile as typeof profile);
         setEditName(ctxProfile.full_name || '');
@@ -613,7 +609,6 @@ export default function ComptePage() {
         }
         setProfileLoading(false);
       }
-      // Load stats
       const [fwersRes, fwingRes, postsRes, carnetsRes, groupsRes] = await Promise.all([
         supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('following_id', user.id),
         supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('follower_id', user.id),
@@ -670,50 +665,52 @@ export default function ComptePage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen" style={{ background: '#E7E3D6' }}>
+      <div className="min-h-screen" style={{ background: '#F5F2EC' }}>
         <Header />
         <div className="flex items-center justify-center min-h-[70vh]">
           <div className="text-center max-w-sm mx-auto px-6">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(228,80,28,0.1)' }}>
-              <Icon name="LockClosedIcon" size={28} className="text-[#E4501C]" variant="outline" />
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5 bg-[#1C2620]/10">
+              <Icon name="LockClosedIcon" size={28} className="text-[#1C2620]" variant="outline" />
             </div>
-            <h2 className="font-display font-800 text-2xl text-[#1C2620] mb-2 tracking-tight">Connexion requise</h2>
-            <p className="text-sm mb-6" style={{ color: '#5C6B5E', lineHeight: 1.7 }}>Connectez-vous pour accéder à votre compte, vos carnets et votre inventaire.</p>
-            <Link href="/connexion" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-700 text-sm transition-all" style={{ background: '#1C2620', color: '#fff' }}>
+            <h2 className="font-bold text-2xl text-[#1C2620] mb-2 tracking-tight" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>Connexion requise</h2>
+            <p className="text-sm text-[#5C6B5E] mb-6 leading-relaxed">Connectez-vous pour accéder à votre compte, vos carnets et votre inventaire.</p>
+            <Link href="/connexion" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm bg-[#1C2620] text-white hover:bg-[#1C2620]/90 transition-colors">
               <Icon name="ArrowRightOnRectangleIcon" size={14} /> Se connecter
             </Link>
           </div>
         </div>
-        <Footer />
+        <NewFooterSection />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#E7E3D6' }}>
+    <div className="min-h-screen" style={{ background: '#F5F2EC' }}>
       <Header />
 
-      {/* ── Hero profile ── */}
+      {/* ── Hero profile — fond vert foncé ── */}
       <section style={{ background: '#1C2620' }} className="pt-16 relative overflow-hidden">
-        {/* Atmospheric grain */}
+        {/* Grain texture */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")', backgroundRepeat: 'repeat', backgroundSize: '128px' }} />
-        <div className="absolute top-0 left-0 w-[500px] h-[500px] rounded-full opacity-[0.05] pointer-events-none" style={{ background: 'radial-gradient(circle, #4A6741 0%, transparent 70%)', transform: 'translate(-30%, -30%)' }} />
+        <div className="absolute top-0 left-0 w-[600px] h-[600px] rounded-full opacity-[0.06] pointer-events-none" style={{ background: 'radial-gradient(circle, #4A6741 0%, transparent 70%)', transform: 'translate(-30%, -30%)' }} />
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-0">
 
-          {/* Eyebrow */}
-          <p className="text-[10px] font-mono tracking-[0.25em] uppercase mb-6" style={{ color: '#E4501C' }}>Mon compte</p>
+          {/* Eyebrow mono */}
+          <p className="text-[10px] font-mono tracking-[0.25em] uppercase mb-6" style={{ color: '#E4501C' }}>
+            · Mon compte
+          </p>
 
           {/* Profile top row */}
           <div className="flex items-start gap-6 sm:gap-10 mb-7">
             {/* Avatar */}
             <div className="relative flex-shrink-0">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center shadow-xl" style={{ background: 'linear-gradient(135deg, #E4501C, #C43A10)', border: '2px solid rgba(228,80,28,0.3)' }}>
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center shadow-xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #4A6741, #2D4A28)', border: '2px solid rgba(74,103,65,0.4)' }}>
                 {profile.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full rounded-2xl object-cover" />
+                  <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
                 ) : (
-                  <span className="font-display font-800 text-3xl text-white">{initials}</span>
+                  <span className="font-bold text-3xl text-white" style={{ fontFamily: 'Georgia, serif' }}>{initials}</span>
                 )}
               </div>
               <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 flex items-center justify-center" style={{ background: '#10b981', borderColor: '#1C2620' }} />
@@ -721,30 +718,29 @@ export default function ComptePage() {
 
             {/* Profile info */}
             <div className="flex-1 min-w-0">
-              {/* Name + actions */}
               <div className="flex items-center gap-3 flex-wrap mb-3">
                 {editMode ? (
-                  <input value={editName} onChange={e => setEditName(e.target.value)} className="rounded-xl px-3 py-1.5 text-white text-lg font-700 focus:outline-none w-48" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }} />
+                  <input value={editName} onChange={e => setEditName(e.target.value)} className="rounded-xl px-3 py-1.5 text-white text-lg font-bold focus:outline-none w-48" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', fontFamily: 'Georgia, serif', fontStyle: 'italic' }} />
                 ) : (
-                  <h1 className="font-display font-800 text-xl sm:text-2xl text-white tracking-tight">{profile.full_name || user.email?.split('@')[0]}</h1>
+                  <h1 className="font-bold text-xl sm:text-2xl text-white tracking-tight" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>{profile.full_name || user.email?.split('@')[0]}</h1>
                 )}
                 <div className="flex items-center gap-2">
                   {editMode ? (
                     <>
-                      <button onClick={handleSave} disabled={saving} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 transition-colors disabled:opacity-50" style={{ background: '#E4501C', color: '#fff' }}>
+                      <button onClick={handleSave} disabled={saving} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors disabled:opacity-50 bg-white text-[#1C2620]">
                         {saving ? '...' : '✓ Sauvegarder'}
                       </button>
-                      <button onClick={() => setEditMode(false)} className="px-3 py-1.5 rounded-xl text-xs font-600 transition-colors" style={{ border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.7)' }}>Annuler</button>
+                      <button onClick={() => setEditMode(false)} className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors" style={{ border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.7)' }}>Annuler</button>
                     </>
                   ) : (
                     <>
-                      <button onClick={() => setEditMode(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 transition-all" style={{ border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)' }}>
+                      <button onClick={() => setEditMode(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all" style={{ border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)' }}>
                         <Icon name="PencilIcon" size={11} /> Modifier
                       </button>
-                      {saved && <span className="text-xs font-600" style={{ color: '#10b981' }}>✓ Sauvegardé</span>}
+                      {saved && <span className="text-xs font-semibold text-emerald-400">✓ Sauvegardé</span>}
                     </>
                   )}
-                  <Link href={`/profil/${user.id}`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 transition-all" style={{ border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)' }}>
+                  <Link href={`/profil/${user.id}`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all" style={{ border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)' }}>
                     <Icon name="ArrowTopRightOnSquareIcon" size={11} /> Profil public
                   </Link>
                 </div>
@@ -759,7 +755,7 @@ export default function ComptePage() {
                   { label: 'carnets', value: carnetsCount },
                 ].map(stat => (
                   <div key={stat.label} className="text-center">
-                    <p className="font-display font-800 text-white text-lg leading-none">{stat.value}</p>
+                    <p className="font-bold text-white text-lg leading-none" style={{ fontFamily: 'Georgia, serif' }}>{stat.value}</p>
                     <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{stat.label}</p>
                   </div>
                 ))}
@@ -769,9 +765,9 @@ export default function ComptePage() {
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm">{currentLevel.badge}</span>
-                  <span className={`text-xs font-600 ${currentLevel.color}`}>{currentLevel.name}</span>
+                  <span className="text-xs font-semibold" style={{ color: currentLevel.color }}>{currentLevel.name}</span>
                   <span style={{ color: 'rgba(255,255,255,0.2)' }}>·</span>
-                  <span className="font-mono text-xs font-700" style={{ color: '#E4501C' }}>{profile.loyalty_points} pts</span>
+                  <span className="font-mono text-xs font-bold" style={{ color: '#E4501C' }}>{profile.loyalty_points} pts</span>
                 </div>
                 {editMode ? (
                   <div className="space-y-2">
@@ -781,7 +777,7 @@ export default function ComptePage() {
                 ) : (
                   <>
                     {profile.location && <p className="text-xs flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.4)' }}><Icon name="MapPinIcon" size={11} /> {profile.location}</p>}
-                    {profile.bio && <p className="text-sm leading-relaxed max-w-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>{profile.bio}</p>}
+                    {profile.bio && <p className="text-sm leading-relaxed max-w-sm" style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>{profile.bio}</p>}
                   </>
                 )}
               </div>
@@ -796,7 +792,7 @@ export default function ComptePage() {
                 <span style={{ color: 'rgba(255,255,255,0.4)' }}>{nextLevel.badge} {nextLevel.name} à {nextLevel.min} pts</span>
               </div>
               <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                <div className="h-full rounded-full transition-all" style={{ width: `${loyaltyProgress}%`, background: 'linear-gradient(90deg, #E4501C, #F07040)' }} />
+                <div className="h-full rounded-full transition-all" style={{ width: `${loyaltyProgress}%`, background: 'linear-gradient(90deg, #4A6741, #6B9B5E)' }} />
               </div>
               <p className="text-[10px] mt-1 text-right" style={{ color: 'rgba(255,255,255,0.25)' }}>{nextLevel.min - profile.loyalty_points} pts pour le niveau suivant</p>
             </div>
@@ -809,33 +805,33 @@ export default function ComptePage() {
               <div className="relative flex-shrink-0">
                 <svg width={56} height={56} className="-rotate-90">
                   <circle cx={28} cy={28} r={22} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={4} />
-                  <circle cx={28} cy={28} r={22} fill="none" stroke="#E4501C" strokeWidth={4} strokeDasharray={2 * Math.PI * 22} strokeDashoffset={2 * Math.PI * 22 * (1 - (profile.trust_score || 50) / 100)} strokeLinecap="round" />
+                  <circle cx={28} cy={28} r={22} fill="none" stroke="#4A6741" strokeWidth={4} strokeDasharray={2 * Math.PI * 22} strokeDashoffset={2 * Math.PI * 22 * (1 - (profile.trust_score || 50) / 100)} strokeLinecap="round" />
                 </svg>
-                <div className="absolute inset-0 flex items-center justify-center"><span className="font-mono font-700 text-white text-sm">{profile.trust_score || 50}</span></div>
+                <div className="absolute inset-0 flex items-center justify-center"><span className="font-mono font-bold text-white text-sm">{profile.trust_score || 50}</span></div>
               </div>
               <div>
                 <p className="text-[10px] font-mono uppercase tracking-wider mb-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Trust Score</p>
-                <p className="font-display font-700 text-white text-sm">Confirmé 🏔️</p>
+                <p className="font-bold text-white text-sm" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>Confirmé 🏔️</p>
                 <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Score de confiance</p>
               </div>
             </div>
 
             {/* AI Conseil */}
-            <div className="rounded-2xl p-4" style={{ background: 'linear-gradient(135deg, rgba(228,80,28,0.18), rgba(228,80,28,0.05))', border: '1px solid rgba(228,80,28,0.25)' }}>
+            <div className="rounded-2xl p-4" style={{ background: 'rgba(74,103,65,0.15)', border: '1px solid rgba(74,103,65,0.3)' }}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Icon name="LightBulbIcon" size={14} className="text-[#E4501C]" />
-                  <p className="text-xs font-600 text-white">Conseil IA personnalisé</p>
+                  <Icon name="LightBulbIcon" size={14} style={{ color: '#6B9B5E' }} />
+                  <p className="text-xs font-semibold text-white">Conseil IA personnalisé</p>
                 </div>
-                <button onClick={handleGenerateConseil} disabled={conseilLoading} className="text-[10px] font-600 disabled:opacity-50 flex items-center gap-1" style={{ color: '#E4501C' }}>
-                  {conseilLoading ? <div className="w-3 h-3 border border-[#E4501C] border-t-transparent rounded-full animate-spin" /> : <Icon name="SparklesIcon" size={10} />}
+                <button onClick={handleGenerateConseil} disabled={conseilLoading} className="text-[10px] font-semibold disabled:opacity-50 flex items-center gap-1" style={{ color: '#6B9B5E' }}>
+                  {conseilLoading ? <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" /> : <Icon name="SparklesIcon" size={10} />}
                   {conseilLoading ? 'Génération...' : 'Générer'}
                 </button>
               </div>
               {aiConseil ? (
                 <p className="text-xs leading-relaxed line-clamp-3" style={{ color: 'rgba(255,255,255,0.75)' }}>
                   {aiConseil}
-                  {conseilLoading && <span className="inline-block w-1 h-3 animate-pulse ml-0.5 rounded-sm" style={{ background: '#E4501C' }} />}
+                  {conseilLoading && <span className="inline-block w-1 h-3 animate-pulse ml-0.5 rounded-sm bg-white/50" />}
                 </p>
               ) : conseilLoading ? (
                 <p className="text-xs animate-pulse" style={{ color: 'rgba(255,255,255,0.35)' }}>Gemini génère vos conseils...</p>
@@ -854,31 +850,31 @@ export default function ComptePage() {
               { label: 'Copilote', href: '/copilote', emoji: '✈️' },
               { label: 'Alertes', href: '/alertes', emoji: '🔔' },
             ].map(item => (
-              <Link key={item.href} href={item.href} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all" style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <Link key={item.href} href={item.href} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <span>{item.emoji}</span> {item.label}
               </Link>
             ))}
-            <button onClick={signOut} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all ml-auto" style={{ background: 'rgba(239,68,68,0.1)', color: 'rgba(239,68,68,0.8)', border: '1px solid rgba(239,68,68,0.2)' }}>
+            <button onClick={signOut} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all ml-auto" style={{ background: 'rgba(239,68,68,0.08)', color: 'rgba(239,68,68,0.75)', border: '1px solid rgba(239,68,68,0.15)' }}>
               <Icon name="ArrowRightOnRectangleIcon" size={11} /> Déconnexion
             </button>
           </div>
 
           {/* Tab navigation */}
-          <div className="flex overflow-x-auto scrollbar-hide -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="flex overflow-x-auto scrollbar-hide -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
             {TABS.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className="flex items-center gap-1.5 px-4 py-3.5 text-xs font-600 whitespace-nowrap transition-all -mt-px"
+                className="flex items-center gap-1.5 px-4 py-3.5 text-xs font-semibold whitespace-nowrap transition-all -mt-px"
                 style={{
-                  borderTop: activeTab === tab.id ? '2px solid #E4501C' : '2px solid transparent',
+                  borderTop: activeTab === tab.id ? '2px solid #E7E3D6' : '2px solid transparent',
                   color: activeTab === tab.id ? '#fff' : 'rgba(255,255,255,0.35)',
                 }}
               >
                 <Icon name={tab.icon} size={13} variant={activeTab === tab.id ? 'solid' : 'outline'} />
                 {tab.label}
                 {tab.count !== undefined && tab.count > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full font-700" style={{ background: activeTab === tab.id ? '#fff' : 'rgba(255,255,255,0.1)', color: activeTab === tab.id ? '#1C2620' : 'rgba(255,255,255,0.4)' }}>{tab.count}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: activeTab === tab.id ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.07)', color: activeTab === tab.id ? '#fff' : 'rgba(255,255,255,0.35)' }}>{tab.count}</span>
                 )}
               </button>
             ))}
@@ -886,10 +882,10 @@ export default function ComptePage() {
         </div>
       </section>
 
-      {/* ── Tab content ── */}
+      {/* ── Tab content — fond crème ── */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {profileLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{[1,2,3,4,5,6].map(i => <div key={i} className="h-32 rounded-2xl animate-pulse" style={{ background: 'rgba(200,195,176,0.3)' }} />)}</div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{[1,2,3,4,5,6].map(i => <div key={i} className="h-32 rounded-2xl animate-pulse bg-[#E8E4DA]" />)}</div>
         ) : (
           <>
             {activeTab === 'posts' && <PostsTab userId={user.id} />}
@@ -903,7 +899,7 @@ export default function ComptePage() {
         )}
       </div>
 
-      <Footer />
+      <NewFooterSection />
     </div>
   );
 }
