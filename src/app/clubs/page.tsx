@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -664,16 +664,15 @@ function ClubCard({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function ClubsPage() {
-  const [activeTab, setActiveTab] = useState<'activite' | 'pays' | 'mes-clubs'>('activite');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editClub, setEditClub] = useState<Club | null>(null);
-  const [deleteClub, setDeleteClub] = useState<Club | null>(null);
-  const [detailClub, setDetailClub] = useState<Club | null>(null);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [filterType, setFilterType] = useState<'all' | 'activite' | 'pays'>('all');
+  const [filterPrivacy, setFilterPrivacy] = useState<'all' | 'open' | 'closed'>('all');
+  const [selectedClub, setSelectedClub] = useState<Club | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingClub, setEditingClub] = useState<Club | null>(null);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const { user } = useAuth();
   const supabase = useMemo(() => createClient(), []);
@@ -682,291 +681,287 @@ export default function ClubsPage() {
 
   const loadClubs = useCallback(async () => {
     setLoading(true);
-    setError(null);
-    try {
-      const { data: clubsData, error: clubsError } = await supabase
-        .from('clubs')
-        .select('*, topics:club_topics(id, title, is_pinned, is_announcement)')
-        .order('members_count', { ascending: false });
-
-      if (clubsError) throw clubsError;
-
-      let memberMap: Record<string, { role: string; status: string }> = {};
-      if (user) {
-        const { data: memberships } = await supabase
-          .from('club_members')
-          .select('club_id, role, status')
-          .eq('user_id', user.id);
-        memberMap = Object.fromEntries((memberships ?? []).map((m) => [m.club_id, { role: m.role, status: m.status }]));
-      }
-
-      setClubs(
-        (clubsData ?? []).map((c) => ({
-          ...c,
-          is_member: !!memberMap[c.id] && memberMap[c.id].status === 'active',
-          member_role: memberMap[c.id]?.role,
-          member_status: memberMap[c.id]?.status,
-        }))
-      );
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur de chargement');
-    } finally {
-      setLoading(false);
+    const { data } = await supabase.from('clubs').select('*, topics:club_topics(id)').order('members_count', { ascending: false });
+    let memberData: { club_id: string; role: string; status: string }[] = [];
+    if (user) {
+      const { data: md } = await supabase.from('club_members').select('club_id, role, status').eq('user_id', user.id).eq('status', 'active');
+      memberData = md ?? [];
     }
-  }, [user, supabase]);
+    setClubs((data ?? []).map((c) => {
+      const membership = memberData.find((m) => m.club_id === c.id);
+      return { ...c, is_member: !!membership, member_role: membership?.role, member_status: membership?.status };
+    }));
+    setLoading(false);
+  }, [supabase, user]);
 
   useEffect(() => { loadClubs(); }, [loadClubs]);
 
-  const handleToggleMember = async (clubId: string, isCurrentlyMember: boolean) => {
-    if (!user) { showToast('Connectez-vous pour rejoindre un club'); return; }
-    const club = clubs.find((c) => c.id === clubId);
-    if (!club) return;
-
-    if (isCurrentlyMember) {
-      await supabase.from('club_members').delete().eq('club_id', clubId).eq('user_id', user.id);
-      await supabase.from('clubs').update({ members_count: Math.max(0, club.members_count - 1) }).eq('id', clubId);
-      setClubs((prev) => prev.map((c) => c.id === clubId ? { ...c, is_member: false, member_role: undefined, members_count: Math.max(0, c.members_count - 1) } : c));
-      showToast('Vous avez quitté le club');
-    } else if (club.privacy === 'open') {
-      await supabase.from('club_members').insert({ club_id: clubId, user_id: user.id, role: 'member', status: 'active' });
-      await supabase.from('clubs').update({ members_count: club.members_count + 1 }).eq('id', clubId);
-      setClubs((prev) => prev.map((c) => c.id === clubId ? { ...c, is_member: true, member_role: 'member', members_count: c.members_count + 1 } : c));
-      showToast('Bienvenue dans le club !');
-    } else {
-      // Closed/secret: send join request
-      await supabase.from('club_join_requests').upsert({ club_id: clubId, user_id: user.id, status: 'pending' }, { onConflict: 'club_id,user_id' });
-      showToast('Demande d\'adhésion envoyée !');
-    }
-  };
-
-  const handleSaveClub = async (form: ClubForm) => {
-    if (!user) return;
+  const handleCreateClub = async (form: ClubForm) => {
+    if (!user) { showToast('Connectez-vous pour créer un club'); return; }
     setSaving(true);
     try {
-      const colorMap: Record<string, string> = {
-        'activite': 'from-emerald-600 to-teal-700',
-        'pays': 'from-blue-600 to-indigo-700',
-      };
-      const payload = {
-        name: form.name,
-        type: form.type,
-        emoji: form.emoji,
-        description: form.description,
-        category: form.category,
-        rules: form.rules,
-        privacy: form.privacy,
-        cover_color: colorMap[form.type] ?? 'from-emerald-600 to-teal-700',
-        created_by: user.id,
-      };
-
-      if (editClub) {
-        const { error: uErr } = await supabase.from('clubs').update(payload).eq('id', editClub.id);
-        if (uErr) throw uErr;
-        showToast('Club mis à jour !');
-      } else {
-        const slug = `c-${form.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}-${Date.now()}`;
-        const { data: newClub, error: iErr } = await supabase.from('clubs').insert({ ...payload, slug, members_count: 1, active_this_month: 0 }).select().single();
-        if (iErr) throw iErr;
-        // Auto-join as admin
-        if (newClub) {
-          await supabase.from('club_members').insert({ club_id: newClub.id, user_id: user.id, role: 'admin', status: 'active' });
-        }
-        showToast('Club créé ! Vous en êtes l\'administrateur.');
-      }
+      const { data, error } = await supabase.from('clubs').insert({ ...form, created_by: user.id, members_count: 1, active_this_month: 1, is_verified: false }).select().single();
+      if (error) throw error;
+      await supabase.from('club_members').insert({ club_id: data.id, user_id: user.id, role: 'admin', status: 'active' });
+      showToast('Club créé !');
       setShowCreateModal(false);
-      setEditClub(null);
       await loadClubs();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur');
-    } finally {
-      setSaving(false);
-    }
+    } catch { showToast('Erreur lors de la création'); }
+    finally { setSaving(false); }
   };
 
-  const handleDeleteClub = async () => {
-    if (!deleteClub) return;
-    setDeleting(true);
-    await supabase.from('clubs').delete().eq('id', deleteClub.id);
-    setDeleteClub(null);
-    setDeleting(false);
-    showToast('Club supprimé');
+  const handleEditClub = async (form: ClubForm) => {
+    if (!editingClub) return;
+    setSaving(true);
+    try {
+      await supabase.from('clubs').update(form).eq('id', editingClub.id);
+      showToast('Club mis à jour !');
+      setEditingClub(null);
+      await loadClubs();
+    } catch { showToast('Erreur lors de la mise à jour'); }
+    finally { setSaving(false); }
+  };
+
+  const handleToggleMember = async (club: Club) => {
+    if (!user) { showToast('Connectez-vous pour rejoindre un club'); return; }
+    if (club.is_member) {
+      await supabase.from('club_members').delete().eq('club_id', club.id).eq('user_id', user.id);
+      await supabase.from('clubs').update({ members_count: Math.max(0, club.members_count - 1) }).eq('id', club.id);
+      showToast('Vous avez quitté le club');
+    } else {
+      if (club.privacy === 'closed') {
+        await supabase.from('club_join_requests').upsert({ club_id: club.id, user_id: user.id, status: 'pending' }, { onConflict: 'club_id,user_id' });
+        showToast('Demande d\'adhésion envoyée');
+      } else {
+        await supabase.from('club_members').insert({ club_id: club.id, user_id: user.id, role: 'member', status: 'active' });
+        await supabase.from('clubs').update({ members_count: club.members_count + 1 }).eq('id', club.id);
+        showToast('Bienvenue dans le club !');
+      }
+    }
     await loadClubs();
   };
 
-  const activityClubs = clubs.filter((c) => c.type === 'activite');
-  const countryClubs = clubs.filter((c) => c.type === 'pays');
-  const myClubs = clubs.filter((c) => c.is_member);
+  const filtered = clubs.filter((c) => {
+    if (filterType !== 'all' && c.type !== filterType) return false;
+    if (filterPrivacy !== 'all' && c.privacy !== filterPrivacy) return false;
+    if (search && !c.name.toLowerCase().includes(search.toLowerCase()) && !c.category.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
 
-  const editForm: ClubForm | undefined = editClub ? {
-    name: editClub.name,
-    type: editClub.type,
-    emoji: editClub.emoji,
-    description: editClub.description,
-    category: editClub.category,
-    rules: editClub.rules,
-    privacy: editClub.privacy,
-  } : undefined;
-
-  const displayedClubs = activeTab === 'activite' ? activityClubs : activeTab === 'pays' ? countryClubs : myClubs;
+  const PRIVACY_CFG: Record<string, { label: string; icon: string; color: string }> = {
+    open: { label: 'Ouvert', icon: '🌍', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+    closed: { label: 'Fermé', icon: '🔒', color: 'text-amber-700 bg-amber-50 border-amber-200' },
+    secret: { label: 'Secret', icon: '🕵️', color: 'text-purple-700 bg-purple-50 border-purple-200' },
+  };
 
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen" style={{ background: '#E7E3D6' }}>
       <Header />
-      <div className="pt-16 lg:pt-18">
-        {/* Hero */}
-        <section className="bg-dark-bg text-white py-14 px-4 relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10 pointer-events-none">
-            <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-secondary blur-3xl" />
+
+      {/* ── Hero ── */}
+      <section style={{ background: '#1C2620' }} className="pt-16 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")', backgroundRepeat: 'repeat', backgroundSize: '128px' }} />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full opacity-[0.06] pointer-events-none" style={{ background: 'radial-gradient(circle, #4A6741 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <div className="flex items-center gap-3 mb-5">
+            <span className="text-[10px] font-mono tracking-[0.25em] uppercase" style={{ color: '#E4501C' }}>Communauté</span>
+            <span style={{ color: 'rgba(255,255,255,0.15)' }}>—</span>
+            <span className="text-[10px] font-mono tracking-[0.15em] uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>Clubs & groupes</span>
           </div>
-          <div className="max-w-7xl mx-auto relative">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="tag-badge bg-secondary/30 text-emerald-300 border border-emerald-500/30 text-[10px]">COMMUNAUTÉ</span>
-              <span className="text-white/50 text-xs font-mono">CLUBS THÉMATIQUES</span>
+
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+            <div>
+              <h1 className="font-display mb-4" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-0.02em', color: '#fff' }}>
+                Trouvez votre<br />
+                <em style={{ fontStyle: 'italic', color: 'rgba(255,255,255,0.65)' }}>tribu d&apos;aventuriers.</em>
+              </h1>
+              <p className="text-sm max-w-xl" style={{ color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>
+                Clubs par activité ou destination — rejoignez des passionnés, partagez vos expériences, organisez des sorties.
+              </p>
             </div>
-            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-              <div>
-                <h1 className="text-section-title text-white mb-3">
-                  Clubs par activité<br />
-                  <span className="text-primary">et par destination</span>
-                </h1>
-                <p className="text-white/60 text-base max-w-xl">
-                  Chaque club a son fil dédié, ses événements, ses défis, ses kits recommandés et sa modération communautaire.
-                </p>
+
+            <div className="flex flex-col gap-3 flex-shrink-0">
+              <div className="flex items-center gap-6">
+                {[
+                  { value: clubs.length.toString(), label: 'clubs actifs' },
+                  { value: clubs.reduce((s, c) => s + c.members_count, 0).toLocaleString(), label: 'membres' },
+                ].map((s) => (
+                  <div key={s.label}>
+                    <p className="font-mono font-700 text-2xl" style={{ color: '#E4501C' }}>{s.value}</p>
+                    <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{s.label}</p>
+                  </div>
+                ))}
               </div>
-              <button onClick={() => { setEditClub(null); setShowCreateModal(true); }} className="btn-primary flex-shrink-0 self-start lg:self-auto">
-                <Icon name="PlusIcon" size={16} />
-                Créer un club
-              </button>
+              {user && (
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-700 transition-all"
+                  style={{ background: '#E4501C', color: '#fff' }}
+                >
+                  <Icon name="PlusIcon" size={15} /> Créer un club
+                </button>
+              )}
             </div>
           </div>
-        </section>
-
-        {/* Tabs */}
-        <section className="sticky top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="flex gap-0">
-              {[
-                { id: 'activite', label: 'Clubs activité', icon: 'BoltIcon', count: activityClubs.length },
-                { id: 'pays', label: 'Clubs destination', icon: 'GlobeAltIcon', count: countryClubs.length },
-                { id: 'mes-clubs', label: 'Mes clubs', icon: 'UserGroupIcon', count: myClubs.length },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                  className={`flex items-center gap-2 px-5 py-4 text-sm font-600 border-b-2 transition-all ${activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
-                >
-                  <Icon name={tab.icon} size={15} />
-                  {tab.label}
-                  {tab.count > 0 && <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full font-700">{tab.count}</span>}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Content */}
-        <div className="max-w-7xl mx-auto px-4 py-10">
-          {error && <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{error}</div>}
-
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => <div key={i} className="topo-card h-80 animate-pulse bg-muted" />)}
-            </div>
-          ) : displayedClubs.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="text-5xl mb-4">👥</div>
-              <p className="font-display font-700 text-foreground text-xl mb-2">
-                {activeTab === 'mes-clubs' ? 'Aucun club rejoint' : 'Aucun club pour l\'instant'}
-              </p>
-              <p className="text-muted-foreground text-sm mb-6">
-                {activeTab === 'mes-clubs' ?'Rejoignez un club pour accéder à son fil dédié, ses événements et ses défis.' :'Soyez le premier à créer un club et rassemblez votre communauté !'}
-              </p>
-              {activeTab !== 'mes-clubs' && (
-                <button
-                  onClick={() => { setEditClub(null); setShowCreateModal(true); }}
-                  className="btn-primary inline-flex items-center gap-2 px-6 py-3"
-                >
-                  <Icon name="PlusIcon" size={16} />
-                  Créer le premier club
-                </button>
-              )}
-              {activeTab === 'mes-clubs' && !user && (
-                <a href="/connexion" className="btn-primary inline-flex items-center gap-2 px-6 py-3">
-                  Se connecter pour rejoindre un club
-                </a>
-              )}
-              {activeTab === 'mes-clubs' && user && (
-                <button
-                  onClick={() => setActiveTab('activite')}
-                  className="btn-secondary inline-flex items-center gap-2 px-6 py-3"
-                >
-                  Parcourir les clubs
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {displayedClubs.map((c) => (
-                <ClubCard
-                  key={c.id}
-                  club={c}
-                  onToggleMember={handleToggleMember}
-                  onOpenDetail={setDetailClub}
-                  onEdit={(club) => { setEditClub(club); setShowCreateModal(true); }}
-                  onDelete={setDeleteClub}
-                  currentUserId={user?.id}
-                />
-              ))}
-            </div>
-          )}
         </div>
+      </section>
+
+      {/* ── Filters + Content ── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Search + filters */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-8">
+          <div className="relative flex-1">
+            <Icon name="MagnifyingGlassIcon" size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5C6B5E]" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Rechercher un club..."
+              className="w-full pl-11 pr-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
+              style={{ background: '#fff', border: '1px solid #E8E4DA', color: '#1C2620' }}
+            />
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {[
+              { id: 'all', label: 'Tous' },
+              { id: 'activite', label: '🎯 Activité' },
+              { id: 'pays', label: '🌍 Destination' },
+            ].map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFilterType(f.id as typeof filterType)}
+                className="px-4 py-2.5 rounded-xl text-sm font-600 transition-all"
+                style={{
+                  background: filterType === f.id ? '#1C2620' : '#fff',
+                  color: filterType === f.id ? '#fff' : '#5C6B5E',
+                  border: `1px solid ${filterType === f.id ? '#1C2620' : '#E8E4DA'}`,
+                }}
+              >
+                {f.label}
+              </button>
+            ))}
+            {[
+              { id: 'all', label: 'Tous' },
+              { id: 'open', label: '🌍 Ouverts' },
+              { id: 'closed', label: '🔒 Fermés' },
+            ].map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFilterPrivacy(f.id as typeof filterPrivacy)}
+                className="px-4 py-2.5 rounded-xl text-sm font-600 transition-all"
+                style={{
+                  background: filterPrivacy === f.id ? '#4A6741' : '#fff',
+                  color: filterPrivacy === f.id ? '#fff' : '#5C6B5E',
+                  border: `1px solid ${filterPrivacy === f.id ? '#4A6741' : '#E8E4DA'}`,
+                }}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Clubs grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[1,2,3,4,5,6].map(i => <div key={i} className="h-56 rounded-2xl animate-pulse" style={{ background: 'rgba(200,195,176,0.4)' }} />)}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-5xl mb-4">🏕️</p>
+            <h2 className="font-display font-700 text-xl text-[#1C2620] mb-2">Aucun club trouvé</h2>
+            <p className="text-sm text-[#5C6B5E] mb-6">Essayez d&apos;autres filtres ou créez le premier club !</p>
+            {user && (
+              <button onClick={() => setShowCreateModal(true)} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-700 transition-all" style={{ background: '#E4501C', color: '#fff' }}>
+                <Icon name="PlusIcon" size={14} /> Créer un club
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filtered.map((club) => {
+              const privCfg = PRIVACY_CFG[club.privacy] ?? PRIVACY_CFG.open;
+              return (
+                <div
+                  key={club.id}
+                  className="rounded-2xl overflow-hidden transition-all cursor-pointer group"
+                  style={{ background: '#fff', border: '1px solid #E8E4DA', boxShadow: '0 1px 3px rgba(28,38,32,0.04)' }}
+                  onClick={() => setSelectedClub(club)}
+                >
+                  {/* Club cover */}
+                  <div className={`h-28 bg-gradient-to-br ${club.cover_color || 'from-emerald-600 to-teal-700'} relative overflow-hidden`}>
+                    {club.cover_image && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={club.cover_image} alt={club.name} className="w-full h-full object-cover opacity-60" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute top-3 left-3 flex gap-2">
+                      <span className={`text-[10px] font-700 px-2 py-0.5 rounded-full border ${privCfg.color}`}>{privCfg.icon} {privCfg.label}</span>
+                      {club.is_verified && <span className="text-[10px] font-700 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">✓ Vérifié</span>}
+                    </div>
+                    <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                      <span className="text-2xl">{club.emoji}</span>
+                      <span className="text-[10px] font-mono text-white/70 uppercase tracking-wider">{club.type === 'activite' ? 'Activité' : 'Destination'}</span>
+                    </div>
+                  </div>
+
+                  {/* Club info */}
+                  <div className="p-4">
+                    <h3 className="font-display font-700 text-[#1C2620] text-base mb-1 group-hover:text-[#E4501C] transition-colors">{club.name}</h3>
+                    <p className="text-xs text-[#5C6B5E] mb-3 line-clamp-2 leading-relaxed">{club.description}</p>
+
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="flex items-center gap-1 text-xs text-[#5C6B5E]">
+                        <Icon name="UsersIcon" size={12} />
+                        <span className="font-600 text-[#1C2620]">{club.members_count.toLocaleString()}</span> membres
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-[#5C6B5E]">
+                        <Icon name="BoltIcon" size={12} />
+                        <span className="font-600 text-[#1C2620]">{club.active_this_month}</span> actifs/mois
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleToggleMember(club); }}
+                        className="flex-1 py-2 rounded-xl text-xs font-700 transition-all"
+                        style={{
+                          background: club.is_member ? 'rgba(74,103,65,0.1)' : '#1C2620',
+                          color: club.is_member ? '#4A6741' : '#fff',
+                          border: club.is_member ? '1px solid rgba(74,103,65,0.3)' : '1px solid #1C2620',
+                        }}
+                      >
+                        {club.is_member ? '✓ Membre' : club.privacy === 'closed' ? 'Demander' : 'Rejoindre'}
+                      </button>
+                      <Link
+                        href={`/clubs/${club.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-2 rounded-xl transition-all"
+                        style={{ border: '1px solid #E8E4DA', color: '#5C6B5E' }}
+                      >
+                        <Icon name="ArrowTopRightOnSquareIcon" size={14} />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Modals */}
-      <ClubFormModal
-        open={showCreateModal}
-        onClose={() => { setShowCreateModal(false); setEditClub(null); }}
-        onSave={handleSaveClub}
-        initial={editForm}
-        saving={saving}
-      />
-
-      <ClubDetailModal
-        club={detailClub}
-        onClose={() => setDetailClub(null)}
-        currentUserId={user?.id}
-        onRefresh={loadClubs}
-      />
-
-      {/* Delete confirm */}
-      {deleteClub && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full">
-            <div className="text-center mb-5">
-              <div className="w-14 h-14 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-3">
-                <Icon name="TrashIcon" size={24} className="text-red-500" />
-              </div>
-              <h3 className="font-display font-700 text-foreground text-lg mb-1">Supprimer &quot;{deleteClub.name}&quot; ?</h3>
-              <p className="text-sm text-muted-foreground">Tous les membres, discussions et événements seront supprimés.</p>
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteClub(null)} className="flex-1 py-2.5 rounded-xl border border-border text-sm font-600 text-muted-foreground hover:bg-muted transition-colors">Annuler</button>
-              <button onClick={handleDeleteClub} disabled={deleting} className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-700 hover:bg-red-600 transition-colors disabled:opacity-50">
-                {deleting ? 'Suppression...' : 'Supprimer'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ClubFormModal open={showCreateModal} onClose={() => setShowCreateModal(false)} onSave={handleCreateClub} saving={saving} />
+      <ClubFormModal open={!!editingClub} onClose={() => setEditingClub(null)} onSave={handleEditClub} initial={editingClub ? { name: editingClub.name, type: editingClub.type, emoji: editingClub.emoji, description: editingClub.description, category: editingClub.category, rules: editingClub.rules, privacy: editingClub.privacy } : undefined} saving={saving} />
+      <ClubDetailModal club={selectedClub} onClose={() => setSelectedClub(null)} currentUserId={user?.id} onRefresh={loadClubs} />
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-foreground text-background px-5 py-3 rounded-xl text-sm font-600 shadow-xl">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl text-sm font-600 shadow-xl" style={{ background: '#1C2620', color: '#fff' }}>
           {toast}
         </div>
       )}
-
-      <Footer />
-    </main>
+    </div>
   );
 }
 

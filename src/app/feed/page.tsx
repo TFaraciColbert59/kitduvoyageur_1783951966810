@@ -368,200 +368,103 @@ function JournalCard({ journal }: {journal: JournalEntry;}) {
 }
 
 export default function FeedPage() {
-  const [filter, setFilter] = useState<'all' | 'verified' | 'gps' | 'recent'>('all');
-  const [showNewJournal, setShowNewJournal] = useState(false);
+  const [journals, setJournals] = useState(JOURNALS);
+  const [filter, setFilter] = useState<'all' | 'verified' | 'ambassadeur'>('all');
 
-  const filtered = JOURNALS.filter((j) => {
+  const filtered = journals.filter((j) => {
     if (filter === 'verified') return j.verified;
-    if (filter === 'gps') return j.gpsTrace;
+    if (filter === 'ambassadeur') return j.authorLevel === 'ambassadeur';
     return true;
   });
 
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen" style={{ background: '#E7E3D6' }}>
       <Header />
-      <div className="pt-16 lg:pt-18">
-        {/* Hero */}
-        <section className="bg-dark-bg text-white py-14 px-4 relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10 pointer-events-none">
-            <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-secondary blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-primary blur-3xl" />
+
+      {/* ── Hero ── */}
+      <section style={{ background: '#1C2620' }} className="pt-16 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")', backgroundRepeat: 'repeat', backgroundSize: '128px' }} />
+        <div className="absolute bottom-0 right-0 w-[600px] h-[400px] rounded-full opacity-[0.05] pointer-events-none" style={{ background: 'radial-gradient(circle, #4A6741 0%, transparent 70%)', transform: 'translate(30%, 30%)' }} />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <div className="flex items-center gap-3 mb-5">
+            <span className="text-[10px] font-mono tracking-[0.25em] uppercase" style={{ color: '#E4501C' }}>Communauté</span>
+            <span style={{ color: 'rgba(255,255,255,0.15)' }}>—</span>
+            <span className="text-[10px] font-mono tracking-[0.15em] uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>Carnets de terrain</span>
           </div>
-          <div className="max-w-7xl mx-auto relative">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="tag-badge bg-secondary/30 text-emerald-300 border border-emerald-500/30 text-[10px]">COMMUNAUTÉ</span>
-              <span className="text-white/50 text-xs font-mono-data">CARNETS DE VOYAGE</span>
-            </div>
-            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-              <div>
-                <h1 className="text-section-title text-white mb-3">
-                  Carnets d&apos;expédition<br />
-                  <span className="text-primary">vérifiés par les données</span>
-                </h1>
-                <p className="text-white/60 text-base max-w-xl">
-                  Pas des posts — des récits longs avec tracé GPS, météo réelle, matériel utilisé depuis votre inventaire. Chaque réaction utile renforce le Trust Score de l&apos;auteur.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowNewJournal(true)}
-                className="btn-primary flex-shrink-0 self-start lg:self-auto">
-                
-                <Icon name="PencilSquareIcon" size={16} />
-                Écrire un carnet
-              </button>
+
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+            <div>
+              <h1 className="font-display mb-4" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-0.02em', color: '#fff' }}>
+                Des récits vrais,<br />
+                <em style={{ fontStyle: 'italic', color: 'rgba(255,255,255,0.65)' }}>par des voyageurs vrais.</em>
+              </h1>
+              <p className="text-sm max-w-xl" style={{ color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>
+                Carnets d&apos;expédition vérifiés, retours terrain avec données GPS, météo réelle et matériel testé. Chaque récit est lié à un achat confirmé.
+              </p>
             </div>
 
-            {/* Stats bar */}
-            <div className="flex flex-wrap gap-6 mt-8 pt-8 border-t border-white/10">
+            <div className="flex items-center gap-6 flex-shrink-0">
               {[
-              { value: '1 247', label: 'Carnets publiés' },
-              { value: '94%', label: 'Achats vérifiés' },
-              { value: '38 420', label: 'Points GPS partagés' },
-              { value: '4.8/5', label: 'Utilité moyenne' }].
-              map((s) =>
-              <div key={s.label}>
-                  <p className="font-display font-700 text-white text-xl">{s.value}</p>
-                  <p className="text-white/40 text-xs">{s.label}</p>
+                { value: journals.filter(j => j.verified).length.toString(), label: 'récits vérifiés' },
+                { value: journals.reduce((s, j) => s + j.gpsPoints, 0).toLocaleString(), label: 'points GPS' },
+              ].map((s) => (
+                <div key={s.label}>
+                  <p className="font-mono font-700 text-2xl" style={{ color: '#E4501C' }}>{s.value}</p>
+                  <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{s.label}</p>
                 </div>
-              )}
+              ))}
             </div>
-          </div>
-        </section>
-
-        {/* Filters */}
-        <section className="sticky top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="flex items-center gap-1 py-3 overflow-x-auto scrollbar-hide">
-              {[
-              { id: 'all', label: 'Tous les carnets' },
-              { id: 'verified', label: '✓ Achat vérifié' },
-              { id: 'gps', label: '📍 Tracé GPS' },
-              { id: 'recent', label: 'Récents' }].
-              map((f) =>
-              <button
-                key={f.id}
-                onClick={() => setFilter(f.id as typeof filter)}
-                className={`category-pill flex-shrink-0 ${filter === f.id ? 'active' : ''}`}>
-                
-                  {f.label}
-                </button>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* Content */}
-        <div className="max-w-7xl mx-auto px-4 py-10">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main feed */}
-            <div className="lg:col-span-2 space-y-8">
-              {filtered.map((j) =>
-              <JournalCard key={j.id} journal={j} />
-              )}
-            </div>
-
-            {/* Sidebar */}
-            <aside className="space-y-6">
-              {/* Trust Score info */}
-              <div className="topo-card p-5">
-                <h3 className="font-display font-700 text-foreground text-base mb-3 flex items-center gap-2">
-                  <Icon name="ShieldCheckIcon" size={16} className="text-primary" />
-                  Réactions & Trust Score
-                </h3>
-                <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-                  Contrairement à un simple like, chaque réaction utile pèse dans le Trust Score de l&apos;auteur. Plus vos carnets aident la communauté, plus votre score monte.
-                </p>
-                <div className="space-y-2">
-                  {(Object.entries(REACTION_CONFIG) as Array<[string, typeof REACTION_CONFIG[keyof typeof REACTION_CONFIG]]>).map(([, cfg]) =>
-                  <div key={cfg.label} className="flex items-center gap-2 text-xs">
-                      <span>{cfg.icon}</span>
-                      <span className="text-muted-foreground">{cfg.label}</span>
-                      <span className="ml-auto font-mono-data text-primary font-700">+2 pts</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Top contributors */}
-              <div className="topo-card p-5">
-                <h3 className="font-display font-700 text-foreground text-base mb-4 flex items-center gap-2">
-                  <Icon name="TrophyIcon" size={16} className="text-amber-500" />
-                  Top contributeurs
-                </h3>
-                <div className="space-y-3">
-                  {[
-                  { name: 'Thomas Vernet', score: 94, carnets: 12, avatar: 'TV' },
-                  { name: 'Camille Rousseau', score: 87, carnets: 8, avatar: 'CR' },
-                  { name: 'Erik Lindström', score: 79, carnets: 6, avatar: 'EL' }].
-                  map((u, i) =>
-                  <div key={u.name} className="flex items-center gap-3">
-                      <span className="font-mono-data text-xs text-muted-foreground w-4">{i + 1}</span>
-                      <div className="w-8 h-8 rounded-lg bg-secondary text-white flex items-center justify-center text-xs font-700 flex-shrink-0">
-                        {u.avatar}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-600 text-foreground truncate">{u.name}</p>
-                        <p className="text-[10px] text-muted-foreground">{u.carnets} carnets</p>
-                      </div>
-                      <span className="font-mono-data text-xs font-700 text-emerald-600">{u.score}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Destinations */}
-              <div className="topo-card p-5">
-                <h3 className="font-display font-700 text-foreground text-base mb-4">Destinations populaires</h3>
-                <div className="flex flex-wrap gap-2">
-                  {['Népal', 'Islande', 'Patagonie', 'Maroc', 'Corse', 'Norvège', 'Pérou', 'Kirghizistan'].map((d) =>
-                  <button key={d} className="category-pill text-xs py-1 px-3">{d}</button>
-                  )}
-                </div>
-              </div>
-            </aside>
           </div>
         </div>
+      </section>
+
+      {/* ── Content ── */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Filters */}
+        <div className="flex items-center gap-2 mb-8 flex-wrap">
+          {[
+            { id: 'all', label: 'Tous les récits' },
+            { id: 'verified', label: '✓ Achats vérifiés' },
+            { id: 'ambassadeur', label: '🏅 Ambassadeurs' },
+          ].map((f) => (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id as typeof filter)}
+              className="px-4 py-2 rounded-xl text-sm font-600 transition-all"
+              style={{
+                background: filter === f.id ? '#1C2620' : '#fff',
+                color: filter === f.id ? '#fff' : '#5C6B5E',
+                border: `1px solid ${filter === f.id ? '#1C2620' : '#E8E4DA'}`,
+              }}
+            >
+              {f.label}
+            </button>
+          ))}
+          <div className="ml-auto flex items-center gap-2">
+            <Link href="/carnets" className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-600 transition-all" style={{ background: '#E4501C', color: '#fff' }}>
+              <Icon name="PlusIcon" size={13} /> Publier un carnet
+            </Link>
+          </div>
+        </div>
+
+        {/* Journal cards */}
+        <div className="space-y-6">
+          {filtered.map((journal) => (
+            <JournalCard key={journal.id} journal={journal} />
+          ))}
+        </div>
+
+        {filtered.length === 0 && (
+          <div className="text-center py-20 text-[#5C6B5E]">
+            <p className="text-4xl mb-3">📖</p>
+            <p className="font-display font-700 text-[#1C2620] text-lg mb-1">Aucun récit</p>
+            <p className="text-sm">Essayez d&apos;autres filtres</p>
+          </div>
+        )}
       </div>
 
-      {/* New journal modal */}
-      {showNewJournal &&
-      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-card border border-border rounded-2xl p-6 max-w-lg w-full">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="font-display font-700 text-foreground text-lg">Nouveau carnet de voyage</h2>
-              <button onClick={() => setShowNewJournal(false)} className="p-2 rounded-lg hover:bg-muted transition-colors">
-                <Icon name="XMarkIcon" size={18} />
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Titre de l&apos;expédition</label>
-                <input className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Ex: GR20 Corse — 15 jours en autonomie" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Destination</label>
-                  <input className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Pays / région" />
-                </div>
-                <div>
-                  <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Durée</label>
-                  <input className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Ex: 15 jours" />
-                </div>
-              </div>
-              <div className="bg-secondary/5 border border-secondary/20 rounded-xl p-3 text-xs text-secondary">
-                <Icon name="InformationCircleIcon" size={14} className="inline mr-1.5" />
-                Votre matériel sera auto-rempli depuis votre inventaire. Le tracé GPS peut être importé en .gpx.
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button onClick={() => setShowNewJournal(false)} className="flex-1 btn-secondary py-2.5 text-sm justify-center">Annuler</button>
-                <button className="flex-1 btn-primary py-2.5 text-sm justify-center">Commencer le carnet</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      }
-
       <Footer />
-    </main>);
-
+    </div>
+  );
 }

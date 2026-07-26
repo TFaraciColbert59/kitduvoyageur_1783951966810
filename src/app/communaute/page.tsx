@@ -1244,61 +1244,97 @@ function GroupesTab() {
 export default function CommunautePage() {
   const [activeTab, setActiveTab] = useState<MainTab>('feed');
 
-  const TABS: { id: MainTab; label: string; icon: string }[] = [
-    { id: 'feed', label: 'Feed', icon: 'RssIcon' },
-    { id: 'profils', label: 'Profils', icon: 'UsersIcon' },
-    { id: 'groupes', label: 'Groupes', icon: 'MapIcon' },
-    { id: 'qa', label: 'Q&R', icon: 'QuestionMarkCircleIcon' },
-    { id: 'ama', label: 'AMA', icon: 'MicrophoneIcon' },
+  const TABS: { id: MainTab; label: string; icon: string; desc: string }[] = [
+    { id: 'feed', label: 'Feed', icon: 'RssIcon', desc: 'Actualités' },
+    { id: 'profils', label: 'Profils', icon: 'UsersIcon', desc: 'Voyageurs' },
+    { id: 'groupes', label: 'Groupes', icon: 'MapIcon', desc: 'Expéditions' },
+    { id: 'qa', label: 'Q&R', icon: 'QuestionMarkCircleIcon', desc: 'Entraide' },
+    { id: 'ama', label: 'AMA', icon: 'MicrophoneIcon', desc: 'Experts' },
   ];
 
   return (
-    <div className="min-h-screen bg-[#E7E3D6] text-[#1C2620]">
+    <div className="min-h-screen text-[#1C2620]" style={{ background: '#E7E3D6' }}>
       <Header />
 
-      {/* Hero */}
-      <section className="bg-[#1C2620] pt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <p className="text-[10px] font-mono text-[#E4501C] tracking-[0.2em] uppercase mb-2">Communauté</p>
-          <h1 className="font-display font-800 text-white text-2xl sm:text-3xl tracking-tight mb-2">
-            La communauté des voyageurs équipés
+      {/* ── Hero plein écran ── */}
+      <section style={{ background: '#1C2620' }} className="pt-16 relative overflow-hidden">
+        {/* Grain texture overlay */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")', backgroundRepeat: 'repeat', backgroundSize: '128px' }} />
+        {/* Atmospheric glow */}
+        <div className="absolute top-0 right-0 w-[600px] h-[400px] rounded-full opacity-[0.06] pointer-events-none" style={{ background: 'radial-gradient(circle, #4A6741 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-0">
+          {/* Eyebrow */}
+          <div className="flex items-center gap-3 mb-5">
+            <span className="text-[10px] font-mono tracking-[0.25em] uppercase" style={{ color: '#E4501C' }}>Communauté</span>
+            <span style={{ color: 'rgba(255,255,255,0.15)' }}>—</span>
+            <span className="text-[10px] font-mono tracking-[0.15em] uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>Espace d&apos;échange</span>
+          </div>
+
+          {/* Title */}
+          <h1 className="font-display mb-4" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-0.02em', color: '#fff' }}>
+            Là où les routes<br />
+            <em style={{ fontStyle: 'italic', color: 'rgba(255,255,255,0.7)' }}>se croisent.</em>
           </h1>
-          <p className="text-white/50 text-sm max-w-xl mb-6">
-            Feed global, profils publics, groupes de voyage, Q&R entre voyageurs et AMAs avec les experts.
+
+          <p className="text-sm mb-8 max-w-lg" style={{ color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>
+            Feed global, profils publics, groupes de voyage, Q&R entre voyageurs et AMAs avec les experts de la communauté.
           </p>
 
-          <div className="flex items-center gap-3 mb-8 flex-wrap">
-            <Link href="/carnets" className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-600 transition-colors">
-              <Icon name="BookOpenIcon" size={14} /> Carnets d&apos;expédition
+          {/* Stats bar */}
+          <div className="flex items-center gap-6 mb-10 flex-wrap">
+            {[
+              { value: '12 400+', label: 'voyageurs' },
+              { value: '3 200', label: 'carnets publiés' },
+              { value: '840', label: 'groupes actifs' },
+              { value: '98%', label: 'satisfaction' },
+            ].map((s) => (
+              <div key={s.label} className="flex items-baseline gap-1.5">
+                <span className="font-mono font-700 text-base" style={{ color: '#E4501C' }}>{s.value}</span>
+                <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{s.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Quick links */}
+          <div className="flex items-center gap-2 mb-8 flex-wrap">
+            <Link href="/carnets" className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-600 transition-all" style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <Icon name="BookOpenIcon" size={13} /> Carnets d&apos;expédition
             </Link>
-            <Link href="/clubs" className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-600 transition-colors">
-              <Icon name="UserGroupIcon" size={14} /> Clubs
+            <Link href="/clubs" className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-600 transition-all" style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <Icon name="UserGroupIcon" size={13} /> Clubs
             </Link>
-            <Link href="/groupes" className="flex items-center gap-2 px-4 py-2 bg-[#E4501C]/20 hover:bg-[#E4501C]/30 border border-[#E4501C]/40 text-white rounded-xl text-sm font-600 transition-colors">
-              <Icon name="MapIcon" size={14} /> Mes groupes
+            <Link href="/groupes" className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-600 transition-all" style={{ background: 'rgba(228,80,28,0.15)', color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(228,80,28,0.3)' }}>
+              <Icon name="MapIcon" size={13} /> Mes groupes
             </Link>
-            <Link href="/groupes?tab=decouvrir" className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-600 transition-colors">
-              <Icon name="MagnifyingGlassIcon" size={14} /> Découvrir des groupes
+            <Link href="/entraide" className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-600 transition-all" style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <Icon name="HandRaisedIcon" size={13} /> Entraide SOS
             </Link>
           </div>
 
-          {/* Tab bar */}
-          <div className="flex items-center gap-0.5 overflow-x-auto pb-px scrollbar-hide">
+          {/* Tab bar — attached to bottom of hero */}
+          <div className="flex items-end gap-0 overflow-x-auto scrollbar-hide -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
             {TABS.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-[#E7E3D6] text-[#1C2620]' : 'text-white/50 hover:text-white hover:bg-white/8'}`}
+                className="flex items-center gap-2 px-5 py-3.5 text-sm font-600 transition-all whitespace-nowrap rounded-t-xl"
+                style={{
+                  background: activeTab === tab.id ? '#E7E3D6' : 'transparent',
+                  color: activeTab === tab.id ? '#1C2620' : 'rgba(255,255,255,0.4)',
+                  borderTop: activeTab === tab.id ? '2px solid #E4501C' : '2px solid transparent',
+                }}
               >
                 <Icon name={tab.icon} size={14} variant="outline" />
                 {tab.label}
+                <span className="hidden sm:inline text-[10px] opacity-60">{tab.desc}</span>
               </button>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Content */}
+      {/* ── Content ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'feed' && <FeedTab />}
         {activeTab === 'profils' && <ProfilsTab />}

@@ -209,269 +209,228 @@ export default function EntraidePage() {
   });
 
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen" style={{ background: '#E7E3D6' }}>
       <Header />
-      <div className="pt-16 lg:pt-18">
-        {/* Hero */}
-        <section className="bg-dark-bg text-white py-14 px-4 relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10 pointer-events-none">
-            <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-secondary blur-3xl" />
-          </div>
-          <div className="max-w-7xl mx-auto relative">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="tag-badge bg-secondary/30 text-emerald-300 border border-emerald-500/30 text-[10px]">COMMUNAUTÉ</span>
-              <span className="text-white/50 text-xs font-mono-data">ENTRAIDE SOS</span>
-            </div>
-            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-              <div>
-                <h1 className="text-section-title text-white mb-3">
-                  Réseau d&apos;entraide<br />
-                  <span className="text-primary">géolocalisé</span>
-                </h1>
-                <p className="text-white/60 text-base max-w-xl">
-                  Panne van, pharmacie oubliée, guide de dernière minute — lancez un appel visible aux membres à proximité. Chaque aide confirmée ajoute au Trust Score de l&apos;aidant.
-                </p>
-              </div>
-              <div className="flex flex-col gap-3">
-                {/* Opt-in toggle */}
-                <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-4 py-3">
-                  <Icon name="MapPinIcon" size={16} className="text-emerald-400" />
-                  <div className="flex-1">
-                    <p className="text-sm font-600 text-white">Recevoir les appels à proximité</p>
-                    <p className="text-xs text-white/50">Opt-in géolocalisation</p>
-                  </div>
-                  <button
-                    onClick={() => setOptedIn((v) => !v)}
-                    className={`w-11 h-6 rounded-full transition-all relative ${optedIn ? 'bg-emerald-500' : 'bg-white/20'}`}
-                  >
-                    <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${optedIn ? 'left-5' : 'left-0.5'}`} />
-                  </button>
-                </div>
-                <button
-                  onClick={() => setShowNewRequest(true)}
-                  className="btn-primary"
-                >
-                  <Icon name="MegaphoneIcon" size={16} />
-                  Lancer un appel d&apos;entraide
-                </button>
-              </div>
-            </div>
 
-            {/* Distinction from SOS */}
-            <div className="mt-6 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-2">
-              <Icon name="ExclamationTriangleIcon" size={14} className="text-amber-400 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-200">
-                <strong>Ce module est pour l&apos;entraide logistique entre voyageurs.</strong> En cas d&apos;urgence vitale (blessure grave, détresse médicale), utilisez le{' '}
-                <a href="/alertes" className="underline text-amber-300">module SOS urgence</a> qui contacte les secours officiels.
+      {/* ── Hero ── */}
+      <section style={{ background: '#1C2620' }} className="pt-16 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")', backgroundRepeat: 'repeat', backgroundSize: '128px' }} />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full opacity-[0.06] pointer-events-none" style={{ background: 'radial-gradient(circle, #4A6741 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <div className="flex items-center gap-3 mb-5">
+            <span className="text-[10px] font-mono tracking-[0.25em] uppercase" style={{ color: '#E4501C' }}>Communauté</span>
+            <span style={{ color: 'rgba(255,255,255,0.15)' }}>—</span>
+            <span className="text-[10px] font-mono tracking-[0.15em] uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>Entraide SOS</span>
+          </div>
+
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+            <div>
+              <h1 className="font-display mb-4" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-0.02em', color: '#fff' }}>
+                Réseau d&apos;entraide<br />
+                <em style={{ fontStyle: 'italic', color: 'rgba(255,255,255,0.65)' }}>géolocalisé.</em>
+              </h1>
+              <p className="text-sm max-w-xl" style={{ color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>
+                Panne van, pharmacie oubliée, guide de dernière minute — lancez un appel visible aux membres à proximité. Chaque aide confirmée ajoute au Trust Score de l&apos;aidant.
               </p>
             </div>
-          </div>
-        </section>
 
-        {/* Filters */}
-        <section className="sticky top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="flex items-center gap-1 py-3">
-              {[
-                { id: 'all', label: 'Tous les appels' },
-                { id: 'open', label: '🔴 En attente' },
-                { id: 'nearby', label: '📍 < 10 km' },
-              ].map((f) => (
+            <div className="flex flex-col gap-4 flex-shrink-0">
+              {/* Opt-in toggle */}
+              <div className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <Icon name="MapPinIcon" size={16} style={{ color: '#10b981' }} />
+                <div className="flex-1">
+                  <p className="text-sm font-600 text-white">Recevoir les appels à proximité</p>
+                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Opt-in géolocalisation</p>
+                </div>
                 <button
-                  key={f.id}
-                  onClick={() => setFilter(f.id as typeof filter)}
-                  className={`category-pill flex-shrink-0 ${filter === f.id ? 'active' : ''}`}
+                  onClick={() => setOptedIn((v) => !v)}
+                  className="w-11 h-6 rounded-full transition-all relative flex-shrink-0"
+                  style={{ background: optedIn ? '#10b981' : 'rgba(255,255,255,0.15)' }}
                 >
-                  {f.label}
+                  <span className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all" style={{ left: optedIn ? '22px' : '2px' }} />
                 </button>
-              ))}
+              </div>
+
+              <button
+                onClick={() => setShowNewRequest(true)}
+                className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-700 transition-all"
+                style={{ background: '#E4501C', color: '#fff' }}
+              >
+                <Icon name="ExclamationTriangleIcon" size={15} />
+                Lancer un appel SOS
+              </button>
             </div>
           </div>
-        </section>
 
-        <div className="max-w-7xl mx-auto px-4 py-10">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            {/* Request list */}
-            <div className="lg:col-span-2 space-y-3">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-display font-700 text-foreground text-lg">Appels actifs</h2>
-                <span className="font-mono-data text-xs text-muted-foreground">{filtered.length} appels</span>
+          {/* Stats */}
+          <div className="flex items-center gap-6 mt-8 flex-wrap">
+            {[
+              { value: HELP_REQUESTS.filter(r => r.status === 'open').length.toString(), label: 'appels ouverts' },
+              { value: HELP_REQUESTS.filter(r => r.status === 'resolved').length.toString(), label: 'résolus' },
+              { value: HELP_REQUESTS.reduce((s, r) => s + r.helpers, 0).toString(), label: 'aides proposées' },
+            ].map((s) => (
+              <div key={s.label} className="flex items-baseline gap-1.5">
+                <span className="font-mono font-700 text-base" style={{ color: '#E4501C' }}>{s.value}</span>
+                <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{s.label}</span>
               </div>
-              {filtered.map((r) => (
-                <RequestCard
-                  key={r.id}
-                  request={r}
-                  isSelected={selectedRequest === r.id}
-                  onSelect={() => setSelectedRequest(r.id)}
-                />
-              ))}
-            </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-            {/* Detail panel */}
-            <div className="lg:col-span-3">
-              {selected ? (
-                <div className="topo-card p-6">
-                  {/* Header */}
-                  <div className="flex items-start gap-4 mb-5">
-                    <span className="text-4xl">{selected.emoji}</span>
+      {/* ── Content ── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Filters */}
+        <div className="flex items-center gap-2 mb-6 flex-wrap">
+          {[
+            { id: 'all', label: 'Tous les appels' },
+            { id: 'open', label: '🆘 En attente' },
+            { id: 'nearby', label: '📍 À proximité (< 10 km)' },
+          ].map((f) => (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id as typeof filter)}
+              className="px-4 py-2 rounded-xl text-sm font-600 transition-all"
+              style={{
+                background: filter === f.id ? '#1C2620' : '#fff',
+                color: filter === f.id ? '#fff' : '#5C6B5E',
+                border: `1px solid ${filter === f.id ? '#1C2620' : '#E8E4DA'}`,
+              }}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Two-column layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Left: requests list */}
+          <div className="lg:col-span-2 space-y-3">
+            {filtered.map((request) => (
+              <RequestCard
+                key={request.id}
+                request={request}
+                isSelected={selectedRequest === request.id}
+                onSelect={() => setSelectedRequest(request.id)}
+              />
+            ))}
+            {filtered.length === 0 && (
+              <div className="text-center py-12 text-[#5C6B5E]">
+                <p className="text-3xl mb-2">🆘</p>
+                <p className="text-sm">Aucun appel pour ce filtre</p>
+              </div>
+            )}
+          </div>
+
+          {/* Right: detail panel */}
+          <div className="lg:col-span-3">
+            {selected ? (
+              <div className="rounded-2xl overflow-hidden sticky top-24" style={{ background: '#fff', border: '1px solid #E8E4DA' }}>
+                {/* Header */}
+                <div className="p-5" style={{ background: '#1C2620' }}>
+                  <div className="flex items-start gap-3">
+                    <span className="text-3xl flex-shrink-0">{selected.emoji}</span>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className={`text-[10px] font-700 px-2 py-0.5 rounded-full ${typeConfig[selected.type].color}`}>
-                          {typeConfig[selected.type].label}
-                        </span>
-                        <span className={`text-[10px] font-700 px-2 py-0.5 rounded-full ${statusConfig[selected.status].color}`}>
-                          {statusConfig[selected.status].label}
-                        </span>
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className={`text-[10px] font-700 px-2 py-0.5 rounded-full ${typeConfig[selected.type].color}`}>{typeConfig[selected.type].label}</span>
+                        <span className={`text-[10px] font-700 px-2 py-0.5 rounded-full ${statusConfig[selected.status].color}`}>{statusConfig[selected.status].label}</span>
                       </div>
-                      <h2 className="font-display font-700 text-foreground text-xl">{selected.title}</h2>
-                      <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1.5">
-                        <Icon name="MapPinIcon" size={12} />
-                        {selected.location} · {selected.distanceKm} km de vous
+                      <h2 className="font-display font-700 text-white text-lg leading-tight">{selected.title}</h2>
+                      <p className="text-xs mt-1 flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                        <Icon name="MapPinIcon" size={11} /> {selected.location} · {selected.distanceKm} km
                       </p>
                     </div>
                   </div>
+                </div>
 
+                <div className="p-5 space-y-5">
                   {/* Author */}
-                  <div className="flex items-center gap-3 p-3 bg-background rounded-xl border border-border mb-5">
-                    <div className="w-9 h-9 rounded-xl bg-secondary text-white flex items-center justify-center text-sm font-700">
+                  <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#F5F2E8', border: '1px solid #E8E4DA' }}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-700 text-white flex-shrink-0" style={{ background: '#4A6741' }}>
                       {selected.authorAvatar}
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-700 text-foreground">{selected.author}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(selected.postedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · {new Date(selected.postedAt).toLocaleDateString('fr-FR')}
-                      </p>
+                      <p className="font-600 text-sm text-[#1C2620]">{selected.author}</p>
+                      <p className="text-xs text-[#5C6B5E]">Trust Score {selected.authorTrustScore}</p>
                     </div>
-                    <TrustRing score={selected.authorTrustScore} size={44} />
+                    <TrustRing score={selected.authorTrustScore} size={40} />
                   </div>
 
-                  <p className="text-sm text-foreground leading-relaxed mb-6">{selected.description}</p>
+                  {/* Description */}
+                  <div>
+                    <p className="text-[10px] font-mono uppercase tracking-wider text-[#5C6B5E] mb-2">Description</p>
+                    <p className="text-sm text-[#1C2620] leading-relaxed">{selected.description}</p>
+                  </div>
 
-                  {/* Help offers */}
-                  <div className="mb-5">
-                    <h3 className="font-display font-700 text-foreground text-base mb-3 flex items-center gap-2">
-                      <Icon name="HandRaisedIcon" size={16} className="text-primary" />
-                      Aides proposées ({HELP_OFFERS.length})
-                    </h3>
-                    <div className="space-y-3">
-                      {HELP_OFFERS.map((offer) => (
-                        <div key={offer.id} className={`p-4 rounded-xl border ${offer.confirmed ? 'bg-emerald-50 border-emerald-200' : 'bg-background border-border'}`}>
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="w-8 h-8 rounded-lg bg-secondary text-white flex items-center justify-center text-xs font-700 flex-shrink-0">
-                              {offer.helperAvatar}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-700 text-foreground">{offer.helper}</span>
-                                {offer.confirmed && (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-700">✓ Confirmé</span>
-                                )}
+                  {/* Offers */}
+                  {selected.id === 'h1' && (
+                    <div>
+                      <p className="text-[10px] font-mono uppercase tracking-wider text-[#5C6B5E] mb-3">Aides proposées ({HELP_OFFERS.length})</p>
+                      <div className="space-y-3">
+                        {HELP_OFFERS.map((offer) => (
+                          <div key={offer.id} className="p-4 rounded-xl" style={{ background: '#F5F2E8', border: `1px solid ${offer.confirmed ? 'rgba(16,185,129,0.3)' : '#E8E4DA'}` }}>
+                            <div className="flex items-center gap-3 mb-2">
+                              <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-700 text-white flex-shrink-0" style={{ background: '#1C2620' }}>
+                                {offer.helperAvatar}
                               </div>
-                              <p className="text-[10px] text-muted-foreground">{offer.distance} · ETA {offer.eta}</p>
+                              <div className="flex-1">
+                                <p className="font-600 text-sm text-[#1C2620]">{offer.helper}</p>
+                                <p className="text-[10px] text-[#5C6B5E]">{offer.distance} · {offer.eta}</p>
+                              </div>
+                              {offer.confirmed && <span className="text-[10px] font-700 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">✓ Confirmé</span>}
                             </div>
-                            <TrustRing score={offer.helperTrustScore} size={36} />
+                            <p className="text-xs text-[#5C6B5E] leading-relaxed">{offer.message}</p>
                           </div>
-                          <p className="text-xs text-foreground">{offer.message}</p>
-                          {!offer.confirmed && (
-                            <div className="flex gap-2 mt-3">
-                              <button className="flex-1 py-1.5 rounded-lg bg-emerald-500 text-white text-xs font-700 hover:bg-emerald-600 transition-colors">
-                                Confirmer l&apos;aide (+Trust Score)
-                              </button>
-                              <button className="px-3 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:bg-muted transition-colors">
-                                Contacter
-                              </button>
-                            </div>
-                          )}
-                          {offer.confirmed && (
-                            <p className="text-[10px] text-emerald-600 mt-2 flex items-center gap-1">
-                              <Icon name="CheckBadgeIcon" size={11} />
-                              Aide confirmée — Trust Score de {offer.helper} augmenté
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Propose help */}
-                  {selected.status === 'open' && (
-                    <div className="border-t border-border pt-5">
-                      <h3 className="font-display font-700 text-foreground text-sm mb-3">Proposer votre aide</h3>
-                      <textarea
-                        rows={3}
-                        className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none mb-3"
-                        placeholder="Décrivez comment vous pouvez aider..."
-                      />
-                      <button className="btn-primary w-full justify-center py-2.5 text-sm">
-                        <Icon name="HandRaisedIcon" size={15} />
-                        Proposer mon aide
-                      </button>
-                      <p className="text-[10px] text-muted-foreground text-center mt-2">
-                        Si votre aide est confirmée par le bénéficiaire, votre Trust Score sera augmenté.
-                      </p>
+                        ))}
+                      </div>
                     </div>
                   )}
+
+                  {/* CTA */}
+                  {selected.status === 'open' && (
+                    <button
+                      className="w-full py-3 rounded-xl text-sm font-700 transition-all"
+                      style={{ background: '#E4501C', color: '#fff' }}
+                    >
+                      <Icon name="HandRaisedIcon" size={15} className="inline mr-2" />
+                      Proposer mon aide
+                    </button>
+                  )}
                 </div>
-              ) : (
-                <div className="topo-card p-12 text-center">
-                  <Icon name="HandRaisedIcon" size={40} className="mx-auto mb-3 text-muted-foreground opacity-30" />
-                  <p className="text-muted-foreground">Sélectionnez un appel pour voir les détails</p>
-                </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="text-center py-20 text-[#5C6B5E]">
+                <p className="text-4xl mb-3">👆</p>
+                <p className="text-sm">Sélectionnez un appel pour voir les détails</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* New request modal */}
       {showNewRequest && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="rounded-2xl w-full max-w-md p-6" style={{ background: '#EDEAE0', border: '1px solid #C8C3B0' }}>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="font-display font-700 text-foreground text-lg">Lancer un appel d&apos;entraide</h2>
-              <button onClick={() => setShowNewRequest(false)} className="p-2 rounded-lg hover:bg-muted transition-colors">
-                <Icon name="XMarkIcon" size={18} />
-              </button>
+              <h2 className="font-display font-700 text-[#1C2620] text-xl">Lancer un appel SOS</h2>
+              <button onClick={() => setShowNewRequest(false)} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Type de besoin</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { id: 'panne', label: '🔧 Panne' },
-                    { id: 'pharmacie', label: '💊 Santé' },
-                    { id: 'guide', label: '🗺️ Guide' },
-                    { id: 'logistique', label: '📦 Logistique' },
-                    { id: 'info', label: 'ℹ️ Info' },
-                  ].map((t) => (
-                    <button key={t.id} className="py-2 px-2 rounded-xl border border-border text-xs font-600 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors">
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Titre</label>
-                <input className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Décrivez brièvement votre besoin" />
-              </div>
-              <div>
-                <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Description détaillée</label>
-                <textarea rows={3} className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" placeholder="Donnez tous les détails utiles..." />
-              </div>
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 flex items-start gap-2">
-                <Icon name="ExclamationTriangleIcon" size={13} className="flex-shrink-0 mt-0.5" />
-                Urgence vitale ? Utilisez le module SOS urgence, pas ce formulaire.
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button onClick={() => setShowNewRequest(false)} className="flex-1 btn-secondary py-2.5 text-sm justify-center">Annuler</button>
-                <button className="flex-1 btn-primary py-2.5 text-sm justify-center">Lancer l&apos;appel</button>
-              </div>
+            <p className="text-sm text-[#5C6B5E] mb-4">Décrivez votre situation et les membres à proximité seront notifiés.</p>
+            <div className="space-y-3">
+              <input placeholder="Titre de votre appel" className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none" style={{ background: '#fff', border: '1px solid #C8C3B0', color: '#1C2620' }} />
+              <textarea rows={3} placeholder="Décrivez votre situation..." className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none resize-none" style={{ background: '#fff', border: '1px solid #C8C3B0', color: '#1C2620' }} />
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => setShowNewRequest(false)} className="flex-1 py-2.5 rounded-xl border text-sm font-600 text-[#5C6B5E]" style={{ borderColor: '#C8C3B0' }}>Annuler</button>
+              <button onClick={() => setShowNewRequest(false)} className="flex-1 py-2.5 rounded-xl text-sm font-700 transition-all" style={{ background: '#E4501C', color: '#fff' }}>Envoyer l&apos;appel</button>
             </div>
           </div>
         </div>
       )}
 
       <Footer />
-    </main>
+    </div>
   );
 }

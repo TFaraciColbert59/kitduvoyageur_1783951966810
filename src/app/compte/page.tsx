@@ -670,14 +670,18 @@ export default function ComptePage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#F5F2E8]">
+      <div className="min-h-screen" style={{ background: '#E7E3D6' }}>
         <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <p className="text-4xl mb-4">🔒</p>
-            <h2 className="font-display font-700 text-xl text-[#1C2620] mb-2">Connexion requise</h2>
-            <p className="text-sm text-[#5C6B5E] mb-4">Connectez-vous pour accéder à votre compte</p>
-            <Link href="/connexion" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E4501C] text-white rounded-xl font-600 hover:bg-[#E4501C]/90 transition-colors">Se connecter</Link>
+        <div className="flex items-center justify-center min-h-[70vh]">
+          <div className="text-center max-w-sm mx-auto px-6">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(228,80,28,0.1)' }}>
+              <Icon name="LockClosedIcon" size={28} className="text-[#E4501C]" variant="outline" />
+            </div>
+            <h2 className="font-display font-800 text-2xl text-[#1C2620] mb-2 tracking-tight">Connexion requise</h2>
+            <p className="text-sm mb-6" style={{ color: '#5C6B5E', lineHeight: 1.7 }}>Connectez-vous pour accéder à votre compte, vos carnets et votre inventaire.</p>
+            <Link href="/connexion" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-700 text-sm transition-all" style={{ background: '#1C2620', color: '#fff' }}>
+              <Icon name="ArrowRightOnRectangleIcon" size={14} /> Se connecter
+            </Link>
           </div>
         </div>
         <Footer />
@@ -686,61 +690,68 @@ export default function ComptePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F2E8]">
+    <div className="min-h-screen" style={{ background: '#E7E3D6' }}>
       <Header />
 
-      {/* Instagram-style profile header */}
-      <section className="bg-[#1C2620] pt-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* ── Hero profile ── */}
+      <section style={{ background: '#1C2620' }} className="pt-16 relative overflow-hidden">
+        {/* Atmospheric grain */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")', backgroundRepeat: 'repeat', backgroundSize: '128px' }} />
+        <div className="absolute top-0 left-0 w-[500px] h-[500px] rounded-full opacity-[0.05] pointer-events-none" style={{ background: 'radial-gradient(circle, #4A6741 0%, transparent 70%)', transform: 'translate(-30%, -30%)' }} />
+
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-0">
+
+          {/* Eyebrow */}
+          <p className="text-[10px] font-mono tracking-[0.25em] uppercase mb-6" style={{ color: '#E4501C' }}>Mon compte</p>
 
           {/* Profile top row */}
-          <div className="flex items-start gap-6 sm:gap-10 mb-6">
+          <div className="flex items-start gap-6 sm:gap-10 mb-7">
             {/* Avatar */}
             <div className="relative flex-shrink-0">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-[#E4501C] to-[#C43A10] flex items-center justify-center border-2 border-[#E4501C]/40 shadow-lg">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center shadow-xl" style={{ background: 'linear-gradient(135deg, #E4501C, #C43A10)', border: '2px solid rgba(228,80,28,0.3)' }}>
                 {profile.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full rounded-full object-cover" />
+                  <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full rounded-2xl object-cover" />
                 ) : (
                   <span className="font-display font-800 text-3xl text-white">{initials}</span>
                 )}
               </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-emerald-500 border-2 border-[#1C2620]" />
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 flex items-center justify-center" style={{ background: '#10b981', borderColor: '#1C2620' }} />
             </div>
 
             {/* Profile info */}
             <div className="flex-1 min-w-0">
               {/* Name + actions */}
-              <div className="flex items-center gap-3 flex-wrap mb-2">
+              <div className="flex items-center gap-3 flex-wrap mb-3">
                 {editMode ? (
-                  <input value={editName} onChange={e => setEditName(e.target.value)} className="bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 text-white text-lg font-700 focus:outline-none focus:border-[#E4501C]/60 w-48" />
+                  <input value={editName} onChange={e => setEditName(e.target.value)} className="rounded-xl px-3 py-1.5 text-white text-lg font-700 focus:outline-none w-48" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }} />
                 ) : (
                   <h1 className="font-display font-800 text-xl sm:text-2xl text-white tracking-tight">{profile.full_name || user.email?.split('@')[0]}</h1>
                 )}
                 <div className="flex items-center gap-2">
                   {editMode ? (
                     <>
-                      <button onClick={handleSave} disabled={saving} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#E4501C] text-white rounded-xl text-xs font-600 hover:bg-[#E4501C]/90 transition-colors disabled:opacity-50">
+                      <button onClick={handleSave} disabled={saving} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 transition-colors disabled:opacity-50" style={{ background: '#E4501C', color: '#fff' }}>
                         {saving ? '...' : '✓ Sauvegarder'}
                       </button>
-                      <button onClick={() => setEditMode(false)} className="px-3 py-1.5 border border-white/20 text-white/70 rounded-xl text-xs font-600 hover:border-white/40 transition-colors">Annuler</button>
+                      <button onClick={() => setEditMode(false)} className="px-3 py-1.5 rounded-xl text-xs font-600 transition-colors" style={{ border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.7)' }}>Annuler</button>
                     </>
                   ) : (
                     <>
-                      <button onClick={() => setEditMode(true)} className="flex items-center gap-1.5 px-3 py-1.5 border border-white/20 text-white/70 rounded-xl text-xs font-600 hover:border-white/40 hover:text-white transition-colors">
+                      <button onClick={() => setEditMode(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 transition-all" style={{ border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)' }}>
                         <Icon name="PencilIcon" size={11} /> Modifier
                       </button>
-                      {saved && <span className="text-xs text-emerald-400 font-600">✓ Sauvegardé</span>}
+                      {saved && <span className="text-xs font-600" style={{ color: '#10b981' }}>✓ Sauvegardé</span>}
                     </>
                   )}
-                  <Link href={`/profil/${user.id}`} className="flex items-center gap-1.5 px-3 py-1.5 border border-white/20 text-white/70 rounded-xl text-xs font-600 hover:border-white/40 hover:text-white transition-colors">
+                  <Link href={`/profil/${user.id}`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 transition-all" style={{ border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)' }}>
                     <Icon name="ArrowTopRightOnSquareIcon" size={11} /> Profil public
                   </Link>
                 </div>
               </div>
 
-              {/* Stats row — Instagram style */}
-              <div className="flex items-center gap-5 sm:gap-8 mb-3">
+              {/* Stats row */}
+              <div className="flex items-center gap-5 sm:gap-8 mb-4">
                 {[
                   { label: 'publications', value: postsCount },
                   { label: 'abonnés', value: followers },
@@ -749,28 +760,28 @@ export default function ComptePage() {
                 ].map(stat => (
                   <div key={stat.label} className="text-center">
                     <p className="font-display font-800 text-white text-lg leading-none">{stat.value}</p>
-                    <p className="text-white/40 text-[10px] mt-0.5">{stat.label}</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{stat.label}</p>
                   </div>
                 ))}
               </div>
 
-              {/* Bio */}
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
+              {/* Level + bio */}
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm">{currentLevel.badge}</span>
                   <span className={`text-xs font-600 ${currentLevel.color}`}>{currentLevel.name}</span>
-                  <span className="text-white/30 text-xs">·</span>
-                  <span className="font-mono text-xs text-[#E4501C] font-700">{profile.loyalty_points} pts</span>
+                  <span style={{ color: 'rgba(255,255,255,0.2)' }}>·</span>
+                  <span className="font-mono text-xs font-700" style={{ color: '#E4501C' }}>{profile.loyalty_points} pts</span>
                 </div>
                 {editMode ? (
                   <div className="space-y-2">
-                    <input value={editLocation} onChange={e => setEditLocation(e.target.value)} placeholder="Localisation" className="bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 text-white/80 text-xs focus:outline-none focus:border-[#E4501C]/60 w-full max-w-xs" />
-                    <textarea rows={2} value={editBio} onChange={e => setEditBio(e.target.value)} placeholder="Votre bio..." className="bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 text-white/80 text-xs focus:outline-none focus:border-[#E4501C]/60 w-full max-w-xs resize-none" />
+                    <input value={editLocation} onChange={e => setEditLocation(e.target.value)} placeholder="Localisation" className="rounded-xl px-3 py-1.5 text-xs focus:outline-none w-full max-w-xs" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)' }} />
+                    <textarea rows={2} value={editBio} onChange={e => setEditBio(e.target.value)} placeholder="Votre bio..." className="rounded-xl px-3 py-1.5 text-xs focus:outline-none w-full max-w-xs resize-none" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)' }} />
                   </div>
                 ) : (
                   <>
-                    {profile.location && <p className="text-white/50 text-xs flex items-center gap-1"><Icon name="MapPinIcon" size={11} /> {profile.location}</p>}
-                    {profile.bio && <p className="text-white/70 text-sm leading-relaxed max-w-sm">{profile.bio}</p>}
+                    {profile.location && <p className="text-xs flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.4)' }}><Icon name="MapPinIcon" size={11} /> {profile.location}</p>}
+                    {profile.bio && <p className="text-sm leading-relaxed max-w-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>{profile.bio}</p>}
                   </>
                 )}
               </div>
@@ -779,20 +790,63 @@ export default function ComptePage() {
 
           {/* Loyalty progress bar */}
           {nextLevel && (
-            <div className="mb-5 bg-white/5 rounded-2xl p-4 border border-white/10">
+            <div className="mb-5 rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <div className="flex items-center justify-between text-xs mb-2">
-                <span className="text-white/50">{currentLevel.badge} {currentLevel.name}</span>
-                <span className="text-white/50">{nextLevel.badge} {nextLevel.name} à {nextLevel.min} pts</span>
+                <span style={{ color: 'rgba(255,255,255,0.4)' }}>{currentLevel.badge} {currentLevel.name}</span>
+                <span style={{ color: 'rgba(255,255,255,0.4)' }}>{nextLevel.badge} {nextLevel.name} à {nextLevel.min} pts</span>
               </div>
-              <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-[#E4501C] to-[#F07040] rounded-full transition-all" style={{ width: `${loyaltyProgress}%` }} />
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                <div className="h-full rounded-full transition-all" style={{ width: `${loyaltyProgress}%`, background: 'linear-gradient(90deg, #E4501C, #F07040)' }} />
               </div>
-              <p className="text-[10px] text-white/30 mt-1 text-right">{nextLevel.min - profile.loyalty_points} pts pour le niveau suivant</p>
+              <p className="text-[10px] mt-1 text-right" style={{ color: 'rgba(255,255,255,0.25)' }}>{nextLevel.min - profile.loyalty_points} pts pour le niveau suivant</p>
             </div>
           )}
 
+          {/* Trust score + AI Conseil */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+            {/* Trust score */}
+            <div className="rounded-2xl p-4 flex items-center gap-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="relative flex-shrink-0">
+                <svg width={56} height={56} className="-rotate-90">
+                  <circle cx={28} cy={28} r={22} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={4} />
+                  <circle cx={28} cy={28} r={22} fill="none" stroke="#E4501C" strokeWidth={4} strokeDasharray={2 * Math.PI * 22} strokeDashoffset={2 * Math.PI * 22 * (1 - (profile.trust_score || 50) / 100)} strokeLinecap="round" />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center"><span className="font-mono font-700 text-white text-sm">{profile.trust_score || 50}</span></div>
+              </div>
+              <div>
+                <p className="text-[10px] font-mono uppercase tracking-wider mb-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Trust Score</p>
+                <p className="font-display font-700 text-white text-sm">Confirmé 🏔️</p>
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Score de confiance</p>
+              </div>
+            </div>
+
+            {/* AI Conseil */}
+            <div className="rounded-2xl p-4" style={{ background: 'linear-gradient(135deg, rgba(228,80,28,0.18), rgba(228,80,28,0.05))', border: '1px solid rgba(228,80,28,0.25)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Icon name="LightBulbIcon" size={14} className="text-[#E4501C]" />
+                  <p className="text-xs font-600 text-white">Conseil IA personnalisé</p>
+                </div>
+                <button onClick={handleGenerateConseil} disabled={conseilLoading} className="text-[10px] font-600 disabled:opacity-50 flex items-center gap-1" style={{ color: '#E4501C' }}>
+                  {conseilLoading ? <div className="w-3 h-3 border border-[#E4501C] border-t-transparent rounded-full animate-spin" /> : <Icon name="SparklesIcon" size={10} />}
+                  {conseilLoading ? 'Génération...' : 'Générer'}
+                </button>
+              </div>
+              {aiConseil ? (
+                <p className="text-xs leading-relaxed line-clamp-3" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                  {aiConseil}
+                  {conseilLoading && <span className="inline-block w-1 h-3 animate-pulse ml-0.5 rounded-sm" style={{ background: '#E4501C' }} />}
+                </p>
+              ) : conseilLoading ? (
+                <p className="text-xs animate-pulse" style={{ color: 'rgba(255,255,255,0.35)' }}>Gemini génère vos conseils...</p>
+              ) : (
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Cliquez sur &quot;Générer&quot; pour obtenir des conseils personnalisés par Gemini.</p>
+              )}
+            </div>
+          </div>
+
           {/* Quick action links */}
-          <div className="flex items-center gap-2 flex-wrap mb-2">
+          <div className="flex items-center gap-2 flex-wrap mb-6">
             {[
               { label: 'Configurateur IA', href: '/ai-configurator', emoji: '🤖' },
               { label: 'Mes groupes', href: '/groupe', emoji: '🗺️' },
@@ -800,70 +854,31 @@ export default function ComptePage() {
               { label: 'Copilote', href: '/copilote', emoji: '✈️' },
               { label: 'Alertes', href: '/alertes', emoji: '🔔' },
             ].map(item => (
-              <Link key={item.href} href={item.href} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-xs text-white/70 hover:text-white transition-all">
+              <Link key={item.href} href={item.href} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all" style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <span>{item.emoji}</span> {item.label}
               </Link>
             ))}
-            <button onClick={signOut} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-xs text-red-400 hover:text-red-300 transition-all ml-auto">
+            <button onClick={signOut} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all ml-auto" style={{ background: 'rgba(239,68,68,0.1)', color: 'rgba(239,68,68,0.8)', border: '1px solid rgba(239,68,68,0.2)' }}>
               <Icon name="ArrowRightOnRectangleIcon" size={11} /> Déconnexion
             </button>
           </div>
 
-          {/* Trust score + AI Conseil row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-            {/* Trust score */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
-              <div className="relative flex-shrink-0">
-                <svg width={56} height={56} className="-rotate-90">
-                  <circle cx={28} cy={28} r={22} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={4} />
-                  <circle cx={28} cy={28} r={22} fill="none" stroke="#E4501C" strokeWidth={4} strokeDasharray={2 * Math.PI * 22} strokeDashoffset={2 * Math.PI * 22 * (1 - (profile.trust_score || 50) / 100)} strokeLinecap="round" />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center"><span className="font-mono font-700 text-white text-sm">{profile.trust_score || 50}</span></div>
-              </div>
-              <div>
-                <p className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-0.5">Trust Score</p>
-                <p className="font-display font-700 text-white text-sm">Confirmé 🏔️</p>
-                <p className="text-white/40 text-xs">Score de confiance</p>
-              </div>
-            </div>
-
-            {/* AI Conseil */}
-            <div className="bg-gradient-to-br from-[#E4501C]/20 to-[#E4501C]/5 border border-[#E4501C]/30 rounded-2xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Icon name="LightBulbIcon" size={14} className="text-[#E4501C]" />
-                  <p className="text-xs font-600 text-white">Conseil IA personnalisé</p>
-                </div>
-                <button onClick={handleGenerateConseil} disabled={conseilLoading} className="text-[10px] text-[#E4501C] hover:underline font-600 disabled:opacity-50 flex items-center gap-1">
-                  {conseilLoading ? <div className="w-3 h-3 border border-[#E4501C] border-t-transparent rounded-full animate-spin" /> : <Icon name="SparklesIcon" size={10} />}
-                  {conseilLoading ? 'Génération...' : 'Générer'}
-                </button>
-              </div>
-              {aiConseil ? (
-                <p className="text-xs text-white/80 leading-relaxed line-clamp-3">
-                  {aiConseil}
-                  {conseilLoading && <span className="inline-block w-1 h-3 bg-[#E4501C] animate-pulse ml-0.5 rounded-sm" />}
-                </p>
-              ) : conseilLoading ? (
-                <p className="text-xs text-white/40 animate-pulse">Gemini génère vos conseils...</p>
-              ) : (
-                <p className="text-xs text-white/40">Cliquez sur &quot;Générer&quot; pour obtenir des conseils personnalisés par Gemini.</p>
-              )}
-            </div>
-          </div>
-
-          {/* Tab navigation — Instagram style */}
-          <div className="flex border-t border-white/10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 overflow-x-auto">
+          {/* Tab navigation */}
+          <div className="flex overflow-x-auto scrollbar-hide -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
             {TABS.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-4 py-3 text-xs font-600 whitespace-nowrap border-t-2 transition-all -mt-px ${activeTab === tab.id ? 'border-white text-white' : 'border-transparent text-white/40 hover:text-white/70'}`}
+                className="flex items-center gap-1.5 px-4 py-3.5 text-xs font-600 whitespace-nowrap transition-all -mt-px"
+                style={{
+                  borderTop: activeTab === tab.id ? '2px solid #E4501C' : '2px solid transparent',
+                  color: activeTab === tab.id ? '#fff' : 'rgba(255,255,255,0.35)',
+                }}
               >
                 <Icon name={tab.icon} size={13} variant={activeTab === tab.id ? 'solid' : 'outline'} />
                 {tab.label}
                 {tab.count !== undefined && tab.count > 0 && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-700 ${activeTab === tab.id ? 'bg-white text-[#1C2620]' : 'bg-white/10 text-white/50'}`}>{tab.count}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full font-700" style={{ background: activeTab === tab.id ? '#fff' : 'rgba(255,255,255,0.1)', color: activeTab === tab.id ? '#1C2620' : 'rgba(255,255,255,0.4)' }}>{tab.count}</span>
                 )}
               </button>
             ))}
@@ -871,10 +886,10 @@ export default function ComptePage() {
         </div>
       </section>
 
-      {/* Tab content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* ── Tab content ── */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {profileLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{[1,2,3,4,5,6].map(i => <div key={i} className="h-32 bg-[#C8C3B0]/30 rounded-2xl animate-pulse" />)}</div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{[1,2,3,4,5,6].map(i => <div key={i} className="h-32 rounded-2xl animate-pulse" style={{ background: 'rgba(200,195,176,0.3)' }} />)}</div>
         ) : (
           <>
             {activeTab === 'posts' && <PostsTab userId={user.id} />}

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import Link from 'next/link';
+
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -396,292 +397,288 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
   );
 }
 
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function EvenementsPage() {
-  const [filter, setFilter] = useState<string>('all');
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [filterType, setFilterType] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [detailEvent, setDetailEvent] = useState<Event | null>(null);
-  const [createForm, setCreateForm] = useState({
-    title: '', type: 'rando', emoji: '🥾', event_date: '', duration: '', location: '', country: 'France',
-    max_participants: 10, description: '', cover_image: '', kitty_goal: 0,
-  });
+  const [toast, setToast] = useState<string | null>(null);
   const { user } = useAuth();
   const supabase = useMemo(() => createClient(), []);
 
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
+
   const loadEvents = useCallback(async () => {
     setLoading(true);
-    setError(null);
-    try {
-      const { data: eventsData, error: eventsError } = await supabase
-        .from('events')
-        .select('*, organizer:user_profiles!events_organizer_id_fkey(full_name, trust_score), expenses:event_expenses(*)')
-        .order('event_date', { ascending: true });
+    const { data } = await supabase
+      .from('club_events')
+      .select('*, organizer:user_profiles(full_name, trust_score), expenses:event_expenses(*)')
+      .order('event_date', { ascending: true });
 
-      if (eventsError) throw eventsError;
-
-      let registeredIds: string[] = [];
-      if (user) {
-        const { data: participations } = await supabase
-          .from('event_participants')
-          .select('event_id')
-          .eq('user_id', user.id);
-        registeredIds = participations?.map((p) => p.event_id) ?? [];
-      }
-
-      setEvents((eventsData ?? []).map((e) => ({ ...e, is_registered: registeredIds.includes(e.id) })));
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    let registeredIds: string[] = [];
+    if (user) {
+      const { data: regs } = await supabase.from('event_registrations').select('event_id').eq('user_id', user.id);
+      registeredIds = regs?.map((r) => r.event_id) ?? [];
     }
-  }, [user, supabase]);
+
+    setEvents(((data ?? []) as Event[]).map((e) => ({ ...e, is_registered: registeredIds.includes(e.id) })));
+    setLoading(false);
+  }, [supabase, user]);
 
   useEffect(() => { loadEvents(); }, [loadEvents]);
 
   const handleToggleRegister = async (eventId: string, isRegistered: boolean) => {
-    if (!user) return;
-    const ev = events.find((e) => e.id === eventId);
-    if (!ev) return;
-
+    if (!user) { showToast('Connectez-vous pour vous inscrire'); return; }
     if (isRegistered) {
-      await supabase.from('event_participants').delete().eq('event_id', eventId).eq('user_id', user.id);
-      await supabase.from('events').update({ current_participants: ev.current_participants - 1 }).eq('id', eventId);
-      setEvents((prev) => prev.map((e) => e.id === eventId ? { ...e, is_registered: false, current_participants: e.current_participants - 1 } : e));
+      await supabase.from('event_registrations').delete().eq('event_id', eventId).eq('user_id', user.id);
+      await supabase.from('club_events').update({ participants_count: Math.max(0, (events.find(e => e.id === eventId)?.current_participants ?? 1) - 1) }).eq('id', eventId);
+      showToast('Désinscription effectuée');
     } else {
-      if (ev.status === 'full') return;
-      await supabase.from('event_participants').insert({ event_id: eventId, user_id: user.id });
-      const newCount = ev.current_participants + 1;
-      const newStatus = newCount >= ev.max_participants ? 'full' : 'upcoming';
-      await supabase.from('events').update({ current_participants: newCount, status: newStatus }).eq('id', eventId);
-      setEvents((prev) => prev.map((e) => e.id === eventId ? { ...e, is_registered: true, current_participants: newCount, status: newStatus as 'upcoming' | 'full' | 'past' } : e));
+      await supabase.from('event_registrations').upsert({ event_id: eventId, user_id: user.id }, { onConflict: 'event_id,user_id' });
+      await supabase.from('club_events').update({ participants_count: (events.find(e => e.id === eventId)?.current_participants ?? 0) + 1 }).eq('id', eventId);
+      showToast('Inscription confirmée !');
+    }
+    setEvents((prev) => prev.map((e) => e.id === eventId ? { ...e, is_registered: !isRegistered, current_participants: isRegistered ? Math.max(0, e.current_participants - 1) : e.current_participants + 1 } : e));
+    if (selectedEvent?.id === eventId) {
+      setSelectedEvent((prev) => prev ? { ...prev, is_registered: !isRegistered } : null);
     }
   };
 
-  const handleCreateEvent = async () => {
-    if (!user || !createForm.title.trim() || !createForm.event_date) return;
-    setCreating(true);
-    try {
-      const { error: insertError } = await supabase.from('events').insert({
-        ...createForm,
-        organizer_id: user.id,
-        current_participants: 0,
-        shared_kitty: 0,
-        status: 'upcoming',
-        cover_image: createForm.cover_image || 'https://images.unsplash.com/photo-1649956688202-51e042251f27',
-        cover_alt: createForm.title,
-      });
-      if (insertError) throw insertError;
-      setShowCreateModal(false);
-      setCreateForm({ title: '', type: 'rando', emoji: '🥾', event_date: '', duration: '', location: '', country: 'France', max_participants: 10, description: '', cover_image: '', kitty_goal: 0 });
-      await loadEvents();
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setCreating(false);
-    }
-  };
+  const filtered = events.filter((e) => {
+    if (filterType !== 'all' && e.type !== filterType) return false;
+    if (filterStatus !== 'all' && e.status !== filterStatus) return false;
+    return true;
+  });
 
-  const filtered = events.filter((e) => filter === 'all' || e.type === filter);
+  const upcomingCount = events.filter(e => e.status === 'upcoming').length;
+  const liveCount = events.filter(e => e.status === 'live').length;
 
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen" style={{ background: '#E7E3D6' }}>
       <Header />
-      <div className="pt-16 lg:pt-18">
-        <section className="bg-dark-bg text-white py-14 px-4 relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10 pointer-events-none">
-            <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-secondary blur-3xl" />
-          </div>
-          <div className="max-w-7xl mx-auto relative">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="tag-badge bg-secondary/30 text-emerald-300 border border-emerald-500/30 text-[10px]">COMMUNAUTÉ</span>
-              <span className="text-white/50 text-xs font-mono">ÉVÉNEMENTS & SORTIES</span>
-            </div>
-            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-              <div>
-                <h1 className="text-section-title text-white mb-3">
-                  Sorties organisées<br />
-                  <span className="text-primary">par des membres vérifiés</span>
-                </h1>
-                <p className="text-white/60 text-base max-w-xl">
-                  Chaque organisateur affiche son Trust Score avant votre inscription. Cagnotte de groupe intégrée, location de matériel partagée.
-                </p>
-              </div>
-              <button onClick={() => setShowCreateModal(true)} className="btn-primary flex-shrink-0 self-start lg:self-auto">
-                <Icon name="PlusIcon" size={16} />
-                Organiser une sortie
-              </button>
-            </div>
-          </div>
-        </section>
 
-        <section className="sticky top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="flex items-center gap-1 py-3 overflow-x-auto scrollbar-hide">
-              {[
-                { id: 'all', label: 'Toutes les sorties' },
-                { id: 'rando', label: '🥾 Randonnée' },
-                { id: 'bushcraft', label: '🪓 Bushcraft' },
-                { id: 'vanlife', label: '🚐 Vanlife' },
-                { id: 'alpinisme', label: '⛏️ Alpinisme' },
-              ].map((f) => (
+      {/* ── Hero ── */}
+      <section style={{ background: '#1C2620' }} className="pt-16 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")', backgroundRepeat: 'repeat', backgroundSize: '128px' }} />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[400px] rounded-full opacity-[0.05] pointer-events-none" style={{ background: 'radial-gradient(circle, #4A6741 0%, transparent 70%)', transform: 'translate(-30%, 30%)' }} />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <div className="flex items-center gap-3 mb-5">
+            <span className="text-[10px] font-mono tracking-[0.25em] uppercase" style={{ color: '#E4501C' }}>Communauté</span>
+            <span style={{ color: 'rgba(255,255,255,0.15)' }}>—</span>
+            <span className="text-[10px] font-mono tracking-[0.15em] uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>Sorties & rassemblements</span>
+          </div>
+
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+            <div>
+              <h1 className="font-display mb-4" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-0.02em', color: '#fff' }}>
+                Partez ensemble,<br />
+                <em style={{ fontStyle: 'italic', color: 'rgba(255,255,255,0.65)' }}>revenez transformés.</em>
+              </h1>
+              <p className="text-sm max-w-xl" style={{ color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>
+                Sorties organisées, ateliers bushcraft, expéditions collectives — rejoignez des aventuriers qui partagent vos passions.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-4 flex-shrink-0">
+              <div className="flex items-center gap-6">
+                {[
+                  { value: upcomingCount.toString(), label: 'à venir' },
+                  { value: liveCount.toString(), label: 'en direct' },
+                  { value: events.length.toString(), label: 'total' },
+                ].map((s) => (
+                  <div key={s.label}>
+                    <p className="font-mono font-700 text-2xl" style={{ color: '#E4501C' }}>{s.value}</p>
+                    <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{s.label}</p>
+                  </div>
+                ))}
+              </div>
+              {user && (
                 <button
-                  key={f.id}
-                  onClick={() => setFilter(f.id)}
-                  className={`category-pill flex-shrink-0 ${filter === f.id ? 'active' : ''}`}
+                  onClick={() => setShowCreateModal(true)}
+                  className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-700 transition-all"
+                  style={{ background: '#E4501C', color: '#fff' }}
                 >
-                  {f.label}
+                  <Icon name="PlusIcon" size={15} /> Organiser un événement
                 </button>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <div className="max-w-7xl mx-auto px-4 py-10">
-          {error && <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{error}</div>}
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="font-display font-700 text-foreground text-xl">Prochaines sorties</h2>
-                <p className="text-sm text-muted-foreground">{filtered.length} événements</p>
-              </div>
-              {loading ? (
-                <div className="space-y-6">
-                  {[1, 2].map((i) => <div key={i} className="topo-card h-96 animate-pulse bg-muted" />)}
-                </div>
-              ) : filtered.length === 0 ? (
-                <div className="text-center py-16 text-muted-foreground">
-                  <Icon name="CalendarIcon" size={40} className="mx-auto mb-3 opacity-30" />
-                  <p className="font-display font-700 text-foreground mb-1">Aucun événement</p>
-                  <p className="text-sm">Soyez le premier à organiser une sortie !</p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {filtered.map((e) => <EventCard key={e.id} event={e} onToggleRegister={handleToggleRegister} onViewDetail={(event) => setDetailEvent(event)} />)}
-                </div>
               )}
             </div>
-
-            <aside className="space-y-6">
-              <div className="topo-card p-5">
-                <h3 className="font-display font-700 text-foreground text-base mb-3 flex items-center gap-2">
-                  <Icon name="ShieldCheckIcon" size={16} className="text-primary" />
-                  Trust Score & sécurité
-                </h3>
-                <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
-                  Le Trust Score de l&apos;organisateur est visible avant toute inscription. Un score élevé signifie des évaluations positives d&apos;événements précédents.
-                </p>
-                <div className="space-y-2">
-                  {[
-                    { score: '90+', label: 'Ambassadeur — Organisateur confirmé', color: 'text-emerald-600' },
-                    { score: '75–89', label: 'Expert — Plusieurs sorties réussies', color: 'text-blue-600' },
-                    { score: '60–74', label: 'Confirmé — Premières sorties', color: 'text-amber-600' },
-                  ].map((s) => (
-                    <div key={s.score} className="flex items-center gap-2 text-xs">
-                      <span className={`font-mono font-700 ${s.color} w-12`}>{s.score}</span>
-                      <span className="text-muted-foreground">{s.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="topo-card p-5">
-                <h3 className="font-display font-700 text-foreground text-base mb-3 flex items-center gap-2">
-                  <Icon name="BanknotesIcon" size={16} className="text-primary" />
-                  Cagnotte intégrée
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Frais partagés gérés directement dans l&apos;événement. Location de matériel possible via le module location de la plateforme.
-                </p>
-              </div>
-            </aside>
           </div>
         </div>
+      </section>
+
+      {/* ── Filters + Content ── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Filters */}
+        <div className="flex flex-wrap gap-2 mb-8">
+          <div className="flex gap-2 flex-wrap">
+            {[
+              { id: 'all', label: 'Tous les types' },
+              { id: 'rando', label: '🥾 Randonnée' },
+              { id: 'bushcraft', label: '🪓 Bushcraft' },
+              { id: 'vanlife', label: '🚐 Vanlife' },
+              { id: 'alpinisme', label: '🏔️ Alpinisme' },
+              { id: 'photo', label: '📷 Photo' },
+            ].map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFilterType(f.id)}
+                className="px-4 py-2 rounded-xl text-sm font-600 transition-all"
+                style={{
+                  background: filterType === f.id ? '#1C2620' : '#fff',
+                  color: filterType === f.id ? '#fff' : '#5C6B5E',
+                  border: `1px solid ${filterType === f.id ? '#1C2620' : '#E8E4DA'}`,
+                }}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2 ml-auto">
+            {[
+              { id: 'all', label: 'Tous' },
+              { id: 'upcoming', label: '📅 À venir' },
+              { id: 'live', label: '🔴 En direct' },
+              { id: 'past', label: '✓ Passés' },
+            ].map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFilterStatus(f.id)}
+                className="px-4 py-2 rounded-xl text-sm font-600 transition-all"
+                style={{
+                  background: filterStatus === f.id ? '#4A6741' : '#fff',
+                  color: filterStatus === f.id ? '#fff' : '#5C6B5E',
+                  border: `1px solid ${filterStatus === f.id ? '#4A6741' : '#E8E4DA'}`,
+                }}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Events grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[1,2,3,4,5,6].map(i => <div key={i} className="h-72 rounded-2xl animate-pulse" style={{ background: 'rgba(200,195,176,0.4)' }} />)}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-5xl mb-4">📅</p>
+            <h2 className="font-display font-700 text-xl text-[#1C2620] mb-2">Aucun événement</h2>
+            <p className="text-sm text-[#5C6B5E]">Essayez d&apos;autres filtres ou organisez le premier événement !</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filtered.map((event) => {
+              const cfg = typeConfig[event.type] ?? { color: 'bg-gray-100 text-gray-700', label: event.type };
+              const spotsLeft = event.max_participants - event.current_participants;
+              return (
+                <div
+                  key={event.id}
+                  className="rounded-2xl overflow-hidden cursor-pointer group transition-all"
+                  style={{ background: '#fff', border: '1px solid #E8E4DA', boxShadow: '0 1px 3px rgba(28,38,32,0.04)' }}
+                  onClick={() => setSelectedEvent(event)}
+                >
+                  {/* Cover */}
+                  <div className="relative h-44 overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={event.cover_image} alt={event.cover_alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute top-3 left-3 flex gap-2">
+                      <span className={`text-[10px] font-700 px-2.5 py-1 rounded-full ${cfg.color}`}>{event.emoji} {cfg.label}</span>
+                      {event.status === 'live' && <span className="text-[10px] font-700 px-2.5 py-1 rounded-full bg-red-100 text-red-700 animate-pulse">🔴 Live</span>}
+                      {event.status === 'full' && <span className="text-[10px] font-700 px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">Complet</span>}
+                    </div>
+                    {event.is_registered && (
+                      <div className="absolute top-3 right-3">
+                        <span className="text-[10px] font-700 px-2.5 py-1 rounded-full bg-emerald-500 text-white">✓ Inscrit</span>
+                      </div>
+                    )}
+                    <div className="absolute bottom-3 left-4 right-4">
+                      <h3 className="font-display font-700 text-white text-base leading-tight line-clamp-2">{event.title}</h3>
+                    </div>
+                  </div>
+
+                  {/* Info */}
+                  <div className="p-4">
+                    <div className="flex items-center gap-3 text-xs text-[#5C6B5E] mb-3">
+                      <span className="flex items-center gap-1"><Icon name="MapPinIcon" size={11} /> {event.location}</span>
+                      <span className="flex items-center gap-1"><Icon name="ClockIcon" size={11} /> {event.duration}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-1.5 text-xs text-[#5C6B5E]">
+                        <Icon name="UsersIcon" size={12} />
+                        <span>{event.current_participants}/{event.max_participants}</span>
+                        {spotsLeft <= 3 && spotsLeft > 0 && <span className="text-red-500 font-600">({spotsLeft} restante{spotsLeft > 1 ? 's' : ''})</span>}
+                      </div>
+                      {event.event_date && (
+                        <span className="text-[10px] font-mono font-600 text-[#1C2620]">
+                          {new Date(event.event_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="h-1 rounded-full overflow-hidden mb-4" style={{ background: '#E8E4DA' }}>
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${(event.current_participants / event.max_participants) * 100}%`,
+                          background: event.current_participants / event.max_participants >= 0.9 ? '#ef4444' : '#4A6741',
+                        }}
+                      />
+                    </div>
+
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleToggleRegister(event.id, !!event.is_registered); }}
+                      disabled={event.status === 'full' && !event.is_registered}
+                      className="w-full py-2.5 rounded-xl text-sm font-700 transition-all disabled:opacity-50"
+                      style={{
+                        background: event.is_registered ? 'rgba(74,103,65,0.1)' : event.status === 'full' ? '#E8E4DA' : '#1C2620',
+                        color: event.is_registered ? '#4A6741' : event.status === 'full' ? '#5C6B5E' : '#fff',
+                        border: event.is_registered ? '1px solid rgba(74,103,65,0.3)' : 'none',
+                      }}
+                    >
+                      {event.is_registered ? '✓ Inscrit — Se désinscrire' : event.status === 'full' ? 'Complet' : 'S\'inscrire'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Create event modal */}
+      {/* Event detail modal */}
+      <EventDetailModal event={selectedEvent} onClose={() => setSelectedEvent(null)} onToggleRegister={handleToggleRegister} />
+
+      {/* Create event modal placeholder */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-card border border-border rounded-2xl p-6 max-w-lg w-full my-4">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="rounded-2xl w-full max-w-md p-6" style={{ background: '#EDEAE0', border: '1px solid #C8C3B0' }}>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="font-display font-700 text-foreground text-lg">Organiser une sortie</h2>
-              <button onClick={() => setShowCreateModal(false)} className="p-2 rounded-lg hover:bg-muted transition-colors">
-                <Icon name="XMarkIcon" size={18} />
-              </button>
+              <h2 className="font-display font-700 text-[#1C2620] text-xl">Organiser un événement</h2>
+              <button onClick={() => setShowCreateModal(false)} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
             </div>
-            {!user ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Connectez-vous pour organiser une sortie.</p>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Titre</label>
-                  <input className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Ex: Traversée GR20" value={createForm.title} onChange={(e) => setCreateForm((f) => ({ ...f, title: e.target.value }))} />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Type</label>
-                    <select className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={createForm.type} onChange={(e) => setCreateForm((f) => ({ ...f, type: e.target.value }))}>
-                      <option value="rando">🥾 Randonnée</option>
-                      <option value="bushcraft">🪓 Bushcraft</option>
-                      <option value="vanlife">🚐 Vanlife</option>
-                      <option value="alpinisme">⛏️ Alpinisme</option>
-                      <option value="photo">📷 Photo</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Date</label>
-                    <input type="date" className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={createForm.event_date} onChange={(e) => setCreateForm((f) => ({ ...f, event_date: e.target.value }))} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Durée</label>
-                    <input className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Ex: 3 jours" value={createForm.duration} onChange={(e) => setCreateForm((f) => ({ ...f, duration: e.target.value }))} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Participants max</label>
-                    <input type="number" min={2} max={50} className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={createForm.max_participants} onChange={(e) => setCreateForm((f) => ({ ...f, max_participants: parseInt(e.target.value) || 10 }))} />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Lieu</label>
-                  <input className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Ex: Pyrénées, Cauterets" value={createForm.location} onChange={(e) => setCreateForm((f) => ({ ...f, location: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Description</label>
-                  <textarea rows={3} className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" placeholder="Décrivez la sortie..." value={createForm.description} onChange={(e) => setCreateForm((f) => ({ ...f, description: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Objectif cagnotte (€)</label>
-                  <input type="number" min={0} className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" value={createForm.kitty_goal} onChange={(e) => setCreateForm((f) => ({ ...f, kitty_goal: parseFloat(e.target.value) || 0 }))} />
-                </div>
-                <div className="flex gap-3 pt-2">
-                  <button onClick={() => setShowCreateModal(false)} className="flex-1 btn-secondary py-2.5 text-sm justify-center">Annuler</button>
-                  <button onClick={handleCreateEvent} disabled={creating || !createForm.title.trim() || !createForm.event_date} className="flex-1 btn-primary py-2.5 text-sm justify-center disabled:opacity-50">
-                    {creating ? 'Création...' : 'Créer la sortie'}
-                  </button>
-                </div>
-              </div>
-            )}
+            <p className="text-sm text-[#5C6B5E] mb-4">Pour organiser un événement, vous devez avoir un Trust Score minimum de {100}.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowCreateModal(false)} className="flex-1 py-2.5 rounded-xl border border-[#C8C3B0] text-sm font-600 text-[#5C6B5E]">Fermer</button>
+              <Link href="/profil" className="flex-1 py-2.5 rounded-xl text-sm font-700 text-center transition-all" style={{ background: '#E4501C', color: '#fff' }}>Mon profil</Link>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Event Detail Modal */}
-      <EventDetailModal
-        event={detailEvent}
-        onClose={() => setDetailEvent(null)}
-        onToggleRegister={(eventId, isRegistered) => {
-          handleToggleRegister(eventId, isRegistered);
-          setDetailEvent((prev) => prev ? { ...prev, is_registered: !isRegistered, current_participants: isRegistered ? prev.current_participants - 1 : prev.current_participants + 1 } : null);
-        }}
-      />
-
-      <Footer />
-    </main>
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl text-sm font-600 shadow-xl" style={{ background: '#1C2620', color: '#fff' }}>
+          {toast}
+        </div>
+      )}
+    </div>
   );
 }
-
-export const dynamic = 'force-dynamic';
