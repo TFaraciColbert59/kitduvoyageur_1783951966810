@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 import TrailPanel from '@/components/explorer/TrailPanel';
 import type { ExploreTrail } from '@/components/explorer/AdventureScore';
+import { createClient } from '@/lib/supabase/client';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -132,172 +133,9 @@ const MOCK_LISTINGS: Listing[] = [
   },
 ];
 
-// ─── Mock Trails / Randonnées ──────────────────────────────────────────────────
+// ─── Mock Trails ──────────────────────────────────────────────────────────────
 
-const MOCK_TRAILS: ExploreTrail[] = [
-  {
-    id: 't1',
-    name: 'Tour de la Chartreuse',
-    geometry: {
-      type: 'LineString',
-      coordinates: [
-        [5.87, 45.38], [5.89, 45.40], [5.92, 45.42], [5.95, 45.44],
-        [5.97, 45.42], [5.94, 45.39], [5.91, 45.37], [5.87, 45.38],
-      ],
-    },
-    distance_km: 18.5,
-    duration_hours: 7,
-    difficulty: 'moderate',
-    elevation_gain: 1200,
-    adventure_score: 82,
-    nature_score: 88,
-    panorama_score: 85,
-    accessibility_score: 70,
-    challenge_score: 75,
-    services_score: 60,
-    start_lat: 45.38,
-    start_lng: 5.87,
-    bbox_min_lat: 45.37,
-    bbox_min_lng: 5.87,
-    bbox_max_lat: 45.44,
-    bbox_max_lng: 5.97,
-  },
-  {
-    id: 't2',
-    name: 'Sentier du Lac Blanc',
-    geometry: {
-      type: 'LineString',
-      coordinates: [
-        [5.77, 45.28], [5.79, 45.30], [5.82, 45.32],
-        [5.84, 45.30], [5.81, 45.28], [5.77, 45.28],
-      ],
-    },
-    distance_km: 9.2,
-    duration_hours: 3.5,
-    difficulty: 'easy',
-    elevation_gain: 450,
-    adventure_score: 74,
-    nature_score: 90,
-    panorama_score: 78,
-    accessibility_score: 85,
-    challenge_score: 45,
-    services_score: 72,
-    start_lat: 45.28,
-    start_lng: 5.77,
-    bbox_min_lat: 45.28,
-    bbox_min_lng: 5.77,
-    bbox_max_lat: 45.32,
-    bbox_max_lng: 5.84,
-  },
-  {
-    id: 't3',
-    name: 'Crête du Grand Som',
-    geometry: {
-      type: 'LineString',
-      coordinates: [
-        [5.92, 45.32], [5.94, 45.35], [5.97, 45.37],
-        [6.00, 45.38], [6.02, 45.36], [5.99, 45.33], [5.92, 45.32],
-      ],
-    },
-    distance_km: 14.8,
-    duration_hours: 6,
-    difficulty: 'hard',
-    elevation_gain: 1650,
-    adventure_score: 91,
-    nature_score: 92,
-    panorama_score: 95,
-    accessibility_score: 50,
-    challenge_score: 90,
-    services_score: 40,
-    start_lat: 45.32,
-    start_lng: 5.92,
-    bbox_min_lat: 45.32,
-    bbox_min_lng: 5.92,
-    bbox_max_lat: 45.38,
-    bbox_max_lng: 6.02,
-  },
-  {
-    id: 't4',
-    name: 'Boucle du Lac Aiguebelette',
-    geometry: {
-      type: 'LineString',
-      coordinates: [
-        [5.79, 45.55], [5.81, 45.57], [5.83, 45.56],
-        [5.82, 45.54], [5.79, 45.55],
-      ],
-    },
-    distance_km: 6.5,
-    duration_hours: 2,
-    difficulty: 'easy',
-    elevation_gain: 120,
-    adventure_score: 65,
-    nature_score: 82,
-    panorama_score: 70,
-    accessibility_score: 95,
-    challenge_score: 30,
-    services_score: 80,
-    start_lat: 45.55,
-    start_lng: 5.79,
-    bbox_min_lat: 45.54,
-    bbox_min_lng: 5.79,
-    bbox_max_lat: 45.57,
-    bbox_max_lng: 5.83,
-  },
-  {
-    id: 't5',
-    name: 'Traversée des Belledonne',
-    geometry: {
-      type: 'LineString',
-      coordinates: [
-        [6.07, 45.48], [6.10, 45.50], [6.13, 45.52],
-        [6.15, 45.50], [6.12, 45.47], [6.09, 45.46], [6.07, 45.48],
-      ],
-    },
-    distance_km: 22.0,
-    duration_hours: 9,
-    difficulty: 'expert',
-    elevation_gain: 2100,
-    adventure_score: 96,
-    nature_score: 94,
-    panorama_score: 98,
-    accessibility_score: 35,
-    challenge_score: 98,
-    services_score: 30,
-    start_lat: 45.48,
-    start_lng: 6.07,
-    bbox_min_lat: 45.46,
-    bbox_min_lng: 6.07,
-    bbox_max_lat: 45.52,
-    bbox_max_lng: 6.15,
-  },
-  {
-    id: 't6',
-    name: 'Sentier des Gorges du Fier',
-    geometry: {
-      type: 'LineString',
-      coordinates: [
-        [5.97, 45.42], [5.99, 45.44], [6.01, 45.45],
-        [6.03, 45.43], [6.01, 45.41], [5.97, 45.42],
-      ],
-    },
-    distance_km: 8.0,
-    duration_hours: 3,
-    difficulty: 'moderate',
-    elevation_gain: 580,
-    adventure_score: 78,
-    nature_score: 85,
-    panorama_score: 80,
-    accessibility_score: 72,
-    challenge_score: 65,
-    services_score: 68,
-    start_lat: 45.42,
-    start_lng: 5.97,
-    bbox_min_lat: 45.41,
-    bbox_min_lng: 5.97,
-    bbox_max_lat: 45.45,
-    bbox_max_lng: 6.03,
-  },
-];
+const MOCK_TRAILS: ExploreTrail[] = [];
 
 // ─── Dynamic Map Import ────────────────────────────────────────────────────────
 
@@ -529,6 +367,24 @@ export default function ExplorerPage() {
   const [searchActivity, setSearchActivity] = useState('Rando · Bivouac');
   const [searchTravelers, setSearchTravelers] = useState('2 adultes');
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [trails, setTrails] = useState<ExploreTrail[]>(MOCK_TRAILS);
+  const [trailsLoading, setTrailsLoading] = useState(true);
+
+  // Fetch real trails from Supabase explore_trails view
+  React.useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from('explore_trails')
+      .select('id, name, geometry, distance_km, duration_hours, difficulty, elevation_gain, adventure_score, nature_score, panorama_score, accessibility_score, challenge_score, services_score, start_lat, start_lng, bbox_min_lat, bbox_min_lng, bbox_max_lat, bbox_max_lng')
+      .limit(200)
+      .then(({ data, error }) => {
+        if (!error && data && data.length > 0) {
+          setTrails(data as ExploreTrail[]);
+        }
+        // If error or empty, keep MOCK_TRAILS as fallback
+        setTrailsLoading(false);
+      });
+  }, []);
 
   const categories: FilterCategory[] = ['Refuges', 'Bivouac', 'Cabanes', 'Vans', 'Gîtes'];
   const durations: DurationFilter[] = ['1 nuit', '2–3 nuits', 'Semaine'];
@@ -843,7 +699,7 @@ export default function ExplorerPage() {
                 panelMode === 'trails' ?'text-[#4A6741] border-b-2 border-[#4A6741]' :'text-[#1C2620]/40 hover:text-[#1C2620]/70'
               }`}
             >
-              🥾 {MOCK_TRAILS.length} randonnées
+              🥾 {trails.length} randonnées
             </button>
           </div>
 
@@ -858,7 +714,7 @@ export default function ExplorerPage() {
           ) : panelMode === 'trails' ? (
             /* Trails list */
             <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
-              {MOCK_TRAILS.map((trail) => (
+              {trails.map((trail) => (
                 <TrailMiniCard
                   key={trail.id}
                   trail={trail}
@@ -885,7 +741,7 @@ export default function ExplorerPage() {
         {/* ── Map ──────────────────────────────────────────────────────── */}
         <div className="flex-1 relative">
           <ExplorerMap
-            trails={MOCK_TRAILS}
+            trails={trails}
             selectedTrailId={selectedTrailId}
             onTrailClick={handleTrailClick}
             userLocation={userLocation}
@@ -914,7 +770,7 @@ export default function ExplorerPage() {
           <div className="absolute bottom-4 left-3 z-[1000] flex items-center gap-2">
             <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-sm border border-[#E8E4DA]">
               <span className="text-xs font-medium text-[#1C2620]">
-                {MOCK_LISTINGS.length} lieux · {MOCK_TRAILS.length} randonnées
+                {MOCK_LISTINGS.length} lieux · {trails.length} randonnées
               </span>
             </div>
           </div>
@@ -1022,7 +878,7 @@ export default function ExplorerPage() {
             <div className="w-10 h-1 bg-[#E8E4DA] rounded-full mb-2" />
             <div className="flex items-center justify-between w-full px-4">
               <span className="text-sm font-semibold text-[#1C2620]">
-                {MOCK_LISTINGS.length} hébergements · {MOCK_TRAILS.length} randonnées
+                {MOCK_LISTINGS.length} hébergements · {trails.length} randonnées
               </span>
               <span className="text-xs text-[#1C2620]/50">Coup de cœur ▾</span>
             </div>
@@ -1064,7 +920,7 @@ export default function ExplorerPage() {
                     onClick={() => handleListingClick(listing)}
                   />
                 ))
-              : MOCK_TRAILS.map((trail) => (
+              : trails.map((trail) => (
                   <TrailMiniCard
                     key={trail.id}
                     trail={trail}
