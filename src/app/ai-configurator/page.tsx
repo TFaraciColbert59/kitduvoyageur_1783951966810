@@ -1,21 +1,21 @@
 import React from 'react';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import NewFooterSection from '@/app/components/home/NewFooterSection';
 import ConfiguratorWizard from '@/app/ai-configurator/components/ConfiguratorWizard';
 
 export const metadata = {
   title: 'Configurateur IA — Kit du Voyageur',
-  description: 'Générez votre liste d\'équipement optimisée en 2 minutes. Entrez votre destination, vos dates et votre profil.',
+  description: 'Composez votre kit de voyage en 5 étapes. Météo, usage, confort : votre sac sur mesure en 2 minutes.',
 };
 
 export default function ConfiguratorPage() {
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen" style={{ background: '#F5F2EC' }}>
       <Header />
-      <div className="pt-16 lg:pt-18">
+      <div className="pt-16">
         <ConfiguratorWizard />
       </div>
-      <Footer />
+      <NewFooterSection />
     </main>
   );
 }

@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
-import WeightGauge from '@/components/WeightGauge';
 import { getChatCompletion } from '@/lib/ai/chatCompletion';
 import { getCart, saveCart } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
@@ -12,15 +11,11 @@ import { useAuth } from '@/contexts/AuthContext';
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface WizardState {
   step: number;
+  usage: string;
+  duree: string;
+  meteo: string;
+  confort: string;
   destination: string;
-  country: string;
-  startDate: string;
-  endDate: string;
-  season: string;
-  activity: string;
-  level: string;
-  maxWeightG: number;
-  budgetEur: number;
   generated: boolean;
 }
 
@@ -42,441 +37,313 @@ interface AIResult {
   liste_equipement: EquipmentItem[];
 }
 
-interface GearInventoryItem {
-  id: string;
-  name: string;
-  category: string;
-  condition: string;
-  weight_g: number;
+// ── Kit items that build up as user answers ──────────────────────────────────
+const BASE_KIT_ITEMS = [
+  { id: 'sac', name: 'Sac 45 L', priceEur: 340, weightG: 1200 },
+];
+
+function getKitItems(state: WizardState): Array<{ id: string; name: string; priceEur: number; weightG: number; active: boolean }> {
+  const items = [
+    { id: 'sac', name: 'Sac 45 L', priceEur: 340, weightG: 1200, active: true },
+    { id: 'duvet', name: 'Duvet 3 saisons', priceEur: 248, weightG: 680, active: state.step >= 2 },
+    { id: 'gourde', name: 'Gourde titane 1 L', priceEur: 68, weightG: 120, active: state.step >= 2 },
+    { id: 'veste', name: 'Veste 3 couches', priceEur: 0, weightG: 0, active: state.step >= 3 && (state.meteo === 'frais' || state.meteo === 'pluvieux') },
+    { id: 'confort', name: 'Confort à choisir', priceEur: 0, weightG: 0, active: state.step >= 4 && state.confort !== '' },
+  ];
+  return items;
 }
 
-// ── Altimeter Loader ─────────────────────────────────────────────────────────────
-function AltimeterLoader({ active }: { active: boolean }) {
-  const [digits, setDigits] = useState([0, 0, 0, 0]);
+function getKitMeta(state: WizardState) {
+  const dureeMap: Record<string, string> = {
+    weekend: '2 jours',
+    semaine: '7 jours',
+    long: '14 jours',
+    expedition: '30+ jours',
+  };
+  const meteoMap: Record<string, string> = {
+    sec: 'Sec, chaud',
+    frais: 'Frais, brumeux',
+    pluvieux: 'Pluvieux, venté',
+    froid: 'Froid sec',
+  };
+  return {
+    duree: dureeMap[state.duree] || '—',
+    meteo: meteoMap[state.meteo] || '—',
+  };
+}
 
-  useEffect(() => {
-    if (!active) return;
-    let frame: ReturnType<typeof setTimeout>;
-    let count = 0;
-    const tick = () => {
-      count++;
-      setDigits([
-        Math.floor(Math.random() * 10),
-        Math.floor(Math.random() * 10),
-        Math.floor(Math.random() * 10),
-        Math.floor(Math.random() * 10),
-      ]);
-      if (count < 20) {
-        frame = setTimeout(tick, 80);
-      } else {
-        setDigits([2, 4, 5, 0]);
-      }
-    };
-    frame = setTimeout(tick, 80);
-    return () => clearTimeout(frame);
-  }, [active]);
+// ── Stepper ──────────────────────────────────────────────────────────────────
+const STEPS = [
+  { id: 1, label: 'Usage' },
+  { id: 2, label: 'Durée' },
+  { id: 3, label: 'Météo' },
+  { id: 4, label: 'Confort' },
+  { id: 5, label: 'Récap' },
+];
 
-  if (!active) return null;
-
+function Stepper({ currentStep }: { currentStep: number }) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 gap-6" role="status" aria-live="polite" aria-label="Génération de votre liste en cours">
-      <div className="flex items-center gap-1">
-        {digits.map((d, i) => (
-          <span key={i} className="font-mono-data text-4xl font-600" style={{ color: 'var(--info)', fontFamily: 'var(--font-mono)' }}>
-            {d}
-          </span>
-        ))}
-        <span className="font-mono-data text-2xl text-muted-foreground ml-1" style={{ fontFamily: 'var(--font-mono)' }}>m</span>
-      </div>
-      <p className="text-sm text-muted-foreground font-mono-data uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>
-        Analyse IA en cours…
-      </p>
-      <div className="flex gap-1.5">
-        {[0, 1, 2].map((i) => (
-          <span key={i} className="w-2 h-2 rounded-full bg-primary"
-            style={{ animation: `pulseOrange 1.2s ${i * 0.2}s infinite` }}
-          />
-        ))}
-      </div>
+    <div className="flex items-center gap-0" role="progressbar" aria-valuenow={currentStep} aria-valuemin={1} aria-valuemax={5}>
+      {STEPS.map((step, idx) => (
+        <React.Fragment key={step.id}>
+          <div className="flex items-center gap-2">
+            <div
+              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-600 transition-all duration-300 ${
+                currentStep > step.id
+                  ? 'bg-[#1C2620] text-white'
+                  : currentStep === step.id
+                  ? 'bg-[#1C2620] text-white ring-2 ring-[#1C2620] ring-offset-2'
+                  : 'bg-transparent border border-[#C5BFB0] text-[#8A8478]'
+              }`}
+            >
+              {currentStep > step.id ? (
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              ) : (
+                <span>{step.id}</span>
+              )}
+            </div>
+            <span
+              className={`text-xs font-500 hidden sm:block transition-colors ${
+                currentStep === step.id ? 'text-[#1C2620]' : 'text-[#8A8478]'
+              }`}
+            >
+              {step.label}
+            </span>
+          </div>
+          {idx < STEPS.length - 1 && (
+            <div
+              className={`flex-1 h-px mx-3 transition-all duration-300 ${
+                currentStep > step.id ? 'bg-[#1C2620]' : 'bg-[#C5BFB0]'
+              }`}
+              style={{ minWidth: 20 }}
+            />
+          )}
+        </React.Fragment>
+      ))}
     </div>
   );
 }
 
-// ── Step Components ──────────────────────────────────────────────────────────────
-function StepDestination({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string | number | boolean) => void }) {
-  const popularDestinations = ['Islande', 'Maroc', 'Japon', 'Pérou', 'Norvège', 'Nouvelle-Zélande'];
+// ── Choice Card ──────────────────────────────────────────────────────────────
+interface ChoiceCardProps {
+  icon: string;
+  title: string;
+  titleItalic?: string;
+  desc: string;
+  selected: boolean;
+  onClick: () => void;
+}
 
+function ChoiceCard({ icon, title, titleItalic, desc, selected, onClick }: ChoiceCardProps) {
   return (
-    <div className="space-y-6">
-      <div>
-        <label htmlFor="destination" className="block text-sm font-600 text-foreground mb-2">
-          Destination ou région
-        </label>
-        <div className="relative">
-          <Icon name="MagnifyingGlassIcon" size={18} variant="outline" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            id="destination"
-            type="text"
-            value={state.destination}
-            onChange={(e) => onChange('destination', e.target.value)}
-            placeholder="Ex: Islande, GR20, Patagonie…"
-            className="input-field pl-10"
-            aria-label="Entrez votre destination"
-          />
+    <button
+      onClick={onClick}
+      className={`w-full text-left p-5 rounded-2xl border-2 transition-all duration-200 group ${
+        selected
+          ? 'border-[#1C2620] bg-white shadow-md'
+          : 'border-[#E8E4DA] bg-white hover:border-[#1C2620]/40 hover:shadow-sm'
+      }`}
+      aria-pressed={selected}
+    >
+      <div className="flex items-start gap-4">
+        <div
+          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg transition-all ${
+            selected ? 'bg-[#1C2620] text-white' : 'bg-[#F0EDE5] text-[#1C2620]'
+          }`}
+        >
+          {icon}
         </div>
-      </div>
-
-      <div>
-        <p className="text-sm text-muted-foreground mb-3">Destinations populaires :</p>
-        <div className="flex flex-wrap gap-2">
-          {popularDestinations.map((dest) => (
-            <button
-              key={dest}
-              onClick={() => onChange('destination', dest)}
-              className={`category-pill text-sm ${state.destination === dest ? 'active' : ''}`}
-              aria-pressed={state.destination === dest}
-            >
-              {dest}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="p-4 rounded-xl" style={{ background: 'rgba(62,107,122,0.08)', border: '1px solid rgba(62,107,122,0.2)' }}>
-        <div className="flex items-start gap-3">
-          <Icon name="InformationCircleIcon" size={18} variant="outline" className="text-info flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            L&apos;IA analysera le climat, l&apos;altitude, les risques locaux et la saison pour optimiser votre liste d&apos;équipement.
+        <div className="flex-1 min-w-0">
+          <p className="font-600 text-[#1C2620] text-sm leading-tight mb-1">
+            {title}
+            {titleItalic && (
+              <em className="font-400 not-italic" style={{ fontStyle: 'italic' }}> {titleItalic}</em>
+            )}
           </p>
+          <p className="text-xs text-[#6B6860] leading-relaxed">{desc}</p>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
-function StepDates({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string | number | boolean) => void }) {
-  const seasons = [
-    { id: 'printemps', label: 'Printemps', icon: '🌸', months: 'Mar – Mai' },
-    { id: 'ete', label: 'Été', icon: '☀️', months: 'Juin – Août' },
-    { id: 'automne', label: 'Automne', icon: '🍂', months: 'Sep – Nov' },
-    { id: 'hiver', label: 'Hiver', icon: '❄️', months: 'Déc – Fév' },
+// ── Step 1: Usage ─────────────────────────────────────────────────────────────
+function StepUsage({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string) => void }) {
+  const choices = [
+    { id: 'randonnee', icon: '🥾', title: 'Randonnée', titleItalic: 'légère.', desc: 'Journées, sentiers balisés. On privilégie la légèreté.' },
+    { id: 'trekking', icon: '⛺', title: 'Trekking', titleItalic: 'multi-jours.', desc: 'Plusieurs nuits en autonomie. Équilibre poids / confort.' },
+    { id: 'alpinisme', icon: '🧗', title: 'Alpinisme', titleItalic: 'technique.', desc: 'Haute montagne, glacier. Sécurité avant tout.' },
+    { id: 'voyage', icon: '✈️', title: 'Voyage', titleItalic: 'urbain.', desc: 'Villes, transports, mobilité. Compact et polyvalent.' },
   ];
-
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="start-date" className="block text-sm font-600 text-foreground mb-2">
-            Date de départ
-          </label>
-          <input
-            id="start-date"
-            type="date"
-            value={state.startDate}
-            onChange={(e) => onChange('startDate', e.target.value)}
-            className="input-field"
-            aria-label="Date de départ"
-          />
-        </div>
-        <div>
-          <label htmlFor="end-date" className="block text-sm font-600 text-foreground mb-2">
-            Date de retour
-          </label>
-          <input
-            id="end-date"
-            type="date"
-            value={state.endDate}
-            onChange={(e) => onChange('endDate', e.target.value)}
-            className="input-field"
-            aria-label="Date de retour"
-          />
-        </div>
-      </div>
-
-      <div>
-        <p className="text-sm font-600 text-foreground mb-3">Saison principale</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {seasons.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => onChange('season', s.id)}
-              className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
-                state.season === s.id
-                  ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground'
-              }`}
-              aria-pressed={state.season === s.id}
-            >
-              <span className="text-2xl" aria-hidden="true">{s.icon}</span>
-              <span className="font-600 text-sm text-foreground">{s.label}</span>
-              <span className="font-mono-data text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{s.months}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+    <div className="space-y-3">
+      {choices.map((c) => (
+        <ChoiceCard
+          key={c.id}
+          icon={c.icon}
+          title={c.title}
+          titleItalic={c.titleItalic}
+          desc={c.desc}
+          selected={state.usage === c.id}
+          onClick={() => onChange('usage', c.id)}
+        />
+      ))}
     </div>
   );
 }
 
-function StepProfile({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string | number | boolean) => void }) {
-  const activities = ['Randonnée', 'Alpinisme', 'Camping', 'Vanlife', 'Trekking', 'Photo nature', 'Sports eau'];
-  const levels = [
-    { id: 'debutant', label: 'Débutant', desc: 'Premiers pas en outdoor' },
-    { id: 'intermediaire', label: 'Intermédiaire', desc: 'Quelques expériences' },
-    { id: 'confirme', label: 'Confirmé', desc: 'Pratique régulière' },
-    { id: 'expert', label: 'Expert', desc: 'Expéditions avancées' },
+// ── Step 2: Durée ─────────────────────────────────────────────────────────────
+function StepDuree({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string) => void }) {
+  const choices = [
+    { id: 'weekend', icon: '🌅', title: 'Week-end,', titleItalic: '2–3 jours.', desc: 'Sac léger, minimum vital. On revient vite.' },
+    { id: 'semaine', icon: '📅', title: 'Une semaine,', titleItalic: '4–7 jours.', desc: 'Équipement complet, quelques extras.' },
+    { id: 'long', icon: '🗺️', title: 'Long séjour,', titleItalic: '1–3 semaines.', desc: 'Polyvalence, recharge, entretien du matériel.' },
+    { id: 'expedition', icon: '🏔️', title: 'Expédition,', titleItalic: '1 mois+.', desc: 'Autonomie maximale, matériel professionnel.' },
   ];
-
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-sm font-600 text-foreground mb-3">Activité principale</p>
-        <div className="flex flex-wrap gap-2">
-          {activities.map((act) => (
-            <button
-              key={act}
-              onClick={() => onChange('activity', act)}
-              className={`category-pill ${state.activity === act ? 'active' : ''}`}
-              aria-pressed={state.activity === act}
-            >
-              {act}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <p className="text-sm font-600 text-foreground mb-3">Niveau d&apos;expérience</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {levels.map((lv) => (
-            <button
-              key={lv.id}
-              onClick={() => onChange('level', lv.id)}
-              className={`flex flex-col gap-1 p-4 rounded-xl border-2 text-left transition-all duration-200 ${
-                state.level === lv.id
-                  ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground'
-              }`}
-              aria-pressed={state.level === lv.id}
-            >
-              <span className="font-600 text-sm text-foreground">{lv.label}</span>
-              <span className="text-xs text-muted-foreground">{lv.desc}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label htmlFor="max-weight" className="text-sm font-600 text-foreground">
-              Poids max du sac
-            </label>
-            <span className="font-mono-data text-sm text-info font-600" style={{ fontFamily: 'var(--font-mono)' }}>
-              {state.maxWeightG >= 1000 ? `${(state.maxWeightG / 1000).toFixed(1)} kg` : `${state.maxWeightG} g`}
-            </span>
-          </div>
-          <input
-            id="max-weight"
-            type="range"
-            min={3000}
-            max={20000}
-            step={500}
-            value={state.maxWeightG}
-            onChange={(e) => onChange('maxWeightG', Number(e.target.value))}
-            className="range-slider w-full"
-            aria-label={`Poids maximum: ${state.maxWeightG} grammes`}
-          />
-          <div className="flex justify-between mt-1">
-            <span className="font-mono-data text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>3 kg</span>
-            <span className="font-mono-data text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>20 kg</span>
-          </div>
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label htmlFor="budget" className="text-sm font-600 text-foreground">
-              Budget équipement
-            </label>
-            <span className="font-mono-data text-sm text-info font-600" style={{ fontFamily: 'var(--font-mono)' }}>
-              {state.budgetEur} €
-            </span>
-          </div>
-          <input
-            id="budget"
-            type="range"
-            min={50}
-            max={2000}
-            step={50}
-            value={state.budgetEur}
-            onChange={(e) => onChange('budgetEur', Number(e.target.value))}
-            className="range-slider w-full"
-            aria-label={`Budget: ${state.budgetEur} euros`}
-          />
-          <div className="flex justify-between mt-1">
-            <span className="font-mono-data text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>50 €</span>
-            <span className="font-mono-data text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>2 000 €</span>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-3">
+      {choices.map((c) => (
+        <ChoiceCard
+          key={c.id}
+          icon={c.icon}
+          title={c.title}
+          titleItalic={c.titleItalic}
+          desc={c.desc}
+          selected={state.duree === c.id}
+          onClick={() => onChange('duree', c.id)}
+        />
+      ))}
     </div>
   );
 }
 
-// ── Step Result with Gemini AI ──────────────────────────────────────────────────
-function StepResult({ state }: { state: WizardState }) {
+// ── Step 3: Météo ─────────────────────────────────────────────────────────────
+function StepMeteo({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string) => void }) {
+  const choices = [
+    { id: 'sec', icon: '☀️', title: 'Sec et', titleItalic: 'chaud.', desc: '15 à 25 °C, faible humidité. On priorise la respirabilité.' },
+    { id: 'frais', icon: '🌫️', title: 'Frais et', titleItalic: 'brumeux.', desc: '5 à 15 °C avec humidité. Notre configuration par défaut.' },
+    { id: 'pluvieux', icon: '🌧️', title: 'Pluvieux et', titleItalic: 'venté.', desc: '0 à 10 °C, précipitations fréquentes. Coques imper renforcées.' },
+    { id: 'froid', icon: '❄️', title: 'Froid', titleItalic: 'sec.', desc: '−5 à 5 °C. Duvet gonflant, base couche lourde.' },
+  ];
+  return (
+    <div className="space-y-3">
+      {choices.map((c) => (
+        <ChoiceCard
+          key={c.id}
+          icon={c.icon}
+          title={c.title}
+          titleItalic={c.titleItalic}
+          desc={c.desc}
+          selected={state.meteo === c.id}
+          onClick={() => onChange('meteo', c.id)}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ── Step 4: Confort ───────────────────────────────────────────────────────────
+function StepConfort({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string) => void }) {
+  const choices = [
+    { id: 'ultralight', icon: '🪶', title: 'Ultra-léger,', titleItalic: 'minimaliste.', desc: 'Chaque gramme compte. On coupe le superflu.' },
+    { id: 'equilibre', icon: '⚖️', title: 'Équilibré,', titleItalic: 'confortable.', desc: 'Bon compromis poids / confort. Notre recommandation.' },
+    { id: 'confort', icon: '🛋️', title: 'Confort', titleItalic: 'maximal.', desc: 'Matelas épais, cuisine complète. Le poids passe après.' },
+    { id: 'securite', icon: '🛡️', title: 'Sécurité', titleItalic: 'renforcée.', desc: 'Trousse médicale complète, équipement de secours.' },
+  ];
+  return (
+    <div className="space-y-3">
+      {choices.map((c) => (
+        <ChoiceCard
+          key={c.id}
+          icon={c.icon}
+          title={c.title}
+          titleItalic={c.titleItalic}
+          desc={c.desc}
+          selected={state.confort === c.id}
+          onClick={() => onChange('confort', c.id)}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ── Step 5: Récap + AI ────────────────────────────────────────────────────────
+function StepRecap({ state }: { state: WizardState }) {
   const [loading, setLoading] = useState(true);
   const [aiResult, setAiResult] = useState<AIResult | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const [autoSaved, setAutoSaved] = useState(false);
-  const [userInventory, setUserInventory] = useState<GearInventoryItem[]>([]);
   const { user } = useAuth();
-
-  // Load user inventory before generating
-  useEffect(() => {
-    const loadInventory = async () => {
-      if (!user) return;
-      try {
-        const supabase = createClient();
-        const { data } = await supabase
-          .from('gear_items')
-          .select('id, name, category, condition, weight_g')
-          .eq('user_id', user.id)
-          .neq('condition', 'à_remplacer');
-        setUserInventory(data ?? []);
-      } catch {
-        // Silent fail
-      }
-    };
-    loadInventory();
-  }, [user]);
-
-  const autoSaveKit = async (result: AIResult, selected: Set<string>) => {
-    if (!user) return;
-    try {
-      const supabase = createClient();
-      const kitName = `Kit ${state.destination || 'Voyage'} — ${state.season || 'Toutes saisons'}`;
-      const { data: kit, error: kitError } = await supabase
-        .from('kits')
-        .insert({
-          user_id: user.id,
-          name: kitName,
-          destination: state.destination,
-          season: state.season,
-          activity: state.activity,
-          total_weight_g: result.liste_equipement.filter(i => selected.has(i.id) && !i.already_owned).reduce((s, i) => s + i.weightG, 0),
-          total_price_eur: result.liste_equipement.filter(i => selected.has(i.id) && !i.already_owned).reduce((s, i) => s + i.priceEur, 0),
-          bag_recommended: result.sac_recommande,
-          source: 'ai_configurator',
-        })
-        .select('id')
-        .single();
-
-      if (kitError || !kit) return;
-
-      const kitItems = result.liste_equipement
-        .filter(i => selected.has(i.id))
-        .map(item => ({
-          kit_id: kit.id,
-          name: item.name,
-          category: item.category,
-          weight_g: item.weightG,
-          price_eur: item.priceEur,
-          essential: item.essential,
-        }));
-
-      if (kitItems.length > 0) {
-        await supabase.from('kit_items').insert(kitItems);
-      }
-      setAutoSaved(true);
-    } catch (_e) {
-      // Silent fail — auto-save is best-effort
-    }
-  };
 
   useEffect(() => {
     const fetchAI = async () => {
       setLoading(true);
       setAiError(null);
-      setAutoSaved(false);
 
-      // Build inventory context for the prompt
-      const inventoryContext = userInventory.length > 0
-        ? `\n\nL'utilisateur possède déjà ces équipements (ne pas proposer à l'achat si la catégorie correspond) :\n${userInventory.map(g => `- ${g.name} (catégorie: ${g.category}, état: ${g.condition})`).join('\n')}\n\nPour chaque article nécessaire : si un équivalent existe dans cet inventaire (même catégorie, état pas "à_remplacer"), marque-le "already_owned": true. Ne propose à l'achat que ce qui manque réellement.`
-        : '';
+      const usageMap: Record<string, string> = { randonnee: 'randonnée légère', trekking: 'trekking multi-jours', alpinisme: 'alpinisme technique', voyage: 'voyage urbain' };
+      const dureeMap: Record<string, string> = { weekend: '2-3 jours', semaine: '4-7 jours', long: '1-3 semaines', expedition: '1 mois+' };
+      const meteoMap: Record<string, string> = { sec: 'sec et chaud (15-25°C)', frais: 'frais et brumeux (5-15°C)', pluvieux: 'pluvieux et venté (0-10°C)', froid: 'froid sec (-5 à 5°C)' };
+      const confortMap: Record<string, string> = { ultralight: 'ultra-léger minimaliste', equilibre: 'équilibré confortable', confort: 'confort maximal', securite: 'sécurité renforcée' };
 
-      const systemPrompt = `Tu es un expert en équipement outdoor et randonnée. Tu génères des listes d'équipement optimisées pour les voyageurs. 
-Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans texte avant ou après.
-Le JSON doit avoir exactement cette structure:
-{
-  "sac_recommande": "string",
-  "poids_total_g": number,
-  "budget_estime_eur": number,
-  "alertes": ["string"],
-  "liste_equipement": [
-    {
-      "id": "string",
-      "name": "string",
-      "category": "string",
-      "weightG": number,
-      "priceEur": number,
-      "essential": boolean,
-      "already_owned": boolean
-    }
-  ]
-}`;
+      const systemPrompt = `Tu es un expert en équipement outdoor. Génère une liste d'équipement optimisée. Réponds UNIQUEMENT avec un JSON valide, sans markdown.
+Structure exacte:
+{"sac_recommande":"string","poids_total_g":number,"budget_estime_eur":number,"alertes":["string"],"liste_equipement":[{"id":"string","name":"string","category":"string","weightG":number,"priceEur":number,"essential":boolean,"already_owned":false}]}`;
 
-      const userPrompt = `Génère une liste d'équipement optimisée pour:
-- Destination: ${state.destination}
-- Saison: ${state.season}
-- Activité: ${state.activity}
-- Niveau: ${state.level}
-- Poids max du sac: ${(state.maxWeightG / 1000).toFixed(1)} kg
-- Budget max: ${state.budgetEur} €
-${state.startDate ? `- Dates: ${state.startDate} au ${state.endDate}` : ''}
-${inventoryContext}
-
-Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes spécifiques à la destination et à la saison. Recommande un sac adapté.`;
+      const userPrompt = `Génère une liste pour:
+- Usage: ${usageMap[state.usage] || state.usage}
+- Durée: ${dureeMap[state.duree] || state.duree}
+- Météo: ${meteoMap[state.meteo] || state.meteo}
+- Confort: ${confortMap[state.confort] || state.confort}
+Génère 8-12 articles pertinents avec prix et poids réalistes.`;
 
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const response = await getChatCompletion('GEMINI', 'gemini/gemini-2.5-flash', [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
-        ], { temperature: 0.7, max_tokens: 4000 }) as any;
+        ], { temperature: 0.7, max_tokens: 3000 }) as any;
 
         const content = response?.choices?.[0]?.message?.content ?? '';
         const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-
         let jsonString = cleaned;
-        try {
-          JSON.parse(jsonString);
-        } catch {
-          const openBraces = (jsonString.match(/\{/g) || []).length - (jsonString.match(/\}/g) || []).length;
-          const openBrackets = (jsonString.match(/\[/g) || []).length - (jsonString.match(/\]/g) || []).length;
-          jsonString = jsonString.replace(/,\s*$/, '').replace(/,\s*\{[^}]*$/, '');
-          for (let i = 0; i < openBrackets; i++) jsonString += ']';
-          for (let i = 0; i < openBraces; i++) jsonString += '}';
+        try { JSON.parse(jsonString); } catch {
+          const ob = (jsonString.match(/\{/g) || []).length - (jsonString.match(/\}/g) || []).length;
+          const obr = (jsonString.match(/\[/g) || []).length - (jsonString.match(/\]/g) || []).length;
+          jsonString = jsonString.replace(/,\s*$/, '');
+          for (let i = 0; i < obr; i++) jsonString += ']';
+          for (let i = 0; i < ob; i++) jsonString += '}';
         }
-
         const parsed: AIResult = JSON.parse(jsonString);
-
-        if (!parsed.liste_equipement || !Array.isArray(parsed.liste_equipement)) {
-          throw new Error('Format de réponse invalide');
-        }
-
-        // Pre-select essential items that are NOT already owned
-        const essentialIds = new Set(
-          parsed.liste_equipement
-            .filter((i) => i.essential && !i.already_owned)
-            .map((i) => i.id)
-        );
+        if (!parsed.liste_equipement || !Array.isArray(parsed.liste_equipement)) throw new Error('Format invalide');
+        const essentialIds = new Set(parsed.liste_equipement.filter(i => i.essential && !i.already_owned).map(i => i.id));
         setAiResult(parsed);
         setSelectedItems(essentialIds);
 
-        // Auto-save for connected users
-        await autoSaveKit(parsed, essentialIds);
+        if (user) {
+          try {
+            const supabase = createClient();
+            const { data: kit } = await supabase.from('kits').insert({
+              user_id: user.id,
+              name: `Kit ${usageMap[state.usage] || 'Voyage'} — ${meteoMap[state.meteo] || ''}`,
+              season: state.meteo,
+              activity: state.usage,
+              total_weight_g: parsed.poids_total_g,
+              total_price_eur: parsed.budget_estime_eur,
+              bag_recommended: parsed.sac_recommande,
+              source: 'ai_configurator',
+            }).select('id').single();
+            if (kit) {
+              const kitItems = parsed.liste_equipement.filter(i => essentialIds.has(i.id)).map(item => ({
+                kit_id: kit.id, name: item.name, category: item.category, weight_g: item.weightG, price_eur: item.priceEur, essential: item.essential,
+              }));
+              if (kitItems.length > 0) await supabase.from('kit_items').insert(kitItems);
+            }
+          } catch { /* silent */ }
+        }
       } catch (err) {
         console.error('AI configurator error:', err);
         setAiError('Impossible de générer la liste. Veuillez réessayer.');
@@ -484,112 +351,47 @@ Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes sp�
         setLoading(false);
       }
     };
-
     fetchAI();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [retryCount, userInventory]);
+  }, [retryCount]);
 
   const toggleItem = (id: string) => {
-    setSelectedItems((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    setSelectedItems(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   };
 
-  // Only count items NOT already owned for price/weight
-  const missingItems = (aiResult?.liste_equipement ?? []).filter((i) => !i.already_owned);
-  const ownedItems = (aiResult?.liste_equipement ?? []).filter((i) => i.already_owned);
-
-  const totalWeightG = missingItems
-    .filter((i) => selectedItems.has(i.id))
-    .reduce((sum, i) => sum + i.weightG, 0);
-
-  const totalPriceEur = missingItems
-    .filter((i) => selectedItems.has(i.id))
-    .reduce((sum, i) => sum + i.priceEur, 0);
-
-  const categories = Array.from(new Set((aiResult?.liste_equipement ?? []).map((i) => i.category)));
-
-  // Readiness score: owned essentials / total essentials
-  const totalEssentials = (aiResult?.liste_equipement ?? []).filter(i => i.essential).length;
-  const ownedEssentials = (aiResult?.liste_equipement ?? []).filter(i => i.essential && i.already_owned).length;
-  const readinessScore = totalEssentials > 0 ? Math.round((ownedEssentials / totalEssentials) * 100) : 0;
-  const missingEssentials = totalEssentials - ownedEssentials;
+  const missingItems = (aiResult?.liste_equipement ?? []).filter(i => !i.already_owned);
+  const totalWeightG = missingItems.filter(i => selectedItems.has(i.id)).reduce((s, i) => s + i.weightG, 0);
+  const totalPriceEur = missingItems.filter(i => selectedItems.has(i.id)).reduce((s, i) => s + i.priceEur, 0);
+  const categories = Array.from(new Set((aiResult?.liste_equipement ?? []).map(i => i.category)));
 
   const handleAddToCart = () => {
-    const itemsToAdd = missingItems.filter((i) => selectedItems.has(i.id));
-    if (itemsToAdd.length === 0) return;
+    const itemsToAdd = missingItems.filter(i => selectedItems.has(i.id));
+    if (!itemsToAdd.length) return;
     const existing = getCart();
-    itemsToAdd.forEach((item) => {
-      const idx = existing.findIndex((e) => e.id === item.id);
-      if (idx >= 0) {
-        existing[idx].quantity += 1;
-      } else {
-        existing.push({
-          id: item.id,
-          slug: item.id,
-          name: item.name,
-          brand: '',
-          category: item.category,
-          priceEur: item.priceEur,
-          weightG: item.weightG,
-          image: '',
-          imageAlt: item.name,
-          quantity: 1,
-        });
-      }
+    itemsToAdd.forEach(item => {
+      const idx = existing.findIndex(e => e.id === item.id);
+      if (idx >= 0) existing[idx].quantity += 1;
+      else existing.push({ id: item.id, slug: item.id, name: item.name, brand: '', category: item.category, priceEur: item.priceEur, weightG: item.weightG, image: '', imageAlt: item.name, quantity: 1 });
     });
     saveCart(existing);
     setToast(true);
     setTimeout(() => setToast(false), 3000);
-
-    // B2: Auto-fill gear_items from kit validation (best-effort, async)
-    if (user && autoSaved) {
-      const supabase = createClient();
-      // Find the kit we just saved (most recent for this user)
-      supabase
-        .from('kits')
-        .select('id')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
-        .then(({ data: kit }) => {
-          if (!kit) return;
-          // Add all selected items (including already_owned) to gear_items with source='kit'
-          const allSelected = (aiResult?.liste_equipement ?? []).filter(i => selectedItems.has(i.id));
-          const gearInserts = allSelected.map(item => ({
-            user_id: user.id,
-            name: item.name,
-            category: item.category,
-            weight_g: item.weightG,
-            condition: 'neuf' as const,
-            source: 'kit',
-            origin_kit_id: kit.id,
-            acquired_at: new Date().toISOString().split('T')[0],
-          }));
-          if (gearInserts.length > 0) {
-            supabase.from('gear_items').insert(gearInserts).then(() => {
-              // Silent — best-effort
-            });
-          }
-        });
-    }
   };
 
-  if (loading) return <AltimeterLoader active />;
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-6">
+        <div className="w-12 h-12 rounded-full border-2 border-[#1C2620] border-t-transparent animate-spin" />
+        <p className="text-sm text-[#6B6860] font-500">Composition de votre kit en cours…</p>
+      </div>
+    );
+  }
 
   if (aiError) {
     return (
       <div className="text-center py-16 space-y-4">
-        <div className="text-4xl">⚠️</div>
-        <p className="text-foreground font-600">{aiError}</p>
-        <button
-          onClick={() => { setAiError(null); setRetryCount((c) => c + 1); }}
-          className="btn-primary px-6 py-2.5"
-        >
+        <p className="text-[#1C2620] font-600">{aiError}</p>
+        <button onClick={() => { setAiError(null); setRetryCount(c => c + 1); }} className="px-6 py-3 bg-[#1C2620] text-white rounded-xl text-sm font-600 hover:bg-[#2A3830] transition-colors">
           Réessayer
         </button>
       </div>
@@ -600,435 +402,451 @@ Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes sp�
 
   return (
     <div className="space-y-6">
-      {/* Auto-save confirmation */}
-      {autoSaved && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: 'rgba(51,70,60,0.1)', border: '1px solid rgba(51,70,60,0.2)' }}>
-          <Icon name="CheckCircleIcon" size={16} variant="outline" className="text-secondary flex-shrink-0" />
-          <p className="text-sm text-secondary font-500">Kit enregistré automatiquement dans vos kits</p>
-        </div>
-      )}
-      {!autoSaved && !user && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: 'rgba(228,80,28,0.06)', border: '1px solid rgba(228,80,28,0.15)' }}>
-          <Icon name="InformationCircleIcon" size={16} variant="outline" className="text-primary flex-shrink-0" />
-          <p className="text-sm text-muted-foreground">
-            <Link href="/connexion" className="text-primary font-600 hover:underline">Connectez-vous</Link> pour sauvegarder ce kit automatiquement.
-          </p>
-        </div>
-      )}
-
-      {/* Inventory context banner */}
-      {userInventory.length > 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: 'rgba(62,107,122,0.08)', border: '1px solid rgba(62,107,122,0.2)' }}>
-          <Icon name="ArchiveBoxIcon" size={16} variant="outline" className="text-info flex-shrink-0" />
-          <p className="text-sm text-muted-foreground">
-            L&apos;IA a analysé vos <span className="font-600 text-foreground">{userInventory.length} équipements</span> existants — les articles déjà possédés sont marqués.
-          </p>
-        </div>
-      )}
-
-      {/* Readiness score */}
-      {totalEssentials > 0 && (
-        <div className="topo-card p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <p className="text-sm font-600 text-foreground">Score &quot;Prêt à partir&quot;</p>
-              <p className="text-xs text-muted-foreground">
-                {readinessScore === 100
-                  ? 'Vous avez tout le nécessaire !'
-                  : `Il vous manque ${missingEssentials} article${missingEssentials > 1 ? 's' : ''} essentiel${missingEssentials > 1 ? 's' : ''}`}
-              </p>
-            </div>
-            <span className={`text-2xl font-display font-800 ${readinessScore >= 80 ? 'text-emerald-600' : readinessScore >= 50 ? 'text-amber-600' : 'text-red-600'}`}
-              style={{ fontFamily: 'var(--font-display)' }}>
-              {readinessScore}%
-            </span>
-          </div>
-          <div className="h-3 bg-muted rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-700 ease-out ${readinessScore >= 80 ? 'bg-emerald-500' : readinessScore >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
-              style={{ width: `${readinessScore}%` }}
-            />
-          </div>
-          <div className="flex justify-between mt-1">
-            <span className="text-xs text-muted-foreground font-mono">{ownedEssentials} possédés</span>
-            <span className="text-xs text-muted-foreground font-mono">{totalEssentials} essentiels</span>
-          </div>
-        </div>
-      )}
-
-      {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Sac recommandé', val: aiResult.sac_recommande, icon: 'ShoppingBagIcon', color: 'var(--secondary)' },
-          { label: 'Poids à acheter', val: `${(totalWeightG / 1000).toFixed(2)} kg`, icon: 'ScaleIcon', color: 'var(--info)', mono: true },
-          { label: 'Budget manquant', val: `${totalPriceEur} €`, icon: 'BanknotesIcon', color: 'var(--accent)', mono: true },
-          { label: 'À acheter', val: `${missingItems.filter(i => selectedItems.has(i.id)).length} / ${missingItems.length}`, icon: 'ListBulletIcon', color: 'var(--primary)', mono: true },
-        ].map(({ label, val, icon, color, mono }) => (
-          <div key={label} className="topo-card p-4">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-3" style={{ background: `${color}20` }}>
-              <Icon name={icon as Parameters<typeof Icon>[0]['name']} size={16} variant="outline" style={{ color }} />
-            </div>
-            <p className="text-xs text-muted-foreground mb-1">{label}</p>
-            <p
-              className={`font-700 text-sm text-foreground leading-tight ${mono ? 'font-mono-data' : 'font-display'}`}
-              style={{ fontFamily: mono ? 'var(--font-mono)' : 'var(--font-display)' }}
-            >
-              {val}
-            </p>
+          { label: 'Sac recommandé', val: aiResult.sac_recommande },
+          { label: 'Poids total', val: `${(totalWeightG / 1000).toFixed(2)} kg` },
+          { label: 'Budget', val: `${totalPriceEur} €` },
+          { label: 'Articles', val: `${missingItems.filter(i => selectedItems.has(i.id)).length}` },
+        ].map(({ label, val }) => (
+          <div key={label} className="bg-[#F5F2EC] rounded-xl p-4">
+            <p className="text-[10px] text-[#8A8478] uppercase tracking-widest mb-1">{label}</p>
+            <p className="font-700 text-[#1C2620] text-sm">{val}</p>
           </div>
         ))}
       </div>
 
-      {/* Animated Weight gauge */}
-      <div className="topo-card p-4">
-        <WeightGauge weightG={totalWeightG} maxG={state.maxWeightG} size="lg" />
-        <p className="font-mono-data text-[10px] text-muted-foreground mt-2" style={{ fontFamily: 'var(--font-mono)' }}>
-          Limite configurée: {(state.maxWeightG / 1000).toFixed(1)} kg · Poids déjà possédé non compté
-        </p>
-      </div>
-
-      {/* Alerts */}
       {aiResult.alertes.length > 0 && (
         <div className="space-y-2">
           {aiResult.alertes.map((alert, idx) => (
-            <div key={idx} className="flex items-start gap-3 p-3 rounded-xl" style={{ background: 'rgba(228,80,28,0.08)', border: '1px solid rgba(228,80,28,0.2)' }}>
-              <Icon name="ExclamationTriangleIcon" size={16} variant="outline" className="text-primary flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-foreground">{alert}</p>
+            <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
+              <span className="text-amber-600 text-sm flex-shrink-0 mt-0.5">⚠</span>
+              <p className="text-sm text-[#1C2620]">{alert}</p>
             </div>
           ))}
         </div>
       )}
 
-      {/* Already owned section */}
-      {ownedItems.length > 0 && (
-        <div>
-          <h3 className="font-display font-700 text-foreground text-base mb-3 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-            <Icon name="CheckCircleIcon" size={18} variant="outline" className="text-emerald-600" />
-            Déjà dans ton sac ({ownedItems.length} articles)
-          </h3>
-          <div className="space-y-2 opacity-70">
-            {ownedItems.map((item) => (
-              <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl border border-emerald-200 bg-emerald-50">
-                <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 bg-emerald-500">
-                  <Icon name="CheckIcon" size={12} variant="outline" className="text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-500 text-foreground truncate">{item.name}</p>
-                  <p className="text-xs text-emerald-600">Déjà possédé · {item.category}</p>
-                </div>
-                <div className="flex items-center gap-4 flex-shrink-0">
-                  <span className="font-mono-data text-xs text-info" style={{ fontFamily: 'var(--font-mono)' }}>
-                    {item.weightG} g
-                  </span>
-                  <span className="text-xs text-emerald-600 font-600 line-through">
-                    {item.priceEur} €
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Equipment list by category — missing items only */}
-      <div>
-        <h3 className="font-display font-700 text-foreground text-base mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-          <Icon name="ShoppingBagIcon" size={18} variant="outline" className="text-primary" />
-          Il te manque ({missingItems.length} articles)
-        </h3>
-        <div className="space-y-4">
-          {categories.map((cat) => {
-            const catMissingItems = missingItems.filter((i) => i.category === cat);
-            if (catMissingItems.length === 0) return null;
-            return (
-              <div key={cat}>
-                <p className="font-mono-data text-[10px] text-muted-foreground uppercase tracking-widest mb-2" style={{ fontFamily: 'var(--font-mono)' }}>
-                  {cat}
-                </p>
-                <div className="space-y-2">
-                  {catMissingItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className={`flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 cursor-pointer ${
-                        selectedItems.has(item.id)
-                          ? 'border-secondary/40 bg-secondary/5' : 'border-border opacity-50'
-                      }`}
-                      onClick={() => toggleItem(item.id)}
-                      role="checkbox"
-                      aria-checked={selectedItems.has(item.id)}
-                      tabIndex={0}
-                      onKeyDown={(e) => { if (e.key === ' ' || e.key === 'Enter') toggleItem(item.id); }}
-                    >
-                      <div
-                        className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-all ${
-                          selectedItems.has(item.id) ? 'bg-secondary border-secondary' : 'border-border'
-                        }`}
-                      >
-                        {selectedItems.has(item.id) && (
-                          <Icon name="CheckIcon" size={12} variant="outline" className="text-white" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-500 text-foreground truncate">{item.name}</p>
-                          {item.essential && (
-                            <span className="tag-badge tag-alert text-[9px] flex-shrink-0">Essentiel</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4 flex-shrink-0">
-                        <span className="font-mono-data text-xs text-info" style={{ fontFamily: 'var(--font-mono)' }}>
-                          {item.weightG} g
-                        </span>
-                        <span className="font-mono-data text-xs text-accent font-600" style={{ fontFamily: 'var(--font-mono)' }}>
-                          {item.priceEur} €
-                        </span>
-                      </div>
+      <div className="space-y-4">
+        {categories.map(cat => {
+          const catItems = missingItems.filter(i => i.category === cat);
+          if (!catItems.length) return null;
+          return (
+            <div key={cat}>
+              <p className="text-[10px] text-[#8A8478] uppercase tracking-widest mb-2">{cat}</p>
+              <div className="space-y-2">
+                {catItems.map(item => (
+                  <div
+                    key={item.id}
+                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                      selectedItems.has(item.id) ? 'border-[#1C2620]/30 bg-[#1C2620]/5' : 'border-[#E8E4DA] opacity-50'
+                    }`}
+                    onClick={() => toggleItem(item.id)}
+                    role="checkbox"
+                    aria-checked={selectedItems.has(item.id)}
+                    tabIndex={0}
+                    onKeyDown={e => { if (e.key === ' ' || e.key === 'Enter') toggleItem(item.id); }}
+                  >
+                    <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-all ${selectedItems.has(item.id) ? 'bg-[#1C2620] border-[#1C2620]' : 'border-[#C5BFB0]'}`}>
+                      {selectedItems.has(item.id) && (
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5 3.5-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                      )}
                     </div>
-                  ))}
-                </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-500 text-[#1C2620] truncate">{item.name}</p>
+                      {item.essential && <span className="text-[9px] text-[#4A6355] font-600 uppercase tracking-wider">Essentiel</span>}
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span className="text-xs text-[#6B6860]">{item.weightG} g</span>
+                      <span className="text-xs font-600 text-[#1C2620]">{item.priceEur} €</span>
+                    </div>
+                  </div>
+                ))}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Add to cart CTA */}
       <div className="flex flex-col sm:flex-row gap-3 pt-2">
-        <button
-          onClick={handleAddToCart}
-          className="btn-primary flex-1 justify-center py-3.5 text-base"
-          aria-label={`Ajouter ${missingItems.filter(i => selectedItems.has(i.id)).length} articles au panier pour ${totalPriceEur} €`}
-        >
+        <button onClick={handleAddToCart} className="flex-1 flex items-center justify-center gap-2 py-4 bg-[#1C2620] text-white rounded-xl font-600 text-sm hover:bg-[#2A3830] transition-colors">
           <Icon name="ShoppingBagIcon" size={18} variant="outline" />
           Ajouter ce qui manque — {totalPriceEur} €
         </button>
-        <Link href="/catalogue" className="btn-secondary justify-center py-3.5 text-base px-6">
+        <Link href="/catalogue" className="flex items-center justify-center gap-2 py-4 px-6 border-2 border-[#1C2620] text-[#1C2620] rounded-xl font-600 text-sm hover:bg-[#1C2620]/5 transition-colors">
           Voir le catalogue
         </Link>
       </div>
 
-      {/* Toast */}
       {toast && (
-        <div
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl"
-          style={{ background: 'var(--secondary)', color: 'var(--secondary-foreground)', border: '1px solid rgba(255,255,255,0.1)' }}
-          role="alert"
-          aria-live="polite"
-        >
-          <Icon name="CheckCircleIcon" size={20} variant="outline" className="text-white flex-shrink-0" />
-          <p className="text-sm font-500 text-white">{missingItems.filter(i => selectedItems.has(i.id)).length} articles ajoutés au panier</p>
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl bg-[#1C2620] text-white" role="alert">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-8" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          <p className="text-sm font-500">{missingItems.filter(i => selectedItems.has(i.id)).length} articles ajoutés au panier</p>
         </div>
       )}
     </div>
   );
 }
 
-// ── Main Wizard ──────────────────────────────────────────────────────────────────
-const STEPS = [
-  { id: 1, label: 'Destination' },
-  { id: 2, label: 'Dates' },
-  { id: 3, label: 'Profil' },
-  { id: 4, label: 'Résultat IA' },
+// ── Right Panel: Kit en construction ─────────────────────────────────────────
+function KitPanel({ state }: { state: WizardState }) {
+  const kitItems = getKitItems(state);
+  const meta = getKitMeta(state);
+  const activeItems = kitItems.filter(i => i.active && i.priceEur > 0);
+  const totalPrice = activeItems.reduce((s, i) => s + i.priceEur, 0);
+  const totalWeight = activeItems.reduce((s, i) => s + i.weightG, 0);
+
+  return (
+    <div
+      className="relative h-full min-h-[500px] rounded-2xl overflow-hidden flex flex-col"
+      style={{ background: '#1C2620' }}
+    >
+      {/* Background texture */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none" aria-hidden="true">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&q=60')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'grayscale(40%)',
+          }}
+        />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(28,38,32,0.7) 0%, rgba(28,38,32,0.85) 100%)' }} />
+      </div>
+
+      <div className="relative z-10 flex flex-col h-full p-6 lg:p-8">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#7CB99A] animate-pulse" />
+            <span className="text-[10px] font-600 text-[#7CB99A] uppercase tracking-widest">Votre sac en construction</span>
+          </div>
+          <h2 className="text-white font-700 leading-tight" style={{ fontFamily: 'var(--font-display, Manrope, sans-serif)', fontSize: 'clamp(1.5rem, 3vw, 2rem)' }}>
+            Un kit <em className="text-[#7CB99A]" style={{ fontStyle: 'italic', fontWeight: 400 }}>en cours</em>
+            <br />de composition.
+          </h2>
+          <p className="text-white/50 text-sm mt-3 leading-relaxed">
+            On assemble en temps réel. Vous pourrez tout modifier à l&apos;étape finale — ou tout jeter et recommencer.
+          </p>
+        </div>
+
+        {/* Items list */}
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] text-white/40 uppercase tracking-widest">Contenu · {activeItems.length} pièces</span>
+            <span className="text-[10px] text-white/40 font-600">{(totalWeight / 1000).toFixed(1)} KG</span>
+          </div>
+
+          <div className="space-y-2">
+            {kitItems.map(item => (
+              <div
+                key={item.id}
+                className={`flex items-center justify-between py-2.5 border-b transition-all duration-300 ${
+                  item.active && item.priceEur > 0
+                    ? 'border-white/10 opacity-100' :'border-white/5 opacity-25'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${item.active && item.priceEur > 0 ? 'bg-[#4A6355]' : 'bg-white/10'}`}>
+                    {item.active && item.priceEur > 0 && (
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5 3.5-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    )}
+                  </div>
+                  <span className={`text-sm font-500 ${item.active && item.priceEur > 0 ? 'text-white' : 'text-white/30'}`}>{item.name}</span>
+                </div>
+                {item.priceEur > 0 && (
+                  <span className={`text-sm font-600 ${item.active ? 'text-white' : 'text-white/30'}`}>{item.priceEur} €</span>
+                )}
+                {item.priceEur === 0 && item.active && (
+                  <span className="text-xs text-white/40 italic">à choisir</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Sous-total */}
+        <div className="mt-6 pt-4 border-t border-white/10">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-[10px] text-white/40 uppercase tracking-widest">Sous-total</span>
+            <span className="text-2xl font-700 text-white">{totalPrice} <span className="text-[#7CB99A]">€</span></span>
+          </div>
+
+          {/* Meta info */}
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: 'Adapté pour', val: meta.duree || '—', italic: true },
+              { label: 'Météo', val: meta.meteo || '—', italic: true },
+              { label: 'Poids total', val: totalWeight > 0 ? `${(totalWeight / 1000).toFixed(1)} kg` : '—', italic: false },
+              { label: 'Livraison', val: 'Sous 48 h', italic: true },
+            ].map(({ label, val, italic }) => (
+              <div key={label}>
+                <p className="text-[10px] text-white/30 uppercase tracking-wider mb-0.5">{label}</p>
+                <p className={`text-sm text-white font-500 ${italic ? 'italic' : ''}`}>{val}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-[10px] text-white/30 mt-4 leading-relaxed">
+            Le sac se met à jour à chaque étape.<br />Vous pourrez tout retirer avant paiement.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Mobile Recap Bottom Sheet ─────────────────────────────────────────────────
+function MobileRecapSheet({ state, open, onToggle }: { state: WizardState; open: boolean; onToggle: () => void }) {
+  const kitItems = getKitItems(state);
+  const activeItems = kitItems.filter(i => i.active && i.priceEur > 0);
+  const totalPrice = activeItems.reduce((s, i) => s + i.priceEur, 0);
+  const totalWeight = activeItems.reduce((s, i) => s + i.weightG, 0);
+
+  return (
+    <>
+      {/* Sticky bottom bar */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-40 lg:hidden"
+        style={{ background: '#1C2620' }}
+      >
+        <button
+          onClick={onToggle}
+          className="w-full flex items-center justify-between px-5 py-4"
+          aria-expanded={open}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-600 text-white uppercase tracking-wider">Votre sac</span>
+            <span className="text-xs text-white/50">· {activeItems.length} pièces</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-700 text-white">{(totalWeight / 1000).toFixed(1)} KG · {totalPrice} €</span>
+            <svg
+              width="16" height="16" viewBox="0 0 16 16" fill="none"
+              className={`text-white transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+            >
+              <path d="M4 10l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        </button>
+
+        {/* Expanded sheet */}
+        <div
+          className={`overflow-hidden transition-all duration-300 ${open ? 'max-h-96' : 'max-h-0'}`}
+          style={{ background: '#1C2620' }}
+        >
+          <div className="px-5 pb-6 space-y-2 border-t border-white/10 pt-4">
+            {kitItems.map(item => (
+              <div
+                key={item.id}
+                className={`flex items-center justify-between py-2 border-b border-white/5 transition-all ${item.active && item.priceEur > 0 ? 'opacity-100' : 'opacity-25'}`}
+              >
+                <span className="text-sm text-white font-500">{item.name}</span>
+                {item.priceEur > 0 && <span className="text-sm font-600 text-white">{item.priceEur} €</span>}
+              </div>
+            ))}
+            <div className="flex items-center justify-between pt-3">
+              <span className="text-xs text-white/40 uppercase tracking-wider">Total</span>
+              <span className="text-lg font-700 text-white">{totalPrice} €</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Step question labels ──────────────────────────────────────────────────────
+const STEP_META = [
+  {
+    num: '01',
+    label: 'USAGE · SÉLECTIONNEZ UNE RÉPONSE',
+    title: 'Quel usage',
+    titleItalic: 'vous attend ?',
+    desc: 'On adapte le volume, la structure et les compartiments. Une seule réponse : votre usage principal.',
+  },
+  {
+    num: '02',
+    label: 'DURÉE · SÉLECTIONNEZ UNE RÉPONSE',
+    title: 'Combien de temps',
+    titleItalic: 'partez-vous ?',
+    desc: 'On adapte la quantité de vêtements, la capacité de stockage et l\'autonomie alimentaire.',
+  },
+  {
+    num: '03',
+    label: 'MÉTÉO ATTENDUE · SÉLECTIONNEZ UNE RÉPONSE',
+    title: 'Quelle météo',
+    titleItalic: 'vous attend ?',
+    desc: 'On adapte l\'épaisseur du duvet, la respirabilité de la veste et la sensibilité de vos couches. Une seule réponse : la plus fréquente.',
+  },
+  {
+    num: '04',
+    label: 'CONFORT · SÉLECTIONNEZ UNE RÉPONSE',
+    title: 'Quel niveau de',
+    titleItalic: 'confort ?',
+    desc: 'On ajuste le matelas, la cuisine de camp et les accessoires de confort selon votre philosophie.',
+  },
+  {
+    num: '05',
+    label: 'RÉCAPITULATIF · VOTRE KIT COMPLET',
+    title: 'Votre kit',
+    titleItalic: 'est prêt.',
+    desc: 'L\'IA a composé votre liste sur mesure. Ajustez les articles, puis ajoutez au panier.',
+  },
 ];
 
+// ── Main Wizard ──────────────────────────────────────────────────────────────
 export default function ConfiguratorWizard() {
   const [state, setState] = useState<WizardState>({
     step: 1,
+    usage: '',
+    duree: '',
+    meteo: '',
+    confort: '',
     destination: '',
-    country: '',
-    startDate: '',
-    endDate: '',
-    season: '',
-    activity: '',
-    level: '',
-    maxWeightG: 10000,
-    budgetEur: 500,
     generated: false,
   });
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
 
-  const update = (key: keyof WizardState, val: string | number | boolean) => {
-    setState((prev) => ({ ...prev, [key]: val }));
+  const update = (key: keyof WizardState, val: string) => {
+    setState(prev => ({ ...prev, [key]: val }));
   };
 
   const canAdvance = () => {
-    if (state.step === 1) return state.destination.trim().length > 0;
-    if (state.step === 2) return state.season.length > 0;
-    if (state.step === 3) return state.activity.length > 0 && state.level.length > 0;
+    if (state.step === 1) return state.usage !== '';
+    if (state.step === 2) return state.duree !== '';
+    if (state.step === 3) return state.meteo !== '';
+    if (state.step === 4) return state.confort !== '';
     return true;
   };
 
   const advance = () => {
-    if (state.step < 4) {
-      setState((prev) => ({ ...prev, step: prev.step + 1 }));
+    if (state.step < 5) {
+      setState(prev => ({ ...prev, step: prev.step + 1 }));
       topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
   const back = () => {
     if (state.step > 1) {
-      setState((prev) => ({ ...prev, step: prev.step - 1 }));
+      setState(prev => ({ ...prev, step: prev.step - 1 }));
       topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
+  const stepMeta = STEP_META[state.step - 1];
+  const nextLabel = state.step === 4 ? 'Générer mon kit' : `Continuer vers ${STEPS[state.step]?.label || ''}`;
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero banner */}
-      <div className="bg-dark-bg py-12 sm:py-16 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-5 pointer-events-none" aria-hidden="true">
-          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="topo-conf" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
-                <path d="M0,40 C20,20 60,60 80,40" fill="none" stroke="#E7E3D6" strokeWidth="0.5" />
-                <path d="M0,60 C20,40 60,80 80,60" fill="none" stroke="#E7E3D6" strokeWidth="0.5" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#topo-conf)" />
-          </svg>
-        </div>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <div className="flex items-center gap-2 justify-center mb-4">
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse-orange" />
-            <span className="text-xs font-mono-data text-primary uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>
-              Génération en cours
-            </span>
+    <div className="min-h-screen" style={{ background: '#F5F2EC' }}>
+      {/* Top header bar */}
+      <div
+        ref={topRef}
+        className="sticky top-0 z-30 border-b"
+        style={{ background: '#F5F2EC', borderColor: '#E8E4DA' }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h1 className="font-700 text-[#1C2620] text-base" style={{ fontFamily: 'var(--font-display, Manrope, sans-serif)' }}>
+                Configurateur · Composer un sac
+              </h1>
+              <p className="text-xs text-[#8A8478]">Étape {state.step}/5 · Assistant multi-étapes</p>
+            </div>
+            <Link
+              href="/boutique"
+              className="text-xs text-[#8A8478] hover:text-[#1C2620] transition-colors font-500 flex items-center gap-1"
+            >
+              Quitter le configurateur
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </Link>
           </div>
-          <h1 className="text-section-title text-white mb-3">
-            Configurateur IA
-          </h1>
-          <p className="text-white/60 text-base max-w-md mx-auto">
-            Votre liste d&apos;équipement optimisée poids / budget / sécurité en 4 étapes.
-          </p>
+          {/* Stepper */}
+          <Stepper currentStep={state.step} />
         </div>
       </div>
-
-      {/* Mono data band */}
-      {state.destination && (
-        <div
-          className="border-b border-border py-2 px-4 sm:px-6 overflow-x-auto"
-          style={{ background: 'rgba(62,107,122,0.06)' }}
-          aria-label="Données contextuelles de destination"
-        >
-          <div className="flex items-center gap-6 min-w-max max-w-7xl mx-auto">
-            {[
-              { label: 'DEST', val: state.destination.toUpperCase() },
-              { label: 'SAISON', val: state.season ? state.season.toUpperCase() : '—' },
-              { label: 'ACTIVITÉ', val: state.activity || '—' },
-              { label: 'MAX POIDS', val: state.maxWeightG >= 1000 ? `${(state.maxWeightG / 1000).toFixed(1)} kg` : `${state.maxWeightG} g` },
-              { label: 'BUDGET', val: `${state.budgetEur} €` },
-            ].map(({ label, val }) => (
-              <div key={label} className="flex items-center gap-2">
-                <span className="font-mono-data text-[10px] text-muted-foreground uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>
-                  {label}
-                </span>
-                <span className="font-mono-data text-[10px] text-info font-600" style={{ fontFamily: 'var(--font-mono)' }}>
-                  {val}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Main content */}
-      <div ref={topRef} className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-        {/* Step indicator */}
-        <div className="flex items-center mb-10" role="progressbar" aria-valuenow={state.step} aria-valuemin={1} aria-valuemax={4} aria-label={`Étape ${state.step} sur 4`}>
-          {STEPS.map((step, idx) => (
-            <React.Fragment key={step.id}>
-              <div className="flex flex-col items-center gap-1.5">
-                <div className={`step-dot ${state.step === step.id ? 'active' : state.step > step.id ? 'completed' : ''}`}>
-                  {state.step > step.id ? (
-                    <Icon name="CheckIcon" size={14} variant="outline" className="text-white" />
-                  ) : (
-                    <span>{step.id}</span>
-                  )}
-                </div>
-                <span className={`text-[10px] font-500 hidden sm:block ${state.step === step.id ? 'text-primary' : 'text-muted-foreground'}`}>
-                  {step.label}
-                </span>
-              </div>
-              {idx < STEPS.length - 1 && (
-                <div className={`step-line mx-1 sm:mx-2 ${state.step > step.id ? 'completed' : ''}`} />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pb-32 lg:pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
 
-        {/* Step card */}
-        <div className="topo-card p-6 sm:p-8">
-          {/* Step header */}
-          <div className="mb-6 pb-5 border-b border-border">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--primary)', color: 'white' }}>
-                <Icon
-                  name={
-                    state.step === 1 ? 'MapPinIcon' :
-                    state.step === 2 ? 'CalendarDaysIcon' :
-                    state.step === 3 ? 'UserCircleIcon' : 'SparklesIcon'
-                  }
-                  size={16}
-                  variant="outline"
-                />
-              </div>
-              <div>
-                <p className="font-mono-data text-[10px] text-muted-foreground uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>
-                  Étape {state.step} / 4
-                </p>
-                <h2 className="font-display font-700 text-foreground text-lg" style={{ fontFamily: 'var(--font-display)' }}>
-                  {STEPS[state.step - 1].label}
-                </h2>
-              </div>
+          {/* Left column: Question */}
+          <div>
+            {/* Step number + label */}
+            <div className="flex items-center gap-3 mb-4">
+              <span
+                className="text-5xl font-800 leading-none"
+                style={{ color: '#E8E4DA', fontFamily: 'var(--font-display, Manrope, sans-serif)' }}
+              >
+                {stepMeta.num}
+              </span>
+              <span className="text-[10px] font-600 text-[#8A8478] uppercase tracking-widest">{stepMeta.label}</span>
             </div>
+
+            {/* Question title */}
+            <h2
+              className="font-700 text-[#1C2620] leading-tight mb-4"
+              style={{ fontFamily: 'var(--font-display, Manrope, sans-serif)', fontSize: 'clamp(2rem, 4vw, 2.75rem)' }}
+            >
+              {stepMeta.title}
+              <br />
+              <span className="font-400" style={{ fontStyle: 'italic' }}>{stepMeta.titleItalic}</span>
+            </h2>
+
+            <p className="text-sm text-[#6B6860] leading-relaxed mb-8 max-w-md">
+              {stepMeta.desc}
+            </p>
+
+            {/* Step content */}
+            <div className="mb-8">
+              {state.step === 1 && <StepUsage state={state} onChange={update} />}
+              {state.step === 2 && <StepDuree state={state} onChange={update} />}
+              {state.step === 3 && <StepMeteo state={state} onChange={update} />}
+              {state.step === 4 && <StepConfort state={state} onChange={update} />}
+              {state.step === 5 && <StepRecap state={state} />}
+            </div>
+
+            {/* Navigation */}
+            {state.step < 5 && (
+              <div className="flex items-center justify-between pt-6 border-t" style={{ borderColor: '#E8E4DA' }}>
+                <button
+                  onClick={back}
+                  disabled={state.step === 1}
+                  className="flex items-center gap-2 text-sm font-500 text-[#6B6860] hover:text-[#1C2620] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 4l-4 4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  Précédent
+                </button>
+                <button
+                  onClick={advance}
+                  disabled={!canAdvance()}
+                  className="flex items-center gap-2 px-7 py-3.5 rounded-xl font-600 text-sm text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ background: canAdvance() ? '#1C2620' : '#8A8478' }}
+                >
+                  {nextLabel}
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Step content */}
-          {state.step === 1 && <StepDestination state={state} onChange={update} />}
-          {state.step === 2 && <StepDates state={state} onChange={update} />}
-          {state.step === 3 && <StepProfile state={state} onChange={update} />}
-          {state.step === 4 && <StepResult state={state} />}
-
-          {/* Navigation buttons */}
-          {state.step < 4 && (
-            <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
-              <button
-                onClick={back}
-                disabled={state.step === 1}
-                className="btn-secondary py-2.5 px-5 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
-                aria-label="Étape précédente"
-              >
-                <Icon name="ArrowLeftIcon" size={16} variant="outline" />
-                Retour
-              </button>
-              <button
-                onClick={advance}
-                disabled={!canAdvance()}
-                className="btn-primary py-2.5 px-6 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
-                aria-label="Étape suivante"
-              >
-                {state.step === 3 ? (
-                  <>
-                    <Icon name="SparklesIcon" size={16} variant="outline" />
-                    Générer ma liste
-                  </>
-                ) : (
-                  <>
-                    Continuer
-                    <Icon name="ArrowRightIcon" size={16} variant="outline" />
-                  </>
-                )}
-              </button>
-            </div>
-          )}
+          {/* Right column: Kit panel (desktop only) */}
+          <div className="hidden lg:block sticky top-32">
+            <KitPanel state={state} />
+          </div>
         </div>
-
-        {/* Disclaimer */}
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          La liste générée est une recommandation IA basée sur votre profil. Adaptez-la selon vos besoins spécifiques.
-        </p>
       </div>
+
+      {/* Mobile bottom sheet */}
+      {state.step < 5 && (
+        <MobileRecapSheet
+          state={state}
+          open={mobileSheetOpen}
+          onToggle={() => setMobileSheetOpen(o => !o)}
+        />
+      )}
     </div>
   );
 }
