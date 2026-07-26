@@ -403,11 +403,13 @@ function FixedDropdown({
   anchorRef,
   children,
   minWidth = 150,
+  portalId,
 }: {
   open: boolean;
   anchorRef: React.RefObject<HTMLElement | null>;
   children: React.ReactNode;
   minWidth?: number;
+  portalId?: string;
 }) {
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const [mounted, setMounted] = useState(false);
@@ -427,6 +429,8 @@ function FixedDropdown({
 
   return createPortal(
     <div
+      id={portalId}
+      data-fixed-dropdown="true"
       style={{
         position: 'fixed',
         top: pos.top,
@@ -457,13 +461,12 @@ function DatePickerDropdown({ value, onChange }: { value: string; onChange: (v: 
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        // Check if click is inside the portal
-        const target = e.target as Node;
-        const portal = document.getElementById('date-picker-portal');
-        if (portal && portal.contains(target)) return;
-        setOpen(false);
-      }
+      const target = e.target as Node;
+      // Don't close if clicking inside the anchor container or inside any portal dropdown
+      if (ref.current && ref.current.contains(target)) return;
+      const portalEl = document.querySelector('[data-fixed-dropdown="true"]');
+      if (portalEl && portalEl.contains(target)) return;
+      setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -575,7 +578,7 @@ function DatePickerDropdown({ value, onChange }: { value: string; onChange: (v: 
         <p className="text-[9px] font-semibold text-[#1C2620]/40 uppercase tracking-widest">Quand</p>
         <p className="text-sm font-medium text-[#1C2620] truncate">{displayValue || 'Dates…'}</p>
       </button>
-      <FixedDropdown open={open} anchorRef={btnRef} minWidth={280}>
+      <FixedDropdown open={open} anchorRef={btnRef} minWidth={280} portalId="date-picker-portal">
         <div id="date-picker-portal" className="p-3">
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
@@ -643,7 +646,11 @@ function PriceDropdown({ value, onChange }: { value: string; onChange: (v: strin
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (ref.current && ref.current.contains(target)) return;
+      const portals = document.querySelectorAll('[data-fixed-dropdown="true"]');
+      for (const p of portals) { if (p.contains(target)) return; }
+      setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -676,7 +683,7 @@ function PriceDropdown({ value, onChange }: { value: string; onChange: (v: strin
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
-      <FixedDropdown open={open} anchorRef={btnRef} minWidth={150}>
+      <FixedDropdown open={open} anchorRef={btnRef} minWidth={150} portalId="price-dropdown-portal">
         {options.map((opt) => (
           <button
             key={opt.value}
@@ -703,7 +710,11 @@ function AltitudeDropdown({ value, onChange }: { value: string; onChange: (v: st
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (ref.current && ref.current.contains(target)) return;
+      const portals = document.querySelectorAll('[data-fixed-dropdown="true"]');
+      for (const p of portals) { if (p.contains(target)) return; }
+      setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -736,7 +747,7 @@ function AltitudeDropdown({ value, onChange }: { value: string; onChange: (v: st
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
-      <FixedDropdown open={open} anchorRef={btnRef} minWidth={160}>
+      <FixedDropdown open={open} anchorRef={btnRef} minWidth={160} portalId="altitude-dropdown-portal">
         {options.map((opt) => (
           <button
             key={opt.value}
@@ -763,7 +774,11 @@ function TravelersDropdown({ value, onChange }: { value: string; onChange: (v: s
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (ref.current && ref.current.contains(target)) return;
+      const portals = document.querySelectorAll('[data-fixed-dropdown="true"]');
+      for (const p of portals) { if (p.contains(target)) return; }
+      setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -790,7 +805,7 @@ function TravelersDropdown({ value, onChange }: { value: string; onChange: (v: s
         <p className="text-[9px] font-semibold text-[#1C2620]/40 uppercase tracking-widest">Voyageurs</p>
         <p className="text-sm font-medium text-[#1C2620] truncate">{value || 'Voyageurs…'}</p>
       </button>
-      <FixedDropdown open={open} anchorRef={btnRef} minWidth={190}>
+      <FixedDropdown open={open} anchorRef={btnRef} minWidth={190} portalId="travelers-dropdown-portal">
         {options.map((opt) => (
           <button
             key={opt}
@@ -817,7 +832,11 @@ function ActivityDropdown({ value, onChange }: { value: string; onChange: (v: st
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (ref.current && ref.current.contains(target)) return;
+      const portals = document.querySelectorAll('[data-fixed-dropdown="true"]');
+      for (const p of portals) { if (p.contains(target)) return; }
+      setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -847,7 +866,7 @@ function ActivityDropdown({ value, onChange }: { value: string; onChange: (v: st
         <p className="text-[9px] font-semibold text-[#1C2620]/40 uppercase tracking-widest">Activité</p>
         <p className="text-sm font-medium text-[#1C2620] truncate">{value || 'Activité…'}</p>
       </button>
-      <FixedDropdown open={open} anchorRef={btnRef} minWidth={190}>
+      <FixedDropdown open={open} anchorRef={btnRef} minWidth={190} portalId="activity-dropdown-portal">
         {options.map((opt) => (
           <button
             key={opt}
@@ -1131,7 +1150,7 @@ export default function ExplorerPage() {
       style={{ fontFamily: "'DM Sans', sans-serif" }}
     >
       {/* ── Search Header ─────────────────────────────────────────────────── */}
-      <header className="flex-shrink-0 bg-white border-b border-[#E8E4DA] shadow-sm z-30">
+      <header className="flex-shrink-0 bg-white border-b border-[#E8E4DA] shadow-sm z-30 relative">
         <div className="flex items-center h-14 px-4 gap-3">
           {/* Back arrow */}
           <Link
@@ -1205,22 +1224,12 @@ export default function ExplorerPage() {
             </svg>
           </button>
 
-          {/* Journal + Avatar */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Link href="/carnets" className="text-sm text-[#1C2620]/60 hover:text-[#1C2620] transition-colors hidden sm:block">
-              Journal
-            </Link>
-            <Link href="/compte" aria-label="Mon compte">
-              <div className="w-8 h-8 rounded-full bg-[#4A6741] flex items-center justify-center text-white text-xs font-bold hover:opacity-80 transition-opacity">
-                MB
-              </div>
-            </Link>
-          </div>
+          {/* Journal + Avatar — removed */}
         </div>
       </header>
 
       {/* ── Filter Bar ────────────────────────────────────────────────────── */}
-      <div className="flex-shrink-0 bg-white border-b border-[#E8E4DA] z-20">
+      <div className="flex-shrink-0 bg-white border-b border-[#E8E4DA] z-20 relative">
         <div className="flex items-center gap-2 px-4 py-2.5 overflow-x-auto scrollbar-hide">
           {/* All filters button */}
           <button
