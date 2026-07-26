@@ -299,6 +299,12 @@ const DIFF_LABELS: Record<string, string> = {
   hard: 'Difficile',
   expert: 'Expert',
 };
+const DIFF_BG: Record<string, string> = {
+  easy: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  moderate: 'bg-orange-50 text-orange-700 border-orange-200',
+  hard: 'bg-red-50 text-red-700 border-red-200',
+  expert: 'bg-violet-50 text-violet-700 border-violet-200',
+};
 
 function TrailMiniCard({
   trail,
@@ -311,45 +317,121 @@ function TrailMiniCard({
 }) {
   const color = DIFF_COLORS[trail.difficulty] || '#94a3b8';
   const label = DIFF_LABELS[trail.difficulty] || trail.difficulty;
+  const diffBg = DIFF_BG[trail.difficulty] || 'bg-slate-50 text-slate-600 border-slate-200';
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full text-left p-3 rounded-xl transition-all duration-150 border ${
+      className={`w-full text-left rounded-2xl transition-all duration-200 overflow-hidden group border ${
         selected
-          ? 'bg-[#1C2620]/8 border-[#1C2620]/20'
-          : 'border-transparent hover:bg-[#1C2620]/4 hover:border-[#1C2620]/10'
+          ? 'border-[#1C2620]/25 bg-white shadow-md shadow-[#1C2620]/8'
+          : 'border-[#E8E4DA] bg-white hover:border-[#1C2620]/20 hover:shadow-sm'
       }`}
     >
-      <div className="flex items-start justify-between gap-2 mb-1.5">
-        <h3 className="text-sm font-semibold text-[#1C2620] leading-tight line-clamp-2 flex-1">
-          {trail.name}
-        </h3>
-        <span
-          className="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border"
-          style={{
-            backgroundColor: `${color}18`,
-            color,
-            borderColor: `${color}40`,
-          }}
-        >
-          {label}
-        </span>
-      </div>
-      <div className="flex items-center gap-3 text-[11px] text-[#1C2620]/50">
-        {trail.distance_km > 0 && <span>📏 {trail.distance_km} km</span>}
-        {trail.duration_hours > 0 && <span>⏱ {trail.duration_hours}h</span>}
-        {trail.elevation_gain > 0 && <span>⬆️ +{trail.elevation_gain}m</span>}
-      </div>
-      {trail.adventure_score > 0 && (
-        <div className="flex items-center gap-1 mt-1.5">
-          <span className="text-amber-400 text-[10px]">⭐</span>
-          <span className="text-[11px] font-mono font-bold text-[#1C2620]">{trail.adventure_score}</span>
-          <span className="text-[10px] text-[#1C2620]/40">/100</span>
+      {/* Difficulty accent bar */}
+      <div className="h-1 w-full" style={{ backgroundColor: color }} />
+
+      <div className="p-3.5">
+        {/* Header row */}
+        <div className="flex items-start justify-between gap-2 mb-2.5">
+          <h3 className="text-sm font-semibold text-[#1C2620] leading-tight line-clamp-2 flex-1">
+            {trail.name}
+          </h3>
+          <span className={`flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border ${diffBg}`}>
+            {label}
+          </span>
         </div>
-      )}
+
+        {/* Stats row */}
+        <div className="flex items-center gap-2 flex-wrap mb-2.5">
+          {trail.distance_km > 0 && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#4A6741] bg-[#4A6741]/8 rounded-full px-2 py-0.5">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12h18M3 6h18M3 18h18" />
+              </svg>
+              {trail.distance_km} km
+            </span>
+          )}
+          {trail.duration_hours > 0 && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#1C2620]/60 bg-[#1C2620]/5 rounded-full px-2 py-0.5">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+              </svg>
+              {trail.duration_hours}h
+            </span>
+          )}
+          {trail.elevation_gain > 0 && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#1C2620]/60 bg-[#1C2620]/5 rounded-full px-2 py-0.5">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
+              +{trail.elevation_gain}m
+            </span>
+          )}
+        </div>
+
+        {/* Adventure score */}
+        {trail.adventure_score > 0 && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <div className="w-16 h-1.5 bg-[#E8E4DA] rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${trail.adventure_score}%`,
+                    backgroundColor: trail.adventure_score >= 75 ? '#22c55e' : trail.adventure_score >= 50 ? '#f97316' : '#94a3b8',
+                  }}
+                />
+              </div>
+              <span className="text-[11px] font-bold text-[#1C2620]">{trail.adventure_score}</span>
+              <span className="text-[10px] text-[#1C2620]/40">/100</span>
+            </div>
+            <span className="text-[10px] text-[#1C2620]/40 font-medium">Score aventure →</span>
+          </div>
+        )}
+      </div>
     </button>
+  );
+}
+
+// ─── Fixed Dropdown Portal ─────────────────────────────────────────────────────
+
+function FixedDropdown({
+  open,
+  anchorRef,
+  children,
+  minWidth = 150,
+}: {
+  open: boolean;
+  anchorRef: React.RefObject<HTMLElement | null>;
+  children: React.ReactNode;
+  minWidth?: number;
+}) {
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+
+  useEffect(() => {
+    if (open && anchorRef.current) {
+      const rect = anchorRef.current.getBoundingClientRect();
+      setPos({ top: rect.bottom + 6, left: rect.left });
+    }
+  }, [open, anchorRef]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: pos.top,
+        left: pos.left,
+        minWidth,
+        zIndex: 99999,
+      }}
+      className="bg-white border border-[#E8E4DA] rounded-xl shadow-xl overflow-hidden"
+    >
+      {children}
+    </div>
   );
 }
 
@@ -358,6 +440,7 @@ function TrailMiniCard({
 function PriceDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -380,6 +463,7 @@ function PriceDropdown({ value, onChange }: { value: string; onChange: (v: strin
   return (
     <div ref={ref} className="relative flex-shrink-0">
       <button
+        ref={btnRef}
         type="button"
         onClick={() => setOpen(!open)}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-150 ${
@@ -393,22 +477,20 @@ function PriceDropdown({ value, onChange }: { value: string; onChange: (v: strin
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
-      {open && (
-        <div className="absolute top-full left-0 mt-1 bg-white border border-[#E8E4DA] rounded-xl shadow-lg z-50 min-w-[140px] overflow-hidden">
-          {options.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => { onChange(opt.value); setOpen(false); }}
-              className={`w-full text-left px-3 py-2 text-xs hover:bg-[#F5F2EC] transition-colors ${
-                opt.value === value ? 'font-semibold text-[#1C2620]' : 'text-[#1C2620]/70'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      )}
+      <FixedDropdown open={open} anchorRef={btnRef} minWidth={150}>
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => { onChange(opt.value); setOpen(false); }}
+            className={`w-full text-left px-3 py-2 text-xs hover:bg-[#F5F2EC] transition-colors ${
+              opt.value === value ? 'font-semibold text-[#1C2620]' : 'text-[#1C2620]/70'
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </FixedDropdown>
     </div>
   );
 }
@@ -418,6 +500,7 @@ function PriceDropdown({ value, onChange }: { value: string; onChange: (v: strin
 function AltitudeDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -440,6 +523,7 @@ function AltitudeDropdown({ value, onChange }: { value: string; onChange: (v: st
   return (
     <div ref={ref} className="relative flex-shrink-0">
       <button
+        ref={btnRef}
         type="button"
         onClick={() => setOpen(!open)}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-150 ${
@@ -453,22 +537,20 @@ function AltitudeDropdown({ value, onChange }: { value: string; onChange: (v: st
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
-      {open && (
-        <div className="absolute top-full left-0 mt-1 bg-white border border-[#E8E4DA] rounded-xl shadow-lg z-50 min-w-[150px] overflow-hidden">
-          {options.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => { onChange(opt.value); setOpen(false); }}
-              className={`w-full text-left px-3 py-2 text-xs hover:bg-[#F5F2EC] transition-colors ${
-                opt.value === value ? 'font-semibold text-[#1C2620]' : 'text-[#1C2620]/70'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      )}
+      <FixedDropdown open={open} anchorRef={btnRef} minWidth={160}>
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => { onChange(opt.value); setOpen(false); }}
+            className={`w-full text-left px-3 py-2 text-xs hover:bg-[#F5F2EC] transition-colors ${
+              opt.value === value ? 'font-semibold text-[#1C2620]' : 'text-[#1C2620]/70'
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </FixedDropdown>
     </div>
   );
 }
@@ -478,6 +560,7 @@ function AltitudeDropdown({ value, onChange }: { value: string; onChange: (v: st
 function TravelersDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -500,6 +583,7 @@ function TravelersDropdown({ value, onChange }: { value: string; onChange: (v: s
   return (
     <div ref={ref} className="relative flex-1 min-w-0">
       <button
+        ref={btnRef}
         type="button"
         onClick={() => setOpen(!open)}
         className="w-full text-left bg-transparent outline-none"
@@ -507,22 +591,20 @@ function TravelersDropdown({ value, onChange }: { value: string; onChange: (v: s
         <p className="text-[9px] font-semibold text-[#1C2620]/40 uppercase tracking-widest">Voyageurs</p>
         <p className="text-sm font-medium text-[#1C2620] truncate">{value || 'Voyageurs…'}</p>
       </button>
-      {open && (
-        <div className="absolute top-full left-0 mt-1 bg-white border border-[#E8E4DA] rounded-xl shadow-lg z-50 min-w-[180px] overflow-hidden">
-          {options.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => { onChange(opt); setOpen(false); }}
-              className={`w-full text-left px-3 py-2 text-sm hover:bg-[#F5F2EC] transition-colors ${
-                opt === value ? 'font-semibold text-[#1C2620]' : 'text-[#1C2620]/70'
-              }`}
-            >
-              {opt}
-            </button>
-          ))}
-        </div>
-      )}
+      <FixedDropdown open={open} anchorRef={btnRef} minWidth={190}>
+        {options.map((opt) => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => { onChange(opt); setOpen(false); }}
+            className={`w-full text-left px-3 py-2 text-sm hover:bg-[#F5F2EC] transition-colors ${
+              opt === value ? 'font-semibold text-[#1C2620]' : 'text-[#1C2620]/70'
+            }`}
+          >
+            {opt}
+          </button>
+        ))}
+      </FixedDropdown>
     </div>
   );
 }
@@ -532,6 +614,7 @@ function TravelersDropdown({ value, onChange }: { value: string; onChange: (v: s
 function ActivityDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -557,6 +640,7 @@ function ActivityDropdown({ value, onChange }: { value: string; onChange: (v: st
   return (
     <div ref={ref} className="relative flex-1 min-w-0">
       <button
+        ref={btnRef}
         type="button"
         onClick={() => setOpen(!open)}
         className="w-full text-left bg-transparent outline-none"
@@ -564,22 +648,20 @@ function ActivityDropdown({ value, onChange }: { value: string; onChange: (v: st
         <p className="text-[9px] font-semibold text-[#1C2620]/40 uppercase tracking-widest">Activité</p>
         <p className="text-sm font-medium text-[#1C2620] truncate">{value || 'Activité…'}</p>
       </button>
-      {open && (
-        <div className="absolute top-full left-0 mt-1 bg-white border border-[#E8E4DA] rounded-xl shadow-lg z-50 min-w-[180px] overflow-hidden">
-          {options.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => { onChange(opt); setOpen(false); }}
-              className={`w-full text-left px-3 py-2 text-sm hover:bg-[#F5F2EC] transition-colors ${
-                opt === value ? 'font-semibold text-[#1C2620]' : 'text-[#1C2620]/70'
-              }`}
-            >
-              {opt}
-            </button>
-          ))}
-        </div>
-      )}
+      <FixedDropdown open={open} anchorRef={btnRef} minWidth={190}>
+        {options.map((opt) => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => { onChange(opt); setOpen(false); }}
+            className={`w-full text-left px-3 py-2 text-sm hover:bg-[#F5F2EC] transition-colors ${
+              opt === value ? 'font-semibold text-[#1C2620]' : 'text-[#1C2620]/70'
+            }`}
+          >
+            {opt}
+          </button>
+        ))}
+      </FixedDropdown>
     </div>
   );
 }
