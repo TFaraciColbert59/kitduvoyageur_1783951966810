@@ -35,8 +35,19 @@ export default function TrailPanel({ trail, onClose, isMobile = false }: TrailPa
   const content = (
     <div ref={panelRef} className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex-shrink-0 px-5 pt-5 pb-4 border-b border-white/8">
-        <div className="flex items-start justify-between gap-3">
+      <div className="flex-shrink-0 px-5 pt-5 pb-4 border-b border-white/10">
+        <div className="flex items-start gap-3">
+          {/* Back arrow button */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-shrink-0 w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors mt-0.5"
+            aria-label="Retour"
+          >
+            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${diffBg}`}>
@@ -45,35 +56,26 @@ export default function TrailPanel({ trail, onClose, isMobile = false }: TrailPa
             </div>
             <h2 className="text-white font-bold text-lg leading-tight">{trail.name}</h2>
           </div>
-          <button
-            onClick={onClose}
-            className="flex-shrink-0 w-8 h-8 rounded-xl bg-white/8 hover:bg-white/15 flex items-center justify-center transition-colors"
-            aria-label="Fermer"
-          >
-            <svg className="w-4 h-4 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
         </div>
       </div>
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
         {/* Adventure Score */}
-        <div className="bg-white/4 rounded-2xl p-4 border border-white/8">
-          <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest mb-3">Adventure Score</p>
+        <div className="bg-white/8 rounded-2xl p-4 border border-white/10">
+          <p className="text-[10px] font-mono text-white/50 uppercase tracking-widest mb-3">Adventure Score</p>
           <AdventureScore trail={trail} />
         </div>
 
         {/* Stats grid */}
         <div>
-          <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest mb-3">Informations</p>
+          <p className="text-[10px] font-mono text-white/50 uppercase tracking-widest mb-3">Informations</p>
           <div className="grid grid-cols-2 gap-2">
             {stats.map((s) => (
-              <div key={s.label} className="bg-white/4 rounded-xl p-3 border border-white/6">
+              <div key={s.label} className="bg-white/8 rounded-xl p-3 border border-white/10">
                 <div className="flex items-center gap-1.5 mb-1">
                   <span className="text-sm">{s.icon}</span>
-                  <span className="text-[10px] text-white/30 font-mono uppercase tracking-wider">{s.label}</span>
+                  <span className="text-[10px] text-white/50 font-mono uppercase tracking-wider">{s.label}</span>
                 </div>
                 <p className="text-white font-mono font-bold text-sm">{s.value}</p>
               </div>
@@ -82,9 +84,9 @@ export default function TrailPanel({ trail, onClose, isMobile = false }: TrailPa
         </div>
 
         {/* Difficulty bar */}
-        <div className="bg-white/4 rounded-xl p-3 border border-white/6">
+        <div className="bg-white/8 rounded-xl p-3 border border-white/10">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] text-white/30 font-mono uppercase tracking-wider">Difficulté</span>
+            <span className="text-[10px] text-white/50 font-mono uppercase tracking-wider">Difficulté</span>
             <span className="text-sm font-bold" style={{ color: diffColor }}>{diffLabel}</span>
           </div>
           <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
@@ -100,7 +102,7 @@ export default function TrailPanel({ trail, onClose, isMobile = false }: TrailPa
       </div>
 
       {/* CTA */}
-      <div className="flex-shrink-0 px-5 pb-5 pt-3 border-t border-white/8">
+      <div className="flex-shrink-0 px-5 pb-5 pt-3 border-t border-white/10">
         <Link
           href={`/ai-configurator?trail=${encodeURIComponent(trail.name)}&difficulty=${trail.difficulty}&distance=${trail.distance_km}&elevation=${trail.elevation_gain}`}
           className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-[#E4501C] hover:bg-[#cc3d10] text-white font-semibold text-sm transition-all duration-200 hover:shadow-lg hover:shadow-[#E4501C]/25 active:scale-[0.98]"
@@ -114,7 +116,7 @@ export default function TrailPanel({ trail, onClose, isMobile = false }: TrailPa
 
   if (isMobile) {
     return (
-      <div className="fixed inset-x-0 bottom-0 z-[2000] max-h-[85vh] bg-[#0f1a16]/98 border-t border-white/10 rounded-t-3xl shadow-2xl backdrop-blur-md flex flex-col">
+      <div className="fixed inset-x-0 bottom-0 z-[2000] max-h-[85vh] bg-[#0f1a16] border-t border-white/10 rounded-t-3xl shadow-2xl flex flex-col">
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
           <div className="w-10 h-1 bg-white/20 rounded-full" />
@@ -125,7 +127,7 @@ export default function TrailPanel({ trail, onClose, isMobile = false }: TrailPa
   }
 
   return (
-    <div className="h-full bg-[#0f1a16]/98 border-l border-white/8 flex flex-col backdrop-blur-md">
+    <div className="h-full bg-[#0f1a16] flex flex-col">
       {content}
     </div>
   );
