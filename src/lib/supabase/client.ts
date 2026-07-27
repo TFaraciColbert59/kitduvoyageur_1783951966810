@@ -61,9 +61,12 @@ const deleteCookie = (name: string) => {
 };
 
 export function createClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://icxyvwzfjbflcbqukpfz.supabase.co';
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljeXZ3emZqYmZsY2JxdWtwZnoiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0ODU2MTg3MywiZXhwIjoyMDY0MTM3ODczfQ.placeholder';
+
   return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll: () => (canUseCookies() ? fromCookies() : fromStorage()),

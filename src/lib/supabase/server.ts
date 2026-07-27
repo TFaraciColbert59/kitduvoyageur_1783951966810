@@ -1,11 +1,11 @@
 import { createServerClient, createBrowserClient } from '@supabase/ssr';
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://icxyvwzfjbflcbqukpfz.supabase.co';
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljeXZ3emZqYmZsY2JxdWtwZnoiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0ODU2MTg3MywiZXhwIjoyMDY0MTM3ODczfQ.placeholder';
+
 export async function createClient() {
   if (typeof window !== 'undefined') {
-    return createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    return createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
 
   try {
@@ -13,8 +13,8 @@ export async function createClient() {
     const cookieStore = await cookies();
 
     return createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY,
       {
         cookies: {
           getAll() {
@@ -37,9 +37,6 @@ export async function createClient() {
       }
     );
   } catch {
-    return createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    return createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
 }
