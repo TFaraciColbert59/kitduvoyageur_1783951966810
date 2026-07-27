@@ -105,6 +105,14 @@ function daysFromNow(n: number): string {
 }
 
 export async function POST(request: Request) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Endpoint disabled in production' }, { status: 403 });
+  }
+
+  if (!SEED_SECRET) {
+    return NextResponse.json({ error: 'SEED_SECRET not configured' }, { status: 500 });
+  }
+
   const { searchParams } = new URL(request.url);
   const secret = searchParams.get('secret');
 
@@ -371,6 +379,6 @@ export async function POST(request: Request) {
 
 export async function GET() {
   return NextResponse.json({ 
-    message: 'Utilisez POST /api/seed?secret=kitduvoyageur-seed-2026 pour insérer les données seed' 
+    message: 'Seed endpoint requires POST request with valid secret' 
   });
 }

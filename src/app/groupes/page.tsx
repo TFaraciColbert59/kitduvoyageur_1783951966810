@@ -129,7 +129,7 @@ function GroupesPageInner() {
       setCreateForm({ name: '', description: '', destination: '', theme: 'Trek', visibility: 'public', departure_date: '', return_date: '', budget_target: '', max_members: '20' });
       await loadMyGroups();
       setActiveTab('mes-groupes');
-      router.push(`/groupe?group=${group.id}`);
+      router.push(`/groupes/${group.id}`);
     } catch (err: unknown) { toast((err as Error).message || 'Erreur', 'error'); }
     finally { setCreating(false); }
   }
@@ -160,7 +160,7 @@ function GroupesPageInner() {
       if (error && error.code !== '23505') throw error;
       toast('Vous avez rejoint le groupe !', 'success');
       await Promise.all([loadMyGroups(), loadPublicGroups()]);
-      router.push(`/groupe?group=${groupId}`);
+      router.push(`/groupes/${groupId}`);
     } catch (err: unknown) { toast((err as Error).message || 'Erreur', 'error'); }
     finally { setJoining(null); }
   }
@@ -196,7 +196,7 @@ function GroupesPageInner() {
       toast(`Vous avez rejoint "${group.name}" !`, 'success');
       setJoinCode('');
       await loadMyGroups();
-      router.push(`/groupe?group=${group.id}`);
+      router.push(`/groupes/${group.id}`);
     } catch (err: unknown) { toast((err as Error).message || 'Erreur', 'error'); }
     finally { setJoiningByCode(false); }
   }
@@ -291,7 +291,7 @@ function GroupesPageInner() {
           <div className="flex gap-2">
             {showActions ? (
               <>
-                <Link href={`/groupe?group=${group.id}`} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white rounded-xl text-xs font-700 transition-colors">
+                <Link href={`/groupes/${group.id}`} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white rounded-xl text-xs font-700 transition-colors">
                   <Icon name="ArrowRightIcon" size={12} /> Ouvrir
                 </Link>
                 {myRole && (
@@ -316,7 +316,7 @@ function GroupesPageInner() {
                 )}
               </>
             ) : alreadyMember ? (
-              <Link href={`/groupe?group=${group.id}`} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#1C2620] hover:bg-[#1C2620]/80 text-white rounded-xl text-xs font-700 transition-colors">
+              <Link href={`/groupes/${group.id}`} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#1C2620] hover:bg-[#1C2620]/80 text-white rounded-xl text-xs font-700 transition-colors">
                 <Icon name="ArrowRightIcon" size={12} /> Déjà membre — Ouvrir
               </Link>
             ) : (
@@ -328,7 +328,7 @@ function GroupesPageInner() {
                 >
                   {joining === group.id ? 'Rejoindre...' : (group.member_count || 0) >= group.max_members ? 'Complet' : 'Rejoindre'}
                 </button>
-                <Link href={`/groupe?group=${group.id}`} className="p-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl hover:border-[#1C2620]/30 hover:text-[#1C2620] transition-colors">
+                <Link href={`/groupes/${group.id}`} className="p-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl hover:border-[#1C2620]/30 hover:text-[#1C2620] transition-colors">
                   <Icon name="EyeIcon" size={12} />
                 </Link>
               </>

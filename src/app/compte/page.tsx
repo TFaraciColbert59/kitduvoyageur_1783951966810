@@ -271,7 +271,7 @@ function GroupesTab({ userId }: { userId: string }) {
         <p className="text-sm text-[#5C6B5E]">{groups.length} groupe{groups.length !== 1 ? 's' : ''}</p>
         <div className="flex gap-2">
           <Link href="/groupes?tab=decouvrir" className="text-xs text-[#5C6B5E] hover:text-[#1C2620] border border-[#C8C3B0]/30 px-3 py-1.5 rounded-full hover:bg-white transition-colors">Découvrir</Link>
-          <Link href="/groupe" className="flex items-center gap-1.5 text-xs text-white bg-[#E4501C] hover:bg-[#E4501C]/90 px-3 py-1.5 rounded-xl transition-colors font-600">
+          <Link href="/groupes" className="flex items-center gap-1.5 text-xs text-white bg-[#E4501C] hover:bg-[#E4501C]/90 px-3 py-1.5 rounded-xl transition-colors font-600">
             <Icon name="PlusIcon" size={12} /> Créer
           </Link>
         </div>
@@ -280,14 +280,14 @@ function GroupesTab({ userId }: { userId: string }) {
         <div className="text-center py-12 text-[#5C6B5E]">
           <p className="text-3xl mb-2">🗺️</p>
           <p className="text-sm mb-3">Aucun groupe de voyage</p>
-          <Link href="/groupe" className="inline-flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600">
+          <Link href="/groupes" className="inline-flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600">
             <Icon name="PlusIcon" size={13} /> Créer un groupe
           </Link>
         </div>
       ) : (
         <div className="space-y-3">
           {groups.map(m => (
-            <Link key={m.id} href={`/groupe?group=${m.group_id}`} className="flex items-center gap-3 bg-white shadow-sm border border-[#C8C3B0]/30 rounded-3xl p-4 hover:border-[#E4501C]/30 hover:shadow-sm transition-all">
+            <Link key={m.id} href={`/groupes/${m.group_id}`} className="flex items-center gap-3 bg-white shadow-sm border border-[#C8C3B0]/30 rounded-3xl p-4 hover:border-[#E4501C]/30 hover:shadow-sm transition-all">
               <div className="w-11 h-11 rounded-xl bg-[#1C2620] flex items-center justify-center text-xl flex-shrink-0">
                 {THEME_EMOJI[m.group?.theme || ''] || '🎒'}
               </div>
