@@ -293,7 +293,7 @@ export default function HomePage() {
               <p className="text-[10px] font-mono tracking-widest uppercase text-white/50 mb-6">DÉCOUVRIR</p>
               <ul className="space-y-3 text-xs text-white/70">
                 <li><Link href="/explorer" className="hover:text-white transition-colors">Aventures</Link></li>
-                <li><Link href="/pays" className="hover:text-white transition-colors">Refuges</Link></li>
+                <li><Link href="/pays" className="hover:text-white transition-colors">Earth</Link></li>
                 <li><Link href="/guides" className="hover:text-white transition-colors">Guides</Link></li>
                 <li><Link href="/communaute" className="hover:text-white transition-colors">Communauté</Link></li>
               </ul>

@@ -5,7 +5,7 @@ export async function GET() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('explore_trails')
-    .select('id, name, start_lat, start_lng, distance_km, duration_hours, difficulty, elevation_gain, adventure_score, nature_score, panorama_score, ref, network, terrain_type, family_friendly, season, ai_description');
+    .select('id, name, start_lat, start_lng, distance_km, duration_hours, difficulty, elevation_gain, adventure_score, nature_score, panorama_score, ref, network, terrain_type, family_friendly, season, ai_description, geometry');
 
   if (error) {
     console.error('Supabase error fetching trails:', error);
@@ -22,6 +22,7 @@ export async function GET() {
     adventure_score: t.adventure_score !== null ? Number(t.adventure_score) : null,
     nature_score: t.nature_score !== null ? Number(t.nature_score) : null,
     panorama_score: t.panorama_score !== null ? Number(t.panorama_score) : null,
+    geojson: t.geometry || null,
   }));
 
   const response = NextResponse.json(normalized);

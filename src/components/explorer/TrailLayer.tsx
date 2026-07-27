@@ -13,6 +13,7 @@ interface TrailLayerProps {
 
 export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick }: TrailLayerProps) {
   const markersRef = useRef<globalThis.Map<string, import('leaflet').Marker>>(new globalThis.Map());
+  const polylinesRef = useRef<globalThis.Map<string, import('leaflet').Polyline>>(new globalThis.Map());
 
   const buildIcon = useCallback((trail: MapTrail, isSelected: boolean, L: typeof import('leaflet')) => {
     const diffColor = getDifficultyColor(trail.difficulty);
@@ -65,10 +66,41 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
       const isSelected = trail.id === selectedTrailId;
       try {
         const icon = buildIcon(trail, isSelected, L);
-        const marker = L.marker([lat, lng], { icon, zIndexOffset: isSelected ? 1000 : 0 });
-        marker.on('click', () => onTrailClick(trail));
-        marker.addTo(map);
-        markersRef.current.set(trail.id, marker);
+      const marker = L.marker([lat, lng], { icon, zIndexOffset: isSelected ? 1000 : 0 });
+      marker.on('click', () => onTrailClick(trail));
+      marker.addTo(map);
+      markersRef.current.set(trail.id, marker);
+
+      // Create polyline from real geometry if available
+      let lineCoords: [number, number][] = [];
+      if (trail.geojson && Array.isArray(trail.geojson.coordinates) && trail.geojson.coordinates.length) {
+        // Handle MultiLineString (array of line arrays) or LineString (array of points)
+        const coords = trail.geojson.coordinates;
+        if (Array.isArray(coords[0][0])) {
+          // MultiLineString: flatten all line arrays
+          (coords as number[][][]).forEach((line) => {
+            line.forEach((pt) => lineCoords.push([pt[1], pt[0]]));
+          });
+        } else {
+          // LineString: direct mapping
+          (coords as number[][]).forEach((pt) => lineCoords.push([pt[1], pt[0]]));
+        }
+      }
+      // Fallback if geometry is missing or empty
+      if (lineCoords.length === 0 && lat !== null && lng !== null) {
+        // No geometry; create a minimal placeholder line so the point is visible
+        lineCoords = [
+          [lat, lng],
+          [lat + 0.00005, lng + 0.00005]
+        ];
+      }
+      const polyline = L.polyline(lineCoords, {
+        color: isSelected ? getDifficultyColor(trail.difficulty) : '#888',
+        weight: isSelected ? 5 : 2,
+        opacity: isSelected ? 1.0 : 0.4,
+      });
+      polyline.addTo(map);
+      polylinesRef.current.set(trail.id, polyline);
       } catch {
         // skip invalid coords silently
       }
@@ -76,25 +108,24 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
     [map, selectedTrailId, onTrailClick, buildIcon]
   );
 
+  // Update polyline styles when selection changes
   useEffect(() => {
-    if (!map || typeof window === 'undefined') return;
-    const markers = markersRef.current;
-
-    import('leaflet').then((L) => {
-      markers.forEach((marker) => {
-        try { map.removeLayer(marker); } catch { /* ignore */ }
+    if (!map) return;
+    polylinesRef.current.forEach((poly, id) => {
+      const isSel = id === selectedTrailId;
+      poly.setStyle({
+        color: isSel ? getDifficultyColor(trails.find(t => t.id === id)?.difficulty) : '#888',
+        weight: isSel ? 5 : 2,
+        opacity: isSel ? 1.0 : 0.4,
       });
-      markers.clear();
-      trails.forEach((trail) => addMarker(trail, L));
+      if (isSel) {
+        // Fit bounds to selected polyline
+        try {
+          map.fitBounds(poly.getBounds(), { padding: [50, 50] });
+        } catch {}
+      }
     });
-
-    return () => {
-      markers.forEach((marker) => {
-        try { map.removeLayer(marker); } catch { /* ignore */ }
-      });
-      markers.clear();
-    };
-  }, [map, trails, selectedTrailId, addMarker]);
+  }, [selectedTrailId, trails, map]);
 
   return null;
 }

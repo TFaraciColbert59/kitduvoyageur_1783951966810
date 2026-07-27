@@ -129,63 +129,126 @@ function ClubFormModal({
   const set = (k: keyof ClubForm, v: any) => setForm((f) => ({ ...f, [k]: v }));
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-card border border-border rounded-2xl w-full max-w-lg my-4">
-        <div className="flex items-center justify-between p-6 border-b border-border">
-          <h2 className="font-display font-700 text-foreground text-xl">{initial ? 'Modifier le club' : 'Créer un club'}</h2>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-muted transition-colors"><Icon name="XMarkIcon" size={20} /></button>
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto transition-opacity duration-300">
+      <div className="bg-card/95 backdrop-blur-xl border border-white/10 shadow-2xl rounded-[2rem] w-full max-w-xl my-4 overflow-hidden flex flex-col transform transition-transform duration-300 scale-100">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 sm:px-8 pt-8 pb-4 relative z-10">
+          <div>
+            <h2 className="font-display font-800 text-foreground text-2xl tracking-tight">
+              {initial ? 'Modifier le club' : 'Créer un club'}
+            </h2>
+            <p className="text-muted-foreground text-sm mt-1">Configurez l&apos;espace de votre communauté.</p>
+          </div>
+          <button onClick={onClose} className="p-3 bg-muted/50 rounded-full hover:bg-muted text-foreground transition-colors self-start">
+            <Icon name="XMarkIcon" size={20} />
+          </button>
         </div>
-        <div className="p-6 space-y-4 max-h-[65vh] overflow-y-auto">
-          <div className="grid grid-cols-4 gap-3">
+
+        {/* Form Body */}
+        <div className="p-6 sm:px-8 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar relative z-10">
+          <div className="flex gap-4">
+            <div className="w-24">
+              <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Emoji</label>
+              <input 
+                className="w-full bg-muted/30 border border-white/10 rounded-2xl px-3 py-4 text-center text-3xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all hover:bg-muted/50" 
+                value={form.emoji} 
+                onChange={(e) => set('emoji', e.target.value)} 
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Nom du club <span className="text-primary">*</span></label>
+              <input 
+                className="w-full bg-muted/30 border border-white/10 rounded-2xl px-5 py-4 text-base text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all hover:bg-muted/50" 
+                placeholder="Ex: Club Sahara" 
+                value={form.name} 
+                onChange={(e) => set('name', e.target.value)} 
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <label className="text-xs font-700 text-muted-foreground uppercase tracking-wider block mb-1.5">Emoji</label>
-              <input className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-center text-xl focus:outline-none focus:ring-2 focus:ring-primary/30" value={form.emoji} onChange={(e) => set('emoji', e.target.value)} />
+              <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Type</label>
+              <div className="flex bg-muted/30 p-1.5 rounded-2xl border border-white/10">
+                {[{ v: 'activite', l: '🎯 Activité' }, { v: 'pays', l: '🌍 Pays' }].map((opt) => (
+                  <button 
+                    key={opt.v} 
+                    type="button" 
+                    onClick={() => set('type', opt.v)} 
+                    className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-600 transition-all ${form.type === opt.v ? 'bg-background shadow-md text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                  >
+                    {opt.l}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="col-span-3">
-              <label className="text-xs font-700 text-muted-foreground uppercase tracking-wider block mb-1.5">Nom du club *</label>
-              <input className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Ex: Club Sahara" value={form.name} onChange={(e) => set('name', e.target.value)} />
+            <div>
+              <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Catégorie</label>
+              <input 
+                className="w-full bg-muted/30 border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all hover:bg-muted/50" 
+                placeholder="Ex: Randonnée, Islande..." 
+                value={form.category} 
+                onChange={(e) => set('category', e.target.value)} 
+              />
             </div>
           </div>
+
           <div>
-            <label className="text-xs font-700 text-muted-foreground uppercase tracking-wider block mb-2">Type</label>
-            <div className="grid grid-cols-2 gap-2">
-              {[{ v: 'activite', l: '🎯 Activité' }, { v: 'pays', l: '🌍 Destination' }].map((opt) => (
-                <button key={opt.v} type="button" onClick={() => set('type', opt.v)} className={`py-2 px-3 rounded-xl border-2 text-sm font-600 transition-all ${form.type === opt.v ? 'border-primary bg-primary/5 text-primary' : 'border-border text-muted-foreground hover:border-primary/50'}`}>{opt.l}</button>
-              ))}
-            </div>
+            <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Description</label>
+            <textarea 
+              rows={3} 
+              className="w-full bg-muted/30 border border-white/10 rounded-2xl px-5 py-4 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all hover:bg-muted/50 resize-none" 
+              placeholder="Décrivez l'objectif et l'ambiance du club..." 
+              value={form.description} 
+              onChange={(e) => set('description', e.target.value)} 
+            />
           </div>
+
           <div>
-            <label className="text-xs font-700 text-muted-foreground uppercase tracking-wider block mb-1.5">Catégorie</label>
-            <input className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Ex: Randonnée, Alpinisme, Islande..." value={form.category} onChange={(e) => set('category', e.target.value)} />
+            <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Règles du club</label>
+            <textarea 
+              rows={2} 
+              className="w-full bg-muted/30 border border-white/10 rounded-2xl px-5 py-4 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all hover:bg-muted/50 resize-none" 
+              placeholder="Règles de bonne conduite (optionnel)..." 
+              value={form.rules} 
+              onChange={(e) => set('rules', e.target.value)} 
+            />
           </div>
+
           <div>
-            <label className="text-xs font-700 text-muted-foreground uppercase tracking-wider block mb-1.5">Description</label>
-            <textarea rows={3} className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" placeholder="Décrivez l'objectif du club..." value={form.description} onChange={(e) => set('description', e.target.value)} />
-          </div>
-          <div>
-            <label className="text-xs font-700 text-muted-foreground uppercase tracking-wider block mb-1.5">Règles du club</label>
-            <textarea rows={2} className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" placeholder="Règles de bonne conduite..." value={form.rules} onChange={(e) => set('rules', e.target.value)} />
-          </div>
-          <div>
-            <label className="text-xs font-700 text-muted-foreground uppercase tracking-wider block mb-2">Confidentialité</label>
-            <div className="grid grid-cols-3 gap-2">
+            <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-3">Confidentialité</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
-                { v: 'open', l: '🌍 Ouvert', d: 'Tout le monde peut rejoindre' },
-                { v: 'closed', l: '🔒 Fermé', d: 'Sur demande d\'adhésion' },
-                { v: 'secret', l: '🕵️ Secret', d: 'Sur invitation uniquement' },
+                { v: 'open', l: '🌍 Ouvert', d: 'Tout le monde' },
+                { v: 'closed', l: '🔒 Fermé', d: 'Sur demande' },
+                { v: 'secret', l: '🕵️ Secret', d: 'Sur invitation' },
               ].map((opt) => (
-                <button key={opt.v} type="button" onClick={() => set('privacy', opt.v)} className={`p-2.5 rounded-xl border-2 text-left transition-all ${form.privacy === opt.v ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}>
-                  <p className="text-xs font-700 text-foreground">{opt.l}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{opt.d}</p>
+                <button 
+                  key={opt.v} 
+                  type="button" 
+                  onClick={() => set('privacy', opt.v)} 
+                  className={`p-4 rounded-2xl border-2 text-left transition-all flex flex-col items-start ${form.privacy === opt.v ? 'border-primary bg-primary/10 shadow-[0_0_15px_rgba(var(--primary),0.2)]' : 'border-white/5 bg-muted/20 hover:border-white/20 hover:bg-muted/40'}`}
+                >
+                  <p className="text-sm font-700 text-foreground mb-1">{opt.l}</p>
+                  <p className="text-[11px] text-muted-foreground">{opt.d}</p>
                 </button>
               ))}
             </div>
           </div>
         </div>
-        <div className="flex gap-3 p-6 border-t border-border">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-border text-sm font-600 text-muted-foreground hover:bg-muted transition-colors">Annuler</button>
-          <button onClick={() => onSave(form)} disabled={saving || !form.name.trim()} className="flex-1 py-2.5 rounded-xl bg-primary text-white text-sm font-700 hover:bg-primary/90 transition-colors disabled:opacity-50">
-            {saving ? 'Enregistrement...' : initial ? 'Mettre à jour' : 'Créer le club'}
+
+        {/* Footer */}
+        <div className="flex items-center gap-3 p-6 sm:px-8 border-t border-white/10 bg-background/50 relative z-10">
+          <button onClick={onClose} className="px-6 py-3.5 rounded-2xl text-sm font-700 text-foreground hover:bg-muted transition-colors">
+            Annuler
+          </button>
+          <button 
+            onClick={() => onSave(form)} 
+            disabled={saving || !form.name.trim()} 
+            className="flex-1 py-3.5 rounded-2xl bg-primary text-white text-sm font-700 hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 active:translate-y-0"
+          >
+            {saving ? 'Enregistrement...' : initial ? 'Mettre à jour le club' : 'Créer le club'}
           </button>
         </div>
       </div>
@@ -320,89 +383,139 @@ function ClubDetailModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-background border border-border rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className={`bg-gradient-to-br ${club.cover_color} p-5 rounded-t-2xl`}>
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">{club.emoji}</span>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="font-display font-700 text-white text-xl">{club.name}</h2>
-                  {club.is_verified && <span className="text-[10px] bg-white/20 text-white px-2 py-0.5 rounded-full font-700">✓ Vérifié</span>}
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 transition-opacity duration-300">
+      <div className="bg-card border border-white/5 shadow-2xl rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+        {/* Header - Immersive */}
+        <div className={`bg-gradient-to-br ${club.cover_color} p-8 relative overflow-hidden shrink-0`}>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-[80px] rounded-full pointer-events-none" />
+          <div className="relative z-10 flex items-start justify-between">
+            <div className="flex items-start gap-5">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-4xl shadow-xl border border-white/20">
+                {club.emoji}
+              </div>
+              <div className="mt-1">
+                <div className="flex items-center gap-3 flex-wrap mb-1">
+                  <h2 className="font-display font-800 text-white text-3xl tracking-tight">{club.name}</h2>
+                  {club.is_verified && <span className="text-[10px] bg-white/20 text-white px-2.5 py-1 rounded-full font-700 tracking-wider">✓ VÉRIFIÉ</span>}
                 </div>
-                <p className="text-white/60 text-xs">{club.members_count.toLocaleString()} membres · {club.privacy}</p>
+                <p className="text-white/70 text-sm font-500">
+                  {club.members_count.toLocaleString()} membres · {club.type === 'activite' ? 'Activité' : 'Destination'} · {club.privacy}
+                </p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 bg-white/20 rounded-xl hover:bg-white/30 transition-colors"><Icon name="XMarkIcon" size={18} className="text-white" /></button>
+            <button onClick={onClose} className="p-3 bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full transition-colors text-white">
+              <Icon name="XMarkIcon" size={18} />
+            </button>
           </div>
           {club.rules && (
-            <div className="mt-3 bg-white/10 rounded-xl px-3 py-2">
-              <p className="text-[10px] text-white/60 font-700 uppercase tracking-wider mb-0.5">Règles</p>
-              <p className="text-xs text-white/80">{club.rules}</p>
+            <div className="mt-6 bg-black/20 backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3 relative z-10 flex items-start gap-3">
+              <Icon name="ShieldCheckIcon" size={16} className="text-white/80 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[10px] text-white/50 font-700 uppercase tracking-widest mb-1">Règles du club</p>
+                <p className="text-sm text-white/90 leading-relaxed">{club.rules}</p>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Tabs */}
-        <div className="flex overflow-x-auto border-b border-border bg-card scrollbar-hide">
+        {/* Tabs - Modern Pills */}
+        <div className="px-6 py-4 border-b border-border bg-background/50 flex overflow-x-auto scrollbar-hide gap-2 shrink-0">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
-              className={`flex items-center gap-1.5 px-4 py-3 text-xs font-600 border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-600 transition-all whitespace-nowrap ${
+                activeTab === tab.id 
+                  ? 'bg-foreground text-background shadow-md' 
+                  : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+              }`}
             >
-              <Icon name={tab.icon} size={13} />
+              <Icon name={tab.icon} size={15} />
               {tab.label}
             </button>
           ))}
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-5">
+        <div className="flex-1 overflow-y-auto p-6 sm:p-8 custom-scrollbar bg-background">
           {loading ? (
-            <div className="text-center py-10 text-muted-foreground text-sm">Chargement...</div>
+            <div className="flex flex-col items-center justify-center py-20 opacity-50">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+              <p className="text-sm text-muted-foreground font-500">Chargement des données du club...</p>
+            </div>
           ) : (
-            <>
+            <div className="max-w-3xl mx-auto">
               {/* Topics */}
               {activeTab === 'topics' && (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {club.is_member && (
-                    <div className="bg-muted rounded-xl p-4 space-y-3">
-                      <input className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Titre de la discussion..." value={newTopic.title} onChange={(e) => setNewTopic((f) => ({ ...f, title: e.target.value }))} />
-                      <textarea rows={2} className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" placeholder="Contenu (optionnel)..." value={newTopic.content} onChange={(e) => setNewTopic((f) => ({ ...f, content: e.target.value }))} />
-                      <button onClick={handlePostTopic} disabled={postingTopic || !newTopic.title.trim()} className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-600 disabled:opacity-50 hover:bg-primary/90 transition-colors">
-                        {postingTopic ? 'Publication...' : 'Publier'}
-                      </button>
+                    <div className="bg-card border border-border shadow-sm rounded-2xl p-5 space-y-4">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                          <Icon name="PencilIcon" size={14} />
+                        </div>
+                        <h3 className="font-700 text-foreground text-base">Lancer une discussion</h3>
+                      </div>
+                      <input 
+                        className="w-full bg-muted/30 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" 
+                        placeholder="De quoi voulez-vous parler ?" 
+                        value={newTopic.title} 
+                        onChange={(e) => setNewTopic((f) => ({ ...f, title: e.target.value }))} 
+                      />
+                      <textarea 
+                        rows={3} 
+                        className="w-full bg-muted/30 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none" 
+                        placeholder="Détaillez votre sujet (optionnel)..." 
+                        value={newTopic.content} 
+                        onChange={(e) => setNewTopic((f) => ({ ...f, content: e.target.value }))} 
+                      />
+                      <div className="flex justify-end">
+                        <button 
+                          onClick={handlePostTopic} 
+                          disabled={postingTopic || !newTopic.title.trim()} 
+                          className="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-700 disabled:opacity-50 hover:bg-primary/90 hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                        >
+                          {postingTopic ? 'Publication...' : 'Publier'}
+                        </button>
+                      </div>
                     </div>
                   )}
                   {topics.length === 0 ? (
-                    <div className="text-center py-10 text-muted-foreground text-sm">Aucune discussion pour l&apos;instant.</div>
+                    <div className="text-center py-16 border border-dashed border-border rounded-3xl">
+                      <div className="text-5xl mb-4 opacity-50">💬</div>
+                      <p className="text-foreground font-700 text-lg mb-1">Aucune discussion</p>
+                      <p className="text-muted-foreground text-sm">Soyez le premier à lancer un sujet !</p>
+                    </div>
                   ) : (
                     topics.map((topic) => (
-                      <div key={topic.id} className={`topo-card p-4 ${topic.is_pinned ? 'border-primary/30 bg-primary/5' : ''}`}>
-                        <div className="flex items-start justify-between gap-3">
+                      <div key={topic.id} className={`group bg-card border border-border rounded-2xl p-5 transition-all hover:shadow-lg ${topic.is_pinned ? 'border-primary/40 bg-primary/5' : 'hover:border-foreground/20'}`}>
+                        <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap mb-1">
-                              {topic.is_pinned && <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-700">📌 Épinglé</span>}
-                              {topic.is_announcement && <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-700">📢 Annonce</span>}
-                              <h4 className="font-600 text-foreground text-sm">{topic.title}</h4>
+                            <div className="flex items-center gap-2 flex-wrap mb-2">
+                              {topic.is_pinned && <span className="text-[10px] bg-primary/20 text-primary px-2.5 py-1 rounded-full font-800 tracking-wider">📌 ÉPINGLÉ</span>}
+                              {topic.is_announcement && <span className="text-[10px] bg-amber-500/20 text-amber-500 px-2.5 py-1 rounded-full font-800 tracking-wider">📢 ANNONCE</span>}
+                              <h4 className="font-700 text-foreground text-base group-hover:text-primary transition-colors">{topic.title}</h4>
                             </div>
-                            {topic.content && <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{topic.content}</p>}
-                            <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                              <span>{topic.author?.full_name ?? 'Anonyme'}</span>
-                              <span>❤️ {topic.likes_count}</span>
-                              <span>💬 {topic.replies_count}</span>
+                            {topic.content && <p className="text-sm text-muted-foreground mb-4 line-clamp-2 leading-relaxed">{topic.content}</p>}
+                            <div className="flex items-center gap-4 text-xs font-500 text-muted-foreground">
+                              <span className="flex items-center gap-1.5 bg-muted px-2 py-1 rounded-md">
+                                <Icon name="UserIcon" size={12} /> {topic.author?.full_name ?? 'Anonyme'}
+                              </span>
+                              <span className="flex items-center gap-1.5">
+                                <Icon name="HeartIcon" size={14} className="text-red-400/70" /> {topic.likes_count}
+                              </span>
+                              <span className="flex items-center gap-1.5">
+                                <Icon name="ChatBubbleLeftIcon" size={14} className="text-blue-400/70" /> {topic.replies_count}
+                              </span>
                             </div>
                           </div>
                           {isAdmin && (
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                              <button onClick={() => handlePinTopic(topic)} title={topic.is_pinned ? 'Désépingler' : 'Épingler'} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
-                                <Icon name="BookmarkIcon" size={13} className={topic.is_pinned ? 'text-primary' : 'text-muted-foreground'} />
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 bg-muted/50 rounded-xl p-1">
+                              <button onClick={() => handlePinTopic(topic)} title={topic.is_pinned ? 'Désépingler' : 'Épingler'} className="p-2 rounded-lg hover:bg-background transition-colors">
+                                <Icon name="BookmarkIcon" size={15} className={topic.is_pinned ? 'text-primary' : 'text-muted-foreground'} />
                               </button>
-                              <button onClick={() => handleDeleteTopic(topic.id)} title="Supprimer" className="p-1.5 rounded-lg hover:bg-red-50 transition-colors">
-                                <Icon name="TrashIcon" size={13} className="text-red-500" />
+                              <button onClick={() => handleDeleteTopic(topic.id)} title="Supprimer" className="p-2 rounded-lg hover:bg-red-500/20 transition-colors">
+                                <Icon name="TrashIcon" size={15} className="text-red-500" />
                               </button>
                             </div>
                           )}
@@ -415,37 +528,41 @@ function ClubDetailModal({
 
               {/* Members */}
               {activeTab === 'members' && (
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {members.map((m) => (
-                    <div key={m.id} className="flex items-center gap-3 p-3 topo-card">
-                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center font-700 text-primary text-sm flex-shrink-0">
-                        {m.user?.full_name?.[0] ?? '?'}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-600 text-foreground text-sm truncate">{m.user?.full_name ?? 'Anonyme'}</p>
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-700 ${m.role === 'admin' ? 'bg-amber-100 text-amber-700' : m.role === 'moderator' ? 'bg-blue-100 text-blue-700' : 'bg-muted text-muted-foreground'}`}>
-                            {m.role === 'admin' ? '👑 Admin' : m.role === 'moderator' ? '🛡️ Modo' : '👤 Membre'}
-                          </span>
+                    <div key={m.id} className="flex flex-col gap-3 p-4 bg-card border border-border rounded-2xl hover:border-foreground/20 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center font-800 text-primary text-lg shadow-inner">
+                            {m.user?.full_name?.[0] ?? '?'}
+                          </div>
+                          <div>
+                            <p className="font-700 text-foreground text-sm truncate">{m.user?.full_name ?? 'Anonyme'}</p>
+                            <span className={`inline-flex items-center mt-1 text-[10px] px-2.5 py-0.5 rounded-full font-800 tracking-wider ${m.role === 'admin' ? 'bg-amber-500/20 text-amber-500' : m.role === 'moderator' ? 'bg-blue-500/20 text-blue-500' : 'bg-muted text-muted-foreground'}`}>
+                              {m.role === 'admin' ? '👑 ADMIN' : m.role === 'moderator' ? '🛡️ MODO' : '👤 MEMBRE'}
+                            </span>
+                          </div>
                         </div>
-                        <p className="text-[10px] text-muted-foreground">Trust {m.user?.trust_score ?? 0}</p>
+                        {isAdmin && m.user_id !== currentUserId && (
+                          <button onClick={() => handleBanMember(m)} className="p-2 rounded-full hover:bg-red-500/20 text-muted-foreground hover:text-red-500 transition-colors" title="Bannir">
+                            <Icon name="NoSymbolIcon" size={15} />
+                          </button>
+                        )}
                       </div>
-                      {isAdmin && m.user_id !== currentUserId && (
-                        <div className="flex items-center gap-1">
+                      <div className="flex items-center justify-between mt-2 pt-3 border-t border-border">
+                        <p className="text-[11px] text-muted-foreground font-600">Trust Score: {m.user?.trust_score ?? 0}</p>
+                        {isAdmin && m.user_id !== currentUserId && (
                           <select
                             value={m.role}
                             onChange={(e) => handlePromoteMember(m, e.target.value as 'admin' | 'moderator' | 'member')}
-                            className="text-xs bg-background border border-border rounded-lg px-2 py-1 focus:outline-none"
+                            className="text-[11px] font-600 bg-muted/50 border border-white/5 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
                           >
                             <option value="member">Membre</option>
                             <option value="moderator">Modérateur</option>
                             <option value="admin">Admin</option>
                           </select>
-                          <button onClick={() => handleBanMember(m)} className="p-1.5 rounded-lg hover:bg-red-50 transition-colors" title="Bannir">
-                            <Icon name="NoSymbolIcon" size={13} className="text-red-500" />
-                          </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -455,20 +572,27 @@ function ClubDetailModal({
               {activeTab === 'challenges' && (
                 <div className="space-y-4">
                   {challenges.length === 0 ? (
-                    <div className="text-center py-10 text-muted-foreground text-sm">Aucun défi actif.</div>
+                    <div className="text-center py-16 border border-dashed border-border rounded-3xl">
+                      <div className="text-5xl mb-4 opacity-50">🏆</div>
+                      <p className="text-foreground font-700 text-lg mb-1">Aucun défi en cours</p>
+                    </div>
                   ) : (
                     challenges.map((ch) => (
-                      <div key={ch.id} className="topo-card p-4">
-                        <div className="flex items-start justify-between gap-3">
+                      <div key={ch.id} className="bg-card border border-border rounded-2xl p-6 hover:shadow-lg transition-all relative overflow-hidden group">
+                        <div className="absolute -right-10 -top-10 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl group-hover:bg-amber-500/20 transition-colors" />
+                        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                           <div>
-                            <h4 className="font-700 text-foreground text-sm mb-1">{ch.title}</h4>
-                            <p className="text-xs text-muted-foreground mb-2">{ch.description}</p>
-                            <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                              <span className="text-amber-600 font-700">+{ch.xp} XP</span>
-                              {ch.deadline && <span>⏰ {new Date(ch.deadline).toLocaleDateString('fr-FR')}</span>}
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="p-2 bg-amber-500/20 text-amber-500 rounded-xl"><Icon name="TrophyIcon" size={16} /></span>
+                              <h4 className="font-800 text-foreground text-lg">{ch.title}</h4>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-4 max-w-xl">{ch.description}</p>
+                            <div className="flex items-center gap-4 text-xs font-600">
+                              <span className="bg-amber-500/10 text-amber-500 px-3 py-1.5 rounded-lg">+{ch.xp} XP à gagner</span>
+                              {ch.deadline && <span className="text-muted-foreground flex items-center gap-1.5"><Icon name="ClockIcon" size={14} /> Fin le {new Date(ch.deadline).toLocaleDateString('fr-FR')}</span>}
                             </div>
                           </div>
-                          <button className="flex-shrink-0 px-3 py-1.5 bg-primary text-white rounded-xl text-xs font-700 hover:bg-primary/90 transition-colors">
+                          <button className="w-full sm:w-auto px-6 py-3 bg-foreground text-background rounded-xl text-sm font-700 hover:bg-primary hover:text-white hover:-translate-y-1 hover:shadow-xl transition-all">
                             Participer
                           </button>
                         </div>
@@ -480,37 +604,73 @@ function ClubDetailModal({
 
               {/* Events / Agenda */}
               {activeTab === 'events' && (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {isAdmin && (
-                    <div className="bg-muted rounded-xl p-4 space-y-3">
-                      <p className="text-xs font-700 text-foreground uppercase tracking-wider">Ajouter un événement</p>
-                      <input className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Titre de l'événement..." value={newEvent.title} onChange={(e) => setNewEvent((f) => ({ ...f, title: e.target.value }))} />
-                      <div className="grid grid-cols-2 gap-3">
-                        <input type="datetime-local" className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={newEvent.event_date} onChange={(e) => setNewEvent((f) => ({ ...f, event_date: e.target.value }))} />
-                        <input className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Lieu..." value={newEvent.location} onChange={(e) => setNewEvent((f) => ({ ...f, location: e.target.value }))} />
+                    <div className="bg-card border border-border shadow-sm rounded-2xl p-6 space-y-4">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                          <Icon name="CalendarIcon" size={14} />
+                        </div>
+                        <h3 className="font-700 text-foreground text-base">Planifier un événement</h3>
                       </div>
-                      <textarea rows={2} className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" placeholder="Description..." value={newEvent.description} onChange={(e) => setNewEvent((f) => ({ ...f, description: e.target.value }))} />
-                      <button onClick={handlePostEvent} disabled={postingEvent || !newEvent.title.trim()} className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-600 disabled:opacity-50 hover:bg-primary/90 transition-colors">
-                        {postingEvent ? 'Ajout...' : 'Ajouter à l\'agenda'}
-                      </button>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Titre</label>
+                          <input className="w-full bg-muted/30 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" placeholder="Titre de l'événement..." value={newEvent.title} onChange={(e) => setNewEvent((f) => ({ ...f, title: e.target.value }))} />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Date et Heure</label>
+                            <input type="datetime-local" className="w-full bg-muted/30 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-foreground" value={newEvent.event_date} onChange={(e) => setNewEvent((f) => ({ ...f, event_date: e.target.value }))} />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Lieu / Lien</label>
+                            <input className="w-full bg-muted/30 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" placeholder="Chamonix ou Lien Zoom..." value={newEvent.location} onChange={(e) => setNewEvent((f) => ({ ...f, location: e.target.value }))} />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Description</label>
+                          <textarea rows={2} className="w-full bg-muted/30 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none" placeholder="Détails de l'événement..." value={newEvent.description} onChange={(e) => setNewEvent((f) => ({ ...f, description: e.target.value }))} />
+                        </div>
+                        <div className="flex justify-end pt-2">
+                          <button onClick={handlePostEvent} disabled={postingEvent || !newEvent.title.trim()} className="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-700 disabled:opacity-50 hover:bg-primary/90 hover:shadow-lg hover:-translate-y-0.5 transition-all">
+                            {postingEvent ? 'Création...' : 'Créer l\'événement'}
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   )}
                   {events.length === 0 ? (
-                    <div className="text-center py-10 text-muted-foreground text-sm">Aucun événement planifié.</div>
+                    <div className="text-center py-16 border border-dashed border-border rounded-3xl">
+                      <div className="text-5xl mb-4 opacity-50">📅</div>
+                      <p className="text-foreground font-700 text-lg mb-1">Aucun événement planifié</p>
+                    </div>
                   ) : (
                     events.map((ev) => (
-                      <div key={ev.id} className="topo-card p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <h4 className="font-700 text-foreground text-sm mb-1">{ev.title}</h4>
-                            {ev.description && <p className="text-xs text-muted-foreground mb-2">{ev.description}</p>}
-                            <div className="flex items-center gap-3 text-[10px] text-muted-foreground flex-wrap">
-                              {ev.event_date && <span className="flex items-center gap-1"><Icon name="CalendarIcon" size={11} />{new Date(ev.event_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
-                              {ev.location && <span className="flex items-center gap-1"><Icon name="MapPinIcon" size={11} />{ev.location}</span>}
-                              <span>{ev.participants_count}/{ev.max_participants} participants</span>
-                            </div>
+                      <div key={ev.id} className="bg-card border border-border rounded-2xl p-5 hover:border-foreground/20 transition-colors flex flex-col sm:flex-row gap-6">
+                        <div className="bg-muted/50 rounded-xl p-4 flex flex-col items-center justify-center min-w-[100px] border border-white/5">
+                          {ev.event_date ? (
+                            <>
+                              <span className="text-sm font-800 text-primary uppercase">{new Date(ev.event_date).toLocaleDateString('fr-FR', { month: 'short' })}</span>
+                              <span className="text-3xl font-900 text-foreground">{new Date(ev.event_date).getDate()}</span>
+                            </>
+                          ) : (
+                            <span className="text-sm font-700 text-muted-foreground">À DÉFINIR</span>
+                          )}
+                        </div>
+                        <div className="flex-1 flex flex-col justify-center">
+                          <h4 className="font-800 text-foreground text-lg mb-1">{ev.title}</h4>
+                          {ev.description && <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{ev.description}</p>}
+                          <div className="flex items-center gap-4 text-xs font-600 text-muted-foreground flex-wrap mt-auto">
+                            {ev.location && <span className="flex items-center gap-1.5 bg-muted px-2.5 py-1 rounded-md"><Icon name="MapPinIcon" size={14} />{ev.location}</span>}
+                            <span className="flex items-center gap-1.5 bg-muted px-2.5 py-1 rounded-md">
+                              <Icon name="UsersIcon" size={14} />{ev.participants_count} / {ev.max_participants} inscrits
+                            </span>
                           </div>
-                          <button className="flex-shrink-0 px-3 py-1.5 bg-primary text-white rounded-xl text-xs font-700 hover:bg-primary/90 transition-colors">
+                        </div>
+                        <div className="flex items-center sm:border-l sm:border-border sm:pl-6">
+                          <button className="w-full sm:w-auto px-6 py-3 bg-primary/10 text-primary border border-primary/20 rounded-xl text-sm font-700 hover:bg-primary hover:text-white transition-all">
                             S&apos;inscrire
                           </button>
                         </div>
@@ -522,37 +682,48 @@ function ClubDetailModal({
 
               {/* Moderation */}
               {activeTab === 'moderation' && isAdmin && (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div>
-                    <h3 className="font-700 text-foreground text-sm mb-3">Demandes d&apos;adhésion ({pendingRequests.length})</h3>
+                    <h3 className="font-700 text-foreground text-lg mb-4 flex items-center gap-2">
+                      <Icon name="ShieldCheckIcon" size={20} className="text-amber-500" />
+                      Demandes d&apos;adhésion en attente
+                      <span className="bg-amber-500/20 text-amber-500 text-xs px-2.5 py-0.5 rounded-full">{pendingRequests.length}</span>
+                    </h3>
                     {pendingRequests.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">Aucune demande en attente.</p>
+                      <div className="text-center py-12 border border-dashed border-border rounded-2xl">
+                        <p className="text-muted-foreground text-sm font-500">Aucune demande en attente pour le moment.</p>
+                      </div>
                     ) : (
-                      pendingRequests.map((req) => (
-                        <div key={req.id} className="flex items-center gap-3 p-3 topo-card mb-2">
-                          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center font-700 text-primary text-sm flex-shrink-0">
-                            {(req as unknown as { user?: { full_name: string } }).user?.full_name?.[0] ?? '?'}
+                      <div className="space-y-3">
+                        {pendingRequests.map((req) => (
+                          <div key={req.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-card border border-border rounded-2xl hover:border-foreground/20 transition-colors">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-muted to-background flex items-center justify-center font-800 text-foreground text-lg shadow-inner border border-border">
+                                {(req as unknown as { user?: { full_name: string } }).user?.full_name?.[0] ?? '?'}
+                              </div>
+                              <div>
+                                <p className="font-700 text-foreground text-base">{(req as unknown as { user?: { full_name: string } }).user?.full_name ?? 'Anonyme'}</p>
+                                <p className="text-xs text-muted-foreground font-600 mt-0.5">Trust Score: {(req as unknown as { user?: { trust_score: number } }).user?.trust_score ?? 0}</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 w-full sm:w-auto">
+                              <button onClick={() => handleApproveRequest(req.id, req.user_id, true)} className="flex-1 sm:flex-none px-4 py-2 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded-xl text-sm font-700 transition-all border border-emerald-500/20 hover:border-emerald-500 shadow-sm">Accepter</button>
+                              <button onClick={() => handleApproveRequest(req.id, req.user_id, false)} className="flex-1 sm:flex-none px-4 py-2 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl text-sm font-700 transition-all border border-red-500/20 hover:border-red-500 shadow-sm">Refuser</button>
+                            </div>
                           </div>
-                          <div className="flex-1">
-                            <p className="font-600 text-foreground text-sm">{(req as unknown as { user?: { full_name: string } }).user?.full_name ?? 'Anonyme'}</p>
-                            <p className="text-[10px] text-muted-foreground">Trust {(req as unknown as { user?: { trust_score: number } }).user?.trust_score ?? 0}</p>
-                          </div>
-                          <div className="flex gap-2">
-                            <button onClick={() => handleApproveRequest(req.id, req.user_id, true)} className="px-3 py-1.5 bg-emerald-500 text-white rounded-xl text-xs font-700 hover:bg-emerald-600 transition-colors">✓ Accepter</button>
-                            <button onClick={() => handleApproveRequest(req.id, req.user_id, false)} className="px-3 py-1.5 bg-red-500 text-white rounded-xl text-xs font-700 hover:bg-red-600 transition-colors">✗ Refuser</button>
-                          </div>
-                        </div>
-                      ))
+                        ))}
+                      </div>
                     )}
                   </div>
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
 
+        {/* Modal Toast Overlay */}
         {toast && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-foreground text-background px-4 py-2 rounded-xl text-sm font-600 shadow-xl z-10">
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-foreground text-background px-6 py-3 rounded-full text-sm font-700 shadow-2xl animate-fade-in-up">
             {toast}
           </div>
         )}
@@ -580,85 +751,105 @@ function ClubCard({
   const [joining, setJoining] = useState(false);
   const isOwner = currentUserId === club.created_by;
 
-  const handleToggle = async () => {
+  const handleToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // prevent opening modal if clicking join
     setJoining(true);
     await onToggleMember(club.id, !!club.is_member);
     setJoining(false);
   };
 
   return (
-    <div className="topo-card overflow-hidden flex flex-col">
-      <div className={`bg-gradient-to-br ${club.cover_color} p-5 text-white relative`}>
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">{club.emoji}</span>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-display font-700 text-white text-lg leading-tight">{club.name}</h3>
-                {club.is_verified && <span className="text-[10px] bg-white/20 text-white px-1.5 py-0.5 rounded-full font-700">✓</span>}
-              </div>
-              <span className="text-white/60 text-[10px] uppercase tracking-wider font-600">
-                {club.type === 'activite' ? 'Club activité' : 'Club destination'}
-                {club.privacy !== 'open' && ` · ${club.privacy === 'closed' ? '🔒 Fermé' : '🕵️ Secret'}`}
-              </span>
-            </div>
+    <Link 
+      href={`/clubs/${club.slug}`}
+      className="group relative flex flex-col bg-card rounded-[2rem] border border-border hover:border-white/20 hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden cursor-pointer h-full block"
+    >
+      {/* Decorative Blur Background */}
+      <div className={`absolute -top-32 -right-32 w-64 h-64 bg-gradient-to-br ${club.cover_color} rounded-full blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 pointer-events-none`} />
+
+      <div className="p-6 relative z-10 flex flex-col h-full">
+        {/* Card Header */}
+        <div className="flex items-start justify-between mb-5">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-background to-muted flex items-center justify-center text-3xl shadow-sm border border-border group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+            {club.emoji}
           </div>
-          <div className="flex items-center gap-1">
+          
+          <div className="flex items-center gap-1.5">
             {isOwner && (
-              <>
-                <button onClick={() => onEdit(club)} className="p-1.5 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"><Icon name="PencilIcon" size={13} className="text-white" /></button>
-                <button onClick={() => onDelete(club)} className="p-1.5 bg-red-500/70 rounded-lg hover:bg-red-500 transition-colors"><Icon name="TrashIcon" size={13} className="text-white" /></button>
-              </>
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onEdit(club); }} 
+                  className="p-2 bg-muted/50 hover:bg-foreground hover:text-background rounded-full transition-colors text-muted-foreground"
+                  title="Modifier"
+                >
+                  <Icon name="PencilIcon" size={14} />
+                </button>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onDelete(club); }} 
+                  className="p-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-full transition-colors"
+                  title="Supprimer"
+                >
+                  <Icon name="TrashIcon" size={14} />
+                </button>
+              </div>
             )}
-            <button
-              onClick={handleToggle}
-              disabled={joining}
-              className={`px-3 py-1.5 rounded-full text-xs font-700 transition-all ${club.is_member ? 'bg-white/20 text-white border border-white/30' : 'bg-white text-gray-800'}`}
-            >
-              {joining ? '...' : club.is_member ? '✓ Membre' : 'Rejoindre'}
-            </button>
+            {club.is_member && (
+              <span className="bg-primary/20 text-primary border border-primary/30 p-2 rounded-full" title="Vous êtes membre">
+                <Icon name="CheckIcon" size={14} />
+              </span>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-4 text-xs text-white/70">
-          <span className="flex items-center gap-1"><Icon name="UsersIcon" size={11} />{club.members_count.toLocaleString()} membres</span>
-          <span className="flex items-center gap-1"><Icon name="BoltIcon" size={11} />{club.active_this_month} actifs</span>
-        </div>
-      </div>
 
-      <div className="p-5 flex-1 flex flex-col">
-        <p className="text-sm text-muted-foreground mb-4 leading-relaxed line-clamp-2">{club.description}</p>
-
-        {club.topics && club.topics.length > 0 && (
-          <div className="mb-4 flex-1">
-            <p className="text-[10px] font-700 text-muted-foreground uppercase tracking-wider mb-2">Discussions récentes</p>
-            <div className="space-y-1">
-              {club.topics.slice(0, 3).map((t, i) => (
-                <p key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                  <span className="text-primary mt-0.5 flex-shrink-0">›</span>
-                  <span className="truncate">{t.title}</span>
-                </p>
-              ))}
-            </div>
+        {/* Content */}
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[10px] font-800 tracking-widest uppercase text-muted-foreground">
+              {club.type === 'activite' ? 'Activité' : 'Destination'}
+            </span>
+            {club.privacy !== 'open' && (
+              <span className="text-[10px] bg-muted px-2 py-0.5 rounded-md font-700 text-muted-foreground flex items-center gap-1">
+                <Icon name={club.privacy === 'closed' ? 'LockClosedIcon' : 'EyeSlashIcon'} size={10} />
+                {club.privacy === 'closed' ? 'Fermé' : 'Secret'}
+              </span>
+            )}
           </div>
-        )}
+          <h3 className="font-display font-800 text-foreground text-xl leading-tight flex items-center gap-2 group-hover:text-primary transition-colors">
+            {club.name}
+            {club.is_verified && <Icon name="CheckBadgeIcon" size={18} className="text-blue-500" title="Club vérifié" />}
+          </h3>
+        </div>
 
-        <div className="flex gap-2 mt-auto">
-          <Link
-            href={`/clubs/${club.id}`}
-            className="flex-1 btn-secondary justify-center py-2 text-sm text-center"
-          >
-            Accéder au club
-          </Link>
+        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 mb-6 flex-1">
+          {club.description}
+        </p>
+
+        {/* Footer Stats & Action */}
+        <div className="mt-auto pt-5 border-t border-border flex items-center justify-between">
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-700 text-foreground flex items-center gap-1.5">
+              <Icon name="UsersIcon" size={14} className="text-muted-foreground" />
+              {club.members_count.toLocaleString()} membres
+            </span>
+            <span className="text-[11px] font-600 text-muted-foreground flex items-center gap-1.5">
+              <Icon name="BoltIcon" size={12} className="text-amber-500/70" />
+              {club.active_this_month} actifs ce mois
+            </span>
+          </div>
+
           <button
-            onClick={() => onOpenDetail(club)}
-            className="px-3 py-2 border border-border rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            title="Aperçu rapide"
+            onClick={handleToggle}
+            disabled={joining}
+            className={`px-4 py-2.5 rounded-xl text-xs font-800 transition-all ${
+              club.is_member 
+                ? 'bg-muted text-muted-foreground hover:bg-red-500/10 hover:text-red-500' 
+                : 'bg-primary text-white hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5'
+            }`}
           >
-            <Icon name="EyeIcon" size={14} />
+            {joining ? '...' : club.is_member ? 'Quitter' : 'Rejoindre'}
           </button>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -700,14 +891,34 @@ export default function ClubsPage() {
         memberMap = Object.fromEntries((memberships ?? []).map((m) => [m.club_id, { role: m.role, status: m.status }]));
       }
 
-      setClubs(
-        (clubsData ?? []).map((c) => ({
-          ...c,
-          is_member: !!memberMap[c.id] && memberMap[c.id].status === 'active',
-          member_role: memberMap[c.id]?.role,
-          member_status: memberMap[c.id]?.status,
-        }))
-      );
+      let finalClubs = (clubsData ?? []).map((c) => ({
+        ...c,
+        is_member: !!memberMap[c.id] && memberMap[c.id].status === 'active',
+        member_role: memberMap[c.id]?.role,
+        member_status: memberMap[c.id]?.status,
+      }));
+
+      try {
+        const localClubs = JSON.parse(localStorage.getItem('user_clubs_data') || '[]');
+        if (localClubs.length > 0) {
+          const localFormatted = localClubs.map((lc: any) => ({
+            ...lc,
+            is_member: true,
+            member_role: 'admin',
+            member_status: 'active',
+            is_verified: false,
+          }));
+          // Merge avoiding duplicates by id or name
+          const existingIds = new Set(finalClubs.map(c => c.id));
+          const existingNames = new Set(finalClubs.map(c => c.name));
+          const uniqueLocals = localFormatted.filter((lc: any) => !existingIds.has(lc.id) && !existingNames.has(lc.name));
+          finalClubs = [...uniqueLocals, ...finalClubs];
+        }
+      } catch (e) {
+        console.error(e);
+      }
+
+      setClubs(finalClubs);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Erreur de chargement');
     } finally {
@@ -715,7 +926,15 @@ export default function ClubsPage() {
     }
   }, [user, supabase]);
 
-  useEffect(() => { loadClubs(); }, [loadClubs]);
+  useEffect(() => { 
+    loadClubs(); 
+    
+    const handleClubCreated = () => {
+      loadClubs();
+    };
+    window.addEventListener('club_created', handleClubCreated);
+    return () => window.removeEventListener('club_created', handleClubCreated);
+  }, [loadClubs]);
 
   const handleToggleMember = async (clubId: string, isCurrentlyMember: boolean) => {
     if (!user) { showToast('Connectez-vous pour rejoindre un club'); return; }
@@ -735,7 +954,7 @@ export default function ClubsPage() {
     } else {
       // Closed/secret: send join request
       await supabase.from('club_join_requests').upsert({ club_id: clubId, user_id: user.id, status: 'pending' }, { onConflict: 'club_id,user_id' });
-      showToast('Demande d\'adhésion envoyée !');
+      showToast("Demande d'adhésion envoyée !");
     }
   };
 
@@ -771,7 +990,7 @@ export default function ClubsPage() {
         if (newClub) {
           await supabase.from('club_members').insert({ club_id: newClub.id, user_id: user.id, role: 'admin', status: 'active' });
         }
-        showToast('Club créé ! Vous en êtes l\'administrateur.');
+        showToast("Club créé ! Vous en êtes l'administrateur.");
       }
       setShowCreateModal(false);
       setEditClub(null);
@@ -810,102 +1029,133 @@ export default function ClubsPage() {
   const displayedClubs = activeTab === 'activite' ? activityClubs : activeTab === 'pays' ? countryClubs : myClubs;
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background selection:bg-primary/20">
       <Header />
-      <div className="pt-16 lg:pt-18">
-        {/* Hero */}
-        <section className="bg-dark-bg text-white py-14 px-4 relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10 pointer-events-none">
-            <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-secondary blur-3xl" />
-          </div>
-          <div className="max-w-7xl mx-auto relative">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="tag-badge bg-secondary/30 text-emerald-300 border border-emerald-500/30 text-[10px]">COMMUNAUTÉ</span>
-              <span className="text-white/50 text-xs font-mono">CLUBS THÉMATIQUES</span>
-            </div>
-            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-              <div>
-                <h1 className="text-section-title text-white mb-3">
-                  Clubs par activité<br />
-                  <span className="text-primary">et par destination</span>
-                </h1>
-                <p className="text-white/60 text-base max-w-xl">
-                  Chaque club a son fil dédié, ses événements, ses défis, ses kits recommandés et sa modération communautaire.
-                </p>
+      
+      {/* Immersive Hero Section */}
+      <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden border-b border-white/5">
+        <div className="absolute inset-0 bg-background pointer-events-none" />
+        {/* Animated decorative blobs */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] opacity-60 mix-blend-screen pointer-events-none animate-pulse-slow" />
+        <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] opacity-50 mix-blend-screen pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 mb-6 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <span className="text-xs font-700 tracking-widest uppercase text-foreground/80">Espaces Communautaires</span>
               </div>
-              <button onClick={() => { setEditClub(null); setShowCreateModal(true); }} className="btn-primary flex-shrink-0 self-start lg:self-auto">
-                <Icon name="PlusIcon" size={16} />
-                Créer un club
-              </button>
+              <h1 className="font-display font-900 text-5xl lg:text-7xl text-foreground tracking-tight leading-[1.1] mb-6">
+                Rejoignez le <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-400">Club.</span><br />
+                Vivez l&apos;aventure.
+              </h1>
+              <p className="text-lg lg:text-xl text-muted-foreground font-500 leading-relaxed max-w-2xl">
+                Trouvez vos compagnons de route, échangez sur votre matériel favori et participez aux défis thématiques de la communauté Le Kit du Voyageur.
+              </p>
+            </div>
+            
+            <div className="flex-shrink-0">
+              <Link 
+                href="/clubs/nouveau"
+                className="group relative inline-flex items-center justify-center gap-3 px-8 py-4 bg-foreground text-background rounded-full font-800 text-sm overflow-hidden transition-all hover:scale-105 hover:shadow-2xl hover:shadow-foreground/20"
+              >
+                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-primary to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out" />
+                <Icon name="PlusIcon" size={18} className="relative z-10 transition-transform group-hover:rotate-90 duration-300" />
+                <span className="relative z-10 group-hover:text-white transition-colors duration-300">Fonder un Club</span>
+              </Link>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Tabs */}
-        <section className="sticky top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="flex gap-0">
+      {/* Main Content Area */}
+      <section className="relative z-20 -mt-8 px-6 pb-32">
+        <div className="max-w-7xl mx-auto">
+          
+          {/* Floating Navigation Tabs */}
+          <div className="flex justify-center mb-12">
+            <div className="inline-flex items-center p-1.5 bg-card/80 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl">
               {[
-                { id: 'activite', label: 'Clubs activité', icon: 'BoltIcon', count: activityClubs.length },
-                { id: 'pays', label: 'Clubs destination', icon: 'GlobeAltIcon', count: countryClubs.length },
-                { id: 'mes-clubs', label: 'Mes clubs', icon: 'UserGroupIcon', count: myClubs.length },
+                { id: 'activite', label: 'Par Activité', icon: 'BoltIcon', count: activityClubs.length },
+                { id: 'pays', label: 'Par Destination', icon: 'GlobeAltIcon', count: countryClubs.length },
+                { id: 'mes-clubs', label: 'Mes Clubs', icon: 'UserGroupIcon', count: myClubs.length },
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                  className={`flex items-center gap-2 px-5 py-4 text-sm font-600 border-b-2 transition-all ${activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                  className={`relative flex items-center gap-2 px-6 py-3 rounded-full text-sm font-700 transition-all duration-300 ${
+                    activeTab === tab.id 
+                      ? 'text-background shadow-md' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                  }`}
                 >
-                  <Icon name={tab.icon} size={15} />
+                  {activeTab === tab.id && (
+                    <span className="absolute inset-0 bg-foreground rounded-full -z-10" />
+                  )}
+                  <Icon name={tab.icon} size={16} className={activeTab === tab.id ? 'text-background' : 'text-muted-foreground'} />
                   {tab.label}
-                  {tab.count > 0 && <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full font-700">{tab.count}</span>}
+                  {tab.count > 0 && (
+                    <span className={`ml-1 text-[10px] px-2 py-0.5 rounded-full ${activeTab === tab.id ? 'bg-background/20' : 'bg-muted'} font-800`}>
+                      {tab.count}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
           </div>
-        </section>
 
-        {/* Content */}
-        <div className="max-w-7xl mx-auto px-4 py-10">
-          {error && <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{error}</div>}
+          {error && (
+            <div className="mb-10 p-5 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500">
+              <Icon name="ExclamationTriangleIcon" size={20} />
+              <p className="font-600 text-sm">{error}</p>
+            </div>
+          )}
 
+          {/* Grid Content */}
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => <div key={i} className="topo-card h-80 animate-pulse bg-muted" />)}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-80 rounded-[2rem] bg-card border border-white/5 animate-pulse flex flex-col p-6">
+                  <div className="w-16 h-16 rounded-2xl bg-muted/50 mb-6" />
+                  <div className="w-1/3 h-4 bg-muted/50 rounded-full mb-3" />
+                  <div className="w-2/3 h-6 bg-muted/50 rounded-full mb-6" />
+                  <div className="w-full h-16 bg-muted/50 rounded-xl mt-auto" />
+                </div>
+              ))}
             </div>
           ) : displayedClubs.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="text-5xl mb-4">👥</div>
-              <p className="font-display font-700 text-foreground text-xl mb-2">
-                {activeTab === 'mes-clubs' ? 'Aucun club rejoint' : 'Aucun club pour l\'instant'}
+            <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-card/30 border border-dashed border-border rounded-[3rem]">
+              <div className="w-24 h-24 bg-muted/50 rounded-full flex items-center justify-center text-4xl mb-6 shadow-inner">
+                {activeTab === 'mes-clubs' ? '🏕️' : '✨'}
+              </div>
+              <h3 className="font-display font-800 text-2xl text-foreground mb-3">
+                {activeTab === 'mes-clubs' ? "Vous n'avez rejoint aucun club" : 'Espace encore vierge'}
+              </h3>
+              <p className="text-muted-foreground text-base max-w-md mb-8">
+                {activeTab === 'mes-clubs' 
+                  ? 'Explorez les clubs existants et trouvez votre prochaine équipe de choc pour vos aventures.' 
+                  : "Il n'y a pas encore de club dans cette catégorie. Soyez le pionnier et créez le vôtre !"}
               </p>
-              <p className="text-muted-foreground text-sm mb-6">
-                {activeTab === 'mes-clubs' ?'Rejoignez un club pour accéder à son fil dédié, ses événements et ses défis.' :'Soyez le premier à créer un club et rassemblez votre communauté !'}
-              </p>
-              {activeTab !== 'mes-clubs' && (
-                <button
-                  onClick={() => { setEditClub(null); setShowCreateModal(true); }}
-                  className="btn-primary inline-flex items-center gap-2 px-6 py-3"
-                >
-                  <Icon name="PlusIcon" size={16} />
-                  Créer le premier club
-                </button>
-              )}
-              {activeTab === 'mes-clubs' && !user && (
-                <a href="/connexion" className="btn-primary inline-flex items-center gap-2 px-6 py-3">
-                  Se connecter pour rejoindre un club
-                </a>
-              )}
-              {activeTab === 'mes-clubs' && user && (
-                <button
-                  onClick={() => setActiveTab('activite')}
-                  className="btn-secondary inline-flex items-center gap-2 px-6 py-3"
-                >
-                  Parcourir les clubs
-                </button>
+              
+              {activeTab === 'mes-clubs' ? (
+                user ? (
+                  <button onClick={() => setActiveTab('activite')} className="px-8 py-3.5 bg-foreground text-background rounded-full font-800 hover:scale-105 transition-transform shadow-lg">
+                    Explorer les clubs
+                  </button>
+                ) : (
+                  <Link href="/connexion" className="px-8 py-3.5 bg-primary text-white rounded-full font-800 hover:scale-105 transition-transform shadow-lg shadow-primary/20">
+                    Se connecter pour rejoindre
+                  </Link>
+                )
+              ) : (
+                <Link href="/clubs/nouveau" className="inline-flex px-8 py-3.5 bg-primary text-white rounded-full font-800 hover:scale-105 transition-transform shadow-lg shadow-primary/20 items-center gap-2">
+                  <Icon name="PlusIcon" size={16} /> Fonder le premier club
+                </Link>
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {displayedClubs.map((c) => (
                 <ClubCard
                   key={c.id}
@@ -920,7 +1170,7 @@ export default function ClubsPage() {
             </div>
           )}
         </div>
-      </div>
+      </section>
 
       {/* Modals */}
       <ClubFormModal
@@ -938,29 +1188,39 @@ export default function ClubsPage() {
         onRefresh={loadClubs}
       />
 
-      {/* Delete confirm */}
+      {/* Delete confirm Modal */}
       {deleteClub && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full">
-            <div className="text-center mb-5">
-              <div className="w-14 h-14 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-3">
-                <Icon name="TrashIcon" size={24} className="text-red-500" />
-              </div>
-              <h3 className="font-display font-700 text-foreground text-lg mb-1">Supprimer &quot;{deleteClub.name}&quot; ?</h3>
-              <p className="text-sm text-muted-foreground">Tous les membres, discussions et événements seront supprimés.</p>
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-card border border-border shadow-2xl rounded-3xl p-8 max-w-sm w-full text-center transform transition-all scale-100">
+            <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-5">
+              <Icon name="ExclamationTriangleIcon" size={32} className="text-red-500" />
             </div>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteClub(null)} className="flex-1 py-2.5 rounded-xl border border-border text-sm font-600 text-muted-foreground hover:bg-muted transition-colors">Annuler</button>
-              <button onClick={handleDeleteClub} disabled={deleting} className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-700 hover:bg-red-600 transition-colors disabled:opacity-50">
-                {deleting ? 'Suppression...' : 'Supprimer'}
+            <h3 className="font-display font-800 text-foreground text-xl mb-2">Supprimer le club ?</h3>
+            <p className="text-sm text-muted-foreground mb-8">Cette action est irréversible. Toutes les données, membres et discussions de &quot;{deleteClub.name}&quot; seront perdus à jamais.</p>
+            
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={handleDeleteClub} 
+                disabled={deleting} 
+                className="w-full py-3.5 rounded-xl bg-red-500 text-white text-sm font-800 hover:bg-red-600 transition-colors disabled:opacity-50 shadow-lg shadow-red-500/20"
+              >
+                {deleting ? 'Destruction en cours...' : 'Oui, supprimer définitivement'}
+              </button>
+              <button 
+                onClick={() => setDeleteClub(null)} 
+                className="w-full py-3.5 rounded-xl border border-transparent text-sm font-700 text-foreground hover:bg-muted transition-colors"
+              >
+                Annuler
               </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Global Toast */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-foreground text-background px-5 py-3 rounded-xl text-sm font-600 shadow-xl">
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[110] bg-foreground text-background px-8 py-4 rounded-full text-sm font-700 shadow-2xl shadow-black/50 animate-fade-in-up flex items-center gap-3">
+          <Icon name="CheckCircleIcon" size={18} className="text-background/70" />
           {toast}
         </div>
       )}

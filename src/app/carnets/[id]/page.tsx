@@ -1,6 +1,7 @@
 import { Metadata, ResolvingMetadata } from 'next';
 import { notFound } from 'next/navigation';
 import CarnetView from '@/components/carnet/CarnetView';
+import LocalCarnetRenderer from '@/components/carnets/LocalCarnetRenderer';
 import { createClient } from '@/lib/supabase/server';
 import { getCarnetComplet } from '@/lib/queries/carnet';
 
@@ -35,17 +36,8 @@ export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const { id } = await params;
-  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-
-  if (!isUuid) {
-    return {
-      title: 'Carnet introuvable',
-      robots: { index: false, follow: false },
-    };
-  }
-
   try {
+    const { id } = await params;
     const supabase = await createClient();
     const { data: carnet } = await supabase
       .from('carnets')
@@ -116,7 +108,7 @@ export default async function CarnetDetailPage({ params }: Props) {
   const carnetData = await getCarnetComplet(id);
 
   if (!carnetData) {
-    notFound();
+    return <LocalCarnetRenderer id={id} />;
   }
 
   const canonicalUrl = `${siteUrl}/carnets/${id}`;

@@ -105,7 +105,6 @@ export default function KitConfiguratorWizard() {
   const carnetId = searchParams?.get('carnetId');
   const trailName = searchParams?.get('trail');
 
-  // FIX: Start at step 0 (Step 1: Usage) instead of step 2!
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
   const [answers, setAnswers] = useState<Record<number, string>>({
@@ -190,7 +189,6 @@ export default function KitConfiguratorWizard() {
     if (currentStepIndex < CONFIGURATOR_STEPS.length - 1) {
       setCurrentStepIndex((prev) => prev + 1);
     } else if (report) {
-      // Step 5: Add missing items to cart using real shop_products fields!
       report.missingItems.forEach((item) => {
         addToCart({
           id: item.id,
@@ -275,20 +273,20 @@ export default function KitConfiguratorWizard() {
       : 'Ajouter les manquants au panier →';
 
   return (
-    <div className="w-full max-w-[1360px] mx-auto px-2 sm:px-6 py-4 font-sans text-[#1C2620]">
-      {/* ── TOP META BREADCRUMB BAR ── */}
-      <div className="flex items-center justify-between text-xs text-[#7A8A7D] mb-4 px-2">
+    <div className="w-full max-w-[1360px] mx-auto px-2 sm:px-6 font-sans text-[#1C2620] pb-24 sm:pb-8">
+      {/* ── TOP BREADCRUMB BADGES ── */}
+      <div className="flex items-center justify-between text-xs text-[#7A8A7D] mb-3 px-2">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-semibold text-[#1C2620]">Configurateur IA · Central Engine</span>
+          <span className="font-bold text-[#1C3829] tracking-tight">Configurateur IA</span>
           <span>Étape {step.id}/5</span>
           {groupInfo && (
             <span className="bg-[#1C3829] text-white px-2.5 py-0.5 rounded-full font-medium">
-              👥 Groupe: {groupInfo.groupName} ({groupInfo.membersCount} pers.)
+              👥 Groupe: {groupInfo.groupName}
             </span>
           )}
           {carnetData && (
             <span className="bg-[#1C3829] text-white px-2.5 py-0.5 rounded-full font-medium">
-              📖 Carnet: {carnetData.title} ({carnetData.destination})
+              📖 Carnet: {carnetData.title}
             </span>
           )}
           {userInventory.length > 0 && (
@@ -297,254 +295,244 @@ export default function KitConfiguratorWizard() {
             </span>
           )}
         </div>
-        <div className="hidden md:flex items-center gap-4 text-xs">
-          <Link href="/" className="hover:text-[#1C2620] transition-colors">← Hub</Link>
-          <Link href="/shop" className="hover:text-[#1C2620] transition-colors">Boutique</Link>
-          <Link href="/inventaire" className="hover:text-[#1C2620] transition-colors">Inventaire</Link>
-          <Link href="/panier" className="hover:text-[#1C2620] transition-colors">Panier →</Link>
-        </div>
       </div>
 
-      {/* ── MAIN CARD CONTAINER ── */}
-      <div className="bg-white rounded-[28px] border border-[#E2DDD0] shadow-xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[640px]">
+      {/* ── MAIN CONTAINER CARD ── */}
+      <div className="bg-white rounded-[28px] border border-[#E2DDD0] shadow-xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[620px]">
         
-        {/* ── LEFT PANEL (Steps & Cards) ── */}
-        <div className="lg:col-span-7 flex flex-col p-6 sm:p-10 border-b lg:border-b-0 lg:border-r border-[#EBE7DE]">
+        {/* ── LEFT PANEL (Steps & Selection Cards) ── */}
+        <div className="lg:col-span-7 flex flex-col p-6 sm:p-10 border-b lg:border-b-0 lg:border-r border-[#EBE7DE] justify-between">
           
-          {/* Top Brand Navigation inside card */}
-          <div className="flex items-center justify-between pb-8 mb-6 border-b border-[#F0ECE1]">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-[#1C3829] rounded-lg flex items-center justify-center text-white">
-                <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M3 17l4-8 4 4 3-6 4 10H3z" />
-                </svg>
-              </div>
-              <span className="font-semibold text-sm tracking-tight text-[#1C3829]">Le Kit du Voyageur</span>
-            </Link>
-
-            <nav className="hidden sm:flex items-center gap-6 text-xs text-[#526356] font-medium">
-              <Link href="/explorer" className="hover:text-[#1C3829] transition-colors">Aventures</Link>
-              <Link href="/communaute" className="hover:text-[#1C3829] transition-colors">Refuges</Link>
-              <Link href="/shop" className="hover:text-[#1C3829] transition-colors">Boutique</Link>
-              <Link href="/inventaire" className="hover:text-[#1C3829] transition-colors">Mon Inventaire</Link>
-            </nav>
-
-            <Link href="/" className="text-xs text-[#7A8A7D] hover:text-[#1C3829] transition-colors font-medium">
-              Quitter le configurateur
-            </Link>
-          </div>
-
-          {/* Stepper Progress Bar */}
-          <div className="flex items-center gap-2 mb-10 overflow-x-auto pb-2 scrollbar-none">
-            {CONFIGURATOR_STEPS.map((s, idx) => {
-              const isDone = idx < currentStepIndex;
-              const isActive = idx === currentStepIndex;
-
-              return (
-                <button
-                  key={s.id}
-                  onClick={() => startTransition(() => setCurrentStepIndex(idx))}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                    isActive
-                      ? 'bg-[#1C3829] text-white shadow-sm'
-                      : isDone
-                      ? 'bg-[#EAF0EC] text-[#1C3829] hover:bg-[#DDE7E0]'
-                      : 'bg-[#F4F1EA] text-[#8C9C8F] hover:bg-[#EAE6DD]'
-                  }`}
-                >
-                  {isDone ? (
-                    <span className="w-4 h-4 rounded-full bg-[#1C3829] text-white flex items-center justify-center text-[10px]">✓</span>
-                  ) : (
-                    <span className={`w-4 h-4 rounded-full ${isActive ? 'bg-white text-[#1C3829]' : 'bg-[#D6D0C2] text-white'} flex items-center justify-center text-[10px] font-bold`}>
-                      {s.id}
-                    </span>
-                  )}
-                  <span>{s.badge.split('·')[0].replace(/^\d+\s*/, '')}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Step Content */}
-          <div className="flex-1 flex flex-col justify-between">
-            <div>
-              {/* Badge */}
-              <p className="text-[11px] font-mono uppercase tracking-widest text-[#7A8A7D] font-medium mb-3">
-                {step.badge}
-              </p>
-
-              {/* Hero Question Title */}
-              <h1 className="text-3xl sm:text-4xl font-bold text-[#1C2620] tracking-tight mb-3">
-                {step.titlePrefix}
-                <span className="font-serif italic font-normal text-[#1C3829]">{step.titleItalic}</span>
-                {step.titleSuffix || ''}
-              </h1>
-
-              {/* Subtitle */}
-              <p className="text-xs sm:text-sm text-[#5C6E60] leading-relaxed max-w-xl mb-8">
-                {step.subtitle}
-              </p>
-
-              {/* 2x2 Choice Cards Grid (Steps 1 to 4) */}
-              {step.options.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                  {step.options.map((opt) => {
-                    const isSelected = answers[step.id] === opt.id;
-
-                    return (
-                      <div
-                        key={opt.id}
-                        onClick={() => handleSelectOption(opt.id)}
-                        className={`group relative p-5 rounded-2xl border cursor-pointer transition-all duration-200 flex flex-col justify-between ${
-                          isSelected
-                            ? 'border-2 border-[#1C3829] bg-white shadow-md shadow-[#1C3829]/5'
-                            : 'border-[#E2DDD0] bg-[#FAF8F3] hover:border-[#1C3829]/40 hover:bg-white'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <StepIcon icon={opt.icon} active={isSelected} />
-                          {isSelected && (
-                            <span className="w-5 h-5 rounded-full bg-[#1C3829] text-white flex items-center justify-center text-xs">
-                              ✓
-                            </span>
-                          )}
-                        </div>
-
-                        <div>
-                          <h3 className="font-bold text-sm text-[#1C2620] mb-1">
-                            {opt.titlePrefix}
-                            <span className="font-serif italic font-normal text-[#1C3829]">{opt.titleItalic}</span>
-                          </h3>
-                          <p className="text-xs text-[#6B7A6E] leading-snug">{opt.subtext}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
+          <div>
+            {/* Single Header Navbar inside card */}
+            <div className="flex items-center justify-between pb-6 mb-6 border-b border-[#F0ECE1]">
+              <Link href="/" className="flex items-center gap-2.5 group">
+                <div className="w-8 h-8 bg-[#1C3829] rounded-xl flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
+                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M3 17l4-8 4 4 3-6 4 10H3z" />
+                  </svg>
                 </div>
-              ) : (
-                /* Step 5: Connected 360° Intelligent Report Breakdown */
-                report && (
-                  <div className="space-y-6 mb-8">
-                    {/* Preparation Score Banner */}
-                    <div className="flex items-center justify-between bg-[#1C3829] text-white p-5 rounded-2xl shadow-lg">
+                <span className="font-bold text-sm tracking-tight text-[#1C3829]">Le Kit du Voyageur</span>
+              </Link>
+
+              <nav className="hidden sm:flex items-center gap-5 text-xs text-[#526356] font-medium">
+                <Link href="/explorer" className="hover:text-[#1C3829] transition-colors">Aventures</Link>
+                <Link href="/shop" className="hover:text-[#1C3829] transition-colors">Boutique</Link>
+                <Link href="/inventaire" className="hover:text-[#1C3829] transition-colors">Mon Inventaire</Link>
+              </nav>
+
+              <Link href="/" className="text-xs text-[#7A8A7D] hover:text-[#1C3829] transition-colors font-medium">
+                Quitter ✕
+              </Link>
+            </div>
+
+            {/* Stepper Progress Bar */}
+            <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2 scrollbar-none">
+              {CONFIGURATOR_STEPS.map((s, idx) => {
+                const isDone = idx < currentStepIndex;
+                const isActive = idx === currentStepIndex;
+
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => startTransition(() => setCurrentStepIndex(idx))}
+                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+                      isActive
+                        ? 'bg-[#1C3829] text-white shadow-sm'
+                        : isDone
+                        ? 'bg-[#EAF0EC] text-[#1C3829] hover:bg-[#DDE7E0]'
+                        : 'bg-[#F4F1EA] text-[#8C9C8F] hover:bg-[#EAE6DD]'
+                    }`}
+                  >
+                    {isDone ? (
+                      <span className="w-4 h-4 rounded-full bg-[#1C3829] text-white flex items-center justify-center text-[10px]">✓</span>
+                    ) : (
+                      <span className={`w-4 h-4 rounded-full ${isActive ? 'bg-white text-[#1C3829]' : 'bg-[#D6D0C2] text-white'} flex items-center justify-center text-[10px] font-bold`}>
+                        {s.id}
+                      </span>
+                    )}
+                    <span>{s.badge.split('·')[0].replace(/^\d+\s*/, '')}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Step Badge */}
+            <p className="text-[11px] font-mono uppercase tracking-widest text-[#7A8A7D] font-medium mb-2">
+              {step.badge}
+            </p>
+
+            {/* Hero Question Title */}
+            <h1 className="text-3xl sm:text-4xl font-bold text-[#1C2620] tracking-tight mb-2 leading-tight">
+              {step.titlePrefix}
+              <span className="font-serif italic font-normal text-[#1C3829]">{step.titleItalic}</span>
+              {step.titleSuffix || ''}
+            </h1>
+
+            {/* Subtitle */}
+            <p className="text-xs sm:text-sm text-[#5C6E60] leading-relaxed max-w-xl mb-6">
+              {step.subtitle}
+            </p>
+
+            {/* 2x2 Choice Cards Grid (Steps 1 to 4) */}
+            {step.options.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-6">
+                {step.options.map((opt) => {
+                  const isSelected = answers[step.id] === opt.id;
+
+                  return (
+                    <div
+                      key={opt.id}
+                      onClick={() => handleSelectOption(opt.id)}
+                      className={`group relative p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all duration-200 flex flex-col justify-between ${
+                        isSelected
+                          ? 'border-2 border-[#1C3829] bg-white shadow-md shadow-[#1C3829]/5'
+                          : 'border-[#E2DDD0] bg-[#FAF8F3] hover:border-[#1C3829]/40 hover:bg-white'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <StepIcon icon={opt.icon} active={isSelected} />
+                        {isSelected && (
+                          <span className="w-5 h-5 rounded-full bg-[#1C3829] text-white flex items-center justify-center text-xs">
+                            ✓
+                          </span>
+                        )}
+                      </div>
+
                       <div>
-                        <p className="text-xs text-[#B5D4BF] font-mono uppercase">Niveau de préparation</p>
-                        <h3 className="text-2xl font-bold font-mono text-white mt-0.5">
-                          {report.preparationScore}% PRÊT
+                        <h3 className="font-bold text-sm text-[#1C2620] mb-1">
+                          {opt.titlePrefix}
+                          <span className="font-serif italic font-normal text-[#1C3829]">{opt.titleItalic}</span>
                         </h3>
-                        <p className="text-xs text-white/80 mt-1">{report.summary}</p>
-                      </div>
-                      <div className="w-14 h-14 rounded-full border-4 border-[#34D399] flex items-center justify-center font-bold text-lg font-mono">
-                        {report.preparationScore}%
+                        <p className="text-xs text-[#6B7A6E] leading-snug">{opt.subtext}</p>
                       </div>
                     </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Step 5: Connected 360° Intelligent Report Breakdown */
+              report && (
+                <div className="space-y-5 mb-6 max-h-[420px] overflow-y-auto pr-1">
+                  {/* Preparation Score Banner */}
+                  <div className="flex items-center justify-between bg-[#1C3829] text-white p-5 rounded-2xl shadow-lg">
+                    <div>
+                      <p className="text-xs text-[#B5D4BF] font-mono uppercase">Niveau de préparation</p>
+                      <h3 className="text-2xl font-bold font-mono text-white mt-0.5">
+                        {report.preparationScore}% PRÊT
+                      </h3>
+                      <p className="text-xs text-white/80 mt-1">{report.summary}</p>
+                    </div>
+                    <div className="w-14 h-14 rounded-full border-4 border-[#34D399] flex items-center justify-center font-bold text-lg font-mono">
+                      {report.preparationScore}%
+                    </div>
+                  </div>
 
-                    {/* Section: Owned Items (from user's inventory) */}
-                    <div className="bg-[#F4F8F5] p-5 rounded-2xl border border-[#C5DED0]">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-xs font-mono uppercase tracking-wider text-[#1C3829] font-bold">
-                          🎒 Matériel déjà possédé ({report.ownedItems.length} article(s))
-                        </h4>
-                        <span className="text-xs text-[#5C6E60] font-medium">0 € dépensés</span>
+                  {/* Section: Owned Items (from user's inventory) */}
+                  <div className="bg-[#F4F8F5] p-4 rounded-2xl border border-[#C5DED0]">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-xs font-mono uppercase tracking-wider text-[#1C3829] font-bold">
+                        🎒 Matériel déjà possédé ({report.ownedItems.length} article(s))
+                      </h4>
+                      <span className="text-xs text-[#5C6E60] font-medium">0 € dépensés</span>
+                    </div>
+                    {report.ownedItems.length > 0 ? (
+                      <div className="space-y-1.5 text-xs">
+                        {report.ownedItems.map((item) => (
+                          <div key={item.id} className="flex items-center justify-between py-1 border-b border-[#D8E6DE] last:border-none">
+                            <span className="font-semibold text-[#1C3829]">✓ {item.name} ({item.brand || 'Perso'})</span>
+                            <span className="text-[11px] text-[#5C6E60] font-mono">{item.weightGrams / 1000} kg</span>
+                          </div>
+                        ))}
                       </div>
-                      {report.ownedItems.length > 0 ? (
-                        <div className="space-y-2 text-xs">
-                          {report.ownedItems.map((item) => (
-                            <div key={item.id} className="flex items-center justify-between py-1.5 border-b border-[#D8E6DE] last:border-none">
-                              <span className="font-semibold text-[#1C3829]">✓ {item.name} ({item.brand || 'Perso'})</span>
-                              <span className="text-[11px] text-[#5C6E60] font-mono">{item.weightGrams / 1000} kg</span>
+                    ) : (
+                      <p className="text-xs text-[#7A8A7D] italic">
+                        Aucun équipement correspondant trouvé dans votre inventaire. Les articles ci-dessous sont recommandés.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Section: Missing Items (from real shop_products) */}
+                  <div className="bg-white p-4 rounded-2xl border border-[#E2DDD0] shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-xs font-mono uppercase tracking-wider text-[#E4501C] font-bold">
+                        🛒 Matériel manquant à acquérir ({report.missingItems.length} article(s))
+                      </h4>
+                      <span className="text-xs font-bold text-[#1C3829] font-mono">
+                        Total: {report.totalMissingPriceEur} €
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {report.missingItems.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between gap-3 text-xs py-1.5 border-b border-[#F0ECE1] last:border-none">
+                          <div className="flex items-center gap-3">
+                            <img src={item.image} alt={item.name} className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
+                            <div>
+                              <p className="font-bold text-[#1C2620]">{item.name}</p>
+                              <p className="text-[11px] text-[#7A8A7D]">{item.brand} · {item.reason}</p>
                             </div>
-                          ))}
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className="font-bold font-mono text-[#1C3829]">{item.priceEur} €</p>
+                            <p className="text-[10px] text-[#7A8A7D] font-mono">{item.weightGrams / 1000} kg</p>
+                          </div>
                         </div>
-                      ) : (
-                        <p className="text-xs text-[#7A8A7D] italic">
-                          Aucun équipement correspondant trouvé dans votre inventaire. Les articles ci-dessous sont recommandés.
-                        </p>
-                      )}
+                      ))}
                     </div>
+                  </div>
 
-                    {/* Section: Missing Items (from real shop_products) */}
-                    <div className="bg-white p-5 rounded-2xl border border-[#E2DDD0] shadow-sm">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-xs font-mono uppercase tracking-wider text-[#E4501C] font-bold">
-                          🛒 Matériel manquant à acquérir ({report.missingItems.length} article(s))
-                        </h4>
-                        <span className="text-xs font-bold text-[#1C3829] font-mono">
-                          Total: {report.totalMissingPriceEur} €
-                        </span>
-                      </div>
-                      <div className="space-y-3">
-                        {report.missingItems.map((item) => (
-                          <div key={item.id} className="flex items-center justify-between gap-3 text-xs py-2 border-b border-[#F0ECE1] last:border-none">
-                            <div className="flex items-center gap-3">
-                              <img src={item.image} alt={item.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-                              <div>
-                                <p className="font-bold text-[#1C2620]">{item.name}</p>
-                                <p className="text-[11px] text-[#7A8A7D]">{item.brand} · {item.reason}</p>
-                              </div>
-                            </div>
-                            <div className="text-right flex-shrink-0">
-                              <p className="font-bold font-mono text-[#1C3829]">{item.priceEur} €</p>
-                              <p className="text-[10px] text-[#7A8A7D] font-mono">{item.weightGrams / 1000} kg</p>
-                            </div>
+                  {/* Section: Weather / Security Alerts */}
+                  {report.inadequateAlerts.length > 0 && (
+                    <div className="bg-[#FFF8F5] p-4 rounded-2xl border border-[#FCD8C8]">
+                      <h4 className="text-xs font-mono uppercase tracking-wider text-[#E4501C] font-bold mb-2">
+                        ⚠️ Alertes & Points d’attention
+                      </h4>
+                      <div className="space-y-2 text-xs">
+                        {report.inadequateAlerts.map((alert, idx) => (
+                          <div key={idx} className="p-3 bg-white rounded-xl border border-[#FCD8C8]">
+                            <p className="font-bold text-[#1C2620] mb-1">{alert.item}</p>
+                            <p className="text-[#E4501C] mb-1">{alert.issue}</p>
+                            <p className="text-[#5C6E60] font-medium">💡 {alert.recommendation}</p>
                           </div>
                         ))}
                       </div>
                     </div>
+                  )}
 
-                    {/* Section: Weather / Security Alerts */}
-                    {report.inadequateAlerts.length > 0 && (
-                      <div className="bg-[#FFF8F5] p-5 rounded-2xl border border-[#FCD8C8]">
-                        <h4 className="text-xs font-mono uppercase tracking-wider text-[#E4501C] font-bold mb-3">
-                          ⚠️ Alertes & Points d’attention
-                        </h4>
-                        <div className="space-y-2 text-xs">
-                          {report.inadequateAlerts.map((alert, idx) => (
-                            <div key={idx} className="p-3 bg-white rounded-xl border border-[#FCD8C8]">
-                              <p className="font-bold text-[#1C2620] mb-1">{alert.item}</p>
-                              <p className="text-[#E4501C] mb-1">{alert.issue}</p>
-                              <p className="text-[#5C6E60] font-medium">💡 {alert.recommendation}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Save actions */}
-                    <div className="flex items-center gap-3 pt-2">
-                      <button
-                        onClick={handleSaveConfiguration}
-                        disabled={isSaving}
-                        className="flex-1 py-2.5 rounded-xl border border-[#1C3829] text-[#1C3829] font-bold text-xs hover:bg-[#EAF0EC] transition-colors disabled:opacity-50"
-                      >
-                        {savedSuccess ? '✅ Configuration enregistrée !' : isSaving ? 'Sauvegarde...' : '💾 Enregistrer la configuration sur mon compte'}
-                      </button>
-                    </div>
+                  {/* Save actions */}
+                  <div className="flex items-center gap-3 pt-1">
+                    <button
+                      onClick={handleSaveConfiguration}
+                      disabled={isSaving}
+                      className="flex-1 py-2.5 rounded-xl border border-[#1C3829] text-[#1C3829] font-bold text-xs hover:bg-[#EAF0EC] transition-colors disabled:opacity-50"
+                    >
+                      {savedSuccess ? '✅ Configuration enregistrée !' : isSaving ? 'Sauvegarde...' : '💾 Enregistrer la configuration sur mon compte'}
+                    </button>
                   </div>
-                )
-              )}
-            </div>
+                </div>
+              )
+            )}
+          </div>
 
-            {/* Bottom Actions */}
-            <div className="flex items-center justify-between pt-6 border-t border-[#F0ECE1]">
-              {currentStepIndex > 0 ? (
-                <button
-                  onClick={handlePrev}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-[#5C6E60] hover:text-[#1C3829] transition-colors"
-                >
-                  ‹ Précédent
-                </button>
-              ) : (
-                <div />
-              )}
-
+          {/* Bottom Desktop Actions */}
+          <div className="flex items-center justify-between pt-5 border-t border-[#F0ECE1]">
+            {currentStepIndex > 0 ? (
               <button
-                onClick={handleNext}
-                className="flex items-center gap-2 px-7 py-3 rounded-full bg-[#1C3829] hover:bg-[#152B1F] text-white font-semibold text-xs transition-all shadow-md shadow-[#1C3829]/20 hover:-translate-y-px"
+                onClick={handlePrev}
+                className="flex items-center gap-1.5 text-xs font-semibold text-[#5C6E60] hover:text-[#1C3829] transition-colors"
               >
-                <span>{nextStepLabel}</span>
+                ‹ Précédent
               </button>
-            </div>
+            ) : (
+              <div />
+            )}
+
+            <button
+              onClick={handleNext}
+              className="flex items-center gap-2 px-7 py-3 rounded-full bg-[#1C3829] hover:bg-[#152B1F] text-white font-semibold text-xs transition-all shadow-md shadow-[#1C3829]/20 hover:-translate-y-px"
+            >
+              <span>{nextStepLabel}</span>
+            </button>
           </div>
         </div>
 
@@ -564,7 +552,7 @@ export default function KitConfiguratorWizard() {
                 Un kit <span className="font-serif italic font-normal text-[#B5D4BF]">en cours</span> de composition.
               </h2>
               <p className="text-xs text-white/70 leading-relaxed">
-                On assemble en temps réel. Vous pourrez tout modifier à l’étape finale — ou tout jeter et recommencer.
+                On assemble en temps réel. Vous pourrez tout modifier à l’étape finale.
               </p>
             </div>
 
@@ -575,12 +563,12 @@ export default function KitConfiguratorWizard() {
                   <span className="font-mono uppercase tracking-wider text-white/70">
                     CONTENU · {report.ownedItems.length + report.missingItems.length} PIÈCES
                   </span>
-                  <span className="font-bold text-[#B5D4BF] bg-white/10 px-2.5 py-1 rounded-md">
+                  <span className="font-bold text-[#B5D4BF] bg-white/10 px-2.5 py-1 rounded-md font-mono">
                     {report.totalWeightKg} KG
                   </span>
                 </div>
 
-                <div className="space-y-2 text-xs max-h-56 overflow-y-auto pr-1">
+                <div className="space-y-2 text-xs max-h-48 overflow-y-auto pr-1">
                   {report.ownedItems.map((item) => (
                     <div key={item.id} className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 truncate">
@@ -611,33 +599,53 @@ export default function KitConfiguratorWizard() {
 
             {/* Metadata Pills */}
             {report && (
-              <div className="grid grid-cols-2 gap-3 text-xs pt-2">
+              <div className="grid grid-cols-2 gap-3 text-xs pt-1">
                 <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
                   <p className="text-[10px] font-mono text-white/50 uppercase tracking-wider mb-1">ADAPTÉ POUR</p>
-                  <p className="font-semibold text-white">{report.durationLabel}</p>
+                  <p className="font-semibold text-white truncate">{report.durationLabel}</p>
                 </div>
                 <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
                   <p className="text-[10px] font-mono text-white/50 uppercase tracking-wider mb-1">MÉTÉO</p>
-                  <p className="font-semibold text-white">{report.weatherLabel}</p>
+                  <p className="font-semibold text-white truncate">{report.weatherLabel}</p>
                 </div>
                 <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
                   <p className="text-[10px] font-mono text-white/50 uppercase tracking-wider mb-1">POIDS TOTAL</p>
                   <p className="font-semibold text-white">{report.totalWeightKg} kg</p>
                 </div>
                 <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
-                  <p className="text-[10px] font-mono text-white/50 uppercase tracking-wider mb-1">EMPREINTE CARBONE</p>
+                  <p className="text-[10px] font-mono text-white/50 uppercase tracking-wider mb-1">CO₂ ESTIMÉ</p>
                   <p className="font-semibold text-white">{report.carbonEstimateKg} kg CO₂</p>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="relative z-10 pt-6 border-t border-white/10 text-[11px] text-white/50">
-            Le sac se met à jour à chaque étape. Vous pourrez tout retirer avant paiement.
+          <div className="relative z-10 pt-4 border-t border-white/10 text-[11px] text-white/50">
+            Le sac se met à jour à chaque étape. Vous pourrez tout modifier avant paiement.
           </div>
         </div>
 
       </div>
+
+      {/* ── MOBILE STICKY BOTTOM ACTION BAR ── */}
+      {report && (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#122419] text-white border-t border-white/10 p-4 flex items-center justify-between shadow-2xl backdrop-blur-lg">
+          <div>
+            <p className="text-[10px] font-mono text-[#B5D4BF] uppercase tracking-wider">
+              VOTRE SAC · {report.ownedItems.length + report.missingItems.length} PIÈCES · {report.totalWeightKg} KG
+            </p>
+            <p className="text-base font-bold font-mono text-white">
+              {report.totalMissingPriceEur} € <span className="text-xs font-normal text-white/60">à acquérir</span>
+            </p>
+          </div>
+          <button
+            onClick={handleNext}
+            className="px-5 py-2.5 rounded-full bg-[#34D399] text-[#122419] font-bold text-xs hover:bg-[#22C55E] transition-colors shadow-lg"
+          >
+            {nextStepLabel}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

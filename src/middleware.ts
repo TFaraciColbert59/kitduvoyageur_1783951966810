@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getCountryCodeByName, getCountryByCode } from '@/lib/countries';
 
-const PROTECTED_ROUTES = ['/admin', '/checkout', '/compte', '/messagerie'];
+const PROTECTED_ROUTES = ['/admin', '/checkout', '/messagerie'];
 const ADMIN_ROUTES = ['/admin'];
 
 function isProtected(pathname: string) {

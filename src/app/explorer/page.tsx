@@ -10,20 +10,7 @@ import TrailDetailPanel from '@/components/explorer/TrailDetailPanel';
 import BackButton from '@/components/ui/BackButton';
 import Link from 'next/link';
 
-const ExplorerMap = dynamic(() => import('@/components/explorer/ExplorerMap'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-[#F5F2EA]">
-      <div className="flex flex-col items-center gap-4">
-        <div className="relative w-10 h-10">
-          <div className="absolute inset-0 border-2 border-[#1C2620]/15 rounded-full" />
-          <div className="absolute inset-0 border-2 border-t-[#1C2620] rounded-full animate-spin" />
-        </div>
-        <p className="text-[#6B7A6E] text-xs font-mono tracking-widest uppercase">Chargement de la carte…</p>
-      </div>
-    </div>
-  ),
-});
+import ExplorerMap from '@/components/explorer/ExplorerMap';
 
 const DIFFICULTY_FILTERS = ['Facile', 'Modérée', 'Difficile', 'Expert'];
 const DURATION_FILTERS = [

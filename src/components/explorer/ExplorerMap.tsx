@@ -157,7 +157,8 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
     if (!mapRef.current) return;
     import('leaflet').then(() => {
       if (trail.lat !== null && trail.lng !== null) {
-        mapRef.current!.setView([trail.lat, trail.lng], 12, { animate: true });
+        // Smooth flyTo animation with closer zoom level for better focus
+        mapRef.current!.flyTo([trail.lat, trail.lng], 14, { animate: true, duration: 1.2 });
       }
     });
   }, []);
