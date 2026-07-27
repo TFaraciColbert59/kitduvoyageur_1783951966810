@@ -42,6 +42,13 @@ export interface CarnetRandonnee {
   badge?: string;
 }
 
+export interface CarnetStatItem {
+  value: string;
+  label: string;
+  sublabel?: string;
+  hidden?: boolean;
+}
+
 export interface CarnetData {
   meta: {
     badge: string;
@@ -53,7 +60,7 @@ export interface CarnetData {
     dateRange: string;
     itineraire: string;
   };
-  stats: { value: string; label: string; sublabel?: string }[];
+  stats: CarnetStatItem[];
   jours: CarnetJour[];
   hebergements: CarnetHebergement[];
   moments: CarnetMoment[];

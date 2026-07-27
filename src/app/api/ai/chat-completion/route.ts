@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { completion } from '@rocketnew/llm-sdk';
+import { createClient } from '@/lib/supabase/server';
 
 const API_KEYS: Record<string, string | undefined> = {
   OPEN_AI: process.env.OPENAI_API_KEY,
@@ -23,6 +24,18 @@ export async function POST(request: NextRequest) {
   let body: any = {};
 
   try {
+    // Authenticate user in production
+    if (process.env.NODE_ENV === 'production') {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json(
+          { error: 'Unauthorized', details: 'Authentication required' },
+          { status: 401 }
+        );
+      }
+    }
+
     body = await request.json();
     const { provider, model, messages, stream = false, parameters = {} } = body;
 

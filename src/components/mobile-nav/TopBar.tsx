@@ -16,7 +16,6 @@ const ROOT_TABS = ['/', '/explorer', '/ai-configurator', '/profil'];
 
 const PARENT_TAB: Record<string, string> = {
   '/carnets': '/profil',
-  '/carnet': '/profil',
   '/clubs': '/explorer',
   '/communaute': '/explorer',
   '/groupes': '/explorer',
@@ -103,16 +102,17 @@ function getParentTab(pathname: string): string {
 export default function TopBar({ cartCount = 0, notifCount = 0, showBack, title, transparent = false }: TopBarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const displayTitle = title || getTitle(pathname);
-  const isHome = pathname === '/';
+  const currentPath = pathname || '/';
+  const displayTitle = title || getTitle(currentPath);
+  const isHome = currentPath === '/';
 
-  const shouldShowBack = showBack !== undefined ? showBack : !isRootTab(pathname);
+  const shouldShowBack = showBack !== undefined ? showBack : !isRootTab(currentPath);
 
   const handleBack = () => {
     if (typeof window !== 'undefined' && window.history.length > 1) {
       router.back();
     } else {
-      router.push(getParentTab(pathname));
+      router.push(getParentTab(currentPath));
     }
   };
 
