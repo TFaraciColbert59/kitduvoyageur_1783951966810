@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -55,7 +56,7 @@ function PostsTab({ userId }: { userId: string }) {
   return (
     <div className="space-y-4">
       {/* Compose */}
-      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4">
+      <div className="bg-white shadow-sm border border-[#C8C3B0]/30 rounded-3xl p-4">
         <div className="flex gap-2 mb-3 flex-wrap">
           {Object.entries(TYPE_CFG).map(([id, cfg]) => (
             <button key={id} onClick={() => setPostType(id as typeof postType)} className={`text-xs font-600 px-3 py-1.5 rounded-full border-2 transition-all ${postType === id ? 'border-[#E4501C] ' + cfg.color : 'border-[#C8C3B0] text-[#5C6B5E]'}`}>
@@ -63,7 +64,7 @@ function PostsTab({ userId }: { userId: string }) {
             </button>
           ))}
         </div>
-        <textarea rows={3} value={newPost} onChange={e => setNewPost(e.target.value)} placeholder="Partagez une astuce, posez une question, racontez votre aventure..." className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-3 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 resize-none mb-3" />
+        <textarea rows={3} value={newPost} onChange={e => setNewPost(e.target.value)} placeholder="Partagez une astuce, posez une question, racontez votre aventure..." className="w-full bg-[#F5F2E8] border-none rounded-xl px-4 py-3 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 resize-none mb-3" />
         <div className="flex items-center justify-between">
           <span className="text-xs text-[#5C6B5E]">{newPost.length}/500</span>
           <div className="flex items-center gap-2">
@@ -84,11 +85,11 @@ function PostsTab({ userId }: { userId: string }) {
           <p className="text-sm">Aucune publication. Partagez quelque chose !</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <motion.div variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1 } } }} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {posts.map(post => {
             const cfg = TYPE_CFG[post.post_type] ?? TYPE_CFG['post'];
             return (
-              <div key={post.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 hover:border-[#E4501C]/30 transition-all">
+              <motion.div key={post.id} variants={{ hidden: { opacity: 0, scale: 0.95 }, show: { opacity: 1, scale: 1 } }} className="bg-white shadow-sm border border-[#C8C3B0]/30 rounded-3xl p-4 hover:border-[#E4501C]/30 transition-all">
                 <div className="flex items-center gap-2 mb-2">
                   <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${cfg.color}`}>{cfg.emoji} {cfg.label}</span>
                   <span className="text-[10px] text-[#5C6B5E] ml-auto">{new Date(post.created_at).toLocaleDateString('fr-FR')}</span>
@@ -98,10 +99,10 @@ function PostsTab({ userId }: { userId: string }) {
                   <span className="flex items-center gap-1"><Icon name="HeartIcon" size={12} /> {post.likes_count}</span>
                   <span className="flex items-center gap-1"><Icon name="ChatBubbleLeftIcon" size={12} /> {post.comments_count}</span>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
     </div>
   );
@@ -139,9 +140,10 @@ function CarnetsTab({ userId }: { userId: string }) {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <motion.div variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1 } } }} initial="hidden" animate="show" className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {carnets.map(c => (
-            <Link key={c.id} href="/carnets" className="group relative aspect-square bg-[#C8C3B0] rounded-2xl overflow-hidden hover:opacity-90 transition-opacity">
+            <motion.div key={c.id} variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}>
+              <Link href="/carnets" className="block group relative aspect-square bg-[#C8C3B0] rounded-2xl overflow-hidden hover:opacity-90 transition-opacity">
               {c.cover_image ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={c.cover_image} alt={c.title} className="w-full h-full object-cover" />
@@ -156,9 +158,10 @@ function CarnetsTab({ userId }: { userId: string }) {
               <div className="absolute top-2 right-2">
                 <span className="bg-black/50 text-white text-[10px] font-700 px-1.5 py-0.5 rounded-full">{c.route_rating}/10</span>
               </div>
-            </Link>
+              </Link>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
     </div>
   );
@@ -192,7 +195,7 @@ function InventaireTab({ userId }: { userId: string }) {
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-3">
         {[{ label: 'Articles', value: gear.length }, { label: 'Poids total', value: `${(totalWeight / 1000).toFixed(1)} kg` }, { label: 'Valeur', value: `${totalValue.toLocaleString()}€` }].map(s => (
-          <div key={s.label} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 text-center">
+          <div key={s.label} className="bg-white shadow-sm border border-[#C8C3B0]/30 rounded-3xl p-4 text-center">
             <p className="font-display font-700 text-[#1C2620] text-xl">{s.value}</p>
             <p className="text-xs text-[#5C6B5E] mt-0.5">{s.label}</p>
           </div>
@@ -215,11 +218,11 @@ function InventaireTab({ userId }: { userId: string }) {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <motion.div variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1 } } }} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {gear.map(g => {
             const cond = CONDITION_CFG[g.condition] || CONDITION_CFG['bon'];
             return (
-              <div key={g.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl overflow-hidden flex hover:border-[#E4501C]/30 transition-all">
+              <motion.div key={g.id} variants={{ hidden: { opacity: 0, scale: 0.95 }, show: { opacity: 1, scale: 1 } }} className="bg-white shadow-sm border border-[#C8C3B0]/30 rounded-3xl overflow-hidden flex hover:border-[#E4501C]/30 transition-all">
                 <div className="w-20 h-20 flex-shrink-0 overflow-hidden bg-[#E7E3D6]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={g.image || 'https://images.unsplash.com/photo-1572698846920-cb1e563bbb30'} alt={g.alt || g.name} className="w-full h-full object-cover" />
@@ -235,10 +238,10 @@ function InventaireTab({ userId }: { userId: string }) {
                     <span className="font-mono font-600 text-[#1C2620]">{g.purchase_price}€</span>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
     </div>
   );
@@ -267,7 +270,7 @@ function GroupesTab({ userId }: { userId: string }) {
       <div className="flex items-center justify-between">
         <p className="text-sm text-[#5C6B5E]">{groups.length} groupe{groups.length !== 1 ? 's' : ''}</p>
         <div className="flex gap-2">
-          <Link href="/groupes?tab=decouvrir" className="text-xs text-[#5C6B5E] hover:text-[#1C2620] border border-[#C8C3B0] px-3 py-1.5 rounded-xl transition-colors">Découvrir</Link>
+          <Link href="/groupes?tab=decouvrir" className="text-xs text-[#5C6B5E] hover:text-[#1C2620] border border-[#C8C3B0]/30 px-3 py-1.5 rounded-full hover:bg-white transition-colors">Découvrir</Link>
           <Link href="/groupe" className="flex items-center gap-1.5 text-xs text-white bg-[#E4501C] hover:bg-[#E4501C]/90 px-3 py-1.5 rounded-xl transition-colors font-600">
             <Icon name="PlusIcon" size={12} /> Créer
           </Link>
@@ -284,7 +287,7 @@ function GroupesTab({ userId }: { userId: string }) {
       ) : (
         <div className="space-y-3">
           {groups.map(m => (
-            <Link key={m.id} href={`/groupe?group=${m.group_id}`} className="flex items-center gap-3 bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 hover:border-[#E4501C]/30 hover:shadow-sm transition-all">
+            <Link key={m.id} href={`/groupe?group=${m.group_id}`} className="flex items-center gap-3 bg-white shadow-sm border border-[#C8C3B0]/30 rounded-3xl p-4 hover:border-[#E4501C]/30 hover:shadow-sm transition-all">
               <div className="w-11 h-11 rounded-xl bg-[#1C2620] flex items-center justify-center text-xl flex-shrink-0">
                 {THEME_EMOJI[m.group?.theme || ''] || '🎒'}
               </div>
@@ -341,7 +344,7 @@ function CommandesTab({ userId }: { userId: string }) {
         orders.map(order => {
           const cfg = STATUS_CFG[order.status] ?? STATUS_CFG['en_preparation'];
           return (
-            <div key={order.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5">
+            <div key={order.id} className="bg-white shadow-sm border border-[#C8C3B0]/30 rounded-3xl p-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                 <div>
                   <p className="font-mono font-600 text-[#1C2620] text-sm">{order.order_number}</p>
@@ -427,7 +430,7 @@ function DocumentsTab({ userId }: { userId: string }) {
             const daysLeft = now > 0 && d.expiry ? Math.ceil((new Date(d.expiry).getTime() - now) / 86400000) : 999;
             const urgent = d.expiry ? daysLeft < 90 : false;
             return (
-              <div key={d.id} className={`bg-[#EDEAE0] border rounded-2xl p-4 ${urgent ? 'border-amber-300' : 'border-[#C8C3B0]'}`}>
+              <div key={d.id} className={`bg-white shadow-sm rounded-3xl p-5 border ${urgent ? 'border-amber-300' : 'border-[#C8C3B0]/30'}`}>
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{typeIcon[d.type] || '📄'}</span>
@@ -454,18 +457,18 @@ function DocumentsTab({ userId }: { userId: string }) {
 
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#EDEAE0] rounded-2xl border border-[#C8C3B0] w-full max-w-md shadow-2xl p-6">
+          <div className="bg-white shadow-sm rounded-3xl w-full max-w-md shadow-2xl p-6">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-display font-700 text-[#1C2620]">Ajouter un document</h2>
-              <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-[#E7E3D6] rounded-lg"><Icon name="XMarkIcon" size={20} variant="outline" /></button>
+              <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-[#F5F2E8] rounded-lg"><Icon name="XMarkIcon" size={20} variant="outline" /></button>
             </div>
             <form onSubmit={handleAddDoc} className="space-y-4">
-              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Nom *</label><input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Passeport FR" className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#E4501C]" /></div>
-              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Type</label><select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#E4501C]">{Object.entries(typeIcon).map(([k, v]) => <option key={k} value={k}>{v} {k.charAt(0).toUpperCase() + k.slice(1)}</option>)}</select></div>
-              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Destination</label><input value={form.destination} onChange={e => setForm({ ...form, destination: e.target.value })} placeholder="Monde entier" className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#E4501C]" /></div>
-              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Expiration</label><input type="date" value={form.expiry} onChange={e => setForm({ ...form, expiry: e.target.value })} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#E4501C]" /></div>
+              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Nom *</label><input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Passeport FR" className="w-full bg-[#F5F2E8] border-none rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" /></div>
+              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Type</label><select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className="w-full bg-[#F5F2E8] border-none rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30">{Object.entries(typeIcon).map(([k, v]) => <option key={k} value={k}>{v} {k.charAt(0).toUpperCase() + k.slice(1)}</option>)}</select></div>
+              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Destination</label><input value={form.destination} onChange={e => setForm({ ...form, destination: e.target.value })} placeholder="Monde entier" className="w-full bg-[#F5F2E8] border-none rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" /></div>
+              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Expiration</label><input type="date" value={form.expiry} onChange={e => setForm({ ...form, expiry: e.target.value })} className="w-full bg-[#F5F2E8] border-none rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" /></div>
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-2.5 rounded-xl border border-[#C8C3B0] text-sm font-medium text-[#5C6B5E]">Annuler</button>
+                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-2.5 rounded-xl border border-[#C8C3B0]/30 hover:bg-[#F5F2E8] text-sm font-medium text-[#5C6B5E] transition-colors">Annuler</button>
                 <button type="submit" disabled={saving} className="flex-1 py-2.5 rounded-xl bg-[#E4501C] text-white text-sm font-medium disabled:opacity-50">{saving ? 'Ajout...' : 'Ajouter'}</button>
               </div>
             </form>
@@ -526,7 +529,7 @@ function SecuriteTab() {
           { icon: 'DocumentArrowDownIcon', title: 'Données personnelles', desc: 'Exporter vos données RGPD', action: handleExport, label: 'Exporter', color: 'bg-blue-100' },
           { icon: 'ArrowRightOnRectangleIcon', title: 'Déconnexion', desc: 'Se déconnecter de l\'application', action: () => signOut(), label: 'Déconnecter', color: 'bg-red-100' },
         ].map(item => (
-          <div key={item.title} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5 flex items-center gap-4">
+          <div key={item.title} className="bg-white shadow-sm rounded-3xl p-5 flex items-center gap-4">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${item.color}`}>
               <Icon name={item.icon} size={18} className="text-[#1C2620]" variant="outline" />
             </div>
@@ -534,23 +537,23 @@ function SecuriteTab() {
               <p className="font-600 text-sm text-[#1C2620]">{item.title}</p>
               <p className="text-xs text-[#5C6B5E]">{item.desc}</p>
             </div>
-            <button onClick={item.action} className="px-3 py-1.5 border border-[#C8C3B0] rounded-xl text-xs font-600 text-[#5C6B5E] hover:text-[#1C2620] hover:border-[#1C2620]/30 transition-all flex-shrink-0">{item.label}</button>
+            <button onClick={item.action} className="px-3 py-1.5 border border-[#C8C3B0]/30 rounded-xl text-xs font-600 text-[#5C6B5E] hover:text-[#1C2620] hover:border-[#1C2620]/30 transition-all flex-shrink-0">{item.label}</button>
           </div>
         ))}
       </div>
 
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#EDEAE0] rounded-2xl border border-[#C8C3B0] w-full max-w-sm shadow-2xl p-6">
+          <div className="bg-white shadow-sm rounded-3xl w-full max-w-sm shadow-2xl p-6">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-display font-700 text-[#1C2620]">Modifier le mot de passe</h2>
-              <button onClick={() => setShowPasswordModal(false)} className="p-2 hover:bg-[#E7E3D6] rounded-lg"><Icon name="XMarkIcon" size={20} variant="outline" /></button>
+              <button onClick={() => setShowPasswordModal(false)} className="p-2 hover:bg-[#F5F2E8] rounded-lg"><Icon name="XMarkIcon" size={20} variant="outline" /></button>
             </div>
             <form onSubmit={handlePasswordChange} className="space-y-4">
-              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Nouveau mot de passe</label><input required type="password" value={passwordForm.newPwd} onChange={e => setPasswordForm({ ...passwordForm, newPwd: e.target.value })} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#E4501C]" /></div>
-              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Confirmer</label><input required type="password" value={passwordForm.confirm} onChange={e => setPasswordForm({ ...passwordForm, confirm: e.target.value })} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#E4501C]" /></div>
+              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Nouveau mot de passe</label><input required type="password" value={passwordForm.newPwd} onChange={e => setPasswordForm({ ...passwordForm, newPwd: e.target.value })} className="w-full bg-[#F5F2E8] border-none rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" /></div>
+              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Confirmer</label><input required type="password" value={passwordForm.confirm} onChange={e => setPasswordForm({ ...passwordForm, confirm: e.target.value })} className="w-full bg-[#F5F2E8] border-none rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" /></div>
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowPasswordModal(false)} className="flex-1 py-2.5 rounded-xl border border-[#C8C3B0] text-sm font-medium text-[#5C6B5E]">Annuler</button>
+                <button type="button" onClick={() => setShowPasswordModal(false)} className="flex-1 py-2.5 rounded-xl border border-[#C8C3B0]/30 text-sm font-medium text-[#5C6B5E]">Annuler</button>
                 <button type="submit" disabled={changingPwd} className="flex-1 py-2.5 rounded-xl bg-[#E4501C] text-white text-sm font-medium disabled:opacity-50">{changingPwd ? 'Modification...' : 'Modifier'}</button>
               </div>
             </form>
@@ -689,181 +692,119 @@ export default function ComptePage() {
     <div className="min-h-screen bg-[#F5F2E8]">
       <Header />
 
-      {/* Instagram-style profile header */}
-      <section className="bg-[#1C2620] pt-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Editorial profile header */}
+      <section className="bg-[#F5F2E8] pt-24 border-b border-[#C8C3B0]/30">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
-          {/* Profile top row */}
-          <div className="flex items-start gap-6 sm:gap-10 mb-6">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-8 mb-10">
             {/* Avatar */}
             <div className="relative flex-shrink-0">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-[#E4501C] to-[#C43A10] flex items-center justify-center border-2 border-[#E4501C]/40 shadow-lg">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full flex items-center justify-center bg-white shadow-sm">
                 {profile.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full rounded-full object-cover" />
+                  <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full rounded-full object-cover p-1" />
                 ) : (
-                  <span className="font-display font-800 text-3xl text-white">{initials}</span>
+                  <span className="font-display font-800 text-3xl md:text-5xl text-[#1C2620]">{initials}</span>
                 )}
               </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-emerald-500 border-2 border-[#1C2620]" />
             </div>
 
             {/* Profile info */}
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 w-full text-center md:text-left">
               {/* Name + actions */}
-              <div className="flex items-center gap-3 flex-wrap mb-2">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 {editMode ? (
-                  <input value={editName} onChange={e => setEditName(e.target.value)} className="bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 text-white text-lg font-700 focus:outline-none focus:border-[#E4501C]/60 w-48" />
+                  <input value={editName} onChange={e => setEditName(e.target.value)} className="bg-transparent border-b border-[#1C2620] px-0 py-1 text-[#1C2620] text-3xl font-display font-800 focus:outline-none w-full md:w-auto text-center md:text-left" />
                 ) : (
-                  <h1 className="font-display font-800 text-xl sm:text-2xl text-white tracking-tight">{profile.full_name || user.email?.split('@')[0]}</h1>
+                  <h1 className="font-display font-800 text-3xl md:text-4xl text-[#1C2620] tracking-tight">{profile.full_name || user.email?.split('@')[0]}</h1>
                 )}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center md:justify-end gap-3">
                   {editMode ? (
                     <>
-                      <button onClick={handleSave} disabled={saving} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#E4501C] text-white rounded-xl text-xs font-600 hover:bg-[#E4501C]/90 transition-colors disabled:opacity-50">
-                        {saving ? '...' : '✓ Sauvegarder'}
+                      <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-[#1C2620] text-white rounded-full text-sm font-600 hover:bg-[#2A3830] transition-colors disabled:opacity-50">
+                        {saving ? '...' : '✓ Enregistrer'}
                       </button>
-                      <button onClick={() => setEditMode(false)} className="px-3 py-1.5 border border-white/20 text-white/70 rounded-xl text-xs font-600 hover:border-white/40 transition-colors">Annuler</button>
+                      <button onClick={() => setEditMode(false)} className="px-5 py-2.5 text-[#1C2620] rounded-full text-sm font-600 hover:bg-black/5 transition-colors">Annuler</button>
                     </>
                   ) : (
                     <>
-                      <button onClick={() => setEditMode(true)} className="flex items-center gap-1.5 px-3 py-1.5 border border-white/20 text-white/70 rounded-xl text-xs font-600 hover:border-white/40 hover:text-white transition-colors">
-                        <Icon name="PencilIcon" size={11} /> Modifier
+                      <button onClick={() => setEditMode(true)} className="px-5 py-2.5 border border-[#C8C3B0]/50 bg-white shadow-sm text-[#1C2620] rounded-full text-sm font-600 hover:bg-[#F5F2E8] transition-colors">
+                        Modifier le profil
                       </button>
-                      {saved && <span className="text-xs text-emerald-400 font-600">✓ Sauvegardé</span>}
+                      {saved && <span className="text-xs text-emerald-600 font-600">✓</span>}
                     </>
                   )}
-                  <Link href={`/profil/${user.id}`} className="flex items-center gap-1.5 px-3 py-1.5 border border-white/20 text-white/70 rounded-xl text-xs font-600 hover:border-white/40 hover:text-white transition-colors">
-                    <Icon name="ArrowTopRightOnSquareIcon" size={11} /> Profil public
-                  </Link>
+                  <button onClick={signOut} className="w-10 h-10 flex items-center justify-center rounded-full border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 transition-colors" title="Déconnexion">
+                    <Icon name="ArrowRightOnRectangleIcon" size={16} />
+                  </button>
                 </div>
               </div>
 
-              {/* Stats row — Instagram style */}
-              <div className="flex items-center gap-5 sm:gap-8 mb-3">
-                {[
-                  { label: 'publications', value: postsCount },
-                  { label: 'abonnés', value: followers },
-                  { label: 'abonnements', value: following },
-                  { label: 'carnets', value: carnetsCount },
-                ].map(stat => (
-                  <div key={stat.label} className="text-center">
-                    <p className="font-display font-800 text-white text-lg leading-none">{stat.value}</p>
-                    <p className="text-white/40 text-[10px] mt-0.5">{stat.label}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Bio */}
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">{currentLevel.badge}</span>
-                  <span className={`text-xs font-600 ${currentLevel.color}`}>{currentLevel.name}</span>
-                  <span className="text-white/30 text-xs">·</span>
-                  <span className="font-mono text-xs text-[#E4501C] font-700">{profile.loyalty_points} pts</span>
-                </div>
+              {/* Bio & Details */}
+              <div className="space-y-4 max-w-xl mx-auto md:mx-0">
                 {editMode ? (
-                  <div className="space-y-2">
-                    <input value={editLocation} onChange={e => setEditLocation(e.target.value)} placeholder="Localisation" className="bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 text-white/80 text-xs focus:outline-none focus:border-[#E4501C]/60 w-full max-w-xs" />
-                    <textarea rows={2} value={editBio} onChange={e => setEditBio(e.target.value)} placeholder="Votre bio..." className="bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 text-white/80 text-xs focus:outline-none focus:border-[#E4501C]/60 w-full max-w-xs resize-none" />
+                  <div className="space-y-3">
+                    <input value={editLocation} onChange={e => setEditLocation(e.target.value)} placeholder="Où êtes-vous basé ?" className="w-full bg-transparent border-b border-[#C8C3B0] px-0 py-2 text-sm text-[#1C2620] focus:outline-none focus:border-[#1C2620]" />
+                    <textarea rows={2} value={editBio} onChange={e => setEditBio(e.target.value)} placeholder="Écrivez quelques mots sur vous..." className="w-full bg-transparent border-b border-[#C8C3B0] px-0 py-2 text-sm text-[#1C2620] focus:outline-none focus:border-[#1C2620] resize-none" />
                   </div>
                 ) : (
                   <>
-                    {profile.location && <p className="text-white/50 text-xs flex items-center gap-1"><Icon name="MapPinIcon" size={11} /> {profile.location}</p>}
-                    {profile.bio && <p className="text-white/70 text-sm leading-relaxed max-w-sm">{profile.bio}</p>}
+                    <div className="flex items-center justify-center md:justify-start gap-4 text-sm font-600 text-[#1C2620]">
+                      <span className="flex items-center gap-1">{currentLevel.badge} {currentLevel.name}</span>
+                      {profile.location && <span className="flex items-center gap-1 text-[#5C6B5E] font-400"><Icon name="MapPinIcon" size={14} /> {profile.location}</span>}
+                    </div>
+                    {profile.bio && <p className="text-[#5C6B5E] text-sm leading-relaxed">{profile.bio}</p>}
                   </>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Loyalty progress bar */}
-          {nextLevel && (
-            <div className="mb-5 bg-white/5 rounded-2xl p-4 border border-white/10">
-              <div className="flex items-center justify-between text-xs mb-2">
-                <span className="text-white/50">{currentLevel.badge} {currentLevel.name}</span>
-                <span className="text-white/50">{nextLevel.badge} {nextLevel.name} à {nextLevel.min} pts</span>
-              </div>
-              <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-[#E4501C] to-[#F07040] rounded-full transition-all" style={{ width: `${loyaltyProgress}%` }} />
-              </div>
-              <p className="text-[10px] text-white/30 mt-1 text-right">{nextLevel.min - profile.loyalty_points} pts pour le niveau suivant</p>
-            </div>
-          )}
-
-          {/* Quick action links */}
-          <div className="flex items-center gap-2 flex-wrap mb-2">
-            {[
-              { label: 'Configurateur IA', href: '/ai-configurator', emoji: '🤖' },
-              { label: 'Mes groupes', href: '/groupe', emoji: '🗺️' },
-              { label: 'Communauté', href: '/communaute', emoji: '🌍' },
-              { label: 'Copilote', href: '/copilote', emoji: '✈️' },
-              { label: 'Alertes', href: '/alertes', emoji: '🔔' },
-            ].map(item => (
-              <Link key={item.href} href={item.href} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-xs text-white/70 hover:text-white transition-all">
-                <span>{item.emoji}</span> {item.label}
-              </Link>
-            ))}
-            <button onClick={signOut} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-xs text-red-400 hover:text-red-300 transition-all ml-auto">
-              <Icon name="ArrowRightOnRectangleIcon" size={11} /> Déconnexion
-            </button>
-          </div>
-
-          {/* Trust score + AI Conseil row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-            {/* Trust score */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
-              <div className="relative flex-shrink-0">
-                <svg width={56} height={56} className="-rotate-90">
-                  <circle cx={28} cy={28} r={22} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={4} />
-                  <circle cx={28} cy={28} r={22} fill="none" stroke="#E4501C" strokeWidth={4} strokeDasharray={2 * Math.PI * 22} strokeDashoffset={2 * Math.PI * 22 * (1 - (profile.trust_score || 50) / 100)} strokeLinecap="round" />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center"><span className="font-mono font-700 text-white text-sm">{profile.trust_score || 50}</span></div>
-              </div>
-              <div>
-                <p className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-0.5">Trust Score</p>
-                <p className="font-display font-700 text-white text-sm">Confirmé 🏔️</p>
-                <p className="text-white/40 text-xs">Score de confiance</p>
-              </div>
-            </div>
-
-            {/* AI Conseil */}
-            <div className="bg-gradient-to-br from-[#E4501C]/20 to-[#E4501C]/5 border border-[#E4501C]/30 rounded-2xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Icon name="LightBulbIcon" size={14} className="text-[#E4501C]" />
-                  <p className="text-xs font-600 text-white">Conseil IA personnalisé</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+            {/* Stats */}
+            <div className="sm:col-span-2 flex justify-around sm:justify-start sm:gap-12 py-6 border-y border-[#C8C3B0]/50">
+              {[
+                { label: 'Carnets', value: carnetsCount },
+                { label: 'Abonnés', value: followers },
+                { label: 'Abonnements', value: following },
+              ].map(stat => (
+                <div key={stat.label} className="text-center sm:text-left">
+                  <p className="font-display font-800 text-[#1C2620] text-2xl">{stat.value}</p>
+                  <p className="text-[#5C6B5E] text-xs font-mono tracking-wide uppercase">{stat.label}</p>
                 </div>
-                <button onClick={handleGenerateConseil} disabled={conseilLoading} className="text-[10px] text-[#E4501C] hover:underline font-600 disabled:opacity-50 flex items-center gap-1">
-                  {conseilLoading ? <div className="w-3 h-3 border border-[#E4501C] border-t-transparent rounded-full animate-spin" /> : <Icon name="SparklesIcon" size={10} />}
-                  {conseilLoading ? 'Génération...' : 'Générer'}
-                </button>
-              </div>
-              {aiConseil ? (
-                <p className="text-xs text-white/80 leading-relaxed line-clamp-3">
-                  {aiConseil}
-                  {conseilLoading && <span className="inline-block w-1 h-3 bg-[#E4501C] animate-pulse ml-0.5 rounded-sm" />}
-                </p>
-              ) : conseilLoading ? (
-                <p className="text-xs text-white/40 animate-pulse">Gemini génère vos conseils...</p>
-              ) : (
-                <p className="text-xs text-white/40">Cliquez sur &quot;Générer&quot; pour obtenir des conseils personnalisés par Gemini.</p>
-              )}
+              ))}
+            </div>
+
+            {/* Quick Actions / Trust Score */}
+            <div className="flex flex-col justify-center border-y border-[#C8C3B0]/50 py-6">
+               <div className="flex items-center gap-3">
+                 <div className="relative w-12 h-12 flex-shrink-0">
+                    <svg width={48} height={48} className="-rotate-90">
+                      <circle cx={24} cy={24} r={20} fill="none" stroke="rgba(200,195,176,0.3)" strokeWidth={3} />
+                      <circle cx={24} cy={24} r={20} fill="none" stroke="#E4501C" strokeWidth={3} strokeDasharray={2 * Math.PI * 20} strokeDashoffset={2 * Math.PI * 20 * (1 - (profile.trust_score || 50) / 100)} strokeLinecap="round" />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center"><span className="font-mono font-700 text-[#1C2620] text-xs">{profile.trust_score || 50}</span></div>
+                 </div>
+                 <div>
+                   <p className="font-600 text-sm text-[#1C2620]">Trust Score</p>
+                   <Link href={`/profil/${user.id}`} className="text-xs text-[#E4501C] hover:underline font-600">Voir mon profil public →</Link>
+                 </div>
+               </div>
             </div>
           </div>
 
-          {/* Tab navigation — Instagram style */}
-          <div className="flex border-t border-white/10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 overflow-x-auto">
+          {/* Tab navigation */}
+          <div className="flex overflow-x-auto scrollbar-hide gap-8">
             {TABS.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-4 py-3 text-xs font-600 whitespace-nowrap border-t-2 transition-all -mt-px ${activeTab === tab.id ? 'border-white text-white' : 'border-transparent text-white/40 hover:text-white/70'}`}
+                className={`pb-4 text-sm font-600 whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${activeTab === tab.id ? 'border-[#1C2620] text-[#1C2620]' : 'border-transparent text-[#5C6B5E] hover:text-[#1C2620]'}`}
               >
-                <Icon name={tab.icon} size={13} variant={activeTab === tab.id ? 'solid' : 'outline'} />
+                <Icon name={tab.icon} size={16} variant={activeTab === tab.id ? 'solid' : 'outline'} />
                 {tab.label}
                 {tab.count !== undefined && tab.count > 0 && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-700 ${activeTab === tab.id ? 'bg-white text-[#1C2620]' : 'bg-white/10 text-white/50'}`}>{tab.count}</span>
+                  <span className="ml-1 text-xs text-[#5C6B5E]">({tab.count})</span>
                 )}
               </button>
             ))}
@@ -876,15 +817,23 @@ export default function ComptePage() {
         {profileLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{[1,2,3,4,5,6].map(i => <div key={i} className="h-32 bg-[#C8C3B0]/30 rounded-2xl animate-pulse" />)}</div>
         ) : (
-          <>
-            {activeTab === 'posts' && <PostsTab userId={user.id} />}
-            {activeTab === 'carnets' && <CarnetsTab userId={user.id} />}
-            {activeTab === 'inventaire' && <InventaireTab userId={user.id} />}
-            {activeTab === 'groupes' && <GroupesTab userId={user.id} />}
-            {activeTab === 'commandes' && <CommandesTab userId={user.id} />}
-            {activeTab === 'documents' && <DocumentsTab userId={user.id} />}
-            {activeTab === 'securite' && <SecuriteTab />}
-          </>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.2 }}
+            >
+              {activeTab === 'posts' && <PostsTab userId={user.id} />}
+              {activeTab === 'carnets' && <CarnetsTab userId={user.id} />}
+              {activeTab === 'inventaire' && <InventaireTab userId={user.id} />}
+              {activeTab === 'groupes' && <GroupesTab userId={user.id} />}
+              {activeTab === 'commandes' && <CommandesTab userId={user.id} />}
+              {activeTab === 'documents' && <DocumentsTab userId={user.id} />}
+              {activeTab === 'securite' && <SecuriteTab />}
+            </motion.div>
+          </AnimatePresence>
         )}
       </div>
 

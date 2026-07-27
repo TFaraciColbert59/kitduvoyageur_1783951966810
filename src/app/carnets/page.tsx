@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import Image from 'next/image';
 import Link from 'next/link';
+import BackButton from '@/components/ui/BackButton';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -904,8 +905,9 @@ export default function CarnetsPage() {
       <Header />
 
       {/* Hero */}
-      <section className="bg-[#1C2620] pt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <section className="bg-[#1C2620] pt-24 pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <BackButton variant="ghost" className="text-xs mb-8 text-white/70 hover:text-white" />
           <p className="text-[10px] font-mono text-[#E4501C] tracking-[0.2em] uppercase mb-2">Communauté</p>
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
             <div>

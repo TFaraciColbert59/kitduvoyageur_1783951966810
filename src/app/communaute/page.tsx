@@ -1,1315 +1,1022 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
-import Image from 'next/image';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
+import { createClient } from '@/lib/supabase/client';
+import CreateGroupWizardModal from '@/components/groupes/CreateGroupWizardModal';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-type MainTab = 'feed' | 'profils' | 'groupes' | 'qa' | 'ama';
-
-interface CommunityPost {
-  id: string;
-  author_id: string;
-  title: string;
-  content: string;
-  image_url: string;
-  image_alt: string;
-  post_type: 'post' | 'tip' | 'question' | 'share';
-  likes_count: number;
-  comments_count: number;
-  shares_count: number;
-  is_trending: boolean;
-  created_at: string;
-  author?: { full_name: string; avatar_url: string; trust_score: number; loyalty_level: string };
-  user_liked?: boolean;
-}
-
-interface PostComment {
-  id: string;
-  post_id: string;
-  author_id: string;
-  content: string;
-  created_at: string;
-  author?: { full_name: string };
-}
-
-interface UserProfile {
-  id: string;
-  full_name: string;
-  avatar_url: string;
-  trust_score: number;
-  loyalty_level: string;
-  created_at: string;
-  user_following?: boolean;
-}
-
-interface QAQuestion {
-  id: string;
-  author_id: string;
-  title: string;
-  content: string;
-  tags: string[];
-  category: string;
-  votes_count: number;
-  answers_count: number;
-  views_count: number;
-  is_solved: boolean;
-  created_at: string;
-  author?: { full_name: string; trust_score: number };
-  user_voted?: boolean;
-}
-
-interface QAAnswer {
-  id: string;
-  question_id: string;
-  author_id: string;
-  content: string;
-  votes_count: number;
-  is_accepted: boolean;
-  created_at: string;
-  author?: { full_name: string; trust_score: number };
-}
-
-interface AMASession {
-  id: string;
-  expert_id: string;
-  title: string;
-  description: string;
-  scheduled_at: string | null;
-  duration_minutes: number;
-  status: 'upcoming' | 'live' | 'ended';
-  participants_count: number;
-  questions_count: number;
-  expert?: { full_name: string; avatar_url: string; trust_score: number; loyalty_level: string };
-}
-
-interface AMAQuestion {
-  id: string;
-  session_id: string;
-  author_id: string;
-  content: string;
-  votes_count: number;
-  is_answered: boolean;
-  answer: string;
-  created_at: string;
-  author?: { full_name: string };
-  user_voted?: boolean;
-}
-
-const POST_TYPE_CFG: Record<string, { label: string; color: string; emoji: string }> = {
-  post: { label: 'Post', color: 'bg-gray-100 text-gray-700', emoji: '💬' },
-  tip: { label: 'Conseil', color: 'bg-emerald-100 text-emerald-700', emoji: '💡' },
-  question: { label: 'Question', color: 'bg-blue-100 text-blue-700', emoji: '❓' },
-  share: { label: 'Partage', color: 'bg-purple-100 text-purple-700', emoji: '🔗' },
+// Helper formatting functions
+const formatDateString = (dateString: string) => {
+  const d = new Date(dateString);
+  const months = ['JAN', 'FÉV', 'MAR', 'AVR', 'MAI', 'JUN', 'JUL', 'AOÛ', 'SEP', 'OCT', 'NOV', 'DÉC'];
+  return {
+    day: d.getDate().toString().padStart(2, '0'),
+    month: months[d.getMonth()]
+  };
 };
 
-const LEVEL_CFG: Record<string, { color: string; icon: string }> = {
-  Explorateur: { color: 'text-gray-600 bg-gray-100', icon: '🌱' },
-  Aventurier: { color: 'text-blue-700 bg-blue-100', icon: '🏔️' },
-  Expert: { color: 'text-purple-700 bg-purple-100', icon: '⛰️' },
-  Ambassadeur: { color: 'text-amber-700 bg-amber-100', icon: '🏅' },
-  'Randonneur Expert': { color: 'text-blue-700 bg-blue-100', icon: '🧗' },
-  'Guide de Montagne': { color: 'text-purple-700 bg-purple-100', icon: '🏔️' },
-  'Légende du Voyage': { color: 'text-amber-700 bg-amber-100', icon: '🌍' },
+const timeAgo = (dateString: string) => {
+  const d = new Date(dateString);
+  const now = new Date();
+  const diff = now.getTime() - d.getTime();
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  if (hours < 24) return `Il y a ${Math.max(1, hours)} h`;
+  return `Il y a ${Math.floor(hours / 24)} j`;
 };
 
-// ─── Compose Post Modal ───────────────────────────────────────────────────────
-interface ComposeModalProps {
-  onClose: () => void;
-  onPublished: () => void;
-}
+// --- INLINE COMPONENTS FOR ENCAPSULATED STATE ---
 
-function ComposeModal({ onClose, onPublished }: ComposeModalProps) {
-  const [form, setForm] = useState({
-    title: '',
-    content: '',
-    post_type: 'post' as CommunityPost['post_type'],
-    image_url: '',
-  });
-  const [posting, setPosting] = useState(false);
-  const [error, setError] = useState('');
-  const { user } = useAuth();
-  const supabase = useMemo(() => createClient(), []);
+function PostCard({ post, user }: { post: any, user: any }) {
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(post.likes_count || 0);
+  const [commentsCount, setCommentsCount] = useState(post.comments_count || 0);
+  const [showComments, setShowComments] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [comments, setComments] = useState<any[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
 
-  const handlePublish = async () => {
-    if (!user) { setError('Connectez-vous pour publier.'); return; }
-    if (!form.content.trim()) { setError('Le contenu est requis.'); return; }
-    setPosting(true);
-    setError('');
-    try {
-      const { error: insertError } = await supabase.from('community_posts').insert({
-        author_id: user.id,
-        title: form.title.trim(),
-        content: form.content.trim(),
-        post_type: form.post_type,
-        image_url: form.image_url.trim(),
-        image_alt: form.title.trim() || 'Image du post',
-      });
-      if (insertError) throw insertError;
-      onPublished();
-      onClose();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de la publication.');
-    } finally {
-      setPosting(false);
+  const handleLike = () => {
+    const newLiked = !isLiked;
+    setIsLiked(newLiked);
+    const newCount = newLiked ? likesCount + 1 : Math.max(0, likesCount - 1);
+    setLikesCount(newCount);
+    
+    const supabase = createClient();
+    supabase.from('community_posts').update({ likes_count: newCount }).eq('id', post.id).then();
+  };
+
+  const handleToggleComments = async () => {
+    setShowComments(!showComments);
+    if (!showComments && comments.length === 0) {
+      setLoadingComments(true);
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('post_comments')
+        .select(`
+          *,
+          author:user_profiles(full_name, avatar_url)
+        `)
+        .eq('post_id', post.id)
+        .order('created_at', { ascending: true });
+      
+      if (data) setComments(data);
+      setLoadingComments(false);
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-lg shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-[#C8C3B0]">
-          <h2 className="font-display font-700 text-[#1C2620] text-lg">Nouveau post</h2>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors">
-            <Icon name="XMarkIcon" size={18} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="p-5 space-y-4">
-          {/* Post type selector */}
-          <div>
-            <label className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-[0.15em] block mb-2">Type de post</label>
-            <div className="flex gap-2 flex-wrap">
-              {(['post', 'tip', 'question', 'share'] as const).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setForm((f) => ({ ...f, post_type: t }))}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border transition-all ${
-                    form.post_type === t
-                      ? 'bg-[#E4501C]/10 border-[#E4501C]/40 text-[#E4501C]'
-                      : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-[#E4501C]/30'
-                  }`}
-                >
-                  {POST_TYPE_CFG[t].emoji} {POST_TYPE_CFG[t].label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Title */}
-          <div>
-            <label className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-[0.15em] block mb-1.5">Titre (optionnel)</label>
-            <input
-              type="text"
-              value={form.title}
-              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              placeholder="Un titre accrocheur..."
-              className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] placeholder:text-[#5C6B5E]/60 focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 focus:border-[#E4501C]/40"
-            />
-          </div>
-
-          {/* Content */}
-          <div>
-            <label className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-[0.15em] block mb-1.5">Contenu *</label>
-            <textarea
-              rows={5}
-              value={form.content}
-              onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
-              placeholder={
-                form.post_type === 'tip' ?'Partagez un conseil utile pour la communauté...'
-                  : form.post_type === 'question' ?'Posez votre question à la communauté...'
-                  : form.post_type === 'share' ?'Partagez un lien, une ressource, une découverte...' :'Partagez votre expérience, vos aventures...'
-              }
-              className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-3 text-sm text-[#1C2620] placeholder:text-[#5C6B5E]/60 focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 focus:border-[#E4501C]/40 resize-none"
-            />
-          </div>
-
-          {/* Image URL */}
-          <div>
-            <label className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-[0.15em] block mb-1.5">
-              <Icon name="PhotoIcon" size={11} className="inline mr-1" />
-              Image (URL optionnelle)
-            </label>
-            <input
-              type="url"
-              value={form.image_url}
-              onChange={(e) => setForm((f) => ({ ...f, image_url: e.target.value }))}
-              placeholder="https://exemple.com/image.jpg"
-              className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] placeholder:text-[#5C6B5E]/60 focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 focus:border-[#E4501C]/40"
-            />
-            {form.image_url && (
-              <div className="mt-2 relative h-32 rounded-xl overflow-hidden border border-[#C8C3B0]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={form.image_url} alt="Aperçu" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-              </div>
-            )}
-          </div>
-
-          {error && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-200">
-              <Icon name="ExclamationCircleIcon" size={14} className="text-red-500 flex-shrink-0" />
-              <p className="text-xs text-red-600">{error}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="flex gap-3 p-5 border-t border-[#C8C3B0]">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border border-[#C8C3B0] text-sm font-600 text-[#5C6B5E] hover:bg-[#C8C3B0]/20 transition-colors"
-          >
-            Annuler
-          </button>
-          <button
-            onClick={handlePublish}
-            disabled={posting || !form.content.trim()}
-            className="flex-1 py-2.5 rounded-xl bg-[#E4501C] text-white text-sm font-700 hover:bg-[#E4501C]/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {posting ? (
-              <>
-                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Publication...
-              </>
-            ) : (
-              <>
-                <Icon name="PaperAirplaneIcon" size={14} />
-                Publier
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Feed Tab ─────────────────────────────────────────────────────────────────
-function FeedTab() {
-  const [posts, setPosts] = useState<CommunityPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [feedFilter, setFeedFilter] = useState<'all' | 'trending'>('all');
-  const [showCompose, setShowCompose] = useState(false);
-  const [commentPost, setCommentPost] = useState<CommunityPost | null>(null);
-  const [comments, setComments] = useState<PostComment[]>([]);
-  const [newComment, setNewComment] = useState('');
-  const [submittingComment, setSubmittingComment] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const { user } = useAuth();
-  const supabase = useMemo(() => createClient(), []);
-
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
-
-  const loadPosts = useCallback(async () => {
-    setLoading(true);
-    let query = supabase
-      .from('community_posts')
-      .select('*, author:user_profiles(full_name, avatar_url, trust_score, loyalty_level)')
-      .order('created_at', { ascending: false })
-      .limit(30);
-
-    if (feedFilter === 'trending') query = query.eq('is_trending', true);
-
-    const { data } = await query;
-    let likedIds: string[] = [];
-    if (user) {
-      const { data: likes } = await supabase.from('post_likes').select('post_id').eq('user_id', user.id);
-      likedIds = likes?.map((l) => l.post_id) ?? [];
-    }
-    // Filter out spam/test posts: content must be at least 20 chars and not look like keyboard mashing
-    const filtered = (data ?? []).filter((p) => {
-      const content = (p.content ?? '').trim();
-      const title = (p.title ?? '').trim();
-      if (content.length < 20) return false;
-      // Detect keyboard mashing: high ratio of repeated chars or no spaces in long strings
-      const hasNoSpaces = content.length > 15 && !content.includes(' ');
-      if (hasNoSpaces) return false;
-      // Detect test/spam titles
-      const spamPatterns = /^(test|spam|ezf|aaa|bbb|xxx|zzz|asdf|qwerty)/i;
-      if (spamPatterns.test(title) || spamPatterns.test(content)) return false;
-      return true;
-    });
-    setPosts(filtered.map((p) => ({ ...p, user_liked: likedIds.includes(p.id) })));
-    setLoading(false);
-  }, [supabase, user, feedFilter]);
-
-  useEffect(() => { loadPosts(); }, [loadPosts]);
-
-  const handleLike = async (post: CommunityPost) => {
-    if (!user) { showToast('Connectez-vous pour réagir'); return; }
-    if (post.user_liked) {
-      await supabase.from('post_likes').delete().eq('post_id', post.id).eq('user_id', user.id);
-      await supabase.from('community_posts').update({ likes_count: Math.max(0, post.likes_count - 1) }).eq('id', post.id);
-      setPosts((prev) => prev.map((p) => p.id === post.id ? { ...p, user_liked: false, likes_count: Math.max(0, p.likes_count - 1) } : p));
-    } else {
-      await supabase.from('post_likes').upsert({ post_id: post.id, user_id: user.id }, { onConflict: 'post_id,user_id' });
-      await supabase.from('community_posts').update({ likes_count: post.likes_count + 1 }).eq('id', post.id);
-      setPosts((prev) => prev.map((p) => p.id === post.id ? { ...p, user_liked: true, likes_count: p.likes_count + 1 } : p));
-    }
-  };
-
-  const openComments = async (post: CommunityPost) => {
-    setCommentPost(post);
-    const { data } = await supabase.from('post_comments').select('*, author:user_profiles(full_name)').eq('post_id', post.id).order('created_at', { ascending: true });
-    setComments((data as PostComment[]) ?? []);
-  };
-
-  const handleComment = async () => {
-    if (!user || !commentPost || !newComment.trim()) return;
-    setSubmittingComment(true);
-    const { data } = await supabase.from('post_comments').insert({ post_id: commentPost.id, author_id: user.id, content: newComment.trim() }).select('*, author:user_profiles(full_name)').single();
-    if (data) {
-      setComments((prev) => [...prev, data as PostComment]);
-      await supabase.from('community_posts').update({ comments_count: commentPost.comments_count + 1 }).eq('id', commentPost.id);
-      setPosts((prev) => prev.map((p) => p.id === commentPost.id ? { ...p, comments_count: p.comments_count + 1 } : p));
-    }
-    setNewComment('');
-    setSubmittingComment(false);
-  };
-
-  const handleShare = (post: CommunityPost) => {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(`${window.location.origin}/communaute?post=${post.id}`);
-      showToast('Lien copié !');
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Compose button / CTA */}
-      {user ? (
-        <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4">
-          <button
-            onClick={() => setShowCompose(true)}
-            className="w-full flex items-center gap-3 text-left"
-          >
-            <div className="w-10 h-10 rounded-xl bg-[#E4501C]/20 flex items-center justify-center font-700 text-[#E4501C] flex-shrink-0">
-              {user.email?.[0]?.toUpperCase() ?? 'U'}
-            </div>
-            <div className="flex-1 bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#5C6B5E]/70 hover:border-[#E4501C]/30 transition-colors">
-              Partagez votre expérience, un conseil, une question...
-            </div>
-            <button
-              onClick={(e) => { e.stopPropagation(); setShowCompose(true); }}
-              className="flex items-center gap-2 px-4 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors flex-shrink-0"
-            >
-              <Icon name="PlusIcon" size={14} />
-              Publier
-            </button>
-          </button>
-        </div>
-      ) : (
-        <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5 text-center">
-          <p className="text-sm text-[#5C6B5E] mb-3">Connectez-vous pour partager avec la communauté</p>
-          <Link href="/connexion" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors">
-            <Icon name="ArrowRightOnRectangleIcon" size={14} />
-            Se connecter
-          </Link>
-        </div>
-      )}
-
-      {/* Feed filters */}
-      <div className="flex items-center gap-2">
-        {[
-          { id: 'all', label: 'Tout le feed' },
-          { id: 'trending', label: '🔥 Trending' },
-        ].map((f) => (
-          <button
-            key={f.id}
-            onClick={() => setFeedFilter(f.id as typeof feedFilter)}
-            className={`px-4 py-2 rounded-xl text-sm font-600 border transition-all ${feedFilter === f.id ? 'bg-[#1C2620] text-white border-[#1C2620]' : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-[#1C2620]/30'}`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Posts */}
-      {loading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => <div key={i} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl h-40 animate-pulse" />)}
-        </div>
-      ) : posts.length === 0 ? (
-        <div className="text-center py-16 text-[#5C6B5E]">
-          <p className="text-4xl mb-3">💬</p>
-          <p className="font-display font-700 text-[#1C2620] text-lg mb-1">Aucun post</p>
-          <p className="text-sm">Soyez le premier à partager quelque chose !</p>
-        </div>
-      ) : (
-        posts.map((post) => {
-          const typeCfg = POST_TYPE_CFG[post.post_type] ?? POST_TYPE_CFG.post;
-          const lvl = LEVEL_CFG[post.author?.loyalty_level ?? 'Explorateur'] ?? LEVEL_CFG.Explorateur;
-          return (
-            <div key={post.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4">
-              {/* Author */}
-              <div className="flex items-start gap-3 mb-3">
-                <Link href={`/profil/${post.author_id}`} className="w-10 h-10 rounded-xl bg-[#E4501C]/20 flex items-center justify-center font-700 text-[#E4501C] flex-shrink-0 hover:bg-[#E4501C]/30 transition-colors">
-                  {post.author?.full_name?.[0] ?? '?'}
-                </Link>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Link href={`/profil/${post.author_id}`} className="font-700 text-[#1C2620] text-sm hover:text-[#E4501C] transition-colors">{post.author?.full_name ?? 'Anonyme'}</Link>
-                    <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${lvl.color}`}>{lvl.icon} {post.author?.loyalty_level}</span>
-                    <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${typeCfg.color}`}>{typeCfg.emoji} {typeCfg.label}</span>
-                    {post.is_trending && <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-700">🔥 Trending</span>}
-                  </div>
-                  <p className="text-[10px] text-[#5C6B5E]">Trust {post.author?.trust_score ?? 0} · {new Date(post.created_at).toLocaleDateString('fr-FR')}</p>
-                </div>
-              </div>
-
-              {/* Title */}
-              {post.title && <h3 className="font-700 text-[#1C2620] text-sm mb-1">{post.title}</h3>}
-
-              {/* Content */}
-              <p className="text-sm text-[#1C2620] mb-3 leading-relaxed">{post.content}</p>
-
-              {/* Image */}
-              {post.image_url && (
-                <div className="relative h-48 rounded-xl overflow-hidden mb-3">
-                  <Image src={post.image_url} alt={post.image_alt || 'Post image'} fill className="object-cover" />
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex items-center gap-2 pt-2 border-t border-[#C8C3B0]/50">
-                <button
-                  onClick={() => handleLike(post)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border transition-all ${post.user_liked ? 'bg-[#E4501C]/10 border-[#E4501C]/30 text-[#E4501C]' : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-[#E4501C]/30'}`}
-                >
-                  <Icon name="HeartIcon" variant={post.user_liked ? 'solid' : 'outline'} size={13} />
-                  {post.likes_count}
-                </button>
-                <button
-                  onClick={() => openComments(post)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border border-[#C8C3B0] text-[#5C6B5E] hover:border-[#1C2620]/30 transition-all"
-                >
-                  <Icon name="ChatBubbleLeftIcon" size={13} />
-                  {post.comments_count}
-                </button>
-                <button
-                  onClick={() => handleShare(post)}
-                  className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border border-[#C8C3B0] text-[#5C6B5E] hover:border-[#1C2620]/30 transition-all"
-                >
-                  <Icon name="ShareIcon" size={13} />
-                  Partager
-                </button>
-              </div>
-            </div>
-          );
-        })
-      )}
-
-      {/* Compose Modal */}
-      {showCompose && (
-        <ComposeModal
-          onClose={() => setShowCompose(false)}
-          onPublished={() => { loadPosts(); showToast('Post publié !'); }}
-        />
-      )}
-
-      {/* Comments modal */}
-      {commentPost && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
-            <div className="flex items-center justify-between p-5 border-b border-[#C8C3B0]">
-              <h3 className="font-display font-700 text-[#1C2620]">Commentaires ({commentPost.comments_count})</h3>
-              <button onClick={() => setCommentPost(null)} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-5 space-y-3">
-              {comments.length === 0 ? (
-                <p className="text-center text-[#5C6B5E] text-sm py-8">Aucun commentaire. Soyez le premier !</p>
-              ) : (
-                comments.map((c) => (
-                  <div key={c.id} className="flex gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-[#E4501C]/20 flex items-center justify-center text-xs font-700 text-[#E4501C] flex-shrink-0">{c.author?.full_name?.[0] ?? '?'}</div>
-                    <div className="flex-1 bg-white rounded-xl p-3">
-                      <p className="text-xs font-700 text-[#1C2620] mb-1">{c.author?.full_name ?? 'Anonyme'}</p>
-                      <p className="text-sm text-[#5C6B5E]">{c.content}</p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            {user ? (
-              <div className="p-5 border-t border-[#C8C3B0] flex gap-3">
-                <input
-                  className="flex-1 bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30"
-                  placeholder="Écrire un commentaire..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleComment(); } }}
-                />
-                <button onClick={handleComment} disabled={submittingComment || !newComment.trim()} className="px-4 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-600 disabled:opacity-50 hover:bg-[#E4501C]/90 transition-colors">
-                  {submittingComment ? '...' : 'Envoyer'}
-                </button>
-              </div>
-            ) : (
-              <div className="p-5 border-t border-[#C8C3B0] text-center text-sm text-[#5C6B5E]">
-                <Link href="/connexion" className="text-[#E4501C] font-600 hover:underline">Connectez-vous</Link> pour commenter
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1C2620] text-white px-5 py-3 rounded-xl text-sm font-600 shadow-xl">
-          {toast}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Profiles Tab ─────────────────────────────────────────────────────────────
-function ProfilsTab() {
-  const [profiles, setProfiles] = useState<UserProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [toast, setToast] = useState<string | null>(null);
-  const { user } = useAuth();
-  const supabase = useMemo(() => createClient(), []);
-
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
-
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      const { data } = await supabase.from('user_profiles').select('*').order('trust_score', { ascending: false }).limit(50);
-      let followingIds: string[] = [];
-      if (user) {
-        const { data: follows } = await supabase.from('user_follows').select('following_id').eq('follower_id', user.id);
-        followingIds = follows?.map((f) => f.following_id) ?? [];
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentText.trim()) return;
+    
+    const newComment = {
+      id: Date.now().toString(),
+      content: commentText.trim(),
+      created_at: new Date().toISOString(),
+      author: {
+        full_name: user.user_metadata?.full_name || 'Moi',
+        avatar_url: user.user_metadata?.avatar_url
       }
-      setProfiles((data ?? []).map((p) => ({ ...p, user_following: followingIds.includes(p.id) })));
-      setLoading(false);
     };
-    load();
-  }, [supabase, user]);
+    
+    // Optimistic UI
+    setComments([...comments, newComment]);
+    setCommentsCount(prev => prev + 1);
+    setCommentText('');
 
-  const handleFollow = async (profile: UserProfile) => {
-    if (!user) { showToast('Connectez-vous pour suivre'); return; }
-    if (profile.id === user.id) return;
-    if (profile.user_following) {
-      await supabase.from('user_follows').delete().eq('follower_id', user.id).eq('following_id', profile.id);
-      setProfiles((prev) => prev.map((p) => p.id === profile.id ? { ...p, user_following: false } : p));
-      showToast('Abonnement annulé');
-    } else {
-      await supabase.from('user_follows').upsert({ follower_id: user.id, following_id: profile.id }, { onConflict: 'follower_id,following_id' });
-      setProfiles((prev) => prev.map((p) => p.id === profile.id ? { ...p, user_following: true } : p));
-      showToast('Abonné !');
-    }
-  };
-
-  const filtered = profiles.filter((p) => !search || p.full_name?.toLowerCase().includes(search.toLowerCase()));
-
-  return (
-    <div className="space-y-6">
-      <div className="relative">
-        <Icon name="MagnifyingGlassIcon" size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5C6B5E]" />
-        <input
-          className="w-full bg-[#EDEAE0] border border-[#C8C3B0] rounded-xl pl-10 pr-4 py-3 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30"
-          placeholder="Rechercher un aventurier..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl h-48 animate-pulse" />)}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.length === 0 ? (
-            <div className="col-span-full text-center py-16 text-[#5C6B5E]">
-              <p className="text-4xl mb-3">🧭</p>
-              <p className="font-display font-700 text-[#1C2620] text-lg mb-1">
-                {search ? 'Aucun aventurier trouvé' : 'Aucun profil disponible'}
-              </p>
-              <p className="text-sm">{search ? `Aucun résultat pour "${search}"` : 'Soyez le premier à rejoindre la communauté !'}</p>
-            </div>
-          ) : (
-            filtered.map((p) => {
-              const lvl = LEVEL_CFG[p.loyalty_level ?? 'Explorateur'] ?? LEVEL_CFG.Explorateur;
-              const isMe = user?.id === p.id;
-              return (
-                <div key={p.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5">
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-2xl bg-[#E4501C]/20 flex items-center justify-center font-700 text-[#E4501C] text-lg flex-shrink-0">
-                      {p.full_name?.[0] ?? '?'}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-700 text-[#1C2620] text-sm truncate">{p.full_name}</p>
-                        <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${lvl.color}`}>{lvl.icon} {p.loyalty_level}</span>
-                      </div>
-                      <p className="text-[10px] text-[#5C6B5E]">Membre depuis {new Date(p.created_at).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="font-mono font-700 text-[#E4501C] text-lg">{p.trust_score}</p>
-                      <p className="text-[10px] text-[#5C6B5E]">Trust</p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Link href={`/profil/${p.id}`} className="flex-1 py-2 rounded-xl text-sm font-600 text-center border border-[#C8C3B0] text-[#5C6B5E] hover:bg-[#C8C3B0]/20 transition-colors">
-                      Voir profil
-                    </Link>
-                    {!isMe && (
-                      <button
-                        onClick={() => handleFollow(p)}
-                        className={`flex-1 py-2 rounded-xl text-sm font-600 transition-all ${p.user_following ? 'bg-[#1C2620]/10 text-[#1C2620] border border-[#C8C3B0]' : 'bg-[#E4501C] text-white hover:bg-[#E4501C]/90'}`}
-                      >
-                        {p.user_following ? '✓ Abonné' : 'Suivre'}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      )}
-
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1C2620] text-white px-5 py-3 rounded-xl text-sm font-600 shadow-xl">
-          {toast}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Q&A Tab ──────────────────────────────────────────────────────────────────
-function QATab() {
-  const [questions, setQuestions] = useState<QAQuestion[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedQ, setSelectedQ] = useState<QAQuestion | null>(null);
-  const [answers, setAnswers] = useState<QAAnswer[]>([]);
-  const [newAnswer, setNewAnswer] = useState('');
-  const [submittingAnswer, setSubmittingAnswer] = useState(false);
-  const [showAskModal, setShowAskModal] = useState(false);
-  const [newQuestion, setNewQuestion] = useState({ title: '', content: '', tags: '', category: 'général' });
-  const [postingQ, setPostingQ] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const { user } = useAuth();
-  const supabase = useMemo(() => createClient(), []);
-
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
-
-  const loadQuestions = useCallback(async () => {
-    setLoading(true);
-    const { data } = await supabase
-      .from('qa_questions')
-      .select('*, author:user_profiles(full_name, trust_score)')
-      .order('created_at', { ascending: false })
-      .limit(30);
-    setQuestions(data ?? []);
-    setLoading(false);
-  }, [supabase]);
-
-  useEffect(() => { loadQuestions(); }, [loadQuestions]);
-
-  const openQuestion = async (q: QAQuestion) => {
-    setSelectedQ(q);
-    const { data } = await supabase.from('qa_answers').select('*, author:user_profiles(full_name, trust_score)').eq('question_id', q.id).order('is_accepted', { ascending: false }).order('votes_count', { ascending: false });
-    setAnswers((data as QAAnswer[]) ?? []);
-    await supabase.from('qa_questions').update({ views_count: (q.views_count ?? 0) + 1 }).eq('id', q.id);
-  };
-
-  const handleSubmitAnswer = async () => {
-    if (!user || !selectedQ || !newAnswer.trim()) return;
-    setSubmittingAnswer(true);
-    const { data } = await supabase.from('qa_answers').insert({ question_id: selectedQ.id, author_id: user.id, content: newAnswer.trim() }).select('*, author:user_profiles(full_name, trust_score)').single();
-    if (data) {
-      setAnswers((prev) => [...prev, data as QAAnswer]);
-      await supabase.from('qa_questions').update({ answers_count: (selectedQ.answers_count ?? 0) + 1 }).eq('id', selectedQ.id);
-      setSelectedQ((prev) => prev ? { ...prev, answers_count: (prev.answers_count ?? 0) + 1 } : null);
-    }
-    setNewAnswer('');
-    setSubmittingAnswer(false);
-    showToast('Réponse publiée !');
-  };
-
-  const handlePostQuestion = async () => {
-    if (!user || !newQuestion.title.trim()) return;
-    setPostingQ(true);
-    await supabase.from('qa_questions').insert({
+    const supabase = createClient();
+    const { error } = await supabase.from('post_comments').insert({
+      post_id: post.id,
       author_id: user.id,
-      title: newQuestion.title,
-      content: newQuestion.content,
-      tags: newQuestion.tags ? newQuestion.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
-      category: newQuestion.category,
+      content: newComment.content
     });
-    setNewQuestion({ title: '', content: '', tags: '', category: 'général' });
-    setShowAskModal(false);
-    setPostingQ(false);
-    showToast('Question publiée !');
-    await loadQuestions();
-  };
-
-  const CATEGORIES = ['général', 'matériel', 'itinéraires', 'sécurité', 'réglementation', 'logistique'];
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-display font-700 text-xl text-[#1C2620]">Questions & Réponses</h2>
-          <p className="text-xs text-[#5C6B5E] mt-0.5">Posez vos questions, partagez votre expertise</p>
-        </div>
-        {user && (
-          <button onClick={() => setShowAskModal(true)} className="flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors">
-            <Icon name="PlusIcon" size={14} /> Poser une question
-          </button>
-        )}
-      </div>
-
-      {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => <div key={i} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl h-24 animate-pulse" />)}
-        </div>
-      ) : questions.length === 0 ? (
-        <div className="text-center py-16 text-[#5C6B5E]">
-          <p className="text-4xl mb-3">❓</p>
-          <p className="font-display font-700 text-[#1C2620] text-lg mb-1">Aucune question</p>
-          <p className="text-sm">Soyez le premier à poser une question !</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {questions.map((q) => (
-            <div key={q.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 hover:border-[#E4501C]/30 transition-colors cursor-pointer" onClick={() => openQuestion(q)}>
-              <div className="flex items-start gap-4">
-                <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                  <span className="font-mono font-700 text-[#1C2620] text-sm">{q.votes_count ?? 0}</span>
-                  <span className="text-[10px] text-[#5C6B5E]">votes</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    {q.is_solved && <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-700">✓ Résolu</span>}
-                    <span className="text-[10px] bg-[#E7E3D6] text-[#5C6B5E] px-2 py-0.5 rounded-full">{q.category}</span>
-                  </div>
-                  <h3 className="font-600 text-[#1C2620] text-sm mb-1">{q.title}</h3>
-                  {q.content && <p className="text-xs text-[#5C6B5E] line-clamp-2 mb-2">{q.content}</p>}
-                  <div className="flex items-center gap-3 text-[10px] text-[#5C6B5E] flex-wrap">
-                    <span>{q.author?.full_name ?? 'Anonyme'}</span>
-                    <span>💬 {q.answers_count ?? 0} réponses</span>
-                    <span>👁️ {q.views_count ?? 0} vues</span>
-                    {q.tags?.slice(0, 3).map((tag) => <span key={tag} className="bg-[#E7E3D6] px-1.5 py-0.5 rounded-full">#{tag}</span>)}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Question detail modal */}
-      {selectedQ && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-            <div className="flex items-start justify-between p-5 border-b border-[#C8C3B0]">
-              <div className="flex-1 pr-4">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  {selectedQ.is_solved && <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-700">✓ Résolu</span>}
-                  <span className="text-[10px] bg-[#E7E3D6] text-[#5C6B5E] px-2 py-0.5 rounded-full">{selectedQ.category}</span>
-                </div>
-                <h3 className="font-display font-700 text-[#1C2620] text-lg">{selectedQ.title}</h3>
-                {selectedQ.content && <p className="text-sm text-[#5C6B5E] mt-1">{selectedQ.content}</p>}
-              </div>
-              <button onClick={() => setSelectedQ(null)} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors flex-shrink-0"><Icon name="XMarkIcon" size={18} /></button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-5 space-y-4">
-              <p className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider">{answers.length} réponse{answers.length !== 1 ? 's' : ''}</p>
-              {answers.map((a) => (
-                <div key={a.id} className={`p-4 rounded-xl border ${a.is_accepted ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-[#C8C3B0]'}`}>
-                  {a.is_accepted && <div className="flex items-center gap-1.5 text-emerald-600 text-xs font-700 mb-2"><Icon name="CheckCircleIcon" size={14} /> Meilleure réponse</div>}
-                  <p className="text-sm text-[#1C2620] mb-3">{a.content}</p>
-                  <div className="flex items-center gap-3 text-[10px] text-[#5C6B5E]">
-                    <span>{a.author?.full_name ?? 'Anonyme'}</span>
-                    <span>▲ {a.votes_count ?? 0}</span>
-                  </div>
-                </div>
-              ))}
-              {answers.length === 0 && <p className="text-center text-[#5C6B5E] text-sm py-4">Aucune réponse pour l&apos;instant.</p>}
-            </div>
-            {user && (
-              <div className="p-5 border-t border-[#C8C3B0] space-y-3">
-                <textarea
-                  rows={3}
-                  className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-3 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 resize-none"
-                  placeholder="Votre réponse..."
-                  value={newAnswer}
-                  onChange={(e) => setNewAnswer(e.target.value)}
-                />
-                <button onClick={handleSubmitAnswer} disabled={submittingAnswer || !newAnswer.trim()} className="px-5 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors disabled:opacity-50">
-                  {submittingAnswer ? 'Publication...' : 'Répondre'}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Ask question modal */}
-      {showAskModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-lg">
-            <div className="flex items-center justify-between p-5 border-b border-[#C8C3B0]">
-              <h3 className="font-display font-700 text-[#1C2620] text-lg">Poser une question</h3>
-              <button onClick={() => setShowAskModal(false)} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
-            </div>
-            <div className="p-5 space-y-4">
-              <div>
-                <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Titre *</label>
-                <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" placeholder="Votre question en une phrase..." value={newQuestion.title} onChange={(e) => setNewQuestion((f) => ({ ...f, title: e.target.value }))} />
-              </div>
-              <div>
-                <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Détails</label>
-                <textarea rows={3} className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 resize-none" placeholder="Contexte, ce que vous avez déjà essayé..." value={newQuestion.content} onChange={(e) => setNewQuestion((f) => ({ ...f, content: e.target.value }))} />
-              </div>
-              <div>
-                <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Catégorie</label>
-                <select className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" value={newQuestion.category} onChange={(e) => setNewQuestion((f) => ({ ...f, category: e.target.value }))}>
-                  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Tags (séparés par des virgules)</label>
-                <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" placeholder="matelas, bivouac, hiver..." value={newQuestion.tags} onChange={(e) => setNewQuestion((f) => ({ ...f, tags: e.target.value }))} />
-              </div>
-            </div>
-            <div className="flex gap-3 p-5 border-t border-[#C8C3B0]">
-              <button onClick={() => setShowAskModal(false)} className="flex-1 py-2.5 rounded-xl border border-[#C8C3B0] text-sm font-600 text-[#5C6B5E] hover:bg-[#C8C3B0]/20 transition-colors">Annuler</button>
-              <button onClick={handlePostQuestion} disabled={postingQ || !newQuestion.title.trim()} className="flex-1 py-2.5 rounded-xl bg-[#E4501C] text-white text-sm font-700 hover:bg-[#E4501C]/90 transition-colors disabled:opacity-50">
-                {postingQ ? 'Publication...' : 'Publier la question'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1C2620] text-white px-5 py-3 rounded-xl text-sm font-600 shadow-xl">
-          {toast}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── AMA Tab ──────────────────────────────────────────────────────────────────
-function AMATab() {
-  const [sessions, setSessions] = useState<AMASession[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedSession, setSelectedSession] = useState<AMASession | null>(null);
-  const [amaQuestions, setAmaQuestions] = useState<AMAQuestion[]>([]);
-  const [newAmaQ, setNewAmaQ] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const { user } = useAuth();
-  const supabase = useMemo(() => createClient(), []);
-
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
-
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      const { data } = await supabase
-        .from('ama_sessions')
-        .select('*, expert:user_profiles(full_name, avatar_url, trust_score, loyalty_level)')
-        .order('scheduled_at', { ascending: true });
-      setSessions((data as AMASession[]) ?? []);
-      setLoading(false);
-    };
-    load();
-  }, [supabase]);
-
-  const openSession = async (session: AMASession) => {
-    setSelectedSession(session);
-    const { data } = await supabase
-      .from('ama_questions')
-      .select('*, author:user_profiles(full_name)')
-      .eq('session_id', session.id)
-      .order('votes_count', { ascending: false });
-    setAmaQuestions((data ?? []).map((q) => ({ ...q, user_voted: false })));
-  };
-
-  const handleSubmitAmaQ = async () => {
-    if (!user || !selectedSession || !newAmaQ.trim()) return;
-    setSubmitting(true);
-    const { data } = await supabase.from('ama_questions').insert({ session_id: selectedSession.id, author_id: user.id, content: newAmaQ.trim() }).select('*, author:user_profiles(full_name)').single();
-    if (data) {
-      setAmaQuestions((prev) => [...prev, { ...data as AMAQuestion, user_voted: false }]);
-      await supabase.from('ama_sessions').update({ questions_count: (selectedSession.questions_count ?? 0) + 1 }).eq('id', selectedSession.id);
-      setSelectedSession((prev) => prev ? { ...prev, questions_count: (prev.questions_count ?? 0) + 1 } : null);
+    if (error) {
+      console.error("Comment insert error:", error);
+      alert("Erreur lors de l'ajout du commentaire.");
     }
-    setNewAmaQ('');
-    setSubmitting(false);
-    showToast('Question soumise !');
-  };
-
-  const STATUS_CFG: Record<string, { label: string; color: string }> = {
-    upcoming: { label: '📅 À venir', color: 'bg-blue-100 text-blue-700' },
-    live: { label: '🔴 En direct', color: 'bg-red-100 text-red-700' },
-    ended: { label: '✓ Terminé', color: 'bg-gray-100 text-gray-600' },
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="font-display font-700 text-xl text-[#1C2620]">AMAs avec les experts</h2>
-        <p className="text-xs text-[#5C6B5E] mt-0.5">Ask Me Anything — posez vos questions aux experts de la communauté</p>
-      </div>
-
-      {loading ? (
-        <div className="space-y-4">
-          {[1, 2].map((i) => <div key={i} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl h-40 animate-pulse" />)}
-        </div>
-      ) : sessions.length === 0 ? (
-        <div className="text-center py-16 text-[#5C6B5E]">
-          <p className="text-4xl mb-3">🎤</p>
-          <p className="font-display font-700 text-[#1C2620] text-lg mb-1">Aucun AMA planifié</p>
-          <p className="text-sm">Les prochaines sessions seront annoncées ici.</p>
-        </div>
-      ) : (
-        sessions.map((session) => {
-          const statusCfg = STATUS_CFG[session.status] ?? STATUS_CFG.upcoming;
-          const lvl = LEVEL_CFG[session.expert?.loyalty_level ?? 'Explorateur'] ?? LEVEL_CFG.Explorateur;
-          return (
-            <div key={session.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#E4501C]/20 flex items-center justify-center font-700 text-[#E4501C] text-lg flex-shrink-0">
-                  {session.expert?.full_name?.[0] ?? '?'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className={`text-[10px] font-700 px-2 py-0.5 rounded-full ${statusCfg.color}`}>{statusCfg.label}</span>
-                    <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${lvl.color}`}>{lvl.icon} {session.expert?.loyalty_level}</span>
-                  </div>
-                  <h3 className="font-display font-700 text-[#1C2620] text-base mb-1">{session.title}</h3>
-                  <p className="text-xs text-[#5C6B5E] mb-2">{session.description}</p>
-                  <div className="flex items-center gap-4 text-[10px] text-[#5C6B5E] flex-wrap">
-                    <span>Par {session.expert?.full_name ?? 'Expert'}</span>
-                    {session.scheduled_at && <span>{new Date(session.scheduled_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>}
-                    <span>❓ {session.questions_count ?? 0} questions</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => openSession(session)}
-                  className="flex-shrink-0 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors"
-                >
-                  {session.status === 'live' ? '🔴 Rejoindre' : session.status === 'ended' ? 'Voir les Q&R' : 'Poser une question'}
-                </button>
-              </div>
-            </div>
-          );
-        })
-      )}
-
-      {/* AMA Session modal */}
-      {selectedSession && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-            <div className="flex items-start justify-between p-5 border-b border-[#C8C3B0]">
-              <div>
-                <h3 className="font-display font-700 text-[#1C2620] text-lg">{selectedSession.title}</h3>
-                <p className="text-xs text-[#5C6B5E] mt-0.5">Par {selectedSession.expert?.full_name} · {amaQuestions.length} questions</p>
-              </div>
-              <button onClick={() => setSelectedSession(null)} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-5 space-y-3">
-              {amaQuestions.length === 0 ? (
-                <p className="text-center text-[#5C6B5E] text-sm py-8">Aucune question pour l&apos;instant. Soyez le premier !</p>
-              ) : (
-                amaQuestions.map((q) => (
-                  <div key={q.id} className={`p-4 rounded-xl border ${q.is_answered ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-[#C8C3B0]'}`}>
-                    <p className="text-sm text-[#1C2620] mb-1">{q.content}</p>
-                    {q.is_answered && q.answer && (
-                      <div className="mt-2 pl-3 border-l-2 border-emerald-400">
-                        <p className="text-[10px] font-700 text-emerald-600 mb-0.5">Réponse de l&apos;expert</p>
-                        <p className="text-xs text-[#5C6B5E]">{q.answer}</p>
-                      </div>
-                    )}
-                    <p className="text-[10px] text-[#5C6B5E] mt-1">{q.author?.full_name ?? 'Anonyme'} · ▲ {q.votes_count ?? 0}</p>
-                  </div>
-                ))
-              )}
-            </div>
-            {user && selectedSession.status !== 'ended' && (
-              <div className="p-5 border-t border-[#C8C3B0] flex gap-3">
-                <input
-                  className="flex-1 bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30"
-                  placeholder="Posez votre question à l'expert..."
-                  value={newAmaQ}
-                  onChange={(e) => setNewAmaQ(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitAmaQ(); } }}
-                />
-                <button onClick={handleSubmitAmaQ} disabled={submitting || !newAmaQ.trim()} className="px-4 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-600 disabled:opacity-50 hover:bg-[#E4501C]/90 transition-colors">
-                  {submitting ? '...' : 'Envoyer'}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1C2620] text-white px-5 py-3 rounded-xl text-sm font-600 shadow-xl">
-          {toast}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Groups Tab ───────────────────────────────────────────────────────────────
-function GroupesTab() {
-  const [publicGroups, setPublicGroups] = useState<{ id: string; name: string; destination: string; theme: string; visibility: string; group_level: number; optimization_score: number; max_members: number; budget_target: number; departure_date: string | null; member_count?: number; owner?: { full_name: string } | null }[]>([]);
-  const [myGroupIds, setMyGroupIds] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [joining, setJoining] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-  const { user } = useAuth();
-  const supabase = useMemo(() => createClient(), []);
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
-
-  const THEME_EMOJI: Record<string, string> = {
-    Trek: '🏔️', 'Van Life': '🚐', Randonnée: '🥾', Expédition: '🧭', 'Tour du monde': '🌍',
-    Plage: '🏖️', Ski: '⛷️', Vélo: '🚴', Moto: '🏍️', Autre: '🎒',
-  };
-
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      const { data } = await supabase
-        .from('travel_groups')
-        .select('*, owner:user_profiles!travel_groups_owner_id_fkey(full_name)')
-        .eq('visibility', 'public')
-        .order('created_at', { ascending: false })
-        .limit(12);
-      const enriched = await Promise.all((data || []).map(async (g) => {
-        const { count } = await supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('group_id', g.id).eq('status', 'active');
-        return { ...g, member_count: count || 0 };
-      }));
-      setPublicGroups(enriched);
-      if (user) {
-        const { data: memberData } = await supabase.from('group_members').select('group_id').eq('user_id', user.id).eq('status', 'active');
-        setMyGroupIds((memberData || []).map(m => m.group_id));
-      }
-      setLoading(false);
-    };
-    load();
-  }, [supabase, user]);
-
-  const handleJoin = async (groupId: string, groupName: string) => {
-    if (!user) { showToast('Connectez-vous pour rejoindre un groupe'); return; }
-    setJoining(groupId);
-    try {
-      const { error } = await supabase.from('group_members').insert({ group_id: groupId, user_id: user.id, role: 'member', status: 'active' });
-      if (error && error.code !== '23505') throw error;
-      setMyGroupIds(prev => [...prev, groupId]);
-      showToast(`Vous avez rejoint "${groupName}" !`);
-    } catch { showToast('Erreur lors de la tentative'); }
-    finally { setJoining(null); }
-  };
-
-  return (
-    <div className="space-y-6">
+    <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-[#E8E4D8]">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-display font-700 text-xl text-[#1C2620]">Groupes de voyage</h2>
-          <p className="text-xs text-[#5C6B5E] mt-0.5">Rejoignez des aventuriers qui partagent vos destinations</p>
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <img src={post.author?.avatar_url || 'https://i.pravatar.cc/150'} alt={post.author?.full_name} className="w-10 h-10 rounded-full border-2 border-[#F5F2E8] object-cover" />
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm text-[#1C2620]">{post.author?.full_name || 'Utilisateur inconnu'}</span>
+              <span className="bg-[#D3DFD7] text-[#2D5A3D] text-[8px] font-mono tracking-widest px-1.5 py-0.5 rounded uppercase">
+                {post.author?.loyalty_level || 'EXPLORATEUR'}
+              </span>
+            </div>
+            <div className="text-[11px] text-[#5C6B5E] mt-0.5">{timeAgo(post.created_at)}</div>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Link href="/groupes" className="flex items-center gap-2 px-4 py-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl text-sm font-600 hover:text-[#1C2620] transition-colors">
-            <Icon name="UserGroupIcon" size={14} /> Mes groupes
-          </Link>
-          <Link href="/groupes?tab=decouvrir" className="flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors">
-            <Icon name="MagnifyingGlassIcon" size={14} /> Explorer tout
-          </Link>
-        </div>
+        <button className="text-[#C8C3B0] hover:text-[#1C2620] transition-colors p-1">
+          <Icon name="EllipsisHorizontalIcon" size={20} />
+        </button>
       </div>
-
-      {/* CTA for non-logged users */}
-      {!user && (
-        <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5 text-center">
-          <p className="text-3xl mb-2">🗺️</p>
-          <p className="font-display font-700 text-[#1C2620] mb-1">Voyagez en groupe</p>
-          <p className="text-sm text-[#5C6B5E] mb-4">Connectez-vous pour créer ou rejoindre des groupes de voyage</p>
-          <Link href="/connexion" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors">
-            <Icon name="ArrowRightOnRectangleIcon" size={14} /> Se connecter
-          </Link>
-        </div>
-      )}
-
-      {/* Groups grid */}
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl h-48 animate-pulse" />)}
-        </div>
-      ) : publicGroups.length === 0 ? (
-        <div className="text-center py-16 text-[#5C6B5E]">
-          <p className="text-4xl mb-3">🗺️</p>
-          <p className="font-display font-700 text-[#1C2620] text-lg mb-1">Aucun groupe public</p>
-          <p className="text-sm mb-4">Soyez le premier à créer un groupe de voyage !</p>
-          <Link href="/groupes" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors">
-            <Icon name="PlusIcon" size={14} /> Créer un groupe
-          </Link>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {publicGroups.map(group => {
-            const isMember = myGroupIds.includes(group.id);
-            return (
-              <div key={group.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl overflow-hidden hover:shadow-md hover:border-[#E4501C]/30 transition-all">
-                <div className="bg-[#1C2620] p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-xl flex-shrink-0">
-                        {THEME_EMOJI[group.theme] || '🎒'}
-                      </div>
-                      <div>
-                        <h3 className="font-display font-700 text-white text-sm leading-tight">{group.name}</h3>
-                        <p className="text-white/50 text-[10px] flex items-center gap-1 mt-0.5">
-                          <Icon name="MapPinIcon" size={9} /> {group.destination}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="font-mono font-700 text-[#E4501C] text-base">{group.optimization_score}</div>
-                      <div className="text-[10px] text-white/40">score</div>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <div className="grid grid-cols-3 gap-2 mb-3">
-                    <div className="text-center p-1.5 bg-white/60 rounded-xl border border-[#C8C3B0]/50">
-                      <p className="font-mono font-700 text-[#1C2620] text-sm">{group.member_count || 0}</p>
-                      <p className="text-[10px] text-[#5C6B5E]">membres</p>
-                    </div>
-                    <div className="text-center p-1.5 bg-white/60 rounded-xl border border-[#C8C3B0]/50">
-                      <p className="font-mono font-700 text-[#1C2620] text-sm">{group.budget_target > 0 ? `${group.budget_target}€` : '—'}</p>
-                      <p className="text-[10px] text-[#5C6B5E]">budget</p>
-                    </div>
-                    <div className="text-center p-1.5 bg-white/60 rounded-xl border border-[#C8C3B0]/50">
-                      <p className="font-mono font-700 text-[#1C2620] text-sm">Niv.{group.group_level}</p>
-                      <p className="text-[10px] text-[#5C6B5E]">niveau</p>
-                    </div>
-                  </div>
-                  {group.departure_date && (
-                    <p className="text-[10px] text-[#5C6B5E] flex items-center gap-1 mb-3">
-                      <Icon name="CalendarIcon" size={9} />
-                      {new Date(group.departure_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                    </p>
-                  )}
-                  {group.owner && (
-                    <p className="text-[10px] text-[#5C6B5E] mb-3">Par <span className="font-600 text-[#1C2620]">{group.owner.full_name}</span></p>
-                  )}
-                  <div className="flex gap-2">
-                    {isMember ? (
-                      <Link href={`/groupe?group=${group.id}`} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#1C2620] hover:bg-[#1C2620]/80 text-white rounded-xl text-xs font-700 transition-colors">
-                        <Icon name="ArrowRightIcon" size={11} /> Ouvrir
-                      </Link>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => handleJoin(group.id, group.name)}
-                          disabled={joining === group.id || (group.member_count || 0) >= group.max_members}
-                          className="flex-1 py-2 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white rounded-xl text-xs font-700 transition-colors disabled:opacity-50"
-                        >
-                          {joining === group.id ? '...' : (group.member_count || 0) >= group.max_members ? 'Complet' : 'Rejoindre'}
-                        </button>
-                        <Link href={`/groupe?group=${group.id}`} className="p-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl hover:border-[#1C2620]/30 hover:text-[#1C2620] transition-colors">
-                          <Icon name="EyeIcon" size={12} />
-                        </Link>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1C2620] text-white px-5 py-3 rounded-xl text-sm font-600 shadow-xl">
-          {toast}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
-export default function CommunautePage() {
-  const [activeTab, setActiveTab] = useState<MainTab>('feed');
-
-  const TABS: { id: MainTab; label: string; icon: string }[] = [
-    { id: 'feed', label: 'Feed', icon: 'RssIcon' },
-    { id: 'profils', label: 'Profils', icon: 'UsersIcon' },
-    { id: 'groupes', label: 'Groupes', icon: 'MapIcon' },
-    { id: 'qa', label: 'Q&R', icon: 'QuestionMarkCircleIcon' },
-    { id: 'ama', label: 'AMA', icon: 'MicrophoneIcon' },
-  ];
-
-  return (
-    <div className="min-h-screen bg-[#E7E3D6] text-[#1C2620]">
-      <Header />
-
-      {/* Hero */}
-      <section className="bg-[#1C2620] pt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <p className="text-[10px] font-mono text-[#E4501C] tracking-[0.2em] uppercase mb-2">Communauté</p>
-          <h1 className="font-display font-800 text-white text-2xl sm:text-3xl tracking-tight mb-2">
-            La communauté des voyageurs équipés
-          </h1>
-          <p className="text-white/50 text-sm max-w-xl mb-6">
-            Feed global, profils publics, groupes de voyage, Q&R entre voyageurs et AMAs avec les experts.
-          </p>
-
-          <div className="flex items-center gap-3 mb-8 flex-wrap">
-            <Link href="/carnets" className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-600 transition-colors">
-              <Icon name="BookOpenIcon" size={14} /> Carnets d&apos;expédition
-            </Link>
-            <Link href="/clubs" className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-600 transition-colors">
-              <Icon name="UserGroupIcon" size={14} /> Clubs
-            </Link>
-            <Link href="/groupes" className="flex items-center gap-2 px-4 py-2 bg-[#E4501C]/20 hover:bg-[#E4501C]/30 border border-[#E4501C]/40 text-white rounded-xl text-sm font-600 transition-colors">
-              <Icon name="MapIcon" size={14} /> Mes groupes
-            </Link>
-            <Link href="/groupes?tab=decouvrir" className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-600 transition-colors">
-              <Icon name="MagnifyingGlassIcon" size={14} /> Découvrir des groupes
-            </Link>
-          </div>
-
-          {/* Tab bar */}
-          <div className="flex items-center gap-0.5 overflow-x-auto pb-px scrollbar-hide">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-[#E7E3D6] text-[#1C2620]' : 'text-white/50 hover:text-white hover:bg-white/8'}`}
-              >
-                <Icon name={tab.icon} size={14} variant="outline" />
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'feed' && <FeedTab />}
-        {activeTab === 'profils' && <ProfilsTab />}
-        {activeTab === 'groupes' && <GroupesTab />}
-        {activeTab === 'qa' && <QATab />}
-        {activeTab === 'ama' && <AMATab />}
+      <p className="text-[#1C2620] text-sm leading-relaxed mb-5 whitespace-pre-wrap">
+        {post.content}
+      </p>
+
+      {/* Image (Optional) */}
+      {post.image_url && (
+        <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] rounded-[1.5rem] overflow-hidden mb-5">
+          <img src={post.image_url} alt={post.image_alt || "Post image"} className="w-full h-full object-cover" />
+          {post.location && (
+            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5 text-[10px] font-semibold text-[#1C2620]">
+              <Icon name="MapPinIcon" size={12} variant="solid" className="text-[#2D5A3D]" />
+              {post.location}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex items-center justify-between border-t border-[#F5F2E8] pt-4">
+        <div className="flex items-center gap-6">
+          <motion.button 
+            whileHover={{ scale: 1.1 }} 
+            whileTap={{ scale: 0.9 }} 
+            onClick={handleLike}
+            className={`flex items-center gap-1.5 text-xs transition-colors group ${isLiked ? 'text-red-500' : 'text-[#5C6B5E] hover:text-[#1C2620]'}`}
+          >
+            <Icon name="HeartIcon" size={18} variant={isLiked ? "solid" : "outline"} className={isLiked ? "fill-current" : "group-hover:fill-red-50 group-hover:text-red-500"} />
+            <span className="font-mono">{likesCount}</span>
+          </motion.button>
+          <motion.button 
+            whileHover={{ scale: 1.1 }} 
+            whileTap={{ scale: 0.9 }} 
+            onClick={handleToggleComments}
+            className="flex items-center gap-1.5 text-xs text-[#5C6B5E] hover:text-[#1C2620] transition-colors"
+          >
+            <Icon name="ChatBubbleLeftIcon" size={18} variant={showComments ? "solid" : "outline"} className={showComments ? "text-[#1C2620]" : ""} />
+            <span className="font-mono">{commentsCount}</span>
+          </motion.button>
+        </div>
+        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="text-[#5C6B5E] hover:text-[#1C2620] transition-colors p-1">
+          <Icon name="BookmarkIcon" size={18} variant="outline" />
+        </motion.button>
       </div>
 
-      <Footer />
+      {/* Comments Section */}
+      <AnimatePresence>
+        {showComments && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden mt-4 pt-4 border-t border-[#F5F2E8] space-y-4"
+          >
+            {loadingComments ? (
+              <div className="flex justify-center py-2"><div className="w-4 h-4 border-2 border-[#2D5A3D] border-t-transparent rounded-full animate-spin"></div></div>
+            ) : (
+              <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                {comments.length === 0 ? (
+                  <p className="text-xs text-[#5C6B5E] text-center italic">Aucun commentaire pour l'instant. Soyez le premier !</p>
+                ) : (
+                  comments.map((c, i) => (
+                    <div key={c.id || i} className="flex gap-3 text-sm">
+                      <img src={c.author?.avatar_url || 'https://i.pravatar.cc/150'} className="w-6 h-6 rounded-full mt-1 object-cover" />
+                      <div className="flex-1 bg-[#F5F2E8] rounded-2xl rounded-tl-none p-3">
+                        <div className="font-bold text-xs text-[#1C2620] mb-0.5">{c.author?.full_name}</div>
+                        <p className="text-[#4A574C]">{c.content}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+            
+            <form onSubmit={handleSubmitComment} className="flex items-center gap-2 mt-2">
+              <img src={user.user_metadata?.avatar_url || 'https://i.pravatar.cc/150'} className="w-8 h-8 rounded-full object-cover" />
+              <input 
+                type="text" 
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+                placeholder="Écrire un commentaire..."
+                className="flex-1 bg-[#F5F2E8] border-none rounded-full px-4 py-2 text-xs focus:ring-1 focus:ring-[#2D5A3D]"
+              />
+              <button 
+                type="submit" 
+                disabled={!commentText.trim()}
+                className="bg-[#2D5A3D] text-white p-2 rounded-full disabled:opacity-50 transition-colors"
+              >
+                <Icon name="PaperAirplaneIcon" size={14} variant="solid" />
+              </button>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-export const dynamic = 'force-dynamic';
+function CarnetCard({ carnet, user }: { carnet: any, user: any }) {
+  const router = useRouter();
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(carnet.likes_count || 0);
+  const [commentsCount, setCommentsCount] = useState(carnet.comments_count || 0);
+  const [showComments, setShowComments] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [comments, setComments] = useState<any[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+
+  const handleLike = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newLiked = !isLiked;
+    setIsLiked(newLiked);
+    const newCount = newLiked ? likesCount + 1 : Math.max(0, likesCount - 1);
+    setLikesCount(newCount);
+
+    const supabase = createClient();
+    supabase.from('carnets').update({ likes_count: newCount }).eq('id', carnet.id).then();
+  };
+
+  const handleToggleComments = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowComments(!showComments);
+    if (!showComments && comments.length === 0) {
+      setLoadingComments(true);
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('carnet_comments')
+        .select(`
+          *,
+          author:user_profiles!author_id(full_name, avatar_url)
+        `)
+        .eq('carnet_id', carnet.id)
+        .order('created_at', { ascending: true });
+      
+      if (data) setComments(data);
+      setLoadingComments(false);
+    }
+  };
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!commentText.trim()) return;
+    
+    const newComment = {
+      id: Date.now().toString(),
+      content: commentText.trim(),
+      created_at: new Date().toISOString(),
+      author: {
+        full_name: user.user_metadata?.full_name || 'Moi',
+        avatar_url: user.user_metadata?.avatar_url
+      }
+    };
+    
+    setComments([...comments, newComment]);
+    setCommentsCount(prev => prev + 1);
+    setCommentText('');
+
+    const supabase = createClient();
+    const { error } = await supabase.from('carnet_comments').insert({
+      carnet_id: carnet.id,
+      author_id: user.id,
+      content: newComment.content
+    });
+    if (error) {
+      console.error("Comment insert error:", error);
+      alert("Erreur lors de l'ajout du commentaire.");
+    }
+  };
+
+  return (
+    <div 
+      onClick={() => router.push(`/carnets/${carnet.id}`)}
+      className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-[#E8E4D8] flex flex-col sm:flex-row group cursor-pointer hover:border-[#2D5A3D] transition-colors"
+    >
+      {carnet.cover_image && (
+        <div className="w-full sm:w-2/5 aspect-[4/3] sm:aspect-auto overflow-hidden">
+          <img src={carnet.cover_image} alt={carnet.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+        </div>
+      )}
+      <div className="p-6 sm:p-8 flex-1 flex flex-col justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-[10px] font-mono tracking-widest text-[#5C6B5E] uppercase mb-3">
+            <Icon name="MapPinIcon" size={12} variant="solid" className="text-[#E4501C]" />
+            {carnet.destination}
+          </div>
+          <h3 className="font-display font-800 text-2xl text-[#1C2620] leading-tight mb-3 group-hover:text-[#2D5A3D] transition-colors">
+            {carnet.title}
+          </h3>
+          <p className="text-sm text-[#4A574C] line-clamp-3 mb-6">
+            {carnet.description}
+          </p>
+        </div>
+        
+        <div className="flex flex-col border-t border-[#F5F2E8] pt-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img src={carnet.author?.avatar_url || 'https://i.pravatar.cc/150'} className="w-8 h-8 rounded-full border border-[#E8E4D8] object-cover" />
+              <span className="font-bold text-xs text-[#1C2620]">{carnet.author?.full_name}</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={handleLike}
+                className={`flex items-center gap-1 text-xs font-mono transition-colors ${isLiked ? 'text-red-500' : 'text-[#5C6B5E] hover:text-[#1C2620]'}`}
+              >
+                <Icon name="HeartIcon" size={16} variant={isLiked ? "solid" : "outline"} />
+                {likesCount}
+              </button>
+              <button 
+                onClick={handleToggleComments}
+                className="flex items-center gap-1 text-xs font-mono text-[#5C6B5E] hover:text-[#1C2620] transition-colors"
+              >
+                <Icon name="ChatBubbleLeftIcon" size={16} variant={showComments ? "solid" : "outline"} />
+                {commentsCount}
+              </button>
+              <button onClick={(e) => e.stopPropagation()} className="text-[#5C6B5E] hover:text-[#1C2620] transition-colors">
+                <Icon name="BookmarkIcon" size={16} variant="outline" />
+              </button>
+            </div>
+          </div>
+
+          <AnimatePresence>
+            {showComments && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden mt-4 pt-4 border-t border-[#F5F2E8] space-y-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {loadingComments ? (
+                  <div className="flex justify-center py-2"><div className="w-4 h-4 border-2 border-[#2D5A3D] border-t-transparent rounded-full animate-spin"></div></div>
+                ) : (
+                  <div className="space-y-3 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                    {comments.length === 0 ? (
+                      <p className="text-xs text-[#5C6B5E] text-center italic">Aucun commentaire. Soyez le premier !</p>
+                    ) : (
+                      comments.map((c, i) => (
+                        <div key={c.id || i} className="flex gap-3 text-sm">
+                          <img src={c.author?.avatar_url || 'https://i.pravatar.cc/150'} className="w-6 h-6 rounded-full mt-1 object-cover" />
+                          <div className="flex-1 bg-[#F5F2E8] rounded-2xl rounded-tl-none p-3">
+                            <div className="font-bold text-xs text-[#1C2620] mb-0.5">{c.author?.full_name}</div>
+                            <p className="text-[#4A574C]">{c.content}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+                
+                <form onSubmit={handleSubmitComment} className="flex items-center gap-2 mt-2">
+                  <img src={user.user_metadata?.avatar_url || 'https://i.pravatar.cc/150'} className="w-8 h-8 rounded-full object-cover" />
+                  <input 
+                    type="text" 
+                    value={commentText}
+                    onChange={e => setCommentText(e.target.value)}
+                    placeholder="Écrire un commentaire..."
+                    className="flex-1 bg-[#F5F2E8] border-none rounded-full px-4 py-2 text-xs focus:ring-1 focus:ring-[#2D5A3D]"
+                  />
+                  <button 
+                    type="submit" 
+                    disabled={!commentText.trim()}
+                    className="bg-[#2D5A3D] text-white p-2 rounded-full disabled:opacity-50 transition-colors"
+                  >
+                    <Icon name="PaperAirplaneIcon" size={14} variant="solid" />
+                  </button>
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN PAGE COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
+export default function CommunautePage() {
+  const { user } = useAuth();
+  const router = useRouter();
+  
+  // Tabs State
+  const [activeTab, setActiveTab] = useState('Feed');
+  
+  // Data States
+  const [posts, setPosts] = useState<any[]>([]);
+  const [carnets, setCarnets] = useState<any[]>([]);
+  const [clubs, setClubs] = useState<any[]>([]);
+  const [travelGroups, setTravelGroups] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [newMembers, setNewMembers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Modal State
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [isCreateGroupWizardOpen, setIsCreateGroupWizardOpen] = useState(false);
+  const [newPostContent, setNewPostContent] = useState('');
+  const [isPublishing, setIsPublishing] = useState(false);
+  
+  // File Upload State
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    
+    async function fetchData() {
+      const supabase = createClient();
+      setLoading(true);
+      
+      try {
+        // Fetch Community Posts (Feed)
+        const { data: postsData } = await supabase
+          .from('community_posts')
+          .select(`
+            *,
+            author:user_profiles!community_posts_author_id_fkey(full_name, avatar_url, loyalty_level)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        if (postsData) setPosts(postsData);
+
+        // Fetch Carnets (Long form)
+        // Using author:user_profiles!carnets_author_id_fkey or fallback if not strictly named
+        // Trying generic relation name
+        const { data: carnetsData } = await supabase
+          .from('carnets')
+          .select(`
+            *,
+            author:user_profiles!author_id(full_name, avatar_url)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(10);
+          
+        if (carnetsData) {
+          setCarnets(carnetsData);
+        } else {
+          // If the precise relation name fails, try the general one
+          const { data: cData2 } = await supabase.from('carnets').select(`*, author:user_profiles(full_name, avatar_url)`).limit(10);
+          if (cData2) setCarnets(cData2);
+        }
+
+        // Fetch Clubs and Groups
+        const { data: clubsData } = await supabase
+          .from('clubs')
+          .select('*')
+          .order('members_count', { ascending: false })
+          .limit(20);
+
+        if (clubsData) setClubs(clubsData);
+
+        // Fetch Travel Groups (user-created groups from the wizard)
+        const { data: travelGroupsData } = await supabase
+          .from('travel_groups')
+          .select('*, owner:user_profiles!travel_groups_owner_id_fkey(full_name, avatar_url)')
+          .eq('visibility', 'public')
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        if (travelGroupsData) setTravelGroups(travelGroupsData);
+
+        // Fetch Events
+        const { data: eventsData } = await supabase
+          .from('club_events')
+          .select('*')
+          .order('event_date', { ascending: true })
+          .limit(3);
+
+        if (eventsData) setEvents(eventsData);
+
+        // Fetch New Members
+        const { data: membersData } = await supabase
+          .from('user_profiles')
+          .select('avatar_url')
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (membersData) setNewMembers(membersData);
+
+      } catch (err) {
+        console.error('Error fetching community data:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [user]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handlePublish = async () => {
+    if (!newPostContent.trim() && !selectedFile) return;
+    setIsPublishing(true);
+    
+    try {
+      const supabase = createClient();
+      
+      // In a real app, we would upload the file to Supabase Storage here and get the public URL.
+      // For this demo, if there's a preview URL, we'll just pass it directly (it's a blob: URL and will only work locally).
+      const imageUrl = previewUrl ? previewUrl : null;
+      
+      const { data, error } = await supabase
+        .from('community_posts')
+        .insert({
+          author_id: user?.id,
+          content: newPostContent.trim(),
+          post_type: 'share',
+          likes_count: 0,
+          comments_count: 0,
+          image_url: imageUrl
+        })
+        .select(`
+          *,
+          author:user_profiles!community_posts_author_id_fkey(full_name, avatar_url, loyalty_level)
+        `)
+        .single();
+        
+      if (data && !error) {
+        setPosts([data, ...posts]);
+        setNewPostContent('');
+        handleRemoveFile();
+        setIsPublishModalOpen(false);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  // Si l'utilisateur n'est pas connecté
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#F5F2E8] font-sans flex flex-col">
+        <Header />
+        <main className="flex-1 pt-24 px-4 flex items-center justify-center">
+          <div className="text-center max-w-md w-full">
+            <div className="w-20 h-20 bg-[#1C2620] rounded-[2rem] mx-auto flex items-center justify-center text-white mb-8 shadow-xl">
+              <Icon name="UserGroupIcon" size={32} />
+            </div>
+            <h1 className="font-display font-800 text-3xl sm:text-4xl text-[#1C2620] mb-4">
+              Rejoignez la <em className="font-serif italic font-normal text-[#2D5A3D]">Communauté</em>
+            </h1>
+            <p className="text-sm text-[#5C6B5E] mb-8 leading-relaxed">
+              Le Hub Voyageurs est un espace privé réservé aux explorateurs pour partager leurs récits, leurs traces et leurs conseils en toute bienveillance.
+            </p>
+            <Link 
+              href="/connexion" 
+              className="inline-flex items-center gap-2 bg-[#1C2620] hover:bg-[#2A3830] text-white px-8 py-4 rounded-full font-semibold text-sm transition-all shadow-md"
+            >
+              Se connecter ou s'inscrire
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#F5F2E8] font-sans text-[#1C2620] selection:bg-[#E4501C]/20 relative">
+      <Header />
+      
+      <main className="pt-24 pb-20">
+        
+        {/* HERO SECTION */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+          <div className="relative w-full min-h-[450px] rounded-[2.5rem] overflow-hidden flex flex-col justify-end p-8 sm:p-10 md:p-14 shadow-xl">
+            {/* Background Image */}
+            <div className="absolute inset-0">
+              <img 
+                src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=1600" 
+                alt="Sunset hiking" 
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1C2620] via-[#1C2620]/80 to-transparent"></div>
+            </div>
+
+            {/* Top Bar (inside hero) */}
+            <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-auto pb-8">
+              <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-white/80 text-[10px] font-mono tracking-widest uppercase border border-white/10">
+                LE HUB VOYAGEURS - Privé
+              </div>
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-md px-6 py-2.5 rounded-full text-white font-medium text-xs transition-colors border border-white/20 shadow-sm"
+              >
+                Explorer
+              </motion.button>
+            </div>
+
+            {/* Content */}
+            <div className="relative z-10 w-full max-w-4xl mt-12">
+              <h1 className="font-display font-800 text-4xl sm:text-5xl md:text-7xl text-white leading-[1.05] mb-6">
+                Ceux qui marchent, <br /><em className="font-serif italic font-normal text-[#E4501C]">parlent doucement.</em>
+              </h1>
+              <p className="text-white/70 text-sm md:text-base leading-relaxed max-w-lg mb-10 font-medium">
+                Un feed sans algorithme. Des voyageurs, des refuges partagés, des itinéraires qu'on se recommande de bouche à oreille. Ici on écrit long, on répond bien.
+              </p>
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 border-t border-white/10">
+                <div>
+                  <div className="font-display font-800 text-white text-3xl mb-1">12 <em className="font-serif italic font-normal text-white/60 text-2xl">4k</em></div>
+                  <div className="text-[9px] font-mono text-white/50 tracking-widest uppercase">Voyageurs actifs</div>
+                </div>
+                <div>
+                  <div className="font-display font-800 text-white text-3xl mb-1">348</div>
+                  <div className="text-[9px] font-mono text-white/50 tracking-widest uppercase">Récits ce mois</div>
+                </div>
+                <div>
+                  <div className="font-display font-800 text-white text-3xl mb-1">{clubs.length > 0 ? clubs.length * 12 : 62}</div>
+                  <div className="text-[9px] font-mono text-white/50 tracking-widest uppercase">Clubs thématiques</div>
+                </div>
+                <div>
+                  <div className="font-display font-800 text-white text-3xl mb-1">{events.length > 0 ? events.length * 9 : 27} <em className="font-serif italic font-normal text-white/60 text-2xl">sorties</em></div>
+                  <div className="text-[9px] font-mono text-white/50 tracking-widest uppercase">Prévues cette semaine</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* MAIN LAYOUT */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+            
+            {/* LEFT COLUMN (FEED/CONTENT) */}
+            <div className="lg:col-span-8">
+              
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4 overflow-x-auto pb-2">
+                <h2 className="font-display font-800 text-3xl text-[#1C2620] flex-shrink-0">
+                  Le fil <em className="font-serif italic font-normal text-[#2D5A3D]">de la maison</em>
+                </h2>
+                <div className="flex bg-white rounded-full p-1 border border-[#E8E4D8] shadow-sm flex-shrink-0">
+                  {['Feed', 'Carnets', 'Clubs', 'Groupes'].map(tab => (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`px-5 py-2 rounded-full text-xs font-semibold transition-all ${activeTab === tab ? 'bg-[#F5F2E8] text-[#1C2620] shadow-sm' : 'text-[#5C6B5E] hover:text-[#1C2620]'}`}
+                    >
+                      {tab}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+
+              {/* TABS CONTENT */}
+              <div className="space-y-8">
+                {loading ? (
+                  <div className="flex justify-center py-20">
+                    <div className="w-8 h-8 border-2 border-[#2D5A3D] border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : activeTab === 'Feed' ? (
+                  // TAB: FEED (community_posts)
+                  posts.length > 0 ? (
+                    posts.map((post, i) => <PostCard key={post.id || i} post={post} user={user} />)
+                  ) : (
+                    <div className="text-center py-20 bg-white rounded-[2rem] border border-[#E8E4D8]">
+                      <Icon name="DocumentTextIcon" size={32} className="mx-auto text-[#C8C3B0] mb-4" />
+                      <p className="text-[#5C6B5E] font-medium">Le fil est vide. Soyez le premier à publier !</p>
+                    </div>
+                  )
+                ) : activeTab === 'Carnets' ? (
+                  // TAB: CARNETS (table carnets)
+                  carnets.length > 0 ? (
+                    <div className="space-y-6">
+                      {carnets.map((carnet, i) => <CarnetCard key={carnet.id || i} carnet={carnet} user={user} />)}
+                    </div>
+                  ) : (
+                    <div className="text-center py-20 bg-white rounded-[2rem] border border-[#E8E4D8]">
+                      <Icon name="BookOpenIcon" size={32} className="mx-auto text-[#C8C3B0] mb-4" />
+                      <p className="text-[#5C6B5E] font-medium">Aucun grand récit de voyage pour l'instant.</p>
+                    </div>
+                  )
+                ) : activeTab === 'Clubs' ? (
+                  // TAB: CLUBS
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {clubs.filter(c => c.type === 'activité').map(club => (
+                      <div 
+                        key={club.id} 
+                        onClick={() => router.push(`/clubs/${club.slug}`)}
+                        className="bg-white rounded-[2rem] p-6 shadow-sm border border-[#E8E4D8] flex flex-col items-center text-center cursor-pointer hover:border-[#1C2620] transition-colors group"
+                      >
+                        <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform">
+                          {club.emoji}
+                        </div>
+                        <h3 className="font-bold text-lg text-[#1C2620] mb-1">{club.name}</h3>
+                        <p className="text-xs text-[#5C6B5E] mb-4 line-clamp-2">{club.description}</p>
+                        <div className="text-[10px] font-mono tracking-widest text-[#2D5A3D] uppercase bg-[#EAF0EB] px-3 py-1 rounded-full">
+                          {club.members_count} membres
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  // TAB: GROUPES
+                  <div className="space-y-6">
+                    {/* Header Banner for Groupes */}
+                    <div className="bg-[#1C2620] rounded-[2.5rem] p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6 border border-[#2D5A3D]/40">
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-[#E4501C] rounded-full blur-[100px] opacity-25 pointer-events-none" />
+                      <div className="relative z-10 space-y-2 text-center sm:text-left">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white/80 text-[10px] font-mono tracking-widest uppercase border border-white/10">
+                          <span>🏕️</span> Cockpit Collaboratif
+                        </div>
+                        <h3 className="font-display font-800 text-2xl sm:text-3xl text-white leading-tight">
+                          Créez votre <em className="font-serif italic font-normal text-[#E4501C]">groupe de voyage</em>
+                        </h3>
+                        <p className="text-xs text-white/70 max-w-md leading-relaxed">
+                          Organisez une expédition entre amis : gestion du matériel, budget partagé, sondages et chat temps réel.
+                        </p>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setIsCreateGroupWizardOpen(true)}
+                        className="relative z-10 px-7 py-3.5 bg-[#E4501C] hover:bg-[#cc3d10] text-white rounded-full font-extrabold text-sm tracking-wide shadow-lg flex items-center gap-2 whitespace-nowrap"
+                      >
+                        <Icon name="PlusIcon" size={18} /> Créer un groupe
+                      </motion.button>
+                    </div>
+
+                    {/* Group Cards Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      {/* Card to launch creation */}
+                      <div 
+                        onClick={() => setIsCreateGroupWizardOpen(true)}
+                        className="bg-white/60 hover:bg-white rounded-[2rem] p-6 border-2 border-dashed border-[#E4501C]/40 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#E4501C] transition-all group min-h-[220px]"
+                      >
+                        <div className="w-14 h-14 bg-[#E4501C]/10 text-[#E4501C] rounded-2xl flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition-transform">
+                          <Icon name="PlusIcon" size={24} />
+                        </div>
+                        <h4 className="font-display font-800 text-base text-[#1C2620] mb-1">Créer un nouveau groupe</h4>
+                        <p className="text-xs text-[#5C6B5E]">Lancer un parcours guidé en 4 étapes simples</p>
+                      </div>
+
+                      {travelGroups.length > 0 ? travelGroups.map(group => (
+                        <div 
+                          key={group.id} 
+                          onClick={() => router.push(`/groupes/${group.id}`)}
+                          className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-[#E8E4D8] flex flex-col cursor-pointer hover:border-[#1C2620] transition-colors group"
+                        >
+                          {group.cover_url && (
+                            <div className="h-32 w-full overflow-hidden">
+                              <img src={group.cover_url} alt={group.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            </div>
+                          )}
+                          <div className="p-5 flex flex-col items-center text-center">
+                            <div className="w-12 h-12 bg-gradient-to-br from-[#2D5A3D]/20 to-[#E4501C]/20 rounded-2xl flex items-center justify-center text-2xl mb-3 -mt-10 bg-white border-2 border-white shadow-md relative z-10">
+                              {group.theme === 'Trek' ? '🏔️' : group.theme === 'Van Life' ? '🚐' : group.theme === 'Vélo' ? '🚴' : group.theme === 'Ski' ? '⛷️' : group.theme === 'Plage' ? '🏖️' : group.theme === 'Expédition' ? '🧭' : '🎒'}
+                            </div>
+                            <h3 className="font-bold text-lg text-[#1C2620] mb-1">{group.name}</h3>
+                            <p className="text-xs text-[#5C6B5E] mb-2 line-clamp-2">{group.description}</p>
+                            {group.destination && (
+                              <p className="text-[10px] font-mono text-[#E4501C] mb-3 flex items-center gap-1">
+                                <span>📍</span> {group.destination}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-mono tracking-widest text-[#2D5A3D] uppercase bg-[#EAF0EB] px-3 py-1 rounded-full">
+                                {group.theme || 'Aventure'}
+                              </span>
+                              {group.owner?.full_name && (
+                                <span className="text-[10px] text-[#5C6B5E]">
+                                  par {group.owner.full_name}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )) : (
+                        <div className="bg-white/60 rounded-[2rem] p-8 border border-[#E8E4D8] flex flex-col items-center justify-center text-center col-span-full">
+                          <p className="text-sm text-[#5C6B5E] mb-2">Aucun groupe public pour l'instant.</p>
+                          <p className="text-xs text-[#5C6B5E]/70">Créez le premier en cliquant sur le bouton ci-dessus !</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN (SIDEBAR) */}
+            <div className="lg:col-span-4 space-y-6">
+              
+              {/* Profile Card */}
+              <div className="bg-[#1C2620] rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#2D5A3D] rounded-full blur-3xl opacity-30 -mr-10 -mt-10"></div>
+                
+                <div className="flex items-center gap-4 mb-6 relative z-10">
+                  <img src={user.user_metadata?.avatar_url || 'https://i.pravatar.cc/150'} alt="Mon profil" className="w-14 h-14 rounded-full border-2 border-white/20 object-cover" />
+                  <div>
+                    <div className="font-display font-800 text-lg leading-tight">{user.user_metadata?.full_name || 'Mon Profil'}</div>
+                    <div className="text-[10px] text-white/50 font-mono mt-1">Voyageur certifié</div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between border-t border-white/10 pt-5 pb-6 relative z-10">
+                  <div className="text-center">
+                    <div className="font-display font-800 text-xl">14</div>
+                    <div className="text-[9px] font-mono text-white/50 uppercase tracking-widest mt-1">Posts</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-display font-800 text-xl">3</div>
+                    <div className="text-[9px] font-mono text-white/50 uppercase tracking-widest mt-1">Clubs</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-display font-800 text-xl">248</div>
+                    <div className="text-[9px] font-mono text-white/50 uppercase tracking-widest mt-1">Likes</div>
+                  </div>
+                </div>
+
+                <motion.button 
+                  onClick={() => setIsPublishModalOpen(true)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full bg-[#E4501C] hover:bg-[#cc3d10] text-white py-3.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center justify-center gap-2 relative z-10"
+                >
+                  <Icon name="PlusIcon" size={16} /> Publier
+                </motion.button>
+              </div>
+
+              {/* Sorties */}
+              {events.length > 0 && (
+                <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-[#E8E4D8]">
+                  <div className="flex items-center justify-between mb-5">
+                    <h3 className="font-display font-800 text-lg text-[#1C2620]">Sorties <em className="font-serif italic font-normal text-[#2D5A3D]">à venir</em></h3>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="text-[10px] font-bold text-[#5C6B5E] hover:text-[#1C2620] uppercase tracking-wider">Tout voir</motion.button>
+                  </div>
+                  <div className="space-y-4">
+                    {events.map((ev, i) => {
+                      const date = formatDateString(ev.event_date);
+                      return (
+                        <div key={ev.id || i} className="flex items-center gap-4 group cursor-pointer">
+                          <div className="w-12 h-12 rounded-2xl bg-[#F5F2E8] border border-[#E8E4D8] flex flex-col items-center justify-center flex-shrink-0 group-hover:border-[#2D5A3D] transition-colors">
+                            <span className="text-[9px] font-mono text-[#5C6B5E] leading-none mb-1">{date.month}</span>
+                            <span className="font-display font-800 text-base text-[#1C2620] leading-none">{date.day}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-xs text-[#1C2620] mb-0.5 group-hover:text-[#2D5A3D] transition-colors truncate">{ev.title}</div>
+                            <div className="text-[10px] text-[#5C6B5E] truncate">{ev.location || 'Localisation TBD'}</div>
+                          </div>
+                          <div className="bg-[#EAF0EB] text-[#2D5A3D] text-[9px] font-bold px-2 py-1 rounded hidden sm:block">
+                            Bientôt
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Clubs */}
+              {clubs.length > 0 && (
+                <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-[#E8E4D8]">
+                  <div className="flex items-center justify-between mb-5">
+                    <h3 className="font-display font-800 text-lg text-[#1C2620]">Clubs <em className="font-serif italic font-normal text-[#2D5A3D]">actifs</em></h3>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="text-[10px] font-bold text-[#5C6B5E] hover:text-[#1C2620] uppercase tracking-wider">Voir tout</motion.button>
+                  </div>
+                  <div className="space-y-4">
+                    {clubs.slice(0, 4).map((club, i) => (
+                      <div 
+                        key={club.id || i} 
+                        onClick={() => router.push(`/clubs/${club.slug}`)}
+                        className="flex items-center justify-between group cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-[#F5F2E8] flex items-center justify-center text-lg">{club.emoji}</div>
+                          <div>
+                            <div className="font-bold text-xs text-[#1C2620] group-hover:text-[#2D5A3D] transition-colors">{club.name}</div>
+                            <div className="text-[10px] text-[#5C6B5E]">{club.members_count} membres</div>
+                          </div>
+                        </div>
+                        <Icon name="ChevronRightIcon" size={14} className="text-[#C8C3B0] group-hover:text-[#1C2620] transition-colors" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Nouveaux removed */}
+
+            </div>
+
+          </div>
+        </div>
+      </main>
+
+      <Footer />
+
+      {/* PUBLISH MODAL */}
+      <AnimatePresence>
+        {isPublishModalOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
+              onClick={() => setIsPublishModalOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-lg bg-white rounded-[2rem] p-6 shadow-2xl z-[101] max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-display font-800 text-2xl text-[#1C2620]">Créer une publication</h3>
+                <button 
+                  onClick={() => setIsPublishModalOpen(false)}
+                  className="w-8 h-8 rounded-full bg-[#F5F2E8] flex items-center justify-center text-[#5C6B5E] hover:bg-[#E8E4D8] transition-colors"
+                >
+                  <Icon name="XMarkIcon" size={16} />
+                </button>
+              </div>
+              
+              <textarea 
+                value={newPostContent}
+                onChange={(e) => setNewPostContent(e.target.value)}
+                placeholder="Racontez votre dernière aventure, partagez une photo, un conseil..."
+                className="w-full h-32 bg-[#F5F2E8] border-none rounded-xl p-4 text-[#1C2620] text-sm focus:ring-2 focus:ring-[#2D5A3D] resize-none mb-4"
+              />
+
+              {/* Image Preview */}
+              {previewUrl && (
+                <div className="relative mb-4 w-full h-48 rounded-xl overflow-hidden bg-black/5">
+                  <img src={previewUrl} alt="Aperçu" className="w-full h-full object-cover" />
+                  <button 
+                    onClick={handleRemoveFile}
+                    className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-full hover:bg-black/70 transition-colors"
+                  >
+                    <Icon name="XMarkIcon" size={14} />
+                  </button>
+                </div>
+              )}
+              
+              <div className="flex justify-between items-center">
+                <div>
+                  <input 
+                    type="file" 
+                    accept="image/*,video/*" 
+                    className="hidden" 
+                    ref={fileInputRef} 
+                    onChange={handleFileChange} 
+                  />
+                  <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-10 h-10 rounded-full border border-[#E8E4D8] flex items-center justify-center text-[#5C6B5E] hover:text-[#2D5A3D] hover:border-[#2D5A3D] transition-colors"
+                    title="Ajouter une photo ou vidéo"
+                  >
+                    <Icon name="PhotoIcon" size={20} />
+                  </button>
+                </div>
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handlePublish}
+                  disabled={isPublishing || (!newPostContent.trim() && !selectedFile)}
+                  className="bg-[#E4501C] hover:bg-[#cc3d10] text-white px-6 py-2.5 rounded-full font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {isPublishing ? 'Publication...' : 'Publier'}
+                </motion.button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* CREATE GROUP WIZARD MODAL */}
+      <CreateGroupWizardModal 
+        isOpen={isCreateGroupWizardOpen} 
+        onClose={() => setIsCreateGroupWizardOpen(false)} 
+      />
+
+    </div>
+  );
+}

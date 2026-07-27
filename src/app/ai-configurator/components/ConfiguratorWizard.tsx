@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
 import WeightGauge from '@/components/WeightGauge';
 import { getChatCompletion } from '@/lib/ai/chatCompletion';
@@ -133,7 +134,11 @@ function StepDestination({ state, onChange }: { state: WizardState; onChange: (k
             <button
               key={dest}
               onClick={() => onChange('destination', dest)}
-              className={`category-pill text-sm ${state.destination === dest ? 'active' : ''}`}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                state.destination === dest 
+                  ? 'bg-[#405247] text-white shadow-sm' 
+                  : 'bg-white border border-[#C8C3B0] text-[#5C6B5E] hover:border-[#405247]/50 hover:bg-[#F4F0EB]'
+              }`}
               aria-pressed={state.destination === dest}
             >
               {dest}
@@ -195,20 +200,20 @@ function StepDates({ state, onChange }: { state: WizardState; onChange: (k: keyo
 
       <div>
         <p className="text-sm font-600 text-foreground mb-3">Saison principale</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {seasons.map((s) => (
             <button
               key={s.id}
               onClick={() => onChange('season', s.id)}
-              className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
+              className={`flex flex-col items-center justify-center gap-3 p-5 rounded-2xl border-2 transition-all duration-300 ${
                 state.season === s.id
-                  ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground'
+                  ? 'border-[#405247] bg-[#405247]/5 shadow-sm scale-[1.02]' : 'border-[#C8C3B0] bg-white hover:border-[#405247]/50 hover:bg-[#F4F0EB]/50'
               }`}
               aria-pressed={state.season === s.id}
             >
-              <span className="text-2xl" aria-hidden="true">{s.icon}</span>
-              <span className="font-600 text-sm text-foreground">{s.label}</span>
-              <span className="font-mono-data text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{s.months}</span>
+              <span className="text-3xl" aria-hidden="true">{s.icon}</span>
+              <span className={`font-600 text-sm ${state.season === s.id ? 'text-[#2D3A33]' : 'text-[#5C6B5E]'}`}>{s.label}</span>
+              <span className="font-mono text-[10px] text-[#5C6B5E] tracking-widest uppercase">{s.months}</span>
             </button>
           ))}
         </div>
@@ -235,7 +240,11 @@ function StepProfile({ state, onChange }: { state: WizardState; onChange: (k: ke
             <button
               key={act}
               onClick={() => onChange('activity', act)}
-              className={`category-pill ${state.activity === act ? 'active' : ''}`}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                state.activity === act 
+                  ? 'bg-[#405247] text-white shadow-sm' 
+                  : 'bg-white border border-[#C8C3B0] text-[#5C6B5E] hover:border-[#405247]/50 hover:bg-[#F4F0EB]'
+              }`}
               aria-pressed={state.activity === act}
             >
               {act}
@@ -246,19 +255,19 @@ function StepProfile({ state, onChange }: { state: WizardState; onChange: (k: ke
 
       <div>
         <p className="text-sm font-600 text-foreground mb-3">Niveau d&apos;expérience</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {levels.map((lv) => (
             <button
               key={lv.id}
               onClick={() => onChange('level', lv.id)}
-              className={`flex flex-col gap-1 p-4 rounded-xl border-2 text-left transition-all duration-200 ${
+              className={`flex flex-col gap-2 p-5 rounded-2xl border-2 text-left transition-all duration-300 ${
                 state.level === lv.id
-                  ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground'
+                  ? 'border-[#405247] bg-[#405247]/5 shadow-sm scale-[1.02]' : 'border-[#C8C3B0] bg-white hover:border-[#405247]/50 hover:bg-[#F4F0EB]/50'
               }`}
               aria-pressed={state.level === lv.id}
             >
-              <span className="font-600 text-sm text-foreground">{lv.label}</span>
-              <span className="text-xs text-muted-foreground">{lv.desc}</span>
+              <span className={`font-600 text-sm ${state.level === lv.id ? 'text-[#2D3A33]' : 'text-[#5C6B5E]'}`}>{lv.label}</span>
+              <span className="text-xs text-[#5C6B5E]/80 leading-snug">{lv.desc}</span>
             </button>
           ))}
         </div>
@@ -266,11 +275,11 @@ function StepProfile({ state, onChange }: { state: WizardState; onChange: (k: ke
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <label htmlFor="max-weight" className="text-sm font-600 text-foreground">
+          <div className="flex items-center justify-between mb-4">
+            <label htmlFor="max-weight" className="text-sm font-600 text-[#2D3A33]">
               Poids max du sac
             </label>
-            <span className="font-mono-data text-sm text-info font-600" style={{ fontFamily: 'var(--font-mono)' }}>
+            <span className="font-mono text-sm text-[#405247] font-bold bg-[#405247]/10 px-3 py-1 rounded-lg">
               {state.maxWeightG >= 1000 ? `${(state.maxWeightG / 1000).toFixed(1)} kg` : `${state.maxWeightG} g`}
             </span>
           </div>
@@ -292,11 +301,11 @@ function StepProfile({ state, onChange }: { state: WizardState; onChange: (k: ke
         </div>
 
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <label htmlFor="budget" className="text-sm font-600 text-foreground">
+          <div className="flex items-center justify-between mb-4">
+            <label htmlFor="budget" className="text-sm font-600 text-[#2D3A33]">
               Budget équipement
             </label>
-            <span className="font-mono-data text-sm text-info font-600" style={{ fontFamily: 'var(--font-mono)' }}>
+            <span className="font-mono text-sm text-[#405247] font-bold bg-[#405247]/10 px-3 py-1 rounded-lg">
               {state.budgetEur} €
             </span>
           </div>
@@ -874,160 +883,186 @@ export default function ConfiguratorWizard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero banner */}
-      <div className="bg-dark-bg py-12 sm:py-16 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-5 pointer-events-none" aria-hidden="true">
+    <div className="min-h-[calc(100vh-64px)] bg-[#F4F0EB] flex flex-col-reverse lg:flex-row">
+      {/* LEFT COLUMN: Steps (Clair) */}
+      <div className="flex-1 lg:w-7/12 relative pb-20">
+        <div ref={topRef} className="max-w-3xl mx-auto px-4 sm:px-8 lg:px-12 py-10 sm:py-14">
+          
+          <div className="mb-10">
+            <h1 className="text-3xl font-display font-400 text-[#2D3A33] mb-2 italic">Préparez votre équipement</h1>
+            <p className="text-[#5C6B5E]">L&apos;IA génère votre liste en fonction des risques et du climat local.</p>
+          </div>
+
+          {/* Step indicator */}
+          <div className="flex items-center mb-10" role="progressbar" aria-valuenow={state.step} aria-valuemin={1} aria-valuemax={4} aria-label={`Étape ${state.step} sur 4`}>
+            {STEPS.map((step, idx) => (
+              <React.Fragment key={step.id}>
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-mono text-xs transition-colors ${state.step === step.id ? 'bg-[#405247] text-white border-2 border-[#405247]' : state.step > step.id ? 'bg-[#6B705C] text-white border-2 border-[#6B705C]' : 'bg-transparent border-2 border-[#C8C3B0] text-[#5C6B5E]'}`}>
+                    {state.step > step.id ? (
+                      <Icon name="CheckIcon" size={14} variant="outline" className="text-white" />
+                    ) : (
+                      <span>{step.id}</span>
+                    )}
+                  </div>
+                  <span className={`text-[10px] font-mono uppercase tracking-widest hidden sm:block ${state.step === step.id ? 'text-[#405247]' : 'text-[#5C6B5E]'}`}>
+                    {step.label}
+                  </span>
+                </div>
+                {idx < STEPS.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-2 ${state.step > step.id ? 'bg-[#6B705C]' : 'bg-[#C8C3B0]'}`} />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+
+          {/* Step card */}
+          <div className="bg-white border border-[#C8C3B0] rounded-3xl p-6 sm:p-10 shadow-sm">
+            {/* Step header */}
+            <div className="mb-8 pb-6 border-b border-[#C8C3B0]">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#405247]/10 text-[#405247]">
+                  <Icon
+                    name={
+                      state.step === 1 ? 'MapPinIcon' :
+                      state.step === 2 ? 'CalendarDaysIcon' :
+                      state.step === 3 ? 'UserCircleIcon' : 'SparklesIcon'
+                    }
+                    size={20}
+                    variant="outline"
+                  />
+                </div>
+                <div>
+                  <p className="font-mono text-[10px] text-[#5C6B5E] uppercase tracking-widest">
+                    Étape {state.step} sur 4
+                  </p>
+                  <h2 className="font-display font-400 text-[#2D3A33] text-2xl mt-1">
+                    {STEPS[state.step - 1].label}
+                  </h2>
+                </div>
+              </div>
+            </div>
+
+            {/* Step content */}
+            <div className="overflow-hidden">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={state.step}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                >
+                  {state.step === 1 && <StepDestination state={state} onChange={update} />}
+                  {state.step === 2 && <StepDates state={state} onChange={update} />}
+                  {state.step === 3 && <StepProfile state={state} onChange={update} />}
+                  {state.step === 4 && <StepResult state={state} />}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Navigation buttons */}
+            {state.step < 4 && (
+              <div className="flex items-center justify-between mt-10 pt-6 border-t border-[#C8C3B0]">
+                <button
+                  onClick={back}
+                  disabled={state.step === 1}
+                  className="flex items-center gap-2 py-3 px-6 text-sm text-[#5C6B5E] font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#F4F0EB] rounded-xl transition-colors"
+                  aria-label="Étape précédente"
+                >
+                  <Icon name="ArrowLeftIcon" size={16} variant="outline" />
+                  Retour
+                </button>
+                <button
+                  onClick={advance}
+                  disabled={!canAdvance()}
+                  className="flex items-center gap-2 bg-[#2D3A33] text-white py-3 px-8 rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#405247] transition-all active:scale-95 shadow-sm"
+                  aria-label="Étape suivante"
+                >
+                  {state.step === 3 ? (
+                    <>
+                      <Icon name="SparklesIcon" size={16} variant="outline" />
+                      Générer ma liste
+                    </>
+                  ) : (
+                    <>
+                      Continuer
+                      <Icon name="ArrowRightIcon" size={16} variant="outline" />
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+          
+          <p className="text-center text-[10px] font-mono text-[#5C6B5E] mt-8 uppercase tracking-widest">
+            IA Propulsée par Gemini 2.5 Flash
+          </p>
+        </div>
+      </div>
+
+      {/* RIGHT COLUMN: Context Panel (Vert) */}
+      <div className="lg:w-5/12 bg-[#2D3A33] lg:sticky lg:top-16 lg:h-[calc(100vh-64px)] flex flex-col justify-between overflow-hidden relative border-l border-[#405247]">
+        {/* Topographic background */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none" aria-hidden="true">
           <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <pattern id="topo-conf" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
-                <path d="M0,40 C20,20 60,60 80,40" fill="none" stroke="#E7E3D6" strokeWidth="0.5" />
-                <path d="M0,60 C20,40 60,80 80,60" fill="none" stroke="#E7E3D6" strokeWidth="0.5" />
+              <pattern id="topo-conf" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+                <path d="M0,50 C25,25 75,75 100,50" fill="none" stroke="#E5D7C1" strokeWidth="1" />
+                <path d="M0,80 C25,55 75,105 100,80" fill="none" stroke="#E5D7C1" strokeWidth="1" />
+                <path d="M0,20 C25,-5 75,45 100,20" fill="none" stroke="#E5D7C1" strokeWidth="1" />
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#topo-conf)" />
           </svg>
         </div>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <div className="flex items-center gap-2 justify-center mb-4">
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse-orange" />
-            <span className="text-xs font-mono-data text-primary uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>
-              Génération en cours
-            </span>
-          </div>
-          <h1 className="text-section-title text-white mb-3">
-            Configurateur IA
-          </h1>
-          <p className="text-white/60 text-base max-w-md mx-auto">
-            Votre liste d&apos;équipement optimisée poids / budget / sécurité en 4 étapes.
-          </p>
-        </div>
-      </div>
-
-      {/* Mono data band */}
-      {state.destination && (
-        <div
-          className="border-b border-border py-2 px-4 sm:px-6 overflow-x-auto"
-          style={{ background: 'rgba(62,107,122,0.06)' }}
-          aria-label="Données contextuelles de destination"
-        >
-          <div className="flex items-center gap-6 min-w-max max-w-7xl mx-auto">
-            {[
-              { label: 'DEST', val: state.destination.toUpperCase() },
-              { label: 'SAISON', val: state.season ? state.season.toUpperCase() : '—' },
-              { label: 'ACTIVITÉ', val: state.activity || '—' },
-              { label: 'MAX POIDS', val: state.maxWeightG >= 1000 ? `${(state.maxWeightG / 1000).toFixed(1)} kg` : `${state.maxWeightG} g` },
-              { label: 'BUDGET', val: `${state.budgetEur} €` },
-            ].map(({ label, val }) => (
-              <div key={label} className="flex items-center gap-2">
-                <span className="font-mono-data text-[10px] text-muted-foreground uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>
-                  {label}
-                </span>
-                <span className="font-mono-data text-[10px] text-info font-600" style={{ fontFamily: 'var(--font-mono)' }}>
-                  {val}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Main content */}
-      <div ref={topRef} className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-        {/* Step indicator */}
-        <div className="flex items-center mb-10" role="progressbar" aria-valuenow={state.step} aria-valuemin={1} aria-valuemax={4} aria-label={`Étape ${state.step} sur 4`}>
-          {STEPS.map((step, idx) => (
-            <React.Fragment key={step.id}>
-              <div className="flex flex-col items-center gap-1.5">
-                <div className={`step-dot ${state.step === step.id ? 'active' : state.step > step.id ? 'completed' : ''}`}>
-                  {state.step > step.id ? (
-                    <Icon name="CheckIcon" size={14} variant="outline" className="text-white" />
-                  ) : (
-                    <span>{step.id}</span>
-                  )}
-                </div>
-                <span className={`text-[10px] font-500 hidden sm:block ${state.step === step.id ? 'text-primary' : 'text-muted-foreground'}`}>
-                  {step.label}
-                </span>
-              </div>
-              {idx < STEPS.length - 1 && (
-                <div className={`step-line mx-1 sm:mx-2 ${state.step > step.id ? 'completed' : ''}`} />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
-
-        {/* Step card */}
-        <div className="topo-card p-6 sm:p-8">
-          {/* Step header */}
-          <div className="mb-6 pb-5 border-b border-border">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--primary)', color: 'white' }}>
-                <Icon
-                  name={
-                    state.step === 1 ? 'MapPinIcon' :
-                    state.step === 2 ? 'CalendarDaysIcon' :
-                    state.step === 3 ? 'UserCircleIcon' : 'SparklesIcon'
-                  }
-                  size={16}
-                  variant="outline"
-                />
-              </div>
-              <div>
-                <p className="font-mono-data text-[10px] text-muted-foreground uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>
-                  Étape {state.step} / 4
-                </p>
-                <h2 className="font-display font-700 text-foreground text-lg" style={{ fontFamily: 'var(--font-display)' }}>
-                  {STEPS[state.step - 1].label}
-                </h2>
-              </div>
+        
+        <div className="relative z-10 p-8 sm:p-12 lg:p-16 flex-1 flex flex-col">
+          <div className="mb-12">
+            <div className="w-12 h-12 bg-[#405247] rounded-2xl flex items-center justify-center mb-6 border border-[#6B705C]">
+              <Icon name="SparklesIcon" size={24} className="text-[#E5D7C1]" />
             </div>
+            <h2 className="text-4xl md:text-5xl font-display font-300 text-[#F4F0EB] leading-[1.1] italic mb-4">
+              Intelligence<br/>Outdoor
+            </h2>
+            <p className="text-[#E5D7C1] font-300">
+              Notre algorithme croise la météo historique, l&apos;altimétrie et les recommandations des experts pour construire votre kit parfait.
+            </p>
           </div>
 
-          {/* Step content */}
-          {state.step === 1 && <StepDestination state={state} onChange={update} />}
-          {state.step === 2 && <StepDates state={state} onChange={update} />}
-          {state.step === 3 && <StepProfile state={state} onChange={update} />}
-          {state.step === 4 && <StepResult state={state} />}
-
-          {/* Navigation buttons */}
-          {state.step < 4 && (
-            <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
-              <button
-                onClick={back}
-                disabled={state.step === 1}
-                className="btn-secondary py-2.5 px-5 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
-                aria-label="Étape précédente"
-              >
-                <Icon name="ArrowLeftIcon" size={16} variant="outline" />
-                Retour
-              </button>
-              <button
-                onClick={advance}
-                disabled={!canAdvance()}
-                className="btn-primary py-2.5 px-6 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
-                aria-label="Étape suivante"
-              >
-                {state.step === 3 ? (
-                  <>
-                    <Icon name="SparklesIcon" size={16} variant="outline" />
-                    Générer ma liste
-                  </>
-                ) : (
-                  <>
-                    Continuer
-                    <Icon name="ArrowRightIcon" size={16} variant="outline" />
-                  </>
-                )}
-              </button>
+          <div className="mt-auto space-y-4">
+            {/* Dynamic summary based on state */}
+            <div className="bg-[#405247]/40 backdrop-blur-md rounded-2xl p-6 border border-[#6B705C]/30">
+              <p className="font-mono text-[10px] text-[#E5D7C1] uppercase tracking-widest mb-4">Configuration en cours</p>
+              
+              <ul className="space-y-4">
+                <li className="flex items-center justify-between">
+                  <span className="text-sm text-[#F4F0EB]/70 flex items-center gap-2"><Icon name="MapPinIcon" size={14}/> Destination</span>
+                  <span className="font-mono text-sm text-[#F4F0EB] font-bold">{state.destination || '—'}</span>
+                </li>
+                <li className="flex items-center justify-between">
+                  <span className="text-sm text-[#F4F0EB]/70 flex items-center gap-2"><Icon name="CalendarDaysIcon" size={14}/> Saison</span>
+                  <span className="font-mono text-sm text-[#F4F0EB] font-bold">{state.season ? state.season.charAt(0).toUpperCase() + state.season.slice(1) : '—'}</span>
+                </li>
+                <li className="flex items-center justify-between">
+                  <span className="text-sm text-[#F4F0EB]/70 flex items-center gap-2"><Icon name="UserCircleIcon" size={14}/> Profil</span>
+                  <span className="font-mono text-sm text-[#F4F0EB] font-bold">{state.activity || '—'}</span>
+                </li>
+                <li className="flex items-center justify-between">
+                  <span className="text-sm text-[#F4F0EB]/70 flex items-center gap-2"><Icon name="ScaleIcon" size={14}/> Poids max</span>
+                  <span className="font-mono text-sm text-[#E5D7C1] font-bold">{state.maxWeightG >= 1000 ? `${(state.maxWeightG / 1000).toFixed(1)} kg` : `${state.maxWeightG} g`}</span>
+                </li>
+              </ul>
             </div>
-          )}
+            
+            {state.generated && (
+              <div className="flex items-center justify-center gap-2 text-[#E5D7C1] mt-4">
+                <span className="w-2 h-2 rounded-full bg-[#E5D7C1] animate-pulse" />
+                <span className="text-xs font-mono uppercase tracking-widest">Analyse terminée</span>
+              </div>
+            )}
+          </div>
         </div>
-
-        {/* Disclaimer */}
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          La liste générée est une recommandation IA basée sur votre profil. Adaptez-la selon vos besoins spécifiques.
-        </p>
       </div>
     </div>
   );

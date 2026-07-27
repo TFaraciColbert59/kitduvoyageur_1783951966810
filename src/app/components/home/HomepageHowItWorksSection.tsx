@@ -1,69 +1,171 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
+import Link from 'next/link';
+import AppImage from '@/components/ui/AppImage';
 
-const STEPS = [
+const JOURNEY_STEPS = [
   {
-    num: '01',
-    title: 'Décrivez votre voyage',
-    desc: 'Destination, durée, activité, budget, niveau. En une phrase ou en répondant à 3 questions.',
-    icon: '🗺️',
+    step: '01',
+    label: 'Catalogue',
+    title: 'Six objets.',
+    img: 'https://img.rocket.new/generatedImages/rocket_gen_img_1370bed92-1783680161245.png',
+    alt: 'Sac à dos technique vert',
+    href: '/boutique',
+    bg: '#EDEAE0',
   },
   {
-    num: '02',
-    title: 'L\'IA compose votre kit',
-    desc: 'Gemini analyse des milliers de combinaisons pour trouver le meilleur rapport poids/prix/performance.',
-    icon: '⚡',
+    step: '02',
+    label: 'Produit',
+    title: 'Sac 45 l.',
+    img: 'https://img.rocket.new/generatedImages/rocket_gen_img_17b4a31a9-1783680161528.png',
+    alt: 'Tente légère ultralight',
+    href: '/kits',
+    bg: '#E0DDD0',
   },
   {
-    num: '03',
-    title: 'Commandez en 1 clic',
-    desc: 'Chaque article est disponible en stock. Livraison sous 48h, retour gratuit 30 jours.',
-    icon: '📦',
+    step: '03',
+    label: 'Assistant',
+    title: 'Composer ton sac.',
+    img: 'https://img.rocket.new/generatedImages/rocket_gen_img_13d6ec110-1783680160804.png',
+    alt: 'Interface configurateur IA avec kit personnalisé',
+    href: '/ai-configurator',
+    bg: '#2D5A3D',
+    dark: true,
+    highlight: true,
   },
   {
-    num: '04',
-    title: 'Partez l\'esprit libre',
-    desc: 'Votre inventaire est sauvegardé. Prochaine aventure ? L\'IA sait déjà ce que vous possédez.',
-    icon: '🏔️',
+    step: '04',
+    label: 'Commande',
+    title: '636 €.',
+    img: 'https://images.unsplash.com/photo-1721633616585-3f6c10c491fe?w=400&q=80',
+    alt: 'Équipement complet soigneusement emballé prêt à l\'envoi',
+    href: '/panier',
+    bg: '#C8D9CE',
+  },
+  {
+    step: '05',
+    label: 'Terrain',
+    title: 'Presque prêt.',
+    img: 'https://images.unsplash.com/photo-1431965400057-a84b80cfdbff?w=400&q=80',
+    alt: 'Randonneur équipé sur un sentier de montagne',
+    href: '/pays',
+    bg: '#9BBBA8',
   },
 ];
 
 export default function HomepageHowItWorksSection() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      { threshold: 0.1 }
+    );
+    if (sectionRef.current) observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <section className="py-20" style={{ background: '#1C2620' }} aria-labelledby="how-heading">
+    <section
+      ref={sectionRef}
+      className="py-20 md:py-28"
+      style={{ background: '#F5F2E8' }}
+      aria-labelledby="journey-heading"
+    >
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
-        <div className="text-center mb-14">
-          <p className="text-[10px] font-mono text-white/30 tracking-[0.2em] uppercase mb-3" style={{ fontFamily: 'var(--font-mono)' }}>
-            — Comment ça marche
-          </p>
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-10 md:mb-14 gap-4">
           <h2
-            id="how-heading"
-            className="font-display font-800 text-white text-3xl md:text-4xl tracking-tight"
-            style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}
+            id="journey-heading"
+            className="text-section-title text-[#1A1F1C]"
+            style={{
+              opacity: visible ? 1 : 0,
+              transform: visible ? 'translateY(0)' : 'translateY(20px)',
+              transition: 'opacity 0.6s ease, transform 0.6s cubic-bezier(0.16,1,0.3,1)',
+            }}
           >
-            Simple comme<br />
-            <span style={{ color: '#E4501C' }}>bonjour.</span>
+            Le parcours{' '}
+            <em className="not-italic" style={{ fontStyle: 'italic', fontWeight: 400, color: 'rgba(26,31,28,0.4)' }}>
+              d&apos;achat.
+            </em>
           </h2>
+          <p
+            className="text-sm text-[#6B7568] max-w-xs leading-relaxed"
+            style={{
+              opacity: visible ? 1 : 0,
+              transition: 'opacity 0.5s ease 0.2s',
+            }}
+          >
+            5 écrans repensés. Cliquez sur le premier et suivez le fil.
+          </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {STEPS?.map((step, i) => (
-            <div key={step?.num} className="relative">
-              {i < STEPS?.length - 1 && (
-                <div className="hidden md:block absolute top-8 left-full w-full h-px z-0" style={{ background: 'linear-gradient(to right, rgba(228,80,28,0.3), transparent)' }} aria-hidden="true" />
-              )}
-              <div className="relative z-10">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mb-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  {step?.icon}
-                </div>
-                <p className="text-[10px] font-mono text-[#E4501C] tracking-widest mb-2" style={{ fontFamily: 'var(--font-mono)' }}>{step?.num}</p>
-                <h3 className="text-sm font-semibold text-white mb-2">{step?.title}</h3>
-                <p className="text-xs text-white/45 leading-relaxed">{step?.desc}</p>
+        {/* Steps — horizontal scroll on mobile */}
+        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide md:grid md:grid-cols-5 md:overflow-visible md:pb-0">
+          {JOURNEY_STEPS.map((step, i) => (
+            <Link
+              key={step.step}
+              href={step.href}
+              className="group flex-shrink-0 w-48 md:w-auto block rounded-xl overflow-hidden transition-all hover:-translate-y-1"
+              style={{
+                background: step.bg,
+                opacity: visible ? 1 : 0,
+                transform: visible ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.97)',
+                transition: `opacity 0.5s ease ${i * 0.1}s, transform 0.5s cubic-bezier(0.16,1,0.3,1) ${i * 0.1}s`,
+              }}
+              aria-label={`Étape ${step.step} — ${step.title}`}
+            >
+              {/* Image */}
+              <div className="relative h-40 overflow-hidden">
+                <AppImage
+                  src={step.img}
+                  alt={step.alt}
+                  fill
+                  sizes="200px"
+                  loading="lazy"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                />
               </div>
-            </div>
+
+              {/* Text */}
+              <div className="p-4">
+                <p
+                  className="text-[9px] uppercase tracking-[0.18em] mb-1"
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    color: step.dark ? 'rgba(245,243,238,0.45)' : 'rgba(26,31,28,0.4)',
+                  }}
+                >
+                  {step.step} · {step.label}
+                </p>
+                <p
+                  className="text-sm font-display font-700 leading-snug"
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 700,
+                    color: step.dark ? '#F5F2E8' : '#1A1F1C',
+                  }}
+                >
+                  {step.title}
+                </p>
+              </div>
+            </Link>
           ))}
         </div>
+
+        {/* Footnote */}
+        <p
+          className="mt-6 text-xs text-[#6B7568] text-center md:text-left"
+          style={{
+            fontFamily: 'var(--font-mono)',
+            opacity: visible ? 1 : 0,
+            transition: 'opacity 0.5s ease 0.5s',
+          }}
+        >
+          Tout compris — en continuant au prochain kit.
+        </p>
       </div>
     </section>
   );

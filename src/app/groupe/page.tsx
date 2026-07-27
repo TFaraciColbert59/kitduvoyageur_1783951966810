@@ -243,7 +243,7 @@ function GroupePageInner() {
       supabase.from('group_messages').select('*, user_profiles(full_name, avatar_url)').eq('group_id', groupId).order('created_at', { ascending: true }).limit(50),
       supabase.from('group_expenses').select('*, user_profiles(full_name)').eq('group_id', groupId).order('created_at', { ascending: false }),
       supabase.from('group_kit_items').select('*, user_profiles(full_name)').eq('group_id', groupId),
-      supabase.from('group_tasks').select('*, user_profiles(full_name)').eq('group_id', groupId).order('created_at', { ascending: false }),
+      supabase.from('group_tasks').select('*, user_profiles!group_tasks_assigned_to_fkey(full_name)').eq('group_id', groupId).order('created_at', { ascending: false }),
       supabase.from('group_polls').select('*').eq('group_id', groupId).order('created_at', { ascending: false }),
     ]);
     setMembers(membersRes.data || []);
