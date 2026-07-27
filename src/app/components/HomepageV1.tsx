@@ -27,7 +27,7 @@ export default function HomepageV1({
       <HomepageSocialProofSection stats={stats} />
 
       {/* 3. Démonstration IA */}
-      <HomepageAIDemoSection />
+      <HomepageAIDemoSection stats={stats} />
 
       {/* 4. Comment ça marche */}
       <HomepageHowItWorksSection />

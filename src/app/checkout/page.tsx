@@ -254,10 +254,10 @@ export default function CheckoutPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-[#F5F2E8]">
         <Header />
         <div className="pt-24 flex items-center justify-center min-h-[60vh]">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-[#1C2620] border-t-transparent rounded-full animate-spin" />
         </div>
         <Footer />
       </div>
@@ -265,315 +265,333 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-[#F5F2E8] text-[#1C2620]">
       <Header />
 
-      <section className="pt-20 pb-0 bg-dark-bg">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <p className="font-mono text-xs text-primary tracking-widest uppercase mb-2" style={{ fontFamily: 'var(--font-mono)' }}>COMMANDE SÉCURISÉE</p>
-          <h1 className="font-display font-800 text-3xl text-white tracking-tight" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>FINALISER MA COMMANDE</h1>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        {step !== 'confirmation' && (
+          <h1 className="font-display font-800 text-5xl text-[#1C2620] mb-12">
+            Presque <em className="italic font-400 text-[#5C6B5E]">parti.</em>
+          </h1>
+        )}
 
-          {/* Step indicator */}
-          <div className="flex items-center gap-0 mt-6">
-            {steps.map((s, i) => (
-              <React.Fragment key={s.id}>
-                <div className="flex items-center gap-2">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-mono font-700 transition-all ${
-                    step === s.id ? 'bg-primary text-white' :
-                    steps.findIndex(x => x.id === step) > i ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white/40'
-                  }`} style={{ fontFamily: 'var(--font-mono)' }}>
-                    {steps.findIndex(x => x.id === step) > i ? '✓' : s.num}
-                  </div>
-                  <span className={`text-xs font-medium ${step === s.id ? 'text-white' : 'text-white/40'}`}>{s.label}</span>
-                </div>
-                {i < steps.length - 1 && <div className="flex-1 h-px bg-white/10 mx-3" />}
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* Main content */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-7 xl:col-span-8">
 
-            {/* ── STEP 1: Livraison ── */}
-            {step === 'livraison' && (
-              <form onSubmit={handleShippingSubmit} className="space-y-6">
-                <div className="bg-card border border-border rounded-2xl p-6">
-                  <h2 className="font-semibold text-lg mb-5 flex items-center gap-2">
-                    <Icon name="TruckIcon" size={18} variant="outline" className="text-primary" />
-                    Adresse de livraison
-                  </h2>
-                  <div className="grid grid-cols-2 gap-4">
-                    {[
-                      { key: 'prenom', label: 'Prénom', col: 1 },
-                      { key: 'nom', label: 'Nom', col: 1 },
-                      { key: 'email', label: 'Email', col: 2 },
-                      { key: 'telephone', label: 'Téléphone', col: 2 },
-                    ].map(({ key, label, col }) => (
-                      <div key={key} className={col === 2 ? 'col-span-2' : ''}>
-                        <label className="block text-sm font-medium mb-1.5">{label}</label>
-                        <input
-                          type={key === 'email' ? 'email' : 'text'}
-                          value={(shipping as Record<string, string>)[key]}
-                          onChange={(e) => setShipping(prev => ({ ...prev, [key]: e.target.value }))}
-                          className={`w-full px-3 py-2.5 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 ${errors[key] ? 'border-red-500' : 'border-border'}`}
-                        />
-                        {errors[key] && <p className="text-red-500 text-xs mt-1">{errors[key]}</p>}
+            {step !== 'confirmation' ? (
+              <div className="space-y-6">
+                
+                {/* ── STEP 1: Vos coordonnées ── */}
+                <div className={`bg-white border border-[#C8C3B0] rounded-3xl p-8 transition-opacity ${step !== 'livraison' ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="font-display font-700 text-xl flex items-center gap-3">
+                      <span className="font-400 italic text-[#5C6B5E]">01</span> Vos coordonnées
+                    </h2>
+                    <button className="text-xs font-600 text-[#1C2620] hover:underline">Se connecter</button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Email</label>
+                      <input
+                        type="email"
+                        value={shipping.email}
+                        onChange={(e) => setShipping(prev => ({ ...prev, email: e.target.value }))}
+                        className={`w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] ${errors.email ? 'ring-1 ring-red-500' : ''}`}
+                      />
+                    </div>
+                    <label className="flex items-center gap-3 cursor-pointer mt-2">
+                      <div className="w-4 h-4 rounded border border-[#1C2620] bg-[#1C2620] flex items-center justify-center">
+                        <Icon name="CheckIcon" size={12} className="text-white" />
                       </div>
-                    ))}
+                      <span className="text-xs text-[#1C2620]">Recevoir le journal du Kit — un envoi par saison, refuges et sentiers uniquement.</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* ── STEP 2: Livraison ── */}
+                <div className={`bg-white border border-[#C8C3B0] rounded-3xl p-8 transition-opacity ${step !== 'livraison' ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <h2 className="font-display font-700 text-xl flex items-center gap-3 mb-6">
+                    <span className="font-400 italic text-[#5C6B5E]">02</span> Livraison
+                  </h2>
+                  
+                  <div className="grid grid-cols-2 gap-4 mb-8">
+                    <div>
+                      <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Prénom</label>
+                      <input
+                        type="text"
+                        value={shipping.prenom}
+                        onChange={(e) => setShipping(prev => ({ ...prev, prenom: e.target.value }))}
+                        className={`w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] ${errors.prenom ? 'ring-1 ring-red-500' : ''}`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Nom</label>
+                      <input
+                        type="text"
+                        value={shipping.nom}
+                        onChange={(e) => setShipping(prev => ({ ...prev, nom: e.target.value }))}
+                        className={`w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] ${errors.nom ? 'ring-1 ring-red-500' : ''}`}
+                      />
+                    </div>
                     <div className="col-span-2">
-                      <label className="block text-sm font-medium mb-1.5">Adresse</label>
+                      <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Adresse</label>
                       <input
                         type="text"
                         value={shipping.adresse}
                         onChange={(e) => setShipping(prev => ({ ...prev, adresse: e.target.value }))}
-                        className={`w-full px-3 py-2.5 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 ${errors.adresse ? 'border-red-500' : 'border-border'}`}
+                        className={`w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] ${errors.adresse ? 'ring-1 ring-red-500' : ''}`}
                       />
-                      {errors.adresse && <p className="text-red-500 text-xs mt-1">{errors.adresse}</p>}
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Complément (Optionnel)</label>
+                      <input
+                        type="text"
+                        value={shipping.complement}
+                        onChange={(e) => setShipping(prev => ({ ...prev, complement: e.target.value }))}
+                        placeholder="Bâtiment - étage - digicode"
+                        className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620]"
+                      />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1.5">Code postal</label>
+                      <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Code postal</label>
                       <input
                         type="text"
                         value={shipping.codePostal}
                         onChange={(e) => setShipping(prev => ({ ...prev, codePostal: e.target.value }))}
-                        className={`w-full px-3 py-2.5 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 ${errors.codePostal ? 'border-red-500' : 'border-border'}`}
+                        className={`w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] ${errors.codePostal ? 'ring-1 ring-red-500' : ''}`}
                       />
-                      {errors.codePostal && <p className="text-red-500 text-xs mt-1">{errors.codePostal}</p>}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1.5">Ville</label>
+                      <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Ville</label>
                       <input
                         type="text"
                         value={shipping.ville}
                         onChange={(e) => setShipping(prev => ({ ...prev, ville: e.target.value }))}
-                        className={`w-full px-3 py-2.5 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 ${errors.ville ? 'border-red-500' : 'border-border'}`}
+                        className={`w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] ${errors.ville ? 'ring-1 ring-red-500' : ''}`}
                       />
-                      {errors.ville && <p className="text-red-500 text-xs mt-1">{errors.ville}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Pays</label>
+                      <select className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] appearance-none">
+                        <option>France</option>
+                        <option>Belgique</option>
+                        <option>Suisse</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Téléphone</label>
+                      <input
+                        type="text"
+                        value={shipping.telephone}
+                        onChange={(e) => setShipping(prev => ({ ...prev, telephone: e.target.value }))}
+                        placeholder="+33 6 12 34 56 78"
+                        className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620]"
+                      />
                     </div>
                   </div>
+
+                  <div>
+                    <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-3">Mode d'expédition</label>
+                    <div className="space-y-3">
+                      {[
+                        { id: 'standard', label: 'Livraison suivie', desc: 'Colis relais ou domicile - 3 à 5 jours ouvrés - CO2 compensé', price: totalPriceEur >= 99 ? 'Offerte' : '5,90 €' },
+                        { id: 'express', label: 'Express 48h', desc: 'Livré à domicile en 48 h - sur créneau choisi', price: '14 €' },
+                        { id: 'relay', label: 'Retrait en atelier', desc: 'Manosque, Alpes-de-Haute-Provence - disponible dès demain', price: 'Offerte' },
+                      ].map((opt) => (
+                        <label key={opt.id} className={`flex items-center justify-between p-4 rounded-2xl cursor-pointer transition-all border-2 ${shippingOption === opt.id ? 'border-[#1C2620] bg-white' : 'border-transparent bg-[#F5F2E8] hover:border-[#C8C3B0]'}`}>
+                          <div className="flex items-center gap-4">
+                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${shippingOption === opt.id ? 'border-[#1C2620]' : 'border-[#C8C3B0]'}`}>
+                              {shippingOption === opt.id && <div className="w-2 h-2 bg-[#1C2620] rounded-full" />}
+                            </div>
+                            <div>
+                              <p className="font-600 text-sm">{opt.label}</p>
+                              <p className="text-[10px] text-[#5C6B5E] mt-0.5">{opt.desc}</p>
+                            </div>
+                          </div>
+                          <span className={`font-600 text-sm ${opt.price === 'Offerte' ? 'text-[#1C2620]' : ''}`}>{opt.price}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {step === 'livraison' && (
+                    <button onClick={handleShippingSubmit} className="mt-8 w-full bg-[#1C2620] hover:bg-[#2A3830] text-white py-4 rounded-xl font-600 transition-colors">
+                      Continuer vers le paiement
+                    </button>
+                  )}
                 </div>
 
-                {/* Shipping options */}
-                <div className="bg-card border border-border rounded-2xl p-6">
-                  <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                    <Icon name="TruckIcon" size={18} variant="outline" className="text-primary" />
-                    Mode de livraison
+                {/* ── STEP 3: Paiement ── */}
+                <div className={`bg-white border border-[#C8C3B0] rounded-3xl p-8 transition-opacity ${step !== 'paiement' ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <h2 className="font-display font-700 text-xl flex items-center gap-3 mb-6">
+                    <span className="font-400 italic text-[#5C6B5E]">03</span> Paiement
                   </h2>
-                  <div className="space-y-3">
-                    {[
-                      { id: 'standard', label: 'Livraison standard', delay: '3–5 jours', price: totalPriceEur >= 99 ? 'Gratuit' : '5,90 €' },
-                      { id: 'express', label: 'Livraison express', delay: '1–2 jours', price: '9,90 €' },
-                      { id: 'relay', label: 'Point relais', delay: '2–4 jours', price: '3,90 €' },
-                    ].map((opt) => (
-                      <label key={opt.id} className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${shippingOption === opt.id ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'}`}>
-                        <div className="flex items-center gap-3">
-                          <input type="radio" name="shipping" value={opt.id} checked={shippingOption === opt.id} onChange={() => setShippingOption(opt.id)} className="text-primary" />
+                  
+                  {step === 'paiement' && (
+                    <>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-8">
+                        <button className="flex flex-col items-center justify-center p-3 border-2 border-[#1C2620] rounded-2xl bg-white text-[#1C2620]">
+                          <Icon name="CreditCardIcon" size={24} className="mb-1" />
+                          <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Carte</span>
+                        </button>
+                        <button className="flex flex-col items-center justify-center p-3 border border-transparent bg-[#F5F2E8] rounded-2xl text-[#5C6B5E] hover:border-[#C8C3B0]">
+                          <span className="text-xl mb-1">🍎</span>
+                          <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Apple Pay</span>
+                        </button>
+                        <button className="flex flex-col items-center justify-center p-3 border border-transparent bg-[#F5F2E8] rounded-2xl text-[#5C6B5E] hover:border-[#C8C3B0]">
+                          <span className="text-xl mb-1 text-blue-600 font-bold">P</span>
+                          <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Compte</span>
+                        </button>
+                        <button className="flex flex-col items-center justify-center p-3 border border-transparent bg-[#F5F2E8] rounded-2xl text-amber-700 hover:border-[#C8C3B0]">
+                          <span className="text-xs font-700 italic mb-1">3× sans frais</span>
+                          <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Alma</span>
+                        </button>
+                      </div>
+
+                      <div className="flex justify-center mb-8">
+                        {/* Fake Credit Card visual */}
+                        <div className="w-full max-w-[320px] aspect-[1.586] bg-gradient-to-br from-[#1C2620] to-[#0A100C] rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+                          <div className="absolute right-[-20px] top-[-20px] w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+                          <div className="w-12 h-8 bg-[#C8C3B0] rounded bg-gradient-to-br from-[#D9D5C4] to-[#B3AE9A] mb-8" />
+                          <div className="font-mono text-xl tracking-[0.2em] mb-6 flex justify-between">
+                            <span>••••</span><span>••••</span><span>••••</span><span>4242</span>
+                          </div>
+                          <div className="flex justify-between items-end">
+                            <div>
+                              <p className="text-[8px] font-mono tracking-widest uppercase opacity-60 mb-1">Titulaire</p>
+                              <p className="text-sm font-600 uppercase truncate max-w-[120px]">{shipping.prenom ? `${shipping.prenom[0]}. ${shipping.nom}` : 'M. Chevrier'}</p>
+                            </div>
+                            <div>
+                              <p className="text-[8px] font-mono tracking-widest uppercase opacity-60 mb-1">Expire</p>
+                              <p className="text-sm font-600 font-mono">09/28</p>
+                            </div>
+                            <div className="text-2xl font-bold italic opacity-80">VISA</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Numéro de carte</label>
+                          <input type="text" placeholder="1234 1234 1234 1234" className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none font-mono" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <p className="font-medium text-sm">{opt.label}</p>
-                            <p className="text-xs text-muted-foreground">{opt.delay}</p>
+                            <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Expiration</label>
+                            <input type="text" placeholder="MM / AA" className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none font-mono" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Cryptogramme</label>
+                            <input type="text" placeholder="CVC" className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none font-mono" />
                           </div>
                         </div>
-                        <span className="font-semibold text-sm">{opt.price}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all">
-                  Continuer vers le paiement
-                  <Icon name="ArrowRightIcon" size={16} variant="outline" />
-                </button>
-              </form>
-            )}
-
-            {/* ── STEP 2: Paiement ── */}
-            {step === 'paiement' && (
-              <div className="space-y-6">
-                <div className="bg-card border border-border rounded-2xl p-6">
-                  <h2 className="font-semibold text-lg mb-5 flex items-center gap-2">
-                    <Icon name="LockClosedIcon" size={18} variant="outline" className="text-primary" />
-                    Mode de paiement
-                  </h2>
-
-                  <div className="space-y-3 mb-6">
-                    {PAYMENT_METHODS.map((pm) => (
-                      <label key={pm.id} className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${paymentMethod === pm.id ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'}`}>
-                        <input type="radio" name="payment" value={pm.id} checked={paymentMethod === pm.id} onChange={() => setPaymentMethod(pm.id)} className="text-primary" />
-                        <span className="text-xl">{pm.icon}</span>
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{pm.label}</p>
-                          <p className="text-xs text-muted-foreground">{pm.desc}</p>
+                        <div>
+                          <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Nom du titulaire</label>
+                          <input type="text" placeholder="Comme écrit sur la carte" className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none uppercase" />
                         </div>
-                        {pm.badge && <span className="text-[10px] font-mono bg-primary/10 text-primary px-2 py-0.5 rounded-full">{pm.badge}</span>}
-                      </label>
-                    ))}
-                  </div>
-
-                  {/* Card payment — redirect to Stripe */}
-                  {paymentMethod === 'card' && (
-                    <div className="space-y-4">
-                      {stripeConfigured ? (
-                        <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4">
-                          <div className="flex items-start gap-3">
-                            <Icon name="ShieldCheckIcon" size={18} variant="outline" className="text-emerald-600 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="font-semibold text-sm text-emerald-700 dark:text-emerald-400">Paiement 100 % sécurisé via Stripe</p>
-                              <p className="text-xs text-emerald-600/80 dark:text-emerald-500 mt-1">
-                                Vos données bancaires sont saisies directement sur les serveurs de Stripe, certifiés PCI-DSS niveau 1.
-                                Aucune donnée de carte ne transite par nos serveurs.
-                              </p>
-                            </div>
+                        
+                        <label className="flex items-center gap-3 cursor-pointer mt-4 mb-6">
+                          <div className="w-4 h-4 rounded border border-[#1C2620] bg-[#1C2620] flex items-center justify-center">
+                            <Icon name="CheckIcon" size={12} className="text-white" />
                           </div>
-                        </div>
-                      ) : (
-                        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
-                          <div className="flex items-start gap-3">
-                            <Icon name="ExclamationTriangleIcon" size={18} variant="outline" className="text-amber-600 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="font-semibold text-sm text-amber-700 dark:text-amber-400">Paiement par carte temporairement indisponible</p>
-                              <p className="text-xs text-amber-600/80 dark:text-amber-500 mt-1">
-                                L&apos;intégration Stripe est en cours de configuration. Veuillez utiliser le virement bancaire ou réessayer ultérieurement.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <Icon name="LockClosedIcon" size={12} variant="outline" />
-                        <span>Connexion SSL 256-bit · Certifié PCI-DSS · Aucune donnée bancaire stockée</span>
+                          <span className="text-xs text-[#5C6B5E]">Enregistrer cette carte pour un futur achat (chiffrée par Stripe).</span>
+                        </label>
                       </div>
 
                       <button
                         onClick={handleStripeCheckout}
-                        disabled={processing || !stripeConfigured}
-                        className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all"
-                      >
-                        {processing ? (
-                          <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Redirection vers Stripe…</>
-                        ) : (
-                          <><Icon name="LockClosedIcon" size={16} variant="outline" /> Payer {grandTotal.toFixed(2)} € en sécurité</>
-                        )}
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Virement */}
-                  {paymentMethod === 'virement' && (
-                    <form onSubmit={handleVirementSubmit} className="space-y-4">
-                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 text-sm">
-                        <p className="font-semibold text-blue-700 dark:text-blue-400 mb-2">Coordonnées bancaires</p>
-                        <div className="space-y-1 text-blue-600/80 dark:text-blue-500 font-mono text-xs">
-                          <p>IBAN : FR76 XXXX XXXX XXXX XXXX XXXX XXX</p>
-                          <p>BIC : XXXXXXXX</p>
-                          <p>Référence : votre email</p>
-                        </div>
-                        <p className="text-xs text-blue-600/60 dark:text-blue-600 mt-2">La commande sera traitée à réception du virement (2–3 jours ouvrés).</p>
-                      </div>
-                      <button
-                        type="submit"
                         disabled={processing}
-                        className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all"
+                        className="w-full bg-[#1C2620] hover:bg-[#2A3830] text-white py-4 rounded-xl font-600 transition-colors disabled:opacity-50"
                       >
-                        {processing ? (
-                          <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Traitement…</>
-                        ) : (
-                          <>Confirmer la commande par virement</>
-                        )}
+                        {processing ? 'Traitement...' : `Payer ${grandTotal.toFixed(2)} €`}
                       </button>
-                    </form>
-                  )}
-
-                  {/* Other methods */}
-                  {(paymentMethod === 'paypal' || paymentMethod === 'apple_pay' || paymentMethod === 'google_pay') && (
-                    <div className="bg-muted/50 rounded-xl p-4 text-center">
-                      <p className="text-sm text-muted-foreground">
-                        Ce mode de paiement sera disponible prochainement. Veuillez utiliser la carte bancaire ou le virement.
-                      </p>
-                    </div>
+                    </>
                   )}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setStep('livraison')}
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <Icon name="ArrowLeftIcon" size={14} variant="outline" />
-                  Modifier la livraison
-                </button>
               </div>
-            )}
-
-            {/* ── STEP 3: Confirmation ── */}
-            {step === 'confirmation' && (
-              <div className="bg-card border border-border rounded-2xl p-8 text-center">
-                <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Icon name="CheckCircleIcon" size={32} variant="outline" className="text-emerald-500" />
+            ) : (
+              /* ── STEP 3: Confirmation ── */
+              <div className="bg-white border border-[#C8C3B0] rounded-3xl p-12 text-center h-full flex flex-col items-center justify-center min-h-[500px]">
+                <div className="w-20 h-20 bg-[#F5F2E8] border border-[#C8C3B0] rounded-full flex items-center justify-center mb-6">
+                  <Icon name="CheckIcon" size={32} className="text-[#1C2620]" />
                 </div>
-                <h2 className="font-display font-800 text-2xl mb-2" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>Commande confirmée !</h2>
-                <p className="text-muted-foreground mb-2">Numéro de commande : <span className="font-mono font-semibold text-foreground">{orderNumber}</span></p>
-                <p className="text-sm text-muted-foreground mb-6">Un email de confirmation vous a été envoyé. Votre inventaire a été mis à jour automatiquement.</p>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Link href="/inventaire" className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-primary/90 transition-all">
-                    <Icon name="ArchiveBoxIcon" size={16} variant="outline" />
-                    Voir mon inventaire
-                  </Link>
-                  <Link href="/shop" className="inline-flex items-center gap-2 border border-border px-6 py-3 rounded-xl font-medium text-sm hover:bg-accent transition-all">
-                    Continuer mes achats
-                  </Link>
-                </div>
+                <h2 className="font-display font-800 text-3xl mb-4">Commande confirmée.</h2>
+                <p className="text-[#5C6B5E] mb-2">Numéro de commande : <span className="font-mono font-600 text-[#1C2620]">{orderNumber}</span></p>
+                <p className="text-sm text-[#5C6B5E] mb-8 max-w-sm mx-auto leading-relaxed">
+                  Merci ! Un email de confirmation vous a été envoyé. Préparez-vous pour l'aventure.
+                </p>
+                <Link href="/inventaire" className="inline-flex items-center gap-2 bg-[#1C2620] text-white px-8 py-3.5 rounded-xl font-600 text-sm hover:bg-[#2A3830] transition-colors">
+                  Voir mon inventaire
+                </Link>
               </div>
             )}
           </div>
 
           {/* Order summary sidebar */}
-          {step !== 'confirmation' && (
-            <div className="lg:col-span-1">
-              <div className="bg-card border border-border rounded-2xl p-5 sticky top-24">
-                <h3 className="font-semibold mb-4">Récapitulatif</h3>
-                <div className="space-y-3 mb-4">
-                  {items.map((item) => (
-                    <div key={item.slug} className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-muted rounded-lg flex-shrink-0 overflow-hidden">
-                        {item.image && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium truncate">{item.name}</p>
-                        <p className="text-xs text-muted-foreground">×{item.quantity}</p>
-                      </div>
-                      <p className="text-xs font-semibold">{(item.priceEur * item.quantity).toFixed(2)} €</p>
+          <div className="lg:col-span-5 xl:col-span-4">
+            <div className="bg-white border border-[#C8C3B0] rounded-3xl p-8 sticky top-24">
+              <h3 className="font-display font-700 text-lg mb-6">Votre commande</h3>
+              <div className="space-y-4 mb-6">
+                {items.map((item) => (
+                  <div key={item.slug} className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-[#F5F2E8] rounded-xl flex-shrink-0 overflow-hidden border border-[#C8C3B0]">
+                      {item.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-[#EBE8DD]">
+                          <Icon name="PhotoIcon" size={16} className="text-[#5C6B5E]/30" />
+                        </div>
+                      )}
                     </div>
-                  ))}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-600 text-[#1C2620] truncate pr-2">{item.name}</p>
+                      <p className="text-[10px] text-[#5C6B5E] mt-0.5">Quantité : {item.quantity}</p>
+                    </div>
+                    <p className="text-xs font-600 whitespace-nowrap">{(item.priceEur * item.quantity).toFixed(2)} €</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t border-[#C8C3B0]/50 pt-5 space-y-2 mb-5">
+                <div className="flex justify-between text-xs">
+                  <span className="text-[#5C6B5E]">Sous-total</span>
+                  <span className="font-600">{totalPriceEur.toFixed(2)} €</span>
                 </div>
-                <div className="border-t border-border pt-4 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Sous-total</span>
-                    <span>{totalPriceEur.toFixed(2)} €</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Livraison</span>
-                    <span>{shippingEur === 0 ? 'Gratuit' : `${shippingEur.toFixed(2)} €`}</span>
-                  </div>
-                  <div className="flex justify-between font-semibold text-base pt-2 border-t border-border">
-                    <span>Total</span>
-                    <span>{grandTotal.toFixed(2)} €</span>
-                  </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-[#5C6B5E]">Livraison suivie</span>
+                  <span className="font-600 text-[#1C2620]">{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
                 </div>
-                <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-                  <Icon name="ShieldCheckIcon" size={12} variant="outline" className="text-emerald-500" />
-                  Paiement 100 % sécurisé
+                <div className="flex justify-between text-xs">
+                  <span className="text-[#5C6B5E]">TVA (20 %, incluse)</span>
+                  <span className="font-600">{(totalPriceEur * 0.2).toFixed(2)} €</span>
                 </div>
               </div>
+
+              <div className="flex justify-between items-end font-display font-800 text-2xl pt-5 border-t border-[#C8C3B0]">
+                <span className="text-lg">Total</span>
+                <span>{grandTotal.toFixed(2)} €</span>
+              </div>
+
+              {step === 'livraison' && (
+                <button onClick={handleShippingSubmit} className="mt-6 w-full bg-[#1C2620] hover:bg-[#2A3830] text-white py-4 rounded-xl font-600 transition-colors">
+                  Payer {grandTotal.toFixed(2)} € par carte
+                </button>
+              )}
+              {step === 'paiement' && (
+                <button onClick={handleStripeCheckout} disabled={processing} className="mt-6 w-full bg-[#1C2620] hover:bg-[#2A3830] text-white py-4 rounded-xl font-600 transition-colors disabled:opacity-50">
+                  {processing ? 'Traitement...' : `Payer ${grandTotal.toFixed(2)} € par carte`}
+                </button>
+              )}
+              
+              <p className="text-center text-[10px] text-[#5C6B5E] mt-4 max-w-[250px] mx-auto leading-relaxed">
+                En passant commande, vous acceptez les <a href="#" className="underline">CGV</a> et notre <a href="#" className="underline">politique de retour</a>. Vous ne serez débité qu'à l'expédition.
+              </p>
             </div>
-          )}
+          </div>
         </div>
       </div>
 

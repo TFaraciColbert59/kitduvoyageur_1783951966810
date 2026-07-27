@@ -1,105 +1,194 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
+import AppImage from '@/components/ui/AppImage';
 import Icon from '@/components/ui/AppIcon';
+import type { TrustStats } from '@/lib/home-queries';
 
-export default function HomepageAIDemoSection() {
-  const steps = [
-    { step: '01', title: 'Décrivez votre aventure', desc: '"Trek Islande 7 jours, budget 800€, débutant"', icon: '💬' },
-    { step: '02', title: 'L\'IA analyse votre profil', desc: 'Destination, météo, niveau, budget, poids cible', icon: '🤖' },
-    { step: '03', title: 'Kit personnalisé généré', desc: 'Liste complète avec prix, poids, alternatives', icon: '🎒' },
-  ];
+interface Props {
+  stats: TrustStats;
+}
 
-  const kitItems = [
-    { name: 'Sac à dos 50L', brand: 'Osprey Farpoint', weight: '1.4 kg', price: '189€', essential: true },
-    { name: 'Veste imperméable', brand: 'Patagonia Torrentshell', weight: '0.3 kg', price: '149€', essential: true },
-    { name: 'Chaussures de trek', brand: 'Salomon X Ultra 4', weight: '0.8 kg', price: '159€', essential: true },
-    { name: 'Tente 2 places', brand: 'MSR Hubba Hubba', weight: '1.7 kg', price: '399€', essential: false },
-  ];
+const STATS = [
+  { val: '47+', label: 'Poids d\'équipement', unit: 'références testées' },
+  { val: '1.4', label: 'kg moyen économisé', unit: 'par rapport au sac habituel' },
+  { val: '6 sem.', label: 'de délai moyen', unit: 'pour préparer un trek' },
+  { val: '100%', label: 'des recommandations', unit: 'vérifiées terrain' },
+];
+
+export default function HomepageAIDemoSection({ stats }: Props) {
+  const sectionRef = useRef<HTMLElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      { threshold: 0.15 }
+    );
+    if (sectionRef.current) observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Show real route count if available, fallback to static
+  const routeCount = stats.routeCount > 0 ? `${stats.routeCount.toLocaleString('fr-FR')}` : '1 169';
 
   return (
-    <section className="py-20" style={{ background: 'var(--dark-bg)' }} aria-labelledby="ai-demo-heading">
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left: explanation */}
+    <section
+      ref={sectionRef}
+      className="py-20 md:py-28 relative overflow-hidden"
+      style={{ background: '#243028' }}
+      aria-labelledby="ai-demo-heading"
+    >
+      {/* Subtle topo lines */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.04]" aria-hidden="true">
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <pattern id="topo-demo" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
+              <circle cx="60" cy="60" r="50" fill="none" stroke="white" strokeWidth="0.8"/>
+              <circle cx="60" cy="60" r="35" fill="none" stroke="white" strokeWidth="0.5"/>
+              <circle cx="60" cy="60" r="20" fill="none" stroke="white" strokeWidth="0.4"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#topo-demo)"/>
+        </svg>
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+
+          {/* Left — text block */}
           <div>
-            <p className="text-[10px] font-mono text-[#E4501C] tracking-[0.2em] uppercase mb-4" style={{ fontFamily: 'var(--font-mono)' }}>
-              — Configurateur IA
+            <p
+              className="label-eyebrow-dark mb-5"
+              style={{
+                opacity: visible ? 1 : 0,
+                transition: 'opacity 0.5s ease',
+              }}
+            >
+              — Notre promesse
             </p>
             <h2
               id="ai-demo-heading"
-              className="font-display font-800 text-white text-3xl md:text-4xl tracking-tight mb-6"
-              style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}
+              className="text-section-title text-white mb-6"
+              style={{
+                opacity: visible ? 1 : 0,
+                transform: visible ? 'translateY(0)' : 'translateY(24px)',
+                transition: 'opacity 0.7s ease 0.1s, transform 0.7s cubic-bezier(0.16,1,0.3,1) 0.1s',
+              }}
             >
-              Votre kit optimal
+              Un sac. Une carte.
               <br />
-              <span style={{ color: '#E4501C' }}>en 2 minutes.</span>
+              <em className="not-italic" style={{ fontStyle: 'italic', fontWeight: 400, color: 'rgba(245,243,238,0.45)' }}>
+                Le reste vient de vous.
+              </em>
             </h2>
-            <p className="text-white/55 text-base leading-relaxed mb-8">
-              Notre IA analyse votre destination, la météo prévue, votre niveau et votre budget pour composer un kit précis — sans superflu, sans oubli.
+
+            <p
+              className="text-white/55 text-base leading-relaxed max-w-md mb-10"
+              style={{
+                opacity: visible ? 1 : 0,
+                transition: 'opacity 0.6s ease 0.2s',
+              }}
+            >
+              Nous traitons ce que les autres ignorent : le poids exact, les alternatives, la météo du terrain.
+              Vous, vous décidez où aller. Le kit fait le reste.
             </p>
 
-            <div className="space-y-4">
-              {steps?.map((s) => (
-                <div key={s?.step} className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg" style={{ background: 'rgba(228,80,28,0.12)', border: '1px solid rgba(228,80,28,0.2)' }}>
-                    {s?.icon}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-white mb-0.5">{s?.title}</p>
-                    <p className="text-xs text-white/40 italic">{s?.desc}</p>
-                  </div>
+            {/* Stats grid */}
+            <div
+              className="grid grid-cols-2 gap-5 mb-10"
+              style={{
+                opacity: visible ? 1 : 0,
+                transition: 'opacity 0.6s ease 0.3s',
+              }}
+            >
+              {STATS.map((s) => (
+                <div key={s.label}>
+                  <p
+                    className="text-2xl font-bold text-white mb-0.5"
+                    style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}
+                  >
+                    {s.val}
+                  </p>
+                  <p className="text-xs font-medium text-white/60">{s.label}</p>
+                  <p className="text-[10px] text-white/30 mt-0.5" style={{ fontFamily: 'var(--font-mono)' }}>
+                    {s.unit}
+                  </p>
                 </div>
               ))}
             </div>
 
             <Link
               href="/ai-configurator"
-              className="inline-flex items-center gap-2 mt-8 px-6 py-3.5 rounded-xl font-semibold text-sm text-white transition-all hover:-translate-y-px hover:shadow-xl hover:shadow-[#E4501C]/30"
-              style={{ background: '#E4501C' }}
+              className="btn-primary"
+              style={{
+                opacity: visible ? 1 : 0,
+                transition: 'opacity 0.5s ease 0.4s',
+              }}
             >
               <Icon name="SparklesIcon" size={16} variant="outline" />
-              Essayer gratuitement
+              Lancer mon configurateur
             </Link>
           </div>
 
-          {/* Right: mock UI preview */}
-          <div className="relative">
-            <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              {/* Header bar */}
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/6">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
-                <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
-                <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
-                <span className="ml-2 text-xs text-white/30 font-mono" style={{ fontFamily: 'var(--font-mono)' }}>Configurateur IA — Kit Islande</span>
-              </div>
-              {/* Content */}
-              <div className="p-5 space-y-3">
-                <div className="rounded-xl p-3.5" style={{ background: 'rgba(228,80,28,0.08)', border: '1px solid rgba(228,80,28,0.15)' }}>
-                  <p className="text-xs text-white/50 mb-1">Votre demande</p>
-                  <p className="text-sm text-white font-medium">&ldquo;Trek Islande 7 jours, budget 800€, débutant&rdquo;</p>
-                </div>
-                {kitItems?.map((item) => (
-                  <div key={item?.name} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
-                    <div className="flex items-center gap-2.5">
-                      <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${item?.essential ? 'bg-[#E4501C]' : 'bg-white/20'}`} />
-                      <div>
-                        <p className="text-xs font-medium text-white/85">{item?.name}</p>
-                        <p className="text-[10px] text-white/35">{item?.brand} · {item?.weight}</p>
-                      </div>
-                    </div>
-                    <span className="text-xs font-mono font-semibold text-white/70" style={{ fontFamily: 'var(--font-mono)' }}>{item?.price}</span>
-                  </div>
-                ))}
-                <div className="flex items-center justify-between pt-2">
-                  <div className="text-xs text-white/40">Total estimé</div>
-                  <div className="text-sm font-mono font-bold text-[#E4501C]" style={{ fontFamily: 'var(--font-mono)' }}>896€ · 4.2 kg</div>
-                </div>
+          {/* Right — mountain photography */}
+          <div
+            className="relative"
+            style={{
+              opacity: visible ? 1 : 0,
+              transform: visible ? 'translateX(0)' : 'translateX(32px)',
+              transition: 'opacity 0.8s ease 0.2s, transform 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s',
+            }}
+          >
+            <div className="relative overflow-hidden rounded-2xl" style={{ aspectRatio: '4/5' }}>
+              <AppImage
+                src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=700&q=80"
+                alt="Vue aérienne d'une vallée alpine avec forêts denses et sommets enneigés"
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                loading="lazy"
+                className="object-cover"
+              />
+              {/* Caption overlay */}
+              <div
+                className="absolute bottom-0 left-0 right-0 p-5"
+                style={{ background: 'linear-gradient(to top, rgba(26,31,28,0.8), transparent)' }}
+              >
+                <p
+                  className="text-[9px] uppercase tracking-[0.18em] text-white/45 mb-1"
+                  style={{ fontFamily: 'var(--font-mono)' }}
+                >
+                  — Référence terrain
+                </p>
+                <p className="text-sm font-semibold text-white">
+                  Trois jours dans la Chartreuse.
+                </p>
               </div>
             </div>
-            {/* Glow */}
-            <div className="absolute -inset-4 rounded-3xl pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, rgba(228,80,28,0.08) 0%, transparent 70%)' }} aria-hidden="true" />
+
+            {/* Floating stat badge */}
+            <div
+              className="absolute -left-6 top-1/2 -translate-y-1/2 hidden lg:block"
+            >
+              <div
+                className="rounded-xl px-4 py-3 text-center"
+                style={{
+                  background: 'rgba(245,243,238,0.97)',
+                  boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
+                }}
+              >
+                <p
+                  className="text-xl font-bold text-[#2D5A3D]"
+                  style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}
+                >
+                  {routeCount}
+                </p>
+                <p className="text-[9px] text-[#6B7568] mt-0.5 leading-tight" style={{ fontFamily: 'var(--font-mono)' }}>
+                  sentiers<br/>référencés
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -77,7 +77,7 @@ export default function GuidesPage() {
             Guides de voyage
           </h1>
           <p className="text-foreground/60 mb-12 max-w-2xl">
-            Découvrez nos guides complets pour préparer chaque aventure. Conseils d\'experts, checklists et équipement recommandé.
+            Découvrez nos guides complets pour préparer chaque aventure. Conseils d&apos;experts, checklists et équipement recommandé.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

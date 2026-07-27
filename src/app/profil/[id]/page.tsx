@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -361,452 +362,186 @@ export default function ProfilPage() {
   return (
     <div className="min-h-screen bg-[#F5F2E8]">
       <Header />
-      <main className="pt-20">
-        {/* Hero Banner */}
-        <div className="bg-[#1C2620] h-44 relative overflow-hidden">
-          <div className="absolute inset-0 opacity-20 bg-gradient-to-br from-[#E4501C] via-transparent to-[#1C2620]" />
-          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(228,80,28,0.15) 0%, transparent 60%), radial-gradient(circle at 80% 20%, rgba(92,107,94,0.2) 0%, transparent 50%)' }} />
-        </div>
-
-        <div className="max-w-4xl mx-auto px-4">
-          {/* Profile Card */}
-          <div className="relative -mt-20 mb-6">
-            <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-6">
-              {loading ? (
-                <div className="space-y-3">
-                  <div className="w-24 h-24 rounded-2xl bg-[#C8C3B0]/30 animate-pulse" />
-                  <div className="h-6 w-48 bg-[#C8C3B0]/30 rounded animate-pulse" />
-                  <div className="h-4 w-64 bg-[#C8C3B0]/30 rounded animate-pulse" />
-                </div>
-              ) : !profile ? (
-                <div className="text-center py-8">
-                  <p className="text-[#5C6B5E]">Profil introuvable</p>
-                  <Link href="/communaute" className="text-[#E4501C] text-sm mt-2 inline-block">← Retour à la communauté</Link>
-                </div>
+      <main className="pt-20 pb-24">
+        {/* Hero Banner Full Width */}
+        <div className="bg-[#1C2620] h-[40vh] min-h-[300px] w-full relative overflow-hidden">
+          <div className="absolute inset-0 opacity-40 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+          {profile?.avatar_url ? (
+            <Image src={profile.avatar_url} alt="Cover" fill className="object-cover opacity-60 mix-blend-overlay blur-sm" />
+          ) : (
+            <div className="absolute inset-0 bg-[#E4501C]/10" />
+          )}
+          
+          <div className="absolute bottom-0 left-0 right-0 p-8 flex justify-center">
+            {/* Avatar overlapping */}
+            <div className="translate-y-1/2">
+              {profile?.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={profile.avatar_url} alt={`Photo de ${profile.full_name}`} className="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-[#F5F2E8] shadow-xl" />
               ) : (
-                <div className="flex flex-col sm:flex-row gap-6">
-                  {/* Avatar */}
-                  <div className="flex-shrink-0">
-                    {profile.avatar_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={profile.avatar_url} alt={`Photo de profil de ${profile.full_name}`} className="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-lg" />
-                    ) : (
-                      <div className="w-24 h-24 rounded-2xl bg-[#E4501C]/20 flex items-center justify-center text-3xl font-700 text-[#E4501C] border-4 border-white shadow-lg">
-                        {initials}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
-                      <div>
-                        <h1 className="font-display font-800 text-2xl text-[#1C2620] tracking-tight">{profile.full_name || 'Aventurier'}</h1>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <span className={`text-xs font-600 px-2.5 py-1 rounded-full border ${levelCfg.bg} ${levelCfg.color}`}>
-                            {levelCfg.icon} {profile.loyalty_level}
-                          </span>
-                          {profile.location && (
-                            <span className="text-xs text-[#5C6B5E] flex items-center gap-1">
-                              <Icon name="MapPinIcon" size={12} /> {profile.location}
-                            </span>
-                          )}
-                          <span className="text-xs text-[#5C6B5E]">
-                            Membre depuis {new Date(profile.created_at).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        {isOwnProfile ? (
-                          <>
-                            <Link href="/compte" className="flex items-center gap-2 px-4 py-2 border border-[#C8C3B0] rounded-xl text-sm font-600 text-[#5C6B5E] hover:text-[#1C2620] hover:border-[#1C2620]/30 transition-all">
-                              <Icon name="PencilIcon" size={14} /> Modifier
-                            </Link>
-                            <Link href="/groupes" className="flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600 hover:bg-[#E4501C]/90 transition-all">
-                              <Icon name="UserGroupIcon" size={14} /> Mes groupes
-                            </Link>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              onClick={handleFollow}
-                              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-600 transition-all ${isFollowing ? 'border border-[#C8C3B0] text-[#5C6B5E] hover:border-red-300 hover:text-red-500' : 'bg-[#E4501C] text-white hover:bg-[#E4501C]/90'}`}
-                            >
-                              <Icon name={isFollowing ? 'UserMinusIcon' : 'UserPlusIcon'} size={14} />
-                              {isFollowing ? 'Abonné' : 'Suivre'}
-                            </button>
-                            <Link href="/messagerie" className="flex items-center gap-2 px-4 py-2 border border-[#C8C3B0] rounded-xl text-sm font-600 text-[#5C6B5E] hover:text-[#1C2620] transition-all">
-                              <Icon name="ChatBubbleLeftIcon" size={14} /> Message
-                            </Link>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {profile.bio && <p className="text-sm text-[#5C6B5E] mb-4 leading-relaxed">{profile.bio}</p>}
-
-                    {/* Stats */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {[
-                        { label: 'Trust Score', value: profile.trust_score ?? 50, icon: '🛡️' },
-                        { label: 'Points fidélité', value: profile.loyalty_points ?? 0, icon: '⭐' },
-                        { label: 'Abonnés', value: followersCount, icon: '👥' },
-                        { label: 'Abonnements', value: followingCount, icon: '🔔' },
-                      ].map((stat) => (
-                        <div key={stat.label} className="bg-white/60 rounded-xl p-3 text-center">
-                          <p className="text-lg">{stat.icon}</p>
-                          <p className="font-display font-700 text-[#1C2620] text-lg">{stat.value.toLocaleString()}</p>
-                          <p className="text-[10px] text-[#5C6B5E]">{stat.label}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-[#E4501C] flex items-center justify-center text-4xl md:text-5xl font-700 text-white border-4 border-[#F5F2E8] shadow-xl">
+                  {initials}
                 </div>
               )}
             </div>
           </div>
+        </div>
 
-          {/* Trust Score + Level Cards */}
-          {profile && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-[#1C2620] rounded-2xl p-5">
-                <p className="text-[10px] font-mono text-white/40 tracking-[0.2em] uppercase mb-3">Trust Score</p>
-                <div className="flex items-center gap-4">
-                  <div className="relative flex-shrink-0">
-                    <svg width={64} height={64} className="-rotate-90">
-                      <circle cx={32} cy={32} r={26} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={4} />
-                      <circle cx={32} cy={32} r={26} fill="none" stroke="#E4501C" strokeWidth={4}
-                        strokeDasharray={2 * Math.PI * 26}
-                        strokeDashoffset={2 * Math.PI * 26 * (1 - (profile.trust_score ?? 50) / 100)}
-                        strokeLinecap="round" />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="font-mono font-700 text-white text-base">{profile.trust_score ?? 50}</span>
+        <div className="max-w-5xl mx-auto px-4 mt-20 md:mt-24">
+          
+          {loading ? (
+             <div className="flex flex-col items-center justify-center space-y-4 py-12">
+               <div className="h-10 w-64 bg-[#C8C3B0]/30 rounded animate-pulse" />
+               <div className="h-4 w-48 bg-[#C8C3B0]/30 rounded animate-pulse" />
+             </div>
+          ) : !profile ? (
+            <div className="text-center py-12">
+              <p className="text-[#5C6B5E]">Profil introuvable</p>
+              <Link href="/communaute" className="text-[#E4501C] text-sm mt-2 inline-block">← Retour à la communauté</Link>
+            </div>
+          ) : (
+            <>
+              {/* Profile Header Title */}
+              <div className="text-center mb-12">
+                <h1 className="font-display font-800 text-4xl md:text-5xl text-[#1C2620] mb-3">
+                  {profile.full_name ? profile.full_name.split(' ').map((word, i, arr) => 
+                    i === arr.length - 1 ? <em key={i} className="italic font-400 text-[#5C6B5E] ml-2">{word}</em> : <span key={i}>{word}</span>
+                  ) : 'Aventurier'}
+                </h1>
+                <div className="flex items-center justify-center gap-3 text-sm text-[#5C6B5E] font-500">
+                  <span className="flex items-center gap-1"><Icon name="MapPinIcon" size={14} /> {profile.location || 'Nomade'}</span>
+                  <span className="w-1 h-1 rounded-full bg-[#C8C3B0]" />
+                  <span className="flex items-center gap-1">{levelCfg.icon} {profile.loyalty_level}</span>
+                </div>
+                
+                {/* Actions */}
+                <div className="flex justify-center gap-3 mt-6">
+                  {isOwnProfile ? (
+                    <Link href="/compte" className="px-6 py-2.5 rounded-full border border-[#C8C3B0] text-[#1C2620] font-600 text-sm hover:bg-white transition-colors">
+                      Éditer le profil
+                    </Link>
+                  ) : (
+                    <>
+                      <button onClick={handleFollow} className={`px-6 py-2.5 rounded-full font-600 text-sm transition-colors ${isFollowing ? 'border border-[#C8C3B0] text-[#1C2620] hover:bg-white' : 'bg-[#1C2620] text-white hover:bg-[#2A3830]'}`}>
+                        {isFollowing ? 'Abonné' : 'Suivre'}
+                      </button>
+                      <button className="w-10 h-10 rounded-full border border-[#C8C3B0] flex items-center justify-center text-[#1C2620] hover:bg-white transition-colors">
+                        <Icon name="ChatBubbleLeftIcon" size={16} />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Two Columns Layout */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+                
+                {/* Left Column: Bio & Details */}
+                <div className="md:col-span-4 space-y-8">
+                  <div>
+                    <h3 className="font-mono text-xs tracking-widest uppercase text-[#5C6B5E] mb-4">À propos</h3>
+                    <p className="text-[#1C2620] leading-relaxed text-sm">
+                      {profile.bio || "Ce voyageur n'a pas encore écrit de biographie. Mais ses aventures parlent pour lui !"}
+                    </p>
+                  </div>
+                  
+                  <div className="pt-6 border-t border-[#C8C3B0]/50">
+                    <h3 className="font-mono text-xs tracking-widest uppercase text-[#5C6B5E] mb-4">Statistiques</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-[#5C6B5E]">Abonnés</span>
+                        <span className="font-600 text-[#1C2620]">{followersCount}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-[#5C6B5E]">Abonnements</span>
+                        <span className="font-600 text-[#1C2620]">{followingCount}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-[#5C6B5E]">Trust Score</span>
+                        <span className="font-600 text-emerald-600 flex items-center gap-1">{profile.trust_score ?? 50}/100 <Icon name="ShieldCheckIcon" size={14} /></span>
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <p className="font-display font-700 text-white text-sm">
-                      {(profile.trust_score ?? 50) >= 80 ? 'Confirmé 🏔️' : (profile.trust_score ?? 50) >= 60 ? 'Fiable ✅' : 'Débutant 🌱'}
-                    </p>
-                    <p className="text-white/40 text-xs mt-1">Score de confiance</p>
-                  </div>
-                </div>
-              </div>
 
-              <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5">
-                <p className="text-[10px] font-mono text-[#5C6B5E] tracking-[0.2em] uppercase mb-3">Niveau fidélité</p>
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">{levelCfg.icon}</span>
-                  <div>
-                    <p className={`font-display font-700 text-lg ${levelCfg.color}`}>{profile.loyalty_level}</p>
-                    <p className="text-xs text-[#5C6B5E]">{profile.loyalty_points?.toLocaleString() ?? 0} pts</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5">
-                <p className="text-[10px] font-mono text-[#5C6B5E] tracking-[0.2em] uppercase mb-3">Activité</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="text-center">
-                    <p className="font-display font-700 text-[#1C2620] text-xl">{carnets.length}</p>
-                    <p className="text-[10px] text-[#5C6B5E]">Carnets</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="font-display font-700 text-[#1C2620] text-xl">{badges.length}</p>
-                    <p className="text-[10px] text-[#5C6B5E]">Badges</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Tabs */}
-          {profile && (
-            <div className="mb-6">
-              <div className="flex items-center gap-0 overflow-x-auto border-b border-[#C8C3B0] scrollbar-hide">
-                {PROFILE_TABS.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-4 py-3 text-sm font-600 border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? 'border-[#E4501C] text-[#E4501C]' : 'border-transparent text-[#5C6B5E] hover:text-[#1C2620]'}`}
-                  >
-                    <Icon name={tab.icon} size={14} />
-                    {tab.label}
-                    {tab.count !== undefined && tab.count > 0 && (
-                      <span className={`text-[10px] font-700 px-1.5 py-0.5 rounded-full ${activeTab === tab.id ? 'bg-[#E4501C]/10 text-[#E4501C]' : 'bg-[#C8C3B0]/50 text-[#5C6B5E]'}`}>
-                        {tab.count}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              {/* Tab Content */}
-              <div className="mt-6 mb-8">
-                {/* Publications */}
-                {activeTab === 'publications' && (
-                  <div className="space-y-3">
-                    {posts.length === 0 ? (
-                      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-8 text-center text-[#5C6B5E]">
-                        <p className="text-3xl mb-2">💬</p>
-                        <p className="text-sm">Aucune publication pour l&apos;instant</p>
+                  <div className="pt-6">
+                    <Link href={`/profil/${profileId}/equipement`} className="w-full flex items-center justify-between px-5 py-4 bg-[#EDEAE0] border border-[#C8C3B0] rounded-xl hover:bg-white hover:border-[#1C2620]/30 transition-all group">
+                      <div className="flex items-center gap-3">
+                        <Icon name="ArchiveBoxIcon" size={20} className="text-[#1C2620]" />
+                        <span className="font-600 text-[#1C2620] text-sm">Voir son équipement</span>
                       </div>
-                    ) : (
-                      posts.map((post) => {
-                        const typeCfg = POST_TYPE_CFG[post.post_type] ?? POST_TYPE_CFG.post;
-                        return (
-                          <div key={post.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${typeCfg.color}`}>{typeCfg.emoji} {typeCfg.label}</span>
-                              <span className="text-[10px] text-[#5C6B5E]">{new Date(post.created_at).toLocaleDateString('fr-FR')}</span>
-                            </div>
-                            <p className="text-sm text-[#1C2620] leading-relaxed mb-3">{post.content}</p>
-                            <div className="flex items-center gap-4 text-xs text-[#5C6B5E]">
-                              <span className="flex items-center gap-1"><Icon name="HeartIcon" size={12} /> {post.likes_count}</span>
-                              <span className="flex items-center gap-1"><Icon name="ChatBubbleLeftIcon" size={12} /> {post.comments_count}</span>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
+                      <Icon name="ArrowRightIcon" size={16} className="text-[#5C6B5E] group-hover:translate-x-1 transition-transform" />
+                    </Link>
                   </div>
-                )}
+                </div>
 
-                {/* Carnets */}
-                {activeTab === 'carnets' && (
+                {/* Right Column: Feed / Carnets */}
+                <div className="md:col-span-8 space-y-10">
                   <div>
+                    <h3 className="font-display font-800 text-2xl text-[#1C2620] mb-6 flex items-center gap-2">
+                      Dernières aventures <span className="text-xl">🗺️</span>
+                    </h3>
+                    
                     {carnets.length === 0 ? (
-                      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-8 text-center text-[#5C6B5E]">
-                        <p className="text-3xl mb-2">🗺️</p>
-                        <p className="text-sm">Aucun carnet public pour l&apos;instant</p>
+                      <div className="p-8 border border-dashed border-[#C8C3B0] rounded-2xl text-center">
+                        <p className="text-[#5C6B5E] text-sm">Aucune aventure publiée pour le moment.</p>
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {carnets.map((carnet) => {
-                          const durationDays = carnet.start_date && carnet.end_date
-                            ? Math.ceil((new Date(carnet.end_date).getTime() - new Date(carnet.start_date).getTime()) / 86400000)
-                            : null;
-                          return (
-                            <Link
-                              key={carnet.id}
-                              href={`/carnets/${carnet.id}`}
-                              className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl overflow-hidden hover:shadow-lg hover:border-[#E4501C]/30 transition-all text-left group"
-                            >
-                              <div className="relative h-40 overflow-hidden bg-[#C8C3B0]">
-                                {carnet.cover_image ? (
-                                  <Image src={carnet.cover_image} alt={carnet.cover_image_alt || carnet.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-4xl">🗺️</div>
-                                )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                                <div className="absolute top-2 left-2 flex gap-1">
-                                  {carnet.verified && <span className="text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full font-700">✓</span>}
-                                </div>
-                                <div className="absolute bottom-3 left-3 right-3">
-                                  <p className="text-[10px] text-white/60 font-mono">{carnet.destination}{durationDays ? ` · ${durationDays}j` : ''}</p>
-                                  <p className="font-display font-700 text-white text-sm leading-tight line-clamp-1">{carnet.title}</p>
-                                </div>
+                        {carnets.slice(0, 4).map((carnet) => (
+                          <div key={carnet.id} onClick={() => setSelectedCarnet(carnet)} className="cursor-pointer group">
+                            <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-[#C8C3B0] mb-3">
+                              {carnet.cover_image ? (
+                                <Image src={carnet.cover_image} alt={carnet.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                              ) : (
+                                <div className="absolute inset-0 flex items-center justify-center bg-[#EDEAE0]">🗺️</div>
+                              )}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                              <div className="absolute bottom-3 left-3 right-3">
+                                <p className="text-[10px] text-white/80 font-mono uppercase tracking-wider mb-0.5">{carnet.destination}</p>
+                                <p className="font-600 text-white text-sm leading-tight line-clamp-1">{carnet.title}</p>
                               </div>
-                              <div className="p-3 flex items-center justify-between">
-                                <div className="flex items-center gap-3 text-xs text-[#5C6B5E]">
-                                  <span className="flex items-center gap-1"><Icon name="HeartIcon" size={11} /> {carnet.likes_count}</span>
-                                  <span className="flex items-center gap-1"><Icon name="ChatBubbleLeftIcon" size={11} /> {carnet.comments_count}</span>
-                                </div>
-                                <span className="font-mono font-700 text-[#E4501C] text-sm">{carnet.route_rating}/10</span>
-                              </div>
-                            </Link>
-                          );
-                        })}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
-                )}
 
-                {/* Groupes */}
-                {activeTab === 'groupes' && (
                   <div>
-                    {groups.length === 0 ? (
-                      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-8 text-center text-[#5C6B5E]">
-                        <p className="text-3xl mb-2">🗺️</p>
-                        <p className="text-sm mb-4">Aucun groupe de voyage pour l&apos;instant</p>
-                        {isOwnProfile && (
-                          <div className="flex gap-3 justify-center flex-wrap">
-                            <Link href="/groupes" className="inline-flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600 hover:bg-[#E4501C]/90 transition-colors">
-                              <Icon name="PlusIcon" size={14} /> Créer un groupe
-                            </Link>
-                            <Link href="/groupes?tab=decouvrir" className="inline-flex items-center gap-2 px-4 py-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl text-sm font-600 hover:text-[#1C2620] transition-colors">
-                              <Icon name="MagnifyingGlassIcon" size={14} /> Découvrir
-                            </Link>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {groups.map((group) => {
-                            const themeEmoji: Record<string, string> = { Trek: '🏔️', 'Van Life': '🚐', Randonnée: '🥾', Expédition: '🧭', 'Tour du monde': '🌍', Plage: '🏖️', Ski: '⛷️', Vélo: '🚴', Moto: '🏍️', Autre: '🎒' };
-                            return (
-                              <Link
-                                key={group.id}
-                                href={`/groupe?group=${group.id}`}
-                                className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 hover:shadow-md hover:border-[#E4501C]/30 transition-all flex items-start gap-4"
-                              >
-                                <div className="w-12 h-12 rounded-xl bg-[#1C2620] flex items-center justify-center text-2xl flex-shrink-0">
-                                  {themeEmoji[group.theme] || '🎒'}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-display font-700 text-[#1C2620] text-sm truncate">{group.name}</p>
-                                  <p className="text-xs text-[#5C6B5E] flex items-center gap-1 mt-0.5">
-                                    <Icon name="MapPinIcon" size={10} /> {group.destination}
-                                  </p>
-                                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                    {group.my_role && (
-                                      <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${group.my_role === 'organizer' ? 'bg-amber-100 text-amber-700' : group.my_role === 'co_organizer' ? 'bg-blue-100 text-blue-700' : 'bg-[#E7E3D6] text-[#5C6B5E]'}`}>
-                                        {group.my_role === 'organizer' ? '👑 Organisateur' : group.my_role === 'co_organizer' ? '🛡️ Co-org' : '👤 Membre'}
-                                      </span>
-                                    )}
-                                    <span className="text-[10px] text-[#5C6B5E]">{group.member_count} membres</span>
-                                    <span className="text-[10px] font-mono text-[#E4501C] font-700">{group.optimization_score}/100</span>
-                                  </div>
-                                  {group.departure_date && (
-                                    <p className="text-[10px] text-[#5C6B5E] mt-1 flex items-center gap-1">
-                                      <Icon name="CalendarIcon" size={9} />
-                                      {new Date(group.departure_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                    </p>
-                                  )}
-                                </div>
-                                <Icon name="ChevronRightIcon" size={14} className="text-[#5C6B5E] flex-shrink-0 mt-1" />
-                              </Link>
-                            );
-                          })}
+                    <h3 className="font-display font-800 text-2xl text-[#1C2620] mb-6 flex items-center gap-2">
+                      Fil d'actualité <span className="text-xl">💬</span>
+                    </h3>
+                    
+                    <div className="space-y-4">
+                      {posts.length === 0 ? (
+                        <div className="p-8 border border-dashed border-[#C8C3B0] rounded-2xl text-center">
+                          <p className="text-[#5C6B5E] text-sm">Rien à signaler pour le moment.</p>
                         </div>
-                        {isOwnProfile && (
-                          <div className="flex gap-3 pt-2 flex-wrap">
-                            <Link href="/groupes" className="flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-600 hover:bg-[#E4501C]/90 transition-colors">
-                              <Icon name="PlusIcon" size={14} /> Gérer mes groupes
-                            </Link>
-                            <Link href="/groupes?tab=decouvrir" className="flex items-center gap-2 px-4 py-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl text-sm font-600 hover:text-[#1C2620] transition-colors">
-                              <Icon name="MagnifyingGlassIcon" size={14} /> Découvrir
-                            </Link>
-                            <Link href="/communaute?tab=groupes" className="flex items-center gap-2 px-4 py-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl text-sm font-600 hover:text-[#1C2620] transition-colors">
-                              <Icon name="UsersIcon" size={14} /> Communauté
-                            </Link>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Clubs */}
-                {activeTab === 'clubs' && (
-                  <div>
-                    {clubs.length === 0 ? (
-                      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-8 text-center text-[#5C6B5E]">
-                        <p className="text-3xl mb-2">🏕️</p>
-                        <p className="text-sm">Aucun club rejoint pour l&apos;instant</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {clubs.map((membership) => (
-                          <Link
-                            key={membership.id}
-                            href={`/clubs/${membership.club_id}`}
-                            className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 hover:shadow-md hover:border-[#E4501C]/30 transition-all flex items-center gap-4"
-                          >
-                            <div className="w-12 h-12 rounded-xl bg-[#1C2620] flex items-center justify-center text-2xl flex-shrink-0">
-                              {membership.club?.emoji ?? '🏕️'}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-display font-700 text-[#1C2620] text-sm truncate">{membership.club?.name ?? 'Club'}</p>
-                              <p className="text-xs text-[#5C6B5E]">{membership.club?.category}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${membership.role === 'admin' ? 'bg-amber-100 text-amber-700' : membership.role === 'moderator' ? 'bg-blue-100 text-blue-700' : 'bg-[#E7E3D6] text-[#5C6B5E]'}`}>
-                                  {membership.role === 'admin' ? '👑 Admin' : membership.role === 'moderator' ? '🛡️ Modo' : '👤 Membre'}
-                                </span>
-                                <span className="text-[10px] text-[#5C6B5E]">{membership.club?.members_count ?? 0} membres</span>
-                              </div>
-                            </div>
-                            <Icon name="ChevronRightIcon" size={14} className="text-[#5C6B5E] flex-shrink-0" />
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Événements */}
-                {activeTab === 'evenements' && (
-                  <div>
-                    {events.length === 0 ? (
-                      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-8 text-center text-[#5C6B5E]">
-                        <p className="text-3xl mb-2">📅</p>
-                        <p className="text-sm">Aucun événement inscrit pour l&apos;instant</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {events.map((participation) => {
-                          const ev = participation.event;
-                          if (!ev) return null;
+                      ) : (
+                        posts.map((post) => {
+                          const typeCfg = POST_TYPE_CFG[post.post_type] ?? POST_TYPE_CFG.post;
                           return (
-                            <Link
-                              key={participation.id}
-                              href="/evenements"
-                              className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 hover:shadow-md hover:border-[#E4501C]/30 transition-all"
-                            >
-                              <div className="flex items-start gap-3">
-                                <div className="w-12 h-12 rounded-xl bg-[#1C2620] flex items-center justify-center text-2xl flex-shrink-0">
-                                  {ev.emoji ?? '🏕️'}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-display font-700 text-[#1C2620] text-sm line-clamp-1">{ev.title}</p>
-                                  <p className="text-xs text-[#5C6B5E] flex items-center gap-1 mt-0.5">
-                                    <Icon name="MapPinIcon" size={10} /> {ev.location}
-                                  </p>
-                                  {ev.event_date && (
-                                    <p className="text-xs text-[#5C6B5E] flex items-center gap-1 mt-0.5">
-                                      <Icon name="CalendarDaysIcon" size={10} />
-                                      {new Date(ev.event_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                    </p>
-                                  )}
-                                  <span className={`inline-block mt-1 text-[10px] font-600 px-2 py-0.5 rounded-full ${ev.status === 'upcoming' ? 'bg-emerald-100 text-emerald-700' : ev.status === 'full' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'}`}>
-                                    {ev.status === 'upcoming' ? '✓ Inscrit' : ev.status === 'full' ? 'Complet' : 'Passé'}
-                                  </span>
+                            <div key={post.id} className="bg-white rounded-2xl p-5 shadow-sm border border-[#C8C3B0]/30">
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${typeCfg.color}`}>{typeCfg.emoji} {typeCfg.label}</span>
+                                  <span className="text-xs text-[#5C6B5E]">{new Date(post.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
                                 </div>
                               </div>
-                            </Link>
+                              <p className="text-[#1C2620] text-sm leading-relaxed mb-4">{post.content}</p>
+                              <div className="flex items-center gap-4 text-xs text-[#5C6B5E]">
+                                <span className="flex items-center gap-1 cursor-pointer hover:text-[#E4501C]"><Icon name="HeartIcon" size={14} /> {post.likes_count}</span>
+                                <span className="flex items-center gap-1 cursor-pointer hover:text-[#E4501C]"><Icon name="ChatBubbleLeftIcon" size={14} /> {post.comments_count}</span>
+                              </div>
+                            </div>
                           );
-                        })}
-                      </div>
-                    )}
+                        })
+                      )}
+                    </div>
                   </div>
-                )}
-
-                {/* Badges */}
-                {activeTab === 'badges' && (
-                  <div>
-                    {badges.length === 0 ? (
-                      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-8 text-center text-[#5C6B5E]">
-                        <p className="text-3xl mb-2">🏆</p>
-                        <p className="text-sm">Aucun badge obtenu pour l&apos;instant</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                        {badges.map((badge) => (
-                          <div key={badge.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 text-center hover:shadow-md transition-shadow">
-                            <span className="text-4xl block mb-2">{badge.icon}</span>
-                            <p className="font-600 text-xs text-[#1C2620] mb-1">{badge.name}</p>
-                            <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${RARITY_CFG[badge.rarity] ?? RARITY_CFG['Commun']}`}>
-                              {badge.rarity}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+                </div>
               </div>
-            </div>
+            </>
           )}
         </div>
       </main>

@@ -2,23 +2,15 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { useChat } from '@/lib/hooks/useChat';
 import toast from 'react-hot-toast';
-import type { ExploreTrail } from './AdventureScore';
-import { DIFFICULTY_COLORS, DIFFICULTY_LABELS, DIFFICULTY_BG } from './AdventureScore';
+import type { MapRefuge } from './types';
 
 interface AdventureDetailPanelProps {
-  trail: ExploreTrail;
+  trail: MapRefuge;
   onClose: () => void;
 }
-
-const SEASONS: Record<string, string> = {
-  spring: 'Printemps',
-  summer: 'Été',
-  autumn: 'Automne',
-  winter: 'Hiver',
-  all: 'Toute l\'année',
-};
 
 export default function AdventureDetailPanel({ trail, onClose }: AdventureDetailPanelProps) {
   const [aiResponse, setAiResponse] = useState('');
@@ -50,59 +42,61 @@ export default function AdventureDetailPanel({ trail, onClose }: AdventureDetail
     sendMessage([
       {
         role: 'system',
-        content: `Tu es le compagnon intelligent de Le Kit du Voyageur. Tu analyses les aventures outdoor et fournis des recommandations personnalisées en français. Sois concis, enthousiaste et pratique. Maximum 3 paragraphes courts.`,
+        content: `Tu es le compagnon intelligent de Le Kit du Voyageur. Tu analyses les lieux d'hébergements et fournis des recommandations personnalisées en français. Sois concis, enthousiaste et pratique. Maximum 3 paragraphes courts.`,
       },
       {
         role: 'user',
-        content: `Analyse cette aventure pour moi et dis-moi si elle me correspond :
+        content: `Analyse ce lieu pour moi :
 Nom : ${trail.name}
-Difficulté : ${DIFFICULTY_LABELS[trail.difficulty] || trail.difficulty}
-Distance : ${trail.distance_km > 0 ? trail.distance_km + ' km' : 'non renseignée'}
-Durée : ${trail.duration_hours > 0 ? trail.duration_hours + 'h' : 'non renseignée'}
-Dénivelé : ${trail.elevation_gain > 0 ? '+' + trail.elevation_gain + 'm' : 'non renseigné'}
-Score aventure : ${trail.adventure_score}/100
+Région : ${trail.region || 'non renseignée'}
+Altitude : ${trail.altitude_m > 0 ? trail.altitude_m + 'm' : 'non renseigné'}
+Capacité : ${trail.capacity || 'non renseignée'} places
+Gardé : ${trail.is_staffed ? 'Oui' : 'Non'}
 
 Donne-moi :
-1. Une analyse de cette aventure (niveau, intérêt, points forts)
-2. Le profil idéal du randonneur pour cette aventure
+1. Une analyse de ce lieu (intérêt, points forts)
+2. Le profil idéal du randonneur pour y passer la nuit
 3. Les équipements essentiels à préparer`,
       },
     ], { temperature: 0.8, max_tokens: 600 });
   };
 
-  const diffColor = DIFFICULTY_COLORS[trail.difficulty] || '#94a3b8';
-  const diffLabel = DIFFICULTY_LABELS[trail.difficulty] || trail.difficulty;
-  const diffBg = DIFFICULTY_BG[trail.difficulty] || 'bg-slate-500/15 text-slate-400 border-slate-500/30';
+  const diffColor = '#4A8A3F';
+  const diffLabel = trail.is_staffed ? 'Refuge gardé' : 'Bivouac / Cabane';
+  const diffBg = 'bg-[#E4501C]/15 text-[#E4501C] border-[#E4501C]/30';
 
   const stats = [
-    { icon: '📏', label: 'Distance', value: trail.distance_km > 0 ? `${trail.distance_km} km` : '—' },
-    { icon: '⏱', label: 'Durée', value: trail.duration_hours > 0 ? `${trail.duration_hours}h` : '—' },
-    { icon: '⬆️', label: 'Dénivelé', value: trail.elevation_gain > 0 ? `+${trail.elevation_gain}m` : '—' },
-    { icon: '🌡', label: 'Saison', value: trail.season ? (SEASONS[trail.season] || trail.season) : 'Variable' },
+    { icon: '🏔', label: 'Altitude', value: trail.altitude_m > 0 ? `${trail.altitude_m} m` : '—' },
+    { icon: '🛏', label: 'Capacité', value: trail.capacity > 0 ? `${trail.capacity} pers` : '—' },
+    { icon: '🍽', label: 'Repas', value: trail.has_meals ? 'Oui' : 'Non' },
+    { icon: '🗓', label: 'Ouverture', value: trail.open_months?.length ? trail.open_months.slice(0,2).join(', ') + '...' : 'Variable' },
   ];
 
   const scores = [
-    { icon: '🌲', label: 'Nature', value: trail.nature_score },
-    { icon: '🏔', label: 'Panorama', value: trail.panorama_score },
-    { icon: '🥾', label: 'Défi', value: trail.challenge_score },
-    { icon: '💧', label: 'Services', value: trail.services_score },
+    { icon: '💰', label: 'Tarif', value: trail.price_per_night ? `${trail.price_per_night} €` : 'Gratuit' },
+    { icon: '🔥', label: 'Chauffé', value: trail.has_blankets ? 'Oui' : 'Non' },
   ];
 
   return (
     <>
       {/* Backdrop */}
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
         className="fixed inset-0 z-[1800] bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Panel — max 50vh on mobile, side panel on desktop */}
-      <div
+      <motion.div
+        initial={{ y: '100%', opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '100%', opacity: 0 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
         className="fixed inset-x-0 bottom-0 z-[1900] bg-[#0d1a12]/98 border-t border-[#2D5A27]/25 rounded-t-3xl shadow-2xl backdrop-blur-2xl flex flex-col md:inset-y-0 md:right-0 md:left-auto md:w-96 md:rounded-none md:rounded-l-3xl md:border-t-0 md:border-l md:max-h-full"
-        style={{
-          maxHeight: '50vh',
-          animation: 'panelUp 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
-        }}
+        style={{ maxHeight: '50vh' }}
       >
         {/* Drag handle (mobile only) */}
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0 md:hidden">
@@ -116,8 +110,8 @@ Donne-moi :
               {diffLabel}
             </span>
             <h2 className="text-white font-bold text-base leading-tight line-clamp-2">{trail.name}</h2>
-            {trail.ai_description && (
-              <p className="text-[#8BAF7C]/60 text-xs mt-1 leading-relaxed line-clamp-2">{trail.ai_description}</p>
+            {trail.description && (
+              <p className="text-[#8BAF7C]/60 text-xs mt-1 leading-relaxed line-clamp-2">{trail.description}</p>
             )}
           </div>
           <button
@@ -204,7 +198,7 @@ Donne-moi :
           {/* CTA */}
           <div className="px-5 py-4">
             <Link
-              href={`/ai-configurator?trail=${encodeURIComponent(trail.name)}&difficulty=${trail.difficulty}&distance=${trail.distance_km}&elevation=${trail.elevation_gain}`}
+              href={`/ai-configurator?trail=${encodeURIComponent(trail.name)}&altitude=${trail.altitude_m || 0}`}
               className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-[#E4501C] hover:bg-[#cc3d10] text-white font-semibold text-sm transition-all duration-200 hover:shadow-lg hover:shadow-[#E4501C]/25 active:scale-[0.98]"
             >
               <span>🎒</span>
@@ -212,14 +206,7 @@ Donne-moi :
             </Link>
           </div>
         </div>
-      </div>
-
-      <style jsx>{`
-        @keyframes panelUp {
-          from { transform: translateY(100%); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-      `}</style>
+      </motion.div>
     </>
   );
 }

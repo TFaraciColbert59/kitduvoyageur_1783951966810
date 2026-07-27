@@ -173,26 +173,26 @@ export default function ClubDetailPage() {
     const load = async () => {
       setLoading(true);
       // Try Supabase first
-      const { data: clubData } = await supabase.from('clubs').select('*').eq('id', clubId).maybeSingle();
+      const { data: clubData } = await supabase.from('clubs').select('*').eq('slug', clubId).maybeSingle();
 
       if (clubData) {
         setClub(clubData as Club);
         const [topicsRes, membersRes, eventsRes] = await Promise.all([
-          supabase.from('club_topics').select('*, author:user_profiles(full_name)').eq('club_id', clubId).eq('is_approved', true).order('is_pinned', { ascending: false }).order('created_at', { ascending: false }).limit(20),
-          supabase.from('club_members').select('*, user:user_profiles(full_name, trust_score)').eq('club_id', clubId).eq('status', 'active').limit(20),
-          supabase.from('club_events').select('*').eq('club_id', clubId).order('event_date', { ascending: true }).limit(10),
+          supabase.from('club_topics').select('*, author:user_profiles(full_name)').eq('club_id', clubData.id).eq('is_approved', true).order('is_pinned', { ascending: false }).order('created_at', { ascending: false }).limit(20),
+          supabase.from('club_members').select('*, user:user_profiles(full_name, trust_score)').eq('club_id', clubData.id).eq('status', 'active').limit(20),
+          supabase.from('club_events').select('*').eq('club_id', clubData.id).order('event_date', { ascending: true }).limit(10),
         ]);
         setTopics((topicsRes.data as ClubTopic[]) ?? []);
         setMembers((membersRes.data as ClubMember[]) ?? []);
         setEvents((eventsRes.data as ClubEvent[]) ?? []);
 
         if (user) {
-          const { data: membership } = await supabase.from('club_members').select('id').eq('club_id', clubId).eq('user_id', user.id).eq('status', 'active').maybeSingle();
+          const { data: membership } = await supabase.from('club_members').select('id').eq('club_id', clubData.id).eq('user_id', user.id).eq('status', 'active').maybeSingle();
           setIsMember(!!membership);
         }
       } else {
         // Fallback to fake data
-        const fake = FAKE_CLUBS.find((c) => c.id === clubId);
+        const fake = FAKE_CLUBS.find((c) => c.slug === clubId || c.id === clubId);
         if (fake) {
           setClub(fake);
           setTopics(FAKE_TOPICS);
@@ -453,8 +453,8 @@ export default function ClubDetailPage() {
                   <Link href="/clubs" className="text-xs text-[#E4501C] hover:underline">Voir tout →</Link>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {FAKE_CLUBS.filter((c) => c.id !== clubId).slice(0, 3).map((c) => (
-                    <Link key={c.id} href={`/clubs/${c.id}`} className={`bg-gradient-to-br ${c.cover_color} rounded-2xl p-5 hover:opacity-90 transition-opacity`}>
+                  {FAKE_CLUBS.filter((c) => c.slug !== clubId && c.id !== clubId).slice(0, 3).map((c) => (
+                    <Link key={c.id} href={`/clubs/${c.slug}`} className={`bg-gradient-to-br ${c.cover_color} rounded-2xl p-5 hover:opacity-90 transition-opacity`}>
                       <div className="flex items-center gap-3 mb-2">
                         <span className="text-2xl">{c.emoji}</span>
                         <p className="font-display font-700 text-white text-sm line-clamp-1">{c.name}</p>

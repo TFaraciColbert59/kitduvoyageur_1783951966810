@@ -122,10 +122,10 @@ export default function PanierPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-[#F5F2E8]">
         <Header />
         <div className="pt-24 flex items-center justify-center min-h-[60vh]">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-label="Chargement du panier" />
+          <div className="w-8 h-8 border-2 border-[#1C2620] border-t-transparent rounded-full animate-spin" aria-label="Chargement du panier" />
         </div>
         <Footer />
       </div>
@@ -133,225 +133,222 @@ export default function PanierPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-[#F5F2E8] text-[#1C2620] flex flex-col">
       <Header />
 
       {confirmDeleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="confirm-delete-title">
-          <div className="bg-background border border-border rounded-2xl p-6 max-w-sm w-full shadow-2xl">
-            <h2 id="confirm-delete-title" className="font-display font-700 text-lg text-foreground mb-2">Retirer cet article ?</h2>
-            <p className="text-sm text-muted-foreground mb-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm" role="dialog" aria-modal="true">
+          <div className="bg-white border border-[#C8C3B0] rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
+            <h2 className="font-display font-700 text-xl mb-3">Retirer cet article ?</h2>
+            <p className="text-sm text-[#5C6B5E] mb-6">
               {items.find((i) => i.id === confirmDeleteId)?.name} sera retiré de votre panier.
             </p>
             <div className="flex gap-3">
-              <button onClick={handleRemoveCancel} className="flex-1 px-4 py-2.5 rounded-xl border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors min-h-[44px]" autoFocus>Annuler</button>
-              <button onClick={handleRemoveConfirm} className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors min-h-[44px]">Retirer</button>
+              <button onClick={handleRemoveCancel} className="flex-1 px-4 py-3 rounded-xl border border-[#C8C3B0] text-sm font-600 hover:bg-[#F5F2E8] transition-colors" autoFocus>Annuler</button>
+              <button onClick={handleRemoveConfirm} className="flex-1 px-4 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-600 transition-colors">Retirer</button>
             </div>
           </div>
         </div>
       )}
 
-      <section className="pt-20 pb-0 bg-dark-bg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="flex items-start gap-4">
-            <div className="w-1 h-10 bg-primary flex-shrink-0 mt-1" aria-hidden="true" />
-            <div>
-              <p className="font-mono text-xs text-primary tracking-widest uppercase mb-1">PANIER — {totalItems} ARTICLE{totalItems !== 1 ? 'S' : ''}</p>
-              <h1 className="font-display font-800 text-3xl md:text-4xl text-white tracking-tight">MON PANIER</h1>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <main id="main-content" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-6 text-center">
-            <div className="w-20 h-20 rounded-full bg-card border border-border flex items-center justify-center">
-              <Icon name="ShoppingBagIcon" size={36} variant="outline" className="text-muted-foreground" />
+            <div className="w-20 h-20 rounded-full bg-white border border-[#C8C3B0] flex items-center justify-center">
+              <Icon name="ShoppingBagIcon" size={36} className="text-[#1C2620]/30" />
             </div>
             <div>
-              <p className="font-display font-700 text-2xl text-foreground mb-2">Votre panier est vide</p>
-              <p className="text-muted-foreground">Explorez notre catalogue pour trouver votre équipement.</p>
+              <p className="font-display font-800 text-3xl text-[#1C2620] mb-2">Votre <em className="italic font-400 text-[#5C6B5E]">panier.</em> est vide</p>
+              <p className="text-[#5C6B5E]">Explorez notre catalogue pour trouver votre équipement.</p>
             </div>
-            <Link href="/catalogue" className="btn-primary">
-              <Icon name="MagnifyingGlassIcon" size={16} variant="outline" />
+            <Link href="/catalogue" className="mt-4 bg-[#1C2620] hover:bg-[#2A3830] text-white px-8 py-3.5 rounded-xl font-600 text-sm transition-colors">
               Voir le catalogue
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 flex flex-col gap-4">
-              {/* Loyalty banner */}
-              {user && loyaltyPoints > 0 && (
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3">
-                  <Icon name="StarIcon" size={20} variant="solid" className="text-amber-500 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-sm font-700 text-amber-800">Vous avez {loyaltyPoints.toLocaleString()} points fidélité</p>
-                    <p className="text-xs text-amber-700">Utilisez vos points pour rendre des articles gratuits (100 pts = 10€)</p>
-                  </div>
-                  <Link href="/fidelite" className="text-xs font-600 text-amber-700 hover:text-amber-900 underline flex-shrink-0">Gérer</Link>
-                </div>
-              )}
+          <>
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+              <h1 className="font-display font-800 text-5xl text-[#1C2620]">
+                Votre <em className="italic font-400 text-[#5C6B5E]">panier.</em>
+              </h1>
+              <p className="text-sm font-600 text-[#5C6B5E]">
+                {totalItems} article{totalItems > 1 ? 's' : ''} · {totalWeightG >= 1000 ? `${(totalWeightG / 1000).toFixed(1).replace('.', ',')} kg` : `${totalWeightG} g`} · sous-total {totalPriceEur.toFixed(0)} €
+              </p>
+            </div>
 
-              {/* Weight summary bar */}
-              <div className="p-4 bg-dark-bg rounded-xl border border-white/10">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono text-xs text-white/50 uppercase tracking-wider">POIDS TOTAL DU PANIER</span>
-                  <span className="font-mono text-sm font-600 text-info">
-                    {totalWeightG >= 1000 ? `${(totalWeightG / 1000).toFixed(2)} kg` : `${totalWeightG} g`}
-                  </span>
-                </div>
-                <WeightGauge weightG={totalWeightG} maxG={20000} showLabel={false} size="lg" />
-              </div>
-
-              {/* Cart items */}
-              {items.map((item) => (
-                <div key={item.id} className={`topo-card p-4 flex gap-4 transition-all duration-300 ${removingId === item.id ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-                  <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={item.image} alt={item.imageAlt} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">{item.brand} · {item.category}</p>
-                        <Link href={`/produit/${item.slug}`} className="font-display font-700 text-foreground text-base hover:text-primary transition-colors leading-tight">
-                          {item.name}
-                        </Link>
-                        {item.loyaltyFree && (
-                          <span className="ml-2 text-[10px] font-700 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">🎁 Offert (fidélité)</span>
-                        )}
-                      </div>
-                      <button onClick={() => handleRemoveRequest(item.id)} className="p-2 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-all flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label={`Retirer ${item.name} du panier`}>
-                        <Icon name="TrashIcon" size={16} variant="outline" />
-                      </button>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+              <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-6">
+                
+                {/* Cart items */}
+                {items.map((item) => (
+                  <div key={item.id} className={`bg-white border border-transparent hover:border-[#C8C3B0] rounded-3xl p-6 flex gap-6 transition-all duration-300 ${removingId === item.id ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+                    <div className="w-32 h-32 flex-shrink-0 rounded-2xl overflow-hidden bg-[#F5F2E8] border border-[#EBE8DD]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover mix-blend-multiply" /> : null}
                     </div>
+                    
+                    <div className="flex-1 flex flex-col justify-between min-w-0">
+                      <div className="flex justify-between items-start gap-4">
+                        <div>
+                          <p className="font-mono text-[10px] text-[#5C6B5E] uppercase tracking-wider mb-1">{item.category || 'PORTAGE'}</p>
+                          <Link href={`/produit/${item.slug}`} className="font-display font-700 text-[#1C2620] text-xl hover:text-[#5C6B5E] transition-colors line-clamp-2">
+                            {item.name.split(' ').map((word, i, arr) => 
+                              i >= arr.length - 2 ? <em key={i} className="italic font-400 text-[#5C6B5E] ml-1">{word}</em> : <span key={i} className="mr-1">{word}</span>
+                            )}
+                          </Link>
+                          <div className="flex items-center gap-2 mt-2 text-xs text-[#5C6B5E]">
+                            <div className="w-3 h-3 rounded-full bg-[#2A3830]"></div>
+                            <span>Vert forêt · {item.weightG >= 1000 ? `${(item.weightG / 1000).toFixed(1).replace('.', ',')} kg` : `${item.weightG} g`}</span>
+                          </div>
+                        </div>
 
-                    <div className="mt-2 mb-3">
-                      <WeightGauge weightG={item.weightG * item.quantity} maxG={5000} size="sm" />
-                    </div>
-
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <div className="flex items-center gap-1 bg-background border border-border rounded-lg overflow-hidden">
-                        <button onClick={() => handleQuantity(item.id, item.quantity - 1)} className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all" aria-label="Diminuer la quantité">
-                          <Icon name="MinusIcon" size={14} variant="outline" />
-                        </button>
-                        <span className="w-8 text-center font-mono text-sm font-600 text-foreground" aria-live="polite">{item.quantity}</span>
-                        <button onClick={() => handleQuantity(item.id, item.quantity + 1)} className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all" aria-label="Augmenter la quantité">
-                          <Icon name="PlusIcon" size={14} variant="outline" />
-                        </button>
+                        <div className="flex flex-col items-end">
+                          <div className="flex items-center gap-3 bg-[#F5F2E8] rounded-full px-1 py-1">
+                            <button onClick={() => handleQuantity(item.id, item.quantity - 1)} className="w-7 h-7 flex items-center justify-center rounded-full bg-white text-[#1C2620] shadow-sm hover:bg-[#EBE8DD] transition-colors">
+                              <Icon name="MinusIcon" size={12} />
+                            </button>
+                            <span className="w-4 text-center font-600 text-sm">{item.quantity}</span>
+                            <button onClick={() => handleQuantity(item.id, item.quantity + 1)} className="w-7 h-7 flex items-center justify-center rounded-full bg-white text-[#1C2620] shadow-sm hover:bg-[#EBE8DD] transition-colors">
+                              <Icon name="PlusIcon" size={12} />
+                            </button>
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        {/* Loyalty free button */}
-                        {user && !item.loyaltyFree && item.priceEur > 0 && (
-                          <button
-                            onClick={() => handleApplyLoyaltyFree(item.id, item.priceEur)}
-                            disabled={loyaltyPoints < pointsNeededForFree(item.priceEur) || applyingLoyalty === item.id}
-                            className="text-[10px] font-600 px-2 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                            title={`${pointsNeededForFree(item.priceEur)} pts nécessaires`}
-                          >
-                            {applyingLoyalty === item.id ? '...' : `🎁 Gratuit (${pointsNeededForFree(item.priceEur)} pts)`}
+                      <div className="flex justify-between items-end mt-4">
+                        <div className="flex gap-4">
+                          <button className="flex items-center gap-1.5 text-xs font-600 text-[#5C6B5E] hover:text-[#1C2620] transition-colors">
+                            <Icon name="BookmarkIcon" size={14} variant="outline" />
+                            Enregistrer
                           </button>
-                        )}
-                        {item.loyaltyFree && (
-                          <button
-                            onClick={() => handleRemoveLoyaltyFree(item.id, item.originalPriceEur ?? item.priceEur)}
-                            className="text-[10px] font-600 px-2 py-1 rounded-lg bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200 transition-colors"
-                          >
-                            ✕ Annuler offre
+                          <button onClick={() => handleRemoveRequest(item.id)} className="flex items-center gap-1.5 text-xs font-600 text-[#5C6B5E] hover:text-red-600 transition-colors">
+                            <Icon name="TrashIcon" size={14} variant="outline" />
+                            Retirer
                           </button>
-                        )}
-
+                        </div>
+                        
                         <div className="text-right">
-                          {item.loyaltyFree ? (
-                            <div>
-                              <p className="font-mono font-700 text-emerald-600 text-base line-through text-muted-foreground text-xs">{((item.originalPriceEur ?? 0) * item.quantity).toFixed(2)} €</p>
-                              <p className="font-mono font-700 text-emerald-600 text-base">0,00 € 🎁</p>
-                            </div>
-                          ) : (
-                            <div>
-                              <p className="font-mono font-700 text-foreground text-base">{(item.priceEur * item.quantity).toFixed(2)} €</p>
-                              {item.quantity > 1 && <p className="font-mono text-[10px] text-muted-foreground">{item.priceEur.toFixed(2)} € / unité</p>}
-                            </div>
-                          )}
+                          <p className="font-600 text-[#1C2620] text-xl">{(item.priceEur * item.quantity).toFixed(0)} €</p>
+                          <p className="text-[10px] text-[#5C6B5E]">TVA incluse</p>
                         </div>
                       </div>
                     </div>
                   </div>
+                ))}
+
+                {/* Upsell Section */}
+                <div className="bg-[#EAF0EB] rounded-3xl p-6 flex items-center justify-between mt-4">
+                  <div className="flex items-center gap-6">
+                    <div className="w-20 h-20 flex-shrink-0 rounded-2xl bg-white/50 mix-blend-multiply overflow-hidden flex items-center justify-center p-2">
+                      <img src="https://images.unsplash.com/photo-1572007886481-64539dc31d04?w=400&q=80" alt="Lampe" className="w-full h-full object-cover rounded-xl" />
+                    </div>
+                    <div>
+                      <p className="font-mono text-[10px] text-[#2A3830] uppercase tracking-wider mb-1">ON A PENSÉ POUR VOUS</p>
+                      <p className="font-display font-700 text-lg text-[#1C2620]">Lampe frontale <em className="italic font-400 text-[#5C6B5E]">350 lumens.</em></p>
+                      <p className="text-xs text-[#5C6B5E] mt-1">Autonomie 45 h, batterie rechargeable. Souvent oubliée, jamais regrettée.</p>
+                    </div>
+                  </div>
+                  <button className="flex items-center gap-2 bg-white px-4 py-2 rounded-full font-600 text-sm text-[#1C2620] shadow-sm hover:bg-[#F5F2E8] transition-colors">
+                    84 € <Icon name="PlusIcon" size={14} />
+                  </button>
                 </div>
-              ))}
+              </div>
 
-              <Link href="/catalogue" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mt-2 w-fit">
-                <Icon name="ArrowLeftIcon" size={14} variant="outline" />
-                Continuer les achats
-              </Link>
-            </div>
-
-            {/* Order summary */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-24">
-                <div className="topo-card p-6">
-                  <h2 className="font-display font-700 text-lg text-foreground mb-5 tracking-tight">Récapitulatif</h2>
-
-                  <div className="space-y-3 mb-5">
+              {/* Order summary */}
+              <div className="lg:col-span-5 xl:col-span-4">
+                <div className="bg-white border border-[#C8C3B0] rounded-3xl p-8 sticky top-24">
+                  <h3 className="font-display font-700 text-xl mb-6">Récapitulatif</h3>
+                  
+                  <div className="space-y-4 mb-8">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Sous-total ({totalItems} article{totalItems !== 1 ? 's' : ''})</span>
-                      <span className="font-mono font-600 text-foreground">{totalPriceEur.toFixed(2)} €</span>
+                      <span className="text-[#5C6B5E]">Sous-total ({totalItems} articles)</span>
+                      <span className="font-600">{totalPriceEur.toFixed(0)} €</span>
                     </div>
-                    {savedEur > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-emerald-600 flex items-center gap-1"><Icon name="StarIcon" size={12} variant="solid" className="text-amber-500" />Économies fidélité</span>
-                        <span className="font-mono font-600 text-emerald-600">-{savedEur.toFixed(2)} €</span>
-                      </div>
-                    )}
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Livraison</span>
-                      <span className={`font-mono font-600 ${shippingEur === 0 ? 'text-emerald-600' : 'text-foreground'}`}>
-                        {shippingEur === 0 ? 'Gratuite' : `${shippingEur.toFixed(2)} €`}
-                      </span>
+                      <span className="text-[#5C6B5E]">Poids total</span>
+                      <span className="font-600">{totalWeightG >= 1000 ? `${(totalWeightG / 1000).toFixed(1).replace('.', ',')} kg` : `${totalWeightG} g`}</span>
                     </div>
-                    {shippingEur > 0 && (
-                      <p className="text-[11px] text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
-                        Livraison gratuite dès 99 € d&apos;achat — il vous manque {(99 - totalPriceEur).toFixed(2)} €
-                      </p>
-                    )}
-                    {loyaltyDiscount > 0 && (
-                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                        <p className="text-xs font-700 text-amber-800">🏆 Niveau {loyaltyLevel}</p>
-                        <p className="text-xs text-amber-700">{(loyaltyDiscount * 100).toFixed(0)}% de réduction permanente appliquée</p>
-                      </div>
-                    )}
-                    <div className="border-t border-border pt-3 flex justify-between">
-                      <span className="font-display font-700 text-foreground">Total</span>
-                      <span className="font-mono font-700 text-xl text-primary">{grandTotal.toFixed(2)} €</span>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#5C6B5E]">Livraison suivie</span>
+                      <span className="font-600 text-[#2A3830]">{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#5C6B5E]">Estimation TVA</span>
+                      <span className="font-600 text-[#5C6B5E]">Incluse</span>
                     </div>
                   </div>
 
-                  <div className="mb-5 p-3 bg-background rounded-lg border border-border">
-                    <WeightGauge weightG={totalWeightG} maxG={20000} size="sm" />
-                    <p className="text-[10px] text-muted-foreground mt-1.5 font-mono">
-                      {items.length} référence{items.length !== 1 ? 's' : ''} · {totalItems} article{totalItems !== 1 ? 's' : ''}
-                    </p>
+                  <div className="flex gap-2 mb-8">
+                    <input type="text" placeholder="Code promo" className="flex-1 px-4 py-3 bg-[#F5F2E8] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620]" />
+                    <button className="bg-[#1C2620] text-white px-6 py-3 rounded-xl font-600 text-sm hover:bg-[#2A3830] transition-colors">Appliquer</button>
                   </div>
 
-                  <Link href="/checkout" className="btn-primary w-full justify-center py-3.5 text-base min-h-[44px]">
-                    <Icon name="LockClosedIcon" size={16} variant="outline" />
-                    Commander — {grandTotal.toFixed(2)} €
+                  <div className="flex justify-between items-end font-display font-800 text-2xl pt-6 border-t border-[#C8C3B0]/50 mb-6">
+                    <span className="text-xl">Total à payer</span>
+                    <span>{grandTotal.toFixed(0)} €</span>
+                  </div>
+
+                  <Link href="/checkout" className="block text-center w-full bg-[#2A3830] hover:bg-[#1C2620] text-white py-4 rounded-xl font-600 transition-colors mb-4">
+                    Passer au paiement
                   </Link>
+                  <p className="text-center text-[10px] text-[#5C6B5E] flex items-center justify-center gap-1.5 mb-8">
+                    <Icon name="LockClosedIcon" size={12} /> Paiement sécurisé Stripe
+                  </p>
 
-                  <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-                    <Icon name="ShieldCheckIcon" size={12} variant="outline" aria-hidden="true" />
-                    Paiement 100% sécurisé
+                  <div className="flex justify-center gap-2 mb-6 opacity-60">
+                    {/* Fake payment logos */}
+                    <div className="px-3 py-1.5 border border-[#C8C3B0] rounded text-[10px] font-600 font-mono">VISA</div>
+                    <div className="px-3 py-1.5 border border-[#C8C3B0] rounded text-[10px] font-600 font-mono">MC</div>
+                    <div className="px-3 py-1.5 border border-[#C8C3B0] rounded text-[10px] font-600 font-mono">AMEX</div>
+                    <div className="px-3 py-1.5 border border-[#C8C3B0] rounded text-[10px] font-600 font-mono">Apple Pay</div>
                   </div>
+
+                  <div className="bg-[#F5F2E8] rounded-2xl p-4 flex justify-between gap-2 text-center text-[10px] font-600 text-[#5C6B5E]">
+                    <div className="flex flex-col items-center gap-2 flex-1">
+                      <Icon name="StarIcon" size={16} /> Garantie à vie
+                    </div>
+                    <div className="flex flex-col items-center gap-2 flex-1">
+                      <Icon name="ArrowPathIcon" size={16} /> Retour 30 j.
+                    </div>
+                    <div className="flex flex-col items-center gap-2 flex-1">
+                      <Icon name="MapPinIcon" size={16} /> 100 % Europe
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </div>
-          </div>
+          </>
         )}
       </main>
 
-      <Footer />
+      <div className="bg-[#1C2620] text-white pt-16 pb-12 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between gap-12">
+            <div className="max-w-sm">
+              <h4 className="font-display font-800 text-2xl mb-2">
+                Ce que vous emportez, <em className="italic font-400 text-[#A3B1A6]">c'est votre voyage.</em>
+              </h4>
+              <p className="text-xs text-[#A3B1A6]">Grenoble, France</p>
+            </div>
+            <div className="flex gap-16 text-sm">
+              <div className="flex flex-col gap-3">
+                <span className="font-mono text-[10px] text-[#A3B1A6] tracking-wider uppercase mb-2">Boutique</span>
+                <Link href="#" className="hover:text-white transition-colors">Catalogue</Link>
+                <Link href="#" className="hover:text-white transition-colors">Configurateur</Link>
+              </div>
+              <div className="flex flex-col gap-3">
+                <span className="font-mono text-[10px] text-[#A3B1A6] tracking-wider uppercase mb-2">Maison</span>
+                <Link href="#" className="hover:text-white transition-colors">Méthode</Link>
+              </div>
+              <div className="flex flex-col gap-3">
+                <span className="font-mono text-[10px] text-[#A3B1A6] tracking-wider uppercase mb-2">Service</span>
+                <Link href="#" className="hover:text-white transition-colors">Livraison</Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

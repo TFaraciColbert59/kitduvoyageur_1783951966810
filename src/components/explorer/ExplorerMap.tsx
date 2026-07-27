@@ -1,15 +1,14 @@
 'use client';
-
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import 'leaflet/dist/leaflet.css';
 import type { Map as LeafletMap } from 'leaflet';
-import type { ExploreTrail } from './AdventureScore';
+import type { MapTrail } from './types';
 import TrailLayer from './TrailLayer';
 
 interface ExplorerMapProps {
-  trails: ExploreTrail[];
+  trails: MapTrail[];
   selectedTrailId: string | null;
-  onTrailClick: (trail: ExploreTrail) => void;
+  onTrailClick: (trail: MapTrail) => void;
   userLocation?: [number, number] | null;
   onMapReady?: () => void;
   onLocationUpdate?: (loc: [number, number]) => void;
@@ -154,17 +153,11 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
   }, [userLocation, mapReady]);
 
   // Auto-zoom to selected trail
-  const fitToTrail = useCallback((trail: ExploreTrail) => {
+  const fitToTrail = useCallback((trail: MapTrail) => {
     if (!mapRef.current) return;
-    import('leaflet').then((L) => {
-      if (trail.bbox_min_lat && trail.bbox_max_lat && trail.bbox_min_lng && trail.bbox_max_lng) {
-        const bounds = L.latLngBounds(
-          [trail.bbox_min_lat, trail.bbox_min_lng],
-          [trail.bbox_max_lat, trail.bbox_max_lng]
-        );
-        mapRef.current!.fitBounds(bounds, { padding: [80, 80], maxZoom: 14, animate: true });
-      } else if (trail.start_lat && trail.start_lng) {
-        mapRef.current!.setView([trail.start_lat, trail.start_lng], 12, { animate: true });
+    import('leaflet').then(() => {
+      if (trail.lat !== null && trail.lng !== null) {
+        mapRef.current!.setView([trail.lat, trail.lng], 12, { animate: true });
       }
     });
   }, []);
@@ -180,14 +173,11 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
     if (!mapReady || !trails.length || !mapRef.current) return;
     if (locationState === 'located' || locationState === 'locating') return;
     import('leaflet').then((L) => {
-      const validTrails = trails.filter(
-        (t) => t.bbox_min_lat && t.bbox_max_lat && t.bbox_min_lng && t.bbox_max_lng
-      );
+      const validTrails = trails.filter((t) => t.lat !== null && t.lng !== null);
       if (!validTrails.length) return;
       const coords: [number, number][] = [];
       validTrails.forEach((t) => {
-        coords.push([t.bbox_min_lat!, t.bbox_min_lng!]);
-        coords.push([t.bbox_max_lat!, t.bbox_max_lng!]);
+        coords.push([t.lat!, t.lng!]);
       });
       const allBounds = L.latLngBounds(coords);
       mapRef.current!.fitBounds(allBounds, { padding: [40, 40], maxZoom: 10 });
@@ -233,10 +223,10 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
 
       {/* Denied — show button to retry */}
       {locationState === 'denied' && (
-        <div className="absolute z-[1000]" style={{ bottom: '34vh', left: '12px' }}>
+        <div className="absolute z-[1000]" style={{ bottom: '80px', left: '12px' }}>
           <button
             onClick={handleManualLocate}
-            className="flex items-center gap-2 bg-[#0d1a12]/90 border border-[#2D5A27]/40 rounded-xl px-3 py-2 text-[#8BAF7C] text-xs font-mono backdrop-blur-sm hover:border-[#2D5A27]/70 transition-colors"
+            className="flex items-center gap-2 bg-white/95 border border-[#E4E0D4] rounded-xl px-3 py-2 text-[#1C2620] text-xs font-medium shadow-md hover:bg-[#F5F2EA] transition-colors"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
@@ -247,20 +237,20 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
       )}
 
       {/* Tile switcher */}
-      <div className="absolute z-[1000] flex flex-col gap-1.5" style={{ bottom: '34vh', right: '12px' }}>
+      <div className="absolute z-[1000] flex flex-col gap-1.5" style={{ bottom: '80px', right: '12px' }}>
         <button
           onClick={() => setTileMode('topo')}
-          className={`w-10 h-10 rounded-xl border text-sm transition-all shadow-md shadow-black/20 ${
-            tileMode === 'topo' ? 'bg-[#2D5A27] border-[#4A8A3F] text-white' : 'bg-[#0d1a12]/90 border-[#2D5A27]/30 text-[#8BAF7C]/60 hover:border-[#2D5A27]/60'
+          className={`w-9 h-9 rounded-xl border text-sm transition-all shadow-sm ${
+            tileMode === 'topo' ? 'bg-[#1C2620] border-[#1C2620] text-white' : 'bg-white border-[#E4E0D4] text-[#1C2620]/60 hover:border-[#1C2620]/40'
           }`}
-          title="Carte topographique"
+          title="Topographique"
         >
           🗺
         </button>
         <button
           onClick={() => setTileMode('osm')}
-          className={`w-10 h-10 rounded-xl border text-sm transition-all shadow-md shadow-black/20 ${
-            tileMode === 'osm' ? 'bg-[#2D5A27] border-[#4A8A3F] text-white' : 'bg-[#0d1a12]/90 border-[#2D5A27]/30 text-[#8BAF7C]/60 hover:border-[#2D5A27]/60'
+          className={`w-9 h-9 rounded-xl border text-sm transition-all shadow-sm ${
+            tileMode === 'osm' ? 'bg-[#1C2620] border-[#1C2620] text-white' : 'bg-white border-[#E4E0D4] text-[#1C2620]/60 hover:border-[#1C2620]/40'
           }`}
           title="OpenStreetMap"
         >
@@ -270,10 +260,10 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
 
       {/* Difficulty legend */}
       <div
-        className="absolute left-3 z-[1000] bg-[#0d1a12]/85 border border-[#2D5A27]/20 rounded-xl px-3 py-2.5 backdrop-blur-sm shadow-md shadow-black/20"
-        style={{ bottom: '34vh' }}
+        className="absolute left-3 z-[1000] bg-white/95 border border-[#E4E0D4] rounded-xl px-3 py-2 shadow-sm"
+        style={{ bottom: '80px' }}
       >
-        <p className="text-[8px] font-mono text-[#8BAF7C]/30 uppercase tracking-widest mb-1.5">Difficulté</p>
+        <p className="text-[9px] font-mono text-[#7A8A7D] uppercase tracking-widest mb-1.5">Difficulté</p>
         {[
           { key: 'easy', label: 'Facile', color: '#22c55e' },
           { key: 'moderate', label: 'Modérée', color: '#f97316' },
@@ -282,10 +272,11 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
         ].map((d) => (
           <div key={d.key} className="flex items-center gap-1.5 mb-0.5">
             <div className="w-4 h-0.5 rounded-full" style={{ backgroundColor: d.color }} />
-            <span className="text-[9px] text-[#8BAF7C]/50">{d.label}</span>
+            <span className="text-[9px] text-[#7A8A7D]">{d.label}</span>
           </div>
         ))}
       </div>
     </div>
   );
 }
+

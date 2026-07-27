@@ -1,246 +1,328 @@
 {
-  "code": "NO",
-  "nom": "Royaume de Norvège",
-  "continent": "Europe",
-  "capital": "Oslo",
-  "coordonnees": "60.4720° N, 8.4689° E",
-  "fuseau": "UTC+1 (CET)",
-  "monnaie": "Couronne norvégienne (NOK)",
-  "langues": [
-    "Norvégien"
-  ],
-  "population": "5.5 millions hab.",
-  "superficie": "385 207 km²",
-  "danger_global": 2,
-  "danger_details": [
-    {
-      "label": "Sécurité générale",
-      "level": "low",
-      "note": "La Norvège est un pays très sûr avec un taux de criminalité très faible."
+  "version": "v2",
+  "generated_at": "2026-07-26T14:32:11.183Z",
+  "valid_until": "2026-07-28T14:32:11.183Z",
+  "data": {
+    "pays": {
+      "nom": "Norvège",
+      "code_iso": "NO",
+      "continent": "Europe"
     },
-    {
-      "label": "Risques naturels",
-      "level": "medium",
-      "note": "Risques d'avalanches et de conditions météorologiques extrêmes (tempêtes, froid intense) en hiver, surtout dans les régions montagneuses et côtières."
+    "meteo": {
+      "calendrier_12_mois": [
+        {
+          "mois": "Janvier",
+          "temp_min_c": -7,
+          "temp_max_c": -2,
+          "precipitations_mm": 50,
+          "niveau": "deconseille",
+          "affluence": "faible"
+        },
+        {
+          "mois": "Février",
+          "temp_min_c": -7,
+          "temp_max_c": -1,
+          "precipitations_mm": 40,
+          "niveau": "deconseille",
+          "affluence": "faible"
+        },
+        {
+          "mois": "Mars",
+          "temp_min_c": -4,
+          "temp_max_c": 3,
+          "precipitations_mm": 40,
+          "niveau": "moyen",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Avril",
+          "temp_min_c": 1,
+          "temp_max_c": 9,
+          "precipitations_mm": 40,
+          "niveau": "bon",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Mai",
+          "temp_min_c": 6,
+          "temp_max_c": 15,
+          "precipitations_mm": 50,
+          "niveau": "bon",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Juin",
+          "temp_min_c": 10,
+          "temp_max_c": 19,
+          "precipitations_mm": 70,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Juillet",
+          "temp_min_c": 12,
+          "temp_max_c": 22,
+          "precipitations_mm": 80,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Août",
+          "temp_min_c": 11,
+          "temp_max_c": 20,
+          "precipitations_mm": 90,
+          "niveau": "bon",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Septembre",
+          "temp_min_c": 7,
+          "temp_max_c": 15,
+          "precipitations_mm": 80,
+          "niveau": "bon",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Octobre",
+          "temp_min_c": 3,
+          "temp_max_c": 9,
+          "precipitations_mm": 80,
+          "niveau": "moyen",
+          "affluence": "faible"
+        },
+        {
+          "mois": "Novembre",
+          "temp_min_c": -1,
+          "temp_max_c": 4,
+          "precipitations_mm": 70,
+          "niveau": "deconseille",
+          "affluence": "faible"
+        },
+        {
+          "mois": "Décembre",
+          "temp_min_c": -5,
+          "temp_max_c": -1,
+          "precipitations_mm": 50,
+          "niveau": "deconseille",
+          "affluence": "faible"
+        }
+      ],
+      "source": "Données climatiques moyennes pour Oslo (capitale) et régions côtières",
+      "derniere_maj": "2024-07-26"
     },
-    {
-      "label": "Santé",
-      "level": "low",
-      "note": "Excellent système de santé. Aucun risque sanitaire majeur. L'eau du robinet est potable."
+    "securite": {
+      "zones": [
+        {
+          "nom_zone": "Ensemble du territoire",
+          "niveau": "sur",
+          "description": "La Norvège est un pays très sûr. La délinquance est faible. Il convient d'appliquer les règles de prudence habituelles, notamment dans les lieux très fréquentés par les touristes."
+        }
+      ],
+      "source_officielle": {
+        "nom": "France Diplomatie",
+        "url": "https://www.diplomatie.gouv.fr/fr/conseils-aux-voyageurs/conseils-par-pays-destination/norvege/"
+      },
+      "derniere_synchronisation": "2024-07-26",
+      "statut": "verifie",
+      "ambassade_consulat": {
+        "nom": "Ambassade de France à Oslo",
+        "telephone": "+47 23 28 46 00",
+        "url": "https://no.ambafrance.org/"
+      }
     },
-    {
-      "label": "Zones à éviter",
-      "level": "low",
-      "note": "Aucune zone spécifique n'est considérée comme dangereuse ou à éviter pour des raisons de sécurité."
+    "sante": {
+      "risques": [
+        "Aucun risque sanitaire particulier, mais attention aux tiques dans les zones rurales et forestières en été.",
+        "Risque d'hypothermie lors d'activités en extérieur en hiver ou en montagne."
+      ],
+      "vaccins_recommandes": [
+        "Rappel DTPolio",
+        "Hépatite A",
+        "Hépatite B (selon conditions de séjour)"
+      ],
+      "vaccins_obligatoires": [],
+      "eau_potable": "oui",
+      "source": "Institut Pasteur / OMS / France Diplomatie",
+      "derniere_maj": "2024-07-26",
+      "statut": "verifie"
+    },
+    "connectivite": {
+      "couverture_mobile": "bonne",
+      "wifi_disponibilite": "Le WiFi est largement disponible et de bonne qualité dans les hôtels, restaurants, cafés et de nombreux lieux publics, y compris dans les zones rurales et touristiques.",
+      "statut": "verifie"
+    },
+    "pratique": {
+      "visa": {
+        "nationalite": "France",
+        "regle": "La Norvège fait partie de l'espace Schengen. Les citoyens français n'ont pas besoin de visa pour les séjours de moins de 90 jours sur une période de 180 jours.",
+        "duree_sejour_sans_visa": "90 jours"
+      },
+      "monnaie": "Couronne norvégienne (NOK)",
+      "prise_electrique": {
+        "type": "F",
+        "voltage": "230V 50Hz"
+      },
+      "langues": [
+        "Norvégien (Bokmål, Nynorsk)",
+        "Sami"
+      ],
+      "phrases_survie": [
+        {
+          "fr": "Bonjour",
+          "locale": "God dag"
+        },
+        {
+          "fr": "Merci",
+          "locale": "Takk"
+        },
+        {
+          "fr": "Au revoir",
+          "locale": "Ha det"
+        },
+        {
+          "fr": "Où sont les toilettes ?",
+          "locale": "Hvor er toalettet?"
+        },
+        {
+          "fr": "Combien ça coûte ?",
+          "locale": "Hvor mye koster det?"
+        }
+      ],
+      "decalage_horaire_utc": "UTC+1 (heure de Paris : identique en hiver, identique en été)",
+      "budget_quotidien_repere_eur": {
+        "petit": {
+          "logement": 60,
+          "nourriture": 40,
+          "transport": 20
+        },
+        "moyen": {
+          "logement": 120,
+          "nourriture": 70,
+          "transport": 40
+        },
+        "gros": {
+          "logement": 200,
+          "nourriture": 100,
+          "transport": 60
+        }
+      }
+    },
+    "vols": {
+      "tendance_par_saison": [
+        {
+          "periode": "Haute saison (Juin-Août, Décembre)",
+          "niveau_prix": "haut"
+        },
+        {
+          "periode": "Basse saison (Janvier-Mars, Novembre)",
+          "niveau_prix": "bas"
+        },
+        {
+          "periode": "Épaule (Avril-Mai, Septembre-Octobre)",
+          "niveau_prix": "moyen"
+        }
+      ],
+      "statut": "indicatif"
+    },
+    "carbone": {
+      "vol_paris_kg_co2_estime": 653,
+      "methodologie": "Distance Paris–Oslo × 2 (aller-retour) × 0.255 kg CO2/km/passager (facteur ADEME aviation moyen-courrier/long-courrier)",
+      "statut": "estimation"
+    },
+    "evenements": [
+      {
+        "nom": "Fête Nationale (Syttende Mai)",
+        "periode": "17 Mai",
+        "description": "Célébration de la Constitution norvégienne avec des défilés, des costumes traditionnels et des festivités dans tout le pays, particulièrement animée à Oslo."
+      },
+      {
+        "nom": "Festival de Jazz de Molde",
+        "periode": "Juillet",
+        "description": "L'un des plus anciens et des plus importants festivals de jazz d'Europe, attirant des artistes internationaux et des milliers de spectateurs dans la ville de Molde."
+      }
+    ],
+    "lieux_incontournables": [
+      {
+        "nom": "Geirangerfjord",
+        "description": "Un fjord emblématique classé au patrimoine mondial de l'UNESCO, célèbre pour ses falaises abruptes, ses cascades majestueuses comme les Sept Sœurs et ses eaux d'un bleu profond.",
+        "lat": 62.1016,
+        "lng": 7.2057
+      },
+      {
+        "nom": "Oslo",
+        "description": "La capitale norvégienne, combinant modernité et nature, avec des sites comme l'Opéra d'Oslo, le Parc de sculptures de Vigeland et le Musée des navires vikings.",
+        "lat": 59.9139,
+        "lng": 10.7522
+      },
+      {
+        "nom": "Îles Lofoten",
+        "description": "Un archipel spectaculaire au nord du cercle polaire, connu pour ses montagnes escarpées, ses eaux turquoise, ses plages de sable blanc et ses villages de pêcheurs colorés.",
+        "lat": 68.1277,
+        "lng": 13.5921
+      },
+      {
+        "nom": "Cap Nord (Nordkapp)",
+        "description": "Le point le plus septentrional de l'Europe continentale, offrant des vues imprenables sur l'océan Arctique, le soleil de minuit en été et les aurores boréales en hiver.",
+        "lat": 71.1696,
+        "lng": 25.7839
+      },
+      {
+        "nom": "Bergen",
+        "description": "La deuxième plus grande ville de Norvège, porte d'entrée des fjords, célèbre pour son quartier historique de Bryggen (UNESCO) avec ses maisons en bois colorées et son marché aux poissons.",
+        "lat": 60.3913,
+        "lng": 5.3221
+      }
+    ],
+    "coutumes": "Les Norvégiens sont généralement discrets, respectueux de la nature et attachés à la ponctualité. La 'Janteloven' (loi de Jante) est une coutume sociale non écrite qui valorise la modestie et l'égalité, décourageant l'ostentation. Il est courant de retirer ses chaussures en entrant chez quelqu'un. Le pourboire n'est pas obligatoire mais apprécié pour un bon service.",
+    "kits_recommandes_tags_climat": [
+      "froid",
+      "randonnee",
+      "nature",
+      "aurores_boreales",
+      "couches_vetements"
+    ],
+    "gabarit_poids_recommande": {
+      "poids_total_kg": 18,
+      "justification": "La Norvège, avec son climat variable et ses nombreuses activités de plein air (randonnée, observation des aurores, ski), nécessite des vêtements chauds et techniques en plusieurs couches, même en été, ainsi que des chaussures adaptées. Le poids recommandé inclut ces équipements essentiels."
+    },
+    "pays_similaires": [
+      {
+        "code_iso": "SE",
+        "nom": "Suède",
+        "raison": "Climat nordique similaire, paysages de forêts et lacs, culture scandinave proche, activités de plein air."
+      },
+      {
+        "code_iso": "FI",
+        "nom": "Finlande",
+        "raison": "Climat froid, nature sauvage, aurores boréales, culture nordique et activités hivernales."
+      },
+      {
+        "code_iso": "IS",
+        "nom": "Islande",
+        "raison": "Paysages volcaniques et glaciaires spectaculaires, activités de plein air, observation des aurores boréales, coût de la vie élevé."
+      }
+    ],
+    "faq": [
+      {
+        "question": "Ai-je besoin d'un visa pour voyager en Norvège en tant que citoyen français ?",
+        "reponse": "Non, en tant que citoyen français, vous n'avez pas besoin de visa pour un séjour touristique en Norvège de moins de 90 jours, car la Norvège fait partie de l'espace Schengen."
+      },
+      {
+        "question": "La Norvège est-elle un pays sûr pour les voyageurs ?",
+        "reponse": "Oui, la Norvège est considérée comme un pays très sûr avec un faible taux de criminalité. Il est recommandé d'appliquer les précautions habituelles, notamment dans les zones touristiques."
+      },
+      {
+        "question": "Quelle est la meilleure période pour visiter la Norvège pour profiter des fjords et du soleil de minuit ?",
+        "reponse": "La meilleure période pour profiter des fjords et du soleil de minuit est de juin à août, lorsque les températures sont les plus clémentes et les jours les plus longs. C'est aussi la haute saison touristique."
+      },
+      {
+        "question": "Quel budget quotidien dois-je prévoir pour un voyage en Norvège, sachant que c'est un pays réputé cher ?",
+        "reponse": "La Norvège est l'un des pays les plus chers d'Europe. Pour un budget moyen, prévoyez environ 190 à 280 EUR par jour, incluant logement, nourriture et transport. Un budget plus serré pourrait être autour de 120 EUR par jour en faisant attention aux dépenses."
+      }
+    ],
+    "meta": {
+      "genere_le": "2024-07-26T12:00:00.000Z",
+      "cache_valide_jusqu_au": "2024-07-28T12:00:00.000Z"
     }
-  ],
-  "calendrier": [
-    {
-      "month": "Janvier",
-      "short": "Jan",
-      "status": "bad",
-      "temp_min": -7,
-      "temp_max": -2,
-      "rain_mm": 50,
-      "description": "Froid intense, neige et jours courts. Idéal pour les sports d'hiver."
-    },
-    {
-      "month": "Février",
-      "short": "Fév",
-      "status": "bad",
-      "temp_min": -6,
-      "temp_max": -1,
-      "rain_mm": 45,
-      "description": "Hiver rigoureux, neige abondante. Possibilité d'aurores boréales."
-    },
-    {
-      "month": "Mars",
-      "short": "Mar",
-      "status": "medium",
-      "temp_min": -3,
-      "temp_max": 3,
-      "rain_mm": 48,
-      "description": "Le printemps commence, mais le temps reste froid et neigeux, surtout au nord."
-    },
-    {
-      "month": "Avril",
-      "short": "Avr",
-      "status": "good",
-      "temp_min": 1,
-      "temp_max": 8,
-      "rain_mm": 52,
-      "description": "Fonte des neiges, nature qui se réveille. Températures plus douces."
-    },
-    {
-      "month": "Mai",
-      "short": "Mai",
-      "status": "good",
-      "temp_min": 5,
-      "temp_max": 14,
-      "rain_mm": 55,
-      "description": "Très agréable, floraison. Fête nationale le 17 mai. Jours très longs."
-    },
-    {
-      "month": "Juin",
-      "short": "Jun",
-      "status": "good",
-      "temp_min": 9,
-      "temp_max": 19,
-      "rain_mm": 54,
-      "description": "Début de l'été, soleil de minuit au nord. Idéal pour la randonnée et les fjords."
-    },
-    {
-      "month": "Juillet",
-      "short": "Jul",
-      "status": "good",
-      "temp_min": 12,
-      "temp_max": 22,
-      "rain_mm": 59,
-      "description": "Mois le plus chaud, haute saison touristique. Longues journées ensoleillées."
-    },
-    {
-      "month": "Août",
-      "short": "Aoû",
-      "status": "good",
-      "temp_min": 11,
-      "temp_max": 21,
-      "rain_mm": 64,
-      "description": "Fin de l'été, encore très agréable. Les couleurs d'automne commencent à apparaître fin août."
-    },
-    {
-      "month": "Septembre",
-      "short": "Sep",
-      "status": "good",
-      "temp_min": 7,
-      "temp_max": 15,
-      "rain_mm": 55,
-      "description": "Automne magnifique avec les couleurs. Début de la saison des aurores boréales."
-    },
-    {
-      "month": "Octobre",
-      "short": "Oct",
-      "status": "medium",
-      "temp_min": 3,
-      "temp_max": 9,
-      "rain_mm": 62,
-      "description": "Froid et pluvieux, les premières neiges peuvent tomber. Bonne période pour les aurores."
-    },
-    {
-      "month": "Novembre",
-      "short": "Nov",
-      "status": "bad",
-      "temp_min": -2,
-      "temp_max": 4,
-      "rain_mm": 51,
-      "description": "Hiver s'installe, jours courts et gris. Idéal pour les aurores boréales et l'ambiance hivernale."
-    },
-    {
-      "month": "Décembre",
-      "short": "Déc",
-      "status": "bad",
-      "temp_min": -5,
-      "temp_max": 0,
-      "rain_mm": 50,
-      "description": "Froid, neige et obscurité polaire au nord. Ambiance de Noël."
-    }
-  ],
-  "infos_pratiques": [
-    {
-      "icon": "IdentificationIcon",
-      "label": "Visa",
-      "value": "Les citoyens de l'UE/EEE n'ont pas besoin de visa pour des séjours de moins de 90 jours. Un passeport ou une carte d'identité valide suffit."
-    },
-    {
-      "icon": "HeartIcon",
-      "label": "Vaccins",
-      "value": "Aucun vaccin n'est obligatoire pour entrer en Norvège. Assurez-vous d'être à jour sur les vaccins universels (DTCP, ROR)."
-    },
-    {
-      "icon": "CurrencyEuroIcon",
-      "label": "Monnaie",
-      "value": "La monnaie est la Couronne norvégienne (NOK). 1 EUR équivaut à environ 11-12 NOK. Les cartes de crédit sont largement acceptées, même pour de petits montants."
-    },
-    {
-      "icon": "BoltIcon",
-      "label": "Prises",
-      "value": "Les prises électriques sont de type F (Schuko), avec une tension de 230V et une fréquence de 50Hz. Un adaptateur n'est généralement pas nécessaire pour les appareils européens."
-    },
-    {
-      "icon": "BeakerIcon",
-      "label": "Eau",
-      "value": "L'eau du robinet est excellente et potable partout en Norvège. N'hésitez pas à remplir votre gourde."
-    },
-    {
-      "icon": "PhoneIcon",
-      "label": "Urgences",
-      "value": "Police : 112, Pompiers : 110, Ambulance : 113. Numéro d'urgence européen : 112."
-    }
-  ],
-  "lieux": [
-    {
-      "nom": "Les Fjords de l'Ouest",
-      "description": "Explorez les majestueux fjords classés au patrimoine mondial de l'UNESCO, tels que le Geirangerfjord et le Nærøyfjord, avec leurs falaises abruptes, cascades et eaux profondes. Des croisières et randonnées offrent des vues spectaculaires."
-    },
-    {
-      "nom": "Oslo",
-      "description": "La capitale norvégienne offre un mélange de modernité et d'histoire. Visitez le musée des bateaux vikings, le parc de sculptures de Vigeland, l'Opéra d'Oslo et la forteresse d'Akershus. Profitez de la vie urbaine et des musées."
-    },
-    {
-      "nom": "Les Îles Lofoten",
-      "description": "Un archipel spectaculaire au nord du cercle polaire, réputé pour ses montagnes escarpées, ses plages de sable blanc, ses villages de pêcheurs colorés (rorbuer) et ses eaux turquoise. Idéal pour la randonnée, la pêche et l'observation des aurores boréales."
-    },
-    {
-      "nom": "Le Cap Nord (Nordkapp)",
-      "description": "Situé à l'extrémité nord de l'Europe continentale, le Cap Nord est un lieu emblématique pour observer le soleil de minuit en été et les aurores boréales en hiver. Un centre d'accueil offre des expositions et des services."
-    },
-    {
-      "nom": "Bergen",
-      "description": "Deuxième ville de Norvège, célèbre pour son quartier de Bryggen (patrimoine UNESCO) avec ses maisons hanséatiques colorées. Explorez le marché aux poissons, prenez le funiculaire Fløibanen pour une vue panoramique et visitez les musées d'art."
-    }
-  ],
-  "kits_recommandes": [
-    {
-      "nom": "Kit Aventure Nordique",
-      "poids_g": 8500,
-      "prix_cents": 29900,
-      "slug": "kit-aventure-nordique",
-      "description": "Idéal pour les randonnées dans les fjords, l'observation des aurores boréales et les activités de plein air. Inclut des vêtements chauds, une gourde isolante et une lampe frontale."
-    },
-    {
-      "nom": "Kit Explorateur Urbain",
-      "poids_g": 5200,
-      "prix_cents": 18900,
-      "slug": "kit-explorateur-urbain",
-      "description": "Parfait pour découvrir les villes comme Oslo et Bergen. Contient un adaptateur universel, un parapluie compact et un sac à dos léger."
-    },
-    {
-      "nom": "Kit Essentiel Voyageur",
-      "poids_g": 3100,
-      "prix_cents": 12900,
-      "slug": "kit-essentiel-voyageur",
-      "description": "Les indispensables pour tout voyage en Norvège : trousse de premiers secours, chargeur portable, et un guide de conversation norvégien."
-    }
-  ],
-  "events": [
-    {
-      "mois": "Mai",
-      "titre": "Fête Nationale (Syttende Mai)",
-      "type": "festival"
-    },
-    {
-      "mois": "Juin-Août",
-      "titre": "Haute saison touristique et Soleil de Minuit",
-      "type": "saison"
-    },
-    {
-      "mois": "Septembre-Mars",
-      "titre": "Saison des Aurores Boréales",
-      "type": "saison"
-    },
-    {
-      "mois": "Décembre-Février",
-      "titre": "Période à éviter pour les frileux (froid et obscurité)",
-      "type": "eviter"
-    }
-  ]
+  }
 }
