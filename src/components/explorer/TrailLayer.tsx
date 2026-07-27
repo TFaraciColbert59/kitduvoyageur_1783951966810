@@ -1,134 +1,131 @@
 'use client';
-
-import { useEffect, useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import type { Map as LeafletMap } from 'leaflet';
-import type { ExploreTrail } from './AdventureScore';
-import { DIFFICULTY_COLORS } from './AdventureScore';
+import type { MapTrail } from './types';
+import { getDifficultyColor, formatDistance } from './types';
 
 interface TrailLayerProps {
   map: LeafletMap;
-  trails: ExploreTrail[];
+  trails: MapTrail[];
   selectedTrailId: string | null;
-  onTrailClick: (trail: ExploreTrail) => void;
+  onTrailClick: (trail: MapTrail) => void;
 }
 
-type AnyGeometry = {
-  type: string;
-  coordinates?: unknown;
-  geometries?: AnyGeometry[];
-};
-
-/** Returns true if the geometry has drawable line coordinates */
-function isValidGeometry(geom: AnyGeometry | null | undefined): boolean {
-  if (!geom || !geom.type) return false;
-  if (geom.type === 'GeometryCollection') {
-    return Array.isArray(geom.geometries) && geom.geometries.length > 0;
-  }
-  return Array.isArray((geom as { coordinates?: unknown }).coordinates) &&
-    ((geom as { coordinates: unknown[] }).coordinates as unknown[]).length > 0;
-}
-
-/** Converts any geometry to a GeoJSON FeatureCollection Leaflet can render */
-function toFeatureCollection(geom: AnyGeometry): object {
-  if (geom.type === 'FeatureCollection') return geom as object;
-  if (geom.type === 'Feature') return { type: 'FeatureCollection', features: [geom] };
-  if (geom.type === 'GeometryCollection') {
-    // Flatten each sub-geometry into its own Feature
-    const features = (geom.geometries || []).map((g) => ({
-      type: 'Feature',
-      geometry: g,
-      properties: {},
-    }));
-    return { type: 'FeatureCollection', features };
-  }
-  // LineString, MultiLineString, Polygon, etc.
-  return {
-    type: 'FeatureCollection',
-    features: [{ type: 'Feature', geometry: geom, properties: {} }],
-  };
-}
-
-// This component manages Leaflet GeoJSON layers imperatively
 export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick }: TrailLayerProps) {
-  const layersRef = useRef<Map<string, import('leaflet').GeoJSON>>(new Map());
+  const markersRef = useRef<globalThis.Map<string, import('leaflet').Marker>>(new globalThis.Map());
+  const polylinesRef = useRef<globalThis.Map<string, import('leaflet').Polyline>>(new globalThis.Map());
 
-  const addLayer = useCallback(
-    (trail: ExploreTrail, L: typeof import('leaflet')) => {
+  const buildIcon = useCallback((trail: MapTrail, isSelected: boolean, L: typeof import('leaflet')) => {
+    const diffColor = getDifficultyColor(trail.difficulty);
+    const label = trail.distance_km ? `${trail.distance_km.toFixed(1)} km` : trail.name?.substring(0, 12) || '•';
+
+    if (isSelected) {
+      const html = `
+        <div style="
+          background: #1C2620;
+          color: white;
+          font-weight: 600;
+          font-size: 11px;
+          padding: 5px 10px;
+          border-radius: 999px;
+          box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+          white-space: nowrap;
+          transform: scale(1.1);
+          transform-origin: bottom center;
+          border: 2px solid ${diffColor};
+          position: relative;
+        ">${label}</div>`;
+      return L.divIcon({ html, className: '', iconSize: [80, 28], iconAnchor: [40, 14] });
+    } else {
+      const html = `
+        <div style="
+          background: white;
+          color: #1C2620;
+          font-weight: 600;
+          font-size: 11px;
+          padding: 4px 9px;
+          border-radius: 999px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+          white-space: nowrap;
+          border: 1.5px solid rgba(200,195,176,0.6);
+          cursor: pointer;
+          transition: transform 0.1s;
+          border-left: 3px solid ${diffColor};
+        ">${label}</div>`;
+      return L.divIcon({ html, className: '', iconSize: [80, 24], iconAnchor: [40, 12] });
+    }
+  }, []);
+
+  const addMarker = useCallback(
+    (trail: MapTrail, L: typeof import('leaflet')) => {
       if (!map) return;
-
-      const geom = trail.geometry as AnyGeometry | null;
-      if (!isValidGeometry(geom)) return;
+      const lat = trail.lat;
+      const lng = trail.lng;
+      if (lat === null || lat === undefined || lng === null || lng === undefined) return;
 
       const isSelected = trail.id === selectedTrailId;
-      const color = DIFFICULTY_COLORS[trail.difficulty] || '#94a3b8';
-
       try {
-        const featureCollection = toFeatureCollection(geom!);
+        const icon = buildIcon(trail, isSelected, L);
+      const marker = L.marker([lat, lng], { icon, zIndexOffset: isSelected ? 1000 : 0 });
+      marker.on('click', () => onTrailClick(trail));
+      marker.addTo(map);
+      markersRef.current.set(trail.id, marker);
 
-        const layer = L.geoJSON(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          featureCollection as any,
-          {
-            style: () => ({
-              color,
-              weight: isSelected ? 7 : 4,
-              opacity: isSelected ? 1 : 0.9,
-              lineCap: 'round',
-              lineJoin: 'round',
-            }),
-          }
-        );
-
-        layer.on('click', () => onTrailClick(trail));
-        layer.on('mouseover', () => {
-          layer.setStyle({ weight: 6, opacity: 1 });
-        });
-        layer.on('mouseout', () => {
-          if (trail.id !== selectedTrailId) {
-            layer.setStyle({ weight: 4, opacity: 0.9 });
-          }
-        });
-
-        layer.addTo(map);
-        layersRef.current.set(trail.id, layer);
+      // Create polyline from real geometry if available
+      let lineCoords: [number, number][] = [];
+      if (trail.geojson && Array.isArray(trail.geojson.coordinates) && trail.geojson.coordinates.length) {
+        // Handle MultiLineString (array of line arrays) or LineString (array of points)
+        const coords = trail.geojson.coordinates;
+        if (Array.isArray(coords[0][0])) {
+          // MultiLineString: flatten all line arrays
+          (coords as number[][][]).forEach((line) => {
+            line.forEach((pt) => lineCoords.push([pt[1], pt[0]]));
+          });
+        } else {
+          // LineString: direct mapping
+          (coords as number[][]).forEach((pt) => lineCoords.push([pt[1], pt[0]]));
+        }
+      }
+      // Fallback if geometry is missing or empty
+      if (lineCoords.length === 0 && lat !== null && lng !== null) {
+        // No geometry; create a minimal placeholder line so the point is visible
+        lineCoords = [
+          [lat, lng],
+          [lat + 0.00005, lng + 0.00005]
+        ];
+      }
+      const polyline = L.polyline(lineCoords, {
+        color: isSelected ? getDifficultyColor(trail.difficulty) : '#888',
+        weight: isSelected ? 5 : 2,
+        opacity: isSelected ? 1.0 : 0.4,
+      });
+      polyline.addTo(map);
+      polylinesRef.current.set(trail.id, polyline);
       } catch {
-        // Skip invalid geometries silently
+        // skip invalid coords silently
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [map, selectedTrailId]
+    [map, selectedTrailId, onTrailClick, buildIcon]
   );
 
+  // Update polyline styles when selection changes
   useEffect(() => {
-    if (!map || typeof window === 'undefined') return;
-
-    import('leaflet').then((L) => {
-      // Remove existing layers
-      layersRef.current.forEach((layer) => {
-        try {
-          map.removeLayer(layer);
-        } catch {
-          // ignore
-        }
+    if (!map) return;
+    polylinesRef.current.forEach((poly, id) => {
+      const isSel = id === selectedTrailId;
+      poly.setStyle({
+        color: isSel ? getDifficultyColor(trails.find(t => t.id === id)?.difficulty) : '#888',
+        weight: isSel ? 5 : 2,
+        opacity: isSel ? 1.0 : 0.4,
       });
-      layersRef.current.clear();
-
-      // Add new layers
-      trails.forEach((trail) => addLayer(trail, L));
+      if (isSel) {
+        // Fit bounds to selected polyline
+        try {
+          map.fitBounds(poly.getBounds(), { padding: [50, 50] });
+        } catch {}
+      }
     });
-
-    return () => {
-      const layers = layersRef.current;
-      layers.forEach((layer) => {
-        try {
-          map.removeLayer(layer);
-        } catch {
-          // ignore
-        }
-      });
-      layers.clear();
-    };
-  }, [map, trails, selectedTrailId, addLayer]);
+  }, [selectedTrailId, trails, map]);
 
   return null;
 }

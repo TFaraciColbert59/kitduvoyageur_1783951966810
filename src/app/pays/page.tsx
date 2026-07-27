@@ -2,7 +2,9 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Header from '@/components/Header';
-import NewFooterSection from '@/app/components/home/NewFooterSection';
+import Footer from '@/components/Footer';
+import TopoSeparator from '@/components/TopoSeparator';
+import BackButton from '@/components/ui/BackButton';
 import Link from 'next/link';
 import { getAllCountries } from '@/lib/countries';
 import AppImage from '@/components/ui/AppImage';
@@ -266,7 +268,17 @@ export default function PaysPage() {
   return (
     <>
       <Header />
-      <main style={{ background: '#F5F2EC', minHeight: '100vh' }}>
+      <main className="min-h-screen bg-white">
+        <div id="main-content" className="container mx-auto px-4 pt-24 pb-12">
+          <BackButton variant="ghost" className="text-xs mb-8" />
+          
+          {/* Hero */}
+          <section className="mb-12">
+            <h1 className="text-4xl md:text-5xl font-bold text-[#1C2620] mb-4">Fiches Pays</h1>
+            <p className="text-lg text-gray-600 max-w-2xl">
+              Explorez {ALL_COUNTRIES.length} destinations avec informations pratiques, météo, visa et équipement recommandé.
+            </p>
+          </section>
 
         {/* ── HERO — fond vert foncé ── */}
         <section

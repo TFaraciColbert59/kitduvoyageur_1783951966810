@@ -10,10 +10,6 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   images: {
     remotePatterns: imageHosts,
     minimumCacheTTL: 86400,
@@ -24,23 +20,5 @@ const nextConfig = {
     qualities: [75, 80, 85, 90, 95],
   },
 
-  webpack(
-    config,
-    {
-      dev: dev
-    }
-  ) {
-    if (dev) {
-      config.module.rules.push({
-        test: /\.(jsx|tsx)$/,
-        exclude: [/node_modules/],
-        use: [{
-          loader: '@dhiwise/component-tagger/nextLoader',
-        }],
-      });
-    }
-
-    return config;
-  }
 };
 export default nextConfig;

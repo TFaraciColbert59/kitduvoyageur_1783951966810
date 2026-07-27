@@ -22,6 +22,7 @@ function AuthForm() {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [confirmationSent, setConfirmationSent] = useState(false);
   const router = useRouter();
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
@@ -40,40 +41,75 @@ function AuthForm() {
           { onConflict: 'id' }
         );
       }
-    } catch { /* Silently fail */ }
+    } catch {
+      // Trigger handles this
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!email || !password) { setError('Veuillez remplir tous les champs.'); return; }
-    if (mode === 'inscription' && !name) { setError('Veuillez entrer votre prénom.'); return; }
-    if (password.length < 8) { setError('Le mot de passe doit contenir au moins 8 caractères.'); return; }
+    setConfirmationSent(false);
+
+    if (!email || !password) {
+      setError('Veuillez remplir tous les champs.');
+      return;
+    }
+    if (mode === 'inscription' && !name) {
+      setError('Veuillez entrer votre prénom.');
+      return;
+    }
+    if (password.length < 8) {
+      setError('Le mot de passe doit contenir au moins 8 caractères.');
+      return;
+    }
+
     setLoading(true);
     try {
       if (mode === 'connexion') {
-        const result = await signIn(email, password) as { user?: { id: string; email?: string } };
-        if (result?.user) await ensureProfile(result.user.id, result.user.email ?? email, '');
+        const result = (await signIn(email, password)) as { user?: { id: string; email?: string } };
+        if (result?.user) {
+          await ensureProfile(result.user.id, result.user.email ?? email, '');
+        }
         trackEvent('login', { method: 'email' });
         toast('Connexion réussie ! Bienvenue.', 'success');
         router.push('/compte');
         router.refresh();
       } else {
-        const result = await signUp(email, password, { fullName: name }) as { user?: { id: string; email?: string } };
-        if (result?.user) await ensureProfile(result.user.id, result.user.email ?? email, name);
-        trackEvent('sign_up', { method: 'email' });
-        toast('Compte créé ! Bienvenue sur Le Kit du Voyageur.', 'success');
-        router.push('/compte');
-        router.refresh();
+        const result = (await signUp(email, password, { fullName: name })) as {
+          user?: { id: string; email?: string };
+          session?: unknown;
+        };
+
+        if (result?.session) {
+          if (result?.user) {
+            await ensureProfile(result.user.id, result.user.email ?? email, name);
+          }
+          trackEvent('sign_up', { method: 'email' });
+          toast('Compte créé ! Bienvenue sur Le Kit du Voyageur.', 'success');
+          router.push('/compte');
+          router.refresh();
+        } else {
+          // Email confirmation link sent by Supabase
+          if (result?.user) {
+            await ensureProfile(result.user.id, result.user.email ?? email, name);
+          }
+          setConfirmationSent(true);
+          toast('Compte créé ! Un email de confirmation a été envoyé.', 'info');
+        }
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Une erreur est survenue.';
       const friendlyMsg =
-        msg.includes('Invalid login credentials') ? 'Email ou mot de passe incorrect.'
-        : msg.includes('User already registered') ? 'Un compte existe déjà avec cet email.'
-        : msg.includes('Email not confirmed') ? 'Veuillez confirmer votre email avant de vous connecter.'
-        : msg.includes('Password should be at least') ? 'Le mot de passe doit contenir au moins 8 caractères.'
-        : msg;
+        msg.includes('Invalid login credentials')
+          ? 'Email ou mot de passe incorrect.'
+          : msg.includes('User already registered')
+          ? 'Un compte existe déjà avec cet email.'
+          : msg.includes('Email not confirmed')
+          ? 'Veuillez confirmer votre email en cliquant sur le lien reçu.'
+          : msg.includes('Password should be at least')
+          ? 'Le mot de passe doit contenir au moins 8 caractères.'
+          : msg;
       setError(friendlyMsg);
     } finally {
       setLoading(false);
@@ -81,21 +117,18 @@ function AuthForm() {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ background: '#F5F2EC' }}>
-      {/* Left — photo panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=85')" }}
-        />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(28,38,32,0.3) 0%, rgba(28,38,32,0.7) 100%)' }} />
-        <div className="relative z-10 flex flex-col justify-end p-12 text-white">
-          <p className="text-xs font-mono tracking-[0.2em] uppercase text-white/60 mb-3">Le Kit du Voyageur</p>
-          <h2 className="font-display text-4xl text-white leading-tight mb-4" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 800 }}>
-            Chaque sommet<br />commence ici.
-          </h2>
-          <p className="text-white/70 text-sm max-w-xs leading-relaxed">
-            Configurez votre kit, planifiez vos aventures, rejoignez une communauté de voyageurs passionnés.
+    <main id="main-content" className="pt-20 min-h-screen flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
+        {/* Logo / Brand */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-dark-bg mb-4" aria-hidden="true">
+            <Icon name="MapIcon" size={28} variant="outline" className="text-primary" />
+          </div>
+          <h1 className="font-display font-700 text-2xl text-foreground">
+            {mode === 'connexion' ? 'Bon retour, aventurier' : "Rejoindre l'expédition"}
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {mode === 'connexion' ? 'Connectez-vous pour accéder à vos kits et préparations.' : "Créez votre carnet d'expédition numérique."}
           </p>
           <div className="flex items-center gap-6 mt-8 pt-8 border-t border-white/20">
             {[{ v: '12 000+', l: 'Voyageurs' }, { v: '4,9★', l: 'Note moyenne' }, { v: '340+', l: 'Destinations' }].map((s) => (
@@ -108,105 +141,103 @@ function AuthForm() {
         </div>
       </div>
 
-      {/* Right — form panel */}
-      <div className="w-full lg:w-1/2 flex flex-col">
-        <Header />
-        <div className="flex-1 flex items-center justify-center px-6 py-16 pt-28">
-          <div className="w-full max-w-md">
-            {/* Eyebrow */}
-            <p className="text-xs font-mono tracking-[0.2em] uppercase mb-2" style={{ color: '#4A6741' }}>
-              {mode === 'connexion' ? 'Bon retour' : 'Rejoindre l\'expédition'}
-            </p>
-            <h1 className="font-display text-3xl mb-1" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 800, color: '#1C2620' }}>
-              {mode === 'connexion' ? 'Se connecter' : 'Créer un compte'}
-            </h1>
-            <p className="text-sm mb-8" style={{ color: '#5C6B5E' }}>
-              {mode === 'connexion' ? 'Accédez à vos kits et préparations.' : 'Votre carnet d\'expédition numérique.'}
-            </p>
+        {/* Mode Toggle */}
+        <div className="flex rounded-full border border-border bg-card p-1 mb-6" role="tablist">
+          {(['connexion', 'inscription'] as const).map((m) => (
+            <button
+              key={m}
+              role="tab"
+              aria-selected={mode === m}
+              onClick={() => { setMode(m); setError(''); setConfirmationSent(false); }}
+              className={`flex-1 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                mode === m ? 'bg-dark-bg text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {m === 'connexion' ? 'Connexion' : 'Inscription'}
+            </button>
+          ))}
+        </div>
 
-            {/* Mode toggle */}
-            <div className="flex rounded-2xl border p-1 mb-8" style={{ borderColor: '#C8C3B0', background: '#EDE9DF' }}>
-              {(['connexion', 'inscription'] as const).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => { setMode(m); setError(''); }}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all"
-                  style={mode === m ? { background: '#1C2620', color: '#fff' } : { color: '#5C6B5E' }}
-                >
-                  {m === 'connexion' ? 'Connexion' : 'Inscription'}
-                </button>
-              ))}
+        <div className="topo-card p-6">
+          {confirmationSent ? (
+            <div className="text-center py-6 space-y-4">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto">
+                <Icon name="CheckCircleIcon" size={32} variant="outline" />
+              </div>
+              <h2 className="font-bold text-xl text-foreground">Vérifiez vos emails !</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Un email de confirmation vient d’être envoyé à <strong className="text-foreground">{email}</strong>. Cliquez sur le lien pour valider votre compte puis connectez-vous.
+              </p>
+              <button
+                onClick={() => { setMode('connexion'); setConfirmationSent(false); }}
+                className="w-full py-3 bg-[#1C3829] text-white rounded-xl font-bold text-sm hover:bg-[#152B1F] transition-colors mt-4"
+              >
+                Passer à la connexion →
+              </button>
             </div>
-
+          ) : (
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               {mode === 'inscription' && (
                 <div>
-                  <label className="block text-xs font-semibold mb-1.5" style={{ color: '#5C6B5E' }}>Prénom</label>
+                  <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1.5">
+                    Prénom
+                  </label>
                   <input
+                    id="name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Votre prénom"
-                    className="w-full px-4 py-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2"
-                    style={{ background: '#fff', border: '1px solid #C8C3B0', color: '#1C2620', focusRingColor: '#4A6741' }}
+                    className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                     autoComplete="given-name"
                   />
                 </div>
               )}
+
               <div>
-                <label className="block text-xs font-semibold mb-1.5" style={{ color: '#5C6B5E' }}>Adresse email</label>
+                <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1.5">
+                  Adresse email
+                </label>
                 <input
+                  id="email"
                   type="email"
                   inputMode="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="vous@exemple.com"
-                  className="w-full px-4 py-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2"
-                  style={{ background: '#fff', border: '1px solid #C8C3B0', color: '#1C2620' }}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                   autoComplete="email"
                 />
               </div>
+
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-semibold" style={{ color: '#5C6B5E' }}>Mot de passe</label>
-                  {mode === 'connexion' && (
-                    <button type="button" className="text-xs hover:underline" style={{ color: '#4A6741' }}>
-                      Mot de passe oublié ?
-                    </button>
-                  )}
+                  <label htmlFor="password" className="block text-sm font-medium text-foreground">
+                    Mot de passe
+                  </label>
                 </div>
                 <input
+                  id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={mode === 'inscription' ? 'Minimum 8 caractères' : '••••••••'}
-                  className="w-full px-4 py-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2"
-                  style={{ background: '#fff', border: '1px solid #C8C3B0', color: '#1C2620' }}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                   autoComplete={mode === 'connexion' ? 'current-password' : 'new-password'}
                 />
               </div>
 
               {error && (
-                <div className="flex items-center gap-2 p-3 rounded-xl" style={{ background: '#FEF2F2', border: '1px solid #FECACA' }}>
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-200" role="alert">
                   <Icon name="ExclamationCircleIcon" size={16} variant="outline" className="text-red-500 flex-shrink-0" />
                   <p className="text-sm text-red-600">{error}</p>
                 </div>
               )}
 
-              {mode === 'inscription' && (
-                <p className="text-xs" style={{ color: '#7A7A6E' }}>
-                  En créant un compte, vous acceptez nos{' '}
-                  <Link href="/cgu" className="hover:underline" style={{ color: '#4A6741' }}>conditions d&apos;utilisation</Link>
-                  {' '}et notre{' '}
-                  <Link href="/politique-confidentialite" className="hover:underline" style={{ color: '#4A6741' }}>politique de confidentialité</Link>.
-                </p>
-              )}
-
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm transition-all mt-2"
-                style={{ background: '#1C2620', color: '#fff' }}
+                className="btn-primary w-full justify-center py-3.5 text-base min-h-[44px]"
               >
                 {loading ? (
                   <>
@@ -221,14 +252,15 @@ function AuthForm() {
                 )}
               </button>
             </form>
+          )}
 
-            <p className="text-center text-xs mt-6" style={{ color: '#7A7A6E' }}>
+          <div className="mt-4 pt-4 border-t border-border text-center">
+            <p className="text-xs text-muted-foreground">
               {mode === 'connexion' ? "Pas encore de compte ? " : "Déjà un compte ? "}
               <button
                 type="button"
-                onClick={() => { setMode(mode === 'connexion' ? 'inscription' : 'connexion'); setError(''); }}
-                className="font-semibold hover:underline"
-                style={{ color: '#4A6741' }}
+                onClick={() => { setMode(mode === 'connexion' ? 'inscription' : 'connexion'); setError(''); setConfirmationSent(false); }}
+                className="text-primary font-medium hover:underline"
               >
                 {mode === 'connexion' ? "S'inscrire" : 'Se connecter'}
               </button>

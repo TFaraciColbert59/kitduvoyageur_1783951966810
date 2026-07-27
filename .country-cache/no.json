@@ -1,7 +1,7 @@
 {
   "version": "v2",
-  "generated_at": "2026-07-26T14:11:02.552Z",
-  "valid_until": "2026-07-28T14:11:02.552Z",
+  "generated_at": "2026-07-26T14:32:11.183Z",
+  "valid_until": "2026-07-28T14:32:11.183Z",
   "data": {
     "pays": {
       "nom": "Norvège",
@@ -29,10 +29,10 @@
         {
           "mois": "Mars",
           "temp_min_c": -4,
-          "temp_max_c": 4,
-          "precipitations_mm": 45,
+          "temp_max_c": 3,
+          "precipitations_mm": 40,
           "niveau": "moyen",
-          "affluence": "faible"
+          "affluence": "moyenne"
         },
         {
           "mois": "Avril",
@@ -45,22 +45,22 @@
         {
           "mois": "Mai",
           "temp_min_c": 6,
-          "temp_max_c": 16,
+          "temp_max_c": 15,
           "precipitations_mm": 50,
-          "niveau": "ideal",
-          "affluence": "moyenne"
+          "niveau": "bon",
+          "affluence": "forte"
         },
         {
           "mois": "Juin",
           "temp_min_c": 10,
-          "temp_max_c": 20,
-          "precipitations_mm": 65,
+          "temp_max_c": 19,
+          "precipitations_mm": 70,
           "niveau": "ideal",
           "affluence": "forte"
         },
         {
           "mois": "Juillet",
-          "temp_min_c": 13,
+          "temp_min_c": 12,
           "temp_max_c": 22,
           "precipitations_mm": 80,
           "niveau": "ideal",
@@ -68,17 +68,17 @@
         },
         {
           "mois": "Août",
-          "temp_min_c": 12,
+          "temp_min_c": 11,
           "temp_max_c": 20,
           "precipitations_mm": 90,
-          "niveau": "ideal",
+          "niveau": "bon",
           "affluence": "forte"
         },
         {
           "mois": "Septembre",
-          "temp_min_c": 8,
+          "temp_min_c": 7,
           "temp_max_c": 15,
-          "precipitations_mm": 90,
+          "precipitations_mm": 80,
           "niveau": "bon",
           "affluence": "moyenne"
         },
@@ -86,13 +86,13 @@
           "mois": "Octobre",
           "temp_min_c": 3,
           "temp_max_c": 9,
-          "precipitations_mm": 85,
+          "precipitations_mm": 80,
           "niveau": "moyen",
           "affluence": "faible"
         },
         {
           "mois": "Novembre",
-          "temp_min_c": -2,
+          "temp_min_c": -1,
           "temp_max_c": 4,
           "precipitations_mm": 70,
           "niveau": "deconseille",
@@ -101,13 +101,13 @@
         {
           "mois": "Décembre",
           "temp_min_c": -5,
-          "temp_max_c": 0,
-          "precipitations_mm": 55,
+          "temp_max_c": -1,
+          "precipitations_mm": 50,
           "niveau": "deconseille",
           "affluence": "faible"
         }
       ],
-      "source": "Données climatiques officielles (met.no) / estimation climatique générale",
+      "source": "Données climatiques moyennes pour Oslo (capitale) et régions côtières",
       "derniere_maj": "2024-07-26"
     },
     "securite": {
@@ -115,7 +115,7 @@
         {
           "nom_zone": "Ensemble du territoire",
           "niveau": "sur",
-          "description": "La Norvège est un pays sûr. La délinquance est faible. Il convient d'appliquer les règles de vigilance habituelles contre la petite délinquance (vols à la tire, vols de sacs) dans les zones touristiques et les transports en commun, notamment à Oslo et Bergen. Les risques liés au terrorisme sont considérés comme modérés."
+          "description": "La Norvège est un pays très sûr. La délinquance est faible. Il convient d'appliquer les règles de prudence habituelles, notamment dans les lieux très fréquentés par les touristes."
         }
       ],
       "source_officielle": {
@@ -132,36 +132,34 @@
     },
     "sante": {
       "risques": [
-        "Maladies transmises par les tiques (encéphalite à tiques, maladie de Lyme) dans les zones boisées et rurales du sud de la Norvège, notamment en été.",
-        "Risques liés au froid et aux conditions météorologiques extrêmes en hiver, particulièrement dans le nord et en montagne.",
-        "Risques d'accidents liés aux activités de plein air (randonnée, ski, sports nautiques) si les précautions ne sont pas respectées."
+        "Aucun risque sanitaire particulier, mais attention aux tiques dans les zones rurales et forestières en été.",
+        "Risque d'hypothermie lors d'activités en extérieur en hiver ou en montagne."
       ],
       "vaccins_recommandes": [
-        "Diphtérie-Tétanos-Poliomyélite (DTP)",
-        "Hépatite B",
-        "ROR (Rougeole-Oreillons-Rubéole) pour les enfants",
-        "Encéphalite à tiques (pour les séjours prolongés en zone rurale et forestière, notamment au printemps et en été)"
+        "Rappel DTPolio",
+        "Hépatite A",
+        "Hépatite B (selon conditions de séjour)"
       ],
       "vaccins_obligatoires": [],
       "eau_potable": "oui",
-      "source": "Institut Pasteur / OMS / Santé Voyageurs",
+      "source": "Institut Pasteur / OMS / France Diplomatie",
       "derniere_maj": "2024-07-26",
       "statut": "verifie"
     },
     "connectivite": {
       "couverture_mobile": "bonne",
-      "wifi_disponibilite": "Le Wi-Fi est largement disponible et de bonne qualité dans les hôtels, restaurants, cafés, aéroports et de nombreuses zones publiques dans les villes et les zones touristiques. La couverture mobile est excellente sur la majeure partie du territoire, y compris dans les zones rurales, bien que certaines régions montagneuses ou isolées puissent avoir une couverture limitée.",
+      "wifi_disponibilite": "Le WiFi est largement disponible et de bonne qualité dans les hôtels, restaurants, cafés et de nombreux lieux publics, y compris dans les zones rurales et touristiques.",
       "statut": "verifie"
     },
     "pratique": {
       "visa": {
         "nationalite": "France",
-        "regle": "La Norvège fait partie de l'espace Schengen. Les citoyens français n'ont pas besoin de visa pour les séjours de courte durée.",
-        "duree_sejour_sans_visa": "90 jours sur toute période de 180 jours"
+        "regle": "La Norvège fait partie de l'espace Schengen. Les citoyens français n'ont pas besoin de visa pour les séjours de moins de 90 jours sur une période de 180 jours.",
+        "duree_sejour_sans_visa": "90 jours"
       },
       "monnaie": "Couronne norvégienne (NOK)",
       "prise_electrique": {
-        "type": "Type F",
+        "type": "F",
         "voltage": "230V 50Hz"
       },
       "langues": [
@@ -171,7 +169,7 @@
       "phrases_survie": [
         {
           "fr": "Bonjour",
-          "locale": "Hei"
+          "locale": "God dag"
         },
         {
           "fr": "Merci",
@@ -179,7 +177,7 @@
         },
         {
           "fr": "Au revoir",
-          "locale": "Ha det bra"
+          "locale": "Ha det"
         },
         {
           "fr": "Où sont les toilettes ?",
@@ -190,7 +188,7 @@
           "locale": "Hvor mye koster det?"
         }
       ],
-      "decalage_horaire_utc": "UTC+1 (heure de Paris : 0 heures, car la Norvège observe aussi l'heure d'été)",
+      "decalage_horaire_utc": "UTC+1 (heure de Paris : identique en hiver, identique en été)",
       "budget_quotidien_repere_eur": {
         "petit": {
           "logement": 60,
@@ -200,137 +198,126 @@
         "moyen": {
           "logement": 120,
           "nourriture": 70,
-          "transport": 30
+          "transport": 40
         },
         "gros": {
           "logement": 200,
           "nourriture": 100,
-          "transport": 50
+          "transport": 60
         }
       }
     },
     "vols": {
       "tendance_par_saison": [
         {
-          "periode": "Haute saison (Juin-Août, Décembre-Mars pour les aurores boréales/ski)",
+          "periode": "Haute saison (Juin-Août, Décembre)",
           "niveau_prix": "haut"
         },
         {
-          "periode": "Basse saison (Avril-Mai, Octobre-Novembre)",
+          "periode": "Basse saison (Janvier-Mars, Novembre)",
           "niveau_prix": "bas"
         },
         {
-          "periode": "Épaule (Septembre)",
+          "periode": "Épaule (Avril-Mai, Septembre-Octobre)",
           "niveau_prix": "moyen"
         }
       ],
       "statut": "indicatif"
     },
     "carbone": {
-      "vol_paris_kg_co2_estime": 663,
-      "methodologie": "Distance Paris–Oslo (environ 1300 km) × 2 (aller-retour) × 0.255 kg CO2/km/passager (facteur ADEME aviation moyen-courrier/long-courrier)",
+      "vol_paris_kg_co2_estime": 653,
+      "methodologie": "Distance Paris–Oslo × 2 (aller-retour) × 0.255 kg CO2/km/passager (facteur ADEME aviation moyen-courrier/long-courrier)",
       "statut": "estimation"
     },
     "evenements": [
       {
         "nom": "Fête Nationale (Syttende Mai)",
         "periode": "17 Mai",
-        "description": "Célébration de la Constitution norvégienne avec des défilés d'enfants, des costumes traditionnels (bunad) et des festivités dans tout le pays."
+        "description": "Célébration de la Constitution norvégienne avec des défilés, des costumes traditionnels et des festivités dans tout le pays, particulièrement animée à Oslo."
       },
       {
         "nom": "Festival de Jazz de Molde",
         "periode": "Juillet",
-        "description": "L'un des plus anciens et des plus prestigieux festivals de jazz d'Europe, attirant des artistes internationaux et des milliers de spectateurs dans la ville de Molde."
-      },
-      {
-        "nom": "Nuit Polaire (Mørketid)",
-        "periode": "Novembre-Janvier (au nord du cercle arctique)",
-        "description": "Période où le soleil ne se lève pas au-dessus de l'horizon, offrant des conditions uniques pour observer les aurores boréales et profiter des activités hivernales."
-      },
-      {
-        "nom": "Holmenkollen Ski Festival",
-        "periode": "Mars",
-        "description": "Compétition annuelle de ski nordique à Oslo, incluant le saut à ski, le combiné nordique et le ski de fond, avec une ambiance festive et populaire."
+        "description": "L'un des plus anciens et des plus importants festivals de jazz d'Europe, attirant des artistes internationaux et des milliers de spectateurs dans la ville de Molde."
       }
     ],
     "lieux_incontournables": [
       {
-        "nom": "Opéra d'Oslo",
-        "description": "Un chef-d'œuvre architectural moderne, conçu pour ressembler à un glacier flottant, où l'on peut marcher sur le toit et profiter d'une vue panoramique sur le fjord d'Oslo.",
-        "lat": 59.9079,
-        "lng": 10.751
-      },
-      {
-        "nom": "Bryggen, Bergen",
-        "description": "Le quartier historique des quais de Bergen, classé au patrimoine mondial de l'UNESCO, avec ses maisons en bois colorées datant de l'époque de la Ligue hanséatique.",
-        "lat": 60.3965,
-        "lng": 5.3244
-      },
-      {
         "nom": "Geirangerfjord",
-        "description": "Un fjord emblématique de l'ouest de la Norvège, classé au patrimoine mondial de l'UNESCO, célèbre pour ses falaises abruptes, ses cascades majestueuses comme les Sept Sœurs et ses fermes abandonnées.",
-        "lat": 62.115,
-        "lng": 7.206
+        "description": "Un fjord emblématique classé au patrimoine mondial de l'UNESCO, célèbre pour ses falaises abruptes, ses cascades majestueuses comme les Sept Sœurs et ses eaux d'un bleu profond.",
+        "lat": 62.1016,
+        "lng": 7.2057
+      },
+      {
+        "nom": "Oslo",
+        "description": "La capitale norvégienne, combinant modernité et nature, avec des sites comme l'Opéra d'Oslo, le Parc de sculptures de Vigeland et le Musée des navires vikings.",
+        "lat": 59.9139,
+        "lng": 10.7522
       },
       {
         "nom": "Îles Lofoten",
-        "description": "Un archipel spectaculaire au nord du cercle arctique, connu pour ses montagnes escarpées, ses eaux turquoise, ses villages de pêcheurs pittoresques (rorbuer) et ses opportunités d'observation des aurores boréales.",
-        "lat": 67.935,
-        "lng": 13.089
+        "description": "Un archipel spectaculaire au nord du cercle polaire, connu pour ses montagnes escarpées, ses eaux turquoise, ses plages de sable blanc et ses villages de pêcheurs colorés.",
+        "lat": 68.1277,
+        "lng": 13.5921
       },
       {
         "nom": "Cap Nord (Nordkapp)",
-        "description": "Le point le plus septentrional de l'Europe continentale, offrant des vues imprenables sur l'océan Arctique et la possibilité d'observer le soleil de minuit en été ou les aurores boréales en hiver.",
-        "lat": 71.169,
-        "lng": 25.782
+        "description": "Le point le plus septentrional de l'Europe continentale, offrant des vues imprenables sur l'océan Arctique, le soleil de minuit en été et les aurores boréales en hiver.",
+        "lat": 71.1696,
+        "lng": 25.7839
+      },
+      {
+        "nom": "Bergen",
+        "description": "La deuxième plus grande ville de Norvège, porte d'entrée des fjords, célèbre pour son quartier historique de Bryggen (UNESCO) avec ses maisons en bois colorées et son marché aux poissons.",
+        "lat": 60.3913,
+        "lng": 5.3221
       }
     ],
-    "coutumes": "Les Norvégiens sont généralement réservés mais très accueillants. Le respect de la nature est primordial, et la pratique de l'« allemannsretten » (droit d'accès à la nature) permet de camper et de se promener librement, à condition de ne laisser aucune trace. La ponctualité est appréciée. Il est courant de retirer ses chaussures en entrant chez quelqu'un. L'alcool est cher et sa consommation est réglementée.",
+    "coutumes": "Les Norvégiens sont généralement discrets, respectueux de la nature et attachés à la ponctualité. La 'Janteloven' (loi de Jante) est une coutume sociale non écrite qui valorise la modestie et l'égalité, décourageant l'ostentation. Il est courant de retirer ses chaussures en entrant chez quelqu'un. Le pourboire n'est pas obligatoire mais apprécié pour un bon service.",
     "kits_recommandes_tags_climat": [
       "froid",
-      "montagne",
       "randonnee",
-      "pluie",
-      "neige",
-      "grand_froid"
+      "nature",
+      "aurores_boreales",
+      "couches_vetements"
     ],
     "gabarit_poids_recommande": {
-      "poids_total_kg": 15,
-      "justification": "La Norvège, avec ses climats variés et ses nombreuses activités de plein air (randonnée, ski, observation des aurores), nécessite des vêtements en couches (layering) pour s'adapter aux changements de température. Des équipements spécifiques pour le froid, la pluie et la neige sont essentiels, surtout hors saison estivale. Un poids de 15kg permet d'emporter le nécessaire sans être surchargé pour les déplacements."
+      "poids_total_kg": 18,
+      "justification": "La Norvège, avec son climat variable et ses nombreuses activités de plein air (randonnée, observation des aurores, ski), nécessite des vêtements chauds et techniques en plusieurs couches, même en été, ainsi que des chaussures adaptées. Le poids recommandé inclut ces équipements essentiels."
     },
     "pays_similaires": [
       {
         "code_iso": "SE",
         "nom": "Suède",
-        "raison": "Similarité climatique nordique, paysages de forêts et lacs, culture scandinave et activités de plein air."
+        "raison": "Climat nordique similaire, paysages de forêts et lacs, culture scandinave proche, activités de plein air."
       },
       {
         "code_iso": "FI",
         "nom": "Finlande",
-        "raison": "Climat nordique, aurores boréales, nature sauvage, culture Sami et activités hivernales."
+        "raison": "Climat froid, nature sauvage, aurores boréales, culture nordique et activités hivernales."
       },
       {
         "code_iso": "IS",
         "nom": "Islande",
-        "raison": "Paysages volcaniques et glaciaires spectaculaires, activités de plein air, aurores boréales et culture nordique, bien que le climat soit plus océanique."
+        "raison": "Paysages volcaniques et glaciaires spectaculaires, activités de plein air, observation des aurores boréales, coût de la vie élevé."
       }
     ],
     "faq": [
       {
         "question": "Ai-je besoin d'un visa pour voyager en Norvège en tant que citoyen français ?",
-        "reponse": "Non, en tant que citoyen français, vous n'avez pas besoin de visa pour un séjour de courte durée en Norvège, car le pays fait partie de l'espace Schengen. Vous pouvez y séjourner jusqu'à 90 jours sur toute période de 180 jours."
+        "reponse": "Non, en tant que citoyen français, vous n'avez pas besoin de visa pour un séjour touristique en Norvège de moins de 90 jours, car la Norvège fait partie de l'espace Schengen."
       },
       {
-        "question": "Quelle est la meilleure période pour visiter la Norvège pour les fjords et la randonnée ?",
-        "reponse": "La meilleure période pour profiter des fjords et de la randonnée en Norvège est de juin à août. Les températures sont les plus douces, les jours sont longs (avec le soleil de minuit au nord) et les conditions sont idéales pour les activités de plein air."
+        "question": "La Norvège est-elle un pays sûr pour les voyageurs ?",
+        "reponse": "Oui, la Norvège est considérée comme un pays très sûr avec un faible taux de criminalité. Il est recommandé d'appliquer les précautions habituelles, notamment dans les zones touristiques."
       },
       {
-        "question": "L'eau du robinet est-elle potable en Norvège ?",
-        "reponse": "Oui, l'eau du robinet est excellente et potable dans toute la Norvège. Vous pouvez la boire en toute sécurité et remplir vos gourdes partout."
+        "question": "Quelle est la meilleure période pour visiter la Norvège pour profiter des fjords et du soleil de minuit ?",
+        "reponse": "La meilleure période pour profiter des fjords et du soleil de minuit est de juin à août, lorsque les températures sont les plus clémentes et les jours les plus longs. C'est aussi la haute saison touristique."
       },
       {
-        "question": "Quel budget quotidien faut-il prévoir pour un voyage en Norvège ?",
-        "reponse": "La Norvège est un pays cher. Pour un budget 'moyen', prévoyez environ 220 EUR par jour, incluant 120 EUR pour le logement, 70 EUR pour la nourriture et 30 EUR pour le transport. Un budget 'petit' peut descendre à 120 EUR par jour en optant pour des auberges et des repas simples."
+        "question": "Quel budget quotidien dois-je prévoir pour un voyage en Norvège, sachant que c'est un pays réputé cher ?",
+        "reponse": "La Norvège est l'un des pays les plus chers d'Europe. Pour un budget moyen, prévoyez environ 190 à 280 EUR par jour, incluant logement, nourriture et transport. Un budget plus serré pourrait être autour de 120 EUR par jour en faisant attention aux dépenses."
       }
     ],
     "meta": {

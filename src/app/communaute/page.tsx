@@ -1,1351 +1,1981 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
-import Image from 'next/image';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
+import { createClient } from '@/lib/supabase/client';
+import CreateGroupWizardModal from '@/components/groupes/CreateGroupWizardModal';
+import CreateCarnetView from '@/components/carnets/CreateCarnetView';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-type MainTab = 'feed' | 'profils' | 'groupes' | 'qa' | 'ama';
-
-interface CommunityPost {
-  id: string;
-  author_id: string;
-  title: string;
-  content: string;
-  image_url: string;
-  image_alt: string;
-  post_type: 'post' | 'tip' | 'question' | 'share';
-  likes_count: number;
-  comments_count: number;
-  shares_count: number;
-  is_trending: boolean;
-  created_at: string;
-  author?: { full_name: string; avatar_url: string; trust_score: number; loyalty_level: string };
-  user_liked?: boolean;
-}
-
-interface PostComment {
-  id: string;
-  post_id: string;
-  author_id: string;
-  content: string;
-  created_at: string;
-  author?: { full_name: string };
-}
-
-interface UserProfile {
-  id: string;
-  full_name: string;
-  avatar_url: string;
-  trust_score: number;
-  loyalty_level: string;
-  created_at: string;
-  user_following?: boolean;
-}
-
-interface QAQuestion {
-  id: string;
-  author_id: string;
-  title: string;
-  content: string;
-  tags: string[];
-  category: string;
-  votes_count: number;
-  answers_count: number;
-  views_count: number;
-  is_solved: boolean;
-  created_at: string;
-  author?: { full_name: string; trust_score: number };
-  user_voted?: boolean;
-}
-
-interface QAAnswer {
-  id: string;
-  question_id: string;
-  author_id: string;
-  content: string;
-  votes_count: number;
-  is_accepted: boolean;
-  created_at: string;
-  author?: { full_name: string; trust_score: number };
-}
-
-interface AMASession {
-  id: string;
-  expert_id: string;
-  title: string;
-  description: string;
-  scheduled_at: string | null;
-  duration_minutes: number;
-  status: 'upcoming' | 'live' | 'ended';
-  participants_count: number;
-  questions_count: number;
-  expert?: { full_name: string; avatar_url: string; trust_score: number; loyalty_level: string };
-}
-
-interface AMAQuestion {
-  id: string;
-  session_id: string;
-  author_id: string;
-  content: string;
-  votes_count: number;
-  is_answered: boolean;
-  answer: string;
-  created_at: string;
-  author?: { full_name: string };
-  user_voted?: boolean;
-}
-
-const POST_TYPE_CFG: Record<string, { label: string; color: string; emoji: string }> = {
-  post: { label: 'Post', color: 'bg-gray-100 text-gray-700', emoji: '💬' },
-  tip: { label: 'Conseil', color: 'bg-emerald-100 text-emerald-700', emoji: '💡' },
-  question: { label: 'Question', color: 'bg-blue-100 text-blue-700', emoji: '❓' },
-  share: { label: 'Partage', color: 'bg-purple-100 text-purple-700', emoji: '🔗' },
+// Helper formatting functions
+const formatDateString = (dateString: string) => {
+  const d = new Date(dateString);
+  const months = ['JAN', 'FÉV', 'MAR', 'AVR', 'MAI', 'JUN', 'JUL', 'AOÛ', 'SEP', 'OCT', 'NOV', 'DÉC'];
+  return {
+    day: d.getDate().toString().padStart(2, '0'),
+    month: months[d.getMonth()]
+  };
 };
 
-const LEVEL_CFG: Record<string, { color: string; icon: string }> = {
-  Explorateur: { color: 'text-gray-600 bg-gray-100', icon: '🌱' },
-  Aventurier: { color: 'text-blue-700 bg-blue-100', icon: '🏔️' },
-  Expert: { color: 'text-purple-700 bg-purple-100', icon: '⛰️' },
-  Ambassadeur: { color: 'text-amber-700 bg-amber-100', icon: '🏅' },
-  'Randonneur Expert': { color: 'text-blue-700 bg-blue-100', icon: '🧗' },
-  'Guide de Montagne': { color: 'text-purple-700 bg-purple-100', icon: '🏔️' },
-  'Légende du Voyage': { color: 'text-amber-700 bg-amber-100', icon: '🌍' },
+const timeAgo = (dateString: string) => {
+  const d = new Date(dateString);
+  const now = new Date();
+  const diff = now.getTime() - d.getTime();
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  if (hours < 24) return `Il y a ${Math.max(1, hours)} h`;
+  return `Il y a ${Math.floor(hours / 24)} j`;
 };
 
-// ─── Compose Post Modal ───────────────────────────────────────────────────────
-interface ComposeModalProps {
-  onClose: () => void;
-  onPublished: () => void;
-}
+// --- INLINE COMPONENTS FOR ENCAPSULATED STATE ---
 
-function ComposeModal({ onClose, onPublished }: ComposeModalProps) {
-  const [form, setForm] = useState({
-    title: '',
-    content: '',
-    post_type: 'post' as CommunityPost['post_type'],
-    image_url: '',
-  });
-  const [posting, setPosting] = useState(false);
-  const [error, setError] = useState('');
-  const { user } = useAuth();
-  const supabase = useMemo(() => createClient(), []);
+function PostCard({ post, user }: { post: any, user: any }) {
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(post.likes_count || 0);
+  const [commentsCount, setCommentsCount] = useState(post.comments_count || 0);
+  const [showComments, setShowComments] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [comments, setComments] = useState<any[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
 
-  const handlePublish = async () => {
-    if (!user) { setError('Connectez-vous pour publier.'); return; }
-    if (!form.content.trim()) { setError('Le contenu est requis.'); return; }
-    setPosting(true);
-    setError('');
-    try {
-      const { error: insertError } = await supabase.from('community_posts').insert({
-        author_id: user.id,
-        title: form.title.trim(),
-        content: form.content.trim(),
-        post_type: form.post_type,
-        image_url: form.image_url.trim(),
-        image_alt: form.title.trim() || 'Image du post',
-      });
-      if (insertError) throw insertError;
-      onPublished();
-      onClose();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de la publication.');
-    } finally {
-      setPosting(false);
+  const handleLike = async () => {
+    const newLiked = !isLiked;
+    setIsLiked(newLiked);
+    const newCount = newLiked ? likesCount + 1 : Math.max(0, likesCount - 1);
+    setLikesCount(newCount);
+
+    const supabase = createClient();
+    const { error } = await supabase.from('community_posts').update({ likes_count: newCount }).eq('id', post.id);
+    if (error) {
+      console.error('Error updating like:', error);
+      // Revert optimistic UI on error
+      setIsLiked(isLiked);
+      setLikesCount(likesCount);
+    }
+  };
+
+  const handleToggleComments = async () => {
+    setShowComments(!showComments);
+    if (!showComments && comments.length === 0) {
+      setLoadingComments(true);
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('post_comments')
+        .select(`
+          *,
+          author:user_profiles(full_name, avatar_url)
+        `)
+        .eq('post_id', post.id)
+        .order('created_at', { ascending: true });
+      
+      if (data) setComments(data);
+      setLoadingComments(false);
+    }
+  };
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentText.trim()) return;
+    
+    const newComment = {
+      id: Date.now().toString(),
+      content: commentText.trim(),
+      created_at: new Date().toISOString(),
+      author: {
+        full_name: user.user_metadata?.full_name || 'Moi',
+        avatar_url: user.user_metadata?.avatar_url
+      }
+    };
+    
+    // Optimistic UI
+    setComments([...comments, newComment]);
+    setCommentsCount((prev: number) => prev + 1);
+    setCommentText('');
+
+    const supabase = createClient();
+    const { error } = await supabase.from('post_comments').insert({
+      post_id: post.id,
+      author_id: user.id,
+      content: newComment.content
+    });
+    if (error) {
+      console.error("Comment insert error:", error);
+      alert("Erreur lors de l'ajout du commentaire.");
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-lg shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-[#C8C3B0]">
-          <h2 className="font-display font-700 text-[#1C2620] text-lg">Nouveau post</h2>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors">
+    <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-[#E8E4D8]">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <img src={post.author?.avatar_url || 'https://i.pravatar.cc/150'} alt={post.author?.full_name} className="w-10 h-10 rounded-full border-2 border-[#F5F2E8] object-cover" />
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm text-[#1C2620]">{post.author?.full_name || 'Utilisateur inconnu'}</span>
+              <span className="bg-[#D3DFD7] text-[#2D5A3D] text-[8px] font-mono tracking-widest px-1.5 py-0.5 rounded uppercase">
+                {post.author?.loyalty_level || 'EXPLORATEUR'}
+              </span>
+            </div>
+            <div className="text-[11px] text-[#5C6B5E] mt-0.5">{timeAgo(post.created_at)}</div>
+          </div>
+        </div>
+        <button className="text-[#C8C3B0] hover:text-[#1C2620] transition-colors p-1">
+          <Icon name="EllipsisHorizontalIcon" size={20} />
+        </button>
+      </div>
+
+      {/* Content */}
+      <p className="text-[#1C2620] text-sm leading-relaxed mb-5 whitespace-pre-wrap">
+        {post.content}
+      </p>
+
+      {/* Image (Optional) */}
+      {post.image_url && (
+        <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] rounded-[1.5rem] overflow-hidden mb-5">
+          <img src={post.image_url} alt={post.image_alt || "Post image"} className="w-full h-full object-cover" />
+          {post.location && (
+            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5 text-[10px] font-semibold text-[#1C2620]">
+              <Icon name="MapPinIcon" size={12} variant="solid" className="text-[#2D5A3D]" />
+              {post.location}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex items-center justify-between border-t border-[#F5F2E8] pt-4">
+        <div className="flex items-center gap-6">
+          <motion.button 
+            whileHover={{ scale: 1.1 }} 
+            whileTap={{ scale: 0.9 }} 
+            onClick={handleLike}
+            className={`flex items-center gap-1.5 text-xs transition-colors group ${isLiked ? 'text-red-500' : 'text-[#5C6B5E] hover:text-[#1C2620]'}`}
+          >
+            <Icon name="HeartIcon" size={18} variant={isLiked ? "solid" : "outline"} className={isLiked ? "fill-current" : "group-hover:fill-red-50 group-hover:text-red-500"} />
+            <span className="font-mono">{likesCount}</span>
+          </motion.button>
+          <motion.button 
+            whileHover={{ scale: 1.1 }} 
+            whileTap={{ scale: 0.9 }} 
+            onClick={handleToggleComments}
+            className="flex items-center gap-1.5 text-xs text-[#5C6B5E] hover:text-[#1C2620] transition-colors"
+          >
+            <Icon name="ChatBubbleLeftIcon" size={18} variant={showComments ? "solid" : "outline"} className={showComments ? "text-[#1C2620]" : ""} />
+            <span className="font-mono">{commentsCount}</span>
+          </motion.button>
+        </div>
+        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="text-[#5C6B5E] hover:text-[#1C2620] transition-colors p-1">
+          <Icon name="BookmarkIcon" size={18} variant="outline" />
+        </motion.button>
+      </div>
+
+      {/* Comments Section */}
+      <AnimatePresence>
+        {showComments && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden mt-4 pt-4 border-t border-[#F5F2E8] space-y-4"
+          >
+            {loadingComments ? (
+              <div className="flex justify-center py-2"><div className="w-4 h-4 border-2 border-[#2D5A3D] border-t-transparent rounded-full animate-spin"></div></div>
+            ) : (
+              <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                {comments.length === 0 ? (
+                  <p className="text-xs text-[#5C6B5E] text-center italic">Aucun commentaire pour l'instant. Soyez le premier !</p>
+                ) : (
+                  comments.map((c, i) => (
+                    <div key={c.id || i} className="flex gap-3 text-sm">
+                      <img src={c.author?.avatar_url || 'https://i.pravatar.cc/150'} className="w-6 h-6 rounded-full mt-1 object-cover" />
+                      <div className="flex-1 bg-[#F5F2E8] rounded-2xl rounded-tl-none p-3">
+                        <div className="font-bold text-xs text-[#1C2620] mb-0.5">{c.author?.full_name}</div>
+                        <p className="text-[#4A574C]">{c.content}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+            
+            <form onSubmit={handleSubmitComment} className="flex items-center gap-2 mt-2">
+              <img src={user.user_metadata?.avatar_url || 'https://i.pravatar.cc/150'} className="w-8 h-8 rounded-full object-cover" />
+              <input 
+                type="text" 
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+                placeholder="Écrire un commentaire..."
+                className="flex-1 bg-[#F5F2E8] border-none rounded-full px-4 py-2 text-xs focus:ring-1 focus:ring-[#2D5A3D]"
+              />
+              <button 
+                type="submit" 
+                disabled={!commentText.trim()}
+                className="bg-[#2D5A3D] text-white p-2 rounded-full disabled:opacity-50 transition-colors"
+              >
+                <Icon name="PaperAirplaneIcon" size={14} variant="solid" />
+              </button>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function CarnetCard({ carnet, user }: { carnet: any, user: any }) {
+  const router = useRouter();
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(carnet.likes_count || 0);
+  const [commentsCount, setCommentsCount] = useState(carnet.comments_count || 0);
+  const [showComments, setShowComments] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [comments, setComments] = useState<any[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newLiked = !isLiked;
+    setIsLiked(newLiked);
+    const newCount = newLiked ? likesCount + 1 : Math.max(0, likesCount - 1);
+    setLikesCount(newCount);
+
+    const supabase = createClient();
+    const { error } = await supabase.from('carnets').update({ likes_count: newCount }).eq('id', carnet.id);
+    if (error) {
+      console.error('Error updating like for carnet:', error);
+      setIsLiked(isLiked);
+      setLikesCount(likesCount);
+    }
+  };
+
+  const handleToggleComments = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowComments(!showComments);
+    if (!showComments && comments.length === 0) {
+      setLoadingComments(true);
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('carnet_comments')
+        .select(`
+          *,
+          author:user_profiles!author_id(full_name, avatar_url)
+        `)
+        .eq('carnet_id', carnet.id)
+        .order('created_at', { ascending: true });
+      
+      if (data) setComments(data);
+      setLoadingComments(false);
+    }
+  };
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!commentText.trim()) return;
+    
+    const newComment = {
+      id: Date.now().toString(),
+      content: commentText.trim(),
+      created_at: new Date().toISOString(),
+      author: {
+        full_name: user.user_metadata?.full_name || 'Moi',
+        avatar_url: user.user_metadata?.avatar_url
+      }
+    };
+    
+    setComments([...comments, newComment]);
+    setCommentsCount((prev: number) => prev + 1);
+    setCommentText('');
+
+    const supabase = createClient();
+    const { error } = await supabase.from('carnet_comments').insert({
+      carnet_id: carnet.id,
+      author_id: user.id,
+      content: newComment.content
+    });
+    if (error) {
+      console.error("Comment insert error:", error);
+      alert("Erreur lors de l'ajout du commentaire.");
+    }
+  };
+
+  return (
+    <div 
+      onClick={() => router.push(`/carnets/${carnet.id || encodeURIComponent(carnet.title)}`)}
+      className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-[#E8E4D8] flex flex-col group cursor-pointer hover:border-[#2D5A3D] hover:shadow-md transition-all duration-300 h-full"
+    >
+      {/* Cover Image */}
+      {carnet.cover_image && (
+        <div className="w-full aspect-[16/9] overflow-hidden relative bg-[#F5F2E8]">
+          <img 
+            src={carnet.cover_image} 
+            alt={carnet.title} 
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+          />
+          <div className="absolute top-3 left-3 flex items-center gap-2">
+            {carnet.destination && (
+              <span className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-mono font-bold text-[#1C2620] shadow-sm flex items-center gap-1">
+                <Icon name="MapPinIcon" size={10} className="text-[#E4501C]" />
+                {carnet.destination}
+              </span>
+            )}
+            {carnet.duration && (
+              <span className="bg-[#1C2620]/90 text-white backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-mono">
+                {carnet.duration}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Body Content */}
+      <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+        <div>
+          <h3 className="font-display font-800 text-lg sm:text-xl text-[#1C2620] leading-snug mb-2 group-hover:text-[#2D5A3D] transition-colors line-clamp-2">
+            {carnet.title}
+          </h3>
+          {carnet.description && (
+            <p className="text-xs text-[#4A574C] line-clamp-2 leading-relaxed">
+              {carnet.description}
+            </p>
+          )}
+        </div>
+        
+        {/* Footer Actions */}
+        <div className="flex flex-col pt-3 border-t border-[#F5F2E8] mt-auto space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <img 
+                src={carnet.author?.avatar_url || 'https://i.pravatar.cc/150'} 
+                alt={carnet.author?.full_name || 'Voyageur'}
+                className="w-7 h-7 rounded-full border border-[#E8E4D8] object-cover shrink-0" 
+              />
+              <span className="font-bold text-xs text-[#1C2620] truncate">{carnet.author?.full_name || 'Voyageur'}</span>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button 
+                onClick={handleLike}
+                className={`flex items-center gap-1 text-xs font-mono transition-colors px-2 py-1 rounded-full ${isLiked ? 'text-red-500 bg-red-50' : 'text-[#5C6B5E] hover:text-[#1C2620] hover:bg-[#F5F2E8]'}`}
+              >
+                <Icon name="HeartIcon" size={14} variant={isLiked ? "solid" : "outline"} />
+                <span>{likesCount}</span>
+              </button>
+
+              <button 
+                onClick={handleToggleComments}
+                className="flex items-center gap-1 text-xs font-mono text-[#5C6B5E] hover:text-[#1C2620] transition-colors px-2 py-1 rounded-full hover:bg-[#F5F2E8]"
+              >
+                <Icon name="ChatBubbleLeftIcon" size={14} variant={showComments ? "solid" : "outline"} />
+                <span>{commentsCount}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Comments Collapse */}
+          <AnimatePresence>
+            {showComments && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden pt-3 border-t border-[#F5F2E8] space-y-3"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {loadingComments ? (
+                  <div className="text-center py-2 text-xs text-[#5C6B5E]">Chargement...</div>
+                ) : (
+                  <>
+                    <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+                      {comments.length === 0 ? (
+                        <p className="text-[11px] text-[#5C6B5E] italic">Aucun commentaire pour l'instant.</p>
+                      ) : (
+                        comments.map((c, i) => (
+                          <div key={c.id || i} className="bg-[#F5F2E8]/60 p-2.5 rounded-xl text-xs flex items-start gap-2">
+                            <img src={c.author?.avatar_url || 'https://i.pravatar.cc/150'} className="w-5 h-5 rounded-full object-cover shrink-0 mt-0.5" />
+                            <div>
+                              <span className="font-bold text-[#1C2620] mr-1.5">{c.author?.full_name}:</span>
+                              <span className="text-[#4A574C]">{c.content}</span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    {user && (
+                      <form onSubmit={handleSubmitComment} className="flex items-center gap-2 pt-1">
+                        <input 
+                          type="text" 
+                          value={commentText}
+                          onChange={e => setCommentText(e.target.value)}
+                          placeholder="Écrire un commentaire..."
+                          className="flex-1 bg-[#F5F2E8] border-none rounded-full px-3 py-1.5 text-xs text-[#1C2620] focus:ring-1 focus:ring-[#2D5A3D]"
+                        />
+                        <button 
+                          type="submit" 
+                          disabled={!commentText.trim()}
+                          className="bg-[#2D5A3D] text-white p-1.5 rounded-full disabled:opacity-50 transition-colors"
+                        >
+                          <Icon name="PaperAirplaneIcon" size={12} variant="solid" />
+                        </button>
+                      </form>
+                    )}
+                  </>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── CARNET FORM MODAL ────────────────────────────────────────────────────────
+function CarnetFormModal({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave?: (form: any) => void;
+  saving?: boolean;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[200] overflow-y-auto bg-[#F5F2E8] animate-fade-in font-sans">
+      <div className="relative min-h-screen">
+        <CreateCarnetView onCloseModal={onClose} />
+      </div>
+    </div>
+  );
+}
+
+// ─── CLUB FORM MODAL ──────────────────────────────────────────────────────────
+function ClubFormModal({
+  isOpen,
+  onClose,
+  onSave,
+  saving
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (form: any) => void;
+  saving: boolean;
+}) {
+  const [form, setForm] = useState({
+    name: '',
+    type: 'activité',
+    emoji: '🏕️',
+    description: '',
+    category: 'Randonnée',
+    rules: '',
+    privacy: 'open'
+  });
+
+  if (!isOpen) return null;
+  const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white border border-[#E8E4D8] shadow-2xl rounded-[2.5rem] w-full max-w-lg my-4 overflow-hidden flex flex-col p-6 sm:p-8">
+        <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
+          <div>
+            <h3 className="font-display font-800 text-2xl text-[#1C2620]">Créer un nouveau club</h3>
+            <p className="text-xs text-[#5C6B5E] mt-0.5">Rassemblez les voyageurs autour d'une passion commune.</p>
+          </div>
+          <button onClick={onClose} className="p-2 bg-[#F5F2E8] hover:bg-[#E8E4D8] rounded-full text-[#1C2620] transition-colors">
             <Icon name="XMarkIcon" size={18} />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="p-5 space-y-4">
-          {/* Post type selector */}
+        <div className="space-y-4 py-4 max-h-[65vh] overflow-y-auto custom-scrollbar">
+          <div className="flex gap-3">
+            <div className="w-20">
+              <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Emoji</label>
+              <input type="text" className="w-full bg-[#F5F2E8] border-none rounded-2xl p-3 text-center text-2xl" value={form.emoji} onChange={e => set('emoji', e.target.value)} />
+            </div>
+            <div className="flex-1">
+              <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Nom du club *</label>
+              <input type="text" placeholder="Ex: Club Trek Alpes" className="w-full bg-[#F5F2E8] border-none rounded-2xl px-4 py-3 text-sm text-[#1C2620] focus:ring-1 focus:ring-[#2D5A3D]" value={form.name} onChange={e => set('name', e.target.value)} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Type</label>
+              <select className="w-full bg-[#F5F2E8] border-none rounded-2xl px-3 py-3 text-xs text-[#1C2620]" value={form.type} onChange={e => set('type', e.target.value)}>
+                <option value="activité">🎯 Activité</option>
+                <option value="pays">🌍 Destination</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Catégorie</label>
+              <input type="text" placeholder="Ex: Randonnée, Kayak..." className="w-full bg-[#F5F2E8] border-none rounded-2xl px-3 py-3 text-xs text-[#1C2620]" value={form.category} onChange={e => set('category', e.target.value)} />
+            </div>
+          </div>
+
           <div>
-            <label className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-[0.15em] block mb-2">Type de post</label>
-            <div className="flex gap-2 flex-wrap">
-              {(['post', 'tip', 'question', 'share'] as const).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setForm((f) => ({ ...f, post_type: t }))}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border transition-all ${
-                    form.post_type === t
-                      ? 'bg-[#E4501C]/10 border-[#E4501C]/40 text-[#E4501C]'
-                      : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-[#E4501C]/30'
-                  }`}
-                >
-                  {POST_TYPE_CFG[t].emoji} {POST_TYPE_CFG[t].label}
+            <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Description</label>
+            <textarea rows={3} placeholder="Présentez l'objectif et l'esprit du club..." className="w-full bg-[#F5F2E8] border-none rounded-2xl p-3 text-xs text-[#1C2620] resize-none" value={form.description} onChange={e => set('description', e.target.value)} />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Règles (optionnel)</label>
+            <textarea rows={2} placeholder="Règles de bonne conduite..." className="w-full bg-[#F5F2E8] border-none rounded-2xl p-3 text-xs text-[#1C2620] resize-none" value={form.rules} onChange={e => set('rules', e.target.value)} />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-2">Confidentialité</label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { v: 'open', l: '🌍 Ouvert', d: 'Libre accès' },
+                { v: 'closed', l: '🔒 Fermé', d: 'Sur demande' },
+                { v: 'secret', l: '🕵️ Secret', d: 'Sur invitation' },
+              ].map(opt => (
+                <button type="button" key={opt.v} onClick={() => set('privacy', opt.v)} className={`p-3 rounded-2xl border text-left transition-all ${form.privacy === opt.v ? 'border-[#2D5A3D] bg-[#2D5A3D]/10 text-[#2D5A3D]' : 'border-[#E8E4D8] bg-[#F5F2E8] text-[#5C6B5E]'}`}>
+                  <div className="font-bold text-xs">{opt.l}</div>
+                  <div className="text-[9px] opacity-75">{opt.d}</div>
                 </button>
               ))}
             </div>
           </div>
-
-          {/* Title */}
-          <div>
-            <label className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-[0.15em] block mb-1.5">Titre (optionnel)</label>
-            <input
-              type="text"
-              value={form.title}
-              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              placeholder="Un titre accrocheur..."
-              className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] placeholder:text-[#5C6B5E]/60 focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 focus:border-[#E4501C]/40"
-            />
-          </div>
-
-          {/* Content */}
-          <div>
-            <label className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-[0.15em] block mb-1.5">Contenu *</label>
-            <textarea
-              rows={5}
-              value={form.content}
-              onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
-              placeholder={
-                form.post_type === 'tip' ?'Partagez un conseil utile pour la communauté...'
-                  : form.post_type === 'question' ?'Posez votre question à la communauté...'
-                  : form.post_type === 'share' ?'Partagez un lien, une ressource, une découverte...' :'Partagez votre expérience, vos aventures...'
-              }
-              className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-3 text-sm text-[#1C2620] placeholder:text-[#5C6B5E]/60 focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 focus:border-[#E4501C]/40 resize-none"
-            />
-          </div>
-
-          {/* Image URL */}
-          <div>
-            <label className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-[0.15em] block mb-1.5">
-              <Icon name="PhotoIcon" size={11} className="inline mr-1" />
-              Image (URL optionnelle)
-            </label>
-            <input
-              type="url"
-              value={form.image_url}
-              onChange={(e) => setForm((f) => ({ ...f, image_url: e.target.value }))}
-              placeholder="https://exemple.com/image.jpg"
-              className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] placeholder:text-[#5C6B5E]/60 focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 focus:border-[#E4501C]/40"
-            />
-            {form.image_url && (
-              <div className="mt-2 relative h-32 rounded-xl overflow-hidden border border-[#C8C3B0]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={form.image_url} alt="Aperçu" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-              </div>
-            )}
-          </div>
-
-          {error && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-200">
-              <Icon name="ExclamationCircleIcon" size={14} className="text-red-500 flex-shrink-0" />
-              <p className="text-xs text-red-600">{error}</p>
-            </div>
-          )}
         </div>
 
-        {/* Footer */}
-        <div className="flex gap-3 p-5 border-t border-[#C8C3B0]">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border border-[#C8C3B0] text-sm font-600 text-[#5C6B5E] hover:bg-[#C8C3B0]/20 transition-colors"
-          >
-            Annuler
-          </button>
-          <button
-            onClick={handlePublish}
-            disabled={posting || !form.content.trim()}
-            className="flex-1 py-2.5 rounded-xl bg-[#E4501C] text-white text-sm font-700 hover:bg-[#E4501C]/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {posting ? (
-              <>
-                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Publication...
-              </>
-            ) : (
-              <>
-                <Icon name="PaperAirplaneIcon" size={14} />
-                Publier
-              </>
-            )}
+        <div className="flex items-center gap-3 pt-4 border-t border-[#F5F2E8]">
+          <button onClick={onClose} className="px-5 py-3 rounded-full text-xs font-semibold text-[#5C6B5E] hover:bg-[#F5F2E8] transition-colors">Annuler</button>
+          <button onClick={() => onSave(form)} disabled={saving || !form.name.trim()} className="flex-1 py-3 bg-[#2D5A3D] text-white rounded-full text-xs font-bold hover:bg-[#1C2620] transition-colors disabled:opacity-50 shadow-md">
+            {saving ? 'Création...' : 'Créer le club'}
           </button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
 
-// ─── Feed Tab ─────────────────────────────────────────────────────────────────
-function FeedTab() {
-  const [posts, setPosts] = useState<CommunityPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [feedFilter, setFeedFilter] = useState<'all' | 'trending'>('all');
-  const [showCompose, setShowCompose] = useState(false);
-  const [commentPost, setCommentPost] = useState<CommunityPost | null>(null);
-  const [comments, setComments] = useState<PostComment[]>([]);
-  const [newComment, setNewComment] = useState('');
-  const [submittingComment, setSubmittingComment] = useState(false);
+// ─── CLUB DETAIL MODAL ────────────────────────────────────────────────────────
+function ClubDetailModal({
+  club,
+  onClose,
+  currentUserId,
+  onRefresh
+}: {
+  club: any | null;
+  onClose: () => void;
+  currentUserId?: string;
+  onRefresh: () => void;
+}) {
+  const [activeTab, setActiveTab] = useState<'topics' | 'members' | 'challenges' | 'events' | 'moderation'>('topics');
+  const [topics, setTopics] = useState<any[]>([]);
+  const [members, setMembers] = useState<any[]>([]);
+  const [challenges, setChallenges] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [newTopic, setNewTopic] = useState({ title: '', content: '' });
+  const [postingTopic, setPostingTopic] = useState(false);
+  const [newEvent, setNewEvent] = useState({ title: '', description: '', event_date: '', location: '', max_participants: 20 });
+  const [postingEvent, setPostingEvent] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const { user } = useAuth();
-  const supabase = useMemo(() => createClient(), []);
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
+  const isAdmin = club?.is_member && (club?.member_role === 'admin' || club?.member_role === 'moderator');
 
-  const loadPosts = useCallback(async () => {
+  const loadData = useCallback(async () => {
+    if (!club) return;
     setLoading(true);
-    let query = supabase
-      .from('community_posts')
-      .select('*, author:user_profiles(full_name, avatar_url, trust_score, loyalty_level)')
-      .order('created_at', { ascending: false })
-      .limit(30);
+    const supabase = createClient();
+    const [topicsRes, membersRes, challengesRes, eventsRes] = await Promise.all([
+      supabase.from('club_topics').select('*, author:user_profiles(full_name)').eq('club_id', club.id).order('is_pinned', { ascending: false }).order('created_at', { ascending: false }),
+      supabase.from('club_members').select('*, user:user_profiles(full_name, avatar_url, trust_score)').eq('club_id', club.id).eq('status', 'active'),
+      supabase.from('club_challenges').select('*').eq('club_id', club.id).eq('active', true),
+      supabase.from('club_events').select('*').eq('club_id', club.id).order('event_date', { ascending: true }),
+    ]);
+    setTopics(topicsRes.data || []);
+    setMembers(membersRes.data || []);
+    setChallenges(challengesRes.data || []);
+    setEvents(eventsRes.data || []);
 
-    if (feedFilter === 'trending') query = query.eq('is_trending', true);
-
-    const { data } = await query;
-    let likedIds: string[] = [];
-    if (user) {
-      const { data: likes } = await supabase.from('post_likes').select('post_id').eq('user_id', user.id);
-      likedIds = likes?.map((l) => l.post_id) ?? [];
+    if (isAdmin) {
+      const { data: pending } = await supabase.from('club_join_requests').select('*, user:user_profiles(full_name, avatar_url, trust_score)').eq('club_id', club.id).eq('status', 'pending');
+      setPendingRequests(pending || []);
     }
-    // Filter out spam/test posts: content must be at least 20 chars and not look like keyboard mashing
-    const filtered = (data ?? []).filter((p) => {
-      const content = (p.content ?? '').trim();
-      const title = (p.title ?? '').trim();
-      if (content.length < 20) return false;
-      // Detect keyboard mashing: high ratio of repeated chars or no spaces in long strings
-      const hasNoSpaces = content.length > 15 && !content.includes(' ');
-      if (hasNoSpaces) return false;
-      // Detect test/spam titles
-      const spamPatterns = /^(test|spam|ezf|aaa|bbb|xxx|zzz|asdf|qwerty)/i;
-      if (spamPatterns.test(title) || spamPatterns.test(content)) return false;
-      return true;
-    });
-    setPosts(filtered.map((p) => ({ ...p, user_liked: likedIds.includes(p.id) })));
     setLoading(false);
-  }, [supabase, user, feedFilter]);
+  }, [club, isAdmin]);
 
-  useEffect(() => { loadPosts(); }, [loadPosts]);
+  useEffect(() => { if (club) loadData(); }, [club, loadData]);
 
-  const handleLike = async (post: CommunityPost) => {
-    if (!user) { showToast('Connectez-vous pour réagir'); return; }
-    if (post.user_liked) {
-      await supabase.from('post_likes').delete().eq('post_id', post.id).eq('user_id', user.id);
-      await supabase.from('community_posts').update({ likes_count: Math.max(0, post.likes_count - 1) }).eq('id', post.id);
-      setPosts((prev) => prev.map((p) => p.id === post.id ? { ...p, user_liked: false, likes_count: Math.max(0, p.likes_count - 1) } : p));
-    } else {
-      await supabase.from('post_likes').upsert({ post_id: post.id, user_id: user.id }, { onConflict: 'post_id,user_id' });
-      await supabase.from('community_posts').update({ likes_count: post.likes_count + 1 }).eq('id', post.id);
-      setPosts((prev) => prev.map((p) => p.id === post.id ? { ...p, user_liked: true, likes_count: p.likes_count + 1 } : p));
+  const handlePostTopic = async () => {
+    if (!club || !currentUserId || !newTopic.title.trim()) return;
+    setPostingTopic(true);
+    const supabase = createClient();
+    await supabase.from('club_topics').insert({ club_id: club.id, author_id: currentUserId, title: newTopic.title, content: newTopic.content });
+    setNewTopic({ title: '', content: '' });
+    setPostingTopic(false);
+    showToast('Discussion publiée !');
+    loadData();
+  };
+
+  const handlePostEvent = async () => {
+    if (!club || !currentUserId || !newEvent.title.trim()) return;
+    setPostingEvent(true);
+    const supabase = createClient();
+    await supabase.from('club_events').insert({
+      club_id: club.id,
+      organizer_id: currentUserId,
+      title: newEvent.title,
+      description: newEvent.description,
+      event_date: newEvent.event_date || null,
+      location: newEvent.location,
+      max_participants: newEvent.max_participants,
+    });
+    setNewEvent({ title: '', description: '', event_date: '', location: '', max_participants: 20 });
+    setPostingEvent(false);
+    showToast('Événement créé !');
+    loadData();
+  };
+
+  const handleApproveRequest = async (requestId: string, userId: string, approve: boolean) => {
+    const supabase = createClient();
+    await supabase.from('club_join_requests').update({ status: approve ? 'approved' : 'rejected' }).eq('id', requestId);
+    if (approve && club) {
+      await supabase.from('club_members').insert({ club_id: club.id, user_id: userId, role: 'member', status: 'active' });
+      await supabase.from('clubs').update({ members_count: (club.members_count || 0) + 1 }).eq('id', club.id);
     }
+    showToast(approve ? 'Demande approuvée !' : 'Demande refusée.');
+    loadData();
+    onRefresh();
   };
 
-  const openComments = async (post: CommunityPost) => {
-    setCommentPost(post);
-    const { data } = await supabase.from('post_comments').select('*, author:user_profiles(full_name)').eq('post_id', post.id).order('created_at', { ascending: true });
-    setComments((data as PostComment[]) ?? []);
-  };
-
-  const handleComment = async () => {
-    if (!user || !commentPost || !newComment.trim()) return;
-    setSubmittingComment(true);
-    const { data } = await supabase.from('post_comments').insert({ post_id: commentPost.id, author_id: user.id, content: newComment.trim() }).select('*, author:user_profiles(full_name)').single();
-    if (data) {
-      setComments((prev) => [...prev, data as PostComment]);
-      await supabase.from('community_posts').update({ comments_count: commentPost.comments_count + 1 }).eq('id', commentPost.id);
-      setPosts((prev) => prev.map((p) => p.id === commentPost.id ? { ...p, comments_count: p.comments_count + 1 } : p));
-    }
-    setNewComment('');
-    setSubmittingComment(false);
-  };
-
-  const handleShare = (post: CommunityPost) => {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(`${window.location.origin}/communaute?post=${post.id}`);
-      showToast('Lien copié !');
-    }
-  };
+  if (!club) return null;
 
   return (
-    <div className="space-y-6">
-      {/* Compose button / CTA */}
-      {user ? (
-        <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4">
-          <button
-            onClick={() => setShowCompose(true)}
-            className="w-full flex items-center gap-3 text-left"
-          >
-            <div className="w-10 h-10 rounded-xl bg-[#E4501C]/20 flex items-center justify-center font-700 text-[#E4501C] flex-shrink-0">
-              {user.email?.[0]?.toUpperCase() ?? 'U'}
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-[#F5F2E8] border border-[#E8E4D8] shadow-2xl rounded-[2.5rem] w-full max-w-3xl my-4 overflow-hidden flex flex-col max-h-[85vh]">
+        {/* Header */}
+        <div className="bg-[#1C2620] text-white p-6 sm:p-8 relative overflow-hidden shrink-0">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-[#E4501C] rounded-full blur-[80px] opacity-30 pointer-events-none" />
+          <div className="relative z-10 flex items-start justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-3xl shadow-inner border border-white/20">
+                {club.emoji || '🏔️'}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="font-display font-800 text-2xl text-white">{club.name}</h2>
+                  {club.is_verified && <span className="bg-[#2D5A3D] text-white text-[9px] font-mono px-2 py-0.5 rounded-full">✓ VÉRIFIÉ</span>}
+                </div>
+                <p className="text-xs text-white/70 mt-1">
+                  {club.members_count || 0} membres · {club.category || 'Général'} · {club.privacy === 'open' ? '🌍 Ouvert' : '🔒 Sur demande'}
+                </p>
+              </div>
             </div>
-            <div className="flex-1 bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#5C6B5E]/70 hover:border-[#E4501C]/30 transition-colors">
-              Partagez votre expérience, un conseil, une question...
-            </div>
-            <button
-              onClick={(e) => { e.stopPropagation(); setShowCompose(true); }}
-              className="flex items-center gap-2 px-4 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors flex-shrink-0"
-            >
-              <Icon name="PlusIcon" size={14} />
-              Publier
+            <button onClick={onClose} className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
+              <Icon name="XMarkIcon" size={18} />
             </button>
-          </button>
-        </div>
-      ) : (
-        <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5 text-center">
-          <p className="text-sm text-[#5C6B5E] mb-3">Connectez-vous pour partager avec la communauté</p>
-          <Link href="/connexion" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors">
-            <Icon name="ArrowRightOnRectangleIcon" size={14} />
-            Se connecter
-          </Link>
-        </div>
-      )}
-
-      {/* Feed filters */}
-      <div className="flex items-center gap-2">
-        {[
-          { id: 'all', label: 'Tout le feed' },
-          { id: 'trending', label: '🔥 Trending' },
-        ].map((f) => (
-          <button
-            key={f.id}
-            onClick={() => setFeedFilter(f.id as typeof feedFilter)}
-            className={`px-4 py-2 rounded-xl text-sm font-600 border transition-all ${feedFilter === f.id ? 'bg-[#1C2620] text-white border-[#1C2620]' : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-[#1C2620]/30'}`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Posts */}
-      {loading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => <div key={i} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl h-40 animate-pulse" />)}
-        </div>
-      ) : posts.length === 0 ? (
-        <div className="text-center py-16 text-[#5C6B5E]">
-          <p className="text-4xl mb-3">💬</p>
-          <p className="font-display font-700 text-[#1C2620] text-lg mb-1">Aucun post</p>
-          <p className="text-sm">Soyez le premier à partager quelque chose !</p>
-        </div>
-      ) : (
-        posts.map((post) => {
-          const typeCfg = POST_TYPE_CFG[post.post_type] ?? POST_TYPE_CFG.post;
-          const lvl = LEVEL_CFG[post.author?.loyalty_level ?? 'Explorateur'] ?? LEVEL_CFG.Explorateur;
-          return (
-            <div key={post.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4">
-              {/* Author */}
-              <div className="flex items-start gap-3 mb-3">
-                <Link href={`/profil/${post.author_id}`} className="w-10 h-10 rounded-xl bg-[#E4501C]/20 flex items-center justify-center font-700 text-[#E4501C] flex-shrink-0 hover:bg-[#E4501C]/30 transition-colors">
-                  {post.author?.full_name?.[0] ?? '?'}
-                </Link>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Link href={`/profil/${post.author_id}`} className="font-700 text-[#1C2620] text-sm hover:text-[#E4501C] transition-colors">{post.author?.full_name ?? 'Anonyme'}</Link>
-                    <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${lvl.color}`}>{lvl.icon} {post.author?.loyalty_level}</span>
-                    <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${typeCfg.color}`}>{typeCfg.emoji} {typeCfg.label}</span>
-                    {post.is_trending && <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-700">🔥 Trending</span>}
-                  </div>
-                  <p className="text-[10px] text-[#5C6B5E]">Trust {post.author?.trust_score ?? 0} · {new Date(post.created_at).toLocaleDateString('fr-FR')}</p>
-                </div>
-              </div>
-
-              {/* Title */}
-              {post.title && <h3 className="font-700 text-[#1C2620] text-sm mb-1">{post.title}</h3>}
-
-              {/* Content */}
-              <p className="text-sm text-[#1C2620] mb-3 leading-relaxed">{post.content}</p>
-
-              {/* Image */}
-              {post.image_url && (
-                <div className="relative h-48 rounded-xl overflow-hidden mb-3">
-                  <Image src={post.image_url} alt={post.image_alt || 'Post image'} fill className="object-cover" />
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex items-center gap-2 pt-2 border-t border-[#C8C3B0]/50">
-                <button
-                  onClick={() => handleLike(post)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border transition-all ${post.user_liked ? 'bg-[#E4501C]/10 border-[#E4501C]/30 text-[#E4501C]' : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-[#E4501C]/30'}`}
-                >
-                  <Icon name="HeartIcon" variant={post.user_liked ? 'solid' : 'outline'} size={13} />
-                  {post.likes_count}
-                </button>
-                <button
-                  onClick={() => openComments(post)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border border-[#C8C3B0] text-[#5C6B5E] hover:border-[#1C2620]/30 transition-all"
-                >
-                  <Icon name="ChatBubbleLeftIcon" size={13} />
-                  {post.comments_count}
-                </button>
-                <button
-                  onClick={() => handleShare(post)}
-                  className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border border-[#C8C3B0] text-[#5C6B5E] hover:border-[#1C2620]/30 transition-all"
-                >
-                  <Icon name="ShareIcon" size={13} />
-                  Partager
-                </button>
-              </div>
-            </div>
-          );
-        })
-      )}
-
-      {/* Compose Modal */}
-      {showCompose && (
-        <ComposeModal
-          onClose={() => setShowCompose(false)}
-          onPublished={() => { loadPosts(); showToast('Post publié !'); }}
-        />
-      )}
-
-      {/* Comments modal */}
-      {commentPost && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
-            <div className="flex items-center justify-between p-5 border-b border-[#C8C3B0]">
-              <h3 className="font-display font-700 text-[#1C2620]">Commentaires ({commentPost.comments_count})</h3>
-              <button onClick={() => setCommentPost(null)} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-5 space-y-3">
-              {comments.length === 0 ? (
-                <p className="text-center text-[#5C6B5E] text-sm py-8">Aucun commentaire. Soyez le premier !</p>
-              ) : (
-                comments.map((c) => (
-                  <div key={c.id} className="flex gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-[#E4501C]/20 flex items-center justify-center text-xs font-700 text-[#E4501C] flex-shrink-0">{c.author?.full_name?.[0] ?? '?'}</div>
-                    <div className="flex-1 bg-white rounded-xl p-3">
-                      <p className="text-xs font-700 text-[#1C2620] mb-1">{c.author?.full_name ?? 'Anonyme'}</p>
-                      <p className="text-sm text-[#5C6B5E]">{c.content}</p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            {user ? (
-              <div className="p-5 border-t border-[#C8C3B0] flex gap-3">
-                <input
-                  className="flex-1 bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30"
-                  placeholder="Écrire un commentaire..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleComment(); } }}
-                />
-                <button onClick={handleComment} disabled={submittingComment || !newComment.trim()} className="px-4 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-600 disabled:opacity-50 hover:bg-[#E4501C]/90 transition-colors">
-                  {submittingComment ? '...' : 'Envoyer'}
-                </button>
-              </div>
-            ) : (
-              <div className="p-5 border-t border-[#C8C3B0] text-center text-sm text-[#5C6B5E]">
-                <Link href="/connexion" className="text-[#E4501C] font-600 hover:underline">Connectez-vous</Link> pour commenter
-              </div>
-            )}
           </div>
-        </div>
-      )}
-
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1C2620] text-white px-5 py-3 rounded-xl text-sm font-600 shadow-xl">
-          {toast}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Profiles Tab ─────────────────────────────────────────────────────────────
-function ProfilsTab() {
-  const [profiles, setProfiles] = useState<UserProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [toast, setToast] = useState<string | null>(null);
-  const { user } = useAuth();
-  const supabase = useMemo(() => createClient(), []);
-
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
-
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      const { data } = await supabase.from('user_profiles').select('*').order('trust_score', { ascending: false }).limit(50);
-      let followingIds: string[] = [];
-      if (user) {
-        const { data: follows } = await supabase.from('user_follows').select('following_id').eq('follower_id', user.id);
-        followingIds = follows?.map((f) => f.following_id) ?? [];
-      }
-      setProfiles((data ?? []).map((p) => ({ ...p, user_following: followingIds.includes(p.id) })));
-      setLoading(false);
-    };
-    load();
-  }, [supabase, user]);
-
-  const handleFollow = async (profile: UserProfile) => {
-    if (!user) { showToast('Connectez-vous pour suivre'); return; }
-    if (profile.id === user.id) return;
-    if (profile.user_following) {
-      await supabase.from('user_follows').delete().eq('follower_id', user.id).eq('following_id', profile.id);
-      setProfiles((prev) => prev.map((p) => p.id === profile.id ? { ...p, user_following: false } : p));
-      showToast('Abonnement annulé');
-    } else {
-      await supabase.from('user_follows').upsert({ follower_id: user.id, following_id: profile.id }, { onConflict: 'follower_id,following_id' });
-      setProfiles((prev) => prev.map((p) => p.id === profile.id ? { ...p, user_following: true } : p));
-      showToast('Abonné !');
-    }
-  };
-
-  const filtered = profiles.filter((p) => !search || p.full_name?.toLowerCase().includes(search.toLowerCase()));
-
-  return (
-    <div className="space-y-6">
-      <div className="relative">
-        <Icon name="MagnifyingGlassIcon" size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5C6B5E]" />
-        <input
-          className="w-full bg-[#EDEAE0] border border-[#C8C3B0] rounded-xl pl-10 pr-4 py-3 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30"
-          placeholder="Rechercher un aventurier..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl h-48 animate-pulse" />)}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.length === 0 ? (
-            <div className="col-span-full text-center py-16 text-[#5C6B5E]">
-              <p className="text-4xl mb-3">🧭</p>
-              <p className="font-display font-700 text-[#1C2620] text-lg mb-1">
-                {search ? 'Aucun aventurier trouvé' : 'Aucun profil disponible'}
-              </p>
-              <p className="text-sm">{search ? `Aucun résultat pour "${search}"` : 'Soyez le premier à rejoindre la communauté !'}</p>
-            </div>
-          ) : (
-            filtered.map((p) => {
-              const lvl = LEVEL_CFG[p.loyalty_level ?? 'Explorateur'] ?? LEVEL_CFG.Explorateur;
-              const isMe = user?.id === p.id;
-              return (
-                <div key={p.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5">
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-2xl bg-[#E4501C]/20 flex items-center justify-center font-700 text-[#E4501C] text-lg flex-shrink-0">
-                      {p.full_name?.[0] ?? '?'}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-700 text-[#1C2620] text-sm truncate">{p.full_name}</p>
-                        <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${lvl.color}`}>{lvl.icon} {p.loyalty_level}</span>
-                      </div>
-                      <p className="text-[10px] text-[#5C6B5E]">Membre depuis {new Date(p.created_at).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="font-mono font-700 text-[#E4501C] text-lg">{p.trust_score}</p>
-                      <p className="text-[10px] text-[#5C6B5E]">Trust</p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Link href={`/profil/${p.id}`} className="flex-1 py-2 rounded-xl text-sm font-600 text-center border border-[#C8C3B0] text-[#5C6B5E] hover:bg-[#C8C3B0]/20 transition-colors">
-                      Voir profil
-                    </Link>
-                    {!isMe && (
-                      <button
-                        onClick={() => handleFollow(p)}
-                        className={`flex-1 py-2 rounded-xl text-sm font-600 transition-all ${p.user_following ? 'bg-[#1C2620]/10 text-[#1C2620] border border-[#C8C3B0]' : 'bg-[#E4501C] text-white hover:bg-[#E4501C]/90'}`}
-                      >
-                        {p.user_following ? '✓ Abonné' : 'Suivre'}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })
+          {club.description && (
+            <p className="text-xs text-white/80 mt-4 leading-relaxed max-w-xl">{club.description}</p>
           )}
         </div>
-      )}
 
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1C2620] text-white px-5 py-3 rounded-xl text-sm font-600 shadow-xl">
-          {toast}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Q&A Tab ──────────────────────────────────────────────────────────────────
-function QATab() {
-  const [questions, setQuestions] = useState<QAQuestion[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedQ, setSelectedQ] = useState<QAQuestion | null>(null);
-  const [answers, setAnswers] = useState<QAAnswer[]>([]);
-  const [newAnswer, setNewAnswer] = useState('');
-  const [submittingAnswer, setSubmittingAnswer] = useState(false);
-  const [showAskModal, setShowAskModal] = useState(false);
-  const [newQuestion, setNewQuestion] = useState({ title: '', content: '', tags: '', category: 'général' });
-  const [postingQ, setPostingQ] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const { user } = useAuth();
-  const supabase = useMemo(() => createClient(), []);
-
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
-
-  const loadQuestions = useCallback(async () => {
-    setLoading(true);
-    const { data } = await supabase
-      .from('qa_questions')
-      .select('*, author:user_profiles(full_name, trust_score)')
-      .order('created_at', { ascending: false })
-      .limit(30);
-    setQuestions(data ?? []);
-    setLoading(false);
-  }, [supabase]);
-
-  useEffect(() => { loadQuestions(); }, [loadQuestions]);
-
-  const openQuestion = async (q: QAQuestion) => {
-    setSelectedQ(q);
-    const { data } = await supabase.from('qa_answers').select('*, author:user_profiles(full_name, trust_score)').eq('question_id', q.id).order('is_accepted', { ascending: false }).order('votes_count', { ascending: false });
-    setAnswers((data as QAAnswer[]) ?? []);
-    await supabase.from('qa_questions').update({ views_count: (q.views_count ?? 0) + 1 }).eq('id', q.id);
-  };
-
-  const handleSubmitAnswer = async () => {
-    if (!user || !selectedQ || !newAnswer.trim()) return;
-    setSubmittingAnswer(true);
-    const { data } = await supabase.from('qa_answers').insert({ question_id: selectedQ.id, author_id: user.id, content: newAnswer.trim() }).select('*, author:user_profiles(full_name, trust_score)').single();
-    if (data) {
-      setAnswers((prev) => [...prev, data as QAAnswer]);
-      await supabase.from('qa_questions').update({ answers_count: (selectedQ.answers_count ?? 0) + 1 }).eq('id', selectedQ.id);
-      setSelectedQ((prev) => prev ? { ...prev, answers_count: (prev.answers_count ?? 0) + 1 } : null);
-    }
-    setNewAnswer('');
-    setSubmittingAnswer(false);
-    showToast('Réponse publiée !');
-  };
-
-  const handlePostQuestion = async () => {
-    if (!user || !newQuestion.title.trim()) return;
-    setPostingQ(true);
-    await supabase.from('qa_questions').insert({
-      author_id: user.id,
-      title: newQuestion.title,
-      content: newQuestion.content,
-      tags: newQuestion.tags ? newQuestion.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
-      category: newQuestion.category,
-    });
-    setNewQuestion({ title: '', content: '', tags: '', category: 'général' });
-    setShowAskModal(false);
-    setPostingQ(false);
-    showToast('Question publiée !');
-    await loadQuestions();
-  };
-
-  const CATEGORIES = ['général', 'matériel', 'itinéraires', 'sécurité', 'réglementation', 'logistique'];
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-display font-700 text-xl text-[#1C2620]">Questions & Réponses</h2>
-          <p className="text-xs text-[#5C6B5E] mt-0.5">Posez vos questions, partagez votre expertise</p>
-        </div>
-        {user && (
-          <button onClick={() => setShowAskModal(true)} className="flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors">
-            <Icon name="PlusIcon" size={14} /> Poser une question
-          </button>
-        )}
-      </div>
-
-      {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => <div key={i} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl h-24 animate-pulse" />)}
-        </div>
-      ) : questions.length === 0 ? (
-        <div className="text-center py-16 text-[#5C6B5E]">
-          <p className="text-4xl mb-3">❓</p>
-          <p className="font-display font-700 text-[#1C2620] text-lg mb-1">Aucune question</p>
-          <p className="text-sm">Soyez le premier à poser une question !</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {questions.map((q) => (
-            <div key={q.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-4 hover:border-[#E4501C]/30 transition-colors cursor-pointer" onClick={() => openQuestion(q)}>
-              <div className="flex items-start gap-4">
-                <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                  <span className="font-mono font-700 text-[#1C2620] text-sm">{q.votes_count ?? 0}</span>
-                  <span className="text-[10px] text-[#5C6B5E]">votes</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    {q.is_solved && <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-700">✓ Résolu</span>}
-                    <span className="text-[10px] bg-[#E7E3D6] text-[#5C6B5E] px-2 py-0.5 rounded-full">{q.category}</span>
-                  </div>
-                  <h3 className="font-600 text-[#1C2620] text-sm mb-1">{q.title}</h3>
-                  {q.content && <p className="text-xs text-[#5C6B5E] line-clamp-2 mb-2">{q.content}</p>}
-                  <div className="flex items-center gap-3 text-[10px] text-[#5C6B5E] flex-wrap">
-                    <span>{q.author?.full_name ?? 'Anonyme'}</span>
-                    <span>💬 {q.answers_count ?? 0} réponses</span>
-                    <span>👁️ {q.views_count ?? 0} vues</span>
-                    {q.tags?.slice(0, 3).map((tag) => <span key={tag} className="bg-[#E7E3D6] px-1.5 py-0.5 rounded-full">#{tag}</span>)}
-                  </div>
-                </div>
-              </div>
-            </div>
+        {/* Navigation Tabs */}
+        <div className="bg-white border-b border-[#E8E4D8] px-6 py-3 flex gap-2 overflow-x-auto scrollbar-hide shrink-0">
+          {[
+            { id: 'topics', label: '💬 Discussions', count: topics.length },
+            { id: 'members', label: '👥 Membres', count: members.length },
+            { id: 'challenges', label: '🏆 Défis', count: challenges.length },
+            { id: 'events', label: '📅 Agenda', count: events.length },
+            ...(isAdmin ? [{ id: 'moderation', label: `🛡️ Modération (${pendingRequests.length})`, count: pendingRequests.length }] : [])
+          ].map(t => (
+            <button key={t.id} onClick={() => setActiveTab(t.id as any)} className={`px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${activeTab === t.id ? 'bg-[#1C2620] text-white shadow-sm' : 'text-[#5C6B5E] hover:bg-[#F5F2E8]'}`}>
+              {t.label}
+            </button>
           ))}
         </div>
-      )}
 
-      {/* Question detail modal */}
-      {selectedQ && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-            <div className="flex items-start justify-between p-5 border-b border-[#C8C3B0]">
-              <div className="flex-1 pr-4">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  {selectedQ.is_solved && <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-700">✓ Résolu</span>}
-                  <span className="text-[10px] bg-[#E7E3D6] text-[#5C6B5E] px-2 py-0.5 rounded-full">{selectedQ.category}</span>
+        {/* Content Body */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+          {loading ? (
+            <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-[#2D5A3D] border-t-transparent rounded-full animate-spin"></div></div>
+          ) : activeTab === 'topics' ? (
+            <div className="space-y-4">
+              {club.is_member && (
+                <div className="bg-white p-4 rounded-2xl border border-[#E8E4D8] space-y-3">
+                  <h4 className="font-bold text-xs text-[#1C2620] uppercase tracking-wider">Lancer un sujet</h4>
+                  <input type="text" placeholder="Titre du sujet..." className="w-full bg-[#F5F2E8] border-none rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#2D5A3D]" value={newTopic.title} onChange={e => setNewTopic({ ...newTopic, title: e.target.value })} />
+                  <textarea rows={2} placeholder="Description..." className="w-full bg-[#F5F2E8] border-none rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#2D5A3D] resize-none" value={newTopic.content} onChange={e => setNewTopic({ ...newTopic, content: e.target.value })} />
+                  <button onClick={handlePostTopic} disabled={postingTopic || !newTopic.title.trim()} className="px-4 py-2 bg-[#2D5A3D] text-white rounded-full text-xs font-bold disabled:opacity-50">
+                    {postingTopic ? 'Publication...' : 'Publier'}
+                  </button>
                 </div>
-                <h3 className="font-display font-700 text-[#1C2620] text-lg">{selectedQ.title}</h3>
-                {selectedQ.content && <p className="text-sm text-[#5C6B5E] mt-1">{selectedQ.content}</p>}
-              </div>
-              <button onClick={() => setSelectedQ(null)} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors flex-shrink-0"><Icon name="XMarkIcon" size={18} /></button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-5 space-y-4">
-              <p className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider">{answers.length} réponse{answers.length !== 1 ? 's' : ''}</p>
-              {answers.map((a) => (
-                <div key={a.id} className={`p-4 rounded-xl border ${a.is_accepted ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-[#C8C3B0]'}`}>
-                  {a.is_accepted && <div className="flex items-center gap-1.5 text-emerald-600 text-xs font-700 mb-2"><Icon name="CheckCircleIcon" size={14} /> Meilleure réponse</div>}
-                  <p className="text-sm text-[#1C2620] mb-3">{a.content}</p>
-                  <div className="flex items-center gap-3 text-[10px] text-[#5C6B5E]">
-                    <span>{a.author?.full_name ?? 'Anonyme'}</span>
-                    <span>▲ {a.votes_count ?? 0}</span>
-                  </div>
+              )}
+
+              {topics.length === 0 ? (
+                <div className="text-center py-10 bg-white rounded-2xl border border-[#E8E4D8]">
+                  <p className="text-xs text-[#5C6B5E]">Aucune discussion lancée dans ce club pour le moment.</p>
                 </div>
-              ))}
-              {answers.length === 0 && <p className="text-center text-[#5C6B5E] text-sm py-4">Aucune réponse pour l&apos;instant.</p>}
-            </div>
-            {user && (
-              <div className="p-5 border-t border-[#C8C3B0] space-y-3">
-                <textarea
-                  rows={3}
-                  className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-3 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 resize-none"
-                  placeholder="Votre réponse..."
-                  value={newAnswer}
-                  onChange={(e) => setNewAnswer(e.target.value)}
-                />
-                <button onClick={handleSubmitAnswer} disabled={submittingAnswer || !newAnswer.trim()} className="px-5 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors disabled:opacity-50">
-                  {submittingAnswer ? 'Publication...' : 'Répondre'}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Ask question modal */}
-      {showAskModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-lg">
-            <div className="flex items-center justify-between p-5 border-b border-[#C8C3B0]">
-              <h3 className="font-display font-700 text-[#1C2620] text-lg">Poser une question</h3>
-              <button onClick={() => setShowAskModal(false)} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
-            </div>
-            <div className="p-5 space-y-4">
-              <div>
-                <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Titre *</label>
-                <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" placeholder="Votre question en une phrase..." value={newQuestion.title} onChange={(e) => setNewQuestion((f) => ({ ...f, title: e.target.value }))} />
-              </div>
-              <div>
-                <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Détails</label>
-                <textarea rows={3} className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 resize-none" placeholder="Contexte, ce que vous avez déjà essayé..." value={newQuestion.content} onChange={(e) => setNewQuestion((f) => ({ ...f, content: e.target.value }))} />
-              </div>
-              <div>
-                <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Catégorie</label>
-                <select className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" value={newQuestion.category} onChange={(e) => setNewQuestion((f) => ({ ...f, category: e.target.value }))}>
-                  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Tags (séparés par des virgules)</label>
-                <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" placeholder="matelas, bivouac, hiver..." value={newQuestion.tags} onChange={(e) => setNewQuestion((f) => ({ ...f, tags: e.target.value }))} />
-              </div>
-            </div>
-            <div className="flex gap-3 p-5 border-t border-[#C8C3B0]">
-              <button onClick={() => setShowAskModal(false)} className="flex-1 py-2.5 rounded-xl border border-[#C8C3B0] text-sm font-600 text-[#5C6B5E] hover:bg-[#C8C3B0]/20 transition-colors">Annuler</button>
-              <button onClick={handlePostQuestion} disabled={postingQ || !newQuestion.title.trim()} className="flex-1 py-2.5 rounded-xl bg-[#E4501C] text-white text-sm font-700 hover:bg-[#E4501C]/90 transition-colors disabled:opacity-50">
-                {postingQ ? 'Publication...' : 'Publier la question'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1C2620] text-white px-5 py-3 rounded-xl text-sm font-600 shadow-xl">
-          {toast}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── AMA Tab ──────────────────────────────────────────────────────────────────
-function AMATab() {
-  const [sessions, setSessions] = useState<AMASession[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedSession, setSelectedSession] = useState<AMASession | null>(null);
-  const [amaQuestions, setAmaQuestions] = useState<AMAQuestion[]>([]);
-  const [newAmaQ, setNewAmaQ] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const { user } = useAuth();
-  const supabase = useMemo(() => createClient(), []);
-
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
-
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      const { data } = await supabase
-        .from('ama_sessions')
-        .select('*, expert:user_profiles(full_name, avatar_url, trust_score, loyalty_level)')
-        .order('scheduled_at', { ascending: true });
-      setSessions((data as AMASession[]) ?? []);
-      setLoading(false);
-    };
-    load();
-  }, [supabase]);
-
-  const openSession = async (session: AMASession) => {
-    setSelectedSession(session);
-    const { data } = await supabase
-      .from('ama_questions')
-      .select('*, author:user_profiles(full_name)')
-      .eq('session_id', session.id)
-      .order('votes_count', { ascending: false });
-    setAmaQuestions((data ?? []).map((q) => ({ ...q, user_voted: false })));
-  };
-
-  const handleSubmitAmaQ = async () => {
-    if (!user || !selectedSession || !newAmaQ.trim()) return;
-    setSubmitting(true);
-    const { data } = await supabase.from('ama_questions').insert({ session_id: selectedSession.id, author_id: user.id, content: newAmaQ.trim() }).select('*, author:user_profiles(full_name)').single();
-    if (data) {
-      setAmaQuestions((prev) => [...prev, { ...data as AMAQuestion, user_voted: false }]);
-      await supabase.from('ama_sessions').update({ questions_count: (selectedSession.questions_count ?? 0) + 1 }).eq('id', selectedSession.id);
-      setSelectedSession((prev) => prev ? { ...prev, questions_count: (prev.questions_count ?? 0) + 1 } : null);
-    }
-    setNewAmaQ('');
-    setSubmitting(false);
-    showToast('Question soumise !');
-  };
-
-  const STATUS_CFG: Record<string, { label: string; color: string }> = {
-    upcoming: { label: '📅 À venir', color: 'bg-blue-100 text-blue-700' },
-    live: { label: '🔴 En direct', color: 'bg-red-100 text-red-700' },
-    ended: { label: '✓ Terminé', color: 'bg-gray-100 text-gray-600' },
-  };
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="font-display font-700 text-xl text-[#1C2620]">AMAs avec les experts</h2>
-        <p className="text-xs text-[#5C6B5E] mt-0.5">Ask Me Anything — posez vos questions aux experts de la communauté</p>
-      </div>
-
-      {loading ? (
-        <div className="space-y-4">
-          {[1, 2].map((i) => <div key={i} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl h-40 animate-pulse" />)}
-        </div>
-      ) : sessions.length === 0 ? (
-        <div className="text-center py-16 text-[#5C6B5E]">
-          <p className="text-4xl mb-3">🎤</p>
-          <p className="font-display font-700 text-[#1C2620] text-lg mb-1">Aucun AMA planifié</p>
-          <p className="text-sm">Les prochaines sessions seront annoncées ici.</p>
-        </div>
-      ) : (
-        sessions.map((session) => {
-          const statusCfg = STATUS_CFG[session.status] ?? STATUS_CFG.upcoming;
-          const lvl = LEVEL_CFG[session.expert?.loyalty_level ?? 'Explorateur'] ?? LEVEL_CFG.Explorateur;
-          return (
-            <div key={session.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#E4501C]/20 flex items-center justify-center font-700 text-[#E4501C] text-lg flex-shrink-0">
-                  {session.expert?.full_name?.[0] ?? '?'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className={`text-[10px] font-700 px-2 py-0.5 rounded-full ${statusCfg.color}`}>{statusCfg.label}</span>
-                    <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${lvl.color}`}>{lvl.icon} {session.expert?.loyalty_level}</span>
-                  </div>
-                  <h3 className="font-display font-700 text-[#1C2620] text-base mb-1">{session.title}</h3>
-                  <p className="text-xs text-[#5C6B5E] mb-2">{session.description}</p>
-                  <div className="flex items-center gap-4 text-[10px] text-[#5C6B5E] flex-wrap">
-                    <span>Par {session.expert?.full_name ?? 'Expert'}</span>
-                    {session.scheduled_at && <span>{new Date(session.scheduled_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>}
-                    <span>❓ {session.questions_count ?? 0} questions</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => openSession(session)}
-                  className="flex-shrink-0 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors"
-                >
-                  {session.status === 'live' ? '🔴 Rejoindre' : session.status === 'ended' ? 'Voir les Q&R' : 'Poser une question'}
-                </button>
-              </div>
-            </div>
-          );
-        })
-      )}
-
-      {/* AMA Session modal */}
-      {selectedSession && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-            <div className="flex items-start justify-between p-5 border-b border-[#C8C3B0]">
-              <div>
-                <h3 className="font-display font-700 text-[#1C2620] text-lg">{selectedSession.title}</h3>
-                <p className="text-xs text-[#5C6B5E] mt-0.5">Par {selectedSession.expert?.full_name} · {amaQuestions.length} questions</p>
-              </div>
-              <button onClick={() => setSelectedSession(null)} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-5 space-y-3">
-              {amaQuestions.length === 0 ? (
-                <p className="text-center text-[#5C6B5E] text-sm py-8">Aucune question pour l&apos;instant. Soyez le premier !</p>
               ) : (
-                amaQuestions.map((q) => (
-                  <div key={q.id} className={`p-4 rounded-xl border ${q.is_answered ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-[#C8C3B0]'}`}>
-                    <p className="text-sm text-[#1C2620] mb-1">{q.content}</p>
-                    {q.is_answered && q.answer && (
-                      <div className="mt-2 pl-3 border-l-2 border-emerald-400">
-                        <p className="text-[10px] font-700 text-emerald-600 mb-0.5">Réponse de l&apos;expert</p>
-                        <p className="text-xs text-[#5C6B5E]">{q.answer}</p>
-                      </div>
-                    )}
-                    <p className="text-[10px] text-[#5C6B5E] mt-1">{q.author?.full_name ?? 'Anonyme'} · ▲ {q.votes_count ?? 0}</p>
+                topics.map(t => (
+                  <div key={t.id} className="bg-white p-4 rounded-2xl border border-[#E8E4D8] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-sm text-[#1C2620]">{t.title}</h4>
+                      {t.is_pinned && <span className="bg-[#2D5A3D]/10 text-[#2D5A3D] text-[9px] font-mono px-2 py-0.5 rounded-full font-bold">📌 ÉPINGLÉ</span>}
+                    </div>
+                    {t.content && <p className="text-xs text-[#4A574C] leading-relaxed">{t.content}</p>}
+                    <div className="flex items-center justify-between text-[10px] text-[#5C6B5E] pt-2 border-t border-[#F5F2E8]">
+                      <span>Par {t.author?.full_name || 'Anonyme'}</span>
+                      <span>❤️ {t.likes_count || 0} likes</span>
+                    </div>
                   </div>
                 ))
               )}
             </div>
-            {user && selectedSession.status !== 'ended' && (
-              <div className="p-5 border-t border-[#C8C3B0] flex gap-3">
-                <input
-                  className="flex-1 bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30"
-                  placeholder="Posez votre question à l'expert..."
-                  value={newAmaQ}
-                  onChange={(e) => setNewAmaQ(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitAmaQ(); } }}
-                />
-                <button onClick={handleSubmitAmaQ} disabled={submitting || !newAmaQ.trim()} className="px-4 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-600 disabled:opacity-50 hover:bg-[#E4501C]/90 transition-colors">
-                  {submitting ? '...' : 'Envoyer'}
-                </button>
-              </div>
-            )}
-          </div>
+          ) : activeTab === 'members' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {members.map(m => (
+                <div key={m.id} className="bg-white p-3 rounded-2xl border border-[#E8E4D8] flex items-center gap-3">
+                  <img src={m.user?.avatar_url || 'https://i.pravatar.cc/150'} className="w-9 h-9 rounded-full object-cover border border-[#E8E4D8]" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-xs text-[#1C2620] truncate">{m.user?.full_name || 'Membre'}</p>
+                    <span className="text-[9px] font-mono text-[#2D5A3D] bg-[#EAF0EB] px-2 py-0.5 rounded-full uppercase">
+                      {m.role === 'admin' ? '👑 Admin' : m.role === 'moderator' ? '🛡️ Modo' : 'Membre'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : activeTab === 'challenges' ? (
+            <div className="space-y-3">
+              {challenges.length === 0 ? (
+                <div className="text-center py-10 bg-white rounded-2xl border border-[#E8E4D8]">
+                  <p className="text-xs text-[#5C6B5E]">Aucun défi actif actuellement.</p>
+                </div>
+              ) : (
+                challenges.map(ch => (
+                  <div key={ch.id} className="bg-white p-4 rounded-2xl border border-[#E8E4D8] flex items-center justify-between gap-4">
+                    <div>
+                      <h4 className="font-bold text-sm text-[#1C2620] mb-1">{ch.title}</h4>
+                      <p className="text-xs text-[#4A574C] mb-2">{ch.description}</p>
+                      <span className="bg-[#E4501C]/10 text-[#E4501C] text-[10px] font-bold px-2.5 py-1 rounded-full">+{ch.xp} XP</span>
+                    </div>
+                    <button className="px-4 py-2 bg-[#1C2620] text-white rounded-full text-xs font-bold hover:bg-[#2D5A3D] transition-colors">Relever</button>
+                  </div>
+                ))
+              )}
+            </div>
+          ) : activeTab === 'events' ? (
+            <div className="space-y-4">
+              {isAdmin && (
+                <div className="bg-white p-4 rounded-2xl border border-[#E8E4D8] space-y-3">
+                  <h4 className="font-bold text-xs text-[#1C2620] uppercase tracking-wider">Planifier une sortie</h4>
+                  <input type="text" placeholder="Titre de la sortie..." className="w-full bg-[#F5F2E8] border-none rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#2D5A3D]" value={newEvent.title} onChange={e => setNewEvent({ ...newEvent, title: e.target.value })} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input type="datetime-local" className="bg-[#F5F2E8] border-none rounded-xl px-3 py-2 text-xs" value={newEvent.event_date} onChange={e => setNewEvent({ ...newEvent, event_date: e.target.value })} />
+                    <input type="text" placeholder="Lieu..." className="bg-[#F5F2E8] border-none rounded-xl px-3 py-2 text-xs" value={newEvent.location} onChange={e => setNewEvent({ ...newEvent, location: e.target.value })} />
+                  </div>
+                  <button onClick={handlePostEvent} disabled={postingEvent || !newEvent.title.trim()} className="px-4 py-2 bg-[#2D5A3D] text-white rounded-full text-xs font-bold disabled:opacity-50">
+                    {postingEvent ? 'Création...' : 'Créer l\'événement'}
+                  </button>
+                </div>
+              )}
+              {events.length === 0 ? (
+                <div className="text-center py-10 bg-white rounded-2xl border border-[#E8E4D8]">
+                  <p className="text-xs text-[#5C6B5E]">Aucune sortie planifiée.</p>
+                </div>
+              ) : (
+                events.map(ev => (
+                  <div key={ev.id} className="bg-white p-4 rounded-2xl border border-[#E8E4D8] flex items-center justify-between gap-4">
+                    <div>
+                      <h4 className="font-bold text-sm text-[#1C2620]">{ev.title}</h4>
+                      <p className="text-xs text-[#5C6B5E] mt-0.5">📍 {ev.location || 'En ligne'} · {ev.event_date ? new Date(ev.event_date).toLocaleDateString('fr-FR') : 'Date à venir'}</p>
+                    </div>
+                    <button className="px-4 py-2 bg-[#2D5A3D] text-white rounded-full text-xs font-bold">Participer</button>
+                  </div>
+                ))
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {pendingRequests.length === 0 ? (
+                <div className="text-center py-10 bg-white rounded-2xl border border-[#E8E4D8]">
+                  <p className="text-xs text-[#5C6B5E]">Aucune demande en attente.</p>
+                </div>
+              ) : (
+                pendingRequests.map(r => (
+                  <div key={r.id} className="bg-white p-4 rounded-2xl border border-[#E8E4D8] flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <img src={r.user?.avatar_url || 'https://i.pravatar.cc/150'} className="w-8 h-8 rounded-full object-cover" />
+                      <span className="font-bold text-xs text-[#1C2620]">{r.user?.full_name || 'Utilisateur'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => handleApproveRequest(r.id, r.user_id, true)} className="px-3 py-1.5 bg-[#2D5A3D] text-white rounded-full text-xs font-bold">Accepter</button>
+                      <button onClick={() => handleApproveRequest(r.id, r.user_id, false)} className="px-3 py-1.5 bg-[#F5F2E8] text-[#5C6B5E] rounded-full text-xs font-bold">Refuser</button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
-      )}
 
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1C2620] text-white px-5 py-3 rounded-xl text-sm font-600 shadow-xl">
-          {toast}
-        </div>
-      )}
+        {toast && (
+          <div className="bg-[#1C2620] text-white text-xs font-bold px-4 py-2 text-center">
+            {toast}
+          </div>
+        )}
+      </motion.div>
     </div>
   );
 }
 
-// ─── Groups Tab ───────────────────────────────────────────────────────────────
-function GroupesTab() {
-  const [publicGroups, setPublicGroups] = useState<{ id: string; name: string; destination: string; theme: string; visibility: string; group_level: number; optimization_score: number; max_members: number; budget_target: number; departure_date: string | null; member_count?: number; owner?: { full_name: string } | null }[]>([]);
-  const [myGroupIds, setMyGroupIds] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [joining, setJoining] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN PAGE COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
+export default function CommunautePage() {
   const { user } = useAuth();
-  const supabase = useMemo(() => createClient(), []);
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
+  const router = useRouter();
+  
+  // Tabs State
+  const [activeTab, setActiveTab] = useState('Feed');
+  
+  // Clubs Tab State & Modals
+  const [clubFilterTab, setClubFilterTab] = useState<'all' | 'activite' | 'pays' | 'my_clubs'>('all');
+  const [clubSearchQuery, setClubSearchQuery] = useState('');
+  const [isCreateClubModalOpen, setIsCreateClubModalOpen] = useState(false);
+  const [selectedDetailClub, setSelectedDetailClub] = useState<any | null>(null);
+  const [isSavingClub, setIsSavingClub] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const THEME_EMOJI: Record<string, string> = {
-    Trek: '🏔️', 'Van Life': '🚐', Randonnée: '🥾', Expédition: '🧭', 'Tour du monde': '🌍',
-    Plage: '🏖️', Ski: '⛷️', Vélo: '🚴', Moto: '🏍️', Autre: '🎒',
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
   };
+  
+  // Carnets Tab State & Modals
+  const [carnetFilterCategory, setCarnetFilterCategory] = useState<string>('all');
+  const [carnetSearchQuery, setCarnetSearchQuery] = useState('');
+  const [isCreateCarnetModalOpen, setIsCreateCarnetModalOpen] = useState(false);
+  const [isSavingCarnet, setIsSavingCarnet] = useState(false);
+
+  // Data States
+  const [posts, setPosts] = useState<any[]>([]);
+  const [carnets, setCarnets] = useState<any[]>([]);
+  const [clubs, setClubs] = useState<any[]>([]);
+  const [travelGroups, setTravelGroups] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [newMembers, setNewMembers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Modal State
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [isCreateGroupWizardOpen, setIsCreateGroupWizardOpen] = useState(false);
+  const [newPostContent, setNewPostContent] = useState('');
+  const [isPublishing, setIsPublishing] = useState(false);
+  
+  // File Upload State
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    const load = async () => {
+    if (!user) return;
+    
+    async function fetchData() {
+      const supabase = createClient();
       setLoading(true);
-      const { data } = await supabase
-        .from('travel_groups')
-        .select('*, owner:user_profiles!travel_groups_owner_id_fkey(full_name)')
-        .eq('visibility', 'public')
-        .order('created_at', { ascending: false })
-        .limit(12);
-      const enriched = await Promise.all((data || []).map(async (g) => {
-        const { count } = await supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('group_id', g.id).eq('status', 'active');
-        return { ...g, member_count: count || 0 };
-      }));
-      setPublicGroups(enriched);
-      if (user) {
-        const { data: memberData } = await supabase.from('group_members').select('group_id').eq('user_id', user.id).eq('status', 'active');
-        setMyGroupIds((memberData || []).map(m => m.group_id));
-      }
-      setLoading(false);
-    };
-    load();
-  }, [supabase, user]);
+      
+      try {
+        // Fetch Community Posts (Feed)
+        const { data: postsData } = await supabase
+          .from('community_posts')
+          .select(`
+            *,
+            author:user_profiles!community_posts_author_id_fkey(full_name, avatar_url, loyalty_level)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(20);
 
-  const handleJoin = async (groupId: string, groupName: string) => {
-    if (!user) { showToast('Connectez-vous pour rejoindre un groupe'); return; }
-    setJoining(groupId);
-    try {
-      const { error } = await supabase.from('group_members').insert({ group_id: groupId, user_id: user.id, role: 'member', status: 'active' });
-      if (error && error.code !== '23505') throw error;
-      setMyGroupIds(prev => [...prev, groupId]);
-      showToast(`Vous avez rejoint "${groupName}" !`);
-    } catch { showToast('Erreur lors de la tentative'); }
-    finally { setJoining(null); }
+        if (postsData) setPosts(postsData);
+
+        // Fetch Carnets (Long form & LocalStorage sync)
+        let localCarnets: any[] = [];
+        try {
+          localCarnets = JSON.parse(localStorage.getItem('user_carnets_data') || '[]');
+        } catch (e) {
+          console.error(e);
+        }
+
+        const { data: carnetsData } = await supabase
+          .from('carnets')
+          .select(`*, author:user_profiles!author_id(full_name, avatar_url)`)
+          .order('created_at', { ascending: false })
+          .limit(20);
+          
+        let remoteCarnets = carnetsData || [];
+        if (!carnetsData) {
+          const { data: cData2 } = await supabase.from('carnets').select(`*, author:user_profiles(full_name, avatar_url)`).limit(20);
+          if (cData2) remoteCarnets = cData2;
+        }
+
+        const allCarnets = [...localCarnets, ...remoteCarnets];
+        const uniqueCarnets = Array.from(new Map(allCarnets.map(item => [item.id || item.title, item])).values());
+        setCarnets(uniqueCarnets);
+
+        // Fetch Clubs with user membership check
+        const { data: clubsData } = await supabase
+          .from('clubs')
+          .select('*')
+          .order('members_count', { ascending: false });
+
+        if (clubsData) {
+          let memberMap: Record<string, { role: string; status: string }> = {};
+          if (user) {
+            const { data: memberships } = await supabase
+              .from('club_members')
+              .select('club_id, role, status')
+              .eq('user_id', user.id);
+            if (memberships) {
+              memberMap = Object.fromEntries(memberships.map((m: any) => [m.club_id, { role: m.role, status: m.status }]));
+            }
+          }
+          setClubs(clubsData.map((c: any) => ({
+            ...c,
+            is_member: !!memberMap[c.id] && memberMap[c.id].status === 'active',
+            member_role: memberMap[c.id]?.role,
+            member_status: memberMap[c.id]?.status,
+          })));
+        }
+
+        // Fetch Travel Groups (user-created groups from the wizard)
+        const { data: travelGroupsData } = await supabase
+          .from('travel_groups')
+          .select('*, owner:user_profiles!travel_groups_owner_id_fkey(full_name, avatar_url)')
+          .eq('visibility', 'public')
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        if (travelGroupsData) setTravelGroups(travelGroupsData);
+
+        // Fetch Events
+        const { data: eventsData } = await supabase
+          .from('club_events')
+          .select('*')
+          .order('event_date', { ascending: true })
+          .limit(3);
+
+        if (eventsData) setEvents(eventsData);
+
+        // Fetch New Members
+        const { data: membersData } = await supabase
+          .from('user_profiles')
+          .select('avatar_url')
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (membersData) setNewMembers(membersData);
+
+      } catch (err) {
+        console.error('Error fetching community data:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [user]);
+
+  useEffect(() => {
+    const handleCarnetCreated = () => {
+      try {
+        const saved = JSON.parse(localStorage.getItem('user_carnets_data') || '[]');
+        if (saved.length > 0) {
+          setCarnets(prev => {
+            const combined = [...saved, ...prev];
+            return Array.from(new Map(combined.map(item => [item.id || item.title, item])).values());
+          });
+        }
+      } catch (e) {
+        console.error("Error updating carnets list:", e);
+      }
+    };
+
+    window.addEventListener('carnet_created', handleCarnetCreated);
+    handleCarnetCreated();
+    return () => window.removeEventListener('carnet_created', handleCarnetCreated);
+  }, []);
+
+  // Handler to toggle club membership (Join / Leave / Request)
+  const handleToggleClubMember = async (clubId: string, isCurrentlyMember: boolean) => {
+    if (!user) {
+      showToast('Connectez-vous pour rejoindre un club');
+      return;
+    }
+    const club = clubs.find((c) => c.id === clubId);
+    if (!club) return;
+
+    const supabase = createClient();
+    if (isCurrentlyMember) {
+      // Leave club
+      setClubs(prev => prev.map(c => c.id === clubId ? { ...c, is_member: false, members_count: Math.max(0, (c.members_count || 1) - 1) } : c));
+      showToast('Vous avez quitté le club');
+      await supabase.from('club_members').delete().eq('club_id', clubId).eq('user_id', user.id);
+      await supabase.from('clubs').update({ members_count: Math.max(0, (club.members_count || 1) - 1) }).eq('id', clubId);
+    } else if (club.privacy === 'open') {
+      // Join open club
+      setClubs(prev => prev.map(c => c.id === clubId ? { ...c, is_member: true, member_role: 'member', members_count: (c.members_count || 0) + 1 } : c));
+      showToast('Bienvenue dans le club ! 🎉');
+      await supabase.from('club_members').insert({ club_id: clubId, user_id: user.id, role: 'member', status: 'active' });
+      await supabase.from('clubs').update({ members_count: (club.members_count || 0) + 1 }).eq('id', clubId);
+    } else {
+      // Send join request for closed/secret club
+      await supabase.from('club_join_requests').upsert({ club_id: clubId, user_id: user.id, status: 'pending' }, { onConflict: 'club_id,user_id' });
+      showToast("Demande d'adhésion envoyée !");
+    }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-display font-700 text-xl text-[#1C2620]">Groupes de voyage</h2>
-          <p className="text-xs text-[#5C6B5E] mt-0.5">Rejoignez des aventuriers qui partagent vos destinations</p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/groupes" className="flex items-center gap-2 px-4 py-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl text-sm font-600 hover:text-[#1C2620] transition-colors">
-            <Icon name="UserGroupIcon" size={14} /> Mes groupes
-          </Link>
-          <Link href="/groupes?tab=decouvrir" className="flex items-center gap-2 px-4 py-2 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors">
-            <Icon name="MagnifyingGlassIcon" size={14} /> Explorer tout
-          </Link>
-        </div>
+  // Handler to create a new club
+  const handleSaveClub = async (form: any) => {
+    if (!user) return;
+    setIsSavingClub(true);
+    try {
+      const supabase = createClient();
+      const colorMap: Record<string, string> = {
+        'activité': 'from-emerald-600 to-teal-700',
+        'pays': 'from-blue-600 to-indigo-700',
+      };
+      const slug = `c-${form.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}-${Date.now()}`;
+      const payload = {
+        name: form.name,
+        type: form.type || 'activité',
+        emoji: form.emoji || '🏕️',
+        description: form.description || '',
+        category: form.category || 'Général',
+        rules: form.rules || '',
+        privacy: form.privacy || 'open',
+        cover_color: colorMap[form.type] || 'from-emerald-600 to-teal-700',
+        created_by: user.id,
+        slug,
+        members_count: 1,
+        active_this_month: 1
+      };
+
+      const { data: newClub, error } = await supabase.from('clubs').insert(payload).select().single();
+      if (error) throw error;
+
+      if (newClub) {
+        await supabase.from('club_members').insert({ club_id: newClub.id, user_id: user.id, role: 'admin', status: 'active' });
+      }
+
+      showToast("Club créé avec succès ! Vous en êtes l'administrateur.");
+      setIsCreateClubModalOpen(false);
+
+      // Refresh clubs
+      const { data: refreshedClubs } = await supabase.from('clubs').select('*').order('members_count', { ascending: false });
+      if (refreshedClubs) {
+        setClubs(refreshedClubs.map(c => ({
+          ...c,
+          is_member: c.id === (newClub?.id) ? true : c.is_member,
+          member_role: c.id === (newClub?.id) ? 'admin' : c.member_role
+        })));
+      }
+    } catch (err: any) {
+      console.error("Error creating club:", err);
+      alert("Erreur lors de la création du club: " + (err.message || err));
+    } finally {
+      setIsSavingClub(false);
+    }
+  };
+
+  // Handler to create a new carnet
+  const handleSaveCarnet = async (form: any) => {
+    if (!user) return;
+    setIsSavingCarnet(true);
+    try {
+      const supabase = createClient();
+      const payload = {
+        title: form.title,
+        destination: form.destination || 'Alpes',
+        description: form.description || '',
+        cover_image: form.cover_image || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1000',
+        duration: form.duration || '3 jours',
+        distance_km: form.distance_km || 45,
+        elevation_m: form.elevation_m || 2400,
+        author_id: user.id,
+        likes_count: 0,
+        comments_count: 0
+      };
+
+      const { data: newCarnet, error } = await supabase.from('carnets').insert(payload).select(`
+        *,
+        author:user_profiles!author_id(full_name, avatar_url)
+      `).single();
+
+      if (error) throw error;
+
+      if (newCarnet) {
+        setCarnets([newCarnet, ...carnets]);
+      }
+      showToast("Carnet de voyage publié avec succès !");
+      setIsCreateCarnetModalOpen(false);
+    } catch (err: any) {
+      console.error("Error creating carnet:", err);
+      alert("Erreur lors de la création du carnet : " + (err.message || err));
+    } finally {
+      setIsSavingCarnet(false);
+    }
+  };
+
+  const filteredCarnets = useMemo(() => {
+    return carnets.filter(c => {
+      if (carnetFilterCategory !== 'all' && (c.category || '').toLowerCase() !== carnetFilterCategory.toLowerCase()) {
+        if (!(c.destination || '').toLowerCase().includes(carnetFilterCategory.toLowerCase())) {
+          return false;
+        }
+      }
+      if (carnetSearchQuery.trim()) {
+        const q = carnetSearchQuery.toLowerCase();
+        const matchTitle = (c.title || '').toLowerCase().includes(q);
+        const matchDest = (c.destination || '').toLowerCase().includes(q);
+        const matchDesc = (c.description || '').toLowerCase().includes(q);
+        if (!matchTitle && !matchDest && !matchDesc) return false;
+      }
+      return true;
+    });
+  }, [carnets, carnetFilterCategory, carnetSearchQuery]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handlePublish = async () => {
+    if (!newPostContent.trim() && !selectedFile) return;
+    setIsPublishing(true);
+    
+    try {
+      const supabase = createClient();
+      
+      // In a real app, we would upload the file to Supabase Storage here and get the public URL.
+      // For this demo, if there's a preview URL, we'll just pass it directly (it's a blob: URL and will only work locally).
+      const imageUrl = previewUrl ? previewUrl : null;
+      
+      const { data, error } = await supabase
+        .from('community_posts')
+        .insert({
+          author_id: user?.id,
+          content: newPostContent.trim(),
+          post_type: 'share',
+          likes_count: 0,
+          comments_count: 0,
+          image_url: imageUrl
+        })
+        .select(`
+          *,
+          author:user_profiles!community_posts_author_id_fkey(full_name, avatar_url, loyalty_level)
+        `)
+        .single();
+        
+      if (data && !error) {
+        setPosts([data, ...posts]);
+        setNewPostContent('');
+        handleRemoveFile();
+        setIsPublishModalOpen(false);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  // Si l'utilisateur n'est pas connecté
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#F5F2E8] font-sans flex flex-col">
+        <Header />
+        <main className="flex-1 pt-24 px-4 flex items-center justify-center">
+          <div className="text-center max-w-md w-full">
+            <div className="w-20 h-20 bg-[#1C2620] rounded-[2rem] mx-auto flex items-center justify-center text-white mb-8 shadow-xl">
+              <Icon name="UserGroupIcon" size={32} />
+            </div>
+            <h1 className="font-display font-800 text-3xl sm:text-4xl text-[#1C2620] mb-4">
+              Rejoignez la <em className="font-serif italic font-normal text-[#2D5A3D]">Communauté</em>
+            </h1>
+            <p className="text-sm text-[#5C6B5E] mb-8 leading-relaxed">
+              Le Hub Voyageurs est un espace privé réservé aux explorateurs pour partager leurs récits, leurs traces et leurs conseils en toute bienveillance.
+            </p>
+            <Link 
+              href="/connexion" 
+              className="inline-flex items-center gap-2 bg-[#1C2620] hover:bg-[#2A3830] text-white px-8 py-4 rounded-full font-semibold text-sm transition-all shadow-md"
+            >
+              Se connecter ou s'inscrire
+            </Link>
+          </div>
+        </main>
+        <Footer />
       </div>
+    );
+  }
 
-      {/* CTA for non-logged users */}
-      {!user && (
-        <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-5 text-center">
-          <p className="text-3xl mb-2">🗺️</p>
-          <p className="font-display font-700 text-[#1C2620] mb-1">Voyagez en groupe</p>
-          <p className="text-sm text-[#5C6B5E] mb-4">Connectez-vous pour créer ou rejoindre des groupes de voyage</p>
-          <Link href="/connexion" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors">
-            <Icon name="ArrowRightOnRectangleIcon" size={14} /> Se connecter
-          </Link>
-        </div>
-      )}
+  return (
+    <div className="min-h-screen bg-[#F5F2E8] font-sans text-[#1C2620] selection:bg-[#E4501C]/20 relative">
+      <Header />
+      
+      <main className="pt-24 pb-20">
+        
+        {/* HERO SECTION */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+          <div className="relative w-full min-h-[450px] rounded-[2.5rem] overflow-hidden flex flex-col justify-end p-8 sm:p-10 md:p-14 shadow-xl">
+            {/* Background Image */}
+            <div className="absolute inset-0">
+              <img 
+                src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=1600" 
+                alt="Sunset hiking" 
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1C2620] via-[#1C2620]/80 to-transparent"></div>
+            </div>
 
-      {/* Groups grid */}
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl h-48 animate-pulse" />)}
+            {/* Top Bar (inside hero) */}
+            <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-auto pb-8">
+              <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-white/80 text-[10px] font-mono tracking-widest uppercase border border-white/10">
+                LE HUB VOYAGEURS - Privé
+              </div>
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-md px-6 py-2.5 rounded-full text-white font-medium text-xs transition-colors border border-white/20 shadow-sm"
+              >
+                Explorer
+              </motion.button>
+            </div>
+
+            {/* Content */}
+            <div className="relative z-10 w-full max-w-4xl mt-12">
+              <h1 className="font-display font-800 text-4xl sm:text-5xl md:text-7xl text-white leading-[1.05] mb-6">
+                Ceux qui marchent, <br /><em className="font-serif italic font-normal text-[#E4501C]">parlent doucement.</em>
+              </h1>
+              <p className="text-white/70 text-sm md:text-base leading-relaxed max-w-lg mb-10 font-medium">
+                Un feed sans algorithme. Des voyageurs, des refuges partagés, des itinéraires qu'on se recommande de bouche à oreille. Ici on écrit long, on répond bien.
+              </p>
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 border-t border-white/10">
+                <div>
+                  <div className="font-display font-800 text-white text-3xl mb-1">12 <em className="font-serif italic font-normal text-white/60 text-2xl">4k</em></div>
+                  <div className="text-[9px] font-mono text-white/50 tracking-widest uppercase">Voyageurs actifs</div>
+                </div>
+                <div>
+                  <div className="font-display font-800 text-white text-3xl mb-1">348</div>
+                  <div className="text-[9px] font-mono text-white/50 tracking-widest uppercase">Récits ce mois</div>
+                </div>
+                <div>
+                  <div className="font-display font-800 text-white text-3xl mb-1">{clubs.length > 0 ? clubs.length * 12 : 62}</div>
+                  <div className="text-[9px] font-mono text-white/50 tracking-widest uppercase">Clubs thématiques</div>
+                </div>
+                <div>
+                  <div className="font-display font-800 text-white text-3xl mb-1">{events.length > 0 ? events.length * 9 : 27} <em className="font-serif italic font-normal text-white/60 text-2xl">sorties</em></div>
+                  <div className="text-[9px] font-mono text-white/50 tracking-widest uppercase">Prévues cette semaine</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      ) : publicGroups.length === 0 ? (
-        <div className="text-center py-16 text-[#5C6B5E]">
-          <p className="text-4xl mb-3">🗺️</p>
-          <p className="font-display font-700 text-[#1C2620] text-lg mb-1">Aucun groupe public</p>
-          <p className="text-sm mb-4">Soyez le premier à créer un groupe de voyage !</p>
-          <Link href="/groupes" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-700 hover:bg-[#E4501C]/90 transition-colors">
-            <Icon name="PlusIcon" size={14} /> Créer un groupe
-          </Link>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {publicGroups.map(group => {
-            const isMember = myGroupIds.includes(group.id);
-            return (
-              <div key={group.id} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl overflow-hidden hover:shadow-md hover:border-[#E4501C]/30 transition-all">
-                <div className="bg-[#1C2620] p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-xl flex-shrink-0">
-                        {THEME_EMOJI[group.theme] || '🎒'}
-                      </div>
-                      <div>
-                        <h3 className="font-display font-700 text-white text-sm leading-tight">{group.name}</h3>
-                        <p className="text-white/50 text-[10px] flex items-center gap-1 mt-0.5">
-                          <Icon name="MapPinIcon" size={9} /> {group.destination}
+
+        {/* MAIN LAYOUT */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+            
+            {/* LEFT COLUMN (FEED/CONTENT) */}
+            <div className="lg:col-span-8">
+              
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4 overflow-x-auto pb-2">
+                <h2 className="font-display font-800 text-3xl text-[#1C2620] flex-shrink-0">
+                  Le fil <em className="font-serif italic font-normal text-[#2D5A3D]">de la maison</em>
+                </h2>
+                <div className="flex bg-white rounded-full p-1 border border-[#E8E4D8] shadow-sm flex-shrink-0">
+                  {['Feed', 'Carnets', 'Clubs', 'Groupes'].map(tab => (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`px-5 py-2 rounded-full text-xs font-semibold transition-all ${activeTab === tab ? 'bg-[#F5F2E8] text-[#1C2620] shadow-sm' : 'text-[#5C6B5E] hover:text-[#1C2620]'}`}
+                    >
+                      {tab}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+
+              {/* TABS CONTENT */}
+              <div className="space-y-8">
+                {loading ? (
+                  <div className="flex justify-center py-20">
+                    <div className="w-8 h-8 border-2 border-[#2D5A3D] border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : activeTab === 'Feed' ? (
+                  // TAB: FEED (community_posts)
+                  posts.length > 0 ? (
+                    posts.map((post, i) => <PostCard key={post.id || i} post={post} user={user} />)
+                  ) : (
+                    <div className="text-center py-20 bg-white rounded-[2rem] border border-[#E8E4D8]">
+                      <Icon name="DocumentTextIcon" size={32} className="mx-auto text-[#C8C3B0] mb-4" />
+                      <p className="text-[#5C6B5E] font-medium">Le fil est vide. Soyez le premier à publier !</p>
+                    </div>
+                  )
+                ) : activeTab === 'Carnets' ? (
+                  // TAB: CARNETS (Redesigned matching media__1785172253456.png)
+                  <div className="space-y-10">
+                    {/* 1. Header Banner & Counter */}
+                    <div className="bg-white rounded-[2.5rem] p-6 sm:p-10 border border-[#E8E4D8] shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+                      <div className="space-y-3 max-w-xl">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EAF0EB] text-[#2D5A3D] text-[10px] font-mono tracking-widest uppercase">
+                          <span>📖</span> LES CARNETS DE VOYAGE
+                        </div>
+                        <h2 className="font-display font-800 text-3xl sm:text-4xl text-[#1C2620]">
+                          Mes voyages, <em className="font-serif italic font-normal text-[#2D5A3D]">préservés.</em>
+                        </h2>
+                        <p className="text-xs sm:text-sm text-[#5C6B5E] leading-relaxed">
+                          Retrouvez les carnets de route des membres, leurs traces GPS, photos et récits d'expéditions en montagne et pleine nature.
                         </p>
                       </div>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="font-mono font-700 text-[#E4501C] text-base">{group.optimization_score}</div>
-                      <div className="text-[10px] text-white/40">score</div>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <div className="grid grid-cols-3 gap-2 mb-3">
-                    <div className="text-center p-1.5 bg-white/60 rounded-xl border border-[#C8C3B0]/50">
-                      <p className="font-mono font-700 text-[#1C2620] text-sm">{group.member_count || 0}</p>
-                      <p className="text-[10px] text-[#5C6B5E]">membres</p>
-                    </div>
-                    <div className="text-center p-1.5 bg-white/60 rounded-xl border border-[#C8C3B0]/50">
-                      <p className="font-mono font-700 text-[#1C2620] text-sm">{group.budget_target > 0 ? `${group.budget_target}€` : '—'}</p>
-                      <p className="text-[10px] text-[#5C6B5E]">budget</p>
-                    </div>
-                    <div className="text-center p-1.5 bg-white/60 rounded-xl border border-[#C8C3B0]/50">
-                      <p className="font-mono font-700 text-[#1C2620] text-sm">Niv.{group.group_level}</p>
-                      <p className="text-[10px] text-[#5C6B5E]">niveau</p>
-                    </div>
-                  </div>
-                  {group.departure_date && (
-                    <p className="text-[10px] text-[#5C6B5E] flex items-center gap-1 mb-3">
-                      <Icon name="CalendarIcon" size={9} />
-                      {new Date(group.departure_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                    </p>
-                  )}
-                  {group.owner && (
-                    <p className="text-[10px] text-[#5C6B5E] mb-3">Par <span className="font-600 text-[#1C2620]">{group.owner.full_name}</span></p>
-                  )}
-                  <div className="flex gap-2">
-                    {isMember ? (
-                      <Link href={`/groupe?group=${group.id}`} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#1C2620] hover:bg-[#1C2620]/80 text-white rounded-xl text-xs font-700 transition-colors">
-                        <Icon name="ArrowRightIcon" size={11} /> Ouvrir
-                      </Link>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => handleJoin(group.id, group.name)}
-                          disabled={joining === group.id || (group.member_count || 0) >= group.max_members}
-                          className="flex-1 py-2 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white rounded-xl text-xs font-700 transition-colors disabled:opacity-50"
+
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                        <div className="bg-[#F5F2E8] px-5 py-3 rounded-2xl text-center border border-[#E8E4D8]">
+                          <span className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block">CARNETS</span>
+                          <span className="font-display font-800 text-2xl text-[#1C2620]">{carnets.length}</span>
+                        </div>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setIsCreateCarnetModalOpen(true)}
+                          className="px-6 py-3.5 bg-[#2D5A3D] hover:bg-[#1C2620] text-white rounded-full font-bold text-xs shadow-md flex items-center gap-2 whitespace-nowrap"
                         >
-                          {joining === group.id ? '...' : (group.member_count || 0) >= group.max_members ? 'Complet' : 'Rejoindre'}
+                          <Icon name="PlusIcon" size={16} /> Nouveau carnet
+                        </motion.button>
+                      </div>
+                    </div>
+
+                    {/* 2. Category Filter Pills & Live Search */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                      <div className="flex bg-white rounded-full p-1 border border-[#E8E4D8] shadow-sm overflow-x-auto">
+                        {[
+                          { id: 'all', label: 'Tous' },
+                          { id: 'Trek', label: '🏔️ Trek' },
+                          { id: 'Bivouac', label: '🏕️ Bivouac' },
+                          { id: 'Kayak', label: '🚣 Kayak' },
+                          { id: 'Van Life', label: '🚐 Van Life' },
+                          { id: 'Vélo', label: '🚵 Vélo' }
+                        ].map(cat => (
+                          <button
+                            key={cat.id}
+                            onClick={() => setCarnetFilterCategory(cat.id)}
+                            className={`px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${carnetFilterCategory === cat.id ? 'bg-[#1C2620] text-white shadow-sm' : 'text-[#5C6B5E] hover:text-[#1C2620]'}`}
+                          >
+                            {cat.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="relative">
+                        <Icon name="MagnifyingGlassIcon" size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C6B5E]" />
+                        <input
+                          type="text"
+                          value={carnetSearchQuery}
+                          onChange={e => setCarnetSearchQuery(e.target.value)}
+                          placeholder="Rechercher un récit ou lieu..."
+                          className="bg-white border border-[#E8E4D8] rounded-full pl-9 pr-4 py-2 text-xs text-[#1C2620] focus:ring-1 focus:ring-[#2D5A3D] w-full sm:w-64"
+                        />
+                        {carnetSearchQuery && (
+                          <button onClick={() => setCarnetSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5C6B5E] text-xs">✕</button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 3. Featured Carnet Showcase (Carnet à la une) */}
+                    {carnets.length > 0 && (
+                      <div className="bg-white rounded-[2.5rem] overflow-hidden border border-[#E8E4D8] shadow-sm flex flex-col md:flex-row group">
+                        <div className="w-full md:w-5/12 relative min-h-[220px] md:min-h-[300px] overflow-hidden shrink-0">
+                          <img
+                            src={carnets[0].cover_image || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1000'}
+                            alt={carnets[0].title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          />
+                          <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
+                            <span className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-mono font-bold text-[#1C2620] shadow-sm flex items-center gap-1">
+                              <Icon name="MapPinIcon" size={10} className="text-[#E4501C]" />
+                              {carnets[0].destination || 'Chartreuse'}
+                            </span>
+                            <span className="bg-[#1C2620]/90 text-white backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-mono">
+                              {carnets[0].duration || '4 jours'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="w-full md:w-7/12 p-6 sm:p-7 flex flex-col justify-between space-y-4">
+                          <div>
+                            <div className="text-[10px] font-mono tracking-widest text-[#E4501C] uppercase mb-1.5 font-bold">CARNET À LA UNE</div>
+                            <h3 className="font-display font-800 text-xl sm:text-2xl text-[#1C2620] mb-2 group-hover:text-[#2D5A3D] transition-colors leading-snug">
+                              {carnets[0].title}
+                            </h3>
+                            <p className="text-xs text-[#4A574C] leading-relaxed line-clamp-3 mb-4">
+                              {carnets[0].description || 'Récit complet de l\'expédition avec carte d\'itinéraire et traces GPS.'}
+                            </p>
+
+                            <div className="flex flex-wrap gap-2">
+                              <span className="bg-[#F5F2E8] text-[#1C2620] px-2.5 py-1 rounded-full text-[10px] font-mono">⏱️ {carnets[0].duration || '4 jours'}</span>
+                              <span className="bg-[#F5F2E8] text-[#1C2620] px-2.5 py-1 rounded-full text-[10px] font-mono">📏 {carnets[0].distance_km || 52} km</span>
+                              <span className="bg-[#F5F2E8] text-[#1C2620] px-2.5 py-1 rounded-full text-[10px] font-mono">⛰️ +{carnets[0].elevation_m || 3200} m</span>
+                            </div>
+                          </div>
+
+                          <div className="pt-3 border-t border-[#F5F2E8] flex items-center justify-between gap-3 mt-auto">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <img src={carnets[0].author?.avatar_url || 'https://i.pravatar.cc/150'} className="w-7 h-7 rounded-full object-cover border border-[#E8E4D8] shrink-0" />
+                              <span className="font-bold text-xs text-[#1C2620] truncate">{carnets[0].author?.full_name || 'Voyageur'}</span>
+                            </div>
+
+                            <button
+                              onClick={() => router.push(`/carnets/${carnets[0].id || encodeURIComponent(carnets[0].title)}`)}
+                              className="px-4 py-2 bg-[#1C2620] hover:bg-[#2D5A3D] text-white rounded-full text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0"
+                            >
+                              <span>Lire le carnet</span>
+                              <Icon name="ArrowRightIcon" size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 4. Carnets Cards Grid ("Les carnets récents") */}
+                    <div>
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="font-display font-800 text-2xl text-[#1C2620]">
+                          Les carnets <em className="font-serif italic font-normal text-[#2D5A3D]">récents</em>
+                        </h3>
+                        <span className="text-xs text-[#5C6B5E] font-mono">{filteredCarnets.length} carnets trouvés</span>
+                      </div>
+
+                      {filteredCarnets.length === 0 ? (
+                        <div className="text-center py-16 bg-white rounded-[2rem] border border-[#E8E4D8] space-y-3">
+                          <Icon name="BookOpenIcon" size={32} className="mx-auto text-[#C8C3B0]" />
+                          <h4 className="font-bold text-base text-[#1C2620]">Aucun carnet trouvé</h4>
+                          <p className="text-xs text-[#5C6B5E] max-w-sm mx-auto">Soyez le premier à publier un récit de voyage dans cette catégorie !</p>
+                          <button onClick={() => setIsCreateCarnetModalOpen(true)} className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#2D5A3D] text-white rounded-full text-xs font-bold hover:bg-[#1C2620] transition-colors">
+                            <Icon name="PlusIcon" size={14} /> Nouveau carnet
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {filteredCarnets.map((carnet, i) => (
+                            <CarnetCard key={carnet.id || i} carnet={carnet} user={user} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : activeTab === 'Clubs' ? (
+                  // TAB: CLUBS (Redesigned)
+                  <div className="space-y-8">
+                    {/* Header Banner */}
+                    <div className="bg-[#1C2620] rounded-[2.5rem] p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6 border border-[#2D5A3D]/40">
+                      <div className="absolute top-0 right-0 w-72 h-72 bg-[#E4501C] rounded-full blur-[110px] opacity-25 pointer-events-none" />
+                      <div className="relative z-10 space-y-2 text-center sm:text-left">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white/80 text-[10px] font-mono tracking-widest uppercase border border-white/10">
+                          <span>🏕️</span> ESPACES COMMUNAUTAIRES
+                        </div>
+                        <h3 className="font-display font-800 text-2xl sm:text-3xl text-white leading-tight">
+                          Trouvez votre tribu, <br/><em className="font-serif italic font-normal text-[#E4501C]">partagez l'aventure.</em>
+                        </h3>
+                        <p className="text-xs text-white/70 max-w-md leading-relaxed">
+                          Rejoignez des clubs de passionnés par discipline ou destination. Conseils matos, sorties en groupe et retours d'expérience.
+                        </p>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => router.push('/clubs/nouveau')}
+                        className="relative z-10 px-7 py-3.5 bg-[#E4501C] hover:bg-[#cc3d10] text-white rounded-full font-extrabold text-sm tracking-wide shadow-lg flex items-center gap-2 whitespace-nowrap"
+                      >
+                        <Icon name="PlusIcon" size={18} /> Fonder un club
+                      </motion.button>
+                    </div>
+
+                    {/* Filter Tabs & Search Bar */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                      <div className="flex bg-white rounded-full p-1 border border-[#E8E4D8] shadow-sm overflow-x-auto">
+                        {[
+                          { id: 'all', label: 'Tous', count: clubs.length },
+                          { id: 'activite', label: '🎯 Activités', count: clubs.filter(c => c.type === 'activité' || c.type === 'activite').length },
+                          { id: 'pays', label: '🌍 Destinations', count: clubs.filter(c => c.type === 'pays').length },
+                          { id: 'my_clubs', label: '⭐ Mes Clubs', count: clubs.filter(c => c.is_member).length }
+                        ].map(t => (
+                          <button
+                            key={t.id}
+                            onClick={() => setClubFilterTab(t.id as any)}
+                            className={`px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 ${clubFilterTab === t.id ? 'bg-[#1C2620] text-white shadow-sm' : 'text-[#5C6B5E] hover:text-[#1C2620]'}`}
+                          >
+                            <span>{t.label}</span>
+                            <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${clubFilterTab === t.id ? 'bg-white/20 text-white' : 'bg-[#F5F2E8] text-[#5C6B5E]'}`}>{t.count}</span>
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="relative">
+                        <Icon name="MagnifyingGlassIcon" size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C6B5E]" />
+                        <input
+                          type="text"
+                          value={clubSearchQuery}
+                          onChange={e => setClubSearchQuery(e.target.value)}
+                          placeholder="Rechercher un club..."
+                          className="bg-white border border-[#E8E4D8] rounded-full pl-9 pr-4 py-2 text-xs text-[#1C2620] focus:ring-1 focus:ring-[#2D5A3D] w-full sm:w-64"
+                        />
+                        {clubSearchQuery && (
+                          <button onClick={() => setClubSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5C6B5E] text-xs">✕</button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Clubs Grid */}
+                    {clubs.filter(c => {
+                      if (clubFilterTab === 'activite' && c.type !== 'activité' && c.type !== 'activite') return false;
+                      if (clubFilterTab === 'pays' && c.type !== 'pays') return false;
+                      if (clubFilterTab === 'my_clubs' && !c.is_member) return false;
+                      if (clubSearchQuery.trim()) {
+                        const q = clubSearchQuery.toLowerCase();
+                        const matchName = (c.name || '').toLowerCase().includes(q);
+                        const matchDesc = (c.description || '').toLowerCase().includes(q);
+                        const matchCat = (c.category || '').toLowerCase().includes(q);
+                        if (!matchName && !matchDesc && !matchCat) return false;
+                      }
+                      return true;
+                    }).length === 0 ? (
+                      <div className="text-center py-16 bg-white rounded-[2rem] border border-[#E8E4D8] space-y-3">
+                        <div className="w-16 h-16 bg-[#F5F2E8] rounded-full flex items-center justify-center text-3xl mx-auto text-[#5C6B5E]">🏕️</div>
+                        <h4 className="font-bold text-base text-[#1C2620]">Aucun club ne correspond à votre recherche</h4>
+                        <p className="text-xs text-[#5C6B5E] max-w-sm mx-auto">Essayez un autre terme de recherche ou fondez le tout premier club de cette catégorie !</p>
+                        <button onClick={() => router.push('/clubs/nouveau')} className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#2D5A3D] text-white rounded-full text-xs font-bold hover:bg-[#1C2620] transition-colors">
+                          <Icon name="PlusIcon" size={14} /> Fonder un club
                         </button>
-                        <Link href={`/groupe?group=${group.id}`} className="p-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl hover:border-[#1C2620]/30 hover:text-[#1C2620] transition-colors">
-                          <Icon name="EyeIcon" size={12} />
-                        </Link>
-                      </>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {clubs.filter(c => {
+                          if (clubFilterTab === 'activite' && c.type !== 'activité' && c.type !== 'activite') return false;
+                          if (clubFilterTab === 'pays' && c.type !== 'pays') return false;
+                          if (clubFilterTab === 'my_clubs' && !c.is_member) return false;
+                          if (clubSearchQuery.trim()) {
+                            const q = clubSearchQuery.toLowerCase();
+                            const matchName = (c.name || '').toLowerCase().includes(q);
+                            const matchDesc = (c.description || '').toLowerCase().includes(q);
+                            const matchCat = (c.category || '').toLowerCase().includes(q);
+                            if (!matchName && !matchDesc && !matchCat) return false;
+                          }
+                          return true;
+                        }).map(club => {
+                          const isMember = club.is_member;
+                          return (
+                            <motion.div
+                              key={club.id}
+                              whileHover={{ y: -4 }}
+                              className="bg-white rounded-[2rem] p-6 shadow-sm border border-[#E8E4D8] flex flex-col justify-between hover:border-[#2D5A3D] transition-all group relative overflow-hidden"
+                            >
+                              {/* Cover Header Accent */}
+                              <div className="flex items-start justify-between mb-4">
+                                <div className="w-14 h-14 bg-gradient-to-br from-[#F5F2E8] to-[#E8E4D8] rounded-2xl flex items-center justify-center text-3xl shadow-sm group-hover:scale-110 transition-transform">
+                                  {club.emoji || '🏔️'}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] font-mono tracking-widest uppercase bg-[#F5F2E8] text-[#5C6B5E] px-2.5 py-1 rounded-full">
+                                    {club.type === 'pays' ? '🌍 Destination' : '🎯 Activité'}
+                                  </span>
+                                  {club.privacy !== 'open' && (
+                                    <span className="text-[10px] font-mono uppercase bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded-full">
+                                      🔒 Sur demande
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Title & Description */}
+                              <div className="mb-6">
+                                <div className="flex items-center gap-2 mb-1.5">
+                                  <h3 className="font-bold text-lg text-[#1C2620] group-hover:text-[#2D5A3D] transition-colors">{club.name}</h3>
+                                  {club.is_verified && (
+                                    <span className="bg-[#2D5A3D] text-white text-[8px] font-mono px-1.5 py-0.5 rounded uppercase">✓ VÉRIFIÉ</span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-[#5C6B5E] leading-relaxed line-clamp-2">{club.description || 'Club de passionnés de voyage et d\'aventure.'}</p>
+                              </div>
+
+                              {/* Stats & Actions */}
+                              <div className="pt-4 border-t border-[#F5F2E8] flex items-center justify-between gap-3 mt-auto">
+                                <div className="flex flex-col">
+                                  <span className="text-xs font-bold text-[#1C2620] flex items-center gap-1">
+                                    <Icon name="UserGroupIcon" size={14} className="text-[#2D5A3D]" />
+                                    {club.members_count || 0} membres
+                                  </span>
+                                  <span className="text-[10px] text-[#5C6B5E] font-mono">
+                                    ⚡ {club.active_this_month || 12} actifs ce mois
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => setSelectedDetailClub(club)}
+                                    className="px-3.5 py-2 rounded-full text-xs font-semibold text-[#5C6B5E] bg-[#F5F2E8] hover:bg-[#E8E4D8] hover:text-[#1C2620] transition-colors"
+                                  >
+                                    Aperçu
+                                  </button>
+
+                                  <button
+                                    onClick={() => router.push(`/clubs/${club.slug || club.id}`)}
+                                    className="px-5 py-2 rounded-full text-xs font-bold transition-all shadow-sm bg-[#2D5A3D] text-white hover:bg-[#1C2620] flex items-center gap-1"
+                                  >
+                                    <span>Voir</span>
+                                    <Icon name="ArrowRightIcon" size={12} />
+                                  </button>
+                                </div>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
+                ) : (
+                  // TAB: GROUPES
+                  <div className="space-y-6">
+                    {/* Header Banner for Groupes */}
+                    <div className="bg-[#1C2620] rounded-[2.5rem] p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6 border border-[#2D5A3D]/40">
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-[#E4501C] rounded-full blur-[100px] opacity-25 pointer-events-none" />
+                      <div className="relative z-10 space-y-2 text-center sm:text-left">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white/80 text-[10px] font-mono tracking-widest uppercase border border-white/10">
+                          <span>🏕️</span> Cockpit Collaboratif
+                        </div>
+                        <h3 className="font-display font-800 text-2xl sm:text-3xl text-white leading-tight">
+                          Créez votre <em className="font-serif italic font-normal text-[#E4501C]">groupe de voyage</em>
+                        </h3>
+                        <p className="text-xs text-white/70 max-w-md leading-relaxed">
+                          Organisez une expédition entre amis : gestion du matériel, budget partagé, sondages et chat temps réel.
+                        </p>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setIsCreateGroupWizardOpen(true)}
+                        className="relative z-10 px-7 py-3.5 bg-[#E4501C] hover:bg-[#cc3d10] text-white rounded-full font-extrabold text-sm tracking-wide shadow-lg flex items-center gap-2 whitespace-nowrap"
+                      >
+                        <Icon name="PlusIcon" size={18} /> Créer un groupe
+                      </motion.button>
+                    </div>
+
+                    {/* Group Cards Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      {/* Card to launch creation */}
+                      <div 
+                        onClick={() => setIsCreateGroupWizardOpen(true)}
+                        className="bg-white/60 hover:bg-white rounded-[2rem] p-6 border-2 border-dashed border-[#E4501C]/40 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#E4501C] transition-all group min-h-[220px]"
+                      >
+                        <div className="w-14 h-14 bg-[#E4501C]/10 text-[#E4501C] rounded-2xl flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition-transform">
+                          <Icon name="PlusIcon" size={24} />
+                        </div>
+                        <h4 className="font-display font-800 text-base text-[#1C2620] mb-1">Créer un nouveau groupe</h4>
+                        <p className="text-xs text-[#5C6B5E]">Lancer un parcours guidé en 4 étapes simples</p>
+                      </div>
+
+                      {travelGroups.length > 0 ? travelGroups.map(group => (
+                        <div 
+                          key={group.id} 
+                          onClick={() => router.push(`/groupes/${group.id}`)}
+                          className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-[#E8E4D8] flex flex-col cursor-pointer hover:border-[#1C2620] transition-colors group"
+                        >
+                          {group.cover_url && (
+                            <div className="h-32 w-full overflow-hidden">
+                              <img src={group.cover_url} alt={group.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            </div>
+                          )}
+                          <div className="p-5 flex flex-col items-center text-center">
+                            <div className="w-12 h-12 bg-gradient-to-br from-[#2D5A3D]/20 to-[#E4501C]/20 rounded-2xl flex items-center justify-center text-2xl mb-3 -mt-10 bg-white border-2 border-white shadow-md relative z-10">
+                              {group.theme === 'Trek' ? '🏔️' : group.theme === 'Van Life' ? '🚐' : group.theme === 'Vélo' ? '🚴' : group.theme === 'Ski' ? '⛷️' : group.theme === 'Plage' ? '🏖️' : group.theme === 'Expédition' ? '🧭' : '🎒'}
+                            </div>
+                            <h3 className="font-bold text-lg text-[#1C2620] mb-1">{group.name}</h3>
+                            <p className="text-xs text-[#5C6B5E] mb-2 line-clamp-2">{group.description}</p>
+                            {group.destination && (
+                              <p className="text-[10px] font-mono text-[#E4501C] mb-3 flex items-center gap-1">
+                                <span>📍</span> {group.destination}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-mono tracking-widest text-[#2D5A3D] uppercase bg-[#EAF0EB] px-3 py-1 rounded-full">
+                                {group.theme || 'Aventure'}
+                              </span>
+                              {group.owner?.full_name && (
+                                <span className="text-[10px] text-[#5C6B5E]">
+                                  par {group.owner.full_name}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )) : (
+                        <div className="bg-white/60 rounded-[2rem] p-8 border border-[#E8E4D8] flex flex-col items-center justify-center text-center col-span-full">
+                          <p className="text-sm text-[#5C6B5E] mb-2">Aucun groupe public pour l'instant.</p>
+                          <p className="text-xs text-[#5C6B5E]/70">Créez le premier en cliquant sur le bouton ci-dessus !</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN (SIDEBAR) */}
+            <div className="lg:col-span-4 space-y-6">
+              
+              {/* Profile Card */}
+              <div className="bg-[#1C2620] rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#2D5A3D] rounded-full blur-3xl opacity-30 -mr-10 -mt-10"></div>
+                
+                <div className="flex items-center gap-4 mb-6 relative z-10">
+                  <img src={user.user_metadata?.avatar_url || 'https://i.pravatar.cc/150'} alt="Mon profil" className="w-14 h-14 rounded-full border-2 border-white/20 object-cover" />
+                  <div>
+                    <div className="font-display font-800 text-lg leading-tight">{user.user_metadata?.full_name || 'Mon Profil'}</div>
+                    <div className="text-[10px] text-white/50 font-mono mt-1">Voyageur certifié</div>
+                  </div>
                 </div>
+
+                <div className="flex justify-between border-t border-white/10 pt-5 pb-6 relative z-10">
+                  <div className="text-center">
+                    <div className="font-display font-800 text-xl">14</div>
+                    <div className="text-[9px] font-mono text-white/50 uppercase tracking-widest mt-1">Posts</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-display font-800 text-xl">3</div>
+                    <div className="text-[9px] font-mono text-white/50 uppercase tracking-widest mt-1">Clubs</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-display font-800 text-xl">248</div>
+                    <div className="text-[9px] font-mono text-white/50 uppercase tracking-widest mt-1">Likes</div>
+                  </div>
+                </div>
+
+                <motion.button 
+                  onClick={() => setIsPublishModalOpen(true)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full bg-[#E4501C] hover:bg-[#cc3d10] text-white py-3.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center justify-center gap-2 relative z-10"
+                >
+                  <Icon name="PlusIcon" size={16} /> Publier
+                </motion.button>
               </div>
-            );
-          })}
-        </div>
-      )}
 
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1C2620] text-white px-5 py-3 rounded-xl text-sm font-600 shadow-xl">
-          {toast}
-        </div>
-      )}
-    </div>
-  );
-}
+              {/* Sorties */}
+              {events.length > 0 && (
+                <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-[#E8E4D8]">
+                  <div className="flex items-center justify-between mb-5">
+                    <h3 className="font-display font-800 text-lg text-[#1C2620]">Sorties <em className="font-serif italic font-normal text-[#2D5A3D]">à venir</em></h3>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="text-[10px] font-bold text-[#5C6B5E] hover:text-[#1C2620] uppercase tracking-wider">Tout voir</motion.button>
+                  </div>
+                  <div className="space-y-4">
+                    {events.map((ev, i) => {
+                      const date = formatDateString(ev.event_date);
+                      return (
+                        <div key={ev.id || i} className="flex items-center gap-4 group cursor-pointer">
+                          <div className="w-12 h-12 rounded-2xl bg-[#F5F2E8] border border-[#E8E4D8] flex flex-col items-center justify-center flex-shrink-0 group-hover:border-[#2D5A3D] transition-colors">
+                            <span className="text-[9px] font-mono text-[#5C6B5E] leading-none mb-1">{date.month}</span>
+                            <span className="font-display font-800 text-base text-[#1C2620] leading-none">{date.day}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-xs text-[#1C2620] mb-0.5 group-hover:text-[#2D5A3D] transition-colors truncate">{ev.title}</div>
+                            <div className="text-[10px] text-[#5C6B5E] truncate">{ev.location || 'Localisation TBD'}</div>
+                          </div>
+                          <div className="bg-[#EAF0EB] text-[#2D5A3D] text-[9px] font-bold px-2 py-1 rounded hidden sm:block">
+                            Bientôt
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-export default function CommunautePage() {
-  const [activeTab, setActiveTab] = useState<MainTab>('feed');
+              {/* Clubs */}
+              {clubs.length > 0 && (
+                <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-[#E8E4D8]">
+                  <div className="flex items-center justify-between mb-5">
+                    <h3 className="font-display font-800 text-lg text-[#1C2620]">Clubs <em className="font-serif italic font-normal text-[#2D5A3D]">actifs</em></h3>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="text-[10px] font-bold text-[#5C6B5E] hover:text-[#1C2620] uppercase tracking-wider">Voir tout</motion.button>
+                  </div>
+                  <div className="space-y-4">
+                    {clubs.slice(0, 4).map((club, i) => (
+                      <div 
+                        key={club.id || i} 
+                        onClick={() => router.push(`/clubs/${club.slug}`)}
+                        className="flex items-center justify-between group cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-[#F5F2E8] flex items-center justify-center text-lg">{club.emoji}</div>
+                          <div>
+                            <div className="font-bold text-xs text-[#1C2620] group-hover:text-[#2D5A3D] transition-colors">{club.name}</div>
+                            <div className="text-[10px] text-[#5C6B5E]">{club.members_count} membres</div>
+                          </div>
+                        </div>
+                        <Icon name="ChevronRightIcon" size={14} className="text-[#C8C3B0] group-hover:text-[#1C2620] transition-colors" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-  const TABS: { id: MainTab; label: string; icon: string; desc: string }[] = [
-    { id: 'feed', label: 'Feed', icon: 'RssIcon', desc: 'Actualités' },
-    { id: 'profils', label: 'Profils', icon: 'UsersIcon', desc: 'Voyageurs' },
-    { id: 'groupes', label: 'Groupes', icon: 'MapIcon', desc: 'Expéditions' },
-    { id: 'qa', label: 'Q&R', icon: 'QuestionMarkCircleIcon', desc: 'Entraide' },
-    { id: 'ama', label: 'AMA', icon: 'MicrophoneIcon', desc: 'Experts' },
-  ];
+              {/* Nouveaux removed */}
 
-  return (
-    <div className="min-h-screen text-[#1C2620]" style={{ background: '#E7E3D6' }}>
-      <Header />
+            </div>
 
-      {/* ── Hero plein écran ── */}
-      <section style={{ background: '#1C2620' }} className="pt-16 relative overflow-hidden">
-        {/* Grain texture overlay */}
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")', backgroundRepeat: 'repeat', backgroundSize: '128px' }} />
-        {/* Atmospheric glow */}
-        <div className="absolute top-0 right-0 w-[600px] h-[400px] rounded-full opacity-[0.06] pointer-events-none" style={{ background: 'radial-gradient(circle, #4A6741 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-0">
-          {/* Eyebrow */}
-          <div className="flex items-center gap-3 mb-5">
-            <span className="text-[10px] font-mono tracking-[0.25em] uppercase" style={{ color: '#E4501C' }}>Communauté</span>
-            <span style={{ color: 'rgba(255,255,255,0.15)' }}>—</span>
-            <span className="text-[10px] font-mono tracking-[0.15em] uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>Espace d&apos;échange</span>
-          </div>
-
-          {/* Title */}
-          <h1 className="font-display mb-4" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-0.02em', color: '#fff' }}>
-            Là où les routes<br />
-            <em style={{ fontStyle: 'italic', color: 'rgba(255,255,255,0.7)' }}>se croisent.</em>
-          </h1>
-
-          <p className="text-sm mb-8 max-w-lg" style={{ color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>
-            Feed global, profils publics, groupes de voyage, Q&R entre voyageurs et AMAs avec les experts de la communauté.
-          </p>
-
-          {/* Stats bar */}
-          <div className="flex items-center gap-6 mb-10 flex-wrap">
-            {[
-              { value: '12 400+', label: 'voyageurs' },
-              { value: '3 200', label: 'carnets publiés' },
-              { value: '840', label: 'groupes actifs' },
-              { value: '98%', label: 'satisfaction' },
-            ].map((s) => (
-              <div key={s.label} className="flex items-baseline gap-1.5">
-                <span className="font-mono font-700 text-base" style={{ color: '#E4501C' }}>{s.value}</span>
-                <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{s.label}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Quick links */}
-          <div className="flex items-center gap-2 mb-8 flex-wrap">
-            <Link href="/carnets" className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-600 transition-all" style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <Icon name="BookOpenIcon" size={13} /> Carnets d&apos;expédition
-            </Link>
-            <Link href="/clubs" className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-600 transition-all" style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <Icon name="UserGroupIcon" size={13} /> Clubs
-            </Link>
-            <Link href="/groupes" className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-600 transition-all" style={{ background: 'rgba(228,80,28,0.15)', color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(228,80,28,0.3)' }}>
-              <Icon name="MapIcon" size={13} /> Mes groupes
-            </Link>
-            <Link href="/entraide" className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-600 transition-all" style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <Icon name="HandRaisedIcon" size={13} /> Entraide SOS
-            </Link>
-          </div>
-
-          {/* Tab bar — attached to bottom of hero */}
-          <div className="flex items-end gap-0 overflow-x-auto scrollbar-hide -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className="flex items-center gap-2 px-5 py-3.5 text-sm font-600 transition-all whitespace-nowrap rounded-t-xl"
-                style={{
-                  background: activeTab === tab.id ? '#E7E3D6' : 'transparent',
-                  color: activeTab === tab.id ? '#1C2620' : 'rgba(255,255,255,0.4)',
-                  borderTop: activeTab === tab.id ? '2px solid #E4501C' : '2px solid transparent',
-                }}
-              >
-                <Icon name={tab.icon} size={14} variant="outline" />
-                {tab.label}
-                <span className="hidden sm:inline text-[10px] opacity-60">{tab.desc}</span>
-              </button>
-            ))}
           </div>
         </div>
-      </section>
-
-      {/* ── Content ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'feed' && <FeedTab />}
-        {activeTab === 'profils' && <ProfilsTab />}
-        {activeTab === 'groupes' && <GroupesTab />}
-        {activeTab === 'qa' && <QATab />}
-        {activeTab === 'ama' && <AMATab />}
-      </div>
+      </main>
 
       <Footer />
+
+      {/* PUBLISH MODAL */}
+      <AnimatePresence>
+        {isPublishModalOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
+              onClick={() => setIsPublishModalOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-lg bg-white rounded-[2rem] p-6 shadow-2xl z-[101] max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-display font-800 text-2xl text-[#1C2620]">Créer une publication</h3>
+                <button 
+                  onClick={() => setIsPublishModalOpen(false)}
+                  className="w-8 h-8 rounded-full bg-[#F5F2E8] flex items-center justify-center text-[#5C6B5E] hover:bg-[#E8E4D8] transition-colors"
+                >
+                  <Icon name="XMarkIcon" size={16} />
+                </button>
+              </div>
+              
+              <textarea 
+                value={newPostContent}
+                onChange={(e) => setNewPostContent(e.target.value)}
+                placeholder="Racontez votre dernière aventure, partagez une photo, un conseil..."
+                className="w-full h-32 bg-[#F5F2E8] border-none rounded-xl p-4 text-[#1C2620] text-sm focus:ring-2 focus:ring-[#2D5A3D] resize-none mb-4"
+              />
+
+              {/* Image Preview */}
+              {previewUrl && (
+                <div className="relative mb-4 w-full h-48 rounded-xl overflow-hidden bg-black/5">
+                  <img src={previewUrl} alt="Aperçu" className="w-full h-full object-cover" />
+                  <button 
+                    onClick={handleRemoveFile}
+                    className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-full hover:bg-black/70 transition-colors"
+                  >
+                    <Icon name="XMarkIcon" size={14} />
+                  </button>
+                </div>
+              )}
+              
+              <div className="flex justify-between items-center">
+                <div>
+                  <input 
+                    type="file" 
+                    accept="image/*,video/*" 
+                    className="hidden" 
+                    ref={fileInputRef} 
+                    onChange={handleFileChange} 
+                  />
+                  <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-10 h-10 rounded-full border border-[#E8E4D8] flex items-center justify-center text-[#5C6B5E] hover:text-[#2D5A3D] hover:border-[#2D5A3D] transition-colors"
+                    title="Ajouter une photo ou vidéo"
+                  >
+                    <Icon name="PhotoIcon" size={20} />
+                  </button>
+                </div>
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handlePublish}
+                  disabled={isPublishing || (!newPostContent.trim() && !selectedFile)}
+                  className="bg-[#E4501C] hover:bg-[#cc3d10] text-white px-6 py-2.5 rounded-full font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {isPublishing ? 'Publication...' : 'Publier'}
+                </motion.button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* CREATE GROUP WIZARD MODAL */}
+      <CreateGroupWizardModal 
+        isOpen={isCreateGroupWizardOpen} 
+        onClose={() => setIsCreateGroupWizardOpen(false)} 
+      />
+
+      {/* CREATE CARNET MODAL */}
+      <CarnetFormModal
+        isOpen={isCreateCarnetModalOpen}
+        onClose={() => setIsCreateCarnetModalOpen(false)}
+        onSave={handleSaveCarnet}
+        saving={isSavingCarnet}
+      />
+
+      {/* CREATE CLUB MODAL */}
+      <ClubFormModal
+        isOpen={isCreateClubModalOpen}
+        onClose={() => setIsCreateClubModalOpen(false)}
+        onSave={handleSaveClub}
+        saving={isSavingClub}
+      />
+
+      {/* CLUB DETAIL MODAL */}
+      <ClubDetailModal
+        club={selectedDetailClub}
+        onClose={() => setSelectedDetailClub(null)}
+        currentUserId={user?.id}
+        onRefresh={() => {
+          const supabase = createClient();
+          supabase.from('clubs').select('*').order('members_count', { ascending: false }).then(({ data }) => {
+            if (data) setClubs(prev => data.map(c => ({ ...c, is_member: prev.find(p => p.id === c.id)?.is_member })));
+          });
+        }}
+      />
+
+      {/* TOAST NOTIFICATION */}
+      {toastMessage && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[110] bg-[#1C2620] text-white px-6 py-3 rounded-full text-xs font-bold shadow-2xl flex items-center gap-2 border border-[#2D5A3D]">
+          <span>✨</span>
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
     </div>
   );
 }
-
-export const dynamic = 'force-dynamic';

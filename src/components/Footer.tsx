@@ -2,195 +2,120 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import AppLogo from '@/components/ui/AppLogo';
 import Icon from '@/components/ui/AppIcon';
 
-const FOOTER_COLS = [
-  {
-    title: 'Shop',
-    links: [
-      { label: 'Tous les produits', href: '/boutique' },
-      { label: 'Kits assemblés', href: '/kits' },
-      { label: 'Occasion vérifiée', href: '/occasion' },
-      { label: 'Abonnements & Box', href: '/abonnements' },
-    ],
-  },
-  {
-    title: 'IA & Outils',
-    links: [
-      { label: 'Configurateur IA', href: '/ai-configurator' },
-      { label: 'Explorer la carte', href: '/explorer' },
-      { label: 'Outils pratiques', href: '/outils' },
-      { label: 'Espace Pro', href: '/pro' },
-    ],
-  },
-  {
-    title: 'Destinations',
-    links: [
-      { label: 'Toutes les destinations', href: '/pays' },
-      { label: 'Guides de voyage', href: '/guides' },
-      { label: 'Blog & Conseils', href: '/blog' },
-      { label: 'Programme fidélité', href: '/fidelite' },
-    ],
-  },
-  {
-    title: 'Communauté',
-    links: [
-      { label: 'Forum communauté', href: '/communaute' },
-      { label: 'Carnets d\'expédition', href: '/carnets' },
-      { label: 'Contact & Support', href: '/contact' },
-      { label: 'FAQ', href: '/faq' },
-    ],
-  },
+const FOOTER_LINKS = [
+  { label: 'Boutique', href: '/boutique' },
+  { label: 'Earth', href: '/pays' },
+  { label: 'Clubs', href: '/communaute' },
+  { label: 'Configurateur IA', href: '/ai-configurator' },
+  { label: 'FAQ & Aide', href: '/faq' },
+  { label: 'Contact', href: '/contact' },
 ];
 
-const LANGUAGES = [
-  { code: 'fr', label: 'FR', name: 'Français' },
-  { code: 'en', label: 'EN', name: 'English' },
-  { code: 'de', label: 'DE', name: 'Deutsch' },
-  { code: 'es', label: 'ES', name: 'Español' },
+const LEGAL_LINKS = [
+  { label: 'Mentions légales', href: '/mentions-legales' },
+  { label: 'CGV / CGU', href: '/cgu' },
+  { label: 'Confidentialité', href: '/cookies' },
 ];
 
 export default function Footer() {
-  const [lang, setLang] = useState('fr');
-  const [langOpen, setLangOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [subscribed, setSubscribed] = useState(false);
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email.trim()) {
+      setSubscribed(true);
+      setEmail('');
+      setTimeout(() => setSubscribed(false), 4000);
+    }
+  };
 
   return (
-    <footer className="bg-[#1C2620] text-white/70" role="contentinfo" suppressHydrationWarning>
-      {/* Top CTA band */}
-      <div className="border-b border-white/8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div>
-            <p className="text-[10px] font-mono text-[#E4501C] tracking-[0.2em] uppercase mb-1.5" style={{ fontFamily: 'var(--font-mono)' }}>
-              Prêt pour votre prochaine aventure ?
-            </p>
-            <h3 className="font-display font-800 text-white text-2xl tracking-tight" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>
-              Configurez votre kit en 2 minutes.
-            </h3>
-          </div>
-          <Link
-            href="/ai-configurator"
-            className="flex-shrink-0 flex items-center gap-2 bg-[#E4501C] hover:bg-[#cc3d10] text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all hover:-translate-y-px hover:shadow-lg hover:shadow-[#E4501C]/30"
-          >
-            <Icon name="SparklesIcon" size={16} variant="outline" />
-            Lancer le configurateur IA
-          </Link>
+    <footer className="w-full max-w-[1000px] mx-auto px-4 pt-12 pb-8 flex flex-col gap-3 font-sans" role="contentinfo">
+      
+      {/* NEWSLETTER CAPSULE (Pill shape like header) */}
+      <div className="w-full bg-white/95 backdrop-blur-md shadow-sm border border-[#E8E4D8] rounded-full px-5 py-2.5 flex flex-col sm:flex-row items-center justify-between gap-3 transition-all">
+        <div className="flex items-center gap-2 text-[#1C2620] text-xs font-semibold px-1">
+          <span className="w-2 h-2 rounded-full bg-[#2D5A3D] animate-pulse" />
+          <span>Restez informé des meilleures sorties & équipements</span>
         </div>
+
+        {subscribed ? (
+          <div className="text-xs font-bold text-[#2D5A3D] px-3 py-1 flex items-center gap-1.5 animate-fade-in">
+            <Icon name="CheckCircleIcon" size={14} />
+            <span>Bienvenue dans l'aventure !</span>
+          </div>
+        ) : (
+          <form onSubmit={handleSubscribe} className="flex items-center gap-2 w-full sm:w-auto">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Votre email..."
+              required
+              className="bg-[#F5F3ED] text-[#1C2620] text-[11px] font-medium px-3.5 py-1.5 rounded-full border border-[#E8E4D8] outline-none placeholder-[#7A8A7D] w-full sm:w-48"
+            />
+            <button
+              type="submit"
+              className="bg-[#1C2620] text-white text-[11px] font-semibold px-4 py-1.5 rounded-full hover:bg-[#2D3F35] transition-colors whitespace-nowrap shrink-0"
+            >
+              S'inscrire
+            </button>
+          </form>
+        )}
       </div>
 
-      {/* Main footer grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 lg:gap-12">
-          {/* Brand col */}
-          <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2.5 mb-5" aria-label="Kit du Voyageur">
-              <AppLogo size={28} />
-              <div className="flex flex-col leading-none">
-                <span className="text-[9px] font-mono text-white/30 tracking-[0.2em] uppercase" style={{ fontFamily: 'var(--font-mono)' }}>Le Kit du</span>
-                <span className="font-display font-800 text-white text-base tracking-tight" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>VOYAGEUR</span>
-              </div>
+      {/* MAIN FOOTER CAPSULE (Identical style to Header) */}
+      <div className="w-full bg-white/95 backdrop-blur-md shadow-sm border border-[#E8E4D8] rounded-full px-5 py-3 flex flex-col md:flex-row items-center justify-between gap-4 transition-all">
+        
+        {/* Left: Brand */}
+        <Link href="/" className="flex items-center gap-2 group focus-visible:outline-none shrink-0">
+          <div className="w-7 h-7 bg-[#1C2620] rounded-lg flex items-center justify-center">
+            <svg width="14" height="14" fill="white" viewBox="0 0 24 24">
+              <path d="M3 17l4-8 4 4 3-6 4 10H3z" />
+            </svg>
+          </div>
+          <span className="font-bold text-[#1C2620] text-sm group-hover:opacity-80 transition-opacity">Le Kit du Voyageur</span>
+        </Link>
+
+        {/* Center: Navigation Links */}
+        <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+          {FOOTER_LINKS.map((link) => (
+            <Link
+              key={link.label}
+              href={link.href}
+              className="text-[11px] font-semibold tracking-wide uppercase transition-colors text-[#7A8A7D] hover:text-[#2D5A3D]"
+            >
+              {link.label}
             </Link>
-            <p className="text-xs text-white/40 leading-relaxed mb-5">
-              L&apos;équipement outdoor intelligent, configuré par l&apos;IA pour chaque destination.
-            </p>
-            {/* Social */}
-            <div className="flex items-center gap-2">
-              {[
-                { icon: 'GlobeAltIcon', label: 'Twitter' },
-                { icon: 'CameraIcon', label: 'Instagram' },
-                { icon: 'PlayCircleIcon', label: 'YouTube' },
-              ].map(({ icon, label }) => (
-                <a
-                  key={label}
-                  href="#"
-                  aria-label={label}
-                  className="w-8 h-8 rounded-lg bg-white/6 hover:bg-white/12 flex items-center justify-center text-white/40 hover:text-white transition-all"
-                >
-                  <Icon name={icon as string} size={14} variant="outline" />
-                </a>
-              ))}
-            </div>
-          </div>
-
-          {/* Nav cols */}
-          {FOOTER_COLS.map((col) => (
-            <div key={col.title}>
-              <p className="text-[10px] font-mono text-white/30 tracking-[0.2em] uppercase mb-4" style={{ fontFamily: 'var(--font-mono)' }}>
-                {col.title}
-              </p>
-              <ul className="space-y-2.5">
-                {col.links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-xs text-white/50 hover:text-white transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
           ))}
-        </div>
-      </div>
+        </nav>
 
-      {/* Bottom bar */}
-      <div className="border-t border-white/8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-white/30">
-            © 2026 Le Kit du Voyageur ·{' '}
-            <Link href="/politique-confidentialite" className="hover:text-white/60 transition-colors">Confidentialité</Link>
-            {' '}·{' '}
-            <Link href="/cgu" className="hover:text-white/60 transition-colors">CGU</Link>
-            {' '}·{' '}
-            <Link href="/cgv" className="hover:text-white/60 transition-colors">CGV</Link>
-            {' '}·{' '}
-            <Link href="/cookies" className="hover:text-white/60 transition-colors">Cookies</Link>
-            {' '}·{' '}
-            <Link href="/mentions-legales" className="hover:text-white/60 transition-colors">Mentions légales</Link>
-            {' '}·{' '}
-            <Link href="/contact" className="hover:text-white/60 transition-colors">Contact</Link>
-          </p>
-
-          <div className="flex items-center gap-3">
-            {/* Trust badges */}
-            <div className="flex items-center gap-1.5 text-[10px] text-white/25 font-mono" style={{ fontFamily: 'var(--font-mono)' }}>
-              <Icon name="ShieldCheckIcon" size={12} variant="outline" className="text-white/25" />
-              Paiement sécurisé
-            </div>
-            <div className="w-px h-3 bg-white/10" />
-            {/* Language selector */}
-            <div className="relative">
-              <button
-                onClick={() => setLangOpen(!langOpen)}
-                className="flex items-center gap-1.5 text-[10px] font-mono text-white/35 hover:text-white/60 transition-colors"
-                style={{ fontFamily: 'var(--font-mono)' }}
-                aria-label="Changer de langue"
-              >
-                <Icon name="GlobeAltIcon" size={12} variant="outline" />
-                {LANGUAGES.find(l => l.code === lang)?.label}
-                <Icon name="ChevronDownIcon" size={10} variant="outline" className={`transition-transform ${langOpen ? 'rotate-180' : ''}`} suppressHydrationWarning />
-              </button>
-              {langOpen && (
-                <div className="absolute bottom-full right-0 mb-2 bg-[#243028] border border-white/10 rounded-xl shadow-xl overflow-hidden z-50 min-w-[130px]">
-                  {LANGUAGES.map(l => (
-                    <button
-                      key={l.code}
-                      onClick={() => { setLang(l.code); setLangOpen(false); }}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-xs hover:bg-white/8 transition-colors ${lang === l.code ? 'text-[#E4501C]' : 'text-white/50'}`}
-                    >
-                      <span className="font-mono text-[10px] w-5" style={{ fontFamily: 'var(--font-mono)' }}>{l.label}</span>
-                      <span>{l.name}</span>
-                      {lang === l.code && <Icon name="CheckIcon" size={10} className="text-[#E4501C] ml-auto" variant="outline" />}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+        {/* Right: Copyright & Security badge */}
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="text-[10px] font-semibold text-[#7A8A7D]">
+            © {new Date().getFullYear()}
+          </span>
+          <div className="flex items-center gap-1 text-[10px] font-semibold text-[#1C2620] bg-[#F5F3ED] px-3 py-1.5 rounded-full border border-[#E8E4D8]">
+            <Icon name="ShieldCheckIcon" size={12} className="text-[#2D5A3D]" />
+            <span>100% Sécurisé</span>
           </div>
         </div>
+
       </div>
+
+      {/* SUB-BAR: LEGAL LINKS */}
+      <div className="flex flex-wrap items-center justify-center gap-4 text-[10px] font-semibold text-[#7A8A7D] px-4 pt-1">
+        {LEGAL_LINKS.map((link) => (
+          <Link key={link.label} href={link.href} className="hover:text-[#1C2620] transition-colors">
+            {link.label}
+          </Link>
+        ))}
+        <span>• Conçu dans les Alpes 🏔️</span>
+      </div>
+
     </footer>
   );
 }

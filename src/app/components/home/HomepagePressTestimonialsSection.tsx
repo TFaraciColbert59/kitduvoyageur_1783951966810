@@ -60,93 +60,99 @@ export default function HomepagePressTestimonialsSection() {
   return (
     <section
       ref={sectionRef}
-      className="py-20"
-      style={{ background: 'var(--dark-bg)' }}
+      className="py-20 md:py-28"
+      style={{ background: '#F5F2E8' }}
       aria-labelledby="social-proof-heading"
     >
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
         {/* Header */}
-        <div className="text-center mb-14">
-          <p className="text-[10px] font-mono text-[#E4501C] tracking-[0.2em] uppercase mb-3" style={{ fontFamily: 'var(--font-mono)' }}>
-            — Ils en parlent
-          </p>
+        <div className="mb-12 md:mb-16">
+          <p className="label-eyebrow mb-4">— Témoignages</p>
           <h2
             id="social-proof-heading"
-            className="font-display font-800 text-white text-3xl md:text-4xl tracking-tight"
-            style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}
+            className="text-section-title text-[#1A1F1C]"
+            style={{
+              opacity: visible ? 1 : 0,
+              transform: visible ? 'translateY(0)' : 'translateY(20px)',
+              transition: 'opacity 0.6s ease, transform 0.6s cubic-bezier(0.16,1,0.3,1)',
+            }}
           >
             Ils ont préparé leur aventure
             <br />
-            <span style={{ color: '#E4501C' }}>avec Le Kit du Voyageur.</span>
+            <em className="not-italic" style={{ fontStyle: 'italic', fontWeight: 400, color: 'rgba(26,31,28,0.45)' }}>
+              avec Le Kit du Voyageur.
+            </em>
           </h2>
         </div>
 
-        {/* Testimonials grid */}
+        {/* Testimonial cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-16">
-          {TESTIMONIALS?.map((t, idx) => (
+          {TESTIMONIALS.map((t, idx) => (
             <article
-              key={t?.id}
-              className="rounded-2xl p-6 flex flex-col"
+              key={t.id}
+              className="premium-card p-6 flex flex-col"
               style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.07)',
                 opacity: visible ? 1 : 0,
                 transform: visible ? 'translateY(0)' : 'translateY(24px)',
                 transition: `opacity 0.6s ease ${idx * 0.12}s, transform 0.6s cubic-bezier(0.16,1,0.3,1) ${idx * 0.12}s`,
               }}
             >
               {/* Stars */}
-              <div className="flex gap-1 mb-4" aria-label={`Note: ${t?.rating}/5`}>
-                {Array.from({ length: t?.rating })?.map((_, i) => (
-                  <Icon key={i} name="StarIcon" size={13} variant="solid" className="text-[#E4501C]" />
+              <div className="flex gap-1 mb-4" aria-label={`Note: ${t.rating}/5`}>
+                {Array.from({ length: t.rating }).map((_, i) => (
+                  <Icon key={i} name="StarIcon" size={13} variant="solid" className="text-[#2D5A3D]" />
                 ))}
               </div>
 
               {/* Trip tag */}
               <span
-                className="inline-block text-[10px] font-mono px-2.5 py-1 rounded-full mb-3 self-start"
+                className="inline-block text-[10px] px-2.5 py-1 rounded-full mb-3 self-start"
                 style={{
-                  background: 'rgba(228,80,28,0.1)',
-                  border: '1px solid rgba(228,80,28,0.2)',
-                  color: '#E4501C',
                   fontFamily: 'var(--font-mono)',
+                  background: '#EBF2EC',
+                  color: '#2D5A3D',
+                  border: '1px solid rgba(45,90,61,0.2)',
+                  letterSpacing: '0.04em',
                 }}
               >
-                {t?.role}
+                {t.role}
               </span>
 
               {/* Quote */}
-              <blockquote className="text-white/70 text-sm leading-relaxed flex-1 italic mb-5">
-                &ldquo;{t?.quote}&rdquo;
+              <blockquote className="text-[#1A1F1C] text-sm leading-relaxed flex-1 italic mb-5" style={{ color: '#3D4840' }}>
+                &ldquo;{t.quote}&rdquo;
               </blockquote>
 
               {/* Weight saved */}
               <div
-                className="flex items-center gap-2 mb-4 p-3 rounded-xl"
-                style={{ background: 'rgba(228,80,28,0.08)', border: '1px solid rgba(228,80,28,0.15)' }}
+                className="flex items-center gap-2 mb-4 p-3 rounded-lg"
+                style={{ background: '#EBF2EC', border: '1px solid rgba(45,90,61,0.15)' }}
               >
-                <Icon name="ScaleIcon" size={13} variant="outline" className="text-[#E4501C] flex-shrink-0" />
-                <span className="font-mono text-xs font-bold" style={{ color: '#E4501C', fontFamily: 'var(--font-mono)' }}>
-                  {t?.weightSaved} économisés
+                <Icon name="ScaleIcon" size={13} variant="outline" className="text-[#2D5A3D] flex-shrink-0" />
+                <span
+                  className="text-xs font-bold"
+                  style={{ color: '#2D5A3D', fontFamily: 'var(--font-mono)' }}
+                >
+                  {t.weightSaved} économisés
                 </span>
               </div>
 
               {/* Author */}
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-white/10">
+                <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-[#DDD9CC]">
                   <AppImage
-                    src={t?.avatar}
-                    alt={t?.avatarAlt}
+                    src={t.avatar}
+                    alt={t.avatarAlt}
                     width={36}
                     height={36}
                     className="object-cover w-full h-full"
                   />
                 </div>
                 <div>
-                  <p className="font-semibold text-white/90 text-sm">{t?.name}</p>
+                  <p className="font-semibold text-[#1A1F1C] text-sm">{t.name}</p>
                   <div className="flex items-center gap-1 mt-0.5">
-                    <Icon name="CheckBadgeIcon" size={10} variant="solid" className="text-[#E4501C]" />
-                    <span className="text-[10px] text-white/40" style={{ fontFamily: 'var(--font-mono)' }}>Achat vérifié</span>
+                    <Icon name="CheckBadgeIcon" size={10} variant="solid" className="text-[#2D5A3D]" />
+                    <span className="text-[10px] text-[#6B7568]" style={{ fontFamily: 'var(--font-mono)' }}>Achat vérifié</span>
                   </div>
                 </div>
               </div>
@@ -158,34 +164,32 @@ export default function HomepagePressTestimonialsSection() {
         <div
           className="rounded-2xl p-8"
           style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: '#FFFFFF',
+            border: '1px solid #DDD9CC',
             opacity: visible ? 1 : 0,
             transition: 'opacity 0.6s ease 0.4s',
           }}
         >
-          <p className="text-center text-[10px] font-mono text-white/30 tracking-[0.2em] uppercase mb-8" style={{ fontFamily: 'var(--font-mono)' }}>
-            — Ils parlent de nous
-          </p>
+          <p className="text-center label-eyebrow-muted mb-8">— Ils parlent de nous</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {PRESS_MENTIONS?.map((press) => (
-              <div key={press?.outlet} className="text-center">
-                <div className="text-3xl mb-3" aria-hidden="true">{press?.logo}</div>
-                <p className="text-xs font-semibold text-white/60 mb-2">{press?.outlet}</p>
-                <p className="text-[11px] text-white/35 italic leading-relaxed">{press?.quote}</p>
+            {PRESS_MENTIONS.map((press) => (
+              <div key={press.outlet} className="text-center">
+                <div className="text-3xl mb-3" aria-hidden="true">{press.logo}</div>
+                <p className="text-xs font-semibold text-[#1A1F1C] mb-2">{press.outlet}</p>
+                <p className="text-[11px] text-[#6B7568] italic leading-relaxed">{press.quote}</p>
               </div>
             ))}
           </div>
 
           {/* Aggregate rating */}
-          <div className="flex items-center justify-center gap-3 mt-8 pt-6 border-t border-white/5">
+          <div className="flex items-center justify-center gap-3 mt-8 pt-6 border-t border-[#DDD9CC]">
             <div className="flex gap-0.5">
-              {Array.from({ length: 5 })?.map((_, i) => (
-                <Icon key={i} name="StarIcon" size={14} variant="solid" className="text-[#E4501C]" />
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Icon key={i} name="StarIcon" size={14} variant="solid" className="text-[#2D5A3D]" />
               ))}
             </div>
-            <span className="font-mono font-bold text-white/80 text-sm" style={{ fontFamily: 'var(--font-mono)' }}>4.8 / 5</span>
-            <span className="text-white/30 text-xs">· 12 847 kits configurés</span>
+            <span className="font-bold text-[#1A1F1C] text-sm" style={{ fontFamily: 'var(--font-mono)' }}>4.8 / 5</span>
+            <span className="text-[#6B7568] text-xs">· 12 847 kits configurés</span>
           </div>
         </div>
       </div>

@@ -33,22 +33,16 @@ export const DYNAMIC_IMPORTS = {
 export const OPTIMIZED_IMPORTS = {
   // Use tree-shaking for large libraries
   heroicons: {
-    before: "import * as HeroIcons from '@heroicons/react/24/solid'
-;",
-    after: "import { MapPinIcon, StarIcon } from '@heroicons/react/24/solid'
-;",
+    before: `import * as HeroIcons from '@heroicons/react/24/solid';`,
+    after: `import { MapPinIcon, StarIcon } from '@heroicons/react/24/solid';`,
   },
   lucideReact: {
-    before: "import * as LucideIcons from 'lucide-react'
-;",
-    after: "import { MapPin, Star, Heart } from 'lucide-react'
-;",
+    before: `import * as LucideIcons from 'lucide-react';`,
+    after: `import { MapPin, Star, Heart } from 'lucide-react';`,
   },
   supabase: {
-    before: "import { createClient } from '@supabase/supabase-js'
-;",
-    after: "import { createClient } from '@supabase/supabase-js'
-; // Already optimized",
+    before: `import { createClient } from '@supabase/supabase-js';`,
+    after: `import { createClient } from '@supabase/supabase-js'; // Already optimized`,
   },
 };
 

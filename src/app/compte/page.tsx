@@ -1,905 +1,294 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
-import NewFooterSection from '@/app/components/home/NewFooterSection';
-import Icon from '@/components/ui/AppIcon';
-import { createClient } from '@/lib/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useChat } from '@/lib/hooks/useChat';
+import HeroProfil from '@/components/compte/HeroProfil';
+import StatsBandeau from '@/components/compte/StatsBandeau';
+import TabsCompte, { CompteTab } from '@/components/compte/TabsCompte';
+import ProchainVoyageCard from '@/components/compte/ProchainVoyageCard';
+import StatsGrid from '@/components/compte/StatsGrid';
+import MesAventuresCard from '@/components/compte/MesAventuresCard';
+import MesCarnetsCard from '@/components/compte/MesCarnetsCard';
+import MesClubsCard from '@/components/compte/MesClubsCard';
+import CommandesCard from '@/components/compte/CommandesCard';
+import BadgesCard from '@/components/compte/BadgesCard';
+import ConstanceCard from '@/components/compte/ConstanceCard';
+import ActiviteCard from '@/components/compte/ActiviteCard';
+import AbonnementCard from '@/components/compte/AbonnementCard';
+import InventaireCTACard from '@/components/compte/InventaireCTACard';
+import ParametresCompteCard from '@/components/compte/ParametresCompteCard';
+import EditProfileModal from '@/components/compte/EditProfileModal';
+import MobileCompteView from '@/components/compte/MobileCompteView';
+import CompteFooter from '@/components/compte/CompteFooter';
+import { MOCK_MARCELINE_DATA, UserProfile } from '@/lib/mock/compte-marceline';
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
-type Tab = 'posts' | 'carnets' | 'inventaire' | 'groupes' | 'commandes' | 'documents' | 'securite';
-
-const LOYALTY_LEVELS = [
-  { name: 'Explorateur', min: 0, badge: '🥾', color: '#5C6B5E' },
-  { name: 'Aventurier', min: 500, badge: '🏕️', color: '#4A6741' },
-  { name: 'Randonneur Expert', min: 1500, badge: '🧗', color: '#3B82F6' },
-  { name: 'Guide de Montagne', min: 3500, badge: '🏔️', color: '#8B5CF6' },
-  { name: 'Légende du Voyage', min: 7500, badge: '🌍', color: '#D97706' },
-];
-
-// ─── Posts Tab ─────────────────────────────────────────────────────────────────
-function PostsTab({ userId }: { userId: string }) {
-  const supabase = useMemo(() => createClient(), []);
-  const [posts, setPosts] = useState<{ id: string; content: string; post_type: string; likes_count: number; comments_count: number; created_at: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [newPost, setNewPost] = useState('');
-  const [postType, setPostType] = useState<'post' | 'tip' | 'question' | 'share'>('post');
-  const [submitting, setSubmitting] = useState(false);
-  const [successMsg, setSuccessMsg] = useState('');
-
-  useEffect(() => {
-    supabase.from('community_posts').select('id, content, post_type, likes_count, comments_count, created_at').eq('author_id', userId).order('created_at', { ascending: false }).limit(12).then(({ data }) => {
-      setPosts(data ?? []);
-      setLoading(false);
-    });
-  }, [userId, supabase]);
-
-  const handlePublish = async () => {
-    if (!newPost.trim()) return;
-    setSubmitting(true);
-    const { data } = await supabase.from('community_posts').insert({ author_id: userId, content: newPost.trim(), post_type: postType, likes_count: 0, comments_count: 0 }).select('id, content, post_type, likes_count, comments_count, created_at').single();
-    if (data) { setPosts(prev => [data, ...prev]); setNewPost(''); setSuccessMsg('Publié !'); setTimeout(() => setSuccessMsg(''), 2000); }
-    setSubmitting(false);
-  };
-
-  const TYPE_CFG: Record<string, { label: string; color: string; emoji: string }> = {
-    post: { label: 'Post', color: 'bg-[#F5F2EC] text-[#5C6B5E] border-[#E8E4DA]', emoji: '💬' },
-    tip: { label: 'Conseil', color: 'bg-emerald-50 text-emerald-700 border-emerald-200', emoji: '💡' },
-    question: { label: 'Question', color: 'bg-blue-50 text-blue-700 border-blue-200', emoji: '❓' },
-    share: { label: 'Partage', color: 'bg-purple-50 text-purple-700 border-purple-200', emoji: '🔗' },
-  };
-
-  return (
-    <div className="space-y-4">
-      {/* Compose */}
-      <div className="bg-white border border-[#E8E4DA] rounded-2xl p-5 shadow-sm">
-        <div className="flex gap-2 mb-3 flex-wrap">
-          {Object.entries(TYPE_CFG).map(([id, cfg]) => (
-            <button key={id} onClick={() => setPostType(id as typeof postType)} className={`text-xs font-semibold px-3 py-1.5 rounded-full border-2 transition-all ${postType === id ? 'border-[#E4501C] ' + cfg.color : 'border-[#E8E4DA] text-[#5C6B5E] bg-[#F5F2EC]'}`}>
-              {cfg.emoji} {cfg.label}
-            </button>
-          ))}
-        </div>
-        <textarea rows={3} value={newPost} onChange={e => setNewPost(e.target.value)} placeholder="Partagez une astuce, posez une question, racontez votre aventure..." className="w-full bg-[#F5F2EC] border border-[#E8E4DA] rounded-xl px-4 py-3 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/20 resize-none mb-3" />
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-[#5C6B5E]">{newPost.length}/500</span>
-          <div className="flex items-center gap-2">
-            {successMsg && <span className="text-xs text-emerald-600 font-semibold">✓ {successMsg}</span>}
-            <button onClick={handlePublish} disabled={submitting || !newPost.trim() || newPost.length > 500} className="flex items-center gap-2 px-4 py-2 bg-[#1C2620] text-white rounded-xl text-sm font-semibold hover:bg-[#1C2620]/90 transition-colors disabled:opacity-50">
-              <Icon name="PaperAirplaneIcon" size={13} variant="outline" />
-              {submitting ? 'Publication...' : 'Publier'}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{[1,2,3,4].map(i => <div key={i} className="h-28 bg-[#E8E4DA] rounded-2xl animate-pulse" />)}</div>
-      ) : posts.length === 0 ? (
-        <div className="text-center py-12 text-[#5C6B5E]">
-          <p className="text-3xl mb-2">✍️</p>
-          <p className="text-sm">Aucune publication. Partagez quelque chose !</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {posts.map(post => {
-            const cfg = TYPE_CFG[post.post_type] ?? TYPE_CFG['post'];
-            return (
-              <div key={post.id} className="bg-white border border-[#E8E4DA] rounded-2xl p-4 hover:border-[#1C2620]/20 hover:shadow-sm transition-all">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${cfg.color}`}>{cfg.emoji} {cfg.label}</span>
-                  <span className="text-[10px] text-[#5C6B5E] ml-auto">{new Date(post.created_at).toLocaleDateString('fr-FR')}</span>
-                </div>
-                <p className="text-sm text-[#1C2620] leading-relaxed line-clamp-3 mb-3">{post.content}</p>
-                <div className="flex items-center gap-3 text-xs text-[#5C6B5E]">
-                  <span className="flex items-center gap-1"><Icon name="HeartIcon" size={12} /> {post.likes_count}</span>
-                  <span className="flex items-center gap-1"><Icon name="ChatBubbleLeftIcon" size={12} /> {post.comments_count}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Carnets Tab ───────────────────────────────────────────────────────────────
-function CarnetsTab({ userId }: { userId: string }) {
-  const supabase = useMemo(() => createClient(), []);
-  const [carnets, setCarnets] = useState<{ id: string; title: string; destination: string; cover_image: string; route_rating: number; likes_count: number; visibility: string; created_at: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    supabase.from('carnets').select('id, title, destination, cover_image, route_rating, likes_count, visibility, created_at').eq('author_id', userId).order('created_at', { ascending: false }).then(({ data }) => {
-      setCarnets(data ?? []);
-      setLoading(false);
-    });
-  }, [userId, supabase]);
-
-  if (loading) return <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{[1,2,3,4,5,6].map(i => <div key={i} className="aspect-square bg-[#E8E4DA] rounded-2xl animate-pulse" />)}</div>;
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-[#5C6B5E]">{carnets.length} carnet{carnets.length !== 1 ? 's' : ''}</p>
-        <Link href="/carnets" className="flex items-center gap-1.5 text-xs text-[#E4501C] hover:underline font-semibold">
-          <Icon name="PlusIcon" size={12} /> Nouveau carnet
-        </Link>
-      </div>
-      {carnets.length === 0 ? (
-        <div className="text-center py-12 text-[#5C6B5E]">
-          <p className="text-3xl mb-2">🗺️</p>
-          <p className="text-sm mb-3">Aucun carnet d&apos;expédition</p>
-          <Link href="/carnets" className="inline-flex items-center gap-2 px-4 py-2 bg-[#1C2620] text-white rounded-xl text-sm font-semibold">
-            <Icon name="PlusIcon" size={13} /> Créer un carnet
-          </Link>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {carnets.map(c => (
-            <Link key={c.id} href="/carnets" className="group relative aspect-square bg-[#E8E4DA] rounded-2xl overflow-hidden hover:opacity-90 transition-opacity">
-              {c.cover_image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={c.cover_image} alt={c.title} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-4xl bg-[#F5F2EC]">🗺️</div>
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform">
-                <p className="text-white text-xs font-bold line-clamp-1">{c.title}</p>
-                <p className="text-white/70 text-[10px]">{c.destination}</p>
-              </div>
-              <div className="absolute top-2 right-2">
-                <span className="bg-black/50 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{c.route_rating}/10</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Inventaire Tab ────────────────────────────────────────────────────────────
-function InventaireTab({ userId }: { userId: string }) {
-  const supabase = useMemo(() => createClient(), []);
-  const [gear, setGear] = useState<{ id: string; name: string; brand: string; category: string; condition: string; purchase_price: number; weight_g: number; usage_count: number; image: string; alt: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    supabase.from('gear_items').select('id, name, brand, category, condition, purchase_price, weight_g, usage_count, image, alt').eq('user_id', userId).order('created_at', { ascending: false }).then(({ data }) => {
-      setGear(data ?? []);
-      setLoading(false);
-    });
-  }, [userId, supabase]);
-
-  const CONDITION_CFG: Record<string, { label: string; color: string }> = {
-    neuf: { label: 'Neuf', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
-    excellent: { label: 'Excellent', color: 'text-green-600 bg-green-50 border-green-200' },
-    bon: { label: 'Bon', color: 'text-blue-600 bg-blue-50 border-blue-200' },
-    usé: { label: 'Usé', color: 'text-amber-600 bg-amber-50 border-amber-200' },
-    à_remplacer: { label: 'À remplacer', color: 'text-red-600 bg-red-50 border-red-200' },
-  };
-
-  const totalWeight = gear.reduce((s, g) => s + g.weight_g, 0);
-  const totalValue = gear.reduce((s, g) => s + g.purchase_price, 0);
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-3">
-        {[{ label: 'Articles', value: gear.length }, { label: 'Poids total', value: `${(totalWeight / 1000).toFixed(1)} kg` }, { label: 'Valeur', value: `${totalValue.toLocaleString()}€` }].map(s => (
-          <div key={s.label} className="bg-white border border-[#E8E4DA] rounded-2xl p-4 text-center shadow-sm">
-            <p className="font-bold text-[#1C2620] text-xl">{s.value}</p>
-            <p className="text-xs text-[#5C6B5E] mt-0.5">{s.label}</p>
-          </div>
-        ))}
-      </div>
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-[#5C6B5E]">{gear.length} équipement{gear.length !== 1 ? 's' : ''}</p>
-        <Link href="/inventaire" className="flex items-center gap-1.5 text-xs text-[#E4501C] hover:underline font-semibold">
-          <Icon name="ArrowTopRightOnSquareIcon" size={12} /> Gérer l&apos;inventaire
-        </Link>
-      </div>
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{[1,2,3,4].map(i => <div key={i} className="h-20 bg-[#E8E4DA] rounded-2xl animate-pulse" />)}</div>
-      ) : gear.length === 0 ? (
-        <div className="text-center py-12 text-[#5C6B5E]">
-          <p className="text-3xl mb-2">🎒</p>
-          <p className="text-sm mb-3">Aucun équipement</p>
-          <Link href="/inventaire" className="inline-flex items-center gap-2 px-4 py-2 bg-[#1C2620] text-white rounded-xl text-sm font-semibold">
-            <Icon name="PlusIcon" size={13} /> Ajouter du matériel
-          </Link>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {gear.map(g => {
-            const cond = CONDITION_CFG[g.condition] || CONDITION_CFG['bon'];
-            return (
-              <div key={g.id} className="bg-white border border-[#E8E4DA] rounded-2xl overflow-hidden flex hover:border-[#1C2620]/20 hover:shadow-sm transition-all">
-                <div className="w-20 h-20 flex-shrink-0 overflow-hidden bg-[#F5F2EC]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={g.image || 'https://images.unsplash.com/photo-1572698846920-cb1e563bbb30'} alt={g.alt || g.name} className="w-full h-full object-cover" />
-                </div>
-                <div className="flex-1 p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="font-semibold text-sm text-[#1C2620] line-clamp-1">{g.name}</p>
-                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border flex-shrink-0 ${cond.color}`}>{cond.label}</span>
-                  </div>
-                  <p className="text-xs text-[#5C6B5E] mt-0.5">{g.brand} · {g.weight_g}g</p>
-                  <div className="flex items-center gap-3 mt-1.5 text-xs text-[#5C6B5E]">
-                    <span>{g.usage_count} utilisations</span>
-                    <span className="font-mono font-semibold text-[#1C2620]">{g.purchase_price}€</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Groupes Tab ───────────────────────────────────────────────────────────────
-function GroupesTab({ userId }: { userId: string }) {
-  const supabase = useMemo(() => createClient(), []);
-  const [groups, setGroups] = useState<{ id: string; group_id: string; role: string; group?: { name: string; destination: string; theme: string; visibility: string } }[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    supabase.from('group_members').select('id, group_id, role, group:travel_groups(name, destination, theme, visibility)').eq('user_id', userId).eq('status', 'active').order('created_at', { ascending: false }).then(({ data }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setGroups((data ?? []) as any[]);
-      setLoading(false);
-    });
-  }, [userId, supabase]);
-
-  const THEME_EMOJI: Record<string, string> = { Trek: '🏔️', 'Van Life': '🚐', Randonnée: '🥾', Expédition: '🧭', 'Tour du monde': '🌍', Plage: '🏖️', Ski: '⛷️', Vélo: '🚴', Moto: '🏍️', Autre: '🎒' };
-
-  if (loading) return <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 bg-[#E8E4DA] rounded-2xl animate-pulse" />)}</div>;
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-[#5C6B5E]">{groups.length} groupe{groups.length !== 1 ? 's' : ''}</p>
-        <div className="flex gap-2">
-          <Link href="/groupes?tab=decouvrir" className="text-xs text-[#5C6B5E] hover:text-[#1C2620] border border-[#E8E4DA] bg-white px-3 py-1.5 rounded-xl transition-colors">Découvrir</Link>
-          <Link href="/groupe" className="flex items-center gap-1.5 text-xs text-white bg-[#1C2620] hover:bg-[#1C2620]/90 px-3 py-1.5 rounded-xl transition-colors font-semibold">
-            <Icon name="PlusIcon" size={12} /> Créer
-          </Link>
-        </div>
-      </div>
-      {groups.length === 0 ? (
-        <div className="text-center py-12 text-[#5C6B5E]">
-          <p className="text-3xl mb-2">🗺️</p>
-          <p className="text-sm mb-3">Aucun groupe de voyage</p>
-          <Link href="/groupe" className="inline-flex items-center gap-2 px-4 py-2 bg-[#1C2620] text-white rounded-xl text-sm font-semibold">
-            <Icon name="PlusIcon" size={13} /> Créer un groupe
-          </Link>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {groups.map(m => (
-            <Link key={m.id} href={`/groupe?group=${m.group_id}`} className="flex items-center gap-3 bg-white border border-[#E8E4DA] rounded-2xl p-4 hover:border-[#1C2620]/20 hover:shadow-sm transition-all">
-              <div className="w-11 h-11 rounded-xl bg-[#1C2620] flex items-center justify-center text-xl flex-shrink-0">
-                {THEME_EMOJI[m.group?.theme || ''] || '🎒'}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm text-[#1C2620] truncate">{m.group?.name || 'Groupe'}</p>
-                <p className="text-xs text-[#5C6B5E] truncate">{m.group?.destination}</p>
-              </div>
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${m.role === 'organizer' ? 'bg-amber-100 text-amber-700' : m.role === 'co_organizer' ? 'bg-blue-100 text-blue-700' : 'bg-[#F5F2EC] text-[#5C6B5E]'}`}>
-                {m.role === 'organizer' ? '👑 Organisateur' : m.role === 'co_organizer' ? '🛡️ Co-org.' : '👤 Membre'}
-              </span>
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Commandes Tab ─────────────────────────────────────────────────────────────
-function CommandesTab({ userId }: { userId: string }) {
-  const supabase = useMemo(() => createClient(), []);
-  const [orders, setOrders] = useState<{ id: string; order_number: string; created_at: string; status: string; total_eur: number; items_count: number; tracking_number: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    supabase.from('orders').select('*').eq('user_id', userId).order('created_at', { ascending: false }).then(({ data }) => {
-      setOrders(data ?? []);
-      setLoading(false);
-    });
-  }, [userId, supabase]);
-
-  const STATUS_CFG: Record<string, { label: string; cls: string }> = {
-    livré: { label: 'Livré', cls: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
-    en_transit: { label: 'En transit', cls: 'text-blue-600 bg-blue-50 border-blue-200' },
-    en_preparation: { label: 'En préparation', cls: 'text-amber-600 bg-amber-50 border-amber-200' },
-    annulé: { label: 'Annulé', cls: 'text-red-500 bg-red-50 border-red-200' },
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-[#5C6B5E]">{orders.length} commande{orders.length !== 1 ? 's' : ''}</p>
-        <Link href="/shop" className="text-xs text-[#E4501C] hover:underline">Boutique →</Link>
-      </div>
-      {loading ? (
-        <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-24 bg-[#E8E4DA] rounded-2xl animate-pulse" />)}</div>
-      ) : orders.length === 0 ? (
-        <div className="text-center py-12 text-[#5C6B5E]">
-          <p className="text-3xl mb-2">🛍️</p>
-          <p className="text-sm mb-3">Aucune commande</p>
-          <Link href="/shop" className="inline-flex items-center gap-2 px-4 py-2 bg-[#1C2620] text-white rounded-xl text-sm font-semibold">Explorer la boutique</Link>
-        </div>
-      ) : (
-        orders.map(order => {
-          const cfg = STATUS_CFG[order.status] ?? STATUS_CFG['en_preparation'];
-          return (
-            <div key={order.id} className="bg-white border border-[#E8E4DA] rounded-2xl p-5 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-                <div>
-                  <p className="font-mono font-semibold text-[#1C2620] text-sm">{order.order_number}</p>
-                  <p className="text-xs text-[#5C6B5E] mt-0.5">{new Date(order.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })} · {order.items_count} article{order.items_count !== 1 ? 's' : ''}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${cfg.cls}`}>{cfg.label}</span>
-                  <span className="font-mono font-bold text-[#1C2620]">{order.total_eur.toFixed(2)} €</span>
-                </div>
-              </div>
-              {order.tracking_number && (
-                <div className="flex items-center gap-2 bg-[#F5F2EC] rounded-xl px-3 py-2">
-                  <Icon name="TruckIcon" size={14} className="text-[#5C6B5E]" />
-                  <span className="text-xs text-[#5C6B5E]">Suivi : <span className="font-mono font-semibold text-[#1C2620]">{order.tracking_number}</span></span>
-                </div>
-              )}
-            </div>
-          );
-        })
-      )}
-    </div>
-  );
-}
-
-// ─── Documents Tab ─────────────────────────────────────────────────────────────
-function DocumentsTab({ userId }: { userId: string }) {
-  const supabase = useMemo(() => createClient(), []);
-  const typeIcon: Record<string, string> = { passeport: '🛂', visa: '📋', assurance: '🛡️', vaccin: '💉', permis: '🪪', autre: '📄' };
-  const [documents, setDocuments] = useState<{ id: string; name: string; type: string; destination: string; expiry: string; file_name: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [form, setForm] = useState({ name: '', type: 'passeport', destination: '', expiry: '', file_name: '' });
-  const [saving, setSaving] = useState(false);
-  const [now, setNow] = useState<number>(0);
-
-  useEffect(() => { setNow(Date.now()); }, []);
-
-  const loadDocs = useCallback(async () => {
-    const { data } = await supabase.from('user_documents').select('*').eq('user_id', userId).order('created_at', { ascending: false });
-    setDocuments(data ?? []);
-    setLoading(false);
-  }, [userId, supabase]);
-
-  useEffect(() => { loadDocs(); }, [loadDocs]);
-
-  const handleAddDoc = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.name.trim()) return;
-    setSaving(true);
-    try {
-      const { error } = await supabase.from('user_documents').insert({ user_id: userId, name: form.name, type: form.type, destination: form.destination, expiry: form.expiry || null, file_name: form.file_name || `${form.name.toLowerCase().replace(/\s+/g, '_')}.pdf` });
-      if (error) throw error;
-      setShowAddModal(false);
-      setForm({ name: '', type: 'passeport', destination: '', expiry: '', file_name: '' });
-      await loadDocs();
-    } catch (err) { console.error(err); }
-    finally { setSaving(false); }
-  };
-
-  const handleDelete = async (id: string) => {
-    await supabase.from('user_documents').delete().eq('id', id);
-    setDocuments(prev => prev.filter(d => d.id !== id));
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-[#5C6B5E]">{documents.length} document{documents.length !== 1 ? 's' : ''}</p>
-        <button onClick={() => setShowAddModal(true)} className="flex items-center gap-1.5 text-xs text-white bg-[#1C2620] hover:bg-[#1C2620]/90 px-3 py-1.5 rounded-xl transition-colors font-semibold">
-          <Icon name="PlusIcon" size={12} /> Ajouter
-        </button>
-      </div>
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{[1,2,3].map(i => <div key={i} className="h-28 bg-[#E8E4DA] rounded-2xl animate-pulse" />)}</div>
-      ) : documents.length === 0 ? (
-        <div className="text-center py-12 text-[#5C6B5E]">
-          <p className="text-3xl mb-2">📁</p>
-          <p className="text-sm">Ajoutez votre passeport, visa, assurance...</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {documents.map(d => {
-            const daysLeft = now > 0 && d.expiry ? Math.ceil((new Date(d.expiry).getTime() - now) / 86400000) : 999;
-            const urgent = d.expiry ? daysLeft < 90 : false;
-            return (
-              <div key={d.id} className={`bg-white border rounded-2xl p-4 shadow-sm ${urgent ? 'border-amber-300' : 'border-[#E8E4DA]'}`}>
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{typeIcon[d.type] || '📄'}</span>
-                    <div>
-                      <p className="font-semibold text-sm text-[#1C2620]">{d.name}</p>
-                      <p className="text-xs text-[#5C6B5E]">{d.destination}</p>
-                    </div>
-                  </div>
-                  <button onClick={() => handleDelete(d.id)} className="p-1 hover:bg-red-50 rounded-lg transition-colors">
-                    <Icon name="TrashIcon" size={14} className="text-red-400" variant="outline" />
-                  </button>
-                </div>
-                {d.expiry && (
-                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold ${urgent ? 'bg-amber-50 border border-amber-200 text-amber-700' : 'bg-emerald-50 border border-emerald-200 text-emerald-700'}`}>
-                    <Icon name={urgent ? 'ExclamationTriangleIcon' : 'CheckCircleIcon'} size={12} />
-                    Expire le {new Date(d.expiry).toLocaleDateString('fr-FR')} ({daysLeft}j)
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border border-[#E8E4DA] w-full max-w-md shadow-2xl p-6">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-[#1C2620]" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>Ajouter un document</h2>
-              <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-[#F5F2EC] rounded-lg"><Icon name="XMarkIcon" size={20} variant="outline" /></button>
-            </div>
-            <form onSubmit={handleAddDoc} className="space-y-4">
-              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Nom *</label><input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Passeport FR" className="w-full bg-[#F5F2EC] border border-[#E8E4DA] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#1C2620]" /></div>
-              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Type</label><select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className="w-full bg-[#F5F2EC] border border-[#E8E4DA] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#1C2620]">{Object.entries(typeIcon).map(([k, v]) => <option key={k} value={k}>{v} {k.charAt(0).toUpperCase() + k.slice(1)}</option>)}</select></div>
-              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Destination</label><input value={form.destination} onChange={e => setForm({ ...form, destination: e.target.value })} placeholder="Monde entier" className="w-full bg-[#F5F2EC] border border-[#E8E4DA] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#1C2620]" /></div>
-              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Expiration</label><input type="date" value={form.expiry} onChange={e => setForm({ ...form, expiry: e.target.value })} className="w-full bg-[#F5F2EC] border border-[#E8E4DA] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#1C2620]" /></div>
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-2.5 rounded-xl border border-[#E8E4DA] text-sm font-medium text-[#5C6B5E] bg-[#F5F2EC]">Annuler</button>
-                <button type="submit" disabled={saving} className="flex-1 py-2.5 rounded-xl bg-[#1C2620] text-white text-sm font-medium disabled:opacity-50">{saving ? 'Ajout...' : 'Ajouter'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Sécurité Tab ──────────────────────────────────────────────────────────────
-function SecuriteTab() {
-  const { user, signOut } = useAuth();
-  const supabase = useMemo(() => createClient(), []);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({ newPwd: '', confirm: '' });
-  const [passwordMsg, setPasswordMsg] = useState<string | null>(null);
-  const [changingPwd, setChangingPwd] = useState(false);
-  const [exportMsg, setExportMsg] = useState<string | null>(null);
-
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (passwordForm.newPwd !== passwordForm.confirm) { setPasswordMsg('Les mots de passe ne correspondent pas.'); return; }
-    if (passwordForm.newPwd.length < 8) { setPasswordMsg('Minimum 8 caractères.'); return; }
-    setChangingPwd(true);
-    try {
-      const { error } = await supabase.auth.updateUser({ password: passwordForm.newPwd });
-      if (error) throw error;
-      setShowPasswordModal(false);
-      setPasswordForm({ newPwd: '', confirm: '' });
-      setPasswordMsg('Mot de passe modifié !');
-      setTimeout(() => setPasswordMsg(null), 3000);
-    } catch (err: unknown) { setPasswordMsg(err instanceof Error ? err.message : 'Erreur'); }
-    finally { setChangingPwd(false); }
-  };
-
-  const handleExport = async () => {
-    if (!user) return;
-    const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', user.id).single();
-    const { data: gear } = await supabase.from('gear_items').select('name, brand, category, condition').eq('user_id', user.id);
-    const exportData = { profile, gear: gear ?? [], exportDate: new Date().toISOString() };
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'mes_donnees_kdv.json'; a.click();
-    URL.revokeObjectURL(url);
-    setExportMsg('Données exportées !');
-    setTimeout(() => setExportMsg(null), 3000);
-  };
-
-  return (
-    <div className="space-y-4">
-      {passwordMsg && <div className={`p-3 rounded-xl border flex items-center gap-2 text-sm ${passwordMsg.includes('!') ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}><Icon name={passwordMsg.includes('!') ? 'CheckCircleIcon' : 'ExclamationCircleIcon'} size={16} />{passwordMsg}</div>}
-      {exportMsg && <div className="p-3 rounded-xl border bg-emerald-50 border-emerald-200 text-emerald-700 flex items-center gap-2 text-sm"><Icon name="CheckCircleIcon" size={16} />{exportMsg}</div>}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {[
-          { icon: 'LockClosedIcon', title: 'Mot de passe', desc: 'Modifier votre mot de passe', action: () => setShowPasswordModal(true), label: 'Modifier', bg: 'bg-emerald-50' },
-          { icon: 'DocumentArrowDownIcon', title: 'Données personnelles', desc: 'Exporter vos données RGPD', action: handleExport, label: 'Exporter', bg: 'bg-blue-50' },
-          { icon: 'ArrowRightOnRectangleIcon', title: 'Déconnexion', desc: 'Se déconnecter de l\'application', action: () => signOut(), label: 'Déconnecter', bg: 'bg-red-50' },
-        ].map(item => (
-          <div key={item.title} className="bg-white border border-[#E8E4DA] rounded-2xl p-5 flex items-center gap-4 shadow-sm">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${item.bg}`}>
-              <Icon name={item.icon} size={18} className="text-[#1C2620]" variant="outline" />
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-sm text-[#1C2620]">{item.title}</p>
-              <p className="text-xs text-[#5C6B5E]">{item.desc}</p>
-            </div>
-            <button onClick={item.action} className="px-3 py-1.5 border border-[#E8E4DA] rounded-xl text-xs font-semibold text-[#5C6B5E] hover:text-[#1C2620] hover:border-[#1C2620]/30 transition-all flex-shrink-0 bg-[#F5F2EC]">{item.label}</button>
-          </div>
-        ))}
-      </div>
-
-      {showPasswordModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border border-[#E8E4DA] w-full max-w-sm shadow-2xl p-6">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-[#1C2620]" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>Modifier le mot de passe</h2>
-              <button onClick={() => setShowPasswordModal(false)} className="p-2 hover:bg-[#F5F2EC] rounded-lg"><Icon name="XMarkIcon" size={20} variant="outline" /></button>
-            </div>
-            <form onSubmit={handlePasswordChange} className="space-y-4">
-              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Nouveau mot de passe</label><input required type="password" value={passwordForm.newPwd} onChange={e => setPasswordForm({ ...passwordForm, newPwd: e.target.value })} className="w-full bg-[#F5F2EC] border border-[#E8E4DA] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#1C2620]" /></div>
-              <div><label className="block text-xs font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Confirmer</label><input required type="password" value={passwordForm.confirm} onChange={e => setPasswordForm({ ...passwordForm, confirm: e.target.value })} className="w-full bg-[#F5F2EC] border border-[#E8E4DA] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#1C2620]" /></div>
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowPasswordModal(false)} className="flex-1 py-2.5 rounded-xl border border-[#E8E4DA] text-sm font-medium text-[#5C6B5E] bg-[#F5F2EC]">Annuler</button>
-                <button type="submit" disabled={changingPwd} className="flex-1 py-2.5 rounded-xl bg-[#1C2620] text-white text-sm font-medium disabled:opacity-50">{changingPwd ? 'Modification...' : 'Modifier'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function ComptePage() {
-  const { user, signOut, profile: ctxProfile, refreshProfile } = useAuth();
-  const supabase = useMemo(() => createClient(), []);
-  const [activeTab, setActiveTab] = useState<Tab>('posts');
+  const [activeTab, setActiveTab] = useState<CompteTab>('vue-d-ensemble');
+  const [toast, setToast] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile>(MOCK_MARCELINE_DATA.profile);
 
-  const [profile, setProfile] = useState({ full_name: '', email: '', trust_score: 50, loyalty_points: 0, loyalty_level: 'Explorateur', bio: '', location: '', avatar_url: '' });
-  const [editMode, setEditMode] = useState(false);
-  const [editName, setEditName] = useState('');
-  const [editBio, setEditBio] = useState('');
-  const [editLocation, setEditLocation] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [profileLoading, setProfileLoading] = useState(true);
-
-  const [followers, setFollowers] = useState(0);
-  const [following, setFollowing] = useState(0);
-  const [postsCount, setPostsCount] = useState(0);
-  const [carnetsCount, setCarnetsCount] = useState(0);
-  const [groupsCount, setGroupsCount] = useState(0);
-
-  const [aiConseil, setAiConseil] = useState('');
-  const [conseilAsked, setConseilAsked] = useState(false);
-  const { response: conseilResponse, isLoading: conseilLoading, sendMessage: sendConseil } = useChat('GEMINI', 'gemini/gemini-2.5-flash', true);
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   useEffect(() => {
-    if (conseilAsked && conseilResponse) setAiConseil(conseilResponse);
-  }, [conseilResponse, conseilAsked]);
-
-  useEffect(() => {
-    if (!user) { setProfileLoading(false); return; }
-    const load = async () => {
-      if (ctxProfile) {
-        setProfile(ctxProfile as typeof profile);
-        setEditName(ctxProfile.full_name || '');
-        setEditBio((ctxProfile as { bio?: string }).bio || '');
-        setEditLocation((ctxProfile as { location?: string }).location || '');
-        setProfileLoading(false);
-      } else {
-        const { data } = await supabase.from('user_profiles').select('*').eq('id', user.id).maybeSingle();
-        if (data) {
-          setProfile(data);
-          setEditName(data.full_name || '');
-          setEditBio(data.bio || '');
-          setEditLocation(data.location || '');
+    const loadSavedProfile = () => {
+      try {
+        const saved = localStorage.getItem('user_profile_data');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          setProfile(prev => ({
+            ...prev,
+            first_name: parsed.first_name || prev.first_name,
+            last_name: parsed.last_name || prev.last_name,
+            bio: parsed.bio || prev.bio,
+            location: parsed.location || prev.location,
+            avatar_url: parsed.avatar_url || prev.avatar_url,
+            hero_image_url: parsed.hero_image_url || prev.hero_image_url
+          }));
         }
-        setProfileLoading(false);
+      } catch (e) {
+        console.error("Error loading saved profile:", e);
       }
-      const [fwersRes, fwingRes, postsRes, carnetsRes, groupsRes] = await Promise.all([
-        supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('following_id', user.id),
-        supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('follower_id', user.id),
-        supabase.from('community_posts').select('*', { count: 'exact', head: true }).eq('author_id', user.id),
-        supabase.from('carnets').select('*', { count: 'exact', head: true }).eq('author_id', user.id),
-        supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'active'),
-      ]);
-      setFollowers(fwersRes.count ?? 0);
-      setFollowing(fwingRes.count ?? 0);
-      setPostsCount(postsRes.count ?? 0);
-      setCarnetsCount(carnetsRes.count ?? 0);
-      setGroupsCount(groupsRes.count ?? 0);
     };
-    load();
-  }, [user, supabase, ctxProfile]);
 
-  const handleSave = async () => {
-    if (!user) return;
-    setSaving(true);
-    await supabase.from('user_profiles').upsert({ id: user.id, email: user.email ?? '', full_name: editName, bio: editBio, location: editLocation, updated_at: new Date().toISOString() }, { onConflict: 'id' });
-    setProfile(p => ({ ...p, full_name: editName, bio: editBio, location: editLocation }));
-    setEditMode(false);
-    setSaved(true);
-    await refreshProfile?.();
-    setTimeout(() => setSaved(false), 2000);
-    setSaving(false);
+    loadSavedProfile();
+
+    const handleProfileUpdated = (e: any) => {
+      const detail = e.detail || JSON.parse(localStorage.getItem('user_profile_data') || '{}');
+      if (detail) {
+        setProfile(prev => ({
+          ...prev,
+          first_name: detail.first_name || prev.first_name,
+          last_name: detail.last_name || prev.last_name,
+          bio: detail.bio || prev.bio,
+          location: detail.location || prev.location,
+          avatar_url: detail.avatar_url || prev.avatar_url,
+          hero_image_url: detail.hero_image_url || prev.hero_image_url
+        }));
+      }
+    };
+
+    window.addEventListener('profile_updated', handleProfileUpdated);
+    return () => window.removeEventListener('profile_updated', handleProfileUpdated);
+  }, []);
+
+  const handleSaveProfile = (updatedFields: Partial<UserProfile>) => {
+    setProfile((prev) => ({ ...prev, ...updatedFields }));
+    showToast('Profil mis à jour avec succès !');
   };
 
-  const handleGenerateConseil = () => {
-    if (!user) return;
-    const currentLevel = LOYALTY_LEVELS.filter(l => profile.loyalty_points >= l.min).pop()!;
-    setAiConseil('');
-    setConseilAsked(true);
-    sendConseil([
-      { role: 'system', content: 'Tu es un expert en voyages d\'aventure et équipement outdoor. Génère des conseils personnalisés, pratiques et motivants pour un voyageur. Réponds en français avec des emojis. Sois concis (3-4 conseils max).' },
-      { role: 'user', content: `Génère des conseils personnalisés pour ce voyageur:\n- Niveau: ${currentLevel.name} (${profile.loyalty_points} points)\n- Localisation: ${profile.location || 'Non renseignée'}\n- Bio: ${profile.bio || 'Non renseignée'}\n- Carnets publiés: ${carnetsCount}\n- Groupes rejoints: ${groupsCount}\n\nDonne des conseils pratiques pour progresser dans ses aventures.` }
-    ], { temperature: 0.8, max_tokens: 400 });
-  };
+  const {
+    prochainVoyage,
+    aventures,
+    carnets,
+    clubs,
+    commandes,
+    badges,
+    constance,
+    activite,
+    abonnement,
+    inventaire,
+  } = MOCK_MARCELINE_DATA;
 
-  const initials = profile.full_name ? profile.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : (user?.email?.[0] ?? 'U').toUpperCase();
-  const currentLevel = LOYALTY_LEVELS.filter(l => profile.loyalty_points >= l.min).pop()!;
-  const nextLevel = LOYALTY_LEVELS.find(l => l.min > profile.loyalty_points);
-  const loyaltyProgress = nextLevel ? (profile.loyalty_points - currentLevel.min) / (nextLevel.min - currentLevel.min) * 100 : 100;
-
-  const TABS: { id: Tab; label: string; icon: string; count?: number }[] = [
-    { id: 'posts', label: 'Publications', icon: 'Squares2X2Icon', count: postsCount },
-    { id: 'carnets', label: 'Carnets', icon: 'BookOpenIcon', count: carnetsCount },
-    { id: 'inventaire', label: 'Inventaire', icon: 'ArchiveBoxIcon' },
-    { id: 'groupes', label: 'Groupes', icon: 'UserGroupIcon', count: groupsCount },
-    { id: 'commandes', label: 'Commandes', icon: 'ShoppingBagIcon' },
-    { id: 'documents', label: 'Documents', icon: 'FolderIcon' },
-    { id: 'securite', label: 'Sécurité', icon: 'LockClosedIcon' },
-  ];
-
-  if (!user) {
-    return (
-      <div className="min-h-screen" style={{ background: '#F5F2EC' }}>
-        <Header />
-        <div className="flex items-center justify-center min-h-[70vh]">
-          <div className="text-center max-w-sm mx-auto px-6">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5 bg-[#1C2620]/10">
-              <Icon name="LockClosedIcon" size={28} className="text-[#1C2620]" variant="outline" />
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'aventures':
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-8 space-y-6">
+              <ProchainVoyageCard voyage={prochainVoyage} />
+              <StatsGrid stats={profile.stats} />
+              <MesAventuresCard aventures={aventures} />
             </div>
-            <h2 className="font-bold text-2xl text-[#1C2620] mb-2 tracking-tight" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>Connexion requise</h2>
-            <p className="text-sm text-[#5C6B5E] mb-6 leading-relaxed">Connectez-vous pour accéder à votre compte, vos carnets et votre inventaire.</p>
-            <Link href="/connexion" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm bg-[#1C2620] text-white hover:bg-[#1C2620]/90 transition-colors">
-              <Icon name="ArrowRightOnRectangleIcon" size={14} /> Se connecter
-            </Link>
+            <div className="lg:col-span-4 space-y-6">
+              <ConstanceCard constance={constance} />
+              <BadgesCard badges={badges} />
+            </div>
           </div>
-        </div>
-        <NewFooterSection />
-      </div>
-    );
-  }
+        );
+
+      case 'carnets':
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-8 space-y-6">
+              <MesCarnetsCard carnets={carnets} />
+            </div>
+            <div className="lg:col-span-4 space-y-6">
+              <ActiviteCard activites={activite} />
+              <InventaireCTACard inventaire={inventaire} />
+            </div>
+          </div>
+        );
+
+      case 'clubs':
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-8 space-y-6">
+              <MesClubsCard clubs={clubs} />
+            </div>
+            <div className="lg:col-span-4 space-y-6">
+              <ActiviteCard activites={activite} />
+            </div>
+          </div>
+        );
+
+      case 'commandes':
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-8 space-y-6">
+              <CommandesCard commandes={commandes} />
+            </div>
+            <div className="lg:col-span-4 space-y-6">
+              <AbonnementCard subscription={abonnement} />
+              <InventaireCTACard inventaire={inventaire} />
+            </div>
+          </div>
+        );
+
+      case 'fidelite':
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-8 space-y-6">
+              <BadgesCard badges={badges} />
+              <StatsGrid stats={profile.stats} />
+            </div>
+            <div className="lg:col-span-4 space-y-6">
+              <ConstanceCard constance={constance} />
+              <AbonnementCard subscription={abonnement} />
+            </div>
+          </div>
+        );
+
+      case 'parametres':
+        return (
+          <div className="w-full">
+            <ParametresCompteCard profile={profile} onSave={showToast} />
+          </div>
+        );
+
+      case 'vue-d-ensemble':
+      default:
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* LEFT COLUMN (≈65%) */}
+            <div className="lg:col-span-8 space-y-6">
+              <ProchainVoyageCard voyage={prochainVoyage} />
+              <StatsGrid stats={profile.stats} />
+              <MesAventuresCard aventures={aventures} />
+              <MesCarnetsCard carnets={carnets} />
+              <MesClubsCard clubs={clubs} />
+              <CommandesCard commandes={commandes} />
+            </div>
+
+            {/* RIGHT COLUMN (≈35%) */}
+            <div className="lg:col-span-4 space-y-6">
+              <BadgesCard badges={badges} />
+              <ConstanceCard constance={constance} />
+              <ActiviteCard activites={activite} />
+              <AbonnementCard subscription={abonnement} />
+              <InventaireCTACard inventaire={inventaire} />
+            </div>
+          </div>
+        );
+    }
+  };
 
   return (
-    <div className="min-h-screen" style={{ background: '#F5F2EC' }}>
-      <Header />
+    <div className="min-h-screen bg-[#F5F3ED] text-[#1C2620] selection:bg-emerald-900/20 font-sans">
+      
+      {/* Mobile-only app-like view */}
+      <MobileCompteView
+        profile={profile}
+        prochainVoyage={prochainVoyage}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onOpenEdit={() => setEditModalOpen(true)}
+      />
 
-      {/* ── Hero profile — fond vert foncé ── */}
-      <section style={{ background: '#1C2620' }} className="pt-16 relative overflow-hidden">
-        {/* Grain texture */}
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")', backgroundRepeat: 'repeat', backgroundSize: '128px' }} />
-        <div className="absolute top-0 left-0 w-[600px] h-[600px] rounded-full opacity-[0.06] pointer-events-none" style={{ background: 'radial-gradient(circle, #4A6741 0%, transparent 70%)', transform: 'translate(-30%, -30%)' }} />
+      {/* Desktop view (md and above) */}
+      <div className="hidden md:block">
+        <Header />
 
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-0">
-
-          {/* Eyebrow mono */}
-          <p className="text-[10px] font-mono tracking-[0.25em] uppercase mb-6" style={{ color: '#E4501C' }}>
-            · Mon compte
-          </p>
-
-          {/* Profile top row */}
-          <div className="flex items-start gap-6 sm:gap-10 mb-7">
-            {/* Avatar */}
-            <div className="relative flex-shrink-0">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center shadow-xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #4A6741, #2D4A28)', border: '2px solid rgba(74,103,65,0.4)' }}>
-                {profile.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="font-bold text-3xl text-white" style={{ fontFamily: 'Georgia, serif' }}>{initials}</span>
-                )}
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 flex items-center justify-center" style={{ background: '#10b981', borderColor: '#1C2620' }} />
+        <main className="pt-24 pb-12">
+          {/* Main Container */}
+          <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
+            
+            {/* 3.1 Page Header Title */}
+            <div className="mb-6">
+              <h1 className="font-display font-900 text-3xl sm:text-4xl text-[#1C2620] tracking-tight">
+                Compte — Dashboard voyageur
+              </h1>
+              <p className="text-sm text-[#1C2620]/60 font-medium mt-1">
+                Vue d'ensemble d'un utilisateur riche · aventures, carnets, clubs, fidélité
+              </p>
             </div>
 
-            {/* Profile info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 flex-wrap mb-3">
-                {editMode ? (
-                  <input value={editName} onChange={e => setEditName(e.target.value)} className="rounded-xl px-3 py-1.5 text-white text-lg font-bold focus:outline-none w-48" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', fontFamily: 'Georgia, serif', fontStyle: 'italic' }} />
-                ) : (
-                  <h1 className="font-bold text-xl sm:text-2xl text-white tracking-tight" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>{profile.full_name || user.email?.split('@')[0]}</h1>
-                )}
-                <div className="flex items-center gap-2">
-                  {editMode ? (
-                    <>
-                      <button onClick={handleSave} disabled={saving} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors disabled:opacity-50 bg-white text-[#1C2620]">
-                        {saving ? '...' : '✓ Sauvegarder'}
-                      </button>
-                      <button onClick={() => setEditMode(false)} className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors" style={{ border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.7)' }}>Annuler</button>
-                    </>
-                  ) : (
-                    <>
-                      <button onClick={() => setEditMode(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all" style={{ border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)' }}>
-                        <Icon name="PencilIcon" size={11} /> Modifier
-                      </button>
-                      {saved && <span className="text-xs font-semibold text-emerald-400">✓ Sauvegardé</span>}
-                    </>
-                  )}
-                  <Link href={`/profil/${user.id}`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all" style={{ border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)' }}>
-                    <Icon name="ArrowTopRightOnSquareIcon" size={11} /> Profil public
-                  </Link>
-                </div>
-              </div>
-
-              {/* Stats row */}
-              <div className="flex items-center gap-5 sm:gap-8 mb-4">
-                {[
-                  { label: 'publications', value: postsCount },
-                  { label: 'abonnés', value: followers },
-                  { label: 'abonnements', value: following },
-                  { label: 'carnets', value: carnetsCount },
-                ].map(stat => (
-                  <div key={stat.label} className="text-center">
-                    <p className="font-bold text-white text-lg leading-none" style={{ fontFamily: 'Georgia, serif' }}>{stat.value}</p>
-                    <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{stat.label}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Level + bio */}
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm">{currentLevel.badge}</span>
-                  <span className="text-xs font-semibold" style={{ color: currentLevel.color }}>{currentLevel.name}</span>
-                  <span style={{ color: 'rgba(255,255,255,0.2)' }}>·</span>
-                  <span className="font-mono text-xs font-bold" style={{ color: '#E4501C' }}>{profile.loyalty_points} pts</span>
-                </div>
-                {editMode ? (
-                  <div className="space-y-2">
-                    <input value={editLocation} onChange={e => setEditLocation(e.target.value)} placeholder="Localisation" className="rounded-xl px-3 py-1.5 text-xs focus:outline-none w-full max-w-xs" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)' }} />
-                    <textarea rows={2} value={editBio} onChange={e => setEditBio(e.target.value)} placeholder="Votre bio..." className="rounded-xl px-3 py-1.5 text-xs focus:outline-none w-full max-w-xs resize-none" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)' }} />
-                  </div>
-                ) : (
-                  <>
-                    {profile.location && <p className="text-xs flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.4)' }}><Icon name="MapPinIcon" size={11} /> {profile.location}</p>}
-                    {profile.bio && <p className="text-sm leading-relaxed max-w-sm" style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>{profile.bio}</p>}
-                  </>
-                )}
-              </div>
+            {/* 3.3 Breadcrumb */}
+            <div className="flex items-center gap-2 text-xs font-semibold text-[#1C2620]/50 mb-6">
+              <Link href="/" className="hover:text-[#1C2620] transition-colors">Accueil</Link>
+              <span>›</span>
+              <span className="text-[#1C2620]/70">Mon compte</span>
+              <span>›</span>
+              <span className="text-[#1C2620] font-bold uppercase tracking-wider text-[11px]">
+                {activeTab.replace('-', ' ')}
+              </span>
             </div>
+
+            {/* 3.4 Photographic Profile Hero */}
+            <HeroProfil
+              profile={profile}
+              onEditProfile={() => setEditModalOpen(true)}
+              onShareProfile={() => showToast('Lien du profil copié dans le presse-papiers !')}
+            />
+
+            {/* 3.5 Level & Key Stats Bandeau */}
+            <StatsBandeau profile={profile} />
+
+            {/* 3.6 Internal Navigation Tabs */}
+            <TabsCompte
+              activeTab={activeTab}
+              onTabChange={(tab) => {
+                setActiveTab(tab);
+                showToast(`Onglet : ${tab.replace('-', ' ')}`);
+              }}
+              counts={{
+                aventures: profile.stats.sorties,
+                carnets: profile.stats.carnets,
+                clubs: profile.stats.clubs,
+                commandes: 18,
+                fidelite: profile.level.current_pts,
+              }}
+            />
+
+            {/* Dynamic Tab Content */}
+            {renderTabContent()}
+
           </div>
+        </main>
 
-          {/* Loyalty progress bar */}
-          {nextLevel && (
-            <div className="mb-5 rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <div className="flex items-center justify-between text-xs mb-2">
-                <span style={{ color: 'rgba(255,255,255,0.4)' }}>{currentLevel.badge} {currentLevel.name}</span>
-                <span style={{ color: 'rgba(255,255,255,0.4)' }}>{nextLevel.badge} {nextLevel.name} à {nextLevel.min} pts</span>
-              </div>
-              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                <div className="h-full rounded-full transition-all" style={{ width: `${loyaltyProgress}%`, background: 'linear-gradient(90deg, #4A6741, #6B9B5E)' }} />
-              </div>
-              <p className="text-[10px] mt-1 text-right" style={{ color: 'rgba(255,255,255,0.25)' }}>{nextLevel.min - profile.loyalty_points} pts pour le niveau suivant</p>
-            </div>
-          )}
-
-          {/* Trust score + AI Conseil */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-            {/* Trust score */}
-            <div className="rounded-2xl p-4 flex items-center gap-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <div className="relative flex-shrink-0">
-                <svg width={56} height={56} className="-rotate-90">
-                  <circle cx={28} cy={28} r={22} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={4} />
-                  <circle cx={28} cy={28} r={22} fill="none" stroke="#4A6741" strokeWidth={4} strokeDasharray={2 * Math.PI * 22} strokeDashoffset={2 * Math.PI * 22 * (1 - (profile.trust_score || 50) / 100)} strokeLinecap="round" />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center"><span className="font-mono font-bold text-white text-sm">{profile.trust_score || 50}</span></div>
-              </div>
-              <div>
-                <p className="text-[10px] font-mono uppercase tracking-wider mb-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Trust Score</p>
-                <p className="font-bold text-white text-sm" style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>Confirmé 🏔️</p>
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Score de confiance</p>
-              </div>
-            </div>
-
-            {/* AI Conseil */}
-            <div className="rounded-2xl p-4" style={{ background: 'rgba(74,103,65,0.15)', border: '1px solid rgba(74,103,65,0.3)' }}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Icon name="LightBulbIcon" size={14} style={{ color: '#6B9B5E' }} />
-                  <p className="text-xs font-semibold text-white">Conseil IA personnalisé</p>
-                </div>
-                <button onClick={handleGenerateConseil} disabled={conseilLoading} className="text-[10px] font-semibold disabled:opacity-50 flex items-center gap-1" style={{ color: '#6B9B5E' }}>
-                  {conseilLoading ? <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" /> : <Icon name="SparklesIcon" size={10} />}
-                  {conseilLoading ? 'Génération...' : 'Générer'}
-                </button>
-              </div>
-              {aiConseil ? (
-                <p className="text-xs leading-relaxed line-clamp-3" style={{ color: 'rgba(255,255,255,0.75)' }}>
-                  {aiConseil}
-                  {conseilLoading && <span className="inline-block w-1 h-3 animate-pulse ml-0.5 rounded-sm bg-white/50" />}
-                </p>
-              ) : conseilLoading ? (
-                <p className="text-xs animate-pulse" style={{ color: 'rgba(255,255,255,0.35)' }}>Gemini génère vos conseils...</p>
-              ) : (
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Cliquez sur &quot;Générer&quot; pour obtenir des conseils personnalisés par Gemini.</p>
-              )}
-            </div>
-          </div>
-
-          {/* Quick action links */}
-          <div className="flex items-center gap-2 flex-wrap mb-6">
-            {[
-              { label: 'Configurateur IA', href: '/ai-configurator', emoji: '🤖' },
-              { label: 'Mes groupes', href: '/groupe', emoji: '🗺️' },
-              { label: 'Communauté', href: '/communaute', emoji: '🌍' },
-              { label: 'Copilote', href: '/copilote', emoji: '✈️' },
-              { label: 'Alertes', href: '/alertes', emoji: '🔔' },
-            ].map(item => (
-              <Link key={item.href} href={item.href} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <span>{item.emoji}</span> {item.label}
-              </Link>
-            ))}
-            <button onClick={signOut} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all ml-auto" style={{ background: 'rgba(239,68,68,0.08)', color: 'rgba(239,68,68,0.75)', border: '1px solid rgba(239,68,68,0.15)' }}>
-              <Icon name="ArrowRightOnRectangleIcon" size={11} /> Déconnexion
-            </button>
-          </div>
-
-          {/* Tab navigation */}
-          <div className="flex overflow-x-auto scrollbar-hide -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-            {TABS.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className="flex items-center gap-1.5 px-4 py-3.5 text-xs font-semibold whitespace-nowrap transition-all -mt-px"
-                style={{
-                  borderTop: activeTab === tab.id ? '2px solid #E7E3D6' : '2px solid transparent',
-                  color: activeTab === tab.id ? '#fff' : 'rgba(255,255,255,0.35)',
-                }}
-              >
-                <Icon name={tab.icon} size={13} variant={activeTab === tab.id ? 'solid' : 'outline'} />
-                {tab.label}
-                {tab.count !== undefined && tab.count > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: activeTab === tab.id ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.07)', color: activeTab === tab.id ? '#fff' : 'rgba(255,255,255,0.35)' }}>{tab.count}</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Tab content — fond crème ── */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {profileLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{[1,2,3,4,5,6].map(i => <div key={i} className="h-32 rounded-2xl animate-pulse bg-[#E8E4DA]" />)}</div>
-        ) : (
-          <>
-            {activeTab === 'posts' && <PostsTab userId={user.id} />}
-            {activeTab === 'carnets' && <CarnetsTab userId={user.id} />}
-            {activeTab === 'inventaire' && <InventaireTab userId={user.id} />}
-            {activeTab === 'groupes' && <GroupesTab userId={user.id} />}
-            {activeTab === 'commandes' && <CommandesTab userId={user.id} />}
-            {activeTab === 'documents' && <DocumentsTab userId={user.id} />}
-            {activeTab === 'securite' && <SecuriteTab />}
-          </>
-        )}
+        {/* 6. Full-Width Footer */}
+        <CompteFooter profile={profile} />
       </div>
 
-      <NewFooterSection />
+      {/* Edit Profile Modal (Accessible from both Desktop & Mobile) */}
+      <EditProfileModal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        profile={profile}
+        onSave={handleSaveProfile}
+      />
+
+      {/* Global Toast */}
+      {toast && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] bg-[#1C2620] text-white px-6 py-3 rounded-full text-xs font-extrabold shadow-2xl animate-fade-in-up flex items-center gap-2 border border-white/20">
+          <span>{toast}</span>
+        </div>
+      )}
+
     </div>
   );
 }

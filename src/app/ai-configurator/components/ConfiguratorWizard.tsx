@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
 import { getChatCompletion } from '@/lib/ai/chatCompletion';
 import { getCart, saveCart } from '@/lib/cart';
@@ -155,12 +156,33 @@ function ChoiceCard({ icon, title, titleItalic, desc, selected, onClick }: Choic
         >
           {icon}
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-600 text-[#1C2620] text-sm leading-tight mb-1">
-            {title}
-            {titleItalic && (
-              <em className="font-400 not-italic" style={{ fontStyle: 'italic' }}> {titleItalic}</em>
-            )}
+      </div>
+
+      <div>
+        <p className="text-sm text-muted-foreground mb-3">Destinations populaires :</p>
+        <div className="flex flex-wrap gap-2">
+          {popularDestinations.map((dest) => (
+            <button
+              key={dest}
+              onClick={() => onChange('destination', dest)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                state.destination === dest 
+                  ? 'bg-[#405247] text-white shadow-sm' 
+                  : 'bg-white border border-[#C8C3B0] text-[#5C6B5E] hover:border-[#405247]/50 hover:bg-[#F4F0EB]'
+              }`}
+              aria-pressed={state.destination === dest}
+            >
+              {dest}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="p-4 rounded-xl" style={{ background: 'rgba(62,107,122,0.08)', border: '1px solid rgba(62,107,122,0.2)' }}>
+        <div className="flex items-start gap-3">
+          <Icon name="InformationCircleIcon" size={18} variant="outline" className="text-info flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            L&apos;IA analysera le climat, l&apos;altitude, les risques locaux et la saison pour optimiser votre liste d&apos;équipement.
           </p>
           <p className="text-xs text-[#6B6860] leading-relaxed">{desc}</p>
         </div>
@@ -178,18 +200,56 @@ function StepUsage({ state, onChange }: { state: WizardState; onChange: (k: keyo
     { id: 'voyage', icon: '✈️', title: 'Voyage', titleItalic: 'urbain.', desc: 'Villes, transports, mobilité. Compact et polyvalent.' },
   ];
   return (
-    <div className="space-y-3">
-      {choices.map((c) => (
-        <ChoiceCard
-          key={c.id}
-          icon={c.icon}
-          title={c.title}
-          titleItalic={c.titleItalic}
-          desc={c.desc}
-          selected={state.usage === c.id}
-          onClick={() => onChange('usage', c.id)}
-        />
-      ))}
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="start-date" className="block text-sm font-600 text-foreground mb-2">
+            Date de départ
+          </label>
+          <input
+            id="start-date"
+            type="date"
+            value={state.startDate}
+            onChange={(e) => onChange('startDate', e.target.value)}
+            className="input-field"
+            aria-label="Date de départ"
+          />
+        </div>
+        <div>
+          <label htmlFor="end-date" className="block text-sm font-600 text-foreground mb-2">
+            Date de retour
+          </label>
+          <input
+            id="end-date"
+            type="date"
+            value={state.endDate}
+            onChange={(e) => onChange('endDate', e.target.value)}
+            className="input-field"
+            aria-label="Date de retour"
+          />
+        </div>
+      </div>
+
+      <div>
+        <p className="text-sm font-600 text-foreground mb-3">Saison principale</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {seasons.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => onChange('season', s.id)}
+              className={`flex flex-col items-center justify-center gap-3 p-5 rounded-2xl border-2 transition-all duration-300 ${
+                state.season === s.id
+                  ? 'border-[#405247] bg-[#405247]/5 shadow-sm scale-[1.02]' : 'border-[#C8C3B0] bg-white hover:border-[#405247]/50 hover:bg-[#F4F0EB]/50'
+              }`}
+              aria-pressed={state.season === s.id}
+            >
+              <span className="text-3xl" aria-hidden="true">{s.icon}</span>
+              <span className={`font-600 text-sm ${state.season === s.id ? 'text-[#2D3A33]' : 'text-[#5C6B5E]'}`}>{s.label}</span>
+              <span className="font-mono text-[10px] text-[#5C6B5E] tracking-widest uppercase">{s.months}</span>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -203,18 +263,100 @@ function StepDuree({ state, onChange }: { state: WizardState; onChange: (k: keyo
     { id: 'expedition', icon: '🏔️', title: 'Expédition,', titleItalic: '1 mois+.', desc: 'Autonomie maximale, matériel professionnel.' },
   ];
   return (
-    <div className="space-y-3">
-      {choices.map((c) => (
-        <ChoiceCard
-          key={c.id}
-          icon={c.icon}
-          title={c.title}
-          titleItalic={c.titleItalic}
-          desc={c.desc}
-          selected={state.duree === c.id}
-          onClick={() => onChange('duree', c.id)}
-        />
-      ))}
+    <div className="space-y-6">
+      <div>
+        <p className="text-sm font-600 text-foreground mb-3">Activité principale</p>
+        <div className="flex flex-wrap gap-2">
+          {activities.map((act) => (
+            <button
+              key={act}
+              onClick={() => onChange('activity', act)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                state.activity === act 
+                  ? 'bg-[#405247] text-white shadow-sm' 
+                  : 'bg-white border border-[#C8C3B0] text-[#5C6B5E] hover:border-[#405247]/50 hover:bg-[#F4F0EB]'
+              }`}
+              aria-pressed={state.activity === act}
+            >
+              {act}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p className="text-sm font-600 text-foreground mb-3">Niveau d&apos;expérience</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {levels.map((lv) => (
+            <button
+              key={lv.id}
+              onClick={() => onChange('level', lv.id)}
+              className={`flex flex-col gap-2 p-5 rounded-2xl border-2 text-left transition-all duration-300 ${
+                state.level === lv.id
+                  ? 'border-[#405247] bg-[#405247]/5 shadow-sm scale-[1.02]' : 'border-[#C8C3B0] bg-white hover:border-[#405247]/50 hover:bg-[#F4F0EB]/50'
+              }`}
+              aria-pressed={state.level === lv.id}
+            >
+              <span className={`font-600 text-sm ${state.level === lv.id ? 'text-[#2D3A33]' : 'text-[#5C6B5E]'}`}>{lv.label}</span>
+              <span className="text-xs text-[#5C6B5E]/80 leading-snug">{lv.desc}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <label htmlFor="max-weight" className="text-sm font-600 text-[#2D3A33]">
+              Poids max du sac
+            </label>
+            <span className="font-mono text-sm text-[#405247] font-bold bg-[#405247]/10 px-3 py-1 rounded-lg">
+              {state.maxWeightG >= 1000 ? `${(state.maxWeightG / 1000).toFixed(1)} kg` : `${state.maxWeightG} g`}
+            </span>
+          </div>
+          <input
+            id="max-weight"
+            type="range"
+            min={3000}
+            max={20000}
+            step={500}
+            value={state.maxWeightG}
+            onChange={(e) => onChange('maxWeightG', Number(e.target.value))}
+            className="range-slider w-full"
+            aria-label={`Poids maximum: ${state.maxWeightG} grammes`}
+          />
+          <div className="flex justify-between mt-1">
+            <span className="font-mono-data text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>3 kg</span>
+            <span className="font-mono-data text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>20 kg</span>
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <label htmlFor="budget" className="text-sm font-600 text-[#2D3A33]">
+              Budget équipement
+            </label>
+            <span className="font-mono text-sm text-[#405247] font-bold bg-[#405247]/10 px-3 py-1 rounded-lg">
+              {state.budgetEur} €
+            </span>
+          </div>
+          <input
+            id="budget"
+            type="range"
+            min={50}
+            max={2000}
+            step={50}
+            value={state.budgetEur}
+            onChange={(e) => onChange('budgetEur', Number(e.target.value))}
+            className="range-slider w-full"
+            aria-label={`Budget: ${state.budgetEur} euros`}
+          />
+          <div className="flex justify-between mt-1">
+            <span className="font-mono-data text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>50 €</span>
+            <span className="font-mono-data text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>2 000 €</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -740,101 +882,184 @@ export default function ConfiguratorWizard() {
   const nextLabel = state.step === 4 ? 'Générer mon kit' : `Continuer vers ${STEPS[state.step]?.label || ''}`;
 
   return (
-    <div className="min-h-screen" style={{ background: '#F5F2EC' }}>
-      {/* Top header bar */}
-      <div
-        ref={topRef}
-        className="sticky top-0 z-30 border-b"
-        style={{ background: '#F5F2EC', borderColor: '#E8E4DA' }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="font-700 text-[#1C2620] text-base" style={{ fontFamily: 'var(--font-display, Manrope, sans-serif)' }}>
-                Configurateur · Composer un sac
-              </h1>
-              <p className="text-xs text-[#8A8478]">Étape {state.step}/5 · Assistant multi-étapes</p>
-            </div>
-            <Link
-              href="/boutique"
-              className="text-xs text-[#8A8478] hover:text-[#1C2620] transition-colors font-500 flex items-center gap-1"
-            >
-              Quitter le configurateur
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            </Link>
+    <div className="min-h-[calc(100vh-64px)] bg-[#F4F0EB] flex flex-col-reverse lg:flex-row">
+      {/* LEFT COLUMN: Steps (Clair) */}
+      <div className="flex-1 lg:w-7/12 relative pb-20">
+        <div ref={topRef} className="max-w-3xl mx-auto px-4 sm:px-8 lg:px-12 py-10 sm:py-14">
+          
+          <div className="mb-10">
+            <h1 className="text-3xl font-display font-400 text-[#2D3A33] mb-2 italic">Préparez votre équipement</h1>
+            <p className="text-[#5C6B5E]">L&apos;IA génère votre liste en fonction des risques et du climat local.</p>
           </div>
-          {/* Stepper */}
-          <Stepper currentStep={state.step} />
-        </div>
-      </div>
 
-      {/* Main content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pb-32 lg:pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+          {/* Step indicator */}
+          <div className="flex items-center mb-10" role="progressbar" aria-valuenow={state.step} aria-valuemin={1} aria-valuemax={4} aria-label={`Étape ${state.step} sur 4`}>
+            {STEPS.map((step, idx) => (
+              <React.Fragment key={step.id}>
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-mono text-xs transition-colors ${state.step === step.id ? 'bg-[#405247] text-white border-2 border-[#405247]' : state.step > step.id ? 'bg-[#6B705C] text-white border-2 border-[#6B705C]' : 'bg-transparent border-2 border-[#C8C3B0] text-[#5C6B5E]'}`}>
+                    {state.step > step.id ? (
+                      <Icon name="CheckIcon" size={14} variant="outline" className="text-white" />
+                    ) : (
+                      <span>{step.id}</span>
+                    )}
+                  </div>
+                  <span className={`text-[10px] font-mono uppercase tracking-widest hidden sm:block ${state.step === step.id ? 'text-[#405247]' : 'text-[#5C6B5E]'}`}>
+                    {step.label}
+                  </span>
+                </div>
+                {idx < STEPS.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-2 ${state.step > step.id ? 'bg-[#6B705C]' : 'bg-[#C8C3B0]'}`} />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
 
-          {/* Left column: Question */}
-          <div>
-            {/* Step number + label */}
-            <div className="flex items-center gap-3 mb-4">
-              <span
-                className="text-5xl font-800 leading-none"
-                style={{ color: '#E8E4DA', fontFamily: 'var(--font-display, Manrope, sans-serif)' }}
-              >
-                {stepMeta.num}
-              </span>
-              <span className="text-[10px] font-600 text-[#8A8478] uppercase tracking-widest">{stepMeta.label}</span>
+          {/* Step card */}
+          <div className="bg-white border border-[#C8C3B0] rounded-3xl p-6 sm:p-10 shadow-sm">
+            {/* Step header */}
+            <div className="mb-8 pb-6 border-b border-[#C8C3B0]">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#405247]/10 text-[#405247]">
+                  <Icon
+                    name={
+                      state.step === 1 ? 'MapPinIcon' :
+                      state.step === 2 ? 'CalendarDaysIcon' :
+                      state.step === 3 ? 'UserCircleIcon' : 'SparklesIcon'
+                    }
+                    size={20}
+                    variant="outline"
+                  />
+                </div>
+                <div>
+                  <p className="font-mono text-[10px] text-[#5C6B5E] uppercase tracking-widest">
+                    Étape {state.step} sur 4
+                  </p>
+                  <h2 className="font-display font-400 text-[#2D3A33] text-2xl mt-1">
+                    {STEPS[state.step - 1].label}
+                  </h2>
+                </div>
+              </div>
             </div>
-
-            {/* Question title */}
-            <h2
-              className="font-700 text-[#1C2620] leading-tight mb-4"
-              style={{ fontFamily: 'var(--font-display, Manrope, sans-serif)', fontSize: 'clamp(2rem, 4vw, 2.75rem)' }}
-            >
-              {stepMeta.title}
-              <br />
-              <span className="font-400" style={{ fontStyle: 'italic' }}>{stepMeta.titleItalic}</span>
-            </h2>
-
-            <p className="text-sm text-[#6B6860] leading-relaxed mb-8 max-w-md">
-              {stepMeta.desc}
-            </p>
 
             {/* Step content */}
-            <div className="mb-8">
-              {state.step === 1 && <StepUsage state={state} onChange={update} />}
-              {state.step === 2 && <StepDuree state={state} onChange={update} />}
-              {state.step === 3 && <StepMeteo state={state} onChange={update} />}
-              {state.step === 4 && <StepConfort state={state} onChange={update} />}
-              {state.step === 5 && <StepRecap state={state} />}
+            <div className="overflow-hidden">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={state.step}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                >
+                  {state.step === 1 && <StepDestination state={state} onChange={update} />}
+                  {state.step === 2 && <StepDates state={state} onChange={update} />}
+                  {state.step === 3 && <StepProfile state={state} onChange={update} />}
+                  {state.step === 4 && <StepResult state={state} />}
+                </motion.div>
+              </AnimatePresence>
             </div>
 
-            {/* Navigation */}
-            {state.step < 5 && (
-              <div className="flex items-center justify-between pt-6 border-t" style={{ borderColor: '#E8E4DA' }}>
+            {/* Navigation buttons */}
+            {state.step < 4 && (
+              <div className="flex items-center justify-between mt-10 pt-6 border-t border-[#C8C3B0]">
                 <button
                   onClick={back}
                   disabled={state.step === 1}
-                  className="flex items-center gap-2 text-sm font-500 text-[#6B6860] hover:text-[#1C2620] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 py-3 px-6 text-sm text-[#5C6B5E] font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#F4F0EB] rounded-xl transition-colors"
+                  aria-label="Étape précédente"
                 >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 4l-4 4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  Précédent
+                  <Icon name="ArrowLeftIcon" size={16} variant="outline" />
+                  Retour
                 </button>
                 <button
                   onClick={advance}
                   disabled={!canAdvance()}
-                  className="flex items-center gap-2 px-7 py-3.5 rounded-xl font-600 text-sm text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ background: canAdvance() ? '#1C2620' : '#8A8478' }}
+                  className="flex items-center gap-2 bg-[#2D3A33] text-white py-3 px-8 rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#405247] transition-all active:scale-95 shadow-sm"
+                  aria-label="Étape suivante"
                 >
-                  {nextLabel}
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  {state.step === 3 ? (
+                    <>
+                      <Icon name="SparklesIcon" size={16} variant="outline" />
+                      Générer ma liste
+                    </>
+                  ) : (
+                    <>
+                      Continuer
+                      <Icon name="ArrowRightIcon" size={16} variant="outline" />
+                    </>
+                  )}
                 </button>
               </div>
             )}
           </div>
+          
+          <p className="text-center text-[10px] font-mono text-[#5C6B5E] mt-8 uppercase tracking-widest">
+            IA Propulsée par Gemini 2.5 Flash
+          </p>
+        </div>
+      </div>
 
-          {/* Right column: Kit panel (desktop only) */}
-          <div className="hidden lg:block sticky top-32">
-            <KitPanel state={state} />
+      {/* RIGHT COLUMN: Context Panel (Vert) */}
+      <div className="lg:w-5/12 bg-[#2D3A33] lg:sticky lg:top-16 lg:h-[calc(100vh-64px)] flex flex-col justify-between overflow-hidden relative border-l border-[#405247]">
+        {/* Topographic background */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none" aria-hidden="true">
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="topo-conf" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+                <path d="M0,50 C25,25 75,75 100,50" fill="none" stroke="#E5D7C1" strokeWidth="1" />
+                <path d="M0,80 C25,55 75,105 100,80" fill="none" stroke="#E5D7C1" strokeWidth="1" />
+                <path d="M0,20 C25,-5 75,45 100,20" fill="none" stroke="#E5D7C1" strokeWidth="1" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#topo-conf)" />
+          </svg>
+        </div>
+        
+        <div className="relative z-10 p-8 sm:p-12 lg:p-16 flex-1 flex flex-col">
+          <div className="mb-12">
+            <div className="w-12 h-12 bg-[#405247] rounded-2xl flex items-center justify-center mb-6 border border-[#6B705C]">
+              <Icon name="SparklesIcon" size={24} className="text-[#E5D7C1]" />
+            </div>
+            <h2 className="text-4xl md:text-5xl font-display font-300 text-[#F4F0EB] leading-[1.1] italic mb-4">
+              Intelligence<br/>Outdoor
+            </h2>
+            <p className="text-[#E5D7C1] font-300">
+              Notre algorithme croise la météo historique, l&apos;altimétrie et les recommandations des experts pour construire votre kit parfait.
+            </p>
+          </div>
+
+          <div className="mt-auto space-y-4">
+            {/* Dynamic summary based on state */}
+            <div className="bg-[#405247]/40 backdrop-blur-md rounded-2xl p-6 border border-[#6B705C]/30">
+              <p className="font-mono text-[10px] text-[#E5D7C1] uppercase tracking-widest mb-4">Configuration en cours</p>
+              
+              <ul className="space-y-4">
+                <li className="flex items-center justify-between">
+                  <span className="text-sm text-[#F4F0EB]/70 flex items-center gap-2"><Icon name="MapPinIcon" size={14}/> Destination</span>
+                  <span className="font-mono text-sm text-[#F4F0EB] font-bold">{state.destination || '—'}</span>
+                </li>
+                <li className="flex items-center justify-between">
+                  <span className="text-sm text-[#F4F0EB]/70 flex items-center gap-2"><Icon name="CalendarDaysIcon" size={14}/> Saison</span>
+                  <span className="font-mono text-sm text-[#F4F0EB] font-bold">{state.season ? state.season.charAt(0).toUpperCase() + state.season.slice(1) : '—'}</span>
+                </li>
+                <li className="flex items-center justify-between">
+                  <span className="text-sm text-[#F4F0EB]/70 flex items-center gap-2"><Icon name="UserCircleIcon" size={14}/> Profil</span>
+                  <span className="font-mono text-sm text-[#F4F0EB] font-bold">{state.activity || '—'}</span>
+                </li>
+                <li className="flex items-center justify-between">
+                  <span className="text-sm text-[#F4F0EB]/70 flex items-center gap-2"><Icon name="ScaleIcon" size={14}/> Poids max</span>
+                  <span className="font-mono text-sm text-[#E5D7C1] font-bold">{state.maxWeightG >= 1000 ? `${(state.maxWeightG / 1000).toFixed(1)} kg` : `${state.maxWeightG} g`}</span>
+                </li>
+              </ul>
+            </div>
+            
+            {state.generated && (
+              <div className="flex items-center justify-center gap-2 text-[#E5D7C1] mt-4">
+                <span className="w-2 h-2 rounded-full bg-[#E5D7C1] animate-pulse" />
+                <span className="text-xs font-mono uppercase tracking-widest">Analyse terminée</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

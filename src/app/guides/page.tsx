@@ -96,6 +96,13 @@ export default function GuidesPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} suppressHydrationWarning />
       <div className="min-h-screen" style={{ background: '#F5F2EC' }}>
         <Header />
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
+          <h1 className="font-display text-4xl md:text-5xl text-foreground mb-4" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>
+            Guides de voyage
+          </h1>
+          <p className="text-foreground/60 mb-12 max-w-2xl">
+            Découvrez nos guides complets pour préparer chaque aventure. Conseils d&apos;experts, checklists et équipement recommandé.
+          </p>
 
         {/* Hero */}
         <section className="relative overflow-hidden pt-20" style={{ background: '#1C2620' }}>

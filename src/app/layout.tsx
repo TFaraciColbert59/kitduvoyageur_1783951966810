@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import { DM_Sans, Manrope, IBM_Plex_Mono } from 'next/font/google';
 import '../styles/tailwind.css';
 import { AuthProvider } from '@/contexts/AuthContext';
+import Script from 'next/script';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
 import ErrorBoundaryWrapper from '@/components/ErrorBoundaryWrapper';
@@ -12,6 +13,9 @@ import TopBar from '@/components/mobile-nav/TopBar';
 import InstallPrompt from '@/components/mobile-nav/InstallPrompt';
 import CookieConsentBanner from '@/components/CookieConsentBanner';
 import { getOrganizationSchema, getWebsiteSchema } from '@/lib/seo-utils';
+import ReactQueryProvider from '@/components/ReactQueryProvider';
+
+
 
 // Only load weights actually used in the app
 const dmSans = DM_Sans({
@@ -181,29 +185,40 @@ export default function RootLayout({
 
         {/* Rocket analytics scripts */}
 
-        <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fkitduvoyag4153back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.19" />
-        <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.2" /></head>
+        <Script
+  src="https://static.rocket.new/rocket-web.js?_cfg=https://kitduvoyag4153back.builtwithrocket.new&_be=https://appanalytics.rocket.new&_v=0.1.19"
+  strategy="lazyOnload"
+  async
+/>
+        <Script
+  src="https://static.rocket.new/rocket-shot.js?v=0.0.2"
+  strategy="lazyOnload"
+  defer
+/>
+</head>
       <body className={dmSans.className}>
         <AuthProvider>
           <WishlistProvider>
             <ToastProvider>
               <ErrorBoundaryWrapper>
-                <Suspense fallback={null}>
-                  <GoogleAnalytics />
-                </Suspense>
-                {/* Skip navigation for accessibility */}
-                <a
-                  href="#main-content"
-                  className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-[#E4501C] focus:text-white focus:rounded-lg focus:font-semibold focus:text-sm"
-                >
-                  Aller au contenu principal
-                </a>
-                {/* Mobile navigation — hidden on desktop (md+) */}
-                <TopBar />
-                <main id="main-content">{children}</main>
-                <BottomTabBar />
-                <InstallPrompt />
-                <CookieConsentBanner />
+                <ReactQueryProvider>
+                  <Suspense fallback={null}>
+                    <GoogleAnalytics />
+                  </Suspense>
+                  {/* Skip navigation for accessibility */}
+                  <a
+                    href="#main-content"
+                    className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-[#E4501C] focus:text-white focus:rounded-lg focus:font-semibold focus:text-sm"
+                  >
+                    Aller au contenu principal
+                  </a>
+                  {/* Mobile navigation — hidden on desktop (md+) */}
+                  <TopBar />
+                  <main id="main-content">{children}</main>
+                  <BottomTabBar />
+                  <InstallPrompt />
+                  <CookieConsentBanner />
+                </ReactQueryProvider>
               </ErrorBoundaryWrapper>
             </ToastProvider>
           </WishlistProvider>

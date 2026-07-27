@@ -197,7 +197,7 @@ export default function CheckoutPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen" style={{ background: '#F5F2EC' }}>
+      <div className="min-h-screen bg-[#F5F2E8]">
         <Header />
         <div className="pt-24 flex items-center justify-center min-h-[60vh]">
           <div className="w-8 h-8 border-2 border-[#1C2620] border-t-transparent rounded-full animate-spin" />
@@ -207,73 +207,267 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#F5F2EC', fontFamily: 'var(--font-sans)' }}>
-      {/* ── HEADER CHECKOUT ── */}
-      <div className="sticky top-0 z-40 border-b border-[#E8E4DA]" style={{ background: '#F5F2EC' }}>
-        <div className="max-w-5xl mx-auto px-4 md:px-8 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <Icon name="MapIcon" size={18} className="text-[#1C2620]" />
-            <span className="text-sm font-semibold text-[#1C2620]">Le Kit du Voyageur</span>
-          </Link>
-          <div className="flex items-center gap-2 text-xs text-[#7A7A6E]">
-            <Icon name="LockClosedIcon" size={12} className="text-[#4A6741]" />
-            <span>Paiement sécurisé · Stripe</span>
-          </div>
-          <Link href="/panier" className="text-xs text-[#7A7A6E] hover:text-[#1C2620] transition-colors flex items-center gap-1">
-            <Icon name="ArrowLeftIcon" size={12} /> Retour au panier
-          </Link>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#F5F2E8] text-[#1C2620]">
+      <Header />
 
-      <div className="max-w-5xl mx-auto px-4 md:px-8 py-8">
-        {/* ── STEPPER ── */}
-        <div className="flex items-center gap-0 mb-10">
-          {STEPS.map((s, i) => (
-            <React.Fragment key={s.id}>
-              <div className="flex items-center gap-2">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono font-bold transition-all ${
-                  stepIndex > i ? 'bg-[#4A6741] text-white' :
-                  stepIndex === i ? 'bg-[#1C2620] text-white' : 'bg-[#E8E4DA] text-[#7A7A6E]'
-                }`}>
-                  {stepIndex > i ? '✓' : s.num}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        {step !== 'confirmation' && (
+          <h1 className="font-display font-800 text-5xl text-[#1C2620] mb-12">
+            Presque <em className="italic font-400 text-[#5C6B5E]">parti.</em>
+          </h1>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          {/* Main content */}
+          <div className="lg:col-span-7 xl:col-span-8">
+
+            {step !== 'confirmation' ? (
+              <div className="space-y-6">
+                
+                {/* ── STEP 1: Vos coordonnées ── */}
+                <div className={`bg-white border border-[#C8C3B0] rounded-3xl p-8 transition-opacity ${step !== 'livraison' ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="font-display font-700 text-xl flex items-center gap-3">
+                      <span className="font-400 italic text-[#5C6B5E]">01</span> Vos coordonnées
+                    </h2>
+                    <button className="text-xs font-600 text-[#1C2620] hover:underline">Se connecter</button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Email</label>
+                      <input
+                        type="email"
+                        value={shipping.email}
+                        onChange={(e) => setShipping(prev => ({ ...prev, email: e.target.value }))}
+                        className={`w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] ${errors.email ? 'ring-1 ring-red-500' : ''}`}
+                      />
+                    </div>
+                    <label className="flex items-center gap-3 cursor-pointer mt-2">
+                      <div className="w-4 h-4 rounded border border-[#1C2620] bg-[#1C2620] flex items-center justify-center">
+                        <Icon name="CheckIcon" size={12} className="text-white" />
+                      </div>
+                      <span className="text-xs text-[#1C2620]">Recevoir le journal du Kit — un envoi par saison, refuges et sentiers uniquement.</span>
+                    </label>
+                  </div>
                 </div>
-                <span className={`text-xs font-medium ${stepIndex === i ? 'text-[#1C2620]' : 'text-[#7A7A6E]'}`}>{s.label}</span>
+
+                {/* ── STEP 2: Livraison ── */}
+                <div className={`bg-white border border-[#C8C3B0] rounded-3xl p-8 transition-opacity ${step !== 'livraison' ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <h2 className="font-display font-700 text-xl flex items-center gap-3 mb-6">
+                    <span className="font-400 italic text-[#5C6B5E]">02</span> Livraison
+                  </h2>
+                  
+                  <div className="grid grid-cols-2 gap-4 mb-8">
+                    <div>
+                      <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Prénom</label>
+                      <input
+                        type="text"
+                        value={shipping.prenom}
+                        onChange={(e) => setShipping(prev => ({ ...prev, prenom: e.target.value }))}
+                        className={`w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] ${errors.prenom ? 'ring-1 ring-red-500' : ''}`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Nom</label>
+                      <input
+                        type="text"
+                        value={shipping.nom}
+                        onChange={(e) => setShipping(prev => ({ ...prev, nom: e.target.value }))}
+                        className={`w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] ${errors.nom ? 'ring-1 ring-red-500' : ''}`}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Adresse</label>
+                      <input
+                        type="text"
+                        value={shipping.adresse}
+                        onChange={(e) => setShipping(prev => ({ ...prev, adresse: e.target.value }))}
+                        className={`w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] ${errors.adresse ? 'ring-1 ring-red-500' : ''}`}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Complément (Optionnel)</label>
+                      <input
+                        type="text"
+                        value={shipping.complement}
+                        onChange={(e) => setShipping(prev => ({ ...prev, complement: e.target.value }))}
+                        placeholder="Bâtiment - étage - digicode"
+                        className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Code postal</label>
+                      <input
+                        type="text"
+                        value={shipping.codePostal}
+                        onChange={(e) => setShipping(prev => ({ ...prev, codePostal: e.target.value }))}
+                        className={`w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] ${errors.codePostal ? 'ring-1 ring-red-500' : ''}`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Ville</label>
+                      <input
+                        type="text"
+                        value={shipping.ville}
+                        onChange={(e) => setShipping(prev => ({ ...prev, ville: e.target.value }))}
+                        className={`w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] ${errors.ville ? 'ring-1 ring-red-500' : ''}`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Pays</label>
+                      <select className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] appearance-none">
+                        <option>France</option>
+                        <option>Belgique</option>
+                        <option>Suisse</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Téléphone</label>
+                      <input
+                        type="text"
+                        value={shipping.telephone}
+                        onChange={(e) => setShipping(prev => ({ ...prev, telephone: e.target.value }))}
+                        placeholder="+33 6 12 34 56 78"
+                        className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-3">Mode d'expédition</label>
+                    <div className="space-y-3">
+                      {[
+                        { id: 'standard', label: 'Livraison suivie', desc: 'Colis relais ou domicile - 3 à 5 jours ouvrés - CO2 compensé', price: totalPriceEur >= 99 ? 'Offerte' : '5,90 €' },
+                        { id: 'express', label: 'Express 48h', desc: 'Livré à domicile en 48 h - sur créneau choisi', price: '14 €' },
+                        { id: 'relay', label: 'Retrait en atelier', desc: 'Manosque, Alpes-de-Haute-Provence - disponible dès demain', price: 'Offerte' },
+                      ].map((opt) => (
+                        <label key={opt.id} className={`flex items-center justify-between p-4 rounded-2xl cursor-pointer transition-all border-2 ${shippingOption === opt.id ? 'border-[#1C2620] bg-white' : 'border-transparent bg-[#F5F2E8] hover:border-[#C8C3B0]'}`}>
+                          <div className="flex items-center gap-4">
+                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${shippingOption === opt.id ? 'border-[#1C2620]' : 'border-[#C8C3B0]'}`}>
+                              {shippingOption === opt.id && <div className="w-2 h-2 bg-[#1C2620] rounded-full" />}
+                            </div>
+                            <div>
+                              <p className="font-600 text-sm">{opt.label}</p>
+                              <p className="text-[10px] text-[#5C6B5E] mt-0.5">{opt.desc}</p>
+                            </div>
+                          </div>
+                          <span className={`font-600 text-sm ${opt.price === 'Offerte' ? 'text-[#1C2620]' : ''}`}>{opt.price}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {step === 'livraison' && (
+                    <button onClick={handleShippingSubmit} className="mt-8 w-full bg-[#1C2620] hover:bg-[#2A3830] text-white py-4 rounded-xl font-600 transition-colors">
+                      Continuer vers le paiement
+                    </button>
+                  )}
+                </div>
+
+                {/* ── STEP 3: Paiement ── */}
+                <div className={`bg-white border border-[#C8C3B0] rounded-3xl p-8 transition-opacity ${step !== 'paiement' ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <h2 className="font-display font-700 text-xl flex items-center gap-3 mb-6">
+                    <span className="font-400 italic text-[#5C6B5E]">03</span> Paiement
+                  </h2>
+                  
+                  {step === 'paiement' && (
+                    <>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-8">
+                        <button className="flex flex-col items-center justify-center p-3 border-2 border-[#1C2620] rounded-2xl bg-white text-[#1C2620]">
+                          <Icon name="CreditCardIcon" size={24} className="mb-1" />
+                          <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Carte</span>
+                        </button>
+                        <button className="flex flex-col items-center justify-center p-3 border border-transparent bg-[#F5F2E8] rounded-2xl text-[#5C6B5E] hover:border-[#C8C3B0]">
+                          <span className="text-xl mb-1">🍎</span>
+                          <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Apple Pay</span>
+                        </button>
+                        <button className="flex flex-col items-center justify-center p-3 border border-transparent bg-[#F5F2E8] rounded-2xl text-[#5C6B5E] hover:border-[#C8C3B0]">
+                          <span className="text-xl mb-1 text-blue-600 font-bold">P</span>
+                          <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Compte</span>
+                        </button>
+                        <button className="flex flex-col items-center justify-center p-3 border border-transparent bg-[#F5F2E8] rounded-2xl text-amber-700 hover:border-[#C8C3B0]">
+                          <span className="text-xs font-700 italic mb-1">3× sans frais</span>
+                          <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Alma</span>
+                        </button>
+                      </div>
+
+                      <div className="flex justify-center mb-8">
+                        {/* Fake Credit Card visual */}
+                        <div className="w-full max-w-[320px] aspect-[1.586] bg-gradient-to-br from-[#1C2620] to-[#0A100C] rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+                          <div className="absolute right-[-20px] top-[-20px] w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+                          <div className="w-12 h-8 bg-[#C8C3B0] rounded bg-gradient-to-br from-[#D9D5C4] to-[#B3AE9A] mb-8" />
+                          <div className="font-mono text-xl tracking-[0.2em] mb-6 flex justify-between">
+                            <span>••••</span><span>••••</span><span>••••</span><span>4242</span>
+                          </div>
+                          <div className="flex justify-between items-end">
+                            <div>
+                              <p className="text-[8px] font-mono tracking-widest uppercase opacity-60 mb-1">Titulaire</p>
+                              <p className="text-sm font-600 uppercase truncate max-w-[120px]">{shipping.prenom ? `${shipping.prenom[0]}. ${shipping.nom}` : 'M. Chevrier'}</p>
+                            </div>
+                            <div>
+                              <p className="text-[8px] font-mono tracking-widest uppercase opacity-60 mb-1">Expire</p>
+                              <p className="text-sm font-600 font-mono">09/28</p>
+                            </div>
+                            <div className="text-2xl font-bold italic opacity-80">VISA</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Numéro de carte</label>
+                          <input type="text" placeholder="1234 1234 1234 1234" className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none font-mono" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Expiration</label>
+                            <input type="text" placeholder="MM / AA" className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none font-mono" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Cryptogramme</label>
+                            <input type="text" placeholder="CVC" className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none font-mono" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Nom du titulaire</label>
+                          <input type="text" placeholder="Comme écrit sur la carte" className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none uppercase" />
+                        </div>
+                        
+                        <label className="flex items-center gap-3 cursor-pointer mt-4 mb-6">
+                          <div className="w-4 h-4 rounded border border-[#1C2620] bg-[#1C2620] flex items-center justify-center">
+                            <Icon name="CheckIcon" size={12} className="text-white" />
+                          </div>
+                          <span className="text-xs text-[#5C6B5E]">Enregistrer cette carte pour un futur achat (chiffrée par Stripe).</span>
+                        </label>
+                      </div>
+
+                      <button
+                        onClick={handleStripeCheckout}
+                        disabled={processing}
+                        className="w-full bg-[#1C2620] hover:bg-[#2A3830] text-white py-4 rounded-xl font-600 transition-colors disabled:opacity-50"
+                      >
+                        {processing ? 'Traitement...' : `Payer ${grandTotal.toFixed(2)} €`}
+                      </button>
+                    </>
+                  )}
+                </div>
+
               </div>
-              {i < STEPS.length - 1 && (
-                <div className={`flex-1 h-px mx-3 transition-all ${stepIndex > i ? 'bg-[#4A6741]' : 'bg-[#E8E4DA]'}`} />
-              )}
-            </React.Fragment>
-          ))}
-          <div className="ml-auto">
-            <span className="text-[10px] font-mono text-[#4A6741] bg-[#4A6741]/10 px-3 py-1 rounded-full flex items-center gap-1">
-              <Icon name="LockClosedIcon" size={10} className="text-[#4A6741]" /> Paiement 100 % sécurisé
-            </span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          {/* ── MAIN FORM ── */}
-          <div className="lg:col-span-3">
-
-            {/* ── CONFIRMATION ── */}
-            {step === 'confirmation' && (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 bg-[#4A6741]/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Icon name="CheckCircleIcon" size={32} className="text-[#4A6741]" />
+            ) : (
+              /* ── STEP 3: Confirmation ── */
+              <div className="bg-white border border-[#C8C3B0] rounded-3xl p-12 text-center h-full flex flex-col items-center justify-center min-h-[500px]">
+                <div className="w-20 h-20 bg-[#F5F2E8] border border-[#C8C3B0] rounded-full flex items-center justify-center mb-6">
+                  <Icon name="CheckIcon" size={32} className="text-[#1C2620]" />
                 </div>
-                <h2 className="text-3xl font-bold text-[#1C2620] mb-2">
-                  Commande <em className="font-light italic" style={{ fontFamily: 'Georgia, serif' }}>confirmée.</em>
-                </h2>
-                <p className="text-[#7A7A6E] mb-1">Numéro de commande : <span className="font-mono font-semibold text-[#1C2620]">{orderNumber}</span></p>
-                <p className="text-sm text-[#7A7A6E] mb-8">Un email de confirmation vous a été envoyé. Votre inventaire a été mis à jour.</p>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Link href="/inventaire" className="inline-flex items-center gap-2 bg-[#1C2620] text-white px-6 py-3 rounded-full font-semibold text-sm hover:bg-[#1C2620]/80 transition-all">
-                    <Icon name="ArchiveBoxIcon" size={16} className="text-white" /> Voir mon inventaire
-                  </Link>
-                  <Link href="/boutique" className="inline-flex items-center gap-2 border border-[#C8C3B0] px-6 py-3 rounded-full font-medium text-sm hover:border-[#1C2620] transition-all text-[#1C2620]">
-                    Continuer mes achats
-                  </Link>
-                </div>
+                <h2 className="font-display font-800 text-3xl mb-4">Commande confirmée.</h2>
+                <p className="text-[#5C6B5E] mb-2">Numéro de commande : <span className="font-mono font-600 text-[#1C2620]">{orderNumber}</span></p>
+                <p className="text-sm text-[#5C6B5E] mb-8 max-w-sm mx-auto leading-relaxed">
+                  Merci ! Un email de confirmation vous a été envoyé. Préparez-vous pour l'aventure.
+                </p>
+                <Link href="/inventaire" className="inline-flex items-center gap-2 bg-[#1C2620] text-white px-8 py-3.5 rounded-xl font-600 text-sm hover:bg-[#2A3830] transition-colors">
+                  Voir mon inventaire
+                </Link>
               </div>
             )}
 
@@ -641,97 +835,68 @@ export default function CheckoutPage() {
             )}
           </div>
 
-          {/* ── RÉCAPITULATIF ── */}
-          {step !== 'confirmation' && (
-            <div className="lg:col-span-2">
-              <div className="sticky top-20 bg-white rounded-2xl border border-[#E8E4DA] p-5">
-                <h3 className="font-semibold text-sm text-[#1C2620] mb-4">Votre commande</h3>
-
-                {/* Articles */}
-                <div className="space-y-3 mb-5">
-                  {items.length > 0 ? items.map((item) => (
-                    <div key={item.slug} className="flex items-start gap-3">
-                      <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-[#F5F2EC]">
-                        {item.image && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                        )}
-                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#1C2620] rounded-full flex items-center justify-center">
-                          <span className="text-white text-[8px] font-bold">{item.quantity}</span>
+          {/* Order summary sidebar */}
+          <div className="lg:col-span-5 xl:col-span-4">
+            <div className="bg-white border border-[#C8C3B0] rounded-3xl p-8 sticky top-24">
+              <h3 className="font-display font-700 text-lg mb-6">Votre commande</h3>
+              <div className="space-y-4 mb-6">
+                {items.map((item) => (
+                  <div key={item.slug} className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-[#F5F2E8] rounded-xl flex-shrink-0 overflow-hidden border border-[#C8C3B0]">
+                      {item.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-[#EBE8DD]">
+                          <Icon name="PhotoIcon" size={16} className="text-[#5C6B5E]/30" />
                         </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-[#1C2620] truncate">{item.name}</p>
-                        <p className="text-[10px] text-[#7A7A6E]">{item.quantity > 1 ? `×${item.quantity}` : ''}</p>
-                      </div>
-                      <p className="text-xs font-semibold text-[#1C2620] flex-shrink-0">{(item.priceEur * item.quantity).toFixed(0)} €</p>
+                      )}
                     </div>
-                  )) : (
-                    /* Demo items */
-                    [
-                      { name: 'Sac 45 L', sub: 'Vert forêt · 45 L · Ventrale + poitrine', price: 340, qty: 1 },
-                      { name: 'Duvet 3 saisons', sub: 'Régulier · -10 °C', price: 248, qty: 1 },
-                      { name: 'Gourde snow 1 L', sub: 'Sauge · 1 L', price: 68, qty: 1 },
-                    ].map((item) => (
-                      <div key={item.name} className="flex items-start gap-3">
-                        <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-[#F5F2EC]">
-                          <div className="w-full h-full flex items-center justify-center text-lg">🎒</div>
-                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#1C2620] rounded-full flex items-center justify-center">
-                            <span className="text-white text-[8px] font-bold">{item.qty}</span>
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-[#1C2620]">{item.name}</p>
-                          <p className="text-[10px] text-[#7A7A6E]">{item.sub}</p>
-                        </div>
-                        <p className="text-xs font-semibold text-[#1C2620]">{item.price} €</p>
-                      </div>
-                    ))
-                  )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-600 text-[#1C2620] truncate pr-2">{item.name}</p>
+                      <p className="text-[10px] text-[#5C6B5E] mt-0.5">Quantité : {item.quantity}</p>
+                    </div>
+                    <p className="text-xs font-600 whitespace-nowrap">{(item.priceEur * item.quantity).toFixed(2)} €</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t border-[#C8C3B0]/50 pt-5 space-y-2 mb-5">
+                <div className="flex justify-between text-xs">
+                  <span className="text-[#5C6B5E]">Sous-total</span>
+                  <span className="font-600">{totalPriceEur.toFixed(2)} €</span>
                 </div>
-
-                {/* Totaux */}
-                <div className="border-t border-[#E8E4DA] pt-4 space-y-2">
-                  <div className="flex justify-between text-xs text-[#7A7A6E]">
-                    <span>Sous-total</span>
-                    <span className="text-[#1C2620]">{items.length > 0 ? `${totalPriceEur.toFixed(0)} €` : '656 €'}</span>
-                  </div>
-                  <div className="flex justify-between text-xs text-[#7A7A6E]">
-                    <span>Livraison suivie</span>
-                    <span className="text-[#4A6741] font-semibold">Offerte</span>
-                  </div>
-                  <div className="flex justify-between text-xs text-[#7A7A6E]">
-                    <span>TVA (20 %, incluse)</span>
-                    <span className="text-[#1C2620]">{items.length > 0 ? `${tva.toFixed(2)} €` : '109,33 €'}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-base pt-2 border-t border-[#E8E4DA] text-[#1C2620]">
-                    <span>Total</span>
-                    <span>{items.length > 0 ? `${grandTotal.toFixed(0)} €` : '656 €'}</span>
-                  </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-[#5C6B5E]">Livraison suivie</span>
+                  <span className="font-600 text-[#1C2620]">{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
                 </div>
-
-                {/* CTA récap */}
-                {step === 'coordonnees' && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const form_el = document.querySelector('form');
-                      form_el?.requestSubmit();
-                    }}
-                    className="w-full mt-4 py-3.5 rounded-full font-semibold text-white text-sm flex items-center justify-center gap-2 transition-all hover:opacity-90"
-                    style={{ background: '#1C2620' }}
-                  >
-                    Payer {items.length > 0 ? `${grandTotal.toFixed(0)} €` : '656 €'} par carte
-                  </button>
-                )}
-
-                <div className="mt-4 flex items-center gap-2 text-[10px] text-[#7A7A6E]">
-                  <Icon name="ShieldCheckIcon" size={12} className="text-[#4A6741]" />
-                  <span>Paiement 100 % sécurisé · SSL 256-bit</span>
+                <div className="flex justify-between text-xs">
+                  <span className="text-[#5C6B5E]">TVA (20 %, incluse)</span>
+                  <span className="font-600">{(totalPriceEur * 0.2).toFixed(2)} €</span>
                 </div>
               </div>
+
+              <div className="flex justify-between items-end font-display font-800 text-2xl pt-5 border-t border-[#C8C3B0]">
+                <span className="text-lg">Total</span>
+                <span>{grandTotal.toFixed(2)} €</span>
+              </div>
+
+              {step === 'livraison' && (
+                <button onClick={handleShippingSubmit} className="mt-6 w-full bg-[#1C2620] hover:bg-[#2A3830] text-white py-4 rounded-xl font-600 transition-colors">
+                  Payer {grandTotal.toFixed(2)} € par carte
+                </button>
+              )}
+              {step === 'paiement' && (
+                <button onClick={handleStripeCheckout} disabled={processing} className="mt-6 w-full bg-[#1C2620] hover:bg-[#2A3830] text-white py-4 rounded-xl font-600 transition-colors disabled:opacity-50">
+                  {processing ? 'Traitement...' : `Payer ${grandTotal.toFixed(2)} € par carte`}
+                </button>
+              )}
+              
+              <p className="text-center text-[10px] text-[#5C6B5E] mt-4 max-w-[250px] mx-auto leading-relaxed">
+                En passant commande, vous acceptez les <a href="#" className="underline">CGV</a> et notre <a href="#" className="underline">politique de retour</a>. Vous ne serez débité qu'à l'expédition.
+              </p>
             </div>
-          )}
+          </div>
         </div>
       </div>
 

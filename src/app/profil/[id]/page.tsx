@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Link from 'next/link';
@@ -253,49 +254,24 @@ export default function ProfilDetailPage() {
   return (
     <div className="min-h-screen" style={{ background: '#F5F2EC', fontFamily: 'var(--font-sans)' }}>
       <Header />
-
-      {/* ── HERO PLEIN ÉCRAN ── */}
-      <div className="relative h-[55vh] min-h-[360px] overflow-hidden">
-        <Image
-          src={heroImg}
-          alt={`Paysage de montagne — profil de ${profile?.full_name ?? 'voyageur'}`}
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/70" />
-        {/* Badge rôle */}
-        <div className="absolute top-24 left-6 md:left-10">
-          <span className="text-[10px] font-mono tracking-[0.2em] uppercase bg-[#E4501C]/90 text-white px-3 py-1.5 rounded-full backdrop-blur-sm">
-            + Gardienne des lieux · Chartreuse
-          </span>
-        </div>
-        {/* Nom sur hero */}
-        <div className="absolute bottom-8 left-6 md:left-10 right-6">
-          <h1 className="text-4xl md:text-6xl font-bold text-white leading-none tracking-tight">
-            {profile?.full_name?.split(' ')[0] ?? 'Marceline'}{' '}
-            <em className="font-light italic" style={{ fontFamily: 'Georgia, serif' }}>
-              {profile?.full_name?.split(' ').slice(1).join(' ') ?? 'Chevrier'}
-            </em>
-          </h1>
-        </div>
-      </div>
-
-      {/* ── AVATAR + ACTIONS ── */}
-      <div className="max-w-5xl mx-auto px-4 md:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 -mt-12 mb-8 relative z-10">
-          <div className="flex items-end gap-4">
-            {/* Avatar */}
-            <div className="relative flex-shrink-0">
+      <main className="pt-20 pb-24">
+        {/* Hero Banner Full Width */}
+        <div className="bg-[#1C2620] h-[40vh] min-h-[300px] w-full relative overflow-hidden">
+          <div className="absolute inset-0 opacity-40 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+          {profile?.avatar_url ? (
+            <Image src={profile.avatar_url} alt="Cover" fill className="object-cover opacity-60 mix-blend-overlay blur-sm" />
+          ) : (
+            <div className="absolute inset-0 bg-[#E4501C]/10" />
+          )}
+          
+          <div className="absolute bottom-0 left-0 right-0 p-8 flex justify-center">
+            {/* Avatar overlapping */}
+            <div className="translate-y-1/2">
               {profile?.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={profile.avatar_url}
-                  alt={`Photo de profil de ${profile.full_name}`}
-                  className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-xl"
-                />
+                <img src={profile.avatar_url} alt={`Photo de ${profile.full_name}`} className="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-[#F5F2E8] shadow-xl" />
               ) : (
-                <div className="w-24 h-24 rounded-full bg-[#1C2620] flex items-center justify-center text-2xl font-bold text-white border-4 border-white shadow-xl">
+                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-[#E4501C] flex items-center justify-center text-4xl md:text-5xl font-700 text-white border-4 border-[#F5F2E8] shadow-xl">
                   {initials}
                 </div>
               )}
@@ -309,292 +285,164 @@ export default function ProfilDetailPage() {
               </p>
             </div>
           </div>
-          <div className="flex gap-2 pb-1">
-            {isOwnProfile ? (
-              <Link href="/compte" className="flex items-center gap-2 px-5 py-2.5 bg-[#1C2620] text-white rounded-full text-sm font-semibold hover:bg-[#1C2620]/80 transition-all">
-                <Icon name="PencilIcon" size={14} className="text-white" /> Modifier
-              </Link>
-            ) : (
-              <>
-                <button
-                  onClick={handleFollow}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${isFollowing ? 'border border-[#C8C3B0] text-[#1C2620] hover:border-[#1C2620]' : 'bg-[#1C2620] text-white hover:bg-[#1C2620]/80'}`}
-                >
-                  <Icon name={isFollowing ? 'CheckIcon' : 'PlusIcon'} size={14} className={isFollowing ? 'text-[#1C2620]' : 'text-white'} />
-                  {isFollowing ? 'Abonné' : '+ Suivre'}
-                </button>
-                <Link href="/messagerie" className="flex items-center gap-2 px-5 py-2.5 border border-[#C8C3B0] rounded-full text-sm font-semibold text-[#1C2620] hover:border-[#1C2620] transition-all">
-                  <Icon name="ChatBubbleLeftIcon" size={14} /> Message
-                </Link>
-              </>
-            )}
-          </div>
         </div>
 
-        {/* ── STATS ── */}
-        <div className="flex flex-wrap gap-8 mb-8 pb-6 border-b border-[#E8E4DA]">
-          {[
-            { value: '32', label: 'sommets', sub: 'explorés' },
-            { value: '1 240', label: 'km', sub: 'parcourus' },
-            { value: '18', label: 'refuges', sub: 'recommandés' },
-            { value: '214', label: 'voyageurs', sub: 'reçus' },
-            { value: '4,9', label: '★', sub: 'note moyenne' },
-          ].map((s) => (
-            <div key={s.label} className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold text-[#1C2620]">{s.value}</span>
-              <div>
-                <span className="text-sm font-semibold text-[#1C2620]">{s.label}</span>
-                <p className="text-[10px] text-[#7A7A6E] uppercase tracking-wider leading-none mt-0.5">{s.sub}</p>
-              </div>
+        <div className="max-w-5xl mx-auto px-4 mt-20 md:mt-24">
+          
+          {loading ? (
+             <div className="flex flex-col items-center justify-center space-y-4 py-12">
+               <div className="h-10 w-64 bg-[#C8C3B0]/30 rounded animate-pulse" />
+               <div className="h-4 w-48 bg-[#C8C3B0]/30 rounded animate-pulse" />
+             </div>
+          ) : !profile ? (
+            <div className="text-center py-12">
+              <p className="text-[#5C6B5E]">Profil introuvable</p>
+              <Link href="/communaute" className="text-[#E4501C] text-sm mt-2 inline-block">← Retour à la communauté</Link>
             </div>
-          ))}
-        </div>
-
-        {/* ── LAYOUT 2 COLONNES ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
-          {/* Colonne gauche */}
-          <div className="lg:col-span-2 space-y-10">
-
-            {/* ONGLETS */}
-            <div>
-              <div className="flex gap-1 mb-6 border-b border-[#E8E4DA]">
-                {TABS.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-2.5 text-sm font-medium transition-all relative ${activeTab === tab.id ? 'text-[#1C2620]' : 'text-[#7A7A6E] hover:text-[#1C2620]'}`}
-                  >
-                    {tab.label}
-                    {tab.count > 0 && (
-                      <span className="ml-1.5 text-xs text-[#7A7A6E]">· {tab.count}</span>
-                    )}
-                    {activeTab === tab.id && (
-                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1C2620] rounded-full" />
-                    )}
-                  </button>
-                ))}
+          ) : (
+            <>
+              {/* Profile Header Title */}
+              <div className="text-center mb-12">
+                <h1 className="font-display font-800 text-4xl md:text-5xl text-[#1C2620] mb-3">
+                  {profile.full_name ? profile.full_name.split(' ').map((word, i, arr) => 
+                    i === arr.length - 1 ? <em key={i} className="italic font-400 text-[#5C6B5E] ml-2">{word}</em> : <span key={i}>{word}</span>
+                  ) : 'Aventurier'}
+                </h1>
+                <div className="flex items-center justify-center gap-3 text-sm text-[#5C6B5E] font-500">
+                  <span className="flex items-center gap-1"><Icon name="MapPinIcon" size={14} /> {profile.location || 'Nomade'}</span>
+                  <span className="w-1 h-1 rounded-full bg-[#C8C3B0]" />
+                  <span className="flex items-center gap-1">{levelCfg.icon} {profile.loyalty_level}</span>
+                </div>
+                
+                {/* Actions */}
+                <div className="flex justify-center gap-3 mt-6">
+                  {isOwnProfile ? (
+                    <Link href="/compte" className="px-6 py-2.5 rounded-full border border-[#C8C3B0] text-[#1C2620] font-600 text-sm hover:bg-white transition-colors">
+                      Éditer le profil
+                    </Link>
+                  ) : (
+                    <>
+                      <button onClick={handleFollow} className={`px-6 py-2.5 rounded-full font-600 text-sm transition-colors ${isFollowing ? 'border border-[#C8C3B0] text-[#1C2620] hover:bg-white' : 'bg-[#1C2620] text-white hover:bg-[#2A3830]'}`}>
+                        {isFollowing ? 'Abonné' : 'Suivre'}
+                      </button>
+                      <button className="w-10 h-10 rounded-full border border-[#C8C3B0] flex items-center justify-center text-[#1C2620] hover:bg-white transition-colors">
+                        <Icon name="ChatBubbleLeftIcon" size={16} />
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
 
-              {/* Aventures tab */}
-              {activeTab === 'aventures' && (
-                <div>
-                  <div className="flex items-baseline justify-between mb-4">
-                    <h2 className="text-xl font-bold text-[#1C2620]">
-                      Aventures <em className="font-light italic" style={{ fontFamily: 'Georgia, serif' }}>récentes.</em>
-                    </h2>
-                    <Link href="/carnets" className="text-xs text-[#7A7A6E] hover:text-[#1C2620] transition-colors">
-                      Voir tout · {displayCarnets.length} →
+              {/* Two Columns Layout */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+                
+                {/* Left Column: Bio & Details */}
+                <div className="md:col-span-4 space-y-8">
+                  <div>
+                    <h3 className="font-mono text-xs tracking-widest uppercase text-[#5C6B5E] mb-4">À propos</h3>
+                    <p className="text-[#1C2620] leading-relaxed text-sm">
+                      {profile.bio || "Ce voyageur n'a pas encore écrit de biographie. Mais ses aventures parlent pour lui !"}
+                    </p>
+                  </div>
+                  
+                  <div className="pt-6 border-t border-[#C8C3B0]/50">
+                    <h3 className="font-mono text-xs tracking-widest uppercase text-[#5C6B5E] mb-4">Statistiques</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-[#5C6B5E]">Abonnés</span>
+                        <span className="font-600 text-[#1C2620]">{followersCount}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-[#5C6B5E]">Abonnements</span>
+                        <span className="font-600 text-[#1C2620]">{followingCount}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-[#5C6B5E]">Trust Score</span>
+                        <span className="font-600 text-emerald-600 flex items-center gap-1">{profile.trust_score ?? 50}/100 <Icon name="ShieldCheckIcon" size={14} /></span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-6">
+                    <Link href={`/profil/${profileId}/equipement`} className="w-full flex items-center justify-between px-5 py-4 bg-[#EDEAE0] border border-[#C8C3B0] rounded-xl hover:bg-white hover:border-[#1C2620]/30 transition-all group">
+                      <div className="flex items-center gap-3">
+                        <Icon name="ArchiveBoxIcon" size={20} className="text-[#1C2620]" />
+                        <span className="font-600 text-[#1C2620] text-sm">Voir son équipement</span>
+                      </div>
+                      <Icon name="ArrowRightIcon" size={16} className="text-[#5C6B5E] group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    {displayCarnets.slice(0, 4).map((c) => (
-                      <Link key={c.id} href="/carnets" className="group relative rounded-2xl overflow-hidden aspect-[4/3] block">
-                        <Image
-                          src={c.cover_image || MOCK_ADVENTURES[0].src}
-                          alt={c.cover_image_alt || c.title}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                        {c.start_date && (
-                          <span className="absolute top-3 left-3 text-[10px] font-mono text-white/80 bg-black/30 backdrop-blur-sm px-2 py-0.5 rounded-full">
-                            {new Date(c.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                          </span>
-                        )}
-                        <div className="absolute bottom-3 left-3 right-3">
-                          <p className="font-bold text-white text-sm leading-tight">
-                            {c.title.split(' ').slice(0, 3).join(' ')}{' '}
-                            <em className="font-light italic" style={{ fontFamily: 'Georgia, serif' }}>
-                              {c.title.split(' ').slice(3).join(' ')}
-                            </em>
-                          </p>
-                          <p className="text-white/60 text-[10px] mt-0.5">{c.destination}</p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
                 </div>
-              )}
 
-              {/* Photos tab */}
-              {activeTab === 'photos' && (
-                <div>
-                  <div className="flex items-baseline justify-between mb-4">
-                    <h2 className="text-xl font-bold text-[#1C2620]">
-                      Journal <em className="font-light italic" style={{ fontFamily: 'Georgia, serif' }}>photo.</em>
-                    </h2>
-                    <span className="text-xs text-[#7A7A6E]">+ 214 photos →</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {PHOTO_JOURNAL.map((p, i) => (
-                      <div key={i} className={`relative rounded-xl overflow-hidden ${i === 0 ? 'col-span-2 row-span-2 aspect-square' : 'aspect-square'}`}>
-                        <Image src={p.src} alt={p.alt} fill className="object-cover hover:scale-105 transition-transform duration-500 cursor-pointer" />
-                        {i === PHOTO_JOURNAL.length - 1 && (
-                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                            <span className="text-white text-sm font-semibold">+ 214 photos</span>
-                          </div>
-                        )}
+                {/* Right Column: Feed / Carnets */}
+                <div className="md:col-span-8 space-y-10">
+                  <div>
+                    <h3 className="font-display font-800 text-2xl text-[#1C2620] mb-6 flex items-center gap-2">
+                      Dernières aventures <span className="text-xl">🗺️</span>
+                    </h3>
+                    
+                    {carnets.length === 0 ? (
+                      <div className="p-8 border border-dashed border-[#C8C3B0] rounded-2xl text-center">
+                        <p className="text-[#5C6B5E] text-sm">Aucune aventure publiée pour le moment.</p>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Recommandations tab */}
-              {activeTab === 'recommandations' && (
-                <div>
-                  <div className="flex items-baseline justify-between mb-4">
-                    <h2 className="text-xl font-bold text-[#1C2620]">
-                      Recommandations <em className="font-light italic" style={{ fontFamily: 'Georgia, serif' }}>refuges.</em>
-                    </h2>
-                  </div>
-                  <div className="space-y-3">
-                    {['Grand Vaneau · Chartreuse', 'Bellefont · Vercors', 'Refuge de la Selle · Écrins', 'Cabane de Pré Peyret · Chartreuse'].map((r, i) => (
-                      <div key={i} className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-[#E8E4DA] hover:border-[#1C2620]/20 transition-all">
-                        <div className="w-10 h-10 rounded-xl bg-[#1C2620]/5 flex items-center justify-center flex-shrink-0">
-                          <Icon name="HomeIcon" size={18} className="text-[#1C2620]" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold text-sm text-[#1C2620]">{r}</p>
-                          <div className="flex items-center gap-1 mt-0.5">
-                            {[1,2,3,4,5].map((s) => (
-                              <span key={s} className="text-[#E4501C] text-xs">★</span>
-                            ))}
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {carnets.slice(0, 4).map((carnet) => (
+                          <div key={carnet.id} onClick={() => setSelectedCarnet(carnet)} className="cursor-pointer group">
+                            <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-[#C8C3B0] mb-3">
+                              {carnet.cover_image ? (
+                                <Image src={carnet.cover_image} alt={carnet.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                              ) : (
+                                <div className="absolute inset-0 flex items-center justify-center bg-[#EDEAE0]">🗺️</div>
+                              )}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                              <div className="absolute bottom-3 left-3 right-3">
+                                <p className="text-[10px] text-white/80 font-mono uppercase tracking-wider mb-0.5">{carnet.destination}</p>
+                                <p className="font-600 text-white text-sm leading-tight line-clamp-1">{carnet.title}</p>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <Icon name="ArrowRightIcon" size={14} className="text-[#7A7A6E]" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* CARTE MONDE */}
-            <div>
-              <div className="flex items-baseline justify-between mb-3">
-                <h2 className="text-lg font-bold text-[#1C2620]">
-                  Là où <em className="font-light italic" style={{ fontFamily: 'Georgia, serif' }}>Marceline est passée.</em>
-                </h2>
-                <span className="text-xs text-[#7A7A6E]">12 pays · 4 continents</span>
-              </div>
-              <div className="rounded-2xl overflow-hidden border border-[#E8E4DA]">
-                <WorldMapDots countries={['FR', 'NO', 'IT', 'MA', 'NP', 'JP', 'CA', 'PE', 'TZ']} />
-                <div className="bg-[#1C2620] px-5 py-3 flex items-center justify-between">
-                  <div className="flex gap-6">
-                    <div>
-                      <p className="text-[10px] text-white/40 uppercase tracking-wider">Pays visités</p>
-                      <p className="text-white font-bold text-sm">12 pays</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-white/40 uppercase tracking-wider">Ce trimestre</p>
-                      <p className="text-white font-bold text-sm">Chartreuse · Vercors</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-white/40 uppercase tracking-wider">Prochain</p>
-                      <p className="text-white font-bold text-sm italic" style={{ fontFamily: 'Georgia, serif' }}>Écrins · Sept.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* JOURNAL PHOTO */}
-            <div>
-              <div className="flex items-baseline justify-between mb-4">
-                <h2 className="text-xl font-bold text-[#1C2620]">
-                  Journal <em className="font-light italic" style={{ fontFamily: 'Georgia, serif' }}>photo.</em>
-                </h2>
-                <Link href="/carnets" className="text-xs text-[#4A6741] hover:text-[#1C2620] transition-colors">
-                  Voir le journal complet →
-                </Link>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="col-span-2 row-span-2 relative rounded-2xl overflow-hidden" style={{ aspectRatio: '1' }}>
-                  <Image src={PHOTO_JOURNAL[0].src} alt={PHOTO_JOURNAL[0].alt} fill className="object-cover hover:scale-105 transition-transform duration-500 cursor-pointer" />
-                </div>
-                {PHOTO_JOURNAL.slice(1, 3).map((p, i) => (
-                  <div key={i} className="relative rounded-2xl overflow-hidden aspect-square">
-                    <Image src={p.src} alt={p.alt} fill className="object-cover hover:scale-105 transition-transform duration-500 cursor-pointer" />
-                  </div>
-                ))}
-                {PHOTO_JOURNAL.slice(3).map((p, i) => (
-                  <div key={i} className="relative rounded-2xl overflow-hidden aspect-square">
-                    <Image src={p.src} alt={p.alt} fill className="object-cover hover:scale-105 transition-transform duration-500 cursor-pointer" />
-                    {i === PHOTO_JOURNAL.slice(3).length - 1 && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-2xl">
-                        <span className="text-white text-xs font-semibold">+ 214 photos</span>
+                        ))}
                       </div>
                     )}
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
 
-          {/* Colonne droite */}
-          <div className="space-y-6">
-            {/* À propos */}
-            <div className="bg-white rounded-2xl border border-[#E8E4DA] p-5">
-              <p className="text-[10px] font-mono text-[#7A7A6E] uppercase tracking-[0.2em] mb-3">À propos</p>
-              <blockquote className="text-sm text-[#1C2620] leading-relaxed italic mb-4" style={{ fontFamily: 'Georgia, serif' }}>
-                &ldquo;{profile?.bio ?? 'Je garde deux refuges dans la Chartreuse depuis douze ans. Le silence est mon métier.'}&rdquo;
-              </blockquote>
-              <div className="space-y-2 text-xs">
-                {[
-                  { label: 'Rôle', value: profile?.loyalty_level ?? 'Gardienne partenaire' },
-                  { label: 'Refuges', value: 'Grand Vaneau, Bellefont' },
-                  { label: 'Discipline', value: 'Rando, ski de rando' },
-                  { label: 'Langues', value: 'Français, anglais, italien' },
-                  { label: 'Répond en', value: '< 1 h' },
-                ].map((row) => (
-                  <div key={row.label} className="flex justify-between gap-2">
-                    <span className="text-[#7A7A6E]">{row.label}</span>
-                    <span className="text-[#1C2620] font-medium text-right">{row.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* BADGES */}
-            <div className="bg-white rounded-2xl border border-[#E8E4DA] p-5">
-              <div className="flex items-baseline justify-between mb-4">
-                <p className="text-[10px] font-mono text-[#7A7A6E] uppercase tracking-[0.2em]">Badges · {displayBadges.filter(b => b.unlocked).length} débloqués</p>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                {displayBadges.map((badge) => (
-                  <div key={badge.id} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${badge.unlocked ? 'bg-[#F5F2EC]' : 'bg-[#F5F2EC]/50 opacity-40'}`}>
-                    <span className="text-xl">{badge.icon}</span>
-                    <p className="text-[9px] font-semibold text-[#1C2620] text-center leading-tight">{badge.name}</p>
-                    <p className="text-[8px] text-[#7A7A6E]">{badge.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* SON KIT */}
-            <div className="bg-white rounded-2xl border border-[#E8E4DA] p-5">
-              <div className="flex items-baseline justify-between mb-4">
-                <p className="text-[10px] font-mono text-[#7A7A6E] uppercase tracking-[0.2em]">Son kit · {displayKit.length} pièces</p>
-                <Link href="/inventaire" className="text-[10px] text-[#4A6741] hover:text-[#1C2620]">Voir →</Link>
-              </div>
-              <div className="space-y-3">
-                {displayKit.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-[#F5F2EC]">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={item.src} alt={item.alt} className="w-full h-full object-cover" />
+                  <div>
+                    <h3 className="font-display font-800 text-2xl text-[#1C2620] mb-6 flex items-center gap-2">
+                      Fil d'actualité <span className="text-xl">💬</span>
+                    </h3>
+                    
+                    <div className="space-y-4">
+                      {posts.length === 0 ? (
+                        <div className="p-8 border border-dashed border-[#C8C3B0] rounded-2xl text-center">
+                          <p className="text-[#5C6B5E] text-sm">Rien à signaler pour le moment.</p>
+                        </div>
+                      ) : (
+                        posts.map((post) => {
+                          const typeCfg = POST_TYPE_CFG[post.post_type] ?? POST_TYPE_CFG.post;
+                          return (
+                            <div key={post.id} className="bg-white rounded-2xl p-5 shadow-sm border border-[#C8C3B0]/30">
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-[10px] font-600 px-2 py-0.5 rounded-full ${typeCfg.color}`}>{typeCfg.emoji} {typeCfg.label}</span>
+                                  <span className="text-xs text-[#5C6B5E]">{new Date(post.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+                                </div>
+                              </div>
+                              <p className="text-[#1C2620] text-sm leading-relaxed mb-4">{post.content}</p>
+                              <div className="flex items-center gap-4 text-xs text-[#5C6B5E]">
+                                <span className="flex items-center gap-1 cursor-pointer hover:text-[#E4501C]"><Icon name="HeartIcon" size={14} /> {post.likes_count}</span>
+                                <span className="flex items-center gap-1 cursor-pointer hover:text-[#E4501C]"><Icon name="ChatBubbleLeftIcon" size={14} /> {post.comments_count}</span>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-[#1C2620] truncate">{item.name}</p>
-                      <p className="text-[10px] text-[#7A7A6E] truncate">{item.detail}</p>
-                    </div>
-                    <span className="text-[10px] font-mono text-[#7A7A6E] flex-shrink-0">{item.weight}</span>
                   </div>
-                ))}
+                </div>
               </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </div>
 

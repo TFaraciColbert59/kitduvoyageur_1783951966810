@@ -1,21 +1,26 @@
-import React from 'react';
-import Header from '@/components/Header';
-import NewFooterSection from '@/app/components/home/NewFooterSection';
-import ConfiguratorWizard from '@/app/ai-configurator/components/ConfiguratorWizard';
+import React, { Suspense } from 'react';
+import KitConfiguratorWizard from '@/app/ai-configurator/components/KitConfiguratorWizard';
 
 export const metadata = {
-  title: 'Configurateur IA — Kit du Voyageur',
-  description: 'Composez votre kit de voyage en 5 étapes. Météo, usage, confort : votre sac sur mesure en 2 minutes.',
+  title: 'Configurateur IA · Le Kit du Voyageur',
+  description: 'Assistant intelligent pour composer votre sac à dos d\'aventure en temps réel selon la météo, la durée et votre équipement.',
 };
+
+function WizardFallback() {
+  return (
+    <div className="min-h-screen bg-[#EBE7DE] flex flex-col items-center justify-center gap-4">
+      <div className="w-10 h-10 border-3 border-[#1C3829] border-t-transparent rounded-full animate-spin" />
+      <p className="text-sm text-[#5C6E60] font-medium">Chargement du configurateur IA…</p>
+    </div>
+  );
+}
 
 export default function ConfiguratorPage() {
   return (
-    <main className="min-h-screen" style={{ background: '#F5F2EC' }}>
-      <Header />
-      <div className="pt-16">
-        <ConfiguratorWizard />
-      </div>
-      <NewFooterSection />
-    </main>
+    <div className="min-h-screen bg-[#EBE7DE] py-4 sm:py-8 flex flex-col justify-center">
+      <Suspense fallback={<WizardFallback />}>
+        <KitConfiguratorWizard />
+      </Suspense>
+    </div>
   );
 }

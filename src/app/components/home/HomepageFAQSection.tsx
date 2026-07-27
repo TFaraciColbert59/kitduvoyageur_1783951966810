@@ -34,46 +34,48 @@ export default function HomepageFAQSection() {
   const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <section className="py-20" style={{ background: 'var(--dark-bg)' }} aria-labelledby="faq-heading">
+    <section className="py-20 md:py-28" style={{ background: '#EDEAE0' }} aria-labelledby="faq-heading">
       <div className="max-w-3xl mx-auto px-5 sm:px-8">
-        <div className="text-center mb-12">
-          <p className="text-[10px] font-mono text-white/30 tracking-[0.2em] uppercase mb-3" style={{ fontFamily: 'var(--font-mono)' }}>
-            — Questions fréquentes
-          </p>
+        <div className="mb-12">
+          <p className="label-eyebrow mb-4">— Questions fréquentes</p>
           <h2
             id="faq-heading"
-            className="font-display font-800 text-white text-3xl md:text-4xl tracking-tight"
-            style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}
+            className="text-section-title text-[#1A1F1C]"
           >
-            Tout ce que vous
-            <br />
-            <span style={{ color: '#E4501C' }}>voulez savoir.</span>
+            Tout ce que vous{' '}
+            <em className="not-italic" style={{ fontStyle: 'italic', fontWeight: 400, color: 'rgba(26,31,28,0.45)' }}>
+              voulez savoir.
+            </em>
           </h2>
         </div>
 
         <div className="space-y-2">
-          {FAQS?.map((faq, i) => (
+          {FAQS.map((faq, i) => (
             <div
               key={i}
-              className="rounded-2xl overflow-hidden"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+              className="rounded-xl overflow-hidden transition-shadow"
+              style={{
+                background: '#FFFFFF',
+                border: '1px solid #DDD9CC',
+                boxShadow: open === i ? '0 4px 16px rgba(26,31,28,0.06)' : 'none',
+              }}
             >
               <button
                 onClick={() => setOpen(open === i ? null : i)}
-                className="w-full flex items-center justify-between px-5 py-4 text-left min-h-[56px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-inset"
+                className="w-full flex items-center justify-between px-5 py-4 text-left min-h-[56px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D5A3D] focus-visible:ring-inset"
                 aria-expanded={open === i}
               >
-                <span className="text-sm font-medium text-white/85 pr-4">{faq?.q}</span>
+                <span className="text-sm font-medium text-[#1A1F1C] pr-4">{faq.q}</span>
                 <Icon
                   name="ChevronDownIcon"
                   size={16}
                   variant="outline"
-                  className={`flex-shrink-0 text-white/40 transition-transform duration-200 ${open === i ? 'rotate-180' : ''}`}
+                  className={`flex-shrink-0 text-[#6B7568] transition-transform duration-200 ${open === i ? 'rotate-180' : ''}`}
                 />
               </button>
               {open === i && (
                 <div className="px-5 pb-5">
-                  <p className="text-sm text-white/50 leading-relaxed">{faq?.a}</p>
+                  <p className="text-sm text-[#6B7568] leading-relaxed">{faq.a}</p>
                 </div>
               )}
             </div>

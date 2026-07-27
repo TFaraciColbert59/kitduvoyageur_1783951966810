@@ -9,6 +9,7 @@ import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import CreateGroupWizardModal from '@/components/groupes/CreateGroupWizardModal';
 
 interface TravelGroup {
   id: string;
@@ -128,7 +129,7 @@ function GroupesPageInner() {
       setCreateForm({ name: '', description: '', destination: '', theme: 'Trek', visibility: 'public', departure_date: '', return_date: '', budget_target: '', max_members: '20' });
       await loadMyGroups();
       setActiveTab('mes-groupes');
-      router.push(`/groupe?group=${group.id}`);
+      router.push(`/groupes/${group.id}`);
     } catch (err: unknown) { toast((err as Error).message || 'Erreur', 'error'); }
     finally { setCreating(false); }
   }
@@ -159,7 +160,7 @@ function GroupesPageInner() {
       if (error && error.code !== '23505') throw error;
       toast('Vous avez rejoint le groupe !', 'success');
       await Promise.all([loadMyGroups(), loadPublicGroups()]);
-      router.push(`/groupe?group=${groupId}`);
+      router.push(`/groupes/${groupId}`);
     } catch (err: unknown) { toast((err as Error).message || 'Erreur', 'error'); }
     finally { setJoining(null); }
   }
@@ -195,7 +196,7 @@ function GroupesPageInner() {
       toast(`Vous avez rejoint "${group.name}" !`, 'success');
       setJoinCode('');
       await loadMyGroups();
-      router.push(`/groupe?group=${group.id}`);
+      router.push(`/groupes/${group.id}`);
     } catch (err: unknown) { toast((err as Error).message || 'Erreur', 'error'); }
     finally { setJoiningByCode(false); }
   }
@@ -290,7 +291,7 @@ function GroupesPageInner() {
           <div className="flex gap-2">
             {showActions ? (
               <>
-                <Link href={`/groupe?group=${group.id}`} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white rounded-xl text-xs font-700 transition-colors">
+                <Link href={`/groupes/${group.id}`} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white rounded-xl text-xs font-700 transition-colors">
                   <Icon name="ArrowRightIcon" size={12} /> Ouvrir
                 </Link>
                 {myRole && (
@@ -315,7 +316,7 @@ function GroupesPageInner() {
                 )}
               </>
             ) : alreadyMember ? (
-              <Link href={`/groupe?group=${group.id}`} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#1C2620] hover:bg-[#1C2620]/80 text-white rounded-xl text-xs font-700 transition-colors">
+              <Link href={`/groupes/${group.id}`} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#1C2620] hover:bg-[#1C2620]/80 text-white rounded-xl text-xs font-700 transition-colors">
                 <Icon name="ArrowRightIcon" size={12} /> Déjà membre — Ouvrir
               </Link>
             ) : (
@@ -327,7 +328,7 @@ function GroupesPageInner() {
                 >
                   {joining === group.id ? 'Rejoindre...' : (group.member_count || 0) >= group.max_members ? 'Complet' : 'Rejoindre'}
                 </button>
-                <Link href={`/groupe?group=${group.id}`} className="p-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl hover:border-[#1C2620]/30 hover:text-[#1C2620] transition-colors">
+                <Link href={`/groupes/${group.id}`} className="p-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl hover:border-[#1C2620]/30 hover:text-[#1C2620] transition-colors">
                   <Icon name="EyeIcon" size={12} />
                 </Link>
               </>
@@ -491,15 +492,25 @@ function GroupesPageInner() {
         )}
       </div>
 
-      {/* Create/Edit Group Modal */}
-      {(showCreateModal || showEditModal) && (
+      {/* Create Group Wizard Modal */}
+      <CreateGroupWizardModal 
+        isOpen={showCreateModal} 
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={async (newId) => {
+          await loadMyGroups();
+          router.push(`/groupes/${newId}`);
+        }}
+      />
+
+      {/* Edit Group Modal */}
+      {showEditModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-lg p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-display font-700 text-lg text-[#1C2620]">{showEditModal ? 'Modifier le groupe' : 'Créer un groupe de voyage'}</h3>
-              <button onClick={() => { setShowCreateModal(false); setShowEditModal(false); setEditingGroup(null); }} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
+              <h3 className="font-display font-700 text-lg text-[#1C2620]">Modifier le groupe</h3>
+              <button onClick={() => { setShowEditModal(false); setEditingGroup(null); }} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
             </div>
-            {showEditModal && editingGroup?.invite_code && (
+            {editingGroup?.invite_code && (
               <div className="mb-4 p-3 bg-[#E4501C]/5 border border-[#E4501C]/20 rounded-xl flex items-center gap-3">
                 <Icon name="LinkIcon" size={14} className="text-[#E4501C] flex-shrink-0" />
                 <div>
@@ -508,7 +519,7 @@ function GroupesPageInner() {
                 </div>
               </div>
             )}
-            <form onSubmit={showEditModal ? handleEditGroup : handleCreateGroup} className="space-y-4">
+            <form onSubmit={handleEditGroup} className="space-y-4">
               <div><label className={labelCls}>Nom du groupe *</label><input required value={createForm.name} onChange={e => setCreateForm({ ...createForm, name: e.target.value })} className={inputCls} placeholder="Trek Himalaya 2026" /></div>
               <div><label className={labelCls}>Destination *</label><input required value={createForm.destination} onChange={e => setCreateForm({ ...createForm, destination: e.target.value })} className={inputCls} placeholder="Nepal - Everest Base Camp" /></div>
               <div><label className={labelCls}>Description</label><textarea value={createForm.description} onChange={e => setCreateForm({ ...createForm, description: e.target.value })} rows={2} className={`${inputCls} resize-none`} placeholder="Décrivez votre aventure..." /></div>
@@ -525,7 +536,7 @@ function GroupesPageInner() {
                 <div><label className={labelCls}>Max membres</label><input type="number" min={2} max={50} value={createForm.max_members} onChange={e => setCreateForm({ ...createForm, max_members: e.target.value })} className={inputCls} /></div>
               </div>
               <button type="submit" disabled={creating} className="w-full py-3 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white rounded-xl font-700 transition-colors disabled:opacity-50">
-                {creating ? 'Création...' : showEditModal ? 'Enregistrer' : 'Créer le groupe'}
+                {creating ? 'Enregistrement...' : 'Enregistrer'}
               </button>
             </form>
           </div>
