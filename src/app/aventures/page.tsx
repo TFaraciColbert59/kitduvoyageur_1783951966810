@@ -155,7 +155,7 @@ const ADVENTURES: Adventure[] = [
 ];
 
 const CATEGORIES = ['Toutes', 'Trekking', 'Refuge', 'Bivouac', 'Kayak'];
-const DIFFICULTIES = ['Toutes', '1', '2', '3', '4', '5'];
+const _DIFFICULTIES = ['Toutes', '1', '2', '3', '4', '5'];
 
 // ─── Difficulty dots ──────────────────────────────────────────────────────────
 
@@ -310,7 +310,7 @@ function AdventureCard({ adv, featured }: { adv: Adventure; featured?: boolean }
 
 export default function AventuresPage() {
   const [activeCategory, setActiveCategory] = useState('Toutes');
-  const [activeDifficulty, setActiveDifficulty] = useState('Toutes');
+  const [activeDifficulty, _setActiveDifficulty] = useState('Toutes');
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
@@ -358,7 +358,7 @@ export default function AventuresPage() {
             {/* Breadcrumb */}
             <nav className="mb-10">
               <ol className="flex items-center gap-2" style={{ fontSize: '12px', fontFamily: 'var(--font-mono)', color: 'rgba(231,227,214,0.4)', letterSpacing: '0.08em' }}>
-                <li><a href="/" className="hover:text-white/70 transition-colors">Accueil</a></li>
+                <li><Link href="/" className="hover:text-white/70 transition-colors">Accueil</Link></li>
                 <li style={{ color: 'rgba(231,227,214,0.2)' }}>›</li>
                 <li style={{ color: 'rgba(231,227,214,0.7)' }}>Aventures</li>
               </ol>

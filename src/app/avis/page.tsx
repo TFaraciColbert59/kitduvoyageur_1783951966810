@@ -281,7 +281,7 @@ export default function AvisPage() {
   };
 
   const filtered = activeFilter === 'tous' ? reviews : reviews.filter((r) => r.type === activeFilter);
-  const avgRating = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : '0.0';
+  const _avgRating = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : '0.0';
 
   return (
     <div className="min-h-screen" style={{ background: '#F5F2EC' }}>

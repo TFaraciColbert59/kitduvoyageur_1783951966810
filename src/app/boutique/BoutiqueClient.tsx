@@ -118,7 +118,7 @@ function InventorySidebar({
             Créer mon inventaire
           </Link>
           <Link href="/auth" className="text-xs font-bold text-[#1C2620]/60 hover:text-[#1C2620] underline underline-offset-4">
-            J'ai déjà un compte · Se connecter
+            J&apos;ai déjà un compte · Se connecter
           </Link>
         </div>
       ) : (
@@ -314,7 +314,7 @@ export default function BoutiqueClient() {
   const ownedProductIds = useMemo(() => new Set(gearItems.map(g => g.product_id).filter(Boolean)), [gearItems]);
   const ownedNames = useMemo(() => new Set(gearItems.map(g => g.name.toLowerCase())), [gearItems]);
 
-  const isProductOwned = (p: ShopProduct) => ownedProductIds.has(p.id) || ownedNames.has(p.name.toLowerCase());
+  const isProductOwned = useCallback((p: ShopProduct) => ownedProductIds.has(p.id) || ownedNames.has(p.name.toLowerCase()), [ownedProductIds, ownedNames]);
 
   const filteredProducts = useMemo(() => {
     let res = products;
@@ -441,7 +441,7 @@ export default function BoutiqueClient() {
                       <AppImage src={p.image || 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80'} alt={p.image_alt || p.name} fill sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
                       {isOwned && (
                         <div className="absolute top-3 right-3 bg-[#8BAF7C] text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1">
-                          ✓ Dans l'inventaire
+                          ✓ Dans l&apos;inventaire
                         </div>
                       )}
                       {!isOwned && p.category && (
