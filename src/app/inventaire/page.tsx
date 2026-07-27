@@ -966,7 +966,12 @@ export default function InventairePage() {
                 <h1 className="text-2xl font-display font-800 tracking-tight">Gestion de l&apos;Inventaire</h1>
               </div>
             </div>
-            <p className="text-white/60 text-sm max-w-xl mb-6">Équipements personnels, stock boutique, commandes et mouvements — tout en temps réel.</p>
+            <div className="flex flex-wrap items-center gap-4 mb-6">
+              <p className="text-white/60 text-sm max-w-xl">Équipements personnels, stock boutique, commandes et mouvements — tout en temps réel.</p>
+              <a href="/ai-configurator" className="inline-flex items-center gap-2 px-4 py-2 bg-[#34D399] text-[#122419] rounded-xl text-xs font-bold hover:bg-[#22C55E] transition-all shadow-lg">
+                🚀 Lancer le configurateur avec mon inventaire
+              </a>
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
                 { label: 'Mes articles', value: gear.length, icon: 'ArchiveBoxIcon' },

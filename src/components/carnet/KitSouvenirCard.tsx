@@ -13,7 +13,7 @@ export default function KitSouvenirCard({ intro, items }: KitSouvenirCardProps) 
         <h3 className="font-display text-lg text-[#1C2620]">
           Ce que j'avais <em className="font-serif italic">dans le sac</em>
         </h3>
-        <a href="#" className="text-xs font-medium text-[#E4501C] hover:underline whitespace-nowrap">Voir le kit →</a>
+        <a href="/ai-configurator" className="text-xs font-medium text-[#1C3829] hover:underline whitespace-nowrap">🤖 Reconfigurer avec l'IA →</a>
       </div>
       <p className="text-sm text-[#1C2620]/60 mb-6 font-sans">{intro}</p>
       <div className="space-y-4">

@@ -1,12 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { CONFIGURATOR_STEPS, getRecommendedItems } from '@/lib/configuratorData';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { CONFIGURATOR_STEPS } from '@/lib/configuratorData';
 import { addToCart } from '@/lib/cart';
+import { createClient } from '@/lib/supabase/client';
+import {
+  fetchUserInventory,
+  fetchGroupContext,
+  computeConnectedReport,
+  OwnedGearItem,
+  ConnectedKitReport,
+} from '@/lib/ai/configuratorEngine';
 
-// SVG Icon renderer matching the mockup icons
 function StepIcon({ icon, active }: { icon: string; active: boolean }) {
   const iconColor = active ? 'text-white' : 'text-[#3A4A3D]';
   const badgeBg = active ? 'bg-[#1C3829]' : 'bg-[#F2EFE8]';
@@ -89,8 +96,14 @@ function StepIcon({ icon, active }: { icon: string; active: boolean }) {
 
 export default function KitConfiguratorWizard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [, startTransition] = useTransition();
 
-  const [currentStepIndex, setCurrentStepIndex] = useState(2); // Start on Step 3 (Météo) matching mockup
+  const groupId = searchParams?.get('groupId');
+  const carnetId = searchParams?.get('carnetId');
+  const trailName = searchParams?.get('trail');
+
+  const [currentStepIndex, setCurrentStepIndex] = useState(2);
   const [answers, setAnswers] = useState<Record<number, string>>({
     1: 'trek',
     2: '3-5d',
@@ -98,8 +111,52 @@ export default function KitConfiguratorWizard() {
     4: 'equilibre',
   });
 
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userInventory, setUserInventory] = useState<OwnedGearItem[]>([]);
+  const [groupInfo, setGroupInfo] = useState<{
+    groupName: string;
+    destination: string;
+    membersCount: number;
+    sharedItems: OwnedGearItem[];
+  } | null>(null);
+  const [report, setReport] = useState<ConnectedKitReport | null>(null);
+  const [savedSuccess, setSavedSuccess] = useState(false);
+
+  // Load user session & inventory on mount
+  useEffect(() => {
+    async function loadContext() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+        const inv = await fetchUserInventory(user.id);
+        setUserInventory(inv);
+      }
+
+      if (groupId) {
+        const grp = await fetchGroupContext(groupId);
+        setGroupInfo(grp);
+      }
+    }
+    loadContext();
+  }, [groupId]);
+
+  // Compute connected report dynamically
+  useEffect(() => {
+    async function updateReport() {
+      const rep = await computeConnectedReport({
+        answers,
+        userOwnedGear: userInventory,
+        groupMode: Boolean(groupId || groupInfo),
+        groupMembersCount: groupInfo?.membersCount ?? 1,
+        sharedGroupItems: groupInfo?.sharedItems ?? [],
+      });
+      setReport(rep);
+    }
+    updateReport();
+  }, [answers, userInventory, groupInfo, groupId]);
+
   const step = CONFIGURATOR_STEPS[currentStepIndex];
-  const { items, totalPrice, totalWeightKg, durationLabel, weatherLabel } = getRecommendedItems(answers);
 
   const handleSelectOption = (optionId: string) => {
     setAnswers((prev) => ({ ...prev, [step.id]: optionId }));
@@ -108,22 +165,20 @@ export default function KitConfiguratorWizard() {
   const handleNext = () => {
     if (currentStepIndex < CONFIGURATOR_STEPS.length - 1) {
       setCurrentStepIndex((prev) => prev + 1);
-    } else {
-      // Step 5: Add items to cart and navigate to panier
-      items.forEach((item) => {
-        if (item.checked) {
-          addToCart({
-            id: item.id,
-            slug: item.id,
-            name: item.name,
-            brand: 'Le Kit du Voyageur',
-            priceEur: item.price,
-            weightG: item.weightKg * 1000,
-            image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400',
-            imageAlt: item.name,
-            category: item.category,
-          });
-        }
+    } else if (report) {
+      // Step 5: Add missing items to cart
+      report.missingItems.forEach((item) => {
+        addToCart({
+          id: item.id,
+          slug: item.id,
+          name: item.name,
+          brand: item.brand,
+          priceEur: item.priceEur,
+          weightG: item.weightGrams,
+          image: item.image,
+          imageAlt: item.name,
+          category: item.category,
+        });
       });
       router.push('/panier');
     }
@@ -135,6 +190,28 @@ export default function KitConfiguratorWizard() {
     }
   };
 
+  const handleSaveConfiguration = async () => {
+    if (!userId || !report) return;
+    try {
+      const supabase = createClient();
+      await supabase.from('configurator_sessions').insert({
+        user_id: userId,
+        destination: trailName || groupInfo?.destination || 'Trek itinérant',
+        country: 'France',
+        season: answers[3] || 'frais_brumeux',
+        activity: answers[1] || 'trek',
+        level: answers[4] || 'equilibre',
+        max_weight_g: Math.round(report.totalWeightKg * 1000),
+        budget_eur: report.totalMissingPriceEur,
+        climate: report.weatherLabel,
+      });
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 4000);
+    } catch (_e) {
+      // Fail-safe
+    }
+  };
+
   const nextStepLabel =
     currentStepIndex === 0
       ? 'Continuer vers Durée'
@@ -143,30 +220,44 @@ export default function KitConfiguratorWizard() {
       : currentStepIndex === 2
       ? 'Continuer vers Confort'
       : currentStepIndex === 3
-      ? 'Voir le récapitulatif'
-      : 'Ajouter au panier & commander';
+      ? 'Voir le récapitulatif 360°'
+      : 'Ajouter les manquants au panier →';
 
   return (
     <div className="w-full max-w-[1360px] mx-auto px-2 sm:px-6 py-4 font-sans text-[#1C2620]">
       {/* ── TOP META BREADCRUMB BAR ── */}
       <div className="flex items-center justify-between text-xs text-[#7A8A7D] mb-4 px-2">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-[#1C2620]">Configurateur · Composer un sac</span>
-          <span>Étape {step.id}/5 - Assistant multi-étapes</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-semibold text-[#1C2620]">Configurateur IA · Central Engine</span>
+          <span>Étape {step.id}/5</span>
+          {groupInfo && (
+            <span className="bg-[#1C3829] text-white px-2.5 py-0.5 rounded-full font-medium">
+              👥 Groupe: {groupInfo.groupName} ({groupInfo.membersCount} pers.)
+            </span>
+          )}
+          {carnetId && (
+            <span className="bg-[#1C3829] text-white px-2.5 py-0.5 rounded-full font-medium">
+              📖 Carnet lié
+            </span>
+          )}
+          {userInventory.length > 0 && (
+            <span className="bg-[#EAF0EC] text-[#1C3829] border border-[#1C3829]/20 px-2 py-0.5 rounded-full font-medium">
+              🎒 {userInventory.length} matériel(s) détecté(s)
+            </span>
+          )}
         </div>
         <div className="hidden md:flex items-center gap-4 text-xs">
           <Link href="/" className="hover:text-[#1C2620] transition-colors">← Hub</Link>
           <Link href="/shop" className="hover:text-[#1C2620] transition-colors">Boutique</Link>
-          <span className="text-[#A3B0A5]">— Fiche</span>
+          <Link href="/inventaire" className="hover:text-[#1C2620] transition-colors">Inventaire</Link>
           <Link href="/panier" className="hover:text-[#1C2620] transition-colors">Panier →</Link>
-          <span className="text-[#A3B0A5]">Paiement</span>
         </div>
       </div>
 
-      {/* ── MAIN CARD CONTAINER (White Card + Dark Green Live Panel) ── */}
+      {/* ── MAIN CARD CONTAINER ── */}
       <div className="bg-white rounded-[28px] border border-[#E2DDD0] shadow-xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[640px]">
         
-        {/* ── LEFT PANEL (Steps & Question Cards) ── */}
+        {/* ── LEFT PANEL (Steps & Cards) ── */}
         <div className="lg:col-span-7 flex flex-col p-6 sm:p-10 border-b lg:border-b-0 lg:border-r border-[#EBE7DE]">
           
           {/* Top Brand Navigation inside card */}
@@ -184,7 +275,7 @@ export default function KitConfiguratorWizard() {
               <Link href="/explorer" className="hover:text-[#1C3829] transition-colors">Aventures</Link>
               <Link href="/communaute" className="hover:text-[#1C3829] transition-colors">Refuges</Link>
               <Link href="/shop" className="hover:text-[#1C3829] transition-colors">Boutique</Link>
-              <Link href="/guides" className="hover:text-[#1C3829] transition-colors">Journal</Link>
+              <Link href="/inventaire" className="hover:text-[#1C3829] transition-colors">Mon Inventaire</Link>
             </nav>
 
             <Link href="/" className="text-xs text-[#7A8A7D] hover:text-[#1C3829] transition-colors font-medium">
@@ -201,7 +292,7 @@ export default function KitConfiguratorWizard() {
               return (
                 <button
                   key={s.id}
-                  onClick={() => setCurrentStepIndex(idx)}
+                  onClick={() => startTransition(() => setCurrentStepIndex(idx))}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                     isActive
                       ? 'bg-[#1C3829] text-white shadow-sm'
@@ -243,7 +334,7 @@ export default function KitConfiguratorWizard() {
                 {step.subtitle}
               </p>
 
-              {/* 2x2 Choice Cards Grid (or Step 5 summary) */}
+              {/* 2x2 Choice Cards Grid (Steps 1 to 4) */}
               {step.options.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                   {step.options.map((opt) => {
@@ -280,23 +371,107 @@ export default function KitConfiguratorWizard() {
                   })}
                 </div>
               ) : (
-                /* Step 5: Full Equipment List Breakdown */
-                <div className="space-y-3 mb-8 bg-[#FAF8F3] p-5 rounded-2xl border border-[#E2DDD0]">
-                  <h3 className="text-sm font-semibold text-[#1C3829] mb-2">Composants inclus dans votre sac :</h3>
-                  {items.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between text-xs py-2 border-b border-[#EBE7DE] last:border-none">
-                      <div className="flex items-center gap-2">
-                        <span className="w-4 h-4 rounded-full bg-[#1C3829] text-white flex items-center justify-center text-[10px]">✓</span>
-                        <span className="font-medium text-[#1C2620]">{item.name}</span>
-                        <span className="text-[10px] text-[#7A8A7D] bg-[#EBE7DE] px-2 py-0.5 rounded-full">{item.category}</span>
+                /* Step 5: Connected 360° Intelligent Report Breakdown */
+                report && (
+                  <div className="space-y-6 mb-8">
+                    {/* Preparation Score Banner */}
+                    <div className="flex items-center justify-between bg-[#1C3829] text-white p-5 rounded-2xl shadow-lg">
+                      <div>
+                        <p className="text-xs text-[#B5D4BF] font-mono uppercase">Niveau de préparation</p>
+                        <h3 className="text-2xl font-bold font-mono text-white mt-0.5">
+                          {report.preparationScore}% PRÊT
+                        </h3>
+                        <p className="text-xs text-white/80 mt-1">{report.summary}</p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-[#7A8A7D]">{item.weightKg} kg</span>
-                        <span className="font-semibold text-[#1C3829]">{item.price} €</span>
+                      <div className="w-14 h-14 rounded-full border-4 border-[#34D399] flex items-center justify-center font-bold text-lg font-mono">
+                        {report.preparationScore}%
                       </div>
                     </div>
-                  ))}
-                </div>
+
+                    {/* Section: Owned Items (from user's inventory) */}
+                    <div className="bg-[#F4F8F5] p-5 rounded-2xl border border-[#C5DED0]">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-xs font-mono uppercase tracking-wider text-[#1C3829] font-bold">
+                          🎒 Matériel déjà possédé ({report.ownedItems.length} article(s))
+                        </h4>
+                        <span className="text-xs text-[#5C6E60] font-medium">0 € dépensés</span>
+                      </div>
+                      {report.ownedItems.length > 0 ? (
+                        <div className="space-y-2 text-xs">
+                          {report.ownedItems.map((item) => (
+                            <div key={item.id} className="flex items-center justify-between py-1.5 border-b border-[#D8E6DE] last:border-none">
+                              <span className="font-semibold text-[#1C3829]">✓ {item.name}</span>
+                              <span className="text-[11px] text-[#5C6E60] font-mono">{item.weightGrams / 1000} kg</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-[#7A8A7D] italic">
+                          Aucun équipement correspondant trouvé dans votre inventaire. Les articles ci-dessous sont recommandés.
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Section: Missing Items (from shop_products) */}
+                    <div className="bg-white p-5 rounded-2xl border border-[#E2DDD0] shadow-sm">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-xs font-mono uppercase tracking-wider text-[#E4501C] font-bold">
+                          🛒 Matériel manquant à acquérir ({report.missingItems.length} article(s))
+                        </h4>
+                        <span className="text-xs font-bold text-[#1C3829] font-mono">
+                          Total: {report.totalMissingPriceEur} €
+                        </span>
+                      </div>
+                      <div className="space-y-3">
+                        {report.missingItems.map((item) => (
+                          <div key={item.id} className="flex items-center justify-between gap-3 text-xs py-2 border-b border-[#F0ECE1] last:border-none">
+                            <div className="flex items-center gap-3">
+                              <img src={item.image} alt={item.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                              <div>
+                                <p className="font-bold text-[#1C2620]">{item.name}</p>
+                                <p className="text-[11px] text-[#7A8A7D]">{item.reason}</p>
+                              </div>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <p className="font-bold font-mono text-[#1C3829]">{item.priceEur} €</p>
+                              <p className="text-[10px] text-[#7A8A7D] font-mono">{item.weightGrams / 1000} kg</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Section: Weather / Security Alerts */}
+                    {report.inadequateAlerts.length > 0 && (
+                      <div className="bg-[#FFF8F5] p-5 rounded-2xl border border-[#FCD8C8]">
+                        <h4 className="text-xs font-mono uppercase tracking-wider text-[#E4501C] font-bold mb-3">
+                          ⚠️ Alertes & Points d’attention
+                        </h4>
+                        <div className="space-y-2 text-xs">
+                          {report.inadequateAlerts.map((alert, idx) => (
+                            <div key={idx} className="p-3 bg-white rounded-xl border border-[#FCD8C8]">
+                              <p className="font-bold text-[#1C2620] mb-1">{alert.item}</p>
+                              <p className="text-[#E4501C] mb-1">{alert.issue}</p>
+                              <p className="text-[#5C6E60] font-medium">💡 {alert.recommendation}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Save actions */}
+                    {userId && (
+                      <div className="flex items-center gap-3 pt-2">
+                        <button
+                          onClick={handleSaveConfiguration}
+                          className="flex-1 py-2.5 rounded-xl border border-[#1C3829] text-[#1C3829] font-bold text-xs hover:bg-[#EAF0EC] transition-colors"
+                        >
+                          {savedSuccess ? '✅ Configuration enregistrée !' : '💾 Enregistrer la configuration sur mon compte'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )
               )}
             </div>
 
@@ -318,7 +493,6 @@ export default function KitConfiguratorWizard() {
                 className="flex items-center gap-2 px-7 py-3 rounded-full bg-[#1C3829] hover:bg-[#152B1F] text-white font-semibold text-xs transition-all shadow-md shadow-[#1C3829]/20 hover:-translate-y-px"
               >
                 <span>{nextStepLabel}</span>
-                <span>→</span>
               </button>
             </div>
           </div>
@@ -326,20 +500,15 @@ export default function KitConfiguratorWizard() {
 
         {/* ── RIGHT PANEL (Dark Glassmorphic Live Kit Summary) ── */}
         <div className="lg:col-span-5 relative bg-[#122419] text-white p-6 sm:p-10 flex flex-col justify-between overflow-hidden">
-          {/* Atmospheric background overlay */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#1E3B2A] via-[#122419] to-[#0A140E] opacity-90" />
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517649763962-0c623266010b?w=800')] bg-cover bg-center opacity-10 mix-blend-overlay pointer-events-none" />
 
-          {/* Content relative wrapper */}
           <div className="relative z-10 space-y-6">
-            
-            {/* Live Badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/20 bg-white/5 backdrop-blur-md text-[11px] font-mono tracking-widest text-[#B5D4BF]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] animate-pulse" />
               <span>VOTRE SAC EN CONSTRUCTION</span>
             </div>
 
-            {/* Title */}
             <div>
               <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-2">
                 Un kit <span className="font-serif italic font-normal text-[#B5D4BF]">en cours</span> de composition.
@@ -349,92 +518,75 @@ export default function KitConfiguratorWizard() {
               </p>
             </div>
 
-            {/* Glassmorphic Item List Box */}
-            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-5 space-y-4 shadow-xl">
-              <div className="flex items-center justify-between text-xs border-b border-white/10 pb-3">
-                <span className="font-mono uppercase tracking-wider text-white/70">
-                  CONTENU · {items.filter((i) => i.checked).length} PIÈCES
-                </span>
-                <span className="font-bold text-[#B5D4BF] bg-white/10 px-2.5 py-1 rounded-md">
-                  {totalWeightKg} KG
-                </span>
-              </div>
+            {/* Glassmorphic Live Panel */}
+            {report && (
+              <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-5 space-y-4 shadow-xl">
+                <div className="flex items-center justify-between text-xs border-b border-white/10 pb-3">
+                  <span className="font-mono uppercase tracking-wider text-white/70">
+                    CONTENU · {report.ownedItems.length + report.missingItems.length} PIÈCES
+                  </span>
+                  <span className="font-bold text-[#B5D4BF] bg-white/10 px-2.5 py-1 rounded-md">
+                    {report.totalWeightKg} KG
+                  </span>
+                </div>
 
-              {/* Item rows */}
-              <div className="space-y-2.5 text-xs">
-                {items.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 truncate">
-                      {item.checked ? (
+                <div className="space-y-2 text-xs max-h-56 overflow-y-auto pr-1">
+                  {report.ownedItems.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 truncate">
                         <span className="w-4 h-4 rounded-full bg-[#34D399] text-[#122419] flex items-center justify-center text-[10px] font-bold flex-shrink-0">✓</span>
-                      ) : (
-                        <span className="w-4 h-4 rounded-full border border-white/30 flex-shrink-0" />
-                      )}
-                      <span className={`truncate ${item.checked ? 'text-white font-medium' : 'text-white/40 font-normal line-through'}`}>
-                        {item.name}
-                      </span>
+                        <span className="truncate text-white font-medium">{item.name}</span>
+                      </div>
+                      <span className="font-mono text-[#B5D4BF] flex-shrink-0 text-[10px] bg-white/10 px-2 py-0.5 rounded">Possédé</span>
                     </div>
-                    <span className="font-mono text-white/80 flex-shrink-0">
-                      {item.checked ? `${item.price} €` : '—'}
-                    </span>
-                  </div>
-                ))}
-              </div>
+                  ))}
 
-              {/* Sous-total */}
-              <div className="pt-3 border-t border-white/15 flex items-center justify-between">
-                <span className="font-mono text-xs uppercase tracking-wider text-white/70">SOUS-TOTAL</span>
-                <span className="text-2xl font-bold font-mono text-white">{totalPrice} €</span>
-              </div>
-            </div>
+                  {report.missingItems.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 truncate">
+                        <span className="w-4 h-4 rounded-full border border-white/30 flex-shrink-0" />
+                        <span className="truncate text-white/70 font-normal">{item.name}</span>
+                      </div>
+                      <span className="font-mono text-white/80 flex-shrink-0">{item.priceEur} €</span>
+                    </div>
+                  ))}
+                </div>
 
-            {/* 2x2 Key-Value Metadata Pills */}
-            <div className="grid grid-cols-2 gap-3 text-xs pt-2">
-              <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
-                <p className="text-[10px] font-mono text-white/50 uppercase tracking-wider mb-1">ADAPTÉ POUR</p>
-                <p className="font-semibold text-white">{durationLabel}</p>
+                <div className="pt-3 border-t border-white/15 flex items-center justify-between">
+                  <span className="font-mono text-xs uppercase tracking-wider text-white/70">À ACQUÉRIR</span>
+                  <span className="text-2xl font-bold font-mono text-white">{report.totalMissingPriceEur} €</span>
+                </div>
               </div>
-              <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
-                <p className="text-[10px] font-mono text-white/50 uppercase tracking-wider mb-1">MÉTÉO</p>
-                <p className="font-semibold text-white">{weatherLabel}</p>
-              </div>
-              <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
-                <p className="text-[10px] font-mono text-white/50 uppercase tracking-wider mb-1">POIDS TOTAL</p>
-                <p className="font-semibold text-white">{totalWeightKg} kg</p>
-              </div>
-              <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
-                <p className="text-[10px] font-mono text-white/50 uppercase tracking-wider mb-1">LIVRAISON</p>
-                <p className="font-semibold text-white">Sous 48 h</p>
-              </div>
-            </div>
+            )}
 
+            {/* Metadata Pills */}
+            {report && (
+              <div className="grid grid-cols-2 gap-3 text-xs pt-2">
+                <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+                  <p className="text-[10px] font-mono text-white/50 uppercase tracking-wider mb-1">ADAPTÉ POUR</p>
+                  <p className="font-semibold text-white">{report.durationLabel}</p>
+                </div>
+                <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+                  <p className="text-[10px] font-mono text-white/50 uppercase tracking-wider mb-1">MÉTÉO</p>
+                  <p className="font-semibold text-white">{report.weatherLabel}</p>
+                </div>
+                <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+                  <p className="text-[10px] font-mono text-white/50 uppercase tracking-wider mb-1">POIDS TOTAL</p>
+                  <p className="font-semibold text-white">{report.totalWeightKg} kg</p>
+                </div>
+                <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+                  <p className="text-[10px] font-mono text-white/50 uppercase tracking-wider mb-1">EMPREINTE CARBONE</p>
+                  <p className="font-semibold text-white">{report.carbonEstimateKg} kg CO₂</p>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Footer note */}
           <div className="relative z-10 pt-6 border-t border-white/10 text-[11px] text-white/50">
             Le sac se met à jour à chaque étape. Vous pourrez tout retirer avant paiement.
           </div>
         </div>
 
-      </div>
-
-      {/* ── MOBILE STICKY BOTTOM BAR ── */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#122419] text-white border-t border-white/15 px-4 py-3 shadow-2xl flex items-center justify-between">
-        <div>
-          <p className="text-[10px] font-mono text-white/60 uppercase">
-            VOTRE SAC · {items.filter((i) => i.checked).length} PIÈCES
-          </p>
-          <p className="text-sm font-bold font-mono text-[#B5D4BF]">
-            {totalWeightKg} KG — {totalPrice} €
-          </p>
-        </div>
-
-        <button
-          onClick={handleNext}
-          className="px-5 py-2.5 rounded-full bg-[#34D399] text-[#122419] text-xs font-bold hover:bg-[#22C55E] transition-colors"
-        >
-          {currentStepIndex === CONFIGURATOR_STEPS.length - 1 ? 'Commander →' : 'Continuer →'}
-        </button>
       </div>
     </div>
   );

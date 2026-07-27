@@ -44,12 +44,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Paramètres manquants' }, { status: 400 });
     }
 
-    // Fetch products from DB that are sourceable (stock > 0)
+    // Fetch products from shop_products table
     const { data: dbProducts } = await supabase
-      .from('products')
-      .select('id, slug, name, brand, category, weight_g, price_eur, description, image, image_alt, stock')
+      .from('shop_products')
+      .select('id, slug, name, brand, category, weight_g, price_eur, image, stock')
       .gt('stock', 0)
       .order('category');
+
+    // Fetch user owned inventory if logged in
+    let userOwnedGear: any[] = [];
+    if (user) {
+      const { data: gear } = await supabase
+        .from('gear_items')
+        .select('id, name, brand, category, weight_g')
+        .eq('user_id', user.id);
+      userOwnedGear = gear || [];
+    }
 
     const sourceable = dbProducts ?? [];
 
