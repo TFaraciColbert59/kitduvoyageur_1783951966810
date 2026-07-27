@@ -103,7 +103,7 @@ export default function ClubDetailPage() {
   const [registeredEvents, setRegisteredEvents] = useState<Record<string, boolean>>({});
   const [likedTopics, setLikedTopics] = useState<Record<string, boolean>>({});
   const [participantsModalOpen, setParticipantsModalOpen] = useState(false);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [_selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventParticipants, setEventParticipants] = useState<any[]>([]);
   const [replyingToTopic, setReplyingToTopic] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
@@ -158,6 +158,7 @@ export default function ClubDetailPage() {
 
   useEffect(() => {
     loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clubId, supabase, user]);
 
   const handleToggleMember = async () => {
@@ -180,7 +181,9 @@ export default function ClubDetailPage() {
     if (navigator.share) {
       try {
         await navigator.share({ title: club?.name, url: window.location.href });
-      } catch (err) {}
+      } catch (_err) {
+        // share cancelled or not supported
+      }
     } else {
       navigator.clipboard.writeText(window.location.href);
       showToast('Lien copié dans le presse-papiers');
@@ -204,9 +207,9 @@ export default function ClubDetailPage() {
   };
 
   const handleLoadReplies = async (topicId: string) => {
-    const { data } = await supabase.from('club_topic_replies').select('*, author:user_profiles(full_name, avatar_url)').eq('topic_id', topicId).order('created_at', { ascending: true });
-    if (data) {
-      setTopicReplies(prev => ({ ...prev, [topicId]: data }));
+    const { data: _data } = await supabase.from('club_topic_replies').select('*, author:user_profiles(full_name, avatar_url)').eq('topic_id', topicId).order('created_at', { ascending: true });
+    if (_data) {
+      setTopicReplies(prev => ({ ...prev, [topicId]: _data }));
     }
   };
 
@@ -247,7 +250,7 @@ export default function ClubDetailPage() {
     if (submitting) return;
 
     setSubmitting(true);
-    const { data, error } = await supabase.from('club_topics').insert({
+    const { data: _data, error } = await supabase.from('club_topics').insert({
       club_id: club!.id,
       author_id: user.id,
       title: newPostTitle,
@@ -387,7 +390,7 @@ export default function ClubDetailPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {topics.filter(t => t.image_url).map(topic => (
               <div key={topic.id} className="aspect-square rounded-2xl overflow-hidden relative group cursor-pointer bg-emerald-50">
-                <img src={topic.image_url} alt="Photo" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <img src={topic.image_url} alt="Photo partagée par un membre du club" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
               </div>
             ))}
             {topics.filter(t => t.image_url).length === 0 && <p className="text-emerald-900/50">Aucune photo partagée pour le moment.</p>}
@@ -453,7 +456,7 @@ export default function ClubDetailPage() {
                         </div>
                       ))}
                       {(!topicReplies[topic.id] || topicReplies[topic.id].length === 0) && (
-                        <p className="text-sm text-emerald-900/40 italic">Aucun commentaire pour l'instant.</p>
+                        <p className="text-sm text-emerald-900/40 italic">Aucun commentaire pour l&apos;instant.</p>
                       )}
                     </div>
                     <div className="flex gap-3">
@@ -537,7 +540,7 @@ export default function ClubDetailPage() {
         {/* Feed */}
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="font-display font-800 text-2xl flex items-center gap-3">Fil d'actualité <span className="px-3 py-1 bg-white border border-emerald-900/10 rounded-full text-xs font-700 text-emerald-900/60">Trier par Récent</span></h2>
+            <h2 className="font-display font-800 text-2xl flex items-center gap-3">Fil d&apos;actualité <span className="px-3 py-1 bg-white border border-emerald-900/10 rounded-full text-xs font-700 text-emerald-900/60">Trier par Récent</span></h2>
             <button onClick={() => { if(user){ setCreatePostType('discussion'); setCreatePostModalOpen(true); } else { showToast('Connectez-vous pour poster'); } }} className="text-emerald-950 flex items-center gap-2 text-sm font-700 hover:opacity-80">
               <Icon name="PlusIcon" size={16} /> Créer un post
             </button>
@@ -599,7 +602,7 @@ export default function ClubDetailPage() {
                           </div>
                         ))}
                         {(!topicReplies[topic.id] || topicReplies[topic.id].length === 0) && (
-                          <p className="text-sm text-emerald-900/40 italic">Aucun commentaire pour l'instant.</p>
+                          <p className="text-sm text-emerald-900/40 italic">Aucun commentaire pour l&apos;instant.</p>
                         )}
                       </div>
                       <div className="flex gap-3">
@@ -834,7 +837,7 @@ export default function ClubDetailPage() {
 
             <div className="bg-white rounded-[2rem] p-6 border border-emerald-900/5 shadow-sm">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="font-display font-800 text-xl">Membres de l'équipe</h3>
+                <h3 className="font-display font-800 text-xl">Membres de l&apos;équipe</h3>
                 <button onClick={() => setActiveTab('Membres')} className="text-xs font-700 text-emerald-900/40 hover:text-emerald-900">Afficher tout</button>
               </div>
               <div className="space-y-4">

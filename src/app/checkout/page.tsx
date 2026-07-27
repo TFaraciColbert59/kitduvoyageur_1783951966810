@@ -81,6 +81,14 @@ export default function CheckoutPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const shipping = form;
+  const setShipping = setForm;
+  const handleShippingSubmit = () => {
+    if (!validate()) return;
+    setStep('livraison');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const { user } = useAuth();
   const supabase = createClient();
 
@@ -104,7 +112,7 @@ export default function CheckoutPage() {
     atelier: 0,
   };
   const shippingEur = shippingCosts[shippingOption];
-  const tva = (totalPriceEur + shippingEur) * 0.2;
+  const _tva = (totalPriceEur + shippingEur) * 0.2;
   const grandTotal = totalPriceEur + shippingEur;
 
   const validate = () => {
@@ -180,7 +188,7 @@ export default function CheckoutPage() {
     { id: 'confirmation' as Step, num: 3, label: 'Confirmation' },
   ];
 
-  const stepIndex = STEPS.findIndex(s => s.id === step);
+  const _stepIndex = STEPS.findIndex(s => s.id === step);
 
   const SHIPPING_OPTIONS: { id: ShippingOption; label: string; sub: string; price: string; badge?: string }[] = [
     { id: 'suivie', label: 'Livraison suivie', sub: 'Colis-relais ou domicile · 3 à 5 jours ouvrés · CO₂ compensé', price: shippingCosts.suivie === 0 ? 'Offerte' : `${shippingCosts.suivie} €`, badge: 'Offerte' },
@@ -335,7 +343,7 @@ export default function CheckoutPage() {
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-3">Mode d'expédition</label>
+                    <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-3">Mode d&apos;expédition</label>
                     <div className="space-y-3">
                       {[
                         { id: 'standard', label: 'Livraison suivie', desc: 'Colis relais ou domicile - 3 à 5 jours ouvrés - CO2 compensé', price: totalPriceEur >= 99 ? 'Offerte' : '5,90 €' },
@@ -463,7 +471,7 @@ export default function CheckoutPage() {
                 <h2 className="font-display font-800 text-3xl mb-4">Commande confirmée.</h2>
                 <p className="text-[#5C6B5E] mb-2">Numéro de commande : <span className="font-mono font-600 text-[#1C2620]">{orderNumber}</span></p>
                 <p className="text-sm text-[#5C6B5E] mb-8 max-w-sm mx-auto leading-relaxed">
-                  Merci ! Un email de confirmation vous a été envoyé. Préparez-vous pour l'aventure.
+                  Merci ! Un email de confirmation vous a été envoyé. Préparez-vous pour l&apos;aventure.
                 </p>
                 <Link href="/inventaire" className="inline-flex items-center gap-2 bg-[#1C2620] text-white px-8 py-3.5 rounded-xl font-600 text-sm hover:bg-[#2A3830] transition-colors">
                   Voir mon inventaire
@@ -1256,7 +1264,7 @@ export default function CheckoutPage() {
               )}
               
               <p className="text-center text-[10px] text-[#5C6B5E] mt-4 max-w-[250px] mx-auto leading-relaxed">
-                En passant commande, vous acceptez les <a href="#" className="underline">CGV</a> et notre <a href="#" className="underline">politique de retour</a>. Vous ne serez débité qu'à l'expédition.
+                En passant commande, vous acceptez les <a href="#" className="underline">CGV</a> et notre <a href="#" className="underline">politique de retour</a>. Vous ne serez débité qu&apos;à l&apos;expédition.
               </p>
             </div>
           </div>
