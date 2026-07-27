@@ -188,7 +188,7 @@ function getFallbackAdventure(slug: string): AdventureDetail {
 
 // ─── Difficulty dots ──────────────────────────────────────────────────────────
 
-function DifficultyDots({ level }: { level: number }) {
+function _DifficultyDots({ level }: { level: number }) {
   return (
     <div className="flex items-center gap-1.5">
       {[1, 2, 3, 4, 5].map((d) => (
@@ -371,7 +371,7 @@ export default function AventureDetailPage() {
   const params = useParams();
   const slug = typeof params?.slug === 'string' ? params.slug : '';
   const adventure = ADVENTURES_DATA[slug] || getFallbackAdventure(slug);
-  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [_galleryOpen, setGalleryOpen] = useState(false);
 
   return (
     <>

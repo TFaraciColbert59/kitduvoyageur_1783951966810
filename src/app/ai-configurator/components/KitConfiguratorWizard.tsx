@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CONFIGURATOR_STEPS } from '@/lib/configuratorData';
 import { addToCart } from '@/lib/cart';
@@ -466,7 +467,7 @@ export default function KitConfiguratorWizard() {
                       {report.missingItems.map((item) => (
                         <div key={item.id} className="flex items-center justify-between gap-3 text-xs py-1.5 border-b border-[#F0ECE1] last:border-none">
                           <div className="flex items-center gap-3">
-                            <img src={item.image} alt={item.name} className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
+                            <Image src={item.image || '/assets/images/no_image.png'} alt={item.name} width={36} height={36} className="rounded-lg object-cover flex-shrink-0" />
                             <div>
                               <p className="font-bold text-[#1C2620]">{item.name}</p>
                               <p className="text-[11px] text-[#7A8A7D]">{item.brand} · {item.reason}</p>

@@ -52,13 +52,13 @@ export async function POST(req: NextRequest) {
       .order('category');
 
     // Fetch user owned inventory if logged in
-    let userOwnedGear: any[] = [];
+    let _userOwnedGear: any[] = [];
     if (user) {
       const { data: gear } = await supabase
         .from('gear_items')
         .select('id, name, brand, category, weight_g')
         .eq('user_id', user.id);
-      userOwnedGear = gear || [];
+      _userOwnedGear = gear || [];
     }
 
     const sourceable = dbProducts ?? [];

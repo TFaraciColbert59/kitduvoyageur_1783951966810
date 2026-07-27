@@ -614,7 +614,7 @@ function _StepMeteo({ state, onChange }: { state: WizardState; onChange: (k: key
 }
 
 // ── Step 4: Confort ───────────────────────────────────────────────────────────
-function StepConfort({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string) => void }) {
+function _StepConfort({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string) => void }) {
   const choices = [
     { id: 'ultralight', icon: '🪶', title: 'Ultra-léger,', titleItalic: 'minimaliste.', desc: 'Chaque gramme compte. On coupe le superflu.' },
     { id: 'equilibre', icon: '⚖️', title: 'Équilibré,', titleItalic: 'confortable.', desc: 'Bon compromis poids / confort. Notre recommandation.' },
@@ -725,7 +725,7 @@ Génère 8-12 articles pertinents avec prix et poids réalistes.`;
   }, [retryCount]);
 
   const toggleItem = (id: string) => {
-    setSelectedItems(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    setSelectedItems(prev => { const n = new Set(prev); if (n.has(id)) { n.delete(id); } else { n.add(id); } return n; });
   };
 
   const missingItems = (aiResult?.liste_equipement ?? []).filter(i => !i.already_owned);
@@ -858,7 +858,7 @@ Génère 8-12 articles pertinents avec prix et poids réalistes.`;
 }
 
 // ── Right Panel: Kit en construction ─────────────────────────────────────────
-function KitPanel({ state }: { state: WizardState }) {
+function _KitPanel({ state }: { state: WizardState }) {
   const kitItems = getKitItems(state);
   const meta = getKitMeta(state);
   const activeItems = kitItems.filter(i => i.active && i.priceEur > 0);
@@ -1112,8 +1112,8 @@ export default function ConfiguratorWizard() {
     }
   };
 
-  const stepMeta = STEP_META[state.step - 1];
-  const nextLabel = state.step === 4 ? 'Générer mon kit' : `Continuer vers ${STEPS[state.step]?.label || ''}`;
+  const _stepMeta = STEP_META[state.step - 1];
+  const _nextLabel = state.step === 4 ? 'Générer mon kit' : `Continuer vers ${STEPS[state.step]?.label || ''}`;
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-[#F4F0EB] flex flex-col-reverse lg:flex-row">
