@@ -9,8 +9,21 @@ export interface OwnedGearItem {
   source: 'inventory' | 'group' | 'carnet';
 }
 
+export interface RealShopProduct {
+  id: string;
+  slug: string;
+  name: string;
+  brand: string;
+  category: string;
+  priceEur: number;
+  weightGrams: number;
+  image: string;
+  stock: number;
+}
+
 export interface MissingShopItem {
   id: string;
+  slug: string;
   name: string;
   category: string;
   brand: string;
@@ -34,6 +47,17 @@ export interface GroupAllocation {
   totalWeightKg: number;
 }
 
+export interface CarnetContextData {
+  carnetId: string;
+  title: string;
+  destination: string;
+  startDate?: string;
+  endDate?: string;
+  weather?: string;
+  distanceKm?: number;
+  kitItems: OwnedGearItem[];
+}
+
 export interface ConnectedKitReport {
   summary: string;
   preparationScore: number; // 0 - 100%
@@ -49,6 +73,40 @@ export interface ConnectedKitReport {
   carbonEstimateKg: number;
 }
 
+/**
+ * Fetch real products from the shop_products table in Supabase
+ */
+export async function fetchRealCatalog(): Promise<RealShopProduct[]> {
+  try {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('shop_products')
+      .select('id, slug, name, brand, category, price_eur, weight_g, image, stock')
+      .eq('is_active', true)
+      .gt('stock', 0)
+      .order('rating', { ascending: false });
+
+    if (!data || data.length === 0) return [];
+
+    return data.map((p) => ({
+      id: p.id,
+      slug: p.slug,
+      name: p.name,
+      brand: p.brand || 'Le Kit du Voyageur',
+      category: p.category || 'Accessoires',
+      priceEur: Number(p.price_eur) || 0,
+      weightGrams: p.weight_g || 0,
+      image: p.image || 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400',
+      stock: p.stock || 10,
+    }));
+  } catch (_e) {
+    return [];
+  }
+}
+
+/**
+ * Fetch personal inventory items owned by the logged-in user
+ */
 export async function fetchUserInventory(userId?: string): Promise<OwnedGearItem[]> {
   if (!userId) return [];
   try {
@@ -71,24 +129,80 @@ export async function fetchUserInventory(userId?: string): Promise<OwnedGearItem
   }
 }
 
+/**
+ * Fetch trip context and items from a carnet
+ */
+export async function fetchCarnetContext(carnetId: string): Promise<CarnetContextData | null> {
+  if (!carnetId) return null;
+  try {
+    const supabase = createClient();
+    const { data: carnet } = await supabase
+      .from('carnets')
+      .select('id, title, destination, start_date, end_date, weather, distance_km')
+      .eq('id', carnetId)
+      .maybeSingle();
+
+    if (!carnet) return null;
+
+    const { data: items } = await supabase
+      .from('carnet_kit_items')
+      .select('id, nom, detail, poids_g, couleur_tag')
+      .eq('carnet_id', carnetId);
+
+    const kitItems: OwnedGearItem[] = (items || []).map((i) => ({
+      id: i.id,
+      name: i.nom,
+      brand: i.detail ?? undefined,
+      category: i.couleur_tag ?? 'Carnet',
+      weightGrams: i.poids_g ?? 400,
+      source: 'carnet',
+    }));
+
+    return {
+      carnetId: carnet.id,
+      title: carnet.title || 'Voyage Carnet',
+      destination: carnet.destination || 'Carnet',
+      startDate: carnet.start_date ?? undefined,
+      endDate: carnet.end_date ?? undefined,
+      weather: carnet.weather ?? undefined,
+      distanceKm: carnet.distance_km ? Number(carnet.distance_km) : undefined,
+      kitItems,
+    };
+  } catch (_e) {
+    return null;
+  }
+}
+
+/**
+ * Fetch group details, member count, and shared kit items
+ */
 export async function fetchGroupContext(groupId: string): Promise<{
   groupName: string;
   destination: string;
   membersCount: number;
   sharedItems: OwnedGearItem[];
 }> {
+  if (!groupId) {
+    return {
+      groupName: 'Groupe d’expédition',
+      destination: 'Non spécifiée',
+      membersCount: 1,
+      sharedItems: [],
+    };
+  }
+
   try {
     const supabase = createClient();
     const { data: grp } = await supabase
       .from('groupes')
       .select('nom, destination')
       .eq('id', groupId)
-      .single();
+      .maybeSingle();
 
     const { data: members } = await supabase
-      .from('groupe_membres')
+      .from('group_members')
       .select('id')
-      .eq('groupe_id', groupId);
+      .eq('group_id', groupId);
 
     const { data: kitItems } = await supabase
       .from('group_kit_items')
@@ -117,16 +231,19 @@ export async function fetchGroupContext(groupId: string): Promise<{
   }
 }
 
+/**
+ * Main Connected Engine Computation
+ */
 export async function computeConnectedReport(params: {
   answers: Record<number, string>;
   userOwnedGear: OwnedGearItem[];
   groupMode?: boolean;
   groupMembersCount?: number;
   sharedGroupItems?: OwnedGearItem[];
+  carnetContext?: CarnetContextData | null;
 }): Promise<ConnectedKitReport> {
   const weatherKey = params.answers[3] || 'frais_brumeux';
   const durationKey = params.answers[2] || '3-5d';
-  const comfortKey = params.answers[4] || 'equilibre';
 
   const weatherLabels: Record<string, string> = {
     sec_chaud: 'Sec, chaud (15 à 25 °C)',
@@ -142,99 +259,162 @@ export async function computeConnectedReport(params: {
     '2w+': 'Plus de 2 semaines',
   };
 
-  // Match user's owned gear to required categories
-  const ownedNames = params.userOwnedGear.map((g) => g.name.toLowerCase());
+  // Fetch real shop products from Supabase
+  const catalog = await fetchRealCatalog();
 
-  const hasSac = ownedNames.some((n) => n.includes('sac') || n.includes('bag'));
-  const hasDuvet = ownedNames.some((n) => n.includes('duvet') || n.includes('couchage'));
-  const hasGourde = ownedNames.some((n) => n.includes('gourde') || n.includes('eau') || n.includes('poche'));
-  const hasVeste = ownedNames.some((n) => n.includes('veste') || n.includes('imper') || n.includes('gore'));
-
+  // Combine owned items from user inventory + group shared + carnet kit items
   const ownedItems: OwnedGearItem[] = [
     ...params.userOwnedGear,
     ...(params.sharedGroupItems || []),
+    ...(params.carnetContext?.kitItems || []),
   ];
+
+  const ownedNames = ownedItems.map((g) => g.name.toLowerCase());
+  const ownedCategories = ownedItems.map((g) => g.category.toLowerCase());
+
+  // Category detection logic
+  const hasSac = ownedNames.some((n) => n.includes('sac') || n.includes('bag') || n.includes('portage')) ||
+                 ownedCategories.some((c) => c.includes('sac') || c.includes('portage'));
+
+  const hasDuvet = ownedNames.some((n) => n.includes('duvet') || n.includes('couchage') || n.includes('sac de couchage')) ||
+                   ownedCategories.some((c) => c.includes('couchage'));
+
+  const hasEau = ownedNames.some((n) => n.includes('gourde') || n.includes('eau') || n.includes('filtre') || n.includes('poche')) ||
+                 ownedCategories.some((c) => c.includes('eau') || c.includes('hydratation'));
+
+  const hasVeste = ownedNames.some((n) => n.includes('veste') || n.includes('imper') || n.includes('gore') || n.includes('hardshell')) ||
+                   ownedCategories.some((c) => c.includes('vêtement') || c.includes('protection'));
+
+  const hasTente = ownedNames.some((n) => n.includes('tente') || n.includes('abri') || n.includes('tarp')) ||
+                   ownedCategories.some((c) => c.includes('tente') || c.includes('abri') || c.includes('bivouac'));
 
   const missingItems: MissingShopItem[] = [];
   const inadequateAlerts: InadequateGearAlert[] = [];
 
-  // Add missing items if not owned
+  // Helper to pick best product from real catalog matching sub-category
+  const findProductForCategory = (catName: string, fallbackName: string, fallbackPrice: number, fallbackWeight: number, fallbackImage: string): RealShopProduct => {
+    const match = catalog.find((p) => p.category.toLowerCase().includes(catName.toLowerCase()) || p.name.toLowerCase().includes(catName.toLowerCase()));
+    if (match) return match;
+
+    // Return synthetic object backed by a deterministic ID if catalog lookup fails
+    return {
+      id: `shop-${catName.toLowerCase().replace(/\s+/g, '-')}`,
+      slug: `produit-${catName.toLowerCase().replace(/\s+/g, '-')}`,
+      name: fallbackName,
+      brand: 'Le Kit du Voyageur',
+      category: catName,
+      priceEur: fallbackPrice,
+      weightGrams: fallbackWeight,
+      image: fallbackImage,
+      stock: 10,
+    };
+  };
+
+  // 1. Sac à dos
   if (!hasSac) {
+    const prod = findProductForCategory('Sacs à dos', 'Sac à dos 45 L Ultra-Résistant', 249, 850, 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400');
     missingItems.push({
-      id: 'shop-sac-45l',
-      name: 'Sac à dos 45 L Ultra-Résistant',
-      brand: 'Osprey',
-      category: 'Sac à dos',
-      priceEur: 340,
-      weightGrams: 850,
-      image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400',
+      id: prod.id,
+      slug: prod.slug,
+      name: prod.name,
+      brand: prod.brand,
+      category: prod.category,
+      priceEur: prod.priceEur,
+      weightGrams: prod.weightGrams,
+      image: prod.image,
       essentiality: 'indispensable',
-      reason: 'Volume adapté pour 3 à 5 jours d’autonomie.',
+      reason: 'Volume de portage essentiel pour la durée sélectionnée.',
     });
   }
 
+  // 2. Couchage
   if (!hasDuvet) {
+    const prod = findProductForCategory('Couchage', 'Duvet 3 saisons 800 Cuin', 219, 520, 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=400');
     missingItems.push({
-      id: 'shop-duvet-800',
-      name: 'Duvet 3 saisons 800 Cuin',
-      brand: 'Cumulus',
-      category: 'Couchage',
-      priceEur: 248,
-      weightGrams: 450,
-      image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=400',
+      id: prod.id,
+      slug: prod.slug,
+      name: prod.name,
+      brand: prod.brand,
+      category: prod.category,
+      priceEur: prod.priceEur,
+      weightGrams: prod.weightGrams,
+      image: prod.image,
       essentiality: 'indispensable',
-      reason: 'Isolant thermique certifié jusqu’à 0°C.',
+      reason: 'Isolation thermique certifiée pour nuits en altitude.',
     });
   }
 
-  if (!hasGourde) {
+  // 3. Hydratation
+  if (!hasEau) {
+    const prod = findProductForCategory('Eau', 'Gourde Titane 1 L + Filtre', 65, 140, 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400');
     missingItems.push({
-      id: 'shop-gourde-titane',
-      name: 'Gourde Titane 1 L Ultralégère',
-      brand: 'Keith',
-      category: 'Hydratation',
-      priceEur: 68,
-      weightGrams: 120,
-      image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400',
+      id: prod.id,
+      slug: prod.slug,
+      name: prod.name,
+      brand: prod.brand,
+      category: prod.category,
+      priceEur: prod.priceEur,
+      weightGrams: prod.weightGrams,
+      image: prod.image,
       essentiality: 'indispensable',
-      reason: 'Indestructible et directement posable sur le réchaud.',
+      reason: 'Garantit votre autonomie en eau potable.',
     });
   }
 
+  // 4. Vêtement imperméable si météo humide
   if (!hasVeste && (weatherKey === 'pluvieux_vente' || weatherKey === 'frais_brumeux')) {
+    const prod = findProductForCategory('Vêtements', 'Veste 3 Couches Hardshell Imper 20k', 289, 340, 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400');
     missingItems.push({
-      id: 'shop-veste-3c',
-      name: 'Veste 3 Couches Hardshell Imper 20k',
-      brand: 'Arc’teryx',
-      category: 'Vêtements',
-      priceEur: 290,
-      weightGrams: 320,
-      image: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400',
+      id: prod.id,
+      slug: prod.slug,
+      name: prod.name,
+      brand: prod.brand,
+      category: prod.category,
+      priceEur: prod.priceEur,
+      weightGrams: prod.weightGrams,
+      image: prod.image,
       essentiality: 'indispensable',
-      reason: 'Protection totale contre la pluie continue et les rafales de vent.',
+      reason: 'Protection contre la pluie battante et les rafales de vent.',
     });
   }
 
-  // Generate gear alerts for cold conditions
+  // 5. Abri / Tente si voyage itinérant et pas de tente
+  if (!hasTente && durationKey !== '1-2d') {
+    const prod = findProductForCategory('Tentes', 'Tente Bivouac 2 Places Ultralégère', 299, 1250, 'https://images.unsplash.com/photo-1478827536114-da961b7f86d2?w=400');
+    missingItems.push({
+      id: prod.id,
+      slug: prod.slug,
+      name: prod.name,
+      brand: prod.brand,
+      category: prod.category,
+      priceEur: prod.priceEur,
+      weightGrams: prod.weightGrams,
+      image: prod.image,
+      essentiality: 'recommande',
+      reason: 'Abri autonome pour les nuits en sauvage.',
+    });
+  }
+
+  // Weather safety warnings
   if (weatherKey === 'froid_sec' && !hasDuvet) {
     inadequateAlerts.push({
       item: 'Système de couchage',
-      issue: 'Météo négative prévue (-5°C). Un duvet été ou léger entraînera de l’hypothermie.',
-      recommendation: 'Privilégier un duvet doudoune 800 cuin avec matelas isolant R-Value > 4.0.',
+      issue: 'Températures négatives prévues (-5°C). Risque fort d’hypothermie sans duvet adapté.',
+      recommendation: 'Privilégier un duvet 800 Cuin avec matelas isolant R-Value > 4.0.',
       severity: 'danger',
     });
   }
 
   if (weatherKey === 'pluvieux_vente' && !hasVeste) {
     inadequateAlerts.push({
-      item: 'Protection contre la pluie',
-      issue: 'Pluie soutenue et vent violent. Un coupe-vent simple transpercera en 30 minutes.',
-      recommendation: 'Emporter une membrane imperméable 20 000 mm minimum avec coutures étanchées.',
+      item: 'Protection imperméable',
+      issue: 'Vent fort et précipitations continues. Un coupe-vent standard transpercera rapidement.',
+      recommendation: 'Emporter une hardshell 3 couches 20 000 mm étanche.',
       severity: 'warning',
     });
   }
 
-  // Calculate weights & totals
+  // Totals
   const totalOwnedWeightKg = Number(
     (ownedItems.reduce((acc, i) => acc + (i.weightGrams || 0), 0) / 1000).toFixed(1)
   );
@@ -246,7 +426,7 @@ export async function computeConnectedReport(params: {
   const totalWeightKg = Number((totalOwnedWeightKg + totalMissingWeightKg).toFixed(1));
   const totalMissingPriceEur = missingItems.reduce((acc, i) => acc + i.priceEur, 0);
 
-  // Group allocations if in group mode
+  // Group gear allocations
   const groupAllocations: GroupAllocation[] = [];
   if (params.groupMode && (params.groupMembersCount || 1) > 1) {
     const memberCount = params.groupMembersCount || 2;
@@ -257,28 +437,32 @@ export async function computeConnectedReport(params: {
     });
     groupAllocations.push({
       memberName: 'Membre 2 (Porteur Abri)',
-      assignedGear: ['Tente 3 places', 'Piquets & haubans', 'Trousse de secours commune'],
+      assignedGear: ['Tente 2-3 places', 'Piquets & haubans', 'Trousse de secours'],
       totalWeightKg: 1.8,
     });
     if (memberCount > 2) {
       groupAllocations.push({
         memberName: 'Membre 3 (Ravitaillement)',
-        assignedGear: ['Sacs étanches nourriture', 'Réserve d’eau 5L', 'Corde & mousquetons'],
+        assignedGear: ['Sacs étanches nourriture', 'Réserve d’eau 5L', 'Trousse bobologie'],
         totalWeightKg: 1.4,
       });
     }
   }
 
-  // Preparation score: Starts at 100%, drops for missing indispensables & alerts
+  // Score computation
   let prepScore = 100;
   if (!hasSac) prepScore -= 20;
   if (!hasDuvet) prepScore -= 25;
-  if (!hasGourde) prepScore -= 15;
+  if (!hasEau) prepScore -= 15;
   if (inadequateAlerts.length > 0) prepScore -= inadequateAlerts.length * 15;
   prepScore = Math.max(35, Math.min(100, prepScore));
 
+  const destinationSummary = params.carnetContext
+    ? `Voyage carnet "${params.carnetContext.title}" vers ${params.carnetContext.destination}`
+    : `Conditions ${weatherLabels[weatherKey]} pour ${durationLabels[durationKey]}`;
+
   return {
-    summary: `Analyse basée sur ${ownedItems.length} équipement(s) possédé(s), les conditions ${weatherLabels[weatherKey]} et une durée de ${durationLabels[durationKey]}.`,
+    summary: `Analyse basée sur ${ownedItems.length} équipement(s) possédé(s). ${destinationSummary}.`,
     preparationScore: prepScore,
     durationLabel: durationLabels[durationKey] || '3 à 5 jours',
     weatherLabel: weatherLabels[weatherKey] || 'Frais, brumeux',
