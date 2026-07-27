@@ -85,6 +85,22 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
         </div>
       </div>
       
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div>
+          <h2 className="text-lg font-bold text-[#1C2620]">Matériel commun & Équipement</h2>
+          <p className="text-xs text-[#6B7A6E]">Répartissez les charges et vérifiez la préparation du groupe.</p>
+        </div>
+
+        {groupId && (
+          <a
+            href={`/ai-configurator?groupId=${groupId}`}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1C3829] text-white text-xs font-bold hover:bg-[#152B1F] transition-all shadow-md"
+          >
+            🤖 Configurer le sac du groupe avec l’IA →
+          </a>
+        )}
+      </div>
+
       <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
         <p className="text-sm text-[#1C2620]/80 font-sans max-w-sm hidden sm:block">
           Chaque objet est apporté par une personne. Les poids se totalisent automatiquement.
