@@ -21,6 +21,7 @@ export interface MapTrail {
   duration_hours?: number | null;
   difficulty?: string | null;
   elevation_gain?: number | null;
+  geojson?: any | null;
   adventure_score?: number | null;
   nature_score?: number | null;
   panorama_score?: number | null;

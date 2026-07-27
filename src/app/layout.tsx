@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import { DM_Sans, Manrope, IBM_Plex_Mono } from 'next/font/google';
 import '../styles/tailwind.css';
 import { AuthProvider } from '@/contexts/AuthContext';
+import Script from 'next/script';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
 import ErrorBoundaryWrapper from '@/components/ErrorBoundaryWrapper';
@@ -184,8 +185,17 @@ export default function RootLayout({
 
         {/* Rocket analytics scripts */}
 
-        <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fkitduvoyag4153back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.19" />
-        <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.2" /></head>
+        <Script
+  src="https://static.rocket.new/rocket-web.js?_cfg=https://kitduvoyag4153back.builtwithrocket.new&_be=https://appanalytics.rocket.new&_v=0.1.19"
+  strategy="lazyOnload"
+  async
+/>
+        <Script
+  src="https://static.rocket.new/rocket-shot.js?v=0.0.2"
+  strategy="lazyOnload"
+  defer
+/>
+</head>
       <body className={dmSans.className}>
         <AuthProvider>
           <WishlistProvider>

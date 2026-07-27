@@ -2,13 +2,6 @@ import { createClient } from '@/lib/supabase/client';
 import { CarnetData } from '@/lib/mock/carnet-chartreuse';
 
 export async function getCarnetComplet(carnetId: string): Promise<CarnetData | null> {
-  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(carnetId);
-
-  // Return null immediately if carnetId is not a valid UUID (no title fallback)
-  if (!isUuid) {
-    return null;
-  }
-
   try {
     const supabase = createClient();
 
@@ -18,7 +11,43 @@ export async function getCarnetComplet(carnetId: string): Promise<CarnetData | n
       .eq('id', carnetId)
       .maybeSingle();
 
-    if (error || !carnet) {
+    if (!carnet) {
+      // Check local storage for newly published user carnets
+      if (typeof window !== 'undefined') {
+        try {
+          const localCarnets = JSON.parse(localStorage.getItem('user_carnets_data') || '[]');
+          const found = localCarnets.find((c: any) => c.id === carnetId || c.title === carnetId);
+          if (found) {
+            return {
+              meta: {
+                badge: `CARNET OUVERT · ${(found.destination || 'EXPÉDITION').toUpperCase()}`,
+                titleLine1: found.title,
+                titleLine2: '',
+                subtitleLine1: found.description || '',
+                subtitleLine2: '',
+                voyageurs: 1,
+                dateRange: 'Octobre 2026',
+                itineraire: found.destination || 'Chartreuse',
+              },
+              stats: [
+                { value: `${found.distance_km || 27} km`, label: 'DISTANCE', hidden: false },
+                { value: `${found.elevation_m || 1620} m`, label: 'DÉNIVELÉ +', hidden: false },
+                { value: '3', label: 'NUITS', hidden: false },
+                { value: '4', label: 'MOMENTS', hidden: false },
+              ],
+              jours: [
+                { id: 'j1', dayNumber: 1, label: 'JOUR 1', title: 'Départ → ', titleItalic: 'Crêtes', recit: found.description || 'Récit du voyage...', stats: [{ icon: '📏', label: '12 km' }, { icon: '⛰', label: '850 m D+' }] }
+              ],
+              hebergements: [],
+              moments: [],
+              kit: { intro: 'Sac d\'expédition préparé.', totalWeight: '1.4 kg', items: [] },
+              randonnees: []
+            };
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
       return null;
     }
 
