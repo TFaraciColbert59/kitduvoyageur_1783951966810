@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import Image from 'next/image';
 
 export default function HomePage() {
   return (
@@ -108,14 +109,14 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Card 1 */}
             <div className="relative h-[480px] rounded-3xl overflow-hidden group cursor-pointer">
-              <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80" alt="Chartreuse" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <Image src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80" alt="Chartreuse" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
                 <span className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#1C2620] tracking-wide uppercase">3 Jours / 50 km</span>
                 <span className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
               </div>
               <div className="absolute bottom-6 left-6 right-6">
-                <h3 className="text-white text-2xl font-bold leading-tight mb-2">Chartreuse<br/>sentier des balcons</h3>
+                <h3 className="text-white text-2xl font-bold leading-tight mb-2">Chartreuse&lt;br/&gt;sentier des balcons</h3>
                 <div className="flex gap-3 text-white/80 text-[11px] uppercase tracking-wider font-mono">
                   <span>+ 4 250 m</span>
                   <span>Niveau expert</span>
@@ -126,14 +127,14 @@ export default function HomePage() {
 
             {/* Card 2 */}
             <div className="relative h-[480px] rounded-3xl overflow-hidden group cursor-pointer">
-              <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80" alt="Vercors" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <Image src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80" alt="Vercors" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
                 <span className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#1C2620] tracking-wide uppercase">2 Jours</span>
                 <span className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
               </div>
               <div className="absolute bottom-6 left-6 right-6">
-                <h3 className="text-white text-2xl font-bold leading-tight mb-2">Bivouac étoilé<br/>Vercors</h3>
+                <h3 className="text-white text-2xl font-bold leading-tight mb-2">Bivouac étoilé&lt;br/&gt;Vercors</h3>
                 <div className="flex gap-3 text-white/80 text-[11px] uppercase tracking-wider font-mono">
                   <span>Plateau Nord</span>
                   <span>Tente incluse</span>
@@ -143,14 +144,14 @@ export default function HomePage() {
 
             {/* Card 3 */}
             <div className="relative h-[480px] rounded-3xl overflow-hidden group cursor-pointer">
-              <img src="https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=800&q=80" alt="Kayak" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <Image src="https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=800&q=80" alt="Kayak" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
                 <span className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#1C2620] tracking-wide uppercase">1 Jour</span>
                 <span className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
               </div>
               <div className="absolute bottom-6 left-6 right-6">
-                <h3 className="text-white text-2xl font-bold leading-tight mb-2">Kayak<br/>Sans-Rançon</h3>
+                <h3 className="text-white text-2xl font-bold leading-tight mb-2">Kayak&lt;br/&gt;Sans-Rançon</h3>
                 <div className="flex gap-3 text-white/80 text-[11px] uppercase tracking-wider font-mono">
                   <span>Eau paisible</span>
                   <span>Gilets par OK</span>
@@ -204,7 +205,7 @@ export default function HomePage() {
           
           <div className="flex-1 w-full">
             <div className="relative rounded-3xl overflow-hidden aspect-[4/5] lg:aspect-auto lg:h-[700px]">
-              <img src="https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=1000&q=80" alt="Montagne" className="w-full h-full object-cover" />
+              <Image src="https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=1000&q=80" alt="Montagne" fill className="object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#1C2620] via-transparent to-transparent opacity-80" />
               <div className="absolute bottom-8 left-8 right-8">
                 <p className="text-[9px] font-mono tracking-widest uppercase text-[#8BAF7C] mb-2">ALPES FRANÇAISES</p>
@@ -220,7 +221,7 @@ export default function HomePage() {
         <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row items-center gap-16">
           <div className="flex-1 w-full">
             <div className="relative rounded-3xl overflow-hidden aspect-square bg-[#E8E4D8]">
-              <img src="https://images.unsplash.com/photo-1550ed4e1b-3b47bd21096a?w=1000&q=80" alt="Sac à dos en toile cirée" className="w-full h-full object-cover" />
+              <Image src="https://images.unsplash.com/photo-1550ed4e1b-3b47bd21096a?w=1000&q=80" alt="Sac à dos en toile cirée" fill className="object-cover" />
               <div className="absolute top-6 left-6">
                 <span className="bg-white/90 backdrop-blur px-3 py-1.5 rounded-full text-[10px] font-bold text-[#1C2620] tracking-wide uppercase shadow-sm">
                   Édition artisanale
@@ -276,7 +277,7 @@ export default function HomePage() {
       <footer className="bg-[#131B16] pt-20 pb-10 px-4">
         <div className="max-w-[1200px] mx-auto">
           <h2 className="text-3xl md:text-4xl font-semibold text-white mb-16">
-            Ce que vous emportez, <span className="font-serif italic text-[#8BAF7C] font-normal">c'est votre<br/>voyage.</span>
+            Ce que vous emportez, <span className="font-serif italic text-[#8BAF7C] font-normal">c'est votre&lt;br/&gt;voyage.</span>
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-20">

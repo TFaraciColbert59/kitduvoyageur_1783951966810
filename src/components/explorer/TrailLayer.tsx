@@ -122,7 +122,9 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
         // Fit bounds to selected polyline
         try {
           map.fitBounds(poly.getBounds(), { padding: [50, 50] });
-        } catch {}
+        } catch {
+          // Ignore fitBounds errors (e.g. invalid bounds)
+        }
       }
     });
   }, [selectedTrailId, trails, map]);

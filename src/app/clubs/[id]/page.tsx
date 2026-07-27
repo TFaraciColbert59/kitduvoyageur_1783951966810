@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import Image from 'next/image';
 
 interface Club {
   id: string;
@@ -390,7 +391,7 @@ export default function ClubDetailPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {topics.filter(t => t.image_url).map(topic => (
               <div key={topic.id} className="aspect-square rounded-2xl overflow-hidden relative group cursor-pointer bg-emerald-50">
-                <img src={topic.image_url} alt="Photo partagée par un membre du club" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <Image src={topic.image_url!} alt="Photo partagée par un membre du club" fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
               </div>
             ))}
             {topics.filter(t => t.image_url).length === 0 && <p className="text-emerald-900/50">Aucune photo partagée pour le moment.</p>}
@@ -426,7 +427,7 @@ export default function ClubDetailPage() {
               <p className="text-emerald-900/80 leading-relaxed text-sm sm:text-base">{topic.content}</p>
               {topic.image_url && (
                 <div className="mt-4 w-full h-64 rounded-2xl overflow-hidden bg-emerald-50 relative">
-                  <img src={topic.image_url} alt="Image" className="w-full h-full object-cover" />
+                  <Image src={topic.image_url!} alt="Image partagée dans la discussion" fill className="object-cover" />
                 </div>
               )}
               <div className="flex flex-col">
@@ -568,7 +569,7 @@ export default function ClubDetailPage() {
                   <p className="text-emerald-900/80 leading-relaxed text-sm sm:text-base">{topic.content}</p>
                   {topic.image_url && (
                     <div className="mt-4 w-full h-64 sm:h-96 rounded-2xl overflow-hidden bg-emerald-50 relative">
-                      <img src={topic.image_url} alt="Post image" className="w-full h-full object-cover" />
+                      <Image src={topic.image_url!} alt="Image du post" fill className="object-cover" />
                     </div>
                   )}
                 </div>
@@ -660,10 +661,11 @@ export default function ClubDetailPage() {
         <div className="relative w-full max-w-[1440px] mx-auto pt-20 px-4 sm:px-6">
           <div className="relative w-full h-[380px] sm:h-[450px] lg:h-[500px] rounded-[2rem] sm:rounded-[3rem] overflow-hidden shadow-2xl flex flex-col justify-end p-6 sm:p-10 lg:p-14">
             <div className="absolute inset-0 z-0">
-              <img 
+              <Image 
                 src="https://images.unsplash.com/photo-1504280387948-406560940733?q=80&w=2000&auto=format&fit=crop" 
                 alt="Club cover"
-                className="w-full h-full object-cover object-center"
+                fill
+                className="object-cover object-center"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
             </div>
@@ -680,7 +682,7 @@ export default function ClubDetailPage() {
               <button className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors"><Icon name="MagnifyingGlassIcon" size={16} /></button>
               <button className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors"><Icon name="BellIcon" size={16} /></button>
               <Link href={user ? `/profil/${user.id}` : "/auth"} className="w-8 h-8 rounded-full bg-black/50 overflow-hidden border border-white/20 hover:scale-105 transition-transform">
-                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'guest'}`} alt="User" />
+                <Image src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'guest'}`} alt="Avatar utilisateur" width={32} height={32} />
               </Link>
             </div>
 
@@ -943,7 +945,7 @@ export default function ClubDetailPage() {
                     <div className="relative">
                       <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm bg-emerald-100 flex items-center justify-center text-emerald-950 font-800 text-lg">
                         {participant.user?.avatar_url ? (
-                          <img src={participant.user.avatar_url} alt={participant.user.full_name} className="w-full h-full object-cover" />
+                          <Image src={participant.user.avatar_url} alt={participant.user?.full_name || 'Avatar'} width={48} height={48} className="w-full h-full object-cover" />
                         ) : (
                           participant.user?.full_name[0] || '?'
                         )}
