@@ -9,9 +9,11 @@ import { createClient } from '@/lib/supabase/client';
 import {
   fetchUserInventory,
   fetchGroupContext,
+  fetchCarnetContext,
   computeConnectedReport,
   OwnedGearItem,
   ConnectedKitReport,
+  CarnetContextData,
 } from '@/lib/ai/configuratorEngine';
 
 function StepIcon({ icon, active }: { icon: string; active: boolean }) {
@@ -103,7 +105,9 @@ export default function KitConfiguratorWizard() {
   const carnetId = searchParams?.get('carnetId');
   const trailName = searchParams?.get('trail');
 
-  const [currentStepIndex, setCurrentStepIndex] = useState(2);
+  // FIX: Start at step 0 (Step 1: Usage) instead of step 2!
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+
   const [answers, setAnswers] = useState<Record<number, string>>({
     1: 'trek',
     2: '3-5d',
@@ -119,10 +123,12 @@ export default function KitConfiguratorWizard() {
     membersCount: number;
     sharedItems: OwnedGearItem[];
   } | null>(null);
+  const [carnetData, setCarnetData] = useState<CarnetContextData | null>(null);
   const [report, setReport] = useState<ConnectedKitReport | null>(null);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Load user session & inventory on mount
+  // Load context on mount
   useEffect(() => {
     async function loadContext() {
       const supabase = createClient();
@@ -137,9 +143,26 @@ export default function KitConfiguratorWizard() {
         const grp = await fetchGroupContext(groupId);
         setGroupInfo(grp);
       }
+
+      if (carnetId) {
+        const carnet = await fetchCarnetContext(carnetId);
+        if (carnet) {
+          setCarnetData(carnet);
+          if (carnet.weather) {
+            const lowerWeather = carnet.weather.toLowerCase();
+            if (lowerWeather.includes('chaud') || lowerWeather.includes('sec')) {
+              setAnswers(prev => ({ ...prev, 3: 'sec_chaud' }));
+            } else if (lowerWeather.includes('pluie') || lowerWeather.includes('vent')) {
+              setAnswers(prev => ({ ...prev, 3: 'pluvieux_vente' }));
+            } else if (lowerWeather.includes('froid') || lowerWeather.includes('neige')) {
+              setAnswers(prev => ({ ...prev, 3: 'froid_sec' }));
+            }
+          }
+        }
+      }
     }
     loadContext();
-  }, [groupId]);
+  }, [groupId, carnetId]);
 
   // Compute connected report dynamically
   useEffect(() => {
@@ -150,11 +173,12 @@ export default function KitConfiguratorWizard() {
         groupMode: Boolean(groupId || groupInfo),
         groupMembersCount: groupInfo?.membersCount ?? 1,
         sharedGroupItems: groupInfo?.sharedItems ?? [],
+        carnetContext: carnetData,
       });
       setReport(rep);
     }
     updateReport();
-  }, [answers, userInventory, groupInfo, groupId]);
+  }, [answers, userInventory, groupInfo, groupId, carnetData]);
 
   const step = CONFIGURATOR_STEPS[currentStepIndex];
 
@@ -166,11 +190,11 @@ export default function KitConfiguratorWizard() {
     if (currentStepIndex < CONFIGURATOR_STEPS.length - 1) {
       setCurrentStepIndex((prev) => prev + 1);
     } else if (report) {
-      // Step 5: Add missing items to cart
+      // Step 5: Add missing items to cart using real shop_products fields!
       report.missingItems.forEach((item) => {
         addToCart({
           id: item.id,
-          slug: item.id,
+          slug: item.slug || item.id,
           name: item.name,
           brand: item.brand,
           priceEur: item.priceEur,
@@ -191,24 +215,51 @@ export default function KitConfiguratorWizard() {
   };
 
   const handleSaveConfiguration = async () => {
-    if (!userId || !report) return;
+    if (!report) return;
+    setIsSaving(true);
     try {
       const supabase = createClient();
-      await supabase.from('configurator_sessions').insert({
-        user_id: userId,
-        destination: trailName || groupInfo?.destination || 'Trek itinérant',
-        country: 'France',
-        season: answers[3] || 'frais_brumeux',
-        activity: answers[1] || 'trek',
-        level: answers[4] || 'equilibre',
-        max_weight_g: Math.round(report.totalWeightKg * 1000),
-        budget_eur: report.totalMissingPriceEur,
-        climate: report.weatherLabel,
-      });
+      const currentUserId = userId || (await supabase.auth.getUser()).data.user?.id;
+
+      if (currentUserId) {
+        const { data: session } = await supabase
+          .from('configurator_sessions')
+          .insert({
+            user_id: currentUserId,
+            destination: carnetData?.destination || trailName || groupInfo?.destination || 'Voyage Outdoor',
+            country: 'France',
+            season: answers[3] || 'frais_brumeux',
+            activity: answers[1] || 'trek',
+            level: answers[4] || 'equilibre',
+            max_weight_g: Math.round(report.totalWeightKg * 1000),
+            budget_eur: report.totalMissingPriceEur,
+            climate: report.weatherLabel,
+          })
+          .select('id')
+          .single();
+
+        await supabase.from('kit_reports').insert({
+          user_id: currentUserId,
+          session_id: session?.id || null,
+          destination: carnetData?.destination || trailName || groupInfo?.destination || 'Voyage Outdoor',
+          country: 'France',
+          season: answers[3] || 'frais_brumeux',
+          activity: answers[1] || 'trek',
+          level: answers[4] || 'equilibre',
+          climate: report.weatherLabel,
+          budget_eur: report.totalMissingPriceEur,
+          selected_items: report.missingItems,
+          total_weight_g: Math.round(report.totalWeightKg * 1000),
+          total_price_eur: report.totalMissingPriceEur,
+          status: 'active',
+        });
+      }
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 4000);
     } catch (_e) {
-      // Fail-safe
+      // Best effort
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -235,9 +286,9 @@ export default function KitConfiguratorWizard() {
               👥 Groupe: {groupInfo.groupName} ({groupInfo.membersCount} pers.)
             </span>
           )}
-          {carnetId && (
+          {carnetData && (
             <span className="bg-[#1C3829] text-white px-2.5 py-0.5 rounded-full font-medium">
-              📖 Carnet lié
+              📖 Carnet: {carnetData.title} ({carnetData.destination})
             </span>
           )}
           {userInventory.length > 0 && (
@@ -400,7 +451,7 @@ export default function KitConfiguratorWizard() {
                         <div className="space-y-2 text-xs">
                           {report.ownedItems.map((item) => (
                             <div key={item.id} className="flex items-center justify-between py-1.5 border-b border-[#D8E6DE] last:border-none">
-                              <span className="font-semibold text-[#1C3829]">✓ {item.name}</span>
+                              <span className="font-semibold text-[#1C3829]">✓ {item.name} ({item.brand || 'Perso'})</span>
                               <span className="text-[11px] text-[#5C6E60] font-mono">{item.weightGrams / 1000} kg</span>
                             </div>
                           ))}
@@ -412,7 +463,7 @@ export default function KitConfiguratorWizard() {
                       )}
                     </div>
 
-                    {/* Section: Missing Items (from shop_products) */}
+                    {/* Section: Missing Items (from real shop_products) */}
                     <div className="bg-white p-5 rounded-2xl border border-[#E2DDD0] shadow-sm">
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="text-xs font-mono uppercase tracking-wider text-[#E4501C] font-bold">
@@ -429,7 +480,7 @@ export default function KitConfiguratorWizard() {
                               <img src={item.image} alt={item.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                               <div>
                                 <p className="font-bold text-[#1C2620]">{item.name}</p>
-                                <p className="text-[11px] text-[#7A8A7D]">{item.reason}</p>
+                                <p className="text-[11px] text-[#7A8A7D]">{item.brand} · {item.reason}</p>
                               </div>
                             </div>
                             <div className="text-right flex-shrink-0">
@@ -460,16 +511,15 @@ export default function KitConfiguratorWizard() {
                     )}
 
                     {/* Save actions */}
-                    {userId && (
-                      <div className="flex items-center gap-3 pt-2">
-                        <button
-                          onClick={handleSaveConfiguration}
-                          className="flex-1 py-2.5 rounded-xl border border-[#1C3829] text-[#1C3829] font-bold text-xs hover:bg-[#EAF0EC] transition-colors"
-                        >
-                          {savedSuccess ? '✅ Configuration enregistrée !' : '💾 Enregistrer la configuration sur mon compte'}
-                        </button>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-3 pt-2">
+                      <button
+                        onClick={handleSaveConfiguration}
+                        disabled={isSaving}
+                        className="flex-1 py-2.5 rounded-xl border border-[#1C3829] text-[#1C3829] font-bold text-xs hover:bg-[#EAF0EC] transition-colors disabled:opacity-50"
+                      >
+                        {savedSuccess ? '✅ Configuration enregistrée !' : isSaving ? 'Sauvegarde...' : '💾 Enregistrer la configuration sur mon compte'}
+                      </button>
+                    </div>
                   </div>
                 )
               )}
