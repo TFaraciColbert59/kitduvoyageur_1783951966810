@@ -1,0 +1,333 @@
+{
+  "version": "v2",
+  "generated_at": "2026-07-27T08:19:23.169Z",
+  "valid_until": "2026-07-29T08:19:23.169Z",
+  "data": {
+    "pays": {
+      "nom": "Pays-Bas",
+      "code_iso": "NL",
+      "continent": "Europe"
+    },
+    "meteo": {
+      "calendrier_12_mois": [
+        {
+          "mois": "Janvier",
+          "temp_min_c": 1,
+          "temp_max_c": 6,
+          "precipitations_mm": 70,
+          "niveau": "deconseille",
+          "affluence": "faible"
+        },
+        {
+          "mois": "Février",
+          "temp_min_c": 1,
+          "temp_max_c": 6,
+          "precipitations_mm": 50,
+          "niveau": "deconseille",
+          "affluence": "faible"
+        },
+        {
+          "mois": "Mars",
+          "temp_min_c": 3,
+          "temp_max_c": 9,
+          "precipitations_mm": 60,
+          "niveau": "moyen",
+          "affluence": "faible"
+        },
+        {
+          "mois": "Avril",
+          "temp_min_c": 5,
+          "temp_max_c": 13,
+          "precipitations_mm": 40,
+          "niveau": "bon",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Mai",
+          "temp_min_c": 9,
+          "temp_max_c": 17,
+          "precipitations_mm": 50,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Juin",
+          "temp_min_c": 12,
+          "temp_max_c": 20,
+          "precipitations_mm": 60,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Juillet",
+          "temp_min_c": 14,
+          "temp_max_c": 22,
+          "precipitations_mm": 80,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Août",
+          "temp_min_c": 14,
+          "temp_max_c": 22,
+          "precipitations_mm": 80,
+          "niveau": "ideal",
+          "affluence": "forte"
+        },
+        {
+          "mois": "Septembre",
+          "temp_min_c": 11,
+          "temp_max_c": 19,
+          "precipitations_mm": 80,
+          "niveau": "bon",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Octobre",
+          "temp_min_c": 8,
+          "temp_max_c": 14,
+          "precipitations_mm": 90,
+          "niveau": "moyen",
+          "affluence": "moyenne"
+        },
+        {
+          "mois": "Novembre",
+          "temp_min_c": 4,
+          "temp_max_c": 9,
+          "precipitations_mm": 80,
+          "niveau": "deconseille",
+          "affluence": "faible"
+        },
+        {
+          "mois": "Décembre",
+          "temp_min_c": 2,
+          "temp_max_c": 7,
+          "precipitations_mm": 80,
+          "niveau": "deconseille",
+          "affluence": "faible"
+        }
+      ],
+      "source": "Données climatiques officielles (KNMI) / estimation climatique générale",
+      "derniere_maj": "2024-07-27"
+    },
+    "securite": {
+      "zones": [
+        {
+          "nom_zone": "Ensemble du territoire",
+          "niveau": "sur",
+          "description": "L'ensemble du territoire des Pays-Bas est considéré comme sûr. Une vigilance normale est de mise, notamment dans les zones touristiques et les transports en commun, où des vols à la tire peuvent survenir."
+        }
+      ],
+      "source_officielle": {
+        "nom": "France Diplomatie",
+        "url": "https://www.diplomatie.gouv.fr/fr/conseils-aux-voyageurs/conseils-par-pays-destination/pays-bas/"
+      },
+      "derniere_synchronisation": "2024-07-27",
+      "statut": "verifie",
+      "ambassade_consulat": {
+        "nom": "Ambassade de France à La Haye",
+        "telephone": "+31 70 312 34 56",
+        "url": "https://nl.ambafrance.org/"
+      }
+    },
+    "sante": {
+      "risques": [
+        "Maladies transmises par les tiques (encéphalite à tiques, maladie de Lyme) en cas de randonnées en forêt ou dans les zones rurales, particulièrement d'avril à octobre.",
+        "Grippe saisonnière (en hiver)."
+      ],
+      "vaccins_recommandes": [
+        "Diphtérie-Tétanos-Poliomyélite (DTP)",
+        "Hépatite B",
+        "ROR (Rougeole-Oreillons-Rubéole)"
+      ],
+      "vaccins_obligatoires": [],
+      "eau_potable": "oui",
+      "source": "Institut Pasteur / OMS / Santé Voyageurs",
+      "derniere_maj": "2024-07-27",
+      "statut": "verifie"
+    },
+    "connectivite": {
+      "couverture_mobile": "bonne",
+      "wifi_disponibilite": "Le WiFi est largement disponible et de bonne qualité dans les villes, les hôtels, les cafés, les restaurants et de nombreux lieux publics. La couverture mobile 4G/5G est excellente sur l'ensemble du territoire.",
+      "statut": "verifie"
+    },
+    "pratique": {
+      "visa": {
+        "nationalite": "France",
+        "regle": "Les ressortissants français (et de l'Union Européenne) n'ont pas besoin de visa pour entrer aux Pays-Bas pour des séjours de moins de 90 jours, car les Pays-Bas font partie de l'espace Schengen.",
+        "duree_sejour_sans_visa": "90 jours"
+      },
+      "monnaie": "Euro (EUR)",
+      "prise_electrique": {
+        "type": "Type F",
+        "voltage": "230V 50Hz"
+      },
+      "langues": [
+        "Néerlandais",
+        "Anglais"
+      ],
+      "phrases_survie": [
+        {
+          "fr": "Bonjour",
+          "locale": "Goedendag"
+        },
+        {
+          "fr": "Merci",
+          "locale": "Dank u wel"
+        },
+        {
+          "fr": "Au revoir",
+          "locale": "Tot ziens"
+        },
+        {
+          "fr": "Où sont les toilettes ?",
+          "locale": "Waar is het toilet?"
+        },
+        {
+          "fr": "Combien ça coûte ?",
+          "locale": "Hoeveel kost het?"
+        }
+      ],
+      "decalage_horaire_utc": "UTC+1 (heure de Paris : +0 heures en hiver, +0 heures en été)",
+      "budget_quotidien_repere_eur": {
+        "petit": {
+          "logement": 40,
+          "nourriture": 25,
+          "transport": 15
+        },
+        "moyen": {
+          "logement": 100,
+          "nourriture": 50,
+          "transport": 15
+        },
+        "gros": {
+          "logement": 250,
+          "nourriture": 100,
+          "transport": 20
+        }
+      }
+    },
+    "vols": {
+      "tendance_par_saison": [
+        {
+          "periode": "Haute saison (Mai-Août, Pâques)",
+          "niveau_prix": "haut"
+        },
+        {
+          "periode": "Basse saison (Novembre-Février)",
+          "niveau_prix": "bas"
+        },
+        {
+          "periode": "Épaule (Mars-Avril, Septembre-Octobre)",
+          "niveau_prix": "moyen"
+        }
+      ],
+      "statut": "indicatif"
+    },
+    "carbone": {
+      "vol_paris_kg_co2_estime": 219,
+      "methodologie": "Distance Paris–Amsterdam × 2 (aller-retour) × 0.255 kg CO2/km/passager (facteur ADEME aviation moyen-courrier/long-courrier)",
+      "statut": "estimation"
+    },
+    "evenements": [
+      {
+        "nom": "Keukenhof",
+        "periode": "Mars-Mai",
+        "description": "L'un des plus grands jardins de fleurs au monde, célèbre pour ses millions de tulipes, jacinthes et narcisses en fleur près de Lisse."
+      },
+      {
+        "nom": "Koningsdag (Jour du Roi)",
+        "periode": "27 avril",
+        "description": "Fête nationale célébrant l'anniversaire du Roi Willem-Alexander, avec des festivités de rue, marchés aux puces et concerts dans tout le pays, les participants étant vêtus d'orange."
+      },
+      {
+        "nom": "Grachtenfestival (Festival des Canaux)",
+        "periode": "Août",
+        "description": "Festival de musique classique se déroulant sur et autour des célèbres canaux d'Amsterdam, avec des concerts en plein air et sur des péniches."
+      }
+    ],
+    "lieux_incontournables": [
+      {
+        "nom": "Rijksmuseum (Amsterdam)",
+        "description": "Musée national des Pays-Bas abritant une vaste collection d'art et d'histoire, incluant des chefs-d'œuvre de Rembrandt (La Ronde de Nuit) et Vermeer.",
+        "lat": 52.3599,
+        "lng": 4.8852
+      },
+      {
+        "nom": "Maison d'Anne Frank (Amsterdam)",
+        "description": "L'ancienne cachette où Anne Frank et sa famille se sont cachées des nazis pendant la Seconde Guerre mondiale, transformée en musée émouvant.",
+        "lat": 52.3752,
+        "lng": 4.8839
+      },
+      {
+        "nom": "Keukenhof (Lisse)",
+        "description": "Le plus grand jardin de fleurs printanières du monde, présentant des millions de tulipes, jacinthes et autres fleurs à bulbes.",
+        "lat": 52.2711,
+        "lng": 4.5462
+      },
+      {
+        "nom": "Zaanse Schans (Zaandam)",
+        "description": "Un musée en plein air qui recrée un village néerlandais du 18e/19e siècle avec des moulins à vent historiques, des maisons en bois et des ateliers traditionnels.",
+        "lat": 52.4795,
+        "lng": 4.8197
+      },
+      {
+        "nom": "Les Canaux d'Amsterdam",
+        "description": "Le réseau de canaux emblématique d'Amsterdam, classé au patrimoine mondial de l'UNESCO, offrant des promenades en bateau et une architecture unique.",
+        "lat": 52.3702,
+        "lng": 4.8952
+      }
+    ],
+    "coutumes": "Les Néerlandais sont connus pour leur pragmatisme, leur ponctualité et leur communication directe. Il est courant de se saluer par une poignée de main. La culture du vélo est omniprésente, il est donc important de faire attention aux pistes cyclables et de respecter les règles de circulation pour les cyclistes. La politesse est appréciée, mais l'approche est généralement moins formelle qu'en France. Il est d'usage de diviser l'addition au restaurant.",
+    "kits_recommandes_tags_climat": [
+      "pluie",
+      "couches_vetements",
+      "velo",
+      "ville",
+      "culture"
+    ],
+    "gabarit_poids_recommande": {
+      "poids_total_kg": 15,
+      "justification": "Pour un séjour aux Pays-Bas, un poids de 15 kg est suffisant pour un voyage de quelques jours à une semaine, compte tenu du climat tempéré nécessitant des vêtements en couches et de la nature urbaine des activités. Les achats de souvenirs peuvent être limités."
+    },
+    "pays_similaires": [
+      {
+        "code_iso": "BE",
+        "nom": "Belgique",
+        "raison": "Climat similaire, culture urbaine riche, proximité géographique et facilité de transport."
+      },
+      {
+        "code_iso": "DK",
+        "nom": "Danemark",
+        "raison": "Climat nordique tempéré, culture du vélo développée, villes agréables et design moderne."
+      },
+      {
+        "code_iso": "DE",
+        "nom": "Allemagne",
+        "raison": "Climat tempéré, villes historiques et modernes, bonne infrastructure de transport et culture européenne."
+      }
+    ],
+    "faq": [
+      {
+        "question": "Ai-je besoin d'un visa pour visiter les Pays-Bas en tant que citoyen français ?",
+        "reponse": "Non, en tant que citoyen français, vous n'avez pas besoin de visa pour les Pays-Bas pour des séjours de moins de 90 jours, car le pays fait partie de l'espace Schengen."
+      },
+      {
+        "question": "Quelle est la meilleure période pour visiter les Pays-Bas pour voir les tulipes ?",
+        "reponse": "La meilleure période pour voir les tulipes est d'avril à mai, lorsque le Keukenhof est ouvert et que les champs de fleurs sont en pleine floraison. Le mois de mai est considéré comme idéal pour la météo."
+      },
+      {
+        "question": "L'eau du robinet est-elle potable aux Pays-Bas ?",
+        "reponse": "Oui, l'eau du robinet est tout à fait potable et de bonne qualité dans l'ensemble des Pays-Bas."
+      },
+      {
+        "question": "Quel budget quotidien prévoir pour un voyage moyen aux Pays-Bas ?",
+        "reponse": "Pour un voyage de niveau moyen, vous pouvez prévoir un budget quotidien d'environ 165 EUR, incluant un logement à 100 EUR, la nourriture à 50 EUR et le transport à 15 EUR."
+      }
+    ],
+    "meta": {
+      "genere_le": "2024-07-27T12:00:00.000Z",
+      "cache_valide_jusqu_au": "2024-07-29T12:00:00.000Z"
+    }
+  }
+}
