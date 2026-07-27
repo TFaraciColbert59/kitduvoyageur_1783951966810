@@ -45,7 +45,7 @@ export default function Footer() {
         {subscribed ? (
           <div className="text-xs font-bold text-[#2D5A3D] px-3 py-1 flex items-center gap-1.5 animate-fade-in">
             <Icon name="CheckCircleIcon" size={14} />
-            <span>Bienvenue dans l'aventure !</span>
+            <span>Bienvenue dans l&apos;aventure !</span>
           </div>
         ) : (
           <form onSubmit={handleSubscribe} className="flex items-center gap-2 w-full sm:w-auto">

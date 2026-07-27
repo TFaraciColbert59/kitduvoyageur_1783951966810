@@ -283,7 +283,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-20">
             <div className="md:col-span-1">
               <p className="text-[10px] font-mono tracking-widest uppercase text-white/50 mb-4">RECEVEZ LE JOURNAL</p>
-              <p className="text-white/70 text-xs mb-4">Un email par saison. Refuges, matériel, récit d'abris.</p>
+              <p className="text-white/70 text-xs mb-4">Un email par saison. Refuges, matériel, récit d&apos;abris.</p>
               <div className="flex gap-2">
                 <input type="email" placeholder="votre@email.fr" className="bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#8BAF7C] w-full" />
                 <button className="bg-[#8BAF7C] text-[#131B16] px-4 py-2 rounded-full text-xs font-bold hover:bg-white transition-colors">S'inscrire</button>

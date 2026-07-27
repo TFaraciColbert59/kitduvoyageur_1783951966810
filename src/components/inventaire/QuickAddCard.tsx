@@ -188,7 +188,7 @@ export default function QuickAddCard({ onAddSuccess }: QuickAddCardProps) {
         {/* Price & Purchase Date */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-[11px] font-semibold text-white/80 mb-1">Prix d'achat (€)</label>
+            <label className="block text-[11px] font-semibold text-white/80 mb-1">Prix d&apos;achat (€)</label>
             <input
               type="number"
               value={price}
@@ -199,7 +199,7 @@ export default function QuickAddCard({ onAddSuccess }: QuickAddCardProps) {
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-white/80 mb-1">Date d'achat</label>
+            <label className="block text-[11px] font-semibold text-white/80 mb-1">Date d&apos;achat</label>
             <input
               type="date"
               value={purchaseDate}
@@ -281,7 +281,7 @@ export default function QuickAddCard({ onAddSuccess }: QuickAddCardProps) {
         >
           {submitted ? (
             <span className="text-emerald-700 font-extrabold flex items-center gap-1">
-              ✓ Article ajouté à l'inventaire !
+              ✓ Article ajouté à l&apos;inventaire !
             </span>
           ) : (
             <>
@@ -289,7 +289,7 @@ export default function QuickAddCard({ onAddSuccess }: QuickAddCardProps) {
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
-              <span>Ajouter l'article</span>
+              <span>Ajouter l&apos;article</span>
             </>
           )}
         </button>

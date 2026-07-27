@@ -334,7 +334,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
 
               <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950 to-emerald-900/60 border border-emerald-500/20 flex items-center justify-between gap-4">
                 <div>
-                  <h5 className="font-bold text-white text-sm">Besoin d'un kit personnalisé ?</h5>
+                  <h5 className="font-bold text-white text-sm">Besoin d&apos;un kit personnalisé ?</h5>
                   <p className="text-xs text-white/60 mt-0.5">Laissez notre IA composer votre équipement idéal selon vos critères.</p>
                 </div>
                 <button

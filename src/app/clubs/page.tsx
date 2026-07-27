@@ -736,14 +736,14 @@ function ClubDetailModal({
 function ClubCard({
   club,
   onToggleMember,
-  onOpenDetail,
+  onOpenDetail: _onOpenDetail,
   onEdit,
   onDelete,
   currentUserId,
 }: {
   club: Club;
   onToggleMember: (clubId: string, joined: boolean) => void;
-  onOpenDetail: (club: Club) => void;
+  onOpenDetail: (_club: Club) => void;
   onEdit: (club: Club) => void;
   onDelete: (club: Club) => void;
   currentUserId?: string;
@@ -857,10 +857,10 @@ function ClubCard({
 export default function ClubsPage() {
   const [clubs, setClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'activite' | 'pays'>('all');
-  const [filterPrivacy, setFilterPrivacy] = useState<'all' | 'open' | 'closed'>('all');
-  const [selectedClub, setSelectedClub] = useState<Club | null>(null);
+  const [_search, _setSearch] = useState('');
+  const [_filterType, _setFilterType] = useState<'all' | 'activite' | 'pays'>('all');
+  const [_filterPrivacy, _setFilterPrivacy] = useState<'all' | 'open' | 'closed'>('all');
+  const [_selectedClub, _setSelectedClub] = useState<Club | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingClub, setEditingClub] = useState<Club | null>(null);
   const [saving, setSaving] = useState(false);
@@ -982,7 +982,7 @@ export default function ClubsPage() {
     finally { setSaving(false); }
   };
 
-  const handleEditClub = async (form: ClubForm) => {
+  const _handleEditClub = async (form: ClubForm) => {
     if (!editingClub) return;
     setSaving(true);
     try {
@@ -1025,10 +1025,10 @@ export default function ClubsPage() {
     finally { setDeleting(false); }
   };
 
-  const filtered = clubs.filter((c) => {
-    if (filterType !== 'all' && c.type !== filterType) return false;
-    if (filterPrivacy !== 'all' && c.privacy !== filterPrivacy) return false;
-    if (search && !c.name.toLowerCase().includes(search.toLowerCase()) && !c.category.toLowerCase().includes(search.toLowerCase())) return false;
+  const _filtered = clubs.filter((c) => {
+    if (_filterType !== 'all' && c.type !== _filterType) return false;
+    if (_filterPrivacy !== 'all' && c.privacy !== _filterPrivacy) return false;
+    if (_search && !c.name.toLowerCase().includes(_search.toLowerCase()) && !c.category.toLowerCase().includes(_search.toLowerCase())) return false;
     return true;
   });
 
@@ -1046,7 +1046,7 @@ export default function ClubsPage() {
     privacy: editClub.privacy,
   } : undefined;
 
-  const PRIVACY_CFG: Record<string, { label: string; icon: string; color: string }> = {
+  const _PRIVACY_CFG: Record<string, { label: string; icon: string; color: string }> = {
     open: { label: 'Ouvert', icon: '🌍', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
     closed: { label: 'Fermé', icon: '🔒', color: 'text-amber-700 bg-amber-50 border-amber-200' },
     secret: { label: 'Secret', icon: '🕵️', color: 'text-purple-700 bg-purple-50 border-purple-200' },

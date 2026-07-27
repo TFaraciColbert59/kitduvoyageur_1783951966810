@@ -238,8 +238,8 @@ export default function CreateClubView() {
           <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
             <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
               <div>
-                <h2 className="font-display font-800 text-xl text-[#1C2620]">L'identité du <em className="font-serif italic text-[#2D5A3D] font-normal">club</em></h2>
-                <p className="text-xs text-[#5C6B5E] mt-0.5">Le nom, la couverture, le logo. C'est ce que verront les voyageurs qui parcourent l'annuaire.</p>
+                <h2 className="font-display font-800 text-xl text-[#1C2620]">L&apos;identité du <em className="font-serif italic text-[#2D5A3D] font-normal">club</em></h2>
+                <p className="text-xs text-[#5C6B5E] mt-0.5">Le nom, la couverture, le logo. C&apos;est ce que verront les voyageurs qui parcourent l&apos;annuaire.</p>
               </div>
               <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F5F2E8] px-2.5 py-1 rounded-full text-[#5C6B5E]">
                 01 · VISUELS
@@ -358,7 +358,7 @@ export default function CreateClubView() {
             <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
               <div>
                 <h2 className="font-display font-800 text-xl text-[#1C2620]">Thématique <em className="font-serif italic text-[#2D5A3D] font-normal">& terrain</em></h2>
-                <p className="text-xs text-[#5C6B5E] mt-0.5">Ce qui rassemble les voyageurs autour d'une pratique ou d'une région, et vos rythmes.</p>
+                <p className="text-xs text-[#5C6B5E] mt-0.5">Ce qui rassemble les voyageurs autour d&apos;une pratique ou d&apos;une région, et vos rythmes.</p>
               </div>
               <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F5F2E8] px-2.5 py-1 rounded-full text-[#5C6B5E]">
                 02 · CADRE
@@ -427,7 +427,7 @@ export default function CreateClubView() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Ville d'ancrage</label>
+                <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Ville d&apos;ancrage</label>
                 <div className="relative">
                   <Icon name="MapPinIcon" size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5C6B5E]" />
                   <input
@@ -635,7 +635,7 @@ export default function CreateClubView() {
             </div>
 
             <div className="pt-2">
-              <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-2">Lien d'invitation</label>
+              <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-2">Lien d&apos;invitation</label>
               <div className="flex items-center gap-2 bg-[#F5F2E8] p-1.5 rounded-2xl border border-[#E8E4D8]">
                 <span className="text-[10px] font-mono text-[#5C6B5E] pl-3 uppercase tracking-wider">LIEN SÉCURISÉ :</span>
                 <input

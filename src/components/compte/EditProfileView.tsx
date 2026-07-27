@@ -366,7 +366,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Nom d'usage public</label>
+                  <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Nom d&apos;usage public</label>
                   <input
                     type="text"
                     value={form.publicName}
@@ -376,7 +376,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block">Nom d'utilisateur *</label>
+                    <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block">Nom d&apos;utilisateur *</label>
                     <span className="text-[10px] font-mono text-[#2D5A3D] font-bold">✓ Disponible</span>
                   </div>
                   <div className="relative">
@@ -560,7 +560,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
             {/* Niveau d'expérience selector */}
             <div>
-              <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-3">Niveau d'expérience globale</label>
+              <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-3">Niveau d&apos;expérience globale</label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
                   { id: 'I', label: 'I · Débutant', sub: '1-2 ans' },

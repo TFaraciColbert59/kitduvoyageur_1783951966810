@@ -198,7 +198,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
             <h2 className="font-display text-2xl text-[#1C2620] mb-4">Gérer les <span className="font-serif italic font-bold">membres</span></h2>
             
             <div className="mb-6 p-4 bg-[#E7E3D6]/30 rounded-xl border border-[#1C2620]/10">
-              <p className="text-xs font-semibold text-[#1C2620] mb-2">Code d'invitation secret :</p>
+              <p className="text-xs font-semibold text-[#1C2620] mb-2">Code d&apos;invitation secret :</p>
               <div className="flex gap-2">
                 <input type="text" readOnly value={group?.invite_code || ''} className="flex-1 bg-white border border-[#1C2620]/10 font-mono tracking-widest font-bold rounded-lg py-2 px-3 text-sm text-[#1C2620] text-center" />
                 <button 

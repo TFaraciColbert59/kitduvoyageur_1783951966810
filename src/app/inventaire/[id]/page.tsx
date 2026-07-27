@@ -135,12 +135,12 @@ export default function GearDetailPage() {
     return (
       <div className="min-h-screen bg-[#FAF8F5] flex flex-col items-center justify-center p-6 text-center">
         <h1 className="text-2xl font-extrabold text-[#132219]">Article introuvable</h1>
-        <p className="mt-2 text-sm text-[#132219]/60">Cet article n'existe pas ou a été supprimé.</p>
+        <p className="mt-2 text-sm text-[#132219]/60">Cet article n&apos;existe pas ou a été supprimé.</p>
         <button
           onClick={() => router.push('/inventaire')}
           className="mt-6 px-6 py-3 bg-[#132219] text-white rounded-full text-xs font-bold"
         >
-          Retour à l'inventaire
+          Retour à l&apos;inventaire
         </button>
       </div>
     );

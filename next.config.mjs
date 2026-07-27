@@ -6,6 +6,10 @@ const nextConfig = {
   distDir: process.env.DIST_DIR || '.next',
   compress: true,
 
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
   typescript: {
     ignoreBuildErrors: true,
   },

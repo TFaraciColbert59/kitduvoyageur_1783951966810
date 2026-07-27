@@ -188,7 +188,7 @@ function PostCard({ post, user }: { post: any, user: any }) {
             ) : (
               <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                 {comments.length === 0 ? (
-                  <p className="text-xs text-[#5C6B5E] text-center italic">Aucun commentaire pour l'instant. Soyez le premier !</p>
+                  <p className="text-xs text-[#5C6B5E] text-center italic">Aucun commentaire pour l&apos;instant. Soyez le premier !</p>
                 ) : (
                   comments.map((c, i) => (
                     <div key={c.id || i} className="flex gap-3 text-sm">
@@ -393,7 +393,7 @@ function CarnetCard({ carnet, user }: { carnet: any, user: any }) {
                   <>
                     <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
                       {comments.length === 0 ? (
-                        <p className="text-[11px] text-[#5C6B5E] italic">Aucun commentaire pour l'instant.</p>
+                        <p className="text-[11px] text-[#5C6B5E] italic">Aucun commentaire pour l&apos;instant.</p>
                       ) : (
                         comments.map((c, i) => (
                           <div key={c.id || i} className="bg-[#F5F2E8]/60 p-2.5 rounded-xl text-xs flex items-start gap-2">
@@ -487,7 +487,7 @@ function ClubFormModal({
         <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
           <div>
             <h3 className="font-display font-800 text-2xl text-[#1C2620]">Créer un nouveau club</h3>
-            <p className="text-xs text-[#5C6B5E] mt-0.5">Rassemblez les voyageurs autour d'une passion commune.</p>
+            <p className="text-xs text-[#5C6B5E] mt-0.5">Rassemblez les voyageurs autour d&apos;une passion commune.</p>
           </div>
           <button onClick={onClose} className="p-2 bg-[#F5F2E8] hover:bg-[#E8E4D8] rounded-full text-[#1C2620] transition-colors">
             <Icon name="XMarkIcon" size={18} />
@@ -1501,7 +1501,7 @@ export default function CommunautePage() {
                           <span>🏕️</span> ESPACES COMMUNAUTAIRES
                         </div>
                         <h3 className="font-display font-800 text-2xl sm:text-3xl text-white leading-tight">
-                          Trouvez votre tribu, <br/><em className="font-serif italic font-normal text-[#E4501C]">partagez l'aventure.</em>
+                          Trouvez votre tribu, <br/><em className="font-serif italic font-normal text-[#E4501C]">partagez l&apos;aventure.</em>
                         </h3>
                         <p className="text-xs text-white/70 max-w-md leading-relaxed">
                           Rejoignez des clubs de passionnés par discipline ou destination. Conseils matos, sorties en groupe et retours d'expérience.
@@ -1736,7 +1736,7 @@ export default function CommunautePage() {
                         </div>
                       )) : (
                         <div className="bg-white/60 rounded-[2rem] p-8 border border-[#E8E4D8] flex flex-col items-center justify-center text-center col-span-full">
-                          <p className="text-sm text-[#5C6B5E] mb-2">Aucun groupe public pour l'instant.</p>
+                          <p className="text-sm text-[#5C6B5E] mb-2">Aucun groupe public pour l&apos;instant.</p>
                           <p className="text-xs text-[#5C6B5E]/70">Créez le premier en cliquant sur le bouton ci-dessus !</p>
                         </div>
                       )}

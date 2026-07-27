@@ -125,7 +125,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
         <form onSubmit={handleAddItem} className="mb-6 bg-[#E7E3D6]/20 p-4 rounded-2xl border border-[#1C2620]/10">
           <div className="flex flex-wrap gap-3 mb-3">
             <div className="flex-1 min-w-[200px]">
-              <label className="block text-[10px] font-mono text-[#1C2620]/60 uppercase tracking-widest mb-1.5">Nom de l'objet</label>
+              <label className="block text-[10px] font-mono text-[#1C2620]/60 uppercase tracking-widest mb-1.5">Nom de l&apos;objet</label>
               <input 
                 type="text" 
                 autoFocus

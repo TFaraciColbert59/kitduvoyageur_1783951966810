@@ -470,7 +470,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#132219] mb-1.5">Nom d'utilisateur public *</label>
+                  <label className="block font-semibold text-[#132219] mb-1.5">Nom d&apos;utilisateur public *</label>
                   <div className="relative">
                     <span className="absolute left-3.5 top-2.5 text-[#132219]/40 font-bold">@</span>
                     <input
@@ -814,7 +814,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
               {/* Languages Grid */}
               <div>
-                <label className="block font-semibold text-[#132219] text-xs sm:text-sm mb-3">Langue de l'interface</label>
+                <label className="block font-semibold text-[#132219] text-xs sm:text-sm mb-3">Langue de l&apos;interface</label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {[
                     { code: 'FR', name: 'Français', sub: 'France, Suisse' },

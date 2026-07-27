@@ -224,7 +224,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
               Simulation du calcul des dettes pour {expenses.items.length > 0 ? expenses.items.length : 0} dépenses.
             </p>
             <div className="bg-[#E7E3D6]/30 p-4 rounded-xl mb-6 border border-[#1C2620]/10">
-              <p className="text-center font-mono text-sm text-[#1C2620]">Vous ne devez rien à personne pour l'instant (démo statique).</p>
+              <p className="text-center font-mono text-sm text-[#1C2620]">Vous ne devez rien à personne pour l&apos;instant (démo statique).</p>
             </div>
             <button 
               onClick={() => setShowBalanceModal(false)}

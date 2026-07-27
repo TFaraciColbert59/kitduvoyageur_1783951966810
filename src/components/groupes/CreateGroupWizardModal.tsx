@@ -483,8 +483,8 @@ export default function CreateGroupWizardModal({ isOpen, onClose, onSuccess }: C
                 {/* Toggle Invitations */}
                 <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-[#C8C3B0]">
                   <div>
-                    <div className="font-bold text-xs text-[#1C2620]">Autoriser l'invitation par les membres</div>
-                    <div className="text-[10px] text-[#5C6B5E]">Permet à tous les participants de générer un lien d'invitation</div>
+                    <div className="font-bold text-xs text-[#1C2620]">Autoriser l&apos;invitation par les membres</div>
+                    <div className="text-[10px] text-[#5C6B5E]">Permet à tous les participants de générer un lien d&apos;invitation</div>
                   </div>
                   <button
                     type="button"

@@ -66,7 +66,7 @@ export default function GroupesPage() {
     return (
       <div className="min-h-screen bg-[#E7E3D6] flex flex-col items-center justify-center">
         <h2 className="font-display text-2xl text-[#1C2620] mb-4">Groupe introuvable</h2>
-        <p className="text-sm text-[#1C2620]/60 mb-6">Ce groupe n'existe pas ou vous n'y avez pas accès.</p>
+        <p className="text-sm text-[#1C2620]/60 mb-6">Ce groupe n&apos;existe pas ou vous n&apos;y avez pas accès.</p>
         <Link href="/groupes" className="px-5 py-2.5 bg-[#33463C] text-[#E7E3D6] rounded-full text-sm font-bold">Retour aux groupes</Link>
       </div>
     );

@@ -314,7 +314,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
             <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
               <div>
                 <h2 className="font-display font-800 text-xl text-[#1C2620]">Couverture & titre</h2>
-                <p className="text-xs text-[#5C6B5E] mt-0.5">Une image forte, un titre en un mot ou en trois. C'est ce que la communauté verra sur le fil de la maison.</p>
+                <p className="text-xs text-[#5C6B5E] mt-0.5">Une image forte, un titre en un mot ou en trois. C&apos;est ce que la communauté verra sur le fil de la maison.</p>
               </div>
               <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F5F2E8] px-2.5 py-1 rounded-full text-[#5C6B5E]">
                 01 · VISUEL & CARTE
@@ -925,7 +925,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                 onClick={() => setPreviewModalOpen(false)}
                 className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-xs font-bold transition-all flex items-center gap-1.5"
               >
-                <span>Fermer l'aperçu</span>
+                <span>Fermer l&apos;aperçu</span>
                 <span>✕</span>
               </button>
 
