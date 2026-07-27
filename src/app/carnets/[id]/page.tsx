@@ -1,5 +1,5 @@
 import { Metadata, ResolvingMetadata } from 'next';
-import { notFound } from 'next/navigation';
+
 import CarnetView from '@/components/carnet/CarnetView';
 import LocalCarnetRenderer from '@/components/carnets/LocalCarnetRenderer';
 import { createClient } from '@/lib/supabase/server';

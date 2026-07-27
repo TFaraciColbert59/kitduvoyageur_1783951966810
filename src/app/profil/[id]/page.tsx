@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { useParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Link from 'next/link';
@@ -105,6 +105,21 @@ const MOCK_ADVENTURES = [
   { id: '4', title: 'Kayak · Serre-Ponçon', subtitle: '1 jour · Hautes-Alpes · 14 km', date: 'Juin', src: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&q=80', alt: 'Kayak sur le lac de Serre-Ponçon' },
 ];
 
+const POST_TYPE_CFG: Record<string, { color: string; emoji: string; label: string }> = {
+  post: { color: 'bg-[#EDEAE0] text-[#5C6B5E]', emoji: '💬', label: 'Post' },
+  carnet: { color: 'bg-[#E4501C]/10 text-[#E4501C]', emoji: '📖', label: 'Carnet' },
+  photo: { color: 'bg-[#4A6741]/10 text-[#4A6741]', emoji: '📷', label: 'Photo' },
+  tip: { color: 'bg-blue-50 text-blue-600', emoji: '💡', label: 'Conseil' },
+};
+
+const LEVEL_CFG: Record<string, { icon: string }> = {
+  Aventurier: { icon: '🥾' },
+  Explorateur: { icon: '🧭' },
+  Randonneur: { icon: '⛺' },
+  Guide: { icon: '🏔️' },
+  Légende: { icon: '🌟' },
+};
+
 // Simple SVG world map dots for visited countries
 function WorldMapDots({ countries }: { countries: string[] }) {
   const dots = [
@@ -170,6 +185,8 @@ export default function ProfilDetailPage() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [selectedCarnet, setSelectedCarnet] = useState<Carnet | null>(null);
+  const [posts, setPosts] = useState<{ id: string; post_type: string; content: string; created_at: string; likes_count: number; comments_count: number }[]>([]);
   const { user } = useAuth();
   const supabase = useMemo(() => createClient(), []);
 
@@ -218,6 +235,7 @@ export default function ProfilDetailPage() {
 
   const isOwnProfile = user?.id === profileId;
   const initials = profile?.full_name ? profile.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() : '?';
+  const levelCfg = LEVEL_CFG[profile?.loyalty_level ?? ''] ?? { icon: '🥾' };
   const heroImg = HERO_IMAGES[0];
 
   const displayCarnets = carnets.length > 0 ? carnets : MOCK_ADVENTURES.map(a => ({
@@ -444,7 +462,7 @@ export default function ProfilDetailPage() {
             </>
           )}
         </div>
-      </div>
+      </main>
 
       <NewFooterSection />
     </div>

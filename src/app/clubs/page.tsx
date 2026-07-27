@@ -865,6 +865,12 @@ export default function ClubsPage() {
   const [editingClub, setEditingClub] = useState<Club | null>(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [editClub, setEditClub] = useState<Club | null>(null);
+  const [detailClub, setDetailClub] = useState<Club | null>(null);
+  const [deleteClub, setDeleteClub] = useState<Club | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [activeTab, setActiveTab] = useState<'activite' | 'pays' | 'mes-clubs'>('activite');
   const { user } = useAuth();
   const supabase = useMemo(() => createClient(), []);
 
@@ -923,11 +929,6 @@ export default function ClubsPage() {
     } finally {
       setLoading(false);
     }
-    setClubs((data ?? []).map((c) => {
-      const membership = memberData.find((m) => m.club_id === c.id);
-      return { ...c, is_member: !!membership, member_role: membership?.role, member_status: membership?.status };
-    }));
-    setLoading(false);
   }, [supabase, user]);
 
   useEffect(() => { 
@@ -939,28 +940,6 @@ export default function ClubsPage() {
     window.addEventListener('club_created', handleClubCreated);
     return () => window.removeEventListener('club_created', handleClubCreated);
   }, [loadClubs]);
-
-  const handleToggleMember = async (clubId: string, isCurrentlyMember: boolean) => {
-    if (!user) { showToast('Connectez-vous pour rejoindre un club'); return; }
-    const club = clubs.find((c) => c.id === clubId);
-    if (!club) return;
-
-    if (isCurrentlyMember) {
-      await supabase.from('club_members').delete().eq('club_id', clubId).eq('user_id', user.id);
-      await supabase.from('clubs').update({ members_count: Math.max(0, club.members_count - 1) }).eq('id', clubId);
-      setClubs((prev) => prev.map((c) => c.id === clubId ? { ...c, is_member: false, member_role: undefined, members_count: Math.max(0, c.members_count - 1) } : c));
-      showToast('Vous avez quitté le club');
-    } else if (club.privacy === 'open') {
-      await supabase.from('club_members').insert({ club_id: clubId, user_id: user.id, role: 'member', status: 'active' });
-      await supabase.from('clubs').update({ members_count: club.members_count + 1 }).eq('id', clubId);
-      setClubs((prev) => prev.map((c) => c.id === clubId ? { ...c, is_member: true, member_role: 'member', members_count: c.members_count + 1 } : c));
-      showToast('Bienvenue dans le club !');
-    } else {
-      // Closed/secret: send join request
-      await supabase.from('club_join_requests').upsert({ club_id: clubId, user_id: user.id, status: 'pending' }, { onConflict: 'club_id,user_id' });
-      showToast("Demande d'adhésion envoyée !");
-    }
-  };
 
   const handleSaveClub = async (form: ClubForm) => {
     if (!user) return;
@@ -997,6 +976,7 @@ export default function ClubsPage() {
         showToast("Club créé ! Vous en êtes l'administrateur.");
       }
       setShowCreateModal(false);
+      setEditClub(null);
       await loadClubs();
     } catch { showToast('Erreur lors de la création'); }
     finally { setSaving(false); }
@@ -1033,12 +1013,38 @@ export default function ClubsPage() {
     await loadClubs();
   };
 
+  const handleDeleteClub = async () => {
+    if (!deleteClub) return;
+    setDeleting(true);
+    try {
+      await supabase.from('clubs').delete().eq('id', deleteClub.id);
+      showToast('Club supprimé');
+      setDeleteClub(null);
+      await loadClubs();
+    } catch { showToast('Erreur lors de la suppression'); }
+    finally { setDeleting(false); }
+  };
+
   const filtered = clubs.filter((c) => {
     if (filterType !== 'all' && c.type !== filterType) return false;
     if (filterPrivacy !== 'all' && c.privacy !== filterPrivacy) return false;
     if (search && !c.name.toLowerCase().includes(search.toLowerCase()) && !c.category.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
+
+  const activityClubs = clubs.filter((c) => c.type === 'activite');
+  const countryClubs = clubs.filter((c) => c.type === 'pays');
+  const myClubs = clubs.filter((c) => c.is_member);
+  const displayedClubs = activeTab === 'activite' ? activityClubs : activeTab === 'pays' ? countryClubs : myClubs;
+  const editForm: ClubForm | undefined = editClub ? {
+    name: editClub.name,
+    type: editClub.type,
+    emoji: editClub.emoji,
+    description: editClub.description,
+    category: editClub.category,
+    rules: editClub.rules,
+    privacy: editClub.privacy,
+  } : undefined;
 
   const PRIVACY_CFG: Record<string, { label: string; icon: string; color: string }> = {
     open: { label: 'Ouvert', icon: '🌍', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
@@ -1151,9 +1157,7 @@ export default function ClubsPage() {
                 {activeTab === 'mes-clubs' ? "Vous n'avez rejoint aucun club" : 'Espace encore vierge'}
               </h3>
               <p className="text-muted-foreground text-base max-w-md mb-8">
-                {activeTab === 'mes-clubs' 
-                  ? 'Explorez les clubs existants et trouvez votre prochaine équipe de choc pour vos aventures.' 
-                  : "Il n'y a pas encore de club dans cette catégorie. Soyez le pionnier et créez le vôtre !"}
+                {activeTab === 'mes-clubs' ?'Explorez les clubs existants et trouvez votre prochaine équipe de choc pour vos aventures.' : "Il n'y a pas encore de club dans cette catégorie. Soyez le pionnier et créez le vôtre !"}
               </p>
               
               {activeTab === 'mes-clubs' ? (
@@ -1242,7 +1246,7 @@ export default function ClubsPage() {
           {toast}
         </div>
       )}
-    </div>
+    </main>
   );
 }
 

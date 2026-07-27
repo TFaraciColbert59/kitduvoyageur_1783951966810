@@ -6,7 +6,7 @@ import AppImage from '@/components/ui/AppImage';
 import BackButton from '@/components/ui/BackButton';
 import Header from '@/components/Header';
 import { createClient } from '@/lib/supabase/client';
-import { getCart, addToCart, removeFromCart, updateQuantity, getCartTotals, CartItem } from '@/lib/cart';
+import { getCart, addToCart } from '@/lib/cart';
 import { useAuth } from '@/contexts/AuthContext';
 
 // --- Types ---

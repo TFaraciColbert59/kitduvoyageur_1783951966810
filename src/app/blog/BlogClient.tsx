@@ -108,7 +108,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
         <div className="absolute inset-0 bg-cover bg-center opacity-15" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=1600&q=80')" }} />
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <nav className="flex items-center gap-2 text-xs font-mono mb-8" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            <a href="/" className="hover:text-white transition-colors">Accueil</a>
+            <Link href="/" className="hover:text-white transition-colors">Accueil</Link>
             <span>/</span>
             <span style={{ color: '#E4501C' }}>Blog</span>
           </nav>

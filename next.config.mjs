@@ -20,5 +20,18 @@ const nextConfig = {
     qualities: [75, 80, 85, 90, 95],
   },
 
+  webpack(config, { dev }) {
+if (dev) {
+    config.module.rules.push({
+      test: /\.(jsx|tsx)$/,
+      exclude: [/node_modules/],
+      use: [{
+        loader: '@dhiwise/component-tagger/nextLoader',
+      }],
+    });
+  }
+
+    return config;
+  }
 };
 export default nextConfig;

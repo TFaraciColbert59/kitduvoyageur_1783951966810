@@ -101,7 +101,7 @@ function FAQPageContent() {
       <section className="relative overflow-hidden pt-20" style={{ background: '#1C2620' }}>
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <nav className="flex items-center gap-2 text-xs font-mono mb-8" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            <a href="/" className="hover:text-white transition-colors">Accueil</a>
+            <Link href="/" className="hover:text-white transition-colors">Accueil</Link>
             <span>/</span>
             <span style={{ color: '#E4501C' }}>FAQ</span>
           </nav>

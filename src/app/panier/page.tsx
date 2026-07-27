@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Icon from '@/components/ui/AppIcon';
 import { getCart, updateQuantity, removeFromCart, getCartTotals, CartItem } from '@/lib/cart';
-import NewFooterSection from '@/app/components/home/NewFooterSection';
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SUGGESTION PRODUCT
@@ -300,6 +300,7 @@ export default function PanierPage() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [mounted, setMounted] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     setItems(getCart());
@@ -335,6 +336,21 @@ export default function PanierPage() {
     setItems(getCart());
   };
 
+  const handleRemoveRequest = (id: string) => {
+    setConfirmDeleteId(id);
+  };
+
+  const handleRemoveCancel = () => {
+    setConfirmDeleteId(null);
+  };
+
+  const handleRemoveConfirm = () => {
+    if (confirmDeleteId) {
+      handleRemove(confirmDeleteId);
+      setConfirmDeleteId(null);
+    }
+  };
+
   const { totalItems, totalPriceEur, totalWeightG } = getCartTotals(items);
   const shippingEur = totalPriceEur >= 200 ? 0 : 5.9;
   const grandTotal = totalPriceEur + shippingEur;
@@ -367,6 +383,7 @@ export default function PanierPage() {
             </div>
           </div>
         </div>
+      )}
 
       <main id="main-content" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
         {items.length === 0 ? (

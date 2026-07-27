@@ -18,6 +18,13 @@ interface WizardState {
   confort: string;
   destination: string;
   generated: boolean;
+  startDate: string;
+  endDate: string;
+  season: string;
+  activity: string;
+  level: string;
+  maxWeightG: number;
+  budgetEur: number;
 }
 
 interface EquipmentItem {
@@ -38,8 +45,31 @@ interface AIResult {
   liste_equipement: EquipmentItem[];
 }
 
+// ── Static data ───────────────────────────────────────────────────────────────
+const popularDestinations = [
+  'Alpes', 'Pyrénées', 'Patagonie', 'Népal', 'Norvège', 'Islande', 'Maroc', 'Japon', 'Pérou', 'Écosse',
+];
+
+const seasons = [
+  { id: 'printemps', icon: '🌸', label: 'Printemps', months: 'Mars–Mai' },
+  { id: 'ete', icon: '☀️', label: 'Été', months: 'Juin–Août' },
+  { id: 'automne', icon: '🍂', label: 'Automne', months: 'Sep–Nov' },
+  { id: 'hiver', icon: '❄️', label: 'Hiver', months: 'Déc–Fév' },
+];
+
+const activities = [
+  'Randonnée', 'Trekking', 'Alpinisme', 'Ski de rando', 'Trail', 'Vélo de montagne', 'Kayak', 'Escalade',
+];
+
+const levels = [
+  { id: 'debutant', label: 'Débutant', desc: 'Premières sorties, sentiers balisés.' },
+  { id: 'intermediaire', label: 'Intermédiaire', desc: 'Quelques expériences, autonomie partielle.' },
+  { id: 'confirme', label: 'Confirmé', desc: 'Expériences variées, autonomie complète.' },
+  { id: 'expert', label: 'Expert', desc: 'Haute montagne, conditions extrêmes.' },
+];
+
 // ── Kit items that build up as user answers ──────────────────────────────────
-const BASE_KIT_ITEMS = [
+const _BASE_KIT_ITEMS = [
   { id: 'sac', name: 'Sac 45 L', priceEur: 340, weightG: 1200 },
 ];
 
@@ -82,7 +112,7 @@ const STEPS = [
   { id: 5, label: 'Récap' },
 ];
 
-function Stepper({ currentStep }: { currentStep: number }) {
+function _Stepper({ currentStep }: { currentStep: number }) {
   return (
     <div className="flex items-center gap-0" role="progressbar" aria-valuenow={currentStep} aria-valuemin={1} aria-valuemax={5}>
       {STEPS.map((step, idx) => (
@@ -156,6 +186,41 @@ function ChoiceCard({ icon, title, titleItalic, desc, selected, onClick }: Choic
         >
           {icon}
         </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-600 text-sm text-[#1C2620]">
+            {title}{titleItalic && <em className="italic font-400"> {titleItalic}</em>}
+          </p>
+          <p className="text-xs text-[#6B6860] leading-relaxed mt-1">{desc}</p>
+        </div>
+        {selected && (
+          <div className="w-5 h-5 rounded-full bg-[#1C2620] flex items-center justify-center flex-shrink-0">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M2 5l2.5 2.5 3.5-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        )}
+      </div>
+    </button>
+  );
+}
+
+// ── Step Destination ──────────────────────────────────────────────────────────
+function StepDestination({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string) => void }) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <label htmlFor="destination-input" className="block text-sm font-600 text-foreground mb-2">
+          Destination
+        </label>
+        <input
+          id="destination-input"
+          type="text"
+          value={state.destination}
+          onChange={(e) => onChange('destination', e.target.value)}
+          placeholder="Ex: Alpes, Népal, Patagonie…"
+          className="input-field w-full"
+          aria-label="Destination"
+        />
       </div>
 
       <div>
@@ -166,8 +231,8 @@ function ChoiceCard({ icon, title, titleItalic, desc, selected, onClick }: Choic
               key={dest}
               onClick={() => onChange('destination', dest)}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                state.destination === dest 
-                  ? 'bg-[#405247] text-white shadow-sm' 
+                state.destination === dest
+                  ? 'bg-[#405247] text-white shadow-sm'
                   : 'bg-white border border-[#C8C3B0] text-[#5C6B5E] hover:border-[#405247]/50 hover:bg-[#F4F0EB]'
               }`}
               aria-pressed={state.destination === dest}
@@ -184,16 +249,178 @@ function ChoiceCard({ icon, title, titleItalic, desc, selected, onClick }: Choic
           <p className="text-sm text-muted-foreground leading-relaxed">
             L&apos;IA analysera le climat, l&apos;altitude, les risques locaux et la saison pour optimiser votre liste d&apos;équipement.
           </p>
-          <p className="text-xs text-[#6B6860] leading-relaxed">{desc}</p>
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 
+// ── Step Dates ────────────────────────────────────────────────────────────────
+function StepDates({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string) => void }) {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="start-date" className="block text-sm font-600 text-foreground mb-2">
+            Date de départ
+          </label>
+          <input
+            id="start-date"
+            type="date"
+            value={state.startDate}
+            onChange={(e) => onChange('startDate', e.target.value)}
+            className="input-field"
+            aria-label="Date de départ"
+          />
+        </div>
+        <div>
+          <label htmlFor="end-date" className="block text-sm font-600 text-foreground mb-2">
+            Date de retour
+          </label>
+          <input
+            id="end-date"
+            type="date"
+            value={state.endDate}
+            onChange={(e) => onChange('endDate', e.target.value)}
+            className="input-field"
+            aria-label="Date de retour"
+          />
+        </div>
+      </div>
+
+      <div>
+        <p className="text-sm font-600 text-foreground mb-3">Saison principale</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {seasons.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => onChange('season', s.id)}
+              className={`flex flex-col items-center justify-center gap-3 p-5 rounded-2xl border-2 transition-all duration-300 ${
+                state.season === s.id
+                  ? 'border-[#405247] bg-[#405247]/5 shadow-sm scale-[1.02]' : 'border-[#C8C3B0] bg-white hover:border-[#405247]/50 hover:bg-[#F4F0EB]/50'
+              }`}
+              aria-pressed={state.season === s.id}
+            >
+              <span className="text-3xl" aria-hidden="true">{s.icon}</span>
+              <span className={`font-600 text-sm ${state.season === s.id ? 'text-[#2D3A33]' : 'text-[#5C6B5E]'}`}>{s.label}</span>
+              <span className="font-mono text-[10px] text-[#5C6B5E] tracking-widest uppercase">{s.months}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Step Profile ──────────────────────────────────────────────────────────────
+function StepProfile({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string | number) => void }) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <p className="text-sm font-600 text-foreground mb-3">Activité principale</p>
+        <div className="flex flex-wrap gap-2">
+          {activities.map((act) => (
+            <button
+              key={act}
+              onClick={() => onChange('activity', act)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                state.activity === act
+                  ? 'bg-[#405247] text-white shadow-sm'
+                  : 'bg-white border border-[#C8C3B0] text-[#5C6B5E] hover:border-[#405247]/50 hover:bg-[#F4F0EB]'
+              }`}
+              aria-pressed={state.activity === act}
+            >
+              {act}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p className="text-sm font-600 text-foreground mb-3">Niveau d&apos;expérience</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {levels.map((lv) => (
+            <button
+              key={lv.id}
+              onClick={() => onChange('level', lv.id)}
+              className={`flex flex-col gap-2 p-5 rounded-2xl border-2 text-left transition-all duration-300 ${
+                state.level === lv.id
+                  ? 'border-[#405247] bg-[#405247]/5 shadow-sm scale-[1.02]' : 'border-[#C8C3B0] bg-white hover:border-[#405247]/50 hover:bg-[#F4F0EB]/50'
+              }`}
+              aria-pressed={state.level === lv.id}
+            >
+              <span className={`font-600 text-sm ${state.level === lv.id ? 'text-[#2D3A33]' : 'text-[#5C6B5E]'}`}>{lv.label}</span>
+              <span className="text-xs text-[#5C6B5E]/80 leading-snug">{lv.desc}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <label htmlFor="max-weight" className="text-sm font-600 text-[#2D3A33]">
+              Poids max du sac
+            </label>
+            <span className="font-mono text-sm text-[#405247] font-bold bg-[#405247]/10 px-3 py-1 rounded-lg">
+              {state.maxWeightG >= 1000 ? `${(state.maxWeightG / 1000).toFixed(1)} kg` : `${state.maxWeightG} g`}
+            </span>
+          </div>
+          <input
+            id="max-weight"
+            type="range"
+            min={3000}
+            max={20000}
+            step={500}
+            value={state.maxWeightG}
+            onChange={(e) => onChange('maxWeightG', Number(e.target.value))}
+            className="range-slider w-full"
+            aria-label={`Poids maximum: ${state.maxWeightG} grammes`}
+          />
+          <div className="flex justify-between mt-1">
+            <span className="font-mono-data text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>3 kg</span>
+            <span className="font-mono-data text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>20 kg</span>
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <label htmlFor="budget" className="text-sm font-600 text-[#2D3A33]">
+              Budget équipement
+            </label>
+            <span className="font-mono text-sm text-[#405247] font-bold bg-[#405247]/10 px-3 py-1 rounded-lg">
+              {state.budgetEur} €
+            </span>
+          </div>
+          <input
+            id="budget"
+            type="range"
+            min={50}
+            max={2000}
+            step={50}
+            value={state.budgetEur}
+            onChange={(e) => onChange('budgetEur', Number(e.target.value))}
+            className="range-slider w-full"
+            aria-label={`Budget: ${state.budgetEur} euros`}
+          />
+          <div className="flex justify-between mt-1">
+            <span className="font-mono-data text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>50 €</span>
+            <span className="font-mono-data text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>2 000 €</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Step Result ───────────────────────────────────────────────────────────────
+function StepResult({ state }: { state: WizardState }) {
+  return <StepRecap state={state} />;
+}
+
 // ── Step 1: Usage ─────────────────────────────────────────────────────────────
-function StepUsage({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string) => void }) {
-  const choices = [
+function _StepUsage({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string) => void }) {
+  const _choices = [
     { id: 'randonnee', icon: '🥾', title: 'Randonnée', titleItalic: 'légère.', desc: 'Journées, sentiers balisés. On privilégie la légèreté.' },
     { id: 'trekking', icon: '⛺', title: 'Trekking', titleItalic: 'multi-jours.', desc: 'Plusieurs nuits en autonomie. Équilibre poids / confort.' },
     { id: 'alpinisme', icon: '🧗', title: 'Alpinisme', titleItalic: 'technique.', desc: 'Haute montagne, glacier. Sécurité avant tout.' },
@@ -255,8 +482,8 @@ function StepUsage({ state, onChange }: { state: WizardState; onChange: (k: keyo
 }
 
 // ── Step 2: Durée ─────────────────────────────────────────────────────────────
-function StepDuree({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string) => void }) {
-  const choices = [
+function _StepDuree({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string) => void }) {
+  const _choices = [
     { id: 'weekend', icon: '🌅', title: 'Week-end,', titleItalic: '2–3 jours.', desc: 'Sac léger, minimum vital. On revient vite.' },
     { id: 'semaine', icon: '📅', title: 'Une semaine,', titleItalic: '4–7 jours.', desc: 'Équipement complet, quelques extras.' },
     { id: 'long', icon: '🗺️', title: 'Long séjour,', titleItalic: '1–3 semaines.', desc: 'Polyvalence, recharge, entretien du matériel.' },
@@ -362,7 +589,7 @@ function StepDuree({ state, onChange }: { state: WizardState; onChange: (k: keyo
 }
 
 // ── Step 3: Météo ─────────────────────────────────────────────────────────────
-function StepMeteo({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string) => void }) {
+function _StepMeteo({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string) => void }) {
   const choices = [
     { id: 'sec', icon: '☀️', title: 'Sec et', titleItalic: 'chaud.', desc: '15 à 25 °C, faible humidité. On priorise la respirabilité.' },
     { id: 'frais', icon: '🌫️', title: 'Frais et', titleItalic: 'brumeux.', desc: '5 à 15 °C avec humidité. Notre configuration par défaut.' },
@@ -848,6 +1075,13 @@ export default function ConfiguratorWizard() {
     confort: '',
     destination: '',
     generated: false,
+    startDate: '',
+    endDate: '',
+    season: '',
+    activity: '',
+    level: '',
+    maxWeightG: 10000,
+    budgetEur: 500,
   });
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);

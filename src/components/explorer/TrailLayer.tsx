@@ -2,7 +2,7 @@
 import { useRef, useCallback, useEffect } from 'react';
 import type { Map as LeafletMap } from 'leaflet';
 import type { MapTrail } from './types';
-import { getDifficultyColor, formatDistance } from './types';
+import { getDifficultyColor } from './types';
 
 interface TrailLayerProps {
   map: LeafletMap;

@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
-import Icon from '@/components/ui/AppIcon';
+
 
 const PRODUCT = {
   badge: 'Édition exclusive',
@@ -32,8 +32,8 @@ export default function HomepageFeaturedProductsSection() {
       ([entry]) => { if (entry.isIntersecting) setVisible(true); },
       { threshold: 0.1 }
     );
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
+    if (sectionRef?.current) observer?.observe(sectionRef?.current);
+    return () => observer?.disconnect();
   }, []);
 
   return (
@@ -50,7 +50,7 @@ export default function HomepageFeaturedProductsSection() {
           <div
             className="relative overflow-hidden rounded-2xl"
             style={{
-              background: PRODUCT.background,
+              background: PRODUCT?.background,
               aspectRatio: '4/5',
               opacity: visible ? 1 : 0,
               transform: visible ? 'translateX(0)' : 'translateX(-24px)',
@@ -68,13 +68,13 @@ export default function HomepageFeaturedProductsSection() {
                   border: '1px solid rgba(26,31,28,0.1)',
                 }}
               >
-                {PRODUCT.badge}
+                {PRODUCT?.badge}
               </span>
             </div>
 
             <AppImage
-              src={PRODUCT.img}
-              alt={PRODUCT.imgAlt}
+              src={PRODUCT?.img}
+              alt={PRODUCT?.imgAlt}
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
               loading="lazy"
@@ -104,24 +104,24 @@ export default function HomepageFeaturedProductsSection() {
                 letterSpacing: '-0.04em',
               }}
             >
-              {PRODUCT.headline[0]}
+              {PRODUCT?.headline?.[0]}
               <br />
               <em className="not-italic" style={{ fontStyle: 'italic', fontWeight: 400, color: 'rgba(26,31,28,0.5)' }}>
-                {PRODUCT.headline[1]}
+                {PRODUCT?.headline?.[1]}
               </em>
               <br />
-              {PRODUCT.headline[2]}
+              {PRODUCT?.headline?.[2]}
             </h2>
 
             <p className="text-[#6B7568] text-sm leading-relaxed mb-8 max-w-sm">
-              {PRODUCT.desc}
+              {PRODUCT?.desc}
             </p>
 
             {/* Specs */}
             <div className="grid grid-cols-2 gap-3 mb-8">
-              {PRODUCT.specs.map((s) => (
+              {PRODUCT?.specs?.map((s) => (
                 <div
-                  key={s.label}
+                  key={s?.label}
                   className="p-4 rounded-xl"
                   style={{ background: '#EDEAE0', border: '1px solid #DDD9CC' }}
                 >
@@ -129,10 +129,10 @@ export default function HomepageFeaturedProductsSection() {
                     className="text-sm font-semibold text-[#1A1F1C] mb-0.5"
                     style={{ fontFamily: 'var(--font-mono)' }}
                   >
-                    {s.val}
+                    {s?.val}
                   </p>
                   <p className="text-[10px] text-[#6B7568] uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>
-                    {s.label}
+                    {s?.label}
                   </p>
                 </div>
               ))}
@@ -144,16 +144,16 @@ export default function HomepageFeaturedProductsSection() {
                 className="text-3xl font-bold text-[#1A1F1C]"
                 style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}
               >
-                {PRODUCT.price}
+                {PRODUCT?.price}
               </span>
             </div>
 
             <div className="flex items-center gap-3">
-              <Link href={PRODUCT.href} className="btn-primary flex-1 sm:flex-none justify-center">
+              <Link href={PRODUCT?.href} className="btn-primary flex-1 sm:flex-none justify-center">
                 Ajouter au kit
               </Link>
               <Link
-                href={`${PRODUCT.href}#details`}
+                href={`${PRODUCT?.href}#details`}
                 className="btn-ghost"
               >
                 Voir la fiche

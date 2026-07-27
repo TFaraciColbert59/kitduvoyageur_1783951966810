@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import Header from '@/components/Header';
 
 import Icon from '@/components/ui/AppIcon';
@@ -185,7 +186,7 @@ export default function B2BPage() {
           </div>
           <div className="max-w-7xl mx-auto relative">
             <nav className="flex items-center gap-2 text-xs font-mono mb-8" style={{ color: 'rgba(255,255,255,0.5)' }}>
-              <a href="/" className="hover:text-white transition-colors">Accueil</a>
+              <Link href="/" className="hover:text-white transition-colors">Accueil</Link>
               <span>/</span>
               <span style={{ color: '#E4501C' }}>Espace Pro</span>
             </nav>

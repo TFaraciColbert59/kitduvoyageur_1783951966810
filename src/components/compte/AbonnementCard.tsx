@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { UserProfile } from '@/lib/mock/compte-marceline';
+
 
 interface AbonnementCardProps {
   subscription: any;

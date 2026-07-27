@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import NewFooterSection from '@/app/components/home/NewFooterSection';
 import Image from 'next/image';
 import Icon from '@/components/ui/AppIcon';
+import Link from 'next/link';
 
 
 interface Plan {
@@ -106,7 +107,7 @@ export default function AbonnementsPage() {
         <div className="absolute inset-0 bg-cover bg-center opacity-15" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1600&q=80')" }} />
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <nav className="flex items-center gap-2 text-xs font-mono mb-8" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            <a href="/" className="hover:text-white transition-colors">Accueil</a>
+            <Link href="/" className="hover:text-white transition-colors">Accueil</Link>
             <span>/</span>
             <span style={{ color: '#E4501C' }}>Abonnements</span>
           </nav>

@@ -12,7 +12,7 @@ import LoansCard from '@/components/inventaire/LoansCard';
 import RecommendationsCard from '@/components/inventaire/RecommendationsCard';
 import AddEditGearModal from '@/components/inventaire/AddEditGearModal';
 import MobileInventaireView from '@/components/inventaire/MobileInventaireView';
-import CompteFooter from '@/components/compte/CompteFooter';
+
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import {

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import AppLogo from '@/components/ui/AppLogo';
+
 import Icon from '@/components/ui/AppIcon';
 import { useAuth } from '@/contexts/AuthContext';
 import GlobalSearchModal from '@/components/ui/GlobalSearchModal';
@@ -41,17 +41,17 @@ export default function Header() {
 
           {/* Center: Links (hidden on mobile) */}
           <nav className="hidden md:flex items-center gap-6">
-            {NAV_LINKS.map((link) => {
-              const isActive = pathname === link.href;
+            {NAV_LINKS?.map((link) => {
+              const isActive = pathname === link?.href;
               return (
                 <Link
-                  key={link.label}
-                  href={link.href}
+                  key={link?.label}
+                  href={link?.href}
                   className={`text-[11px] font-semibold tracking-wide uppercase transition-colors hover:text-[#2D5A3D] ${
                     isActive ? 'text-[#1C2620]' : 'text-[#7A8A7D]'
                   }`}
                 >
-                  {link.label}
+                  {link?.label}
                 </Link>
               );
             })}
@@ -82,7 +82,6 @@ export default function Header() {
           </div>
         </div>
       </header>
-
       {/* Global Site Search Overlay */}
       <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </>

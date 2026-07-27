@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, Suspense } from 'react';
-import Header from '@/components/Header';
+
 
 import Icon from '@/components/ui/AppIcon';
-import Link from 'next/link';
+
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -102,12 +102,9 @@ function AuthForm() {
       const msg = err instanceof Error ? err.message : 'Une erreur est survenue.';
       const friendlyMsg =
         msg.includes('Invalid login credentials')
-          ? 'Email ou mot de passe incorrect.'
-          : msg.includes('User already registered')
-          ? 'Un compte existe déjà avec cet email.'
-          : msg.includes('Email not confirmed')
-          ? 'Veuillez confirmer votre email en cliquant sur le lien reçu.'
-          : msg.includes('Password should be at least')
+          ? 'Email ou mot de passe incorrect.' : msg.includes('User already registered')
+          ? 'Un compte existe déjà avec cet email.' : msg.includes('Email not confirmed')
+          ? 'Veuillez confirmer votre email en cliquant sur le lien reçu.' : msg.includes('Password should be at least')
           ? 'Le mot de passe doit contenir au moins 8 caractères.'
           : msg;
       setError(friendlyMsg);
@@ -139,7 +136,6 @@ function AuthForm() {
             ))}
           </div>
         </div>
-      </div>
 
         {/* Mode Toggle */}
         <div className="flex rounded-full border border-border bg-card p-1 mb-6" role="tablist">
@@ -268,7 +264,7 @@ function AuthForm() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 

@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import { addToCart } from '@/lib/cart';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
-import NewFooterSection from '@/app/components/home/NewFooterSection';
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -151,7 +151,6 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
             <span className="text-[#1C2620]">{product.nom}</span>
           </nav>
         </div>
-      </div>
 
         {/* HERO SECTION */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -354,22 +353,6 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
 
             </div>
 
-            {/* CTA */}
-            <div className="flex items-center gap-3">
-              <AddToCartButton product={product} selectedVolume={selectedVolume} />
-              <button
-                className="w-12 h-12 rounded-full border border-[#E8E4DA] bg-white flex items-center justify-center hover:border-[#1C2620] transition-colors flex-shrink-0"
-                aria-label="Ajouter aux favoris"
-              >
-                <Icon name="HeartIcon" size={18} variant="outline" className="text-[#1C2620]" />
-              </button>
-            </div>
-
-            {/* Trust badges */}
-            <TrustBadges />
-
-            {/* AI Chat */}
-            <AIProductChat product={product} />
           </div>
         </section>
 

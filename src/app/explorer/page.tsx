@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
-import dynamic from 'next/dynamic';
+
 import { useQuery } from '@tanstack/react-query';
 import type { MapTrail } from '@/components/explorer/types';
 import { getDifficultyColor, formatDistance, formatDuration, getTrailImage } from '@/components/explorer/types';
