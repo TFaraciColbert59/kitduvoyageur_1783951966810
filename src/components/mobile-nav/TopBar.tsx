@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import LkvIcon from '@/components/ui/LkvIcon';
@@ -98,17 +98,10 @@ function getParentTab(pathname: string): string {
 export default function TopBar({ variant = 'standard', cartCount = 0, showBack, title }: TopBarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [scrolled, setScrolled] = useState(false);
   const currentPath = pathname || '/';
   const displayTitle = title || getTitle(currentPath);
   const isHome = currentPath === '/';
   const isOnImage = variant === 'on-image';
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const shouldShowBack = showBack !== undefined ? showBack : !isRootTab(currentPath);
 
@@ -122,8 +115,7 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
 
   const standardStyle: React.CSSProperties = {
     background: '#FBFAF6',
-    borderBottom: scrolled ? '1px solid rgba(11,31,23,0.05)' : '1px solid transparent',
-    transition: 'border-color 300ms ease',
+    borderBottom: '1px solid rgba(11,31,23,0.05)',
   };
 
   const onImageStyle: React.CSSProperties = {
