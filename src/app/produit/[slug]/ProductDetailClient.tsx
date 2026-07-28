@@ -9,6 +9,8 @@ import { createClient } from '@/lib/supabase/client';
 import { addToCart } from '@/lib/cart';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import ProductBuyBar from '@/components/produit/ProductBuyBar';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -132,314 +134,655 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
   const lastWords = titleWords.slice(-2).join(' ');
   const firstWords = titleWords.slice(0, -2).join(' ');
 
+  const COLORS = [
+    { id: 'vert', color: '#445749' },
+    { id: 'moutarde', color: '#B89B60' },
+    { id: 'noir', color: '#2B302C' },
+    { id: 'bleu', color: '#A1B2BA' },
+    { id: 'terre', color: '#8B6D5C' },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#EBE8DD] text-[#1C2620] font-sans selection:bg-[#E4501C]/20">
-      <Header />
-      
-      <main id="main-content" className="pt-24 pb-16">
-        
-        {/* BREADCRUMB */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
-          <nav className="flex items-center gap-2 text-[11px] text-[#5C6B5E] font-medium tracking-wide">
-            <Link href="/" className="hover:text-[#1C2620] transition-colors">Accueil</Link>
-            <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
-            <Link href="/boutique" className="hover:text-[#1C2620] transition-colors">Boutique</Link>
-            <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
-            <Link href="/catalogue" className="hover:text-[#1C2620] transition-colors">{product.categorie}</Link>
-            <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
-            <span className="text-[#1C2620]">{product.nom}</span>
-          </nav>
-        </div>
+    <>
+      {/* ── DESKTOP VIEW ── */}
+      <div className="hidden md:block">
+        <div className="min-h-screen bg-[#EBE8DD] text-[#1C2620] font-sans selection:bg-[#E4501C]/20">
+          <Header />
 
-        {/* HERO SECTION */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
-            
-            {/* GALLERY (Left) */}
-            <div className="lg:col-span-7 flex flex-col-reverse md:flex-row gap-4 h-auto md:h-[650px]">
-              
-              {/* Thumbnails */}
-              <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto w-full md:w-24 flex-shrink-0 scrollbar-hide py-1">
-                {product.images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveImage(i)}
-                    className={`relative w-20 md:w-full aspect-square rounded-2xl overflow-hidden border-2 transition-all flex-shrink-0 bg-[#E3DFD2] ${i === activeImage ? 'border-[#1C2620] shadow-sm' : 'border-transparent hover:border-[#1C2620]/30'}`}
-                  >
-                    <img src={img.url} alt={`Miniature ${i+1}`} className="w-full h-full object-cover mix-blend-multiply opacity-90" />
-                  </button>
-                ))}
-              </div>
+          <main id="main-content" className="pt-24 pb-16">
 
-              {/* Main Image */}
-              <div className="relative flex-1 rounded-3xl overflow-hidden bg-[#E3DFD2] border border-[#DBD6C6] group">
-                <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur text-[10px] font-semibold text-[#1C2620] px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-[#B5652D] rounded-full"></span>
-                  Édition automne
-                </div>
-                
-                <AnimatePresence mode="wait">
-                  <motion.img
-                    key={activeImage}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    src={product.images[activeImage]?.url}
-                    alt={product.images[activeImage]?.alt}
-                    className="w-full h-full object-cover mix-blend-multiply"
-                  />
-                </AnimatePresence>
-
-                <button className="absolute bottom-4 right-4 w-10 h-10 bg-white/80 backdrop-blur rounded-full flex items-center justify-center text-[#1C2620] shadow-sm hover:bg-white hover:scale-105 transition-all opacity-0 group-hover:opacity-100">
-                  <Icon name="ArrowsPointingOutIcon" size={16} variant="outline" />
-                </button>
-              </div>
+            {/* BREADCRUMB */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+              <nav className="flex items-center gap-2 text-[11px] text-[#5C6B5E] font-medium tracking-wide">
+                <Link href="/" className="hover:text-[#1C2620] transition-colors">Accueil</Link>
+                <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
+                <Link href="/boutique" className="hover:text-[#1C2620] transition-colors">Boutique</Link>
+                <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
+                <Link href="/catalogue" className="hover:text-[#1C2620] transition-colors">{product.categorie}</Link>
+                <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
+                <span className="text-[#1C2620]">{product.nom}</span>
+              </nav>
             </div>
 
-            {/* PRODUCT INFO (Right) */}
-            <div className="lg:col-span-5 flex flex-col justify-center">
-              
-              <div className="mb-4">
-                <span className="inline-block bg-[#D3DFD7] text-[#2D5A3D] text-[9px] font-mono tracking-[0.2em] uppercase px-2.5 py-1 rounded-full mb-4">
-                  Le sac essentiel
-                </span>
-                <h1 className="font-display font-800 text-4xl lg:text-[44px] leading-[1.1] text-[#1C2620] tracking-tight mb-3">
-                  {firstWords} <em className="font-serif italic font-normal text-[#5C6B5E]">{lastWords}</em>.
-                </h1>
-                <div className="flex items-center gap-2 text-xs font-medium text-[#5C6B5E]">
-                  <span className="flex items-center gap-1 text-[#B5652D]"><Icon name="StarIcon" size={12} /> 4.9</span>
-                  <span className="w-1 h-1 bg-[#C8C3B0] rounded-full"></span>
-                  <span>125 avis</span>
-                  <span className="w-1 h-1 bg-[#C8C3B0] rounded-full"></span>
-                  <span>47 testeurs terrain</span>
-                </div>
-              </div>
+            {/* HERO SECTION */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
 
-              <p className="text-sm text-[#4A574C] leading-relaxed mb-8">
-                {product.description}
-              </p>
+                {/* GALLERY (Left) */}
+                <div className="lg:col-span-7 flex flex-col-reverse md:flex-row gap-4 h-auto md:h-[650px]">
 
-              {/* VARIANTS */}
-              <div className="space-y-6 mb-10">
-                {/* Coloris */}
-                <div>
-                  <div className="flex justify-between items-baseline mb-3">
-                    <span className="text-xs font-semibold text-[#1C2620]">Coloris</span>
-                    <span className="text-xs text-[#5C6B5E]">{selectedColor === 'vert' ? 'Vert forêt' : 'Autre'}</span>
-                  </div>
-                  <div className="flex gap-3">
-                    {[
-                      { id: 'vert', color: '#445749' },
-                      { id: 'moutarde', color: '#B89B60' },
-                      { id: 'noir', color: '#2B302C' },
-                      { id: 'bleu', color: '#A1B2BA' },
-                    ].map(c => (
+                  {/* Thumbnails */}
+                  <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto w-full md:w-24 flex-shrink-0 scrollbar-hide py-1">
+                    {product.images.map((img, i) => (
                       <button
-                        key={c.id}
-                        onClick={() => setSelectedColor(c.id)}
-                        className={`relative w-8 h-8 rounded-full flex items-center justify-center transition-all ${selectedColor === c.id ? 'ring-2 ring-offset-2 ring-offset-[#EBE8DD] ring-[#1C2620]' : 'hover:scale-110'}`}
+                        key={i}
+                        onClick={() => setActiveImage(i)}
+                        className={`relative w-20 md:w-full aspect-square rounded-2xl overflow-hidden border-2 transition-all flex-shrink-0 bg-[#E3DFD2] ${i === activeImage ? 'border-[#1C2620] shadow-sm' : 'border-transparent hover:border-[#1C2620]/30'}`}
                       >
-                        <span className="w-full h-full rounded-full border border-black/10" style={{ backgroundColor: c.color }}></span>
+                        <img src={img.url} alt={`Miniature ${i+1}`} className="w-full h-full object-cover mix-blend-multiply opacity-90" />
                       </button>
                     ))}
                   </div>
-                </div>
 
-                {/* Volume */}
-                <div>
-                  <div className="flex justify-between items-baseline mb-3">
-                    <span className="text-xs font-semibold text-[#1C2620]">Volume</span>
-                    <span className="text-xs text-[#5C6B5E]">{selectedVolume} - idéal 3-5 jours</span>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {['30 L', '45 L', '60 L', '75 L'].map(vol => (
-                      <button
-                        key={vol}
-                        onClick={() => setSelectedVolume(vol)}
-                        className={`px-4 py-2 rounded-full text-xs font-semibold transition-all border ${selectedVolume === vol ? 'bg-[#1C2620] text-white border-[#1C2620]' : 'bg-white border-[#C8C3B0] text-[#1C2620] hover:border-[#1C2620]'}`}
-                      >
-                        {vol}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                  {/* Main Image */}
+                  <div className="relative flex-1 rounded-3xl overflow-hidden bg-[#E3DFD2] border border-[#DBD6C6] group">
+                    <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur text-[10px] font-semibold text-[#1C2620] px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 bg-[#B5652D] rounded-full"></span>
+                      Édition automne
+                    </div>
 
-                {/* Sangles */}
-                <div>
-                  <div className="flex justify-between items-baseline mb-3">
-                    <span className="text-xs font-semibold text-[#1C2620]">Sangles</span>
-                    <span className="text-xs text-[#5C6B5E]">{selectedStrap}</span>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {['Basique', 'Ventrale + poitrine', 'Ventrale + poitrine + porte-piolet'].map(strap => (
-                      <button
-                        key={strap}
-                        onClick={() => setSelectedStrap(strap)}
-                        className={`px-4 py-2 rounded-full text-xs font-semibold transition-all border ${selectedStrap === strap ? 'bg-[#1C2620] text-white border-[#1C2620]' : 'bg-white border-[#C8C3B0] text-[#1C2620] hover:border-[#1C2620]'}`}
-                      >
-                        {strap}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* PRICE & CTA */}
-              <div className="border-t border-[#C8C3B0] pt-6 mb-8">
-                <div className="flex justify-between items-end mb-5">
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-display font-800 text-[28px] text-[#1C2620]">{(product.prix_cents / 100).toFixed(0)} €</span>
-                    <span className="text-xs text-[#5C6B5E]">- TVA incluse</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[10px] font-medium text-[#2D5A3D]">
-                    <span className="w-1.5 h-1.5 bg-[#2D5A3D] rounded-full"></span>
-                    En stock - expédié sous 48 h
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleAddToCart}
-                    className={`flex-1 py-4 rounded-full font-semibold text-sm transition-all flex items-center justify-center gap-2 ${cartAdded ? 'bg-emerald-600 text-white' : 'bg-[#1C2620] hover:bg-[#2A3830] text-white'}`}
-                  >
-                    {cartAdded ? (
-                      <><Icon name="CheckCircleIcon" size={18} /> Ajouté</>
-                    ) : (
-                      <><Icon name="ShoppingBagIcon" size={18} /> Ajouter au panier</>
-                    )}
-                  </button>
-                  
-                  <motion.button 
-                    whileTap={{ scale: 0.8 }}
-                    onClick={() => setIsFavorite(!isFavorite)}
-                    className={`w-[52px] h-[52px] rounded-full border flex items-center justify-center transition-colors flex-shrink-0 relative overflow-hidden ${isFavorite ? 'border-[#E4501C] bg-[#E4501C]/10 text-[#E4501C]' : 'border-[#C8C3B0] bg-white hover:bg-[#E3DFD2] text-[#1C2620]'}`}
-                  >
                     <AnimatePresence mode="wait">
-                      <motion.div
-                        key={isFavorite ? 'filled' : 'outline'}
-                        initial={{ scale: 0.5, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.5, opacity: 0 }}
-                        transition={{ duration: 0.15 }}
-                      >
-                        <Icon name="HeartIcon" size={20} variant={isFavorite ? "solid" : "outline"} className={isFavorite ? "fill-current" : ""} />
-                      </motion.div>
+                      <motion.img
+                        key={activeImage}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        src={product.images[activeImage]?.url}
+                        alt={product.images[activeImage]?.alt}
+                        className="w-full h-full object-cover mix-blend-multiply"
+                      />
                     </AnimatePresence>
-                  </motion.button>
+
+                    <button className="absolute bottom-4 right-4 w-10 h-10 bg-white/80 backdrop-blur rounded-full flex items-center justify-center text-[#1C2620] shadow-sm hover:bg-white hover:scale-105 transition-all opacity-0 group-hover:opacity-100">
+                      <Icon name="ArrowsPointingOutIcon" size={16} variant="outline" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* PRODUCT INFO (Right) */}
+                <div className="lg:col-span-5 flex flex-col justify-center">
+
+                  <div className="mb-4">
+                    <span className="inline-block bg-[#D3DFD7] text-[#2D5A3D] text-[9px] font-mono tracking-[0.2em] uppercase px-2.5 py-1 rounded-full mb-4">
+                      Le sac essentiel
+                    </span>
+                    <h1 className="font-display font-800 text-4xl lg:text-[44px] leading-[1.1] text-[#1C2620] tracking-tight mb-3">
+                      {firstWords} <em className="font-serif italic font-normal text-[#5C6B5E]">{lastWords}</em>.
+                    </h1>
+                    <div className="flex items-center gap-2 text-xs font-medium text-[#5C6B5E]">
+                      <span className="flex items-center gap-1 text-[#B5652D]"><Icon name="StarIcon" size={12} /> 4.9</span>
+                      <span className="w-1 h-1 bg-[#C8C3B0] rounded-full"></span>
+                      <span>125 avis</span>
+                      <span className="w-1 h-1 bg-[#C8C3B0] rounded-full"></span>
+                      <span>47 testeurs terrain</span>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-[#4A574C] leading-relaxed mb-8">
+                    {product.description}
+                  </p>
+
+                  {/* VARIANTS */}
+                  <div className="space-y-6 mb-10">
+                    {/* Coloris */}
+                    <div>
+                      <div className="flex justify-between items-baseline mb-3">
+                        <span className="text-xs font-semibold text-[#1C2620]">Coloris</span>
+                        <span className="text-xs text-[#5C6B5E]">{selectedColor === 'vert' ? 'Vert forêt' : 'Autre'}</span>
+                      </div>
+                      <div className="flex gap-3">
+                        {COLORS.slice(0, 4).map(c => (
+                          <button
+                            key={c.id}
+                            onClick={() => setSelectedColor(c.id)}
+                            className={`relative w-8 h-8 rounded-full flex items-center justify-center transition-all ${selectedColor === c.id ? 'ring-2 ring-offset-2 ring-offset-[#EBE8DD] ring-[#1C2620]' : 'hover:scale-110'}`}
+                          >
+                            <span className="w-full h-full rounded-full border border-black/10" style={{ backgroundColor: c.color }}></span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Volume */}
+                    <div>
+                      <div className="flex justify-between items-baseline mb-3">
+                        <span className="text-xs font-semibold text-[#1C2620]">Volume</span>
+                        <span className="text-xs text-[#5C6B5E]">{selectedVolume} - idéal 3-5 jours</span>
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        {['30 L', '45 L', '60 L', '75 L'].map(vol => (
+                          <button
+                            key={vol}
+                            onClick={() => setSelectedVolume(vol)}
+                            className={`px-4 py-2 rounded-full text-xs font-semibold transition-all border ${selectedVolume === vol ? 'bg-[#1C2620] text-white border-[#1C2620]' : 'bg-white border-[#C8C3B0] text-[#1C2620] hover:border-[#1C2620]'}`}
+                          >
+                            {vol}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Sangles */}
+                    <div>
+                      <div className="flex justify-between items-baseline mb-3">
+                        <span className="text-xs font-semibold text-[#1C2620]">Sangles</span>
+                        <span className="text-xs text-[#5C6B5E]">{selectedStrap}</span>
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        {['Basique', 'Ventrale + poitrine', 'Ventrale + poitrine + porte-piolet'].map(strap => (
+                          <button
+                            key={strap}
+                            onClick={() => setSelectedStrap(strap)}
+                            className={`px-4 py-2 rounded-full text-xs font-semibold transition-all border ${selectedStrap === strap ? 'bg-[#1C2620] text-white border-[#1C2620]' : 'bg-white border-[#C8C3B0] text-[#1C2620] hover:border-[#1C2620]'}`}
+                          >
+                            {strap}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* PRICE & CTA */}
+                  <div className="border-t border-[#C8C3B0] pt-6 mb-8">
+                    <div className="flex justify-between items-end mb-5">
+                      <div className="flex items-baseline gap-2">
+                        <span className="font-display font-800 text-[28px] text-[#1C2620]">{(product.prix_cents / 100).toFixed(0)} €</span>
+                        <span className="text-xs text-[#5C6B5E]">- TVA incluse</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[10px] font-medium text-[#2D5A3D]">
+                        <span className="w-1.5 h-1.5 bg-[#2D5A3D] rounded-full"></span>
+                        En stock - expédié sous 48 h
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleAddToCart}
+                        className={`flex-1 py-4 rounded-full font-semibold text-sm transition-all flex items-center justify-center gap-2 ${cartAdded ? 'bg-emerald-600 text-white' : 'bg-[#1C2620] hover:bg-[#2A3830] text-white'}`}
+                      >
+                        {cartAdded ? (
+                          <><Icon name="CheckCircleIcon" size={18} /> Ajouté</>
+                        ) : (
+                          <><Icon name="ShoppingBagIcon" size={18} /> Ajouter au panier</>
+                        )}
+                      </button>
+
+                      <motion.button
+                        whileTap={{ scale: 0.8 }}
+                        onClick={() => setIsFavorite(!isFavorite)}
+                        className={`w-[52px] h-[52px] rounded-full border flex items-center justify-center transition-colors flex-shrink-0 relative overflow-hidden ${isFavorite ? 'border-[#E4501C] bg-[#E4501C]/10 text-[#E4501C]' : 'border-[#C8C3B0] bg-white hover:bg-[#E3DFD2] text-[#1C2620]'}`}
+                      >
+                        <AnimatePresence mode="wait">
+                          <motion.div
+                            key={isFavorite ? 'filled' : 'outline'}
+                            initial={{ scale: 0.5, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.5, opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                          >
+                            <Icon name="HeartIcon" size={20} variant={isFavorite ? "solid" : "outline"} className={isFavorite ? "fill-current" : ""} />
+                          </motion.div>
+                        </AnimatePresence>
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  {/* TRUST BADGES */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { icon: 'ShieldCheckIcon', title: 'Garantie à vie', sub: 'Réparable 1x/an gratuit' },
+                      { icon: 'TruckIcon', title: 'Livraison offerte', sub: 'Dès 100€' },
+                      { icon: 'ArrowPathIcon', title: 'Retour 30 jours', sub: 'Sans motifs' },
+                      { icon: 'GlobeAltIcon', title: '100% Europe', sub: 'Alpes-de-Haute-Provence' },
+                    ].map(badge => (
+                      <div key={badge.title} className="bg-white/50 border border-[#C8C3B0]/50 rounded-2xl p-3 flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-[#E3DFD2] flex items-center justify-center flex-shrink-0 text-[#2D5A3D]">
+                          <Icon name={badge.icon as any} size={16} variant="outline" />
+                        </div>
+                        <div>
+                          <div className="text-[11px] font-bold text-[#1C2620] mb-0.5">{badge.title}</div>
+                          <div className="text-[9px] text-[#5C6B5E] leading-tight">{badge.sub}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
                 </div>
               </div>
+            </section>
 
-              {/* TRUST BADGES */}
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { icon: 'ShieldCheckIcon', title: 'Garantie à vie', sub: 'Réparable 1x/an gratuit' },
-                  { icon: 'TruckIcon', title: 'Livraison offerte', sub: 'Dès 100€' },
-                  { icon: 'ArrowPathIcon', title: 'Retour 30 jours', sub: 'Sans motifs' },
-                  { icon: 'GlobeAltIcon', title: '100% Europe', sub: 'Alpes-de-Haute-Provence' },
-                ].map(badge => (
-                  <div key={badge.title} className="bg-white/50 border border-[#C8C3B0]/50 rounded-2xl p-3 flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#E3DFD2] flex items-center justify-center flex-shrink-0 text-[#2D5A3D]">
-                      <Icon name={badge.icon as any} size={16} variant="outline" />
+            {/* FABRICATION SECTION */}
+            <section className="mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-20 items-center">
+                <div className="aspect-[4/5] rounded-[2rem] overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80" alt="Atelier de fabrication" className="w-full h-full object-cover grayscale-[30%]" />
+                </div>
+                <div>
+                  <span className="text-[9px] font-mono tracking-[0.2em] text-[#5C6B5E] uppercase mb-4 block">Fabrication</span>
+                  <h2 className="font-display font-800 text-[32px] md:text-[40px] leading-[1.1] text-[#1C2620] mb-6">
+                    Cousu à <em className="font-serif italic text-[#2D5A3D] font-normal">Manosque,</em><br /> par cinq mains.
+                  </h2>
+                  <p className="text-sm text-[#5C6B5E] leading-relaxed mb-12 max-w-md">
+                    Cinq artisanes travaillent le cuir chaque semaine dans un atelier des Alpes-de-Haute-Provence. Un sac demande six heures de couture, une heure d'huilage, une nuit de séchage.
+                  </p>
+
+                  <div className="grid grid-cols-3 gap-6 border-t border-[#C8C3B0] pt-6">
+                    <div>
+                      <div className="font-display font-800 text-2xl text-[#1C2620] mb-1">6 <em className="font-serif italic font-normal">h</em></div>
+                      <div className="text-[9px] font-mono uppercase tracking-wider text-[#5C6B5E]">Couture</div>
                     </div>
                     <div>
-                      <div className="text-[11px] font-bold text-[#1C2620] mb-0.5">{badge.title}</div>
-                      <div className="text-[9px] text-[#5C6B5E] leading-tight">{badge.sub}</div>
+                      <div className="font-display font-800 text-2xl text-[#1C2620] mb-1">1 200 <em className="font-serif italic font-normal">g</em></div>
+                      <div className="text-[9px] font-mono uppercase tracking-wider text-[#5C6B5E]">Poids à sec</div>
+                    </div>
+                    <div>
+                      <div className="font-display font-800 text-2xl text-[#1C2620] mb-1">45 <em className="font-serif italic font-normal">L</em></div>
+                      <div className="text-[9px] font-mono uppercase tracking-wider text-[#5C6B5E]">Volume utile</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* SPECS SECTION */}
+            <section className="mt-24 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 bg-white rounded-[2rem] p-8 md:p-12 shadow-sm border border-[#E8E4D8]">
+              <h3 className="font-display font-800 text-2xl mb-8">Spécifications <em className="font-serif italic font-normal text-[#2D5A3D]">techniques.</em></h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4 text-xs">
+                {[
+                  { label: 'Volume utile', value: '45 litres' },
+                  { label: 'Poids à sec', value: '1,4 kg' },
+                  { label: 'Toile principale', value: 'Coton huilé 12 oz' },
+                  { label: 'Doublure', value: 'Lin biologique 400 g/m²' },
+                  { label: 'Boucles', value: 'Laiton brossé, France' },
+                  { label: 'Couture', value: 'Point sellier, fil ciré' },
+                  { label: 'Dos', value: 'Ergonomique 4 zones' },
+                  { label: 'Ceinture ventrale', value: 'Réglable, amovible' },
+                  { label: 'Compartiments', value: '3 - dont 1 rabat + 1 poche sécurisée' },
+                  { label: 'Accroches', value: 'Tapis, piolet, gourde' },
+                  { label: 'Imperméabilité', value: 'IP54 - pluie fine' },
+                  { label: 'Garantie', value: 'À vie - réparable' },
+                ].map(spec => (
+                  <div key={spec.label} className="flex justify-between items-center py-2 border-b border-[#EBE8DD] last:border-0 md:last:border-b">
+                    <span className="text-[#5C6B5E]">{spec.label}</span>
+                    <span className="font-medium text-[#1C2620] text-right">{spec.value}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* CROSS SELL */}
+            <section className="mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">
+              <h3 className="font-display font-800 text-2xl mb-8">Ils vont <em className="font-serif italic font-normal text-[#2D5A3D]">avec.</em></h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                {[
+                  { label: 'COUCHAGE', title: 'Duvet 3 saisons', price: '240 €', img: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=200&q=80' },
+                  { label: 'HYDRATATION', title: 'Gourde titane 1 L', price: '68 €', img: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=200&q=80' },
+                  { label: 'VÊTEMENTS', title: 'Veste 3 couches', price: '212 €', img: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=200&q=80' },
+                ].map(item => (
+                  <div key={item.title} className="bg-white rounded-2xl p-3 pr-5 flex items-center gap-4 shadow-sm border border-[#E8E4D8] hover:border-[#1C2620] transition-colors cursor-pointer group">
+                    <div className="w-16 h-16 rounded-xl bg-[#EBE8DD] overflow-hidden flex-shrink-0">
+                      <img src={item.img} alt={item.title} className="w-full h-full object-cover mix-blend-multiply opacity-90 group-hover:scale-110 transition-transform duration-500" />
+                    </div>
+                    <div>
+                      <div className="text-[8px] font-mono tracking-widest text-[#5C6B5E] uppercase mb-0.5">{item.label}</div>
+                      <div className="text-xs font-bold text-[#1C2620]">{item.title}</div>
+                      <div className="text-xs text-[#1C2620] mt-0.5">{item.price}</div>
                     </div>
                   </div>
                 ))}
               </div>
+            </section>
 
+          </main>
+          <Footer />
+        </div>
+      </div>
+
+      {/* ── MOBILE VIEW ── */}
+      <div className="block md:hidden">
+        <MobilePageShell>
+          {/* Gallery */}
+          <div
+            style={{
+              height: '380px',
+              background: 'linear-gradient(160deg, #2D6B4A 0%, #17402C 60%, #0B1F17 100%)',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Chips overlay */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '12px',
+                left: '16px',
+                display: 'flex',
+                gap: '6px',
+                zIndex: 2,
+              }}
+            >
+              <span
+                style={{
+                  padding: '4px 10px',
+                  background: 'rgba(255,255,255,0.9)',
+                  borderRadius: '999px',
+                  fontSize: '9px',
+                  fontWeight: 600,
+                  color: '#17402C',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                Nouveauté
+              </span>
+              <span
+                style={{
+                  padding: '4px 10px',
+                  background: 'rgba(255,255,255,0.9)',
+                  borderRadius: '999px',
+                  fontSize: '9px',
+                  fontWeight: 600,
+                  color: '#17402C',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                -14 %
+              </span>
+            </div>
+
+            {/* Center SVG icon */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <svg width="140" height="140" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="0.8">
+                <path d="M3 17l4-8 4 4 3-6 4 10H3z" />
+                <circle cx="12" cy="6" r="2.5" />
+                <path d="M8 20v-4a4 4 0 0 1 8 0v4" />
+              </svg>
+            </div>
+
+            {/* Pagination dots */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '16px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                gap: '6px',
+              }}
+            >
+              {[0, 1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: i === 0 ? '20px' : '6px',
+                    height: '6px',
+                    borderRadius: '999px',
+                    background: i === 0 ? '#fff' : 'rgba(255,255,255,0.3)',
+                    transition: 'width 200ms ease',
+                  }}
+                />
+              ))}
             </div>
           </div>
-        </section>
 
-        {/* FABRICATION SECTION */}
-        <section className="mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-20 items-center">
-            <div className="aspect-[4/5] rounded-[2rem] overflow-hidden">
-              <img src="https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80" alt="Atelier de fabrication" className="w-full h-full object-cover grayscale-[30%]" />
+          {/* Info section */}
+          <div style={{ padding: '16px 20px 8px' }}>
+            <div
+              style={{
+                fontSize: '10px',
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: '#6B7A72',
+                fontWeight: 500,
+              }}
+            >
+              LE KIT · N°01 · PORTAGE
             </div>
-            <div>
-              <span className="text-[9px] font-mono tracking-[0.2em] text-[#5C6B5E] uppercase mb-4 block">Fabrication</span>
-              <h2 className="font-display font-800 text-[32px] md:text-[40px] leading-[1.1] text-[#1C2620] mb-6">
-                Cousu à <em className="font-serif italic text-[#2D5A3D] font-normal">Manosque,</em><br /> par cinq mains.
-              </h2>
-              <p className="text-sm text-[#5C6B5E] leading-relaxed mb-12 max-w-md">
-                Cinq artisanes travaillent le cuir chaque semaine dans un atelier des Alpes-de-Haute-Provence. Un sac demande six heures de couture, une heure d'huilage, une nuit de séchage.
-              </p>
+            <h1
+              style={{
+                fontSize: '24px',
+                fontWeight: 500,
+                letterSpacing: '-0.02em',
+                lineHeight: 1.1,
+                margin: '4px 0',
+                color: '#0B1F17',
+              }}
+            >
+              {product.nom.split(' ').slice(0, -1).join(' ')}{' '}
+              <em
+                style={{
+                  fontFamily: 'Georgia, serif',
+                  fontStyle: 'italic',
+                  color: '#17402C',
+                  fontWeight: 400,
+                }}
+              >
+                {product.nom.split(' ').slice(-1)}
+              </em>
+            </h1>
 
-              <div className="grid grid-cols-3 gap-6 border-t border-[#C8C3B0] pt-6">
-                <div>
-                  <div className="font-display font-800 text-2xl text-[#1C2620] mb-1">6 <em className="font-serif italic font-normal">h</em></div>
-                  <div className="text-[9px] font-mono uppercase tracking-wider text-[#5C6B5E]">Couture</div>
-                </div>
-                <div>
-                  <div className="font-display font-800 text-2xl text-[#1C2620] mb-1">1 200 <em className="font-serif italic font-normal">g</em></div>
-                  <div className="text-[9px] font-mono uppercase tracking-wider text-[#5C6B5E]">Poids à sec</div>
-                </div>
-                <div>
-                  <div className="font-display font-800 text-2xl text-[#1C2620] mb-1">45 <em className="font-serif italic font-normal">L</em></div>
-                  <div className="text-[9px] font-mono uppercase tracking-wider text-[#5C6B5E]">Volume utile</div>
-                </div>
-              </div>
+            {/* Price */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '8px',
+                marginTop: '8px',
+              }}
+            >
+              <span style={{ fontSize: '22px', fontWeight: 500, color: '#17402C' }}>
+                {(product.prix_cents / 100).toFixed(0)} €
+              </span>
+              <span
+                style={{
+                  fontSize: '12px',
+                  color: '#8B978F',
+                  textDecoration: 'line-through',
+                }}
+              >
+                {((product.prix_cents / 100) * 1.14).toFixed(0)} €
+              </span>
+              <span
+                style={{
+                  fontSize: '9px',
+                  fontWeight: 600,
+                  color: '#fff',
+                  background: '#2D6B4A',
+                  padding: '2px 6px',
+                  borderRadius: '999px',
+                }}
+              >
+                −14 %
+              </span>
+            </div>
+
+            {/* Stars */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                marginTop: '6px',
+              }}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#A8C8A0" stroke="#A8C8A0" strokeWidth="1">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <span style={{ fontSize: '11px', color: '#6B7A72' }}>4.9 (125 avis)</span>
             </div>
           </div>
-        </section>
 
-        {/* SPECS SECTION */}
-        <section className="mt-24 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 bg-white rounded-[2rem] p-8 md:p-12 shadow-sm border border-[#E8E4D8]">
-          <h3 className="font-display font-800 text-2xl mb-8">Spécifications <em className="font-serif italic font-normal text-[#2D5A3D]">techniques.</em></h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4 text-xs">
+          {/* Attributes grid 2×2 */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '8px',
+              padding: '12px 20px',
+            }}
+          >
             {[
-              { label: 'Volume utile', value: '45 litres' },
-              { label: 'Poids à sec', value: '1,4 kg' },
-              { label: 'Toile principale', value: 'Coton huilé 12 oz' },
-              { label: 'Doublure', value: 'Lin biologique 400 g/m²' },
-              { label: 'Boucles', value: 'Laiton brossé, France' },
-              { label: 'Couture', value: 'Point sellier, fil ciré' },
-              { label: 'Dos', value: 'Ergonomique 4 zones' },
-              { label: 'Ceinture ventrale', value: 'Réglable, amovible' },
-              { label: 'Compartiments', value: '3 - dont 1 rabat + 1 poche sécurisée' },
-              { label: 'Accroches', value: 'Tapis, piolet, gourde' },
-              { label: 'Imperméabilité', value: 'IP54 - pluie fine' },
-              { label: 'Garantie', value: 'À vie - réparable' },
-            ].map(spec => (
-              <div key={spec.label} className="flex justify-between items-center py-2 border-b border-[#EBE8DD] last:border-0 md:last:border-b">
-                <span className="text-[#5C6B5E]">{spec.label}</span>
-                <span className="font-medium text-[#1C2620] text-right">{spec.value}</span>
+              { label: 'Capacité', value: '45', unit: 'litres' },
+              { label: 'Poids', value: '1,4', unit: 'kg' },
+              { label: 'Matière', value: 'Coton huilé', unit: '12 oz' },
+              { label: 'Origine', value: 'Alpes-de-Haute-Provence', unit: 'France' },
+            ].map((attr) => (
+              <div
+                key={attr.label}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 12px',
+                  background: '#F4F1EA',
+                  borderRadius: '14px',
+                }}
+              >
+                <div
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '8px',
+                    background: '#EAF1E5',
+                    color: '#17402C',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    fontFamily: 'ui-monospace, monospace',
+                    flexShrink: 0,
+                  }}
+                >
+                  {attr.label === 'Capacité' ? '45' : attr.label === 'Poids' ? '1' : attr.label === 'Matière' ? '•' : '★'}
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontSize: '9px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.1em',
+                      color: '#6B7A72',
+                    }}
+                  >
+                    {attr.label}
+                  </div>
+                  <div style={{ fontSize: '12px', fontWeight: 500, color: '#0B1F17' }}>
+                    {attr.value}{' '}
+                    <em
+                      style={{
+                        fontFamily: 'Georgia, serif',
+                        fontStyle: 'italic',
+                        color: '#17402C',
+                        fontSize: '11px',
+                      }}
+                    >
+                      {attr.unit}
+                    </em>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
-        </section>
 
-        {/* CROSS SELL */}
-        <section className="mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">
-          <h3 className="font-display font-800 text-2xl mb-8">Ils vont <em className="font-serif italic font-normal text-[#2D5A3D]">avec.</em></h3>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {[
-              { label: 'COUCHAGE', title: 'Duvet 3 saisons', price: '240 €', img: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=200&q=80' },
-              { label: 'HYDRATATION', title: 'Gourde titane 1 L', price: '68 €', img: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=200&q=80' },
-              { label: 'VÊTEMENTS', title: 'Veste 3 couches', price: '212 €', img: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=200&q=80' },
-            ].map(item => (
-              <div key={item.title} className="bg-white rounded-2xl p-3 pr-5 flex items-center gap-4 shadow-sm border border-[#E8E4D8] hover:border-[#1C2620] transition-colors cursor-pointer group">
-                <div className="w-16 h-16 rounded-xl bg-[#EBE8DD] overflow-hidden flex-shrink-0">
-                  <img src={item.img} alt={item.title} className="w-full h-full object-cover mix-blend-multiply opacity-90 group-hover:scale-110 transition-transform duration-500" />
-                </div>
-                <div>
-                  <div className="text-[8px] font-mono tracking-widest text-[#5C6B5E] uppercase mb-0.5">{item.label}</div>
-                  <div className="text-xs font-bold text-[#1C2620]">{item.title}</div>
-                  <div className="text-xs text-[#1C2620] mt-0.5">{item.price}</div>
-                </div>
-              </div>
-            ))}
+          {/* Color selector */}
+          <div style={{ padding: '8px 20px' }}>
+            <div
+              style={{
+                fontSize: '12px',
+                fontWeight: 500,
+                color: '#0B1F17',
+                marginBottom: '10px',
+              }}
+            >
+              Coloris
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {COLORS.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setSelectedColor(c.id)}
+                  style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '14px',
+                    border: selectedColor === c.id ? '2px solid #17402C' : '2px solid transparent',
+                    padding: '2px',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <span
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      borderRadius: '10px',
+                      backgroundColor: c.color,
+                      display: 'block',
+                    }}
+                  />
+                </button>
+              ))}
+            </div>
+            <div
+              style={{
+                fontSize: '10px',
+                color: '#6B7A72',
+                marginTop: '6px',
+                fontFamily: 'ui-monospace, monospace',
+              }}
+            >
+              {selectedColor}
+            </div>
           </div>
-        </section>
 
-      </main>
-      <Footer />
-    </div>
+          {/* Description */}
+          <div style={{ padding: '8px 20px 16px' }}>
+            <p
+              style={{
+                fontSize: '13px',
+                color: '#384A42',
+                lineHeight: 1.6,
+              }}
+            >
+              {product.description}
+            </p>
+          </div>
+
+          {/* Buy bar */}
+          <ProductBuyBar
+            price={product.prix_cents / 100}
+            onAddToCart={(qty) => {
+              for (let i = 0; i < qty; i++) handleAddToCart();
+            }}
+          />
+        </MobilePageShell>
+      </div>
+    </>
   );
 }
