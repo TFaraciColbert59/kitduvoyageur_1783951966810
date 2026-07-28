@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { MapTrail } from './types';
+import { getChatCompletion, GEMINI_PROVIDER, GEMINI_DEFAULT_MODEL } from '@/lib/ai/chatCompletion';
 import {
   getTrailImage,
   getDifficultyColor,
@@ -46,6 +47,87 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
   const imgUrl = getTrailImage(trail.id);
   const diffColor = getDifficultyColor(trail.difficulty);
   const diffLabel = getDifficultyLabel(trail.difficulty);
+
+  const [description, setDescription] = useState<string | null>(null);
+  const [loadingAI, setLoadingAI] = useState<boolean>(false);
+
+  const cacheKey = `gemini_desc_${trail.id}`;
+
+  // Generate AI Description
+  useEffect(() => {
+    let isMounted = true;
+
+    // 1. Check local storage cache first to save quota
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        setDescription(cached);
+        setLoadingAI(false);
+        return;
+      }
+    } catch {}
+
+    async function generateDescription() {
+      setDescription(null);
+      setLoadingAI(true);
+      try {
+        const prompt = `Agis comme un guide de montagne expert et passionné. Génère une description riche, détaillée et inspirante pour cette randonnée, en utilisant un formatage Markdown élégant.
+
+Voici les données de la randonnée :
+- Nom : ${trail.name}
+- Distance : ${trail.distance_km || '?'} km
+- Durée estimée : ${trail.duration_hours || '?'} heures
+- Dénivelé positif : +${trail.elevation_gain || '?'} mètres
+- Difficulté technique : ${trail.difficulty || '?'}
+- Localisation/Massif : ${trail.ref || ''} ${trail.network ? ' / ' + trail.network : ''}
+- Score Aventure : ${trail.adventure_score || '?'} / 100
+- Score Nature : ${trail.nature_score || '?'} / 100
+- Score Panorama : ${trail.panorama_score || '?'} / 100
+
+Structure ta réponse de cette manière :
+1. **L'Expérience** : Un premier paragraphe immersif et captivant qui donne envie de faire cette randonnée (ambiance, paysages, sensation).
+2. **L'Effort & Le Terrain** : Un deuxième paragraphe qui analyse le ratio distance/dénivelé/durée. Explique très concrètement à quoi s'attendre (est-ce raide ? long ? familial ?). 
+3. **Le Conseil du Guide** : Une phrase courte finale avec un conseil pratique (ex: eau, chaussures, météo) lié à ce type de profil.
+
+Ne sois pas redondant, ne fais pas juste la liste des chiffres, mais utilise-les pour créer un vrai récit. N'invente pas de noms de villes ou de sommets si tu ne les connais pas, reste concentré sur l'ambiance et la typologie de l'effort.`;
+
+        const response: any = await getChatCompletion(
+          GEMINI_PROVIDER,
+          GEMINI_DEFAULT_MODEL,
+          [{ role: 'user', content: prompt }]
+        );
+
+        if (isMounted) {
+          const text = response?.text || response?.content || response?.choices?.[0]?.message?.content;
+          if (text) {
+            setDescription(text);
+            try { localStorage.setItem(cacheKey, text); } catch {}
+          } else {
+            setDescription("Description générée non disponible.");
+          }
+        }
+      } catch (err: any) {
+        console.error(err);
+        if (isMounted) {
+          // Fallback gracefully if API quota is reached or network fails
+          if (trail.ai_description) {
+            setDescription(trail.ai_description);
+          } else {
+            const dist = trail.distance_km ? `${trail.distance_km} km` : '';
+            const elev = trail.elevation_gain ? `+${trail.elevation_gain}m de dénivelé` : '';
+            const diff = trail.difficulty ? `niveau ${trail.difficulty.toLowerCase()}` : '';
+            setDescription(`Magnifique itinéraire de randonnée ${dist} ${elev} (${diff}). Profitez d'un cadre naturel préservé et d'une belle immersion en plein air.`);
+          }
+        }
+      } finally {
+        if (isMounted) setLoadingAI(false);
+      }
+    }
+
+    generateDescription();
+
+    return () => { isMounted = false; };
+  }, [trail, cacheKey]);
 
   // Close on Escape
   useEffect(() => {
@@ -168,12 +250,36 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
           </div>
 
           {/* AI Description */}
-          {trail.ai_description && (
+          {(description || loadingAI) && (
             <>
               <div className="h-px bg-[#E8E4D8] mx-4" />
               <div className="px-4 py-4">
-                <h3 className="text-xs font-bold text-[#1C2620] uppercase tracking-widest mb-2">Description</h3>
-                <p className="text-sm text-[#5A6A5D] leading-relaxed">{trail.ai_description}</p>
+                <div className="flex items-center gap-2 mb-2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2D5A27" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" />
+                  </svg>
+                  <h3 className="text-xs font-bold text-[#1C2620] uppercase tracking-widest">Description (IA)</h3>
+                </div>
+                {loadingAI ? (
+                  <div className="animate-pulse space-y-2">
+                    <div className="h-3 bg-[#E8E4D8] rounded w-full"></div>
+                    <div className="h-3 bg-[#E8E4D8] rounded w-full"></div>
+                    <div className="h-3 bg-[#E8E4D8] rounded w-5/6"></div>
+                    <div className="h-3 bg-[#E8E4D8] rounded w-4/6 mt-4"></div>
+                    <div className="h-3 bg-[#E8E4D8] rounded w-full"></div>
+                    <p className="text-[10px] text-[#7A8A7D] mt-2 font-mono">Génération par Gemini en cours...</p>
+                  </div>
+                ) : (
+                  <div className="text-sm text-[#5A6A5D] leading-relaxed">
+                    {description?.split('\n').map((line, i) => (
+                      <span key={i} className="block mb-2">
+                        {line.split('**').map((part, j) => 
+                          j % 2 === 1 ? <strong key={j} className="text-[#1C2620]">{part}</strong> : part
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </>
           )}

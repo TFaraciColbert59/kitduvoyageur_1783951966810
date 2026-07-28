@@ -21,6 +21,11 @@ import ParametresCompteCard from '@/components/compte/ParametresCompteCard';
 import EditProfileModal from '@/components/compte/EditProfileModal';
 import MobileCompteView from '@/components/compte/MobileCompteView';
 import CompteFooter from '@/components/compte/CompteFooter';
+import AventuresTab from '@/components/compte/AventuresTab';
+import CarnetsTab from '@/components/compte/CarnetsTab';
+import ClubsTab from '@/components/compte/ClubsTab';
+import CommandesTab from '@/components/compte/CommandesTab';
+import FideliteTab from '@/components/compte/FideliteTab';
 import { MOCK_MARCELINE_DATA, UserProfile } from '@/lib/mock/compte-marceline';
 
 export default function ComptePage() {
@@ -97,71 +102,19 @@ export default function ComptePage() {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'aventures':
-        return (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <div className="lg:col-span-8 space-y-6">
-              <ProchainVoyageCard voyage={prochainVoyage} />
-              <StatsGrid stats={profile.stats} />
-              <MesAventuresCard aventures={aventures} />
-            </div>
-            <div className="lg:col-span-4 space-y-6">
-              <ConstanceCard constance={constance} />
-              <BadgesCard badges={badges} />
-            </div>
-          </div>
-        );
+        return <AventuresTab profile={profile} />;
 
       case 'carnets':
-        return (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <div className="lg:col-span-8 space-y-6">
-              <MesCarnetsCard carnets={carnets} />
-            </div>
-            <div className="lg:col-span-4 space-y-6">
-              <ActiviteCard activites={activite} />
-              <InventaireCTACard inventaire={inventaire} />
-            </div>
-          </div>
-        );
+        return <CarnetsTab profile={profile} />;
 
       case 'clubs':
-        return (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <div className="lg:col-span-8 space-y-6">
-              <MesClubsCard clubs={clubs} />
-            </div>
-            <div className="lg:col-span-4 space-y-6">
-              <ActiviteCard activites={activite} />
-            </div>
-          </div>
-        );
+        return <ClubsTab profile={profile} />;
 
       case 'commandes':
-        return (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <div className="lg:col-span-8 space-y-6">
-              <CommandesCard commandes={commandes} />
-            </div>
-            <div className="lg:col-span-4 space-y-6">
-              <AbonnementCard subscription={abonnement} />
-              <InventaireCTACard inventaire={inventaire} />
-            </div>
-          </div>
-        );
+        return <CommandesTab profile={profile} />;
 
       case 'fidelite':
-        return (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <div className="lg:col-span-8 space-y-6">
-              <BadgesCard badges={badges} />
-              <StatsGrid stats={profile.stats} />
-            </div>
-            <div className="lg:col-span-4 space-y-6">
-              <ConstanceCard constance={constance} />
-              <AbonnementCard subscription={abonnement} />
-            </div>
-          </div>
-        );
+        return <FideliteTab profile={profile} />;
 
       case 'parametres':
         return (

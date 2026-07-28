@@ -25,9 +25,9 @@ export default function MobileCompteView({
   const { stats, constance } = profile;
 
   const tabs: { id: CompteTab; label: string }[] = [
-    { id: 'vue-d-ensemble', label: 'Vue' },
-    { id: 'aventures', label: `Aventures ${profile.stats.sorties}` },
-    { id: 'carnets', label: `Carnets ${profile.stats.carnets}` },
+    { id: 'vue-d-ensemble', label: 'Vue d\'ensemble' },
+    { id: 'aventures', label: `Groupes ${profile.stats.sorties}` },
+    { id: 'carnets', label: `Carnets de route ${profile.stats.kilometres}` },
     { id: 'clubs', label: `Clubs ${profile.stats.clubs}` },
     { id: 'commandes', label: 'Commandes' },
     { id: 'fidelite', label: 'Fidélité' },

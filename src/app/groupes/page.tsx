@@ -9,8 +9,6 @@ import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import CreateGroupWizardModal from '@/components/groupes/CreateGroupWizardModal';
-
 interface TravelGroup {
   id: string;
   name: string;
@@ -61,7 +59,6 @@ function GroupesPageInner() {
   const [joining, setJoining] = useState<string | null>(null);
   const [joinCode, setJoinCode] = useState('');
   const [joiningByCode, setJoiningByCode] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingGroup, setEditingGroup] = useState<TravelGroup | null>(null);
   const [creating, setCreating] = useState(false);
@@ -95,11 +92,12 @@ function GroupesPageInner() {
       .eq('visibility', 'public')
       .order('created_at', { ascending: false })
       .limit(30);
+    console.log('Fetched public groups:', data);
     const enriched = await Promise.all((data || []).map(async (g) => {
       const { count } = await supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('group_id', g.id).eq('status', 'active');
       return { ...g, member_count: count || 0 };
     }));
-    setPublicGroups(enriched);
+    setPublicGroups(enriched || []);
   }, [supabase]);
 
   useEffect(() => {
@@ -111,28 +109,6 @@ function GroupesPageInner() {
     load();
   }, [loadMyGroups, loadPublicGroups]);
 
-  async function handleCreateGroup(e: React.FormEvent) {
-    e.preventDefault();
-    if (!user) { toast('Connectez-vous pour créer un groupe', 'error'); return; }
-    setCreating(true);
-    try {
-      const { data: group, error } = await supabase.from('travel_groups').insert({
-        name: createForm.name, description: createForm.description, destination: createForm.destination,
-        theme: createForm.theme, visibility: createForm.visibility,
-        departure_date: createForm.departure_date || null, return_date: createForm.return_date || null,
-        budget_target: parseFloat(createForm.budget_target) || 0, max_members: parseInt(createForm.max_members) || 20, owner_id: user.id,
-      }).select().single();
-      if (error) throw error;
-      await supabase.from('group_members').insert({ group_id: group.id, user_id: user.id, role: 'organizer', status: 'active' });
-      toast('Groupe créé !', 'success');
-      setShowCreateModal(false);
-      setCreateForm({ name: '', description: '', destination: '', theme: 'Trek', visibility: 'public', departure_date: '', return_date: '', budget_target: '', max_members: '20' });
-      await loadMyGroups();
-      setActiveTab('mes-groupes');
-      router.push(`/groupes/${group.id}`);
-    } catch (err: unknown) { toast((err as Error).message || 'Erreur', 'error'); }
-    finally { setCreating(false); }
-  }
 
   async function handleEditGroup(e: React.FormEvent) {
     e.preventDefault();
@@ -363,9 +339,9 @@ function GroupesPageInner() {
               <button onClick={handleJoinByCode} disabled={joiningByCode} className="bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm px-3 py-2 rounded-xl transition-colors">
                 {joiningByCode ? '...' : 'Rejoindre'}
               </button>
-              <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white text-sm px-4 py-2 rounded-xl transition-colors font-600">
+              <Link href="/nouveau-groupe" className="flex items-center gap-2 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white text-sm px-4 py-2 rounded-xl transition-colors font-600">
                 <Icon name="PlusIcon" size={14} /> Créer un groupe
-              </button>
+              </Link>
             </div>
           </div>
 
@@ -426,9 +402,9 @@ function GroupesPageInner() {
                 <h2 className="font-display font-700 text-xl text-[#1C2620] mb-2">Vous n&apos;avez pas encore de groupe</h2>
                 <p className="text-sm text-[#5C6B5E] mb-6">Créez votre premier groupe ou rejoignez-en un avec un code d&apos;invitation</p>
                 <div className="flex gap-3 justify-center flex-wrap">
-                  <button onClick={() => setShowCreateModal(true)} className="inline-flex items-center gap-2 px-6 py-3 bg-[#E4501C] text-white rounded-xl font-700 hover:bg-[#E4501C]/90 transition-colors">
+                  <Link href="/nouveau-groupe" className="inline-flex items-center gap-2 px-6 py-3 bg-[#E4501C] text-white rounded-xl font-700 hover:bg-[#E4501C]/90 transition-colors">
                     <Icon name="PlusIcon" size={14} /> Créer un groupe
-                  </button>
+                  </Link>
                   <button onClick={() => setActiveTab('decouvrir')} className="inline-flex items-center gap-2 px-6 py-3 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl font-600 hover:text-[#1C2620] transition-colors">
                     <Icon name="MagnifyingGlassIcon" size={14} /> Découvrir des groupes
                   </button>
@@ -438,9 +414,9 @@ function GroupesPageInner() {
               <div>
                 <div className="flex items-center justify-between mb-6">
                   <p className="text-sm text-[#5C6B5E]">{myGroups.length} groupe{myGroups.length > 1 ? 's' : ''}</p>
-                  <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white text-sm px-4 py-2 rounded-xl transition-colors font-600">
+                  <Link href="/nouveau-groupe" className="flex items-center gap-2 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white text-sm px-4 py-2 rounded-xl transition-colors font-600">
                     <Icon name="PlusIcon" size={14} /> Nouveau groupe
-                  </button>
+                  </Link>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {myGroups.map(group => <GroupCard key={group.id} group={group} showActions />)}
@@ -492,15 +468,6 @@ function GroupesPageInner() {
         )}
       </div>
 
-      {/* Create Group Wizard Modal */}
-      <CreateGroupWizardModal 
-        isOpen={showCreateModal} 
-        onClose={() => setShowCreateModal(false)}
-        onSuccess={async (newId) => {
-          await loadMyGroups();
-          router.push(`/groupes/${newId}`);
-        }}
-      />
 
       {/* Edit Group Modal */}
       {showEditModal && (

@@ -45,6 +45,10 @@ export default function ExplorerPage() {
 
   const filteredTrails = useMemo(() => {
     return trails.filter((t) => {
+      // FORCE FILTER OUT < 2km (Stale cache protection + strict rule)
+      const dist = t.distance_km !== null && t.distance_km !== undefined ? Number(t.distance_km) : 0;
+      if (dist < 2.0) return false;
+
       // Search filter
       if (searchQuery) {
         const q = searchQuery.toLowerCase();

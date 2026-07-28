@@ -1,8 +1,8 @@
 'use client';
 import { useRef, useCallback, useEffect } from 'react';
-import type { Map as LeafletMap } from 'leaflet';
+import type { Map as LeafletMap, LayerGroup } from 'leaflet';
 import type { MapTrail } from './types';
-import { getDifficultyColor, formatDistance } from './types';
+import { getDifficultyColor } from './types';
 
 interface TrailLayerProps {
   map: LeafletMap;
@@ -11,121 +11,156 @@ interface TrailLayerProps {
   onTrailClick: (trail: MapTrail) => void;
 }
 
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+
 export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick }: TrailLayerProps) {
-  const markersRef = useRef<globalThis.Map<string, import('leaflet').Marker>>(new globalThis.Map());
-  const polylinesRef = useRef<globalThis.Map<string, import('leaflet').Polyline>>(new globalThis.Map());
+  const layerGroupRef = useRef<any>(null);
 
-  const buildIcon = useCallback((trail: MapTrail, isSelected: boolean, L: typeof import('leaflet')) => {
-    const diffColor = getDifficultyColor(trail.difficulty);
-    const label = trail.distance_km ? `${trail.distance_km.toFixed(1)} km` : trail.name?.substring(0, 12) || '•';
-
-    if (isSelected) {
-      const html = `
-        <div style="
-          background: #1C2620;
-          color: white;
-          font-weight: 600;
-          font-size: 11px;
-          padding: 5px 10px;
-          border-radius: 999px;
-          box-shadow: 0 4px 14px rgba(0,0,0,0.3);
-          white-space: nowrap;
-          transform: scale(1.1);
-          transform-origin: bottom center;
-          border: 2px solid ${diffColor};
-          position: relative;
-        ">${label}</div>`;
-      return L.divIcon({ html, className: '', iconSize: [80, 28], iconAnchor: [40, 14] });
-    } else {
-      const html = `
-        <div style="
-          background: white;
-          color: #1C2620;
-          font-weight: 600;
-          font-size: 11px;
-          padding: 4px 9px;
-          border-radius: 999px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-          white-space: nowrap;
-          border: 1.5px solid rgba(200,195,176,0.6);
-          cursor: pointer;
-          transition: transform 0.1s;
-          border-left: 3px solid ${diffColor};
-        ">${label}</div>`;
-      return L.divIcon({ html, className: '', iconSize: [80, 24], iconAnchor: [40, 12] });
-    }
-  }, []);
-
-  const addMarker = useCallback(
-    (trail: MapTrail, L: typeof import('leaflet')) => {
-      if (!map) return;
-      const lat = trail.lat;
-      const lng = trail.lng;
-      if (lat === null || lat === undefined || lng === null || lng === undefined) return;
-
-      const isSelected = trail.id === selectedTrailId;
-      try {
-        const icon = buildIcon(trail, isSelected, L);
-      const marker = L.marker([lat, lng], { icon, zIndexOffset: isSelected ? 1000 : 0 });
-      marker.on('click', () => onTrailClick(trail));
-      marker.addTo(map);
-      markersRef.current.set(trail.id, marker);
-
-      // Create polyline from real geometry if available
-      let lineCoords: [number, number][] = [];
-      if (trail.geojson && Array.isArray(trail.geojson.coordinates) && trail.geojson.coordinates.length) {
-        // Handle MultiLineString (array of line arrays) or LineString (array of points)
-        const coords = trail.geojson.coordinates;
-        if (Array.isArray(coords[0][0])) {
-          // MultiLineString: flatten all line arrays
-          (coords as number[][][]).forEach((line) => {
-            line.forEach((pt) => lineCoords.push([pt[1], pt[0]]));
-          });
-        } else {
-          // LineString: direct mapping
-          (coords as number[][]).forEach((pt) => lineCoords.push([pt[1], pt[0]]));
-        }
-      }
-      // Fallback if geometry is missing or empty
-      if (lineCoords.length === 0 && lat !== null && lng !== null) {
-        // No geometry; create a minimal placeholder line so the point is visible
-        lineCoords = [
-          [lat, lng],
-          [lat + 0.00005, lng + 0.00005]
-        ];
-      }
-      const polyline = L.polyline(lineCoords, {
-        color: isSelected ? getDifficultyColor(trail.difficulty) : '#888',
-        weight: isSelected ? 5 : 2,
-        opacity: isSelected ? 1.0 : 0.4,
-      });
-      polyline.addTo(map);
-      polylinesRef.current.set(trail.id, polyline);
-      } catch {
-        // skip invalid coords silently
-      }
-    },
-    [map, selectedTrailId, onTrailClick, buildIcon]
-  );
-
-  // Update polyline styles when selection changes
+  // Main render effect for trails and markers
   useEffect(() => {
     if (!map) return;
-    polylinesRef.current.forEach((poly, id) => {
-      const isSel = id === selectedTrailId;
-      poly.setStyle({
-        color: isSel ? getDifficultyColor(trails.find(t => t.id === id)?.difficulty) : '#888',
-        weight: isSel ? 5 : 2,
-        opacity: isSel ? 1.0 : 0.4,
-      });
-      if (isSel) {
-        // Fit bounds to selected polyline
-        try {
-          map.fitBounds(poly.getBounds(), { padding: [50, 50] });
-        } catch {}
+
+    let isMounted = true;
+
+    Promise.all([
+      import('leaflet'),
+      import('leaflet.markercluster')
+    ]).then(([LModule]) => {
+      if (!isMounted) return;
+      const L = LModule.default || LModule;
+
+      // Clean up previous layer group
+      if (layerGroupRef.current) {
+        try { map.removeLayer(layerGroupRef.current); } catch {}
+        layerGroupRef.current = null;
       }
+
+      if (!trails.length) return;
+
+      // Create a MarkerClusterGroup
+      // @ts-ignore
+      const clusterGroup = L.markerClusterGroup({
+        showCoverageOnHover: false,
+        maxClusterRadius: 45,
+        spiderfyOnMaxZoom: true,
+        iconCreateFunction: function (cluster: any) {
+          const count = cluster.getChildCount();
+          const html = `
+            <div style="
+              background: #1C2620;
+              color: white;
+              font-weight: 700;
+              font-size: 11px;
+              width: 32px;
+              height: 32px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+              border: 2px solid white;
+            ">${count}</div>
+          `;
+          return L.divIcon({ html, className: '', iconSize: [32, 32], iconAnchor: [16, 16] });
+        }
+      });
+
+      // Regular group for geoJSON lines so they don't get clustered
+      const linesGroup = L.layerGroup();
+
+      trails.forEach((trail) => {
+        const isSelected = trail.id === selectedTrailId;
+        
+        let greenColor = '#4ade80';
+        switch ((trail.difficulty || '').toLowerCase()) {
+          case 'facile': greenColor = '#86efac'; break;
+          case 'modérée':
+          case 'moderate': greenColor = '#4ade80'; break;
+          case 'difficile':
+          case 'difficult': greenColor = '#22c55e'; break;
+          case 'expert':
+          case 'très difficile': greenColor = '#16a34a'; break;
+        }
+
+        // 1. Render GeoJSON Trace ONLY IF SELECTED (Hide by default)
+        if (trail.geojson && isSelected) {
+          try {
+            const geoJsonLayer = L.geoJSON(trail.geojson as any, {
+              style: {
+                color: '#1C2620',
+                weight: 6,
+                opacity: 1.0,
+                lineCap: 'round',
+                lineJoin: 'round',
+              },
+            });
+            geoJsonLayer.on('click', (e) => {
+              L.DomEvent.stopPropagation(e);
+              onTrailClick?.(trail);
+            });
+            linesGroup.addLayer(geoJsonLayer);
+
+            // Auto-fit bounds if selected
+            try {
+              const bounds = geoJsonLayer.getBounds();
+              if (bounds.isValid()) {
+                map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14, animate: true });
+              }
+            } catch {}
+          } catch (e) {
+            console.warn('Failed to parse GeoJSON for trail:', trail.name, e);
+          }
+        }
+
+        // 2. Render KM Marker (Clean white pill style) added to Cluster!
+        if (trail.lat && trail.lng && !isNaN(trail.lat) && !isNaN(trail.lng)) {
+          const label = trail.distance_km ? `${Number(trail.distance_km).toFixed(1)}km`.replace('.', ',').replace(',0', '') : '';
+          if (label) {
+            const html = `
+              <div style="
+                background: ${isSelected ? '#1C2620' : 'white'};
+                color: ${isSelected ? 'white' : '#1C2620'};
+                font-weight: 700;
+                font-size: 11px;
+                padding: 4px 10px;
+                border-radius: 999px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+                white-space: nowrap;
+                border: 1px solid ${isSelected ? '#1C2620' : '#E8E4D8'};
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              ">${label}</div>`;
+            const icon = L.divIcon({ html, className: '', iconSize: [54, 24], iconAnchor: [27, 12] });
+            const marker = L.marker([trail.lat, trail.lng], { icon, zIndexOffset: isSelected ? 1000 : 10 });
+            marker.on('click', (e) => {
+              L.DomEvent.stopPropagation(e);
+              onTrailClick?.(trail);
+            });
+            clusterGroup.addLayer(marker);
+          }
+        }
+      });
+
+      // Add both layers to map
+      clusterGroup.addTo(map);
+      linesGroup.addTo(map);
+      
+      // Store both in a parent group so we can remove them later
+      const parentGroup = L.layerGroup([clusterGroup, linesGroup]);
+      layerGroupRef.current = parentGroup;
     });
-  }, [selectedTrailId, trails, map]);
+
+    return () => {
+      isMounted = false;
+      if (layerGroupRef.current && map) {
+        try { map.removeLayer(layerGroupRef.current); } catch {}
+      }
+    };
+  }, [map, trails, selectedTrailId, onTrailClick]);
 
   return null;
 }
+

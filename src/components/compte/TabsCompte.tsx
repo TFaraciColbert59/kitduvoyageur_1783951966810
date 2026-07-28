@@ -19,8 +19,8 @@ interface TabsCompteProps {
 export default function TabsCompte({ activeTab, onTabChange, counts }: TabsCompteProps) {
   const tabs = [
     { id: 'vue-d-ensemble' as CompteTab, label: "Vue d'ensemble" },
-    { id: 'aventures' as CompteTab, label: `Aventures (${counts.aventures})` },
-    { id: 'carnets' as CompteTab, label: `Carnets (${counts.carnets})`, hasDot: true },
+    { id: 'aventures' as CompteTab, label: `Groupes (${counts.aventures})` },
+    { id: 'carnets' as CompteTab, label: `Carnets de route (${counts.carnets})`, hasDot: true },
     { id: 'clubs' as CompteTab, label: `Clubs (${counts.clubs})` },
     { id: 'commandes' as CompteTab, label: `Commandes (${counts.commandes})` },
     { id: 'fidelite' as CompteTab, label: `Fidélité (${counts.fidelite})` },

@@ -33,7 +33,7 @@ export default function MesAventuresCard({ aventures }: MesAventuresCardProps) {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#1C2620]/5 pb-4">
         <div>
           <h3 className="font-display font-800 text-2xl text-[#1C2620]">
-            Mes <span className="font-serif italic font-normal">aventures</span>
+            Mes <span className="font-serif italic font-normal">groupes</span>
           </h3>
           <p className="text-xs font-mono text-[#1C2620]/50 mt-0.5">
             42 terminées · 1 en cours · 2 planifiées
@@ -57,7 +57,7 @@ export default function MesAventuresCard({ aventures }: MesAventuresCardProps) {
               <option value="2024">2024</option>
             </select>
           </div>
-          <Link href="/explorer" className="text-xs font-extrabold text-emerald-700 hover:text-emerald-900 transition-colors whitespace-nowrap">
+          <Link href="/compte?tab=aventures" className="text-xs font-extrabold text-emerald-700 hover:text-emerald-900 transition-colors whitespace-nowrap">
             Tout voir →
           </Link>
         </div>
@@ -70,8 +70,9 @@ export default function MesAventuresCard({ aventures }: MesAventuresCardProps) {
       {/* List */}
       <div className="space-y-4">
         {aventures.map((item) => (
-          <div
+          <Link
             key={item.id}
+            href={`/groupes/${item.id}`}
             className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-2xl bg-[#F5F3ED]/50 hover:bg-[#F5F3ED] border border-[#1C2620]/5 transition-all gap-4 cursor-pointer"
           >
             <div className="flex items-center gap-4 min-w-0 w-full sm:w-auto">
@@ -119,7 +120,7 @@ export default function MesAventuresCard({ aventures }: MesAventuresCardProps) {
 
               {getStatusBadge(item.status)}
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 

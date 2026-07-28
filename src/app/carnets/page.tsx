@@ -9,6 +9,7 @@ import Link from 'next/link';
 import BackButton from '@/components/ui/BackButton';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import CommentItem from '@/components/communaute/CommentItem';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Carnet {
@@ -468,18 +469,18 @@ function CarnetDetailModal({
               ) : (
                 <div className="space-y-3 mb-4">
                   {comments.map((c) => (
-                    <div key={c.id} className="flex gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-[#E4501C]/20 flex items-center justify-center text-xs font-700 text-[#E4501C] flex-shrink-0">
-                        {c.author?.full_name?.[0] ?? '?'}
-                      </div>
-                      <div className="flex-1 bg-white rounded-xl p-3">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="text-xs font-700 text-[#1C2620]">{c.author?.full_name ?? 'Anonyme'}</p>
-                          <p className="text-[10px] text-[#5C6B5E]">{new Date(c.created_at).toLocaleDateString('fr-FR')}</p>
-                        </div>
-                        <p className="text-sm text-[#5C6B5E]">{c.content}</p>
-                      </div>
-                    </div>
+                    <CommentItem
+                      key={c.id}
+                      comment={c}
+                      currentUser={user}
+                      tableName="carnet_comments"
+                      onUpdate={(id, newContent) =>
+                        setComments((prev) => prev.map((item) => (item.id === id ? { ...item, content: newContent } : item)))
+                      }
+                      onDelete={(id) => {
+                        setComments((prev) => prev.filter((item) => item.id !== id));
+                      }}
+                    />
                   ))}
                 </div>
               )}

@@ -1,55 +1,41 @@
+'use client';
+
 import React from 'react';
 
-interface SkeletonProps {
-  className?: string;
-}
-
-export function Skeleton({ className = '' }: SkeletonProps) {
+export function Skeleton({ className = '' }: { className?: string }) {
   return (
     <div
-      className={`animate-pulse bg-white/8 rounded-lg ${className}`}
-      aria-hidden="true"
+      className={`bg-gradient-to-r from-[#E8E5DC] via-[#FAF8F5] to-[#E8E5DC] bg-[length:200%_100%] animate-shimmer rounded-xl ${className}`}
     />
   );
 }
 
-export function ProductCardSkeleton() {
+export function SkeletonCard({ className = '' }: { className?: string }) {
   return (
-    <div className="topo-card p-4 flex flex-col gap-3" aria-hidden="true">
-      <Skeleton className="w-full aspect-square rounded-xl" />
-      <Skeleton className="h-3 w-1/3" />
-      <Skeleton className="h-4 w-3/4" />
-      <Skeleton className="h-3 w-full" />
-      <Skeleton className="h-3 w-2/3" />
-      <div className="flex justify-between items-center mt-auto pt-2">
-        <Skeleton className="h-5 w-16" />
-        <Skeleton className="h-8 w-24 rounded-full" />
+    <div className={`bg-white rounded-3xl p-5 border border-[#E8E4D8] space-y-4 shadow-sm ${className}`}>
+      <Skeleton className="w-full aspect-[16/10] rounded-2xl" />
+      <div className="space-y-2">
+        <Skeleton className="w-1/3 h-4" />
+        <Skeleton className="w-3/4 h-6" />
+        <Skeleton className="w-full h-4" />
+      </div>
+      <div className="flex items-center justify-between pt-3 border-t border-[#F0ECE1]">
+        <Skeleton className="w-24 h-8 rounded-full" />
+        <Skeleton className="w-16 h-8 rounded-full" />
       </div>
     </div>
   );
 }
 
-export function KitCardSkeleton() {
+export function SkeletonText({ lines = 3, className = '' }: { lines?: number; className?: string }) {
   return (
-    <div className="topo-card p-5 flex flex-col gap-3" aria-hidden="true">
-      <Skeleton className="w-full h-40 rounded-xl" />
-      <Skeleton className="h-4 w-2/3" />
-      <Skeleton className="h-3 w-full" />
-      <Skeleton className="h-3 w-4/5" />
-      <div className="flex justify-between items-center mt-2">
-        <Skeleton className="h-5 w-20" />
-        <Skeleton className="h-8 w-28 rounded-full" />
-      </div>
-    </div>
-  );
-}
-
-export function CountryCardSkeleton() {
-  return (
-    <div className="topo-card p-4 flex flex-col gap-2" aria-hidden="true">
-      <Skeleton className="h-8 w-8 rounded-full" />
-      <Skeleton className="h-4 w-1/2" />
-      <Skeleton className="h-3 w-3/4" />
+    <div className={`space-y-2 ${className}`}>
+      {Array.from({ length: lines }).map((_, i) => (
+        <Skeleton
+          key={i}
+          className={`h-4 ${i === lines - 1 ? 'w-2/3' : 'w-full'}`}
+        />
+      ))}
     </div>
   );
 }
