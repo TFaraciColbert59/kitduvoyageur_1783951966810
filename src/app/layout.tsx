@@ -14,6 +14,7 @@ import InstallPrompt from '@/components/mobile-nav/InstallPrompt';
 import CookieConsentBanner from '@/components/CookieConsentBanner';
 import { getOrganizationSchema, getWebsiteSchema } from '@/lib/seo-utils';
 import ReactQueryProvider from '@/components/ReactQueryProvider';
+import PageTransition from '@/components/ui/PageTransition';
 
 
 
@@ -214,7 +215,9 @@ export default function RootLayout({
                   </a>
                   {/* Mobile navigation — hidden on desktop (md+) */}
                   <TopBar />
-                  <main id="main-content">{children}</main>
+                  <main id="main-content">
+                    <PageTransition>{children}</PageTransition>
+                  </main>
                   <BottomTabBar />
                   <InstallPrompt />
                   <CookieConsentBanner />

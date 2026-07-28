@@ -118,7 +118,11 @@ export default function ClubDetailPage() {
   const loadData = async () => {
     if (!clubId) return;
     setLoading(true);
-    const { data: clubData } = await supabase.from('clubs').select('*').eq('slug', clubId).maybeSingle();
+    let { data: clubData } = await supabase.from('clubs').select('*').eq('slug', clubId).maybeSingle();
+    if (!clubData) {
+      const { data: clubById } = await supabase.from('clubs').select('*').eq('id', clubId).maybeSingle();
+      if (clubById) clubData = clubById;
+    }
 
     if (clubData) {
       setClub(clubData as Club);
@@ -152,7 +156,29 @@ export default function ClubDetailPage() {
         }
       }
     } else {
-      setClub(FAKE_CLUBS[0]);
+      // Dynamic fallback based on the actual clicked clubId/slug
+      const formattedTitle = clubId
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+
+      setClub({
+        id: clubId,
+        slug: clubId,
+        name: formattedTitle,
+        type: 'activité',
+        emoji: '🏔️',
+        description: `Bienvenue sur le club ${formattedTitle}. Échangez avec les passionnés, découvrez les sorties et participez à nos prochaines expéditions.`,
+        cover_color: 'from-emerald-800 to-slate-900',
+        category: 'Montagne & Outdoor',
+        rules: '1. Respect mutuel. 2. Entraide & sécurité. 3. Partage de traces et conseils.',
+        privacy: 'open',
+        members_count: 148,
+        active_this_month: 24,
+        is_verified: true,
+        created_by: 'system',
+        created_at: new Date().toISOString(),
+        location: 'Alpes, France'
+      });
     }
     setLoading(false);
   };

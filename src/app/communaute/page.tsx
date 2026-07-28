@@ -9,8 +9,9 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
-import CreateGroupWizardModal from '@/components/groupes/CreateGroupWizardModal';
+
 import CreateCarnetView from '@/components/carnets/CreateCarnetView';
+import CommentItem from '@/components/communaute/CommentItem';
 
 // Helper formatting functions
 const formatDateString = (dateString: string) => {
@@ -191,13 +192,19 @@ function PostCard({ post, user }: { post: any, user: any }) {
                   <p className="text-xs text-[#5C6B5E] text-center italic">Aucun commentaire pour l&apos;instant. Soyez le premier !</p>
                 ) : (
                   comments.map((c, i) => (
-                    <div key={c.id || i} className="flex gap-3 text-sm">
-                      <img src={c.author?.avatar_url || 'https://i.pravatar.cc/150'} className="w-6 h-6 rounded-full mt-1 object-cover" />
-                      <div className="flex-1 bg-[#F5F2E8] rounded-2xl rounded-tl-none p-3">
-                        <div className="font-bold text-xs text-[#1C2620] mb-0.5">{c.author?.full_name}</div>
-                        <p className="text-[#4A574C]">{c.content}</p>
-                      </div>
-                    </div>
+                    <CommentItem
+                      key={c.id || i}
+                      comment={c}
+                      currentUser={user}
+                      tableName="post_comments"
+                      onUpdate={(id, newContent) =>
+                        setComments((prev) => prev.map((item) => (item.id === id ? { ...item, content: newContent } : item)))
+                      }
+                      onDelete={(id) => {
+                        setComments((prev) => prev.filter((item) => item.id !== id));
+                        setCommentsCount((prev: number) => Math.max(0, prev - 1));
+                      }}
+                    />
                   ))
                 )}
               </div>
@@ -307,61 +314,105 @@ function CarnetCard({ carnet, user }: { carnet: any, user: any }) {
   return (
     <div 
       onClick={() => router.push(`/carnets/${carnet.id || encodeURIComponent(carnet.title)}`)}
-      className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-[#E8E4D8] flex flex-col group cursor-pointer hover:border-[#2D5A3D] hover:shadow-md transition-all duration-300 h-full"
+      className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-[#E8E4D8] flex flex-col group cursor-pointer hover:border-[#2D5A3D] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full"
     >
-      {/* Cover Image */}
-      {carnet.cover_image && (
-        <div className="w-full aspect-[16/9] overflow-hidden relative bg-[#F5F2E8]">
-          <img 
-            src={carnet.cover_image} 
-            alt={carnet.title} 
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-          />
-          <div className="absolute top-3 left-3 flex items-center gap-2">
-            {carnet.destination && (
-              <span className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-mono font-bold text-[#1C2620] shadow-sm flex items-center gap-1">
-                <Icon name="MapPinIcon" size={10} className="text-[#E4501C]" />
-                {carnet.destination}
-              </span>
-            )}
-            {carnet.duration && (
-              <span className="bg-[#1C2620]/90 text-white backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-mono">
-                {carnet.duration}
-              </span>
-            )}
-          </div>
+      {/* Cover Image Header */}
+      <div className="w-full aspect-[16/10] overflow-hidden relative bg-[#E7E3D6]">
+        <img 
+          src={carnet.cover_image || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800'} 
+          alt={carnet.title} 
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+        
+        {/* Floating Badges (Top Left) */}
+        <div className="absolute top-3.5 left-3.5 flex items-center gap-2 flex-wrap">
+          {carnet.destination && (
+            <span className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full text-[11px] font-bold text-[#1C2620] shadow-md flex items-center gap-1.5">
+              <Icon name="MapPinIcon" size={12} className="text-[#E4501C]" />
+              <span>{carnet.destination}</span>
+            </span>
+          )}
+          {carnet.duration && (
+            <span className="bg-[#1C2620]/90 text-white backdrop-blur-md px-3 py-1.5 rounded-full text-[11px] font-mono font-semibold shadow-sm">
+              ⏱️ {carnet.duration}
+            </span>
+          )}
         </div>
-      )}
+
+        {/* Top Right Verified / Favorite Badge */}
+        <div className="absolute top-3.5 right-3.5 flex items-center gap-1.5">
+          {carnet.verified && (
+            <span className="bg-[#2D6A4F] text-white backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm flex items-center gap-1">
+              <span>✓</span> Vérifié
+            </span>
+          )}
+        </div>
+      </div>
 
       {/* Body Content */}
-      <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-        <div>
-          <h3 className="font-display font-800 text-lg sm:text-xl text-[#1C2620] leading-snug mb-2 group-hover:text-[#2D5A3D] transition-colors line-clamp-2">
+      <div className="p-6 flex-1 flex flex-col justify-between space-y-4 bg-white">
+        <div className="space-y-2">
+          <div className="text-[10px] font-mono tracking-widest text-[#E4501C] uppercase font-bold">
+            CARNET DE VOYAGE
+          </div>
+          <h3 className="font-display font-800 text-xl text-[#1C2620] leading-snug group-hover:text-[#2D5A3D] transition-colors line-clamp-2">
             {carnet.title}
           </h3>
           {carnet.description && (
-            <p className="text-xs text-[#4A574C] line-clamp-2 leading-relaxed">
+            <p className="text-xs text-[#5C6B5E] line-clamp-2 leading-relaxed font-normal">
               {carnet.description}
             </p>
           )}
         </div>
-        
-        {/* Footer Actions */}
-        <div className="flex flex-col pt-3 border-t border-[#F5F2E8] mt-auto space-y-3">
+
+        {/* Key Metrics Chips Row */}
+        {(carnet.distance_km || carnet.elevation_m || carnet.duration) && (
+          <div className="flex items-center gap-2 flex-wrap pt-1">
+            {carnet.distance_km && (
+              <span className="px-2.5 py-1 bg-[#F5F2EA] text-[#1C2620] text-[11px] font-mono font-semibold rounded-lg border border-[#E4E0D4]">
+                📏 {carnet.distance_km} km
+              </span>
+            )}
+            {carnet.elevation_m && (
+              <span className="px-2.5 py-1 bg-[#F5F2EA] text-[#1C2620] text-[11px] font-mono font-semibold rounded-lg border border-[#E4E0D4]">
+                ⛰️ +{carnet.elevation_m} m
+              </span>
+            )}
+            {carnet.weather && (
+              <span className="px-2.5 py-1 bg-[#F5F2EA] text-[#1C2620] text-[11px] font-medium rounded-lg border border-[#E4E0D4] truncate max-w-[150px]">
+                ☁️ {carnet.weather}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Footer Author & Actions */}
+        <div className="flex flex-col pt-4 border-t border-[#F0ECE1] mt-auto space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <img 
-                src={carnet.author?.avatar_url || 'https://i.pravatar.cc/150'} 
-                alt={carnet.author?.full_name || 'Voyageur'}
-                className="w-7 h-7 rounded-full border border-[#E8E4D8] object-cover shrink-0" 
-              />
-              <span className="font-bold text-xs text-[#1C2620] truncate">{carnet.author?.full_name || 'Voyageur'}</span>
+            {/* Author profile */}
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="relative shrink-0">
+                <img 
+                  src={carnet.author?.avatar_url || 'https://i.pravatar.cc/150'} 
+                  alt={carnet.author?.full_name || 'Voyageur'}
+                  className="w-8 h-8 rounded-full border border-[#E8E4D8] object-cover" 
+                />
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />
+              </div>
+              <div className="truncate">
+                <span className="font-bold text-xs text-[#1C2620] block truncate">{carnet.author?.full_name || 'Voyageur'}</span>
+                <span className="text-[10px] text-[#7A8A7D] block">Explorateur</span>
+              </div>
             </div>
 
+            {/* Social action buttons */}
             <div className="flex items-center gap-2 shrink-0">
               <button 
                 onClick={handleLike}
-                className={`flex items-center gap-1 text-xs font-mono transition-colors px-2 py-1 rounded-full ${isLiked ? 'text-red-500 bg-red-50' : 'text-[#5C6B5E] hover:text-[#1C2620] hover:bg-[#F5F2E8]'}`}
+                className={`flex items-center gap-1.5 text-xs font-mono font-bold transition-all px-3 py-1.5 rounded-full border ${
+                  isLiked ? 'text-red-500 bg-red-50 border-red-200 shadow-sm' : 'text-[#5C6B5E] border-[#E4E0D4] hover:text-[#1C2620] hover:bg-[#F5F2EA]'
+                }`}
               >
                 <Icon name="HeartIcon" size={14} variant={isLiked ? "solid" : "outline"} />
                 <span>{likesCount}</span>
@@ -369,7 +420,7 @@ function CarnetCard({ carnet, user }: { carnet: any, user: any }) {
 
               <button 
                 onClick={handleToggleComments}
-                className="flex items-center gap-1 text-xs font-mono text-[#5C6B5E] hover:text-[#1C2620] transition-colors px-2 py-1 rounded-full hover:bg-[#F5F2E8]"
+                className="flex items-center gap-1.5 text-xs font-mono font-bold text-[#5C6B5E] border border-[#E4E0D4] hover:text-[#1C2620] transition-all px-3 py-1.5 rounded-full hover:bg-[#F5F2EA]"
               >
                 <Icon name="ChatBubbleLeftIcon" size={14} variant={showComments ? "solid" : "outline"} />
                 <span>{commentsCount}</span>
@@ -377,32 +428,38 @@ function CarnetCard({ carnet, user }: { carnet: any, user: any }) {
             </div>
           </div>
 
-          {/* Comments Collapse */}
+          {/* Comments Expandable Drawer */}
           <AnimatePresence>
             {showComments && (
               <motion.div 
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden pt-3 border-t border-[#F5F2E8] space-y-3"
+                className="overflow-hidden pt-3 border-t border-[#F0ECE1] space-y-3"
                 onClick={(e) => e.stopPropagation()}
               >
                 {loadingComments ? (
-                  <div className="text-center py-2 text-xs text-[#5C6B5E]">Chargement...</div>
+                  <div className="text-center py-2 text-xs text-[#5C6B5E]">Chargement des commentaires...</div>
                 ) : (
                   <>
-                    <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+                    <div className="space-y-2.5 max-h-48 overflow-y-auto custom-scrollbar pr-1">
                       {comments.length === 0 ? (
-                        <p className="text-[11px] text-[#5C6B5E] italic">Aucun commentaire pour l&apos;instant.</p>
+                        <p className="text-[11px] text-[#5C6B5E] italic text-center py-2">Aucun commentaire pour l&apos;instant. Soyez le premier !</p>
                       ) : (
                         comments.map((c, i) => (
-                          <div key={c.id || i} className="bg-[#F5F2E8]/60 p-2.5 rounded-xl text-xs flex items-start gap-2">
-                            <img src={c.author?.avatar_url || 'https://i.pravatar.cc/150'} className="w-5 h-5 rounded-full object-cover shrink-0 mt-0.5" />
-                            <div>
-                              <span className="font-bold text-[#1C2620] mr-1.5">{c.author?.full_name}:</span>
-                              <span className="text-[#4A574C]">{c.content}</span>
-                            </div>
-                          </div>
+                          <CommentItem
+                            key={c.id || i}
+                            comment={c}
+                            currentUser={user}
+                            tableName="carnet_comments"
+                            onUpdate={(id, newContent) =>
+                              setComments((prev) => prev.map((item) => (item.id === id ? { ...item, content: newContent } : item)))
+                            }
+                            onDelete={(id) => {
+                              setComments((prev) => prev.filter((item) => item.id !== id));
+                              setCommentsCount((prev: number) => Math.max(0, prev - 1));
+                            }}
+                          />
                         ))
                       )}
                     </div>
@@ -412,13 +469,13 @@ function CarnetCard({ carnet, user }: { carnet: any, user: any }) {
                           type="text" 
                           value={commentText}
                           onChange={e => setCommentText(e.target.value)}
-                          placeholder="Écrire un commentaire..."
-                          className="flex-1 bg-[#F5F2E8] border-none rounded-full px-3 py-1.5 text-xs text-[#1C2620] focus:ring-1 focus:ring-[#2D5A3D]"
+                          placeholder="Ajouter un commentaire..."
+                          className="flex-1 bg-[#F5F2EA] border border-[#E4E0D4] rounded-full px-3.5 py-1.5 text-xs text-[#1C2620] focus:outline-none focus:border-[#2D5A3D]"
                         />
                         <button 
                           type="submit" 
                           disabled={!commentText.trim()}
-                          className="bg-[#2D5A3D] text-white p-1.5 rounded-full disabled:opacity-50 transition-colors"
+                          className="bg-[#2D5A3D] text-white p-2 rounded-full disabled:opacity-50 hover:bg-[#1C2620] transition-colors"
                         >
                           <Icon name="PaperAirplaneIcon" size={12} variant="solid" />
                         </button>
@@ -874,7 +931,7 @@ export default function CommunautePage() {
 
   // Modal State
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
-  const [isCreateGroupWizardOpen, setIsCreateGroupWizardOpen] = useState(false);
+
   const [newPostContent, setNewPostContent] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
   
@@ -1679,7 +1736,7 @@ export default function CommunautePage() {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => setIsCreateGroupWizardOpen(true)}
+                        onClick={() => router.push('/nouveau-groupe')}
                         className="relative z-10 px-7 py-3.5 bg-[#E4501C] hover:bg-[#cc3d10] text-white rounded-full font-extrabold text-sm tracking-wide shadow-lg flex items-center gap-2 whitespace-nowrap"
                       >
                         <Icon name="PlusIcon" size={18} /> Créer un groupe
@@ -1690,7 +1747,7 @@ export default function CommunautePage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       {/* Card to launch creation */}
                       <div 
-                        onClick={() => setIsCreateGroupWizardOpen(true)}
+                        onClick={() => router.push('/nouveau-groupe')}
                         className="bg-white/60 hover:bg-white rounded-[2rem] p-6 border-2 border-dashed border-[#E4501C]/40 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#E4501C] transition-all group min-h-[220px]"
                       >
                         <div className="w-14 h-14 bg-[#E4501C]/10 text-[#E4501C] rounded-2xl flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition-transform">
@@ -1777,7 +1834,7 @@ export default function CommunautePage() {
                 </div>
 
                 <motion.button 
-                  onClick={() => setIsPublishModalOpen(true)}
+                  onClick={() => router.push('/communaute/publier')}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="w-full bg-[#E4501C] hover:bg-[#cc3d10] text-white py-3.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center justify-center gap-2 relative z-10"
@@ -1933,11 +1990,8 @@ export default function CommunautePage() {
         )}
       </AnimatePresence>
 
-      {/* CREATE GROUP WIZARD MODAL */}
-      <CreateGroupWizardModal 
-        isOpen={isCreateGroupWizardOpen} 
-        onClose={() => setIsCreateGroupWizardOpen(false)} 
-      />
+
+      
 
       {/* CREATE CARNET MODAL */}
       <CarnetFormModal

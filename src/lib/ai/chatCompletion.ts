@@ -2,6 +2,9 @@ import { callAIEndpoint } from './aiClient';
 
 const ENDPOINT = '/api/ai/chat-completion';
 
+export const GEMINI_PROVIDER = 'GEMINI';
+export const GEMINI_DEFAULT_MODEL = 'gemini/gemini-2.0-flash';
+
 export async function getChatCompletion(
   provider: string,
   model: string,

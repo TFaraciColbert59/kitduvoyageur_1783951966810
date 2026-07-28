@@ -6,10 +6,7 @@ import Header from '@/components/Header';
 
 
 import Link from 'next/link';
-import { getAllCountries } from '@/lib/countries';
-import AppImage from '@/components/ui/AppImage';
-import NewFooterSection from '@/app/components/home/NewFooterSection';
-
+import { getAllCountries, type Country } from '@/lib/countries';
 
 const ALL_COUNTRIES = getAllCountries();
 
@@ -18,16 +15,72 @@ function getFlagEmoji(code: string): string {
   return String.fromCodePoint(...codePoints);
 }
 
-const continents = ['Tous', 'Europe', 'Asie', 'Afrique', 'Amérique du Nord', 'Amérique du Sud', 'Océanie'];
+const CONTINENTS = ['Tous', 'Europe', 'Asie', 'Afrique', 'Amérique du Nord', 'Amérique du Sud', 'Océanie'];
 
-const dangerConfig: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  low: { label: 'Sûr', color: '#059669', bg: 'rgba(5,150,105,0.08)', border: 'rgba(5,150,105,0.2)' },
-  medium: { label: 'Vigilance', color: '#D97706', bg: 'rgba(217,119,6,0.08)', border: 'rgba(217,119,6,0.2)' },
-  high: { label: 'Risqué', color: '#DC2626', bg: 'rgba(220,38,38,0.08)', border: 'rgba(220,38,38,0.2)' },
+const CONTINENT_EMOJIS: Record<string, string> = {
+  'Tous': '🌍',
+  'Europe': '🏔️',
+  'Asie': '🗺️',
+  'Afrique': '🦁',
+  'Amérique du Nord': '🦅',
+  'Amérique du Sud': '🌿',
+  'Océanie': '🌊',
 };
 
-const FEATURED = ALL_COUNTRIES.filter((c) => c.published).slice(0, 4);
-const PAGE_SIZE = 60;
+const DANGER_CONFIG: Record<string, { label: string; bg: string; text: string; border: string; dot: string }> = {
+  low: {
+    label: 'Sûr',
+    bg: 'bg-[#EDF7F0]',
+    text: 'text-[#2D6A4F]',
+    border: 'border-[#B7E4C7]',
+    dot: 'bg-[#2D6A4F]',
+  },
+  medium: {
+    label: 'Vigilance',
+    bg: 'bg-[#FEF3C7]',
+    text: 'text-[#D97706]',
+    border: 'border-[#FCD34D]',
+    dot: 'bg-[#D97706]',
+  },
+  high: {
+    label: 'Risqué',
+    bg: 'bg-[#FEE2E2]',
+    text: 'text-[#DC2626]',
+    border: 'border-[#FCA5A5]',
+    dot: 'bg-[#DC2626]',
+  },
+};
+
+const COUNTRY_IMAGES: Record<string, string> = {
+  IS: 'https://images.unsplash.com/photo-1504893524553-b855bce32c67?w=600&q=80',
+  NO: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=600&q=80',
+  FR: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80',
+  JP: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&q=80',
+  NP: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=600&q=80',
+  MA: 'https://images.unsplash.com/photo-1489749798305-4fea3ae63d43?w=600&q=80',
+  TZ: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=600&q=80',
+  CA: 'https://images.unsplash.com/photo-1503614472-8c93d56e92ce?w=600&q=80',
+  PE: 'https://images.unsplash.com/photo-1526392060635-9d6019884377?w=600&q=80',
+  NZ: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=600&q=80',
+};
+
+const DEFAULT_LANDSCAPES = [
+  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&q=80',
+  'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&q=80',
+  'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=600&q=80',
+  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&q=80',
+  'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&q=80',
+];
+
+function getCountryImage(code: string): string {
+  if (COUNTRY_IMAGES[code]) return COUNTRY_IMAGES[code];
+  const charCode = code.charCodeAt(0) + (code.charCodeAt(1) || 0);
+  return DEFAULT_LANDSCAPES[charCode % DEFAULT_LANDSCAPES.length];
+}
+
+const ALL_TAGS = Array.from(new Set(ALL_COUNTRIES.flatMap((c) => c.tags))).sort();
+const FEATURED = ALL_COUNTRIES.filter((c) => c.published);
+const PAGE_SIZE = 36;
 
 // ─── Country Card ─────────────────────────────────────────────────────────────
 
@@ -247,7 +300,10 @@ function FeaturedCountryCard({ country }: { country: ReturnType<typeof getAllCou
 export default function PaysPage() {
   const [search, setSearch] = useState('');
   const [continent, setContinent] = useState('Tous');
-  const [dangerFilter, setDangerFilter] = useState('Tous');
+  const [dangerFilter, setDangerFilter] = useState<string>('Tous');
+  const [tagFilter, setTagFilter] = useState<string>('');
+  const [publishedOnly, setPublishedOnly] = useState<boolean>(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
@@ -258,11 +314,15 @@ export default function PaysPage() {
         c.tags.some((tag) => tag.toLowerCase().includes(search.toLowerCase()));
       const matchContinent = continent === 'Tous' || c.continent === continent;
       const matchDanger = dangerFilter === 'Tous' || c.danger_level === dangerFilter;
-      return matchSearch && matchContinent && matchDanger;
+      const matchTag = tagFilter === '' || c.tags.includes(tagFilter);
+      const matchPublished = !publishedOnly || c.published;
+      return matchSearch && matchContinent && matchDanger && matchTag && matchPublished;
     });
-  }, [search, continent, dangerFilter]);
+  }, [search, continent, dangerFilter, tagFilter, publishedOnly]);
 
-  useEffect(() => { setPage(1); }, [search, continent, dangerFilter]);
+  useEffect(() => {
+    setPage(1);
+  }, [search, continent, dangerFilter, tagFilter, publishedOnly]);
 
   const displayItems = filtered.slice(0, page * PAGE_SIZE);
   const hasMore = page * PAGE_SIZE < filtered.length;
@@ -270,297 +330,422 @@ export default function PaysPage() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-white">
+      <main className="min-h-screen bg-[#FAF8F5] text-[#1C2620]">
+        {/* Top Hero Section */}
+        <section className="relative pt-28 pb-16 bg-[#1C2620] text-white overflow-hidden">
+          {/* Subtle topo grid pattern */}
+          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#E8E4D8_1px,transparent_1px)] [background-size:24px_24px]" />
+          
+          <div className="container mx-auto px-4 relative z-10">
+            <BackButton variant="ghost" className="text-white/70 hover:text-white mb-6" />
 
-        {/* ── HERO — fond vert foncé ── */}
-        <section
-          className="relative overflow-hidden"
-          style={{ background: '#1C2620', paddingTop: '120px', paddingBottom: '80px' }}
-        >
-          {/* Grain texture */}
-          <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")', backgroundRepeat: 'repeat', backgroundSize: '128px' }} />
-          {/* Background photo overlay */}
-          <div className="absolute inset-0">
-            <AppImage
-              src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1920&q=80"
-              alt="Vue aérienne d'une chaîne de montagnes enneigées avec nuages et ciel bleu"
-              fill
-              className="object-cover opacity-20"
-              priority
-            />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(28,38,32,0.7) 0%, rgba(28,38,32,0.85) 100%)' }} />
-          </div>
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md text-xs font-semibold text-white/90 mb-4 border border-white/15">
+                <span className="animate-pulse text-emerald-400">●</span>
+                <span>Exploration Mondiale · Earth Guide</span>
+              </div>
 
-          <div className="relative max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 xl:px-16">
-            {/* Breadcrumb */}
-            <nav className="mb-10">
-              <ol className="flex items-center gap-2" style={{ fontSize: '12px', fontFamily: 'var(--font-mono)', color: 'rgba(231,227,214,0.4)', letterSpacing: '0.08em' }}>
-                <li><a href="/" className="hover:text-white/70 transition-colors">Accueil</a></li>
-                <li style={{ color: 'rgba(231,227,214,0.2)' }}>›</li>
-                <li style={{ color: 'rgba(231,227,214,0.7)' }}>Fiches pays</li>
-              </ol>
-            </nav>
+              <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white mb-4 leading-tight">
+                Destinations & Fiches Pays 🌍
+              </h1>
+              
+              <p className="text-lg text-white/80 leading-relaxed mb-8 max-w-2xl font-light">
+                Explorez <span className="font-semibold text-white">{ALL_COUNTRIES.length} destinations</span> répertoriées. 
+                Retrouvez les conseils de sécurité, météo idéale, équipements recommandés et formalités de visa.
+              </p>
 
-            {/* Eyebrow mono */}
-            <p
-              className="mb-4"
-              style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#E4501C', letterSpacing: '0.2em', textTransform: 'uppercase' }}
-            >
-              · Destinations
-            </p>
-
-            <h1
-              style={{
-                fontFamily: 'Georgia, serif',
-                fontWeight: 800,
-                fontStyle: 'italic',
-                fontSize: 'clamp(2.8rem, 6vw, 5rem)',
-                lineHeight: '1.0',
-                letterSpacing: '-0.03em',
-                color: '#FFFFFF',
-                maxWidth: '700px',
-                marginBottom: '20px',
-              }}
-            >
-              Le monde,{' '}
-              <em style={{ fontStyle: 'normal', color: 'rgba(231,227,214,0.45)' }}>pays par pays.</em>
-            </h1>
-
-            <p
-              style={{
-                fontSize: 'clamp(1rem, 1.5vw, 1.1rem)',
-                color: 'rgba(231,227,214,0.6)',
-                fontFamily: 'var(--font-sans)',
-                lineHeight: '1.6',
-                maxWidth: '520px',
-                marginBottom: '48px',
-              }}
-            >
-              {ALL_COUNTRIES.length} fiches pays avec informations pratiques, météo, visa, santé et équipement recommandé.
-            </p>
-
-            {/* Stats */}
-            <div className="flex items-center gap-10 flex-wrap">
-              {[
-                { value: `${ALL_COUNTRIES.length}`, label: 'pays' },
-                { value: `${ALL_COUNTRIES.filter(c => c.danger_level === 'low').length}`, label: 'destinations sûres' },
-                { value: `${ALL_COUNTRIES.filter(c => c.published).length}`, label: 'fiches vérifiées' },
-              ].map((stat) => (
-                <div key={stat.label}>
-                  <p style={{ fontFamily: 'Georgia, serif', fontWeight: 800, fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', color: '#FFFFFF', lineHeight: '1', letterSpacing: '-0.03em' }}>
-                    {stat.value}
-                  </p>
-                  <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'rgba(231,227,214,0.4)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-                    {stat.label}
-                  </p>
+              {/* Search Bar Input */}
+              <div className="relative max-w-xl">
+                <div className="relative flex items-center bg-white rounded-2xl shadow-xl overflow-hidden p-1.5 border border-[#E4E0D4]">
+                  <svg className="w-5 h-5 ml-3 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Rechercher un pays, une capitale, une activité (ex: Islande, Tokyo, Safari)..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full px-3 py-2.5 text-sm text-[#1C2620] bg-transparent focus:outline-none placeholder-gray-400 font-medium"
+                  />
+                  {search && (
+                    <button
+                      onClick={() => setSearch('')}
+                      className="p-1.5 text-gray-400 hover:text-gray-600 rounded-full mr-1 transition-colors"
+                    >
+                      <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
-              ))}
+              </div>
+            </div>
+
+            {/* Quick Metrics Bar */}
+            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl border-t border-white/10 pt-6">
+              <div>
+                <span className="block text-2xl md:text-3xl font-bold text-white">{ALL_COUNTRIES.length}</span>
+                <span className="text-xs text-white/60">Pays répertoriés</span>
+              </div>
+              <div>
+                <span className="block text-2xl md:text-3xl font-bold text-emerald-400">{FEATURED.length}</span>
+                <span className="text-xs text-white/60">Destinations Phares</span>
+              </div>
+              <div>
+                <span className="block text-2xl md:text-3xl font-bold text-white">7</span>
+                <span className="text-xs text-white/60">Continents couverts</span>
+              </div>
+              <div>
+                <span className="block text-2xl md:text-3xl font-bold text-amber-400">{ALL_TAGS.length}</span>
+                <span className="text-xs text-white/60">Thématiques Outdoor</span>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* ── FEATURED — fond crème ── */}
-        {FEATURED.length > 0 && (
-          <section className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 py-14 sm:py-16">
-            <div className="flex items-end justify-between mb-8">
-              <div>
-                <p style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: '#E4501C', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '8px' }}>
-                  · Destinations phares
-                </p>
-                <h2
-                  style={{
-                    fontFamily: 'Georgia, serif',
-                    fontWeight: 800,
-                    fontStyle: 'italic',
-                    fontSize: 'clamp(1.6rem, 3vw, 2.2rem)',
-                    color: '#1C2620',
-                    lineHeight: '1.1',
-                    letterSpacing: '-0.02em',
-                  }}
-                >
-                  Les incontournables.
-                </h2>
+        {/* Main Content Area */}
+        <div id="main-content" className="container mx-auto px-4 py-10">
+
+          {/* Featured Destinations Carousel / Grid */}
+          {FEATURED.length > 0 && !search && continent === 'Tous' && dangerFilter === 'Tous' && !tagFilter && (
+            <section className="mb-14">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#1C2620]">Destinations Phares 🔥</h2>
+                  <p className="text-sm text-[#5C6B5E]">Nos fiches complètes vérifiées avec guides d&apos;équipement sur-mesure</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {FEATURED.map((country) => {
+                  const img = getCountryImage(country.code);
+                  const danger = DANGER_CONFIG[country.danger_level];
+                  return (
+                    <Link
+                      key={country.code}
+                      href={`/pays/${country.code.toLowerCase()}`}
+                      className="group relative flex flex-col bg-white rounded-2xl overflow-hidden border border-[#E8E4D8] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                    >
+                      {/* Image Header */}
+                      <div className="relative h-44 w-full bg-[#E7E3D6] overflow-hidden">
+                        <img
+                          src={img}
+                          alt={country.nom}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                        
+                        {/* Flag Badge */}
+                        <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md text-sm font-bold shadow-md flex items-center gap-1.5">
+                          <span>{getFlagEmoji(country.code)}</span>
+                          <span className="text-[#1C2620] text-xs uppercase tracking-wider">{country.code}</span>
+                        </div>
+
+                        {/* Safety Badge */}
+                        <div className={`absolute top-3 right-3 px-2.5 py-1 rounded-full text-xs font-bold border shadow-sm flex items-center gap-1 ${danger.bg} ${danger.text} ${danger.border}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${danger.dot}`} />
+                          <span>{danger.label}</span>
+                        </div>
+
+                        {/* Title over gradient */}
+                        <div className="absolute bottom-3 left-3 right-3 text-white">
+                          <h3 className="font-bold text-xl leading-tight drop-shadow-md">{country.nom}</h3>
+                          <p className="text-xs text-white/80 font-light">{country.capital} · {country.continent}</p>
+                        </div>
+                      </div>
+
+                      {/* Card Content */}
+                      <div className="p-4 flex flex-col flex-1 justify-between bg-white">
+                        <div className="space-y-2 mb-3">
+                          <div className="flex items-center justify-between text-xs text-[#5C6B5E]">
+                            <span>📅 {country.meilleure_saison}</span>
+                            <span className="font-mono bg-[#F5F2EA] px-2 py-0.5 rounded text-[#1C2620] font-semibold">{country.monnaie}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[#F0ECE1]">
+                          {country.tags.slice(0, 3).map((tag) => (
+                            <span key={tag} className="px-2 py-0.5 bg-[#F5F2EA] text-[#3A4A3D] text-[11px] font-medium rounded-md border border-[#E4E0D4]">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          <TopoSeparator className="my-8" />
+
+          {/* Filter Bar & Controls */}
+          <section className="mb-8 space-y-5">
+            {/* Continent Pills Bar */}
+            <div>
+              <label className="block text-xs font-bold text-[#7A8A7D] uppercase tracking-wider mb-2">Continent</label>
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                {CONTINENTS.map((c) => {
+                  const isSelected = continent === c;
+                  return (
+                    <button
+                      key={c}
+                      onClick={() => setContinent(c)}
+                      className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 border ${
+                        isSelected
+                          ? 'bg-[#1C2620] text-white border-[#1C2620] shadow-md scale-105'
+                          : 'bg-white text-[#3A4A3D] border-[#E4E0D4] hover:border-[#1C2620] hover:bg-[#F5F2EA]'
+                      }`}
+                    >
+                      <span>{CONTINENT_EMOJIS[c]}</span>
+                      <span>{c}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {FEATURED.map((country) => (
-                <FeaturedCountryCard key={country.code} country={country} />
-              ))}
+
+            {/* Dropdown Filters Row */}
+            <div className="bg-white p-4 rounded-2xl border border-[#E8E4D8] shadow-sm grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-center">
+              {/* Security Filter */}
+              <div>
+                <label className="block text-[11px] font-bold text-[#7A8A7D] uppercase tracking-wider mb-1">Sécurité</label>
+                <select
+                  value={dangerFilter}
+                  onChange={(e) => setDangerFilter(e.target.value)}
+                  className="w-full px-3 py-2 text-xs font-semibold text-[#1C2620] bg-[#F5F2EA] border border-[#E4E0D4] rounded-xl focus:outline-none focus:border-[#1C2620]"
+                >
+                  <option value="Tous">Tous les niveaux</option>
+                  <option value="low">🟢 Sûr</option>
+                  <option value="medium">🟡 Vigilance</option>
+                  <option value="high">🔴 Risqué</option>
+                </select>
+              </div>
+
+              {/* Tag / Activity Filter */}
+              <div>
+                <label className="block text-[11px] font-bold text-[#7A8A7D] uppercase tracking-wider mb-1">Thématique / Activité</label>
+                <select
+                  value={tagFilter}
+                  onChange={(e) => setTagFilter(e.target.value)}
+                  className="w-full px-3 py-2 text-xs font-semibold text-[#1C2620] bg-[#F5F2EA] border border-[#E4E0D4] rounded-xl focus:outline-none focus:border-[#1C2620]"
+                >
+                  <option value="">Toutes les activités</option>
+                  {ALL_TAGS.map((tag) => (
+                    <option key={tag} value={tag}>{tag}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Published Toggle */}
+              <div className="flex items-center gap-2 pt-4 sm:pt-0">
+                <input
+                  type="checkbox"
+                  id="publishedToggle"
+                  checked={publishedOnly}
+                  onChange={(e) => setPublishedOnly(e.target.checked)}
+                  className="w-4 h-4 rounded accent-[#1C2620] cursor-pointer"
+                />
+                <label htmlFor="publishedToggle" className="text-xs font-semibold text-[#1C2620] cursor-pointer">
+                  Destinations vérifiées uniquement
+                </label>
+              </div>
+
+              {/* Reset Filters Button */}
+              {(search || continent !== 'Tous' || dangerFilter !== 'Tous' || tagFilter || publishedOnly) && (
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => {
+                      setSearch('');
+                      setContinent('Tous');
+                      setDangerFilter('Tous');
+                      setTagFilter('');
+                      setPublishedOnly(false);
+                    }}
+                    className="text-xs font-semibold text-[#E4501C] hover:underline flex items-center gap-1"
+                  >
+                    <span>Réinitialiser les filtres</span>
+                    <span>✕</span>
+                  </button>
+                </div>
+              )}
             </div>
           </section>
-        )}
 
-        {/* ── FILTERS — fond crème sticky ── */}
-        <section
-          style={{
-            background: '#F5F2EC',
-            borderTop: '1px solid #E8E4DA',
-            borderBottom: '1px solid #E8E4DA',
-            position: 'sticky',
-            top: '64px',
-            zIndex: 30,
-          }}
-        >
-          <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 py-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-wrap">
-              {/* Search */}
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Rechercher un pays…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="outline-none"
-                  style={{
-                    background: '#FFFFFF',
-                    border: '1px solid #E8E4DA',
-                    borderRadius: '10px',
-                    padding: '8px 14px',
-                    fontSize: '13px',
-                    color: '#1C2620',
-                    fontFamily: 'var(--font-sans)',
-                    width: '220px',
-                    boxShadow: '0 1px 3px rgba(28,38,32,0.04)',
-                  }}
-                />
-              </div>
-
-              {/* Continent */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {continents.slice(0, 5).map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setContinent(c)}
-                    className="transition-all duration-200"
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      fontFamily: 'var(--font-mono)',
-                      letterSpacing: '0.04em',
-                      border: continent === c ? '1px solid #1C2620' : '1px solid #E8E4DA',
-                      background: continent === c ? '#1C2620' : '#FFFFFF',
-                      color: continent === c ? '#FFFFFF' : '#5C6B5E',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-
-              {/* Danger filter */}
-              <div className="flex items-center gap-2">
-                {['Tous', 'low', 'medium', 'high'].map((d) => (
-                  <button
-                    key={d}
-                    onClick={() => setDangerFilter(d)}
-                    className="transition-all duration-200"
-                    style={{
-                      padding: '5px 10px',
-                      borderRadius: '6px',
-                      fontSize: '11px',
-                      fontFamily: 'var(--font-mono)',
-                      border: dangerFilter === d ? '1px solid #1C2620' : '1px solid #E8E4DA',
-                      background: dangerFilter === d ? '#1C2620' : '#FFFFFF',
-                      color: dangerFilter === d ? '#FFFFFF' : '#8A8578',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {d === 'Tous' ? 'Tous' : dangerConfig[d]?.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Count */}
-              <p
-                className="sm:ml-auto"
-                style={{ fontSize: '12px', fontFamily: 'var(--font-mono)', color: '#8A8578', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}
-              >
-                {filtered.length} pays
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* ── GRID — fond crème ── */}
-        <section className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 py-10 sm:py-12">
-          {displayItems.length === 0 ? (
-            <div className="text-center py-24">
-              <p style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: '1.5rem', color: '#8A8578' }}>
-                Aucun pays trouvé.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {displayItems.map((country) => (
-                <CountryCard key={country.code} country={country} />
-              ))}
-            </div>
-          )}
-
-          {hasMore && (
-            <div className="flex justify-center mt-10">
+          {/* Results Summary & View Switcher */}
+          <div className="flex justify-between items-center mb-6">
+            <p className="text-xs font-bold text-[#7A8A7D] uppercase tracking-wider">
+              {filtered.length} destination{filtered.length > 1 ? 's' : ''} trouvée{filtered.length > 1 ? 's' : ''}
+            </p>
+            <div className="flex gap-1.5 p-1 bg-white border border-[#E4E0D4] rounded-xl shadow-sm">
               <button
-                onClick={() => setPage((p) => p + 1)}
-                className="font-medium transition-all duration-200 hover:bg-[#1C2620] hover:text-white"
-                style={{
-                  background: '#FFFFFF',
-                  border: '1px solid #E8E4DA',
-                  borderRadius: '12px',
-                  padding: '12px 28px',
-                  fontSize: '13px',
-                  fontFamily: 'var(--font-sans)',
-                  color: '#5C6B5E',
-                  cursor: 'pointer',
-                  boxShadow: '0 1px 3px rgba(28,38,32,0.04)',
-                }}
+                onClick={() => setViewMode('grid')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  viewMode === 'grid' ? 'bg-[#1C2620] text-white shadow-sm' : 'text-[#5C6B5E] hover:text-[#1C2620]'
+                }`}
               >
-                Voir plus · {filtered.length - displayItems.length} pays restants
+                Grille
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  viewMode === 'list' ? 'bg-[#1C2620] text-white shadow-sm' : 'text-[#5C6B5E] hover:text-[#1C2620]'
+                }`}
+              >
+                Liste
               </button>
             </div>
+          </div>
+
+          {/* Results Display */}
+          {filtered.length === 0 ? (
+            <div className="text-center py-20 bg-white rounded-3xl border border-[#E8E4D8] p-8 shadow-sm">
+              <div className="text-5xl mb-4">🌏</div>
+              <h3 className="text-xl font-bold text-[#1C2620] mb-2">Aucune destination trouvée</h3>
+              <p className="text-sm text-[#5C6B5E] max-w-md mx-auto mb-6">
+                Aucun pays ne correspond aux filtres sélectionnés. Essayez de réinitialiser votre recherche.
+              </p>
+              <button
+                onClick={() => {
+                  setSearch('');
+                  setContinent('Tous');
+                  setDangerFilter('Tous');
+                  setTagFilter('');
+                  setPublishedOnly(false);
+                }}
+                className="px-5 py-2.5 bg-[#1C2620] text-white text-xs font-bold rounded-xl hover:bg-[#2D3F35] transition-all"
+              >
+                Réinitialiser les filtres
+              </button>
+            </div>
+          ) : viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {displayItems.map((country) => {
+                const danger = DANGER_CONFIG[country.danger_level];
+                const img = getCountryImage(country.code);
+                return (
+                  <Link
+                    key={country.code}
+                    href={`/pays/${country.code.toLowerCase()}`}
+                    className="group relative flex flex-col bg-white rounded-2xl overflow-hidden border border-[#E8E4D8] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                  >
+                    {/* Top image bar */}
+                    <div className="relative h-36 w-full bg-[#E7E3D6] overflow-hidden">
+                      <img
+                        src={img}
+                        alt={country.nom}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+                      {/* Flag Badge */}
+                      <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md text-sm font-bold shadow-md flex items-center gap-1.5">
+                        <span>{getFlagEmoji(country.code)}</span>
+                        <span className="text-[#1C2620] text-xs font-mono">{country.code}</span>
+                      </div>
+
+                      {/* Security Level Pill */}
+                      <div className={`absolute top-3 right-3 px-2.5 py-1 rounded-full text-xs font-bold border shadow-sm flex items-center gap-1.5 ${danger.bg} ${danger.text} ${danger.border}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${danger.dot}`} />
+                        <span>{danger.label}</span>
+                      </div>
+
+                      {/* Name over image */}
+                      <div className="absolute bottom-3 left-3 right-3 text-white">
+                        <h3 className="font-bold text-lg leading-tight drop-shadow">{country.nom}</h3>
+                        <p className="text-xs text-white/80 font-light">{country.capital} · {country.continent}</p>
+                      </div>
+                    </div>
+
+                    {/* Card details */}
+                    <div className="p-4 flex flex-col flex-1 justify-between bg-white space-y-3">
+                      <div className="flex items-center justify-between text-xs text-[#5C6B5E] pt-1">
+                        <span>📅 <strong>Saison:</strong> {country.meilleure_saison}</span>
+                        <span className="font-mono bg-[#F5F2EA] px-2 py-0.5 rounded text-[#1C2620] font-semibold">{country.monnaie}</span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[#F0ECE1]">
+                        {country.tags.map((tag) => (
+                          <span key={tag} className="px-2 py-0.5 bg-[#F5F2EA] text-[#3A4A3D] text-[11px] font-medium rounded-md border border-[#E4E0D4]">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+
+                      {country.published && (
+                        <div className="pt-2 flex items-center text-[11px] text-[#2D6A4F] font-bold gap-1">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                          <span>Fiche Guide Vérifiée</span>
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            /* List View */
+            <div className="space-y-3">
+              {displayItems.map((country) => {
+                const danger = DANGER_CONFIG[country.danger_level];
+                return (
+                  <Link
+                    key={country.code}
+                    href={`/pays/${country.code.toLowerCase()}`}
+                    className="group flex items-center justify-between p-4 bg-white border border-[#E8E4D8] rounded-xl hover:border-[#1C2620] hover:shadow-md transition-all duration-200"
+                  >
+                    <div className="flex items-center gap-4 flex-1">
+                      <span className="text-3xl p-2 bg-[#F5F2EA] rounded-xl">{getFlagEmoji(country.code)}</span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-bold text-base text-[#1C2620] group-hover:text-[#E4501C] transition-colors">{country.nom}</h3>
+                          <span className="text-xs text-[#7A8A7D] font-mono">({country.code})</span>
+                        </div>
+                        <p className="text-xs text-[#5C6B5E]">{country.capital} · {country.continent}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-6">
+                      <div className="hidden md:block text-right">
+                        <span className="block text-xs font-semibold text-[#1C2620]">Saison: {country.meilleure_saison}</span>
+                        <span className="text-xs text-[#7A8A7D]">Devise: {country.monnaie}</span>
+                      </div>
+
+                      <div className="flex gap-1.5 hidden lg:flex">
+                        {country.tags.slice(0, 2).map((tag) => (
+                          <span key={tag} className="px-2 py-0.5 bg-[#F5F2EA] text-[#3A4A3D] text-[11px] font-medium rounded-md border border-[#E4E0D4]">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+
+                      <span className={`px-2.5 py-1 text-xs font-bold rounded-full border flex items-center gap-1 ${danger.bg} ${danger.text} ${danger.border}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${danger.dot}`} />
+                        <span>{danger.label}</span>
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
           )}
         </section>
 
-        {/* ── CTA CONFIGURATEUR ── */}
-        <section className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 xl:px-16 pb-16 sm:pb-20">
-          <div
-            className="relative overflow-hidden"
-            style={{ background: '#1C2620', borderRadius: '20px', padding: 'clamp(40px, 5vw, 64px)' }}
-          >
-            {/* Grain */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")', backgroundRepeat: 'repeat', backgroundSize: '128px' }} />
-            <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
-              <div>
-                <p style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: '#E4501C', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '12px' }}>
-                  · Kit sur mesure
-                </p>
-                <h2
-                  style={{
-                    fontFamily: 'Georgia, serif',
-                    fontWeight: 800,
-                    fontStyle: 'italic',
-                    fontSize: 'clamp(1.8rem, 3vw, 2.5rem)',
-                    lineHeight: '1.1',
-                    letterSpacing: '-0.02em',
-                    color: '#FFFFFF',
-                    marginBottom: '12px',
-                  }}
-                >
-                  Composez votre kit{' '}
-                  <em style={{ fontStyle: 'normal', color: 'rgba(231,227,214,0.4)' }}>pour cette destination.</em>
-                </h2>
-                <p style={{ fontSize: '15px', color: 'rgba(231,227,214,0.5)', fontFamily: 'var(--font-sans)', lineHeight: '1.6', maxWidth: '480px' }}>
-                  4 questions. Un kit optimisé pour votre pays, votre durée et votre saison.
-                </p>
-              </div>
-              <Link
-                href="/ai-configurator"
-                className="flex-shrink-0 font-semibold transition-all duration-200 hover:opacity-90"
-                style={{ background: '#E7E3D6', color: '#1C2620', borderRadius: '12px', padding: '14px 28px', fontSize: '14px', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}
+          {/* Load More Pagination */}
+          {hasMore && (
+            <div className="flex flex-col items-center justify-center mt-12 space-y-3">
+              <button
+                onClick={() => setPage((p) => p + 1)}
+                className="px-8 py-3.5 bg-[#1C2620] text-white rounded-2xl text-xs font-bold tracking-wide uppercase shadow-lg hover:bg-[#2D3F35] active:scale-[0.98] transition-all"
               >
-                Configurer mon kit →
-              </Link>
+                Charger plus de pays ({filtered.length - displayItems.length} restants)
+              </button>
+              <p className="text-xs text-[#7A8A7D]">
+                Affichage de {displayItems.length} sur {filtered.length} destinations
+              </p>
             </div>
           </div>
         </section>

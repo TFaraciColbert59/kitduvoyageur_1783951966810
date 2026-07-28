@@ -18,7 +18,7 @@ export default function AdventureDetailPanel({ trail, onClose }: AdventureDetail
 
   const { response, isLoading: aiLoading, error: aiError, sendMessage } = useChat(
     'GEMINI',
-    'gemini/gemini-2.5-flash',
+    'gemini/gemini-2.0-flash',
     true
   );
 
