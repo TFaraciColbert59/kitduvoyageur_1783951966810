@@ -73,10 +73,31 @@ export const radius = {
   full: '9999px',
 } as const;
 
+export const forest = {
+  950: '#06120C', 900: '#0B1F17', 800: '#17402C',
+  700: '#205238', 600: '#2D6B4A',
+} as const;
+
+export const sage = {
+  500: '#A8C8A0', 300: '#C6DCBE', 200: '#DDE9D6', 100: '#EAF1E5',
+} as const;
+
+export const stone = {
+  50: '#F4F1EA', 100: '#E9E4D9', 200: '#DDD6C6',
+} as const;
+
+export const ink = {
+  900: '#0B1F17', 700: '#384A42', 500: '#6B7A72',
+  400: '#8B978F', 300: '#AEB7B1',
+} as const;
+
+export const paper = '#FBFAF6';
+
 export const shadows = {
-  low: '0 1px 2px 0 rgba(0,0,0,0.05)',
-  medium: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
-  high: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
+  xs: '0 1px 2px rgba(11,31,23,0.05), 0 1px 3px rgba(11,31,23,0.04)',
+  sm: '0 2px 6px rgba(11,31,23,0.06), 0 4px 12px rgba(11,31,23,0.05)',
+  md: '0 6px 16px rgba(11,31,23,0.08), 0 12px 32px rgba(11,31,23,0.06)',
+  lg: '0 12px 24px rgba(11,31,23,0.10), 0 24px 56px rgba(11,31,23,0.10)',
 } as const;
 
 export const transition = {
@@ -87,7 +108,7 @@ export const transition = {
 
 // Export a combined theme object for convenience
 export const theme = {
-  colors,
+  colors, forest, sage, stone, ink, paper,
   typography,
   spacing,
   radius,
