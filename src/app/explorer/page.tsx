@@ -77,9 +77,18 @@ export default function ExplorerPage() {
       }
       // Family filter
       if (familyOnly && !t.family_friendly) return false;
+      // Category filter (from mobile hero chips)
+      if (activeCategory && activeCategory !== 'Tout') {
+        const cat = activeCategory.toLowerCase();
+        const terrain = (t.terrain_type || '').toLowerCase();
+        const network = (t.network || '').toLowerCase();
+        const name_ = (t.name || '').toLowerCase();
+        const match = terrain.includes(cat) || network.includes(cat) || name_.includes(cat);
+        if (!match) return false;
+      }
       return true;
     });
-  }, [trails, searchQuery, activeDifficulties, activeDuration, familyOnly]);
+  }, [trails, searchQuery, activeDifficulties, activeDuration, familyOnly, activeCategory]);
 
   const handleTrailClick = useCallback((trail: MapTrail) => {
     setSelectedTrailId(trail.id);
@@ -275,7 +284,7 @@ export default function ExplorerPage() {
 
                   {!isLoading && error && (
                     <div className="flex flex-col items-center justify-center h-48 text-center px-6">
-                      <svg width="32" height="32" fill="none" stroke="#E4501C" strokeWidth="1.5" viewBox="0 0 24 24" className="mb-3">
+                      <svg width="32" height="32" fill="none" stroke="#7A8A7D" strokeWidth="1.5" viewBox="0 0 24 24" className="mb-3">
                         <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                       </svg>
                       <p className="text-sm font-medium text-[#1C2620]">Erreur de chargement</p>
