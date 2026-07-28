@@ -9,6 +9,7 @@ import Icon from '@/components/ui/AppIcon';
 import { getCart, updateQuantity, removeFromCart, getCartTotals, applyLoyaltyFree, removeLoyaltyFree, CartItem } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 export default function PanierPage() {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -133,8 +134,9 @@ export default function PanierPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F2E8] text-[#1C2620] flex flex-col">
-      <Header />
+    <>
+      <div className="hidden md:block min-h-screen bg-[#F5F2E8] text-[#1C2620] flex flex-col">
+        <Header />
 
       {confirmDeleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm" role="dialog" aria-modal="true">
@@ -350,5 +352,104 @@ export default function PanierPage() {
         </div>
       </div>
     </div>
+
+    {/* ── MOBILE VIEW ── */}
+    <div className="block md:hidden">
+      <MobilePageShell>
+        {items.length === 0 ? (
+          <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+            <div style={{ fontSize: '22px', fontWeight: 500, color: '#0B1F17', marginBottom: '8px' }}>
+              Votre <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>panier</em> est vide
+            </div>
+            <Link href="/catalogue" style={{ display: 'inline-block', marginTop: '16px', padding: '12px 24px', background: '#0B1F17', color: '#fff', borderRadius: '999px', fontSize: '14px', fontWeight: 500, textDecoration: 'none' }}>
+              Voir le catalogue
+            </Link>
+          </div>
+        ) : (
+          <>
+            {/* Cart header */}
+            <div style={{ padding: '12px 16px 16px', borderBottom: '1px solid rgba(11,31,23,0.05)' }}>
+              <h1 style={{ fontSize: '28px', letterSpacing: '-0.025em', margin: 0 }}>
+                {totalItems} pièce{totalItems > 1 ? 's' : ''}<br/>
+                <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>prêtes à partir.</em>
+              </h1>
+              <div style={{ fontSize: '12px', color: '#6B7A72', fontFamily: 'ui-monospace, monospace', marginTop: '2px' }}>
+                MSA-CH-2026-047 · panier ouvert
+              </div>
+            </div>
+
+            {/* Cart items */}
+            {items.map((item) => (
+              <div key={item.id} style={{ display: 'flex', gap: '12px', padding: '16px', borderBottom: '1px solid rgba(11,31,23,0.05)' }}>
+                <div style={{ width: '76px', height: '92px', borderRadius: '12px', background: 'linear-gradient(135deg, #17402C 0%, #2D6B4A 100%)', flexShrink: 0, overflow: 'hidden' }}>
+                  {item.image ? <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'multiply' }} /> : null}
+                </div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontSize: '10px', color: '#6B7A72', fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      {item.category || 'PORTAGE'}
+                    </div>
+                    <div style={{ fontSize: '14px', fontWeight: 500, color: '#0B1F17', marginTop: '2px' }}>
+                      {item.name}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px', background: '#F4F1EA', borderRadius: '999px' }}>
+                      <button onClick={() => handleQuantity(item.id, Math.max(1, item.quantity - 1))} style={{ width: '24px', height: '24px', borderRadius: '999px', background: '#FBFAF6', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: '#0B1F17', fontFamily: 'inherit' }}>−</button>
+                      <span style={{ minWidth: '18px', textAlign: 'center', fontSize: '13px', fontWeight: 500, fontFamily: 'ui-monospace, monospace', color: '#0B1F17' }}>{item.quantity}</span>
+                      <button onClick={() => handleQuantity(item.id, item.quantity + 1)} style={{ width: '24px', height: '24px', borderRadius: '999px', background: '#FBFAF6', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: '#0B1F17', fontFamily: 'inherit' }}>+</button>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '15px', fontWeight: 600, color: '#0B1F17' }}>{(item.priceEur * item.quantity).toFixed(0)} €</div>
+                      <button onClick={() => handleRemoveRequest(item.id)} style={{ fontSize: '11px', color: '#9AA89C', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', fontFamily: 'inherit' }}>Retirer</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Promo banner */}
+            <div style={{ margin: '16px', padding: '12px 16px', background: '#EDF3ED', borderRadius: '14px', border: '1.5px dashed #A3C4A3' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6B7A72' }}>Code promo</div>
+                  <div style={{ fontSize: '13px', fontWeight: 500, color: '#0B1F17', marginTop: '2px' }}>BIENVENUE10</div>
+                </div>
+                <button style={{ fontSize: '12px', fontWeight: 500, color: '#17402C', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Appliquer →</button>
+              </div>
+            </div>
+
+            {/* Summary card */}
+            <div style={{ margin: '0 16px', padding: '16px', background: '#FBFAF6', borderRadius: '16px', border: '1px solid #EDF3ED' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '13px', color: '#6B7A72' }}>Sous-total</span>
+                <span style={{ fontSize: '13px', fontWeight: 500, color: '#0B1F17' }}>{totalPriceEur.toFixed(0)} €</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '13px', color: '#6B7A72' }}>Livraison</span>
+                <span style={{ fontSize: '13px', fontWeight: 500, color: '#0B1F17' }}>{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
+              </div>
+              <div style={{ height: '1px', background: '#EDF3ED', margin: '12px 0' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '16px', fontWeight: 700, color: '#0B1F17' }}>Total</span>
+                <span style={{ fontSize: '16px', fontWeight: 700, color: '#0B1F17' }}>{grandTotal.toFixed(0)} €</span>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <div style={{ padding: '16px' }}>
+              <Link href="/checkout" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '14px 20px', background: '#0B1F17', color: '#fff', borderRadius: '999px', fontSize: '15px', fontWeight: 500, textDecoration: 'none', fontFamily: 'inherit' }}>
+                <span>Suivant</span>
+                <span style={{ fontSize: '12px', opacity: 0.7, fontFamily: 'ui-monospace, monospace', background: 'rgba(255,255,255,0.15)', padding: '2px 10px', borderRadius: '999px' }}>{grandTotal.toFixed(0)} €</span>
+              </Link>
+            </div>
+
+            {/* Footer spacer */}
+            <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
+          </>
+        )}
+      </MobilePageShell>
+    </div>
+    </>
   );
 }
