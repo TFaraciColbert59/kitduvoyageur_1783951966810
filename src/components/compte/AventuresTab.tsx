@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
-import { UserProfile, Aventure, MOCK_MARCELINE_DATA } from '@/lib/mock/compte-marceline';
+import { UserProfile, Aventure } from '@/lib/mock/compte-marceline';
 import ProchainVoyageCard from '@/components/compte/ProchainVoyageCard';
 import { createClient } from '@/lib/supabase/client';
 
@@ -28,7 +28,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
-          setAventures(MOCK_MARCELINE_DATA.aventures);
+          setAventures([]);
           return;
         }
 
@@ -54,10 +54,10 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
           image_url: item.cover_url || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80'
         }));
 
-        setAventures(formatted.length > 0 ? formatted : MOCK_MARCELINE_DATA.aventures);
+        setAventures(formatted.length > 0 ? formatted : []);
       } catch (err) {
         console.error("Error fetching aventures:", err);
-        setAventures(MOCK_MARCELINE_DATA.aventures);
+        setAventures([]);
       } finally {
         setLoading(false);
       }
@@ -171,7 +171,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
             <span className="text-sm font-bold text-[#5C6B5E] font-serif italic">kg</span>
           </div>
           <p className="text-[10px] text-[#5C6B5E]">
-            <span className="text-[#E4501C] font-bold">équivalent</span> 1 vol Paris-Nice
+            <span className="text-[#17402C] font-bold">équivalent</span> 1 vol Paris-Nice
           </p>
         </div>
       </div>
@@ -218,7 +218,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
                 { label: 'JUL', val: activityMetric === 'Sorties' ? 55 : activityMetric === 'Distance' ? 75 : 45, color: '#2D5A3D' },
                 { label: 'AOÛ', val: activityMetric === 'Sorties' ? 65 : activityMetric === 'Distance' ? 90 : 55, color: '#2D5A3D' },
                 { label: 'SEP', val: activityMetric === 'Sorties' ? 80 : activityMetric === 'Distance' ? 100 : 70, color: '#2D5A3D' },
-                { label: 'OCT', val: activityMetric === 'Sorties' ? 85 : activityMetric === 'Distance' ? 120 : 80, color: '#E4501C' }, // Highlighted
+                { label: 'OCT', val: activityMetric === 'Sorties' ? 85 : activityMetric === 'Distance' ? 120 : 80, color: '#17402C' }, // Highlighted
                 { label: 'NOV', val: 0, color: '#E8E4D8' },
                 { label: 'DÉC', val: 0, color: '#E8E4D8' },
               ].map((month, idx) => {
@@ -324,7 +324,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
                       <div className="flex items-center gap-3">
                         <span className={`text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${
                           av.status === 'Terminée' ? 'bg-[#EAF0EB] text-[#2D5A3D]' : 
-                          av.status === 'En cours' ? 'bg-[#FFF3E0] text-[#E4501C]' : 
+                          av.status === 'En cours' ? 'bg-[#FFF3E0] text-[#17402C]' : 
                           'bg-[#F5F2E8] text-[#5C6B5E]'
                         }`}>
                           {av.status}
@@ -428,7 +428,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
 
         {/* RIGHT COLUMN (4 cols) */}
         <div className="lg:col-span-4 space-y-6">
-          <ProchainVoyageCard voyage={MOCK_MARCELINE_DATA.prochainVoyage} compact={true} />
+          <ProchainVoyageCard voyage={{ id: '', title: 'Aucun', title_highlight: 'voyage prévu', days_left: 0, date_range: '', companions: '', refuges_count: 0, preparation_percentage: 0, preparation_detail: '', tasks_left: 0, group_id: '' } as any} compact={true} />
           
           {/* TOP MASSIFS */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#E8E4D8]">

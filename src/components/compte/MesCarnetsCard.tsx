@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/AppIcon';
 import { Carnet } from '@/lib/mock/compte-marceline';
 
@@ -11,6 +12,7 @@ interface MesCarnetsCardProps {
 }
 
 export default function MesCarnetsCard({ carnets }: MesCarnetsCardProps) {
+  const router = useRouter();
   return (
     <div className="bg-white rounded-[2rem] p-6 sm:p-8 border border-[#1C2620]/5 shadow-sm space-y-6 my-6">
       
@@ -48,7 +50,7 @@ export default function MesCarnetsCard({ carnets }: MesCarnetsCardProps) {
         {carnets.map((item) => (
           <div
             key={item.id}
-            onClick={() => window.location.href = `/carnets/${item.id || encodeURIComponent(item.title)}`}
+            onClick={() => router.push(`/carnets/${item.id || encodeURIComponent(item.title)}`)}
             className="group bg-[#F5F3ED]/40 hover:bg-[#F5F3ED] border border-[#1C2620]/5 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col justify-between cursor-pointer"
           >
             <div>

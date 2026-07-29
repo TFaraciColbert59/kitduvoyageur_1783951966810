@@ -7,6 +7,7 @@ import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 interface OccasionItem {
   id: string;
@@ -516,8 +517,8 @@ export default function OccasionPage() {
       return 0;
     });
 
-  return (
-    <div className="min-h-screen bg-background">
+  const pageContent = (
+    <>
       <Header />
       <main className="pt-20">
         {/* Hero */}
@@ -755,6 +756,27 @@ export default function OccasionPage() {
       )}
 
       <Footer />
-    </div>
+    </>
+  );
+
+  return (
+    <>
+      {/* DESKTOP */}
+      <div className="hidden md:block">
+        <div className="min-h-screen bg-background">
+          {pageContent}
+        </div>
+      </div>
+
+      {/* MOBILE */}
+      <div className="block md:hidden">
+        <MobilePageShell>
+          <div className="min-h-screen bg-background">
+            {pageContent}
+          </div>
+        </MobilePageShell>
+        
+      </div>
+    </>
   );
 }

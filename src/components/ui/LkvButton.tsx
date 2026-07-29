@@ -47,7 +47,7 @@ export default function LkvButton({
     cursor: disabled ? 'not-allowed' : 'pointer',
     border: 'none',
     fontFamily: 'inherit',
-    transition: 'all 220ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+    transition: 'all 220ms cubic-bezier(0.16, 1, 0.3, 1)',
     ...STYLES[variant],
     ...SIZES[size],
     ...(disabled ? { opacity: 0.5 } : {}),

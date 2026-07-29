@@ -5,6 +5,7 @@ import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 type AdminSection =
@@ -251,10 +252,10 @@ function OverviewSection() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs text-white/70 truncate">{p.name}</span>
-                    <span className="font-mono text-xs text-[#E4501C] ml-2" style={{ fontFamily: 'var(--font-mono)' }}>{p.price_eur}€</span>
+                    <span className="font-mono text-xs text-[#17402C] ml-2" style={{ fontFamily: 'var(--font-mono)' }}>{p.price_eur}€</span>
                   </div>
                   <div className="h-1 bg-white/8 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#E4501C] rounded-full" style={{ width: `${Math.max(20, 100 - i * 18)}%` }} />
+                    <div className="h-full bg-[#17402C] rounded-full" style={{ width: `${Math.max(20, 100 - i * 18)}%` }} />
                   </div>
                 </div>
                 <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${p.stock > 0 ? 'text-emerald-400 bg-emerald-400/10' : 'text-red-400 bg-red-400/10'}`}>
@@ -304,15 +305,15 @@ function ProductsSection() {
   return (
     <div className="space-y-4">
       <div className="bg-[#1E2B25] border border-white/8 rounded-xl p-6 text-center">
-        <div className="w-12 h-12 rounded-2xl bg-[#E4501C]/15 flex items-center justify-center mx-auto mb-4">
-          <Icon name="ArchiveBoxIcon" size={22} variant="outline" className="text-[#E4501C]" />
+        <div className="w-12 h-12 rounded-2xl bg-[#17402C]/15 flex items-center justify-center mx-auto mb-4">
+          <Icon name="ArchiveBoxIcon" size={22} variant="outline" className="text-[#17402C]" />
         </div>
         <h3 className="font-semibold text-white mb-2">Gestion complète des produits</h3>
         <p className="text-sm text-white/40 mb-5 max-w-sm mx-auto">
           Vue liste, formulaire 29 champs, IA Gemini, médias, relations, import/export CSV, logs d&apos;audit.
         </p>
         <Link href="/admin/produits"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#E4501C] text-white text-sm font-medium hover:bg-[#cc3d10] transition-all">
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#17402C] text-white text-sm font-medium hover:bg-[#cc3d10] transition-all">
           <Icon name="ArrowTopRightOnSquareIcon" size={14} variant="outline" />
           Ouvrir la gestion produits
         </Link>
@@ -342,7 +343,7 @@ function OrdersSection() {
           <button
             key={s}
             onClick={() => setStatusFilter(s)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${statusFilter === s ? 'bg-[#E4501C] text-white' : 'bg-white/5 border border-white/10 text-white/50 hover:text-white'}`}
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${statusFilter === s ? 'bg-[#17402C] text-white' : 'bg-white/5 border border-white/10 text-white/50 hover:text-white'}`}
           >
             {s === 'all' ? 'Toutes' : s.replace('_', ' ')}
           </button>
@@ -410,7 +411,7 @@ function CountriesSection() {
       )}
       <div className="flex items-center justify-between">
         <p className="text-sm text-white/50">{COUNTRIES_DATA.length} pays configurés</p>
-        <button className="flex items-center gap-2 bg-[#E4501C] hover:bg-[#cc3d10] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
+        <button className="flex items-center gap-2 bg-[#17402C] hover:bg-[#cc3d10] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
           <Icon name="PlusIcon" size={14} variant="outline" />
           Nouveau pays
         </button>
@@ -486,7 +487,7 @@ function UsersSection() {
             placeholder="Rechercher un utilisateur..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-[#1E2B25] border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#E4501C]/50 transition-colors"
+            className="w-full bg-[#1E2B25] border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#17402C]/50 transition-colors"
           />
         </div>
         <span className="text-xs text-white/30 font-mono px-3">{users.length} membres</span>
@@ -514,7 +515,7 @@ function UsersSection() {
                     <td className="px-4 py-3">
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/60">{u.loyalty_level}</span>
                     </td>
-                    <td className="px-4 py-3 font-mono text-[#E4501C]" style={{ fontFamily: 'var(--font-mono)' }}>{u.trust_score}</td>
+                    <td className="px-4 py-3 font-mono text-[#17402C]" style={{ fontFamily: 'var(--font-mono)' }}>{u.trust_score}</td>
                     <td className="px-4 py-3 text-white/35">{new Date(u.created_at).toLocaleDateString('fr-FR')}</td>
                   </tr>
                 ))
@@ -590,8 +591,8 @@ function ToolboxSection() {
     <div className="space-y-3">
       {tools.map(tool => (
         <div key={tool.id} className="bg-[#1E2B25] border border-white/8 rounded-xl p-4 flex items-center gap-4">
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${tool.active ? 'bg-[#E4501C]/15' : 'bg-white/5'}`}>
-            <Icon name="WrenchScrewdriverIcon" size={16} variant="outline" className={tool.active ? 'text-[#E4501C]' : 'text-white/25'} />
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${tool.active ? 'bg-[#17402C]/15' : 'bg-white/5'}`}>
+            <Icon name="WrenchScrewdriverIcon" size={16} variant="outline" className={tool.active ? 'text-[#17402C]' : 'text-white/25'} />
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-white/80">{tool.name}</p>
@@ -599,7 +600,7 @@ function ToolboxSection() {
           </div>
           <button
             onClick={() => setTools(ts => ts.map(t => t.id === tool.id ? { ...t, active: !t.active } : t))}
-            className={`relative w-11 h-6 rounded-full transition-colors ${tool.active ? 'bg-[#E4501C]' : 'bg-white/10'}`}
+            className={`relative w-11 h-6 rounded-full transition-colors ${tool.active ? 'bg-[#17402C]' : 'bg-white/10'}`}
           >
             <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${tool.active ? 'translate-x-5' : 'translate-x-0.5'}`} />
           </button>
@@ -617,7 +618,7 @@ function ContentSection() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-white/50">{GUIDES_DATA.length} guides</p>
-        <button onClick={() => setEditing('new')} className="flex items-center gap-2 bg-[#E4501C] hover:bg-[#cc3d10] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
+        <button onClick={() => setEditing('new')} className="flex items-center gap-2 bg-[#17402C] hover:bg-[#cc3d10] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
           <Icon name="PlusIcon" size={14} variant="outline" />
           Nouvel article
         </button>
@@ -631,16 +632,16 @@ function ContentSection() {
               <Icon name="XMarkIcon" size={16} variant="outline" />
             </button>
           </div>
-          <input type="text" placeholder="Titre de l'article" className="w-full bg-[#243028] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#E4501C]/50" />
+          <input type="text" placeholder="Titre de l'article" className="w-full bg-[#243028] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#17402C]/50" />
           <textarea
             value={mdContent}
             onChange={e => setMdContent(e.target.value)}
             rows={12}
-            className="w-full bg-[#243028] border border-white/10 rounded-xl px-4 py-3 text-sm text-white/80 font-mono placeholder-white/25 focus:outline-none focus:border-[#E4501C]/50 resize-none"
+            className="w-full bg-[#243028] border border-white/10 rounded-xl px-4 py-3 text-sm text-white/80 font-mono placeholder-white/25 focus:outline-none focus:border-[#17402C]/50 resize-none"
             style={{ fontFamily: 'var(--font-mono)' }}
           />
           <div className="flex gap-3">
-            <button className="flex items-center gap-2 bg-[#E4501C] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#cc3d10] transition-all">
+            <button className="flex items-center gap-2 bg-[#17402C] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#cc3d10] transition-all">
               <Icon name="CheckIcon" size={14} variant="outline" />
               Publier
             </button>
@@ -717,7 +718,7 @@ function AuditSection() {
                 <span className="text-xs text-white/50">{item.label}</span>
                 <input
                   defaultValue={item.value}
-                  className="bg-[#243028] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white font-mono w-24 text-right focus:outline-none focus:border-[#E4501C]/50"
+                  className="bg-[#243028] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white font-mono w-24 text-right focus:outline-none focus:border-[#17402C]/50"
                   style={{ fontFamily: 'var(--font-mono)' }}
                 />
               </div>
@@ -767,7 +768,7 @@ function ConfiguratorSection() {
           { label: 'Config → Achat', value: '34.2%', icon: 'ShoppingBagIcon' },
         ].map(kpi => (
           <div key={kpi.label} className="bg-[#1E2B25] border border-white/8 rounded-xl p-4">
-            <Icon name={kpi.icon as string} size={16} variant="outline" className="text-[#E4501C] mb-2" />
+            <Icon name={kpi.icon as string} size={16} variant="outline" className="text-[#17402C] mb-2" />
             <div className="font-mono text-xl font-700 text-white" style={{ fontFamily: 'var(--font-mono)' }}>{kpi.value}</div>
             <div className="text-xs text-white/40 mt-0.5">{kpi.label}</div>
           </div>
@@ -783,11 +784,11 @@ function ConfiguratorSection() {
           value={prompt}
           onChange={e => setPrompt(e.target.value)}
           rows={6}
-          className="w-full bg-[#243028] border border-white/10 rounded-xl px-4 py-3 text-sm text-white/70 font-mono focus:outline-none focus:border-[#E4501C]/50 resize-none"
+          className="w-full bg-[#243028] border border-white/10 rounded-xl px-4 py-3 text-sm text-white/70 font-mono focus:outline-none focus:border-[#17402C]/50 resize-none"
           style={{ fontFamily: 'var(--font-mono)' }}
         />
         <div className="flex gap-3 mt-3">
-          <button className="flex items-center gap-2 bg-[#E4501C] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#cc3d10] transition-all">
+          <button className="flex items-center gap-2 bg-[#17402C] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#cc3d10] transition-all">
             <Icon name="CheckIcon" size={14} variant="outline" />
             Sauvegarder le prompt
           </button>
@@ -812,7 +813,7 @@ function KitsSection() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-white/50">{KITS.length} kits</p>
-        <button className="flex items-center gap-2 bg-[#E4501C] hover:bg-[#cc3d10] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
+        <button className="flex items-center gap-2 bg-[#17402C] hover:bg-[#cc3d10] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
           <Icon name="PlusIcon" size={14} variant="outline" />
           Nouveau kit
         </button>
@@ -832,7 +833,7 @@ function KitsSection() {
                 <td className="px-4 py-3 text-white/80 font-medium">{k.name}</td>
                 <td className="px-4 py-3 font-mono text-white/50" style={{ fontFamily: 'var(--font-mono)' }}>{k.products}</td>
                 <td className="px-4 py-3 font-mono text-white/50" style={{ fontFamily: 'var(--font-mono)' }}>{(k.weight / 1000).toFixed(1)} kg</td>
-                <td className="px-4 py-3 font-mono font-700 text-[#E4501C]" style={{ fontFamily: 'var(--font-mono)' }}>{k.price}€</td>
+                <td className="px-4 py-3 font-mono font-700 text-[#17402C]" style={{ fontFamily: 'var(--font-mono)' }}>{k.price}€</td>
                 <td className="px-4 py-3">
                   <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${STATUS_COLORS[k.status]}`}>{k.status}</span>
                 </td>
@@ -868,7 +869,7 @@ function CategoriesSection() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-white/50">{CATS.length} catégories</p>
-        <button className="flex items-center gap-2 bg-[#E4501C] hover:bg-[#cc3d10] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
+        <button className="flex items-center gap-2 bg-[#17402C] hover:bg-[#cc3d10] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
           <Icon name="PlusIcon" size={14} variant="outline" />
           Nouvelle catégorie
         </button>
@@ -931,7 +932,7 @@ export default function AdminPage() {
   if (authState !== 'authorized') {
     return (
       <div className="min-h-screen bg-[#151F1A] flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-[#E4501C] border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -954,140 +955,250 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#151F1A] text-white flex" style={{ paddingTop: 0 }}>
-      {/* Mobile sidebar overlay */}
-      {mobileSidebarOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-black/60 lg:hidden"
-          onClick={() => setMobileSidebarOpen(false)}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Fixed Sidebar */}
-      <aside
-        className={`fixed top-0 left-0 h-full bg-[#1C2620] border-r border-white/8 flex flex-col z-50 transition-all duration-300
-          ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          ${sidebarCollapsed ? 'lg:w-14' : 'lg:w-56'} w-64`}
-      >
-        {/* Logo */}
-        <div className="flex items-center gap-2.5 px-4 py-4 border-b border-white/8 flex-shrink-0">
-          <div className="w-7 h-7 rounded-lg bg-[#E4501C] flex items-center justify-center flex-shrink-0">
-            <Icon name="ShieldCheckIcon" size={14} variant="outline" className="text-white" />
-          </div>
-          {!sidebarCollapsed && (
-            <div className="min-w-0">
-              <p className="text-[9px] font-mono text-white/30 tracking-[0.2em] uppercase" style={{ fontFamily: 'var(--font-mono)' }}>Admin</p>
-              <p className="font-display font-700 text-white text-sm leading-tight truncate" style={{ fontFamily: 'var(--font-display)' }}>KDV Dashboard</p>
-            </div>
+    <>
+      {/* ── DESKTOP ── */}
+      <div className="hidden md:block">
+        <div className="min-h-screen bg-[#151F1A] text-white flex" style={{ paddingTop: 0 }}>
+          {/* Mobile sidebar overlay */}
+          {mobileSidebarOpen && (
+            <div
+              className="fixed inset-0 z-50 bg-black/60 lg:hidden"
+              onClick={() => setMobileSidebarOpen(false)}
+              aria-hidden="true"
+            />
           )}
-        </div>
 
-        {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
-          {groups.map(group => (
-            <div key={group}>
+          {/* Fixed Sidebar */}
+          <aside
+            className={`fixed top-0 left-0 h-full bg-[#1C2620] border-r border-white/8 flex flex-col z-50 transition-all duration-300
+              ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+              ${sidebarCollapsed ? 'lg:w-14' : 'lg:w-56'} w-64`}
+          >
+            {/* Logo */}
+            <div className="flex items-center gap-2.5 px-4 py-4 border-b border-white/8 flex-shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-[#17402C] flex items-center justify-center flex-shrink-0">
+                <Icon name="ShieldCheckIcon" size={14} variant="outline" className="text-white" />
+              </div>
               {!sidebarCollapsed && (
-                <p className="text-[9px] font-mono text-white/20 tracking-[0.2em] uppercase px-2 mb-1.5" style={{ fontFamily: 'var(--font-mono)' }}>{group}</p>
+                <div className="min-w-0">
+                  <p className="text-[9px] font-mono text-white/30 tracking-[0.2em] uppercase" style={{ fontFamily: 'var(--font-mono)' }}>Admin</p>
+                  <p className="font-display font-700 text-white text-sm leading-tight truncate" style={{ fontFamily: 'var(--font-display)' }}>KDV Dashboard</p>
+                </div>
               )}
-              <div className="space-y-0.5">
-                {SIDEBAR_ITEMS.filter(i => i.group === group).map(item => (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveSection(item.id)}
-                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-medium transition-all ${
-                      activeSection === item.id
-                        ? 'bg-[#E4501C]/15 text-[#E4501C]'
-                        : 'text-white/45 hover:text-white hover:bg-white/6'
-                    }`}
-                    title={sidebarCollapsed ? item.label : undefined}
-                  >
-                    <Icon name={item.icon as string} size={15} variant="outline" className="flex-shrink-0" />
-                    {!sidebarCollapsed && (
-                      <>
-                        <span className="flex-1 text-left truncate">{item.label}</span>
-                        {item.badge && (
-                          <span className="w-4 h-4 rounded-full bg-[#E4501C] text-white text-[9px] font-700 flex items-center justify-center flex-shrink-0">
-                            {item.badge}
-                          </span>
+            </div>
+
+            {/* Nav */}
+            <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
+              {groups.map(group => (
+                <div key={group}>
+                  {!sidebarCollapsed && (
+                    <p className="text-[9px] font-mono text-white/20 tracking-[0.2em] uppercase px-2 mb-1.5" style={{ fontFamily: 'var(--font-mono)' }}>{group}</p>
+                  )}
+                  <div className="space-y-0.5">
+                    {SIDEBAR_ITEMS.filter(i => i.group === group).map(item => (
+                      <button
+                        key={item.id}
+                        onClick={() => setActiveSection(item.id)}
+                        className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-medium transition-all ${
+                          activeSection === item.id
+                            ? 'bg-[#17402C]/15 text-[#17402C]'
+                            : 'text-white/45 hover:text-white hover:bg-white/6'
+                        }`}
+                        title={sidebarCollapsed ? item.label : undefined}
+                      >
+                        <Icon name={item.icon as string} size={15} variant="outline" className="flex-shrink-0" />
+                        {!sidebarCollapsed && (
+                          <>
+                            <span className="flex-1 text-left truncate">{item.label}</span>
+                            {item.badge && (
+                              <span className="w-4 h-4 rounded-full bg-[#17402C] text-white text-[9px] font-700 flex items-center justify-center flex-shrink-0">
+                                {item.badge}
+                              </span>
+                            )}
+                          </>
                         )}
-                      </>
-                    )}
-                  </button>
-                ))}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </nav>
+
+            {/* Bottom */}
+            <div className="border-t border-white/8 p-2 flex-shrink-0 space-y-1">
+              <Link
+                href="/"
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs text-white/35 hover:text-white hover:bg-white/6 transition-all"
+              >
+                <Icon name="ArrowLeftIcon" size={14} variant="outline" className="flex-shrink-0" />
+                {!sidebarCollapsed && <span>Retour au site</span>}
+              </Link>
+              <button
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs text-white/25 hover:text-white hover:bg-white/6 transition-all"
+              >
+                <Icon name={sidebarCollapsed ? 'ChevronRightIcon' : 'ChevronLeftIcon'} size={14} variant="outline" className="flex-shrink-0" />
+                {!sidebarCollapsed && <span>Réduire</span>}
+              </button>
+            </div>
+          </aside>
+
+          {/* Main content */}
+          <main className={`flex-1 min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-14' : 'lg:ml-56'} ml-0`}>
+            {/* Top bar */}
+            <div className="sticky top-0 z-30 bg-[#151F1A]/95 backdrop-blur-md border-b border-white/6 px-4 sm:px-6 py-3.5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {/* Mobile menu toggle */}
+                <button
+                  onClick={() => setMobileSidebarOpen(true)}
+                  className="lg:hidden p-2 rounded-xl bg-white/8 text-white/60 hover:text-white transition-colors"
+                  aria-label="Ouvrir le menu"
+                >
+                  <Icon name="Bars3Icon" size={18} variant="outline" />
+                </button>
+                <div>
+                  <h1 className="font-display font-700 text-white text-base" style={{ fontFamily: 'var(--font-display)' }}>
+                    {SECTION_TITLES[activeSection]}
+                  </h1>
+                  <p className="text-[10px] font-mono text-white/25 mt-0.5 hidden sm:block" style={{ fontFamily: 'var(--font-mono)' }}>
+                    Admin · Le Kit du Voyageur
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="hidden sm:flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[10px] font-mono text-white/30" style={{ fontFamily: 'var(--font-mono)' }}>Live</span>
+                </div>
+                <div className="w-7 h-7 rounded-lg bg-[#17402C]/20 flex items-center justify-center">
+                  <span className="text-[10px] font-mono font-700 text-[#17402C]" style={{ fontFamily: 'var(--font-mono)' }}>JA</span>
+                </div>
               </div>
             </div>
-          ))}
-        </nav>
 
-        {/* Bottom */}
-        <div className="border-t border-white/8 p-2 flex-shrink-0 space-y-1">
-          <Link
-            href="/"
-            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs text-white/35 hover:text-white hover:bg-white/6 transition-all"
-          >
-            <Icon name="ArrowLeftIcon" size={14} variant="outline" className="flex-shrink-0" />
-            {!sidebarCollapsed && <span>Retour au site</span>}
-          </Link>
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs text-white/25 hover:text-white hover:bg-white/6 transition-all"
-          >
-            <Icon name={sidebarCollapsed ? 'ChevronRightIcon' : 'ChevronLeftIcon'} size={14} variant="outline" className="flex-shrink-0" />
-            {!sidebarCollapsed && <span>Réduire</span>}
-          </button>
+            {/* Section content */}
+            <div className="p-4 sm:p-6">
+              {activeSection === 'overview' && <OverviewSection />}
+              {activeSection === 'products' && <ProductsSection />}
+              {activeSection === 'kits' && <KitsSection />}
+              {activeSection === 'categories' && <CategoriesSection />}
+              {activeSection === 'orders' && <OrdersSection />}
+              {activeSection === 'configurator' && <ConfiguratorSection />}
+              {activeSection === 'countries' && <CountriesSection />}
+              {activeSection === 'toolbox' && <ToolboxSection />}
+              {activeSection === 'users' && <UsersSection />}
+              {activeSection === 'moderation' && <ModerationSection />}
+              {activeSection === 'content' && <ContentSection />}
+              {activeSection === 'audit' && <AuditSection />}
+            </div>
+          </main>
         </div>
-      </aside>
+      </div>
 
-      {/* Main content */}
-      <main className={`flex-1 min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-14' : 'lg:ml-56'} ml-0`}>
-        {/* Top bar */}
-        <div className="sticky top-0 z-30 bg-[#151F1A]/95 backdrop-blur-md border-b border-white/6 px-4 sm:px-6 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {/* Mobile menu toggle */}
-            <button
-              onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-xl bg-white/8 text-white/60 hover:text-white transition-colors"
-              aria-label="Ouvrir le menu"
-            >
-              <Icon name="Bars3Icon" size={18} variant="outline" />
-            </button>
-            <div>
-              <h1 className="font-display font-700 text-white text-base" style={{ fontFamily: 'var(--font-display)' }}>
-                {SECTION_TITLES[activeSection]}
-              </h1>
-              <p className="text-[10px] font-mono text-white/25 mt-0.5 hidden sm:block" style={{ fontFamily: 'var(--font-mono)' }}>
-                Admin · Le Kit du Voyageur
-              </p>
+      {/* ── MOBILE ── */}
+      <div className="block md:hidden">
+        <MobilePageShell>
+          {/* Top bar */}
+          <div style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 30,
+            backgroundColor: '#0B1F17',
+            padding: '12px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderBottom: '1px solid rgba(11,31,23,0.06)',
+          }}>
+            <h1 style={{
+              fontFamily: 'Georgia, serif',
+              fontStyle: 'italic',
+              color: '#17402C',
+              fontWeight: 400,
+              fontSize: '18px',
+              margin: 0,
+            }}>
+              Admin
+            </h1>
+            <div style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '8px',
+              backgroundColor: 'rgba(23,64,44,0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <span style={{
+                fontFamily: 'ui-monospace, monospace',
+                fontSize: '10px',
+                fontWeight: 700,
+                color: '#17402C',
+              }}>JA</span>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[10px] font-mono text-white/30" style={{ fontFamily: 'var(--font-mono)' }}>Live</span>
-            </div>
-            <div className="w-7 h-7 rounded-lg bg-[#E4501C]/20 flex items-center justify-center">
-              <span className="text-[10px] font-mono font-700 text-[#E4501C]" style={{ fontFamily: 'var(--font-mono)' }}>JA</span>
-            </div>
-          </div>
-        </div>
 
-        {/* Section content */}
-        <div className="p-4 sm:p-6">
-          {activeSection === 'overview' && <OverviewSection />}
-          {activeSection === 'products' && <ProductsSection />}
-          {activeSection === 'kits' && <KitsSection />}
-          {activeSection === 'categories' && <CategoriesSection />}
-          {activeSection === 'orders' && <OrdersSection />}
-          {activeSection === 'configurator' && <ConfiguratorSection />}
-          {activeSection === 'countries' && <CountriesSection />}
-          {activeSection === 'toolbox' && <ToolboxSection />}
-          {activeSection === 'users' && <UsersSection />}
-          {activeSection === 'moderation' && <ModerationSection />}
-          {activeSection === 'content' && <ContentSection />}
-          {activeSection === 'audit' && <AuditSection />}
-        </div>
-      </main>
-    </div>
+          {/* Section pills */}
+          <div style={{
+            overflowX: 'auto',
+            whiteSpace: 'nowrap',
+            padding: '12px 16px',
+            backgroundColor: '#0B1F17',
+            borderBottom: '1px solid rgba(11,31,23,0.06)',
+            display: 'flex',
+            gap: '8px',
+            WebkitOverflowScrolling: 'touch',
+            msOverflowStyle: 'none',
+            scrollbarWidth: 'none',
+          }}>
+            {SIDEBAR_ITEMS.map(item => (
+              <button
+                key={item.id}
+                onClick={() => setActiveSection(item.id)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  fontSize: '12px',
+                  fontWeight: activeSection === item.id ? 600 : 400,
+                  border: 'none',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  backgroundColor: activeSection === item.id ? '#17402C' : '#F4F1EA',
+                  color: activeSection === item.id ? '#FFFFFF' : '#6B7A72',
+                  transition: 'all 0.2s',
+                  flexShrink: 0,
+                  fontFamily: 'ui-monospace, monospace',
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Section content */}
+          <div style={{
+            backgroundColor: '#FBFAF6',
+            minHeight: 'calc(100vh - 120px)',
+            padding: '16px',
+          }}>
+            {activeSection === 'overview' && <OverviewSection />}
+            {activeSection === 'products' && <ProductsSection />}
+            {activeSection === 'kits' && <KitsSection />}
+            {activeSection === 'categories' && <CategoriesSection />}
+            {activeSection === 'orders' && <OrdersSection />}
+            {activeSection === 'configurator' && <ConfiguratorSection />}
+            {activeSection === 'countries' && <CountriesSection />}
+            {activeSection === 'toolbox' && <ToolboxSection />}
+            {activeSection === 'users' && <UsersSection />}
+            {activeSection === 'moderation' && <ModerationSection />}
+            {activeSection === 'content' && <ContentSection />}
+            {activeSection === 'audit' && <AuditSection />}
+          </div>
+
+          {/* Footer spacer */}
+          <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
+        </MobilePageShell>
+      </div>
+    </>
   );
 }

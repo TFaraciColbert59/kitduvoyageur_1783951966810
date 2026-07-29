@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 const CONSENT_COOKIE_KEY = 'lkdv_cookie_consent';
 const CONSENT_VERSION = '1';
@@ -75,7 +76,7 @@ export default function CookiesPage() {
     setTimeout(() => setSaved(false), 3000);
   };
 
-  return (
+  const desktopContent = (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
@@ -90,7 +91,6 @@ export default function CookiesPage() {
         </p>
 
         <div className="space-y-10 text-sm text-foreground/80 leading-relaxed">
-
           {/* Gestion des préférences */}
           <section className="bg-foreground/3 border border-border rounded-2xl p-5">
             <h2 className="text-base font-semibold text-foreground mb-1">Gérer mes préférences</h2>
@@ -99,7 +99,6 @@ export default function CookiesPage() {
             </p>
 
             <div className="space-y-3 mb-5">
-              {/* Nécessaires */}
               <div className="flex items-center justify-between p-3 bg-background rounded-xl border border-border">
                 <div>
                   <p className="font-medium text-foreground text-sm">🔒 Cookies nécessaires</p>
@@ -110,7 +109,6 @@ export default function CookiesPage() {
                 </div>
               </div>
 
-              {/* Analytics */}
               <div className="flex items-center justify-between p-3 bg-background rounded-xl border border-border">
                 <div>
                   <p className="font-medium text-foreground text-sm">📊 Cookies analytiques</p>
@@ -126,7 +124,6 @@ export default function CookiesPage() {
                 </button>
               </div>
 
-              {/* Marketing */}
               <div className="flex items-center justify-between p-3 bg-background rounded-xl border border-border">
                 <div>
                   <p className="font-medium text-foreground text-sm">🎯 Cookies marketing</p>
@@ -144,236 +141,26 @@ export default function CookiesPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2">
-              <button
-                onClick={handleSave}
-                className="flex-1 bg-primary hover:bg-primary/90 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
-              >
+              <button onClick={handleSave} className="flex-1 bg-primary hover:bg-primary/90 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all">
                 {saved ? '✓ Préférences enregistrées' : 'Enregistrer mes choix'}
               </button>
-              <button
-                onClick={handleAcceptAll}
-                className="flex-1 bg-foreground/8 hover:bg-foreground/15 text-foreground px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
-              >
-                Tout accepter
-              </button>
-              <button
-                onClick={handleRejectAll}
-                className="flex-1 border border-border hover:border-foreground/30 text-foreground/60 hover:text-foreground/80 px-4 py-2.5 rounded-xl text-sm transition-all"
-              >
-                Tout refuser
-              </button>
+              <button onClick={handleAcceptAll} className="flex-1 bg-foreground/8 hover:bg-foreground/15 text-foreground px-4 py-2.5 rounded-xl text-sm font-medium transition-all">Tout accepter</button>
+              <button onClick={handleRejectAll} className="flex-1 border border-border hover:border-foreground/30 text-foreground/60 hover:text-foreground/80 px-4 py-2.5 rounded-xl text-sm transition-all">Tout refuser</button>
             </div>
           </section>
 
-          {/* Qu'est-ce qu'un cookie */}
-          <section>
-            <h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">1. Qu&apos;est-ce qu&apos;un cookie ?</h2>
-            <p>
-              Un cookie est un petit fichier texte déposé sur votre terminal (ordinateur, smartphone, tablette) lors de la visite d&apos;un site web. Il permet au site de mémoriser des informations sur votre visite, comme votre langue préférée et d&apos;autres paramètres.
-            </p>
-            <p className="mt-3">
-              Les cookies peuvent être déposés par le site que vous visitez (cookies « propriétaires ») ou par des tiers (cookies « tiers »). Ils peuvent être temporaires (cookies de session, supprimés à la fermeture du navigateur) ou persistants (conservés sur votre terminal pendant une durée déterminée).
-            </p>
-            <p className="mt-3">
-              Conformément à l&apos;article 82 de la loi Informatique et Libertés et aux recommandations de la CNIL, certains cookies nécessitent votre consentement préalable avant d&apos;être déposés sur votre terminal.
-            </p>
+          <section><h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">1. Qu&apos;est-ce qu&apos;un cookie ?</h2><p>Un cookie est un petit fichier texte déposé sur votre terminal lors de la visite d&apos;un site web. Il permet au site de mémoriser des informations sur votre visite.</p></section>
+
+          <section><h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">2. Cookies utilisés</h2>
+            <p className="mb-4">Cookies nécessaires (exemptés de consentement) : sb-*-auth-token (session), lkdv_cookie_consent (6 mois), __stripe_mid (1 an), __stripe_sid (30 min).</p>
+            <p className="mb-4">Cookies analytiques (consentement requis) : _ga (13 mois), _ga_* (13 mois), _gid (24h) — Google Analytics avec anonymisation IP.</p>
+            <p>Cookies marketing : aucun actif actuellement.</p>
           </section>
 
-          {/* Cookies utilisés */}
-          <section>
-            <h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">2. Cookies utilisés sur lekitduvoyageur.fr</h2>
+          <section><h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">3. Durée de conservation</h2><p>Votre consentement est mémorisé pendant 6 mois. Les cookies Google Analytics ont une durée maximale de 13 mois.</p></section>
 
-            {/* Nécessaires */}
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-sm font-semibold text-foreground">🔒 Cookies nécessaires</span>
-                <span className="text-xs bg-green-500/10 text-green-600 px-2 py-0.5 rounded-full">Exemptés de consentement</span>
-              </div>
-              <p className="text-xs text-foreground/60 mb-3">
-                Ces cookies sont indispensables au fonctionnement du site. Ils ne peuvent pas être désactivés. Ils ne collectent aucune information permettant de vous identifier à des fins publicitaires.
-              </p>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs border-collapse">
-                  <thead>
-                    <tr className="bg-foreground/5">
-                      <th className="text-left p-2 text-foreground font-medium">Nom</th>
-                      <th className="text-left p-2 text-foreground font-medium">Finalité</th>
-                      <th className="text-left p-2 text-foreground font-medium">Durée</th>
-                      <th className="text-left p-2 text-foreground font-medium">Émetteur</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    <tr>
-                      <td className="p-2 font-mono">sb-*-auth-token</td>
-                      <td className="p-2 text-foreground/60">Session d&apos;authentification Supabase</td>
-                      <td className="p-2 text-foreground/60">Session / 7 jours</td>
-                      <td className="p-2 text-foreground/60">lekitduvoyageur.fr</td>
-                    </tr>
-                    <tr>
-                      <td className="p-2 font-mono">lkdv_cookie_consent</td>
-                      <td className="p-2 text-foreground/60">Mémorisation de vos préférences cookies</td>
-                      <td className="p-2 text-foreground/60">6 mois</td>
-                      <td className="p-2 text-foreground/60">lekitduvoyageur.fr</td>
-                    </tr>
-                    <tr>
-                      <td className="p-2 font-mono">__stripe_mid</td>
-                      <td className="p-2 text-foreground/60">Prévention de la fraude (paiement)</td>
-                      <td className="p-2 text-foreground/60">1 an</td>
-                      <td className="p-2 text-foreground/60">stripe.com</td>
-                    </tr>
-                    <tr>
-                      <td className="p-2 font-mono">__stripe_sid</td>
-                      <td className="p-2 text-foreground/60">Session de paiement sécurisée</td>
-                      <td className="p-2 text-foreground/60">30 minutes</td>
-                      <td className="p-2 text-foreground/60">stripe.com</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+          <section><h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">4. Contact DPO</h2><p>Email : <a href="mailto:dpo@lekitduvoyageur.fr" className="text-primary hover:underline">dpo@lekitduvoyageur.fr</a></p></section>
 
-            {/* Analytics */}
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-sm font-semibold text-foreground">📊 Cookies analytiques</span>
-                <span className="text-xs bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded-full">Consentement requis</span>
-              </div>
-              <p className="text-xs text-foreground/60 mb-3">
-                Ces cookies nous permettent de mesurer l&apos;audience du site et d&apos;analyser le comportement des visiteurs afin d&apos;améliorer nos services. Les données collectées sont anonymisées (IP tronquée) et ne permettent pas de vous identifier personnellement.
-              </p>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs border-collapse">
-                  <thead>
-                    <tr className="bg-foreground/5">
-                      <th className="text-left p-2 text-foreground font-medium">Nom</th>
-                      <th className="text-left p-2 text-foreground font-medium">Finalité</th>
-                      <th className="text-left p-2 text-foreground font-medium">Durée</th>
-                      <th className="text-left p-2 text-foreground font-medium">Émetteur</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    <tr>
-                      <td className="p-2 font-mono">_ga</td>
-                      <td className="p-2 text-foreground/60">Distinguer les utilisateurs uniques (Google Analytics)</td>
-                      <td className="p-2 text-foreground/60">13 mois</td>
-                      <td className="p-2 text-foreground/60">google.com</td>
-                    </tr>
-                    <tr>
-                      <td className="p-2 font-mono">_ga_*</td>
-                      <td className="p-2 text-foreground/60">Maintenir l&apos;état de session (Google Analytics 4)</td>
-                      <td className="p-2 text-foreground/60">13 mois</td>
-                      <td className="p-2 text-foreground/60">google.com</td>
-                    </tr>
-                    <tr>
-                      <td className="p-2 font-mono">_gid</td>
-                      <td className="p-2 text-foreground/60">Distinguer les utilisateurs (24h)</td>
-                      <td className="p-2 text-foreground/60">24 heures</td>
-                      <td className="p-2 text-foreground/60">google.com</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <p className="mt-2 text-xs text-foreground/50">
-                Google Analytics est configuré avec l&apos;anonymisation des adresses IP (<code>anonymize_ip: true</code>). Les données sont traitées par Google LLC (États-Unis) dans le cadre du Data Privacy Framework UE-États-Unis.
-              </p>
-            </div>
-
-            {/* Marketing */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-sm font-semibold text-foreground">🎯 Cookies marketing</span>
-                <span className="text-xs bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded-full">Consentement requis</span>
-              </div>
-              <p className="text-xs text-foreground/60 mb-3">
-                Ces cookies permettent de vous proposer des publicités personnalisées en fonction de vos centres d&apos;intérêt. Ils peuvent être déposés par nos partenaires publicitaires.
-              </p>
-              <p className="text-xs text-foreground/50 italic">
-                Aucun cookie marketing n&apos;est actuellement actif sur ce site. Cette catégorie est réservée pour une utilisation future.
-              </p>
-            </div>
-          </section>
-
-          {/* Durée de conservation */}
-          <section>
-            <h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">3. Durée de conservation du consentement</h2>
-            <p>
-              Votre consentement (ou refus) est mémorisé pendant <strong>6 mois</strong> via le cookie <code className="text-xs bg-foreground/8 px-1 py-0.5 rounded">lkdv_cookie_consent</code>. À l&apos;expiration de ce délai, la bannière de consentement s&apos;affichera à nouveau pour recueillir vos préférences actualisées.
-            </p>
-            <p className="mt-3">
-              Les cookies analytiques (Google Analytics) ont une durée de vie maximale de <strong>13 mois</strong>, conformément aux recommandations de la CNIL.
-            </p>
-          </section>
-
-          {/* Comment gérer */}
-          <section>
-            <h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">4. Comment gérer vos cookies</h2>
-            <p className="mb-3">Vous pouvez gérer vos préférences de cookies de plusieurs façons :</p>
-            <div className="space-y-3">
-              <div className="bg-foreground/3 rounded-xl p-4">
-                <p className="font-medium text-foreground text-xs mb-1">Via notre gestionnaire de consentement</p>
-                <p className="text-foreground/60 text-xs">Utilisez le panneau de gestion en haut de cette page ou la bannière cookies qui s&apos;affiche lors de votre première visite.</p>
-              </div>
-              <div className="bg-foreground/3 rounded-xl p-4">
-                <p className="font-medium text-foreground text-xs mb-1">Via les paramètres de votre navigateur</p>
-                <p className="text-foreground/60 text-xs">
-                  Vous pouvez configurer votre navigateur pour refuser tous les cookies ou être averti avant d&apos;en accepter un.
-                  Attention : le blocage de certains cookies peut affecter le fonctionnement du site (authentification, panier).
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {[
-                    { name: 'Chrome', url: 'https://support.google.com/chrome/answer/95647' },
-                    { name: 'Firefox', url: 'https://support.mozilla.org/fr/kb/cookies-informations-sites-enregistrent' },
-                    { name: 'Safari', url: 'https://support.apple.com/fr-fr/guide/safari/sfri11471/mac' },
-                    { name: 'Edge', url: 'https://support.microsoft.com/fr-fr/microsoft-edge/supprimer-les-cookies-dans-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09' },
-                  ].map((browser) => (
-                    <a
-                      key={browser.name}
-                      href={browser.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-primary hover:underline bg-primary/5 px-2 py-1 rounded-lg"
-                    >
-                      {browser.name} →
-                    </a>
-                  ))}
-                </div>
-              </div>
-              <div className="bg-foreground/3 rounded-xl p-4">
-                <p className="font-medium text-foreground text-xs mb-1">Opt-out Google Analytics</p>
-                <p className="text-foreground/60 text-xs">
-                  Vous pouvez également désactiver Google Analytics via l&apos;extension officielle :{' '}
-                  <a href="https://tools.google.com/dlpage/gaoptout" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
-                    tools.google.com/dlpage/gaoptout
-                  </a>
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* Transferts hors UE */}
-          <section>
-            <h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">5. Transferts de données hors Union Européenne</h2>
-            <p>
-              Google Analytics implique un transfert de données vers les États-Unis. Ce transfert est encadré par le <strong>Data Privacy Framework UE-États-Unis</strong> (décision d&apos;adéquation de la Commission européenne du 10 juillet 2023) et par des Clauses Contractuelles Types (CCT).
-            </p>
-            <p className="mt-3">
-              Google Analytics est configuré avec l&apos;anonymisation des adresses IP, ce qui réduit le volume de données personnelles transférées.
-            </p>
-          </section>
-
-          {/* Contact DPO */}
-          <section>
-            <h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">6. Contact — Délégué à la Protection des Données (DPO)</h2>
-            <p>
-              Pour toute question relative à l&apos;utilisation des cookies ou pour exercer vos droits, contactez notre DPO :
-            </p>
-            <div className="mt-3 bg-foreground/3 rounded-xl p-4">
-              <p><strong className="text-foreground">Email DPO :</strong> <a href="mailto:dpo@lekitduvoyageur.fr" className="text-primary hover:underline">dpo@lekitduvoyageur.fr</a></p>
-              <p className="mt-1"><strong className="text-foreground">CNIL :</strong> <a href="https://www.cnil.fr" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">www.cnil.fr</a> — 3 Place de Fontenoy, TSA 80715, 75334 Paris Cedex 07</p>
-            </div>
-          </section>
-
-          {/* Navigation */}
           <div className="flex flex-wrap gap-3 pt-6 border-t border-border">
             <Link href="/politique-confidentialite" className="text-primary hover:underline text-xs">Politique de confidentialité</Link>
             <span className="text-foreground/20 text-xs">·</span>
@@ -383,13 +170,77 @@ export default function CookiesPage() {
             <span className="text-foreground/20 text-xs">·</span>
             <Link href="/cgv" className="text-primary hover:underline text-xs">CGV</Link>
           </div>
-
-          <p className="text-xs text-foreground/40">
-            Dernière mise à jour : juillet 2026 — Version 1.0
-          </p>
         </div>
       </main>
       <Footer />
     </div>
+  );
+
+  const mobileContent = (
+    <div style={{ padding: '16px' }}>
+      <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '12px' }}>Cookies & Traceurs</p>
+      <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#1C2620', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Politique de gestion des cookies</h1>
+      <p style={{ fontSize: '12px', color: 'rgba(28,38,32,0.5)', marginBottom: '24px' }}>Conformément aux recommandations de la CNIL</p>
+
+      <div style={{ background: '#F4F1EA', borderRadius: '16px', border: '1px solid rgba(11,31,23,0.06)', padding: '16px', marginBottom: '24px' }}>
+        <p style={{ fontSize: '14px', fontWeight: 600, color: '#1C2620', marginBottom: '4px' }}>Gérer mes préférences</p>
+        <p style={{ fontSize: '12px', color: 'rgba(28,38,32,0.5)', marginBottom: '16px' }}>
+          {hasConsent ? 'Vos préférences sont définies.' : 'Vous n\'avez pas encore défini vos préférences.'}
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+            <div><p style={{ fontSize: '13px', fontWeight: 500, color: '#1C2620' }}>🔒 Cookies nécessaires</p><p style={{ fontSize: '11px', color: 'rgba(28,38,32,0.5)' }}>Toujours actifs</p></div>
+            <div style={{ width: '36px', height: '18px', background: '#17402C', borderRadius: '36px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: '2px', opacity: 0.6 }}>
+              <div style={{ width: '14px', height: '14px', background: 'white', borderRadius: '50%' }} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+            <div><p style={{ fontSize: '13px', fontWeight: 500, color: '#1C2620' }}>📊 Cookies analytiques</p></div>
+            <button onClick={() => setAnalytics(!analytics)} style={{ width: '36px', height: '18px', borderRadius: '36px', display: 'flex', alignItems: 'center', transition: 'all 0.2s', background: analytics ? '#17402C' : 'rgba(11,31,23,0.15)', justifyContent: analytics ? 'flex-end' : 'flex-start', padding: analytics ? '0 2px 0 0' : '0 0 0 2px', border: 'none', cursor: 'pointer' }}>
+              <div style={{ width: '14px', height: '14px', background: 'white', borderRadius: '50%', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }} />
+            </button>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+            <div><p style={{ fontSize: '13px', fontWeight: 500, color: '#1C2620' }}>🎯 Cookies marketing</p></div>
+            <button onClick={() => setMarketing(!marketing)} style={{ width: '36px', height: '18px', borderRadius: '36px', display: 'flex', alignItems: 'center', transition: 'all 0.2s', background: marketing ? '#17402C' : 'rgba(11,31,23,0.15)', justifyContent: marketing ? 'flex-end' : 'flex-start', padding: marketing ? '0 2px 0 0' : '0 0 0 2px', border: 'none', cursor: 'pointer' }}>
+              <div style={{ width: '14px', height: '14px', background: 'white', borderRadius: '50%', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }} />
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <button onClick={handleSave} style={{ background: '#17402C', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>{saved ? '✓ Préférences enregistrées' : 'Enregistrer mes choix'}</button>
+          <button onClick={handleAcceptAll} style={{ background: 'rgba(11,31,23,0.06)', color: '#1C2620', border: 'none', padding: '10px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>Tout accepter</button>
+          <button onClick={handleRejectAll} style={{ background: 'transparent', color: 'rgba(28,38,32,0.6)', border: '1px solid rgba(11,31,23,0.06)', padding: '10px 16px', borderRadius: '12px', fontSize: '13px', cursor: 'pointer' }}>Tout refuser</button>
+        </div>
+      </div>
+
+      <section style={{ marginBottom: '24px' }}>
+        <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#1C2620', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(11,31,23,0.06)' }}>1. Qu&apos;est-ce qu&apos;un cookie ?</h2>
+        <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.8)', lineHeight: '1.6' }}>Un cookie est un petit fichier texte déposé sur votre terminal lors de la visite d&apos;un site web.</p>
+      </section>
+      <section style={{ marginBottom: '24px' }}>
+        <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#1C2620', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(11,31,23,0.06)' }}>2. Cookies utilisés</h2>
+        <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.8)', lineHeight: '1.6' }}>Cookies nécessaires : session, préférences, Stripe. Cookies analytics (avec consentement) : Google Analytics, 13 mois max. Cookies marketing : aucun actif.</p>
+      </section>
+      <section style={{ marginBottom: '24px' }}>
+        <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#1C2620', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(11,31,23,0.06)' }}>3. Contact DPO</h2>
+        <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.8)', lineHeight: '1.6' }}><a href="mailto:dpo@lekitduvoyageur.fr" style={{ color: '#17402C', textDecoration: 'underline' }}>dpo@lekitduvoyageur.fr</a></p>
+      </section>
+    </div>
+  );
+
+  return (
+    <>
+      {/* DESKTOP */}
+      <div className="hidden md:block">{desktopContent}</div>
+
+      {/* MOBILE */}
+      <div className="block md:hidden">
+        <MobilePageShell>{mobileContent}</MobilePageShell>
+        
+      </div>
+    </>
   );
 }

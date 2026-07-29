@@ -11,6 +11,7 @@ interface AventureCardProps {
   elevation: string | number;
   duration: string;
   href?: string;
+  onClick?: () => void;
 }
 
 export default function AventureCard({
@@ -21,10 +22,10 @@ export default function AventureCard({
   elevation,
   duration,
   href = '#',
+  onClick,
 }: AventureCardProps) {
-  return (
-    <Link
-      href={href}
+  const content = (
+    <div
       style={{
         background: '#FBFAF6',
         border: '1px solid rgba(11,31,23,0.06)',
@@ -33,6 +34,7 @@ export default function AventureCard({
         display: 'flex',
         textDecoration: 'none',
         color: 'inherit',
+        cursor: onClick ? 'pointer' : undefined,
       }}
     >
       <div
@@ -98,6 +100,12 @@ export default function AventureCard({
           <span>{duration}</span>
         </div>
       </div>
-    </Link>
+    </div>
   );
+
+  if (onClick) {
+    return <div onClick={onClick}>{content}</div>;
+  }
+
+  return <Link href={href}>{content}</Link>;
 }

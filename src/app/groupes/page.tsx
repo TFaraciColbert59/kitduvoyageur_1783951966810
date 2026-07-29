@@ -40,7 +40,7 @@ const THEME_EMOJI: Record<string, string> = {
 
 type MainTab = 'mes-groupes' | 'decouvrir';
 
-const inputCls = "w-full bg-white border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 focus:border-[#E4501C]/40 transition-colors";
+const inputCls = "w-full bg-white border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30 focus:border-[#17402C]/40 transition-colors";
 const labelCls = "block text-[10px] font-mono text-[#5C6B5E] uppercase tracking-[0.15em] mb-1.5";
 
 function GroupesPageInner() {
@@ -203,7 +203,7 @@ function GroupesPageInner() {
     const isOwner = user?.id === group.owner_id;
     const myRole = group.my_role;
     return (
-      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl overflow-hidden hover:shadow-md hover:border-[#E4501C]/30 transition-all group">
+      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl overflow-hidden hover:shadow-md hover:border-[#17402C]/30 transition-all group">
         {/* Header */}
         <div className="bg-[#1C2620] p-4 relative">
           <div className="flex items-start justify-between gap-3">
@@ -219,7 +219,7 @@ function GroupesPageInner() {
               </div>
             </div>
             <div className="text-right flex-shrink-0">
-              <div className="font-mono font-700 text-[#E4501C] text-lg">{group.optimization_score}</div>
+              <div className="font-mono font-700 text-[#17402C] text-lg">{group.optimization_score}</div>
               <div className="text-[10px] text-white/40">score</div>
             </div>
           </div>
@@ -258,7 +258,7 @@ function GroupesPageInner() {
           )}
           {group.owner && (
             <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[#C8C3B0]/50">
-              <div className="w-5 h-5 rounded-full bg-[#E4501C]/20 flex items-center justify-center text-[10px] font-700 text-[#E4501C]">
+              <div className="w-5 h-5 rounded-full bg-[#17402C]/20 flex items-center justify-center text-[10px] font-700 text-[#17402C]">
                 {group.owner.full_name?.[0] || '?'}
               </div>
               <span className="text-[10px] text-[#5C6B5E]">Organisé par <span className="font-600 text-[#1C2620]">{group.owner.full_name}</span></span>
@@ -269,7 +269,7 @@ function GroupesPageInner() {
           <div className="flex gap-2">
             {showActions ? (
               <>
-                <Link href={`/groupes/${group.id}`} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white rounded-xl text-xs font-700 transition-colors">
+                <Link href={`/groupes/${group.id}`} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#17402C] hover:bg-[#17402C]/90 text-white rounded-xl text-xs font-700 transition-colors">
                   <Icon name="ArrowRightIcon" size={12} /> Ouvrir
                 </Link>
                 {myRole && (
@@ -278,7 +278,7 @@ function GroupesPageInner() {
                   </span>
                 )}
                 {(isOwner || myRole === 'organizer') && (
-                  <button onClick={() => openEditModal(group)} className="p-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl hover:border-[#E4501C]/40 hover:text-[#E4501C] transition-colors">
+                  <button onClick={() => openEditModal(group)} className="p-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl hover:border-[#17402C]/40 hover:text-[#17402C] transition-colors">
                     <Icon name="PencilIcon" size={12} />
                   </button>
                 )}
@@ -302,7 +302,7 @@ function GroupesPageInner() {
                 <button
                   onClick={() => handleJoinGroup(group.id)}
                   disabled={joining === group.id || (group.member_count || 0) >= group.max_members}
-                  className="flex-1 py-2 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white rounded-xl text-xs font-700 transition-colors disabled:opacity-50"
+                  className="flex-1 py-2 bg-[#17402C] hover:bg-[#17402C]/90 text-white rounded-xl text-xs font-700 transition-colors disabled:opacity-50"
                 >
                   {joining === group.id ? 'Rejoindre...' : (group.member_count || 0) >= group.max_members ? 'Complet' : 'Rejoindre'}
                 </button>
@@ -430,7 +430,7 @@ function GroupesPageInner() {
       {/* Hero */}
       <section className="bg-[#1C2620] pt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <p className="text-[10px] font-mono text-[#E4501C] tracking-[0.2em] uppercase mb-2">Groupes de voyage</p>
+          <p className="text-[10px] font-mono text-[#17402C] tracking-[0.2em] uppercase mb-2">Groupes de voyage</p>
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
             <div>
               <h1 className="font-display font-800 text-2xl md:text-3xl text-white tracking-tight">Voyager ensemble</h1>
@@ -441,13 +441,13 @@ function GroupesPageInner() {
                 value={joinCode}
                 onChange={e => setJoinCode(e.target.value.toUpperCase())}
                 placeholder="Code d'invitation"
-                className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#E4501C]/60 w-36"
+                className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#17402C]/60 w-36"
                 onKeyDown={e => e.key === 'Enter' && handleJoinByCode()}
               />
               <button onClick={handleJoinByCode} disabled={joiningByCode} className="bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm px-3 py-2 rounded-xl transition-colors">
                 {joiningByCode ? '...' : 'Rejoindre'}
               </button>
-              <Link href="/nouveau-groupe" className="flex items-center gap-2 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white text-sm px-4 py-2 rounded-xl transition-colors font-600">
+              <Link href="/nouveau-groupe" className="flex items-center gap-2 bg-[#17402C] hover:bg-[#17402C]/90 text-white text-sm px-4 py-2 rounded-xl transition-colors font-600">
                 <Icon name="PlusIcon" size={14} /> Créer un groupe
               </Link>
             </div>
@@ -500,7 +500,7 @@ function GroupesPageInner() {
                 <p className="text-5xl mb-4">🗺️</p>
                 <h2 className="font-display font-700 text-xl text-[#1C2620] mb-2">Connectez-vous pour voir vos groupes</h2>
                 <p className="text-sm text-[#5C6B5E] mb-6">Créez ou rejoignez des groupes de voyage collaboratifs</p>
-                <Link href="/connexion" className="inline-flex items-center gap-2 px-6 py-3 bg-[#E4501C] text-white rounded-xl font-700 hover:bg-[#E4501C]/90 transition-colors">
+                <Link href="/connexion" className="inline-flex items-center gap-2 px-6 py-3 bg-[#17402C] text-white rounded-xl font-700 hover:bg-[#17402C]/90 transition-colors">
                   <Icon name="ArrowRightOnRectangleIcon" size={14} /> Se connecter
                 </Link>
               </div>
@@ -510,7 +510,7 @@ function GroupesPageInner() {
                 <h2 className="font-display font-700 text-xl text-[#1C2620] mb-2">Vous n&apos;avez pas encore de groupe</h2>
                 <p className="text-sm text-[#5C6B5E] mb-6">Créez votre premier groupe ou rejoignez-en un avec un code d&apos;invitation</p>
                 <div className="flex gap-3 justify-center flex-wrap">
-                  <Link href="/nouveau-groupe" className="inline-flex items-center gap-2 px-6 py-3 bg-[#E4501C] text-white rounded-xl font-700 hover:bg-[#E4501C]/90 transition-colors">
+                  <Link href="/nouveau-groupe" className="inline-flex items-center gap-2 px-6 py-3 bg-[#17402C] text-white rounded-xl font-700 hover:bg-[#17402C]/90 transition-colors">
                     <Icon name="PlusIcon" size={14} /> Créer un groupe
                   </Link>
                   <button onClick={() => setActiveTab('decouvrir')} className="inline-flex items-center gap-2 px-6 py-3 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl font-600 hover:text-[#1C2620] transition-colors">
@@ -522,7 +522,7 @@ function GroupesPageInner() {
               <div>
                 <div className="flex items-center justify-between mb-6">
                   <p className="text-sm text-[#5C6B5E]">{myGroups.length} groupe{myGroups.length > 1 ? 's' : ''}</p>
-                  <Link href="/nouveau-groupe" className="flex items-center gap-2 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white text-sm px-4 py-2 rounded-xl transition-colors font-600">
+                  <Link href="/nouveau-groupe" className="flex items-center gap-2 bg-[#17402C] hover:bg-[#17402C]/90 text-white text-sm px-4 py-2 rounded-xl transition-colors font-600">
                     <Icon name="PlusIcon" size={14} /> Nouveau groupe
                   </Link>
                 </div>
@@ -539,7 +539,7 @@ function GroupesPageInner() {
               <div className="relative flex-1">
                 <Icon name="MagnifyingGlassIcon" size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5C6B5E]" />
                 <input
-                  className="w-full bg-[#EDEAE0] border border-[#C8C3B0] rounded-xl pl-10 pr-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30"
+                  className="w-full bg-[#EDEAE0] border border-[#C8C3B0] rounded-xl pl-10 pr-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30"
                   placeholder="Rechercher par nom ou destination..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
@@ -586,11 +586,11 @@ function GroupesPageInner() {
               <button onClick={() => { setShowEditModal(false); setEditingGroup(null); }} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
             </div>
             {editingGroup?.invite_code && (
-              <div className="mb-4 p-3 bg-[#E4501C]/5 border border-[#E4501C]/20 rounded-xl flex items-center gap-3">
-                <Icon name="LinkIcon" size={14} className="text-[#E4501C] flex-shrink-0" />
+              <div className="mb-4 p-3 bg-[#17402C]/5 border border-[#17402C]/20 rounded-xl flex items-center gap-3">
+                <Icon name="LinkIcon" size={14} className="text-[#17402C] flex-shrink-0" />
                 <div>
                   <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider">Code d&apos;invitation</p>
-                  <p className="font-mono font-700 text-[#E4501C] text-sm tracking-widest">{editingGroup.invite_code}</p>
+                  <p className="font-mono font-700 text-[#17402C] text-sm tracking-widest">{editingGroup.invite_code}</p>
                 </div>
               </div>
             )}
@@ -610,7 +610,7 @@ function GroupesPageInner() {
                 <div><label className={labelCls}>Budget (€)</label><input type="number" value={createForm.budget_target} onChange={e => setCreateForm({ ...createForm, budget_target: e.target.value })} className={inputCls} placeholder="2500" /></div>
                 <div><label className={labelCls}>Max membres</label><input type="number" min={2} max={50} value={createForm.max_members} onChange={e => setCreateForm({ ...createForm, max_members: e.target.value })} className={inputCls} /></div>
               </div>
-              <button type="submit" disabled={creating} className="w-full py-3 bg-[#E4501C] hover:bg-[#E4501C]/90 text-white rounded-xl font-700 transition-colors disabled:opacity-50">
+              <button type="submit" disabled={creating} className="w-full py-3 bg-[#17402C] hover:bg-[#17402C]/90 text-white rounded-xl font-700 transition-colors disabled:opacity-50">
                 {creating ? 'Enregistrement...' : 'Enregistrer'}
               </button>
             </form>

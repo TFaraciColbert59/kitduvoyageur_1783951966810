@@ -677,7 +677,7 @@ export default function CheckoutPage() {
           </button>
         </div>
 
-        <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
+        
       </MobilePageShell>
     </div>
   </>

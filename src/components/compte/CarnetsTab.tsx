@@ -277,7 +277,7 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
                 {published.length} récits publiés, {drafts.length} en cours
                 {totalViews > 0 && ` — ${fmtNum(totalViews)} lectures ce trimestre`}
                 {fideles.length > 0 && (
-                  <> — <Link href="#" className="text-[#E4501C] underline-offset-2 hover:underline">la communauté vous suit.</Link></>
+                  <> — <Link href="#" className="text-[#17402C] underline-offset-2 hover:underline">la communauté vous suit.</Link></>
                 )}
               </p>
             </div>
@@ -439,7 +439,7 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-600 text-[#1C2620] truncate group-hover:text-[#E4501C] transition-colors">{f.full_name}</p>
+                    <p className="text-sm font-600 text-[#1C2620] truncate group-hover:text-[#17402C] transition-colors">{f.full_name}</p>
                     {f.location && <p className="text-[10px] text-[#9CA89E] truncate">{f.location} · abonné</p>}
                   </div>
                   <div className="text-right flex-shrink-0">
@@ -466,7 +466,7 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
                 <div
                   className={`w-full aspect-square rounded-md transition-colors ${
                     m.current
-                      ? 'bg-[#1C2620] ring-2 ring-[#E4501C]/40'
+                      ? 'bg-[#1C2620] ring-2 ring-[#17402C]/40'
                       : m.count >= 2 ? 'bg-[#1C2620]'
                       : m.count === 1 ? 'bg-[#5C6B5E]/50'
                       : 'bg-[#EDEAE0]'
@@ -486,8 +486,8 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
         </div>
 
         {/* ── Suggestion d'écriture ── */}
-        <div className="bg-[#FFF9F0] border border-[#E4501C]/20 rounded-2xl p-5">
-          <p className="text-[10px] font-mono text-[#E4501C] uppercase tracking-[0.15em] mb-2">Suggestion · Écriture</p>
+        <div className="bg-[#FFF9F0] border border-[#17402C]/20 rounded-2xl p-5">
+          <p className="text-[10px] font-mono text-[#17402C] uppercase tracking-[0.15em] mb-2">Suggestion · Écriture</p>
           <h4 className="font-display font-700 text-[#1C2620] text-base leading-snug mb-2">
             Un carnet sur vos {profile.stats.clubs} clubs ?
           </h4>
@@ -496,7 +496,7 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
           </p>
           <Link
             href="/carnets/nouveau"
-            className="flex items-center gap-2 text-xs font-700 text-[#1C2620] hover:text-[#E4501C] transition-colors"
+            className="flex items-center gap-2 text-xs font-700 text-[#1C2620] hover:text-[#17402C] transition-colors"
           >
             <Icon name="PlusIcon" size={13} />
             Commencer ce carnet
@@ -535,7 +535,7 @@ function CarnetPublishedCard({ carnet, fallbackCover }: { carnet: CarnetDB; fall
         {/* Status badge */}
         <div className="absolute top-3 left-3">
           {isNew ? (
-            <span className="px-2.5 py-1 bg-[#E4501C] text-white text-[10px] font-700 rounded-full uppercase tracking-wider shadow">
+            <span className="px-2.5 py-1 bg-[#17402C] text-white text-[10px] font-700 rounded-full uppercase tracking-wider shadow">
               Nouveau
             </span>
           ) : (
@@ -594,7 +594,7 @@ function DraftRow({
 }) {
   const router = useRouter();
   const progress = draft.draft_progress ?? Math.min(95, 20 + idx * 25);
-  const progressColor = progress >= 80 ? '#22C55E' : progress >= 50 ? '#E4501C' : '#C8C3B0';
+  const progressColor = progress >= 80 ? '#22C55E' : progress >= 50 ? '#17402C' : '#C8C3B0';
   const roman = ['I', 'II', 'III', 'IV', 'V'][idx] || String(idx + 1);
 
   return (
@@ -608,7 +608,7 @@ function DraftRow({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h5 className="font-600 text-sm text-[#1C2620] truncate group-hover:text-[#E4501C] transition-colors">
+              <h5 className="font-600 text-sm text-[#1C2620] truncate group-hover:text-[#17402C] transition-colors">
                 {draft.title || 'Brouillon sans titre'}
               </h5>
               <p className="text-[11px] text-[#9CA89E] mt-0.5">

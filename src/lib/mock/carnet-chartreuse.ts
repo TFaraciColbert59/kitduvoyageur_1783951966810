@@ -184,7 +184,7 @@ export const mockCarnetChartreuse: CarnetData = {
       { id: 'k1', name: 'Sac 45L toile huilée', detail: 'Assemblé à Digne-les-Bains', weight: '1,4 kg', color: '#B5652D' },
       { id: 'k2', name: 'Duvet plumes 800', detail: 'Confort -5°C', weight: '920 g', color: '#3A6EA5' },
       { id: 'k3', name: 'Veste 3 couches', detail: 'Portée les 3 jours', weight: '400 g', color: '#33463C' },
-      { id: 'k4', name: 'Gourde inox 1L', detail: 'Remplie à la source', weight: '188 g', color: '#E4501C' },
+      { id: 'k4', name: 'Gourde inox 1L', detail: 'Remplie à la source', weight: '188 g', color: '#17402C' },
     ],
   },
   randonnees: [

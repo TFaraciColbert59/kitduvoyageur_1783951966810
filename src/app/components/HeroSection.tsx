@@ -9,7 +9,7 @@ const DESTINATIONS = [
 { name: 'Népal', tag: 'Trekking', img: "https://images.unsplash.com/photo-1643437177212-1af76d04434f", alt: 'Chaîne himalayenne enneigée avec village de montagne au premier plan, ciel bleu profond', color: '#3E6B7A' },
 { name: 'Patagonie', tag: 'Alpinisme', img: "https://img.rocket.new/generatedImages/rocket_gen_img_14566789d-1772251928133.png", alt: 'Torres del Paine avec lacs turquoise et glaciers en Patagonie chilienne', color: '#33463C' },
 { name: 'Islande', tag: 'Volcans', img: "https://images.unsplash.com/photo-1721633616585-3f6c10c491fe", alt: 'Aurore boréale verte au-dessus d\'un paysage volcanique islandais enneigé', color: '#B5652D' },
-{ name: 'Sahara', tag: 'Désert', img: "https://images.unsplash.com/photo-1728408828574-70a460530093", alt: 'Dunes de sable rouge du Sahara au coucher du soleil avec caravane de chameaux', color: '#E4501C' }];
+{ name: 'Sahara', tag: 'Désert', img: "https://images.unsplash.com/photo-1728408828574-70a460530093", alt: 'Dunes de sable rouge du Sahara au coucher du soleil avec caravane de chameaux', color: '#17402C' }];
 
 
 const _FEATURES = [
@@ -19,7 +19,7 @@ const _FEATURES = [
   desc: 'Décrivez votre voyage, l\'IA compose votre kit optimal en 2 minutes — poids, budget, destination.',
   href: '/ai-configurator',
   cta: 'Configurer mon kit',
-  accent: '#E4501C'
+  accent: '#17402C'
 },
 {
   icon: 'GlobeAltIcon',
@@ -105,7 +105,7 @@ export default function HeroSection() {
           {/* Left — headline */}
           <div className="lg:col-span-7">
             <div className="inline-flex items-center gap-2 mb-6">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#E4501C] animate-pulse" />
+              <div className="w-1.5 h-1.5 rounded-full bg-[#17402C] animate-pulse" />
               <span className="text-[10px] font-mono text-white/50 tracking-[0.25em] uppercase" style={{ fontFamily: 'var(--font-mono)' }}>
                 Expédition 2026 · IA-Powered
               </span>
@@ -114,7 +114,7 @@ export default function HeroSection() {
             <h1 className="font-display font-800 text-white leading-[0.95] tracking-tight mb-6" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(3rem, 7vw, 5.5rem)' }}>
               L&apos;équipement
               <br />
-              <span style={{ color: '#E4501C' }}>intelligent</span>
+              <span style={{ color: '#17402C' }}>intelligent</span>
               <br />
               pour chaque
               <br />
@@ -126,7 +126,7 @@ export default function HeroSection() {
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
-              <Link href="/ai-configurator" className="flex items-center gap-2 bg-[#E4501C] hover:bg-[#cc3d10] text-white px-6 py-3.5 rounded-xl font-semibold text-sm transition-all hover:-translate-y-px hover:shadow-xl hover:shadow-[#E4501C]/35">
+              <Link href="/ai-configurator" className="flex items-center gap-2 bg-[#17402C] hover:bg-[#cc3d10] text-white px-6 py-3.5 rounded-xl font-semibold text-sm transition-all hover:-translate-y-px hover:shadow-xl hover:shadow-[#17402C]/35">
                 <Icon name="SparklesIcon" size={16} variant="outline" />
                 Configurer mon kit
               </Link>

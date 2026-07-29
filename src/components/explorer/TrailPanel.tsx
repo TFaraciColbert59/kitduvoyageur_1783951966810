@@ -103,7 +103,7 @@ export default function TrailPanel({ trail, onClose, isMobile = false }: TrailPa
       <div className="flex-shrink-0 px-5 pb-5 pt-3 border-t border-white/8">
         <Link
           href={`/ai-configurator?trail=${encodeURIComponent(trail.name)}&difficulty=${trail.difficulty}&distance=${trail.distance_km}&elevation=${trail.elevation_gain}`}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-[#E4501C] hover:bg-[#cc3d10] text-white font-semibold text-sm transition-all duration-200 hover:shadow-lg hover:shadow-[#E4501C]/25 active:scale-[0.98]"
+          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-[#17402C] hover:bg-[#cc3d10] text-white font-semibold text-sm transition-all duration-200 hover:shadow-lg hover:shadow-[#17402C]/25 active:scale-[0.98]"
         >
           <span>🎒</span>
           Préparer cette aventure

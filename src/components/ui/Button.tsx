@@ -1,7 +1,5 @@
-// src/components/ui/Button.tsx
-import React from 'react';
-import { theme } from '@/design/tokens';
-import clsx from 'clsx';
+'use client';
+import React, { useState } from 'react';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -13,43 +11,80 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   children: React.ReactNode;
 }
 
+const VARIANT_STYLES: Record<ButtonVariant, React.CSSProperties> = {
+  primary: { background: '#17402C', color: '#fff', border: 'none' },
+  secondary: { background: '#FAF8F5', color: '#0B1F17', border: '1px solid #E8E4D8' },
+  danger: { background: '#E53E3E', color: '#fff', border: 'none' },
+  ghost: { background: 'transparent', color: '#0B1F17', border: 'none' },
+};
+
+const HOVER_STYLES: Partial<Record<ButtonVariant, React.CSSProperties>> = {
+  primary: { background: '#0F2D1F' },
+  secondary: { background: '#F0ECE1' },
+  danger: { background: '#C53030' },
+  ghost: { background: '#FAF8F5' },
+};
+
+const SIZE_STYLES: Record<ButtonSize, React.CSSProperties> = {
+  sm: { fontSize: '12px', padding: '6px 12px' },
+  md: { fontSize: '14px', padding: '10px 16px' },
+  lg: { fontSize: '16px', padding: '12px 20px' },
+};
+
 export const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   size = 'md',
   loading = false,
   disabled,
-  className,
+  style,
   children,
   ...rest
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
-  const sizeStyles = {
-    sm: 'text-xs px-3 py-1.5',
-    md: 'text-sm px-4 py-2.5',
-    lg: 'text-base px-5 py-3',
-  }[size];
+  const [isHovered, setIsHovered] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
 
-  const variantStyles = {
-    primary: `bg-${theme.colors.primary} text-${theme.colors.white} hover:bg-${theme.colors.primary}80 focus:ring-${theme.colors.primary}`,
-    secondary: `bg-${theme.colors.surface} text-${theme.colors.primary} border border-${theme.colors.border} hover:bg-${theme.colors.surface}80`,
-    danger: `bg-${theme.colors.error} text-${theme.colors.white} hover:bg-${theme.colors.error}80 focus:ring-${theme.colors.error}`,
-    ghost: `bg-transparent text-${theme.colors.primary} hover:bg-${theme.colors.surface} focus:ring-${theme.colors.primary}`,
-  }[variant];
+  const isDisabled = disabled || loading;
 
-  const disabledStyles = disabled || loading ? 'opacity-50 cursor-not-allowed' : '';
+  const baseStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 500,
+    borderRadius: '8px',
+    cursor: isDisabled ? 'not-allowed' : 'pointer',
+    fontFamily: 'inherit',
+    lineHeight: 1.4,
+    transition: 'all 200ms cubic-bezier(0.16, 1, 0.3, 1)',
+    opacity: isDisabled ? 0.5 : 1,
+    ...VARIANT_STYLES[variant],
+    ...SIZE_STYLES[size],
+    ...(isHovered && !isDisabled ? HOVER_STYLES[variant] || {} : {}),
+    ...(isFocused ? { outline: '2px solid #A8C8A0', outlineOffset: '2px' } : {}),
+    ...style,
+  };
 
   return (
     <button
-      className={clsx(baseStyles, sizeStyles, variantStyles, disabledStyles, className)}
-      disabled={disabled || loading}
+      style={baseStyle}
+      disabled={isDisabled}
+      onMouseEnter={(e) => { setIsHovered(true); rest.onMouseEnter?.(e); }}
+      onMouseLeave={(e) => { setIsHovered(false); rest.onMouseLeave?.(e); }}
+      onFocus={(e) => { setIsFocused(true); rest.onFocus?.(e); }}
+      onBlur={(e) => { setIsFocused(false); rest.onBlur?.(e); }}
       {...rest}
     >
-      {loading ? (
-        <svg className="animate-spin h-4 w-4 mr-2 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+      {loading && (
+        <svg
+          className="animate-spin"
+          style={{ height: '16px', width: '16px', marginRight: '8px' }}
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
         </svg>
-      ) : null}
+      )}
       {children}
     </button>
   );

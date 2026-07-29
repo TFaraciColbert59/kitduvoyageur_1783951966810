@@ -7,6 +7,7 @@ import Icon from '@/components/ui/AppIcon';
 import WeightGauge from '@/components/WeightGauge';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 interface BagItem {
   id: string;
@@ -22,7 +23,7 @@ interface BagItem {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  shelter: '#E4501C',
+  shelter: '#17402C',
   sleeping: '#3E6B7A',
   clothing: '#33463C',
   food: '#B5652D',
@@ -187,8 +188,10 @@ export default function Jumeau3DPage() {
   const tips = optimizationTips();
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <>
+      <div className="hidden md:block">
+        <div className="min-h-screen bg-background">
+          <Header />
       <main className="pt-20">
         {/* Hero */}
         <section className="bg-dark-bg text-white py-10 px-4">
@@ -347,7 +350,7 @@ export default function Jumeau3DPage() {
                       {/* Balance bars */}
                       <div className="absolute bottom-4 left-4 right-4">
                         <div className="flex gap-1 h-1.5 rounded-full overflow-hidden">
-                          <div style={{ width: `${balance.top}%`, background: '#E4501C', transition: 'width 0.3s' }} />
+                          <div style={{ width: `${balance.top}%`, background: '#17402C', transition: 'width 0.3s' }} />
                           <div style={{ width: `${balance.middle}%`, background: '#3E6B7A', transition: 'width 0.3s' }} />
                           <div style={{ width: `${balance.bottom}%`, background: '#33463C', transition: 'width 0.3s' }} />
                         </div>
@@ -539,8 +542,257 @@ export default function Jumeau3DPage() {
         />
       )}
 
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+      </div>
+
+      {/* ── MOBILE ── */}
+      <div className="block md:hidden">
+        <MobilePageShell>
+          {/* Header */}
+          <div style={{ padding: '16px', borderBottom: '1px solid rgba(11,31,23,0.06)' }}>
+            <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 4px 0' }}>
+              Phase 3 &middot; Jumeau Num&eacute;rique
+            </p>
+            <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#0B1F17', margin: 0 }}>
+              Visualiseur 3D du Sac
+            </h1>
+            <p style={{ fontSize: '13px', color: '#6B7A72', margin: '6px 0 0 0', lineHeight: 1.4 }}>
+              Organisez et visualisez le contenu de votre sac en 3D.
+            </p>
+          </div>
+
+          {/* Not connected state */}
+          {!user && !loading && (
+            <div style={{ padding: '32px 16px', textAlign: 'center' }}>
+              <p style={{ fontSize: '36px', marginBottom: '12px' }}>&#127782;</p>
+              <p style={{ fontSize: '18px', fontWeight: 600, color: '#0B1F17', marginBottom: '8px' }}>Connectez-vous</p>
+              <p style={{ fontSize: '13px', color: '#6B7A72', marginBottom: '20px' }}>Votre inventaire est synchronis&eacute; avec le visualiseur 3D.</p>
+              <a href="/connexion" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', background: '#17402C', color: '#fff', borderRadius: '12px', fontSize: '14px', fontWeight: 500, textDecoration: 'none' }}>
+                Se connecter
+              </a>
+            </div>
+          )}
+
+          {/* Loading state */}
+          {loading && (
+            <div style={{ padding: '16px' }}>
+              <div style={{ height: '180px', background: '#F4F1EA', borderRadius: '12px', marginBottom: '12px', animation: 'pulse 2s infinite' }} />
+              <div style={{ height: '80px', background: '#F4F1EA', borderRadius: '12px', marginBottom: '12px', animation: 'pulse 2s infinite' }} />
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!loading && user && items.length === 0 && (
+            <div style={{ padding: '32px 16px', textAlign: 'center' }}>
+              <p style={{ fontSize: '36px', marginBottom: '12px' }}>&#128230;</p>
+              <p style={{ fontSize: '18px', fontWeight: 600, color: '#0B1F17', marginBottom: '8px' }}>Votre sac est vide</p>
+              <p style={{ fontSize: '13px', color: '#6B7A72', marginBottom: '20px' }}>Ajoutez des articles depuis votre inventaire.</p>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                <a href="/inventaire" style={{ padding: '12px 20px', background: '#F4F1EA', color: '#0B1F17', borderRadius: '12px', fontSize: '14px', fontWeight: 500, textDecoration: 'none', border: '1px solid rgba(11,31,23,0.06)' }}>
+                  Voir l&apos;inventaire
+                </a>
+                <button onClick={() => setShowAddModal(true)} style={{ padding: '12px 20px', background: '#17402C', color: '#fff', borderRadius: '12px', fontSize: '14px', fontWeight: 500, border: 'none', cursor: 'pointer' }}>
+                  Ajouter un article
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Main content with items */}
+          {!loading && user && items.length > 0 && (
+            <>
+              {/* Weight Summary Card */}
+              <div style={{ margin: '16px', padding: '16px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+                <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 8px 0' }}>
+                  R&Eacute;SUM&Eacute; DU SAC
+                </p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <div>
+                    <p style={{ fontSize: '11px', color: '#6B7A72', margin: '0 0 2px 0' }}>Poids total</p>
+                    <p style={{ fontSize: '24px', fontFamily: 'ui-monospace, monospace', fontWeight: 700, color: '#0B1F17', margin: 0 }}>
+                      {(totalWeightG / 1000).toFixed(2)} <span style={{ fontSize: '13px', fontWeight: 400, color: '#6B7A72' }}>kg</span>
+                    </p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ fontSize: '11px', color: '#6B7A72', margin: '0 0 2px 0' }}>Volume</p>
+                    <p style={{ fontSize: '18px', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#0B1F17', margin: 0 }}>
+                      {totalVolumeL.toFixed(0)} <span style={{ fontSize: '12px', fontWeight: 400, color: '#6B7A72' }}>L</span>
+                    </p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ fontSize: '11px', color: '#6B7A72', margin: '0 0 2px 0' }}>Articles</p>
+                    <p style={{ fontSize: '18px', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#0B1F17', margin: 0 }}>
+                      {packedItems.length}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Fill indicator */}
+                <div style={{ background: 'rgba(11,31,23,0.06)', borderRadius: '999px', height: '6px', overflow: 'hidden', marginTop: '4px' }}>
+                  <div style={{ width: `${fillPercent}%`, background: '#17402C', height: '100%', borderRadius: '999px' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                  <span style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72' }}>{fillPercent.toFixed(0)}% rempli</span>
+                  <span style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72' }}>{BAG_CAPACITY_L} L max</span>
+                </div>
+              </div>
+
+              {/* 3D Visualization Placeholder */}
+              <div style={{ margin: '0 16px 16px', padding: '16px', background: '#0B1F17', borderRadius: '12px', position: 'relative', minHeight: '200px' }}>
+                <p style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 4px 0' }}>
+                  Visualisation 3D
+                </p>
+                {/* Simplified zone representation */}
+                <div style={{ margin: '12px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                  {(['top', 'middle', 'bottom'] as const).map((zone, zi) => {
+                    const zItems = packedItems.filter(i => i.zone === zone);
+                    return (
+                      <div key={zone} style={{
+                        width: zi === 0 ? '70%' : zi === 1 ? '85%' : '90%',
+                        height: '36px',
+                        background: zItems.length > 0 ? '#17402C' : 'rgba(255,255,255,0.08)',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                      }}>
+                        <span style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: 'rgba(255,255,255,0.5)' }}>
+                          {ZONE_LABELS[zone]} &middot; {zItems.length} art.
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Weight balance */}
+                <div style={{ marginTop: '12px' }}>
+                  <div style={{ display: 'flex', gap: '3px', height: '4px', borderRadius: '999px', overflow: 'hidden' }}>
+                    <div style={{ width: `${balance.top}%`, background: '#17402C' }} />
+                    <div style={{ width: `${balance.middle}%`, background: '#3E6B7A' }} />
+                    <div style={{ width: `${balance.bottom}%`, background: '#33463C' }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '3px' }}>
+                    <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.3)', fontFamily: 'ui-monospace, monospace' }}>Haut {balance.top.toFixed(0)}%</span>
+                    <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.3)', fontFamily: 'ui-monospace, monospace' }}>Mil. {balance.middle.toFixed(0)}%</span>
+                    <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.3)', fontFamily: 'ui-monospace, monospace' }}>Bas {balance.bottom.toFixed(0)}%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Category Breakdown */}
+              <div style={{ margin: '0 16px 16px', padding: '16px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+                <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 12px 0' }}>
+                  R&Eacute;PARTITION PAR CAT&Eacute;GORIE
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {Object.entries(CATEGORY_LABELS).map(([key, label]) => {
+                    const catWeight = packedItems.filter(i => i.category === key).reduce((s, i) => s + i.weightG, 0);
+                    const pct = totalWeightG > 0 ? (catWeight / totalWeightG) * 100 : 0;
+                    if (catWeight === 0) return null;
+                    return (
+                      <div key={key}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: CATEGORY_COLORS[key], flexShrink: 0 }} />
+                            <span style={{ fontSize: '12px', color: '#0B1F17' }}>{label}</span>
+                          </div>
+                          <span style={{ fontSize: '11px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72' }}>
+                            {catWeight >= 1000 ? `${(catWeight / 1000).toFixed(2)} kg` : `${catWeight} g`} &middot; {pct.toFixed(0)}%
+                          </span>
+                        </div>
+                        <div style={{ background: 'rgba(11,31,23,0.06)', borderRadius: '999px', height: '4px', overflow: 'hidden' }}>
+                          <div style={{ width: `${pct}%`, background: CATEGORY_COLORS[key], height: '100%', borderRadius: '999px', transition: 'width 0.3s ease' }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Top Items List */}
+              <div style={{ margin: '0 16px 16px', padding: '16px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+                <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 12px 0' }}>
+                  ARTICLES LES PLUS LOURDS
+                </p>
+                {packedItems
+                  .sort((a, b) => b.weightG - a.weightG)
+                  .slice(0, 6)
+                  .map((item, i) => (
+                    <div key={item.id} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '8px 0',
+                      borderBottom: i < Math.min(packedItems.length, 6) - 1 ? '1px solid rgba(11,31,23,0.06)' : 'none',
+                    }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: item.color, flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: '13px', fontWeight: 500, color: '#0B1F17', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {item.name}
+                        </p>
+                        <p style={{ fontSize: '11px', color: '#6B7A72', margin: '1px 0 0 0', fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>
+                          {CATEGORY_LABELS[item.category]} &middot; {ZONE_LABELS[item.zone]}
+                        </p>
+                      </div>
+                      <span style={{ fontSize: '12px', fontFamily: 'ui-monospace, monospace', color: '#0B1F17', fontWeight: 600, flexShrink: 0 }}>
+                        {item.weightG >= 1000 ? `${(item.weightG / 1000).toFixed(2)} kg` : `${item.weightG} g`}
+                      </span>
+                    </div>
+                  ))}
+                {packedItems.length === 0 && (
+                  <p style={{ fontSize: '12px', color: '#6B7A72', fontFamily: 'Georgia, serif', fontStyle: 'italic', margin: 0 }}>
+                    Aucun article emball&eacute;
+                  </p>
+                )}
+              </div>
+
+              {/* Optimization Tips */}
+              {tips.length > 0 && (
+                <div style={{ margin: '0 16px 16px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+                  <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 8px 0' }}>
+                    Conseils d&apos;optimisation
+                  </p>
+                  <ul style={{ margin: 0, padding: '0 0 0 16px', listStyle: 'none' }}>
+                    {tips.map((tip, i) => (
+                      <li key={i} style={{ fontSize: '12px', color: '#0B1F17', marginBottom: '6px', lineHeight: 1.4, display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+                        <span style={{ color: '#17402C', flexShrink: 0 }}>&rarr;</span>
+                        <span>{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Add item button */}
+              <div style={{ padding: '0 16px 16px' }}>
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  style={{
+                    width: '100%',
+                    padding: '14px',
+                    background: '#17402C',
+                    color: '#fff',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  + Ajouter un article
+                </button>
+              </div>
+
+              {/* Footer spacer */}
+              <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
+            </>
+          )}
+
+        </MobilePageShell>
+      </div>
+    </>
   );
 }
 

@@ -134,49 +134,49 @@ function CarnetModal({
         <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
           <div>
             <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Titre *</label>
-            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" placeholder="Ex: Circuit des Annapurnas — 18 jours" value={form.title} onChange={(e) => set('title', e.target.value)} />
+            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="Ex: Circuit des Annapurnas — 18 jours" value={form.title} onChange={(e) => set('title', e.target.value)} />
           </div>
           <div>
             <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Destination *</label>
-            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" placeholder="Ex: Népal, Corse, Islande..." value={form.destination} onChange={(e) => set('destination', e.target.value)} />
+            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="Ex: Népal, Corse, Islande..." value={form.destination} onChange={(e) => set('destination', e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Date de départ</label>
-              <input type="date" className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" value={form.start_date} onChange={(e) => set('start_date', e.target.value)} />
+              <input type="date" className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" value={form.start_date} onChange={(e) => set('start_date', e.target.value)} />
             </div>
             <div>
               <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Date de retour</label>
-              <input type="date" className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" value={form.end_date} onChange={(e) => set('end_date', e.target.value)} />
+              <input type="date" className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" value={form.end_date} onChange={(e) => set('end_date', e.target.value)} />
             </div>
           </div>
           <div>
             <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Description</label>
-            <textarea rows={4} className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30 resize-none" placeholder="Décrivez votre expédition, les conditions, les moments forts..." value={form.description} onChange={(e) => set('description', e.target.value)} />
+            <textarea rows={4} className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30 resize-none" placeholder="Décrivez votre expédition, les conditions, les moments forts..." value={form.description} onChange={(e) => set('description', e.target.value)} />
           </div>
           <div>
             <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">URL de la photo de couverture</label>
-            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" placeholder="https://..." value={form.cover_image} onChange={(e) => set('cover_image', e.target.value)} />
+            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="https://..." value={form.cover_image} onChange={(e) => set('cover_image', e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Météo</label>
-              <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" placeholder="Ex: Ensoleillé, tempête J5..." value={form.weather} onChange={(e) => set('weather', e.target.value)} />
+              <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="Ex: Ensoleillé, tempête J5..." value={form.weather} onChange={(e) => set('weather', e.target.value)} />
             </div>
             <div>
               <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Note parcours ({form.route_rating}/10)</label>
-              <input type="range" min={1} max={10} step={0.1} className="w-full mt-2 accent-[#E4501C]" value={form.route_rating} onChange={(e) => set('route_rating', parseFloat(e.target.value))} />
+              <input type="range" min={1} max={10} step={0.1} className="w-full mt-2 accent-[#17402C]" value={form.route_rating} onChange={(e) => set('route_rating', parseFloat(e.target.value))} />
             </div>
           </div>
           <div>
             <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Tags (séparés par des virgules)</label>
-            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30" placeholder="himalaya, autonomie, haute-altitude..." value={form.tags} onChange={(e) => set('tags', e.target.value)} />
+            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="himalaya, autonomie, haute-altitude..." value={form.tags} onChange={(e) => set('tags', e.target.value)} />
           </div>
           <div>
             <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-2">Visibilité</label>
             <div className="grid grid-cols-3 gap-2">
               {VISIBILITY_OPTS.map((opt) => (
-                <button key={opt.value} type="button" onClick={() => set('visibility', opt.value)} className={`p-3 rounded-xl border-2 text-left transition-all ${form.visibility === opt.value ? 'border-[#E4501C] bg-[#E4501C]/5' : 'border-[#C8C3B0] hover:border-[#E4501C]/40'}`}>
+                <button key={opt.value} type="button" onClick={() => set('visibility', opt.value)} className={`p-3 rounded-xl border-2 text-left transition-all ${form.visibility === opt.value ? 'border-[#17402C] bg-[#17402C]/5' : 'border-[#C8C3B0] hover:border-[#17402C]/40'}`}>
                   <p className="text-sm font-600 text-[#1C2620]">{opt.label}</p>
                   <p className="text-[10px] text-[#5C6B5E] mt-0.5">{opt.desc}</p>
                 </button>
@@ -188,14 +188,14 @@ function CarnetModal({
               <p className="text-sm font-600 text-[#1C2620]">Carnet collaboratif</p>
               <p className="text-xs text-[#5C6B5E]">Permettre à d&apos;autres membres de contribuer</p>
             </div>
-            <button type="button" onClick={() => set('is_collaborative', !form.is_collaborative)} className={`w-12 h-6 rounded-full transition-all relative ${form.is_collaborative ? 'bg-[#E4501C]' : 'bg-[#C8C3B0]'}`}>
+            <button type="button" onClick={() => set('is_collaborative', !form.is_collaborative)} className={`w-12 h-6 rounded-full transition-all relative ${form.is_collaborative ? 'bg-[#17402C]' : 'bg-[#C8C3B0]'}`}>
               <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${form.is_collaborative ? 'left-6' : 'left-0.5'}`} />
             </button>
           </div>
         </div>
         <div className="flex gap-3 p-6 border-t border-[#C8C3B0]">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-[#C8C3B0] text-sm font-600 text-[#5C6B5E] hover:bg-[#C8C3B0]/20 transition-colors">Annuler</button>
-          <button onClick={() => onSave(form)} disabled={saving || !form.title.trim() || !form.destination.trim()} className="flex-1 py-2.5 rounded-xl bg-[#E4501C] text-white text-sm font-700 hover:bg-[#E4501C]/90 transition-colors disabled:opacity-50">
+          <button onClick={() => onSave(form)} disabled={saving || !form.title.trim() || !form.destination.trim()} className="flex-1 py-2.5 rounded-xl bg-[#17402C] text-white text-sm font-700 hover:bg-[#17402C]/90 transition-colors disabled:opacity-50">
             {saving ? 'Enregistrement...' : initial ? 'Mettre à jour' : 'Publier le carnet'}
           </button>
         </div>
@@ -309,11 +309,11 @@ function CarnetDetailModal({
 
           {/* Bottom info */}
           <div className="absolute bottom-5 left-5 right-5">
-            <p className="text-[10px] font-mono text-[#E4501C] uppercase tracking-wider mb-1">{carnet.destination}</p>
+            <p className="text-[10px] font-mono text-[#17402C] uppercase tracking-wider mb-1">{carnet.destination}</p>
             <h2 className="font-display font-800 text-white text-2xl leading-tight mb-2">{carnet.title}</h2>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[#E4501C]/30 flex items-center justify-center text-xs font-700 text-white">
+                <div className="w-7 h-7 rounded-lg bg-[#17402C]/30 flex items-center justify-center text-xs font-700 text-white">
                   {carnet.author?.full_name?.[0] ?? '?'}
                 </div>
                 <span className="text-white/80 text-sm font-500">{carnet.author?.full_name ?? 'Anonyme'}</span>
@@ -347,7 +347,7 @@ function CarnetDetailModal({
             {/* Dates */}
             {(carnet.start_date || carnet.end_date) && (
               <div className="flex items-center gap-4 p-4 bg-[#1C2620] rounded-xl">
-                <Icon name="CalendarDaysIcon" size={20} className="text-[#E4501C] flex-shrink-0" />
+                <Icon name="CalendarDaysIcon" size={20} className="text-[#17402C] flex-shrink-0" />
                 <div className="flex flex-wrap items-center gap-4 text-sm">
                   {carnet.start_date && (
                     <div>
@@ -367,7 +367,7 @@ function CarnetDetailModal({
                   {durationDays && (
                     <div className="ml-auto">
                       <p className="text-[10px] text-white/40 uppercase tracking-wider">Durée</p>
-                      <p className="font-mono font-700 text-[#E4501C] text-lg">{durationDays}j</p>
+                      <p className="font-mono font-700 text-[#17402C] text-lg">{durationDays}j</p>
                     </div>
                   )}
                 </div>
@@ -400,7 +400,7 @@ function CarnetDetailModal({
                 <div className="space-y-2">
                   {carnet.map_points.map((point, i) => (
                     <div key={i} className="flex items-center gap-3 p-3 bg-[#E7E3D6] rounded-xl border border-[#C8C3B0]">
-                      <div className="w-7 h-7 rounded-lg bg-[#E4501C] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">
+                      <div className="w-7 h-7 rounded-lg bg-[#17402C] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">
                         {point.day ?? i + 1}
                       </div>
                       <div className="flex-1">
@@ -431,7 +431,7 @@ function CarnetDetailModal({
               <div className="relative">
                 <button
                   onClick={() => setShowReactions(!showReactions)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-600 border transition-all ${carnet.user_liked ? 'bg-[#E4501C]/10 border-[#E4501C]/30 text-[#E4501C]' : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-[#E4501C]/30'}`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-600 border transition-all ${carnet.user_liked ? 'bg-[#17402C]/10 border-[#17402C]/30 text-[#17402C]' : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-[#17402C]/30'}`}
                 >
                   {carnet.user_reaction ? REACTION_OPTS.find((r) => r.key === carnet.user_reaction)?.emoji : '🎒'}
                   <span>{carnet.likes_count} réactions</span>
@@ -439,7 +439,7 @@ function CarnetDetailModal({
                 {showReactions && (
                   <div className="absolute bottom-full left-0 mb-2 bg-white border border-[#C8C3B0] rounded-xl p-2 flex gap-1 shadow-lg z-10">
                     {REACTION_OPTS.map((r) => (
-                      <button key={r.key} onClick={() => { onLike(carnet, r.key); setShowReactions(false); }} title={r.label} className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg hover:bg-[#E7E3D6] transition-colors ${carnet.user_reaction === r.key ? 'bg-[#E4501C]/10' : ''}`}>
+                      <button key={r.key} onClick={() => { onLike(carnet, r.key); setShowReactions(false); }} title={r.label} className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg hover:bg-[#E7E3D6] transition-colors ${carnet.user_reaction === r.key ? 'bg-[#17402C]/10' : ''}`}>
                         {r.emoji}
                       </button>
                     ))}
@@ -495,19 +495,19 @@ function CarnetDetailModal({
               {user ? (
                 <div className="flex gap-3">
                   <input
-                    className="flex-1 bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30"
+                    className="flex-1 bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#17402C]/30"
                     placeholder="Écrire un commentaire..."
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitComment(); } }}
                   />
-                  <button onClick={handleSubmitComment} disabled={submitting || !newComment.trim()} className="px-4 py-2.5 bg-[#E4501C] text-white rounded-xl text-sm font-600 disabled:opacity-50 hover:bg-[#E4501C]/90 transition-colors">
+                  <button onClick={handleSubmitComment} disabled={submitting || !newComment.trim()} className="px-4 py-2.5 bg-[#17402C] text-white rounded-xl text-sm font-600 disabled:opacity-50 hover:bg-[#17402C]/90 transition-colors">
                     {submitting ? '...' : 'Envoyer'}
                   </button>
                 </div>
               ) : (
                 <p className="text-sm text-center text-[#5C6B5E] py-2">
-                  <Link href="/connexion" className="text-[#E4501C] hover:underline">Connectez-vous</Link> pour commenter
+                  <Link href="/connexion" className="text-[#17402C] hover:underline">Connectez-vous</Link> pour commenter
                 </p>
               )}
             </div>
@@ -618,15 +618,15 @@ function CarnetCard({
       <div className="p-4">
         {/* Author */}
         <div className="flex items-center gap-3 mb-3">
-          <Link href={`/profil/${carnet.author_id}`} className="w-8 h-8 rounded-xl bg-[#E4501C]/20 flex items-center justify-center text-xs font-700 text-[#E4501C] flex-shrink-0 hover:bg-[#E4501C]/30 transition-colors">
+          <Link href={`/profil/${carnet.author_id}`} className="w-8 h-8 rounded-xl bg-[#17402C]/20 flex items-center justify-center text-xs font-700 text-[#17402C] flex-shrink-0 hover:bg-[#17402C]/30 transition-colors">
             {carnet.author?.full_name?.[0] ?? '?'}
           </Link>
           <div className="flex-1 min-w-0">
-            <Link href={`/profil/${carnet.author_id}`} className="text-sm font-600 text-[#1C2620] truncate hover:text-[#E4501C] transition-colors block">{carnet.author?.full_name ?? 'Anonyme'}</Link>
+            <Link href={`/profil/${carnet.author_id}`} className="text-sm font-600 text-[#1C2620] truncate hover:text-[#17402C] transition-colors block">{carnet.author?.full_name ?? 'Anonyme'}</Link>
             <p className="text-[10px] text-[#5C6B5E]">Trust {carnet.author?.trust_score ?? 0}</p>
           </div>
           <div className="text-right flex-shrink-0">
-            <p className="font-mono font-700 text-[#E4501C] text-sm">{carnet.route_rating}/10</p>
+            <p className="font-mono font-700 text-[#17402C] text-sm">{carnet.route_rating}/10</p>
             <p className="text-[10px] text-[#5C6B5E]">parcours</p>
           </div>
         </div>
@@ -659,7 +659,7 @@ function CarnetCard({
           <div className="relative">
             <button
               onClick={() => setShowReactions(!showReactions)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border transition-all ${carnet.user_liked ? 'bg-[#E4501C]/10 border-[#E4501C]/30 text-[#E4501C]' : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-[#E4501C]/30'}`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border transition-all ${carnet.user_liked ? 'bg-[#17402C]/10 border-[#17402C]/30 text-[#17402C]' : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-[#17402C]/30'}`}
             >
               {carnet.user_reaction ? REACTION_OPTS.find((r) => r.key === carnet.user_reaction)?.emoji : '🎒'}
               <span>{carnet.likes_count}</span>
@@ -667,7 +667,7 @@ function CarnetCard({
             {showReactions && (
               <div className="absolute bottom-full left-0 mb-2 bg-white border border-[#C8C3B0] rounded-xl p-2 flex gap-1 shadow-lg z-10">
                 {REACTION_OPTS.map((r) => (
-                  <button key={r.key} onClick={() => { onLike(carnet, r.key); setShowReactions(false); }} title={r.label} className={`w-8 h-8 rounded-lg flex items-center justify-center text-base hover:bg-[#E7E3D6] transition-colors ${carnet.user_reaction === r.key ? 'bg-[#E4501C]/10' : ''}`}>
+                  <button key={r.key} onClick={() => { onLike(carnet, r.key); setShowReactions(false); }} title={r.label} className={`w-8 h-8 rounded-lg flex items-center justify-center text-base hover:bg-[#E7E3D6] transition-colors ${carnet.user_reaction === r.key ? 'bg-[#17402C]/10' : ''}`}>
                     {r.emoji}
                   </button>
                 ))}
@@ -919,7 +919,7 @@ export default function CarnetsPage() {
       <section className="bg-[#1C2620] pt-24 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <BackButton variant="ghost" className="text-xs mb-8 text-white/70 hover:text-white" />
-          <p className="text-[10px] font-mono text-[#E4501C] tracking-[0.2em] uppercase mb-2">Communauté</p>
+          <p className="text-[10px] font-mono text-[#17402C] tracking-[0.2em] uppercase mb-2">Communauté</p>
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
             <div>
               <h1 className="font-display font-800 text-white text-3xl tracking-tight mb-2">
@@ -931,7 +931,7 @@ export default function CarnetsPage() {
             </div>
             <button
               onClick={() => { setEditCarnet(null); setShowCreate(true); }}
-              className="flex items-center gap-2 px-5 py-3 bg-[#E4501C] text-white rounded-xl font-700 text-sm hover:bg-[#E4501C]/90 transition-colors self-start lg:self-auto"
+              className="flex items-center gap-2 px-5 py-3 bg-[#17402C] text-white rounded-xl font-700 text-sm hover:bg-[#17402C]/90 transition-colors self-start lg:self-auto"
             >
               <Icon name="PlusIcon" size={16} />
               Nouveau carnet
@@ -952,7 +952,7 @@ export default function CarnetsPage() {
               <button
                 key={tab.id}
                 onClick={() => setFilter(tab.id as typeof filter)}
-                className={`flex items-center gap-2 px-5 py-4 text-sm font-600 border-b-2 transition-all whitespace-nowrap ${filter === tab.id ? 'border-[#E4501C] text-[#E4501C]' : 'border-transparent text-white/50 hover:text-white'}`}
+                className={`flex items-center gap-2 px-5 py-4 text-sm font-600 border-b-2 transition-all whitespace-nowrap ${filter === tab.id ? 'border-[#17402C] text-[#17402C]' : 'border-transparent text-white/50 hover:text-white'}`}
               >
                 <Icon name={tab.icon} size={14} />
                 {tab.label}
@@ -968,7 +968,7 @@ export default function CarnetsPage() {
         <div className="mb-6 relative">
           <Icon name="MagnifyingGlassIcon" size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5C6B5E]" />
           <input
-            className="w-full bg-[#EDEAE0] border border-[#C8C3B0] rounded-xl pl-10 pr-4 py-3 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#E4501C]/30"
+            className="w-full bg-[#EDEAE0] border border-[#C8C3B0] rounded-xl pl-10 pr-4 py-3 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30"
             placeholder="Rechercher par titre ou destination..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -997,7 +997,7 @@ export default function CarnetsPage() {
             {filter === 'mine' && (
               <button
                 onClick={() => { setEditCarnet(null); setShowCreate(true); }}
-                className="px-6 py-3 bg-[#E4501C] text-white rounded-xl font-700 text-sm hover:bg-[#E4501C]/90 transition-colors"
+                className="px-6 py-3 bg-[#17402C] text-white rounded-xl font-700 text-sm hover:bg-[#17402C]/90 transition-colors"
               >
                 Créer mon premier carnet
               </button>
@@ -1060,77 +1060,100 @@ export default function CarnetsPage() {
       {/* MOBILE VIEW */}
       <div className="block md:hidden">
         <MobilePageShell>
-          {/* Step 1: Hero */}
+          {/* Hero */}
           <div style={{ padding: '12px 16px 16px', background: '#FBFAF6' }}>
             <div style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '6px' }}>
-              Édition N°08 · automne 2026
+              Carnets d&apos;expédition
             </div>
             <h1 style={{ fontSize: '30px', fontWeight: 500, letterSpacing: '-0.025em', lineHeight: 1.1, margin: 0 }}>
               Récits du <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>terrain.</em>
             </h1>
             <div style={{ display: 'flex', gap: '8px', marginTop: '14px', fontSize: '12px', color: '#6B7A72' }}>
-              <span style={{ fontWeight: 500 }}>48 articles</span>
-              <span>·</span>
-              <span>12 450 lecteurs</span>
+              <span style={{ fontWeight: 500 }}>{carnets.length} article{carnets.length !== 1 ? 's' : ''}</span>
+              {user && (
+                <>
+                  <span>·</span>
+                  <button
+                    onClick={() => { setEditCarnet(null); setShowCreate(true); }}
+                    style={{ background: 'none', border: 'none', padding: 0, color: '#17402C', fontWeight: 600, fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}
+                  >
+                    + Nouveau
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Step 2: Featured article */}
-          <div style={{ margin: '12px 16px', borderRadius: '14px', overflow: 'hidden' }}>
-            <div style={{ height: '220px', background: 'linear-gradient(135deg, #0B1F17 0%, #17402C 100%)', position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '20px' }}>
-              {/* Mountains SVG overlay */}
-              <svg style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '60%', opacity: 0.15 }} viewBox="0 0 400 200" preserveAspectRatio="none">
-                <path d="M0 200 L50 80 L100 130 L150 40 L200 100 L250 20 L300 90 L350 50 L400 120 L400 200 Z" fill="white"/>
-              </svg>
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: '#A3C4A3', letterSpacing: '0.1em', textTransform: 'uppercase' }}>À la une · Reportage</span>
-                </div>
-                <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#FBFAF6', margin: 0, lineHeight: 1.2 }}>
-                  Traversée du Vercors en autonomie
-                </h2>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px' }}>
-                  <div style={{ width: '22px', height: '22px', borderRadius: '999px', background: '#A3C4A3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: '#0B1F17', fontWeight: 600 }}>M</div>
-                  <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>Mathieu C.</span>
-                  <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>·</span>
-                  <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>8 min de lecture</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Step 3: Category tabs */}
+          {/* Filter tabs */}
           <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', padding: '0 16px 12px', scrollbarWidth: 'none' }}>
-            {['Tout', 'Reportages', 'Tests matériel', 'Refuges', 'Méthode'].map(cat => (
-              <button key={cat} style={{ padding: '6px 14px', borderRadius: '999px', background: cat === 'Tout' ? '#17402C' : '#FBFAF6', border: `1px solid ${cat === 'Tout' ? '#17402C' : 'rgba(11,31,23,0.06)'}`, color: cat === 'Tout' ? '#fff' : '#384A42', fontSize: '12px', fontWeight: 500, whiteSpace: 'nowrap', cursor: 'pointer', fontFamily: 'inherit' }}>
-                {cat}
+            {[
+              { id: 'all', label: 'Tous' },
+              { id: 'mine', label: 'Mes carnets' },
+              { id: 'favorites', label: 'Favoris' },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setFilter(tab.id as typeof filter)}
+                style={{
+                  padding: '6px 14px', borderRadius: '999px',
+                  background: filter === tab.id ? '#17402C' : '#FBFAF6',
+                  border: `1px solid ${filter === tab.id ? '#17402C' : 'rgba(11,31,23,0.06)'}`,
+                  color: filter === tab.id ? '#fff' : '#384A42',
+                  fontSize: '12px', fontWeight: 500, whiteSpace: 'nowrap',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                {tab.label}
               </button>
             ))}
           </div>
 
-          {/* Article cards */}
+          {/* Carnet list from real data */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '0 16px 16px' }}>
-            {[
-              { kind: 'Reportage', title: 'UTMB — Dans les coulisses de la course', author: 'Sarah K.', time: '12 min' },
-              { kind: 'Test', title: 'Duvet Rab Mythic Ultra 200 : le test terrain', author: 'Antoine L.', time: '6 min' },
-              { kind: 'Refuge', title: 'Gardien de refuge, un métier de passion', author: 'Marie P.', time: '10 min' },
-              { kind: 'Méthode', title: 'Comment bien préparer son sac pour 3 jours', author: 'Lucas B.', time: '5 min' },
-            ].map((article, i) => (
-              <div key={i} style={{ display: 'flex', gap: '12px', padding: '12px', background: '#FBFAF6', borderRadius: '14px', border: '1px solid rgba(11,31,23,0.05)' }}>
-                <div style={{ width: '80px', height: '90px', borderRadius: '10px', background: 'linear-gradient(135deg, #17402C 20%, #2D6B4A 100%)', flexShrink: 0 }} />
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ fontSize: '9px', color: '#6B7A72', fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{article.kind}</div>
-                    <div style={{ fontSize: '14px', fontWeight: 500, color: '#0B1F17', marginTop: '2px', lineHeight: 1.2 }}>{article.title}</div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', color: '#6B7A72' }}>
-                    <span>{article.author}</span>
-                    <span>·</span>
-                    <span>{article.time}</span>
-                  </div>
-                </div>
+            {loading ? (
+              <div style={{ padding: '40px 0', textAlign: 'center', color: '#6B7A72', fontSize: '13px' }}>Chargement...</div>
+            ) : filtered.length === 0 ? (
+              <div style={{ padding: '40px 0', textAlign: 'center', color: '#6B7A72', fontSize: '13px' }}>
+                {filter === 'mine' ? 'Aucun carnet publié' : filter === 'favorites' ? 'Aucun favori' : 'Aucun carnet trouvé'}
               </div>
-            ))}
+            ) : (
+              filtered.map(c => {
+                const authorName = (c as any).author?.full_name ?? 'Voyageur';
+                const authorInitial = authorName.charAt(0).toUpperCase();
+                return (
+                  <div
+                    key={c.id}
+                    onClick={() => setDetailCarnet(c)}
+                    style={{ display: 'flex', gap: '12px', padding: '12px', background: '#FBFAF6', borderRadius: '14px', border: '1px solid rgba(11,31,23,0.05)', cursor: 'pointer' }}
+                  >
+                    <div style={{
+                      width: '80px', height: '90px', borderRadius: '10px', flexShrink: 0,
+                      background: c.cover_image ? `url(${c.cover_image}) center/cover` : 'linear-gradient(135deg, #17402C 20%, #2D6B4A 100%)'
+                    }} />
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ fontSize: '9px', color: '#6B7A72', fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                          {c.destination || 'Voyage'}
+                        </div>
+                        <div style={{ fontSize: '14px', fontWeight: 500, color: '#0B1F17', marginTop: '2px', lineHeight: 1.2 }}>{c.title}</div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', color: '#6B7A72' }}>
+                        <div style={{ width: '18px', height: '18px', borderRadius: '999px', background: '#A3C4A3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', color: '#0B1F17', fontWeight: 600 }}>
+                          {authorInitial}
+                        </div>
+                        <span>{authorName}</span>
+                        {c.likes_count !== undefined && c.likes_count > 0 && (
+                          <>
+                            <span>·</span>
+                            <span>{c.likes_count} ❤</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
 
           {/* Footer spacer */}

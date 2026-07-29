@@ -66,17 +66,17 @@ function getRarityColor(rarity: string) {
   switch (rarity?.toLowerCase()) {
     case 'légendaire': return 'text-purple-600';
     case 'épique': return 'text-blue-600';
-    case 'rare': return 'text-[#E4501C]';
+    case 'rare': return 'text-[#17402C]';
     default: return 'text-[#9CA89E]';
   }
 }
 
 function getHistoryIconAndColors(type: string, points: number) {
-  if (points < 0) return { icon: 'ArrowRightIcon', color: 'text-[#E4501C]', bg: 'bg-red-50' };
+  if (points < 0) return { icon: 'ArrowRightIcon', color: 'text-[#17402C]', bg: 'bg-red-50' };
   switch (type) {
     case 'badge_unlock': return { icon: 'StarIcon', color: 'text-amber-500', bg: 'bg-amber-50' };
     case 'post_creation': return { icon: 'MapIcon', color: 'text-emerald-600', bg: 'bg-emerald-50' };
-    case 'reward_redemption': return { icon: 'ArrowRightIcon', color: 'text-[#E4501C]', bg: 'bg-red-50' };
+    case 'reward_redemption': return { icon: 'ArrowRightIcon', color: 'text-[#17402C]', bg: 'bg-red-50' };
     default: return { icon: 'SparklesIcon', color: 'text-emerald-600', bg: 'bg-emerald-50' };
   }
 }
@@ -500,7 +500,7 @@ export default function FideliteTab({ profile }: FideliteTabProps) {
                       <p className="font-600 text-sm text-[#1C2620] truncate">{item.action}</p>
                       <p className="text-xs text-[#9CA89E] font-mono mt-0.5 truncate">{formatDateFull(item.created_at)}</p>
                     </div>
-                    <div className={`font-display font-700 text-lg flex-shrink-0 ${item.points < 0 ? 'text-[#E4501C]' : 'text-[#1C2620]'}`}>
+                    <div className={`font-display font-700 text-lg flex-shrink-0 ${item.points < 0 ? 'text-[#17402C]' : 'text-[#1C2620]'}`}>
                       {item.points > 0 ? '+' : ''}{item.points} <span className="text-[10px] font-mono font-normal">PTS</span>
                     </div>
                   </div>

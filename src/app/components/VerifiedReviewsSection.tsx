@@ -30,7 +30,7 @@ export default function VerifiedReviewsSection() {
         <div className="flex items-center gap-3 mb-6">
           <div className="flex gap-0.5">
             {Array.from({ length: 5 })?.map((_, i) => (
-              <Icon key={i} name="StarIcon" size={13} variant="solid" className="text-[#E4501C]" />
+              <Icon key={i} name="StarIcon" size={13} variant="solid" className="text-[#17402C]" />
             ))}
           </div>
           <span
@@ -53,7 +53,7 @@ export default function VerifiedReviewsSection() {
               {/* Stars */}
               <div className="flex gap-0.5" aria-label={`Note: ${review?.stars}/5`}>
                 {Array.from({ length: review?.stars })?.map((_, i) => (
-                  <Icon key={i} name="StarIcon" size={12} variant="solid" className="text-[#E4501C]" />
+                  <Icon key={i} name="StarIcon" size={12} variant="solid" className="text-[#17402C]" />
                 ))}
               </div>
 
@@ -75,7 +75,7 @@ export default function VerifiedReviewsSection() {
                   className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full"
                   style={{
                     background: 'rgba(228,80,28,0.12)',
-                    color: '#E4501C',
+                    color: '#17402C',
                     border: '1px solid rgba(228,80,28,0.2)',
                     fontFamily: 'var(--font-mono)',
                   }}>

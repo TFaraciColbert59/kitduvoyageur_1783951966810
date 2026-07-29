@@ -81,11 +81,18 @@ Toutes les pages suivent le pattern dual-view :
 | Page | Fichier | Sections mobiles |
 |------|---------|------------------|
 | Accueil | `MobileHomePage.tsx` + HomeHeroSection, QuickGrid, EditorialCard, StatsRow, StripCTA | Hero 460px forest-900, 2×2 grid, carte éditoriale, stats, CTA strip |
-| Explorer | `explorer/page.tsx` | AventuresHero, MiniMap (900×250px), AventureCards avec filtres |
+| Explorer | `explorer/page.tsx` | AventuresHero, MiniMap 900×250px (coins arrondis 16px), AventureCards, FAB Naviguer forest-800 |
 | Fiche Produit | `produit/[slug]/ProductDetailClient.tsx` | Gallery 380px gradient, attributs 2×2, coloris 5 swatches, ProductBuyBar |
 | Panier | `panier/page.tsx` | Items 76×92px images, qty selector, promo banner dashed, summary card |
 | Checkout | `checkout/page.tsx` | Progress steps 4-bar, adresse carte, shipping radio, payment grid, dark total card |
 | Carnets | `carnets/page.tsx` | Hero badge "Édition N°08", featured article 220px gradient, tabs scrollables, article list 80×90px |
+| Admin | `admin/page.tsx` | Top bar forest-900 sticky, 12 pills sections scrollables horizontalement |
+| Carnet de voyage | `components/carnet/CarnetView.tsx` | Hero dark stats chips, moments cards, kit items, footer |
+| Création carnet | `components/carnets/CreateCarnetView.tsx` | Header glassmorphism sticky, éditeur champs, chapitres, tags, Preview+Publish |
+| Pays | `pays/[code]/CountryPageClient.tsx` | Hero drapeau+infos, 8 tabs scrollables, contenus compressés, AI CTA cards |
+| Jumeau 3D | `jumeau-3d/page.tsx` | Résumé poids sac, barres catégories, top articles, placeholder 3D |
+| Rapport Kit | `rapport-kit/page.tsx` | En-tête stats, objets par catégorie, barres poids, recommandations |
+| Rapport Expédition | `rapport-expedition/page.tsx` | Titre+dates, stats clés, résumé jour par jour, équipement |
 
 ### Nouveaux composants UI
 - `ProductBuyBar` — sticky bottom bar, verre dépoli, qty pill + add-to-cart forest-800
@@ -118,8 +125,27 @@ getCartTotals(items: CartItem[]): { totalItems, totalPriceEur, totalWeightG, sav
 
 - **Server Components** : data fetching, API, logique serveur (les clés API restent côté serveur)
 - **Client Components** (`'use client'`) : UI locale uniquement (état, événements) — pas de requêtes données
-- **Logique métier** : encapsulée dans `services/*.ts`
+- **Logique métier** : encapsulée dans `services/*.ts` ou `lib/supabase/queries-*.ts`
+- **Service layer compte** : `src/lib/supabase/queries-compte.ts` centralise toutes les requêtes Supabase du dashboard voyageur (profil, stats, voyages, carnets, clubs, commandes, badges, activités, abonnement, inventaire)
 - **Validation** : `zod` pour toutes les entrées utilisateur (API → service)
+
+### Connexion Supabase (Dashboard Compte)
+Toutes les pages de compte utilisent `useAuth()` + `fetchDashboardData(user.id)` — pas de mock data.  
+Le pattern :
+```tsx
+const { user } = useAuth();
+// Dans un useEffect :
+const data = await fetchDashboardData(user.id);
+setDashboardData(data);
+```
+8 fonctions de requêtes dans `queries-compte.ts` : `fetchFullProfile`, `fetchUserCarnets`, `fetchUserClubs`, `fetchUserOrders`, `fetchUserBadges`, `fetchUserActivities`, `fetchNextTrip`, `fetchDashboardData`.
+
+### Navigation Client-side
+Utiliser `useRouter()` de Next.js (`router.push()`) — jamais `window.location.href` qui force un rechargement complet de la page et casse le contexte React.
+
+### Guards Null-safety
+- `isFinite(null)` → `true` en JS (coercition `Number(null)` = 0). Toujours vérifier `lat != null && lng != null` avant `isFinite()`.
+- Données optionnelles du dashboard (`prochainVoyage`) : wrapper avec `{data && (...)}` ou `data?.field` pour éviter les crashes.
 
 ## 💾 Supabase
 

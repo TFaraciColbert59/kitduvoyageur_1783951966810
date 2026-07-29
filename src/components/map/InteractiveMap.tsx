@@ -352,7 +352,7 @@ export default function InteractiveMap() {
       filteredPois.forEach(poi => {
         allCoords.push([poi.lat, poi.lng]);
         const emoji = poi.type === 'refuge' ? '🏡' : poi.type === 'summit' ? '⛰️' : '💧';
-        const bgColor = poi.type === 'refuge' ? '#E4501C' : poi.type === 'summit' ? '#1C2620' : '#2563EB';
+        const bgColor = poi.type === 'refuge' ? '#17402C' : poi.type === 'summit' ? '#1C2620' : '#2563EB';
 
         const poiIcon = L.divIcon({
           html: `

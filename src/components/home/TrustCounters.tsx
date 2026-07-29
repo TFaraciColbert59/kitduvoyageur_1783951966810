@@ -25,7 +25,7 @@ function buildCounters(stats: TrustStats): Counter[] {
       value: hasRealUsers ? stats.userCount : 0,
       suffix: hasRealUsers ? '+' : '',
       icon: '🧭',
-      color: '#E4501C',
+      color: '#17402C',
       isNumeric: true,
       sub: hasRealUsers ? 'Membres actifs' : 'Bêta ouverte — rejoignez-nous',
     },
@@ -158,7 +158,7 @@ export default function TrustCounters({ stats }: { stats: TrustStats }) {
             className="text-section-title text-white"
           >
             Construit pour<br />
-            <span style={{ color: '#E4501C' }}>durer.</span>
+            <span style={{ color: '#17402C' }}>durer.</span>
           </h2>
         </div>
 

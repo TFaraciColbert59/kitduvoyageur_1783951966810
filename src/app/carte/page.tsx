@@ -1,5 +1,6 @@
 import React from 'react';
 import CarteClient from './CarteClient';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 export const metadata = {
   title: 'Carte Interactive - Le Kit du Voyageur',
@@ -7,5 +8,20 @@ export const metadata = {
 };
 
 export default function CartePage() {
-  return <CarteClient />;
+  return (
+    <>
+      {/* DESKTOP */}
+      <div className="hidden md:block">
+        <CarteClient />
+      </div>
+
+      {/* MOBILE */}
+      <div className="block md:hidden">
+        <MobilePageShell>
+          <CarteClient />
+        </MobilePageShell>
+        
+      </div>
+    </>
+  );
 }

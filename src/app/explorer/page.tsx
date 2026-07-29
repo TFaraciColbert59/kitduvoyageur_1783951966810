@@ -8,7 +8,6 @@ import { getDifficultyColor, getDifficultyLabel, formatDistance, formatDuration,
 import ExplorerListCard from '@/components/explorer/ExplorerListCard';
 import TrailDetailPanel from '@/components/explorer/TrailDetailPanel';
 import AventuresHero from '@/components/explorer/AventuresHero';
-import AventuresMiniMap from '@/components/explorer/AventuresMiniMap';
 import AventureCard from '@/components/explorer/AventureCard';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import BackButton from '@/components/ui/BackButton';
@@ -417,7 +416,178 @@ export default function ExplorerPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <AventuresHero activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
-          <AventuresMiniMap />
+          {/* Mobile-adapted interactive map */}
+          <div style={{ height: '250px', width: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(11,31,23,0.08)' }}>
+            <ExplorerMap
+              trails={filteredTrails}
+              selectedTrailId={selectedTrailId}
+              onTrailClick={handleTrailClick}
+              userLocation={userLocation}
+              onLocationUpdate={handleLocationUpdate}
+            />
+            {selectedTrail && (
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '12px',
+                  left: '12px',
+                  right: '12px',
+                  zIndex: 500,
+                }}
+              >
+                <div
+                  style={{
+                    background: 'white',
+                    borderRadius: '16px',
+                    boxShadow: '0 4px 24px rgba(11,31,23,0.15)',
+                    border: '1px solid rgba(11,31,23,0.06)',
+                    overflow: 'hidden',
+                    padding: '12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <div
+                      style={{
+                        width: '72px',
+                        height: '56px',
+                        borderRadius: '10px',
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                        background: '#EDF3ED',
+                      }}
+                    >
+                      <img
+                        src={getTrailImage(selectedTrail.id)}
+                        alt={selectedTrail.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <h4
+                        style={{
+                          fontWeight: 600,
+                          color: '#0B1F17',
+                          fontSize: '13px',
+                          lineHeight: 1.3,
+                          marginBottom: '4px',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {selectedTrail.name}
+                      </h4>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontSize: '11px',
+                          color: '#6B7A72',
+                        }}
+                      >
+                        {selectedTrail.distance_km !== null &&
+                          selectedTrail.distance_km !== undefined && (
+                            <span>
+                              {formatDistance(selectedTrail.distance_km)}
+                            </span>
+                          )}
+                        {selectedTrail.duration_hours !== null &&
+                          selectedTrail.duration_hours !== undefined && (
+                            <>
+                              <span>·</span>
+                              <span>
+                                {formatDuration(selectedTrail.duration_hours)}
+                              </span>
+                            </>
+                          )}
+                        {selectedTrail.difficulty && (
+                          <>
+                            <span>·</span>
+                            <span
+                              style={{
+                                color: getDifficultyColor(
+                                  selectedTrail.difficulty
+                                ),
+                                fontWeight: 500,
+                              }}
+                            >
+                              {selectedTrail.difficulty}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                        <button
+                          onClick={() => setDetailPanelOpen(true)}
+                          style={{
+                            flex: 1,
+                            padding: '8px 0',
+                            background: '#17402C',
+                            color: 'white',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            borderRadius: '10px',
+                            textAlign: 'center',
+                            border: 'none',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Voir le détail
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedTrailId(null);
+                            setSelectedTrail(null);
+                          }}
+                          style={{
+                            padding: '8px 12px',
+                            border: '1px solid rgba(11,31,23,0.08)',
+                            borderRadius: '10px',
+                            background: 'transparent',
+                            color: '#6B7A72',
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!selectedTrail && (
+              <Link
+                href="/naviguer"
+                style={{
+                  position: 'absolute',
+                  bottom: '16px',
+                  right: '16px',
+                  zIndex: 400,
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  background: '#17402C',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(11,31,23,0.15)',
+                  cursor: 'pointer',
+                  textDecoration: 'none',
+                }}
+                aria-label="Naviguer"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="white" />
+                </svg>
+              </Link>
+            )}
+          </div>
 
           {/* Results header */}
           <div
@@ -462,14 +632,26 @@ export default function ExplorerPage() {
                 distance={trail.distance_km ?? 0}
                 elevation={trail.elevation_gain ?? 0}
                 duration={formatDuration(trail.duration_hours)}
-                href={`/explorer/${trail.id}`}
+                onClick={() => {
+                  setSelectedTrailId(trail.id);
+                  setSelectedTrail(trail);
+                  setDetailPanelOpen(true);
+                }}
               />
             ))}
           </div>
 
           {/* Footer spacer for bottom tab bar */}
-          <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
+
         </MobilePageShell>
+
+        {/* Trail detail panel (shared, positioned fixed) */}
+        {detailPanelOpen && selectedTrail && (
+          <TrailDetailPanel
+            trail={selectedTrail}
+            onClose={() => setDetailPanelOpen(false)}
+          />
+        )}
       </div>
     </>
   );

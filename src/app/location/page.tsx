@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 interface RentalListing {
   id: string;
@@ -505,6 +506,9 @@ export default function LocationPage() {
     });
 
   return (
+    <>
+      {/* ── DESKTOP ── */}
+      <div className="hidden md:block">
     <div className="min-h-screen bg-background">
       <Header />
       <main className="pt-20">
@@ -669,5 +673,182 @@ export default function LocationPage() {
 
       <Footer />
     </div>
+      </div>
+
+      {/* ── MOBILE ── */}
+      <div className="block md:hidden">
+        <MobilePageShell>
+          <div style={{ padding: '16px 16px calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#17402C', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '16px' }}>📅</div>
+              <div>
+                <p style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#7A8A7D', margin: '0 0 2px' }}>Location</p>
+                <h1 style={{ fontSize: '20px', fontWeight: '700', color: '#1C2620', margin: 0 }}>Location de Matériel</h1>
+              </div>
+            </div>
+
+            {/* Search + Sort row */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+              <div style={{ flex: 1, position: 'relative' }}>
+                <input
+                  type="text"
+                  placeholder="Rechercher..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '12px',
+                    border: '1px solid #E4E0D4',
+                    fontSize: '13px',
+                    background: '#fff',
+                    color: '#1C2620',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '12px',
+                  border: '1px solid #E4E0D4',
+                  fontSize: '12px',
+                  background: '#fff',
+                  color: '#1C2620',
+                  fontWeight: '600',
+                  outline: 'none',
+                }}
+              >
+                <option value="distance">📍 Distance</option>
+                <option value="price">💰 Prix</option>
+                <option value="rating">⭐ Note</option>
+              </select>
+            </div>
+
+            {/* Stats row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
+              <div style={{ background: '#17402C', borderRadius: '12px', padding: '12px 8px', textAlign: 'center', color: '#fff' }}>
+                <span style={{ fontSize: '18px', fontWeight: '700', display: 'block' }}>{listings.length}</span>
+                <span style={{ fontSize: '9px', opacity: 0.7, fontFamily: 'ui-monospace, monospace' }}>Articles</span>
+              </div>
+              <div style={{ background: '#1C2620', borderRadius: '12px', padding: '12px 8px', textAlign: 'center', color: '#fff' }}>
+                <span style={{ fontSize: '18px', fontWeight: '700', display: 'block', color: '#FCD34D' }}>{listings.filter(l => l.available).length}</span>
+                <span style={{ fontSize: '9px', opacity: 0.7, fontFamily: 'ui-monospace, monospace' }}>Disponibles</span>
+              </div>
+              <div style={{ background: '#1C2620', borderRadius: '12px', padding: '12px 8px', textAlign: 'center', color: '#fff' }}>
+                <span style={{ fontSize: '18px', fontWeight: '700', display: 'block', color: '#6EE7B7' }}>
+                  {listings.length > 0 ? Math.round(listings.reduce((s, l) => s + l.pricePerDay, 0) / listings.length) : 0}€
+                </span>
+                <span style={{ fontSize: '9px', opacity: 0.7, fontFamily: 'ui-monospace, monospace' }}>Prix moy./j</span>
+              </div>
+            </div>
+
+            {/* Category scrollable */}
+            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '12px', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setCategory(cat)}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '999px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    whiteSpace: 'nowrap',
+                    border: '1px solid',
+                    background: category === cat ? '#17402C' : '#fff',
+                    color: category === cat ? '#fff' : '#3A4A3D',
+                    borderColor: category === cat ? '#17402C' : '#E4E0D4',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                  }}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            {/* Results */}
+            {filtered.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 16px', background: '#fff', borderRadius: '16px', border: '1px solid #E8E4D8' }}>
+                <p style={{ fontSize: '14px', color: '#7A8A7D' }}>Aucun article trouvé</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {filtered.slice(0, 20).map((listing) => {
+                  const cond = conditionConfig[listing.condition];
+                  return (
+                    <div
+                      key={listing.id}
+                      onClick={() => setSelectedListing(listing)}
+                      style={{
+                        display: 'flex',
+                        gap: '12px',
+                        background: '#fff',
+                        borderRadius: '14px',
+                        border: '1px solid #E8E4D8',
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <div style={{ width: '100px', height: '100px', flexShrink: 0, background: '#E7E3D6', overflow: 'hidden' }}>
+                        <img src={listing.image} alt={listing.alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                      <div style={{ flex: 1, padding: '10px 10px 10px 0', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                        <div>
+                          <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#1C2620', margin: '0 0 4px', lineHeight: 1.3 }}>{listing.title}</h3>
+                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                            <span style={{ padding: '1px 6px', borderRadius: '4px', fontSize: '9px', fontWeight: '600', border: '1px solid', background: cond.bg, color: cond.text, borderColor: cond.border }}>
+                              {cond.label}
+                            </span>
+                            {listing.tags.slice(0, 2).map((tag) => (
+                              <span key={tag} style={{ padding: '1px 6px', background: '#F5F2EA', fontSize: '9px', borderRadius: '4px', border: '1px solid #E4E0D4', color: '#3A4A3D' }}>{tag}</span>
+                            ))}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '16px', fontWeight: '800', color: '#1C2620' }}>{listing.pricePerDay}€<span style={{ fontSize: '10px', fontWeight: '400', color: '#7A8A7D' }}>/j</span></span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                            <svg width="10" height="10" fill="#F59E0B" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            <span style={{ fontSize: '11px', fontWeight: '600', color: '#1C2620' }}>{listing.rating}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Propose CTA */}
+            <button
+              onClick={() => setShowListModal(true)}
+              style={{
+                width: '100%',
+                marginTop: '16px',
+                padding: '14px',
+                background: '#17402C',
+                color: '#fff',
+                borderRadius: '14px',
+                fontSize: '13px',
+                fontWeight: '700',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+              }}
+            >
+              + Proposer du matériel
+            </button>
+          </div>
+        </MobilePageShell>
+      </div>
+    </>
   );
 }

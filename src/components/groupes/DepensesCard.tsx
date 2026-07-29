@@ -86,7 +86,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
       </div>
       
       <div className="flex justify-between items-center mb-6">
-        <button className="text-xs font-medium text-[#E4501C] hover:underline font-sans">Historique</button>
+        <button className="text-xs font-medium text-[#17402C] hover:underline font-sans">Historique</button>
         <button 
           onClick={() => setIsAdding(!isAdding)}
           className="px-3 py-1.5 rounded-full bg-[#33463C] text-white font-sans font-medium text-xs hover:bg-[#33463C]/90 transition-colors flex items-center gap-1"
@@ -162,7 +162,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
         </div>
         <div className="bg-[#1C2620]/5 p-3 rounded-xl border border-[#1C2620]/10">
           <p className="font-mono text-[9px] uppercase tracking-widest text-[#1C2620]/50 mb-1">Vous devez</p>
-          <p className="font-mono font-bold text-lg text-[#E4501C]">{expenses.userBalance}€</p>
+          <p className="font-mono font-bold text-lg text-[#17402C]">{expenses.userBalance}€</p>
         </div>
       </div>
       

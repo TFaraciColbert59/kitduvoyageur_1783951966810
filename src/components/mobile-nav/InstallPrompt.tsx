@@ -85,7 +85,7 @@ export default function InstallPrompt() {
       {/* App icon */}
       <div
         className="flex-shrink-0 flex items-center justify-center rounded-xl"
-        style={{ width: '40px', height: '40px', background: '#E4501C' }}
+        style={{ width: '40px', height: '40px', background: '#17402C' }}
         aria-hidden="true"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -110,7 +110,7 @@ export default function InstallPrompt() {
           <button
             onClick={handleInstall}
             className="text-xs font-semibold px-3 py-1.5 rounded-full"
-            style={{ background: '#E4501C', color: 'white' }}
+            style={{ background: '#17402C', color: 'white' }}
             aria-label="Installer l'application sur l'écran d'accueil"
           >
             Installer

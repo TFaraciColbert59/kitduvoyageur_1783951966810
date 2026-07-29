@@ -19,7 +19,7 @@ export default function MobileHomePage() {
       <StatsRow />
       <StripCTA />
       {/* Footer spacer for bottom tab bar */}
-      <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} aria-hidden="true" />
+      
     </div>
   );
 }

@@ -283,13 +283,13 @@ Réponds en JSON: {"points_forts": ["..."], "lacunes": ["..."], "recommandations
       <div className="bg-[#1E2B25] border border-white/8 rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Icon name="SparklesIcon" size={16} variant="outline" className="text-[#E4501C]" />
+            <Icon name="SparklesIcon" size={16} variant="outline" className="text-[#17402C]" />
             <h3 className="text-sm font-semibold text-white">Analyse IA du catalogue</h3>
           </div>
           <button
             onClick={runCatalogueAnalysis}
             disabled={aiAnalysisLoading || analysisLoading}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#E4501C]/15 text-[#E4501C] text-xs hover:bg-[#E4501C]/25 disabled:opacity-40 transition-all"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#17402C]/15 text-[#17402C] text-xs hover:bg-[#17402C]/25 disabled:opacity-40 transition-all"
           >
             {(aiAnalysisLoading || analysisLoading) ? <><AISpinner /> Analyse en cours...</> : '🔍 Analyser le catalogue'}
           </button>
@@ -366,7 +366,7 @@ Réponds en JSON: {"points_forts": ["..."], "lacunes": ["..."], "recommandations
               <div key={cat} className="flex items-center gap-3">
                 <span className="text-xs text-white/50 w-28 truncate">{cat}</span>
                 <div className="flex-1 h-1.5 bg-white/8 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#E4501C] rounded-full transition-all" style={{ width: `${(count / maxCat) * 100}%` }} />
+                  <div className="h-full bg-[#17402C] rounded-full transition-all" style={{ width: `${(count / maxCat) * 100}%` }} />
                 </div>
                 <span className="font-mono text-xs text-white/40 w-6 text-right">{count}</span>
               </div>
@@ -383,7 +383,7 @@ Réponds en JSON: {"points_forts": ["..."], "lacunes": ["..."], "recommandations
                 <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${ESSENTIALITY_COLOR[e] || 'text-white/40 bg-white/5 border-white/10'}`}>{e}</span>
                 <div className="flex items-center gap-2">
                   <div className="w-24 h-1.5 bg-white/8 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#E4501C] rounded-full" style={{ width: `${((byEssentiality[e] || 0) / (active.length || 1)) * 100}%` }} />
+                    <div className="h-full bg-[#17402C] rounded-full" style={{ width: `${((byEssentiality[e] || 0) / (active.length || 1)) * 100}%` }} />
                   </div>
                   <span className="font-mono text-xs text-white/40 w-6 text-right">{byEssentiality[e] || 0}</span>
                 </div>
@@ -476,7 +476,7 @@ function ProductListSection({
   };
 
   const SortIcon = ({ field }: { field: keyof ShopProduct }) => (
-    <span className={`ml-1 ${sortField === field ? 'text-[#E4501C]' : 'text-white/20'}`}>
+    <span className={`ml-1 ${sortField === field ? 'text-[#17402C]' : 'text-white/20'}`}>
       {sortField === field ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}
     </span>
   );
@@ -581,11 +581,11 @@ Réponds UNIQUEMENT en JSON: {"description_why": "...", "justification_ai": "...
 
       {/* AI Batch Enrichment Banner */}
       {missingDescCount > 0 && (
-        <div className="bg-[#E4501C]/8 border border-[#E4501C]/20 rounded-xl p-3 flex items-center gap-3">
-          <Icon name="SparklesIcon" size={14} variant="outline" className="text-[#E4501C] flex-shrink-0" />
+        <div className="bg-[#17402C]/8 border border-[#17402C]/20 rounded-xl p-3 flex items-center gap-3">
+          <Icon name="SparklesIcon" size={14} variant="outline" className="text-[#17402C] flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-xs text-white/70">
-              <span className="text-[#E4501C] font-medium">{missingDescCount} produit(s)</span> sans description dans la vue actuelle.
+              <span className="text-[#17402C] font-medium">{missingDescCount} produit(s)</span> sans description dans la vue actuelle.
               {batchEnrichResult && <span className="ml-2 text-white/40">{batchEnrichResult}</span>}
               {enrichingProductId && <span className="ml-1 text-white/30 text-[10px]">({enrichingProductId})</span>}
             </p>
@@ -593,7 +593,7 @@ Réponds UNIQUEMENT en JSON: {"description_why": "...", "justification_ai": "...
           <button
             onClick={startBatchEnrich}
             disabled={batchEnrichLoading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#E4501C] text-white text-xs hover:bg-[#cc3d10] disabled:opacity-50 transition-all flex-shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#17402C] text-white text-xs hover:bg-[#cc3d10] disabled:opacity-50 transition-all flex-shrink-0"
           >
             {batchEnrichLoading ? <><AISpinner /> En cours...</> : '✨ Enrichir avec IA (max 5)'}
           </button>
@@ -605,11 +605,11 @@ Réponds UNIQUEMENT en JSON: {"description_why": "...", "justification_ai": "...
         <div className="relative flex-1 min-w-48">
           <Icon name="MagnifyingGlassIcon" size={14} variant="outline" className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
           <input type="text" placeholder="Rechercher nom, marque, ID..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
-            className="w-full bg-[#1E2B25] border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#E4501C]/50 transition-colors" />
+            className="w-full bg-[#1E2B25] border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#17402C]/50 transition-colors" />
         </div>
 
         <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
-          className="bg-[#1E2B25] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white/70 focus:outline-none focus:border-[#E4501C]/50">
+          className="bg-[#1E2B25] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white/70 focus:outline-none focus:border-[#17402C]/50">
           <option value="active">Actifs</option>
           <option value="inactive">Inactifs</option>
           <option value="deleted">Supprimés</option>
@@ -617,19 +617,19 @@ Réponds UNIQUEMENT en JSON: {"description_why": "...", "justification_ai": "...
         </select>
 
         <select value={filterCat} onChange={e => { setFilterCat(e.target.value); setPage(1); }}
-          className="bg-[#1E2B25] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white/70 focus:outline-none focus:border-[#E4501C]/50">
+          className="bg-[#1E2B25] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white/70 focus:outline-none focus:border-[#17402C]/50">
           <option value="">Toutes catégories</option>
           {categories.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
 
         <select value={filterEss} onChange={e => { setFilterEss(e.target.value); setPage(1); }}
-          className="bg-[#1E2B25] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white/70 focus:outline-none focus:border-[#E4501C]/50">
+          className="bg-[#1E2B25] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white/70 focus:outline-none focus:border-[#17402C]/50">
           <option value="">Essentialité</option>
           {ESSENTIALITY_OPTIONS.map(e => <option key={e} value={e}>{e}</option>)}
         </select>
 
         <select value={filterCabin} onChange={e => { setFilterCabin(e.target.value); setPage(1); }}
-          className="bg-[#1E2B25] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white/70 focus:outline-none focus:border-[#E4501C]/50">
+          className="bg-[#1E2B25] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white/70 focus:outline-none focus:border-[#17402C]/50">
           <option value="">Cabine</option>
           <option value="yes">✈️ Compatible</option>
           <option value="no">❌ Non compatible</option>
@@ -691,7 +691,7 @@ Réponds UNIQUEMENT en JSON: {"description_why": "...", "justification_ai": "...
               {paginated.length === 0 ? (
                 <tr><td colSpan={11} className="px-4 py-10 text-center text-white/30">Aucun produit trouvé</td></tr>
               ) : paginated.map(p => (
-                <tr key={p.id} className={`hover:bg-white/3 transition-colors ${selected.has(p.id) ? 'bg-[#E4501C]/5' : ''} ${enrichingProductId === p.product_id ? 'bg-[#E4501C]/8' : ''}`}>
+                <tr key={p.id} className={`hover:bg-white/3 transition-colors ${selected.has(p.id) ? 'bg-[#17402C]/5' : ''} ${enrichingProductId === p.product_id ? 'bg-[#17402C]/8' : ''}`}>
                   <td className="px-3 py-3">
                     <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)}
                       className="rounded border-white/20 bg-transparent" />
@@ -701,11 +701,11 @@ Réponds UNIQUEMENT en JSON: {"description_why": "...", "justification_ai": "...
                     <p className="text-sm font-medium text-white/85 truncate max-w-[160px]">{p.name}</p>
                     <p className="text-white/30 text-[10px] mt-0.5">{p.model}</p>
                     {!p.description_why && <span className="text-[9px] text-amber-400/60">⚠ sans desc</span>}
-                    {enrichingProductId === p.product_id && <span className="text-[9px] text-[#E4501C] animate-pulse ml-1">✨ IA...</span>}
+                    {enrichingProductId === p.product_id && <span className="text-[9px] text-[#17402C] animate-pulse ml-1">✨ IA...</span>}
                   </td>
                   <td className="px-3 py-3 text-white/50">{p.brand}</td>
                   <td className="px-3 py-3 text-white/40 truncate max-w-[100px]">{p.category_main || p.category}</td>
-                  <td className="px-3 py-3 font-mono font-700 text-[#E4501C]">{p.price_eur}€</td>
+                  <td className="px-3 py-3 font-mono font-700 text-[#17402C]">{p.price_eur}€</td>
                   <td className="px-3 py-3 font-mono text-white/50">{p.weight_g || p.weight_grams}g</td>
                   <td className="px-3 py-3">
                     <span className={`font-mono font-700 text-xs px-2 py-0.5 rounded-full ${SCORE_KDV_COLOR(p.score_kdv || 0)}`}>{p.score_kdv || 0}</span>
@@ -1003,12 +1003,12 @@ Réponds en JSON: {"slug": "...", "image_alt": "...", "source_review": "..."}`, 
     { id: 'media', label: 'Médias', icon: 'PhotoIcon' },
   ] as const;
 
-  const inputCls = (field: string) => `w-full bg-[#162019] border ${errors[field] ? 'border-red-500/50' : 'border-white/10'} rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#E4501C]/50 transition-colors`;
+  const inputCls = (field: string) => `w-full bg-[#162019] border ${errors[field] ? 'border-red-500/50' : 'border-white/10'} rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#17402C]/50 transition-colors`;
   const labelCls = 'block text-xs font-mono text-white/40 uppercase tracking-wider mb-1.5';
 
   // AI action buttons config
   const AI_ACTIONS = [
-    { id: 'desc', label: '✍️ Description', onClick: generateDescription, color: 'bg-[#E4501C]/15 text-[#E4501C] hover:bg-[#E4501C]/25', tab: null },
+    { id: 'desc', label: '✍️ Description', onClick: generateDescription, color: 'bg-[#17402C]/15 text-[#17402C] hover:bg-[#17402C]/25', tab: null },
     { id: 'pros_cons', label: '⚖️ Avantages/Inconvénients', onClick: generateAdvantagesDisadvantages, color: 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25', tab: 'content' },
     { id: 'score_kdv', label: '🎯 Score KDV', onClick: suggestScoreKDV, color: 'bg-amber-500/15 text-amber-400 hover:bg-amber-500/25', tab: 'scores' },
     { id: 'coherence', label: '🔍 Cohérence', onClick: analyzeCoherence, color: 'bg-blue-500/15 text-blue-400 hover:bg-blue-500/25', tab: null },
@@ -1028,16 +1028,16 @@ Réponds en JSON: {"slug": "...", "image_alt": "...", "source_review": "..."}`, 
         <div className="flex gap-2">
           <button onClick={onCancel} className="px-4 py-2 rounded-xl border border-white/10 text-sm text-white/60 hover:text-white transition-all">Annuler</button>
           <button onClick={handleSubmit} disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#E4501C] text-white text-sm font-medium hover:bg-[#cc3d10] disabled:opacity-50 transition-all">
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#17402C] text-white text-sm font-medium hover:bg-[#cc3d10] disabled:opacity-50 transition-all">
             {saving ? <><AISpinner />Sauvegarde...</> : <><Icon name="CheckIcon" size={14} variant="outline" />Sauvegarder</>}
           </button>
         </div>
       </div>
 
       {/* AI Toolbar — expanded */}
-      <div className="bg-[#1E2B25] border border-[#E4501C]/20 rounded-xl p-3 space-y-2">
+      <div className="bg-[#1E2B25] border border-[#17402C]/20 rounded-xl p-3 space-y-2">
         <div className="flex items-center gap-2 mb-1">
-          <Icon name="SparklesIcon" size={14} variant="outline" className="text-[#E4501C]" />
+          <Icon name="SparklesIcon" size={14} variant="outline" className="text-[#17402C]" />
           <span className="text-xs font-medium text-white/60">IA Gemini — 7 actions disponibles</span>
           {chatLoading && <span className="text-xs text-white/30 animate-pulse ml-auto">Gemini réfléchit...</span>}
         </div>
@@ -1063,7 +1063,7 @@ Réponds en JSON: {"slug": "...", "image_alt": "...", "source_review": "..."}`, 
                 if (m) {
                   const p = JSON.parse(m[0]);
                   if (p.verdict) return <span className={p.verdict === 'COHÉRENT' ? 'text-emerald-400' : 'text-red-400'}>Verdict: {p.verdict} — {p.analyse}{p.score_kdv_suggere ? ` (Score KDV suggéré: ${p.score_kdv_suggere})` : ''}</span>;
-                  if (p.explication) return <span>Score KDV suggéré: <strong className="text-[#E4501C]">{p.score_kdv}</strong> — {p.explication}</span>;
+                  if (p.explication) return <span>Score KDV suggéré: <strong className="text-[#17402C]">{p.score_kdv}</strong> — {p.explication}</span>;
                   if (p.raison_premium) return <span>Premium: {p.alt_premium_id} ({p.raison_premium}) · Budget: {p.alt_budget_id} ({p.raison_budget})</span>;
                 }
               } catch (_e) { /* ignore */ }
@@ -1077,7 +1077,7 @@ Réponds en JSON: {"slug": "...", "image_alt": "...", "source_review": "..."}`, 
       <div className="flex gap-1 bg-[#1E2B25] border border-white/8 rounded-xl p-1">
         {TABS.map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id as typeof activeTab)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all flex-1 justify-center ${activeTab === tab.id ? 'bg-[#E4501C] text-white' : 'text-white/40 hover:text-white'}`}>
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all flex-1 justify-center ${activeTab === tab.id ? 'bg-[#17402C] text-white' : 'text-white/40 hover:text-white'}`}>
             <Icon name={tab.icon as string} size={12} variant="outline" />
             {tab.label}
           </button>
@@ -1190,8 +1190,8 @@ Réponds en JSON: {"slug": "...", "image_alt": "...", "source_review": "..."}`, 
                 <div className="flex items-center gap-3">
                   <input type="range" min={0} max={max} step={step} value={Number((form as Record<string, unknown>)[field]) || 0}
                     onChange={e => set(field, Number(e.target.value))}
-                    className="flex-1 accent-[#E4501C]" />
-                  <span className="font-mono text-sm text-[#E4501C] w-10 text-right">{Number((form as Record<string, unknown>)[field] || 0).toFixed(1)}</span>
+                    className="flex-1 accent-[#17402C]" />
+                  <span className="font-mono text-sm text-[#17402C] w-10 text-right">{Number((form as Record<string, unknown>)[field] || 0).toFixed(1)}</span>
                 </div>
               </div>
             ))}
@@ -1202,7 +1202,7 @@ Réponds en JSON: {"slug": "...", "image_alt": "...", "source_review": "..."}`, 
               </div>
               <div className="flex items-center gap-3">
                 <input type="range" min={0} max={100} step={1} value={Number(form.score_kdv) || 0}
-                  onChange={e => set('score_kdv', Number(e.target.value))} className="flex-1 accent-[#E4501C]" />
+                  onChange={e => set('score_kdv', Number(e.target.value))} className="flex-1 accent-[#17402C]" />
                 <span className={`font-mono text-sm font-700 w-10 text-right px-2 py-0.5 rounded-full ${SCORE_KDV_COLOR(Number(form.score_kdv) || 0)}`}>{form.score_kdv || 0}</span>
               </div>
               {errors.score_kdv && <p className="text-xs text-red-400 mt-1">{errors.score_kdv}</p>}
@@ -1219,7 +1219,7 @@ Réponds en JSON: {"slug": "...", "image_alt": "...", "source_review": "..."}`, 
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className={labelCls.replace('mb-1.5', '')}>Pourquoi ce produit (description_why) * <span className="text-white/20 normal-case">{(form.description_why || '').length}/500</span></label>
-                {chatLoading && aiLoading === 'desc' && <span className="text-[10px] text-[#E4501C] animate-pulse">IA rédige...</span>}
+                {chatLoading && aiLoading === 'desc' && <span className="text-[10px] text-[#17402C] animate-pulse">IA rédige...</span>}
               </div>
               <textarea value={form.description_why || ''} onChange={e => set('description_why', e.target.value)} rows={4}
                 placeholder="Expliquez pourquoi ce produit est recommandé pour les voyageurs..." className={`${inputCls('description_why')} resize-none`} />
@@ -1421,7 +1421,7 @@ Réponds en JSON: {"compatibilites": [{"product_id": "P0XX", "relation_type": "c
     } catch (_e) { /* ignore */ }
   }, [compatResponse, compatLoading, selectedProductForAI]);
 
-  const inputCls = 'bg-[#162019] border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#E4501C]/50 transition-colors';
+  const inputCls = 'bg-[#162019] border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#17402C]/50 transition-colors';
   const getProductName = (pid: string) => products.find(p => p.product_id === pid)?.name || pid;
 
   return (
@@ -1429,7 +1429,7 @@ Réponds en JSON: {"compatibilites": [{"product_id": "P0XX", "relation_type": "c
       <div className="flex gap-2">
         {(['compat', 'alt'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${tab === t ? 'bg-[#E4501C] text-white' : 'bg-white/5 border border-white/10 text-white/50 hover:text-white'}`}>
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${tab === t ? 'bg-[#17402C] text-white' : 'bg-white/5 border border-white/10 text-white/50 hover:text-white'}`}>
             {t === 'compat' ? `Compatibilités (${compatibilities.length})` : `Alternatives (${alternatives.length})`}
           </button>
         ))}
@@ -1499,7 +1499,7 @@ Réponds en JSON: {"compatibilites": [{"product_id": "P0XX", "relation_type": "c
                   <input value={newCompat.notes} onChange={e => setNewCompat(p => ({ ...p, notes: e.target.value }))} placeholder="Notes" className={inputCls} />
                 </div>
                 <datalist id="product-ids-rel">{products.map(p => <option key={p.product_id} value={p.product_id}>{p.name}</option>)}</datalist>
-                <button onClick={addCompat} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#E4501C] text-white text-sm hover:bg-[#cc3d10] transition-all">
+                <button onClick={addCompat} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#17402C] text-white text-sm hover:bg-[#cc3d10] transition-all">
                   <Icon name="PlusIcon" size={14} variant="outline" />Ajouter
                 </button>
               </div>
@@ -1511,9 +1511,9 @@ Réponds en JSON: {"compatibilites": [{"product_id": "P0XX", "relation_type": "c
                   <tbody className="divide-y divide-white/5">
                     {compatibilities.map(c => (
                       <tr key={c.id} className="hover:bg-white/3 transition-colors">
-                        <td className="px-4 py-3"><span className="font-mono text-[#E4501C] text-[10px]">{c.product_id_1}</span><p className="text-white/50 text-[10px] mt-0.5 truncate max-w-[120px]">{getProductName(c.product_id_1)}</p></td>
+                        <td className="px-4 py-3"><span className="font-mono text-[#17402C] text-[10px]">{c.product_id_1}</span><p className="text-white/50 text-[10px] mt-0.5 truncate max-w-[120px]">{getProductName(c.product_id_1)}</p></td>
                         <td className="px-4 py-3"><span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-400/10 text-blue-400">{c.relation_type}</span></td>
-                        <td className="px-4 py-3"><span className="font-mono text-[#E4501C] text-[10px]">{c.product_id_2}</span><p className="text-white/50 text-[10px] mt-0.5 truncate max-w-[120px]">{getProductName(c.product_id_2)}</p></td>
+                        <td className="px-4 py-3"><span className="font-mono text-[#17402C] text-[10px]">{c.product_id_2}</span><p className="text-white/50 text-[10px] mt-0.5 truncate max-w-[120px]">{getProductName(c.product_id_2)}</p></td>
                         <td className="px-4 py-3 text-white/40 truncate max-w-[120px]">{c.notes || '—'}</td>
                         <td className="px-4 py-3"><button onClick={() => deleteCompat(c.id)} className="p-1.5 rounded-lg hover:bg-red-500/15 text-white/30 hover:text-red-400 transition-all"><Icon name="TrashIcon" size={12} variant="outline" /></button></td>
                       </tr>
@@ -1536,7 +1536,7 @@ Réponds en JSON: {"compatibilites": [{"product_id": "P0XX", "relation_type": "c
                   <input type="number" value={newAlt.priority} onChange={e => setNewAlt(p => ({ ...p, priority: Number(e.target.value) }))} placeholder="Priorité" className={inputCls} />
                   <input value={newAlt.reason} onChange={e => setNewAlt(p => ({ ...p, reason: e.target.value }))} placeholder="Raison" className={inputCls} />
                 </div>
-                <button onClick={addAlt} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#E4501C] text-white text-sm hover:bg-[#cc3d10] transition-all">
+                <button onClick={addAlt} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#17402C] text-white text-sm hover:bg-[#cc3d10] transition-all">
                   <Icon name="PlusIcon" size={14} variant="outline" />Ajouter
                 </button>
               </div>
@@ -1548,8 +1548,8 @@ Réponds en JSON: {"compatibilites": [{"product_id": "P0XX", "relation_type": "c
                   <tbody className="divide-y divide-white/5">
                     {alternatives.map(a => (
                       <tr key={a.id} className="hover:bg-white/3 transition-colors">
-                        <td className="px-4 py-3"><span className="font-mono text-[#E4501C] text-[10px]">{a.original_product_id}</span><p className="text-white/50 text-[10px] mt-0.5 truncate max-w-[120px]">{getProductName(a.original_product_id)}</p></td>
-                        <td className="px-4 py-3"><span className="font-mono text-[#E4501C] text-[10px]">{a.substitute_product_id}</span><p className="text-white/50 text-[10px] mt-0.5 truncate max-w-[120px]">{getProductName(a.substitute_product_id)}</p></td>
+                        <td className="px-4 py-3"><span className="font-mono text-[#17402C] text-[10px]">{a.original_product_id}</span><p className="text-white/50 text-[10px] mt-0.5 truncate max-w-[120px]">{getProductName(a.original_product_id)}</p></td>
+                        <td className="px-4 py-3"><span className="font-mono text-[#17402C] text-[10px]">{a.substitute_product_id}</span><p className="text-white/50 text-[10px] mt-0.5 truncate max-w-[120px]">{getProductName(a.substitute_product_id)}</p></td>
                         <td className="px-4 py-3 font-mono text-white/50">{a.priority}</td>
                         <td className="px-4 py-3 text-white/40 truncate max-w-[120px]">{a.reason || '—'}</td>
                         <td className="px-4 py-3"><button onClick={() => deleteAlt(a.id)} className="p-1.5 rounded-lg hover:bg-red-500/15 text-white/30 hover:text-red-400 transition-all"><Icon name="TrashIcon" size={12} variant="outline" /></button></td>
@@ -1777,7 +1777,7 @@ Réponds en JSON: {"mapping": {"colonne_csv": "colonne_attendue_ou_null"}}`;
 
         {preview.length > 0 && (
           <button onClick={handleImport} disabled={importing || errors.length > 5}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E4501C] text-white text-sm font-medium hover:bg-[#cc3d10] disabled:opacity-50 transition-all">
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#17402C] text-white text-sm font-medium hover:bg-[#cc3d10] disabled:opacity-50 transition-all">
             {importing ? <><AISpinner />Import en cours...</> : <><Icon name="CloudArrowUpIcon" size={14} variant="outline" />Importer {parseCSV(csvText).length} produits</>}
           </button>
         )}
@@ -1931,9 +1931,9 @@ export default function AdminProductsManager() {
           <span className="text-white/20">/</span>
           <h1 className="font-semibold text-white text-sm">Gestion Produits</h1>
           <div className="ml-auto flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#E4501C]/10 border border-[#E4501C]/20">
-              <Icon name="SparklesIcon" size={11} variant="outline" className="text-[#E4501C]" />
-              <span className="text-[10px] font-medium text-[#E4501C]">IA Gemini</span>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#17402C]/10 border border-[#17402C]/20">
+              <Icon name="SparklesIcon" size={11} variant="outline" className="text-[#17402C]" />
+              <span className="text-[10px] font-medium text-[#17402C]">IA Gemini</span>
             </div>
             <span className="font-mono text-xs text-white/30">{products.length} produits en base</span>
           </div>
@@ -1946,7 +1946,7 @@ export default function AdminProductsManager() {
           <nav className="space-y-1 sticky top-20">
             {NAV_ITEMS.map(item => (
               <button key={item.id} onClick={() => { setView(item.id); if (item.id !== 'form') setEditProduct(null); }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all ${view === item.id ? 'bg-[#E4501C] text-white' : 'text-white/50 hover:text-white hover:bg-white/5'}`}>
+                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all ${view === item.id ? 'bg-[#17402C] text-white' : 'text-white/50 hover:text-white hover:bg-white/5'}`}>
                 <Icon name={item.icon as string} size={15} variant="outline" />
                 <span className="flex-1 text-left">{item.label}</span>
                 {item.badge !== undefined && (
@@ -1968,7 +1968,7 @@ export default function AdminProductsManager() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold text-white">Catalogue produits</h2>
-                    <button onClick={handleNew} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#E4501C] text-white text-sm font-medium hover:bg-[#cc3d10] transition-all">
+                    <button onClick={handleNew} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#17402C] text-white text-sm font-medium hover:bg-[#cc3d10] transition-all">
                       <Icon name="PlusIcon" size={14} variant="outline" />Nouveau produit
                     </button>
                   </div>

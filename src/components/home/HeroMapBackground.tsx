@@ -97,7 +97,7 @@ export default function HeroMapBackground() {
         />
         <div
           className="absolute top-1/2 right-1/4 w-[300px] h-[300px] rounded-full blur-[60px] opacity-8 pointer-events-none"
-          style={{ background: 'radial-gradient(circle, #E4501C 0%, transparent 70%)' }}
+          style={{ background: 'radial-gradient(circle, #17402C 0%, transparent 70%)' }}
         />
       </div>
 
@@ -111,7 +111,7 @@ export default function HeroMapBackground() {
           {/* Outer pulse ring */}
           {shouldAnimate && (
             <div
-              className="absolute inset-0 rounded-full border border-[#E4501C]/40"
+              className="absolute inset-0 rounded-full border border-[#17402C]/40"
               style={{
                 width: 32,
                 height: 32,
@@ -124,8 +124,8 @@ export default function HeroMapBackground() {
           )}
           {/* Dot */}
           <div
-            className="w-3 h-3 rounded-full border-2 border-[#E4501C]/80"
-            style={{ background: '#E4501C', boxShadow: '0 0 8px rgba(228,80,28,0.6)' }}
+            className="w-3 h-3 rounded-full border-2 border-[#17402C]/80"
+            style={{ background: '#17402C', boxShadow: '0 0 8px rgba(228,80,28,0.6)' }}
           />
         </div>
       ))}

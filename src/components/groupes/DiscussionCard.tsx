@@ -174,7 +174,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
       </div>
       
       <div className="flex justify-end mb-4 flex-shrink-0">
-        <button className="text-xs font-medium text-[#E4501C] hover:underline font-sans">Voir tout</button>
+        <button className="text-xs font-medium text-[#17402C] hover:underline font-sans">Voir tout</button>
       </div>
       
       <div className="flex-1 overflow-y-auto space-y-6 pr-2 mb-4 custom-scrollbar">
@@ -190,7 +190,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-semibold text-sm text-[#1C2620]">{msg.author}</span>
                 {msg.tag && (
-                  <span className="text-[9px] font-mono uppercase tracking-widest bg-[#E4501C]/10 text-[#E4501C] px-1.5 py-0.5 rounded-sm">{msg.tag}</span>
+                  <span className="text-[9px] font-mono uppercase tracking-widest bg-[#17402C]/10 text-[#17402C] px-1.5 py-0.5 rounded-sm">{msg.tag}</span>
                 )}
                 <span className="text-xs text-[#1C2620]/40 ml-auto">{msg.time}</span>
               </div>
@@ -253,7 +253,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
             disabled={uploading || loading}
             className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
               uploading 
-                ? 'text-[#E4501C] animate-pulse bg-[#E4501C]/10' 
+                ? 'text-[#17402C] animate-pulse bg-[#17402C]/10' 
                 : 'text-[#1C2620]/40 hover:text-[#1C2620] hover:bg-[#1C2620]/5'
             }`}
             title="Envoyer une photo ou vidéo"
@@ -265,7 +265,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
             disabled={locating || loading}
             className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
               locating 
-                ? 'text-[#E4501C] animate-pulse bg-[#E4501C]/10' 
+                ? 'text-[#17402C] animate-pulse bg-[#17402C]/10' 
                 : 'text-[#1C2620]/40 hover:text-[#1C2620] hover:bg-[#1C2620]/5'
             }`}
             title="Partager ma position"

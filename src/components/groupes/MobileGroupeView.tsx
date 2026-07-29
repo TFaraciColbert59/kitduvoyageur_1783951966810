@@ -53,7 +53,7 @@ export default function MobileGroupeView({ data, groupId, user, members, onRefre
       {/* Bandeau Countdown */}
       <div className="bg-[#33463C] text-[#E7E3D6] px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Icon name="ClockIcon" size={16} className="text-[#E4501C]" />
+          <Icon name="ClockIcon" size={16} className="text-[#17402C]" />
           <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-[#E7E3D6]">DÉPART · DANS {data.meta.daysLeft} J</span>
         </div>
         <div className="flex -space-x-2">
@@ -63,7 +63,7 @@ export default function MobileGroupeView({ data, groupId, user, members, onRefre
             </div>
           ))}
           {data.travelers.length > 3 && (
-            <div className="w-6 h-6 rounded-full border border-[#33463C] bg-[#E4501C] text-white flex items-center justify-center text-[8px] font-bold">
+            <div className="w-6 h-6 rounded-full border border-[#33463C] bg-[#17402C] text-white flex items-center justify-center text-[8px] font-bold">
               +{data.travelers.length - 3}
             </div>
           )}
@@ -141,27 +141,6 @@ export default function MobileGroupeView({ data, groupId, user, members, onRefre
         {activeSection === 'members' && (
           <VoyageursCard travelers={data.travelers} groupId={groupId} onRefresh={onRefresh} user={user} members={members} />
         )}
-      </div>
-
-      {/* Bottom Nav Mobile */}
-      <div className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-[#1C2620]/10 flex items-center justify-around px-2 pb-safe z-50">
-        {[
-          { id: 'overview' as const, icon: 'HomeIcon' },
-          { id: 'tasks' as const, icon: 'ClipboardDocumentListIcon' },
-          { id: 'discussion' as const, icon: 'ChatBubbleLeftRightIcon' },
-          { id: 'expenses' as const, icon: 'CurrencyEuroIcon' },
-          { id: 'members' as const, icon: 'UserGroupIcon' },
-        ].map(nav => (
-          <button
-            key={nav.id}
-            onClick={() => setActiveSection(nav.id)}
-            className={`flex flex-col items-center justify-center w-12 h-12 ${
-              activeSection === nav.id ? 'text-[#E4501C]' : 'text-[#1C2620]/50'
-            }`}
-          >
-            <Icon name={nav.icon} size={24} />
-          </button>
-        ))}
       </div>
     </div>
   );

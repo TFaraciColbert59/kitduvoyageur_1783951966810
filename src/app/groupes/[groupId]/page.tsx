@@ -25,6 +25,7 @@ import ActiviteCard from '@/components/groupes/ActiviteCard';
 import AProposCard from '@/components/groupes/AProposCard';
 import CarnetCTACard from '@/components/groupes/CarnetCTACard';
 import MobileGroupeView from '@/components/groupes/MobileGroupeView';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,7 +78,11 @@ export default function GroupesPage() {
 
   return (
     <div className="min-h-screen bg-[#E7E3D6] font-sans">
-      <MobileGroupeView data={formattedData} groupId={groupId} user={user} members={members} onRefresh={refreshData} />
+      <div className="block md:hidden">
+        <MobilePageShell>
+          <MobileGroupeView data={formattedData} groupId={groupId} user={user} members={members} onRefresh={refreshData} />
+        </MobilePageShell>
+      </div>
 
       <div className="hidden md:block">
         <Header />

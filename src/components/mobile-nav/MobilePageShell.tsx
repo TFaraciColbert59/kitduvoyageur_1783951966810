@@ -4,10 +4,6 @@ import React from 'react';
 
 interface MobilePageShellProps {
   children: React.ReactNode;
-  showBack?: boolean;
-  title?: string;
-  cartCount?: number;
-  notifCount?: number;
 }
 
 /**
@@ -21,9 +17,8 @@ export default function MobilePageShell({
   return (
     <div
       style={{
-        paddingTop: 'calc(52px + env(safe-area-inset-top))',
-        paddingBottom: 'calc(60px + env(safe-area-inset-bottom) + 8px)',
-        minHeight: '100dvh',
+        paddingBottom: 'calc(86px + env(safe-area-inset-bottom))',
+        height: '100dvh',
         overflowY: 'auto',
         overscrollBehavior: 'contain',
       }}
