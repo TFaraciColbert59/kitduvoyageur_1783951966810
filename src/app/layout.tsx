@@ -8,8 +8,7 @@ import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
 import ErrorBoundaryWrapper from '@/components/ErrorBoundaryWrapper';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
-import BottomTabBar from '@/components/mobile-nav/BottomTabBar';
-import TopBar from '@/components/mobile-nav/TopBar';
+import MobileNavWrapper from '@/components/mobile-nav/MobileNavWrapper';
 import InstallPrompt from '@/components/mobile-nav/InstallPrompt';
 import CookieConsentBanner from '@/components/CookieConsentBanner';
 import { getOrganizationSchema, getWebsiteSchema } from '@/lib/seo-utils';
@@ -214,11 +213,10 @@ export default function RootLayout({
                     Aller au contenu principal
                   </a>
                   {/* Mobile navigation — hidden on desktop (md+) */}
-                  <TopBar />
+                  <MobileNavWrapper />
                   <main id="main-content">
                     <PageTransition>{children}</PageTransition>
                   </main>
-                  <BottomTabBar />
                   <InstallPrompt />
                   <CookieConsentBanner />
                 </ReactQueryProvider>

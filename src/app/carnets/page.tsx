@@ -10,6 +10,7 @@ import BackButton from '@/components/ui/BackButton';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import CommentItem from '@/components/communaute/CommentItem';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Carnet {
@@ -902,7 +903,9 @@ export default function CarnetsPage() {
   } : undefined;
 
   return (
-    <div className="min-h-screen bg-[#E7E3D6] text-[#1C2620]">
+    <>
+      <div className="hidden md:block">
+        <div className="min-h-screen bg-[#E7E3D6] text-[#1C2620]">
       <Header />
 
       {/* Hero */}
@@ -1044,7 +1047,90 @@ export default function CarnetsPage() {
       )}
 
       <Footer />
-    </div>
+        </div>
+      </div>
+
+      {/* MOBILE VIEW */}
+      <div className="block md:hidden">
+        <MobilePageShell>
+          {/* Step 1: Hero */}
+          <div style={{ padding: '12px 16px 16px', background: '#FBFAF6' }}>
+            <div style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '6px' }}>
+              Édition N°08 · automne 2026
+            </div>
+            <h1 style={{ fontSize: '30px', fontWeight: 500, letterSpacing: '-0.025em', lineHeight: 1.1, margin: 0 }}>
+              Récits du <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>terrain.</em>
+            </h1>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '14px', fontSize: '12px', color: '#6B7A72' }}>
+              <span style={{ fontWeight: 500 }}>48 articles</span>
+              <span>·</span>
+              <span>12 450 lecteurs</span>
+            </div>
+          </div>
+
+          {/* Step 2: Featured article */}
+          <div style={{ margin: '12px 16px', borderRadius: '14px', overflow: 'hidden' }}>
+            <div style={{ height: '220px', background: 'linear-gradient(135deg, #0B1F17 0%, #17402C 100%)', position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '20px' }}>
+              {/* Mountains SVG overlay */}
+              <svg style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '60%', opacity: 0.15 }} viewBox="0 0 400 200" preserveAspectRatio="none">
+                <path d="M0 200 L50 80 L100 130 L150 40 L200 100 L250 20 L300 90 L350 50 L400 120 L400 200 Z" fill="white"/>
+              </svg>
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: '#A3C4A3', letterSpacing: '0.1em', textTransform: 'uppercase' }}>À la une · Reportage</span>
+                </div>
+                <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#FBFAF6', margin: 0, lineHeight: 1.2 }}>
+                  Traversée du Vercors en autonomie
+                </h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px' }}>
+                  <div style={{ width: '22px', height: '22px', borderRadius: '999px', background: '#A3C4A3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: '#0B1F17', fontWeight: 600 }}>M</div>
+                  <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>Mathieu C.</span>
+                  <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>·</span>
+                  <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>8 min de lecture</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 3: Category tabs */}
+          <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', padding: '0 16px 12px', scrollbarWidth: 'none' }}>
+            {['Tout', 'Reportages', 'Tests matériel', 'Refuges', 'Méthode'].map(cat => (
+              <button key={cat} style={{ padding: '6px 14px', borderRadius: '999px', background: cat === 'Tout' ? '#17402C' : '#FBFAF6', border: `1px solid ${cat === 'Tout' ? '#17402C' : 'rgba(11,31,23,0.06)'}`, color: cat === 'Tout' ? '#fff' : '#384A42', fontSize: '12px', fontWeight: 500, whiteSpace: 'nowrap', cursor: 'pointer', fontFamily: 'inherit' }}>
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* Article cards */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '0 16px 16px' }}>
+            {[
+              { kind: 'Reportage', title: 'UTMB — Dans les coulisses de la course', author: 'Sarah K.', time: '12 min' },
+              { kind: 'Test', title: 'Duvet Rab Mythic Ultra 200 : le test terrain', author: 'Antoine L.', time: '6 min' },
+              { kind: 'Refuge', title: 'Gardien de refuge, un métier de passion', author: 'Marie P.', time: '10 min' },
+              { kind: 'Méthode', title: 'Comment bien préparer son sac pour 3 jours', author: 'Lucas B.', time: '5 min' },
+            ].map((article, i) => (
+              <div key={i} style={{ display: 'flex', gap: '12px', padding: '12px', background: '#FBFAF6', borderRadius: '14px', border: '1px solid rgba(11,31,23,0.05)' }}>
+                <div style={{ width: '80px', height: '90px', borderRadius: '10px', background: 'linear-gradient(135deg, #17402C 20%, #2D6B4A 100%)', flexShrink: 0 }} />
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontSize: '9px', color: '#6B7A72', fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{article.kind}</div>
+                    <div style={{ fontSize: '14px', fontWeight: 500, color: '#0B1F17', marginTop: '2px', lineHeight: 1.2 }}>{article.title}</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', color: '#6B7A72' }}>
+                    <span>{article.author}</span>
+                    <span>·</span>
+                    <span>{article.time}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Footer spacer */}
+          <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
+        </MobilePageShell>
+      </div>
+    </>
   );
 }
 

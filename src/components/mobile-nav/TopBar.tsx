@@ -10,6 +10,7 @@ interface TopBarProps {
   showBack?: boolean;
   title?: string;
   cartCount?: number;
+  onMenuOpen?: () => void;
 }
 
 const ROOT_TABS = ['/', '/explorer', '/boutique', '/compte', '/profil', '/carnets'];
@@ -95,7 +96,7 @@ function getParentTab(pathname: string): string {
   return '/explorer';
 }
 
-export default function TopBar({ variant = 'standard', cartCount = 0, showBack, title }: TopBarProps) {
+export default function TopBar({ variant = 'standard', cartCount = 0, showBack, title, onMenuOpen }: TopBarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const currentPath = pathname || '/';
@@ -190,16 +191,36 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
               <LkvIcon name="chevron-left" size={20} />
             </button>
           ) : isHome ? (
-            <span
-              style={{
-                fontSize: '17px',
-                fontWeight: 700,
-                letterSpacing: '-0.02em',
-                color: '#0B1F17',
-              }}
-            >
-              Le Kit du <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>Voyageur</em>
-            </span>
+            <>
+              <button
+                onClick={onMenuOpen}
+                aria-label="Menu"
+                style={{
+                  ...mBtnStyle,
+                  cursor: 'pointer',
+                  outline: 'none',
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.outline = '2px solid #2D6B4A';
+                  e.currentTarget.style.outlineOffset = '2px';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.outline = 'none';
+                }}
+              >
+                <LkvIcon name="menu" size={20} />
+              </button>
+              <span
+                style={{
+                  fontSize: '17px',
+                  fontWeight: 700,
+                  letterSpacing: '-0.02em',
+                  color: '#0B1F17',
+                }}
+              >
+                Le Kit du <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>Voyageur</em>
+              </span>
+            </>
           ) : (
             <span
               style={{

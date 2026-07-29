@@ -114,7 +114,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
 
   if (!product) return null;
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (qty: number = 1) => {
     addToCart({
       id: product.id,
       slug: product.slug,
@@ -125,7 +125,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
       weightG: product.poids_g,
       image: product.images[0]?.url ?? '',
       imageAlt: product.images[0]?.alt ?? product.nom,
-    });
+    }, qty);
     setCartAdded(true);
     setTimeout(() => setCartAdded(false), 3000);
   };
@@ -146,7 +146,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
     <>
       {/* ── DESKTOP VIEW ── */}
       <div className="hidden md:block">
-        <div className="min-h-screen bg-[#EBE8DD] text-[#1C2620] font-sans selection:bg-[#E4501C]/20">
+        <div className="min-h-screen bg-[#EBE8DD] text-[#1C2620] font-sans selection:bg-[#17402C]/20">
           <Header />
 
           <main id="main-content" className="pt-24 pb-16">
@@ -321,7 +321,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
                       <motion.button
                         whileTap={{ scale: 0.8 }}
                         onClick={() => setIsFavorite(!isFavorite)}
-                        className={`w-[52px] h-[52px] rounded-full border flex items-center justify-center transition-colors flex-shrink-0 relative overflow-hidden ${isFavorite ? 'border-[#E4501C] bg-[#E4501C]/10 text-[#E4501C]' : 'border-[#C8C3B0] bg-white hover:bg-[#E3DFD2] text-[#1C2620]'}`}
+                        className={`w-[52px] h-[52px] rounded-full border flex items-center justify-center transition-colors flex-shrink-0 relative overflow-hidden ${isFavorite ? 'border-[#17402C] bg-[#17402C]/10 text-[#17402C]' : 'border-[#C8C3B0] bg-white hover:bg-[#E3DFD2] text-[#1C2620]'}`}
                       >
                         <AnimatePresence mode="wait">
                           <motion.div
@@ -778,7 +778,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
           <ProductBuyBar
             price={product.prix_cents / 100}
             onAddToCart={(qty) => {
-              for (let i = 0; i < qty; i++) handleAddToCart();
+              handleAddToCart(qty);
             }}
           />
         </MobilePageShell>
