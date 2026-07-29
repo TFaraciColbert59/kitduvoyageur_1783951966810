@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -896,9 +897,44 @@ function CategoriesSection() {
 
 // ─── Main Admin Page ───────────────────────────────────────────────────────────
 export default function AdminPage() {
+  const router = useRouter();
+  const [authState, setAuthState] = useState<'loading' | 'authorized' | 'denied'>('loading');
   const [activeSection, setActiveSection] = useState<AdminSection>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  // ─── Client-side auth guard (defense-in-depth) ──────────────────────────
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setAuthState('denied');
+        router.replace('/connexion?redirect=/admin');
+        return;
+      }
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      if (!profile || profile.role !== 'admin') {
+        setAuthState('denied');
+        router.replace('/');
+        return;
+      }
+      setAuthState('authorized');
+    };
+    checkAuth();
+  }, [router]);
+
+  if (authState !== 'authorized') {
+    return (
+      <div className="min-h-screen bg-[#151F1A] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-[#E4501C] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const groups = [...new Set(SIDEBAR_ITEMS.map(i => i.group))];
 

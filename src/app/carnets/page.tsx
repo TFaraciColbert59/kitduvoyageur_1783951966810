@@ -233,6 +233,13 @@ function CarnetDetailModal({
   useEffect(() => {
     if (!carnet) return;
     setLoadingComments(true);
+
+    // Track view
+    supabase.from('carnet_views').insert({
+      carnet_id: carnet.id,
+      user_id: user?.id || null,
+    }).then().catch(() => {});
+
     supabase
       .from('carnet_comments')
       .select('*, author:user_profiles(full_name, avatar_url)')
@@ -242,7 +249,7 @@ function CarnetDetailModal({
         setComments((data as Comment[]) ?? []);
         setLoadingComments(false);
       });
-  }, [carnet, supabase]);
+  }, [carnet, supabase, user?.id]);
 
   const handleSubmitComment = async () => {
     if (!user || !carnet || !newComment.trim()) return;
@@ -843,13 +850,13 @@ export default function CarnetsPage() {
     if (!user) { showToast('Connectez-vous pour réagir'); return; }
     if (carnet.user_liked && carnet.user_reaction === reaction) {
       await supabase.from('carnet_likes').delete().eq('carnet_id', carnet.id).eq('user_id', user.id);
-      await supabase.from('carnets').update({ likes_count: Math.max(0, carnet.likes_count - 1) }).eq('id', carnet.id);
+      // Trigger sync_carnet_likes_count décrémente likes_count atomiquement
       setCarnets((prev) => prev.map((c) => c.id === carnet.id ? { ...c, user_liked: false, user_reaction: undefined, likes_count: Math.max(0, c.likes_count - 1) } : c));
       if (detailCarnet?.id === carnet.id) setDetailCarnet((prev) => prev ? { ...prev, user_liked: false, user_reaction: undefined, likes_count: Math.max(0, prev.likes_count - 1) } : null);
     } else {
       await supabase.from('carnet_likes').upsert({ carnet_id: carnet.id, user_id: user.id, reaction }, { onConflict: 'carnet_id,user_id' });
       if (!carnet.user_liked) {
-        await supabase.from('carnets').update({ likes_count: carnet.likes_count + 1 }).eq('id', carnet.id);
+        // Trigger sync_carnet_likes_count incrémente likes_count atomiquement
         setCarnets((prev) => prev.map((c) => c.id === carnet.id ? { ...c, user_liked: true, user_reaction: reaction, likes_count: c.likes_count + 1 } : c));
         if (detailCarnet?.id === carnet.id) setDetailCarnet((prev) => prev ? { ...prev, user_liked: true, user_reaction: reaction, likes_count: prev.likes_count + 1 } : null);
       } else {
@@ -863,13 +870,13 @@ export default function CarnetsPage() {
     if (!user) { showToast('Connectez-vous pour sauvegarder'); return; }
     if (carnet.user_favorited) {
       await supabase.from('carnet_favorites').delete().eq('carnet_id', carnet.id).eq('user_id', user.id);
-      await supabase.from('carnets').update({ favorites_count: Math.max(0, carnet.favorites_count - 1) }).eq('id', carnet.id);
+      // Trigger sync_carnet_favorites_count décrémente favorites_count atomiquement
       setCarnets((prev) => prev.map((c) => c.id === carnet.id ? { ...c, user_favorited: false, favorites_count: Math.max(0, c.favorites_count - 1) } : c));
       if (detailCarnet?.id === carnet.id) setDetailCarnet((prev) => prev ? { ...prev, user_favorited: false, favorites_count: Math.max(0, prev.favorites_count - 1) } : null);
       showToast('Retiré des favoris');
     } else {
       await supabase.from('carnet_favorites').insert({ carnet_id: carnet.id, user_id: user.id });
-      await supabase.from('carnets').update({ favorites_count: carnet.favorites_count + 1 }).eq('id', carnet.id);
+      // Trigger sync_carnet_favorites_count incrémente favorites_count atomiquement
       setCarnets((prev) => prev.map((c) => c.id === carnet.id ? { ...c, user_favorited: true, favorites_count: c.favorites_count + 1 } : c));
       if (detailCarnet?.id === carnet.id) setDetailCarnet((prev) => prev ? { ...prev, user_favorited: true, favorites_count: prev.favorites_count + 1 } : null);
       showToast('Ajouté aux favoris ⭐');

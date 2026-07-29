@@ -20,11 +20,28 @@
 - `src/app/carnets/[id]/page.tsx` — Aucun changement (server component, délègue à CarnetView)
 - `src/app/carnets/nouveau/page.tsx` — Aucun changement (thin wrapper CreateCarnetView)
 
-## Lot C — À venir
-Fix 3 bugs récurrents :
-1. `/admin` accessible sans auth
-2. SSR des pages produit
-3. Compteurs de contenu
+## Lot C — Fix 3 bugs récurrents ✅
+1. **`/admin` accessible sans auth** ✅
+   - Middleware: ajout explicite de `/admin` dans le matcher (défense-in-depth)
+   - Client-side guard: vérification auth + admin role dans `admin/page.tsx` avec spinner loading
+   - Deux couches de protection : middleware + client
+
+2. **SSR des pages produit** ✅
+   - Server Component (`produit/[slug]/page.tsx`) : récupère `shop_products` et passe `initialProduct` au client
+   - Client (`ProductDetailClient.tsx`) : utilise `initialProduct` pour initialiser l'état → skip le loading state
+   - Élimine le loading flash / layout shift à chaque navigation
+
+3. **Compteurs de contenu** ✅
+   - **Migration `20260729120000_content_counters_triggers.sql`** :
+     - Trigger `carnet_likes` INSERT/DELETE → `carnets.likes_count`
+     - Trigger `carnet_comments` INSERT/DELETE → `carnets.comments_count`
+     - Trigger `carnet_favorites` INSERT/DELETE → `carnets.favorites_count`
+     - Table `carnet_views` + trigger INSERT → `carnets.views_count`
+     - Backfill des compteurs existants
+   - **Application** :
+     - `carnets/page.tsx` : retrait des `.update({count})` redondants (trigger gère)
+     - `CarnetDetailModal` : insertion `carnet_views` à l'ouverture
+   - Avantage : compteurs atomiques et cohérents, pas de race conditions
 
 ## Lot D — À venir
 Rollout mobile shell aux ~84 pages restantes

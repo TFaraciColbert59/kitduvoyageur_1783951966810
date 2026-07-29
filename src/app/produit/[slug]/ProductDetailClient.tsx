@@ -29,11 +29,58 @@ interface Product {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function mapToProduct(data: Record<string, unknown>): Product {
+  return {
+    id: data.id as string,
+    slug: data.slug as string,
+    nom: (data.name as string) ?? 'Sac 45 L toile cirée',
+    marque: (data.brand as string) ?? 'Marque',
+    categorie: (data.category_main as string) ?? (data.category as string) ?? 'Équipement',
+    description: (data.description_why as string) ?? "Trois compartiments, une bandoulière ventrale, un point d'accroche pour tapis de sol. Coton huilé 12 oz, fabriqué dans les Alpes-de-Haute-Provence, réparable à vie.",
+    prix_cents: Math.round(Number(data.price_eur ?? 340) * 100),
+    poids_g: (data.weight_g as number) ?? 1200,
+    images: [
+      { url: (data.image as string) ?? 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80', alt: (data.name as string) ?? '' },
+      { url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80', alt: 'Détail 1' },
+      { url: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800&q=80', alt: 'Détail 2' },
+      { url: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=800&q=80', alt: 'Détail 3' },
+      { url: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=800&q=80', alt: 'Détail 4' },
+    ],
+    tags: [],
+  };
+}
+
+function fallbackProduct(slug: string): Product {
+  return {
+    id: slug,
+    slug,
+    nom: 'Sac 45 L toile cirée',
+    marque: 'Le Kit du Voyageur',
+    categorie: 'Portage',
+    description: "Trois compartiments, une bandoulière ventrale, un point d'accroche pour tapis de sol. Coton huilé 12 oz, fabriqué dans les Alpes-de-Haute-Provence, réparable à vie.",
+    prix_cents: 34000,
+    poids_g: 1200,
+    images: [
+      { url: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80', alt: 'Sac 45 L toile cirée' },
+      { url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80', alt: 'Détail' },
+      { url: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800&q=80', alt: 'Détail 2' },
+      { url: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=800&q=80', alt: 'Détail 3' },
+      { url: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=800&q=80', alt: 'Détail 4' },
+    ],
+    tags: [],
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
-export default function ProductDetailClient({ slug }: { slug: string }) {
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function ProductDetailClient({ slug, initialProduct }: { slug: string; initialProduct?: Record<string, unknown> | null }) {
+  const [product, setProduct] = useState<Product | null>(() =>
+    initialProduct ? mapToProduct(initialProduct) : null
+  );
+  const [loading, setLoading] = useState(!initialProduct);
   const [activeImage, setActiveImage] = useState(0);
   const [cartAdded, setCartAdded] = useState(false);
   const [selectedColor, setSelectedColor] = useState('vert');
@@ -43,6 +90,9 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
   const { user } = useAuth();
 
   useEffect(() => {
+    // If we already have initial data, skip the client fetch
+    if (initialProduct) return;
+
     async function load() {
       try {
         const supabase = createClient();
@@ -51,46 +101,12 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
           .select('*')
           .eq('slug', slug)
           .single();
-        
+
         if (data && !error) {
-          setProduct({
-            id: data.id,
-            slug: data.slug,
-            nom: data.name,
-            marque: data.brand ?? 'Marque',
-            categorie: data.category_main ?? data.category ?? 'Équipement',
-            description: data.description_why ?? "Trois compartiments, une bandoulière ventrale, un point d'accroche pour tapis de sol. Coton huilé 12 oz, fabriqué dans les Alpes-de-Haute-Provence, réparable à vie.",
-            prix_cents: Math.round(Number(data.price_eur ?? 340) * 100),
-            poids_g: data.weight_g ?? 1200,
-            images: [
-              { url: data.image ?? 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80', alt: data.name },
-              { url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80', alt: 'Détail 1' },
-              { url: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800&q=80', alt: 'Détail 2' },
-              { url: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=800&q=80', alt: 'Détail 3' },
-              { url: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=800&q=80', alt: 'Détail 4' }
-            ],
-            tags: [],
-          });
+          setProduct(mapToProduct(data));
         } else {
           // Fallback matching mockup
-          setProduct({
-            id: slug,
-            slug,
-            nom: 'Sac 45 L toile cirée',
-            marque: 'Le Kit du Voyageur',
-            categorie: 'Portage',
-            description: "Trois compartiments, une bandoulière ventrale, un point d'accroche pour tapis de sol. Coton huilé 12 oz, fabriqué dans les Alpes-de-Haute-Provence, réparable à vie.",
-            prix_cents: 34000,
-            poids_g: 1200,
-            images: [
-              { url: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80', alt: 'Sac 45 L toile cirée' },
-              { url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80', alt: 'Détail' },
-              { url: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800&q=80', alt: 'Détail 2' },
-              { url: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=800&q=80', alt: 'Détail 3' },
-              { url: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=800&q=80', alt: 'Détail 4' }
-            ],
-            tags: [],
-          });
+          setProduct(fallbackProduct(slug));
         }
       } catch (err) {
         console.error(err);
@@ -99,7 +115,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
       }
     }
     load();
-  }, [slug]);
+  }, [slug, initialProduct]);
 
   if (loading) {
     return (
