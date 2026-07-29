@@ -1,8 +1,8 @@
 'use client';
-import { useRef, useCallback, useEffect } from 'react';
-import type { Map as LeafletMap, LayerGroup } from 'leaflet';
+import { useRef, useEffect } from 'react';
+import type { Map as LeafletMap } from 'leaflet';
 import type { MapTrail } from './types';
-import { getDifficultyColor } from './types';
+
 
 interface TrailLayerProps {
   map: LeafletMap;

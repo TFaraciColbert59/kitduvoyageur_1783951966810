@@ -7,6 +7,14 @@ import Header from '@/components/Header';
 
 import Link from 'next/link';
 import { getAllCountries, type Country } from '@/lib/countries';
+import AppImage from '@/components/ui/AppImage';
+import BackButton from '@/components/ui/BackButton';
+import TopoSeparator from '@/components/TopoSeparator';
+import NewFooterSection from '@/app/components/home/NewFooterSection';
+
+
+
+
 
 const ALL_COUNTRIES = getAllCountries();
 

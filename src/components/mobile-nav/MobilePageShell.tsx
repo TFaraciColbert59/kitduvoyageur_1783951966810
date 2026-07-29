@@ -24,8 +24,6 @@ export default function MobilePageShell({
         paddingTop: 'calc(52px + env(safe-area-inset-top))',
         paddingBottom: 'calc(60px + env(safe-area-inset-bottom) + 8px)',
         minHeight: '100dvh',
-        overflowY: 'auto',
-        overscrollBehavior: 'contain',
       }}
     >
       {children}

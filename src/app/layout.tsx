@@ -215,7 +215,7 @@ export default function RootLayout({
                   </a>
                   {/* Mobile navigation — hidden on desktop (md+) */}
                   <TopBar />
-                  <main id="main-content">
+                  <main id="main-content" style={{ WebkitOverflowScrolling: 'touch' }}>
                     <PageTransition>{children}</PageTransition>
                   </main>
                   <BottomTabBar />

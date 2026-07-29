@@ -137,7 +137,6 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overscroll-behavior: none;
   }
 
   h1, h2, h3, h4, h5, h6, p {
@@ -536,9 +535,7 @@
 
 /* Mobile bottom bar padding */
 @media (max-width: 767px) {
-  main#main-content,
-  main.mobile-page-content,
-  .mobile-page-content {
-    padding-bottom: calc(56px + env(safe-area-inset-bottom) + 1rem);
+  main#main-content {
+    padding-bottom: 0;
   }
 }
