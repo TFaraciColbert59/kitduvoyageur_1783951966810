@@ -111,6 +111,7 @@ export default async function ProduitPage({ params }: Props) {
   const { slug } = await params;
 
   let schemaOrg: Record<string, unknown> | null = null;
+  let initialProduct: Record<string, unknown> | null = null;
 
   try {
     const supabase = await createClient();
@@ -123,6 +124,7 @@ export default async function ProduitPage({ params }: Props) {
       .single();
 
     if (product) {
+      initialProduct = product;
       const canonicalUrl = `${siteUrl}/produit/${slug}`;
 
       // JSON-LD: Product + BreadcrumbList
@@ -196,7 +198,6 @@ export default async function ProduitPage({ params }: Props) {
     // Silent fail — client component will handle with its own fallback
   }
 
-  // Always render the client component — it has its own Supabase fetch + fallback
   // Only call notFound() for clearly invalid slugs (empty or malformed)
   if (!slug || slug.length < 2) {
     notFound();
@@ -211,7 +212,7 @@ export default async function ProduitPage({ params }: Props) {
           suppressHydrationWarning
         />
       )}
-      <ProductDetailClient slug={slug} />
+      <ProductDetailClient slug={slug} initialProduct={initialProduct} />
     </>
   );
 }

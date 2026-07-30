@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface SessionParams {
@@ -137,8 +138,8 @@ function ReportHeader({ report }: { report: KitReport }) {
       </div>
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-4">
-          <span className="w-2 h-2 rounded-full bg-[#E4501C] animate-pulse" />
-          <span className="text-[10px] font-mono text-[#E4501C] uppercase tracking-widest">
+          <span className="w-2 h-2 rounded-full bg-[#17402C] animate-pulse" />
+          <span className="text-[10px] font-mono text-[#17402C] uppercase tracking-widest">
             RAPPORT KIT PERSONNALISÉ
           </span>
         </div>
@@ -232,7 +233,7 @@ function WeightSection({ report }: { report: KitReport }) {
                 </div>
                 <div className="h-2 bg-[#C8C3B0]/40 rounded-full overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-[#E4501C]"
+                    className="h-full rounded-full bg-[#17402C]"
                     style={{ width: `${pct}%`, transition: 'width 0.6s ease' }}
                   />
                 </div>
@@ -342,7 +343,7 @@ function ProductsSection({
                       <div>
                         <Link
                           href={`/produit/${item.slug || item.id}`}
-                          className="font-600 text-sm text-[#1C2620] hover:text-[#E4501C] transition-colors"
+                          className="font-600 text-sm text-[#1C2620] hover:text-[#17402C] transition-colors"
                         >
                           {item.name}
                         </Link>
@@ -350,7 +351,7 @@ function ProductsSection({
                       </div>
                       <div className="flex items-center gap-3 flex-shrink-0">
                         <span className="font-mono text-xs text-[#5C6B5E]">{formatWeight(item.weight_g)}</span>
-                        <span className="font-mono font-700 text-sm text-[#E4501C]">{Number(item.price_eur).toFixed(2)} €</span>
+                        <span className="font-mono font-700 text-sm text-[#17402C]">{Number(item.price_eur).toFixed(2)} €</span>
                         <button
                           onClick={() => onRemove(item.id)}
                           className="p-1.5 rounded-lg hover:bg-red-50 text-[#5C6B5E] hover:text-red-500 transition-colors"
@@ -361,7 +362,7 @@ function ProductsSection({
                       </div>
                     </div>
                     {item.justification && (
-                      <p className="mt-2 text-xs text-[#5C6B5E] leading-relaxed italic border-l-2 border-[#E4501C]/30 pl-2">
+                      <p className="mt-2 text-xs text-[#5C6B5E] leading-relaxed italic border-l-2 border-[#17402C]/30 pl-2">
                         {item.justification}
                       </p>
                     )}
@@ -442,7 +443,7 @@ function ConsumablesSection({ consumables }: { consumables: Consumable[] }) {
               <p className="text-sm font-600 text-[#1C2620]">{c.name}</p>
               <p className="text-xs text-[#5C6B5E] mt-0.5">{c.reason}</p>
               {c.estimated_price_eur > 0 && (
-                <p className="font-mono text-xs text-[#E4501C] mt-1">~{c.estimated_price_eur} €</p>
+                <p className="font-mono text-xs text-[#17402C] mt-1">~{c.estimated_price_eur} €</p>
               )}
             </div>
           </div>
@@ -474,7 +475,7 @@ function BringYourselfSection({ items }: { items: BringYourself[] }) {
               <p className="text-sm font-600 text-[#1C2620]">{b.item}</p>
               <p className="text-xs text-[#5C6B5E] mt-0.5 leading-relaxed">{b.guide}</p>
               {b.affiliate_hint && (
-                <p className="text-xs text-[#E4501C] mt-1">{b.affiliate_hint}</p>
+                <p className="text-xs text-[#17402C] mt-1">{b.affiliate_hint}</p>
               )}
             </div>
           </div>
@@ -500,7 +501,7 @@ function DestinationSection({ ctx, country }: { ctx: DestinationContext; country
         </div>
         <Link
           href={`/pays/${countryCode}`}
-          className="flex items-center gap-1.5 text-xs text-[#E4501C] hover:underline"
+          className="flex items-center gap-1.5 text-xs text-[#17402C] hover:underline"
         >
           Fiche pays complète
           <Icon name="ArrowTopRightOnSquareIcon" size={12} variant="outline" />
@@ -636,7 +637,7 @@ function ActionsBar({
             <button
               onClick={onPurchase}
               disabled={purchasing || activeItems.length === 0}
-              className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-[#E4501C] text-white text-sm font-600 hover:opacity-90 transition-all disabled:opacity-50"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-[#17402C] text-white text-sm font-600 hover:opacity-90 transition-all disabled:opacity-50"
             >
               <Icon name="ShoppingBagIcon" size={14} variant="outline" />
               {purchasing ? 'Traitement...' : `Acheter le kit — ${totalEur.toFixed(2)} €`}
@@ -728,7 +729,7 @@ function ConfiguratorForm({ onGenerate }: { onGenerate: (params: SessionParams, 
                 value={params.destination}
                 onChange={e => set('destination', e.target.value)}
                 placeholder="Ex: Islande, GR20, Patagonie…"
-                className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#E4501C]"
+                className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#17402C]"
               />
             </div>
             <div className="sm:col-span-2">
@@ -738,16 +739,16 @@ function ConfiguratorForm({ onGenerate }: { onGenerate: (params: SessionParams, 
                 value={params.country}
                 onChange={e => set('country', e.target.value)}
                 placeholder="Ex: France, Népal…"
-                className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#E4501C]"
+                className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#17402C]"
               />
             </div>
             <div>
               <label className="block text-xs font-600 text-[#5C6B5E] uppercase tracking-wider mb-1.5">Date de départ</label>
-              <input type="date" value={params.startDate} onChange={e => set('startDate', e.target.value)} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#E4501C]" />
+              <input type="date" value={params.startDate} onChange={e => set('startDate', e.target.value)} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#17402C]" />
             </div>
             <div>
               <label className="block text-xs font-600 text-[#5C6B5E] uppercase tracking-wider mb-1.5">Date de retour</label>
-              <input type="date" value={params.endDate} onChange={e => set('endDate', e.target.value)} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#E4501C]" />
+              <input type="date" value={params.endDate} onChange={e => set('endDate', e.target.value)} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#17402C]" />
             </div>
           </div>
 
@@ -755,7 +756,7 @@ function ConfiguratorForm({ onGenerate }: { onGenerate: (params: SessionParams, 
             <p className="text-xs font-600 text-[#5C6B5E] uppercase tracking-wider mb-2">Saison</p>
             <div className="grid grid-cols-4 gap-2">
               {SEASONS.map(s => (
-                <button key={s.id} onClick={() => set('season', s.id)} className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${params.season === s.id ? 'border-[#E4501C] bg-[#E4501C]/5' : 'border-[#C8C3B0] hover:border-[#5C6B5E]'}`}>
+                <button key={s.id} onClick={() => set('season', s.id)} className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${params.season === s.id ? 'border-[#17402C] bg-[#17402C]/5' : 'border-[#C8C3B0] hover:border-[#5C6B5E]'}`}>
                   <span className="text-xl">{s.icon}</span>
                   <span className="text-xs font-600 text-[#1C2620]">{s.label}</span>
                 </button>
@@ -767,7 +768,7 @@ function ConfiguratorForm({ onGenerate }: { onGenerate: (params: SessionParams, 
             <p className="text-xs font-600 text-[#5C6B5E] uppercase tracking-wider mb-2">Activité</p>
             <div className="flex flex-wrap gap-2">
               {ACTIVITIES.map(a => (
-                <button key={a} onClick={() => set('activity', a)} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${params.activity === a ? 'bg-[#E4501C] border-[#E4501C] text-white' : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-[#5C6B5E]'}`}>{a}</button>
+                <button key={a} onClick={() => set('activity', a)} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${params.activity === a ? 'bg-[#17402C] border-[#17402C] text-white' : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-[#5C6B5E]'}`}>{a}</button>
               ))}
             </div>
           </div>
@@ -776,7 +777,7 @@ function ConfiguratorForm({ onGenerate }: { onGenerate: (params: SessionParams, 
             <p className="text-xs font-600 text-[#5C6B5E] uppercase tracking-wider mb-2">Niveau</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {LEVELS.map(l => (
-                <button key={l.id} onClick={() => set('level', l.id)} className={`py-2.5 rounded-xl border-2 text-xs font-600 transition-all ${params.level === l.id ? 'border-[#E4501C] bg-[#E4501C]/5 text-[#E4501C]' : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-[#5C6B5E]'}`}>{l.label}</button>
+                <button key={l.id} onClick={() => set('level', l.id)} className={`py-2.5 rounded-xl border-2 text-xs font-600 transition-all ${params.level === l.id ? 'border-[#17402C] bg-[#17402C]/5 text-[#17402C]' : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-[#5C6B5E]'}`}>{l.label}</button>
               ))}
             </div>
           </div>
@@ -784,22 +785,22 @@ function ConfiguratorForm({ onGenerate }: { onGenerate: (params: SessionParams, 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-600 text-[#5C6B5E] uppercase tracking-wider mb-1.5">Budget max (€)</label>
-              <input type="number" min={0} value={params.budgetEur} onChange={e => set('budgetEur', Number(e.target.value))} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#E4501C]" />
+              <input type="number" min={0} value={params.budgetEur} onChange={e => set('budgetEur', Number(e.target.value))} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#17402C]" />
             </div>
             <div>
               <label className="block text-xs font-600 text-[#5C6B5E] uppercase tracking-wider mb-1.5">Poids max (kg)</label>
-              <input type="number" min={1} value={params.maxWeightG / 1000} onChange={e => set('maxWeightG', Number(e.target.value) * 1000)} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#E4501C]" />
+              <input type="number" min={1} value={params.maxWeightG / 1000} onChange={e => set('maxWeightG', Number(e.target.value) * 1000)} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#17402C]" />
             </div>
             <div>
               <label className="block text-xs font-600 text-[#5C6B5E] uppercase tracking-wider mb-1.5">Poids corporel (kg)</label>
-              <input type="number" min={0} value={params.bodyWeightKg ?? ''} onChange={e => set('bodyWeightKg', e.target.value ? Number(e.target.value) : undefined)} placeholder="Optionnel" className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#E4501C]" />
+              <input type="number" min={0} value={params.bodyWeightKg ?? ''} onChange={e => set('bodyWeightKg', e.target.value ? Number(e.target.value) : undefined)} placeholder="Optionnel" className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#17402C]" />
             </div>
           </div>
 
           <button
             onClick={() => setStep(2)}
             disabled={!params.destination.trim()}
-            className="w-full py-3 rounded-xl bg-[#E4501C] text-white font-600 text-sm hover:opacity-90 transition-all disabled:opacity-40"
+            className="w-full py-3 rounded-xl bg-[#17402C] text-white font-600 text-sm hover:opacity-90 transition-all disabled:opacity-40"
           >
             Choisir les articles →
           </button>
@@ -828,9 +829,9 @@ function ConfiguratorForm({ onGenerate }: { onGenerate: (params: SessionParams, 
                     if (next.has(p.id)) next.delete(p.id); else next.add(p.id);
                     return next;
                   })}
-                  className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${selected.has(p.id) ? 'border-[#E4501C] bg-[#E4501C]/5' : 'border-[#C8C3B0] hover:border-[#5C6B5E]'}`}
+                  className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${selected.has(p.id) ? 'border-[#17402C] bg-[#17402C]/5' : 'border-[#C8C3B0] hover:border-[#5C6B5E]'}`}
                 >
-                  <div className={`w-5 h-5 rounded flex items-center justify-center border-2 flex-shrink-0 ${selected.has(p.id) ? 'bg-[#E4501C] border-[#E4501C]' : 'border-[#C8C3B0]'}`}>
+                  <div className={`w-5 h-5 rounded flex items-center justify-center border-2 flex-shrink-0 ${selected.has(p.id) ? 'bg-[#17402C] border-[#17402C]' : 'border-[#C8C3B0]'}`}>
                     {selected.has(p.id) && <Icon name="CheckIcon" size={10} variant="outline" className="text-white" />}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -839,7 +840,7 @@ function ConfiguratorForm({ onGenerate }: { onGenerate: (params: SessionParams, 
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
                     <span className="font-mono text-xs text-[#5C6B5E]">{formatWeight(p.weight_g)}</span>
-                    <span className="font-mono font-700 text-sm text-[#E4501C]">{Number(p.price_eur).toFixed(2)} €</span>
+                    <span className="font-mono font-700 text-sm text-[#17402C]">{Number(p.price_eur).toFixed(2)} €</span>
                   </div>
                 </div>
               ))}
@@ -849,7 +850,7 @@ function ConfiguratorForm({ onGenerate }: { onGenerate: (params: SessionParams, 
           <button
             onClick={handleGenerate}
             disabled={generating || selected.size === 0}
-            className="w-full py-3 rounded-xl bg-[#E4501C] text-white font-600 text-sm hover:opacity-90 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl bg-[#17402C] text-white font-600 text-sm hover:opacity-90 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {generating ? (
               <>
@@ -980,8 +981,10 @@ export default function KitReportPage() {
   };
 
   return (
-    <main className="min-h-screen bg-background">
-      <Header />
+    <>
+      <div className="hidden md:block">
+        <main className="min-h-screen bg-background">
+          <Header />
       <div className="pt-16 lg:pt-18">
         {/* Hero */}
         <div className="bg-[#1C2620] py-10 sm:py-14 relative overflow-hidden">
@@ -998,8 +1001,8 @@ export default function KitReportPage() {
           </div>
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
             <div className="flex items-center gap-2 justify-center mb-4">
-              <span className="w-2 h-2 rounded-full bg-[#E4501C] animate-pulse" />
-              <span className="text-[10px] font-mono text-[#E4501C] uppercase tracking-widest">RAPPORT KIT IA</span>
+              <span className="w-2 h-2 rounded-full bg-[#17402C] animate-pulse" />
+              <span className="text-[10px] font-mono text-[#17402C] uppercase tracking-widest">RAPPORT KIT IA</span>
             </div>
             <h1 className="font-display font-700 text-white text-2xl sm:text-3xl mb-3">
               Rapport de kit personnalisé
@@ -1014,7 +1017,7 @@ export default function KitReportPage() {
           {/* Generating loader */}
           {generating && (
             <div className="flex flex-col items-center justify-center py-20 gap-6">
-              <div className="w-12 h-12 border-4 border-[#C8C3B0] border-t-[#E4501C] rounded-full animate-spin" />
+              <div className="w-12 h-12 border-4 border-[#C8C3B0] border-t-[#17402C] rounded-full animate-spin" />
               <div className="text-center">
                 <p className="font-display font-700 text-[#1C2620] text-lg">Génération du rapport IA…</p>
                 <p className="text-sm text-[#5C6B5E] mt-1">Analyse du profil, justifications, alternatives…</p>
@@ -1118,7 +1121,367 @@ export default function KitReportPage() {
         />
       )}
 
-      <Footer />
-    </main>
+        <Footer />
+      </main>
+      </div>
+
+      {/* ── MOBILE ── */}
+      <div className="block md:hidden">
+        <MobilePageShell>
+          {/* Mobile content */}
+          {!report && !generating && (
+            <div style={{ padding: '16px' }}>
+              <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 4px 0' }}>
+                RAPPORT KIT IA
+              </p>
+              <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0B1F17', margin: '0 0 4px 0' }}>
+                Rapport de kit personnalis&eacute;
+              </h1>
+              <p style={{ fontSize: '13px', color: '#6B7A72', margin: '0', lineHeight: 1.4 }}>
+                G&eacute;n&eacute;r&eacute; depuis votre session configurateur.
+              </p>
+            </div>
+          )}
+
+          {/* Generating loader */}
+          {generating && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 16px', gap: '16px' }}>
+              <div style={{ width: '32px', height: '32px', border: '3px solid rgba(11,31,23,0.06)', borderTopColor: '#17402C', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: '16px', fontWeight: 600, color: '#0B1F17', margin: '0 0 4px 0' }}>G&eacute;n&eacute;ration du rapport IA&hellip;</p>
+                <p style={{ fontSize: '12px', color: '#6B7A72', margin: 0 }}>Analyse du profil, justifications, alternatives&hellip;</p>
+              </div>
+            </div>
+          )}
+
+          {/* Error state */}
+          {error && !generating && (
+            <div style={{ margin: '16px', padding: '12px', background: '#FEF2F2', borderRadius: '12px', border: '1px solid #FECACA', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+              <span style={{ color: '#EF4444', fontSize: '14px', flexShrink: 0 }}>!</span>
+              <p style={{ fontSize: '13px', color: '#991B1B', margin: 0 }}>{error}</p>
+            </div>
+          )}
+
+          {/* Report visible */}
+          {report && !generating && (
+            <>
+              {/* Report Header */}
+              <div style={{ margin: '16px', padding: '20px', background: '#0B1F17', borderRadius: '12px', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  <p style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 6px 0' }}>
+                    RAPPORT KIT PERSONNALIS&Eacute;
+                  </p>
+                  <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#fff', margin: '0 0 4px 0' }}>
+                    {report.sessionParams.destination}
+                  </h2>
+                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', margin: '0 0 16px 0' }}>
+                    {report.sessionParams.country} &middot; {report.sessionParams.activity} &middot; {report.sessionParams.season}
+                  </p>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '10px', padding: '10px' }}>
+                      <p style={{ fontSize: '8px', fontFamily: 'ui-monospace, monospace', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 2px 0' }}>D&Eacute;PART</p>
+                      <p style={{ fontSize: '12px', fontWeight: 600, color: '#fff', margin: 0 }}>{formatDate(report.sessionParams.startDate)}</p>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '10px', padding: '10px' }}>
+                      <p style={{ fontSize: '8px', fontFamily: 'ui-monospace, monospace', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 2px 0' }}>RETOUR</p>
+                      <p style={{ fontSize: '12px', fontWeight: 600, color: '#fff', margin: 0 }}>{formatDate(report.sessionParams.endDate)}</p>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '10px', padding: '10px' }}>
+                      <p style={{ fontSize: '8px', fontFamily: 'ui-monospace, monospace', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 2px 0' }}>NIVEAU</p>
+                      <p style={{ fontSize: '12px', fontWeight: 600, color: '#fff', margin: 0 }}>{report.sessionParams.level}</p>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '10px', padding: '10px' }}>
+                      <p style={{ fontSize: '8px', fontFamily: 'ui-monospace, monospace', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 2px 0' }}>BUDGET</p>
+                      <p style={{ fontSize: '12px', fontWeight: 600, color: '#fff', margin: 0 }}>{report.sessionParams.budgetEur} &euro;</p>
+                    </div>
+                  </div>
+
+                  <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', margin: '12px 0 0 0' }}>
+                    G&eacute;n&eacute;r&eacute; le {formatDate(report.generatedAt)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Weight Summary */}
+              <div style={{ margin: '0 16px 16px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#17402C', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', color: '#fff' }}>
+                    &#9878;
+                  </div>
+                  <p style={{ fontSize: '15px', fontWeight: 600, color: '#0B1F17', margin: 0 }}>Gabarit de poids</p>
+                </div>
+                <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 4px 0' }}>POIDS TOTAL</p>
+                <p style={{ fontSize: '28px', fontFamily: 'ui-monospace, monospace', fontWeight: 700, color: '#0B1F17', margin: '0 0 12px 0' }}>
+                  {(report.totalWeightG / 1000).toFixed(2)} <span style={{ fontSize: '14px', fontWeight: 400, color: '#6B7A72' }}>kg</span>
+                </p>
+
+                {/* Weight breakdown bars */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {Object.entries(report.weightBreakdown)
+                    .sort(([, a], [, b]) => b - a)
+                    .slice(0, 6)
+                    .map(([cat, g]) => {
+                      const pct = report.totalWeightG > 0 ? (g / report.totalWeightG) * 100 : 0;
+                      return (
+                        <div key={cat}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                            <span style={{ fontSize: '12px', color: '#0B1F17', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span>{CATEGORY_ICONS[cat] ?? '📦'}</span>
+                              {cat}
+                            </span>
+                            <span style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72' }}>
+                              {formatWeight(g)} &middot; {pct.toFixed(0)}%
+                            </span>
+                          </div>
+                          <div style={{ background: 'rgba(11,31,23,0.06)', borderRadius: '999px', height: '5px', overflow: 'hidden' }}>
+                            <div style={{ width: `${pct}%`, background: '#17402C', height: '100%', borderRadius: '999px', transition: 'width 0.6s ease' }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                {report.totalWeightG > report.sessionParams.maxWeightG * 1.1 && (
+                  <div style={{ marginTop: '12px', padding: '10px', background: '#FEF3C7', borderRadius: '10px', border: '1px solid #FDE68A', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: '12px', color: '#D97706', flexShrink: 0 }}>&#9888;</span>
+                    <p style={{ fontSize: '11px', color: '#92400E', margin: 0 }}>
+                      Poids sup&eacute;rieur &agrave; votre objectif de {formatWeight(report.sessionParams.maxWeightG)}.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Budget Summary */}
+              <div style={{ margin: '0 16px 16px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#17402C', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', color: '#fff' }}>
+                    &#36;
+                  </div>
+                  <p style={{ fontSize: '15px', fontWeight: 600, color: '#0B1F17', margin: 0 }}>D&eacute;tail budg&eacute;taire</p>
+                </div>
+                <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 4px 0' }}>TOTAL</p>
+                <p style={{ fontSize: '24px', fontFamily: 'ui-monospace, monospace', fontWeight: 700, color: '#0B1F17', margin: '0 0 8px 0' }}>
+                  {report.totalPriceEur.toFixed(2)} <span style={{ fontSize: '13px', fontWeight: 400, color: '#6B7A72' }}>&euro;</span>
+                </p>
+
+                {/* Items list */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {report.selectedItems.filter(i => !removedIds.has(i.id)).slice(0, 8).map(item => (
+                    <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid rgba(11,31,23,0.04)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                        <span style={{ fontSize: '14px', flexShrink: 0 }}>{CATEGORY_ICONS[item.category] ?? '📦'}</span>
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{ fontSize: '12px', fontWeight: 500, color: '#0B1F17', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {item.name}
+                          </p>
+                          <p style={{ fontSize: '10px', color: '#6B7A72', margin: '1px 0 0 0' }}>{item.brand}</p>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '8px' }}>
+                        <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: 0 }}>{formatWeight(item.weight_g)}</p>
+                        <p style={{ fontSize: '12px', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#17402C', margin: '1px 0 0 0' }}>
+                          {Number(item.price_eur).toFixed(2)} &euro;
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  {report.selectedItems.filter(i => !removedIds.has(i.id)).length > 8 && (
+                    <p style={{ fontSize: '11px', color: '#6B7A72', textAlign: 'center', margin: '4px 0 0 0', fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>
+                      +{report.selectedItems.filter(i => !removedIds.has(i.id)).length - 8} article(s) suppl&eacute;mentaire(s)
+                    </p>
+                  )}
+                </div>
+
+                {report.totalPriceEur > report.sessionParams.budgetEur && (
+                  <div style={{ marginTop: '10px', padding: '10px', background: '#FEF3C7', borderRadius: '10px', border: '1px solid #FDE68A', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: '12px', color: '#D97706', flexShrink: 0 }}>&#9888;</span>
+                    <p style={{ fontSize: '11px', color: '#92400E', margin: 0 }}>
+                      D&eacute;passe votre budget de {(report.totalPriceEur - report.sessionParams.budgetEur).toFixed(2)} &euro;.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Consumables */}
+              {report.consumables?.length > 0 && (
+                <div style={{ margin: '0 16px 16px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17', margin: '0 0 10px 0' }}>Consommables recommand&eacute;s</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {report.consumables.slice(0, 4).map((c, i) => (
+                      <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', padding: '10px', background: '#FBFAF6', borderRadius: '10px' }}>
+                        <span style={{ fontSize: '16px', flexShrink: 0 }}>{CATEGORY_ICONS[c.category] ?? '🧴'}</span>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: '12px', fontWeight: 600, color: '#0B1F17', margin: 0 }}>{c.name}</p>
+                          <p style={{ fontSize: '11px', color: '#6B7A72', margin: '2px 0 0 0' }}>{c.reason}</p>
+                          {c.estimated_price_eur > 0 && (
+                            <p style={{ fontSize: '11px', fontFamily: 'ui-monospace, monospace', color: '#17402C', margin: '4px 0 0 0' }}>~{c.estimated_price_eur} &euro;</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {report.consumables.length > 4 && (
+                      <p style={{ fontSize: '10px', color: '#6B7A72', textAlign: 'center', fontFamily: 'Georgia, serif', fontStyle: 'italic', margin: 0 }}>
+                        +{report.consumables.length - 4} autre(s)
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Bring Yourself */}
+              {report.bring_yourself?.length > 0 && (
+                <div style={{ margin: '0 16px 16px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17', margin: '0 0 10px 0' }}>&Agrave; apporter soi-m&ecirc;me</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {report.bring_yourself.slice(0, 4).map((b, i) => (
+                      <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', padding: '10px', background: '#FBFAF6', borderRadius: '10px' }}>
+                        <span style={{ fontSize: '14px', color: '#17402C', flexShrink: 0, marginTop: '1px' }}>&#10003;</span>
+                        <div>
+                          <p style={{ fontSize: '12px', fontWeight: 600, color: '#0B1F17', margin: 0 }}>{b.item}</p>
+                          <p style={{ fontSize: '11px', color: '#6B7A72', margin: '2px 0 0 0', lineHeight: 1.4 }}>{b.guide}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {report.bring_yourself.length > 4 && (
+                      <p style={{ fontSize: '10px', color: '#6B7A72', textAlign: 'center', fontFamily: 'Georgia, serif', fontStyle: 'italic', margin: 0 }}>
+                        +{report.bring_yourself.length - 4} autre(s)
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Destination Context */}
+              {report.destinationContext && (
+                <div style={{ margin: '0 16px 16px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17', margin: '0 0 10px 0' }}>Contexte destination</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ padding: '10px', background: '#FBFAF6', borderRadius: '10px' }}>
+                      <p style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 4px 0' }}>M&Eacute;T&Eacute;O PR&Eacute;VUE</p>
+                      <p style={{ fontSize: '12px', color: '#0B1F17', margin: 0, lineHeight: 1.4 }}>{report.destinationContext.weather_summary}</p>
+                    </div>
+                    <div style={{ padding: '10px', background: '#FBFAF6', borderRadius: '10px' }}>
+                      <p style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 4px 0' }}>
+                        S&Eacute;CURIT&Eacute; : <span style={{ color: report.destinationContext.security_level === 'faible' ? '#059669' : report.destinationContext.security_level === 'élevé' ? '#DC2626' : '#D97706' }}>
+                          {report.destinationContext.security_level}
+                        </span>
+                      </p>
+                      <p style={{ fontSize: '12px', color: '#0B1F17', margin: 0, lineHeight: 1.4 }}>{report.destinationContext.security_notes}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Carbon Estimate */}
+              {report.carbonKgEstimate != null && report.carbonKgEstimate > 0 && (
+                <div style={{ margin: '0 16px 16px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17', margin: '0 0 8px 0' }}>Empreinte carbone</p>
+                  <p style={{ fontSize: '22px', fontFamily: 'ui-monospace, monospace', fontWeight: 700, color: '#059669', margin: 0 }}>
+                    {report.carbonKgEstimate.toFixed(1)} <span style={{ fontSize: '12px', fontWeight: 400, color: '#6B7A72' }}>kg CO&#8322;</span>
+                  </p>
+                </div>
+              )}
+
+              {/* Purchase confirmation */}
+              {purchased && (
+                <div style={{ margin: '0 16px 16px', padding: '14px', background: '#ECFDF5', borderRadius: '12px', border: '1px solid #A7F3D0', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: '16px', color: '#059669', flexShrink: 0 }}>&#10003;</span>
+                  <div>
+                    <p style={{ fontSize: '13px', fontWeight: 600, color: '#065F46', margin: '0 0 2px 0' }}>Kit ajout&eacute; &agrave; votre inventaire</p>
+                    <p style={{ fontSize: '11px', color: '#047857', margin: 0 }}>
+                      Retrouvez tous vos articles dans <Link href="/inventaire" style={{ textDecoration: 'underline', fontWeight: 500, color: '#065F46' }}>Mon Inventaire</Link>.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <button
+                  onClick={handlePurchase}
+                  disabled={purchasing || report.selectedItems.filter(i => !removedIds.has(i.id)).length === 0}
+                  style={{
+                    width: '100%',
+                    padding: '14px',
+                    background: purchased ? '#059669' : '#17402C',
+                    color: '#fff',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    border: 'none',
+                    cursor: purchased ? 'default' : 'pointer',
+                    opacity: purchasing ? 0.7 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  {purchased ? 'Ajout\u00e9 \u00e0 l\u0027inventaire' : purchasing ? 'Traitement...' : `Acheter le kit \u2014 ${report.selectedItems.filter(i => !removedIds.has(i.id)).reduce((s, i) => s + Number(i.price_eur), 0).toFixed(2)} \u20ac`}
+                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={handleExport}
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      background: '#F4F1EA',
+                      color: '#0B1F17',
+                      borderRadius: '12px',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      border: '1px solid rgba(11,31,23,0.06)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Exporter
+                  </button>
+                  <button
+                    onClick={() => { setReport(null); setRemovedIds(new Set()); setSaved(false); setPurchased(false); }}
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      background: '#F4F1EA',
+                      color: '#0B1F17',
+                      borderRadius: '12px',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      border: '1px solid rgba(11,31,23,0.06)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Nouveau rapport
+                  </button>
+                </div>
+              </div>
+
+              {/* Footer spacer */}
+              <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
+            </>
+          )}
+
+          {/* Form (no report) */}
+          {!report && !generating && (
+            <div style={{ padding: '0 16px' }}>
+              <div style={{ padding: '20px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+                <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0B1F17', margin: '0 0 16px 0' }}>Param&egrave;tres du voyage</h2>
+                <p style={{ fontSize: '12px', color: '#6B7A72', margin: '0 0 16px 0', fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>
+                  Utilisez la version desktop pour configurer votre kit.
+                </p>
+                <a href="/ai-configurator" style={{ display: 'block', width: '100%', padding: '12px', textAlign: 'center', background: '#17402C', color: '#fff', borderRadius: '12px', fontSize: '14px', fontWeight: 500, textDecoration: 'none' }}>
+                  Ouvrir le configurateur
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* Footer spacer for form/error states */}
+          {!report && (
+            <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
+          )}
+        </MobilePageShell>
+      </div>
+    </>
   );
 }

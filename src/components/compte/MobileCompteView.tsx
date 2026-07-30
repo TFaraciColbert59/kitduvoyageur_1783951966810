@@ -4,12 +4,12 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
-import { UserProfile, ProchainVoyage } from '@/lib/mock/compte-marceline';
+import type { CompteUserProfile, CompteProchainVoyage } from '@/lib/supabase/queries-compte';
 import { CompteTab } from './TabsCompte';
 
 interface MobileCompteViewProps {
-  profile: UserProfile;
-  prochainVoyage: ProchainVoyage;
+  profile: CompteUserProfile;
+  prochainVoyage: CompteProchainVoyage | null;
   activeTab: CompteTab;
   onTabChange: (tab: CompteTab) => void;
   onOpenEdit: () => void;
@@ -25,9 +25,9 @@ export default function MobileCompteView({
   const { stats, constance } = profile;
 
   const tabs: { id: CompteTab; label: string }[] = [
-    { id: 'vue-d-ensemble', label: 'Vue' },
-    { id: 'aventures', label: `Aventures ${profile.stats.sorties}` },
-    { id: 'carnets', label: `Carnets ${profile.stats.carnets}` },
+    { id: 'vue-d-ensemble', label: 'Vue d\'ensemble' },
+    { id: 'aventures', label: `Groupes ${profile.stats.sorties}` },
+    { id: 'carnets', label: `Carnets de route ${profile.stats.kilometres}` },
     { id: 'clubs', label: `Clubs ${profile.stats.clubs}` },
     { id: 'commandes', label: 'Commandes' },
     { id: 'fidelite', label: 'Fidélité' },
@@ -115,7 +115,7 @@ export default function MobileCompteView({
         {/* Big Inventory Button on Mobile */}
         <Link
           href="/inventaire"
-          className="w-full py-3 bg-[#E4501C] hover:bg-[#cc3d10] text-white font-black text-xs rounded-2xl shadow-lg flex items-center justify-center gap-2 border border-white/10"
+          className="w-full py-3 bg-[#17402C] hover:bg-[#cc3d10] text-white font-black text-xs rounded-2xl shadow-lg flex items-center justify-center gap-2 border border-white/10"
         >
           <span>🎒 Accéder à mon Inventaire</span>
           <Icon name="ArrowRightIcon" size={14} />
@@ -145,6 +145,7 @@ export default function MobileCompteView({
       </div>
 
       {/* 5. Condensed Prochain Voyage Card */}
+      {prochainVoyage && (
       <div className="px-4 mt-4">
         <div className="bg-gradient-to-br from-[#1C2620] to-[#23332A] text-white rounded-2xl p-4 shadow-md border border-white/10 space-y-3">
           <div className="flex items-center justify-between">
@@ -174,6 +175,7 @@ export default function MobileCompteView({
           </div>
         </div>
       </div>
+      )}
 
       {/* 6. 2x2 Condensed Stats Grid */}
       <div className="px-4 mt-4 grid grid-cols-2 gap-3">
@@ -194,32 +196,6 @@ export default function MobileCompteView({
           <span className="font-mono font-900 text-xl text-[#1C2620] block mt-0.5">🔥 6 sem.</span>
         </div>
       </div>
-
-      {/* 7. App-like Fixed Bottom Nav Bar (5 Icons) */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#1C2620]/10 px-4 py-2 flex items-center justify-between shadow-lg">
-        <Link href="/" className="flex flex-col items-center gap-1 text-[#1C2620]/60 hover:text-[#1C2620]">
-          <Icon name="HomeIcon" size={20} />
-          <span className="text-[9px] font-bold">Home</span>
-        </Link>
-        <Link href="/boutique" className="flex flex-col items-center gap-1 text-[#1C2620]/60 hover:text-[#1C2620]">
-          <Icon name="MagnifyingGlassIcon" size={20} />
-          <span className="text-[9px] font-bold">Recherche</span>
-        </Link>
-        <Link href="/clubs" className="flex flex-col items-center gap-1 text-[#1C2620]/60 hover:text-[#1C2620]">
-          <Icon name="UsersIcon" size={20} />
-          <span className="text-[9px] font-bold">Clubs</span>
-        </Link>
-        <Link href="/carnets" className="flex flex-col items-center gap-1 text-[#1C2620]/60 hover:text-[#1C2620]">
-          <Icon name="DocumentTextIcon" size={20} />
-          <span className="text-[9px] font-bold">Carnets</span>
-        </Link>
-        <button onClick={onOpenEdit} className="flex flex-col items-center gap-1 text-emerald-700 relative">
-          <Icon name="UserIcon" size={20} />
-          <span className="text-[9px] font-bold">Profil</span>
-          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full absolute -bottom-1" />
-        </button>
-      </div>
-
     </div>
   );
 }

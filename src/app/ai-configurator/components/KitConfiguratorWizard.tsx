@@ -455,7 +455,7 @@ export default function KitConfiguratorWizard() {
                   {/* Section: Missing Items (from real shop_products) */}
                   <div className="bg-white p-4 rounded-2xl border border-[#E2DDD0] shadow-sm">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-xs font-mono uppercase tracking-wider text-[#E4501C] font-bold">
+                      <h4 className="text-xs font-mono uppercase tracking-wider text-[#17402C] font-bold">
                         🛒 Matériel manquant à acquérir ({report.missingItems.length} article(s))
                       </h4>
                       <span className="text-xs font-bold text-[#1C3829] font-mono">
@@ -484,14 +484,14 @@ export default function KitConfiguratorWizard() {
                   {/* Section: Weather / Security Alerts */}
                   {report.inadequateAlerts.length > 0 && (
                     <div className="bg-[#FFF8F5] p-4 rounded-2xl border border-[#FCD8C8]">
-                      <h4 className="text-xs font-mono uppercase tracking-wider text-[#E4501C] font-bold mb-2">
+                      <h4 className="text-xs font-mono uppercase tracking-wider text-[#17402C] font-bold mb-2">
                         ⚠️ Alertes & Points d’attention
                       </h4>
                       <div className="space-y-2 text-xs">
                         {report.inadequateAlerts.map((alert, idx) => (
                           <div key={idx} className="p-3 bg-white rounded-xl border border-[#FCD8C8]">
                             <p className="font-bold text-[#1C2620] mb-1">{alert.item}</p>
-                            <p className="text-[#E4501C] mb-1">{alert.issue}</p>
+                            <p className="text-[#17402C] mb-1">{alert.issue}</p>
                             <p className="text-[#5C6E60] font-medium">💡 {alert.recommendation}</p>
                           </div>
                         ))}

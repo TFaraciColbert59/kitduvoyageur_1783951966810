@@ -122,7 +122,7 @@ export default function FeaturedJournal({ carnets }: { carnets: FeaturedCarnet[]
           </div>
           <Link
             href="/carnets"
-            className="hidden md:inline-flex items-center gap-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 rounded-lg px-1"
+            className="hidden md:inline-flex items-center gap-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 rounded-lg px-1"
             style={{ color: 'var(--primary)' }}
           >
             Tous les carnets
@@ -183,7 +183,7 @@ export default function FeaturedJournal({ carnets }: { carnets: FeaturedCarnet[]
                         className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono mb-3 self-start"
                         style={{
                           background: 'rgba(228,80,28,0.2)',
-                          color: '#E4501C',
+                          color: '#17402C',
                           border: '1px solid rgba(228,80,28,0.3)',
                           fontFamily: 'var(--font-mono)',
                         }}
@@ -209,7 +209,7 @@ export default function FeaturedJournal({ carnets }: { carnets: FeaturedCarnet[]
                       <div className="flex items-center gap-2">
                         <div
                           className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                          style={{ background: '#E4501C' }}
+                          style={{ background: '#17402C' }}
                           aria-hidden="true"
                         >
                           {carnet.author_name?.[0] ?? '?'}
@@ -240,7 +240,7 @@ export default function FeaturedJournal({ carnets }: { carnets: FeaturedCarnet[]
                 <button
                   key={carnet.id}
                   onClick={() => setActiveIdx(i)}
-                  className="text-left rounded-xl p-4 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 min-h-[44px]"
+                  className="text-left rounded-xl p-4 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 min-h-[44px]"
                   style={{
                     background: activeIdx === i ? 'rgba(228,80,28,0.08)' : 'var(--card)',
                     border: activeIdx === i ? '1px solid rgba(228,80,28,0.25)' : '1px solid var(--border)',
@@ -274,8 +274,8 @@ export default function FeaturedJournal({ carnets }: { carnets: FeaturedCarnet[]
 
               <Link
                 href={`/carnets/${active.id}`}
-                className="mt-2 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm text-white transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 min-h-[44px]"
-                style={{ background: '#E4501C' }}
+                className="mt-2 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm text-white transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 min-h-[44px]"
+                style={{ background: '#17402C' }}
               >
                 Lire ce carnet
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -341,7 +341,7 @@ export default function FeaturedJournal({ carnets }: { carnets: FeaturedCarnet[]
                       className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono mb-2 self-start"
                       style={{
                         background: 'rgba(228,80,28,0.2)',
-                        color: '#E4501C',
+                        color: '#17402C',
                         fontFamily: 'var(--font-mono)',
                       }}
                     >
@@ -365,8 +365,8 @@ export default function FeaturedJournal({ carnets }: { carnets: FeaturedCarnet[]
                   </div>
                   <Link
                     href={`/carnets/${carnet.id}`}
-                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] min-h-[36px]"
-                    style={{ color: '#E4501C' }}
+                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] min-h-[36px]"
+                    style={{ color: '#17402C' }}
                   >
                     Lire le carnet
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
@@ -392,11 +392,11 @@ export default function FeaturedJournal({ carnets }: { carnets: FeaturedCarnet[]
                   scrollRef.current.scrollTo({ left: i * w, behavior: 'smooth' });
                   setActiveIdx(i);
                 }}
-                className="rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] min-h-[20px] min-w-[20px] flex items-center justify-center"
+                className="rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] min-h-[20px] min-w-[20px] flex items-center justify-center"
                 style={{
                   width: activeIdx === i ? 20 : 6,
                   height: 6,
-                  background: activeIdx === i ? '#E4501C' : 'rgba(28,38,32,0.2)',
+                  background: activeIdx === i ? '#17402C' : 'rgba(28,38,32,0.2)',
                 }}
               />
             ))}
@@ -405,7 +405,7 @@ export default function FeaturedJournal({ carnets }: { carnets: FeaturedCarnet[]
           <div className="text-center mt-6">
             <Link
               href="/carnets"
-              className="inline-flex items-center gap-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 rounded-lg px-1 min-h-[44px]"
+              className="inline-flex items-center gap-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 rounded-lg px-1 min-h-[44px]"
               style={{ color: 'var(--primary)' }}
             >
               Tous les carnets

@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import WeightGauge from '@/components/WeightGauge';
 
 
@@ -1017,72 +1018,151 @@ export default function OutilSlugPage() {
 
   if (!tool) {
     return (
-      <div className="min-h-screen bg-background text-foreground">
-        <Header />
-        <div className="max-w-2xl mx-auto px-4 pt-32 text-center">
-          <p className="text-6xl mb-4">🔧</p>
-          <h1 className="font-display font-700 text-2xl mb-4" style={{ fontFamily: 'var(--font-display)' }}>Outil introuvable</h1>
-          <Link href="/outils" className="btn-primary">← Retour aux outils</Link>
+      <>
+        {/* ── DESKTOP ── */}
+        <div className="hidden md:block">
+          <div className="min-h-screen bg-background text-foreground">
+            <Header />
+            <div className="max-w-2xl mx-auto px-4 pt-32 text-center">
+              <p className="text-6xl mb-4">🔧</p>
+              <h1 className="font-display font-700 text-2xl mb-4" style={{ fontFamily: 'var(--font-display)' }}>Outil introuvable</h1>
+              <Link href="/outils" className="btn-primary">← Retour aux outils</Link>
+            </div>
+            <Footer />
+          </div>
         </div>
-        <Footer />
-      </div>
+
+        {/* ── MOBILE ── */}
+        <div className="block md:hidden">
+          <MobilePageShell>
+            <div style={{ padding: '16px', textAlign: 'center', paddingTop: '80px' }}>
+              <p style={{ fontSize: '40px', marginBottom: '16px' }}>🔧</p>
+              <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#1C2620', marginBottom: '12px' }}>Outil introuvable</h1>
+              <Link href="/outils" style={{ display: 'inline-block', padding: '12px 24px', background: '#17402C', color: 'white', borderRadius: '999px', fontSize: '14px', fontWeight: 700, textDecoration: 'none' }}>← Retour aux outils</Link>
+            </div>
+          </MobilePageShell>
+          
+        </div>
+      </>
     );
   }
 
   const ToolComponent = tool.component;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Header />
+    <>
+      {/* ── DESKTOP ── */}
+      <div className="hidden md:block">
+        <div className="min-h-screen bg-background text-foreground">
+          <Header />
 
-      {/* Tool Header */}
-      <section className="pt-24 pb-8 bg-dark-bg">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6">
-          <nav className="flex items-center gap-2 text-xs text-white/50 mb-4" aria-label="Fil d'Ariane">
-            <Link href="/" className="hover:text-white transition-colors">Accueil</Link>
-            <span>/</span>
-            <Link href="/outils" className="hover:text-white transition-colors">Outils</Link>
-            <span>/</span>
-            <span className="text-white/80">{tool.nom}</span>
-          </nav>
-          <div className="flex items-center gap-4">
-            <span className="text-5xl" role="img" aria-label={tool.nom}>{tool.icon}</span>
-            <div>
-              <h1 className="font-display font-800 text-2xl md:text-3xl text-white tracking-tight" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>
-                {tool.nom}
-              </h1>
-              <p className="text-white/60 text-sm mt-1">{tool.description}</p>
+          {/* Tool Header */}
+          <section className="pt-24 pb-8 bg-dark-bg">
+            <div className="max-w-3xl mx-auto px-4 sm:px-6">
+              <nav className="flex items-center gap-2 text-xs text-white/50 mb-4" aria-label="Fil d'Ariane">
+                <Link href="/" className="hover:text-white transition-colors">Accueil</Link>
+                <span>/</span>
+                <Link href="/outils" className="hover:text-white transition-colors">Outils</Link>
+                <span>/</span>
+                <span className="text-white/80">{tool.nom}</span>
+              </nav>
+              <div className="flex items-center gap-4">
+                <span className="text-5xl" role="img" aria-label={tool.nom}>{tool.icon}</span>
+                <div>
+                  <h1 className="font-display font-800 text-2xl md:text-3xl text-white tracking-tight" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>
+                    {tool.nom}
+                  </h1>
+                  <p className="text-white/60 text-sm mt-1">{tool.description}</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Tool Content */}
+          <section className="py-8">
+            <div className="max-w-3xl mx-auto px-4 sm:px-6">
+              <ToolComponent />
+            </div>
+          </section>
+
+          {/* Nav between tools */}
+          <section className="py-8 border-t border-border">
+            <div className="max-w-3xl mx-auto px-4 sm:px-6">
+              <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-4" style={{ fontFamily: 'var(--font-mono)' }}>AUTRES OUTILS</p>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(toolRegistry)
+                  .filter(([s]) => s !== slug)
+                  .map(([s, t]) => (
+                    <Link key={s} href={`/outils/${s}`}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border text-sm text-muted-foreground hover:text-foreground hover:border-info/50 transition-all">
+                      <span>{t.icon}</span>
+                      <span>{t.nom}</span>
+                    </Link>
+                  ))}
+              </div>
+            </div>
+          </section>
+
+          <Footer />
+        </div>
+      </div>
+
+      {/* ── MOBILE ── */}
+      <div className="block md:hidden">
+        <MobilePageShell>
+          <div style={{ padding: '16px' }}>
+            {/* Tool Header */}
+            <div style={{ marginBottom: '20px' }}>
+              <nav style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#6B7A72', marginBottom: '12px' }}>
+                <Link href="/outils" style={{ color: '#6B7A72', textDecoration: 'none' }}>Outils</Link>
+                <span>/</span>
+                <span style={{ color: '#1C2620' }}>{tool.nom}</span>
+              </nav>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '36px' }} role="img" aria-label={tool.nom}>{tool.icon}</span>
+                <div>
+                  <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#1C2620', lineHeight: '1.2', marginBottom: '4px' }}>{tool.nom}</h1>
+                  <p style={{ fontSize: '13px', color: '#6B7A72', lineHeight: '1.4' }}>{tool.description}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Tool Content */}
+            <ToolComponent />
+
+            {/* Other tools */}
+            <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid rgba(11,31,23,0.06)' }}>
+              <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>AUTRES OUTILS</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {Object.entries(toolRegistry)
+                  .filter(([s]) => s !== slug)
+                  .map(([s, t]) => (
+                    <Link
+                      key={s}
+                      href={`/outils/${s}`}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '8px 14px',
+                        background: '#F4F1EA',
+                        border: '1px solid rgba(11,31,23,0.06)',
+                        borderRadius: '10px',
+                        fontSize: '13px',
+                        color: '#6B7A72',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      <span>{t.icon}</span>
+                      <span>{t.nom}</span>
+                    </Link>
+                  ))}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Tool Content */}
-      <section className="py-8">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6">
-          <ToolComponent />
-        </div>
-      </section>
-
-      {/* Nav between tools */}
-      <section className="py-8 border-t border-border">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6">
-          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-4" style={{ fontFamily: 'var(--font-mono)' }}>AUTRES OUTILS</p>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(toolRegistry)
-              .filter(([s]) => s !== slug)
-              .map(([s, t]) => (
-                <Link key={s} href={`/outils/${s}`}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border text-sm text-muted-foreground hover:text-foreground hover:border-info/50 transition-all">
-                  <span>{t.icon}</span>
-                  <span>{t.nom}</span>
-                </Link>
-              ))}
-          </div>
-        </div>
-      </section>
-
-      <Footer />
-    </div>
+        </MobilePageShell>
+        
+      </div>
+    </>
   );
 }

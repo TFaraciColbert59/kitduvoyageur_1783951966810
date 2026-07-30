@@ -13,7 +13,7 @@ export default function NaviguerButton({ isActive }: NaviguerButtonProps) {
       href="/naviguer"
       aria-label="Naviguer — carte et mode rando"
       aria-current={isActive ? 'page' : undefined}
-      className="flex flex-col items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 rounded-full"
+      className="flex flex-col items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 rounded-full"
     >
       {/* Elevated circle */}
       <div
@@ -22,8 +22,8 @@ export default function NaviguerButton({ isActive }: NaviguerButtonProps) {
           width: '52px',
           height: '52px',
           background: isActive
-            ? 'linear-gradient(135deg, #E4501C 0%, #cc3d10 100%)'
-            : 'linear-gradient(135deg, #E4501C 0%, #d44518 100%)',
+            ? 'linear-gradient(135deg, #17402C 0%, #cc3d10 100%)'
+            : 'linear-gradient(135deg, #17402C 0%, #d44518 100%)',
           boxShadow: isActive
             ? '0 4px 16px rgba(228, 80, 28, 0.55), 0 2px 4px rgba(0,0,0,0.15)'
             : '0 4px 12px rgba(228, 80, 28, 0.4), 0 2px 4px rgba(0,0,0,0.12)',
@@ -46,7 +46,7 @@ export default function NaviguerButton({ isActive }: NaviguerButtonProps) {
       </div>
       <span
         className="text-[10px] font-medium leading-none"
-        style={{ color: isActive ? '#E4501C' : '#7A8A7D' }}
+        style={{ color: isActive ? '#17402C' : '#7A8A7D' }}
       >
         Naviguer
       </span>

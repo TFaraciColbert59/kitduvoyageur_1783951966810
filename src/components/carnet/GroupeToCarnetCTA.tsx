@@ -14,7 +14,7 @@ export default function GroupeToCarnetCTA() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           {/* Left */}
           <div>
-            <span className="inline-block font-mono text-[9px] uppercase tracking-[0.25em] text-[#E4501C] bg-[#E4501C]/10 px-3 py-1 rounded-full mb-6">
+            <span className="inline-block font-mono text-[9px] uppercase tracking-[0.25em] text-[#17402C] bg-[#17402C]/10 px-3 py-1 rounded-full mb-6">
               + DU GROUPE AU CARNET
             </span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-2 leading-tight">
@@ -51,7 +51,7 @@ export default function GroupeToCarnetCTA() {
                   <div className="flex-1">
                     <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#E7E3D6]/40 mb-1">{step.label}</p>
                     <p className="text-sm text-[#E7E3D6]/90 font-sans mb-1">{step.desc}</p>
-                    <p className="font-mono text-[10px] text-[#E4501C]/80">{step.status}</p>
+                    <p className="font-mono text-[10px] text-[#17402C]/80">{step.status}</p>
                   </div>
                 </div>
               ))}

@@ -7,16 +7,17 @@ import { ProchainVoyage } from '@/lib/mock/compte-marceline';
 
 interface ProchainVoyageCardProps {
   voyage: ProchainVoyage;
+  compact?: boolean;
 }
 
-export default function ProchainVoyageCard({ voyage }: ProchainVoyageCardProps) {
+export default function ProchainVoyageCard({ voyage, compact = false }: ProchainVoyageCardProps) {
   return (
-    <div className="w-full bg-gradient-to-br from-[#1C2620] via-[#23332A] to-[#121A15] text-white rounded-[2rem] p-6 sm:p-8 shadow-2xl border border-white/10 relative overflow-hidden font-sans group">
+    <div className={`w-full bg-gradient-to-br from-[#1C2620] via-[#23332A] to-[#121A15] text-white p-6 sm:p-8 shadow-2xl border border-white/10 relative overflow-hidden font-sans group ${compact ? 'rounded-3xl' : 'rounded-[2rem]'}`}>
       
       {/* Background Subtle Gradient glow */}
       <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-[90px] pointer-events-none" />
 
-      <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      <div className={`relative z-10 flex justify-between gap-6 ${compact ? 'flex-col items-start' : 'flex-col md:flex-row items-start md:items-center'}`}>
         
         <div className="space-y-3 flex-1">
           {/* Badge */}
@@ -26,7 +27,7 @@ export default function ProchainVoyageCard({ voyage }: ProchainVoyageCardProps) 
           </div>
 
           {/* Title */}
-          <h3 className="font-display font-900 text-3xl sm:text-4xl text-white tracking-tight">
+          <h3 className={`font-display font-900 text-white tracking-tight ${compact ? 'text-2xl' : 'text-3xl sm:text-4xl'}`}>
             {voyage.title}
             <span className="font-serif italic font-normal text-emerald-200">
               {voyage.title_highlight}
@@ -39,8 +40,8 @@ export default function ProchainVoyageCard({ voyage }: ProchainVoyageCardProps) 
           </p>
 
           {/* Progress Bar & Tasks */}
-          <div className="space-y-1.5 pt-2 max-w-md">
-            <div className="flex justify-between items-center text-xs font-mono font-semibold text-white/80">
+          <div className="space-y-1.5 pt-2 w-full">
+            <div className={`flex justify-between items-center font-mono font-semibold text-white/80 ${compact ? 'text-[9px] flex-col items-start gap-1' : 'text-xs'}`}>
               <span>Préparation {voyage.preparation_percentage}% · {voyage.preparation_detail}</span>
               <span className="text-emerald-400">{voyage.tasks_left} tâches restantes</span>
             </div>
@@ -54,8 +55,8 @@ export default function ProchainVoyageCard({ voyage }: ProchainVoyageCardProps) 
         </div>
 
         {/* Right Countdown Box & CTA */}
-        <div className="flex flex-col items-start md:items-end justify-between gap-4 shrink-0 w-full md:w-auto pt-4 md:pt-0 border-t md:border-t-0 border-white/10">
-          <div className="bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl px-6 py-4 text-center min-w-[140px]">
+        <div className={`flex justify-between gap-4 shrink-0 border-white/10 ${compact ? 'flex-row items-center w-full pt-4 border-t' : 'flex-col items-start md:items-end w-full md:w-auto pt-4 md:pt-0 border-t md:border-t-0'}`}>
+          <div className={`bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl px-6 py-4 text-center ${compact ? 'flex-1' : 'min-w-[140px]'}`}>
             <span className="text-xs font-mono font-bold uppercase tracking-widest text-white/50 block">Countdown</span>
             <span className="font-mono font-900 text-4xl text-white block">J-<span className="text-emerald-400">{voyage.days_left}</span></span>
             <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-white/50 block mt-0.5">AVANT LE DÉPART</span>

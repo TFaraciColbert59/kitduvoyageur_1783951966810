@@ -113,8 +113,8 @@ export default function QuickStartQuiz() {
                 </div>
                 <button
                   onClick={() => setIsOpen(true)}
-                  className="flex-shrink-0 inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm text-white transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] min-h-[44px]"
-                  style={{ background: '#E4501C' }}
+                  className="flex-shrink-0 inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm text-white transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] min-h-[44px]"
+                  style={{ background: '#17402C' }}
                 >
                   ✨ Démarrer le quiz
                 </button>
@@ -134,7 +134,7 @@ export default function QuickStartQuiz() {
                   >
                     <div
                       className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${progress + 33}%`, background: '#E4501C' }}
+                      style={{ width: `${progress + 33}%`, background: '#17402C' }}
                     />
                   </div>
                   <span
@@ -145,7 +145,7 @@ export default function QuickStartQuiz() {
                   </span>
                   <button
                     onClick={handleReset}
-                    className="text-xs text-white/40 hover:text-white/70 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] rounded px-1 min-h-[36px]"
+                    className="text-xs text-white/40 hover:text-white/70 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] rounded px-1 min-h-[36px]"
                     aria-label="Recommencer le quiz"
                   >
                     ✕
@@ -164,7 +164,7 @@ export default function QuickStartQuiz() {
                     <button
                       key={opt.value}
                       onClick={() => handleAnswer(opt.value)}
-                      className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] min-h-[80px]"
+                      className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] min-h-[80px]"
                       style={{
                         background: 'rgba(255,255,255,0.05)',
                         border: '1px solid rgba(255,255,255,0.08)',
@@ -191,9 +191,9 @@ export default function QuickStartQuiz() {
           >
             <button
               onClick={() => setIsOpen(true)}
-              className="flex items-center gap-2 px-4 py-3 rounded-full font-semibold text-sm text-white shadow-lg transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 min-h-[44px]"
+              className="flex items-center gap-2 px-4 py-3 rounded-full font-semibold text-sm text-white shadow-lg transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 min-h-[44px]"
               style={{
-                background: '#E4501C',
+                background: '#17402C',
                 boxShadow: '0 4px 20px rgba(228,80,28,0.4)',
               }}
               aria-label="Ouvrir le quiz pour trouver votre aventure"
@@ -243,7 +243,7 @@ export default function QuickStartQuiz() {
                   >
                     <div
                       className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${progress + 33}%`, background: '#E4501C' }}
+                      style={{ width: `${progress + 33}%`, background: '#17402C' }}
                     />
                   </div>
                   <span
@@ -254,7 +254,7 @@ export default function QuickStartQuiz() {
                   </span>
                   <button
                     onClick={handleReset}
-                    className="text-white/40 hover:text-white/70 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] rounded p-1 min-h-[36px] min-w-[36px] flex items-center justify-center"
+                    className="text-white/40 hover:text-white/70 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] rounded p-1 min-h-[36px] min-w-[36px] flex items-center justify-center"
                     aria-label="Fermer le quiz"
                   >
                     ✕
@@ -274,7 +274,7 @@ export default function QuickStartQuiz() {
                     <button
                       key={opt.value}
                       onClick={() => handleAnswer(opt.value)}
-                      className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-100 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] min-h-[80px]"
+                      className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-100 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] min-h-[80px]"
                       style={{
                         background: 'rgba(255,255,255,0.05)',
                         border: '1px solid rgba(255,255,255,0.08)',

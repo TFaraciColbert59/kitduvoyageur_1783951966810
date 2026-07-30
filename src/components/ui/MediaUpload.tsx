@@ -107,8 +107,8 @@ export default function MediaUpload({
         onClick={() => !uploading && inputRef.current?.click()}
         className={`relative border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-200 ${
           uploading
-            ? 'border-[#E4501C]/50 bg-[#E4501C]/5 cursor-not-allowed'
-            : 'border-[#C8C3B0] hover:border-[#E4501C]/50 hover:bg-[#E4501C]/5 bg-[#F5F2E8]'
+            ? 'border-[#17402C]/50 bg-[#17402C]/5 cursor-not-allowed'
+            : 'border-[#C8C3B0] hover:border-[#17402C]/50 hover:bg-[#17402C]/5 bg-[#F5F2E8]'
         }`}
       >
         {preview && !uploading ? (
@@ -119,8 +119,8 @@ export default function MediaUpload({
           </div>
         ) : (
           <>
-            <div className="w-12 h-12 rounded-2xl bg-[#E4501C]/10 flex items-center justify-center mx-auto mb-3">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E4501C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <div className="w-12 h-12 rounded-2xl bg-[#17402C]/10 flex items-center justify-center mx-auto mb-3">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
@@ -135,7 +135,7 @@ export default function MediaUpload({
         {uploading && (
           <div className="absolute inset-x-0 bottom-0 h-1 bg-[#C8C3B0] rounded-b-2xl overflow-hidden">
             <div
-              className="h-full bg-[#E4501C] transition-all duration-300 rounded-b-2xl"
+              className="h-full bg-[#17402C] transition-all duration-300 rounded-b-2xl"
               style={{ width: `${progress}%` }}
             />
           </div>

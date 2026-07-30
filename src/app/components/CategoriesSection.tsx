@@ -39,7 +39,7 @@ const categories: Category[] = [
   id: '4', slug: 'vanlife', name: 'Vanlife', productCount: 134, minWeightG: 200,
   image: "https://images.unsplash.com/photo-1627386173348-4b19a6feefda",
   imageAlt: 'Intérieur aménagé d\'un van avec lit, cuisine compacte et grandes fenêtres sur paysage forestier',
-  color: '#E4501C'
+  color: '#17402C'
 },
 {
   id: '5', slug: 'photo', name: 'Photo Nature', productCount: 62, minWeightG: 450,

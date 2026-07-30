@@ -13,7 +13,7 @@ export default function HeroVoyage({ data }: HeroVoyageProps) {
       
       <div className="relative z-10 max-w-2xl">
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full mb-6 border border-white/20">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#E4501C] animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[#17402C] animate-pulse" />
           <span className="font-mono text-[10px] uppercase tracking-widest text-[#E7E3D6]">{data.meta.type} · {data.meta.participantsCount} PERSONNES · {data.meta.season}</span>
         </div>
         

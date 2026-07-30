@@ -48,13 +48,13 @@ export default function Hero() {
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono tracking-widest uppercase"
               style={{
                 background: 'rgba(228,80,28,0.15)',
-                color: '#E4501C',
+                color: '#17402C',
                 border: '1px solid rgba(228,80,28,0.3)',
                 fontFamily: 'var(--font-mono)',
               }}
             >
               <span
-                className="w-1.5 h-1.5 rounded-full bg-[#E4501C]"
+                className="w-1.5 h-1.5 rounded-full bg-[#17402C]"
                 style={{ animation: 'pulse 2s cubic-bezier(0.4,0,0.6,1) infinite' }}
                 aria-hidden="true"
               />
@@ -69,7 +69,7 @@ export default function Hero() {
             style={{ fontFamily: 'var(--font-display)' }}
           >
             Votre prochaine<br />
-            <span style={{ color: '#E4501C' }}>aventure commence</span><br />
+            <span style={{ color: '#17402C' }}>aventure commence</span><br />
             <span className="text-white/50">ici.</span>
           </h1>
 
@@ -119,7 +119,7 @@ export default function Hero() {
               <button
                 type="submit"
                 className="absolute right-2 top-1/2 -translate-y-1/2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent min-h-[44px] min-w-[44px]"
-                style={{ background: '#E4501C' }}
+                style={{ background: '#17402C' }}
                 aria-label="Lancer la recherche"
               >
                 <span className="hidden sm:inline">Rechercher</span>
@@ -164,7 +164,7 @@ export default function Hero() {
                 key={tag}
                 type="button"
                 onClick={() => handleSuggestion(tag.replace(/^[^\s]+\s/, ''))}
-                className="px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 active:scale-95 min-h-[36px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C]"
+                className="px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 active:scale-95 min-h-[36px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C]"
                 style={{
                   background: 'rgba(255,255,255,0.07)',
                   color: 'rgba(231,227,214,0.7)',

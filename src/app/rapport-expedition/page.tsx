@@ -7,6 +7,7 @@ import Icon from '@/components/ui/AppIcon';
 import { useChat } from '@/lib/hooks/useChat';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 interface GearItem {
   name: string;
@@ -412,8 +413,10 @@ export default function RapportExpeditionPage() {
   const totalBudgetDelta = reports.reduce((s, r) => s + r.budgetDelta, 0);
 
   return (
-    <div className="min-h-screen bg-dark-bg text-white">
-      <Header />
+    <>
+      <div className="hidden md:block">
+        <div className="min-h-screen bg-dark-bg text-white">
+          <Header />
 
       <main className="pt-20">
         {/* Hero */}
@@ -689,9 +692,380 @@ export default function RapportExpeditionPage() {
         <NewReportModal onClose={() => setShowNewReportModal(false)} onSave={handleSaveReport} />
       )}
 
+          {selectedReport && (
+            <ReportDetailModal report={selectedReport} onClose={() => setSelectedReport(null)} />
+          )}
+        </div>
+      </div>
+
+      {/* ── MOBILE ── */}
+      <div className="block md:hidden">
+        <MobilePageShell>
+          {/* Hero */}
+          <div style={{ padding: '16px', borderBottom: '1px solid rgba(11,31,23,0.06)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 10px', background: 'rgba(23,64,44,0.08)', borderRadius: '999px', width: 'fit-content', marginBottom: '10px' }}>
+              <span style={{ fontSize: '10px', color: '#17402C', fontFamily: 'ui-monospace, monospace', letterSpacing: '0.05em' }}>PHASE 5 &mdash; RAPPORT POST-EXP&Eacute;DITION</span>
+            </div>
+            <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0B1F17', margin: '0 0 4px 0', lineHeight: 1.2 }}>
+              Bilan automatique de chaque aventure
+            </h1>
+            <p style={{ fontSize: '13px', color: '#6B7A72', margin: '0 0 16px 0', lineHeight: 1.4 }}>
+              &Eacute;quipement utilis&eacute;, budget r&eacute;el vs estim&eacute;, retour IA personnalis&eacute;.
+            </p>
+            <button
+              onClick={() => setShowNewReportModal(true)}
+              style={{
+                width: '100%',
+                padding: '12px',
+                background: '#17402C',
+                color: '#fff',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: 500,
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+              }}
+            >
+              + Nouveau rapport
+            </button>
+          </div>
+
+          {/* Stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', padding: '12px 16px' }}>
+            <div style={{ padding: '12px', background: '#FBFAF6', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)' }}>
+              <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>Exp&eacute;ditions</p>
+              <p style={{ fontSize: '20px', fontWeight: 700, color: '#17402C', margin: 0, fontFamily: 'ui-monospace, monospace' }}>{reports.length}</p>
+            </div>
+            <div style={{ padding: '12px', background: '#FBFAF6', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)' }}>
+              <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>Score moyen</p>
+              <p style={{ fontSize: '20px', fontWeight: 700, color: '#0B1F17', margin: 0, fontFamily: 'ui-monospace, monospace' }}>{reports.length > 0 ? `${avgScore}/100` : '\u2014'}</p>
+            </div>
+            <div style={{ padding: '12px', background: '#FBFAF6', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)' }}>
+              <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>Budget total</p>
+              <p style={{ fontSize: '20px', fontWeight: 700, color: totalBudgetDelta > 0 ? '#DC2626' : '#059669', margin: 0, fontFamily: 'ui-monospace, monospace' }}>
+                {totalBudgetDelta !== 0 ? `${totalBudgetDelta > 0 ? '+' : ''}${totalBudgetDelta}\u20ac` : '\u2014'}
+              </p>
+            </div>
+            <div style={{ padding: '12px', background: '#FBFAF6', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)' }}>
+              <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>&Eacute;quipements</p>
+              <p style={{ fontSize: '20px', fontWeight: 700, color: '#0B1F17', margin: 0, fontFamily: 'ui-monospace, monospace' }}>
+                {userGear.length > 0 ? `${(totalWeight / 1000).toFixed(1)} kg` : '\u2014'}
+              </p>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div style={{ display: 'flex', gap: '4px', padding: '0 16px' }}>
+            <button
+              onClick={() => setActiveTab('historique')}
+              style={{
+                flex: 1,
+                padding: '10px',
+                background: activeTab === 'historique' ? '#17402C' : '#F4F1EA',
+                color: activeTab === 'historique' ? '#fff' : '#6B7A72',
+                borderRadius: '10px',
+                fontSize: '12px',
+                fontWeight: 500,
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              Mes exp&eacute;ditions
+            </button>
+            <button
+              onClick={() => setActiveTab('ia')}
+              style={{
+                flex: 1,
+                padding: '10px',
+                background: activeTab === 'ia' ? '#17402C' : '#F4F1EA',
+                color: activeTab === 'ia' ? '#fff' : '#6B7A72',
+                borderRadius: '10px',
+                fontSize: '12px',
+                fontWeight: 500,
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              Analyse IA
+            </button>
+          </div>
+
+          {/* ── HISTORIQUE TAB (Mobile) ── */}
+          {activeTab === 'historique' && (
+            <div style={{ padding: '16px' }}>
+              {savedSuccess && (
+                <div style={{ marginBottom: '12px', padding: '10px', background: '#ECFDF5', borderRadius: '10px', border: '1px solid #A7F3D0', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '14px', color: '#059669' }}>&#10003;</span>
+                  <p style={{ fontSize: '12px', color: '#065F46', margin: 0 }}>Rapport cr&eacute;&eacute; avec succ&egrave;s ! +75 points fid&eacute;lit&eacute;.</p>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <p style={{ fontSize: '15px', fontWeight: 600, color: '#0B1F17', margin: 0 }}>
+                  Mes exp&eacute;ditions ({reports.length})
+                </p>
+                <button
+                  onClick={() => setShowNewReportModal(true)}
+                  style={{
+                    padding: '8px 14px',
+                    background: '#17402C',
+                    color: '#fff',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  + Nouveau
+                </button>
+              </div>
+
+              {!user && (
+                <div style={{ textAlign: 'center', padding: '32px 16px' }}>
+                  <p style={{ fontSize: '13px', color: '#6B7A72', margin: 0 }}>Connectez-vous pour voir vos rapports d&apos;exp&eacute;dition.</p>
+                </div>
+              )}
+
+              {loadingReports && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {[1, 2].map(i => (
+                    <div key={i} style={{ height: '120px', background: '#F4F1EA', borderRadius: '12px', animation: 'pulse 2s infinite' }} />
+                  ))}
+                </div>
+              )}
+
+              {!loadingReports && user && reports.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '32px 16px' }}>
+                  <p style={{ fontSize: '16px', fontWeight: 600, color: '#0B1F17', margin: '0 0 4px 0' }}>Aucune exp&eacute;dition enregistr&eacute;e</p>
+                  <p style={{ fontSize: '12px', color: '#6B7A72', margin: '0 0 16px 0' }}>Cr&eacute;ez votre premier rapport.</p>
+                  <button
+                    onClick={() => setShowNewReportModal(true)}
+                    style={{
+                      padding: '12px 24px',
+                      background: '#17402C',
+                      color: '#fff',
+                      borderRadius: '12px',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cr&eacute;er mon premier rapport
+                  </button>
+                </div>
+              )}
+
+              {!loadingReports && user && reports.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {reports.slice(0, 10).map((report) => (
+                    <div
+                      key={report.id}
+                      onClick={() => setSelectedReport(report)}
+                      style={{
+                        background: '#FBFAF6',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(11,31,23,0.06)',
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <div style={{ height: '120px', background: `url(${report.image}) center/cover`, position: 'relative' }}>
+                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }} />
+                        <div style={{ position: 'absolute', top: '8px', right: '8px', padding: '2px 8px', background: 'rgba(0,0,0,0.5)', borderRadius: '999px' }}>
+                          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>{report.type}</span>
+                        </div>
+                        <div style={{ position: 'absolute', bottom: '8px', left: '12px', right: '12px' }}>
+                          <p style={{ fontSize: '14px', fontWeight: 700, color: '#fff', margin: '0 0 2px 0' }}>{report.destination}</p>
+                          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', margin: 0 }}>{report.country} &middot; {report.date} &middot; {report.duration}</p>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(23,64,44,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span style={{ fontSize: '12px', fontWeight: 700, color: '#17402C' }}>{report.score}</span>
+                          </div>
+                          <span style={{ fontSize: '10px', color: '#6B7A72' }}>Score</span>
+                        </div>
+                        <span style={{ fontSize: '11px', fontWeight: 500, color: report.budgetDelta > 0 ? '#DC2626' : report.budgetDelta < 0 ? '#059669' : '#6B7A72' }}>
+                          {report.budgetDelta !== 0 ? `${report.budgetDelta > 0 ? '+' : ''}${report.budgetDelta}\u20ac vs budget` : 'Budget non renseign\u00e9'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {reports.length > 10 && (
+                    <p style={{ fontSize: '11px', color: '#6B7A72', textAlign: 'center', fontFamily: 'Georgia, serif', fontStyle: 'italic', margin: 0 }}>
+                      +{reports.length - 10} autre(s) exp&eacute;dition(s)
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── IA TAB (Mobile) ── */}
+          {activeTab === 'ia' && (
+            <div style={{ padding: '16px' }}>
+              <div style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)', overflow: 'hidden' }}>
+                {/* Header */}
+                <div style={{ padding: '12px', borderBottom: '1px solid rgba(11,31,23,0.06)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#17402C', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '13px' }}>
+                    &#10024;
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17', margin: 0 }}>Analyse IA</p>
+                    <p style={{ fontSize: '10px', color: '#6B7A72', margin: '1px 0 0 0' }}>Gemini &middot; Analyse personnalis&eacute;e</p>
+                  </div>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#059669', flexShrink: 0 }} />
+                </div>
+
+                {/* Profile context */}
+                <div style={{ padding: '12px', borderBottom: '1px solid rgba(11,31,23,0.06)' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                    <div style={{ padding: '8px', background: '#F4F1EA', borderRadius: '8px', textAlign: 'center' }}>
+                      <p style={{ fontSize: '16px', fontWeight: 700, color: '#17402C', margin: '0 0 2px 0', fontFamily: 'ui-monospace, monospace' }}>{reports.length}</p>
+                      <p style={{ fontSize: '9px', color: '#6B7A72', margin: 0 }}>Exp&eacute;ditions</p>
+                    </div>
+                    <div style={{ padding: '8px', background: '#F4F1EA', borderRadius: '8px', textAlign: 'center' }}>
+                      <p style={{ fontSize: '16px', fontWeight: 700, color: '#0B1F17', margin: '0 0 2px 0', fontFamily: 'ui-monospace, monospace' }}>{avgScore > 0 ? `${avgScore}/100` : '\u2014'}</p>
+                      <p style={{ fontSize: '9px', color: '#6B7A72', margin: 0 }}>Score</p>
+                    </div>
+                    <div style={{ padding: '8px', background: '#F4F1EA', borderRadius: '8px', textAlign: 'center' }}>
+                      <p style={{ fontSize: '16px', fontWeight: 700, color: '#0B1F17', margin: '0 0 2px 0', fontFamily: 'ui-monospace, monospace' }}>{userGear.length}</p>
+                      <p style={{ fontSize: '9px', color: '#6B7A72', margin: 0 }}>&Eacute;quipements</p>
+                    </div>
+                  </div>
+                  {reports.length === 0 && (
+                    <div style={{ marginTop: '8px', padding: '8px', background: '#FEF3C7', borderRadius: '8px', border: '1px solid #FDE68A' }}>
+                      <p style={{ fontSize: '11px', color: '#92400E', margin: 0 }}>Cr&eacute;ez votre premier rapport pour obtenir une analyse personnalis&eacute;e.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Chat messages */}
+                {chatMessages.length > 0 && (
+                  <div style={{ padding: '12px', maxHeight: '240px', overflowY: 'auto', borderBottom: '1px solid rgba(11,31,23,0.06)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {chatMessages.map((msg, i) => (
+                      <div key={i} style={{ display: 'flex', gap: '8px', flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
+                        <div style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '6px',
+                          background: msg.role === 'user' ? '#17402C' : 'rgba(23,64,44,0.1)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          fontSize: '10px',
+                          color: msg.role === 'user' ? '#fff' : '#17402C',
+                        }}>
+                          {msg.role === 'user' ? 'U' : 'AI'}
+                        </div>
+                        <div style={{
+                          maxWidth: '75%',
+                          padding: '8px 12px',
+                          borderRadius: '10px',
+                          fontSize: '12px',
+                          lineHeight: 1.4,
+                          background: msg.role === 'user' ? '#17402C' : '#F4F1EA',
+                          color: msg.role === 'user' ? '#fff' : '#0B1F17',
+                        }}>
+                          {msg.content}
+                        </div>
+                      </div>
+                    ))}
+                    {isLoading && (
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'rgba(23,64,44,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: '#17402C' }}>AI</div>
+                        <div style={{ padding: '8px 12px', borderRadius: '10px', background: '#F4F1EA', display: 'flex', gap: '3px', alignItems: 'center' }}>
+                          <span style={{ width: '5px', height: '5px', background: '#17402C', borderRadius: '50%', animation: 'bounce 1s infinite' }} />
+                          <span style={{ width: '5px', height: '5px', background: '#17402C', borderRadius: '50%', animation: 'bounce 1s infinite 150ms' }} />
+                          <span style={{ width: '5px', height: '5px', background: '#17402C', borderRadius: '50%', animation: 'bounce 1s infinite 300ms' }} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Input */}
+                <div style={{ padding: '12px' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="text"
+                      value={userInput}
+                      onChange={(e) => setUserInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                      placeholder="Posez une question..."
+                      style={{
+                        flex: 1,
+                        padding: '10px 12px',
+                        background: '#F4F1EA',
+                        border: '1px solid rgba(11,31,23,0.06)',
+                        borderRadius: '10px',
+                        fontSize: '12px',
+                        color: '#0B1F17',
+                        outline: 'none',
+                      }}
+                    />
+                    <button
+                      onClick={handleSend}
+                      disabled={isLoading || !userInput.trim()}
+                      style={{
+                        padding: '10px 14px',
+                        background: '#17402C',
+                        color: '#fff',
+                        borderRadius: '10px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        opacity: isLoading || !userInput.trim() ? 0.5 : 1,
+                      }}
+                    >
+                      &#10148;
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+                    {['Que retirer de mon kit ?', 'Quelle destination ensuite ?', 'Comment optimiser mon budget ?'].map((prompt) => (
+                      <button
+                        key={prompt}
+                        onClick={() => setUserInput(prompt)}
+                        style={{
+                          padding: '4px 10px',
+                          background: '#F4F1EA',
+                          border: '1px solid rgba(11,31,23,0.06)',
+                          borderRadius: '999px',
+                          fontSize: '10px',
+                          color: '#6B7A72',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {prompt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Footer spacer */}
+          <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
+        </MobilePageShell>
+      </div>
+
+      {/* Modals (shown on both views) */}
+      {showNewReportModal && (
+        <NewReportModal onClose={() => setShowNewReportModal(false)} onSave={handleSaveReport} />
+      )}
+
       {selectedReport && (
         <ReportDetailModal report={selectedReport} onClose={() => setSelectedReport(null)} />
       )}
-    </div>
+    </>
   );
 }

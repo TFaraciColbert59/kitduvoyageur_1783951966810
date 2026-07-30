@@ -22,7 +22,7 @@ const TILES: BentoTile[] = [
     subtitle: 'Configurez votre équipement parfait en 2 minutes avec notre IA',
     href: '/ai-configurator',
     emoji: '🎒',
-    accent: '#E4501C',
+    accent: '#17402C',
     bg: 'linear-gradient(135deg, #1C2620 0%, #2a3d30 100%)',
     span: 'large',
     badge: 'IA · 2 min',
@@ -146,7 +146,7 @@ export default function BentoGrid() {
           {/* Large tile — col-span-1 row-span-2 */}
           <Link
             href={largeTile.href}
-            className="group relative rounded-2xl overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2"
+            className="group relative rounded-2xl overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2"
             style={{
               background: largeTile.bg,
               gridRow: 'span 2',
@@ -209,7 +209,7 @@ export default function BentoGrid() {
             <Link
               key={tile.id}
               href={tile.href}
-              className="group relative rounded-2xl overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 transition-transform duration-150 hover:-translate-y-0.5"
+              className="group relative rounded-2xl overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 transition-transform duration-150 hover:-translate-y-0.5"
               style={{ background: tile.bg, minHeight: 150 }}
               aria-label={`${tile.title} — ${tile.subtitle}`}
             >
@@ -254,7 +254,7 @@ export default function BentoGrid() {
             role="region"
             aria-label="Modules — défiler horizontalement ou utiliser les touches fléchées"
             tabIndex={0}
-            className="flex gap-3 overflow-x-auto pb-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 rounded-lg"
+            className="flex gap-3 overflow-x-auto pb-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 rounded-lg"
             style={{
               scrollSnapType: 'x mandatory',
               WebkitOverflowScrolling: 'touch',
@@ -266,7 +266,7 @@ export default function BentoGrid() {
               <Link
                 key={tile.id}
                 href={tile.href}
-                className="flex-none rounded-2xl overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] active:scale-[0.98] transition-transform duration-100"
+                className="flex-none rounded-2xl overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] active:scale-[0.98] transition-transform duration-100"
                 style={{
                   width: '85vw',
                   maxWidth: 320,
@@ -334,11 +334,11 @@ export default function BentoGrid() {
                   });
                   setActiveIdx(i);
                 }}
-                className="rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] min-h-[20px] min-w-[20px] flex items-center justify-center"
+                className="rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] min-h-[20px] min-w-[20px] flex items-center justify-center"
                 style={{
                   width: activeIdx === i ? 20 : 6,
                   height: 6,
-                  background: activeIdx === i ? '#E4501C' : 'rgba(28,38,32,0.25)',
+                  background: activeIdx === i ? '#17402C' : 'rgba(28,38,32,0.25)',
                 }}
               />
             ))}

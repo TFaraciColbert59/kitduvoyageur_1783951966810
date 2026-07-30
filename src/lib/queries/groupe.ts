@@ -6,13 +6,13 @@ export async function getGroupeComplet(groupeId: string) {
     const supabase = createClient();
 
     // Find group by ID or by name
-    let query = supabase.from('groupes').select('*');
+    let query = supabase.from('travel_groups').select('*');
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(groupeId);
     
     if (isUuid) {
       query = query.eq('id', groupeId);
     } else {
-      query = query.eq('nom', 'Traversée de la Chartreuse');
+      query = query.eq('name', 'Traversée de la Chartreuse');
     }
 
     const { data: groupe } = await query.single();
@@ -147,25 +147,25 @@ export async function getGroupeComplet(groupeId: string) {
     return {
       id: realGroupId,
       meta: {
-        titlePrefix: groupe.nom.split(' ')[0] || 'Traversée',
-        titleSuffix: groupe.nom.split(' ').slice(1).join(' ') || 'de la Chartreuse',
+        titlePrefix: groupe.name.split(' ')[0] || 'Traversée',
+        titleSuffix: groupe.name.split(' ').slice(1).join(' ') || 'de la Chartreuse',
         description: groupe.description || mockChartreuseData.meta.description,
         type: 'VOYAGE COLLABORATIF',
-        participantsCount: groupe.places_max || 6,
+        participantsCount: groupe.max_members || 6,
         season: 'AUTOMNE 2026',
-        durationDays: groupe.nb_nuits ? groupe.nb_nuits + 1 : 3,
-        distanceKm: Number(groupe.distance_km) || 27.4,
-        elevationGain: groupe.denivele_m || 1620,
-        daysLeft: 16,
-        startDate: groupe.date_debut ? new Date(groupe.date_debut).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '12 oct.',
-        endDate: groupe.date_fin ? new Date(groupe.date_fin).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '14 oct.',
-        fullStartDate: 'Vendredi 12 octobre',
-        massif: groupe.massif || 'Chartreuse · Isère',
-        difficulty: `${groupe.difficulte || 'Moyenne'} · dénivelé`,
-        budgetEstimate: `≈ ${Math.round((groupe.budget_prevu_cents || 18000) / 200)}€/pers`,
-        privacy: groupe.confidentialite === 'public' ? 'Groupe public' : 'Groupe privé',
-        meetingPoint: groupe.lieu_rdv || 'Saint-Pierre-de-Chartreuse — rendez-vous à 9h à l\'église',
-        progression: groupe.progression_pct || 60,
+        durationDays: groupe.departure_date && groupe.return_date ? Math.round((new Date(groupe.return_date).getTime() - new Date(groupe.departure_date).getTime()) / (1000 * 60 * 60 * 24)) : 3,
+        distanceKm: Number(groupe.group_xp) || 27.4,
+        elevationGain: groupe.optimization_score || 1620,
+        daysLeft: groupe.departure_date ? Math.round((new Date(groupe.departure_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 16,
+        startDate: groupe.departure_date ? new Date(groupe.departure_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '12 oct.',
+        endDate: groupe.return_date ? new Date(groupe.return_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '14 oct.',
+        fullStartDate: groupe.departure_date ? new Date(groupe.departure_date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Vendredi 12 octobre',
+        massif: groupe.destination || 'Chartreuse · Isère',
+        difficulty: `${groupe.group_level || 'Moyenne'} · dénivelé`,
+        budgetEstimate: `≈ ${groupe.budget_target || 85}€/pers`,
+        privacy: groupe.visibility === 'public' ? 'Groupe public' : 'Groupe privé',
+        meetingPoint: 'Point de rendez-vous à définir',
+        progression: 60,
       },
       tasks: formattedTasks,
       equipment: formattedEquipment,

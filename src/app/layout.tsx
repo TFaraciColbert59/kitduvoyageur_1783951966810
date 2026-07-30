@@ -8,12 +8,12 @@ import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
 import ErrorBoundaryWrapper from '@/components/ErrorBoundaryWrapper';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
-import BottomTabBar from '@/components/mobile-nav/BottomTabBar';
-import TopBar from '@/components/mobile-nav/TopBar';
-import InstallPrompt from '@/components/mobile-nav/InstallPrompt';
+import MobileNavWrapper from '@/components/mobile-nav/MobileNavWrapper';
+
 import CookieConsentBanner from '@/components/CookieConsentBanner';
 import { getOrganizationSchema, getWebsiteSchema } from '@/lib/seo-utils';
 import ReactQueryProvider from '@/components/ReactQueryProvider';
+import PageTransition from '@/components/ui/PageTransition';
 
 
 
@@ -208,15 +208,15 @@ export default function RootLayout({
                   {/* Skip navigation for accessibility */}
                   <a
                     href="#main-content"
-                    className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-[#E4501C] focus:text-white focus:rounded-lg focus:font-semibold focus:text-sm"
+                    className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-[#17402C] focus:text-white focus:rounded-lg focus:font-semibold focus:text-sm"
                   >
                     Aller au contenu principal
                   </a>
                   {/* Mobile navigation — hidden on desktop (md+) */}
-                  <TopBar />
-                  <main id="main-content">{children}</main>
-                  <BottomTabBar />
-                  <InstallPrompt />
+                  <MobileNavWrapper />
+                  <main id="main-content">
+                    <PageTransition>{children}</PageTransition>
+                  </main>
                   <CookieConsentBanner />
                 </ReactQueryProvider>
               </ErrorBoundaryWrapper>

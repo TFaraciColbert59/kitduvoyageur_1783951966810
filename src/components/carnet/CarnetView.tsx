@@ -11,6 +11,7 @@ import KitSouvenirCard from '@/components/carnet/KitSouvenirCard';
 import RandonneesSouvenirCard from '@/components/carnet/RandonneesSouvenirCard';
 import GroupeToCarnetCTA from '@/components/carnet/GroupeToCarnetCTA';
 import CarnetFooter from '@/components/carnet/CarnetFooter';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { CarnetData } from '@/lib/mock/carnet-chartreuse';
 
 function downloadMockGPX(name: string) {
@@ -41,6 +42,9 @@ export default function CarnetView({ data }: CarnetViewProps) {
   };
 
   return (
+    <>
+      {/* ── DESKTOP ── */}
+      <div className="hidden md:block">
     <div className="min-h-screen bg-[#E7E3D6] font-sans">
       <Header />
 
@@ -110,5 +114,92 @@ export default function CarnetView({ data }: CarnetViewProps) {
       <GroupeToCarnetCTA />
       <CarnetFooter />
     </div>
+      </div>
+
+      {/* ── MOBILE ── */}
+      <div className="block md:hidden">
+        <MobilePageShell>
+          <div style={{ padding: '0 0 calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }}>
+            {/* Hero */}
+            <div style={{ background: '#1C2620', padding: '24px 16px 20px', color: '#fff' }}>
+              <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', marginBottom: '8px' }}>
+                Carnet de voyage
+              </p>
+              <h1 style={{ fontSize: '26px', fontWeight: '700', lineHeight: 1.15, marginBottom: '8px' }}>
+                {data.meta.titleLine1}<br />
+                <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#8BAF7C', fontWeight: 400 }}>{data.meta.titleLine2}</em>
+              </h1>
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', marginBottom: '16px' }}>
+                {data.meta.subtitleLine1}
+              </p>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {data.stats && (
+                  <>
+                    <span style={{ background: 'rgba(255,255,255,0.1)', padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontFamily: 'ui-monospace, monospace' }}>
+                      📏 {data.stats.distance_km} km
+                    </span>
+                    <span style={{ background: 'rgba(255,255,255,0.1)', padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontFamily: 'ui-monospace, monospace' }}>
+                      ⛰️ {data.stats.denivele_m} m
+                    </span>
+                    <span style={{ background: 'rgba(255,255,255,0.1)', padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontFamily: 'ui-monospace, monospace' }}>
+                      📅 {data.stats.duree_jours} jours
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Moments */}
+            {data.moments.length > 0 && (
+              <div style={{ padding: '20px 16px' }}>
+                <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1C2620', marginBottom: '12px' }}>
+                  Les <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>moments</em>
+                </h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {data.moments.map(m => (
+                    <div key={m.id} style={{ background: '#fff', borderRadius: '14px', padding: '14px', border: '1px solid #E8E4D8' }}>
+                      <p style={{ fontSize: '14px', fontWeight: '600', color: '#1C2620', margin: '0 0 4px' }}>{m.title}</p>
+                      <p style={{ fontSize: '12px', color: '#5C6B5E', margin: 0, lineHeight: 1.4 }}>{m.description || m.content}</p>
+                      {m.coordinates && (
+                        <p style={{ fontSize: '10px', color: '#7A8A7D', fontFamily: 'ui-monospace, monospace', marginTop: '6px' }}>
+                          📍 {m.coordinates.lat.toFixed(4)}, {m.coordinates.lng.toFixed(4)}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Kit souvenir */}
+            {data.kit.items.length > 0 && (
+              <div style={{ padding: '0 16px 20px' }}>
+                <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1C2620', marginBottom: '12px' }}>
+                  Le <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>kit</em>
+                </h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {data.kit.items.slice(0, 5).map(item => (
+                    <div key={item.name} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: '#fff', borderRadius: '12px', border: '1px solid #E8E4D8', fontSize: '13px' }}>
+                      <span style={{ fontWeight: '600', color: '#1C2620' }}>{item.name}</span>
+                      <span style={{ color: '#5C6B5E' }}>{item.weightG}g</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Footer */}
+            <div style={{ background: '#132219', padding: '24px 16px 12px' }}>
+              <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 12px' }}>
+                {data.meta.titleLine1} — {data.meta.subtitleLine1}
+              </p>
+              <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+                © Le Kit du Voyageur
+              </p>
+            </div>
+          </div>
+        </MobilePageShell>
+      </div>
+    </>
   );
 }

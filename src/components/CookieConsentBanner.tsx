@@ -89,7 +89,7 @@ export default function CookieConsentBanner() {
       role="region"
       aria-label="Gestion des cookies"
       aria-describedby="cookie-banner-desc"
-      className="fixed bottom-0 left-0 right-0 z-[9999] pointer-events-none"
+      className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none"
       style={{ paddingBottom: 'max(0px, env(safe-area-inset-bottom))' }}
     >
       <div
@@ -99,8 +99,8 @@ export default function CookieConsentBanner() {
         {!showDetails ? (
           <div className="p-4 sm:p-5">
             <div className="flex items-start gap-3 mb-3">
-              <div className="w-7 h-7 rounded-lg bg-[#E4501C]/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <svg className="w-3.5 h-3.5 text-[#E4501C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <div className="w-7 h-7 rounded-lg bg-[#17402C]/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg className="w-3.5 h-3.5 text-[#17402C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.955 11.955 0 003 12c0 6.627 5.373 12 12 12s12-5.373 12-12c0-2.017-.5-3.92-1.382-5.593" />
                 </svg>
               </div>
@@ -108,7 +108,7 @@ export default function CookieConsentBanner() {
                 <h2 className="font-semibold text-white text-sm mb-0.5">Nous respectons votre vie privée</h2>
                 <p id="cookie-banner-desc" className="text-white/55 text-xs leading-relaxed">
                   Cookies nécessaires au fonctionnement + cookies analytiques (Google Analytics) avec votre accord.{' '}
-                  <Link href="/cookies" className="text-[#E4501C] hover:underline">
+                  <Link href="/cookies" className="text-[#17402C] hover:underline">
                     En savoir plus
                   </Link>
                 </p>
@@ -117,7 +117,7 @@ export default function CookieConsentBanner() {
             <div className="flex flex-row gap-2">
               <button
                 onClick={acceptAll}
-                className="flex-1 bg-[#E4501C] hover:bg-[#cc3d10] text-white px-3 py-2 rounded-xl text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[#E4501C] focus:ring-offset-2 focus:ring-offset-[#1C2620] min-h-[36px]"
+                className="flex-1 bg-[#17402C] hover:bg-[#cc3d10] text-white px-3 py-2 rounded-xl text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[#17402C] focus:ring-offset-2 focus:ring-offset-[#1C2620] min-h-[36px]"
               >
                 Tout accepter
               </button>
@@ -156,7 +156,7 @@ export default function CookieConsentBanner() {
                   <p className="text-white text-xs font-medium">🔒 Nécessaires</p>
                   <p className="text-white/40 text-[10px] mt-0.5">Authentification, panier — toujours actifs</p>
                 </div>
-                <div className="w-9 h-5 bg-[#E4501C] rounded-full flex items-center justify-end pr-0.5 cursor-not-allowed opacity-60 flex-shrink-0">
+                <div className="w-9 h-5 bg-[#17402C] rounded-full flex items-center justify-end pr-0.5 cursor-not-allowed opacity-60 flex-shrink-0">
                   <div className="w-4 h-4 bg-white rounded-full" />
                 </div>
               </div>
@@ -168,7 +168,7 @@ export default function CookieConsentBanner() {
                 </div>
                 <button
                   onClick={() => setAnalytics(!analytics)}
-                  className={`w-9 h-5 rounded-full flex items-center transition-all flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-[#E4501C] focus:ring-offset-1 focus:ring-offset-[#1C2620] ${analytics ? 'bg-[#E4501C] justify-end pr-0.5' : 'bg-white/15 justify-start pl-0.5'}`}
+                  className={`w-9 h-5 rounded-full flex items-center transition-all flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-[#17402C] focus:ring-offset-1 focus:ring-offset-[#1C2620] ${analytics ? 'bg-[#17402C] justify-end pr-0.5' : 'bg-white/15 justify-start pl-0.5'}`}
                   aria-pressed={analytics}
                   aria-label="Activer les cookies analytiques"
                 >
@@ -183,7 +183,7 @@ export default function CookieConsentBanner() {
                 </div>
                 <button
                   onClick={() => setMarketing(!marketing)}
-                  className={`w-9 h-5 rounded-full flex items-center transition-all flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-[#E4501C] focus:ring-offset-1 focus:ring-offset-[#1C2620] ${marketing ? 'bg-[#E4501C] justify-end pr-0.5' : 'bg-white/15 justify-start pl-0.5'}`}
+                  className={`w-9 h-5 rounded-full flex items-center transition-all flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-[#17402C] focus:ring-offset-1 focus:ring-offset-[#1C2620] ${marketing ? 'bg-[#17402C] justify-end pr-0.5' : 'bg-white/15 justify-start pl-0.5'}`}
                   aria-pressed={marketing}
                   aria-label="Activer les cookies marketing"
                 >
@@ -195,7 +195,7 @@ export default function CookieConsentBanner() {
             <div className="flex gap-2">
               <button
                 onClick={saveCustom}
-                className="flex-1 bg-[#E4501C] hover:bg-[#cc3d10] text-white px-3 py-2 rounded-xl text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[#E4501C] focus:ring-offset-2 focus:ring-offset-[#1C2620] min-h-[36px]"
+                className="flex-1 bg-[#17402C] hover:bg-[#cc3d10] text-white px-3 py-2 rounded-xl text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[#17402C] focus:ring-offset-2 focus:ring-offset-[#1C2620] min-h-[36px]"
               >
                 Enregistrer
               </button>

@@ -4,7 +4,7 @@
  * 1200x630px with design tokens:
  * - Background: #E7E3D6 (papier carte)
  * - Headline: "Le Kit du Voyageur" in Space Grotesk bold #1C2620 (encre pin)
- * - Accent bar: thin #E4501C (orange balise)
+ * - Accent bar: thin #17402C (orange balise)
  */
 
 export const OG_IMAGE_PATH = '/assets/images/og-image.png';

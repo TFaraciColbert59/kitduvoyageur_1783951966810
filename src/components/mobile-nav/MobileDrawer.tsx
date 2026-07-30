@@ -1,0 +1,402 @@
+'use client';
+
+import React, { useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import LkvIcon from '@/components/ui/LkvIcon';
+import { useAuth } from '@/contexts/AuthContext';
+
+interface MobileDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+interface NavItem {
+  label: string;
+  href: string;
+  icon: 'home' | 'mountain' | 'bag' | 'doc' | 'user' | 'search' | 'chevron-left' | 'chevron-right' | 'heart' | 'bookmark' | 'bell' | 'map-pin' | 'star' | 'minus' | 'plus' | 'close' | 'menu' | 'arrow-right' | 'lock' | 'filter';
+}
+
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
+
+const SECTIONS: NavSection[] = [
+  {
+    label: 'Naviguer',
+    items: [
+      { label: 'Aventures', icon: 'mountain', href: '/explorer' },
+      { label: 'Boutique', icon: 'bag', href: '/boutique' },
+      { label: 'Carte', icon: 'map-pin', href: '/carte-interactive' },
+      { label: 'Carnets', icon: 'doc', href: '/carnets' },
+    ],
+  },
+  {
+    label: 'Mon compte',
+    items: [
+      { label: 'Profil', icon: 'user', href: '/compte' },
+      { label: 'Inventaire', icon: 'bag', href: '/inventaire' },
+      { label: 'Fidélité', icon: 'star', href: '/fidelite' },
+      { label: 'Alertes', icon: 'bell', href: '/alertes' },
+    ],
+  },
+  {
+    label: 'Maison',
+    items: [
+      { label: 'Accueil', icon: 'home', href: '/' },
+      { label: 'Paramètres', icon: 'lock', href: '/compte' },
+      { label: 'Aide', icon: 'heart', href: '/faq' },
+    ],
+  },
+];
+
+const sectionLabelStyle: React.CSSProperties = {
+  fontSize: '11px',
+  fontWeight: 600,
+  color: '#8B978F',
+  letterSpacing: '0.04em',
+  textTransform: 'uppercase',
+  padding: '16px 20px 8px',
+};
+
+const itemStyle: React.CSSProperties = {
+  padding: '8px 20px',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '12px',
+  color: '#0B1F17',
+  fontSize: '15px',
+  fontWeight: 400,
+  textDecoration: 'none',
+  cursor: 'pointer',
+  transition: 'background 0.15s ease',
+};
+
+const scrimStyle: React.CSSProperties = {
+  position: 'fixed',
+  inset: 0,
+  background: 'rgba(11,31,23,0.55)',
+  backdropFilter: 'blur(2px)',
+  WebkitBackdropFilter: 'blur(2px)',
+  zIndex: 50,
+};
+
+const panelStyle: React.CSSProperties = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  bottom: 0,
+  width: '88%',
+  maxWidth: '360px',
+  background: '#FBFAF6',
+  zIndex: 51,
+  boxShadow: '20px 0 60px rgba(11,31,23,0.25)',
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden',
+};
+
+const scrollableContentStyle: React.CSSProperties = {
+  flex: 1,
+  overflowY: 'auto',
+  WebkitOverflowScrolling: 'touch',
+};
+
+export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
+  const pathname = usePathname();
+  const { user, profile } = useAuth();
+
+  // Lock body scroll when drawer is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Scrim */}
+          <motion.div
+            key="drawer-scrim"
+            style={scrimStyle}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={onClose}
+            aria-hidden="true"
+          />
+
+          {/* Panel */}
+          <motion.div
+            key="drawer-panel"
+            style={panelStyle}
+            initial={{ x: '-100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '-100%' }}
+            transition={{
+              type: 'spring',
+              damping: 28,
+              stiffness: 300,
+              mass: 0.8,
+            }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation principale"
+          >
+            <div style={scrollableContentStyle}>
+              {/* Header */}
+              <header
+                style={{
+                  background: '#0B1F17',
+                  color: '#fff',
+                  padding: '40px 20px 22px',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+              >
+                {/* Glow circle decoration */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: '-50px',
+                    right: '-30px',
+                    width: '180px',
+                    height: '180px',
+                    borderRadius: '50%',
+                    background:
+                      'radial-gradient(circle, rgba(168,200,160,0.4) 0%, transparent 65%)',
+                  }}
+                  aria-hidden="true"
+                />
+
+                {/* Close button */}
+                <button
+                  onClick={onClose}
+                  style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '999px',
+                    background: 'rgba(255,255,255,0.14)',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                  aria-label="Fermer le menu"
+                >
+                  <LkvIcon name="close" size={14} />
+                </button>
+
+                {/* Logo + Brand */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    marginBottom: '22px',
+                    position: 'relative',
+                    zIndex: 2,
+                  }}
+                >
+                  <LkvIcon name="mountain" size={28} color="#A8C8A0" />
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                      Le Kit du Voyageur
+                    </div>
+                    <em
+                      style={{
+                        display: 'block',
+                        fontFamily: 'Georgia, serif',
+                        fontStyle: 'italic',
+                        color: '#C6DCBE',
+                        fontSize: '12px',
+                      }}
+                    >
+                      édition automne · 2026
+                    </em>
+                  </div>
+                </div>
+
+                {/* User section */}
+                {user ? (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      position: 'relative',
+                      zIndex: 2,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '999px',
+                        background: '#A8C8A0',
+                        color: '#06120C',
+                        fontFamily: 'Georgia, serif',
+                        fontStyle: 'italic',
+                        fontSize: '18px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '2px solid rgba(255,255,255,0.2)',
+                      }}
+                    >
+                      {(profile?.full_name?.[0] || user?.email?.[0] || '?').toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '15px', fontWeight: 500 }}>
+                        {profile?.full_name || 'Voyageur'}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '11px',
+                          color: 'rgba(255,255,255,0.6)',
+                          fontFamily: 'ui-monospace, monospace',
+                        }}
+                      >
+                        MEMBRE · NIVEAU {profile?.level || 1}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ position: 'relative', zIndex: 2 }}>
+                    <Link
+                      href="/connexion"
+                      style={{
+                        color: '#A8C8A0',
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        textDecoration: 'none',
+                      }}
+                      onClick={onClose}
+                    >
+                      Se connecter
+                    </Link>
+                  </div>
+                )}
+              </header>
+
+              {/* Navigation Sections */}
+              <nav>
+                {SECTIONS.map((section) => (
+                  <div key={section.label}>
+                    <div style={sectionLabelStyle}>{section.label}</div>
+                    {section.items.map((item) => {
+                      const isActive =
+                        pathname === item.href ||
+                        (item.href !== '/' && pathname?.startsWith(item.href));
+
+                      return (
+                        <Link
+                          key={item.href + item.label}
+                          href={item.href}
+                          onClick={onClose}
+                          style={{
+                            ...itemStyle,
+                            background: isActive
+                              ? 'rgba(11,31,23,0.04)'
+                              : 'transparent',
+                            fontWeight: isActive ? 500 : 400,
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background =
+                              'rgba(11,31,23,0.03)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = isActive
+                              ? 'rgba(11,31,23,0.04)'
+                              : 'transparent';
+                          }}
+                        >
+                          <LkvIcon
+                            name={item.icon}
+                            size={20}
+                            color={isActive ? '#17402C' : '#0B1F17'}
+                          />
+                          <span style={{ flex: 1 }}>{item.label}</span>
+                          <LkvIcon
+                            name="chevron-right"
+                            size={16}
+                            color="#AEB7B1"
+                          />
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ))}
+              </nav>
+
+              {/* Footer */}
+              <footer
+                style={{
+                  padding: '14px 16px 20px',
+                  borderTop: '1px solid rgba(11,31,23,0.06)',
+                  background: '#F4F1EA',
+                }}
+              >
+                <Link
+                  href="/abonnements"
+                  onClick={onClose}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '12px',
+                    background: '#FBFAF6',
+                    borderRadius: '14px',
+                    border: '1px solid rgba(11,31,23,0.05)',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <LkvIcon name="star" size={20} color="#17402C" />
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17' }}>
+                      Premium Voyageur
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#6B7A72' }}>
+                      Débloquez toutes les fonctionnalités
+                    </div>
+                  </div>
+                  <LkvIcon
+                    name="arrow-right"
+                    size={16}
+                    color="#17402C"
+                  />
+                </Link>
+                <div
+                  style={{
+                    fontSize: '10px',
+                    color: '#8B978F',
+                    textAlign: 'center',
+                    marginTop: '14px',
+                    fontFamily: 'ui-monospace, monospace',
+                  }}
+                >
+                  v.2026.4 · GRENOBLE · FR
+                </div>
+              </footer>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}

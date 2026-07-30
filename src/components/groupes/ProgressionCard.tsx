@@ -29,7 +29,7 @@ export default function ProgressionCard({ progression }: ProgressionCardProps) {
       
       <div className="relative h-2 bg-black/20 rounded-full mb-8 overflow-hidden">
         <motion.div 
-          className="absolute top-0 left-0 h-full bg-[#E4501C] rounded-full"
+          className="absolute top-0 left-0 h-full bg-[#17402C] rounded-full"
           initial={{ width: 0 }}
           animate={{ width: `${progression}%` }}
           transition={{ duration: 1, ease: "easeOut" }}
@@ -43,7 +43,7 @@ export default function ProgressionCard({ progression }: ProgressionCardProps) {
         {steps.map((step) => (
           <div key={step.id} className="flex flex-col items-center gap-2">
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold z-10 transition-colors
-              ${step.completed ? 'bg-[#E4501C] text-white' : step.active ? 'bg-white text-[#1C2620] ring-4 ring-white/20' : 'bg-[#1C2620] text-white/50 border border-white/20'}`}
+              ${step.completed ? 'bg-[#17402C] text-white' : step.active ? 'bg-white text-[#1C2620] ring-4 ring-white/20' : 'bg-[#1C2620] text-white/50 border border-white/20'}`}
             >
               {step.completed ? <Icon name="CheckIcon" size={12} /> : step.id}
             </div>

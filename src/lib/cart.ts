@@ -32,14 +32,14 @@ export function saveCart(items: CartItem[]): void {
   localStorage.setItem(CART_KEY, JSON.stringify(items));
 }
 
-export function addToCart(item: Omit<CartItem, 'quantity'>): CartItem[] {
+export function addToCart(item: Omit<CartItem, 'quantity'>, quantity: number = 1): CartItem[] {
   const cart = getCart();
   const existing = cart.find((i) => i.id === item.id);
   let updated: CartItem[];
   if (existing) {
-    updated = cart.map((i) => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
+    updated = cart.map((i) => i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i);
   } else {
-    updated = [...cart, { ...item, quantity: 1 }];
+    updated = [...cart, { ...item, quantity }];
   }
   saveCart(updated);
   return updated;

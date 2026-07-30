@@ -40,7 +40,7 @@ export default function FinalCTA() {
           style={{ fontFamily: 'var(--font-display)' }}
         >
           Votre prochaine<br />
-          <span style={{ color: '#E4501C' }}>expédition commence</span><br />
+          <span style={{ color: '#17402C' }}>expédition commence</span><br />
           <span className="text-white/40">maintenant.</span>
         </h2>
 
@@ -58,9 +58,9 @@ export default function FinalCTA() {
         >
           <Link
             href="/ai-configurator"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-semibold text-base text-white transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E4501C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] min-h-[52px]"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-semibold text-base text-white transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] min-h-[52px]"
             style={{
-              background: '#E4501C',
+              background: '#17402C',
               boxShadow: '0 8px 32px rgba(228,80,28,0.3)',
             }}
           >

@@ -74,12 +74,12 @@ export default function AIExplorerSearch({ onSearch }: AIExplorerSearchProps) {
         <div
           className={`relative flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all duration-300 ${
             focused
-              ? 'bg-[#1a2820]/95 border-[#E4501C]/60 shadow-lg shadow-[#E4501C]/10'
+              ? 'bg-[#1a2820]/95 border-[#17402C]/60 shadow-lg shadow-[#17402C]/10'
               : 'bg-[#1a2820]/80 border-white/10 hover:border-white/20'
           }`}
         >
           {/* AI spark icon */}
-          <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-[#E4501C]/15 border border-[#E4501C]/30 flex items-center justify-center">
+          <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-[#17402C]/15 border border-[#17402C]/30 flex items-center justify-center">
             <span className="text-sm">✨</span>
           </div>
 
@@ -108,7 +108,7 @@ export default function AIExplorerSearch({ onSearch }: AIExplorerSearchProps) {
 
           <button
             type="submit"
-            className="flex-shrink-0 w-8 h-8 rounded-xl bg-[#E4501C] flex items-center justify-center hover:bg-[#cc3d10] transition-colors"
+            className="flex-shrink-0 w-8 h-8 rounded-xl bg-[#17402C] flex items-center justify-center hover:bg-[#cc3d10] transition-colors"
           >
             <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -131,7 +131,7 @@ export default function AIExplorerSearch({ onSearch }: AIExplorerSearchProps) {
                 activeSuggestion === i ? 'bg-white/8 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white'
               }`}
             >
-              <span className="text-[#E4501C]/60 text-xs">→</span>
+              <span className="text-[#17402C]/60 text-xs">→</span>
               <span className="text-sm">{s}</span>
             </button>
           ))}

@@ -23,7 +23,7 @@ export default function RandonneesSouvenirCard({ randonnees }: RandonneesSouveni
         <h3 className="font-display text-lg text-[#1C2620]">
           Randonnées <em className="font-serif italic">parcourues</em>
         </h3>
-        <a href="#" className="text-xs font-medium text-[#E4501C] hover:underline whitespace-nowrap">Tout →</a>
+        <a href="#" className="text-xs font-medium text-[#17402C] hover:underline whitespace-nowrap">Tout →</a>
       </div>
       <p className="text-sm text-[#1C2620]/60 mb-6 font-sans">Trois traces enregistrées, trois exportables au format GPX pour la fois prochaine.</p>
       <div className="space-y-3">

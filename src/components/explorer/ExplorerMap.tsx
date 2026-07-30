@@ -20,8 +20,8 @@ const TOPO_TILE = {
 };
 
 const OSM_TILE = {
-  url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
 };
 
 type TileMode = 'topo' | 'osm';
@@ -43,6 +43,11 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
     if (!containerRef.current || mapRef.current || typeof window === 'undefined') return;
 
     import('leaflet').then((L) => {
+      // Clear any pre-existing Leaflet container instance
+      if ((containerRef.current as any)?._leaflet_id) {
+        (containerRef.current as any)._leaflet_id = null;
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
@@ -78,9 +83,12 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
       if (mapRef.current) {
         try { mapRef.current.remove(); } catch { /* ignore */ }
         mapRef.current = null;
-        setMapInstance(null);
-        setMapReady(false);
       }
+      if (containerRef.current) {
+        (containerRef.current as any)._leaflet_id = null;
+      }
+      setMapInstance(null);
+      setMapReady(false);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -103,7 +111,7 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
         const loc: [number, number] = [latitude, longitude];
         setLocationState('located');
         onLocationUpdate?.(loc);
-        if (mapRef.current) {
+        if (mapRef.current && latitude != null && longitude != null && isFinite(latitude) && isFinite(longitude)) {
           mapRef.current.flyTo([latitude, longitude], 13, { duration: 1.5 });
         }
       },
@@ -194,7 +202,9 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
         const { longitude, latitude } = position.coords;
         setLocationState('located');
         onLocationUpdate?.([latitude, longitude]);
-        mapRef.current!.flyTo([latitude, longitude], 13, { duration: 1.5 });
+        if (isFinite(latitude) && isFinite(longitude)) {
+          mapRef.current!.flyTo([latitude, longitude], 13, { duration: 1.5 });
+        }
       },
       () => setLocationState('denied'),
       { enableHighAccuracy: true, timeout: 8000 }
@@ -238,24 +248,28 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
       )}
 
       {/* Tile switcher */}
-      <div className="absolute z-[1000] flex flex-col gap-1.5" style={{ bottom: '80px', right: '12px' }}>
-        <button
-          onClick={() => setTileMode('topo')}
-          className={`w-9 h-9 rounded-xl border text-sm transition-all shadow-sm ${
-            tileMode === 'topo' ? 'bg-[#1C2620] border-[#1C2620] text-white' : 'bg-white border-[#E4E0D4] text-[#1C2620]/60 hover:border-[#1C2620]/40'
-          }`}
-          title="Topographique"
-        >
-          🗺
-        </button>
+      <div className="absolute z-[1000] flex items-center p-1 bg-white/95 backdrop-blur-sm border border-[#E4E0D4] rounded-2xl shadow-md" style={{ bottom: '80px', right: '12px' }}>
         <button
           onClick={() => setTileMode('osm')}
-          className={`w-9 h-9 rounded-xl border text-sm transition-all shadow-sm ${
-            tileMode === 'osm' ? 'bg-[#1C2620] border-[#1C2620] text-white' : 'bg-white border-[#E4E0D4] text-[#1C2620]/60 hover:border-[#1C2620]/40'
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl transition-all ${
+            tileMode === 'osm' ? 'bg-[#1C2620] text-white shadow-sm' : 'text-[#7A8A7D] hover:bg-[#F5F2EA] hover:text-[#1C2620]'
           }`}
-          title="OpenStreetMap"
         >
-          🧭
+          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path><path d="M9 3v12"></path><path d="M15 6v12"></path>
+          </svg>
+          Carte
+        </button>
+        <button
+          onClick={() => setTileMode('topo')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl transition-all ${
+            tileMode === 'topo' ? 'bg-[#1C2620] text-white shadow-sm' : 'text-[#7A8A7D] hover:bg-[#F5F2EA] hover:text-[#1C2620]'
+          }`}
+        >
+          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
+          </svg>
+          Relief
         </button>
       </div>
 

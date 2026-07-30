@@ -1,7 +1,4 @@
-// src/components/ui/Card.tsx
 import React from 'react';
-import { theme } from '@/design/tokens';
-import clsx from 'clsx';
 
 type CardVariant = 'default' | 'elevated' | 'outlined';
 
@@ -11,21 +8,40 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
 }
 
+const VARIANT_STYLES: Record<CardVariant, React.CSSProperties> = {
+  default: {
+    background: '#FAF8F5',
+    border: '1px solid #E8E4D8',
+    borderRadius: '8px',
+    boxShadow: '0 2px 6px rgba(11,31,23,0.06), 0 4px 12px rgba(11,31,23,0.05)',
+  },
+  elevated: {
+    background: '#FAF8F5',
+    border: '1px solid #E8E4D8',
+    borderRadius: '8px',
+    boxShadow: '0 6px 16px rgba(11,31,23,0.08), 0 12px 32px rgba(11,31,23,0.06)',
+  },
+  outlined: {
+    background: '#FAF8F5',
+    border: '1px solid #E8E4D8',
+    borderRadius: '8px',
+    boxShadow: 'none',
+  },
+};
+
 export const Card: React.FC<CardProps> = ({
   variant = 'default',
   className,
   children,
+  style,
   ...rest
 }) => {
-  const base = 'rounded-lg bg-white border border-transparent transition-shadow';
-  const variantStyles = {
-    default: `bg-${theme.colors.surface} border-${theme.colors.border} shadow-${theme.shadows.low}`,
-    elevated: `bg-${theme.colors.surface} border-${theme.colors.border} shadow-${theme.shadows.medium}`,
-    outlined: `bg-${theme.colors.surface} border-${theme.colors.border} shadow-none`,
-  }[variant];
-
   return (
-    <div className={clsx(base, variantStyles, className)} {...rest}>
+    <div
+      style={{ ...VARIANT_STYLES[variant], ...style }}
+      className={className}
+      {...rest}
+    >
       {children}
     </div>
   );

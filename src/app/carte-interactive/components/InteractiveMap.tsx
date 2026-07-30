@@ -135,7 +135,7 @@ interface TrailDetailPanelProps {
 }
 
 function _TrailDetailPanel({ trail, isSaved, isSaving, onClose, onSave, onShare, onDownloadGPX }: TrailDetailPanelProps) {
-  const color = DIFFICULTY_COLORS[trail.difficulty] || '#E4501C';
+  const color = DIFFICULTY_COLORS[trail.difficulty] || '#17402C';
   const diffLabel = DIFFICULTY_LABELS[trail.difficulty] || trail.difficulty;
   const activityType = trail.activity_type || trail.trail_type || 'hiking';
 
@@ -323,7 +323,7 @@ function _TrailDetailPanel({ trail, isSaved, isSaving, onClose, onSave, onShare,
 
           <button
             onClick={handleCreateAdventure}
-            className="flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium bg-[#E4501C]/15 border border-[#E4501C]/30 text-[#E4501C] hover:bg-[#E4501C]/25 transition-all"
+            className="flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium bg-[#17402C]/15 border border-[#17402C]/30 text-[#17402C] hover:bg-[#17402C]/25 transition-all"
           >
             <span className="text-base">🤖</span>
             <span>IA</span>
@@ -333,7 +333,7 @@ function _TrailDetailPanel({ trail, isSaved, isSaving, onClose, onSave, onShare,
         {/* Main CTA */}
         <button
           onClick={handleCreateAdventure}
-          className="w-full bg-gradient-to-r from-[#E4501C] to-[#f97316] text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2.5 hover:opacity-90 transition-opacity shadow-lg shadow-[#E4501C]/25 text-sm"
+          className="w-full bg-gradient-to-r from-[#17402C] to-[#f97316] text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2.5 hover:opacity-90 transition-opacity shadow-lg shadow-[#17402C]/25 text-sm"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />

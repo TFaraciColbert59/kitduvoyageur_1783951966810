@@ -2,7 +2,8 @@
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import Header from '@/components/Header';
-
+import Footer from '@/components/Footer';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -234,10 +235,8 @@ export default function MessageriePage() {
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${activeConv}` },
         async (payload) => {
           const newMsg = payload.new as Record<string, unknown>;
-          // Don't add if it's our own message (already added optimistically)
           if (newMsg.sender_id === user.id) return;
 
-          // Fetch sender info
           const { data: senderData } = await supabase
             .from('user_profiles')
             .select('full_name')
@@ -297,7 +296,6 @@ export default function MessageriePage() {
       }).select().single();
 
       if (saved) {
-        // Replace temp message with real one
         setConversations((prev) => prev.map((c) =>
           c.id === conv.id ? {
             ...c,
@@ -307,7 +305,6 @@ export default function MessageriePage() {
       }
     } catch (err) {
       console.error('Send message error:', err);
-      // Remove temp message on error
       setConversations((prev) => prev.map((c) =>
         c.id === conv.id ? { ...c, messages: c.messages.filter((m) => m.id !== tempMsg.id) } : c
       ));
@@ -354,142 +351,310 @@ export default function MessageriePage() {
   const typeIcon: Record<string, string> = { '1to1': '👤', group: '👥', club: '🏕️', event: '📅' };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Header />
-      <main className="pt-16 flex-1 flex flex-col">
-        <div className="flex-1 flex overflow-hidden" style={{ height: 'calc(100dvh - 64px)' }}>
-          {/* Sidebar — hidden on mobile when a conversation is active */}
-          <div className={`${activeConv ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-shrink-0 border-r border-border flex-col bg-card`}>
-            <div className="p-4 border-b border-border">
-              <div className="flex items-center justify-between mb-3">
-                <h1 className="font-display font-700 text-lg">Messagerie</h1>
-                <button
-                  onClick={() => setShowNewConvModal(true)}
-                  className="p-2 rounded-lg bg-primary text-white hover:opacity-90 transition-opacity"
-                  title="Nouvelle conversation"
-                >
-                  <Icon name="PlusIcon" size={16} variant="outline" />
-                </button>
-              </div>
-              <div className="relative">
-                <Icon name="MagnifyingGlassIcon" size={14} variant="outline" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Rechercher..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto">
-              {!user ? (
-                <div className="p-6 text-center text-muted-foreground">
-                  <Icon name="ChatBubbleLeftRightIcon" size={32} className="mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Connectez-vous pour accéder à la messagerie</p>
-                </div>
-              ) : loading ? (
-                <div className="p-4 space-y-3">
-                  {[1, 2, 3].map((i) => <div key={i} className="h-16 rounded-xl bg-muted animate-pulse" />)}
-                </div>
-              ) : filteredConvs.length === 0 ? (
-                <div className="p-6 text-center text-muted-foreground">
-                  <Icon name="ChatBubbleLeftRightIcon" size={32} className="mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Aucune conversation</p>
-                  <button onClick={() => setShowNewConvModal(true)} className="mt-3 text-xs text-primary hover:underline">
-                    Démarrer une conversation
-                  </button>
-                </div>
-              ) : (
-                filteredConvs.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => setActiveConv(c.id)}
-                    className={`w-full flex items-center gap-3 p-4 hover:bg-muted transition-colors text-left border-b border-border/50 ${activeConv === c.id ? 'bg-primary/5 border-l-2 border-l-primary' : ''}`}
-                  >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center flex-shrink-0 text-sm font-700">
-                      {c.avatar.length <= 2 ? c.avatar : c.avatar}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-0.5">
-                        <p className="text-sm font-600 text-foreground truncate">{c.name}</p>
-                        <span className="text-[10px] text-muted-foreground flex-shrink-0 ml-2">{c.lastTime}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-[10px] text-muted-foreground">{typeIcon[c.type]}</span>
-                        <p className="text-xs text-muted-foreground truncate">{c.lastMessage || 'Aucun message'}</p>
-                      </div>
-                    </div>
-                    {c.unread > 0 && (
-                      <span className="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-700 flex items-center justify-center flex-shrink-0">
-                        {c.unread}
-                      </span>
-                    )}
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Chat area — full width on mobile */}
-          <div className={`${!activeConv ? 'hidden md:flex' : 'flex'} flex-1 flex-col min-w-0`}>
-            {!conv ? (
-              <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                <div className="text-center">
-                  <Icon name="ChatBubbleLeftRightIcon" size={48} className="mx-auto mb-3 opacity-20" />
-                  <p className="font-display font-700 text-foreground mb-1">Sélectionnez une conversation</p>
-                  <p className="text-sm">Choisissez une conversation dans la liste ou créez-en une nouvelle.</p>
-                </div>
-              </div>
-            ) : (
-              <>
-                {/* Chat header */}
-                <div className="flex items-center gap-3 p-4 border-b border-border bg-card">
-                  {/* Back button on mobile */}
-                  <button
-                    onClick={() => setActiveConv(null)}
-                    className="md:hidden p-2 -ml-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                    aria-label="Retour à la liste"
-                  >
-                    <Icon name="ChevronLeftIcon" size={20} variant="outline" />
-                  </button>
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center text-sm font-700">
-                    {conv.avatar}
+    <>
+      {/* ── DESKTOP ── */}
+      <div className="hidden md:block">
+        <div className="min-h-screen bg-background flex flex-col">
+          <Header />
+          <main className="pt-16 flex-1 flex flex-col">
+            <div className="flex-1 flex overflow-hidden" style={{ height: 'calc(100dvh - 64px)' }}>
+              {/* Sidebar — hidden on mobile when a conversation is active */}
+              <div className={`${activeConv ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-shrink-0 border-r border-border flex-col bg-card`}>
+                <div className="p-4 border-b border-border">
+                  <div className="flex items-center justify-between mb-3">
+                    <h1 className="font-display font-700 text-lg">Messagerie</h1>
+                    <button
+                      onClick={() => setShowNewConvModal(true)}
+                      className="p-2 rounded-lg bg-primary text-white hover:opacity-90 transition-opacity"
+                      title="Nouvelle conversation"
+                    >
+                      <Icon name="PlusIcon" size={16} variant="outline" />
+                    </button>
                   </div>
-                  <div className="flex-1">
-                    <p className="font-600 text-foreground">{conv.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {conv.members ? `${conv.members.toLocaleString()} membres` : typeIcon[conv.type] + ' ' + (conv.type === '1to1' ? 'Message privé' : conv.type === 'group' ? 'Groupe' : conv.type === 'club' ? 'Club' : 'Événement')}
-                    </p>
+                  <div className="relative">
+                    <Icon name="MagnifyingGlassIcon" size={14} variant="outline" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      type="text"
+                      placeholder="Rechercher..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-8 pr-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto">
+                  {!user ? (
+                    <div className="p-6 text-center text-muted-foreground">
+                      <Icon name="ChatBubbleLeftRightIcon" size={32} className="mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">Connectez-vous pour accéder à la messagerie</p>
+                    </div>
+                  ) : loading ? (
+                    <div className="p-4 space-y-3">
+                      {[1, 2, 3].map((i) => <div key={i} className="h-16 rounded-xl bg-muted animate-pulse" />)}
+                    </div>
+                  ) : filteredConvs.length === 0 ? (
+                    <div className="p-6 text-center text-muted-foreground">
+                      <Icon name="ChatBubbleLeftRightIcon" size={32} className="mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">Aucune conversation</p>
+                      <button onClick={() => setShowNewConvModal(true)} className="mt-3 text-xs text-primary hover:underline">
+                        Démarrer une conversation
+                      </button>
+                    </div>
+                  ) : (
+                    filteredConvs.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => setActiveConv(c.id)}
+                        className={`w-full flex items-center gap-3 p-4 hover:bg-muted transition-colors text-left border-b border-border/50 ${activeConv === c.id ? 'bg-primary/5 border-l-2 border-l-primary' : ''}`}
+                      >
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center flex-shrink-0 text-sm font-700">
+                          {c.avatar.length <= 2 ? c.avatar : c.avatar}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <p className="text-sm font-600 text-foreground truncate">{c.name}</p>
+                            <span className="text-[10px] text-muted-foreground flex-shrink-0 ml-2">{c.lastTime}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] text-muted-foreground">{typeIcon[c.type]}</span>
+                            <p className="text-xs text-muted-foreground truncate">{c.lastMessage || 'Aucun message'}</p>
+                          </div>
+                        </div>
+                        {c.unread > 0 && (
+                          <span className="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-700 flex items-center justify-center flex-shrink-0">
+                            {c.unread}
+                          </span>
+                        )}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Chat area — full width on mobile */}
+              <div className={`${!activeConv ? 'hidden md:flex' : 'flex'} flex-1 flex-col min-w-0`}>
+                {!conv ? (
+                  <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                    <div className="text-center">
+                      <Icon name="ChatBubbleLeftRightIcon" size={48} className="mx-auto mb-3 opacity-20" />
+                      <p className="font-display font-700 text-foreground mb-1">Sélectionnez une conversation</p>
+                      <p className="text-sm">Choisissez une conversation dans la liste ou créez-en une nouvelle.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Chat header */}
+                    <div className="flex items-center gap-3 p-4 border-b border-border bg-card">
+                      <button
+                        onClick={() => setActiveConv(null)}
+                        className="md:hidden p-2 -ml-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                        aria-label="Retour à la liste"
+                      >
+                        <Icon name="ChevronLeftIcon" size={20} variant="outline" />
+                      </button>
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center text-sm font-700">
+                        {conv.avatar}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-600 text-foreground">{conv.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {conv.members ? `${conv.members.toLocaleString()} membres` : typeIcon[conv.type] + ' ' + (conv.type === '1to1' ? 'Message privé' : conv.type === 'group' ? 'Groupe' : conv.type === 'club' ? 'Club' : 'Événement')}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Messages */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                      {conv.messages.length === 0 ? (
+                        <div className="flex items-center justify-center h-full text-muted-foreground">
+                          <div className="text-center">
+                            <Icon name="ChatBubbleOvalLeftIcon" size={32} className="mx-auto mb-2 opacity-30" />
+                            <p className="text-sm">Aucun message. Soyez le premier à écrire !</p>
+                          </div>
+                        </div>
+                      ) : (
+                        conv.messages.map((msg) => (
+                          <div key={msg.id} className={`flex gap-3 ${msg.isMe ? 'flex-row-reverse' : ''}`}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-700 flex-shrink-0 ${msg.isMe ? 'bg-primary text-white' : 'bg-muted text-foreground'}`}>
+                              {msg.senderAvatar}
+                            </div>
+                            <div className={`max-w-[70%] ${msg.isMe ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+                              {!msg.isMe && <p className="text-[10px] text-muted-foreground font-medium">{msg.sender}</p>}
+                              {msg.type === 'gps' && msg.gpsData ? (
+                                <GPSBubble data={msg.gpsData} />
+                              ) : (
+                                <div className={`px-4 py-2.5 rounded-2xl text-sm ${msg.isMe ? 'bg-primary text-white rounded-tr-sm' : 'bg-card border border-border text-foreground rounded-tl-sm'}`}>
+                                  {msg.content}
+                                </div>
+                              )}
+                              <p className="text-[10px] text-muted-foreground">{msg.timestamp}</p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                      <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Input */}
+                    <div className="p-4 border-t border-border bg-card">
+                      <div className="flex gap-3 items-end">
+                        <div className="flex-1 relative">
+                          <textarea
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSend();
+                              }
+                            }}
+                            placeholder="Écrivez un message... (Entrée pour envoyer)"
+                            rows={1}
+                            className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+                            style={{ minHeight: '44px', maxHeight: '120px' }}
+                          />
+                        </div>
+                        <button
+                          onClick={handleSend}
+                          disabled={sending || !message.trim() || !user}
+                          className="p-3 bg-primary text-white rounded-xl hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                        >
+                          <Icon name="PaperAirplaneIcon" size={18} variant="outline" />
+                        </button>
+                      </div>
+                      {!user && (
+                        <p className="text-xs text-muted-foreground mt-2 text-center">Connectez-vous pour envoyer des messages</p>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+
+      {/* ── MOBILE ── */}
+      <div className="block md:hidden">
+        <MobilePageShell>
+          <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
+            {!activeConv ? (
+              /* Conversation List */
+              <>
+                <div style={{ padding: '16px 16px 8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                    <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0B1F17' }}>Messagerie</h1>
+                    <button
+                      onClick={() => setShowNewConvModal(true)}
+                      style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#17402C', color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}
+                      title="Nouvelle conversation"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text"
+                      placeholder="Rechercher..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      style={{ width: '100%', padding: '10px 12px 10px 32px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '13px', color: '#0B1F17', outline: 'none', boxSizing: 'border-box' }}
+                    />
+                    <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#6B7A72', fontSize: '12px' }}>🔍</span>
+                  </div>
+                </div>
+
+                <div style={{ flex: 1, overflowY: 'auto' }}>
+                  {!user ? (
+                    <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '32px', color: '#6B7A72', marginBottom: '8px', opacity: 0.3 }}>💬</div>
+                      <p style={{ fontSize: '13px', color: '#6B7A72' }}>Connectez-vous pour accéder à la messagerie</p>
+                    </div>
+                  ) : loading ? (
+                    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} style={{ height: '64px', borderRadius: '12px', background: '#F4F1EA', opacity: 0.5 }} />
+                      ))}
+                    </div>
+                  ) : filteredConvs.length === 0 ? (
+                    <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '32px', color: '#6B7A72', marginBottom: '8px', opacity: 0.3 }}>💬</div>
+                      <p style={{ fontSize: '13px', color: '#6B7A72', marginBottom: '12px' }}>Aucune conversation</p>
+                      <button onClick={() => setShowNewConvModal(true)} style={{ fontSize: '12px', color: '#17402C', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'inherit' }}>
+                        Démarrer une conversation
+                      </button>
+                    </div>
+                  ) : (
+                    filteredConvs.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => setActiveConv(c.id)}
+                        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', border: 'none', borderBottom: '1px solid rgba(11,31,23,0.04)', background: activeConv === c.id ? 'rgba(23,64,44,0.04)' : 'transparent', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                      >
+                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, rgba(23,64,44,0.2), rgba(45,107,74,0.2))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: '#0B1F17', flexShrink: 0 }}>
+                          {c.avatar.length <= 2 ? c.avatar : c.avatar.slice(0, 2)}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+                            <span style={{ fontSize: '10px', color: '#6B7A72', flexShrink: 0, marginLeft: '8px' }}>{c.lastTime}</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ fontSize: '10px', color: '#6B7A72' }}>{typeIcon[c.type]}</span>
+                            <span style={{ fontSize: '12px', color: '#6B7A72', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.lastMessage || 'Aucun message'}</span>
+                          </div>
+                        </div>
+                        {c.unread > 0 && (
+                          <span style={{ minWidth: '20px', height: '20px', borderRadius: '50%', background: '#17402C', color: '#fff', fontSize: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{c.unread}</span>
+                        )}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </>
+            ) : null}
+
+            {activeConv && conv ? (
+              /* Chat View */
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 'calc(100dvh - 52px - env(safe-area-inset-top) - 62px - env(safe-area-inset-bottom) - 24px)' }}>
+                {/* Chat header */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', borderBottom: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6' }}>
+                  <button onClick={() => setActiveConv(null)} style={{ padding: '6px', borderRadius: '8px', border: 'none', background: 'transparent', cursor: 'pointer', color: '#6B7A72', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    ←
+                  </button>
+                  <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg, rgba(23,64,44,0.2), rgba(45,107,74,0.2))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, flexShrink: 0 }}>
+                    {conv.avatar.length <= 2 ? conv.avatar : conv.avatar.slice(0, 2)}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17' }}>{conv.name}</div>
+                    <div style={{ fontSize: '11px', color: '#6B7A72' }}>
+                      {conv.members ? `${conv.members.toLocaleString()} membres` : (conv.type === '1to1' ? 'Message privé' : conv.type === 'group' ? 'Groupe' : conv.type === 'club' ? 'Club' : 'Événement')}
+                    </div>
                   </div>
                 </div>
 
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {conv.messages.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
-                      <div className="text-center">
-                        <Icon name="ChatBubbleOvalLeftIcon" size={32} className="mx-auto mb-2 opacity-30" />
-                        <p className="text-sm">Aucun message. Soyez le premier à écrire !</p>
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ textAlign: 'center', color: '#6B7A72' }}>
+                        <div style={{ fontSize: '28px', marginBottom: '8px', opacity: 0.3 }}>💬</div>
+                        <p style={{ fontSize: '13px' }}>Aucun message. Soyez le premier à écrire !</p>
                       </div>
                     </div>
                   ) : (
                     conv.messages.map((msg) => (
-                      <div key={msg.id} className={`flex gap-3 ${msg.isMe ? 'flex-row-reverse' : ''}`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-700 flex-shrink-0 ${msg.isMe ? 'bg-primary text-white' : 'bg-muted text-foreground'}`}>
+                      <div key={msg.id} style={{ display: 'flex', gap: '10px', flexDirection: msg.isMe ? 'row-reverse' : 'row' }}>
+                        <div style={{ width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, flexShrink: 0, background: msg.isMe ? '#17402C' : '#F4F1EA', color: msg.isMe ? '#fff' : '#0B1F17' }}>
                           {msg.senderAvatar}
                         </div>
-                        <div className={`max-w-[70%] ${msg.isMe ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
-                          {!msg.isMe && <p className="text-[10px] text-muted-foreground font-medium">{msg.sender}</p>}
-                          {msg.type === 'gps' && msg.gpsData ? (
-                            <GPSBubble data={msg.gpsData} />
-                          ) : (
-                            <div className={`px-4 py-2.5 rounded-2xl text-sm ${msg.isMe ? 'bg-primary text-white rounded-tr-sm' : 'bg-card border border-border text-foreground rounded-tl-sm'}`}>
-                              {msg.content}
-                            </div>
-                          )}
-                          <p className="text-[10px] text-muted-foreground">{msg.timestamp}</p>
+                        <div style={{ maxWidth: '75%', display: 'flex', flexDirection: 'column', gap: '4px', alignItems: msg.isMe ? 'flex-end' : 'flex-start' }}>
+                          {!msg.isMe && <p style={{ fontSize: '10px', color: '#6B7A72', fontWeight: 500, margin: 0 }}>{msg.sender}</p>}
+                          <div style={{ padding: '10px 14px', borderRadius: msg.isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px', fontSize: '13px', background: msg.isMe ? '#17402C' : '#F4F1EA', color: msg.isMe ? '#fff' : '#0B1F17', border: msg.isMe ? 'none' : '1px solid rgba(11,31,23,0.06)' }}>
+                            {msg.content}
+                          </div>
+                          <p style={{ fontSize: '10px', color: '#6B7A72', margin: 0 }}>{msg.timestamp}</p>
                         </div>
                       </div>
                     ))
@@ -498,45 +663,44 @@ export default function MessageriePage() {
                 </div>
 
                 {/* Input */}
-                <div className="p-4 border-t border-border bg-card">
-                  <div className="flex gap-3 items-end">
-                    <div className="flex-1 relative">
-                      <textarea
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSend();
-                          }
-                        }}
-                        placeholder="Écrivez un message... (Entrée pour envoyer)"
-                        rows={1}
-                        className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-                        style={{ minHeight: '44px', maxHeight: '120px' }}
-                      />
-                    </div>
+                <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6' }}>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
+                    <textarea
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSend();
+                        }
+                      }}
+                      placeholder="Écrivez un message..."
+                      rows={1}
+                      style={{ flex: 1, padding: '10px 14px', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)', background: '#F4F1EA', fontSize: '13px', color: '#0B1F17', outline: 'none', resize: 'none', fontFamily: 'inherit', minHeight: '40px', maxHeight: '100px', boxSizing: 'border-box' }}
+                    />
                     <button
                       onClick={handleSend}
                       disabled={sending || !message.trim() || !user}
-                      className="p-3 bg-primary text-white rounded-xl hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                      style={{ padding: '10px', background: '#17402C', color: '#fff', borderRadius: '10px', border: 'none', cursor: sending || !message.trim() || !user ? 'not-allowed' : 'pointer', opacity: sending || !message.trim() || !user ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '16px' }}
                     >
-                      <Icon name="PaperAirplaneIcon" size={18} variant="outline" />
+                      ➤
                     </button>
                   </div>
                   {!user && (
-                    <p className="text-xs text-muted-foreground mt-2 text-center">Connectez-vous pour envoyer des messages</p>
+                    <p style={{ fontSize: '11px', color: '#6B7A72', textAlign: 'center', margin: '8px 0 0' }}>Connectez-vous pour envoyer des messages</p>
                   )}
                 </div>
-              </>
-            )}
+              </div>
+            ) : null}
           </div>
-        </div>
-      </main>
+        </MobilePageShell>
+        
+      </div>
 
+      {/* New Conversation Modal - rendered outside dual-view so it works on both */}
       {showNewConvModal && (
         <NewConversationModal onClose={() => setShowNewConvModal(false)} onStart={handleNewConversation} />
       )}
-    </div>
+    </>
   );
 }

@@ -40,7 +40,7 @@ export default function ParcoursCard() {
           <path d="M50,140 C120,130 180,60 250,90 C300,110 330,70 350,50" fill="none" stroke="#1C2620" strokeWidth="3" strokeDasharray="6,4" />
           
           {/* Variant */}
-          <path d="M180,60 C210,30 240,40 250,90" fill="none" stroke="#E4501C" strokeWidth="2" strokeDasharray="4,4" />
+          <path d="M180,60 C210,30 240,40 250,90" fill="none" stroke="#17402C" strokeWidth="2" strokeDasharray="4,4" />
           
           {/* Points */}
           <circle cx="50" cy="140" r="4" fill="#1C2620" />
@@ -52,14 +52,14 @@ export default function ParcoursCard() {
           <circle cx="250" cy="90" r="4" fill="#1C2620" />
           <text x="250" y="108" fontSize="10" fill="#1C2620" textAnchor="middle" fontWeight="bold">Refuge 2</text>
           
-          <circle cx="350" cy="50" r="6" fill="#E4501C" />
-          <text x="350" y="36" fontSize="10" fill="#E4501C" textAnchor="middle" fontWeight="bold">Arrivée</text>
+          <circle cx="350" cy="50" r="6" fill="#17402C" />
+          <text x="350" y="36" fontSize="10" fill="#17402C" textAnchor="middle" fontWeight="bold">Arrivée</text>
         </svg>
       </div>
       
       <div className="flex flex-wrap items-center gap-4 text-[10px] font-mono uppercase tracking-widest text-[#1C2620]/60">
         <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] bg-[#1C2620]" /> Tracé principal</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] bg-[#E4501C] border-dashed border-t-2" /> Variantes</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] bg-[#17402C] border-dashed border-t-2" /> Variantes</span>
         <span className="flex items-center gap-1.5"><Icon name="ArrowTrendingUpIcon" size={12} /> 1 620 m D+</span>
         <span className="flex items-center gap-1.5"><Icon name="HomeIcon" size={12} /> 3 refuges</span>
       </div>

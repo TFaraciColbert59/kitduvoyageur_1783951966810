@@ -68,7 +68,7 @@ function LoggedOutProfile() {
               justifyContent: 'center',
             }}
           >
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#E4501C" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
               <circle cx="12" cy="8" r="4" />
               <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
             </svg>
@@ -94,7 +94,7 @@ function LoggedOutProfile() {
               href="/connexion"
               className="flex-1 flex items-center justify-center font-semibold haptic-press"
               style={{
-                background: '#E4501C',
+                background: '#17402C',
                 color: 'white',
                 borderRadius: '16px',
                 padding: '14px',
@@ -293,7 +293,7 @@ function LoggedInProfile() {
               width: '64px',
               height: '64px',
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #E4501C, #B5652D)',
+              background: 'linear-gradient(135deg, #17402C, #B5652D)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -331,7 +331,7 @@ function LoggedInProfile() {
                 padding: '3px 10px',
               }}
             >
-              <span style={{ fontSize: '10px', color: '#E4501C', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
+              <span style={{ fontSize: '10px', color: '#17402C', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
                 NIVEAU 1 · EXPLORATEUR
               </span>
             </div>
@@ -437,7 +437,7 @@ function LoggedInProfile() {
               <span
                 style={{
                   background: 'rgba(228,80,28,0.1)',
-                  color: '#E4501C',
+                  color: '#17402C',
                   borderRadius: '999px',
                   padding: '3px 10px',
                   fontSize: '11px',
@@ -466,7 +466,7 @@ function LoggedInProfile() {
             border: '1px solid rgba(228,80,28,0.15)',
             borderRadius: '18px',
             padding: '14px',
-            color: '#E4501C',
+            color: '#17402C',
             fontSize: '15px',
             fontWeight: 600,
             fontFamily: 'var(--font-sans)',

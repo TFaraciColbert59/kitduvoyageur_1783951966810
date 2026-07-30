@@ -194,8 +194,8 @@ export default function CreateClubView() {
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="text-[10px] font-mono text-[#E4501C] font-bold bg-[#E4501C]/10 px-3 py-1.5 rounded-full flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#E4501C]"></span>
+          <span className="text-[10px] font-mono text-[#17402C] font-bold bg-[#17402C]/10 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#17402C]"></span>
             non publié
           </span>
 
@@ -706,7 +706,7 @@ export default function CreateClubView() {
                     </span>
                     Inviter un premier membre
                   </span>
-                  <span className="text-[9px] font-mono text-[#E4501C] uppercase font-bold bg-[#E4501C]/10 px-1.5 py-0.5 rounded">RECOMMANDÉ</span>
+                  <span className="text-[9px] font-mono text-[#17402C] uppercase font-bold bg-[#17402C]/10 px-1.5 py-0.5 rounded">RECOMMANDÉ</span>
               </div>
               <div className="flex items-center justify-between text-xs">
                   <span className="flex items-center gap-2 text-[#C8C3B0] font-medium">
