@@ -283,7 +283,7 @@ function GalerieDefauts({ photos }: { photos?: { url: string; alt: string; descr
       <div className="aspect-video rounded-xl overflow-hidden bg-card border border-border mb-3 relative">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={photos[activeIdx]?.url}
+          src={photos[activeIdx]?.url || '/assets/images/no_image.png'}
           alt={photos[activeIdx]?.alt}
           className="w-full h-full object-cover"
         />

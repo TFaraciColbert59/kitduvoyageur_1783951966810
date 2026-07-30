@@ -10,7 +10,7 @@ import LkvIcon from '@/components/ui/LkvIcon';
 interface Tab {
   href: string;
   label: string;
-  iconName: 'home' | 'mountain' | 'bag' | 'doc' | 'user';
+  iconName: 'home' | 'mountain' | 'bag' | 'users' | 'user';
   ariaLabel: string;
   matchPaths?: string[];
 }
@@ -38,11 +38,11 @@ const TABS: Tab[] = [
     matchPaths: ['/boutique', '/kits', '/occasion', '/produit', '/panier', '/checkout'],
   },
   {
-    href: '/carnets',
-    label: 'Carnet',
-    iconName: 'doc',
-    ariaLabel: 'Mes carnets de voyage',
-    matchPaths: ['/carnets', '/inventaire', '/fidelite', '/gamification'],
+    href: '/communaute',
+    label: 'Communauté',
+    iconName: 'users',
+    ariaLabel: 'Communauté, clubs, événements',
+    matchPaths: ['/communaute', '/communaute/publier', '/communaute-pro', '/clubs', '/groupes', '/entraide', '/createurs', '/experts', '/evenements', '/feed', '/messagerie'],
   },
   {
     href: '/compte',

@@ -214,7 +214,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.3 }}
-                        src={product.images[activeImage]?.url}
+                        src={product.images[activeImage]?.url || '/assets/images/no_image.png'}
                         alt={product.images[activeImage]?.alt}
                         className="w-full h-full object-cover mix-blend-multiply"
                       />

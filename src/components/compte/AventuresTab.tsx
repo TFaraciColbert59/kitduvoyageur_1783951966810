@@ -288,7 +288,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
                     
                     <div className="flex items-center gap-4 w-full sm:w-auto flex-1">
                       <div className="w-20 h-14 sm:w-24 sm:h-16 rounded-xl overflow-hidden shrink-0 shadow-sm relative">
-                        <img src={av.image_url} alt={av.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <img src={av.image_url || '/assets/images/no_image.png'} alt={av.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       </div>
                       
                       <div className="min-w-0 flex-1">

@@ -886,7 +886,7 @@ function ActiveOrderCard({
                 <div className="w-14 h-14 bg-[#EDEAE0] rounded-xl overflow-hidden flex-shrink-0 border border-[#E8E4D8]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={item.image || ''}
+                    src={item.image || '/assets/images/no_image.png'}
                     alt={item.name}
                     className="w-full h-full object-cover"
                   />

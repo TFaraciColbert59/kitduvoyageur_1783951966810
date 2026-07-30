@@ -247,7 +247,7 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
           <div className="p-5 space-y-5">
             <div className="relative rounded-xl overflow-hidden aspect-video">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={listing.image} alt={listing.alt} className="w-full h-full object-cover" />
+              <img src={listing.image || '/assets/images/no_image.png'} alt={listing.alt} className="w-full h-full object-cover" />
               <div className="absolute top-3 left-3 flex gap-2">
                 <span className={`text-xs font-600 px-2 py-1 rounded-full border ${cond.color}`}>{cond.label}</span>
                 {!listing.available && (
@@ -384,7 +384,7 @@ function RentalCard({ listing, onClick }: { listing: RentalListing; onClick: () 
     <div className="topo-card group flex flex-col cursor-pointer hover:border-primary/20 transition-all" onClick={onClick}>
       <div className="relative overflow-hidden aspect-[4/3] rounded-t-xl">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={listing.image} alt={listing.alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+        <img src={listing.image || '/assets/images/no_image.png'} alt={listing.alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
         <div className="absolute top-2 left-2 flex gap-1.5">
           <span className={`text-xs font-600 px-2 py-0.5 rounded-full border ${cond.color}`}>{cond.label}</span>
           {!listing.available && (
@@ -796,7 +796,7 @@ export default function LocationPage() {
                       }}
                     >
                       <div style={{ width: '100px', height: '100px', flexShrink: 0, background: '#E7E3D6', overflow: 'hidden' }}>
-                        <img src={listing.image} alt={listing.alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={listing.image || '/assets/images/no_image.png'} alt={listing.alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                       <div style={{ flex: 1, padding: '10px 10px 10px 0', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                         <div>

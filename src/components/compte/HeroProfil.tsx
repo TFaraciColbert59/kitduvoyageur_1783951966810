@@ -18,7 +18,7 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
       {/* Photographic Mountain Hero Background */}
       <div className="absolute inset-0 z-0">
         <Image
-          src={profile.hero_image_url}
+          src={profile.hero_image_url || '/assets/images/no_image.png'}
           alt="Montagnes alpins"
           fill
           priority
@@ -65,7 +65,7 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
           <div className="relative shrink-0">
             <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden border-4 border-white/30 shadow-2xl bg-[#132219] relative">
               <Image
-                src={profile.avatar_url}
+                src={profile.avatar_url || '/assets/images/no_image.png'}
                 alt={`${profile.first_name} ${profile.last_name}`}
                 fill
                 sizes="128px"

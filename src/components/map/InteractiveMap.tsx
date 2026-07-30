@@ -83,6 +83,7 @@ export default function InteractiveMap() {
   const [showWaterPoints, setShowWaterPoints] = useState(true);
 
   const [mapReady, setMapReady] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   // 1. Fetch Trails with Server-side Filtering from /api/hikes
   const fetchTrails = useCallback(async () => {
@@ -432,10 +433,10 @@ export default function InteractiveMap() {
   }, [trails, selectedTrailId]);
 
   return (
-    <div className="relative w-full h-[calc(100vh-64px)] flex overflow-hidden font-sans">
+    <div className="relative w-full sm:h-[calc(100vh-64px)] h-dvh flex overflow-hidden font-sans">
       
       {/* ── SIDEBAR PANEL ── */}
-      <div className="w-full sm:w-[400px] bg-white border-r border-[#E8E4D8] z-20 flex flex-col shadow-xl">
+      <div className={`${showMobileFilters ? 'fixed inset-0 z-50 sm:relative sm:inset-auto flex' : 'hidden'} sm:flex sm:w-[400px] bg-white border-r border-[#E8E4D8] flex-col shadow-xl`}>
         
         {/* Header & Filters */}
         <div className="p-4 border-b border-[#E8E4D8] bg-[#FAFAF7] space-y-3">
@@ -444,12 +445,20 @@ export default function InteractiveMap() {
               <h2 className="font-display font-800 text-lg text-[#1C2620]">Carte des Randonnées</h2>
               <p className="text-[11px] text-[#5C6B5E] font-medium">Filtre qualité AllTrails (≥ 2 km)</p>
             </div>
-            <button 
-              onClick={handleResetBounds}
-              className="text-[11px] font-700 bg-[#1C2620] text-white px-3 py-1.5 rounded-full hover:bg-[#2A3830] transition-all shadow-sm"
-            >
-              Zoom global
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowMobileFilters(false)}
+                className="sm:hidden text-[11px] font-700 bg-white border border-[#E8E4D8] text-[#5C6B5E] px-3 py-1.5 rounded-full hover:bg-[#F5F3ED] transition-all"
+              >
+                ✕ Fermer
+              </button>
+              <button
+                onClick={handleResetBounds}
+                className="text-[11px] font-700 bg-[#1C2620] text-white px-3 py-1.5 rounded-full hover:bg-[#2A3830] transition-all shadow-sm"
+              >
+                Zoom global
+              </button>
+            </div>
           </div>
 
           {/* Distance Filter Chips */}
@@ -597,6 +606,17 @@ export default function InteractiveMap() {
           )}
         </div>
       </div>
+
+      {/* Mobile filter toggle FAB */}
+      {!showMobileFilters && (
+        <button
+          onClick={() => setShowMobileFilters(true)}
+          className="sm:hidden fixed top-20 left-3 z-30 bg-[#1C2620] text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center text-sm"
+          aria-label="Toggle filters"
+        >
+          🔍
+        </button>
+      )}
 
       {/* ── MAP CONTAINER ── */}
       <div className="flex-1 h-full relative">

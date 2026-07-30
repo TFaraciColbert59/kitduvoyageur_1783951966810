@@ -2,7 +2,7 @@
 import React from 'react';
 
 interface LkvIconProps {
-  name: 'home' | 'mountain' | 'bag' | 'doc' | 'user' | 'search' | 'chevron-left' | 'chevron-right' | 'heart' | 'bookmark' | 'bell' | 'map-pin' | 'star' | 'minus' | 'plus' | 'close' | 'menu' | 'arrow-right' | 'lock' | 'filter';
+  name: 'home' | 'mountain' | 'bag' | 'doc' | 'user' | 'search' | 'chevron-left' | 'chevron-right' | 'heart' | 'bookmark' | 'bell' | 'map-pin' | 'star' | 'minus' | 'plus' | 'close' | 'menu' | 'arrow-right' | 'lock' | 'filter' | 'users';
   size?: number;
   color?: string;
 }
@@ -28,6 +28,7 @@ const PATHS: Record<LkvIconProps['name'], string | string[]> = {
   'map-pin': ['M12 2a8 8 0 0 0-8 8c0 6 8 12 8 12s8-6 8-12a8 8 0 0 0-8-8z', 'M12 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6'],
   bookmark: 'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z',
   heart: 'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z',
+  users: ['M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8', 'M20 21c0-4-4-6-8-6s-8 2-8 6', 'M17 8a3 3 0 1 0 0-6', 'M22 21c0-3-2.5-5-5-5'],
 };
 
 export default function LkvIcon({ name, size = 20, color = 'currentColor' }: LkvIconProps) {

@@ -56,7 +56,7 @@ export default function CommandesCard({ commandes }: CommandesCardProps) {
             <div className="flex items-center gap-4 min-w-0">
               <div className="w-12 h-12 rounded-xl overflow-hidden relative shrink-0 border border-[#1C2620]/10 shadow-sm bg-white">
                 <Image
-                  src={item.image_url}
+                  src={item.image_url || '/assets/images/no_image.png'}
                   alt={item.product_name}
                   fill
                   sizes="48px"

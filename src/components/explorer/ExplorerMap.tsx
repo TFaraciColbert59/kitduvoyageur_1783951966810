@@ -226,7 +226,7 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
 
       {/* Location status indicator */}
       {locationState === 'locating' && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-[#0d1a12]/90 border border-[#2D5A27]/40 rounded-xl px-4 py-2 flex items-center gap-2 backdrop-blur-sm">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[40] bg-[#0d1a12]/90 border border-[#2D5A27]/40 rounded-xl px-4 py-2 flex items-center gap-2 backdrop-blur-sm">
           <div className="w-3 h-3 border-2 border-[#2D5A27]/30 border-t-[#8BAF7C] rounded-full animate-spin" />
           <span className="text-[#8BAF7C] text-xs font-mono">Localisation…</span>
         </div>
@@ -234,7 +234,7 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
 
       {/* Denied — show button to retry */}
       {locationState === 'denied' && (
-        <div className="absolute z-[1000]" style={{ bottom: '80px', left: '12px' }}>
+        <div className="absolute z-[40]" style={{ bottom: '80px', left: '12px' }}>
           <button
             onClick={handleManualLocate}
             className="flex items-center gap-2 bg-white/95 border border-[#E4E0D4] rounded-xl px-3 py-2 text-[#1C2620] text-xs font-medium shadow-md hover:bg-[#F5F2EA] transition-colors"
@@ -248,7 +248,7 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
       )}
 
       {/* Tile switcher */}
-      <div className="absolute z-[1000] flex items-center p-1 bg-white/95 backdrop-blur-sm border border-[#E4E0D4] rounded-2xl shadow-md" style={{ bottom: '80px', right: '12px' }}>
+      <div className="absolute z-[40] flex items-center p-1 bg-white/95 backdrop-blur-sm border border-[#E4E0D4] rounded-2xl shadow-md" style={{ bottom: '80px', right: '12px' }}>
         <button
           onClick={() => setTileMode('osm')}
           className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl transition-all ${
@@ -275,7 +275,7 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
 
       {/* Difficulty legend */}
       <div
-        className="absolute left-3 z-[1000] bg-white/95 border border-[#E4E0D4] rounded-xl px-3 py-2 shadow-sm"
+        className="absolute left-3 z-[40] bg-white/95 border border-[#E4E0D4] rounded-xl px-3 py-2 shadow-sm"
         style={{ bottom: '80px' }}
       >
         <p className="text-[9px] font-mono text-[#7A8A7D] uppercase tracking-widest mb-1.5">Difficulté</p>

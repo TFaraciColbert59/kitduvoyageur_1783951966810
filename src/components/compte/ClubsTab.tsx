@@ -630,7 +630,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
                 <div key={disc.id} className="flex items-center justify-between gap-3 p-2.5 rounded-2xl hover:bg-[#F9F8F5] transition-colors border border-transparent hover:border-[#C8C3B0]/30">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-10 h-10 rounded-xl overflow-hidden relative flex-shrink-0 bg-[#EDEAE0]">
-                      <Image src={disc.imageUrl} alt={disc.name} fill className="object-cover" />
+                      <Image src={disc.imageUrl || '/assets/images/no_image.png'} alt={disc.name} fill className="object-cover" />
                     </div>
                     <div className="min-w-0">
                       <h3 className="font-display font-bold text-xs text-[#1C2620] truncate">

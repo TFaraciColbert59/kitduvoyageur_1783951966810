@@ -43,7 +43,7 @@ export default function MesClubsCard({ clubs }: MesClubsCardProps) {
             <div className="flex items-center gap-4 min-w-0">
               <div className="w-12 h-12 rounded-2xl overflow-hidden relative shrink-0 border border-[#1C2620]/10 shadow-sm bg-emerald-900">
                 <Image
-                  src={club.logo_url}
+                  src={club.logo_url || '/assets/images/no_image.png'}
                   alt={club.name}
                   fill
                   sizes="48px"
