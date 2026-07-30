@@ -9,7 +9,7 @@ interface StaggerGridProps {
   staggerDelay?: number;
 }
 
-export function StaggerGrid({
+export default function StaggerGrid({
   children,
   columns = 2,
   staggerDelay = 0.05
@@ -29,3 +29,5 @@ export function StaggerGrid({
     </div>
   );
 }
+
+export { StaggerGrid };

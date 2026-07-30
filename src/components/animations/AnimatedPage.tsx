@@ -10,7 +10,7 @@ interface AnimatedPageProps {
   gestureEnabled?: boolean;
 }
 
-export function AnimatedPage({
+export default function AnimatedPage({
   children,
   variant = 'slideUp',
   gestureEnabled = true
@@ -45,3 +45,5 @@ export function AnimatedPage({
     </motion.div>
   );
 }
+
+export { AnimatedPage };

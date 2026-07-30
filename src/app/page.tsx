@@ -4,6 +4,9 @@ import React from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AnimatedPage from '@/components/animations/AnimatedPage';
+import ScrollReveal from '@/components/animations/ScrollReveal';
+import StaggerGrid from '@/components/animations/StaggerGrid';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 

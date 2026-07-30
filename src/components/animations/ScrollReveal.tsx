@@ -10,7 +10,7 @@ interface ScrollRevealProps {
   threshold?: number;
 }
 
-export function ScrollReveal({
+export default function ScrollReveal({
   children,
   delay = 0,
   threshold = 0.2
@@ -29,3 +29,5 @@ export function ScrollReveal({
     </motion.div>
   );
 }
+
+export { ScrollReveal };
