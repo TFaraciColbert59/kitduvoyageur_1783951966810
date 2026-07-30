@@ -106,7 +106,7 @@ export default function AvisPage() {
       const { data, error: fetchError } = await supabase.from('reviews').select('*, author:user_profiles!reviews_user_id_fkey(full_name, trust_score)').order('created_at', { ascending: false });
       if (fetchError) throw fetchError;
       setReviews(data?.length ? data : FALLBACK_REVIEWS);
-    } catch { setReviews(FALLBACK_REVIEWS); setError(null); } finally { setLoading(false); }
+    } catch (err) { console.error('Error loading reviews:', err); setError('Impossible de charger les avis.'); setReviews(FALLBACK_REVIEWS); } finally { setLoading(false); }
   }, [supabase]);
 
   useEffect(() => { loadReviews(); }, [loadReviews]);
@@ -176,7 +176,8 @@ export default function AvisPage() {
                 <button key={f.id} onClick={() => setActiveFilter(f.id as typeof activeFilter)} style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '12px', border: 'none', cursor: 'pointer', background: activeFilter === f.id ? '#17402C' : '#F4F1EA', color: activeFilter === f.id ? 'white' : 'rgba(28,38,32,0.6)', whiteSpace: 'nowrap', border: activeFilter === f.id ? 'none' : '1px solid rgba(11,31,23,0.06)' }}>{f.label}</button>
               ))}
             </div>
-            {filtered.length === 0 ? <p style={{ textAlign: 'center', color: 'rgba(28,38,32,0.5)', padding: '40px 0' }}>Aucun avis pour l&apos;instant</p>
+            {error ? <div style={{ textAlign: 'center', padding: '40px 0' }}><p style={{ fontSize: '28px', marginBottom: '8px' }}>⚠️</p><p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.5)', marginBottom: '12px' }}>{error}</p><button onClick={() => loadReviews()} style={{ padding: '8px 16px', background: '#17402C', color: '#fff', borderRadius: '8px', fontSize: '12px', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Réessayer</button></div>
+              : filtered.length === 0 ? <p style={{ textAlign: 'center', color: 'rgba(28,38,32,0.5)', padding: '40px 0' }}>Aucun avis pour l&apos;instant</p>
               : <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>{filtered.map((review) => {
                 const authorName = review.author?.full_name ?? 'Membre';
                 return <div key={review.id} style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)', padding: '14px' }}>

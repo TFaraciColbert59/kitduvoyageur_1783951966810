@@ -117,6 +117,7 @@ export default function MessageriePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const conv = conversations.find((c) => c.id === activeConv) ?? null;
@@ -176,6 +177,7 @@ export default function MessageriePage() {
       if (mapped.length > 0) setActiveConv(mapped[0].id);
     } catch (err) {
       console.error('Load conversations error:', err);
+      setError('Impossible de charger les conversations.');
     } finally {
       setLoading(false);
     }
@@ -393,6 +395,12 @@ export default function MessageriePage() {
                     <div className="p-4 space-y-3">
                       {[1, 2, 3].map((i) => <div key={i} className="h-16 rounded-xl bg-muted animate-pulse" />)}
                     </div>
+                  ) : error ? (
+                    <div className="p-6 text-center text-muted-foreground">
+                      <p className="text-3xl mb-2">⚠️</p>
+                      <p className="text-sm mb-3">{error}</p>
+                      <button onClick={() => { setError(null); loadConversations(); }} className="text-xs text-primary hover:underline cursor-pointer">Réessayer</button>
+                    </div>
                   ) : filteredConvs.length === 0 ? (
                     <div className="p-6 text-center text-muted-foreground">
                       <Icon name="ChatBubbleLeftRightIcon" size={32} className="mx-auto mb-2 opacity-30" />
@@ -576,6 +584,12 @@ export default function MessageriePage() {
                       {[1, 2, 3].map((i) => (
                         <div key={i} style={{ height: '64px', borderRadius: '12px', background: '#F4F1EA', opacity: 0.5 }} />
                       ))}
+                    </div>
+                  ) : error ? (
+                    <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+                      <p style={{ fontSize: '28px', marginBottom: '8px' }}>⚠️</p>
+                      <p style={{ fontSize: '13px', color: '#6B7A72', marginBottom: '12px' }}>{error}</p>
+                      <button onClick={() => { setError(null); loadConversations(); }} style={{ fontSize: '12px', color: '#17402C', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'inherit' }}>Réessayer</button>
                     </div>
                   ) : filteredConvs.length === 0 ? (
                     <div style={{ padding: '40px 20px', textAlign: 'center' }}>

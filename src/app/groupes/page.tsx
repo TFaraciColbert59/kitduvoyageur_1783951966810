@@ -56,6 +56,7 @@ function GroupesPageInner() {
   const [myGroups, setMyGroups] = useState<TravelGroup[]>([]);
   const [publicGroups, setPublicGroups] = useState<TravelGroup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [selectedTheme, setSelectedTheme] = useState('Tous');
   const [joining, setJoining] = useState<string | null>(null);
@@ -72,34 +73,45 @@ function GroupesPageInner() {
 
   const loadMyGroups = useCallback(async () => {
     if (!user) { setMyGroups([]); return; }
-    const { data: memberData } = await supabase.from('group_members').select('group_id, role').eq('user_id', user.id).eq('status', 'active');
-    if (!memberData?.length) { setMyGroups([]); return; }
-    const groupIds = memberData.map(m => m.group_id);
-    const { data: groups } = await supabase
-      .from('travel_groups')
-      .select('*, owner:user_profiles!travel_groups_owner_id_fkey(full_name, avatar_url)')
-      .in('id', groupIds)
-      .order('created_at', { ascending: false });
-    const enriched = await Promise.all((groups || []).map(async (g) => {
-      const { count } = await supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('group_id', g.id).eq('status', 'active');
-      return { ...g, member_count: count || 0, my_role: memberData.find(m => m.group_id === g.id)?.role };
-    }));
-    setMyGroups(enriched);
+    try {
+      const { data: memberData } = await supabase.from('group_members').select('group_id, role').eq('user_id', user.id).eq('status', 'active');
+      if (!memberData?.length) { setMyGroups([]); return; }
+      const groupIds = memberData.map(m => m.group_id);
+      const { data: groups } = await supabase
+        .from('travel_groups')
+        .select('*, owner:user_profiles!travel_groups_owner_id_fkey(full_name, avatar_url)')
+        .in('id', groupIds)
+        .order('created_at', { ascending: false });
+      const enriched = await Promise.all((groups || []).map(async (g) => {
+        const { count } = await supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('group_id', g.id).eq('status', 'active');
+        return { ...g, member_count: count || 0, my_role: memberData.find(m => m.group_id === g.id)?.role };
+      }));
+      setMyGroups(enriched);
+      setError(null);
+    } catch (err) {
+      console.error('Error loading my groups:', err);
+      setError('Impossible de charger vos groupes.');
+    }
   }, [user, supabase]);
 
   const loadPublicGroups = useCallback(async () => {
-    const { data } = await supabase
-      .from('travel_groups')
-      .select('*, owner:user_profiles!travel_groups_owner_id_fkey(full_name, avatar_url)')
-      .eq('visibility', 'public')
-      .order('created_at', { ascending: false })
-      .limit(30);
-    console.log('Fetched public groups:', data);
-    const enriched = await Promise.all((data || []).map(async (g) => {
-      const { count } = await supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('group_id', g.id).eq('status', 'active');
-      return { ...g, member_count: count || 0 };
-    }));
-    setPublicGroups(enriched || []);
+    try {
+      const { data } = await supabase
+        .from('travel_groups')
+        .select('*, owner:user_profiles!travel_groups_owner_id_fkey(full_name, avatar_url)')
+        .eq('visibility', 'public')
+        .order('created_at', { ascending: false })
+        .limit(30);
+      const enriched = await Promise.all((data || []).map(async (g) => {
+        const { count } = await supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('group_id', g.id).eq('status', 'active');
+        return { ...g, member_count: count || 0 };
+      }));
+      setPublicGroups(enriched || []);
+      setError(null);
+    } catch (err) {
+      console.error('Error loading public groups:', err);
+      setError('Impossible de charger les groupes publics.');
+    }
   }, [supabase]);
 
   useEffect(() => {
@@ -493,6 +505,18 @@ function GroupesPageInner() {
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {[1, 2, 3].map(i => <div key={i} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl h-64 animate-pulse" />)}
           </div>
+        ) : error ? (
+          <div className="text-center py-16">
+            <p className="text-5xl mb-4">⚠️</p>
+            <h2 className="font-display font-700 text-xl text-[#1C2620] mb-2">Erreur de chargement</h2>
+            <p className="text-sm text-[#5C6B5E] mb-6">{error}</p>
+            <button
+              onClick={() => { setError(null); setLoading(true); Promise.all([loadMyGroups(), loadPublicGroups()]).finally(() => setLoading(false)); }}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#17402C] text-white rounded-xl font-700 hover:bg-[#17402C]/90 transition-colors cursor-pointer"
+            >
+              Réessayer
+            </button>
+          </div>
         ) : activeTab === 'mes-groupes' ? (
           <div>
             {!user ? (
@@ -704,8 +728,23 @@ function GroupesPageInner() {
                   <div key={i} style={{ height: '160px', background: '#F4F1EA', borderRadius: '16px', opacity: 0.5 }} />
                 ))}
               </div>
+            ) : error ? (
+              <div style={{ textAlign: 'center', padding: '40px 16px' }}>
+                <p style={{ fontSize: '32px', marginBottom: '12px' }}>⚠️</p>
+                <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0B1F17', marginBottom: '8px' }}>Erreur de chargement</h2>
+                <p style={{ fontSize: '13px', color: '#6B7A72', marginBottom: '16px' }}>{error}</p>
+                <button
+                  onClick={() => { setError(null); setLoading(true); Promise.all([loadMyGroups(), loadPublicGroups()]).finally(() => setLoading(false)); }}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '12px 24px',
+                    background: '#17402C', color: '#fff', borderRadius: '999px',
+                    fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer',
+                  }}
+                >
+                  Réessayer
+                </button>
+              </div>
             ) : activeTab === 'mes-groupes' ? (
-              /* My Groups */
               !user ? (
                 <div style={{ textAlign: 'center', padding: '40px 16px' }}>
                   <p style={{ fontSize: '32px', marginBottom: '12px' }}>🗺️</p>
