@@ -111,12 +111,38 @@
 .dark {
   --background: #1A1F1C;
   --foreground: #F5F3EE;
+  --primary: #4A7C5B;
+  --primary-hover: #5A8A6A;
+  --primary-subtle: rgba(74,124,91,0.15);
+  --secondary: #2D3830;
+  --secondary-foreground: #EDEAE0;
+  --accent: #6B9B7A;
+  --accent-foreground: #1A1F1C;
   --card: #243028;
   --card-foreground: #F5F3EE;
+  --surface: #1E2521;
+  --surface-elevated: #2D3830;
   --border: rgba(255,255,255,0.08);
+  --border-subtle: rgba(255,255,255,0.05);
   --muted: #2D3830;
   --muted-foreground: #9BBBA8;
   --input: #243028;
+  --ring: #4A7C5B;
+  --success: #4A7C5B;
+  --warning: #B8932A;
+  --danger: #C53030;
+
+  /* Shadow colors for dark mode */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.3);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,0.45), 0 8px 16px rgba(0,0,0,0.35);
+  --shadow-2xl: 0 32px 80px rgba(0,0,0,0.5), 0 16px 32px rgba(0,0,0,0.4);
+}
+
+.dark .premium-card:hover {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
 }
 
 @layer base {
@@ -236,11 +262,24 @@
   .focus-ring {
     transition: border-color 150ms ease, box-shadow 150ms ease;
   }
-  .focus-ring:focus-within, .focus-ring:focus {
+  .focus-ring:focus-within, .focus-ring:focus-visible {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(45, 90, 61, 0.15);
   }
+
+  /* Global focus-visible for keyboard navigation */
+  *:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs, 2px);
+  }
+
+  button:focus-visible:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Reduce motion for prefers-reduced-motion users — already handled above */
 
   .btn-ghost {
     display: inline-flex;
@@ -533,9 +572,4 @@
   ::view-transition-new(root) { animation: none; }
 }
 
-/* Mobile bottom bar padding */
-@media (max-width: 767px) {
-  main#main-content {
-    padding-bottom: 0;
-  }
-}
+/* Mobile bottom bar padding — géré par MobilePageShell */

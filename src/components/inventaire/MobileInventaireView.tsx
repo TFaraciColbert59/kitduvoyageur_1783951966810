@@ -130,32 +130,6 @@ export default function MobileInventaireView({
           ))}
         </div>
       </div>
-
-      {/* 5. Fixed 5-Icon Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#E8E4D8] px-4 py-2 flex items-center justify-between shadow-lg">
-        <Link href="/" className="flex flex-col items-center gap-1 text-[#132219]/60 hover:text-[#132219]">
-          <Icon name="HomeIcon" size={20} />
-          <span className="text-[9px] font-bold">Home</span>
-        </Link>
-        <Link href="/boutique" className="flex flex-col items-center gap-1 text-[#132219]/60 hover:text-[#132219]">
-          <Icon name="MagnifyingGlassIcon" size={20} />
-          <span className="text-[9px] font-bold">Recherche</span>
-        </Link>
-        <Link href="/inventaire" className="flex flex-col items-center gap-1 text-[#2D5A3D] relative">
-          <Icon name="ArchiveBoxIcon" size={20} />
-          <span className="text-[9px] font-bold">Inventaire</span>
-          <span className="w-1.5 h-1.5 bg-[#2D5A3D] rounded-full absolute -bottom-1" />
-        </Link>
-        <Link href="/carnets" className="flex flex-col items-center gap-1 text-[#132219]/60 hover:text-[#132219]">
-          <Icon name="DocumentTextIcon" size={20} />
-          <span className="text-[9px] font-bold">Carnets</span>
-        </Link>
-        <Link href="/compte" className="flex flex-col items-center gap-1 text-[#132219]/60 hover:text-[#132219]">
-          <Icon name="UserIcon" size={20} />
-          <span className="text-[9px] font-bold">Profil</span>
-        </Link>
-      </div>
-
     </div>
   );
 }

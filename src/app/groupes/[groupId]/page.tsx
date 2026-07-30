@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Icon from '@/components/ui/AppIcon';
+import LkvIcon from '@/components/ui/LkvIcon';
 import { getGroupeComplet } from '@/lib/queries/groupe';
 
 // Components
@@ -25,6 +25,7 @@ import ActiviteCard from '@/components/groupes/ActiviteCard';
 import AProposCard from '@/components/groupes/AProposCard';
 import CarnetCTACard from '@/components/groupes/CarnetCTACard';
 import MobileGroupeView from '@/components/groupes/MobileGroupeView';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,7 +78,11 @@ export default function GroupesPage() {
 
   return (
     <div className="min-h-screen bg-[#E7E3D6] font-sans">
-      <MobileGroupeView data={formattedData} groupId={groupId} user={user} members={members} onRefresh={refreshData} />
+      <div className="block md:hidden">
+        <MobilePageShell>
+          <MobileGroupeView data={formattedData} groupId={groupId} user={user} members={members} onRefresh={refreshData} />
+        </MobilePageShell>
+      </div>
 
       <div className="hidden md:block">
         <Header />
@@ -85,9 +90,9 @@ export default function GroupesPage() {
         <main className="max-w-[1400px] mx-auto px-6 pt-24 pb-16">
           <div className="flex items-center gap-2 text-xs font-medium text-[#1C2620]/50 mb-6">
             <Link href="/communaute" className="hover:text-[#1C2620]">Communauté</Link>
-            <Icon name="ChevronRightIcon" size={12} />
+            <LkvIcon name="chevron-right" size={12} />
             <Link href="/groupes" className="hover:text-[#1C2620]">Mes groupes</Link>
-            <Icon name="ChevronRightIcon" size={12} />
+            <LkvIcon name="chevron-right" size={12} />
             <span className="text-[#1C2620]">{formattedData.meta.titlePrefix} {formattedData.meta.titleSuffix}</span>
           </div>
 

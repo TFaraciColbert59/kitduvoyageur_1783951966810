@@ -672,14 +672,14 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
                   key={addr.id}
                   className={`rounded-xl p-4 border transition-colors ${
                     addr.isDefault
-                      ? 'bg-[#FFF9F0] border-[#E4501C]/20'
+                      ? 'bg-[#FFF9F0] border-[#17402C]/20'
                       : 'bg-[#FAFAF7] border-[#E8E4D8]'
                   }`}
                 >
                   <div className="flex items-start justify-between mb-1">
                     <span className="font-700 text-sm text-[#1C2620]">{addr.label}</span>
                     {addr.isDefault && (
-                      <span className="px-2 py-0.5 bg-[#E4501C] text-white text-[9px] font-700 rounded-full uppercase tracking-wider">
+                      <span className="px-2 py-0.5 bg-[#17402C] text-white text-[9px] font-700 rounded-full uppercase tracking-wider">
                         défaut
                       </span>
                     )}
@@ -707,7 +707,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
                     ) : (
                       <button
                         onClick={() => handleSetDefaultAddress(addr.id)}
-                        className="text-[11px] text-[#5C6B5E] hover:text-[#E4501C] font-600 underline-offset-2 hover:underline transition-colors"
+                        className="text-[11px] text-[#5C6B5E] hover:text-[#17402C] font-600 underline-offset-2 hover:underline transition-colors"
                       >
                         Définir par défaut
                       </button>
@@ -951,7 +951,7 @@ function ActiveOrderCard({
                   isDone
                     ? 'bg-[#1C2620] text-white'
                     : 'bg-[#EDEAE0] text-[#9CA89E]'
-                } ${isCurrent ? 'ring-2 ring-[#E4501C]/40 ring-offset-2 ring-offset-white' : ''}`}>
+                } ${isCurrent ? 'ring-2 ring-[#17402C]/40 ring-offset-2 ring-offset-white' : ''}`}>
                   {isDone ? (
                     <Icon name="CheckIcon" size={14} />
                   ) : (
@@ -987,7 +987,7 @@ function ActiveOrderCard({
         {(order.derivedStatus === 'confirmed' || order.derivedStatus === 'preparing') && (
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-[#E4501C] hover:text-red-600 text-xs font-600 transition-colors"
+            className="px-4 py-2 text-[#17402C] hover:text-red-600 text-xs font-600 transition-colors"
           >
             Annuler
           </button>
@@ -1024,7 +1024,7 @@ function HistoryOrderRow({
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-600 text-[#1C2620] truncate group-hover:text-[#E4501C] transition-colors">
+        <p className="text-sm font-600 text-[#1C2620] truncate group-hover:text-[#17402C] transition-colors">
           {firstItem?.name || 'Commande'}
           {itemCount > 1 && <span className="text-[#9CA89E] font-normal"> +{itemCount - 1}</span>}
         </p>

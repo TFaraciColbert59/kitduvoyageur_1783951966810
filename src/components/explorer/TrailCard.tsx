@@ -20,7 +20,7 @@ export default function TrailCard({ trail, selected, onClick }: TrailCardProps) 
       onClick={() => onClick(trail)}
       className={`w-full text-left rounded-2xl border transition-all duration-200 overflow-hidden group ${
         selected
-          ? 'border-[#E4501C]/60 bg-[#E4501C]/8 shadow-lg shadow-[#E4501C]/10'
+          ? 'border-[#17402C]/60 bg-[#17402C]/8 shadow-lg shadow-[#17402C]/10'
           : 'border-white/8 bg-white/4 hover:border-white/20 hover:bg-white/6'
       }`}
     >

@@ -33,7 +33,7 @@ export default function CountdownCard({ data }: CountdownCardProps) {
         </div>
         <div className="bg-white/10 p-3 rounded-xl border border-white/10">
           <p className="font-mono text-[9px] uppercase tracking-widest text-white/50 mb-1">Durée</p>
-          <p className="font-mono font-bold text-sm text-[#E4501C]">{data.meta.durationDays} jours</p>
+          <p className="font-mono font-bold text-sm text-[#17402C]">{data.meta.durationDays} jours</p>
         </div>
       </div>
       

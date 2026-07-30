@@ -33,8 +33,8 @@ export default function CarnetMap({ onDownloadGPX }: CarnetMapProps) {
           />
 
           {/* Point 1 - Start: Saint-Pierre */}
-          <circle cx="60" cy="250" r="6" fill="#E4501C" />
-          <circle cx="60" cy="250" r="10" fill="none" stroke="#E4501C" strokeWidth="1" opacity="0.3" />
+          <circle cx="60" cy="250" r="6" fill="#17402C" />
+          <circle cx="60" cy="250" r="10" fill="none" stroke="#17402C" strokeWidth="1" opacity="0.3" />
           <text x="60" y="270" textAnchor="middle" className="fill-[#1C2620]" fontSize="8" fontFamily="monospace" fontWeight="600">St-Pierre</text>
 
           {/* Point 2 - Charmant Som */}
@@ -61,7 +61,7 @@ export default function CarnetMap({ onDownloadGPX }: CarnetMapProps) {
         <p className="font-mono text-[11px] text-[#1C2620]/60">27,4 km · 1 620 m D+</p>
         <button
           onClick={onDownloadGPX}
-          className="font-mono text-[11px] font-semibold text-[#33463C] hover:text-[#E4501C] transition-colors flex items-center gap-1"
+          className="font-mono text-[11px] font-semibold text-[#33463C] hover:text-[#17402C] transition-colors flex items-center gap-1"
         >
           Télécharger GPX ↓
         </button>

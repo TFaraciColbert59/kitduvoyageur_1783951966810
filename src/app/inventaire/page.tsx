@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import InventaireHero from '@/components/inventaire/InventaireHero';
 import InventaireToolbar, { CategoryFilter, SortOption } from '@/components/inventaire/InventaireToolbar';
 import CategorySection from '@/components/inventaire/CategorySection';
@@ -12,7 +13,8 @@ import LoansCard from '@/components/inventaire/LoansCard';
 import RecommendationsCard from '@/components/inventaire/RecommendationsCard';
 import AddEditGearModal from '@/components/inventaire/AddEditGearModal';
 import MobileInventaireView from '@/components/inventaire/MobileInventaireView';
-
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import CompteFooter from '@/components/compte/CompteFooter';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -263,143 +265,149 @@ export default function InventairePage() {
   }, [filteredItems]);
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] text-[#132219] selection:bg-emerald-900/20 font-sans">
-      
-      {/* Mobile App View (< md) */}
-      <MobileInventaireView
-        items={items}
-        kits={MOCK_USER_KITS}
-        totalArticles={totalArticles}
-        totalWeightKg={totalWeightKg}
-        activeCategory={activeCategory}
-        onCategoryChange={setActiveCategory}
-        onToggleFavorite={handleToggleFavorite}
-        onEdit={(item) => { setEditingItem(item); setIsAddModalOpen(true); }}
-        onDelete={handleDeleteItem}
-        onOpenAddModal={() => { setEditingItem(null); setIsAddModalOpen(true); }}
-      />
-
-      {/* Desktop View (md and above) */}
+    <>
+      {/* ── DESKTOP ── */}
       <div className="hidden md:block">
-        <Header />
+        <div className="min-h-screen bg-[#FAF8F5] text-[#132219] selection:bg-emerald-900/20 font-sans">
+          <Header />
 
-        <main className="pt-24 pb-16">
-          <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
-            
-            {/* 1. Immersive Photographic Hero */}
-            <InventaireHero
-              totalArticles={totalArticles}
-              totalWeightKg={totalWeightKg}
-              kitsCount={MOCK_USER_KITS.length}
-              repairsCount={MOCK_REPAIRS.length}
-              loansCount={MOCK_LOANS.length}
-              onOpenAddModal={() => { setEditingItem(null); setAddCategoryTarget(undefined); setIsAddModalOpen(true); }}
-              onOpenPhotoModal={() => showToast('Reconnaissance IA de photo activée !')}
-            />
+          <main className="pt-24 pb-16">
+            <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
 
-            {/* 2. Search, Filter & View Mode Toolbar */}
-            <InventaireToolbar
-              search={search}
-              onSearchChange={setSearch}
-              activeCategory={activeCategory}
-              onCategoryChange={setActiveCategory}
-              sortBy={sortBy}
-              onSortChange={setSortBy}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-              categoryCounts={categoryCounts}
-            />
+              {/* 1. Immersive Photographic Hero */}
+              <InventaireHero
+                totalArticles={totalArticles}
+                totalWeightKg={totalWeightKg}
+                kitsCount={MOCK_USER_KITS.length}
+                repairsCount={MOCK_REPAIRS.length}
+                loansCount={MOCK_LOANS.length}
+                onOpenAddModal={() => { setEditingItem(null); setAddCategoryTarget(undefined); setIsAddModalOpen(true); }}
+                onOpenPhotoModal={() => showToast('Reconnaissance IA de photo activée !')}
+              />
 
-            {/* 3. Main 2-Column Grid Layout (68% Left / 32% Right Sidebar) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              
-              {/* LEFT COLUMN (Categorized Gear Sections) */}
-              <div className="lg:col-span-8 space-y-4">
-                {categorizedSections.length > 0 ? (
-                  categorizedSections.map(([catKey, group]) => (
-                    <CategorySection
-                      key={catKey}
-                      title={group.title}
-                      categoryKey={catKey}
-                      items={group.items}
-                      recommendationTag={group.tag}
-                      viewMode={viewMode}
-                      onToggleFavorite={handleToggleFavorite}
-                      onEdit={(item) => { setEditingItem(item); setIsAddModalOpen(true); }}
-                      onDelete={handleDeleteItem}
-                      onAddCategoryItem={() => { setEditingItem(null); setAddCategoryTarget(catKey); setIsAddModalOpen(true); }}
-                    />
-                  ))
-                ) : (
-                  <div className="bg-white rounded-[2rem] p-12 border border-[#E8E4D8] text-center space-y-4 shadow-sm">
-                    <div className="w-16 h-16 rounded-full bg-[#F5F3ED] text-[#132219]/40 flex items-center justify-center text-3xl mx-auto">
-                      🎒
+              {/* 2. Search, Filter & View Mode Toolbar */}
+              <InventaireToolbar
+                search={search}
+                onSearchChange={setSearch}
+                activeCategory={activeCategory}
+                onCategoryChange={setActiveCategory}
+                sortBy={sortBy}
+                onSortChange={setSortBy}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                categoryCounts={categoryCounts}
+              />
+
+              {/* 3. Main 2-Column Grid Layout (68% Left / 32% Right Sidebar) */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+                {/* LEFT COLUMN (Categorized Gear Sections) */}
+                <div className="lg:col-span-8 space-y-4">
+                  {categorizedSections.length > 0 ? (
+                    categorizedSections.map(([catKey, group]) => (
+                      <CategorySection
+                        key={catKey}
+                        title={group.title}
+                        categoryKey={catKey}
+                        items={group.items}
+                        recommendationTag={group.tag}
+                        viewMode={viewMode}
+                        onToggleFavorite={handleToggleFavorite}
+                        onEdit={(item) => { setEditingItem(item); setIsAddModalOpen(true); }}
+                        onDelete={handleDeleteItem}
+                        onAddCategoryItem={() => { setEditingItem(null); setAddCategoryTarget(catKey); setIsAddModalOpen(true); }}
+                      />
+                    ))
+                  ) : (
+                    <div className="bg-white rounded-[2rem] p-12 border border-[#E8E4D8] text-center space-y-4 shadow-sm">
+                      <div className="w-16 h-16 rounded-full bg-[#F5F3ED] text-[#132219]/40 flex items-center justify-center text-3xl mx-auto">
+                        🎒
+                      </div>
+                      <h3 className="font-display font-800 text-xl text-[#132219]">Aucun équipement trouvé</h3>
+                      <p className="text-xs text-[#132219]/60 max-w-md mx-auto">
+                        Aucun article ne correspond à votre recherche ou filtre actuel. Ajoutez un nouvel équipement !
+                      </p>
+                      <button
+                        onClick={() => { setSearch(''); setActiveCategory('all'); }}
+                        className="px-6 py-2.5 bg-[#132219] text-white rounded-full text-xs font-bold hover:bg-[#2D5A3D] transition-colors"
+                      >
+                        Réinitialiser les filtres
+                      </button>
                     </div>
-                    <h3 className="font-display font-800 text-xl text-[#132219]">Aucun équipement trouvé</h3>
-                    <p className="text-xs text-[#132219]/60 max-w-md mx-auto">
-                      Aucun article ne correspond à votre recherche ou filtre actuel. Ajoutez un nouvel équipement !
-                    </p>
-                    <button
-                      onClick={() => { setSearch(''); setActiveCategory('all'); }}
-                      className="px-6 py-2.5 bg-[#132219] text-white rounded-full text-xs font-bold hover:bg-[#2D5A3D] transition-colors"
-                    >
-                      Réinitialiser les filtres
-                    </button>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
 
-              {/* RIGHT COLUMN (Sidebar Widgets) */}
-              <div className="lg:col-span-4 space-y-6">
-                
-                {/* 1. Weight Breakdown Progress Bar Widget */}
-                <WeightDistributionCard items={items} />
+                {/* RIGHT COLUMN (Sidebar Widgets) */}
+                <div className="lg:col-span-4 space-y-6">
 
-                {/* 2. User Kits Widget */}
-                <KitsAssemblersCard kits={MOCK_USER_KITS} />
+                  {/* 1. Weight Breakdown Progress Bar Widget */}
+                  <WeightDistributionCard items={items} />
 
-                {/* 3. Items to Repair / Replace Widget */}
-                <RepairsReplacementsCard
-                  repairs={MOCK_REPAIRS}
-                  onAction={(r) => showToast(`Réparation engagée pour ${r.item_name}`)}
-                />
+                  {/* 2. User Kits Widget */}
+                  <KitsAssemblersCard kits={MOCK_USER_KITS} />
 
-                {/* 4. Active Loans Widget */}
-                <LoansCard loans={MOCK_LOANS} />
+                  {/* 3. Items to Repair / Replace Widget */}
+                  <RepairsReplacementsCard
+                    repairs={MOCK_REPAIRS}
+                    onAction={(r) => showToast(`Réparation engagée pour ${r.item_name}`)}
+                  />
 
-                {/* 5. Boutique Recommendations Widget */}
-                <RecommendationsCard recommendations={MOCK_RECOMMENDATIONS} />
+                  {/* 4. Active Loans Widget */}
+                  <LoansCard loans={MOCK_LOANS} />
+
+                  {/* 5. Boutique Recommendations Widget */}
+                  <RecommendationsCard recommendations={MOCK_RECOMMENDATIONS} />
+
+                </div>
 
               </div>
 
             </div>
+          </main>
 
-          </div>
-        </main>
-
-        {/* 4. Full-Width Footer Banner */}
-        <div className="bg-[#132219] text-white py-12 px-6 border-t border-white/10 mt-12 font-sans">
-          <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-            <div>
-              <h3 className="font-display font-900 text-2xl sm:text-3xl text-white">
-                Un sac bien fait, <span className="font-serif italic font-normal text-emerald-200">c&apos;est déjà un voyage réussi.</span>
-              </h3>
-              <p className="text-xs text-white/60 mt-1 font-mono">
-                © 2026 Le Kit du Voyageur — Inventaire de Marceline Chevrier · {totalArticles} articles pesés
-              </p>
+          {/* 4. Full-Width Footer Banner */}
+          <div className="bg-[#132219] text-white py-12 px-6 border-t border-white/10 mt-12 font-sans">
+            <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+              <div>
+                <h3 className="font-display font-900 text-2xl sm:text-3xl text-white">
+                  Un sac bien fait, <span className="font-serif italic font-normal text-emerald-200">c&apos;est déjà un voyage réussi.</span>
+                </h3>
+                <p className="text-xs text-white/60 mt-1 font-mono">
+                  © 2026 Le Kit du Voyageur — Inventaire de Marceline Chevrier · {totalArticles} articles pesés
+                </p>
+              </div>
+              <button
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-xs font-bold text-white transition-all shrink-0"
+              >
+                Haut de page ↑
+              </button>
             </div>
-            <button
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-xs font-bold text-white transition-all shrink-0"
-            >
-              Haut de page ↑
-            </button>
           </div>
+
+          <Footer />
         </div>
-
       </div>
 
-      {/* Add / Edit Gear Modal */}
+      {/* ── MOBILE ── */}
+      <div className="block md:hidden">
+        <MobilePageShell>
+          <MobileInventaireView
+            items={items}
+            kits={MOCK_USER_KITS}
+            totalArticles={totalArticles}
+            totalWeightKg={totalWeightKg}
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+            onToggleFavorite={handleToggleFavorite}
+            onEdit={(item) => { setEditingItem(item); setIsAddModalOpen(true); }}
+            onDelete={handleDeleteItem}
+            onOpenAddModal={() => { setEditingItem(null); setIsAddModalOpen(true); }}
+          />
+        </MobilePageShell>
+      </div>
+
+      {/* Shared Modals & Toasts */}
       <AddEditGearModal
         isOpen={isAddModalOpen}
         onClose={() => { setIsAddModalOpen(false); setEditingItem(null); }}
@@ -414,7 +422,6 @@ export default function InventairePage() {
           <span>{toast}</span>
         </div>
       )}
-
-    </div>
+    </>
   );
 }

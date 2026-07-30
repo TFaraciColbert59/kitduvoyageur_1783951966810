@@ -93,7 +93,7 @@ export default function ExplorerListCard({ trail, isSelected, onClick }: Props) 
         <div className="flex items-center justify-between mt-1.5">
           {score !== null ? (
             <div className="flex items-center gap-1">
-              <span className="text-[#E4501C] text-xs">★</span>
+              <span className="text-[#17402C] text-xs">★</span>
               <span className="text-[11px] font-semibold text-[#1C2620]">{score}/100</span>
             </div>
           ) : (

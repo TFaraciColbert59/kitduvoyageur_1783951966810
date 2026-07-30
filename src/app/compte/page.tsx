@@ -20,106 +20,103 @@ import InventaireCTACard from '@/components/compte/InventaireCTACard';
 import ParametresCompteCard from '@/components/compte/ParametresCompteCard';
 import EditProfileModal from '@/components/compte/EditProfileModal';
 import MobileCompteView from '@/components/compte/MobileCompteView';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import CompteFooter from '@/components/compte/CompteFooter';
 import AventuresTab from '@/components/compte/AventuresTab';
 import CarnetsTab from '@/components/compte/CarnetsTab';
 import ClubsTab from '@/components/compte/ClubsTab';
 import CommandesTab from '@/components/compte/CommandesTab';
 import FideliteTab from '@/components/compte/FideliteTab';
-import { MOCK_MARCELINE_DATA, UserProfile } from '@/lib/mock/compte-marceline';
+import { useAuth } from '@/contexts/AuthContext';
+import { fetchDashboardData, type CompteDashboardData } from '@/lib/supabase/queries-compte';
 
 export default function ComptePage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<CompteTab>('vue-d-ensemble');
   const [toast, setToast] = useState<string | null>(null);
-  const [profile, setProfile] = useState<UserProfile>(MOCK_MARCELINE_DATA.profile);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState<CompteDashboardData | null>(null);
 
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   };
-  const [editModalOpen, setEditModalOpen] = useState(false);
 
   useEffect(() => {
-    const loadSavedProfile = () => {
+    async function loadData() {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       try {
-        const saved = localStorage.getItem('user_profile_data');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          setProfile(prev => ({
-            ...prev,
-            first_name: parsed.first_name || prev.first_name,
-            last_name: parsed.last_name || prev.last_name,
-            bio: parsed.bio || prev.bio,
-            location: parsed.location || prev.location,
-            avatar_url: parsed.avatar_url || prev.avatar_url,
-            hero_image_url: parsed.hero_image_url || prev.hero_image_url
-          }));
-        }
-      } catch (e) {
-        console.error("Error loading saved profile:", e);
+        const data = await fetchDashboardData(user.id);
+        setDashboardData(data);
+      } catch (err) {
+        console.error('Error loading dashboard data:', err);
+      } finally {
+        setLoading(false);
       }
-    };
+    }
+    loadData();
+  }, [user]);
 
-    loadSavedProfile();
-
-    const handleProfileUpdated = (e: any) => {
-      const detail = e.detail || JSON.parse(localStorage.getItem('user_profile_data') || '{}');
-      if (detail) {
-        setProfile(prev => ({
-          ...prev,
-          first_name: detail.first_name || prev.first_name,
-          last_name: detail.last_name || prev.last_name,
-          bio: detail.bio || prev.bio,
-          location: detail.location || prev.location,
-          avatar_url: detail.avatar_url || prev.avatar_url,
-          hero_image_url: detail.hero_image_url || prev.hero_image_url
-        }));
-      }
-    };
-
-    window.addEventListener('profile_updated', handleProfileUpdated);
-    return () => window.removeEventListener('profile_updated', handleProfileUpdated);
-  }, []);
-
-  const handleSaveProfile = (updatedFields: Partial<UserProfile>) => {
-    setProfile((prev) => ({ ...prev, ...updatedFields }));
+  const handleSaveProfile = (updatedFields: any) => {
     showToast('Profil mis à jour avec succès !');
   };
 
-  const {
-    prochainVoyage,
-    aventures,
-    carnets,
-    clubs,
-    commandes,
-    badges,
-    constance,
-    activite,
-    abonnement,
-    inventaire,
-  } = MOCK_MARCELINE_DATA;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F5F3ED] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[#1C2620] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-[#5C6B5E] font-medium">Chargement de votre tableau de bord...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !dashboardData) {
+    return (
+      <div className="min-h-screen bg-[#F5F3ED] flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <p className="text-5xl mb-4">🔐</p>
+          <h2 className="font-display font-800 text-2xl text-[#1C2620] mb-2">Connexion requise</h2>
+          <p className="text-sm text-[#5C6B5E] mb-6">Connectez-vous pour accéder à votre tableau de bord voyageur.</p>
+          <Link
+            href="/connexion?mode=connexion"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#1C2620] text-white rounded-full text-sm font-bold hover:bg-[#2A3830] transition-colors"
+          >
+            Se connecter
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const { profile, prochainVoyage, aventures, carnets, clubs, commandes, badges, constance, activite, abonnement, inventaire } = dashboardData;
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'aventures':
-        return <AventuresTab profile={profile} />;
+        return <AventuresTab profile={profile as any} />;
 
       case 'carnets':
-        return <CarnetsTab profile={profile} />;
+        return <CarnetsTab profile={profile as any} />;
 
       case 'clubs':
-        return <ClubsTab profile={profile} />;
+        return <ClubsTab profile={profile as any} />;
 
       case 'commandes':
-        return <CommandesTab profile={profile} />;
+        return <CommandesTab profile={profile as any} />;
 
       case 'fidelite':
-        return <FideliteTab profile={profile} />;
+        return <FideliteTab profile={profile as any} />;
 
       case 'parametres':
         return (
           <div className="w-full">
-            <ParametresCompteCard profile={profile} onSave={showToast} />
+            <ParametresCompteCard profile={profile as any} onSave={showToast} />
           </div>
         );
 
@@ -129,19 +126,19 @@ export default function ComptePage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* LEFT COLUMN (≈65%) */}
             <div className="lg:col-span-8 space-y-6">
-              <ProchainVoyageCard voyage={prochainVoyage} />
+              {prochainVoyage && <ProchainVoyageCard voyage={prochainVoyage} />}
               <StatsGrid stats={profile.stats} />
-              <MesAventuresCard aventures={aventures} />
-              <MesCarnetsCard carnets={carnets} />
-              <MesClubsCard clubs={clubs} />
-              <CommandesCard commandes={commandes} />
+              <MesAventuresCard aventures={aventures as any} />
+              <MesCarnetsCard carnets={carnets as any} />
+              <MesClubsCard clubs={clubs as any} />
+              <CommandesCard commandes={commandes as any} />
             </div>
 
             {/* RIGHT COLUMN (≈35%) */}
             <div className="lg:col-span-4 space-y-6">
-              <BadgesCard badges={badges} />
+              <BadgesCard badges={badges as any} />
               <ConstanceCard constance={constance} />
-              <ActiviteCard activites={activite} />
+              <ActiviteCard activites={activite as any} />
               <AbonnementCard subscription={abonnement} />
               <InventaireCTACard inventaire={inventaire} />
             </div>
@@ -152,15 +149,23 @@ export default function ComptePage() {
 
   return (
     <div className="min-h-screen bg-[#F5F3ED] text-[#1C2620] selection:bg-emerald-900/20 font-sans">
-      
+
       {/* Mobile-only app-like view */}
-      <MobileCompteView
-        profile={profile}
-        prochainVoyage={prochainVoyage}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        onOpenEdit={() => setEditModalOpen(true)}
-      />
+      <div className="block md:hidden">
+        <MobilePageShell>
+          <MobileCompteView
+            profile={profile as any}
+            prochainVoyage={prochainVoyage}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            onOpenEdit={() => setEditModalOpen(true)}
+          />
+          {/* Tab content rendered below the mobile header */}
+          <div className="px-4 pb-24">
+            {renderTabContent()}
+          </div>
+        </MobilePageShell>
+      </div>
 
       {/* Desktop view (md and above) */}
       <div className="hidden md:block">
@@ -169,14 +174,14 @@ export default function ComptePage() {
         <main className="pt-24 pb-12">
           {/* Main Container */}
           <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
-            
+
             {/* 3.1 Page Header Title */}
             <div className="mb-6">
               <h1 className="font-display font-900 text-3xl sm:text-4xl text-[#1C2620] tracking-tight">
                 Compte — Dashboard voyageur
               </h1>
               <p className="text-sm text-[#1C2620]/60 font-medium mt-1">
-                Vue d'ensemble d'un utilisateur riche · aventures, carnets, clubs, fidélité
+                Vue d&apos;ensemble · aventures, carnets, clubs, fidélité
               </p>
             </div>
 
@@ -193,13 +198,13 @@ export default function ComptePage() {
 
             {/* 3.4 Photographic Profile Hero */}
             <HeroProfil
-              profile={profile}
+              profile={profile as any}
               onEditProfile={() => setEditModalOpen(true)}
               onShareProfile={() => showToast('Lien du profil copié dans le presse-papiers !')}
             />
 
             {/* 3.5 Level & Key Stats Bandeau */}
-            <StatsBandeau profile={profile} />
+            <StatsBandeau profile={profile as any} />
 
             {/* 3.6 Internal Navigation Tabs */}
             <TabsCompte
@@ -212,7 +217,7 @@ export default function ComptePage() {
                 aventures: profile.stats.sorties,
                 carnets: profile.stats.carnets,
                 clubs: profile.stats.clubs,
-                commandes: 18,
+                commandes: commandes.length,
                 fidelite: profile.level.current_pts,
               }}
             />
@@ -224,14 +229,14 @@ export default function ComptePage() {
         </main>
 
         {/* 6. Full-Width Footer */}
-        <CompteFooter profile={profile} />
+        <CompteFooter profile={profile as any} />
       </div>
 
       {/* Edit Profile Modal (Accessible from both Desktop & Mobile) */}
       <EditProfileModal
         isOpen={editModalOpen}
         onClose={() => setEditModalOpen(false)}
-        profile={profile}
+        profile={profile as any}
         onSave={handleSaveProfile}
       />
 

@@ -48,7 +48,7 @@ const featuredCountries: CountryCard[] = [
 
 const dangerColors = {
   low: { bg: 'rgba(62,107,122,0.15)', text: '#3E6B7A', dot: '#3E6B7A' },
-  medium: { bg: 'rgba(228,80,28,0.15)', text: '#E4501C', dot: '#E4501C' },
+  medium: { bg: 'rgba(228,80,28,0.15)', text: '#17402C', dot: '#17402C' },
   high: { bg: 'rgba(200,30,30,0.15)', text: '#c81e1e', dot: '#c81e1e' }
 };
 

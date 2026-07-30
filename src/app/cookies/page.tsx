@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
-import NewFooterSection from '@/app/components/home/NewFooterSection';
+import Footer from '@/components/Footer';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 const CONSENT_COOKIE_KEY = 'lkdv_cookie_consent';
 const CONSENT_VERSION = '1';
@@ -54,39 +55,20 @@ export default function CookiesPage() {
     </button>
   );
 
-  return (
-    <div className="min-h-screen" style={{ background: '#F5F2EC' }}>
+  const desktopContent = (
+    <div className="min-h-screen bg-background text-foreground">
       <Header />
 
-      {/* Hero */}
-      <section className="relative overflow-hidden pt-20" style={{ background: '#1C2620' }}>
-        <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <nav className="flex items-center gap-2 text-xs font-mono mb-6" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            <Link href="/" className="hover:text-white transition-colors">Accueil</Link>
-            <span>/</span>
-            <span style={{ color: '#E4501C' }}>Cookies</span>
-          </nav>
-          <p className="text-xs font-mono tracking-[0.2em] uppercase mb-3" style={{ color: '#4A6741' }}>Cookies & Traceurs</p>
-          <h1 className="font-display text-4xl text-white mb-2" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 800 }}>
-            Politique de gestion<br />des cookies
-          </h1>
-          <p className="text-sm text-white/50">
-            Conformément aux recommandations de la CNIL (délibération n° 2020-091 du 17 septembre 2020)
-          </p>
-        </div>
-      </section>
-
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="space-y-10 text-sm leading-relaxed" style={{ color: '#5C6B5E' }}>
-
-          {/* Preferences panel */}
-          <section className="rounded-2xl p-7" style={{ background: '#fff', border: '2px solid #4A6741' }}>
-            <h2 className="text-base font-semibold mb-1" style={{ color: '#1C2620' }}>Gérer mes préférences</h2>
-            <p className="text-xs mb-6" style={{ color: '#7A7A6E' }}>
+        <div className="space-y-10 text-sm text-foreground/80 leading-relaxed">
+          {/* Gestion des préférences */}
+          <section className="bg-foreground/3 border border-border rounded-2xl p-5">
+            <h2 className="text-base font-semibold text-foreground mb-1">Gérer mes préférences</h2>
+            <p className="text-xs text-foreground/50 mb-5">
               {hasConsent ? 'Vos préférences actuelles sont affichées ci-dessous. Vous pouvez les modifier à tout moment.' : 'Vous n\'avez pas encore défini vos préférences.'}
             </p>
-            <div className="space-y-3 mb-6">
-              <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: '#F5F2EC', border: '1px solid #E8E4DA' }}>
+
+            <div className="space-y-3 mb-5">
+              <div className="flex items-center justify-between p-3 bg-background rounded-xl border border-border">
                 <div>
                   <p className="font-medium text-sm" style={{ color: '#1C2620' }}>🔒 Cookies nécessaires</p>
                   <p className="text-xs mt-0.5" style={{ color: '#7A7A6E' }}>Toujours actifs — exemptés de consentement (CNIL)</p>
@@ -95,14 +77,16 @@ export default function CookiesPage() {
                   <div className="w-5 h-5 bg-white rounded-full" />
                 </div>
               </div>
-              <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: '#F5F2EC', border: '1px solid #E8E4DA' }}>
+
+              <div className="flex items-center justify-between p-3 bg-background rounded-xl border border-border">
                 <div>
                   <p className="font-medium text-sm" style={{ color: '#1C2620' }}>📊 Cookies analytiques</p>
                   <p className="text-xs mt-0.5" style={{ color: '#7A7A6E' }}>Google Analytics — mesure d&apos;audience anonymisée</p>
                 </div>
                 <Toggle value={analytics} onChange={() => setAnalytics(!analytics)} label="Activer ou désactiver les cookies analytiques" />
               </div>
-              <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: '#F5F2EC', border: '1px solid #E8E4DA' }}>
+
+              <div className="flex items-center justify-between p-3 bg-background rounded-xl border border-border">
                 <div>
                   <p className="font-medium text-sm" style={{ color: '#1C2620' }}>🎯 Cookies marketing</p>
                   <p className="text-xs mt-0.5" style={{ color: '#7A7A6E' }}>Publicités personnalisées et remarketing</p>
@@ -111,129 +95,107 @@ export default function CookiesPage() {
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
-              <button onClick={handleSave} className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all" style={{ background: '#1C2620', color: '#fff' }}>
+              <button onClick={handleSave} className="flex-1 bg-primary hover:bg-primary/90 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all">
                 {saved ? '✓ Préférences enregistrées' : 'Enregistrer mes choix'}
               </button>
-              <button onClick={handleAcceptAll} className="flex-1 py-3 rounded-xl text-sm font-medium transition-all" style={{ background: '#4A6741', color: '#fff' }}>
-                Tout accepter
-              </button>
-              <button onClick={handleRejectAll} className="flex-1 py-3 rounded-xl text-sm transition-all" style={{ border: '1px solid #C8C3B0', color: '#5C6B5E' }}>
-                Tout refuser
-              </button>
+              <button onClick={handleAcceptAll} className="flex-1 bg-foreground/8 hover:bg-foreground/15 text-foreground px-4 py-2.5 rounded-xl text-sm font-medium transition-all">Tout accepter</button>
+              <button onClick={handleRejectAll} className="flex-1 border border-border hover:border-foreground/30 text-foreground/60 hover:text-foreground/80 px-4 py-2.5 rounded-xl text-sm transition-all">Tout refuser</button>
             </div>
           </section>
 
-          <section>
-            <h2 className="text-base font-semibold mb-4 pb-2" style={{ color: '#1C2620', borderBottom: '1px solid #E8E4DA' }}>1. Qu&apos;est-ce qu&apos;un cookie ?</h2>
-            <p>Un cookie est un petit fichier texte déposé sur votre terminal lors de la visite d&apos;un site web. Il permet au site de mémoriser des informations sur votre visite, comme votre langue préférée et d&apos;autres paramètres. Conformément à l&apos;article 82 de la loi Informatique et Libertés et aux recommandations de la CNIL, certains cookies nécessitent votre consentement préalable avant d&apos;être déposés sur votre terminal.</p>
+          <section><h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">1. Qu&apos;est-ce qu&apos;un cookie ?</h2><p>Un cookie est un petit fichier texte déposé sur votre terminal lors de la visite d&apos;un site web. Il permet au site de mémoriser des informations sur votre visite.</p></section>
+
+          <section><h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">2. Cookies utilisés</h2>
+            <p className="mb-4">Cookies nécessaires (exemptés de consentement) : sb-*-auth-token (session), lkdv_cookie_consent (6 mois), __stripe_mid (1 an), __stripe_sid (30 min).</p>
+            <p className="mb-4">Cookies analytiques (consentement requis) : _ga (13 mois), _ga_* (13 mois), _gid (24h) — Google Analytics avec anonymisation IP.</p>
+            <p>Cookies marketing : aucun actif actuellement.</p>
           </section>
 
-          <section>
-            <h2 className="text-base font-semibold mb-4 pb-2" style={{ color: '#1C2620', borderBottom: '1px solid #E8E4DA' }}>2. Cookies utilisés sur lekitduvoyageur.fr</h2>
-            {[
-              {
-                title: '🔒 Cookies nécessaires',
-                badge: 'Exemptés de consentement',
-                badgeColor: '#4A6741',
-                desc: 'Ces cookies sont indispensables au fonctionnement du site. Ils ne peuvent pas être désactivés.',
-                rows: [
-                  ['sb-*-auth-token', 'Session d\'authentification Supabase', 'Session / 7 jours', 'lekitduvoyageur.fr'],
-                  ['lkdv_cookie_consent', 'Mémorisation de vos préférences cookies', '6 mois', 'lekitduvoyageur.fr'],
-                  ['__stripe_mid', 'Prévention de la fraude (paiement)', '1 an', 'stripe.com'],
-                  ['__stripe_sid', 'Session de paiement sécurisée', '30 minutes', 'stripe.com'],
-                ],
-              },
-              {
-                title: '📊 Cookies analytiques',
-                badge: 'Consentement requis',
-                badgeColor: '#E4501C',
-                desc: 'Ces cookies nous permettent de mesurer l\'audience du site et d\'analyser le comportement des visiteurs. Les données collectées sont anonymisées.',
-                rows: [
-                  ['_ga', 'Identifiant visiteur unique Google Analytics', '2 ans', 'google.com'],
-                  ['_ga_*', 'Persistance de session Google Analytics 4', '2 ans', 'google.com'],
-                  ['_gid', 'Identifiant de session Google Analytics', '24 heures', 'google.com'],
-                ],
-              },
-              {
-                title: '🎯 Cookies marketing',
-                badge: 'Consentement requis',
-                badgeColor: '#E4501C',
-                desc: 'Ces cookies permettent d\'afficher des publicités personnalisées et de mesurer l\'efficacité des campagnes publicitaires.',
-                rows: [
-                  ['_fbp', 'Suivi des conversions Facebook Ads', '3 mois', 'facebook.com'],
-                  ['_gcl_au', 'Suivi des conversions Google Ads', '3 mois', 'google.com'],
-                ],
-              },
-            ].map((group) => (
-              <div key={group.title} className="mb-8">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-sm font-semibold" style={{ color: '#1C2620' }}>{group.title}</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full text-white" style={{ background: group.badgeColor }}>{group.badge}</span>
-                </div>
-                <p className="text-xs mb-3" style={{ color: '#7A7A6E' }}>{group.desc}</p>
-                <div className="overflow-x-auto rounded-xl" style={{ border: '1px solid #E8E4DA' }}>
-                  <table className="w-full text-xs border-collapse">
-                    <thead>
-                      <tr style={{ background: '#F5F2EC' }}>
-                        {['Nom', 'Finalité', 'Durée', 'Émetteur'].map((h) => (
-                          <th key={h} className="text-left p-3 font-medium" style={{ color: '#1C2620' }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {group.rows.map(([name, finalite, duree, emetteur]) => (
-                        <tr key={name} style={{ borderTop: '1px solid #E8E4DA' }}>
-                          <td className="p-3 font-mono" style={{ color: '#1C2620' }}>{name}</td>
-                          <td className="p-3" style={{ color: '#5C6B5E' }}>{finalite}</td>
-                          <td className="p-3" style={{ color: '#5C6B5E' }}>{duree}</td>
-                          <td className="p-3" style={{ color: '#5C6B5E' }}>{emetteur}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ))}
-          </section>
+          <section><h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">3. Durée de conservation</h2><p>Votre consentement est mémorisé pendant 6 mois. Les cookies Google Analytics ont une durée maximale de 13 mois.</p></section>
 
-          <section>
-            <h2 className="text-base font-semibold mb-4 pb-2" style={{ color: '#1C2620', borderBottom: '1px solid #E8E4DA' }}>3. Comment gérer les cookies dans votre navigateur ?</h2>
-            <p className="mb-4">Vous pouvez également configurer votre navigateur pour refuser les cookies. Voici les liens vers les paramètres des principaux navigateurs :</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {[
-                { name: 'Chrome', url: 'https://support.google.com/chrome/answer/95647' },
-                { name: 'Firefox', url: 'https://support.mozilla.org/fr/kb/cookies-informations-sites-enregistrent' },
-                { name: 'Safari', url: 'https://support.apple.com/fr-fr/guide/safari/sfri11471/mac' },
-                { name: 'Edge', url: 'https://support.microsoft.com/fr-fr/microsoft-edge/supprimer-les-cookies-dans-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09' },
-                { name: 'Opera', url: 'https://help.opera.com/en/latest/web-preferences/#cookies' },
-              ].map((browser) => (
-                <a key={browser.name} href={browser.url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2 p-3 rounded-xl text-sm font-medium transition-all hover:shadow-sm"
-                  style={{ background: '#fff', border: '1px solid #E8E4DA', color: '#1C2620' }}>
-                  {browser.name} →
-                </a>
-              ))}
-            </div>
-          </section>
+          <section><h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">4. Contact DPO</h2><p>Email : <a href="mailto:dpo@lekitduvoyageur.fr" className="text-primary hover:underline">dpo@lekitduvoyageur.fr</a></p></section>
 
-          <section>
-            <h2 className="text-base font-semibold mb-4 pb-2" style={{ color: '#1C2620', borderBottom: '1px solid #E8E4DA' }}>4. Durée de conservation des cookies</h2>
-            <p>La durée de conservation des cookies varie selon leur type. Les cookies de session sont supprimés à la fermeture du navigateur. Les cookies persistants sont conservés pendant la durée indiquée dans le tableau ci-dessus, dans la limite de 13 mois conformément aux recommandations de la CNIL.</p>
-          </section>
-
-          <div className="flex flex-wrap gap-3 pt-6" style={{ borderTop: '1px solid #E8E4DA' }}>
-            {[{ href: '/politique-confidentialite', label: 'Politique de confidentialité' }, { href: '/mentions-legales', label: 'Mentions légales' }, { href: '/cgu', label: 'CGU' }, { href: '/contact', label: 'Contact DPO' }].map((link, i, arr) => (
-              <React.Fragment key={link.href}>
-                <Link href={link.href} className="text-xs hover:underline" style={{ color: '#4A6741' }}>{link.label}</Link>
-                {i < arr.length - 1 && <span className="text-xs" style={{ color: '#C8C3B0' }}>·</span>}
-              </React.Fragment>
-            ))}
+          <div className="flex flex-wrap gap-3 pt-6 border-t border-border">
+            <Link href="/politique-confidentialite" className="text-primary hover:underline text-xs">Politique de confidentialité</Link>
+            <span className="text-foreground/20 text-xs">·</span>
+            <Link href="/mentions-legales" className="text-primary hover:underline text-xs">Mentions légales</Link>
+            <span className="text-foreground/20 text-xs">·</span>
+            <Link href="/cgu" className="text-primary hover:underline text-xs">CGU</Link>
+            <span className="text-foreground/20 text-xs">·</span>
+            <Link href="/cgv" className="text-primary hover:underline text-xs">CGV</Link>
           </div>
-          <p className="text-xs" style={{ color: '#9A9A8E' }}>Dernière mise à jour : juillet 2026</p>
         </div>
       </main>
 
       <NewFooterSection />
     </div>
+  );
+
+  const mobileContent = (
+    <div style={{ padding: '16px' }}>
+      <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '12px' }}>Cookies & Traceurs</p>
+      <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#1C2620', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Politique de gestion des cookies</h1>
+      <p style={{ fontSize: '12px', color: 'rgba(28,38,32,0.5)', marginBottom: '24px' }}>Conformément aux recommandations de la CNIL</p>
+
+      <div style={{ background: '#F4F1EA', borderRadius: '16px', border: '1px solid rgba(11,31,23,0.06)', padding: '16px', marginBottom: '24px' }}>
+        <p style={{ fontSize: '14px', fontWeight: 600, color: '#1C2620', marginBottom: '4px' }}>Gérer mes préférences</p>
+        <p style={{ fontSize: '12px', color: 'rgba(28,38,32,0.5)', marginBottom: '16px' }}>
+          {hasConsent ? 'Vos préférences sont définies.' : 'Vous n\'avez pas encore défini vos préférences.'}
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+            <div><p style={{ fontSize: '13px', fontWeight: 500, color: '#1C2620' }}>🔒 Cookies nécessaires</p><p style={{ fontSize: '11px', color: 'rgba(28,38,32,0.5)' }}>Toujours actifs</p></div>
+            <div style={{ width: '36px', height: '18px', background: '#17402C', borderRadius: '36px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: '2px', opacity: 0.6 }}>
+              <div style={{ width: '14px', height: '14px', background: 'white', borderRadius: '50%' }} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+            <div><p style={{ fontSize: '13px', fontWeight: 500, color: '#1C2620' }}>📊 Cookies analytiques</p></div>
+            <button onClick={() => setAnalytics(!analytics)} style={{ width: '36px', height: '18px', borderRadius: '36px', display: 'flex', alignItems: 'center', transition: 'all 0.2s', background: analytics ? '#17402C' : 'rgba(11,31,23,0.15)', justifyContent: analytics ? 'flex-end' : 'flex-start', padding: analytics ? '0 2px 0 0' : '0 0 0 2px', border: 'none', cursor: 'pointer' }}>
+              <div style={{ width: '14px', height: '14px', background: 'white', borderRadius: '50%', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }} />
+            </button>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+            <div><p style={{ fontSize: '13px', fontWeight: 500, color: '#1C2620' }}>🎯 Cookies marketing</p></div>
+            <button onClick={() => setMarketing(!marketing)} style={{ width: '36px', height: '18px', borderRadius: '36px', display: 'flex', alignItems: 'center', transition: 'all 0.2s', background: marketing ? '#17402C' : 'rgba(11,31,23,0.15)', justifyContent: marketing ? 'flex-end' : 'flex-start', padding: marketing ? '0 2px 0 0' : '0 0 0 2px', border: 'none', cursor: 'pointer' }}>
+              <div style={{ width: '14px', height: '14px', background: 'white', borderRadius: '50%', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }} />
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <button onClick={handleSave} style={{ background: '#17402C', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>{saved ? '✓ Préférences enregistrées' : 'Enregistrer mes choix'}</button>
+          <button onClick={handleAcceptAll} style={{ background: 'rgba(11,31,23,0.06)', color: '#1C2620', border: 'none', padding: '10px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>Tout accepter</button>
+          <button onClick={handleRejectAll} style={{ background: 'transparent', color: 'rgba(28,38,32,0.6)', border: '1px solid rgba(11,31,23,0.06)', padding: '10px 16px', borderRadius: '12px', fontSize: '13px', cursor: 'pointer' }}>Tout refuser</button>
+        </div>
+      </div>
+
+      <section style={{ marginBottom: '24px' }}>
+        <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#1C2620', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(11,31,23,0.06)' }}>1. Qu&apos;est-ce qu&apos;un cookie ?</h2>
+        <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.8)', lineHeight: '1.6' }}>Un cookie est un petit fichier texte déposé sur votre terminal lors de la visite d&apos;un site web.</p>
+      </section>
+      <section style={{ marginBottom: '24px' }}>
+        <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#1C2620', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(11,31,23,0.06)' }}>2. Cookies utilisés</h2>
+        <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.8)', lineHeight: '1.6' }}>Cookies nécessaires : session, préférences, Stripe. Cookies analytics (avec consentement) : Google Analytics, 13 mois max. Cookies marketing : aucun actif.</p>
+      </section>
+      <section style={{ marginBottom: '24px' }}>
+        <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#1C2620', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(11,31,23,0.06)' }}>3. Contact DPO</h2>
+        <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.8)', lineHeight: '1.6' }}><a href="mailto:dpo@lekitduvoyageur.fr" style={{ color: '#17402C', textDecoration: 'underline' }}>dpo@lekitduvoyageur.fr</a></p>
+      </section>
+    </div>
+  );
+
+  return (
+    <>
+      {/* DESKTOP */}
+      <div className="hidden md:block">{desktopContent}</div>
+
+      {/* MOBILE */}
+      <div className="block md:hidden">
+        <MobilePageShell>{mobileContent}</MobilePageShell>
+        
+      </div>
+    </>
   );
 }

@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import BlogClient from './BlogClient';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
+
 export const metadata = {
   title: 'Blog — Le Kit du Voyageur',
   description: 'Conseils, guides et inspirations pour voyager léger et bien équipé. Découvrez nos articles sur le matériel outdoor, les destinations et les techniques de voyage.',
@@ -171,5 +173,42 @@ async function getBlogPosts(): Promise<BlogPost[]> {
 
 export default async function BlogPage() {
   const posts = await getBlogPosts();
-  return <BlogClient posts={posts} />;
+
+  const webPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'Blog — Le Kit du Voyageur',
+    description: 'Conseils, guides et inspirations pour voyager léger et bien équipé.',
+    url: `${siteUrl}/blog`,
+    isPartOf: {
+      '@type': 'WebSite',
+      name: 'Le Kit du Voyageur',
+      url: siteUrl,
+    },
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Accueil', item: siteUrl },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: `${siteUrl}/blog` },
+    ],
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
+        suppressHydrationWarning
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        suppressHydrationWarning
+      />
+      <BlogClient posts={posts} />
+    </>
+  );
 }

@@ -111,7 +111,7 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
         const loc: [number, number] = [latitude, longitude];
         setLocationState('located');
         onLocationUpdate?.(loc);
-        if (mapRef.current) {
+        if (mapRef.current && latitude != null && longitude != null && isFinite(latitude) && isFinite(longitude)) {
           mapRef.current.flyTo([latitude, longitude], 13, { duration: 1.5 });
         }
       },
@@ -202,7 +202,9 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
         const { longitude, latitude } = position.coords;
         setLocationState('located');
         onLocationUpdate?.([latitude, longitude]);
-        mapRef.current!.flyTo([latitude, longitude], 13, { duration: 1.5 });
+        if (isFinite(latitude) && isFinite(longitude)) {
+          mapRef.current!.flyTo([latitude, longitude], 13, { duration: 1.5 });
+        }
       },
       () => setLocationState('denied'),
       { enableHighAccuracy: true, timeout: 8000 }

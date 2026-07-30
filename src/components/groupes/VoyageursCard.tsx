@@ -102,7 +102,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
         {isOrganizer && (
           <button 
             onClick={() => setShowManageModal(true)}
-            className="text-xs font-medium text-[#E4501C] hover:underline font-sans"
+            className="text-xs font-medium text-[#17402C] hover:underline font-sans"
           >
             Gérer →
           </button>
@@ -123,7 +123,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
               {t.progress < 100 && t.progress > 0 && (
                 <svg className="absolute -inset-1 w-12 h-12 -rotate-90">
                   <circle cx="24" cy="24" r="22" stroke="currentColor" strokeWidth="2" fill="none" className="text-[#1C2620]/10" />
-                  <circle cx="24" cy="24" r="22" stroke="currentColor" strokeWidth="2" fill="none" strokeDasharray="138" strokeDashoffset={138 - (138 * t.progress) / 100} className="text-[#E4501C]" />
+                  <circle cx="24" cy="24" r="22" stroke="currentColor" strokeWidth="2" fill="none" strokeDasharray="138" strokeDashoffset={138 - (138 * t.progress) / 100} className="text-[#17402C]" />
                 </svg>
               )}
             </div>
@@ -139,7 +139,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
                 {t.status}
               </span>
             ) : (
-              <span className="text-[10px] font-mono font-bold text-[#E4501C] whitespace-nowrap">
+              <span className="text-[10px] font-mono font-bold text-[#17402C] whitespace-nowrap">
                 {t.progress}%
               </span>
             )}
@@ -161,7 +161,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
               value={joinCode}
               onChange={e => setJoinCode(e.target.value.toUpperCase())}
               placeholder="Code d'invitation"
-              className="flex-1 bg-white border border-[#1C2620]/10 rounded-xl px-3 py-2 text-xs text-[#1C2620] focus:outline-none focus:border-[#E4501C]/60"
+              className="flex-1 bg-white border border-[#1C2620]/10 rounded-xl px-3 py-2 text-xs text-[#1C2620] focus:outline-none focus:border-[#17402C]/60"
               onKeyDown={e => e.key === 'Enter' && handleJoinByCode()}
             />
             <button 

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 export interface ChapterItem {
   id: string;
@@ -249,7 +250,10 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
   const selectedAdventure = linkedAdventuresList.find(a => a.id === form.linkedAdventureId);
 
   return (
-    <div className="min-h-screen bg-[#F5F2E8] font-sans text-[#1C2620] pb-28">
+    <>
+      {/* ── DESKTOP ── */}
+      <div className="hidden md:block">
+        <div className="min-h-screen bg-[#F5F2E8] font-sans text-[#1C2620] pb-28">
       
       {/* 1. TOP STICKY NAVBAR */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-[#E8E4D8] px-4 sm:px-8 py-3 flex items-center justify-between shadow-sm">
@@ -735,7 +739,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
           
           {/* WIDGET 1: CARNET EN BROUILLON (Live Preview) */}
           <div className="bg-[#1C2620] rounded-[2.5rem] p-6 text-white shadow-xl relative overflow-hidden space-y-4">
-            <div className="text-[9px] font-mono tracking-widest text-[#E4501C] uppercase font-bold">CARNET EN BROUILLON</div>
+            <div className="text-[9px] font-mono tracking-widest text-[#17402C] uppercase font-bold">CARNET EN BROUILLON</div>
 
             <div className="relative rounded-2xl overflow-hidden aspect-[16/9]">
               <img src={form.coverImage} alt="Cover preview" className="w-full h-full object-cover" />
@@ -822,12 +826,198 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
           <button
             onClick={() => handlePublish(false)}
             disabled={saving || !form.title.trim()}
-            className="px-6 py-2.5 bg-[#2D5A3D] hover:bg-[#E4501C] text-white rounded-full text-xs font-bold shadow-lg transition-all disabled:opacity-50"
+            className="px-6 py-2.5 bg-[#2D5A3D] hover:bg-[#17402C] text-white rounded-full text-xs font-bold shadow-lg transition-all disabled:opacity-50"
           >
             {saving ? 'Publication...' : saveSuccess ? '✓ Publié !' : 'Publier le carnet'}
           </button>
         </div>
       </div>
+
+    </div>
+      </div>
+
+      {/* ── MOBILE ── */}
+      <div className="block md:hidden">
+        <MobilePageShell>
+          {/* Sticky header */}
+          <div style={{ position: 'sticky', top: 0, zIndex: 40, background: 'rgba(251,250,246,0.92)', backdropFilter: 'blur(16px) saturate(1.5)', WebkitBackdropFilter: 'blur(16px) saturate(1.5)', borderBottom: '1px solid rgba(11,31,23,0.06)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Link href="/communaute" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 500, color: '#0B1F17', textDecoration: 'none' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0B1F17" strokeWidth="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              </Link>
+              <span style={{ fontSize: '17px', fontWeight: 600, color: '#0B1F17', letterSpacing: '-0.01em' }}>Nouveau carnet</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ background: '#EDF3ED', borderRadius: '999px', padding: '2px 10px', fontSize: '10px', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#17402C' }}>
+                {completionScore}%
+              </div>
+            </div>
+          </div>
+
+          <div style={{ padding: '16px' }}>
+            {/* Cover image */}
+            <div style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', minHeight: '200px', background: '#0B1F17', marginBottom: '16px' }}>
+              <img src={form.coverImage} alt="Couverture" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.9 }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(11,31,23,0.8), rgba(11,31,23,0.2))' }} />
+              <div style={{ position: 'absolute', bottom: '12px', left: '12px', right: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                <div style={{ color: '#fff', fontSize: '20px', fontWeight: 700, letterSpacing: '-0.02em', textShadow: '0 1px 4px rgba(0,0,0,0.3)' }}>
+                  {form.title || 'Titre du carnet'}
+                </div>
+                <label style={{ background: 'rgba(255,255,255,0.9)', color: '#0B1F17', border: 'none', borderRadius: '999px', padding: '6px 12px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'inherit' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  Changer
+                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      setField('coverImage', URL.createObjectURL(e.target.files[0]));
+                    }
+                  }} />
+                </label>
+              </div>
+            </div>
+
+            {/* Title input */}
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.14em', color: '#6B7A72', display: 'block', marginBottom: '4px', fontFamily: 'ui-monospace, monospace', fontWeight: 600 }}>
+                Titre *
+              </label>
+              <input
+                type="text"
+                value={form.title}
+                onChange={e => setField('title', e.target.value)}
+                placeholder="Ex: Trois jours sur les crêtes"
+                style={{ width: '100%', background: '#FBFAF6', border: '1px solid rgba(11,31,23,0.06)', borderRadius: '12px', padding: '10px 14px', fontSize: '15px', fontWeight: 600, color: '#0B1F17', outline: 'none', fontFamily: 'inherit' }}
+              />
+            </div>
+
+            {/* Subtitle input */}
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.14em', color: '#6B7A72', display: 'block', marginBottom: '4px', fontFamily: 'ui-monospace, monospace', fontWeight: 600 }}>
+                Sous-titre
+              </label>
+              <input
+                type="text"
+                value={form.subtitle}
+                onChange={e => setField('subtitle', e.target.value)}
+                placeholder="Chartreuse · octobre 2026 · 27 km à deux"
+                style={{ width: '100%', background: '#FBFAF6', border: '1px solid rgba(11,31,23,0.06)', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', fontWeight: 500, color: '#0B1F17', outline: 'none', fontFamily: 'inherit' }}
+              />
+            </div>
+
+            {/* Chapeau textarea */}
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <label style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.14em', color: '#6B7A72', fontFamily: 'ui-monospace, monospace', fontWeight: 600 }}>
+                  Chapeau
+                </label>
+                <span style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72' }}>{form.chapeau.length} / 300</span>
+              </div>
+              <textarea
+                rows={3}
+                maxLength={300}
+                value={form.chapeau}
+                onChange={e => setField('chapeau', e.target.value)}
+                placeholder="Deux ou trois phrases qui donnent le ton de la lecture..."
+                style={{ width: '100%', background: '#FBFAF6', border: '1px solid rgba(11,31,23,0.06)', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#0B1F17', outline: 'none', lineHeight: '1.6', resize: 'none' }}
+              />
+            </div>
+
+            {/* Chapter list */}
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <label style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.14em', color: '#6B7A72', fontFamily: 'ui-monospace, monospace', fontWeight: 600 }}>
+                  Chapitres ({form.chapters.length})
+                </label>
+                <button
+                  type="button"
+                  onClick={addChapter}
+                  style={{ background: 'none', border: 'none', fontSize: '11px', fontWeight: 600, color: '#17402C', cursor: 'pointer', padding: '2px 6px', fontFamily: 'inherit' }}
+                >
+                  + Ajouter
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {form.chapters.map(ch => (
+                  <div key={ch.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+                    <span style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: '14px', color: '#17402C', width: '20px', textAlign: 'center', flexShrink: 0 }}>{ch.num}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.title}</div>
+                      <div style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>{ch.wordCount} mots</span>
+                        <span>·</span>
+                        <span style={{
+                          fontWeight: 600,
+                          color: ch.status === 'Rédigé' ? '#2D6B4A' : ch.status === 'En cours' ? '#B8860B' : '#A3A8A3'
+                        }}>{ch.status}</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => startEditChapter(ch)}
+                      style={{ background: '#F4F1EA', border: 'none', borderRadius: '999px', padding: '4px 10px', fontSize: '10px', fontWeight: 600, color: '#0B1F17', cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit' }}
+                    >
+                      Éditer
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Theme tags */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.14em', color: '#6B7A72', display: 'block', marginBottom: '8px', fontFamily: 'ui-monospace, monospace', fontWeight: 600 }}>
+                Thématiques
+              </label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {availableThemes.map(theme => {
+                  const isSelected = form.selectedThemes.includes(theme);
+                  return (
+                    <button
+                      key={theme}
+                      type="button"
+                      onClick={() => toggleTheme(theme)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '999px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        background: isSelected ? '#17402C' : '#F4F1EA',
+                        color: isSelected ? '#fff' : '#6B7A72'
+                      }}
+                    >
+                      {isSelected ? `✓ ${theme}` : theme}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Preview + Publish buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '4px' }}>
+              <button
+                onClick={() => setPreviewModalOpen(true)}
+                style={{ width: '100%', padding: '12px', borderRadius: '999px', border: '1px solid rgba(11,31,23,0.06)', background: '#F4F1EA', color: '#0B1F17', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center' }}
+              >
+                Aperçu lecteur
+              </button>
+              <button
+                onClick={() => handlePublish(false)}
+                disabled={saving || !form.title.trim()}
+                style={{ width: '100%', padding: '12px', borderRadius: '999px', border: 'none', background: '#17402C', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center', opacity: saving || !form.title.trim() ? 0.5 : 1 }}
+              >
+                {saving ? 'Publication...' : saveSuccess ? 'Publier' : 'Publier le carnet'}
+              </button>
+            </div>
+          </div>
+
+          {/* Footer spacer */}
+          <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
+        </MobilePageShell>
+      </div>
+
+      {/* ── SHARED MODALS ── */}
 
       {/* 5. CHAPTER EDIT MODAL */}
       {editingChapterId && (
@@ -908,11 +1098,11 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
       {/* 6. FULLSCREEN READER PREVIEW MODAL */}
       {previewModalOpen && (
         <div className="fixed inset-0 z-[300] bg-[#F5F2E8] overflow-y-auto animate-fade-in font-sans">
-          
+
           {/* Preview Header Bar */}
           <header className="sticky top-0 z-50 bg-[#1C2620] text-white px-6 py-3 flex items-center justify-between shadow-md">
             <div className="flex items-center gap-3">
-              <span className="bg-[#E4501C] text-white text-[10px] font-mono font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+              <span className="bg-[#17402C] text-white text-[10px] font-mono font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
                 👁️ Mode Aperçu Lecteur
               </span>
               <span className="text-xs text-white/60 font-mono hidden sm:inline">
@@ -934,7 +1124,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                   setPreviewModalOpen(false);
                   handlePublish(false);
                 }}
-                className="px-5 py-2 bg-[#2D5A3D] hover:bg-[#E4501C] text-white rounded-full text-xs font-bold transition-all shadow-md"
+                className="px-5 py-2 bg-[#2D5A3D] hover:bg-[#17402C] text-white rounded-full text-xs font-bold transition-all shadow-md"
               >
                 Publier le carnet
               </button>
@@ -945,12 +1135,12 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
           <div className={`max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-10 ${
             form.readingStyle === 'journal' ? 'font-serif' : form.readingStyle === 'paper' ? 'font-mono' : 'font-sans'
           }`}>
-            
+
             {/* Cover Banner */}
             <div className="relative rounded-[2.5rem] overflow-hidden min-h-[350px] sm:min-h-[450px] shadow-2xl bg-[#1C2620] text-white p-8 sm:p-12 flex flex-col justify-end">
               <img src={form.coverImage} alt={form.title} className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
-              
+
               <div className="relative z-10 space-y-3">
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-mono font-bold text-white border border-white/20">
                   <span>📖 Carnet de voyage</span>
@@ -1065,6 +1255,6 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
         </div>
       )}
 
-    </div>
+    </>
   );
 }

@@ -298,7 +298,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
             <span className="text-base font-serif italic text-[#1C2620]">alertes</span>
           </div>
           <p className="text-xs text-[#5C6B5E] mt-2 font-medium">
-            <span className="text-[#E4501C] font-bold">3 non lus</span> · {invitations.length} invitations en attente
+            <span className="text-[#17402C] font-bold">3 non lus</span> · {invitations.length} invitations en attente
           </p>
         </div>
       </div>
@@ -328,7 +328,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
                 {/* Top Row: Admin Badge & Featured Tag */}
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
-                    <span className="bg-[#E4501C] text-white text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full shadow-md">
+                    <span className="bg-[#17402C] text-white text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full shadow-md">
                       VOUS ÊTES ADMIN
                     </span>
                     <span className="text-white/60 text-[10px] font-bold uppercase tracking-widest">

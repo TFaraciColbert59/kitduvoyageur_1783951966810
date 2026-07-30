@@ -3,7 +3,9 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
-import NewFooterSection from '@/app/components/home/NewFooterSection';
+import Footer from '@/components/Footer';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import TopoSeparator from '@/components/TopoSeparator';
 import AppImage from '@/components/ui/AppImage';
 import type { BlogPost } from './page';
 
@@ -90,6 +92,45 @@ function PostCard({ post }: { post: BlogPost }) {
   );
 }
 
+function MobilePostCard({ post }: { post: BlogPost }) {
+  return (
+    <Link href={`/guides/${post.slug}`} style={{ display: 'block', textDecoration: 'none' }}>
+      <article style={{ borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)', background: '#F4F1EA', overflow: 'hidden', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', gap: '12px', padding: '12px' }}>
+          <div style={{ width: '80px', height: '90px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, position: 'relative', background: '#E8E4D8' }}>
+            {post.image && (
+              <img src={post.image} alt={post.image_alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            )}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+              <span style={{ fontSize: '10px', color: '#17402C', fontFamily: 'ui-monospace, monospace', fontWeight: 700 }}>
+                {post.category}
+              </span>
+              {post.featured && (
+                <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '4px', background: '#EDF3ED', color: '#17402C' }}>
+                  A la une
+                </span>
+              )}
+            </div>
+            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#1C2620', margin: 0, lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+              {post.title}
+            </h3>
+            <p style={{ fontSize: '12px', color: '#6B7A72', margin: '4px 0 0 0', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+              {post.excerpt}
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px', fontSize: '10px', color: '#6B7A72', fontFamily: 'ui-monospace, monospace' }}>
+              <span>{formatDate(post.published_at)}</span>
+              <span>·</span>
+              <span>{post.read_time} min</span>
+            </div>
+          </div>
+        </div>
+      </article>
+    </Link>
+  );
+}
+
 export default function BlogClient({ posts }: { posts: BlogPost[] }) {
   const [activeCategory, setActiveCategory] = useState('Tous');
 
@@ -99,10 +140,8 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
     return activeCategory === 'Tous' ? nonFeatured : nonFeatured.filter((p) => p.category === activeCategory);
   }, [posts, activeCategory]);
 
-  return (
-    <div className="min-h-screen" style={{ background: '#F5F2EC' }}>
-      <Header />
-
+  const desktopContent = (
+    <>
       {/* Hero */}
       <section className="relative overflow-hidden pt-20" style={{ background: '#1C2620' }}>
         <div className="absolute inset-0 bg-cover bg-center opacity-15" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=1600&q=80')" }} />
@@ -130,14 +169,32 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
         </div>
       </section>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        {/* Featured */}
-        {featuredPosts.length > 0 && (
-          <section className="mb-16">
-            <p className="text-xs font-mono tracking-[0.2em] uppercase mb-6" style={{ color: '#4A6741' }}>À la une</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {featuredPosts.slice(0, 2).map((post) => (
-                <FeaturedCard key={post.id} post={post} />
+      <section className="py-12 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Search + Category filters */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-8">
+            <div className="relative flex-1">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Rechercher un article…"
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-border bg-card text-foreground placeholder-muted-foreground text-sm focus:outline-none focus:border-primary transition-colors"
+              />
+            </div>
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                    activeCategory === cat
+                      ? 'bg-primary text-white' :'bg-card border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                  }`}
+                >
+                  {cat}
+                </button>
               ))}
             </div>
           </section>
@@ -160,21 +217,175 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
           ))}
         </div>
 
-        {/* Posts grid */}
-        {filteredPosts.length === 0 ? (
-          <div className="text-center py-16" style={{ color: '#7A7A6E' }}>
-            <p className="text-lg font-display" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic' }}>Aucun article dans cette catégorie.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPosts.map((post) => (
-              <PostCard key={post.id} post={post} />
+      <TopoSeparator />
+    </>
+  );
+
+  const mobileContent = (
+    <div style={{ padding: '16px' }}>
+      {/* Hero */}
+      <div style={{ marginBottom: '24px' }}>
+        <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '11px', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '4px' }}>
+          BLOG — {posts.length} ARTICLES
+        </p>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '22px', color: '#1C2620', margin: 0 }}>
+          Conseils & Guides
+        </h1>
+        <p style={{ fontSize: '13px', color: '#6B7A72', marginTop: '6px', lineHeight: 1.5 }}>
+          Expertise terrain, comparatifs honnetes et inspirations pour voyager mieux, plus leger et plus loin.
+        </p>
+      </div>
+
+      {/* Search */}
+      <div style={{ marginBottom: '16px' }}>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Rechercher un article..."
+          style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#F4F1EA', color: '#1C2620', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+        />
+      </div>
+
+      {/* Category filters */}
+      <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '20px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            style={{
+              flexShrink: 0,
+              padding: '8px 14px',
+              borderRadius: '10px',
+              fontSize: '13px',
+              fontWeight: 600,
+              border: 'none',
+              cursor: 'pointer',
+              background: activeCategory === cat ? '#17402C' : '#F4F1EA',
+              color: activeCategory === cat ? '#FFFFFF' : '#6B7A72',
+              transition: 'all 0.2s',
+            }}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Featured */}
+      {featured.length > 0 && activeCategory === 'Tous' && !searchQuery && (
+        <div style={{ marginBottom: '20px' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', color: '#1C2620', marginBottom: '12px' }}>
+            A la une
+          </h2>
+          {featured.slice(0, 1).map((post) => (
+            <MobileFeaturedCard key={post.id} post={post} />
+          ))}
+        </div>
+      )}
+
+      {/* Posts list */}
+      {filtered.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+          <p style={{ fontSize: '32px', marginBottom: '8px' }}>📝</p>
+          <p style={{ fontWeight: 700, fontSize: '16px', color: '#1C2620', marginBottom: '4px' }}>Aucun article trouve</p>
+          <p style={{ fontSize: '13px', color: '#6B7A72', marginBottom: '16px' }}>Essayez une autre categorie ou un autre terme de recherche.</p>
+          <button onClick={() => { setActiveCategory('Tous'); setSearchQuery(''); }}
+            style={{ padding: '10px 24px', background: '#17402C', color: '#fff', borderRadius: '10px', fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+            Voir tous les articles
+          </button>
+        </div>
+      ) : (
+        <>
+          {(activeCategory !== 'Tous' || searchQuery) && (
+            <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '13px', color: '#6B7A72', marginBottom: '12px' }}>
+              <strong style={{ color: '#1C2620' }}>{filtered.length}</strong> article{filtered.length > 1 ? 's' : ''}
+            </p>
+          )}
+          {(!searchQuery && activeCategory === 'Tous') && nonFeaturedFiltered.length > 0 && (
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', color: '#1C2620', marginBottom: '12px' }}>
+              Tous les articles
+            </h2>
+          )}
+          <div>
+            {(activeCategory !== 'Tous' || searchQuery ? filtered : nonFeaturedFiltered).map((post) => (
+              <MobilePostCard key={post.id} post={post} />
             ))}
           </div>
-        )}
-      </main>
+        </>
+      )}
 
-      <NewFooterSection />
+      {/* Newsletter */}
+      <div style={{ marginTop: '24px', padding: '20px', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)', background: '#F4F1EA', textAlign: 'center' }}>
+        <p style={{ fontSize: '28px', marginBottom: '8px' }}>📬</p>
+        <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', color: '#1C2620', margin: '0 0 8px 0' }}>
+          Restez informe
+        </h3>
+        <p style={{ fontSize: '13px', color: '#6B7A72', marginBottom: '16px', lineHeight: 1.5 }}>
+          Recevez nos meilleurs articles, comparatifs et bons plans equipement directement dans votre boite mail.
+        </p>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <input
+            type="email"
+            placeholder="votre@email.fr"
+            style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', color: '#1C2620', fontSize: '13px', outline: 'none' }}
+          />
+          <button style={{ padding: '10px 16px', background: '#17402C', color: '#fff', borderRadius: '10px', fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            S&apos;abonner
+          </button>
+        </div>
+      </div>
     </div>
+  );
+
+  return (
+    <>
+      {/* ── DESKTOP ── */}
+      <div className="hidden md:block">
+        <div className="min-h-screen bg-background text-foreground">
+          <Header />
+          {desktopContent}
+          <Footer />
+        </div>
+      </div>
+
+      {/* ── MOBILE ── */}
+      <div className="block md:hidden">
+        <MobilePageShell>
+          {mobileContent}
+        </MobilePageShell>
+        
+      </div>
+    </>
+  );
+}
+
+function MobileFeaturedCard({ post }: { post: BlogPost }) {
+  return (
+    <Link href={`/guides/${post.slug}`} style={{ display: 'block', textDecoration: 'none', marginBottom: '16px' }}>
+      <article style={{ borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)', background: '#F4F1EA', overflow: 'hidden' }}>
+        <div style={{ position: 'relative', height: '180px', overflow: 'hidden', background: '#E8E4D8' }}>
+          {post.image && (
+            <img src={post.image} alt={post.image_alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          )}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }} />
+          <div style={{ position: 'absolute', top: '8px', left: '8px' }}>
+            <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 700, background: '#17402C', color: '#fff' }}>
+              A la une
+            </span>
+          </div>
+          <div style={{ position: 'absolute', bottom: '12px', left: '12px', right: '12px' }}>
+            <span style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '9px', background: 'rgba(255,255,255,0.2)', color: '#fff', fontFamily: 'ui-monospace, monospace' }}>
+              {post.category}
+            </span>
+            <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#fff', margin: '6px 0 2px 0', lineHeight: 1.2, fontFamily: 'var(--font-display)' }}>
+              {post.title}
+            </h3>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+              {post.excerpt}
+            </p>
+          </div>
+        </div>
+      </article>
+    </Link>
   );
 }

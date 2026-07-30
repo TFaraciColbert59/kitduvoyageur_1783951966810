@@ -7,14 +7,7 @@ import Header from '@/components/Header';
 
 import Link from 'next/link';
 import { getAllCountries, type Country } from '@/lib/countries';
-import AppImage from '@/components/ui/AppImage';
-import BackButton from '@/components/ui/BackButton';
-import TopoSeparator from '@/components/TopoSeparator';
-import NewFooterSection from '@/app/components/home/NewFooterSection';
-
-
-
-
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 const ALL_COUNTRIES = getAllCountries();
 
@@ -337,6 +330,8 @@ export default function PaysPage() {
 
   return (
     <>
+      {/* ── DESKTOP ── */}
+      <div className="hidden md:block">
       <Header />
       <main className="min-h-screen bg-[#FAF8F5] text-[#1C2620]">
         {/* Top Hero Section */}
@@ -571,7 +566,7 @@ export default function PaysPage() {
                       setTagFilter('');
                       setPublishedOnly(false);
                     }}
-                    className="text-xs font-semibold text-[#E4501C] hover:underline flex items-center gap-1"
+                    className="text-xs font-semibold text-[#17402C] hover:underline flex items-center gap-1"
                   >
                     <span>Réinitialiser les filtres</span>
                     <span>✕</span>
@@ -709,7 +704,7 @@ export default function PaysPage() {
                       <span className="text-3xl p-2 bg-[#F5F2EA] rounded-xl">{getFlagEmoji(country.code)}</span>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-base text-[#1C2620] group-hover:text-[#E4501C] transition-colors">{country.nom}</h3>
+                          <h3 className="font-bold text-base text-[#1C2620] group-hover:text-[#17402C] transition-colors">{country.nom}</h3>
                           <span className="text-xs text-[#7A8A7D] font-mono">({country.code})</span>
                         </div>
                         <p className="text-xs text-[#5C6B5E]">{country.capital} · {country.continent}</p>
@@ -760,6 +755,234 @@ export default function PaysPage() {
 
         <NewFooterSection />
       </main>
+      <Footer />
+      </div>
+
+      {/* ── MOBILE ── */}
+      <div className="block md:hidden">
+        <MobilePageShell>
+          <div style={{ padding: '16px', minHeight: '100%' }}>
+            {/* Mobile Header */}
+            <div style={{ marginBottom: '20px' }}>
+              <BackButton variant="ghost" className="text-[#1C2620]/60 mb-3" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#1C2620', margin: 0 }}>
+                  Destinations
+                </h1>
+                <span style={{ fontSize: '20px' }}>🌍</span>
+              </div>
+              <p style={{ fontSize: '13px', color: '#5C6B5E', marginBottom: '16px', margin: '4px 0 16px' }}>
+                {ALL_COUNTRIES.length} pays répertoriés
+              </p>
+              {/* Search */}
+              <div style={{ position: 'relative' }}>
+                <svg style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: '#9CA3AF' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Rechercher un pays..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px 10px 36px',
+                    borderRadius: '12px',
+                    border: '1px solid #E4E0D4',
+                    fontSize: '13px',
+                    background: '#fff',
+                    color: '#1C2620',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch('')}
+                    style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', fontSize: '14px' }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Continent Filter */}
+            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '12px', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+              {CONTINENTS.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setContinent(c)}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '999px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    whiteSpace: 'nowrap',
+                    border: '1px solid',
+                    background: continent === c ? '#1C2620' : '#fff',
+                    color: continent === c ? '#fff' : '#3A4A3D',
+                    borderColor: continent === c ? '#1C2620' : '#E4E0D4',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                  }}
+                >
+                  {CONTINENT_EMOJIS[c]} {c}
+                </button>
+              ))}
+            </div>
+
+            {/* Danger + Tag filters */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+              <select
+                value={dangerFilter}
+                onChange={(e) => setDangerFilter(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '8px 10px',
+                  fontSize: '12px',
+                  borderRadius: '10px',
+                  border: '1px solid #E4E0D4',
+                  background: '#F5F2EA',
+                  color: '#1C2620',
+                  fontWeight: '600',
+                  outline: 'none',
+                }}
+              >
+                <option value="Tous">🟢 Sécurité: Tous</option>
+                <option value="low">🟢 Sûr</option>
+                <option value="medium">🟡 Vigilance</option>
+                <option value="high">🔴 Risqué</option>
+              </select>
+              <select
+                value={tagFilter}
+                onChange={(e) => setTagFilter(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '8px 10px',
+                  fontSize: '12px',
+                  borderRadius: '10px',
+                  border: '1px solid #E4E0D4',
+                  background: '#F5F2EA',
+                  color: '#1C2620',
+                  fontWeight: '600',
+                  outline: 'none',
+                }}
+              >
+                <option value="">🏷️ Activité: Toutes</option>
+                {ALL_TAGS.map((tag) => (
+                  <option key={tag} value={tag}>{tag}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Active filters reset */}
+            {(search || continent !== 'Tous' || dangerFilter !== 'Tous' || tagFilter) && (
+              <div style={{ marginBottom: '12px', textAlign: 'right' }}>
+                <button
+                  onClick={() => { setSearch(''); setContinent('Tous'); setDangerFilter('Tous'); setTagFilter(''); }}
+                  style={{ fontSize: '11px', fontWeight: '600', color: '#17402C', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  Réinitialiser les filtres ✕
+                </button>
+              </div>
+            )}
+
+            {/* Results count */}
+            <div style={{ marginBottom: '12px' }}>
+              <p style={{ fontSize: '11px', fontWeight: '700', color: '#7A8A7D', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {filtered.length} destination{filtered.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+
+            {/* Results grid */}
+            {filtered.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 16px', background: '#fff', borderRadius: '16px', border: '1px solid #E8E4D8' }}>
+                <div style={{ fontSize: '40px', marginBottom: '12px' }}>🌏</div>
+                <p style={{ fontSize: '16px', fontWeight: '700', color: '#1C2620', marginBottom: '8px' }}>Aucune destination</p>
+                <p style={{ fontSize: '13px', color: '#5C6B5E', marginBottom: '16px' }}>Essayez de modifier vos filtres</p>
+                <button
+                  onClick={() => { setSearch(''); setContinent('Tous'); setDangerFilter('Tous'); setTagFilter(''); }}
+                  style={{ padding: '10px 20px', background: '#1C2620', color: '#fff', fontSize: '12px', fontWeight: '700', borderRadius: '12px', border: 'none', cursor: 'pointer' }}
+                >
+                  Réinitialiser
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                {displayItems.map((country) => {
+                  const danger = DANGER_CONFIG[country.danger_level];
+                  const img = getCountryImage(country.code);
+                  return (
+                    <Link
+                      key={country.code}
+                      href={`/pays/${country.code.toLowerCase()}`}
+                      style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: '14px', overflow: 'hidden', border: '1px solid #E8E4D8' }}
+                    >
+                      <div style={{ position: 'relative', height: '100px', background: '#E7E3D6', overflow: 'hidden' }}>
+                        <img src={img} alt={country.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)' }} />
+                        <div style={{ position: 'absolute', top: '6px', left: '6px', padding: '2px 8px', borderRadius: '999px', background: 'rgba(255,255,255,0.95)', fontSize: '16px', lineHeight: '22px' }}>
+                          {getFlagEmoji(country.code)}
+                        </div>
+                        <div style={{ position: 'absolute', top: '6px', right: '6px', padding: '2px 7px', borderRadius: '999px', fontSize: '10px', fontWeight: '700', border: '1px solid', display: 'flex', alignItems: 'center', gap: '3px', background: danger.bg, color: danger.text, borderColor: danger.border }}>
+                          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: danger.dot, display: 'inline-block' }} />
+                          <span>{danger.label}</span>
+                        </div>
+                        <div style={{ position: 'absolute', bottom: '6px', left: '8px', right: '8px', color: '#fff' }}>
+                          <span style={{ fontSize: '14px', fontWeight: '700', display: 'block', textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>{country.nom}</span>
+                          <span style={{ fontSize: '10px', opacity: 0.8 }}>{country.capital}</span>
+                        </div>
+                      </div>
+                      <div style={{ padding: '8px' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {country.tags.slice(0, 2).map((tag) => (
+                            <span key={tag} style={{ padding: '2px 6px', background: '#F5F2EA', fontSize: '9px', fontWeight: '500', borderRadius: '4px', border: '1px solid #E4E0D4', color: '#3A4A3D' }}>
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                        <div style={{ fontSize: '10px', color: '#5C6B5E', marginTop: '4px' }}>
+                          📅 {country.meilleure_saison}
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Load More */}
+            {hasMore && (
+              <div style={{ textAlign: 'center', marginTop: '20px', marginBottom: '20px' }}>
+                <button
+                  onClick={() => setPage((p) => p + 1)}
+                  style={{
+                    padding: '12px 28px',
+                    background: '#1C2620',
+                    color: '#fff',
+                    borderRadius: '14px',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    border: 'none',
+                    cursor: 'pointer',
+                    width: '100%',
+                    maxWidth: '280px',
+                  }}
+                >
+                  Charger plus ({filtered.length - displayItems.length} restants)
+                </button>
+                <p style={{ fontSize: '11px', color: '#7A8A7D', marginTop: '8px' }}>
+                  {displayItems.length} / {filtered.length}
+                </p>
+              </div>
+            )}
+
+            {/* Bottom spacer */}
+            <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
+          </div>
+        </MobilePageShell>
+      </div>
     </>
   );
 }

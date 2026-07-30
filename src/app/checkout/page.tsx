@@ -7,7 +7,7 @@ import Icon from '@/components/ui/AppIcon';
 import { getCart, getCartTotals, clearCart, CartItem } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import NewFooterSection from '@/app/components/home/NewFooterSection';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 type Step = 'coordonnees' | 'livraison' | 'confirmation';
 type PaymentMethod = 'card' | 'apple_pay' | 'paypal' | 'alma';
@@ -215,7 +215,9 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F2E8] text-[#1C2620]">
+    <>
+      <div className="hidden md:block">
+        <div className="min-h-screen bg-[#F5F2E8] text-[#1C2620]">
       <Header />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
@@ -1293,5 +1295,86 @@ export default function CheckoutPage() {
 
       <NewFooterSection />
     </div>
-  );
+    </div>
+
+    <div className="block md:hidden">
+      <MobilePageShell>
+        <div style={{ padding: '12px 16px 20px' }}>
+          <div style={{ display: 'flex', gap: '6px', marginBottom: '16px' }}>
+            {[0,1,2,3].map(i => (
+              <div key={i} style={{ flex: 1, height: '3px', borderRadius: '999px', background: i < 2 ? '#A8C8A0' : i === 2 ? '#17402C' : 'rgba(11,31,23,0.08)' }} />
+            ))}
+          </div>
+          <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.14em', color: '#6B7A72' }}>Étape 3 · 4 · Paiement</div>
+          <h1 style={{ fontSize: '26px', letterSpacing: '-0.025em', margin: 0 }}>
+            Un dernier <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>geste.</em>
+          </h1>
+        </div>
+
+        <div style={{ margin: '0 16px 12px', padding: '14px', background: '#FBFAF6', borderRadius: '14px', border: '1px solid rgba(11,31,23,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#F4F1EA', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="1.5"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '13px', fontWeight: 500, color: '#0B1F17' }}>{shipping.prenom || 'Mathieu'} {shipping.nom || 'Chevrier'}</div>
+              <div style={{ fontSize: '11px', color: '#6B7A72' }}>{shipping.adresse || '42 Rue de la République'} · {shipping.codePostal || '38000'} {shipping.ville || 'Grenoble'}</div>
+            </div>
+            <div style={{ fontSize: '9px', fontWeight: 500, color: '#17402C', background: '#EDF3ED', padding: '2px 8px', borderRadius: '999px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Maison</div>
+          </div>
+        </div>
+
+        <div style={{ margin: '0 16px 12px', padding: '14px', background: '#FBFAF6', borderRadius: '14px', border: '1px solid rgba(11,31,23,0.06)' }}>
+          <div style={{ fontSize: '11px', fontWeight: 500, color: '#0B1F17', marginBottom: '10px' }}>Mode d'expédition</div>
+          {[{ id: 'standard', label: 'Livraison suivie', price: 'Offerte', desc: '3-5 jours ouvrés' }, { id: 'express', label: 'Express 48h', price: '9,90 €', desc: 'Livré à domicile' }].map(opt => (
+            <label key={opt.id} onClick={() => setShippingOption(opt.id)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderTop: '1px solid rgba(11,31,23,0.05)', cursor: 'pointer' }}>
+              <div style={{ width: '18px', height: '18px', borderRadius: '999px', border: '1.5px solid', borderColor: shippingOption === opt.id ? '#17402C' : '#A3C4A3', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {shippingOption === opt.id && <div style={{ width: '10px', height: '10px', borderRadius: '999px', background: '#17402C' }} />}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '13px', fontWeight: 500, color: '#0B1F17' }}>{opt.label}</div>
+                <div style={{ fontSize: '10px', color: '#6B7A72' }}>{opt.desc}</div>
+              </div>
+              <div style={{ fontSize: '13px', fontWeight: 500, color: '#17402C' }}>{opt.price}</div>
+            </label>
+          ))}
+        </div>
+
+        <div style={{ margin: '0 16px 12px', padding: '14px', background: '#FBFAF6', borderRadius: '14px', border: '1px solid rgba(11,31,23,0.06)' }}>
+          <div style={{ fontSize: '11px', fontWeight: 500, color: '#0B1F17', marginBottom: '10px' }}>Moyen de paiement</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            {['Carte', 'Apple Pay', 'PayPal', "3× sans frais"].map(m => (
+              <button key={m} style={{ padding: '10px', borderRadius: '10px', background: '#F4F1EA', border: 'none', fontSize: '11px', fontWeight: 500, color: '#0B1F17', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center' }}>
+                {m}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ margin: '12px 16px', padding: '16px', background: '#06120C', borderRadius: '16px', color: '#FBFAF6' }}>
+          <div style={{ fontSize: '11px', fontWeight: 500, marginBottom: '12px', opacity: 0.8 }}>Récapitulatif</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '12px', opacity: 0.7 }}>
+            <span>Sous-total</span>
+            <span style={{ fontWeight: 500 }}>{totalPriceEur.toFixed(0)} €</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '12px', opacity: 0.7 }}>
+            <span>Livraison</span>
+            <span style={{ fontWeight: 500 }}>{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
+          </div>
+          <div style={{ height: '1px', background: 'rgba(255,255,255,0.12)', margin: '12px 0' }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
+            <span style={{ fontSize: '15px', fontWeight: 700 }}>Total</span>
+            <span style={{ fontSize: '15px', fontWeight: 700 }}>{grandTotal.toFixed(0)} €</span>
+          </div>
+          <button onClick={handleStripeCheckout} disabled={processing} style={{ width: '100%', padding: '14px', background: '#17402C', color: '#fff', border: 'none', borderRadius: '999px', fontSize: '14px', fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontFamily: 'inherit' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="11" width="22" height="10" rx="2"/><path d="M6 11V7a6 6 0 0 1 12 0v4"/></svg>
+            Payer {grandTotal.toFixed(0)} €
+          </button>
+        </div>
+
+        
+      </MobilePageShell>
+    </div>
+  </>
+);
 }

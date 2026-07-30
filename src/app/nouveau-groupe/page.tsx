@@ -3,7 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
+import Icon from '@/components/ui/AppIcon';
+import LkvIcon from '@/components/ui/LkvIcon';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -206,7 +208,10 @@ export default function NouveauGroupePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F2EA] text-[#1C2620] font-sans pb-32">
+    <>
+      {/* ── DESKTOP ── */}
+      <div className="hidden md:block">
+        <div className="min-h-screen bg-[#F5F2EA] text-[#1C2620] font-sans pb-32">
       
       {/* ── Top Nav / Breadcrumbs Header ── */}
       <div className="border-b border-[#E8E4D8] bg-[#F5F2EA]/80 backdrop-blur-md sticky top-0 z-40">
@@ -956,6 +961,102 @@ export default function NouveauGroupePage() {
         </div>
       </div>
 
-    </div>
+        </div>
+      </div>
+
+      {/* ── MOBILE ── */}
+      <div className="block md:hidden">
+        <MobilePageShell>
+          <div style={{ padding: '16px' }}>
+            {/* Header */}
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '8px', fontWeight: 500 }}>
+                NOUVEAU GROUPE
+              </div>
+              <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0B1F17', letterSpacing: '-0.02em', lineHeight: 1.2, marginBottom: '4px' }}>
+                Rassembler <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>pour un voyage.</em>
+              </h1>
+              <p style={{ fontSize: '13px', color: '#6B7A72', lineHeight: 1.5 }}>
+                Un groupe suit pour une sortie et vit le temps de l'organiser.
+              </p>
+            </div>
+
+            {/* Nom du groupe */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 600, color: '#0B1F17', display: 'block', marginBottom: '6px' }}>Nom du groupe</label>
+              <input
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="Chartreuse en octobre"
+                style={{ width: '100%', padding: '12px', background: '#F4F1EA', border: '1px solid rgba(11,31,23,0.08)', borderRadius: '12px', fontSize: '14px', color: '#0B1F17', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            {/* Description */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 600, color: '#0B1F17', display: 'block', marginBottom: '6px' }}>Description</label>
+              <input
+                type="text"
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="Traversée de la Chartreuse à 6, octobre 2026"
+                style={{ width: '100%', padding: '12px', background: '#F4F1EA', border: '1px solid rgba(11,31,23,0.08)', borderRadius: '12px', fontSize: '14px', color: '#0B1F17', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            {/* Dates */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#0B1F17', display: 'block', marginBottom: '6px' }}>Début</label>
+                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
+                  style={{ width: '100%', padding: '12px', background: '#F4F1EA', border: '1px solid rgba(11,31,23,0.08)', borderRadius: '12px', fontSize: '13px', color: '#0B1F17', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#0B1F17', display: 'block', marginBottom: '6px' }}>Fin</label>
+                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
+                  style={{ width: '100%', padding: '12px', background: '#F4F1EA', border: '1px solid rgba(11,31,23,0.08)', borderRadius: '12px', fontSize: '13px', color: '#0B1F17', boxSizing: 'border-box' }} />
+              </div>
+            </div>
+
+            {/* Max members */}
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 600, color: '#0B1F17', display: 'block', marginBottom: '6px' }}>Participants max</label>
+              <input type="number" min={2} max={50} value={maxMembers} onChange={e => setMaxMembers(parseInt(e.target.value) || 6)}
+                style={{ width: '100%', padding: '12px', background: '#F4F1EA', border: '1px solid rgba(11,31,23,0.08)', borderRadius: '12px', fontSize: '14px', color: '#0B1F17', boxSizing: 'border-box' }} />
+            </div>
+
+            {/* Pictogramme selector */}
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 600, color: '#0B1F17', display: 'block', marginBottom: '8px' }}>Pictogramme</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '8px' }}>
+                {PICTOGRAMS.map(p => (
+                  <button key={p.id} onClick={() => setPictogram(p.icon)}
+                    style={{
+                      height: '44px', borderRadius: '10px', fontSize: '20px', border: 'none',
+                      background: pictogram === p.icon ? '#17402C' : '#F4F1EA',
+                      cursor: 'pointer',
+                    }}>
+                    {p.icon}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Create buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <button onClick={() => handleCreateGroup(true)} disabled={loading}
+                style={{ padding: '14px', background: '#17402C', color: '#fff', borderRadius: '999px', fontSize: '14px', fontWeight: 600, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1 }}>
+                {loading ? 'Création...' : 'Créer & inviter'}
+              </button>
+              <button onClick={() => handleCreateGroup(false)} disabled={loading}
+                style={{ padding: '14px', background: '#F4F1EA', color: '#0B1F17', borderRadius: '999px', fontSize: '14px', fontWeight: 600, border: '1px solid rgba(11,31,23,0.08)', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1 }}>
+                Créer sans inviter
+              </button>
+            </div>
+          </div>
+        </MobilePageShell>
+      </div>
+    </>
   );
 }

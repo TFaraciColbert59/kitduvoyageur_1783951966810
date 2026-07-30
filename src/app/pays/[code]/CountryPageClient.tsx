@@ -7,6 +7,7 @@ import WeightGauge from '@/components/WeightGauge';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
 import type { CountryDataV2 } from '@/types/country';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────
 
@@ -303,7 +304,10 @@ export default function CountryPage({ code: rawCode }: { code: string }) {
     : undefined;
 
   return (
-    <div className="min-h-screen" style={{ background: '#F5F2EC' }}>
+    <>
+      {/* ── DESKTOP ── */}
+      <div className="hidden md:block">
+    <div className="min-h-screen bg-background">
       <Header />
       <main id="main-content">
 
@@ -1059,5 +1063,517 @@ export default function CountryPage({ code: rawCode }: { code: string }) {
       </main>
       <NewFooterSection />
     </div>
+      </div>
+
+      {/* ── MOBILE ── */}
+      <div className="block md:hidden">
+        <MobilePageShell>
+          <div style={{ padding: '0 0 calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }}>
+
+            {/* Loading state */}
+            {loading && (
+              <div style={{ padding: '24px 16px' }}>
+                <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 24 }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(11,31,23,0.06)' }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ width: 80, height: 10, borderRadius: 5, background: 'rgba(11,31,23,0.06)', marginBottom: 8 }} />
+                    <div style={{ width: 140, height: 18, borderRadius: 5, background: 'rgba(11,31,23,0.06)' }} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Error state */}
+            {!loading && error && (
+              <div style={{ padding: '48px 16px', textAlign: 'center' }}>
+                <p style={{ fontSize: 14, color: '#6B7A72', marginBottom: 8, margin: '0 0 16px' }}>
+                  Donn&eacute;es indisponibles
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  style={{ padding: '10px 24px', background: '#17402C', color: '#FBFAF6', border: 'none', borderRadius: 8, fontSize: 14, cursor: 'pointer' }}
+                >
+                  R&eacute;essayer
+                </button>
+              </div>
+            )}
+
+            {/* Country loaded */}
+            {!loading && !error && country && (
+              <>
+                {/* ── Hero ── */}
+                <div style={{ background: '#0B1F17', padding: '24px 16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                    <span style={{ fontSize: 40 }}>{getFlagEmoji(code)}</span>
+                    <div>
+                      <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#A3C4A3', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 2px' }}>
+                        {country.pays.continent}
+                      </p>
+                      <h1 style={{ fontSize: 24, fontWeight: 700, color: '#FBFAF6', margin: 0, lineHeight: 1.2 }}>
+                        {country.pays.nom}
+                      </h1>
+                    </div>
+                  </div>
+
+                  {/* Quick info chips */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+                    <div style={{ background: '#EDF3ED', padding: '6px 12px', borderRadius: 8, fontSize: 12, color: '#0B1F17' }}>
+                      &#x1F6C2; {country.pratique.visa.duree_sejour_sans_visa || 'Variable'}
+                    </div>
+                    <div style={{ background: '#EDF3ED', padding: '6px 12px', borderRadius: 8, fontSize: 12, color: '#0B1F17' }}>
+                      &#x1F4B0; {country.pratique.monnaie}
+                    </div>
+                    <div style={{ background: '#EDF3ED', padding: '6px 12px', borderRadius: 8, fontSize: 12, color: '#0B1F17' }}>
+                      &#x1F5E3;&#xFE0F; {country.pratique.langues.slice(0, 2).join(', ')}
+                    </div>
+                    <div style={{ background: '#EDF3ED', padding: '6px 12px', borderRadius: 8, fontSize: 12, color: '#0B1F17' }}>
+                      &#x1F550; {country.pratique.decalage_horaire_utc.replace(/.*UTC/, 'UTC')}
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Tab pills ── */}
+                <div style={{ padding: '16px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                  <div style={{ display: 'flex', gap: 8, minWidth: 'max-content' }}>
+                    {TABS.map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        style={{
+                          padding: '6px 16px',
+                          borderRadius: 20,
+                          border: 'none',
+                          fontSize: 13,
+                          fontWeight: activeTab === tab.id ? 600 : 400,
+                          background: activeTab === tab.id ? '#17402C' : '#EDF3ED',
+                          color: activeTab === tab.id ? '#FBFAF6' : '#0B1F17',
+                          whiteSpace: 'nowrap',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ── Tab content ── */}
+                <div style={{ padding: '0 16px 16px' }}>
+
+                  {/* APERÇU */}
+                  {activeTab === 'apercu' && (
+                    <div>
+                      {/* Best season */}
+                      {bestMonths.length > 0 && (
+                        <div style={{ background: '#EDF3ED', borderRadius: 12, padding: 14, marginBottom: 16 }}>
+                          <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 4px' }}>MEILLEURE P&Eacute;RIODE</p>
+                          <p style={{ fontSize: 16, fontWeight: 700, color: '#0B1F17', margin: 0 }}>
+                            {bestMonths[0].mois} &ndash; {bestMonths[bestMonths.length - 1].mois}
+                          </p>
+                          <p style={{ fontSize: 11, color: '#6B7A72', margin: '4px 0 0' }}>
+                            {bestMonths.filter(m => m.niveau === 'ideal').length} mois id&eacute;aux
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Security overview */}
+                      <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0B1F17', margin: '0 0 10px' }}>S&eacute;curit&eacute;</h3>
+                      {country.securite.zones.map((z) => (
+                        <div
+                          key={z.nom_zone}
+                          style={{
+                            padding: 12,
+                            borderRadius: 10,
+                            marginBottom: 8,
+                            border: '1px solid rgba(11,31,23,0.06)',
+                            background: z.niveau === 'sur' ? 'rgba(163,196,163,0.15)' : z.niveau === 'deconseille_sauf_raison_imperative' || z.niveau === 'formellement_deconseille' ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                            <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: 0 }}>
+                              {z.nom_zone}
+                            </p>
+                            <span style={{
+                              fontSize: 10,
+                              fontWeight: 600,
+                              padding: '2px 8px',
+                              borderRadius: 999,
+                              background: z.niveau === 'sur' ? '#A3C4A3' : z.niveau === 'deconseille_sauf_raison_imperative' || z.niveau === 'formellement_deconseille' ? '#FCA5A5' : '#FCD34D',
+                              color: '#0B1F17',
+                            }}>
+                              {niveauSecurite[z.niveau].label}
+                            </span>
+                          </div>
+                          <p style={{ fontSize: 12, color: '#6B7A72', margin: 0 }}>{z.description}</p>
+                        </div>
+                      ))}
+
+                      {/* Events */}
+                      {country.evenements.length > 0 && (
+                        <div style={{ marginTop: 20 }}>
+                          <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0B1F17', margin: '0 0 10px' }}>&Eacute;v&eacute;nements</h3>
+                          {country.evenements.slice(0, 2).map((ev) => (
+                            <div key={ev.nom} style={{ padding: 12, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', marginBottom: 8, background: '#FBFAF6' }}>
+                              <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 2px' }}>{ev.periode}</p>
+                              <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 2px' }}>{ev.nom}</p>
+                              <p style={{ fontSize: 11, color: '#6B7A72', margin: 0 }}>{ev.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Top attractions */}
+                      {country.lieux_incontournables.length > 0 && (
+                        <div style={{ marginTop: 20 }}>
+                          <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0B1F17', margin: '0 0 10px' }}>Incontournables</h3>
+                          {country.lieux_incontournables.slice(0, 3).map((lieu, i) => (
+                            <div key={lieu.nom} style={{ display: 'flex', gap: 10, padding: 12, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', marginBottom: 8, background: '#FBFAF6', alignItems: 'flex-start' }}>
+                              <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#EDF3ED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#17402C', flexShrink: 0 }}>
+                                {i + 1}
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 2px' }}>{lieu.nom}</p>
+                                <p style={{ fontSize: 11, color: '#6B7A72', margin: 0 }}>{lieu.description}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Coutumes */}
+                      {country.coutumes && (
+                        <div style={{ marginTop: 20, padding: 14, borderRadius: 12, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6' }}>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 6px' }}>Coutumes locales</p>
+                          <p style={{ fontSize: 12, color: '#6B7A72', margin: 0, lineHeight: 1.5 }}>{country.coutumes}</p>
+                        </div>
+                      )}
+
+                      {/* CTA */}
+                      <div style={{ marginTop: 20, padding: 16, borderRadius: 12, background: '#0B1F17' }}>
+                        <p style={{ fontSize: 15, fontWeight: 700, color: '#FBFAF6', margin: '0 0 4px' }}>
+                          Pr&eacute;parez votre voyage en {country.pays.nom}
+                        </p>
+                        <p style={{ fontSize: 12, color: '#A3C4A3', margin: '0 0 12px' }}>
+                          Notre IA configure votre kit id&eacute;al selon la saison et vos activit&eacute;s.
+                        </p>
+                        <Link
+                          href="/ai-configurator"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', background: '#17402C', color: '#FBFAF6', borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+                        >
+                          Configurer mon kit
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* MÉTÉO */}
+                  {activeTab === 'meteo' && (
+                    <div>
+                      <p style={{ fontSize: 13, color: '#6B7A72', margin: '0 0 16px' }}>
+                        Temp&eacute;ratures et pr&eacute;cipitations pour {country.pays.nom}.
+                      </p>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                        {country.meteo?.calendrier_12_mois && Array.isArray(country.meteo.calendrier_12_mois) && country.meteo.calendrier_12_mois.map((m) => {
+                          const colBg = m.niveau === 'ideal' ? 'rgba(163,196,163,0.2)' : m.niveau === 'deconseille' ? 'rgba(239,68,68,0.06)' : '#FBFAF6';
+                          return (
+                            <div
+                              key={m.mois}
+                              style={{
+                                padding: 10,
+                                borderRadius: 10,
+                                textAlign: 'center',
+                                border: '1px solid rgba(11,31,23,0.06)',
+                                background: colBg,
+                              }}
+                            >
+                              <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 6px' }}>{m.mois.slice(0, 3)}</p>
+                              <div style={{ width: 8, height: 8, borderRadius: '50%', margin: '0 auto 6px', background: m.niveau === 'ideal' ? '#A3C4A3' : m.niveau === 'bon' ? '#6EE7B7' : m.niveau === 'moyen' ? '#FCD34D' : '#FCA5A5' }} />
+                              <p style={{ fontSize: 11, fontWeight: 700, color: '#17402C', margin: '0 0 2px' }}>{m.temp_min_c}&deg; &ndash; {m.temp_max_c}&deg;</p>
+                              <p style={{ fontSize: 10, color: '#6B7A72', margin: 0 }}>{m.precipitations_mm}mm</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SÉCURITÉ */}
+                  {activeTab === 'securite' && (
+                    <div>
+                      <p style={{ fontSize: 12, color: '#6B7A72', margin: '0 0 16px' }}>
+                        Source : {country.securite.source_officielle.nom}
+                      </p>
+                      {country.securite.zones.map((z) => (
+                        <div key={z.nom_zone} style={{ padding: 14, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', marginBottom: 10, background: '#FBFAF6' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                            <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: 0 }}>{z.nom_zone}</p>
+                            <span style={{
+                              fontSize: 10,
+                              fontWeight: 600,
+                              padding: '2px 8px',
+                              borderRadius: 999,
+                              background: z.niveau === 'sur' ? '#A3C4A3' : z.niveau === 'deconseille_sauf_raison_imperative' || z.niveau === 'formellement_deconseille' ? '#FCA5A5' : '#FCD34D',
+                              color: '#0B1F17',
+                            }}>
+                              {niveauSecurite[z.niveau].label}
+                            </span>
+                          </div>
+                          <p style={{ fontSize: 12, color: '#6B7A72', margin: 0 }}>{z.description}</p>
+                        </div>
+                      ))}
+                      <div style={{ padding: 14, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', marginTop: 12 }}>
+                        <p style={{ fontSize: 12, fontWeight: 600, color: '#0B1F17', margin: '0 0 4px' }}>Ambassade</p>
+                        <p style={{ fontSize: 12, color: '#6B7A72', margin: '0 0 4px' }}>{country.securite.ambassade_consulat.nom}</p>
+                        {country.securite.ambassade_consulat.telephone && (
+                          <p style={{ fontSize: 11, color: '#6B7A72', margin: '0 0 2px' }}>{country.securite.ambassade_consulat.telephone}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SANTÉ */}
+                  {activeTab === 'sante' && (
+                    <div>
+                      {/* Eau potable */}
+                      <div style={{
+                        padding: 14,
+                        borderRadius: 10,
+                        marginBottom: 12,
+                        border: '1px solid',
+                        background: country.sante.eau_potable === 'oui' ? 'rgba(163,196,163,0.15)' : country.sante.eau_potable === 'non' ? 'rgba(239,68,68,0.06)' : 'rgba(245,158,11,0.08)',
+                        borderColor: country.sante.eau_potable === 'oui' ? '#A3C4A3' : country.sante.eau_potable === 'non' ? '#FCA5A5' : '#FCD34D',
+                      }}>
+                        <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 2px' }}>Eau du robinet</p>
+                        <p style={{ fontSize: 12, color: '#6B7A72', margin: 0 }}>
+                          {country.sante.eau_potable === 'oui' ? 'Potable' : country.sante.eau_potable === 'non' ? 'Non potable' : 'Non v&eacute;rifi&eacute;'}
+                        </p>
+                      </div>
+
+                      {/* Risques */}
+                      {country.sante.risques.length > 0 && (
+                        <div style={{ marginBottom: 12 }}>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 8px' }}>Risques sanitaires</p>
+                          {country.sante.risques.map((r) => (
+                            <div key={r} style={{ padding: 10, borderRadius: 8, border: '1px solid rgba(11,31,23,0.06)', marginBottom: 6, background: '#FBFAF6' }}>
+                              <p style={{ fontSize: 12, color: '#6B7A72', margin: 0 }}>{r}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Vaccins recommandés */}
+                      {country.sante.vaccins_recommandes.length > 0 && (
+                        <div style={{ marginBottom: 12 }}>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 8px' }}>Vaccins recommand&eacute;s</p>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                            {country.sante.vaccins_recommandes.map((v) => (
+                              <span key={v} style={{ padding: '4px 10px', borderRadius: 999, background: '#EDF3ED', fontSize: 11, color: '#0B1F17' }}>
+                                {v}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* PRATIQUE */}
+                  {activeTab === 'pratique' && (
+                    <div>
+                      {/* Visa */}
+                      <div style={{ padding: 14, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', marginBottom: 12 }}>
+                        <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 2px' }}>VISA</p>
+                        <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 2px' }}>{country.pratique.visa.regle}</p>
+                        <p style={{ fontSize: 12, color: '#17402C', margin: 0 }}>{country.pratique.visa.duree_sejour_sans_visa}</p>
+                      </div>
+
+                      {/* Grid 2x2 */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+                        <div style={{ padding: 12, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6' }}>
+                          <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 2px' }}>MONNAIE</p>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: 0 }}>{country.pratique.monnaie}</p>
+                        </div>
+                        <div style={{ padding: 12, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6' }}>
+                          <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 2px' }}>PRISES</p>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: 0 }}>{country.pratique.prise_electrique.type}</p>
+                        </div>
+                        <div style={{ padding: 12, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6' }}>
+                          <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 2px' }}>D&Eacute;CALAGE</p>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: 0 }}>{country.pratique.decalage_horaire_utc}</p>
+                        </div>
+                        <div style={{ padding: 12, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6' }}>
+                          <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 2px' }}>CONNECTIVIT&Eacute;</p>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: 0 }}>{country.connectivite.couverture_mobile}</p>
+                        </div>
+                      </div>
+
+                      {/* Budget */}
+                      <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 8px' }}>Budget quotidien</p>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
+                        {(['petit', 'moyen', 'gros'] as const).map((tier) => {
+                          const b = country.pratique.budget_quotidien_repere_eur[tier];
+                          const total = b.logement + b.nourriture + b.transport;
+                          const tierLabel = { petit: 'Petit', moyen: 'Moyen', gros: 'Confort' }[tier];
+                          return (
+                            <div key={tier} style={{ padding: 10, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', textAlign: 'center' }}>
+                              <p style={{ fontSize: 9, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 4px' }}>{tierLabel}</p>
+                              <p style={{ fontSize: 14, fontWeight: 700, color: '#17402C', margin: 0 }}>{total.toLocaleString('fr-FR')} &euro;</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Phrases de survie */}
+                      {country.pratique.phrases_survie.length > 0 && (
+                        <div>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 8px' }}>Phrases de survie</p>
+                          {country.pratique.phrases_survie.map((p) => (
+                            <div key={p.fr} style={{ padding: 10, borderRadius: 8, border: '1px solid rgba(11,31,23,0.06)', marginBottom: 6, background: '#FBFAF6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <p style={{ fontSize: 11, color: '#6B7A72', margin: 0 }}>{p.fr}</p>
+                              <p style={{ fontSize: 12, fontWeight: 600, fontFamily: 'ui-monospace, monospace', color: '#17402C', margin: 0 }}>{p.locale}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Poids recommandé */}
+                      {country.gabarit_poids_recommande && (
+                        <div style={{ marginTop: 12, padding: 14, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6' }}>
+                          <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 4px' }}>POIDS RECOMMAND&Eacute;</p>
+                          <p style={{ fontSize: 18, fontWeight: 700, color: '#17402C', margin: '0 0 2px' }}>{country.gabarit_poids_recommande.poids_total_kg} kg</p>
+                          <p style={{ fontSize: 11, color: '#6B7A72', margin: 0 }}>{country.gabarit_poids_recommande.justification}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* VOLS */}
+                  {activeTab === 'vols' && (
+                    <div>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 12px' }}>Tendances de prix par saison</p>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
+                        {country.vols.tendance_par_saison.map((t) => {
+                          const priceStyle = prixVolStyle[t.niveau_prix];
+                          return (
+                            <div key={t.periode} style={{ padding: 10, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', textAlign: 'center' }}>
+                              <p style={{ fontSize: 9, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 4px' }}>{t.periode.split('(')[0].trim()}</p>
+                              <p style={{ fontSize: 12, fontWeight: 700, color: '#17402C', margin: 0 }}>{priceStyle.label}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* CO2 */}
+                      <div style={{ padding: 14, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6' }}>
+                        <p style={{ fontSize: 12, fontWeight: 600, color: '#0B1F17', margin: '0 0 8px' }}>Empreinte carbone</p>
+                        <p style={{ fontSize: 24, fontWeight: 700, color: '#17402C', margin: '0 0 4px' }}>
+                          ~{country.carbone.vol_paris_kg_co2_estime.toLocaleString('fr-FR')} kg
+                        </p>
+                        <p style={{ fontSize: 11, color: '#6B7A72', margin: 0 }}>Paris &harr; {country.pays.nom} aller-retour</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* LIEUX */}
+                  {activeTab === 'lieux' && (
+                    <div>
+                      {country.lieux_incontournables.map((lieu, i) => (
+                        <div key={lieu.nom} style={{ display: 'flex', gap: 12, padding: 14, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', marginBottom: 10, background: '#FBFAF6', alignItems: 'flex-start' }}>
+                          <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#EDF3ED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#17402C', flexShrink: 0 }}>
+                            {String(i + 1).padStart(2, '0')}
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 4px' }}>{lieu.nom}</p>
+                            <p style={{ fontSize: 11, color: '#6B7A72', margin: 0 }}>{lieu.description}</p>
+                          </div>
+                        </div>
+                      ))}
+
+                      {country.evenements.length > 0 && (
+                        <div style={{ marginTop: 20 }}>
+                          <p style={{ fontSize: 14, fontWeight: 700, color: '#0B1F17', margin: '0 0 10px' }}>&Eacute;v&eacute;nements</p>
+                          {country.evenements.map((ev) => (
+                            <div key={ev.nom} style={{ padding: 12, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', marginBottom: 8, background: '#FBFAF6' }}>
+                              <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 2px' }}>{ev.periode}</p>
+                              <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 2px' }}>{ev.nom}</p>
+                              <p style={{ fontSize: 11, color: '#6B7A72', margin: 0 }}>{ev.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* FAQ */}
+                  {activeTab === 'faq' && (
+                    <div>
+                      <p style={{ fontSize: 13, color: '#6B7A72', margin: '0 0 16px' }}>
+                        Questions fr&eacute;quentes sur {country.pays.nom}.
+                      </p>
+                      {country.faq.map((item, i) => (
+                        <div key={i} style={{ borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', marginBottom: 8, overflow: 'hidden' }}>
+                          <button
+                            onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                            style={{
+                              width: '100%',
+                              padding: '14px',
+                              textAlign: 'left',
+                              background: '#FBFAF6',
+                              border: 'none',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              gap: 12,
+                            }}
+                            aria-expanded={openFaq === i}
+                          >
+                            <span style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', flex: 1 }}>{item.question}</span>
+                            <span style={{ fontSize: 14, color: '#6B7A72', flexShrink: 0, transition: 'transform 0.2s', transform: openFaq === i ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                              &#x25BC;
+                            </span>
+                          </button>
+                          {openFaq === i && (
+                            <div style={{ padding: '0 14px 14px', background: '#FBFAF6' }}>
+                              <p style={{ fontSize: 12, color: '#6B7A72', margin: 0, lineHeight: 1.5 }}>{item.reponse}</p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* CTA */}
+                      <div style={{ marginTop: 20, padding: 16, borderRadius: 12, background: '#0B1F17' }}>
+                        <p style={{ fontSize: 15, fontWeight: 700, color: '#FBFAF6', margin: '0 0 4px' }}>
+                          Kit personnalis&eacute; pour {country.pays.nom}
+                        </p>
+                        <p style={{ fontSize: 12, color: '#A3C4A3', margin: '0 0 12px' }}>
+                          Notre IA analyse la m&eacute;t&eacute;o, les activit&eacute;s et votre budget.
+                        </p>
+                        <Link
+                          href="/ai-configurator"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', background: '#17402C', color: '#FBFAF6', borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+                        >
+                          Configurer mon kit IA
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+
+                </div>{/* ── end tab content ── */}
+              </>
+            )}
+
+            {/* Country not found */}
+            {!loading && !error && !country && (
+              <div style={{ padding: '48px 16px', textAlign: 'center' }}>
+                <p style={{ fontSize: 14, color: '#6B7A72', margin: 0 }}>Pays non trouv&eacute;</p>
+              </div>
+            )}
+
+          </div>{/* ── end inner padding div ── */}
+        </MobilePageShell>
+      </div>
+    </>
   );
 }

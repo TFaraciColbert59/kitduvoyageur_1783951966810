@@ -11,7 +11,7 @@ const FEATURES = [
     desc: 'Décrivez votre voyage, l\'IA compose votre kit optimal en 2 minutes — poids, budget, destination.',
     href: '/ai-configurator',
     cta: 'Configurer mon kit',
-    accent: '#E4501C'
+    accent: '#17402C'
   },
   {
     icon: 'GlobeAltIcon',
@@ -37,7 +37,7 @@ export default function FeaturesSection() {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
           <div>
-            <p className="text-[10px] font-mono text-[#E4501C] tracking-[0.2em] uppercase mb-2" style={{ fontFamily: 'var(--font-mono)' }}>Fonctionnalités clés</p>
+            <p className="text-[10px] font-mono text-[#17402C] tracking-[0.2em] uppercase mb-2" style={{ fontFamily: 'var(--font-mono)' }}>Fonctionnalités clés</p>
             <h2 className="font-display font-800 text-[#1C2620] text-3xl sm:text-4xl tracking-tight" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>
               Tout pour votre<br />prochaine expédition.
             </h2>

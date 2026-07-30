@@ -734,7 +734,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
           
           {/* WIDGET 1: APERÇU PROFIL PUBLIC (Live Card) */}
           <div className="bg-[#1C2620] rounded-[2.5rem] p-6 text-white shadow-xl relative overflow-hidden space-y-4">
-            <div className="text-[9px] font-mono tracking-widest text-[#E4501C] uppercase font-bold">APERÇU · PROFIL PUBLIC</div>
+            <div className="text-[9px] font-mono tracking-widest text-[#17402C] uppercase font-bold">APERÇU · PROFIL PUBLIC</div>
 
             <div className="flex items-center gap-4">
               <img src={form.avatarUrl} alt={form.publicName} className="w-14 h-14 rounded-full object-cover border-2 border-white/20" />
@@ -754,7 +754,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                   {m}
                 </span>
               ))}
-              <span className="bg-[#E4501C] text-white text-[10px] font-mono px-2.5 py-1 rounded-full font-bold">
+              <span className="bg-[#17402C] text-white text-[10px] font-mono px-2.5 py-1 rounded-full font-bold">
                 Niveau {form.experienceLevel}
               </span>
             </div>
@@ -820,7 +820,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-6 py-2.5 bg-[#2D5A3D] hover:bg-[#E4501C] text-white rounded-full text-xs font-bold shadow-lg transition-all disabled:opacity-50"
+            className="px-6 py-2.5 bg-[#2D5A3D] hover:bg-[#17402C] text-white rounded-full text-xs font-bold shadow-lg transition-all disabled:opacity-50"
           >
             {saving ? 'Enregistrement...' : saveSuccess ? '✓ Enregistré !' : 'Enregistrer les changements'}
           </button>

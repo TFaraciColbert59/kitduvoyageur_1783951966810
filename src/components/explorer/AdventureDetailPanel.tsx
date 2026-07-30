@@ -63,7 +63,7 @@ Donne-moi :
 
   const diffColor = '#4A8A3F';
   const diffLabel = trail.is_staffed ? 'Refuge gardé' : 'Bivouac / Cabane';
-  const diffBg = 'bg-[#E4501C]/15 text-[#E4501C] border-[#E4501C]/30';
+  const diffBg = 'bg-[#17402C]/15 text-[#17402C] border-[#17402C]/30';
 
   const stats = [
     { icon: '🏔', label: 'Altitude', value: trail.altitude_m > 0 ? `${trail.altitude_m} m` : '—' },
@@ -199,7 +199,7 @@ Donne-moi :
           <div className="px-5 py-4">
             <Link
               href={`/ai-configurator?trail=${encodeURIComponent(trail.name)}&altitude=${trail.altitude_m || 0}`}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-[#E4501C] hover:bg-[#cc3d10] text-white font-semibold text-sm transition-all duration-200 hover:shadow-lg hover:shadow-[#E4501C]/25 active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-[#17402C] hover:bg-[#cc3d10] text-white font-semibold text-sm transition-all duration-200 hover:shadow-lg hover:shadow-[#17402C]/25 active:scale-[0.98]"
             >
               <span>🎒</span>
               Préparer cette aventure

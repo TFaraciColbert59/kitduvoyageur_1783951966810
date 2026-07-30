@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
-
+import Footer from '@/components/Footer';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -1053,146 +1054,317 @@ export default function ClubsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-background selection:bg-primary/20">
-      <Header />
-      
-      {/* Immersive Hero Section */}
-      <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden border-b border-white/5">
-        <div className="absolute inset-0 bg-background pointer-events-none" />
-        {/* Animated decorative blobs */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] opacity-60 mix-blend-screen pointer-events-none animate-pulse-slow" />
-        <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] opacity-50 mix-blend-screen pointer-events-none" />
-        
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
-            <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-2 mb-6 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
-                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-700 tracking-widest uppercase text-foreground/80">Espaces Communautaires</span>
+    <>
+      {/* ── DESKTOP ── */}
+      <div className="hidden md:block">
+        <main className="min-h-screen bg-background selection:bg-primary/20">
+          <Header />
+
+          {/* Immersive Hero Section */}
+          <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden border-b border-white/5">
+            <div className="absolute inset-0 bg-background pointer-events-none" />
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] opacity-60 mix-blend-screen pointer-events-none animate-pulse-slow" />
+            <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] opacity-50 mix-blend-screen pointer-events-none" />
+
+            <div className="max-w-7xl mx-auto px-6 relative z-10">
+              <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
+                <div className="max-w-3xl">
+                  <div className="inline-flex items-center gap-2 mb-6 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    <span className="text-xs font-700 tracking-widest uppercase text-foreground/80">Espaces Communautaires</span>
+                  </div>
+                  <h1 className="font-display font-900 text-5xl lg:text-7xl text-foreground tracking-tight leading-[1.1] mb-6">
+                    Rejoignez le <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-400">Club.</span><br />
+                    Vivez l&apos;aventure.
+                  </h1>
+                  <p className="text-lg lg:text-xl text-muted-foreground font-500 leading-relaxed max-w-2xl">
+                    Trouvez vos compagnons de route, échangez sur votre matériel favori et participez aux défis thématiques de la communauté Le Kit du Voyageur.
+                  </p>
+                </div>
+
+                <div className="flex-shrink-0">
+                  <Link
+                    href="/clubs/nouveau"
+                    className="group relative inline-flex items-center justify-center gap-3 px-8 py-4 bg-foreground text-background rounded-full font-800 text-sm overflow-hidden transition-all hover:scale-105 hover:shadow-2xl hover:shadow-foreground/20"
+                  >
+                    <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-primary to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out" />
+                    <Icon name="PlusIcon" size={18} className="relative z-10 transition-transform group-hover:rotate-90 duration-300" />
+                    <span className="relative z-10 group-hover:text-white transition-colors duration-300">Fonder un Club</span>
+                  </Link>
+                </div>
               </div>
-              <h1 className="font-display font-900 text-5xl lg:text-7xl text-foreground tracking-tight leading-[1.1] mb-6">
-                Rejoignez le <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-400">Club.</span><br />
-                Vivez l&apos;aventure.
-              </h1>
-              <p className="text-lg lg:text-xl text-muted-foreground font-500 leading-relaxed max-w-2xl">
-                Trouvez vos compagnons de route, échangez sur votre matériel favori et participez aux défis thématiques de la communauté Le Kit du Voyageur.
-              </p>
             </div>
-            
-            <div className="flex-shrink-0">
-              <Link 
+          </section>
+
+          {/* Main Content Area */}
+          <section className="relative z-20 -mt-8 px-6 pb-32">
+            <div className="max-w-7xl mx-auto">
+
+              {/* Floating Navigation Tabs */}
+              <div className="flex justify-center mb-12">
+                <div className="inline-flex items-center p-1.5 bg-card/80 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl">
+                  {[
+                    { id: 'activite', label: 'Par Activité', icon: 'BoltIcon', count: activityClubs.length },
+                    { id: 'pays', label: 'Par Destination', icon: 'GlobeAltIcon', count: countryClubs.length },
+                    { id: 'mes-clubs', label: 'Mes Clubs', icon: 'UserGroupIcon', count: myClubs.length },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                      className={`relative flex items-center gap-2 px-6 py-3 rounded-full text-sm font-700 transition-all duration-300 ${
+                        activeTab === tab.id
+                          ? 'text-background shadow-md'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                      }`}
+                    >
+                      {activeTab === tab.id && (
+                        <span className="absolute inset-0 bg-foreground rounded-full -z-10" />
+                      )}
+                      <Icon name={tab.icon} size={16} className={activeTab === tab.id ? 'text-background' : 'text-muted-foreground'} />
+                      {tab.label}
+                      {tab.count > 0 && (
+                        <span className={`ml-1 text-[10px] px-2 py-0.5 rounded-full ${activeTab === tab.id ? 'bg-background/20' : 'bg-muted'} font-800`}>
+                          {tab.count}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {error && (
+                <div className="mb-10 p-5 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500">
+                  <Icon name="ExclamationTriangleIcon" size={20} />
+                  <p className="font-600 text-sm">{error}</p>
+                </div>
+              )}
+
+              {/* Grid Content */}
+              {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div key={i} className="h-80 rounded-[2rem] bg-card border border-white/5 animate-pulse flex flex-col p-6">
+                      <div className="w-16 h-16 rounded-2xl bg-muted/50 mb-6" />
+                      <div className="w-1/3 h-4 bg-muted/50 rounded-full mb-3" />
+                      <div className="w-2/3 h-6 bg-muted/50 rounded-full mb-6" />
+                      <div className="w-full h-16 bg-muted/50 rounded-xl mt-auto" />
+                    </div>
+                  ))}
+                </div>
+              ) : displayedClubs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-card/30 border border-dashed border-border rounded-[3rem]">
+                  <div className="w-24 h-24 bg-muted/50 rounded-full flex items-center justify-center text-4xl mb-6 shadow-inner">
+                    {activeTab === 'mes-clubs' ? '🏕️' : '✨'}
+                  </div>
+                  <h3 className="font-display font-800 text-2xl text-foreground mb-3">
+                    {activeTab === 'mes-clubs' ? "Vous n'avez rejoint aucun club" : 'Espace encore vierge'}
+                  </h3>
+                  <p className="text-muted-foreground text-base max-w-md mb-8">
+                    {activeTab === 'mes-clubs'
+                      ? 'Explorez les clubs existants et trouvez votre prochaine équipe de choc pour vos aventures.'
+                      : "Il n'y a pas encore de club dans cette catégorie. Soyez le pionnier et créez le vôtre !"}
+                  </p>
+
+                  {activeTab === 'mes-clubs' ? (
+                    user ? (
+                      <button onClick={() => setActiveTab('activite')} className="px-8 py-3.5 bg-foreground text-background rounded-full font-800 hover:scale-105 transition-transform shadow-lg">
+                        Explorer les clubs
+                      </button>
+                    ) : (
+                      <Link href="/connexion" className="px-8 py-3.5 bg-primary text-white rounded-full font-800 hover:scale-105 transition-transform shadow-lg shadow-primary/20">
+                        Se connecter pour rejoindre
+                      </Link>
+                    )
+                  ) : (
+                    <Link href="/clubs/nouveau" className="inline-flex px-8 py-3.5 bg-primary text-white rounded-full font-800 hover:scale-105 transition-transform shadow-lg shadow-primary/20 items-center gap-2">
+                      <Icon name="PlusIcon" size={16} /> Fonder le premier club
+                    </Link>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {displayedClubs.map((c) => (
+                    <ClubCard
+                      key={c.id}
+                      club={c}
+                      onToggleMember={handleToggleMember}
+                      onOpenDetail={setDetailClub}
+                      onEdit={(club) => { setEditClub(club); setShowCreateModal(true); }}
+                      onDelete={setDeleteClub}
+                      currentUserId={user?.id}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+
+          <Footer />
+        </main>
+      </div>
+
+      {/* ── MOBILE ── */}
+      <div className="block md:hidden">
+        <MobilePageShell>
+          <div style={{ padding: '16px' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <div>
+                <div style={{ fontSize: '10px', color: '#6B7A72', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>Les Clubs</div>
+                <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0B1F17', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+                  Clubs <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>voyageurs</em>
+                </h1>
+              </div>
+              <Link
                 href="/clubs/nouveau"
-                className="group relative inline-flex items-center justify-center gap-3 px-8 py-4 bg-foreground text-background rounded-full font-800 text-sm overflow-hidden transition-all hover:scale-105 hover:shadow-2xl hover:shadow-foreground/20"
+                style={{ padding: '10px 18px', background: '#17402C', color: '#fff', borderRadius: '999px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
               >
-                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-primary to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out" />
-                <Icon name="PlusIcon" size={18} className="relative z-10 transition-transform group-hover:rotate-90 duration-300" />
-                <span className="relative z-10 group-hover:text-white transition-colors duration-300">Fonder un Club</span>
+                + Nouveau
               </Link>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Main Content Area */}
-      <section className="relative z-20 -mt-8 px-6 pb-32">
-        <div className="max-w-7xl mx-auto">
-          
-          {/* Floating Navigation Tabs */}
-          <div className="flex justify-center mb-12">
-            <div className="inline-flex items-center p-1.5 bg-card/80 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl">
+            {/* Filter Tabs */}
+            <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
               {[
-                { id: 'activite', label: 'Par Activité', icon: 'BoltIcon', count: activityClubs.length },
-                { id: 'pays', label: 'Par Destination', icon: 'GlobeAltIcon', count: countryClubs.length },
-                { id: 'mes-clubs', label: 'Mes Clubs', icon: 'UserGroupIcon', count: myClubs.length },
+                { id: 'activite', label: 'Par Activité', count: activityClubs.length },
+                { id: 'pays', label: 'Par Destination', count: countryClubs.length },
+                { id: 'mes-clubs', label: 'Mes Clubs', count: myClubs.length },
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                  className={`relative flex items-center gap-2 px-6 py-3 rounded-full text-sm font-700 transition-all duration-300 ${
-                    activeTab === tab.id 
-                      ? 'text-background shadow-md' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
-                  }`}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '999px',
+                    border: 'none',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    background: activeTab === tab.id ? '#17402C' : '#F4F1EA',
+                    color: activeTab === tab.id ? '#fff' : '#6B7A72',
+                    fontFamily: 'inherit',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
                 >
-                  {activeTab === tab.id && (
-                    <span className="absolute inset-0 bg-foreground rounded-full -z-10" />
-                  )}
-                  <Icon name={tab.icon} size={16} className={activeTab === tab.id ? 'text-background' : 'text-muted-foreground'} />
                   {tab.label}
                   {tab.count > 0 && (
-                    <span className={`ml-1 text-[10px] px-2 py-0.5 rounded-full ${activeTab === tab.id ? 'bg-background/20' : 'bg-muted'} font-800`}>
+                    <span style={{
+                      fontSize: '10px',
+                      padding: '1px 6px',
+                      borderRadius: '999px',
+                      background: activeTab === tab.id ? 'rgba(255,255,255,0.2)' : '#EDF3ED',
+                      color: activeTab === tab.id ? '#fff' : '#6B7A72',
+                    }}>
                       {tab.count}
                     </span>
                   )}
                 </button>
               ))}
             </div>
-          </div>
 
-          {error && (
-            <div className="mb-10 p-5 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500">
-              <Icon name="ExclamationTriangleIcon" size={20} />
-              <p className="font-600 text-sm">{error}</p>
-            </div>
-          )}
-
-          {/* Grid Content */}
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="h-80 rounded-[2rem] bg-card border border-white/5 animate-pulse flex flex-col p-6">
-                  <div className="w-16 h-16 rounded-2xl bg-muted/50 mb-6" />
-                  <div className="w-1/3 h-4 bg-muted/50 rounded-full mb-3" />
-                  <div className="w-2/3 h-6 bg-muted/50 rounded-full mb-6" />
-                  <div className="w-full h-16 bg-muted/50 rounded-xl mt-auto" />
-                </div>
-              ))}
-            </div>
-          ) : displayedClubs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-card/30 border border-dashed border-border rounded-[3rem]">
-              <div className="w-24 h-24 bg-muted/50 rounded-full flex items-center justify-center text-4xl mb-6 shadow-inner">
-                {activeTab === 'mes-clubs' ? '🏕️' : '✨'}
+            {/* Error */}
+            {error && (
+              <div style={{ padding: '12px', background: 'rgba(239,68,68,0.08)', borderRadius: '12px', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', fontSize: '12px', fontWeight: 600, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                ⚠️ {error}
               </div>
-              <h3 className="font-display font-800 text-2xl text-foreground mb-3">
-                {activeTab === 'mes-clubs' ? "Vous n'avez rejoint aucun club" : 'Espace encore vierge'}
-              </h3>
-              <p className="text-muted-foreground text-base max-w-md mb-8">
-                {activeTab === 'mes-clubs' ?'Explorez les clubs existants et trouvez votre prochaine équipe de choc pour vos aventures.' : "Il n'y a pas encore de club dans cette catégorie. Soyez le pionnier et créez le vôtre !"}
-              </p>
-              
-              {activeTab === 'mes-clubs' ? (
-                user ? (
-                  <button onClick={() => setActiveTab('activite')} className="px-8 py-3.5 bg-foreground text-background rounded-full font-800 hover:scale-105 transition-transform shadow-lg">
-                    Explorer les clubs
-                  </button>
+            )}
+
+            {/* Clubs Content */}
+            {loading ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {[1, 2, 3].map((i) => (
+                  <div key={i} style={{ height: '140px', background: '#F4F1EA', borderRadius: '16px', opacity: 0.5 }} />
+                ))}
+              </div>
+            ) : displayedClubs.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 16px', background: 'rgba(244,241,234,0.5)', borderRadius: '24px', border: '1px dashed rgba(11,31,23,0.1)' }}>
+                <div style={{ fontSize: '36px', marginBottom: '12px' }}>{activeTab === 'mes-clubs' ? '🏕️' : '✨'}</div>
+                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0B1F17', marginBottom: '8px' }}>
+                  {activeTab === 'mes-clubs' ? "Vous n'avez rejoint aucun club" : 'Espace encore vierge'}
+                </h3>
+                <p style={{ fontSize: '13px', color: '#6B7A72', marginBottom: '16px' }}>
+                  {activeTab === 'mes-clubs'
+                    ? 'Explorez les clubs existants et trouvez votre prochaine équipe.'
+                    : "Soyez le pionnier et créez le vôtre !"}
+                </p>
+                {activeTab === 'mes-clubs' ? (
+                  user ? (
+                    <button onClick={() => setActiveTab('activite')} style={{ padding: '12px 28px', background: '#0B1F17', color: '#fff', borderRadius: '999px', border: 'none', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      Explorer les clubs
+                    </button>
+                  ) : (
+                    <Link href="/connexion" style={{ padding: '12px 28px', background: '#17402C', color: '#fff', borderRadius: '999px', fontSize: '13px', fontWeight: 700, textDecoration: 'none', display: 'inline-block', fontFamily: 'inherit' }}>
+                      Se connecter
+                    </Link>
+                  )
                 ) : (
-                  <Link href="/connexion" className="px-8 py-3.5 bg-primary text-white rounded-full font-800 hover:scale-105 transition-transform shadow-lg shadow-primary/20">
-                    Se connecter pour rejoindre
+                  <Link href="/clubs/nouveau" style={{ padding: '12px 28px', background: '#17402C', color: '#fff', borderRadius: '999px', fontSize: '13px', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', fontFamily: 'inherit' }}>
+                    + Fonder le premier club
                   </Link>
-                )
-              ) : (
-                <Link href="/clubs/nouveau" className="inline-flex px-8 py-3.5 bg-primary text-white rounded-full font-800 hover:scale-105 transition-transform shadow-lg shadow-primary/20 items-center gap-2">
-                  <Icon name="PlusIcon" size={16} /> Fonder le premier club
-                </Link>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {displayedClubs.map((c) => (
-                <ClubCard
-                  key={c.id}
-                  club={c}
-                  onToggleMember={handleToggleMember}
-                  onOpenDetail={setDetailClub}
-                  onEdit={(club) => { setEditClub(club); setShowCreateModal(true); }}
-                  onDelete={setDeleteClub}
-                  currentUserId={user?.id}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+                )}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {displayedClubs.map((c) => (
+                  <div
+                    key={c.id}
+                    style={{ background: '#FBFAF6', borderRadius: '16px', padding: '14px', border: '1px solid rgba(11,31,23,0.06)', cursor: 'pointer' }}
+                    onClick={() => window.location.href = `/clubs/${c.slug}`}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'linear-gradient(135deg, #F4F1EA, #EDF3ED)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
+                          {c.emoji || '🏔️'}
+                        </div>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ fontSize: '14px', fontWeight: 700, color: '#0B1F17' }}>{c.name}</span>
+                            {c.is_verified && <span style={{ fontSize: '14px', color: '#17402C' }}>✓</span>}
+                          </div>
+                          <span style={{ fontSize: '10px', color: '#6B7A72', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{c.type === 'pays' ? 'Destination' : 'Activité'} · {c.privacy === 'open' ? 'Public' : 'Privé'}</span>
+                        </div>
+                      </div>
+                      {c.is_member && (
+                        <span style={{ fontSize: '10px', color: '#17402C', background: '#EDF3ED', padding: '2px 8px', borderRadius: '999px', fontWeight: 700 }}>Membre</span>
+                      )}
+                    </div>
+                    <p style={{ fontSize: '12px', color: '#6B7A72', margin: '0 0 10px', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.description}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: '#6B7A72' }}>
+                        <span>👥 {c.members_count} membres</span>
+                        <span>⚡ {c.active_this_month} actifs</span>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleMember(c.id, !!c.is_member);
+                        }}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '999px',
+                          border: 'none',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          background: c.is_member ? '#F4F1EA' : '#17402C',
+                          color: c.is_member ? '#0B1F17' : '#fff',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        {c.is_member ? 'Quitter' : 'Rejoindre'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </MobilePageShell>
+        
+      </div>
 
       {/* Modals */}
       <ClubFormModal
@@ -1219,17 +1391,17 @@ export default function ClubsPage() {
             </div>
             <h3 className="font-display font-800 text-foreground text-xl mb-2">Supprimer le club ?</h3>
             <p className="text-sm text-muted-foreground mb-8">Cette action est irréversible. Toutes les données, membres et discussions de &quot;{deleteClub.name}&quot; seront perdus à jamais.</p>
-            
+
             <div className="flex flex-col gap-3">
-              <button 
-                onClick={handleDeleteClub} 
-                disabled={deleting} 
+              <button
+                onClick={handleDeleteClub}
+                disabled={deleting}
                 className="w-full py-3.5 rounded-xl bg-red-500 text-white text-sm font-800 hover:bg-red-600 transition-colors disabled:opacity-50 shadow-lg shadow-red-500/20"
               >
                 {deleting ? 'Destruction en cours...' : 'Oui, supprimer définitivement'}
               </button>
-              <button 
-                onClick={() => setDeleteClub(null)} 
+              <button
+                onClick={() => setDeleteClub(null)}
                 className="w-full py-3.5 rounded-xl border border-transparent text-sm font-700 text-foreground hover:bg-muted transition-colors"
               >
                 Annuler
@@ -1246,7 +1418,7 @@ export default function ClubsPage() {
           {toast}
         </div>
       )}
-    </main>
+    </>
   );
 }
 
