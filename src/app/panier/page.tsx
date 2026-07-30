@@ -163,7 +163,7 @@ export default function PanierPage() {
               <p className="font-display font-800 text-3xl text-[#1C2620] mb-2">Votre <em className="italic font-400 text-[#5C6B5E]">panier.</em> est vide</p>
               <p className="text-[#5C6B5E]">Explorez notre catalogue pour trouver votre équipement.</p>
             </div>
-            <Link href="/catalogue" className="mt-4 bg-[#1C2620] hover:bg-[#2A3830] text-white px-8 py-3.5 rounded-xl font-600 text-sm transition-colors">
+            <Link href="/boutique" className="mt-4 bg-[#1C2620] hover:bg-[#2A3830] text-white px-8 py-3.5 rounded-xl font-600 text-sm transition-colors">
               Voir le catalogue
             </Link>
           </div>
@@ -361,7 +361,7 @@ export default function PanierPage() {
             <div style={{ fontSize: '22px', fontWeight: 500, color: '#0B1F17', marginBottom: '8px' }}>
               Votre <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>panier</em> est vide
             </div>
-            <Link href="/catalogue" style={{ display: 'inline-block', marginTop: '16px', padding: '12px 24px', background: '#0B1F17', color: '#fff', borderRadius: '999px', fontSize: '14px', fontWeight: 500, textDecoration: 'none' }}>
+            <Link href="/boutique" style={{ display: 'inline-block', marginTop: '16px', padding: '12px 24px', background: '#0B1F17', color: '#fff', borderRadius: '999px', fontSize: '14px', fontWeight: 500, textDecoration: 'none' }}>
               Voir le catalogue
             </Link>
           </div>

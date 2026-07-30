@@ -25,29 +25,38 @@ interface NavSection {
 
 const SECTIONS: NavSection[] = [
   {
-    label: 'Naviguer',
+    label: 'Découvrir',
     items: [
-      { label: 'Aventures', icon: 'mountain', href: '/explorer' },
-      { label: 'Boutique', icon: 'bag', href: '/boutique' },
-      { label: 'Carte', icon: 'map-pin', href: '/carte-interactive' },
+      { label: 'Carte interactive', icon: 'map-pin', href: '/carte-interactive' },
       { label: 'Carnets', icon: 'doc', href: '/carnets' },
+      { label: 'Guides', icon: 'bookmark', href: '/guides' },
+      { label: 'Blog', icon: 'doc', href: '/blog' },
+      { label: 'Outils terrain', icon: 'search', href: '/outils' },
+      { label: 'Mode rando GPS/SOS', icon: 'map-pin', href: '/naviguer' },
     ],
   },
   {
-    label: 'Mon compte',
+    label: 'Vie pro & occasion',
     items: [
-      { label: 'Profil', icon: 'user', href: '/compte' },
-      { label: 'Inventaire', icon: 'bag', href: '/inventaire' },
-      { label: 'Fidélité', icon: 'star', href: '/fidelite' },
-      { label: 'Alertes', icon: 'bell', href: '/alertes' },
+      { label: 'Location', icon: 'bag', href: '/location' },
+      { label: 'Enchères', icon: 'star', href: '/encheres' },
+      { label: 'Espace Pro', icon: 'user', href: '/pro' },
+      { label: 'Ambassadeurs', icon: 'star', href: '/ambassadeurs' },
+      { label: 'Créateurs', icon: 'star', href: '/createurs' },
     ],
   },
   {
-    label: 'Maison',
+    label: 'Compte & légal',
     items: [
-      { label: 'Accueil', icon: 'home', href: '/' },
-      { label: 'Paramètres', icon: 'lock', href: '/compte' },
-      { label: 'Aide', icon: 'heart', href: '/faq' },
+      { label: 'Mes Aventures', icon: 'mountain', href: '/mes-aventures' },
+      { label: "Rapport d'Expédition", icon: 'doc', href: '/rapport-expedition' },
+      { label: 'Rapport Kit', icon: 'bag', href: '/rapport-kit' },
+      { label: 'Aide / FAQ', icon: 'heart', href: '/faq' },
+      { label: 'Contact', icon: 'heart', href: '/contact' },
+      { label: 'CGU', icon: 'lock', href: '/cgu' },
+      { label: 'CGV', icon: 'lock', href: '/cgv' },
+      { label: 'Mentions Légales', icon: 'lock', href: '/mentions-legales' },
+      { label: 'Politique de Confidentialité', icon: 'lock', href: '/politique-confidentialite' },
     ],
   },
 ];

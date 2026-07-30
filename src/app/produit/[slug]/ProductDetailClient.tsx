@@ -174,7 +174,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                 <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
                 <Link href="/boutique" className="hover:text-[#1C2620] transition-colors">Boutique</Link>
                 <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
-                <Link href="/catalogue" className="hover:text-[#1C2620] transition-colors">{product.categorie}</Link>
+                <Link href="/boutique" className="hover:text-[#1C2620] transition-colors">{product.categorie}</Link>
                 <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
                 <span className="text-[#1C2620]">{product.nom}</span>
               </nav>

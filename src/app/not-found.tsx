@@ -8,7 +8,7 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 const POPULAR_PAGES = [
   { label: 'Configurateur IA', href: '/ai-configurator', icon: 'SparklesIcon' },
-  { label: 'Boutique', href: '/shop', icon: 'ShoppingBagIcon' },
+  { label: 'Boutique', href: '/boutique', icon: 'ShoppingBagIcon' },
   { label: 'Destinations', href: '/pays', icon: 'GlobeAltIcon' },
   { label: 'Mon inventaire', href: '/inventaire', icon: 'ArchiveBoxIcon' },
 ];

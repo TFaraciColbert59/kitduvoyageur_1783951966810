@@ -574,3 +574,35 @@
 }
 
 /* Mobile bottom bar padding — géré par MobilePageShell */
+
+/* ── Custom Scrollbars — Forest Theme ── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--forest-600);
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--forest-500);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--forest-600) transparent;
+}
+
+/* ── Custom Cursor — Grab/Pointer moderne ── */
+* {
+  cursor: default;
+}
+a, button, select, input, textarea, [role="button"], [tabindex]:not([tabindex="-1"]) {
+  cursor: pointer;
+}
+a:active, button:active, [role="button"]:active {
+  cursor: pointer;
+}

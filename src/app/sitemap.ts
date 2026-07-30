@@ -18,7 +18,6 @@ const staticRoutes: Array<{
   { url: '/ai-configurator', priority: 0.8, changeFrequency: 'monthly' },
   { url: '/explorer', priority: 0.75, changeFrequency: 'weekly' },
   { url: '/communaute', priority: 0.7, changeFrequency: 'daily' },
-  { url: '/experts', priority: 0.7, changeFrequency: 'weekly' },
   { url: '/avis', priority: 0.65, changeFrequency: 'weekly' },
   { url: '/outils', priority: 0.6, changeFrequency: 'monthly' },
   { url: '/abonnements', priority: 0.6, changeFrequency: 'monthly' },
@@ -30,6 +29,18 @@ const staticRoutes: Array<{
   { url: '/cgv', priority: 0.3, changeFrequency: 'yearly' },
   { url: '/politique-confidentialite', priority: 0.3, changeFrequency: 'yearly' },
   { url: '/cgu', priority: 0.3, changeFrequency: 'yearly' },
+  { url: '/carte-interactive', priority: 0.7, changeFrequency: 'weekly' },
+  { url: '/carnets', priority: 0.7, changeFrequency: 'weekly' },
+  { url: '/naviguer', priority: 0.7, changeFrequency: 'monthly' },
+  { url: '/carbone', priority: 0.65, changeFrequency: 'monthly' },
+  { url: '/ambassadeurs', priority: 0.6, changeFrequency: 'monthly' },
+  { url: '/createurs', priority: 0.6, changeFrequency: 'monthly' },
+  { url: '/evenements', priority: 0.6, changeFrequency: 'weekly' },
+  { url: '/encheres', priority: 0.6, changeFrequency: 'weekly' },
+  { url: '/location', priority: 0.6, changeFrequency: 'weekly' },
+  { url: '/occasion', priority: 0.6, changeFrequency: 'weekly' },
+  { url: '/experts', priority: 0.6, changeFrequency: 'monthly' },
+  { url: '/communaute-pro', priority: 0.5, changeFrequency: 'monthly' },
 ];
 
 const kitSlugs = ['islande-trek', 'gr20-corse', 'vanlife-europe'];
@@ -125,28 +136,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Sitemap continues without guides if error
   }
 
-  // Dynamic categories from Supabase
-  let categoryEntries: MetadataRoute.Sitemap = [];
-  try {
-    const supabase = await createClient();
-    const { data: categories } = await supabase
-      .from('shop_products')
-      .select('category_main')
-      .distinct()
-      .limit(50);
-
-    if (categories && categories.length > 0) {
-      categoryEntries = categories.map((c) => ({
-        url: `${base}/catalogue/${c.category_main.toLowerCase().replace(/\s+/g, '-')}`,
-        lastModified: now,
-        changeFrequency: 'weekly' as const,
-        priority: 0.75,
-      }));
-    }
-  } catch {
-    // Sitemap continues without categories if error
-  }
-
   return [
     ...staticEntries,
     ...countryEntries,
@@ -154,6 +143,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...outilsEntries,
     ...productEntries,
     ...guideEntries,
-    ...categoryEntries,
   ];
 }

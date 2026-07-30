@@ -812,7 +812,7 @@ Génère entre 8 et 14 articles d'équipement pertinents. Inclus des alertes sp�
           <Icon name="ShoppingBagIcon" size={18} variant="outline" />
           Ajouter ce qui manque — {totalPriceEur} €
         </button>
-        <Link href="/catalogue" className="btn-secondary justify-center py-3.5 text-base px-6">
+        <Link href="/boutique" className="btn-secondary justify-center py-3.5 text-base px-6">
           Voir le catalogue
         </Link>
       </div>

@@ -42,7 +42,7 @@ const TABS: Tab[] = [
     label: 'Communauté',
     iconName: 'users',
     ariaLabel: 'Communauté, clubs, événements',
-    matchPaths: ['/communaute', '/communaute/publier', '/communaute-pro', '/clubs', '/groupes', '/entraide', '/createurs', '/experts', '/evenements', '/feed', '/messagerie'],
+    matchPaths: ['/communaute', '/communaute/publier', '/clubs', '/groupes', '/entraide', '/createurs', '/experts', '/evenements', '/feed', '/messagerie'],
   },
   {
     href: '/compte',

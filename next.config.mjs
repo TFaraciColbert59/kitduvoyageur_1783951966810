@@ -23,5 +23,27 @@ const nextConfig = {
     qualities: [75, 80, 85, 90, 95],
   },
 
+  transpilePackages: ['react-globe.gl', 'three', 'lucide-react'],
+
+  async redirects() {
+    return [
+      {
+        source: '/shop',
+        destination: '/boutique',
+        permanent: true,
+      },
+      {
+        source: '/catalogue/:path*',
+        destination: '/boutique',
+        permanent: true,
+      },
+      {
+        source: '/configurateur',
+        destination: '/ai-configurator',
+        permanent: true,
+      },
+    ];
+  },
+
 };
 export default nextConfig;

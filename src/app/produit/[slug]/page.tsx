@@ -181,7 +181,7 @@ export default async function ProduitPage({ params }: Props) {
                 '@type': 'ListItem',
                 position: 3,
                 name: product.category_main,
-                item: `${siteUrl}/catalogue/${product.category_main.toLowerCase().replace(/\s+/g, '-')}`,
+                item: `${siteUrl}/boutique?categorie=${encodeURIComponent(product.category_main)}`,
               },
               {
                 '@type': 'ListItem',

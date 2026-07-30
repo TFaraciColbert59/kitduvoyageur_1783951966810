@@ -7,6 +7,7 @@ import { useGeolocation } from '@/hooks/useGeolocation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import CopilotFAB from '@/components/mobile-nav/CopilotFAB';
 
 function SOSModal({ onClose, position, emergencyContact, onSetContact }: {
   onClose: () => void;
@@ -186,9 +187,7 @@ export default function NaviguerPage() {
         {isActive && (
           <>
             <button onClick={() => setShowSOS(true)} style={{ position: 'fixed', zIndex: 100, display: 'flex', alignItems: 'center', gap: '8px', padding: '0 16px', borderRadius: '16px', fontWeight: 700, fontSize: '16px', right: '16px', bottom: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom) + 80px)', height: '56px', minWidth: '56px', background: '#DC2626', color: 'white', border: 'none', boxShadow: '0 4px 20px rgba(220, 38, 38, 0.6)', cursor: 'pointer' }}><span>🆘</span><span>SOS</span></button>
-            <Link href="/copilote" style={{ position: 'fixed', zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', left: '16px', bottom: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom) + 80px)', width: '48px', height: '48px', background: '#3A6EA5', boxShadow: '0 4px 16px rgba(58, 110, 165, 0.5)' }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-            </Link>
+            <CopilotFAB />
           </>
         )}
 
