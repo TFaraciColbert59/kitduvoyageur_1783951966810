@@ -22,11 +22,13 @@ import EditProfileModal from '@/components/compte/EditProfileModal';
 import MobileCompteView from '@/components/compte/MobileCompteView';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import CompteFooter from '@/components/compte/CompteFooter';
-import AventuresTab from '@/components/compte/AventuresTab';
-import CarnetsTab from '@/components/compte/CarnetsTab';
-import ClubsTab from '@/components/compte/ClubsTab';
-import CommandesTab from '@/components/compte/CommandesTab';
-import FideliteTab from '@/components/compte/FideliteTab';
+import dynamic from 'next/dynamic';
+
+const AventuresTab = dynamic(() => import('@/components/compte/AventuresTab'), { ssr: false });
+const CarnetsTab = dynamic(() => import('@/components/compte/CarnetsTab'), { ssr: false });
+const ClubsTab = dynamic(() => import('@/components/compte/ClubsTab'), { ssr: false });
+const CommandesTab = dynamic(() => import('@/components/compte/CommandesTab'), { ssr: false });
+const FideliteTab = dynamic(() => import('@/components/compte/FideliteTab'), { ssr: false });
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchDashboardData, type CompteDashboardData } from '@/lib/supabase/queries-compte';
 
