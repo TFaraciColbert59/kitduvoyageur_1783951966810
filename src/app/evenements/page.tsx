@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
@@ -474,7 +475,7 @@ function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Eve
 export default function EvenementsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [detailEvent, setDetailEvent] = useState<Event | null>(null);
   const [filterType, setFilterType] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filter, setFilter] = useState<string>('all');
@@ -517,8 +518,8 @@ export default function EvenementsPage() {
       showToast('Inscription confirmée !');
     }
     setEvents((prev) => prev.map((e) => e.id === eventId ? { ...e, is_registered: !isRegistered, current_participants: isRegistered ? Math.max(0, e.current_participants - 1) : e.current_participants + 1 } : e));
-    if (selectedEvent?.id === eventId) {
-      setSelectedEvent((prev) => prev ? { ...prev, is_registered: !isRegistered } : null);
+    if (detailEvent?.id === eventId) {
+      setDetailEvent((prev) => prev ? { ...prev, is_registered: !isRegistered } : null);
     }
   };
 
