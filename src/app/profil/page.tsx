@@ -75,7 +75,7 @@ const MOCK_ADVENTURES = [
   { id: '4', title: 'Kayak · Serre-Ponçon', destination: '1 jour · Hautes-Alpes · 14 km', cover_image: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&q=80', cover_image_alt: 'Kayak sur le lac de Serre-Ponçon', start_date: '2026-06-15', created_at: '' },
 ];
 
-function WorldMapDots() {
+export default function WorldMapDots() {
   const dots = [
     { x: 48, y: 38, visited: true, label: 'France' },
     { x: 52, y: 32, visited: true, label: 'Norvège' },

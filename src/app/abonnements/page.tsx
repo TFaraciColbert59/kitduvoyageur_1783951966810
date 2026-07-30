@@ -94,10 +94,20 @@ const BOX_PREVIEWS: BoxContent[] = [
   },
 ];
 
+const PROFILES = [
+  { id: 'alpiniste', label: 'Alpiniste', icon: '⛰️' },
+  { id: 'randonneur', label: 'Randonneur', icon: '🥾' },
+  { id: 'bikepacker', label: 'Bikepacker', icon: '🚵' },
+  { id: 'kayakiste', label: 'Kayakiste', icon: '🛶' },
+  { id: 'voyageur', label: 'Voyageur léger', icon: '✈️' },
+  { id: 'survivaliste', label: 'Survivaliste', icon: '🌿' },
+];
+
 export default function AbonnementsPage() {
   const [selectedPlan, setSelectedPlan] = useState('aventurier');
   const [activeBox, setActiveBox] = useState(0);
   const [billingAnnual, setBillingAnnual] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState('randonneur');
 
   const desktopContent = (
     <>

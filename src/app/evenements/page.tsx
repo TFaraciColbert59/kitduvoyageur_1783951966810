@@ -477,6 +477,8 @@ export default function EvenementsPage() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [filterType, setFilterType] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filter, setFilter] = useState<string>('all');
+  const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const { user } = useAuth();

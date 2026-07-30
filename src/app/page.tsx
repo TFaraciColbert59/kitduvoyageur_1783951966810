@@ -225,7 +225,7 @@ export default function HomePage() {
         <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row items-center gap-16">
           <div className="flex-1 w-full">
             <div className="relative rounded-3xl overflow-hidden aspect-square bg-[#E8E4D8]">
-              <Image src="https://images.unsplash.com/photo-1550ed4e1b-3b47bd21096a?w=1000&q=80" alt="Sac à dos en toile cirée" fill className="object-cover" />
+              <Image src="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=1000&q=80" alt="Sac à dos en toile cirée" fill className="object-cover" />
               <div className="absolute top-6 left-6">
                 <span className="bg-white/90 backdrop-blur px-3 py-1.5 rounded-full text-[10px] font-bold text-[#1C2620] tracking-wide uppercase shadow-sm">
                   Édition artisanale
@@ -435,7 +435,7 @@ export default function HomePage() {
                 </p>
               </div>
               <div style={{ borderRadius: '16px', overflow: 'hidden', marginBottom: '16px', background: '#E8E4D8', aspectRatio: '1' }}>
-                <img src="https://images.unsplash.com/photo-1550ed4e1b-3b47bd21096a?w=800&q=80" alt="Sac à dos" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&q=80" alt="Sac à dos" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div><span style={{ fontSize: '8px', fontFamily: 'ui-monospace, monospace', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7A8A7D', display: 'block', marginBottom: '2px' }}>VOLUME</span><span style={{ fontSize: '14px', fontWeight: '600', color: '#1C2620' }}>45 litres</span></div>
