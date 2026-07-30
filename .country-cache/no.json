@@ -93,7 +93,7 @@
         {
           "mois": "Novembre",
           "temp_min_c": -2,
-          "temp_max_c": 73,
+          "temp_max_c": 3,
           "precipitations_mm": 73,
           "niveau": "moyen",
           "affluence": "faible"
@@ -203,55 +203,44 @@
           "transport": 30
         },
         "gros": {
-          "logement": 200,
+          "logement": 150,
           "nourriture": 80,
-          "transport": 60
+          "transport": 50
         }
+      },
+      "fuseau_horaire": "Europe/Oslo (CET/CEST)",
+      "indicatif_telephonique": "+47",
+      "urgence": {
+        "police": "112",
+        "ambulance": "113",
+        "pompier": "110"
       }
     },
-    "vols": {
-      "tendance_par_saison": [
-        {
-          "periode": "Haute saison (Juin-Août)",
-          "niveau_prix": "haut"
-        },
-        {
-          "periode": "Basse saison (Novembre-Mars, hors vacances scolaires)",
-          "niveau_prix": "bas"
-        },
-        {
-          "periode": "Épaule (Avril-Mai, Septembre-Octobre)",
-          "niveau_prix": "moyen"
-        }
-      ],
-      "statut": "indicatif"
-    },
-    "carbone": {
-      "vol_paris_kg_co2_estime": 638,
-      "methodologie": "Distance Paris–Oslo × 2 (aller-retour) × 0.255 kg CO2/km/passager (facteur ADEME aviation moyen-courrier)",
-      "statut": "estimation"
-    },
-    "evenements": [
-      {
-        "nom": "Fête Nationale (Syttende Mai)",
-        "periode": "17 Mai",
-        "description": "Célébration de la Constitution norvégienne avec des défilés d'enfants, des costumes traditionnels et une ambiance festive dans tout le pays."
+    "transports": {
+      "avion": {
+        "compagnies": ["SAS", "Norwegian Air Shuttle", "Air France"],
+        "aeroports": ["Oslo (OSL)", "Bergen (BGO)", "Tromsø (TOS)"]
       },
-      {
-        "nom": "Festival du Soleil de Minuit",
-        "periode": "Juin-Juillet (Nord de la Norvège)",
-        "description": "Phénomène naturel où le soleil reste visible 24h/24 au-dessus du cercle arctique, célébré par divers festivals et activités nocturnes."
+      "train": {
+        "operateur": "Vy (anciennement NSB)",
+        "description": "Réseau ferroviaire reliant les principales villes. Oslo-Bergen et Oslo-Trondheim sont des lignes emblématiques."
       },
-      {
-        "nom": "Festival de ski de Holmenkollen",
-        "periode": "Mars (Oslo)",
-        "description": "L'un des plus anciens festivals de ski au monde, avec des compétitions de saut à ski, de combiné nordique et de ski de fond, attirant des milliers de spectateurs."
+      "bus": {
+        "operateur": "Vy Buss, NOR-WAY Bussekspress",
+        "description": "Réseau de bus longue distance couvrant l'ensemble du territoire."
+      },
+      "ferry": {
+        "operateur": "Hurtigruten, Fjord Line, Color Line",
+        "description": "Hurtigruten propose des croisières côtières de Bergen vers le nord. Ferries rapides et conventionnels relient les fjords et îles."
+      },
+      "voiture": {
+        "description": "Location de voiture recommandée pour explorer les fjords et zones rurales. Routes bien entretenues mais tunnels payants. Conduite en hiver nécessite des pneus cloutés."
       }
-    ],
+    },
     "lieux_incontournables": [
       {
         "nom": "Geirangerfjord",
-        "description": "Un fjord emblématique classé au patrimoine mondial de l'UNESCO, célèbre pour ses falaises abruptes, ses cascades majestueuses comme les Sept Sœurs et ses eaux d'un bleu profond.",
+        "description": "Fjord classé au patrimoine mondial de l'UNESCO, célèbre pour ses cascades vertigineuses (Sept Sœurs) et ses eaux d'un bleu profond.",
         "lat": 62.115,
         "lng": 7.205
       },
@@ -264,28 +253,27 @@
       {
         "nom": "Îles Lofoten",
         "description": "Un archipel au nord du cercle arctique, réputé pour ses paysages dramatiques de montagnes escarpées, ses plages de sable blanc, ses villages de pêcheurs colorés et la possibilité d'observer les aurores boréales.",
-        "lat": 67.937,
-        "lng": 13.084
+        "lat": 68.2,
+        "lng": 14.6
       },
       {
         "nom": "Oslo (Opéra d'Oslo)",
-        "description": "La capitale norvégienne, combinant modernité et nature, avec des musées de renommée mondiale, des parcs et une architecture innovante comme l'Opéra d'Oslo, qui semble émerger de l'eau.",
+        "description": "La capitale norvégienne, combinant modernité et nature, avec de nombreux musées de renommée mondiale, des parcs et une architecture innovante comme l'Opéra d'Oslo, qui semble émerger de l'eau.",
         "lat": 59.907,
         "lng": 10.751
       },
       {
         "nom": "Cap Nord (Nordkapp)",
-        "description": "Le point le plus septentrional de l'Europe continentale, offrant des vues imprenables sur l'océan Arctique, le soleil de minuit en été et un centre d'accueil moderne.",
+        "description": "Le point le plus septentrional de l'Europe continentale, offrant des vues impressionnantes sur l'océan Arctique, le soleil de minuit en été et les aurores boréales en hiver.",
         "lat": 71.169,
         "lng": 25.786
       }
     ],
-    "coutumes": "Les Norvégiens sont généralement réservés, respectueux de la nature et attachés à la ponctualité. La 'Janteloven' (loi de Jante) influence la culture, prônant l'humilité et l'égalité. Il est courant de retirer ses chaussures en entrant chez quelqu'un. Le pourboire n'est pas obligatoire mais apprécié pour un bon service. Le respect de l'environnement est primordial, notamment lors des activités de plein air.",
+    "coutumes": "Les Norvégiens sont généralement réservés mais respectueux. La 'Janteloven' (loi de Jante) influence la culture, prônant l'humilité et l'égalité. Il est courant de retirer ses chaussures en entrant chez quelqu'un. Le pourboire n'est pas obligatoire mais apprécié pour un bon service. Le respect de l'environnement est primordial, notamment lors des activités de plein air.",
     "kits_recommandes_tags_climat": [
       "froid",
-      "randonnee",
+      "randonee",
       "nature",
-      "hiver",
       "ete_frais",
       "aurores_boreales"
     ],
@@ -297,17 +285,17 @@
       {
         "code_iso": "SE",
         "nom": "Suède",
-        "raison": "Similarité climatique (nordique), paysages naturels (forêts, lacs), culture et activités de plein air."
+        "raison": "Climatique similaire (nordique), paysages naturels (forêts, lacs), culture et activités de plein air."
       },
       {
         "code_iso": "FI",
         "nom": "Finlande",
-        "raison": "Climat nordique, aurores boréales, activités hivernales, culture Sami et vastes étendues sauvages."
+        "raison": "Climat nordique, aurores boréales, vastes étendues sauvages et culture Sami."
       },
       {
         "code_iso": "IS",
         "nom": "Islande",
-        "raison": "Paysages volcaniques et glaciaires spectaculaires, activités de nature (randonnée, observation de la faune), climat frais et culture nordique."
+        "raison": "Paysages volcaniques et glaciaires, activités de nature (randonnée, observation de la faune), climat froid et culture nordique."
       }
     ],
     "faq": [
@@ -317,15 +305,23 @@
       },
       {
         "question": "Quelle est la meilleure période pour visiter la Norvège et quel budget prévoir ?",
-        "reponse": "La meilleure période dépend de vos intérêts : l'été (Juin-Août) est idéal pour les fjords et la randonnée (budget élevé), tandis que l'hiver (Décembre-Mars) est bon pour les aurores boréales et le ski (budget moyen à élevé). La Norvège est un pays cher, prévoyez un budget quotidien de 80 EUR (petit) à 200 EUR (gros) par personne, hors vols."
+        "reponse": "La meilleure période dépend de vos intentions : l'été (Juin-Août) est idéal pour les fjords et la randonnée, la randonnée (budget élevé), tandis que l'hiver (Décembre-Mars) est bon pour les aurores boréales et le ski (budget moyen à élevé). La Norvège est un pays cher, prévoyez un budget quotidien de 80 EUR (petit) à 200 EUR (gros) par personne, hors vols."
       },
       {
         "question": "Y a-t-il des vaccins obligatoires ou recommandés pour la Norvège ?",
-        "reponse": "Aucun vaccin n'est obligatoire pour la Norvège. Cependant, les rappels DTPolio et ROR sont recommandés. Pour les séjours en zones rurales et forestières, le vaccin contre l'encéphalite à tiques peut être conseillé."
+        "reponse": "Aucun vaccin n'est obligatoire. Cependant, il est recommandé de vérifier ses rappels DTPolio et ROR. Pour les séjours en zone rurale et forestière, la vaccination contre l'encéphalite à tiques peut être recommandée selon la durée et la saison."
+      },
+      {
+        "question": "Quels moyens de transport sont disponibles et recommandés en Norvège ?",
+        "reponse": "La Norvège dispose d'un excellent réseau de transports publics (train, bus, ferry). Les trains Vy relient les principales villes. Les ferries (Hurtigruten) sont une excellente façon de découvrir la côte. La voiture de location est idéale pour les fjords, mais attention aux conditions de conduite en hiver."
       },
       {
         "question": "La Norvège est-elle un pays sûr pour les voyageurs ?",
-        "reponse": "Oui, la Norvège est considérée comme un pays très sûr avec un faible taux de criminalité. Il est néanmoins recommandé de faire preuve de vigilance habituelle contre les vols à la tire dans les zones touristiques et les transports en commun, comme dans toute grande ville."
+        "reponse": "Oui, la Norvège est considérée comme l'un des pays les plus sûrs au monde. Cependant, il est recommandé de faire preuve de vigilance habituelle contre les vols à la tire dans les zones touristiques et les transports en commun, notamment à Oslo."
+      },
+      {
+        "question": "La Norvège est-elle un pays sur pour les voyageurs ?",
+        "reponse": "Oui, la Norvège est considérée comme l'un des pays les plus sûrs au monde. Cependant, il est recommandé de faire preuve de vigilance habituelle contre les vols à la tire dans les zones touristiques et les transports en commun, notamment à Oslo."
       }
     ],
     "meta": {
