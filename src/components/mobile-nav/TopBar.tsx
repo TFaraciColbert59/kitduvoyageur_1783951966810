@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import LkvIcon from '@/components/ui/LkvIcon';
+import { useSearchContext } from '@/contexts/SearchContext';
 
 interface TopBarProps {
   variant?: 'standard' | 'on-image';
@@ -11,9 +12,10 @@ interface TopBarProps {
   title?: string;
   cartCount?: number;
   onMenuOpen?: () => void;
+  onSearchOpen?: () => void;
 }
 
-const ROOT_TABS = ['/', '/explorer', '/boutique', '/compte', '/profil', '/carnets'];
+const ROOT_TABS = ['/', '/explorer', '/boutique', '/compte', '/profil', '/carnets', '/terrain'];
 
 const PARENT_TAB: Record<string, string> = {
   '/carnets': '/carnets',
@@ -40,6 +42,8 @@ const PARENT_TAB: Record<string, string> = {
   '/alertes': '/compte',
   '/mes-aventures': '/compte',
   '/rapport-expedition': '/compte',
+  '/terrain': '/terrain',
+  '/naviguer': '/terrain',
 };
 
 const PAGE_TITLES: Record<string, string> = {
@@ -70,6 +74,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/checkout': 'Commande',
   '/connexion': 'Connexion',
   '/inscription': 'Inscription',
+  '/terrain': 'Mode Terrain',
 };
 
 function getTitle(pathname: string): string {
@@ -91,7 +96,7 @@ function getParentTab(pathname: string): string {
   return '/explorer';
 }
 
-export default function TopBar({ variant = 'standard', cartCount = 0, showBack, title, onMenuOpen }: TopBarProps) {
+export default function TopBar({ variant = 'standard', cartCount = 0, showBack, title, onMenuOpen, onSearchOpen }: TopBarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const currentPath = pathname || '/';
@@ -247,19 +252,25 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
 
         {/* Right actions */}
         <div className="flex items-center gap-1" style={{ minWidth: '38px', justifyContent: 'flex-end' }}>
-          {/* Search */}
-          {isHome && (
-            <Link
-              href="/explorer"
-              aria-label="Rechercher"
-              style={{
-                ...mBtnStyle,
-                textDecoration: 'none',
-              }}
-            >
-              <LkvIcon name="search" size={18} />
-            </Link>
-          )}
+          {/* Search — visible on all pages */}
+          <button
+            onClick={onSearchOpen}
+            aria-label="Rechercher"
+            style={{
+              ...mBtnStyle,
+              cursor: 'pointer',
+              outline: 'none',
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.outline = '2px solid #2D6B4A';
+              e.currentTarget.style.outlineOffset = '2px';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.outline = 'none';
+            }}
+          >
+            <LkvIcon name="search" size={18} />
+          </button>
 
           {/* Cart */}
           <Link

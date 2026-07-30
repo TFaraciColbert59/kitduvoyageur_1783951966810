@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import BottomTabBar from '@/components/mobile-nav/BottomTabBar';
 import MobileDrawer from '@/components/mobile-nav/MobileDrawer';
+import SearchOverlay from '@/components/search/SearchOverlay';
 import LkvIcon from '@/components/ui/LkvIcon';
 
 export default function MobileNavWrapper() {
@@ -39,6 +40,7 @@ export default function MobileNavWrapper() {
       </button>
       <BottomTabBar />
       <MobileDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <SearchOverlay />
     </>
   );
 }

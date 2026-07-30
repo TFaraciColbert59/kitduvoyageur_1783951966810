@@ -12,6 +12,7 @@ const staticRoutes: Array<{
 }> = [
   { url: '/', priority: 1.0, changeFrequency: 'daily' },
   { url: '/boutique', priority: 0.95, changeFrequency: 'daily' },
+  { url: '/kits', priority: 0.85, changeFrequency: 'weekly' },
   { url: '/pays', priority: 0.85, changeFrequency: 'weekly' },
   { url: '/guides', priority: 0.8, changeFrequency: 'weekly' },
   { url: '/blog', priority: 0.8, changeFrequency: 'daily' },
@@ -41,16 +42,20 @@ const staticRoutes: Array<{
   { url: '/occasion', priority: 0.6, changeFrequency: 'weekly' },
   { url: '/experts', priority: 0.6, changeFrequency: 'monthly' },
   { url: '/communaute-pro', priority: 0.5, changeFrequency: 'monthly' },
+  { url: '/clubs', priority: 0.5, changeFrequency: 'monthly' },
 ];
 
 const kitSlugs = ['islande-trek', 'gr20-corse', 'vanlife-europe'];
 const outilsSlugs = [
-  'poids-du-sac',
+  'poids-sac',
   'budget-voyage',
+  'convertisseur',
   'checklist',
-  'convertisseur-devises',
-  'calculateur-calories',
-  'planificateur-itineraire',
+  'tailles',
+  'fuseaux',
+  'boussole',
+  'chronometre',
+  'rations',
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

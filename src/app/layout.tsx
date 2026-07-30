@@ -6,6 +6,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import Script from 'next/script';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
+import { SearchProvider } from '@/contexts/SearchContext';
 import ErrorBoundaryWrapper from '@/components/ErrorBoundaryWrapper';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import MobileNavWrapper from '@/components/mobile-nav/MobileNavWrapper';
@@ -200,26 +201,28 @@ export default function RootLayout({
         <AuthProvider>
           <WishlistProvider>
             <ToastProvider>
-              <ErrorBoundaryWrapper>
-                <ReactQueryProvider>
-                  <Suspense fallback={null}>
-                    <GoogleAnalytics />
-                  </Suspense>
-                  {/* Skip navigation for accessibility */}
-                  <a
-                    href="#main-content"
-                    className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-[#17402C] focus:text-white focus:rounded-lg focus:font-semibold focus:text-sm"
-                  >
-                    Aller au contenu principal
-                  </a>
-                  {/* Mobile navigation — hidden on desktop (md+) */}
-                  <MobileNavWrapper />
-                  <main id="main-content">
-                    <PageTransition>{children}</PageTransition>
-                  </main>
-                  <CookieConsentBanner />
-                </ReactQueryProvider>
-              </ErrorBoundaryWrapper>
+              <SearchProvider>
+                <ErrorBoundaryWrapper>
+                  <ReactQueryProvider>
+                    <Suspense fallback={null}>
+                      <GoogleAnalytics />
+                    </Suspense>
+                    {/* Skip navigation for accessibility */}
+                    <a
+                      href="#main-content"
+                      className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-[#17402C] focus:text-white focus:rounded-lg focus:font-semibold focus:text-sm"
+                    >
+                      Aller au contenu principal
+                    </a>
+                    {/* Mobile navigation — hidden on desktop (md+) */}
+                    <MobileNavWrapper />
+                    <main id="main-content">
+                      <PageTransition>{children}</PageTransition>
+                    </main>
+                    <CookieConsentBanner />
+                  </ReactQueryProvider>
+                </ErrorBoundaryWrapper>
+              </SearchProvider>
             </ToastProvider>
           </WishlistProvider>
         </AuthProvider>

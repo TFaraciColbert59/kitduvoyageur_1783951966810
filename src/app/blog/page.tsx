@@ -176,7 +176,7 @@ export default async function BlogPage() {
 
   const webPageSchema = {
     '@context': 'https://schema.org',
-    '@type': 'WebPage',
+    '@type': 'Blog',
     name: 'Blog — Le Kit du Voyageur',
     description: 'Conseils, guides et inspirations pour voyager léger et bien équipé.',
     url: `${siteUrl}/blog`,

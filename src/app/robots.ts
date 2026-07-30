@@ -35,6 +35,7 @@ export default function robots(): MetadataRoute.Robots {
           '/ai-configurator/',
           '/naviguer/',
           '/carnets/',
+          '/cookies/',
         ],
         disallow: [
           '/api/',
@@ -61,10 +62,8 @@ export default function robots(): MetadataRoute.Robots {
           '/publier/',
           '/nouveau-groupe/',
           '/gamification/',
-          '/fidelite/',
           '/alertes/',
           '/activite/',
-          '/cookies/',
           '/jumeau-3d/',
         ],
       },
@@ -98,6 +97,7 @@ export default function robots(): MetadataRoute.Robots {
           '/ai-configurator/',
           '/naviguer/',
           '/carnets/',
+          '/cookies/',
         ],
         disallow: [
           '/api/',
@@ -124,12 +124,34 @@ export default function robots(): MetadataRoute.Robots {
           '/publier/',
           '/nouveau-groupe/',
           '/gamification/',
-          '/fidelite/',
           '/alertes/',
           '/activite/',
-          '/cookies/',
           '/jumeau-3d/',
         ],
+      },
+      {
+        userAgent: 'GPTBot',
+        disallow: '/',
+      },
+      {
+        userAgent: 'ClaudeBot',
+        disallow: '/',
+      },
+      {
+        userAgent: 'Google-Extended',
+        disallow: '/',
+      },
+      {
+        userAgent: 'Bytespider',
+        disallow: '/',
+      },
+      {
+        userAgent: 'CCBot',
+        disallow: '/',
+      },
+      {
+        userAgent: 'PerplexityBot',
+        disallow: '/',
       },
       {
         userAgent: '*',
@@ -161,6 +183,7 @@ export default function robots(): MetadataRoute.Robots {
           '/ai-configurator/',
           '/naviguer/',
           '/carnets/',
+          '/cookies/',
         ],
         disallow: [
           '/api/',
@@ -187,10 +210,8 @@ export default function robots(): MetadataRoute.Robots {
           '/publier/',
           '/nouveau-groupe/',
           '/gamification/',
-          '/fidelite/',
           '/alertes/',
           '/activite/',
-          '/cookies/',
           '/jumeau-3d/',
         ],
       },

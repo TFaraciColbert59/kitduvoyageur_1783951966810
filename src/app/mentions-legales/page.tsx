@@ -4,6 +4,8 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
+
 export const metadata = {
   title: 'Mentions légales | Le Kit du Voyageur',
   description: 'Mentions légales du site lekitduvoyageur.fr, conformément à la loi LCEN n° 2004-575 du 21 juin 2004.',
@@ -44,8 +46,28 @@ function MobileMLContent() {
 }
 
 export default function MentionsLegalesPage() {
+  const webPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: "Mentions l\u00e9gales — Le Kit du Voyageur",
+    description: "Mentions l\u00e9gales du site lekitduvoyageur.fr, conform\u00e9ment \u00e0 la loi LCEN.",
+    url: `${siteUrl}/mentions-legales`,
+    isPartOf: { '@id': `${siteUrl}/#website` },
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Accueil', item: siteUrl },
+      { '@type': 'ListItem', position: 2, name: 'Mentions l\u00e9gales', item: `${siteUrl}/mentions-legales` },
+    ],
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} suppressHydrationWarning />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} suppressHydrationWarning />
       {/* DESKTOP */}
       <div className="hidden md:block">
         <div className="min-h-screen bg-background text-foreground">

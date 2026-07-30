@@ -13,8 +13,19 @@ const POPULAR_PAGES = [
   { label: 'Mon inventaire', href: '/inventaire', icon: 'ArchiveBoxIcon' },
 ];
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
+
 export default function NotFound() {
   const router = useRouter();
+
+  const webPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: '404 \u2014 Page introuvable | Le Kit du Voyageur',
+    description: 'La page que vous cherchez a \u00e9t\u00e9 d\u00e9plac\u00e9e, renomm\u00e9e ou n\u2019existe plus.',
+    url: `${siteUrl}/404`,
+    isPartOf: { '@id': `${siteUrl}/#website` },
+  };
 
   const handleGoBack = () => {
     if (typeof window !== 'undefined') {
@@ -24,6 +35,7 @@ export default function NotFound() {
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} suppressHydrationWarning />
       {/* DESKTOP */}
       <div className="hidden md:block">
         <div className="min-h-screen flex flex-col items-center justify-center bg-[#1C2620] p-4">

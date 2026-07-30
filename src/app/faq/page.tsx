@@ -173,29 +173,9 @@ export default function FAQPage() {
     ),
   };
 
-  const webPageSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: 'Questions fréquentes — Le Kit du Voyageur',
-    description: 'Trouvez les réponses à vos questions sur les commandes, livraisons, retours, le configurateur IA et votre compte.',
-    url: `${siteUrl}/faq`,
-    isPartOf: { '@type': 'WebSite', name: 'Le Kit du Voyageur', url: siteUrl },
-  };
-
-  const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Accueil', item: siteUrl },
-      { '@type': 'ListItem', position: 2, name: 'Questions fréquentes', item: `${siteUrl}/faq` },
-    ],
-  };
-
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} suppressHydrationWarning />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} suppressHydrationWarning />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} suppressHydrationWarning />
 
       {/* DESKTOP */}
       <div className="hidden md:block">

@@ -42,3 +42,6 @@ jest-test-results.json
 
 # Optional: if using TurboRepo or monorepo
 turbo/
+
+# Country data cache (API responses, generated at build time)
+.country-cache/

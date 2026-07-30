@@ -5,9 +5,30 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
+
 export default function HomePage() {
+  const webPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'Le Kit du Voyageur \u2014 \u00c9quipement outdoor & Configurateur IA',
+    description: "Configurateur IA, \u00e9quipement outdoor, fiches pays et outils terrain. La plateforme compl\u00e8te du voyageur et de l'aventurier.",
+    url: siteUrl,
+    isPartOf: { '@id': `${siteUrl}/#website` },
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Accueil', item: siteUrl },
+    ],
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} suppressHydrationWarning />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} suppressHydrationWarning />
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
     <div className="min-h-screen bg-[#F7FAF8] font-sans text-[#1C2620]">
@@ -340,9 +361,9 @@ export default function HomePage() {
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <div style={{ padding: '0 0 calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }}>
-            {/* Hero */}
-            <section style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 20px 40px', background: 'linear-gradient(135deg, #E4EFE8, #F7FAF8, #fff)' }}>
+            <div style={{ padding: '0 0 calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }}>
+              {/* Hero */}
+              <section style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 20px 40px', background: 'linear-gradient(135deg, #E4EFE8, #F7FAF8, #fff)' }}>
               <p style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#7A8A7D', marginBottom: '16px' }}>ÉDITION AUTOMNE · REFUGES PARTENAIRES</p>
               <h1 style={{ fontSize: '36px', fontWeight: '600', color: '#1C2620', lineHeight: 1.1, marginBottom: '16px' }}>
                 Là où la carte<br />
@@ -372,16 +393,16 @@ export default function HomePage() {
 
             {/* 3 Adventure Cards */}
             <section style={{ padding: '32px 16px', background: '#fff' }}>
-              <div style={{ marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '28px', fontWeight: '600', color: '#1C2620', lineHeight: 1.1, marginBottom: '8px' }}>
-                  Trois façons<br />
-                  <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>de se perdre.</em>
-                </h2>
-                <p style={{ fontSize: '12px', color: '#7A8A7D', fontFamily: 'ui-monospace, monospace', letterSpacing: '0.05em' }}>
-                  Moins d'équipement, plus de silence.
-                </p>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '28px', fontWeight: '600', color: '#1C2620', lineHeight: 1.1, marginBottom: '8px' }}>
+                    Trois façons<br />
+                    <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>de se perdre.</em>
+                  </h2>
+                  <p style={{ fontSize: '12px', color: '#7A8A7D', fontFamily: 'ui-monospace, monospace', letterSpacing: '0.05em' }}>
+                    Moins d'équipement, plus de silence.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {[
                   { img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80', title: 'Chartreuse\nsentier des balcons', tag: '3 Jours / 50 km', info: '+ 4 250 m · Expert' },
                   { img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80', title: 'Bivouac étoilé\nVercors', tag: '2 Jours', info: 'Plateau Nord' },
@@ -489,8 +510,12 @@ export default function HomePage() {
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>
                 <p style={{ margin: 0 }}>© 2026 Le Kit du Voyageur · Grenoble</p>
                 <div style={{ display: 'flex', gap: '16px' }}>
-                  {['Mentions', 'Confidentialité', 'Cookies'].map((l) => (
-                    <Link key={l} href="#" style={{ color: 'inherit', textDecoration: 'none' }}>{l}</Link>
+                  {[
+                    ['Mentions', '/mentions-legales'],
+                    ['Confidentialité', '/politique-confidentialite'],
+                    ['Cookies', '/cookies'],
+                  ].map(([label, href]) => (
+                    <Link key={label} href={href} style={{ color: 'inherit', textDecoration: 'none' }}>{label}</Link>
                   ))}
                 </div>
               </div>
