@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import NewFooterSection from '@/app/components/home/NewFooterSection';
+
 
 const CONSENT_COOKIE_KEY = 'lkdv_cookie_consent';
 const CONSENT_VERSION = '1';
@@ -125,7 +127,6 @@ export default function CookiesPage() {
             <Link href="/cgv" className="text-primary hover:underline text-xs">CGV</Link>
           </div>
         </div>
-      </main>
 
       <NewFooterSection />
     </div>

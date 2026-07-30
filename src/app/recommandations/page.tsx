@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Icon from '@/components/ui/AppIcon';
+
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 export default function RecommandationsPage() {

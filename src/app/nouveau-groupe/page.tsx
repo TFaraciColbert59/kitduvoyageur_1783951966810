@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Icon from '@/components/ui/AppIcon';
-import LkvIcon from '@/components/ui/LkvIcon';
+
+
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';

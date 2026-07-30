@@ -4,12 +4,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 
 import { useParams } from 'next/navigation';
 import Header from '@/components/Header';
-import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
+
+
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import Footer from '@/components/Footer';
+
 
 interface Profile {
   id: string; full_name: string; avatar_url: string; trust_score: number; loyalty_points: number;

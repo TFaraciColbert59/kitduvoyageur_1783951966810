@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
+
 import Header from '@/components/Header';
 
 import Icon from '@/components/ui/AppIcon';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import Footer from '@/components/Footer';
+
 
 const PRO_PLANS = [
   { id: 'guide', name: 'Guide Indépendant', price: 29, period: 'mois', description: 'Pour les guides de montagne et accompagnateurs indépendants', features: ['Tarifs pro -15%', 'Commandes groupées jusqu\'à 10', 'Facturation professionnelle', 'Support prioritaire'], highlighted: false },

@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from 'react';
 
 
-import Icon from '@/components/ui/AppIcon';
+
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,6 +11,8 @@ import { useToast } from '@/contexts/ToastContext';
 import { trackEvent } from '@/lib/analytics';
 import { createClient } from '@/lib/supabase/client';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 type AuthMode = 'connexion' | 'inscription';
 

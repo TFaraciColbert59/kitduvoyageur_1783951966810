@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
-import Link from 'next/link';
+
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 const JOURNALS = [
@@ -15,6 +15,7 @@ const JOURNALS = [
 export default function FeedPage() {
   const [journals, setJournals] = useState(JOURNALS);
   const [filter, setFilter] = useState<'all' | 'verified' | 'ambassadeur'>('all');
+  const [showNewJournal, setShowNewJournal] = useState(false);
 
   const filtered = JOURNALS.filter((j) => { if (filter === 'verified') return j.verified; if (filter === 'gps') return j.gpsTrace; return true; });
 

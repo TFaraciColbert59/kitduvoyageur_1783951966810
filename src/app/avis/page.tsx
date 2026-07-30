@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
-import NewFooterSection from '@/app/components/home/NewFooterSection';
-import Link from 'next/link';
+
+
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import Footer from '@/components/Footer';
+
 
 interface Review {
   id: string;
@@ -124,7 +126,7 @@ export default function AvisPage() {
   };
 
   const filtered = activeFilter === 'tous' ? reviews : reviews.filter((r) => r.type === activeFilter);
-  const _avgRating = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : '0.0';
+  const avgRating = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : '0.0';
 
   return (
     <>

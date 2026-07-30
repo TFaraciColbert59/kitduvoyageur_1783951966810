@@ -8,6 +8,8 @@ import { getCart, getCartTotals, clearCart, CartItem } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import NewFooterSection from '@/app/components/home/NewFooterSection';
+
 
 type Step = 'coordonnees' | 'livraison' | 'confirmation';
 type PaymentMethod = 'card' | 'apple_pay' | 'paypal' | 'alma';

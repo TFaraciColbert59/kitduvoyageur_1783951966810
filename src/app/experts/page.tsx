@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import Link from 'next/link';
+
 import Header from '@/components/Header';
-import NewFooterSection from '@/app/components/home/NewFooterSection';
-import Icon from '@/components/ui/AppIcon';
-import { createClient } from '@/lib/supabase/client';
+
+
+
 import { useAuth } from '@/contexts/AuthContext';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import Footer from '@/components/Footer';
+
 
 export default function ExpertsPage() {
   const [bookingOpen, setBookingOpen] = useState(false);

@@ -4,7 +4,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
-import BackButton from '@/components/ui/BackButton';
+
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -329,9 +329,7 @@ export default function PublierPostPage() {
                       type="button"
                       onClick={() => setPostType('photo')}
                       className={`flex flex-col items-center justify-center p-4 rounded-2xl border text-center transition-all ${
-                        postType === 'photo'
-                          ? 'bg-[#EAF0EB] border-[#2D5A27] text-[#1C2620] shadow-sm'
-                          : 'bg-[#FAF8F5] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
+                        postType === 'photo' ?'bg-[#EAF0EB] border-[#2D5A27] text-[#1C2620] shadow-sm' :'bg-[#FAF8F5] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
                       }`}
                     >
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 text-base ${postType === 'photo' ? 'bg-[#2D5A27] text-white' : 'bg-[#E8E4D8] text-[#1C2620]'}`}>
@@ -346,8 +344,7 @@ export default function PublierPostPage() {
                       onClick={() => setPostType('billet')}
                       className={`flex flex-col items-center justify-center p-4 rounded-2xl border text-center transition-all ${
                         postType === 'billet'
-                          ? 'bg-[#EAF0EB] border-[#2D5A27] text-[#1C2620] shadow-sm'
-                          : 'bg-[#FAF8F5] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
+                          ? 'bg-[#EAF0EB] border-[#2D5A27] text-[#1C2620] shadow-sm' :'bg-[#FAF8F5] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
                       }`}
                     >
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 text-base ${postType === 'billet' ? 'bg-[#2D5A27] text-white' : 'bg-[#E8E4D8] text-[#1C2620]'}`}>
@@ -364,9 +361,7 @@ export default function PublierPostPage() {
                         if (!tags.includes('question')) setTags([...tags, 'question']);
                       }}
                       className={`flex flex-col items-center justify-center p-4 rounded-2xl border text-center transition-all ${
-                        postType === 'question'
-                          ? 'bg-[#EAF0EB] border-[#2D5A27] text-[#1C2620] shadow-sm'
-                          : 'bg-[#FAF8F5] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
+                        postType === 'question' ?'bg-[#EAF0EB] border-[#2D5A27] text-[#1C2620] shadow-sm' :'bg-[#FAF8F5] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
                       }`}
                     >
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 text-base ${postType === 'question' ? 'bg-[#2D5A27] text-white' : 'bg-[#E8E4D8] text-[#1C2620]'}`}>
@@ -380,9 +375,7 @@ export default function PublierPostPage() {
                       type="button"
                       onClick={() => setPostType('evenement')}
                       className={`flex flex-col items-center justify-center p-4 rounded-2xl border text-center transition-all ${
-                        postType === 'evenement'
-                          ? 'bg-[#EAF0EB] border-[#2D5A27] text-[#1C2620] shadow-sm'
-                          : 'bg-[#FAF8F5] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
+                        postType === 'evenement' ?'bg-[#EAF0EB] border-[#2D5A27] text-[#1C2620] shadow-sm' :'bg-[#FAF8F5] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
                       }`}
                     >
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 text-base ${postType === 'evenement' ? 'bg-[#2D5A27] text-white' : 'bg-[#E8E4D8] text-[#1C2620]'}`}>
@@ -401,22 +394,16 @@ export default function PublierPostPage() {
                     <span className="text-[10px] font-mono text-[#7A8A7D] uppercase">02 — Ce que vous partagez</span>
                   </div>
                   <p className="text-xs text-[#7A8A7D] mb-5">
-                    {postType === 'question'
-                      ? 'Posez une question claire à la communauté outdoor pour obtenir des réponses pertinentes.'
-                      : postType === 'evenement'
-                      ? 'Proposez une sortie ou une expédition en groupe.'
-                      : 'Un mot court engage plus qu\'un long paragraphe. Une image, une phrase — c\'est souvent tout ce qu\'il faut.'}
+                    {postType === 'question' ?'Posez une question claire à la communauté outdoor pour obtenir des réponses pertinentes.'
+                      : postType === 'evenement' ?'Proposez une sortie ou une expédition en groupe.' :'Un mot court engage plus qu\'un long paragraphe. Une image, une phrase — c\'est souvent tout ce qu\'il faut.'}
                   </p>
 
                   <div className="space-y-4">
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <label className="text-xs font-semibold text-[#1C2620]">
-                          {postType === 'question'
-                            ? 'Intitulé de votre question *'
-                            : postType === 'evenement'
-                            ? 'Nom de la sortie ou événement *'
-                            : 'Titre '}
+                          {postType === 'question' ?'Intitulé de votre question *'
+                            : postType === 'evenement' ?'Nom de la sortie ou événement *' :'Titre '}
                           {postType === 'photo' && <span className="text-[#7A8A7D] font-normal">(Optionnel pour une seule photo)</span>}
                         </label>
                       </div>
@@ -425,11 +412,8 @@ export default function PublierPostPage() {
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder={
-                          postType === 'question'
-                            ? 'Ex: Quelle tente 2 places ultralégère conseiller pour les Alpes ?'
-                            : postType === 'evenement'
-                            ? 'Ex: Traversée du Charmant Som au coucher du soleil'
-                            : 'Donnez un titre à votre post...'
+                          postType === 'question' ?'Ex: Quelle tente 2 places ultralégère conseiller pour les Alpes ?'
+                            : postType === 'evenement' ?'Ex: Traversée du Charmant Som au coucher du soleil' :'Donnez un titre à votre post...'
                         }
                         className="w-full px-4 py-3 bg-[#F5F2EA] border border-[#E4E0D4] rounded-2xl text-xs font-semibold text-[#1C2620] focus:outline-none focus:border-[#2D5A27]"
                       />
@@ -472,11 +456,8 @@ export default function PublierPostPage() {
                           value={content}
                           onChange={(e) => setContent(e.target.value)}
                           placeholder={
-                            postType === 'question'
-                              ? 'Décrivez votre contexte, le budget, votre niveau ou vos contraintes...'
-                              : postType === 'evenement'
-                              ? 'Précisez l\'itinéraire, l\'équipement requis et le lieu de rdv...'
-                              : 'Racontez votre expérience, partagez votre conseil...'
+                            postType === 'question' ?'Décrivez votre contexte, le budget, votre niveau ou vos contraintes...'
+                              : postType === 'evenement' ?'Précisez l\'itinéraire, l\'équipement requis et le lieu de rdv...' :'Racontez votre expérience, partagez votre conseil...'
                           }
                           className={`w-full p-4 bg-transparent text-xs text-[#1C2620] leading-relaxed focus:outline-none resize-y ${isBold ? 'font-bold' : ''} ${isItalic ? 'italic font-serif' : ''}`}
                         />

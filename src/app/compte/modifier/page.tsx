@@ -3,7 +3,7 @@
 import React from 'react';
 import Header from '@/components/Header';
 import EditProfileView from '@/components/compte/EditProfileView';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+
 
 export default function EditProfilePage() {
   return (

@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Icon from '@/components/ui/AppIcon';
+
 import { useChat } from '@/lib/hooks/useChat';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 

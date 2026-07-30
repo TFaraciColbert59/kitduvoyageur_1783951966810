@@ -133,12 +133,25 @@ function MobilePostCard({ post }: { post: BlogPost }) {
 
 export default function BlogClient({ posts }: { posts: BlogPost[] }) {
   const [activeCategory, setActiveCategory] = useState('Tous');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const featuredPosts = useMemo(() => posts.filter((p) => p.featured), [posts]);
   const filteredPosts = useMemo(() => {
     const nonFeatured = posts.filter((p) => !p.featured);
     return activeCategory === 'Tous' ? nonFeatured : nonFeatured.filter((p) => p.category === activeCategory);
   }, [posts, activeCategory]);
+
+  const featured = featuredPosts;
+  const filtered = useMemo(() => {
+    let base = posts;
+    if (activeCategory !== 'Tous') base = base.filter((p) => p.category === activeCategory);
+    if (searchQuery)
+      base = base.filter(
+        (p) => p.title.toLowerCase().includes(searchQuery.toLowerCase()) || p.excerpt.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    return base;
+  }, [posts, activeCategory, searchQuery]);
+  const nonFeaturedFiltered = useMemo(() => filteredPosts, [filteredPosts]);
 
   const desktopContent = (
     <>
@@ -197,25 +210,26 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
                 </button>
               ))}
             </div>
-          </section>
-        )}
+          </div>
 
-        {/* Category filters */}
-        <div className="flex flex-wrap gap-2 mb-10">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
-              style={activeCategory === cat
-                ? { background: '#1C2620', color: '#fff' }
-                : { background: '#fff', border: '1px solid #C8C3B0', color: '#5C6B5E' }
-              }
-            >
-              {cat}
-            </button>
-          ))}
+          {/* Category filters */}
+          <div className="flex flex-wrap gap-2 mb-10">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                style={activeCategory === cat
+                  ? { background: '#1C2620', color: '#fff' }
+                  : { background: '#fff', border: '1px solid #C8C3B0', color: '#5C6B5E' }
+                }
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
+      </section>
 
       <TopoSeparator />
     </>

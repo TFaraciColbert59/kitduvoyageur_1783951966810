@@ -72,7 +72,7 @@ export default function InscriptionPage() {
             </div>
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 

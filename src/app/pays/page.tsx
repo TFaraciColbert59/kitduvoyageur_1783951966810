@@ -8,6 +8,16 @@ import Header from '@/components/Header';
 import Link from 'next/link';
 import { getAllCountries, type Country } from '@/lib/countries';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppImage from '@/components/ui/AppImage';
+import BackButton from '@/components/ui/BackButton';
+import TopoSeparator from '@/components/TopoSeparator';
+import NewFooterSection from '@/app/components/home/NewFooterSection';
+import Footer from '@/components/Footer';
+
+
+
+
+
 
 const ALL_COUNTRIES = getAllCountries();
 
@@ -735,7 +745,6 @@ export default function PaysPage() {
               })}
             </div>
           )}
-        </section>
 
           {/* Load More Pagination */}
           {hasMore && (
@@ -750,8 +759,7 @@ export default function PaysPage() {
                 Affichage de {displayItems.length} sur {filtered.length} destinations
               </p>
             </div>
-          </div>
-        </section>
+          )}
 
         <NewFooterSection />
       </main>

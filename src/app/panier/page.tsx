@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Icon from '@/components/ui/AppIcon';
-import { getCart, updateQuantity, removeFromCart, getCartTotals, applyLoyaltyFree, removeLoyaltyFree, CartItem } from '@/lib/cart';
-import { createClient } from '@/lib/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { getCart, updateQuantity, removeFromCart, getCartTotals, CartItem } from '@/lib/cart';
+
+
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 
