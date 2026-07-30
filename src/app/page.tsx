@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from '@/components/Header';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
@@ -336,7 +337,6 @@ export default function HomePage() {
       </footer>
     </div>
       </div>
-
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
         <MobilePageShell>
@@ -386,16 +386,16 @@ export default function HomePage() {
                   { img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80', title: 'Chartreuse\nsentier des balcons', tag: '3 Jours / 50 km', info: '+ 4 250 m · Expert' },
                   { img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80', title: 'Bivouac étoilé\nVercors', tag: '2 Jours', info: 'Plateau Nord' },
                   { img: 'https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=800&q=80', title: 'Kayak\nSans-Rançon', tag: '1 Jour', info: 'Eau paisible' },
-                ].map((card, i) => (
+                ]?.map((card, i) => (
                   <Link key={i} href="/explorer" style={{ position: 'relative', height: '200px', borderRadius: '16px', overflow: 'hidden', display: 'block', textDecoration: 'none' }}>
-                    <img src={card.img} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={card?.img} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2), transparent)' }} />
-                    <span style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(255,255,255,0.9)', padding: '4px 12px', borderRadius: '999px', fontSize: '10px', fontWeight: '700', color: '#1C2620', letterSpacing: '0.05em' }}>{card.tag}</span>
+                    <span style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(255,255,255,0.9)', padding: '4px 12px', borderRadius: '999px', fontSize: '10px', fontWeight: '700', color: '#1C2620', letterSpacing: '0.05em' }}>{card?.tag}</span>
                     <div style={{ position: 'absolute', bottom: '16px', left: '16px', right: '16px', color: '#fff' }}>
-                      {card.title.split('\n').map((line, j) => (
+                      {card?.title?.split('\n')?.map((line, j) => (
                         <span key={j} style={{ display: 'block', fontSize: j === 0 ? '20px' : '16px', fontWeight: '700', lineHeight: 1.2 }}>{line}</span>
                       ))}
-                      <span style={{ fontSize: '10px', opacity: 0.8, fontFamily: 'ui-monospace, monospace', letterSpacing: '0.05em', textTransform: 'uppercase', marginTop: '6px', display: 'block' }}>{card.info}</span>
+                      <span style={{ fontSize: '10px', opacity: 0.8, fontFamily: 'ui-monospace, monospace', letterSpacing: '0.05em', textTransform: 'uppercase', marginTop: '6px', display: 'block' }}>{card?.info}</span>
                     </div>
                   </Link>
                 ))}
@@ -471,15 +471,15 @@ export default function HomePage() {
                   <div>
                     <p style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: '8px' }}>DÉCOUVRIR</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {['Explorer', 'Pays', 'Guides', 'Communauté'].map((l) => (
-                        <Link key={l} href={`/${l.toLowerCase() === 'explorer' ? 'explorer' : l.toLowerCase() === 'pays' ? 'pays' : l.toLowerCase() === 'guides' ? 'guides' : 'communaute'}`} style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>{l}</Link>
+                      {['Explorer', 'Pays', 'Guides', 'Communauté']?.map((l) => (
+                        <Link key={l} href={`/${l?.toLowerCase() === 'explorer' ? 'explorer' : l?.toLowerCase() === 'pays' ? 'pays' : l?.toLowerCase() === 'guides' ? 'guides' : 'communaute'}`} style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>{l}</Link>
                       ))}
                     </div>
                   </div>
                   <div>
                     <p style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: '8px' }}>BOUTIQUE</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {['Le sac', 'Bivouac', 'Vêtements', 'Livres & cartes'].map((l) => (
+                      {['Le sac', 'Bivouac', 'Vêtements', 'Livres & cartes']?.map((l) => (
                         <Link key={l} href="/boutique" style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>{l}</Link>
                       ))}
                     </div>
@@ -489,7 +489,7 @@ export default function HomePage() {
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>
                 <p style={{ margin: 0 }}>© 2026 Le Kit du Voyageur · Grenoble</p>
                 <div style={{ display: 'flex', gap: '16px' }}>
-                  {['Mentions', 'Confidentialité', 'Cookies'].map((l) => (
+                  {['Mentions', 'Confidentialité', 'Cookies']?.map((l) => (
                     <Link key={l} href="#" style={{ color: 'inherit', textDecoration: 'none' }}>{l}</Link>
                   ))}
                 </div>

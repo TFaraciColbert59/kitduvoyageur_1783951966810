@@ -62,7 +62,7 @@ const DANGER_CONFIG: Record<string, { label: string; bg: string; text: string; b
   },
 };
 
-const COUNTRY_IMAGES: Record<string, string> = {
+const COUNTRY_IMAGES_SIMPLE: Record<string, string> = {
   IS: 'https://images.unsplash.com/photo-1504893524553-b855bce32c67?w=600&q=80',
   NO: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=600&q=80',
   FR: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80',
@@ -84,7 +84,7 @@ const DEFAULT_LANDSCAPES = [
 ];
 
 function getCountryImage(code: string): string {
-  if (COUNTRY_IMAGES[code]) return COUNTRY_IMAGES[code];
+  if (COUNTRY_IMAGES_SIMPLE[code]) return COUNTRY_IMAGES_SIMPLE[code];
   const charCode = code.charCodeAt(0) + (code.charCodeAt(1) || 0);
   return DEFAULT_LANDSCAPES[charCode % DEFAULT_LANDSCAPES.length];
 }
@@ -96,7 +96,7 @@ const PAGE_SIZE = 36;
 // ─── Country Card ─────────────────────────────────────────────────────────────
 
 function CountryCard({ country }: { country: ReturnType<typeof getAllCountries>[0] }) {
-  const danger = dangerConfig[country.danger_level] || dangerConfig.medium;
+  const danger = DANGER_CONFIG[country.danger_level] || DANGER_CONFIG.medium;
 
   return (
     <Link
@@ -214,7 +214,7 @@ const COUNTRY_IMAGES: Record<string, { src: string; alt: string }> = {
 
 function FeaturedCountryCard({ country }: { country: ReturnType<typeof getAllCountries>[0] }) {
   const img = COUNTRY_IMAGES[country.code.toUpperCase()];
-  const danger = dangerConfig[country.danger_level] || dangerConfig.medium;
+  const danger = DANGER_CONFIG[country.danger_level] || DANGER_CONFIG.medium;
 
   return (
     <Link
@@ -761,6 +761,7 @@ export default function PaysPage() {
             </div>
           )}
 
+        </div>
         <NewFooterSection />
       </main>
       <Footer />
