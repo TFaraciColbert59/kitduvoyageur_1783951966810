@@ -1,6 +1,6 @@
 # PROGRESS — MISSION: 8 bugs bloquants mobile (30-31/07/2026)
 
-## Livrable final — Récapitulatif des 10 chantiers
+## Livrable final — Récapitulatif des 11 chantiers
 
 | # | Chantier | Statut | Fichiers | Cause racine | Correctif |
 |---|---|---|---|---|---|
@@ -14,12 +14,15 @@
 | 8 | Transitions de page | ✅ | `src/components/ui/PageTransition.tsx` | Pas de support `prefers-reduced-motion` | `useReducedMotion()` — animations désactivées si requis ; défaut : fade + y 6→0, sortie y -4, easing Apple `[0.16,1,0.3,1]` |
 | 14 | Feed communauté interactif + accès clubs (mobile) | ✅ | `src/app/communaute/page.tsx` | Feed mobile : posts rendus en `<div>` inertes (compteurs ❤️/💬 sans interaction, zéro handler) ; onglet Clubs : cartes sans onClick, `selectedDetailClub` jamais alimenté malgré le `ClubDetailModal` root existant | Feed mobile réutilise `PostCard` (like optimiste + commentaires, même logique que desktop, aucune duplication) ; cartes clubs ouvrent `ClubDetailModal` au tap (discussions/membres/défis/agenda), bouton Rejoindre isolé via `e.stopPropagation()` |
 | 15 | RLS : likes feed + flux adhésion/modération clubs | ✅ | migration `club_requests_likes_rls_policies` | Le like (exposé en mobile, chantier 14) échouait silencieusement sur les posts d'autrui (policy UPDATE author-only). Flux clubs morts : `club_join_requests` sans AUCUNE policy (demande + modération invisibles), INSERT `club_members` bloqué pour l'approbation admin, `upsert` cassé (pas de contrainte unique) | Contrainte `UNIQUE (club_id, user_id)` ; policies `club_join_requests` SELECT (soi-même OU membre actif) / INSERT (soi-même) / UPDATE (admin+modérateur) ; policy `club_members` INSERT admin/modérateur (role `member` figé) ; `REVOKE UPDATE` table + `GRANT UPDATE (likes_count)` sur `community_posts` → like ouvert à tout connecté SANS jamais permettre l'édition du contenu par un tiers. Vérifié par probes RLS (simulation JWT, ROLLBACK) : like par non-auteur ✅, édition contenu ❌, anon ❌, demande d'adhésion ✅, approbation modérateur ✅, modérateur voit les demandes ✅, outsider voit 0 ✅ |
+| 15b | RLS : escalade de privilèges `club_members` + self-approval `club_join_requests` | ✅ | migrations `club_members_policy_escalation_fix` + `club_join_requests_moderate_with_check_tighten` | (1) La policy FOR ALL héritée `club_members_manage` (WITH CHECK `user_id = auth.uid()`) était OR-combinée avec les nouvelles policies → n'importe quel connecté pouvait s'insérer en `admin` dans n'importe quel club et se promouvoir. (2) Le WITH CHECK de `club_join_requests_moderate` avait une branche `user_id = auth.uid()` → RLS évalue USING/WITH CHECK indépendamment entre policies → self-approval `status='approved'` possible | (1) `DROP club_members_manage` remplacée par 5 policies de commande : self-join (open, role `member`), créateur-as-admin (gated `clubs.created_by`), UPDATE ban/promote admin+modérateur, self-DELETE (quitter), self-UPDATE pending (re-soumission). (2) WITH CHECK moderate resserré sur admin/modérateur. Vérifié par probes RLS (simulation JWT, ROLLBACK) : self-insert admin ❌, self-join fermé ❌, self-promote ❌, ré-insertion banned ❌, self-approve ❌, self-reject ❌, approbation admin ✅, créateur auto-admin ✅, self-join open ✅, re-soumission pending ✅, quitter ✅, ban/promote admin ✅ |
 
 ## Migrations Supabase appliquées (projet `icxyvwzfjbflcbqukpfz`)
 
 - `content_counters_triggers` (20260731084705) — triggers `sync_carnet_likes_count`, `sync_carnet_comments_count`, `sync_carnet_views_count`, `sync_carnet_favorites_count`
 - `clubs_public_read_policy_fix` (20260731085235) — policy SELECT `clubs_read` sur `public.clubs`
 - `club_requests_likes_rls_policies` (20260731160000) — policies likes `community_posts` + adhésion/modération clubs (voir chantier 15)
+- `club_members_policy_escalation_fix` (20260731170000) — remplacement de la policy FOR ALL `club_members_manage` par 5 policies de commande restreintes (voir chantier 15b)
+- `club_join_requests_moderate_with_check_tighten` (20260731171500) — WITH CHECK strictement admin/modérateur sur `club_join_requests_moderate` (voir chantier 15b)
 
 ## Build
 
@@ -30,7 +33,7 @@
 
 - ⚠️ Table `activities` : toujours pas de policy SELECT (hors mission, à traiter ultérieurement)
 - ⏸️ Migration `security_audit_rls_cleanup` : NON appliquée (décision — ne pas durcir les policies sans recette claire)
-- ⚠️ Chantier 15 — limites assumées : (1) `club_members` UPDATE ban/promote d'un membre par un admin reste bloqué sur `clubs/page.tsx` (aucune policy UPDATE ajoutée ; le self-`club_members_manage` pré-existant ne couvre que `user_id = auth.uid()`), modération desktop = approuver/refuser seulement via `ClubDetailModal` ; (2) à l'approbation, `clubs.members_count` est incrémenté côté client par `ClubDetailModal.handleApproveRequest` (pas atomique avec l'INSERT membre) ; (3) `auth_like_community_posts` USING(true) permet de mettre `likes_count` à n'importe quelle valeur (non négatif) — counter fiable mais pas inviolable ; (4) le post like reste `INSERT` libre (`auth_insert_community_posts`) — pas d'anti-spam
+- ⚠️ Chantier 15/15b — limites assumées (résiduelles) : (1) à l'approbation d'une demande, `clubs.members_count` est incrémenté côté client par `ClubDetailModal.handleApproveRequest` (pas atomique avec l'INSERT membre) ; (2) `auth_like_community_posts` USING(true) permet de mettre `likes_count` à n'importe quelle valeur (non négative) — counter fiable mais pas inviolable ; (3) le post like reste `INSERT` libre (`auth_insert_community_posts`) — pas d'anti-spam ; (4) `club_join_requests` rejetées restent visibles par l'admin (pas de purge)
 - ⚠️ `TopBar.tsx` : composant mort (aucun import), conservé tel quel (noté, pas supprimé)
 - ⚠️ Cartes clubs mobile utilisent `window.location.href` (déviation pré-existante vs règle CLAUDE.md `router.push`), non modifiée pour ne pas casser le flux
 - ℹ️ `stash@{0}` présent dans le repo : laissé intact (pas à moi)
