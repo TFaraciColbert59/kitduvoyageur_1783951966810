@@ -1,6 +1,6 @@
 # PROGRESS — MISSION: 8 bugs bloquants mobile (30-31/07/2026)
 
-## Livrable final — Récapitulatif des 8 chantiers
+## Livrable final — Récapitulatif des 9 chantiers
 
 | # | Chantier | Statut | Fichiers | Cause racine | Correctif |
 |---|---|---|---|---|---|
@@ -12,6 +12,7 @@
 | 6 | Panier : clic article n'ouvre pas le produit | ✅ | `src/app/panier/page.tsx` | Image + nom d'article sans lien en mobile (desktop OK) | Liens `<Link href="/produit/[slug]">` sur l'image et le nom |
 | 7 | Nettoyage sidebar (drawer) | ✅ | `src/components/mobile-nav/MobileDrawer.tsx` | Safe-areas iOS absentes (notch / home indicator) sur le drawer | `env(safe-area-inset-top/bottom)` dans les paddings header/footer. Audit complet : aucun doublon BottomTabBar/drawer, aucun lien mort, z-index cohérents (scrim 50 / panel 51), fermeture au clic |
 | 8 | Transitions de page | ✅ | `src/components/ui/PageTransition.tsx` | Pas de support `prefers-reduced-motion` | `useReducedMotion()` — animations désactivées si requis ; défaut : fade + y 6→0, sortie y -4, easing Apple `[0.16,1,0.3,1]` |
+| 14 | Feed communauté interactif + accès clubs (mobile) | ✅ | `src/app/communaute/page.tsx` | Feed mobile : posts rendus en `<div>` inertes (compteurs ❤️/💬 sans interaction, zéro handler) ; onglet Clubs : cartes sans onClick, `selectedDetailClub` jamais alimenté malgré le `ClubDetailModal` root existant | Feed mobile réutilise `PostCard` (like optimiste + commentaires, même logique que desktop, aucune duplication) ; cartes clubs ouvrent `ClubDetailModal` au tap (discussions/membres/défis/agenda), bouton Rejoindre isolé via `e.stopPropagation()` |
 
 ## Migrations Supabase appliquées (projet `icxyvwzfjbflcbqukpfz`)
 
@@ -20,7 +21,7 @@
 
 ## Build
 
-- ✅ `npm run build` — exit 0, aucune erreur
+- ✅ `npm run build` — exit 0, aucune erreur (chantier 14 : re-vérifié, "Compiled successfully", 194 pages)
 - ⚠️ `npx tsc --noEmit` remonte ~60 erreurs **pré-existantes** (ignoreBuildErrors dans next.config) — aucune dans les fichiers modifiés par cette mission
 
 ## Points en pause / notes
