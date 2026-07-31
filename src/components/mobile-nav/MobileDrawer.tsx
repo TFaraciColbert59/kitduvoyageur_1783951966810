@@ -168,7 +168,7 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
                 style={{
                   background: '#0B1F17',
                   color: '#fff',
-                  padding: '40px 20px 22px',
+                  padding: 'calc(40px + env(safe-area-inset-top)) 20px 22px',
                   position: 'relative',
                   overflow: 'hidden',
                 }}
@@ -356,7 +356,7 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
               {/* Footer */}
               <footer
                 style={{
-                  padding: '14px 16px 20px',
+                  padding: '14px 16px calc(20px + env(safe-area-inset-bottom))',
                   borderTop: '1px solid rgba(11,31,23,0.06)',
                   background: '#F4F1EA',
                 }}
