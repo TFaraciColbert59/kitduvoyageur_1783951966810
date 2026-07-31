@@ -1,4 +1,39 @@
-# PROGRESS — Session autonome 30/07/2026
+# PROGRESS — MISSION: 8 bugs bloquants mobile (30-31/07/2026)
+
+## Livrable final — Récapitulatif des 8 chantiers
+
+| # | Chantier | Statut | Fichiers | Cause racine | Correctif |
+|---|---|---|---|---|---|
+| 1 | Collision `dynamic` (TDZ) | ✅ | `src/app/groupes/[groupId]/page.tsx` | `import dynamic from 'next/dynamic'` + `export const dynamic = 'force-dynamic'` dans la même route → `Cannot access 'dynamic' before initialization` | Import renommé `nextDynamic`, plus de conflit de nom |
+| 2 | Jumeau 3D interactif mobile + globe robuste | ✅ | `src/app/jumeau-3d/page.tsx`, `src/components/pays/CountryGlobe.tsx` | Jumeau 3D peu interactif sur mobile ; globe fragile (crashes WebGL, DPR non géré) | Refactor jumeau 3D (pods, barres, top articles) + globe robuste (ResizeObserver, DPR cap, fallback, focus caméra) |
+| 3 | Interactions sociales (like / comment / fav) | ✅ | `src/app/carnets/page.tsx` + migration `content_counters_triggers` | Compteurs (likes/comments/views/favorites) jamais resynchronisés après mutation → état UI incohérent | Triggers SQL `sync_carnet_*_count` + resync état React (`onCommentCountChange`, diff calculé à la lecture) |
+| 4 | Carnets ne chargent pas au clic (mobile) | ✅ | `src/app/carnets/page.tsx` | Modals (détail/création/suppression) rendues DANS le bloc desktop `hidden md:block` → invisibles sur mobile ; clic carte ne montrait rien | Modals + toast déplacés à la racine, partagés desktop & mobile |
+| 5 | Clubs ne chargent pas (liste + détail) | ✅ | migration `clubs_public_read_policy_fix` | Table `clubs` RLS activée mais AUCUNE policy SELECT (supposée existante puis droppée) → zéro ligne côté client, détail replié sur données factices | Création policy `clubs_read` FOR SELECT TO public USING (true) |
+| 6 | Panier : clic article n'ouvre pas le produit | ✅ | `src/app/panier/page.tsx` | Image + nom d'article sans lien en mobile (desktop OK) | Liens `<Link href="/produit/[slug]">` sur l'image et le nom |
+| 7 | Nettoyage sidebar (drawer) | ✅ | `src/components/mobile-nav/MobileDrawer.tsx` | Safe-areas iOS absentes (notch / home indicator) sur le drawer | `env(safe-area-inset-top/bottom)` dans les paddings header/footer. Audit complet : aucun doublon BottomTabBar/drawer, aucun lien mort, z-index cohérents (scrim 50 / panel 51), fermeture au clic |
+| 8 | Transitions de page | ✅ | `src/components/ui/PageTransition.tsx` | Pas de support `prefers-reduced-motion` | `useReducedMotion()` — animations désactivées si requis ; défaut : fade + y 6→0, sortie y -4, easing Apple `[0.16,1,0.3,1]` |
+
+## Migrations Supabase appliquées (projet `icxyvwzfjbflcbqukpfz`)
+
+- `content_counters_triggers` (20260731084705) — triggers `sync_carnet_likes_count`, `sync_carnet_comments_count`, `sync_carnet_views_count`, `sync_carnet_favorites_count`
+- `clubs_public_read_policy_fix` (20260731085235) — policy SELECT `clubs_read` sur `public.clubs`
+
+## Build
+
+- ✅ `npm run build` — exit 0, aucune erreur
+- ⚠️ `npx tsc --noEmit` remonte ~60 erreurs **pré-existantes** (ignoreBuildErrors dans next.config) — aucune dans les fichiers modifiés par cette mission
+
+## Points en pause / notes
+
+- ⚠️ Tables `activities` et `club_join_requests` : pas de policy SELECT (hors des 8 chantiers, à traiter ultérieurement)
+- ⏸️ Migration `security_audit_rls_cleanup` : NON appliquée (décision — ne pas durcir les policies sans recette claire)
+- ⚠️ `TopBar.tsx` : composant mort (aucun import), conservé tel quel (noté, pas supprimé)
+- ⚠️ Cartes clubs mobile utilisent `window.location.href` (déviation pré-existante vs règle CLAUDE.md `router.push`), non modifiée pour ne pas casser le flux
+- ℹ️ `stash@{0}` présent dans le repo : laissé intact (pas à moi)
+
+---
+
+## Sessions précédentes (SEO, sitemap, terrain)
 
 ## Chantier 1 — Navigation mobile cleanup ✅
 - MobileDrawer already has correct structure (Découvrir, Vie pro & occasion, Compte & légal sections)
