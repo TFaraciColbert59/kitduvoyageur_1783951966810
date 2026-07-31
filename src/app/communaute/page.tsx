@@ -1482,25 +1482,7 @@ export default function CommunautePage() {
                     <p style={{ fontSize: '13px' }}>Le fil est vide. Soyez le premier à publier !</p>
                   </div>
                 ) : posts.slice(0, 10).map((post, i) => (
-                  <div key={post.id || i} style={{ background: '#FBFAF6', borderRadius: '16px', padding: '14px', border: '1px solid rgba(11,31,23,0.06)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                      <img src={post.author?.avatar_url || 'https://i.pravatar.cc/150'} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
-                      <div>
-                        <div style={{ fontSize: '12px', fontWeight: 700, color: '#0B1F17' }}>{post.author?.full_name || 'Utilisateur'}</div>
-                        <div style={{ fontSize: '10px', color: '#6B7A72' }}>{timeAgo(post.created_at)}</div>
-                      </div>
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#0B1F17', lineHeight: 1.5, marginBottom: '8px', whiteSpace: 'pre-wrap' }}>{post.content}</div>
-                    {post.image_url && (
-                      <div style={{ width: '100%', aspectRatio: '16/9', borderRadius: '12px', overflow: 'hidden', marginBottom: '8px', background: '#EDF3ED' }}>
-                        <img src={post.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      </div>
-                    )}
-                    <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: '#6B7A72', paddingTop: '8px', borderTop: '1px solid rgba(11,31,23,0.04)' }}>
-                      <span>❤️ {post.likes_count || 0}</span>
-                      <span>💬 {post.comments_count || 0}</span>
-                    </div>
-                  </div>
+                  <PostCard key={post.id || i} post={post} user={user} />
                 ))}
               </div>
             ) : activeTab === 'Carnets' ? (
@@ -1564,7 +1546,7 @@ export default function CommunautePage() {
                   if (clubFilterTab === 'my_clubs' && !c.is_member) return false;
                   return true;
                 }).slice(0, 10).map(club => (
-                  <div key={club.id} style={{ background: '#FBFAF6', borderRadius: '16px', padding: '14px', border: '1px solid rgba(11,31,23,0.06)' }}>
+                  <div key={club.id} onClick={() => setSelectedDetailClub(club)} style={{ background: '#FBFAF6', borderRadius: '16px', padding: '14px', border: '1px solid rgba(11,31,23,0.06)', cursor: 'pointer' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '8px' }}>
                       <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#EDF3ED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0 }}>{club.emoji || '🏔️'}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -1574,7 +1556,7 @@ export default function CommunautePage() {
                         </div>
                         <span style={{ fontSize: '10px', color: '#6B7A72' }}>{club.type === 'pays' ? 'Destination' : 'Activité'} · {club.members_count} membres</span>
                       </div>
-                      <button onClick={() => handleToggleClubMember(club.id, !!club.is_member)} style={{
+                      <button onClick={(e) => { e.stopPropagation(); handleToggleClubMember(club.id, !!club.is_member); }} style={{
                         padding: '6px 14px', borderRadius: '999px', border: 'none',
                         fontSize: '10px', fontWeight: 700, cursor: 'pointer', flexShrink: 0,
                         background: club.is_member ? '#F4F1EA' : '#17402C',
