@@ -83,13 +83,20 @@ export default function CountryGlobe({
     return () => ro.disconnect();
   }, []);
 
-  // ── Auto-rotation initiale ──
+  // ── Auto-rotation initiale + DPR mobile (performance) ──
   useEffect(() => {
     if (!geoLoaded || !globeRef.current) return;
     const ctrl = globeRef.current.controls();
     ctrlRef.current = ctrl;
     ctrl.autoRotate = true;
     ctrl.autoRotateSpeed = 0.4;
+    try {
+      const renderer = globeRef.current.renderer();
+      if (renderer && typeof renderer.setPixelRatio === 'function') {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        renderer.setPixelRatio(dpr);
+      }
+    } catch (_e) { /* non-critical */ }
   }, [geoLoaded]);
 
   // ── Focus caméra ──
@@ -182,6 +189,8 @@ export default function CountryGlobe({
         overflow: 'hidden',
         background: '#0B1F17',
         cursor: 'grab',
+        touchAction: 'none',
+        WebkitTapHighlightColor: 'transparent',
       }}
     >
       {typeof window !== 'undefined' && geoLoaded && (
