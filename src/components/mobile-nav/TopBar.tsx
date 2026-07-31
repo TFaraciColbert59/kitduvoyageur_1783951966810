@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import LkvIcon from '@/components/ui/LkvIcon';
 import { useSearchContext } from '@/contexts/SearchContext';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface TopBarProps {
   variant?: 'standard' | 'on-image';
@@ -99,6 +100,7 @@ function getParentTab(pathname: string): string {
 export default function TopBar({ variant = 'standard', cartCount = 0, showBack, title, onMenuOpen, onSearchOpen }: TopBarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { haptic } = useHapticFeedback();
   const currentPath = pathname || '/';
   const displayTitle = title || getTitle(currentPath);
   const isHome = currentPath === '/';
@@ -107,6 +109,7 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
   const shouldShowBack = showBack !== undefined ? showBack : !isRootTab(currentPath);
 
   const handleBack = () => {
+    haptic('selection');
     if (typeof window !== 'undefined' && window.history.length > 1) {
       router.back();
     } else {
@@ -254,7 +257,10 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
         <div className="flex items-center gap-1" style={{ minWidth: '38px', justifyContent: 'flex-end' }}>
           {/* Search — visible on all pages */}
           <button
-            onClick={onSearchOpen}
+            onClick={() => {
+              haptic('selection');
+              onSearchOpen?.();
+            }}
             aria-label="Rechercher"
             style={{
               ...mBtnStyle,

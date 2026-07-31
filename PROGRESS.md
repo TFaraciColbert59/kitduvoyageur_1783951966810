@@ -84,3 +84,59 @@
 ## Chantier 10 — Sitemap cleanup (non-implemented tools) ✅
 - ✅ Removed 11 unimplemented tool slugs from sitemap.ts (`decompression`, `altimetre`, `meteo-montagne`, `carbone`, `debit-eau`, `pharmacie`, `visa`, `vaccins`, `langue`, `noeud`, `soleil`) — these slugs show "Outil introuvable" (not in toolRegistry) and were wasting crawl budget with thin content
 - ✅ Build verified: 193 pages, compiled 7.2s, exit 0, no errors
+
+## Chantier 11 — Animation components default exports ✅
+- ✅ SearchProvider context error fixed (previous session)
+- ✅ AnimatedPage.tsx — added default export + kept named export for backward compatibility
+- ✅ ScrollReveal.tsx — added default export + kept named export
+- ✅ StaggerGrid.tsx — added default export + kept named export
+- ✅ page.tsx — re-added animation component imports (AnimatedPage, ScrollReveal, StaggerGrid)
+- ✅ Build verified: 193 pages, compiled 6.5s, exit 0, no errors
+
+## Chantier 12 — Cleanup Navigation Refactor (Design Spec) ✅
+### ÉTAPE 2 — Code mort homepage (déjà fait)
+- ✅ Vérification: aucun fichier dans `src/app/components/` (les 13 composants obsolètes avaient déjà été supprimés en session précédente)
+- ✅ Les composants actifs vivent dans `src/components/home/*` (17 sections utilisées)
+
+### ÉTAPE 3 — Consolidation IA (déjà fait)
+- ✅ CopilotFAB.tsx existe déjà et redirige vers `/ai-configurator`
+- ✅ `/copilote` accessible uniquement par URL directe (non présent dans MobileDrawer)
+- ✅ `/voyage-ia` n'apparaît pas dans la navigation structurée
+
+### ÉTAPE 4 — Pages inachevées (déjà masquées)
+- ✅ `/gamification` et `/communaute-pro` ne sont pas dans MobileDrawer
+- ✅ Accessibles uniquement par URL directe
+
+### ÉTAPE 5 — Navigation mobile (déjà conforme)
+- ✅ MobileDrawer structure validée : 3 sections (Découvrir, Vie pro & occasion, Compte & légal)
+- ✅ Pas de doublons avec BottomTabBar
+- ✅ Toutes les routes atteignables en 2 taps max
+
+### Build final
+- ✅ `npm run build` — 193 pages, compiled 4.6s, exit 0, no errors
+- ✅ Toutes les étapes du design spec déjà implémentées ou obsolètes
+
+## Chantier 13 — Terrain Fluidité (Design Spec) ✅
+### Hub terrain mobile
+- ✅ `/terrain` — page statique (3.23 kB) : desktop redirige vers `/explorer`, mobile rend `TerrainHub` dans `MobilePageShell`
+- ✅ `TerrainHub.tsx` — header avec badge GPS actif/hors ligne (`useOnlineStatus`), hero card "Naviguer" (gradient forest, lien `/naviguer`), grille Accès rapide 2×2 (Mon Kit, Recherche, Carte, Guides), CTA "Mode terrain persistant" (à venir)
+- ✅ Badge hors ligne en ink `#6B7A72` (orange `#E4501C` interdit par le design system)
+
+### Recherche persistante
+- ✅ `SearchOverlay.tsx` — overlay global (déjà existant, haptic ajouté) : scrim + panneau glassmorphism, autofocus, recent searches persistées en localStorage
+- ✅ `useRecentSearches.ts` — hooks localStorage pour recherches récentes (add/clear/remove)
+- ✅ Soumission → `/boutique?q=` (URL encode), fermeture auto de l'overlay
+- ✅ `SearchContext` + `SearchProvider` déjà branchés dans le layout racine
+
+### Offline
+- ✅ `OfflineBanner.tsx` — bannière sticky (z-index 55, sous safe-area) quand `navigator.onLine` est faux, toast "Connexion rétablie" au retour du réseau, icône wifi-off en SVG inline (pas de `LkvIcon` dédié), indicateur sage `#A3C4A3`
+- ✅ `useOfflineCache.ts` — hook générique cache localStorage + TTL (`lkdv_cache_<key>`), expose `{ data, isLoading, error, isCached, invalidate, clearCache, refetch }`
+- ✅ `OfflineBanner` monté dans `MobileNavWrapper` (global via layout)
+
+### Haptique
+- ✅ `useHapticFeedback` (`navigator.vibrate`) branché sur : `BottomTabBar` (tab switch, light/medium), `SearchOverlay` (ouverture = selection, submit = success, recent click = light), `TopBar` (back = selection, search = selection)
+
+### Build final
+- ✅ `npx next build` — 194 pages, exit 0, aucun warning
+- ⚠️ `tsc --noEmit` remonte ~30 erreurs de type **pré-existantes** (abonnements, avis, carnets, clubs, connexion, copilote, faq, groupes, inventaire, kits, location, mes-aventures, nouveau-groupe, produit, GestureCard) — aucune dans les fichiers créés/modifiés par ce chantier
+- ⚠️ `GestureCard.tsx` a un mismatch haptic pré-existant (`haptic.light` vs hook `haptic(style)`) — fichier non modifié

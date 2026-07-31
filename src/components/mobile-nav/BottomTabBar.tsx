@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import LkvIcon from '@/components/ui/LkvIcon';
 
 interface Tab {
@@ -56,12 +57,19 @@ const TABS: Tab[] = [
 ];
 
 function TabLink({ tab, isActive }: { tab: Tab; isActive: boolean }) {
+  const { haptic } = useHapticFeedback();
+
+  const handleTap = () => {
+    haptic(isActive ? 'selection' : 'medium');
+  };
+
   if (tab.isHero) {
     return (
       <Link
         href={tab.href}
         aria-label={tab.ariaLabel}
         aria-current={isActive ? 'page' : undefined}
+        onClick={handleTap}
         className="relative flex flex-col items-center justify-center flex-1 h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-inset rounded-sm"
       >
         <div
@@ -104,6 +112,7 @@ function TabLink({ tab, isActive }: { tab: Tab; isActive: boolean }) {
       href={tab.href}
       aria-label={tab.ariaLabel}
       aria-current={isActive ? 'page' : undefined}
+      onClick={handleTap}
       className="relative flex flex-col items-center justify-center flex-1 h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-inset rounded-sm"
     >
       <div

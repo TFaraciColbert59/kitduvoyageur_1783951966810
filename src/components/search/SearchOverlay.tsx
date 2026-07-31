@@ -6,42 +6,47 @@ import { motion, AnimatePresence } from 'framer-motion';
 import LkvIcon from '@/components/ui/LkvIcon';
 import { useRecentSearches } from '@/components/search/useRecentSearches';
 import { useSearchContext } from '@/contexts/SearchContext';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export default function SearchOverlay() {
   const { isSearchOpen, closeSearch } = useSearchContext();
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
+  const { haptic } = useHapticFeedback();
   const { recentSearches, addSearch, clearSearches, removeSearch } = useRecentSearches();
 
   // Reset query when overlay opens
   useEffect(() => {
     if (isSearchOpen) {
       setQuery('');
+      haptic('selection');
       // Focus input after animation
       setTimeout(() => inputRef.current?.focus(), 150);
     }
-  }, [isSearchOpen]);
+  }, [isSearchOpen, haptic]);
 
   const handleSubmit = useCallback(
     (e?: React.FormEvent) => {
       e?.preventDefault();
       const trimmed = query.trim();
       if (!trimmed) return;
+      haptic('success');
       addSearch(trimmed);
       closeSearch();
       router.push(`/boutique?q=${encodeURIComponent(trimmed)}`);
     },
-    [query, addSearch, closeSearch, router]
+    [query, addSearch, closeSearch, router, haptic]
   );
 
   const handleRecentClick = useCallback(
     (q: string) => {
+      haptic('light');
       addSearch(q);
       closeSearch();
       router.push(`/boutique?q=${encodeURIComponent(q)}`);
     },
-    [addSearch, closeSearch, router]
+    [addSearch, closeSearch, router, haptic]
   );
 
   // Close on Escape
