@@ -381,17 +381,21 @@ export default function PanierPage() {
             {/* Cart items */}
             {items.map((item) => (
               <div key={item.id} style={{ display: 'flex', gap: '12px', padding: '16px', borderBottom: '1px solid rgba(11,31,23,0.05)' }}>
-                <div style={{ width: '76px', height: '92px', borderRadius: '12px', background: 'linear-gradient(135deg, #17402C 0%, #2D6B4A 100%)', flexShrink: 0, overflow: 'hidden' }}>
-                  {item.image ? <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'multiply' }} /> : null}
-                </div>
+                <Link href={`/produit/${item.slug}`} aria-label={item.name} style={{ textDecoration: 'none' }}>
+                  <div style={{ width: '76px', height: '92px', borderRadius: '12px', background: 'linear-gradient(135deg, #17402C 0%, #2D6B4A 100%)', flexShrink: 0, overflow: 'hidden' }}>
+                    {item.image ? <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'multiply' }} /> : null}
+                  </div>
+                </Link>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{ fontSize: '10px', color: '#6B7A72', fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       {item.category || 'PORTAGE'}
                     </div>
-                    <div style={{ fontSize: '14px', fontWeight: 500, color: '#0B1F17', marginTop: '2px' }}>
-                      {item.name}
-                    </div>
+                    <Link href={`/produit/${item.slug}`} style={{ textDecoration: 'none' }}>
+                      <div style={{ fontSize: '14px', fontWeight: 500, color: '#0B1F17', marginTop: '2px' }}>
+                        {item.name}
+                      </div>
+                    </Link>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px', background: '#F4F1EA', borderRadius: '999px' }}>
