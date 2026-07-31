@@ -27,6 +27,12 @@ const OSM_TILE = {
 type TileMode = 'topo' | 'osm';
 type LocationState = 'idle' | 'locating' | 'located' | 'denied' | 'unavailable';
 
+// Guard strict : `lat != null` (loose) exclut null ET undefined, isFinite exclut NaN/Infinity.
+// `!== null` laisserait passer `undefined` (undefined !== null === true) → LatLng(NaN, NaN) → crash Leaflet.
+function isValidLatLng(lat: unknown, lng: unknown): boolean {
+  return lat != null && lng != null && isFinite(Number(lat)) && isFinite(Number(lng));
+}
+
 export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, userLocation, onMapReady, onLocationUpdate }: ExplorerMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
@@ -111,7 +117,7 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
         const loc: [number, number] = [latitude, longitude];
         setLocationState('located');
         onLocationUpdate?.(loc);
-        if (mapRef.current && latitude != null && longitude != null && isFinite(latitude) && isFinite(longitude)) {
+        if (mapRef.current && isValidLatLng(latitude, longitude)) {
           mapRef.current.flyTo([latitude, longitude], 13, { duration: 1.5 });
         }
       },
@@ -143,7 +149,7 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
 
   // User location marker (from prop)
   useEffect(() => {
-    if (!mapRef.current || !mapReady || !userLocation) return;
+    if (!mapRef.current || !mapReady || !userLocation || !isValidLatLng(userLocation[0], userLocation[1])) return;
     import('leaflet').then((L) => {
       if (userMarkerRef.current) {
         try { mapRef.current!.removeLayer(userMarkerRef.current); } catch { /* ignore */ }
@@ -164,9 +170,9 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
   const fitToTrail = useCallback((trail: MapTrail) => {
     if (!mapRef.current) return;
     import('leaflet').then(() => {
-      if (trail.lat !== null && trail.lng !== null) {
+      if (isValidLatLng(trail.lat, trail.lng)) {
         // Smooth flyTo animation with closer zoom level for better focus
-        mapRef.current!.flyTo([trail.lat, trail.lng], 14, { animate: true, duration: 1.2 });
+        mapRef.current!.flyTo([Number(trail.lat), Number(trail.lng)], 14, { animate: true, duration: 1.2 });
       }
     });
   }, []);
@@ -182,11 +188,11 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
     if (!mapReady || !trails.length || !mapRef.current) return;
     if (locationState === 'located' || locationState === 'locating') return;
     import('leaflet').then((L) => {
-      const validTrails = trails.filter((t) => t.lat !== null && t.lng !== null);
+      const validTrails = trails.filter((t) => isValidLatLng(t.lat, t.lng));
       if (!validTrails.length) return;
       const coords: [number, number][] = [];
       validTrails.forEach((t) => {
-        coords.push([t.lat!, t.lng!]);
+        coords.push([Number(t.lat), Number(t.lng)]);
       });
       const allBounds = L.latLngBounds(coords);
       mapRef.current!.fitBounds(allBounds, { padding: [40, 40], maxZoom: 10 });
@@ -202,7 +208,7 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
         const { longitude, latitude } = position.coords;
         setLocationState('located');
         onLocationUpdate?.([latitude, longitude]);
-        if (isFinite(latitude) && isFinite(longitude)) {
+        if (isValidLatLng(latitude, longitude)) {
           mapRef.current!.flyTo([latitude, longitude], 13, { duration: 1.5 });
         }
       },
