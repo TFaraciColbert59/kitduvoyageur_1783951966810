@@ -212,6 +212,7 @@ function CarnetDetailModal({
   onDelete,
   onLike,
   onFavorite,
+  onCommentCountChange,
   currentUserId,
 }: {
   carnet: Carnet | null;
@@ -220,6 +221,7 @@ function CarnetDetailModal({
   onDelete: (c: Carnet) => void;
   onLike: (c: Carnet, reaction: string) => void;
   onFavorite: (c: Carnet) => void;
+  onCommentCountChange: (carnetId: string, delta: number) => void;
   currentUserId?: string;
 }) {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -227,8 +229,14 @@ function CarnetDetailModal({
   const [loadingComments, setLoadingComments] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
+  const [commentCount, setCommentCount] = useState(carnet?.comments_count ?? 0);
   const { user } = useAuth();
   const supabase = useMemo(() => createClient(), []);
+
+  // Resync local counter when a different carnet is opened
+  useEffect(() => {
+    setCommentCount(carnet?.comments_count ?? 0);
+  }, [carnet?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!carnet) return;
@@ -238,7 +246,7 @@ function CarnetDetailModal({
     supabase.from('carnet_views').insert({
       carnet_id: carnet.id,
       user_id: user?.id || null,
-    }).then().catch(() => {});
+    }).then(() => {}).catch(() => {});
 
     supabase
       .from('carnet_comments')
@@ -246,10 +254,14 @@ function CarnetDetailModal({
       .eq('carnet_id', carnet.id)
       .order('created_at', { ascending: true })
       .then(({ data }) => {
-        setComments((data as Comment[]) ?? []);
+        const list = (data as Comment[]) ?? [];
+        setComments(list);
         setLoadingComments(false);
+        // Sync counter with the real comment count loaded from DB
+        const diff = list.length - (carnet.comments_count ?? 0);
+        if (diff !== 0) onCommentCountChange(carnet.id, diff);
       });
-  }, [carnet, supabase, user?.id]);
+  }, [carnet, supabase, user?.id, onCommentCountChange]);
 
   const handleSubmitComment = async () => {
     if (!user || !carnet || !newComment.trim()) return;
@@ -259,7 +271,11 @@ function CarnetDetailModal({
       .insert({ carnet_id: carnet.id, author_id: user.id, content: newComment.trim() })
       .select('*, author:user_profiles(full_name, avatar_url)')
       .single();
-    if (data) setComments((prev) => [...prev, data as Comment]);
+    if (data) {
+      setComments((prev) => [...prev, data as Comment]);
+      setCommentCount((prev) => prev + 1);
+      onCommentCountChange(carnet.id, 1);
+    }
     setNewComment('');
     setSubmitting(false);
   };
@@ -468,7 +484,7 @@ function CarnetDetailModal({
             {/* Comments */}
             <div>
               <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider mb-3">
-                Commentaires ({carnet.comments_count})
+                Commentaires ({commentCount})
               </p>
               {loadingComments ? (
                 <div className="space-y-2">{[1, 2].map((i) => <div key={i} className="h-14 bg-[#C8C3B0]/30 rounded-xl animate-pulse" />)}</div>
@@ -487,6 +503,8 @@ function CarnetDetailModal({
                       }
                       onDelete={(id) => {
                         setComments((prev) => prev.filter((item) => item.id !== id));
+                        setCommentCount((prev) => Math.max(0, prev - 1));
+                        onCommentCountChange(carnet.id, -1);
                       }}
                     />
                   ))}
@@ -883,6 +901,11 @@ export default function CarnetsPage() {
     }
   };
 
+  const handleCommentCountChange = useCallback((carnetId: string, delta: number) => {
+    setCarnets((prev) => prev.map((c) => c.id === carnetId ? { ...c, comments_count: Math.max(0, (c.comments_count ?? 0) + delta) } : c));
+    setDetailCarnet((prev) => prev && prev.id === carnetId ? { ...prev, comments_count: Math.max(0, (prev.comments_count ?? 0) + delta) } : prev);
+  }, []);
+
   const handleShare = (_carnet: Carnet) => {
     const url = `${window.location.origin}/carnets`;
     if (navigator.clipboard) {
@@ -1022,37 +1045,6 @@ export default function CarnetsPage() {
         )}
       </div>
 
-      {/* Modals */}
-      <CarnetModal
-        open={showCreate}
-        onClose={() => { setShowCreate(false); setEditCarnet(null); }}
-        onSave={handleSave}
-        initial={editForm}
-        saving={saving}
-      />
-      <CarnetDetailModal
-        carnet={detailCarnet}
-        onClose={() => setDetailCarnet(null)}
-        onEdit={(c) => { setDetailCarnet(null); setEditCarnet(c); setShowCreate(true); }}
-        onDelete={(c) => { setDetailCarnet(null); setDeleteCarnet(c); }}
-        onLike={handleLike}
-        onFavorite={handleFavorite}
-        currentUserId={user?.id}
-      />
-      <DeleteModal
-        open={!!deleteCarnet}
-        onClose={() => setDeleteCarnet(null)}
-        onConfirm={handleDelete}
-        deleting={deleting}
-      />
-
-      {/* Toast */}
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1C2620] text-white px-5 py-3 rounded-xl text-sm font-600 shadow-xl">
-          {toast}
-        </div>
-      )}
-
       <Footer />
         </div>
       </div>
@@ -1160,6 +1152,38 @@ export default function CarnetsPage() {
           <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
         </MobilePageShell>
       </div>
+
+      {/* Modals — partagés desktop & mobile */}
+      <CarnetModal
+        open={showCreate}
+        onClose={() => { setShowCreate(false); setEditCarnet(null); }}
+        onSave={handleSave}
+        initial={editForm}
+        saving={saving}
+      />
+      <CarnetDetailModal
+        carnet={detailCarnet}
+        onClose={() => setDetailCarnet(null)}
+        onEdit={(c) => { setDetailCarnet(null); setEditCarnet(c); setShowCreate(true); }}
+        onDelete={(c) => { setDetailCarnet(null); setDeleteCarnet(c); }}
+        onLike={handleLike}
+        onFavorite={handleFavorite}
+        onCommentCountChange={handleCommentCountChange}
+        currentUserId={user?.id}
+      />
+      <DeleteModal
+        open={!!deleteCarnet}
+        onClose={() => setDeleteCarnet(null)}
+        onConfirm={handleDelete}
+        deleting={deleting}
+      />
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1C2620] text-white px-5 py-3 rounded-xl text-sm font-600 shadow-xl">
+          {toast}
+        </div>
+      )}
     </>
   );
 }
