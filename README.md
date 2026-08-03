@@ -2,7 +2,7 @@
 
 Plateforme e-commerce et communauté pour voyageurs outdoor, construite avec Next.js 15, Supabase et Stripe.
 
-## 🎯 Fonctionnalités
+## 🏷️ Fonctionnalités
 
 - **Boutique** — Catalogue produits outdoor, configurateur de kit, panier, checkout Stripe
 - **Explorer** — Carte interactive des randonnées (PostGIS), filtres par difficulté/distance
@@ -12,16 +12,16 @@ Plateforme e-commerce et communauté pour voyageurs outdoor, construite avec Nex
 - **Admin** — Gestion produits, commandes, contenu (accès restreint)
 - **Mobile** — Design responsive dual-view (desktop Tailwind + mobile inline styles via MobilePageShell)
 - **Terrain** — Hub mobile centralisant GPS, carte, kit, recherche et mode hors ligne
-- **Offline** — Bannière hors ligne, cache localStorage avec TTL, recherches récentes persistées
+- **Offline** — Bannière hors ligne, cache localStorage avec TTL, recherches récentes persistantes
 - **Haptique** — Vibrations tactiles sur navigation mobile (BottomTabBar, SearchOverlay, TopBar)
 
 ## 🛠️ Stack Technique
 
 | Couche | Technologie |
-|-|-|
+|---|---|
 | Frontend | Next.js 15 (App Router), React 19, TypeScript strict, Tailwind CSS |
 | Backend | Supabase (PostgreSQL + PostGIS), RLS par `auth.uid()` |
-| Payment | Stripe (server-side, webhooks async) |
+| Paiement | Stripe (server-side, webhooks async) |
 | IA | OpenRouter MCP |
 | 3D | react-globe.gl + three.js (globe interactif page Pays) |
 | Cartes | Leaflet + tuiles OSM/satellite |
@@ -45,65 +45,65 @@ yarn dev
 
 Ouvrir [http://localhost:3000](http://localhost:3000)
 
-## 📂 Structure du Projet
+## 🗂️ Structure du Projet
 
 ```
 nextjs/
-└── src/
-    ├── app/                    # App Router (pages, layouts, API routes)
-    │   ├── (shop)/             # Boutique, produit, panier, checkout
-    │   ├── explorer/           # Carte randonnées
-    │   ├── communaute/         # Feed, clubs, groupes, événements
-    │   ├── compte/             # Dashboard voyageur
-    │   ├── pays/               # Guides par destination
-    │   ├── terrain/            # Hub terrain mobile (offline, GPS)
-    │   ├── admin/               # Admin (accès restreint)
-    │   └── components/         # (vide — anciens composants supprimés)
-    ├── components/
-    │   ├── mobile-nav/         # BottomTabBar, MobileDrawer, MobileNavWrapper, TopBar, OfflineBanner
-    │   ├── explorer/           # ExplorerMap, InteractiveMap
-    │   ├── carnet/             # CarnetView, CreateCarnetView
-    │   ├── communaute/         # CarnetFormModal, ClubFormModal, ClubDetailModal (dynamic imports)
-    │   ├── terrain/            # TerrainHub
-    │   ├── search/             # SearchOverlay, useRecentSearches
-    │   ├── compte/             # Dashboard tabs (dynamic imports)
-    │   ├── groupes/            # Cards groupe voyage (dynamic imports pour les tabs)
-    │   ├── home/               # 17 sections homepage
-    │   └── ui/                 # AppImage, LkvIcon, EmptyState
-    ├── hooks/                  # useHapticFeedback, useOnlineStatus, useOfflineCache, useRecentSearches
-    ├── lib/
-    │   ├── supabase/
-    │   │   ├── queries-*.ts    # Service layer (queries-compte, queries-carnet, etc.)
-    │   │   └── client.ts       # Client Supabase
-    │   └── services/           # Logique métier (cart, auth, stripe)
-    ├── contexts/               # AuthContext, WishlistContext, ToastContext, SearchContext
-    └── supabase/
-        └── migrations/         # Migrations SQL (RLS, triggers, PostGIS)
-├── docs/
-    ├── superpowers/
-    │   ├── plans/              # Plans de développement
-    │   └── specs/              # Specs de design
-    ├── FINAL_DELIVERY_REPORT.md
-    └── IMPLEMENTATION_SUMMARY.md
-├── CLAUDE.md                  # Conventions de développement (design system, patterns, architecture)
-├── PROGRESS.md                # Suivi des chantiers
-└── next.config.mjs
+    src/
+        app/                # App Router (pages, layouts, API routes)
+        ├── (shop)/         # Boutique, produit, panier, checkout
+        ├── explorer/        # Carte randonnées
+        ├── communaute/      # Feed, clubs, groupes, événements
+        ├── compte/          # Dashboard voyageur
+        ├── pays/            # Guides par destination
+        ├── terrain/         # Hub terrain mobile (offline, GPS)
+        ├── admin/           # Admin (accès restreint)
+        ├── components/      # (vidéo — anciens composants supprimés)
+        components/
+        mobile-nav/          # BottomTabBar, MobileDrawer, MobileNavWrapper, TopBar, OfflineBanner
+        explorer/            # ExplorerMap, InteractiveMap
+        carnet/              # CarnetView, CreateCarnetView
+        communaute/          # CarnetFormModal, ClubFormModal, ClubDetailModal (dynamic imports)
+        terrain/             # TerrainHub
+        search/             # SearchOverlay, useRecentSearches
+        compte/              # Dashboard tabs (dynamic imports)
+        groupes/             # Cards groupe voyage (dynamic imports)
+        home/                # 17 sections homepage
+        ui/                  # AppImage, LkvIcon, EmptyState
+    hooks/                   # useHapticFeedback, useOnlineStatus, useOfflineCache, useRecentSearches
+    lib/
+        supabase/
+        ├── queries-*.ts    # Service layer (queries-compte, queries-carnet, etc.)
+        ├── client.ts       # Client Supabase
+        ├── services/       # Logique métier (cart, auth, stripe)
+    contexts/               # AuthContext, WishlistContext, ToastContext, SearchContext
+    supabase/
+        migrations/         # Migrations SQL (RLS, triggers, PostGIS)
+    docs/
+        ├── superpowers/
+        ├── plans/          # Plans de développement
+        ├── specs/          # Specs de design
+        ├── FINAL_DELIVERY_REPORT.md
+        ├── IMPLEMENTATION_SUMMARY.md
+        CLAUDE.md           # Conventions de développement et design system
+        PROGRESS.md         # Suivi des chantiers
+    next.config.mjs
 ```
 
-## 📖 Conventions
+## 📝 Conventions
 
 Voir [CLAUDE.md](./CLAUDE.md) pour le design system complet, les patterns responsive, les conventions d'image fallback, l'architecture, et les règles de sécurité.
 
 Points clés :
 - **Dual-view** : desktop (Tailwind) + mobile (inline styles via MobilePageShell)
 - **Image fallback** : `src={data.image_url || '/assets/images/no_image.png'}`
-- **Palette** : Forest/Sage/Stone/Ink — orange `#E4501C` interdit
+- **Palette** : Foreground/Sage/Stone/Ink — orange `#E4501C` interdit
 - **RLS** : obligatoire sur toutes les tables Supabase
 - **Dynamic imports** : composants lourds en `next/dynamic` pour réduire le FLJS
 - **États UI** : loading/error/empty sur toutes les pages data-driven
 - **Haptique** : `useHapticFeedback` sur interactions mobile clés
 
-## 🔧 Scripts
+## 📜 Scripts
 
 - `npm run dev` — Serveur de développement (port 3000)
 - `npm run build` — Build de production
@@ -112,6 +112,7 @@ Points clés :
 - `npm run lint` — ESLint
 - `npm run lint:fix` — Corriger automatiquement les erreurs ESLint
 - `npm run format` — Prettier
+- `node scripts/validate-country-cache.mjs` — Valide les fichiers `.country-cache/*.json` (schéma, températures, précipitations, FAQ dupliquées)
 
 ## 📚 Documentation
 
