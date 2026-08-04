@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import EditProfileView from '@/components/compte/EditProfileView';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
@@ -33,7 +34,7 @@ export default function EditProfilePage() {
             justifyContent: 'space-between',
           }}
         >
-          <a
+          <Link
             href="/compte"
             style={{
               display: 'flex',
@@ -50,7 +51,7 @@ export default function EditProfilePage() {
               <path d="M19 12H5" /><polyline points="12 19 5 12 12 5" />
             </svg>
             Retour
-          </a>
+          </Link>
           <span style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>
             Modifier mon profil
           </span>
