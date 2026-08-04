@@ -1,18 +1,18 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import type { FilterState } from './types';
+import type { FilterStates } from './types';
 
 interface ExplorerFilterSheetProps {
   open: boolean;
   onClose: () => void;
-  filters: FilterState;
-  onChange: (f: FilterState) => void;
+  filters: FilterStates;
+  onChange: (f: FilterStates) => void;
 }
 
 const FILTER_SECTIONS = [
   {
-    key: 'type' as keyof FilterState,
+    key: 'type' as keyof FilterStates,
     label: 'Type d\'aventure',
     options: [
       { value: 'randonnee', label: 'Randonnée', icon: '🥾' },
@@ -24,7 +24,7 @@ const FILTER_SECTIONS = [
     ],
   },
   {
-    key: 'difficulty' as keyof FilterState,
+    key: 'difficulty' as keyof FilterStates,
     label: 'Difficulté',
     options: [
       { value: 'easy', label: 'Facile', icon: '🟢' },
@@ -34,7 +34,7 @@ const FILTER_SECTIONS = [
     ],
   },
   {
-    key: 'duration' as keyof FilterState,
+    key: 'duration' as keyof FilterStates,
     label: 'Durée',
     options: [
       { value: '2h', label: '< 2h', icon: '⚡' },
@@ -44,7 +44,7 @@ const FILTER_SECTIONS = [
     ],
   },
   {
-    key: 'ambiance' as keyof FilterState,
+    key: 'ambiance' as keyof FilterStates,
     label: 'Ambiance',
     options: [
       { value: 'montagne', label: 'Montagne', icon: '🏔' },
@@ -63,16 +63,17 @@ export default function ExplorerFilterSheet({ open, onClose, filters, onChange }
     return () => document.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
-  const toggle = (key: keyof FilterState, value: string) => {
+  const toggle = (key: keyof FilterStates, value: string) => {
     const current = filters[key];
+    if (!Array.isArray(current)) return;
     const updated = current.includes(value)
-      ? current.filter((v) => v !== value)
+      ? current.filter((v: string) => v !== value)
       : [...current, value];
     onChange({ ...filters, [key]: updated });
   };
 
   const clearAll = () => {
-    onChange({ type: [], difficulty: [], duration: [], ambiance: [] });
+    onChange({ difficulty: [], duration: [], terrain_type: [], family_friendly: null });
   };
 
   const totalActive = Object.values(filters).flat().length;
@@ -131,7 +132,8 @@ export default function ExplorerFilterSheet({ open, onClose, filters, onChange }
               </p>
               <div className="flex flex-wrap gap-2">
                 {section.options.map((opt) => {
-                  const active = filters[section.key].includes(opt.value);
+                  const current = filters[section.key];
+                  const active = Array.isArray(current) ? current.includes(opt.value) : false;
                   return (
                     <button
                       key={opt.value}
