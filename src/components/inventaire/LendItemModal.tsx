@@ -7,12 +7,12 @@ import { GearItemData } from '@/lib/mock/inventaire-marceline';
 interface LendItemModalProps {
   isOpen: boolean;
   onClose: () => void;
-  item: GearItemData;
+  item?: GearItemData;
   onSaveLoan: (borrowerName: string, returnDate?: string, notes?: string) => Promise<void>;
 }
 
 export default function LendItemModal({ isOpen, onClose, item, onSaveLoan }: LendItemModalProps) {
-  const [borrowerName, setBorrowerName] = useState(item.loan_to_name || '');
+  const [borrowerName, setBorrowerName] = useState(item?.loan_to_name || '');
   const [returnDate, setReturnDate] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -37,7 +37,7 @@ export default function LendItemModal({ isOpen, onClose, item, onSaveLoan }: Len
         <div className="flex justify-between items-center border-b border-[#E8E4D8] pb-4">
           <div>
             <h3 className="font-extrabold text-[#132219] text-xl font-display">
-              Prêter <span className="italic font-serif font-normal text-[#2D5A3D]">{item.name}</span>
+              Prêter <span className="italic font-serif font-normal text-[#2D5A3D]">{item?.name}</span>
             </h3>
             <p className="text-xs text-[#132219]/60 mt-0.5">
               Enregistrez le prêt pour garder une trace de vos équipements.
