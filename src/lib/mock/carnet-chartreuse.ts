@@ -25,6 +25,10 @@ export interface CarnetMoment {
   author: string;
   location: string;
   imageUrl?: string;
+  title?: string;
+  description?: string;
+  content?: string;
+  coordinates?: { lat: number; lng: number } | null;
 }
 
 export interface CarnetKitItem {
@@ -33,6 +37,7 @@ export interface CarnetKitItem {
   detail: string;
   weight: string;
   color: string;
+  weightG?: number;
 }
 
 export interface CarnetRandonnee {
@@ -47,6 +52,9 @@ export interface CarnetStatItem {
   label: string;
   sublabel?: string;
   hidden?: boolean;
+  distance_km?: number;
+  denivele_m?: number;
+  duree_jours?: number;
 }
 
 export interface CarnetData {
