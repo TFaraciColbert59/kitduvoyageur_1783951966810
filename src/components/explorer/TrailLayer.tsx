@@ -32,14 +32,16 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
 
       // Clean up previous layer group
       if (layerGroupRef.current) {
-        try { map.removeLayer(layerGroupRef.current); } catch {}
+        try { map.removeLayer(layerGroupRef.current); } catch {
+          // ignore layer removal errors
+        }
         layerGroupRef.current = null;
       }
 
       if (!trails.length) return;
 
       // Create a MarkerClusterGroup
-      // @ts-ignore
+      // @ts-expect-error - leaflet.markercluster types not available
       const clusterGroup = L.markerClusterGroup({
         showCoverageOnHover: false,
         maxClusterRadius: 45,
@@ -107,7 +109,9 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
               if (bounds.isValid()) {
                 map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14, animate: true });
               }
-            } catch {}
+            } catch {
+              // ignore bounds fitting errors
+            }
           } catch (e) {
             console.warn('Failed to parse GeoJSON for trail:', trail.name, e);
           }
@@ -156,11 +160,12 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
     return () => {
       isMounted = false;
       if (layerGroupRef.current && map) {
-        try { map.removeLayer(layerGroupRef.current); } catch {}
+        try { map.removeLayer(layerGroupRef.current); } catch {
+          // ignore layer removal errors on cleanup
+        }
       }
     };
   }, [map, trails, selectedTrailId, onTrailClick]);
 
   return null;
 }
-

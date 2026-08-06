@@ -31,6 +31,16 @@ export interface MapTrail {
   family_friendly?: boolean | null;
   season?: string | null;
   ai_description?: string | null;
+  // Extended fields for refuges/shelters
+  region?: string | null;
+  altitude_m?: number | null;
+  capacity?: number | null;
+  is_staffed?: boolean | null;
+  has_meals?: boolean | null;
+  open_months?: string[] | null;
+  price_per_night?: number | null;
+  has_blankets?: boolean | null;
+  description?: string | null;
 }
 
 // Keep MapRefuge as alias for backwards compat

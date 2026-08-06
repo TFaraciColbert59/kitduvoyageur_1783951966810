@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface GestureCardProps {
@@ -17,7 +17,9 @@ export function GestureCard({
   onSwipeRight,
   onTap
 }: GestureCardProps) {
-  const { light, medium } = useHapticFeedback();
+  const { haptic } = useHapticFeedback();
+  const light = useCallback(() => haptic('light'), [haptic]);
+  const medium = useCallback(() => haptic('medium'), [haptic]);
   const [isDragging, setIsDragging] = useState(false);
 
   return (
