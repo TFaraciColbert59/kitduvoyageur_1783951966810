@@ -1,1 +1,52 @@
-J3VzZSBjbGllbnQnOwoKaW1wb3J0IHsgbW90aW9uIH0gZnJvbSAnZnJhbWVyLW1vdGlvbic7CmltcG9ydCB7IHVzZVN0YXRlLCB1c2VDYWxsYmFjayB9IGZyb20gJ3JlYWN0JzsKaW1wb3J0IHsgdXNlSGFwdGljRmVlZGJhY2sgfSBmcm9tICdAL2hvb2tzL3VzZUhhcHRpY0ZlZWRiYWNrJzsKCmludGVyZmFjZSBHZXN0dXJlQ2FyZFByb3BzIHsKICBjaGlsZHJlbjogUmVhY3QuUmVhY3ROb2RlOwogIG9uU3dpcGVMZWZ0PzogKCkgPT4gdm9pZDsKICBvblN3aXBlUmlnaHQ/OiAoKSA9PiB2b2lkOwogIG9uVGFwPzogKCkgPT4gdm9pZDsKfQoKZXhwb3J0IGZ1bmN0aW9uIEdlc3R1cmVDYXJkKHsKICBjaGlsZHJlbiwKICBvblN3aXBlTGVmdCwKICBvblN3aXBlUmlnaHQsCiAgb25UYXAKfTogR2VzdHVyZUNhcmRQcm9wcykgewogIGNvbnN0IHsgaGFwdGljIH0gPSB1c2VIYXB0aWNGZWVkYmFjaygpOwogIGNvbnN0IGxpZ2h0ID0gdXNlQ2FsbGJhY2soKCkgPT4gaGFwdGljKCdsaWdodCcpLCBbaGFwdGljXSk7CiAgY29uc3QgbWVkaXVtID0gdXNlQ2FsbGJhY2soKCkgPT4gaGFwdGljKCdtZWRpdW0nKSwgW2hhcHRpY10pOwogIGNvbnN0IFtpc0RyYWdnaW5nLCBzZXRJc0RyYWdnaW5nXSA9IHVzZVN0YXRlKGZhbHNlKTsKCiAgcmV0dXJuICgKICAgIDxtb3Rpb24uZGl2CiAgICAgIGRyYWc9IngiCiAgICAgIGRyYWdDb25zdHJhaW50cz17eyBsZWZ0OiAwLCByaWdodDogMCB9fQogICAgICBkcmFnRWxhc3RpYz17MC4yfQogICAgICBvbkRyYWdTdGFydD17KCkgPT4gc2V0SXNEcmFnZ2luZyh0cnVlKX0KICAgICAgb25EcmFnRW5kPXsoZSwgeyBvZmZzZXQsIHZlbG9jaXR5IH0pID0+IHsKICAgICAgICBzZXRJc0RyYWdnaW5nKGZhbHNlKTsKICAgICAgICBpZiAob2Zmc2V0LnggPCAtMTAwICYmIHZlbG9jaXR5LnggPCAtMjAwICYmIG9uU3dpcGVMZWZ0KSB7CiAgICAgICAgICBtZWRpdW0oKTsKICAgICAgICAgIG9uU3dpcGVMZWZ0KCk7CiAgICAgICAgfSBlbHNlIGlmIChvZmZzZXQueCA+IDEwMCAmJiB2ZWxvY2l0eS54ID4gMjAwICYmIG9uU3dpcGVSaWdodCkgewogICAgICAgICAgbWVkaXVtKCk7CiAgICAgICAgICBvblN3aXBlUmlnaHQoKTsKICAgICAgICB9CiAgICAgIH19CiAgICAgIG9uVGFwPXsoKSA9PiB7CiAgICAgICAgaWYgKCFpc0RyYWdnaW5nICYmIG9uVGFwKSB7CiAgICAgICAgICBsaWdodCgpOwogICAgICAgICAgb25UYXAoKTsKICAgICAgICB9CiAgICAgIH19CiAgICAgIHdoaWxlVGFwPXt7IHNjYWxlOiAwLjk4IH19CiAgICA+CiAgICAgIHtjaGlsZHJlbn0KICAgIDwvbW90aW9uLmRpdj4KICApOwp9Cg==
+'use client';
+
+import { motion } from 'framer-motion';
+import { useState, useCallback } from 'react';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+
+interface GestureCardProps {
+  children: React.ReactNode;
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
+  onTap?: () => void;
+}
+
+export function GestureCard({
+  children,
+  onSwipeLeft,
+  onSwipeRight,
+  onTap
+}: GestureCardProps) {
+  const { haptic } = useHapticFeedback();
+  const light = useCallback(() => haptic('light'), [haptic]);
+  const medium = useCallback(() => haptic('medium'), [haptic]);
+  const [isDragging, setIsDragging] = useState(false);
+
+  return (
+    <motion.div
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.2}
+      onDragStart={() => setIsDragging(true)}
+      onDragEnd={(e, { offset, velocity }) => {
+        setIsDragging(false);
+        if (offset.x < -100 && velocity.x < -200 && onSwipeLeft) {
+          medium();
+          onSwipeLeft();
+        } else if (offset.x > 100 && velocity.x > 200 && onSwipeRight) {
+          medium();
+          onSwipeRight();
+        }
+      }}
+      onTap={() => {
+        if (!isDragging && onTap) {
+          light();
+          onTap();
+        }
+      }}
+      whileTap={{ scale: 0.98 }}
+    >
+      {children}
+    </motion.div>
+  );
+}
