@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('explore_trails')
-    .select('id, name, start_lat, start_lng, distance_km, duration_hours, difficulty, elevation_gain, adventure_score, nature_score, panorama_score, ref, network, terrain_type, family_friendly, season, ai_description, geometry');
+    .select('id, name, start_lat, start_lng, distance_km, duration_hours, difficulty, elevation_gain, adventure_score, nature_score, panorama_score, ref, network, terrain_type, family_friendly, season, ai_description');
 
   // Apply SQL filters directly on Supabase
   if (!includeShort && minDist > 0) {
@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
       adventure_score: scoreReal?.adventure_score != null ? Number(scoreReal.adventure_score) : null,
       nature_score: scoreReal?.nature_score != null ? Number(scoreReal.nature_score) : null,
       panorama_score: scoreReal?.panorama_score != null ? Number(scoreReal.panorama_score) : null,
-      geojson: t.geometry || null,
+      geojson: null,
     });
   }
 
