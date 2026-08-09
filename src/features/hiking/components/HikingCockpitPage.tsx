@@ -307,7 +307,7 @@ export default function HikingCockpitPage() {
   const showCompletionScreen = isCompleted || hikingStore.state === 'COMPLETED';
 
   return (
-    <div className="w-full h-screen relative overflow-hidden bg-[#EAE6DF] text-[#0B1F17] select-none font-sans">
+    <div className="w-full h-[100dvh] relative overflow-hidden bg-[#EAE6DF] text-[#0B1F17] select-none font-sans">
       <div className="relative w-full h-full overflow-hidden bg-[#FBFAF6]">
           {showCompletionScreen ? (
             <CompletionView
@@ -352,6 +352,7 @@ export default function HikingCockpitPage() {
                 headingDeg={deviceHeading}
                 routeBearingDeg={hikingStore.guidanceBearingDeg}
                 gpsHeadingDeg={currentPos?.heading != null ? (((currentPos.heading % 360) + 360) % 360) : null}
+                progressFrac={progressPct / 100}
                 autoFollow={autoFollow}
                 onAutoFollowChange={setAutoFollow}
                 onRecentre={() => setAutoFollow(true)}

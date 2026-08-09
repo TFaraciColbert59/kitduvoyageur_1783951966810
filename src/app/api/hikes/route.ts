@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('explore_trails')
-    .select('id, name, start_lat, start_lng, distance_km, duration_hours, difficulty, elevation_gain, adventure_score, nature_score, panorama_score, ref, network, terrain_type, family_friendly, season, ai_description, geometry');
+    .select('id, name, start_lat, start_lng, distance_km, duration_hours, difficulty, elevation_gain, adventure_score, nature_score, panorama_score, ref, network, terrain_type, family_friendly, season, ai_description');
 
   // Apply SQL filters directly on Supabase
   if (!includeShort && minDist > 0) {
@@ -103,8 +103,8 @@ export async function GET(request: NextRequest) {
       seenStartCoords.add(coordKey);
     }
 
-    const distanceReal = routeReal?.distance_km ?? null;
-    const nameReal = routeReal?.name ?? null;
+    const distanceReal = routeReal?.distance_km != null ? Number(routeReal.distance_km) : (t.distance_km != null ? Number(t.distance_km) : null);
+    const nameReal = routeReal?.name || t.name || `Randonnée #${t.id}`;
 
     deduplicated.push({
       ...t,
@@ -112,17 +112,17 @@ export async function GET(request: NextRequest) {
       lat: t.start_lat !== undefined && t.start_lat !== null ? Number(t.start_lat) : null,
       lng: t.start_lng !== undefined && t.start_lng !== null ? Number(t.start_lng) : null,
       distance_km: distanceReal,
-      duration_hours: metaReal?.duration_hours != null ? Number(metaReal.duration_hours) : null,
-      difficulty: metaReal?.difficulty != null ? String(metaReal.difficulty) : null,
-      elevation_gain: metaReal?.elevation_gain != null ? Number(metaReal.elevation_gain) : null,
-      terrain_type: metaReal?.terrain_type != null ? String(metaReal.terrain_type) : null,
-      family_friendly: metaReal?.family_friendly ?? null,
-      season: metaReal?.season != null ? String(metaReal.season) : null,
-      ai_description: metaReal?.ai_description != null ? String(metaReal.ai_description) : null,
-      adventure_score: scoreReal?.adventure_score != null ? Number(scoreReal.adventure_score) : null,
-      nature_score: scoreReal?.nature_score != null ? Number(scoreReal.nature_score) : null,
-      panorama_score: scoreReal?.panorama_score != null ? Number(scoreReal.panorama_score) : null,
-      geojson: t.geometry || null,
+      duration_hours: metaReal?.duration_hours != null ? Number(metaReal.duration_hours) : (t.duration_hours != null ? Number(t.duration_hours) : null),
+      difficulty: metaReal?.difficulty != null ? String(metaReal.difficulty) : (t.difficulty != null ? String(t.difficulty) : null),
+      elevation_gain: metaReal?.elevation_gain != null ? Number(metaReal.elevation_gain) : (t.elevation_gain != null ? Number(t.elevation_gain) : null),
+      terrain_type: metaReal?.terrain_type != null ? String(metaReal.terrain_type) : (t.terrain_type != null ? String(t.terrain_type) : null),
+      family_friendly: metaReal?.family_friendly ?? t.family_friendly ?? null,
+      season: metaReal?.season != null ? String(metaReal.season) : (t.season != null ? String(t.season) : null),
+      ai_description: metaReal?.ai_description != null ? String(metaReal.ai_description) : (t.ai_description != null ? String(t.ai_description) : null),
+      adventure_score: scoreReal?.adventure_score != null ? Number(scoreReal.adventure_score) : (t.adventure_score != null ? Number(t.adventure_score) : null),
+      nature_score: scoreReal?.nature_score != null ? Number(scoreReal.nature_score) : (t.nature_score != null ? Number(t.nature_score) : null),
+      panorama_score: scoreReal?.panorama_score != null ? Number(scoreReal.panorama_score) : (t.panorama_score != null ? Number(t.panorama_score) : null),
+      geojson: null,
     });
   }
 

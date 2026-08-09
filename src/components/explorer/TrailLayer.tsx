@@ -9,12 +9,14 @@ interface TrailLayerProps {
   trails: MapTrail[];
   selectedTrailId: string | null;
   onTrailClick: (trail: MapTrail) => void;
+  progressFrac?: number | null;
 }
 
+import { sliceRouteGeoJSON } from '@/features/hiking/services/RouteGeom';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
-export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick }: TrailLayerProps) {
+export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick, progressFrac }: TrailLayerProps) {
   const layerGroupRef = useRef<any>(null);
 
   // Main render effect for trails and markers
@@ -73,32 +75,13 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
 
       trails.forEach((trail) => {
         const isSelected = trail.id === selectedTrailId;
-        
-        let greenColor = '#4ade80';
-        switch ((trail.difficulty || '').toLowerCase()) {
-          case 'facile': greenColor = '#86efac'; break;
-          case 'modérée':
-          case 'moderate': greenColor = '#4ade80'; break;
-          case 'difficile':
-          case 'difficult': greenColor = '#22c55e'; break;
-          case 'expert':
-          case 'très difficile': greenColor = '#16a34a'; break;
-        }
 
         // 1. Render GeoJSON Trace ONLY IF SELECTED (Hide by default)
         if (trail.geojson && isSelected) {
           try {
             const parsedGeo = typeof trail.geojson === 'string' ? JSON.parse(trail.geojson) : trail.geojson;
-
-            // Sanitisation centralisée : aucune coordonnée invalide (null/NaN/
-            // Infinity/hors bornes) ne doit atteindre Leaflet — source du crash
-            // "Invalid LatLng object: (NaN, NaN)". Si le tracé est totalement
-            // invalide, on l'ignore plutôt que de casser la carte.
             const cleanGeo = sanitizeGeoJSON(parsedGeo);
-            if (!cleanGeo) {
-              console.warn('TrailLayer: geometry invalide, tracé ignoré:', trail.name);
-              return;
-            }
+            if (!cleanGeo) return;
 
             // Outer casing for high contrast
             const casingLayer = L.geoJSON(cleanGeo as any, {
@@ -112,30 +95,54 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
             });
             linesGroup.addLayer(casingLayer);
 
-            // Core trail line
-            const geoJsonLayer = L.geoJSON(cleanGeo as any, {
-              style: {
-                color: '#17402C',
-                weight: 5,
-                opacity: 1.0,
-                lineCap: 'round',
-                lineJoin: 'round',
-              },
-            });
-            geoJsonLayer.on('click', (e) => {
-              L.DomEvent.stopPropagation(e);
-              onTrailClick?.(trail);
-            });
-            linesGroup.addLayer(geoJsonLayer);
+            // Dynamically slice trail into completed vs remaining if progressFrac exists
+            if (progressFrac != null && Number.isFinite(progressFrac) && progressFrac > 0) {
+              const { completedGeojson, remainingGeojson } = sliceRouteGeoJSON(cleanGeo, progressFrac);
 
-            // Auto-fit bounds if selected
-            try {
-              const bounds = geoJsonLayer.getBounds();
-              if (bounds.isValid()) {
-                map.fitBounds(bounds, { padding: [80, 80], maxZoom: 15, animate: true });
+              // Completed portion (Solid Forest Green)
+              if (completedGeojson) {
+                const completedLayer = L.geoJSON(completedGeojson as any, {
+                  style: {
+                    color: '#17402C',
+                    weight: 6,
+                    opacity: 1.0,
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                  },
+                });
+                linesGroup.addLayer(completedLayer);
               }
-            } catch {
-              // ignore bounds fitting errors
+
+              // Remaining portion (Dashed Sage Green)
+              if (remainingGeojson) {
+                const remainingLayer = L.geoJSON(remainingGeojson as any, {
+                  style: {
+                    color: '#4A7C5B',
+                    weight: 5,
+                    opacity: 0.75,
+                    dashArray: '8, 8',
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                  },
+                });
+                linesGroup.addLayer(remainingLayer);
+              }
+            } else {
+              // Full trail line if progress is 0
+              const geoJsonLayer = L.geoJSON(cleanGeo as any, {
+                style: {
+                  color: '#17402C',
+                  weight: 5,
+                  opacity: 1.0,
+                  lineCap: 'round',
+                  lineJoin: 'round',
+                },
+              });
+              geoJsonLayer.on('click', (e) => {
+                L.DomEvent.stopPropagation(e);
+                onTrailClick?.(trail);
+              });
+              linesGroup.addLayer(geoJsonLayer);
             }
           } catch (e) {
             console.warn('Failed to parse GeoJSON for trail:', trail.name, e);
@@ -195,7 +202,7 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
         }
       }
     };
-  }, [map, trails, selectedTrailId, onTrailClick]);
+  }, [map, trails, selectedTrailId, onTrailClick, progressFrac]);
 
   return null;
 }

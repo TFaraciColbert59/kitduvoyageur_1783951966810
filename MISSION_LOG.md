@@ -448,6 +448,39 @@ Mise en place du **Système Intelligent du Voyageur** : calcul objectif et dynam
    - `npm run type-check` (`tsc --noEmit`) : **0 ERREUR**.
    - `npm run build` : **Compilation Next.js réussie**.
 
+---
+
+## 2026-08-09 — Mission : Audit & Fix Mobile Randonnée
+
+### Objectif Achévé
+Adaptation complète et optimisation de l'expérience cockpit randonnée sur écran mobile/smartphone sans altération des moteurs V1/V2/V3/V4.
+
+### Problèmes Identifiés et Corrections Effctuées
+
+1. **Calcul de la Hauteur de Viewport iOS / Safari (`HikingCockpitPage.tsx`) :**
+   - Remplacement de `h-screen` par `h-[100dvh]` pour éliminer le scroll vertical induit par la barre d'adresse dynamique iOS Safari.
+
+2. **Refonte Responsive de la Barre Supérieure (`DesktopTopBar.tsx`) :**
+   - Masquage des cellules HUD non essentielles (Boussole, Météo secondaire, Niveau de batterie étendu) sur les viewports réduits (< 768px).
+   - Préservation de l'indicateur d'état GPS actif et du titre d'itinéraire réactif.
+
+3. **Optimisation de la Barre Dock Inférieure (`DesktopDockBar.tsx`) :**
+   - Conteneur défilement horizontal fluide (`max-w-[95vw] overflow-x-auto`) et hauteur ajustée `h-[68px]` sur mobile.
+   - Accès garanti aux boutons essentiels (En Pause, Reprendre, Terminer, Stats).
+
+4. **Masquage Intelligent des Panneaux Latéraux sur Mobile (`DesktopLeftPanel.tsx` & `DesktopRightPanel.tsx`) :**
+   - Application de `hidden md:flex` sur les panneaux fixes gauche et droite afin de laisser la carte Leaflet 100% visible et interactive au toucher.
+   - Accès aux statistiques via la feuille `StatsSheet` lors de l'activation du dock.
+
+5. **Détection Tactile et Suspension Auto-Follow (`ExplorerMap.tsx`) :**
+   - Ajout des écouteurs d'événements `movestart` pour débrayer proprement l'auto-follow dès le premier glissement tactile de l'utilisateur sur smartphone.
+
+6. **Validation Globale :**
+   - `npm run type-check` : **0 ERREUR** (Exit code 0).
+   - `npm run build` : **Compilé avec succès**.
+   - Executés : `test_navigation_v2.ts`, `test_copilote_v3.ts`, `test_voyageur_v4.ts`.
+
+
 
 
 
