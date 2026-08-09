@@ -14,7 +14,6 @@ export * from './services/OfflineService';
 export * from './offline/OfflineManager';
 export * from './offline/useOfflineManager';
 export * from './navigation/NavigationEngine';
-export * from './navigation/VoiceGuidanceService';
 export * from './journal/JournalEventBuilder';
 export * from './journal/JournalService';
 export * from './journal/JournalStore';

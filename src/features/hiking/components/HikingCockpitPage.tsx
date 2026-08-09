@@ -35,7 +35,7 @@ export default function HikingCockpitPage() {
   const [showSafetyModal, setShowSafetyModal] = useState(false);
   const [show3DTerrain, setShow3DTerrain] = useState(false);
   const [showGPXModal, setShowGPXModal] = useState(false);
-  const [deviceHeading, setDeviceHeading] = useState<number | null>(24);
+  const [deviceHeading, setDeviceHeading] = useState<number | null>(null);
   const [isCompleted, setIsCompleted] = useState(false);
   const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
   const [autoFollow, setAutoFollow] = useState(true);
@@ -255,8 +255,6 @@ export default function HikingCockpitPage() {
 
   const userLoc: [number, number] | null = currentPos
     ? [currentPos.latitude, currentPos.longitude]
-    : dbRouteData?.startLat != null && dbRouteData?.startLon != null
-    ? [dbRouteData.startLat, dbRouteData.startLon]
     : null;
 
   const totalDistanceKm = dbRouteData?.distanceKm || hikingStore.routeTotalKm || 0;
@@ -423,7 +421,7 @@ export default function HikingCockpitPage() {
                 isPaused={hikingStore.isPaused}
                 durationSeconds={hikingStore.durationSeconds}
                 onTabSelect={(tab) => {
-                  if (tab === 'voix' || tab === 'moment') {
+                  if (tab === 'moment') {
                     setActiveTab('capture');
                   } else {
                     setActiveTab(tab);
@@ -504,7 +502,7 @@ export default function HikingCockpitPage() {
                 onOpenARCompass={() => router.push('/boussole')}
                 onOpen3DTerrain={() => setShow3DTerrain(true)}
                 onOpenGPXModal={() => setShowGPXModal(true)}
-                onStopHike={handleConfirmStop}
+                onStopHike={() => setShowStopModal(true)}
               />
 
               <SafetyCenterModal
