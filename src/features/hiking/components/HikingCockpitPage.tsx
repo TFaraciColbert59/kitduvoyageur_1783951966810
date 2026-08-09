@@ -352,6 +352,7 @@ export default function HikingCockpitPage() {
                 headingDeg={deviceHeading}
                 routeBearingDeg={hikingStore.guidanceBearingDeg}
                 gpsHeadingDeg={currentPos?.heading != null ? (((currentPos.heading % 360) + 360) % 360) : null}
+                progressFrac={progressPct / 100}
                 autoFollow={autoFollow}
                 onAutoFollowChange={setAutoFollow}
                 onRecentre={() => setAutoFollow(true)}

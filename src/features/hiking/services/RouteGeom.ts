@@ -400,3 +400,88 @@ export function nextTurnOnRoute(
     distanceRemainingM: distM,
   };
 }
+
+export interface SlicedRouteGeoJSON {
+  completedGeojson: Record<string, unknown> | null;
+  remainingGeojson: Record<string, unknown> | null;
+}
+
+/**
+ * Découpe dynamiquement une géométrie PostGIS (LineString/MultiLineString) en
+ * deux portions GeoJSON au point exact de progression (0..1) :
+ * 1. completedGeojson : la portion déjà parcourue (DÉPART -> 📍)
+ * 2. remainingGeojson : la portion restant à parcourir (📍 -> ARRIVÉE)
+ *
+ * Utilise la géométrie réelle et les longueurs curvilignes haversine sans aucun saut.
+ */
+export function sliceRouteGeoJSON(
+  geojson: unknown,
+  progressFrac: number | null | undefined
+): SlicedRouteGeoJSON {
+  if (!geojson || typeof geojson !== 'object') {
+    return { completedGeojson: null, remainingGeojson: null };
+  }
+
+  const frac = progressFrac != null && Number.isFinite(progressFrac) ? Math.max(0, Math.min(1, progressFrac)) : 0;
+
+  const segments = flattenSegments(geojson);
+  const total = totalLengthM(segments);
+  if (segments.length === 0 || total <= 0) {
+    return { completedGeojson: null, remainingGeojson: geojson as Record<string, unknown> };
+  }
+
+  const fullGeo = geojson as Record<string, unknown>;
+
+  if (frac <= 0.0005) {
+    return { completedGeojson: null, remainingGeojson: fullGeo };
+  }
+
+  if (frac >= 0.999) {
+    return { completedGeojson: fullGeo, remainingGeojson: null };
+  }
+
+  const splitM = total * frac;
+  const completedCoords: [number, number][] = [];
+  const remainingCoords: [number, number][] = [];
+
+  let splitLat = 0;
+  let splitLng = 0;
+
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i];
+    const segStartM = seg.cumLenM;
+    const segEndM = seg.cumLenM + seg.segLenM;
+
+    if (i === 0) {
+      completedCoords.push([seg.startLng, seg.startLat]);
+    }
+
+    if (splitM >= segEndM) {
+      completedCoords.push([seg.endLng, seg.endLat]);
+    } else if (splitM <= segStartM) {
+      if (remainingCoords.length === 0) {
+        remainingCoords.push([splitLng, splitLat]);
+      }
+      remainingCoords.push([seg.endLng, seg.endLat]);
+    } else {
+      const ratio = seg.segLenM > 0 ? (splitM - segStartM) / seg.segLenM : 0;
+      splitLat = seg.startLat + (seg.endLat - seg.startLat) * ratio;
+      splitLng = seg.startLng + (seg.endLng - seg.startLng) * ratio;
+
+      completedCoords.push([splitLng, splitLat]);
+
+      remainingCoords.push([splitLng, splitLat]);
+      remainingCoords.push([seg.endLng, seg.endLat]);
+    }
+  }
+
+  const completedGeojson = completedCoords.length >= 2
+    ? { type: 'LineString', coordinates: completedCoords }
+    : null;
+
+  const remainingGeojson = remainingCoords.length >= 2
+    ? { type: 'LineString', coordinates: remainingCoords }
+    : (geojson as Record<string, unknown>);
+
+  return { completedGeojson, remainingGeojson };
+}

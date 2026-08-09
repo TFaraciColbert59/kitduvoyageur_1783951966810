@@ -14,6 +14,7 @@ interface ExplorerMapProps {
   userPositions?: Array<{ latitude: number; longitude: number }>;
   userAccuracy?: number | null;
   headingDeg?: number | null;
+  progressFrac?: number | null;
   autoFollow?: boolean;
   onAutoFollowChange?: (enabled: boolean) => void;
   onMapReady?: () => void;
@@ -41,6 +42,7 @@ export default function ExplorerMap({
   userPositions,
   userAccuracy = null,
   headingDeg,
+  progressFrac = null,
   autoFollow = true,
   onAutoFollowChange,
   onMapReady,
@@ -351,6 +353,7 @@ export default function ExplorerMap({
           trails={trails}
           selectedTrailId={selectedTrailId}
           onTrailClick={onTrailClick}
+          progressFrac={progressFrac}
         />
       )}
 
