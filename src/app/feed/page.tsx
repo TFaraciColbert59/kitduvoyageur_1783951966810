@@ -14,7 +14,7 @@ const JOURNALS = [
 
 export default function FeedPage() {
   const [journals, setJournals] = useState(JOURNALS);
-  const [filter, setFilter] = useState<'all' | 'verified' | 'ambassadeur'>('all');
+  const [filter, setFilter] = useState<'all' | 'verified' | 'ambassadeur' | 'gps'>('all');
   const [showNewJournal, setShowNewJournal] = useState(false);
 
   const filtered = JOURNALS.filter((j) => { if (filter === 'verified') return j.verified; if (filter === 'gps') return j.gpsTrace; return true; });

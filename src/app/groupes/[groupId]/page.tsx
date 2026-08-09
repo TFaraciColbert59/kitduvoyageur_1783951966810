@@ -23,14 +23,6 @@ import ActiviteCard from '@/components/groupes/ActiviteCard';
 import AProposCard from '@/components/groupes/AProposCard';
 import CarnetCTACard from '@/components/groupes/CarnetCTACard';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
-import MobileGroupeView from '@/components/groupes/MobileGroupeView';
-import DepensesCard from '@/components/groupes/DepensesCard';
-import DecisionsCard from '@/components/groupes/DecisionsCard';
-import DiscussionCard from '@/components/groupes/DiscussionCard';
-
-
-
-
 
 // Dynamically imported — only load when tab is active
 const DepensesCard = nextDynamic(() => import('@/components/groupes/DepensesCard'), { ssr: false });
