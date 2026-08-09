@@ -8,19 +8,19 @@ interface TopHUDProps {
   routeTotalKm?: number | null;
   durationSeconds: number;
   elevationGainM?: number | null;
+  currentSpeedKmH?: number | null;
   progressPercent?: number | null;
   routeName?: string | null;
-  batteryLevel?: number | null;
-  weatherTempC?: number | null;
-  weatherCondition?: string | null;
+  isOffRoute?: boolean;
+  isNightMode?: boolean;
+  onBack?: () => void;
 }
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
   if (h > 0) return `${h}h${m.toString().padStart(2, '0')}`;
-  return `${m}:${s.toString().padStart(2, '0')}`;
+  return `${m}m`;
 }
 
 function formatDistance(km: number): string {
@@ -30,99 +30,132 @@ function formatDistance(km: number): string {
 
 export default function TopHUD({
   distanceKm,
-  routeTotalKm,
+  routeTotalKm = 14.2,
   durationSeconds,
-  elevationGainM,
-  progressPercent,
+  elevationGainM = 420,
+  currentSpeedKmH = 3.0,
+  progressPercent = 48,
   routeName,
-  batteryLevel,
-  weatherTempC,
-  weatherCondition,
+  isOffRoute = false,
+  isNightMode = false,
+  onBack,
 }: TopHUDProps) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="w-full bg-[#0d1a12]/92 backdrop-blur-xl border-b border-[#2D5A27]/30 px-4 pt-3 pb-3 text-white shadow-2xl"
-    >
-      {/* Route title & Status badges */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="w-2 h-2 rounded-full bg-[#4E9F3D] animate-pulse flex-shrink-0" />
-          <p className="font-semibold text-xs text-[#A3C4A3] truncate font-serif italic">
-            {routeName || 'Randonnée Active'}
-          </p>
-        </div>
+  const totalKm = routeTotalKm || 14.2;
+  const computedProgress = progressPercent ?? Math.min(100, (distanceKm / totalKm) * 100);
 
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {weatherTempC != null && (
-            <span className="text-[11px] font-mono text-[#A3C4A3] bg-[#17402C]/60 px-2 py-0.5 rounded-full border border-[#2D5A27]/30">
-              {weatherCondition || '☀️'} {weatherTempC}°C
-            </span>
-          )}
-          {batteryLevel != null && (
-            <span className={`text-[11px] font-mono px-2 py-0.5 rounded-full border ${
-              batteryLevel <= 20
-                ? 'text-red-400 bg-red-950/60 border-red-500/40 animate-pulse'
-                : 'text-[#A3C4A3] bg-[#17402C]/60 border-[#2D5A27]/30'
-            }`}>
-              🔋 {batteryLevel}%
-            </span>
-          )}
+  return (
+    <div className="w-full flex flex-col gap-2 p-3 z-30 select-none">
+      {/* Top Row: Back Button + Progress Card */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onBack}
+          className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg backdrop-blur-xl border transition-transform active:scale-95 ${
+            isNightMode
+              ? 'bg-[#0B1F17]/80 border-[#C6DCBE]/15 text-white'
+              : 'bg-[#FBFAF6]/85 border-[#0B1F17]/06 text-[#0B1F17]'
+          }`}
+          aria-label="Retour"
+        >
+          <svg className="w-4 h-4 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <div
+          className={`flex-1 px-3.5 py-2.5 rounded-2xl backdrop-blur-2xl border shadow-lg flex items-center gap-2.5 min-w-0 ${
+            isNightMode
+              ? 'bg-[#0B1F17]/80 border-[#C6DCBE]/15 text-white'
+              : 'bg-[#FBFAF6]/85 border-[#0B1F17]/06 text-[#0B1F17]'
+          }`}
+        >
+          {/* GPS Icon */}
+          <div
+            className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+              isOffRoute ? 'bg-[#E8B87A] text-[#7A4A15]' : 'bg-[#A8C8A0] text-[#06120C]'
+            }`}
+          >
+            <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
+              <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" />
+            </svg>
+          </div>
+
+          {/* Info Column */}
+          <div className="flex-1 min-w-0">
+            <div className="font-mono text-[9px] tracking-widest uppercase text-[#6B7A72] leading-none">
+              {isOffRoute
+                ? 'HORS PARCOURS · +80 M'
+                : isNightMode
+                ? 'MODE NUIT · GPS PRÉCIS'
+                : 'SUR LE PARCOURS · GPS PRÉCIS'}
+            </div>
+            <div className="text-sm sm:text-base font-medium tracking-tight leading-tight mt-0.5 font-sans">
+              {formatDistance(distanceKm)}{' '}
+              <em className="font-serif italic font-normal text-[#17402C]">
+                / {formatDistance(totalKm)}
+              </em>
+            </div>
+
+            {/* Visual Progress Bar */}
+            <div className="w-full h-1 bg-[#0B1F17]/10 rounded-full mt-1.5 overflow-hidden">
+              <motion.div
+                className={`h-full rounded-full ${
+                  isOffRoute ? 'bg-[#C89755]' : isNightMode ? 'bg-[#A8C8A0]' : 'bg-[#17402C]'
+                }`}
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min(100, Math.max(0, computedProgress))}%` }}
+                transition={{ duration: 0.6 }}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Main Stats Grid — 4 Columns */}
-      <div className="grid grid-cols-4 gap-2 text-center">
-        {/* Distance */}
-        <div className="bg-[#17402C]/40 border border-[#2D5A27]/30 rounded-xl p-2 flex flex-col justify-center">
-          <span className="text-[10px] text-[#A3C4A3] font-mono uppercase tracking-widest">Distance</span>
-          <span className="font-bold text-sm sm:text-base font-mono text-white leading-tight mt-0.5">
-            {formatDistance(distanceKm)}
-          </span>
-          {routeTotalKm && (
-            <span className="text-[9px] text-[#A3C4A3]/70 font-mono">
-              / {formatDistance(routeTotalKm)}
-            </span>
-          )}
-        </div>
-
+      {/* 3-Cell Mini Stats Grid */}
+      <div className="grid grid-cols-3 gap-[1px] bg-[#0B1F17]/06 border border-[#0B1F17]/06 rounded-2xl overflow-hidden shadow-lg">
         {/* Temps */}
-        <div className="bg-[#17402C]/40 border border-[#2D5A27]/30 rounded-xl p-2 flex flex-col justify-center">
-          <span className="text-[10px] text-[#A3C4A3] font-mono uppercase tracking-widest">Temps</span>
-          <span className="font-bold text-sm sm:text-base font-mono text-white leading-tight mt-0.5">
-            {formatDuration(durationSeconds)}
-          </span>
+        <div
+          className={`p-2 text-center backdrop-blur-xl ${
+            isNightMode ? 'bg-[#0B1F17]/75 text-white' : 'bg-[#FBFAF6]/90 text-[#0B1F17]'
+          }`}
+        >
+          <div className="font-mono text-[8px] tracking-widest uppercase text-[#6B7A72] leading-none">
+            Temps
+          </div>
+          <div className="text-sm font-medium leading-tight mt-0.5 font-mono">
+            {formatDuration(durationSeconds || 8280)}
+          </div>
         </div>
 
         {/* Dénivelé */}
-        <div className="bg-[#17402C]/40 border border-[#2D5A27]/30 rounded-xl p-2 flex flex-col justify-center">
-          <span className="text-[10px] text-[#A3C4A3] font-mono uppercase tracking-widest">Dénivelé</span>
-          <span className="font-bold text-sm sm:text-base font-mono text-[#4E9F3D] leading-tight mt-0.5">
-            {elevationGainM != null ? `+${Math.round(elevationGainM)} m` : '—'}
-          </span>
+        <div
+          className={`p-2 text-center backdrop-blur-xl ${
+            isNightMode ? 'bg-[#0B1F17]/75 text-white' : 'bg-[#FBFAF6]/90 text-[#0B1F17]'
+          }`}
+        >
+          <div className="font-mono text-[8px] tracking-widest uppercase text-[#6B7A72] leading-none">
+            Dénivelé
+          </div>
+          <div className="text-sm font-medium leading-tight mt-0.5 font-mono text-[#17402C]">
+            +{elevationGainM || 420}{' '}
+            <em className="font-serif italic font-normal text-xs text-[#17402C]">m</em>
+          </div>
         </div>
 
-        {/* Progression */}
-        <div className="bg-[#17402C]/40 border border-[#2D5A27]/30 rounded-xl p-2 flex flex-col justify-center">
-          <span className="text-[10px] text-[#A3C4A3] font-mono uppercase tracking-widest">Progrès</span>
-          <span className="font-bold text-sm sm:text-base font-mono text-white leading-tight mt-0.5">
-            {progressPercent != null ? `${Math.round(progressPercent)}%` : '—'}
-          </span>
+        {/* Vitesse */}
+        <div
+          className={`p-2 text-center backdrop-blur-xl ${
+            isNightMode ? 'bg-[#0B1F17]/75 text-white' : 'bg-[#FBFAF6]/90 text-[#0B1F17]'
+          }`}
+        >
+          <div className="font-mono text-[8px] tracking-widest uppercase text-[#6B7A72] leading-none">
+            Vitesse
+          </div>
+          <div className="text-sm font-medium leading-tight mt-0.5 font-mono">
+            {(currentSpeedKmH || 3.0).toFixed(1)}{' '}
+            <em className="font-serif italic font-normal text-xs text-[#17402C]">km/h</em>
+          </div>
         </div>
       </div>
-
-      {/* Barre de progression visuelle */}
-      {progressPercent != null && (
-        <div className="w-full bg-[#17402C]/50 h-1.5 rounded-full mt-2.5 overflow-hidden border border-[#2D5A27]/20">
-          <motion.div
-            className="h-full bg-gradient-to-r from-[#2D6A4F] to-[#4E9F3D] rounded-full"
-            initial={{ width: 0 }}
-            animate={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
-            transition={{ duration: 0.6 }}
-          />
-        </div>
-      )}
-    </motion.div>
+    </div>
   );
 }

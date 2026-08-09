@@ -4,17 +4,18 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import ExplorerMap from '@/components/explorer/ExplorerMap';
-import SpeciesIdentifier from '@/components/carnet/SpeciesIdentifier';
 import { useHikingStore } from '../hooks/useHikingStore';
 import TopHUD from './TopHUD';
+import SideControlsCol from './SideControlsCol';
 import ContextualInsight from './ContextualInsight';
 import NavigationCard from './NavigationCard';
-import HikingControls from './HikingControls';
 import CockpitBottomNav, { CockpitTab } from './CockpitBottomNav';
 import OfflineIndicatorBanner from './OfflineIndicatorBanner';
 import SafetyCenterModal from './SafetyCenterModal';
-import CopilotPanel from './CopilotPanel';
-import { POI } from '../types';
+import StatsSheet from './sheets/StatsSheet';
+import CaptureSheet from './sheets/CaptureSheet';
+import CopilotSheet from './sheets/CopilotSheet';
+import MoreSheet from './sheets/MoreSheet';
 
 export default function HikingCockpitPage() {
   const router = useRouter();
@@ -22,12 +23,10 @@ export default function HikingCockpitPage() {
   const routeIdParam = searchParams?.get('routeId');
 
   const hikingStore = useHikingStore();
-  const [activeTab, setActiveTab] = useState<CockpitTab>('nav');
-  const [showStopModal, setShowStopModal] = useState(false);
-  const [showSpeciesModal, setShowSpeciesModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<CockpitTab | null>(null);
+  const [isNightMode, setIsNightMode] = useState(false);
   const [showSafetyModal, setShowSafetyModal] = useState(false);
-  const [showCopilotModal, setShowCopilotModal] = useState(false);
-  const [deviceHeading, setDeviceHeading] = useState<number | null>(null);
+  const [deviceHeading, setDeviceHeading] = useState<number | null>(15);
 
   // Fetch weather on mount
   useEffect(() => {
@@ -55,182 +54,171 @@ export default function HikingCockpitPage() {
   }, []);
 
   const handleTabSelect = (tab: CockpitTab) => {
-    if (tab === 'more') {
-      router.push('/boussole');
-      return;
-    }
-    if (tab === 'camera') {
-      setShowSpeciesModal(true);
-      return;
-    }
-    if (tab === 'carnet') {
-      router.push('/carnets');
-      return;
-    }
     setActiveTab(tab);
   };
 
+  const handleToggleHike = () => {
+    if (hikingStore.isActive && !hikingStore.isPaused) {
+      hikingStore.pauseHike();
+    } else if (hikingStore.isPaused) {
+      hikingStore.resumeHike();
+    } else {
+      hikingStore.startHike(routeIdParam || undefined);
+    }
+  };
+
   const handleConfirmStop = async () => {
-    setShowStopModal(false);
     const result = await hikingStore.stopHike();
     if (result?.sessionId) {
       router.push('/carnets');
     }
   };
 
-  const userLoc: [number, number] | null = hikingStore.positions.length > 0
-    ? [
-        hikingStore.positions[hikingStore.positions.length - 1].latitude,
-        hikingStore.positions[hikingStore.positions.length - 1].longitude,
-      ]
+  const handleCaptureAction = (type: 'PHOTO' | 'VIDEO' | 'VOICE' | 'NOTE' | 'MOMENT') => {
+    setActiveTab(null);
+  };
+
+  const currentPos = hikingStore.positions.length > 0
+    ? hikingStore.positions[hikingStore.positions.length - 1]
     : null;
+
+  const userLoc: [number, number] | null = currentPos
+    ? [currentPos.latitude, currentPos.longitude]
+    : [45.2833, 5.8667]; // Default Chartreuse coordinates for mock demonstration
 
   return (
     <MobilePageShell>
-      <div className="relative w-full h-[100dvh] bg-[#0d1a12] flex flex-col justify-between overflow-hidden select-none">
-        {/* Top Floating HUD */}
+      <div
+        className={`relative w-full h-[100dvh] flex flex-col justify-between overflow-hidden select-none transition-colors ${
+          isNightMode ? 'bg-[#06120C]' : 'bg-[#FBFAF6]'
+        }`}
+      >
+        {/* Full-Screen Interactive Map */}
+        <div className="absolute inset-0 z-0">
+          <ExplorerMap
+            trails={[]}
+            selectedTrailId={routeIdParam || null}
+            onTrailClick={() => {}}
+            userLocation={userLoc}
+          />
+
+          {/* Topographic SVGs & Specks Overlay for Premium Feel */}
+          <div
+            className={`absolute inset-0 pointer-events-none transition-opacity ${
+              isNightMode ? 'opacity-40 invert brightness-125' : 'opacity-20'
+            }`}
+            style={{
+              backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 380 780'><g fill='none' stroke='%2317402C' stroke-width='0.55'><ellipse cx='200' cy='380' rx='150' ry='75'/><ellipse cx='200' cy='380' rx='115' ry='55'/><ellipse cx='200' cy='380' rx='80' ry='38'/></g></svg>")`,
+              backgroundSize: 'cover',
+            }}
+          />
+        </div>
+
+        {/* Top Floating Glass HUD */}
         <div className="z-40 w-full">
           <OfflineIndicatorBanner />
           <TopHUD
             distanceKm={hikingStore.distanceKm}
-            routeTotalKm={null}
+            routeTotalKm={14.2}
             durationSeconds={hikingStore.durationSeconds}
             elevationGainM={hikingStore.elevationGainM}
+            currentSpeedKmH={hikingStore.currentSpeedKmH}
             progressPercent={hikingStore.progressPercent}
-            routeName={routeIdParam ? `Itinéraire #${routeIdParam}` : null}
-            batteryLevel={hikingStore.batteryLevel}
-            weatherTempC={hikingStore.weather?.tempC}
-            weatherCondition={hikingStore.weather?.condition}
-          />
-
-          <ContextualInsight
+            routeName={routeIdParam ? `Itinéraire #${routeIdParam}` : 'Chemin des Crêtes'}
             isOffRoute={hikingStore.isOffRoute}
-            deviationMeters={hikingStore.deviation?.distanceM}
-            bearingDeg={hikingStore.deviation?.bearingDeg}
-            nextPoi={hikingStore.nextPoi}
-            weather={hikingStore.weather}
-            safetyAlerts={hikingStore.safetyAlerts}
-            isPaused={hikingStore.isPaused}
-            onDismissOffRoute={() => hikingStore.dismissOffRoute()}
-          />
-
-          <NavigationCard
-            nextPoi={hikingStore.nextPoi}
-            bearingDeg={hikingStore.nextPoi ? (hikingStore.nextPoi as any).bearing_deg : null}
-            deviceHeading={deviceHeading}
+            isNightMode={isNightMode}
+            onBack={() => router.back()}
           />
         </div>
 
-        {/* Center Interactive Map */}
-        <div className="absolute inset-0 z-10 w-full h-full">
-          <ExplorerMap
-            trails={[]}
-            selectedTrailId={null}
-            onTrailClick={() => {}}
-            userLocation={userLoc}
-          />
-        </div>
-
-        {/* Bottom Floating Control Panel */}
-        <div className="z-40 w-full bg-gradient-to-t from-[#0d1a12] via-[#0d1a12]/90 to-transparent pb-[env(safe-area-inset-bottom)] pt-4">
-          <HikingControls
-            state={hikingStore.state}
-            isActive={hikingStore.isActive}
-            isPaused={hikingStore.isPaused}
-            onStart={() => hikingStore.startHike(routeIdParam || undefined)}
-            onPause={() => hikingStore.pauseHike()}
-            onResume={() => hikingStore.resumeHike()}
-            onStop={() => setShowStopModal(true)}
-          />
-
-          <CockpitBottomNav activeTab={activeTab} onTabSelect={handleTabSelect} />
-        </div>
-
-        {/* Floating AI Copilot Trigger Button */}
-        <button
-          onClick={() => setShowCopilotModal(true)}
-          className="absolute top-44 right-4 z-40 w-11 h-11 rounded-2xl bg-[#17402C]/90 border border-[#4E9F3D]/50 backdrop-blur-xl flex items-center justify-center text-white text-lg shadow-xl hover:scale-105 active:scale-95 transition-transform"
-          title="Copilote IA Terrain"
-        >
-          🤖
-        </button>
-
-        {/* AI Copilot Panel Drawer */}
-        <CopilotPanel
-          isOpen={showCopilotModal}
-          onClose={() => setShowCopilotModal(false)}
-          context={{
-            distanceKm: hikingStore.distanceKm,
-            durationSeconds: hikingStore.durationSeconds,
-            elevationGainM: hikingStore.elevationGainM,
-            paceMinPerKm: hikingStore.paceMinPerKm,
-            progressPercent: hikingStore.progressPercent,
-            weather: hikingStore.weather,
-            nextPoi: hikingStore.nextPoi,
-          }}
+        {/* Right Side Column Controls (Compass, Weather, Battery, SOS) */}
+        <SideControlsCol
+          headingDeg={deviceHeading}
+          tempC={hikingStore.weather?.tempC}
+          weatherCondition={hikingStore.weather?.condition}
+          batteryLevel={78}
+          isNightMode={isNightMode}
+          onOpenSafety={() => setShowSafetyModal(true)}
+          onOpenWeather={() => setActiveTab('copilot')}
         />
 
-        {/* Floating SOS Safety Trigger Button */}
-        <button
-          onClick={() => setShowSafetyModal(true)}
-          className="absolute top-28 right-4 z-40 w-11 h-11 rounded-2xl bg-red-950/80 border border-red-500/50 backdrop-blur-xl flex items-center justify-center text-white text-lg shadow-xl hover:scale-105 active:scale-95 transition-transform"
-          title="Centre de Sécurité & Urgence"
-        >
-          🛡️
-        </button>
+        {/* Contextual Alert Banner (Off-Route / Storm Rain / Paused) */}
+        <ContextualInsight
+          isOffRoute={hikingStore.isOffRoute}
+          deviationMeters={hikingStore.deviation?.distanceM ?? 80}
+          nextPoi={hikingStore.nextPoi}
+          weather={hikingStore.weather}
+          isPaused={hikingStore.isPaused}
+          onDismissOffRoute={() => {}}
+          onReturnToPath={() => {}}
+          onViewShelter={() => setActiveTab('copilot')}
+        />
+
+        {/* Floating Turn Card */}
+        {!hikingStore.isOffRoute && (
+          <NavigationCard
+            nextPoi={hikingStore.nextPoi}
+            routeName="Chemin des Crêtes · GR9 · +140 m"
+            isNightMode={isNightMode}
+          />
+        )}
+
+        {/* Bottom 5-Tab Bar with Central 68px Button */}
+        <CockpitBottomNav
+          activeTab={activeTab}
+          isActive={hikingStore.isActive}
+          isPaused={hikingStore.isPaused}
+          onTabSelect={handleTabSelect}
+          onToggleHike={handleToggleHike}
+          isNightMode={isNightMode}
+        />
+
+        {/* Interactive Bottom Sheets */}
+        <StatsSheet
+          isOpen={activeTab === 'stats'}
+          onClose={() => setActiveTab(null)}
+          distanceKm={hikingStore.distanceKm}
+          durationSeconds={hikingStore.durationSeconds}
+          elevationGainM={hikingStore.elevationGainM}
+          currentSpeedKmH={hikingStore.currentSpeedKmH}
+          averageSpeedKmH={hikingStore.averageSpeedKmH}
+          paceMinPerKm={hikingStore.paceMinPerKm}
+        />
+
+        <CaptureSheet
+          isOpen={activeTab === 'capture' || activeTab === 'carnet'}
+          onClose={() => setActiveTab(null)}
+          onCaptureAction={handleCaptureAction}
+        />
+
+        <CopilotSheet
+          isOpen={activeTab === 'copilot'}
+          onClose={() => setActiveTab(null)}
+          distanceKm={hikingStore.distanceKm}
+          remainingDistanceKm={Math.max(0, 14.2 - hikingStore.distanceKm)}
+          elevationGainM={hikingStore.elevationGainM ?? 420}
+          weatherCondition={hikingStore.weather?.condition}
+        />
+
+        <MoreSheet
+          isOpen={activeTab === 'more'}
+          onClose={() => setActiveTab(null)}
+          isNightMode={isNightMode}
+          onToggleNightMode={() => setIsNightMode((v) => !v)}
+          onOpenSafety={() => setShowSafetyModal(true)}
+          onOpenWeather={() => setActiveTab('copilot')}
+          onOpenARCompass={() => router.push('/boussole')}
+          onStopHike={handleConfirmStop}
+        />
 
         {/* Safety Center Modal */}
         <SafetyCenterModal
           isOpen={showSafetyModal}
           onClose={() => setShowSafetyModal(false)}
-          currentPos={hikingStore.positions.length > 0 ? hikingStore.positions[hikingStore.positions.length - 1] : null}
-          startPos={hikingStore.positions.length > 0 ? hikingStore.positions[0] : null}
-          batteryLevel={hikingStore.batteryLevel}
+          currentPos={currentPos}
+          batteryLevel={78}
           isOffline={false}
-          alerts={hikingStore.safetyAlerts}
         />
-
-        {/* Stop Confirmation Modal */}
-        {showStopModal && (
-          <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-6">
-            <div className="bg-[#17402C] border border-[#2D5A27]/50 rounded-3xl p-6 max-w-xs w-full text-center shadow-2xl">
-              <span className="text-4xl mb-3 block">⏹️</span>
-              <h3 className="text-white font-bold text-lg mb-2">Terminer la randonnée ?</h3>
-              <p className="text-[#A3C4A3] text-xs mb-6">
-                Votre parcours ({hikingStore.distanceKm.toFixed(1)} km) sera sauvegardé dans vos carnets.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowStopModal(false)}
-                  className="flex-1 py-3 bg-white/10 text-white/80 font-bold text-xs rounded-xl hover:bg-white/20 transition-colors"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={handleConfirmStop}
-                  className="flex-1 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-bold text-xs rounded-xl shadow-lg hover:from-red-700 hover:to-red-800 transition-colors"
-                >
-                  Confirmer
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Species Identifier Modal */}
-        {showSpeciesModal && (
-          <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-            <div className="bg-[#0d1a12] border border-[#2D5A27]/50 rounded-3xl p-4 max-w-sm w-full relative">
-              <button
-                onClick={() => setShowSpeciesModal(false)}
-                className="absolute top-3 right-3 text-white/60 hover:text-white text-sm bg-white/10 w-8 h-8 rounded-full flex items-center justify-center"
-              >
-                ✕
-              </button>
-              <SpeciesIdentifier />
-            </div>
-          </div>
-        )}
       </div>
     </MobilePageShell>
   );
