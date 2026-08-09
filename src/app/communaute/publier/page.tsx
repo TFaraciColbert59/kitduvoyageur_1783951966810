@@ -129,7 +129,7 @@ export default function PublierPostPage() {
         setIsDetectingLocation(false);
       },
       (error) => {
-        console.error('Geolocation error:', error);
+        console.warn('Geolocation error:', error?.message || `Code ${error?.code}` || error);
         setLocation('Chartreuse, France (Position approximative)');
         setIsDetectingLocation(false);
       },

@@ -1,18 +1,18 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import type { FilterStates } from './types';
+import type { FilterState } from './types';
 
 interface ExplorerFilterSheetProps {
   open: boolean;
   onClose: () => void;
-  filters: FilterStates;
-  onChange: (f: FilterStates) => void;
+  filters: FilterState;
+  onChange: (f: FilterState) => void;
 }
 
 const FILTER_SECTIONS = [
   {
-    key: 'type' as keyof FilterStates,
+    key: 'type' as keyof FilterState & string,
     label: 'Type d\'aventure',
     options: [
       { value: 'randonnee', label: 'Randonnée', icon: '🥾' },
@@ -24,7 +24,7 @@ const FILTER_SECTIONS = [
     ],
   },
   {
-    key: 'difficulty' as keyof FilterStates,
+    key: 'difficulty' as keyof FilterState & string,
     label: 'Difficulté',
     options: [
       { value: 'easy', label: 'Facile', icon: '🟢' },
@@ -34,7 +34,7 @@ const FILTER_SECTIONS = [
     ],
   },
   {
-    key: 'duration' as keyof FilterStates,
+    key: 'duration' as keyof FilterState & string,
     label: 'Durée',
     options: [
       { value: '2h', label: '< 2h', icon: '⚡' },
@@ -44,7 +44,7 @@ const FILTER_SECTIONS = [
     ],
   },
   {
-    key: 'ambiance' as keyof FilterStates,
+    key: 'ambiance' as keyof FilterState & string,
     label: 'Ambiance',
     options: [
       { value: 'montagne', label: 'Montagne', icon: '🏔' },

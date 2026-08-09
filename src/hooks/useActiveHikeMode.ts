@@ -361,7 +361,7 @@ export function useActiveHikeMode(): ActiveHikeModeState {
             });
           },
           (error) => {
-            console.error('Geolocation error:', error);
+            console.warn('Geolocation error:', error?.message || `Code ${error?.code}` || error);
           },
           { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
         );
