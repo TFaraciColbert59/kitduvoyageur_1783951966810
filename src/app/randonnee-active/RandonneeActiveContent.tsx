@@ -269,7 +269,7 @@ export default function RandonneeActiveContent() {
         )}
 
         {/* Map */}
-        <div style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }}>
+        <div style={{ width: '100%', height: '100%', position: 'absolute', inset: 0, zIndex: 1 }}>
           <ExplorerMap
             trails={[]}
             selectedTrailId={null}
@@ -278,15 +278,65 @@ export default function RandonneeActiveContent() {
           />
         </div>
 
+        {/* Top Header Bar */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 16,
+            left: 16,
+            right: 16,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: 'rgba(11, 31, 23, 0.85)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(163, 196, 163, 0.2)',
+            borderRadius: 16,
+            padding: '10px 14px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button
+              onClick={() => router.push('/explorer')}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.1)',
+                border: 'none',
+                color: '#FBFAF6',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 14,
+                cursor: 'pointer',
+              }}
+              aria-label="Retour"
+            >
+              ←
+            </button>
+            <div>
+              <p style={{ color: '#FBFAF6', fontWeight: 700, fontSize: 14, lineHeight: 1 }}>
+                Randonnée Active
+              </p>
+              <p style={{ color: '#A3C4A3', fontSize: 10, marginTop: 2, fontFamily: 'monospace' }}>
+                {isPaused ? '⏸️ En pause' : '🟢 Suivi GPS actif'}
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Off-route alert */}
         {stats.isOffRoute && stats.deviation && !offAlertHidden && (
           <div
             style={{
               position: 'absolute',
-              top: 16,
+              top: 72,
               left: 16,
               right: 16,
-              zIndex: 50,
+              zIndex: 60,
               background: 'rgba(58, 32, 8, 0.96)',
               backdropFilter: 'blur(24px) saturate(1.5)',
               border: '1px solid rgba(251, 191, 36, 0.6)',
@@ -393,10 +443,12 @@ export default function RandonneeActiveContent() {
             bottom: 0,
             left: 0,
             right: 0,
-            background: 'linear-gradient(to top, rgba(11, 31, 23, 0.95) 0%, rgba(11, 31, 23, 0.8) 70%, transparent 100%)',
-            padding: '24px 16px 16px',
+            zIndex: 50,
+            background: 'linear-gradient(to top, rgba(11, 31, 23, 0.96) 0%, rgba(11, 31, 23, 0.88) 75%, transparent 100%)',
+            padding: '24px 16px calc(76px + env(safe-area-inset-bottom)) 16px',
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
+            pointerEvents: 'auto',
           }}
         >
           {/* Route name */}
