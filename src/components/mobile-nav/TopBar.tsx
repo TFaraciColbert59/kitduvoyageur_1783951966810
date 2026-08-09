@@ -184,7 +184,7 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
         style={{ height: '52px', padding: '0 16px' }}
       >
         {/* Left */}
-        <div className="flex items-center gap-2" style={{ minWidth: '38px' }}>
+        <div className="flex items-center gap-2 relative z-10 pointer-events-auto" style={{ minWidth: '38px' }}>
           {shouldShowBack ? (
             <button
               onClick={handleBack}
@@ -252,7 +252,7 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
         {/* Center title (only when back arrow is shown) */}
         {shouldShowBack && (
           <span
-            className="absolute left-1/2 -translate-x-1/2 max-w-[55vw] truncate text-center"
+            className="absolute left-1/2 -translate-x-1/2 max-w-[55vw] truncate text-center pointer-events-none z-0"
             style={{
               fontSize: '17px',
               fontWeight: 600,
@@ -265,7 +265,7 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
         )}
 
         {/* Right actions */}
-        <div className="flex items-center gap-1" style={{ minWidth: '38px', justifyContent: 'flex-end' }}>
+        <div className="flex items-center gap-1 relative z-10 pointer-events-auto" style={{ minWidth: '38px', justifyContent: 'flex-end' }}>
           {/* Search — visible on all pages */}
           <button
             onClick={() => {

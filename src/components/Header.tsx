@@ -35,7 +35,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-[1000px] px-4 transition-all duration-300">
+      <header className="hidden md:block fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-[1000px] px-4 transition-all duration-300">
         <div
           className={`w-full rounded-full px-5 transition-all duration-300 flex items-center justify-between ${
             scrolled
