@@ -11,6 +11,7 @@ interface DesktopRightPanelProps {
   distanceKm?: number;
   remainingDistanceKm?: number;
   weatherCondition?: string;
+  routeName?: string;
   onAskCopilot?: (question: string) => void;
 }
 
@@ -22,20 +23,21 @@ function formatDuration(seconds: number): string {
 }
 
 export default function DesktopRightPanel({
-  averageSpeedKmH = 3.0,
-  durationSeconds = 8280,
-  currentSpeedKmH = 3.4,
-  elevationGainM = 420,
-  elevationLossM = 45,
-  distanceKm = 6.8,
-  remainingDistanceKm = 7.4,
-  weatherCondition = 'Ciel dégagé',
+  averageSpeedKmH = 0,
+  durationSeconds = 0,
+  currentSpeedKmH = 0,
+  elevationGainM = 0,
+  elevationLossM = 0,
+  distanceKm = 0,
+  remainingDistanceKm = 0,
+  weatherCondition = 'Chargement…',
+  routeName,
 }: DesktopRightPanelProps) {
   const [inputText, setInputText] = useState('');
   const [chatMessages, setChatMessages] = useState<Array<{ sender: 'ai' | 'user'; text: string }>>([
     {
       sender: 'ai',
-      text: `Il reste ${remainingDistanceKm.toFixed(1)} km et +780 m jusqu'à Chamechaude. À votre rythme actuel, arrivée vers 15h42. Météo stable jusqu'à 16h.`,
+      text: `Bonjour ! Je suis votre copilote LKDV pour ${routeName || 'votre randonnée'}. Posez-moi vos questions de météo, parcours ou points d'intérêt.`,
     },
   ]);
 
@@ -169,10 +171,10 @@ export default function DesktopRightPanel({
       <div className="bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#0B1F17]/07 rounded-2xl shadow-[0_12px_32px_rgba(11,31,23,0.10),0_2px_8px_rgba(11,31,23,0.04)] overflow-hidden p-4 space-y-3">
         <div className="flex justify-between items-baseline">
           <span className="text-[11px] uppercase tracking-widest text-[#6B7A72] font-semibold">
-            Copilote <em className="font-serif italic text-[#17402C] font-normal">Chartreuse</em>
+            Copilote <em className="font-serif italic text-[#17402C] font-normal">LKDV IA</em>
           </span>
-          <span className="font-mono text-[10px] text-[#8B978F] tracking-wide font-semibold">
-            247 voyageurs
+          <span className="font-mono text-[10px] text-[#17402C] tracking-wide font-semibold">
+            ● EN LIGNE
           </span>
         </div>
 

@@ -61,26 +61,35 @@ export default function HikingCockpitPage() {
         const { data, error } = await query;
         if (!error && data && data.length > 0) {
           const r = data[0];
+          const startLat = Number(r.start_latitude) || 45.2833;
+          const startLon = Number(r.start_longitude) || 5.8667;
+          
           setDbRouteData({
-            name: r.name || 'Chamechaude',
-            distanceKm: Number(r.distance_km) || 14.2,
-            elevationGainM: Number(r.elevation_gain_m) || 1200,
-            startLat: Number(r.start_latitude) || 45.2833,
-            startLon: Number(r.start_longitude) || 5.8667,
+            name: r.name || 'Itinéraire',
+            distanceKm: Number(r.distance_km) || 0,
+            elevationGainM: Number(r.elevation_gain_m) || 0,
+            startLat,
+            startLon,
           });
+
+          // Safely parse GeoJSON geometry if string
+          let parsedGeom = r.geometry;
+          if (typeof r.geometry === 'string') {
+            try { parsedGeom = JSON.parse(r.geometry); } catch { /* ignore */ }
+          }
 
           const formattedTrails = data.map((t: any) => ({
             id: String(t.id),
             name: t.name || 'Randonnée',
-            lat: Number(t.start_latitude) || 45.2833,
-            lng: Number(t.start_longitude) || 5.8667,
-            distance_km: Number(t.distance_km) || 14.2,
+            lat: Number(t.start_latitude) || startLat,
+            lng: Number(t.start_longitude) || startLon,
+            distance_km: Number(t.distance_km) || 0,
             duration_hours: 4.5,
             difficulty: 'modérée',
-            elevation_gain: Number(t.elevation_gain_m) || 1200,
+            elevation_gain: Number(t.elevation_gain_m) || 0,
             terrain_type: 'Montagne',
             family_friendly: false,
-            geojson: t.geometry || null,
+            geojson: parsedGeom || null,
           }));
           setMapTrails(formattedTrails);
         }
@@ -198,7 +207,52 @@ export default function HikingCockpitPage() {
 
   const userLoc: [number, number] | null = currentPos
     ? [currentPos.latitude, currentPos.longitude]
-    : [45.2833, 5.8667]; // Chartreuse default
+    : (dbRouteData ? [dbRouteData.startLat, dbRouteData.startLon] : null);
+
+  const totalDistanceKm = dbRouteData?.distanceKm || hikingStore.routeTotalKm || 0;
+  const currentDistanceKm = hikingStore.distanceKm || 0;
+  const remainingDistanceKm = totalDistanceKm > 0 ? Math.max(0, totalDistanceKm - currentDistanceKm) : 0;
+  const progressPct = totalDistanceKm > 0 ? Math.min(100, Math.round((currentDistanceKm / totalDistanceKm) * 100)) : 0;
+
+  const gpsStatusStr = currentPos?.accuracy
+    ? `Précis · ${Math.round(currentPos.accuracy)} m`
+    : hikingStore.isActive
+    ? 'GPS Actif'
+    : 'Recherche GPS…';
+
+  const formatDurationStr = (sec: number) => {
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    if (h > 0) return `${h}h${m.toString().padStart(2, '0')}`;
+    return `${m}m`;
+  };
+
+  const waypointsList = [
+    {
+      id: 'wp-start',
+      name: 'Départ ·',
+      italicPart: dbRouteData?.name || 'Début',
+      meta: `0 KM · ${dbRouteData?.startLat ? `${dbRouteData.startLat.toFixed(2)}°N` : 'Départ'}`,
+      status: currentDistanceKm > 0 ? ('done' as const) : ('current' as const),
+      iconType: 'check' as const,
+    },
+    ...(currentDistanceKm > 0 ? [{
+      id: 'wp-current',
+      name: 'En cours ·',
+      italicPart: 'position GPS',
+      meta: `${currentDistanceKm.toFixed(1)} KM · +${Math.round(hikingStore.elevationGainM || 0)}m`,
+      status: 'current' as const,
+      iconType: 'dot' as const,
+    }] : []),
+    ...(totalDistanceKm > 0 ? [{
+      id: 'wp-end',
+      name: 'Arrivée ·',
+      italicPart: dbRouteData?.name || 'Sommet',
+      meta: `${totalDistanceKm.toFixed(1)} KM · +${Math.round(dbRouteData?.elevationGainM || 0)}m`,
+      status: 'future' as const,
+      iconType: 'summit' as const,
+    }] : []),
+  ];
 
   const showCompletionScreen = isCompleted || hikingStore.state === 'COMPLETED';
 
@@ -207,12 +261,12 @@ export default function HikingCockpitPage() {
       <div className="relative w-full h-full overflow-hidden bg-[#FBFAF6]">
           {showCompletionScreen ? (
             <CompletionView
-              routeName={routeIdParam ? `Itinéraire #${routeIdParam}` : 'Chamechaude'}
-              distanceKm={hikingStore.distanceKm || 14.2}
-              durationSeconds={hikingStore.durationSeconds || 19080}
-              elevationGainM={hikingStore.elevationGainM || 620}
-              averageSpeedKmH={hikingStore.averageSpeedKmH || 3.1}
-              maxAltitudeM={2082}
+              routeName={dbRouteData?.name || (routeIdParam ? `Itinéraire #${routeIdParam}` : 'Randonnée')}
+              distanceKm={currentDistanceKm}
+              durationSeconds={hikingStore.durationSeconds}
+              elevationGainM={hikingStore.elevationGainM}
+              averageSpeedKmH={hikingStore.averageSpeedKmH}
+              maxAltitudeM={currentPos?.altitude ? Math.round(currentPos.altitude) : null}
               onViewCarnet={() => {
                 if (savedSessionId) {
                   router.push(`/carnets?sessionId=${savedSessionId}`);
@@ -224,7 +278,7 @@ export default function HikingCockpitPage() {
                 if (navigator.share) {
                   navigator.share({
                     title: 'Randonnée terminée !',
-                    text: `J'ai terminé ma randonnée Chamechaude avec LKDV !`,
+                    text: `J'ai terminé ma randonnée ${dbRouteData?.name || ''} avec LKDV !`,
                     url: window.location.href,
                   }).catch(() => {});
                 } else {
@@ -238,6 +292,7 @@ export default function HikingCockpitPage() {
               {/* Map Layer */}
               <DesktopMapOverlay
                 userLoc={userLoc}
+                userPositions={hikingStore.positions}
                 trails={mapTrails}
                 selectedTrailId={routeIdParam}
                 isNightMode={isNightMode}
@@ -246,44 +301,45 @@ export default function HikingCockpitPage() {
 
               {/* Floating TopBar */}
               <DesktopTopBar
-                gpsStatus="Précis · 4 m"
-                headingDeg={deviceHeading || 24}
-                cardinalDir="NNE"
-                tempC={hikingStore.weather?.tempC ?? 21}
-                weatherCondition={hikingStore.weather?.condition ?? 'Dégagé'}
-                batteryLevel={hikingStore.batteryLevel ?? 74}
-                batteryHours="6 h"
-                userName="C"
+                gpsStatus={gpsStatusStr}
+                headingDeg={deviceHeading}
+                tempC={hikingStore.weather?.tempC ?? null}
+                weatherCondition={hikingStore.weather?.condition ?? 'Supervision active'}
+                batteryLevel={hikingStore.batteryLevel}
+                routeName={dbRouteData?.name || hikingStore.routeName || (routeIdParam ? `Itinéraire #${routeIdParam}` : 'Suivi libre')}
+                totalDistanceKm={totalDistanceKm}
+                elevationGainM={dbRouteData?.elevationGainM || hikingStore.elevationGainM || 0}
                 onOpenWeather={() => setActiveTab('copilot')}
               />
 
               {/* Left Panel: Waypoints & Progression */}
               <DesktopLeftPanel
-                distanceKm={hikingStore.distanceKm || 6.8}
-                totalDistanceKm={dbRouteData?.distanceKm || 14.2}
-                progressPercent={hikingStore.progressPercent || 48}
-                startTime="05:47"
-                etaTime="15:42"
-                elapsedTimeStr="2h18"
-                maxAltitudeM={2082}
+                distanceKm={currentDistanceKm}
+                totalDistanceKm={totalDistanceKm}
+                progressPercent={progressPct}
+                startTime={hikingStore.isActive ? 'En cours' : '--:--'}
+                elapsedTimeStr={formatDurationStr(hikingStore.durationSeconds)}
+                maxAltitudeM={currentPos?.altitude ? Math.round(currentPos.altitude) : undefined}
+                waypoints={waypointsList}
               />
 
               {/* Right Panel: Live Stats & Copilot */}
               <DesktopRightPanel
-                averageSpeedKmH={hikingStore.averageSpeedKmH || 3.0}
-                durationSeconds={hikingStore.durationSeconds || 8280}
-                currentSpeedKmH={hikingStore.currentSpeedKmH || 3.4}
-                elevationGainM={hikingStore.elevationGainM || 420}
-                elevationLossM={45}
-                distanceKm={hikingStore.distanceKm || 6.8}
-                remainingDistanceKm={Math.max(0, 14.2 - (hikingStore.distanceKm || 6.8))}
-                weatherCondition={hikingStore.weather?.condition || 'Ciel dégagé'}
+                averageSpeedKmH={hikingStore.averageSpeedKmH}
+                durationSeconds={hikingStore.durationSeconds}
+                currentSpeedKmH={hikingStore.currentSpeedKmH}
+                elevationGainM={hikingStore.elevationGainM || 0}
+                elevationLossM={0}
+                distanceKm={currentDistanceKm}
+                remainingDistanceKm={remainingDistanceKm}
+                weatherCondition={hikingStore.weather?.condition || 'Supervision météo active'}
+                routeName={dbRouteData?.name || hikingStore.routeName || 'votre randonnée'}
               />
 
               {/* Off-Route / Weather Alert Banner */}
               <ContextualInsight
                 isOffRoute={hikingStore.isOffRoute}
-                deviationMeters={hikingStore.deviation?.distanceM ?? 80}
+                deviationMeters={hikingStore.deviation?.distanceM ?? null}
                 nextPoi={hikingStore.nextPoi}
                 weather={hikingStore.weather}
                 isPaused={hikingStore.isPaused}
@@ -297,7 +353,7 @@ export default function HikingCockpitPage() {
                 activeTab={activeTab}
                 isActive={hikingStore.isActive}
                 isPaused={hikingStore.isPaused}
-                durationSeconds={hikingStore.durationSeconds || 8327}
+                durationSeconds={hikingStore.durationSeconds}
                 onTabSelect={(tab) => {
                   if (tab === 'voix' || tab === 'moment') {
                     setActiveTab('capture');
@@ -313,12 +369,12 @@ export default function HikingCockpitPage() {
               <StatsSheet
                 isOpen={activeTab === 'stats'}
                 onClose={() => setActiveTab(null)}
-                distanceKm={hikingStore.distanceKm || 6.8}
-                durationSeconds={hikingStore.durationSeconds || 8280}
-                elevationGainM={hikingStore.elevationGainM || 420}
-                currentSpeedKmH={hikingStore.currentSpeedKmH || 3.4}
-                averageSpeedKmH={hikingStore.averageSpeedKmH || 3.0}
-                paceMinPerKm={hikingStore.paceMinPerKm || 18.6}
+                distanceKm={currentDistanceKm}
+                durationSeconds={hikingStore.durationSeconds}
+                elevationGainM={hikingStore.elevationGainM || 0}
+                currentSpeedKmH={hikingStore.currentSpeedKmH}
+                averageSpeedKmH={hikingStore.averageSpeedKmH}
+                paceMinPerKm={hikingStore.paceMinPerKm}
               />
 
               <CaptureSheet
@@ -330,9 +386,9 @@ export default function HikingCockpitPage() {
               <CopilotSheet
                 isOpen={activeTab === 'copilot'}
                 onClose={() => setActiveTab(null)}
-                distanceKm={hikingStore.distanceKm || 6.8}
-                remainingDistanceKm={Math.max(0, 14.2 - (hikingStore.distanceKm || 6.8))}
-                elevationGainM={hikingStore.elevationGainM ?? 420}
+                distanceKm={currentDistanceKm}
+                remainingDistanceKm={remainingDistanceKm}
+                elevationGainM={hikingStore.elevationGainM || 0}
                 weatherCondition={hikingStore.weather?.condition}
               />
 

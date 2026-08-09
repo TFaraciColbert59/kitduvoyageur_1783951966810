@@ -11,6 +11,7 @@ interface ExplorerMapProps {
   selectedTrailId: string | null;
   onTrailClick: (trail: MapTrail) => void;
   userLocation?: [number, number] | null;
+  userPositions?: Array<{ latitude: number; longitude: number }>;
   onMapReady?: () => void;
   onLocationUpdate?: (loc: [number, number]) => void;
 }
@@ -28,11 +29,12 @@ const OSM_TILE = {
 type TileMode = 'topo' | 'osm';
 type LocationState = 'idle' | 'locating' | 'located' | 'denied' | 'unavailable';
 
-export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, userLocation, onMapReady, onLocationUpdate }: ExplorerMapProps) {
+export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, userLocation, userPositions, onMapReady, onLocationUpdate }: ExplorerMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const tileLayerRef = useRef<ReturnType<typeof import('leaflet')['tileLayer']> | null>(null);
   const userMarkerRef = useRef<import('leaflet').Marker | null>(null);
+  const userTrackPolylineRef = useRef<import('leaflet').Polyline | null>(null);
   const [mapInstance, setMapInstance] = useState<LeafletMap | null>(null);
   const [tileMode, setTileMode] = useState<TileMode>('topo');
   const [mapReady, setMapReady] = useState(false);
@@ -156,10 +158,29 @@ export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, use
         iconAnchor: [7, 7],
       });
       const marker = L.marker(userLocation, { icon });
-      marker.addTo(mapRef.current!);
-      userMarkerRef.current = marker;
     });
   }, [userLocation, mapReady]);
+
+  // Live GPS Track Polyline (from userPositions)
+  useEffect(() => {
+    if (!mapRef.current || !mapReady || !userPositions || userPositions.length < 2) return;
+    import('leaflet').then((L) => {
+      const latLngs = userPositions.map((p) => [p.latitude, p.longitude] as [number, number]);
+      if (userTrackPolylineRef.current) {
+        userTrackPolylineRef.current.setLatLngs(latLngs);
+      } else {
+        const polyline = L.polyline(latLngs, {
+          color: '#ef4444',
+          weight: 5,
+          opacity: 0.9,
+          lineCap: 'round',
+          lineJoin: 'round',
+        });
+        polyline.addTo(mapRef.current!);
+        userTrackPolylineRef.current = polyline;
+      }
+    });
+  }, [userPositions, mapReady]);
 
   // Auto-zoom to selected trail
   const fitToTrail = useCallback((trail: MapTrail) => {

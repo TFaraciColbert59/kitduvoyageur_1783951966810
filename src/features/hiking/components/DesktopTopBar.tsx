@@ -11,19 +11,25 @@ interface DesktopTopBarProps {
   batteryLevel?: number | null;
   batteryHours?: string;
   userName?: string;
+  routeName?: string;
+  totalDistanceKm?: number;
+  elevationGainM?: number;
   onOpenSafety?: () => void;
   onOpenWeather?: () => void;
 }
 
 export default function DesktopTopBar({
-  gpsStatus = 'Précis · 4 m',
-  headingDeg = 24,
-  cardinalDir = 'NNE',
-  tempC = 21,
-  weatherCondition = 'Dégagé',
-  batteryLevel = 74,
-  batteryHours = '6 h',
-  userName = 'C',
+  gpsStatus = 'GPS actif',
+  headingDeg = 0,
+  cardinalDir = 'N',
+  tempC = null,
+  weatherCondition = 'Chargement…',
+  batteryLevel = null,
+  batteryHours,
+  userName = 'Tony',
+  routeName,
+  totalDistanceKm = 0,
+  elevationGainM = 0,
   onOpenWeather,
 }: DesktopTopBarProps) {
   return (
@@ -42,28 +48,23 @@ export default function DesktopTopBar({
 
       {/* Breadcrumb */}
       <div className="flex items-center gap-3 px-5 h-11 bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#0B1F17]/07 rounded-full shadow-[0_12px_32px_rgba(11,31,23,0.10),0_2px_8px_rgba(11,31,23,0.04)]">
-        <span className="font-mono text-[10px] tracking-widest text-[#17402C] font-semibold px-2 py-0.5 bg-[#DDE9D6] rounded">
-          J2 / 3
+        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        <span className="text-xs font-semibold text-[#0B1F17] truncate max-w-[240px]">
+          {routeName || 'Suivi GPS Actif'}
         </span>
-        <span className="font-mono text-[10px] tracking-wider text-[#6B7A72] uppercase">
-          Chartreuse
-        </span>
-        <span className="text-[#AEB7B1] flex items-center">
-          <svg className="w-3 h-3 stroke-current stroke-[2]" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 6l6 6-6 6" />
-          </svg>
-        </span>
-        <span className="text-xs font-medium text-[#0B1F17]">
-          Habert → <em className="font-serif italic text-[#17402C] font-normal">Chamechaude</em>
-        </span>
-        <span className="text-[#AEB7B1] flex items-center">
-          <svg className="w-3 h-3 stroke-current stroke-[2]" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 6l6 6-6 6" />
-          </svg>
-        </span>
-        <span className="font-mono text-[10px] tracking-wider text-[#6B7A72]">
-          14,2 km · +1 200 m
-        </span>
+        {(totalDistanceKm > 0 || elevationGainM > 0) && (
+          <>
+            <span className="text-[#AEB7B1] flex items-center">
+              <svg className="w-3 h-3 stroke-current stroke-[2]" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 6l6 6-6 6" />
+              </svg>
+            </span>
+            <span className="font-mono text-[10px] tracking-wider text-[#6B7A72]">
+              {totalDistanceKm > 0 ? `${totalDistanceKm.toFixed(1)} km` : ''}
+              {elevationGainM > 0 ? ` · +${Math.round(elevationGainM)} m` : ''}
+            </span>
+          </>
+        )}
       </div>
 
       <div className="flex-1" />

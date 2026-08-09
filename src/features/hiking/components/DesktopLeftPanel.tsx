@@ -23,65 +23,18 @@ interface DesktopLeftPanelProps {
 }
 
 export default function DesktopLeftPanel({
-  distanceKm = 6.8,
-  totalDistanceKm = 14.2,
-  progressPercent = 48,
-  startTime = '05:47',
-  etaTime = '15:42',
-  elapsedTimeStr = '2h18',
-  maxAltitudeM = 2082,
-  waypoints = [
-    {
-      id: 'wp1',
-      name: 'Col de Porte ·',
-      italicPart: 'départ',
-      meta: '05:47 · 1 326 M · 0 KM',
-      status: 'done',
-      iconType: 'check',
-    },
-    {
-      id: 'wp2',
-      name: 'Col du',
-      italicPart: 'Coq',
-      meta: '07:32 · 1 434 M · 3,2 KM',
-      status: 'done',
-      iconType: 'check',
-    },
-    {
-      id: 'wp3',
-      name: 'Habert ·',
-      italicPart: 'refuge',
-      meta: '08:58 · 1 640 M · 5,4 KM · PAUSE 16 MIN',
-      status: 'done',
-      iconType: 'check',
-    },
-    {
-      id: 'wp4',
-      name: 'Crête de',
-      italicPart: 'Bovinant',
-      meta: 'EN COURS · 1 780 M · 6,8 KM',
-      status: 'current',
-      iconType: 'dot',
-    },
-    {
-      id: 'wp5',
-      name: 'Panorama ·',
-      italicPart: 'Grésivaudan',
-      meta: 'ETA 11:42 · 1 842 M · 8,1 KM',
-      status: 'future',
-      iconType: 'photo',
-    },
-    {
-      id: 'wp6',
-      name: 'Sommet ·',
-      italicPart: 'Chamechaude',
-      meta: 'ETA 15:42 · 2 082 M · 14,2 KM',
-      status: 'future',
-      iconType: 'summit',
-    },
-  ],
+  distanceKm = 0,
+  totalDistanceKm = 0,
+  progressPercent = 0,
+  startTime = '--:--',
+  etaTime,
+  elapsedTimeStr = '00m',
+  maxAltitudeM,
+  waypoints = [],
 }: DesktopLeftPanelProps) {
-  const pct = Math.min(100, Math.max(0, progressPercent ?? (distanceKm / totalDistanceKm) * 100));
+  const pct = totalDistanceKm > 0
+    ? Math.min(100, Math.max(0, progressPercent ?? (distanceKm / totalDistanceKm) * 100))
+    : 0;
 
   return (
     <div className="absolute top-[96px] left-5 w-[320px] max-h-[calc(100%-180px)] flex flex-col gap-3.5 z-30 select-none overflow-y-auto custom-scrollbar">

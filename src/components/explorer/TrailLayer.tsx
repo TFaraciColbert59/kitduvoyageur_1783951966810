@@ -88,10 +88,25 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
         // 1. Render GeoJSON Trace ONLY IF SELECTED (Hide by default)
         if (trail.geojson && isSelected) {
           try {
-            const geoJsonLayer = L.geoJSON(trail.geojson as any, {
+            const parsedGeo = typeof trail.geojson === 'string' ? JSON.parse(trail.geojson) : trail.geojson;
+            
+            // Outer casing for high contrast
+            const casingLayer = L.geoJSON(parsedGeo as any, {
               style: {
-                color: '#1C2620',
-                weight: 6,
+                color: '#FBFAF6',
+                weight: 9,
+                opacity: 0.9,
+                lineCap: 'round',
+                lineJoin: 'round',
+              },
+            });
+            linesGroup.addLayer(casingLayer);
+
+            // Core trail line
+            const geoJsonLayer = L.geoJSON(parsedGeo as any, {
+              style: {
+                color: '#17402C',
+                weight: 5,
                 opacity: 1.0,
                 lineCap: 'round',
                 lineJoin: 'round',
@@ -107,7 +122,7 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
             try {
               const bounds = geoJsonLayer.getBounds();
               if (bounds.isValid()) {
-                map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14, animate: true });
+                map.fitBounds(bounds, { padding: [80, 80], maxZoom: 15, animate: true });
               }
             } catch {
               // ignore bounds fitting errors

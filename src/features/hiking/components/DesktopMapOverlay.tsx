@@ -7,6 +7,7 @@ import { POI } from '../types';
 
 interface DesktopMapOverlayProps {
   userLoc: [number, number] | null;
+  userPositions?: Array<{ latitude: number; longitude: number }>;
   trails?: MapTrail[];
   selectedTrailId?: string | null;
   isNightMode?: boolean;
@@ -18,6 +19,7 @@ interface DesktopMapOverlayProps {
 
 export default function DesktopMapOverlay({
   userLoc,
+  userPositions,
   trails = [],
   selectedTrailId,
   isNightMode = false,
@@ -55,30 +57,35 @@ export default function DesktopMapOverlay({
             selectedTrailId={selectedTrailId || null}
             onTrailClick={() => {}}
             userLocation={userLoc}
+            userPositions={userPositions}
           />
         </div>
       </div>
 
       {/* Floating Center Turn Instruction Card */}
-      <div className="absolute top-[96px] left-1/2 -translate-x-1/2 px-5 py-3.5 bg-[#FBFAF6]/96 backdrop-blur-2xl border border-[#0B1F17]/07 rounded-2xl shadow-[0_12px_32px_rgba(11,31,23,0.10),0_2px_8px_rgba(11,31,23,0.04)] flex items-center gap-3.5 z-20 min-w-[380px] select-none">
-        <div className="w-14 h-14 rounded-2xl bg-[#17402C] text-white flex items-center justify-center flex-shrink-0 relative shadow-md">
-          <svg className="w-7 h-7 stroke-current stroke-[2.2] fill-none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 20V8M12 8l-4 4M12 8l4 4" />
-          </svg>
-          <span className="absolute -inset-1 rounded-2xl border-2 border-[#17402C] opacity-25 animate-ping pointer-events-none" />
+      {nextPoi && (
+        <div className="absolute top-[96px] left-1/2 -translate-x-1/2 px-5 py-3.5 bg-[#FBFAF6]/96 backdrop-blur-2xl border border-[#0B1F17]/07 rounded-2xl shadow-[0_12px_32px_rgba(11,31,23,0.10),0_2px_8px_rgba(11,31,23,0.04)] flex items-center gap-3.5 z-20 min-w-[360px] max-w-[90vw] select-none">
+          <div className="w-12 h-12 rounded-2xl bg-[#17402C] text-white flex items-center justify-center flex-shrink-0 relative shadow-md">
+            <svg className="w-6 h-6 stroke-current stroke-[2.2] fill-none" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 20V8M12 8l-4 4M12 8l4 4" />
+            </svg>
+            <span className="absolute -inset-1 rounded-2xl border-2 border-[#17402C] opacity-25 animate-ping pointer-events-none" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-mono text-[10px] tracking-widest uppercase font-semibold text-[#17402C] leading-none">
+              Prochain point · Dans {Math.round(nextPoi.distanceRemainingM)} m
+            </div>
+            <div className="text-base font-bold tracking-tight text-[#0B1F17] mt-1 truncate">
+              {nextPoi.name}
+            </div>
+            {nextPoi.category && (
+              <div className="text-[10px] text-[#6B7A72] font-mono tracking-wide mt-0.5 uppercase">
+                {nextPoi.category}
+              </div>
+            )}
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="font-mono text-[10px] tracking-widest uppercase font-semibold text-[#17402C] leading-none">
-            Dans {Math.round(distM)} m
-          </div>
-          <div className="text-xl font-medium tracking-tight text-[#0B1F17] mt-0.5">
-            {turnTitle}
-          </div>
-          <div className="text-[11px] text-[#6B7A72] font-mono tracking-wide mt-0.5 truncate">
-            CHEMIN DES CRÊTES · GR9 · +140 M
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Floating Map Tools (Right side above Dock) */}
       <div className="absolute right-[380px] bottom-[40px] flex flex-col gap-1.5 z-30 select-none">
