@@ -180,6 +180,10 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  button, a, [role="button"] {
+    touch-action: manipulation;
+  }
+
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;

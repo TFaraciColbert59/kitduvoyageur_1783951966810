@@ -49,7 +49,7 @@ export default function TopHUD({
       <div className="flex items-center gap-2">
         <button
           onClick={onBack}
-          className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg backdrop-blur-xl border transition-transform active:scale-95 ${
+          className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg backdrop-blur-xl border transition-transform active:scale-95 touch-manipulation cursor-pointer ${
             isNightMode
               ? 'bg-[#0B1F17]/80 border-[#C6DCBE]/15 text-white'
               : 'bg-[#FBFAF6]/85 border-[#0B1F17]/06 text-[#0B1F17]'

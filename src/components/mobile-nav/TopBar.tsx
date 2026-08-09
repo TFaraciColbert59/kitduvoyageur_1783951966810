@@ -141,29 +141,31 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
   };
 
   const mBtnStandard: React.CSSProperties = {
-    width: '38px',
-    height: '38px',
+    width: '44px',
+    height: '44px',
     borderRadius: '999px',
-    background: 'rgba(255,255,255,0.9)',
-    border: '1px solid rgba(11,31,23,0.06)',
+    background: 'rgba(255,255,255,0.92)',
+    border: '1px solid rgba(11,31,23,0.08)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     color: '#0B1F17',
+    touchAction: 'manipulation',
   };
 
   const mBtnOnImage: React.CSSProperties = {
-    width: '38px',
-    height: '38px',
+    width: '44px',
+    height: '44px',
     borderRadius: '999px',
-    background: 'rgba(255,255,255,0.16)',
+    background: 'rgba(255,255,255,0.22)',
     backdropFilter: 'blur(20px)',
     WebkitBackdropFilter: 'blur(20px)',
-    border: '1px solid rgba(255,255,255,0.28)',
+    border: '1px solid rgba(255,255,255,0.35)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     color: '#fff',
+    touchAction: 'manipulation',
   };
 
   const mBtnStyle = isOnImage ? mBtnOnImage : mBtnStandard;
