@@ -10,11 +10,11 @@ interface HighlightItem {
 }
 
 interface CompletionViewProps {
-  routeName?: string;
+  routeName?: string | null;
   dateStr?: string;
   timeRangeStr?: string;
-  distanceKm: number;
-  durationSeconds: number;
+  distanceKm?: number | null;
+  durationSeconds?: number | null;
   elevationGainM?: number | null;
   averageSpeedKmH?: number | null;
   maxAltitudeM?: number | null;
@@ -24,7 +24,8 @@ interface CompletionViewProps {
   onEditCarnet?: () => void;
 }
 
-function formatDuration(seconds: number): string {
+function formatDuration(seconds: number | null | undefined): string {
+  if (seconds == null || seconds <= 0) return '—';
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   if (h > 0) return `${h}h${m.toString().padStart(2, '0')}`;
@@ -32,35 +33,21 @@ function formatDuration(seconds: number): string {
 }
 
 export default function CompletionView({
-  routeName = 'Chamechaude',
-  dateStr = 'Aujourd\'hui',
-  timeRangeStr = '08:30 → 14:18',
-  distanceKm = 14.2,
-  durationSeconds = 19080,
-  elevationGainM = 620,
-  averageSpeedKmH = 3.1,
-  maxAltitudeM = 2082,
-  highlights = [
-    {
-      icon: '🌅',
-      title: 'Lever de soleil · crête de Bovinant',
-      subtitle: '06:47 · 1 780 M · 1 PHOTO',
-    },
-    {
-      icon: '📸',
-      title: 'Panorama · vallée de Grésivaudan',
-      subtitle: '11:42 · 1 842 M · 3 PHOTOS',
-    },
-    {
-      icon: '🏔️',
-      title: 'Sommet atteint · 2 082 m',
-      subtitle: '14:24 · CHAMECHAUDE · +12 MIN AVANT ETA',
-    },
-  ],
+  routeName = null,
+  dateStr,
+  timeRangeStr,
+  distanceKm = 0,
+  durationSeconds = 0,
+  elevationGainM = null,
+  averageSpeedKmH = null,
+  maxAltitudeM = null,
+  highlights = [],
   onViewCarnet,
   onShare,
   onEditCarnet,
 }: CompletionViewProps) {
+  const displayDate = dateStr || new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+  const displayTimeRange = timeRangeStr || '';
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
@@ -86,11 +73,12 @@ export default function CompletionView({
             Randonnée · terminée
           </div>
           <h1 className="text-3xl font-medium tracking-tight leading-tight">
-            {routeName} <br />
+            {routeName || 'Randonnée'} <br />
             <em className="font-serif italic font-normal text-[#C6DCBE]">c&apos;est fait.</em>
           </h1>
           <p className="font-mono text-xs text-white/70 tracking-wider">
-            {dateStr} · {timeRangeStr}
+            {displayDate}
+            {displayTimeRange ? ` · ${displayTimeRange}` : ''}
           </p>
         </div>
 
@@ -101,7 +89,7 @@ export default function CompletionView({
               Distance
             </div>
             <div className="text-2xl font-medium tracking-tight mt-1">
-              {distanceKm.toFixed(1)}{' '}
+              {distanceKm != null ? distanceKm.toFixed(1) : '—'}{' '}
               <em className="font-serif italic font-normal text-sm text-[#A8C8A0]">km</em>
             </div>
             <div className="font-mono text-[9px] text-white/50 mt-0.5">Parcours complet</div>
@@ -112,11 +100,11 @@ export default function CompletionView({
               Dénivelé +
             </div>
             <div className="text-2xl font-medium tracking-tight mt-1">
-              +{elevationGainM || 620}{' '}
+              +{elevationGainM != null ? Math.round(elevationGainM) : '—'}{' '}
               <em className="font-serif italic font-normal text-sm text-[#A8C8A0]">m</em>
             </div>
             <div className="font-mono text-[9px] text-white/50 mt-0.5">
-              Max · {maxAltitudeM || 2082} m
+              Max · {maxAltitudeM != null ? Math.round(maxAltitudeM) : '—'} m
             </div>
           </div>
 
@@ -135,7 +123,7 @@ export default function CompletionView({
               Allure moyenne
             </div>
             <div className="text-2xl font-medium tracking-tight mt-1">
-              {(averageSpeedKmH || 3.1).toFixed(1)}{' '}
+              {(averageSpeedKmH != null && averageSpeedKmH > 0 ? averageSpeedKmH : 0).toFixed(1)}{' '}
               <em className="font-serif italic font-normal text-sm text-[#A8C8A0]">km/h</em>
             </div>
             <div className="font-mono text-[9px] text-white/50 mt-0.5">Rythme régulier</div>
@@ -160,7 +148,7 @@ export default function CompletionView({
             <circle cx="340" cy="25" r="5" fill="#A8C8A0" stroke="#06120C" strokeWidth="2" />
           </svg>
           <div className="relative z-10 self-start px-2.5 py-1 rounded-full bg-[#06120C]/80 backdrop-blur-md font-mono text-[10px] text-[#A8C8A0] tracking-wider border border-[#C6DCBE]/10">
-            {maxAltitudeM || 2082} M · {routeName.toUpperCase()}
+            {maxAltitudeM != null ? `${Math.round(maxAltitudeM)} M · ` : ''}{(routeName || 'RANDONNÉE').toUpperCase()}
           </div>
         </div>
 

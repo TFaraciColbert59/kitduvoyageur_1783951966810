@@ -18,7 +18,7 @@ interface ContextualInsightProps {
 
 export default function ContextualInsight({
   isOffRoute,
-  deviationMeters = 80,
+  deviationMeters = null,
   nextPoi,
   weather,
   isPaused,
@@ -75,7 +75,7 @@ export default function ContextualInsight({
             {priorityType === 'off-route' ? (
               <>Vous avez quitté <em className="font-serif italic font-normal">le sentier</em></>
             ) : priorityType === 'weather' ? (
-              <>Pluie probable <em className="font-serif italic font-normal">dans 28 min</em></>
+              <>Alerte <em className="font-serif italic font-normal">météo</em></>
             ) : priorityType === 'paused' ? (
               <>Randonnée <em className="font-serif italic font-normal">en pause</em></>
             ) : (
@@ -85,12 +85,16 @@ export default function ContextualInsight({
 
           <div className="text-[11px] opacity-80 font-mono tracking-wide mt-0.5 truncate">
             {priorityType === 'off-route'
-              ? `Dernière position connue · Rejoint à ${Math.round(deviationMeters ?? 80)}m`
+              ? deviationMeters != null
+                ? `Rejoint à ${Math.round(deviationMeters)} m du tracé`
+                : 'Hors du tracé · position GPS'
               : priorityType === 'weather'
-              ? weather?.alertMessage || 'Ciel dégagé → pluie forte · Abri le plus proche à 1,2 km'
+              ? weather?.alertMessage || 'Alerte météo — consulte un bulletin à jour'
               : priorityType === 'paused'
               ? 'Appuyez sur Reprendre pour continuer le tracking'
-              : `${Math.round(nextPoi?.distanceRemainingM || 180)} m restants`}
+              : nextPoi?.distanceRemainingM != null
+              ? `${Math.round(nextPoi.distanceRemainingM)} m restants`
+              : 'Prochain point à proximité'}
           </div>
         </div>
 

@@ -99,8 +99,8 @@ export default function AventureCard({
             marginTop: '8px',
           }}
         >
-          <span>{distance} km</span>
-          <span>+{elevation} m</span>
+          <span>{distance}</span>
+          <span>{elevation}</span>
           <span>{duration}</span>
         </div>
       </div>

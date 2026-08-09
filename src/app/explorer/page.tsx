@@ -640,10 +640,10 @@ export default function ExplorerPage() {
               <AventureCard
                 key={trail.id}
                 difficulty={getDifficultyLabel(trail.difficulty)}
-                location={trail.network || trail.terrain_type || 'Chartreuse'}
+                location={trail.network || trail.terrain_type || ''}
                 title={trail.name}
-                distance={trail.distance_km ?? 0}
-                elevation={trail.elevation_gain ?? 0}
+                distance={formatDistance(trail.distance_km)}
+                elevation={trail.elevation_gain != null && trail.elevation_gain != undefined ? `+${Math.round(trail.elevation_gain)} m` : '—'}
                 duration={formatDuration(trail.duration_hours)}
                 onClick={() => {
                   setSelectedTrailId(trail.id);

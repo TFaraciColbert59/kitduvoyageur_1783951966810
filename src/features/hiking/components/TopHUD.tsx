@@ -30,18 +30,18 @@ function formatDistance(km: number): string {
 
 export default function TopHUD({
   distanceKm,
-  routeTotalKm = 14.2,
+  routeTotalKm = null,
   durationSeconds,
-  elevationGainM = 420,
-  currentSpeedKmH = 3.0,
-  progressPercent = 48,
+  elevationGainM = null,
+  currentSpeedKmH = null,
+  progressPercent = null,
   routeName,
   isOffRoute = false,
   isNightMode = false,
   onBack,
 }: TopHUDProps) {
-  const totalKm = routeTotalKm || 14.2;
-  const computedProgress = progressPercent ?? Math.min(100, (distanceKm / totalKm) * 100);
+  const totalKm = routeTotalKm;
+  const computedProgress = progressPercent ?? (totalKm && totalKm > 0 ? Math.min(100, (distanceKm / totalKm) * 100) : 0);
 
   return (
     <div className="w-full flex flex-col gap-2 p-3 z-30 select-none">
@@ -83,16 +83,18 @@ export default function TopHUD({
           <div className="flex-1 min-w-0">
             <div className="font-mono text-[9px] tracking-widest uppercase text-[#6B7A72] leading-none">
               {isOffRoute
-                ? 'HORS PARCOURS · +80 M'
+                ? 'HORS PARCOURS'
                 : isNightMode
-                ? 'MODE NUIT · GPS PRÉCIS'
-                : 'SUR LE PARCOURS · GPS PRÉCIS'}
+                ? 'MODE NUIT · SUIVI GPS'
+                : 'SUIVI GPS'}
             </div>
             <div className="text-sm sm:text-base font-medium tracking-tight leading-tight mt-0.5 font-sans">
               {formatDistance(distanceKm)}{' '}
-              <em className="font-serif italic font-normal text-[#17402C]">
-                / {formatDistance(totalKm)}
-              </em>
+              {totalKm != null && totalKm > 0 && (
+                <em className="font-serif italic font-normal text-[#17402C]">
+                  / {formatDistance(totalKm)}
+                </em>
+              )}
             </div>
 
             {/* Visual Progress Bar */}
@@ -122,7 +124,7 @@ export default function TopHUD({
             Temps
           </div>
           <div className="text-sm font-medium leading-tight mt-0.5 font-mono">
-            {formatDuration(durationSeconds || 8280)}
+            {formatDuration(durationSeconds || 0)}
           </div>
         </div>
 
@@ -136,7 +138,7 @@ export default function TopHUD({
             Dénivelé
           </div>
           <div className="text-sm font-medium leading-tight mt-0.5 font-mono text-[#17402C]">
-            +{elevationGainM || 420}{' '}
+            +{elevationGainM != null ? Math.round(elevationGainM) : '—'}{' '}
             <em className="font-serif italic font-normal text-xs text-[#17402C]">m</em>
           </div>
         </div>
@@ -151,7 +153,7 @@ export default function TopHUD({
             Vitesse
           </div>
           <div className="text-sm font-medium leading-tight mt-0.5 font-mono">
-            {(currentSpeedKmH || 3.0).toFixed(1)}{' '}
+            {currentSpeedKmH != null && currentSpeedKmH > 0 ? currentSpeedKmH.toFixed(1) : '—'}{' '}
             <em className="font-serif italic font-normal text-xs text-[#17402C]">km/h</em>
           </div>
         </div>

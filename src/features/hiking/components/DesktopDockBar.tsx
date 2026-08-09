@@ -25,7 +25,7 @@ export default function DesktopDockBar({
   activeTab,
   isActive,
   isPaused,
-  durationSeconds = 8327,
+  durationSeconds = 0,
   onTabSelect,
   onToggleHike,
   onStopHike,

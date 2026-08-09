@@ -92,6 +92,14 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
       }
     } catch {}
 
+    // 2. Description réelle déjà générée en base (trail_metadata.ai_description) :
+    //    inutile de rappeler Gemini (économise le quota et évite les erreurs 429).
+    if (trail.ai_description) {
+      setDescription(trail.ai_description);
+      setLoadingAI(false);
+      return;
+    }
+
     async function generateDescription() {
       setDescription(null);
       setLoadingAI(true);
@@ -132,7 +140,9 @@ Ne sois pas redondant, ne fais pas juste la liste des chiffres, mais utilise-les
           }
         }
       } catch (err: any) {
-        console.error(err);
+        // Quota/rate-limit Gemini, réseau, etc. : silencieux côté console,
+        // on sert la description réelle stockée (ai_description) en repli.
+        console.warn('[TrailDetailPanel] Description IA indisponible:', err?.message || err);
         if (isMounted) {
           // Fallback gracefully if API quota is reached or network fails
           if (trail.ai_description) {

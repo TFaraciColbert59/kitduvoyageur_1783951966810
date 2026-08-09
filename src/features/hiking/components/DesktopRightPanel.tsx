@@ -53,9 +53,9 @@ export default function DesktopRightPanel({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          destination: 'Chartreuse (Chamechaude)',
-          difficulty: 'Modérée',
-          season: 'Été',
+          destination: routeName || null,
+          difficulty: '',
+          season: '',
           question: text,
         }),
       });
@@ -71,11 +71,16 @@ export default function DesktopRightPanel({
       /* fallback below */
     }
 
-    let reply = `D'après vos données (${distanceKm.toFixed(1)} km parcourus, D+ +${elevationGainM} m), votre itinéraire se déroule parfaitement. Météo : ${weatherCondition}.`;
-    if (text.includes('eau')) {
-      reply = 'La prochaine source d\'eau potable est à 450 m sur votre droite (Refuge du Habert).';
-    } else if (text.includes('courte')) {
-      reply = 'Une variante par le col du Coq permet de raccourcir le parcours de 2,3 km.';
+    let reply = [
+      routeName ? `Randonnée « ${routeName} »` : 'Randonnée en cours',
+      distanceKm != null ? `${distanceKm.toFixed(1)} km parcourus` : 'aucune distance enregistrée',
+      elevationGainM != null ? `+${Math.round(elevationGainM)} m` : null,
+      weatherCondition ? `météo : ${weatherCondition}` : null,
+    ].filter(Boolean).join(' · ') + '.';
+    if (text.toLowerCase().includes('eau')) {
+      reply = 'Je n\'ai pas de donnée fiable sur le prochain point d\'eau de ce tracé dans la base actuelle. Vérifie la carte officielle avant de partir.';
+    } else if (text.toLowerCase().includes('courte')) {
+      reply = 'Je n\'ai pas de variante de raccourci certifiée pour cette randonnée. Suis le tracé officiel.';
     }
     setChatMessages((prev) => [...prev, { sender: 'ai', text: reply }]);
   };
@@ -89,7 +94,7 @@ export default function DesktopRightPanel({
             Stats en direct
           </span>
           <span className="font-mono text-[10px] text-[#8B978F] tracking-wide">
-            Mise à jour · 09:41
+            En temps réel
           </span>
         </div>
 
@@ -106,7 +111,7 @@ export default function DesktopRightPanel({
               <em className="font-serif italic font-normal text-base text-[#C6DCBE] ml-0.5">km/h</em>
             </div>
             <div className="font-mono text-[9px] text-[#C6DCBE]/70 tracking-wide mt-1.5">
-              ▲ RYTHME RÉGULIER · +0,2 KM/H DEPUIS L&apos;HABERT
+              RYTHME EN DIRECT
             </div>
           </div>
 
@@ -119,7 +124,7 @@ export default function DesktopRightPanel({
               {formatDuration(durationSeconds)}
             </div>
             <div className="font-mono text-[9px] text-[#6B7A72] tracking-wide mt-1.5">
-              PAUSES · 16 MIN
+              TEMPS DE DÉPLACEMENT
             </div>
           </div>
 
@@ -133,7 +138,7 @@ export default function DesktopRightPanel({
               <em className="font-serif italic font-normal text-xs text-[#17402C] ml-0.5">km/h</em>
             </div>
             <div className="font-mono text-[9px] text-[#6B7A72] tracking-wide mt-1.5">
-              MONTÉE MODÉRÉE
+              VITESSE DU MOMENT
             </div>
           </div>
 
@@ -143,11 +148,11 @@ export default function DesktopRightPanel({
               D+ · dénivelé
             </div>
             <div className="text-xl font-medium tracking-tight text-[#0B1F17] mt-1.5 leading-none">
-              +{elevationGainM}
+              +{elevationGainM != null ? Math.round(elevationGainM) : '—'}
               <em className="font-serif italic font-normal text-xs text-[#17402C] ml-0.5">m</em>
             </div>
             <div className="font-mono text-[9px] text-[#6B7A72] tracking-wide mt-1.5">
-              OBJ. · +1 200 M
+              DÉNIVELÉ CUMULÉ
             </div>
           </div>
 
@@ -157,11 +162,11 @@ export default function DesktopRightPanel({
               D− · dénivelé
             </div>
             <div className="text-xl font-medium tracking-tight text-[#0B1F17] mt-1.5 leading-none">
-              −{elevationLossM}
+              −{elevationLossM != null ? Math.round(elevationLossM) : '—'}
               <em className="font-serif italic font-normal text-xs text-[#17402C] ml-0.5">m</em>
             </div>
             <div className="font-mono text-[9px] text-[#6B7A72] tracking-wide mt-1.5">
-              PEU DESCENDU
+              DÉNIVELÉ NÉGATIF
             </div>
           </div>
         </div>
@@ -186,7 +191,7 @@ export default function DesktopRightPanel({
               Prêt à <em className="font-serif italic text-[#17402C] font-normal">répondre</em>
             </div>
             <div className="font-mono text-[9px] text-[#6B7A72] tracking-wider mt-0.5 truncate">
-              CONTEXTE · JOUR 2 · {distanceKm.toFixed(1)} KM · {weatherCondition.toUpperCase()}
+              EN DIRECT · {distanceKm != null ? `${distanceKm.toFixed(1)} KM` : 'GPS EN RECHERCHE'} · {(weatherCondition || '').toUpperCase()}
             </div>
           </div>
         </div>
@@ -203,27 +208,34 @@ export default function DesktopRightPanel({
               }`}
             >
               {msg.text}
+              {/* Chips réelles (données du moment, absentes → masquées) */}
               {msg.sender === 'ai' && idx === 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
-                  <span className="px-2 py-0.5 bg-[#FBFAF6] border border-[#0B1F17]/06 rounded-full font-mono text-[9px] text-[#17402C] inline-flex items-center gap-1">
-                    <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
-                      <path d="M4 21l16-8L4 5v6l10 2-10 2z" />
-                    </svg>
-                    7,4 km
-                  </span>
-                  <span className="px-2 py-0.5 bg-[#FBFAF6] border border-[#0B1F17]/06 rounded-full font-mono text-[9px] text-[#17402C] inline-flex items-center gap-1">
-                    <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
-                      <path d="M4 20l6-12 4 6 4-2 2 8" />
-                    </svg>
-                    +780 m
-                  </span>
-                  <span className="px-2 py-0.5 bg-[#FBFAF6] border border-[#0B1F17]/06 rounded-full font-mono text-[9px] text-[#17402C] inline-flex items-center gap-1">
-                    <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="9" />
-                      <path d="M12 7v5l3 2" />
-                    </svg>
-                    ETA 15:42
-                  </span>
+                  {remainingDistanceKm != null && remainingDistanceKm > 0 && (
+                    <span className="px-2 py-0.5 bg-[#FBFAF6] border border-[#0B1F17]/06 rounded-full font-mono text-[9px] text-[#17402C] inline-flex items-center gap-1">
+                      <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
+                        <path d="M4 21l16-8L4 5v6l10 2-10 2z" />
+                      </svg>
+                      {remainingDistanceKm.toFixed(1)} km
+                    </span>
+                  )}
+                  {elevationGainM != null && elevationGainM > 0 && (
+                    <span className="px-2 py-0.5 bg-[#FBFAF6] border border-[#0B1F17]/06 rounded-full font-mono text-[9px] text-[#17402C] inline-flex items-center gap-1">
+                      <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
+                        <path d="M4 20l6-12 4 6 4-2 2 8" />
+                      </svg>
+                      +{Math.round(elevationGainM)} m
+                    </span>
+                  )}
+                  {weatherCondition && (
+                    <span className="px-2 py-0.5 bg-[#FBFAF6] border border-[#0B1F17]/06 rounded-full font-mono text-[9px] text-[#17402C] inline-flex items-center gap-1">
+                      <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="9" />
+                        <path d="M12 7v5l3 2" />
+                      </svg>
+                      {weatherCondition}
+                    </span>
+                  )}
                 </div>
               )}
             </div>

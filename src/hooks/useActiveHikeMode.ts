@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { getRouteOffline } from '@/lib/offlineStorage';
+import { loadRouteDetail } from '@/features/hiking/services/RouteService';
 
 export interface PoiEvent {
   poiName: string;
@@ -192,49 +193,24 @@ export function useActiveHikeMode(): ActiveHikeModeState {
 
       const supabase = createClient();
 
-      // Fetch route
-      const { data: route, error: routeError } = await supabase
-        .from('hiking_routes')
-        .select('id, name, distance_km')
-        .eq('id', routeId)
-        .single();
-
-      if (routeError || !route) {
-        console.error('Route not found:', routeError);
+      // Route complète (geometrie + metadata + vrais POI de la route)
+      const route = await loadRouteDetail(supabase, routeId);
+      if (!route) {
+        console.error('Route not found:', routeId);
         setIsLoadingRoute(false);
         return;
       }
 
-      // Fetch POIs for this route (using trail_pois with proximity)
-      // Note: trail_route_pois doesn't exist, so we query nearby POIs
-      const { data: pois } = await supabase
-        .from('trail_pois')
-        .select('name, geom')
-        .not('name', 'is', null)
-        .limit(20);
-
-      const routePois: RoutePoi[] = (pois || [])
-        .filter((poi: { geom?: string; name: string }) => poi.geom)
-        .map((poi: { geom: string; name: string }) => {
-          // Parse PostGIS point - format is "POINT(lon lat)"
-          const match = poi.geom.match(/POINT\(([-\d.]+)\s+([-\d.]+)\)/);
-          if (match) {
-            return {
-              name: poi.name,
-              lon: parseFloat(match[1]),
-              lat: parseFloat(match[2]),
-              distanceM: 0, // Will be calculated during hike
-            };
-          }
-          return null;
-        })
-        .filter((poi): poi is RoutePoi => poi !== null);
-
       setRouteData({
-        id: String(route.id),
+        id: route.id,
         name: route.name || 'Randonnée',
-        distanceKm: route.distance_km || 0,
-        pois: routePois,
+        distanceKm: route.distanceKm ?? 0,
+        pois: route.pois.map((p) => ({
+          name: p.name,
+          lat: p.lat,
+          lon: p.lon,
+          distanceM: p.distanceM,
+        })),
       });
     } catch (err) {
       console.error('Error fetching route:', err);

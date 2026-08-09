@@ -2,7 +2,7 @@
 import { useRef, useCallback, useEffect } from 'react';
 import type { Map as LeafletMap, LayerGroup } from 'leaflet';
 import type { MapTrail } from './types';
-import { isValidLatLng } from './types';
+import { isValidLatLng, sanitizeGeoJSON } from './types';
 
 interface TrailLayerProps {
   map: LeafletMap;
@@ -89,9 +89,19 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
         if (trail.geojson && isSelected) {
           try {
             const parsedGeo = typeof trail.geojson === 'string' ? JSON.parse(trail.geojson) : trail.geojson;
-            
+
+            // Sanitisation centralisée : aucune coordonnée invalide (null/NaN/
+            // Infinity/hors bornes) ne doit atteindre Leaflet — source du crash
+            // "Invalid LatLng object: (NaN, NaN)". Si le tracé est totalement
+            // invalide, on l'ignore plutôt que de casser la carte.
+            const cleanGeo = sanitizeGeoJSON(parsedGeo);
+            if (!cleanGeo) {
+              console.warn('TrailLayer: geometry invalide, tracé ignoré:', trail.name);
+              return;
+            }
+
             // Outer casing for high contrast
-            const casingLayer = L.geoJSON(parsedGeo as any, {
+            const casingLayer = L.geoJSON(cleanGeo as any, {
               style: {
                 color: '#FBFAF6',
                 weight: 9,
@@ -103,7 +113,7 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
             linesGroup.addLayer(casingLayer);
 
             // Core trail line
-            const geoJsonLayer = L.geoJSON(parsedGeo as any, {
+            const geoJsonLayer = L.geoJSON(cleanGeo as any, {
               style: {
                 color: '#17402C',
                 weight: 5,

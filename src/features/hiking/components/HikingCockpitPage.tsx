@@ -15,6 +15,9 @@ import Terrain3DViewer from './Terrain3DViewer';
 import GPXImportExportModal from './GPXImportExportModal';
 
 import { createClient } from '@/lib/supabase/client';
+import { loadRouteDetail } from '../services/RouteService';
+import { routeStartPoint, nextTurnOnRoute } from '../services/RouteGeom';
+import { getRouteOffline } from '@/lib/offlineStorage';
 
 import StatsSheet from './sheets/StatsSheet';
 import CaptureSheet from './sheets/CaptureSheet';
@@ -35,69 +38,107 @@ export default function HikingCockpitPage() {
   const [deviceHeading, setDeviceHeading] = useState<number | null>(24);
   const [isCompleted, setIsCompleted] = useState(false);
   const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
+  const [autoFollow, setAutoFollow] = useState(true);
 
   const [dbRouteData, setDbRouteData] = useState<{
-    name: string;
-    distanceKm: number;
-    elevationGainM: number;
-    startLat: number;
-    startLon: number;
+    name: string | null;
+    distanceKm: number | null;
+    elevationGainM: number | null;
+    startLat: number | null;
+    startLon: number | null;
   } | null>(null);
   const [mapTrails, setMapTrails] = useState<any[]>([]);
+  const [isOffline, setIsOffline] = useState(false);
+
+  // Détection réseau réelle (transportée à la SafetyCenterModal, plus de faux "Connecté")
+  useEffect(() => {
+    const update = () => setIsOffline(typeof navigator !== 'undefined' && navigator.onLine === false);
+    update();
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
+    return () => {
+      window.removeEventListener('online', update);
+      window.removeEventListener('offline', update);
+    };
+  }, []);
 
   // Load Route data and trails from Supabase DB / Offline Cache
   useEffect(() => {
+    let isMounted = true;
+
     async function loadDbRoute() {
       try {
-        const supabase = createClient();
-        let query = supabase
-          .from('hiking_routes')
-          .select('id, name, distance_km, elevation_gain_m, start_latitude, start_longitude, geometry');
         if (routeIdParam) {
-          query = query.eq('id', routeIdParam);
-        } else {
-          query = query.limit(5);
-        }
-        const { data, error } = await query;
-        if (!error && data && data.length > 0) {
-          const r = data[0];
-          const startLat = Number(r.start_latitude) || 45.2833;
-          const startLon = Number(r.start_longitude) || 5.8667;
-          
-          setDbRouteData({
-            name: r.name || 'Itinéraire',
-            distanceKm: Number(r.distance_km) || 0,
-            elevationGainM: Number(r.elevation_gain_m) || 0,
-            startLat,
-            startLon,
-          });
+          const supabase = createClient();
+          const route = await loadRouteDetail(supabase, routeIdParam);
 
-          // Safely parse GeoJSON geometry if string
-          let parsedGeom = r.geometry;
-          if (typeof r.geometry === 'string') {
-            try { parsedGeom = JSON.parse(r.geometry); } catch { /* ignore */ }
+          if (isMounted && route) {
+            setDbRouteData({
+              name: route.name || 'Itinéraire',
+              distanceKm: route.distanceKm ?? 0,
+              elevationGainM: route.elevationGainM ?? 0,
+              startLat: route.start?.lat ?? null,
+              startLon: route.start?.lng ?? null,
+            });
+
+            const formattedTrails = [
+              {
+                id: route.id,
+                name: route.name || 'Randonnée',
+                lat: route.start?.lat ?? null,
+                lng: route.start?.lng ?? null,
+                distance_km: route.distanceKm,
+                duration_hours: route.durationHours,
+                difficulty: route.difficulty,
+                elevation_gain: route.elevationGainM,
+                terrain_type: route.terrainType,
+                family_friendly: route.familyFriendly,
+                geojson: route.geojson ?? null,
+              },
+            ];
+            setMapTrails(formattedTrails);
+            return;
           }
 
-          const formattedTrails = data.map((t: any) => ({
-            id: String(t.id),
-            name: t.name || 'Randonnée',
-            lat: Number(t.start_latitude) || startLat,
-            lng: Number(t.start_longitude) || startLon,
-            distance_km: Number(t.distance_km) || 0,
-            duration_hours: 4.5,
-            difficulty: 'modérée',
-            elevation_gain: Number(t.elevation_gain_m) || 0,
-            terrain_type: 'Montagne',
-            family_friendly: false,
-            geojson: parsedGeom || null,
-          }));
-          setMapTrails(formattedTrails);
+          // Hors-ligne : servir depuis le cache IndexedDB quand la route a été
+          // téléchargée avant le départ.
+          const cached = await getRouteOffline(routeIdParam).catch(() => undefined);
+          if (isMounted && cached) {
+            const cachedStart = cached.geojson ? routeStartPoint(cached.geojson) : null;
+            setDbRouteData({
+              name: cached.name,
+              distanceKm: cached.distanceKm || 0,
+              elevationGainM: null,
+              startLat: cachedStart?.lat ?? null,
+              startLon: cachedStart?.lng ?? null,
+            });
+            setMapTrails([
+              {
+                id: routeIdParam,
+                name: cached.name,
+                lat: cachedStart?.lat ?? null,
+                lng: cachedStart?.lng ?? null,
+                distance_km: cached.distanceKm || null,
+                duration_hours: null,
+                difficulty: null,
+                elevation_gain: null,
+                geojson: cached.geojson ?? null,
+              },
+            ]);
+          }
+        } else {
+          // Suivi libre : pas de route, pas de tracé à afficher.
+          setDbRouteData(null);
+          setMapTrails([]);
         }
       } catch {
-        /* fallback to default */
+        /* aucune donnée disponible : on reste sur l'état vide */
       }
     }
     loadDbRoute();
+    return () => {
+      isMounted = false;
+    };
   }, [routeIdParam]);
 
   // Fetch weather on mount
@@ -207,7 +248,9 @@ export default function HikingCockpitPage() {
 
   const userLoc: [number, number] | null = currentPos
     ? [currentPos.latitude, currentPos.longitude]
-    : (dbRouteData ? [dbRouteData.startLat, dbRouteData.startLon] : null);
+    : dbRouteData?.startLat != null && dbRouteData?.startLon != null
+    ? [dbRouteData.startLat, dbRouteData.startLon]
+    : null;
 
   const totalDistanceKm = dbRouteData?.distanceKm || hikingStore.routeTotalKm || 0;
   const currentDistanceKm = hikingStore.distanceKm || 0;
@@ -227,12 +270,19 @@ export default function HikingCockpitPage() {
     return `${m}m`;
   };
 
+  const startTimeStr = hikingStore.positions.length > 0
+    ? new Date(hikingStore.positions[0].timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    : '--:--';
+  const etaTimeStr = hikingStore.estimatedEtaMinutes != null && Number.isFinite(hikingStore.estimatedEtaMinutes)
+    ? new Date(Date.now() + hikingStore.estimatedEtaMinutes * 60000).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    : '—';
+
   const waypointsList = [
     {
       id: 'wp-start',
       name: 'Départ ·',
       italicPart: dbRouteData?.name || 'Début',
-      meta: `0 KM · ${dbRouteData?.startLat ? `${dbRouteData.startLat.toFixed(2)}°N` : 'Départ'}`,
+      meta: `0 KM · ${dbRouteData?.startLat != null ? `${dbRouteData.startLat.toFixed(2)}°N` : 'Départ'}`,
       status: currentDistanceKm > 0 ? ('done' as const) : ('current' as const),
       iconType: 'check' as const,
     },
@@ -240,7 +290,7 @@ export default function HikingCockpitPage() {
       id: 'wp-current',
       name: 'En cours ·',
       italicPart: 'position GPS',
-      meta: `${currentDistanceKm.toFixed(1)} KM · +${Math.round(hikingStore.elevationGainM || 0)}m`,
+      meta: `${currentDistanceKm.toFixed(1)} KM · ${hikingStore.elevationGainM != null ? `+${Math.round(hikingStore.elevationGainM)}m` : 'D+ —'}`,
       status: 'current' as const,
       iconType: 'dot' as const,
     }] : []),
@@ -248,7 +298,7 @@ export default function HikingCockpitPage() {
       id: 'wp-end',
       name: 'Arrivée ·',
       italicPart: dbRouteData?.name || 'Sommet',
-      meta: `${totalDistanceKm.toFixed(1)} KM · +${Math.round(dbRouteData?.elevationGainM || 0)}m`,
+      meta: `${totalDistanceKm.toFixed(1)} KM · ${dbRouteData?.elevationGainM != null ? `+${Math.round(dbRouteData.elevationGainM)}m` : 'D+ —'}`,
       status: 'future' as const,
       iconType: 'summit' as const,
     }] : []),
@@ -293,10 +343,18 @@ export default function HikingCockpitPage() {
               <DesktopMapOverlay
                 userLoc={userLoc}
                 userPositions={hikingStore.positions}
+                userAccuracy={currentPos?.accuracy ?? null}
                 trails={mapTrails}
                 selectedTrailId={routeIdParam}
                 isNightMode={isNightMode}
                 nextPoi={hikingStore.nextPoi}
+                nextTurn={mapTrails[0]?.geojson ? nextTurnOnRoute(mapTrails[0].geojson, progressPct / 100) : null}
+                headingDeg={deviceHeading}
+                routeBearingDeg={hikingStore.guidanceBearingDeg}
+                gpsHeadingDeg={currentPos?.heading != null ? (((currentPos.heading % 360) + 360) % 360) : null}
+                autoFollow={autoFollow}
+                onAutoFollowChange={setAutoFollow}
+                onRecentre={() => setAutoFollow(true)}
               />
 
               {/* Floating TopBar */}
@@ -317,9 +375,9 @@ export default function HikingCockpitPage() {
                 distanceKm={currentDistanceKm}
                 totalDistanceKm={totalDistanceKm}
                 progressPercent={progressPct}
-                startTime={hikingStore.isActive ? 'En cours' : '--:--'}
+                startTime={startTimeStr}
+                etaTime={etaTimeStr}
                 elapsedTimeStr={formatDurationStr(hikingStore.durationSeconds)}
-                maxAltitudeM={currentPos?.altitude ? Math.round(currentPos.altitude) : undefined}
                 waypoints={waypointsList}
               />
 
@@ -328,7 +386,7 @@ export default function HikingCockpitPage() {
                 averageSpeedKmH={hikingStore.averageSpeedKmH}
                 durationSeconds={hikingStore.durationSeconds}
                 currentSpeedKmH={hikingStore.currentSpeedKmH}
-                elevationGainM={hikingStore.elevationGainM || 0}
+                elevationGainM={hikingStore.elevationGainM ?? 0}
                 elevationLossM={0}
                 distanceKm={currentDistanceKm}
                 remainingDistanceKm={remainingDistanceKm}
@@ -371,7 +429,9 @@ export default function HikingCockpitPage() {
                 onClose={() => setActiveTab(null)}
                 distanceKm={currentDistanceKm}
                 durationSeconds={hikingStore.durationSeconds}
-                elevationGainM={hikingStore.elevationGainM || 0}
+                routeTotalKm={totalDistanceKm}
+                progressPercent={progressPct}
+                elevationGainM={hikingStore.elevationGainM}
                 currentSpeedKmH={hikingStore.currentSpeedKmH}
                 averageSpeedKmH={hikingStore.averageSpeedKmH}
                 paceMinPerKm={hikingStore.paceMinPerKm}
@@ -386,9 +446,10 @@ export default function HikingCockpitPage() {
               <CopilotSheet
                 isOpen={activeTab === 'copilot'}
                 onClose={() => setActiveTab(null)}
+                routeName={dbRouteData?.name || hikingStore.routeName}
                 distanceKm={currentDistanceKm}
                 remainingDistanceKm={remainingDistanceKm}
-                elevationGainM={hikingStore.elevationGainM || 0}
+                elevationGainM={hikingStore.elevationGainM}
                 weatherCondition={hikingStore.weather?.condition}
               />
 
@@ -409,14 +470,14 @@ export default function HikingCockpitPage() {
                 isOpen={showSafetyModal}
                 onClose={() => setShowSafetyModal(false)}
                 currentPos={currentPos}
-                batteryLevel={74}
-                isOffline={false}
+                batteryLevel={hikingStore.batteryLevel}
+                isOffline={isOffline}
               />
 
               <Terrain3DViewer
                 isOpen={show3DTerrain}
                 onClose={() => setShow3DTerrain(false)}
-                elevationGainM={hikingStore.elevationGainM || 420}
+                elevationGainM={hikingStore.elevationGainM}
               />
 
               <GPXImportExportModal

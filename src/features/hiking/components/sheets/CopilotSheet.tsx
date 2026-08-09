@@ -6,39 +6,45 @@ import { motion } from 'framer-motion';
 interface CopilotSheetProps {
   isOpen: boolean;
   onClose: () => void;
-  distanceKm?: number;
-  remainingDistanceKm?: number;
-  elevationGainM?: number;
-  weatherCondition?: string;
+  routeName?: string | null;
+  distanceKm?: number | null;
+  remainingDistanceKm?: number | null;
+  elevationGainM?: number | null;
+  weatherCondition?: string | null;
 }
 
 export default function CopilotSheet({
   isOpen,
   onClose,
-  distanceKm = 6.8,
-  remainingDistanceKm = 7.4,
-  elevationGainM = 420,
-  weatherCondition = 'Ciel dégagé',
+  routeName,
+  distanceKm = null,
+  remainingDistanceKm = null,
+  elevationGainM = null,
+  weatherCondition = null,
 }: CopilotSheetProps) {
   const [messages, setMessages] = useState<Array<{ sender: 'me' | 'ai'; text: string }>>([
     {
       sender: 'me',
-      text: 'Combien il me reste pour arriver au sommet ?',
+      text: 'Quel est l\'état de ma randonnée ?',
     },
     {
       sender: 'ai',
-      text: `Il reste ${remainingDistanceKm.toFixed(1)} km et +780 m jusqu'à Chamechaude. Avec votre rythme actuel : environ 3h. La météo est stable jusqu'à 18h.`,
+      text: honestlySummarize(distanceKm, remainingDistanceKm, elevationGainM, weatherCondition, routeName),
     },
   ]);
 
   if (!isOpen) return null;
 
   const handleAskQuick = (question: string) => {
-    let reply = `D'après vos métriques (${distanceKm.toFixed(1)} km parcourus, D+ +${elevationGainM} m), tout est sous contrôle. Météo : ${weatherCondition}.`;
-    if (question.includes('pause')) {
-      reply = 'Oui — le refuge du Habert est à 12 min et propose un point d\'eau potable.';
-    } else if (question.includes('eau')) {
-      reply = 'La prochaine source est à 450 m sur votre droite.';
+    let reply = honestlySummarize(distanceKm, remainingDistanceKm, elevationGainM, weatherCondition, routeName);
+    if (question.toLowerCase().includes('eau')) {
+      reply = 'Je n\'ai pas de donnée fiable sur le prochain point d\'eau de cette randonnée dans la base actuelle. Vérifie la carte ou une source officielle avant de partir.';
+    } else if (question.toLowerCase().includes('pause')) {
+      reply = 'Je ne connais pas de refuge ou d\'aire de pause certifiée sur ce tracé pour le moment. Prévois tes pauses selon ton énergie et la météo.';
+    } else if (question.toLowerCase().includes('météo') || question.toLowerCase().includes('meteo')) {
+      reply = weatherCondition
+        ? `Conditions actuellement signalées : ${weatherCondition}. Consulte un bulletin météo à jour avant toute décision.`
+        : 'La météo n\'est pas disponible en ce moment. Consulte un bulletin météo à jour.';
     }
     setMessages((prev) => [
       ...prev,
@@ -63,10 +69,10 @@ export default function CopilotSheet({
         <div className="text-center">
           <div className="w-18 h-18 rounded-full mx-auto bg-gradient-to-br from-[#EAF1E5] via-[#A8C8A0] to-[#17402C] shadow-lg animate-pulse relative border-2 border-white/40" />
           <h2 className="text-xl font-medium tracking-tight mt-2">
-            Copilote <em className="font-serif italic text-[#17402C]">Chartreuse</em>
+            Copilote <em className="font-serif italic text-[#17402C]">{routeName || 'de randonnée'}</em>
           </h2>
           <p className="text-[11px] font-mono text-[#6B7A72] tracking-wider mt-0.5">
-            APPRIS DE 247 VOYAGEURS · CONTEXTE JOUR 2
+            INFORMATIONS BASÉES SUR VOS DONNÉES RÉELLES
           </p>
         </div>
 
@@ -117,4 +123,25 @@ export default function CopilotSheet({
       </motion.div>
     </div>
   );
+}
+
+function honestlySummarize(
+  distanceKm: number | null,
+  remainingDistanceKm: number | null,
+  elevationGainM: number | null,
+  weatherCondition: string | null,
+  routeName?: string | null
+): string {
+  const parts: string[] = [];
+  parts.push(distanceKm != null ? `${distanceKm.toFixed(1)} km parcourus` : 'aucune distance enregistrée');
+  parts.push(
+    remainingDistanceKm != null && remainingDistanceKm > 0
+      ? `${remainingDistanceKm.toFixed(1)} km restants`
+      : remainingDistanceKm === 0
+      ? 'arrivée atteinte'
+      : 'distance restante non disponible'
+  );
+  if (elevationGainM != null) parts.push(`+${Math.round(elevationGainM)} m de dénivelé`);
+  if (weatherCondition) parts.push(`météo actuelle : ${weatherCondition}`);
+  return `${routeName ? `Randonnée « ${routeName} » — ` : ''}${parts.join(', ')}.`;
 }

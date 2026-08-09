@@ -14,7 +14,7 @@ export default function Terrain3DViewer({
   isOpen,
   onClose,
   userLocation,
-  elevationGainM = 420,
+  elevationGainM = null,
 }: Terrain3DViewerProps) {
   if (!isOpen) return null;
 
@@ -59,11 +59,10 @@ export default function Terrain3DViewer({
         {/* Floating Info Overlay */}
         <div className="absolute bottom-6 left-6 right-6 p-4 bg-[#0B1F17]/90 backdrop-blur-2xl border border-white/15 rounded-3xl space-y-1.5 shadow-2xl">
           <div className="flex justify-between items-center text-xs font-mono text-[#A8C8A0]">
-            <span>ALTITUDE MAX: 1 842 m</span>
-            <span>DÉNIVELÉ +: +{elevationGainM ?? 420} m</span>
+            <span>DÉNIVELÉ +: +{elevationGainM != null ? Math.round(elevationGainM) : '—'} m</span>
           </div>
           <div className="text-sm font-medium">
-            Rendu 3D temps réel du massif de la Chartreuse
+            Rendu 3D du relief consultable en cours de randonnée
           </div>
         </div>
       </div>

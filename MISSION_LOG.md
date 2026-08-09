@@ -266,4 +266,190 @@
   - Si aucun `routeIdParam` n'est transmis : le comportement de suivi libre inchangé est conservé.
 - **Validation technique :** `npx tsc --noEmit --skipLibCheck` → 0 erreur (Code 0).
 
+---
+
+## 2026-08-09 — Mission « ZÉRO MOCK » sur le pipeline randonnée/GPS
+
+### Objectif
+Rendre le système randonnée réellement fonctionnel de bout en bout avec les données PostGIS et le GPS réel : **aucune donnée inventée** lorsqu'une donnée réelle existe dans Supabase. Règle appliquée partout : `null`/`—` ou calcul réel, jamais de fallback métier inventé.
+
+### Phase 1 — Audit (vérifié contre la BDD réelle et le code, pas contre les README)
+- **BDD réelle (projet `icxyvwzfjbflcbqukpfz`)** :
+  - `hiking_routes` = **1169** routes (`id` bigint, `name`, `ref`, `network`, `distance_km`, `geom` MultiLineString EPSG:4326).
+  - `trail_metadata` = 1163, `trail_scores` = 1169 : liés par **`trail_id`** (== `hiking_routes.id`).
+  - `trail_pois` = 1811 : **PAS de `trail_id`** → association par proximité au tracé, jamais une clé.
+  - `trail_segments` = **0 ligne**. `hike_sessions` = **0 ligne**.
+  - `explore_trails` (1139 lignes) : `id` = text ; toutes les coordonnées/geometry **validées** (scan exhaustif : 0 NaN, 0 bbox invalide). La vue contient des **fallbacks synthétiques** (COALESCE scores/durée/difficulté/dénivelé) → neutralisés côté serveur.
+- **Bug réel trouvé** : `HikingController.ts` lisait `elevation_gain_m`, `start_latitude`, `start_longitude`, `geometry` sur `hiking_routes` → **colonnes inexistantes** → la requête échouait (400) → `dbRouteData`/route jamais chargés dans le cockpit.
+- **Bug réel POI** : `trail_pois.geom` renvoyé par PostgREST est **GeoJSON**, pas du WKT `POINT(...)` → le regex `.match(/POINT\(/)` échouait systématiquement → 0 POI réel dans les deux flows (Controller + `useActiveHikeMode`).
+
+### Mocks supprimés (ZÉRO MOCK)
+- `HikingController.ts` : `'Chamechaude'`, `14.2`, coords `5.8667/45.2833`, `.limit(10)` sans filtre route, `poiEvents: []` perdues au Stop.
+- `HikingCockpitPage.tsx` : lecture de colonnes inexistantes, `startLat || 45.2833`, `duration_hours: 4.5`, `difficulty: 'modérée'`, `terrain_type: 'Montagne'`, `batteryLevel={74}`, `elevationGainM || 420`.
+- Panneaux/voûtes : `CompletionView` (Chamechaude, +620, 2082 m, moments forts inventés), `DesktopRightPanel` (09:41, L'Habert, +1200 m, ETA 15:42, « 7,4 km/+780 m », Chartreuse), `DesktopLeftPanel` (GR9, profil altimétrique fake « 14,2 KM », marqueur VOUS), `StatsSheet` (14,2 km, 48 %, pauses 14 min, splits inventés, max 1842 m), `CopilotSheet` (Chartreuse, refuge du Habert, source à 450 m, 247 voyageurs, +780 m), `ContextualInsight` (80 m, « pluie dans 28 min », abri à 1,2 km, 180 m), `Terrain3DViewer` (1 842 m, massif Chartreuse), `TopHUD`, `CaptureSheet` (captures inventées : Col de Porte, lever du soleil…), `DesktopDockBar` (8327 s), `DesktopMapOverlay` (`?? 180`), `AventureCard`/`explorer/page` (fallback « Chartreuse », 0 km/+0 m).
+- `explore_trails` : la vue garde les COALESCE pour compat parsers, mais **`/api/hikes` surcharge par les tables réelles** (`hiking_routes` distance/nom, `trail_metadata` durée/difficulté/dénivelé/terrain/saison/ai_description, `trail_scores`) → une donnée absente = `null`, jamais inventée.
+
+### Nouveaux services
+- **`src/features/hiking/services/RouteGeom.ts`** — calculs géométriques réels : haversine, distance point→segment, point le plus proche du tracé (`closestOnRoute`) avec fraction de progression + bearing, et `computeRoutePois` (POI à ≤750 m du tracé, triés par progression le long de la route).
+- **`src/features/hiking/services/RouteService.ts`** — `loadRouteDetail(client, routeId)` : jointure réelle `hiking_routes` + `trail_metadata` + `trail_scores` + POI (par proximité), aucun LIMIT arbitraire.
+
+### Pipelines corrigés
+- **P1/P2 — Route complète** : `HikingController.loadRouteDetails` + cockpit utilisent `loadRouteDetail`. Cockpit : mapTrails réels (geometry + départ réel) avec fallback IndexedDB hors-ligne.
+- **P3 — Bug Leaflet NaN** : helpers `isValidLatLng`/`toValidLatLng` (déjà présents) + nouveau `sanitizeGeoJSON()` appliqué **avant** `L.geoJSON` dans `TrailLayer` (source du crash) ; gardes renforcées GPS dans `ExplorerMap` (polyline, marker, auto-follow).
+- **P4 — GPS** : `TrackingEngine.isValidPosition` rejetait `null`/`''` (via `Number(null)`) → désormais rejet strict (null, nombre non fini, hors bornes, précision > 50 m). Auto-follow de la carte quand `userPositions` fourni (sauf si l'utilisateur fait glisser la carte).
+- **P5 — Vrai tracé** : bounds/départ calculés depuis `geom` réel, plus aucune coordonnée hardcodée.
+- **P6 — Vrai prochain POI** : POI de la route active (proximité + `progressFrac`), `nextPoi` = premier non atteint avec distance haversine réelle + bearing réel position→POI.
+- **P7 — Vraie déviation** : `HikingController` poll `get_route_deviation` (RPC PostGIS existant, vérifiée fonctionnelle) toutes les 15 s, debounce 2 lectures (> 50 m → `OFF_ROUTE`, < 30 m → retour) + `offRouteDismissed`.
+- **P8 — Session réelle** : `poiEvents` réels transmis à `POST /api/hike-sessions`.
+
+### Robustesse IA
+- `TrailDetailPanel` : `ai_description` réel servi immédiatement (économise le quota, évite les 429) ; échec Gemini → `console.warn` silencieux + fallback données réelles stockées ; jamais de description fictive.
+- Volets IA (CopilotSheet/DesktopRightPanel) : réponses honnêtes (« donnée absente » quand on ne sait pas), plus de refuges/sources/sommets inventés.
+
+### Validation
+- `npm run type-check` → **0 erreur**.
+- `npm run build` → **Compiled successfully · 201 pages · exit 0**.
+- `npx tsc --noEmit --skipLibCheck` → 0 erreur.
+- Tests TrackingEngine (6/6) ✅.
+- Pipeline réel vérifié via `scripts/audit_hiking_schema.mjs` (schéma) + `scripts/scan_trail_geometry.mjs` (aucune coordonnée invalide) + audit `loadRouteDetail` : route 1 = 0 POI à ≤750 m (vérité : aucun POI nommé près de ce tracé), route 3 = 1 POI réel « eau potable » à 497 m du tracé (progress 0.985), `closestOnRoute` au départ = 0.0 m.
+
+---
+
+## 2026-08-09 — Mission : GPS de Randonnée Fonctionnel de Bout en Bout
+
+### Objectif Achévé
+Le système de randonnée est désormais un **véritable GPS de randonnée fonctionnel de bout en bout** (de l'Exploration à l'enregistrement réel de la session).
+
+### Réalisations et Validation par Phase
+
+1. **Phase 1 — Audit du flux complet :**
+   - Audit complet de la chaîne : `Explorer` → `routeId` → `/randonnee-active?routeId=...` → `Permission GPS` → `startHike()` → `RouteService` → `TrackingEngine` → `useHikingStore` → `Cockpit Carte` → `Métriques` → `POI` → `Déviation` → `Stop` → `Supabase (hike_sessions)`.
+   - Zéro mock, zéro fallback métier arbitraire.
+
+2. **Phase 2 — Démarrage automatique :**
+   - Démarrage automatique au chargement de `/randonnee-active?routeId=3` dès que la géolocalisation est autorisée par le navigateur, sans nécessiter de clic supplémentaire.
+
+3. **Phase 3 — GPS & Robustesse :**
+   - Gestion des données manquantes dans `TrackingEngine` et `GPSService`. Les valeurs non disponibles affichent honnêtement un tiret `—` ou un état explicite.
+
+4. **Phase 4 & 5 — Carte & Progression :**
+   - Suivi auto-follow fluide et tracé réel.
+   - Progression calculée via projection curviligne sur la géométrie réelle (`RouteGeom.ts`).
+   - Aucune coordonnée `NaN` ou `null` transmise aux composants Leaflet (`LeafletMap.tsx`, `TrailLayer`).
+
+5. **Phase 6 & 7 — Prochain POI & Déviation :**
+   - Sélection du prochain POI pertinent situé devant l'utilisateur avec distance et bearing réels.
+   - Détection de la sortie d'itinéraire via RPC `get_route_deviation` (déclenchement si > 50m avec debouncing, retour sous 30m).
+
+6. **Phase 8 & 9 — Guidage & Fin de Randonnée :**
+   - Calcul de direction et cap boussole.
+   - Arrêt via le bouton `TERMINER` qui désactive le tracking, clôture le chronomètre, calcule les métriques finales et persiste la session dans `hike_sessions`.
+
+7. **Phase 10, 11 & 12 — Tests Réels & Persistance BDD :**
+   - Validation directe de la route API `POST /api/hike-sessions` et du client Supabase authentifié via `scripts/test_hike_session.mjs` :
+     - Auth RLS `own_sessions` validé.
+     - Sauvegarde et relecture d'une session réelle (`route_id: 3`, `distance_km: 12.4`, `duration_seconds: 9000`, `poi_events: [...]`).
+     - Session relue avec succès dans la table Supabase `hike_sessions` (`sessionId: 715ac1b5-7379-4e56-9df0-ef2675041893`).
+   - Validation du mode libre (`/randonnee-active` sans routeId).
+
+8. **Vérification Finale de la Qualité du Code :**
+   - `npm run type-check` (`tsc --noEmit`) : **0 ERREUR** (Exit code 0).
+   - `npm run build` : **201 pages Next.js compilées avec succès**.
+   - Serveur de dev : **Opérationnel sur `http://localhost:4028`**.
+
+---
+
+## 2026-08-09 — Mission : GPS Randonnée V2 — Navigation Réelle & Guidage Virage par Virage
+
+### Objectif Achévé
+Transition du simple suivi GPS vers un **système de navigation outdoor intelligent** calculant les virages réels, le cercle d'incertitude GPS et l'auto-follow débrayable.
+
+### Réalisations et Validation par Phase
+
+1. **Detection des Virages Réels & Guidage Directionnel (`RouteGeom.ts`) :**
+   - Fonctions `detectRouteTurns(geojson)` et `nextTurnOnRoute(geojson, progressFrac)`.
+   - Filtrage et lissage du bruit GPS/micro-segments (échantillonnage 15m).
+   - Classification réelle des virages (`tout_droit`, `leger_droite`, `droite`, `serre_droite`, `leger_gauche`, `gauche`, `serre_gauche`).
+   - Instructions en français clair (ex: "Tournez à droite dans 150m").
+
+2. **Curseur GPS Intelligent & Auto-Follow (`ExplorerMap.tsx` / `DesktopMapOverlay.tsx`) :**
+   - Rendu dynamique d'un **cercle d'incertitude GPS** (`L.circle`) proportionnel à `accuracy`.
+   - Transparence et couleur d'alerte en cas de faible précision (> 30m).
+   - Rotation du curseur guidée par le `heading` **uniquement** si disponible.
+   - Suspension immédiate de l'auto-follow dès la manipulation manuelle de la carte par l'utilisateur.
+   - Bouton **"Recentrer"** avec indication visuelle de l'état de l'auto-follow et reprise au clic.
+
+3. **Guidage Prioritaire au Cockpit (`HikingCockpitPage.tsx`) :**
+   - Hiérarchie d'affichage : Sortie de parcours > Virage imminent (<150m) > POI imminent > Navigation standard.
+
+4. **Validation par Tests Réels :**
+   - Test unitaire `scripts/test_navigation_v2.ts` :
+     - Route 3 (Via Francigena) : virage détecté et qualifié à partir de la géométrie PostGIS réelle.
+     - Route 1 (0 POI) : 32 virages géométriques réels extraits et qualifiés sans erreur.
+   - `npm run type-check` : **0 ERREUR** (Exit 0).
+   - `npm run build` : **Compilé avec succès**.
+
+---
+
+## 2026-08-09 — Mission V3 : Copilote Outdoor Intelligent
+
+### Objectif Achévé
+Transformation du moteur de navigation en un **Copilote Outdoor Intelligent** avec contexte temps réel unifié, moteur d'alertes priorisé, file de synchronisation offline idempotente et génération de journal factuel (0 hallucination).
+
+### Réalisations et Validation par Module
+
+1. **Contexte Temps Réel Unifié (`HikeContext.ts`) :**
+   - Implémentation du constructeur `HikeContextBuilder` qui agrège en une structure immuable : position, précision, vitesse, cap, progression curviligne, virage imminent, prochain POI, état et métriques de marche.
+   - Source de vérité unique pour l'ensemble des panneaux du cockpit.
+
+2. **Moteur d'Alertes Centralisé (`HikeAlertEngine.ts`) :**
+   - Définition des types d'alertes : `OFF_ROUTE`, `GPS_WEAK`, `GPS_LOST`, `TURN`, `POI`, `ARRIVAL`, `LOW_BATTERY`, `OFFLINE`.
+   - Ordre de priorité strict (1 = Critique, 2 = Haute, 3 = Moyenne, 4 = Info).
+   - Système de cooldown par type pour supprimer le spam et les fausses alertes.
+
+3. **File de Synchronisation Offline Idempotente (`HikeSyncQueue.ts`) :**
+   - Gestion des états de synchronisation : `pending` | `syncing` | `synced` | `failed`.
+   - Génération d'identifiants uniques d'instance pour garantir l'unicité des sessions même lors des coupures réseau intermittentes.
+   - Tentative de reconnexion automatique déclenchée au retour de la connexion réseau (`online`).
+
+4. **Timeline & Journal Factuel 0 Hallucination (`HikeTimelineJournal.ts`) :**
+   - Extraction automatique de la chronologie basée **uniquement** sur les événements réels enregistrés (départ, jalons de kilomètres, POIs franchis, déviations résolues, arrivée).
+   - Zéro invention de faits ou de météo fictive.
+
+5. **Validation par Tests :**
+   - Script d'intégration `scripts/test_copilote_v3.ts` : **100% de réussite** (Context, AlertEngine, SyncQueue, Timeline factuelle).
+   - `npm run type-check` (`tsc --noEmit`) : **0 ERREUR**.
+   - `npm run build` : **Compilation Next.js réussie**.
+
+---
+
+## 2026-08-09 — Mission V4 : Système Intelligent du Voyageur
+
+### Objectif Achévé
+Mise en place du **Système Intelligent du Voyageur** : calcul objectif et dynamique du niveau de randonneur à partir des sessions réelles Supabase, moteur de recommandation d'itinéraires explicable, et préparation de randonnée avec checklist automatique.
+
+### Réalisations et Validation par Module
+
+1. **Calcul du Profil & Niveau Randonneur (`HikerProfileService.ts`) :**
+   - Calcul des statistiques réelles (sessions terminées/abandonnées, km cumulés, record de distance, vitesse moyenne, dénivelé cumulé, POIs visités).
+   - Attribution objective du niveau : `Débutant`, `Régulier`, `Confirmé`, `Aventurier`, `Expert`.
+   - Zéro déduction arbitraire sur une seule sortie.
+
+2. **Moteur de Recommandation & Découverte Explicable (`TrailRecommendationEngine.ts`) :**
+   - Filtrage et attribution de scores d'adéquation (0 à 100%) basés sur la distance habituelle et l'historique du randonneur.
+   - Raison explicite et compréhensible générée pour chaque suggestion (ex: *"Correspond à ta distance habituelle avec une légère progression"*).
+
+3. **Préparation Randonnée & Checklist (`PreHikePreparationCard.tsx`) :**
+   - Résumé factuel de l'itinéraire (distance, dénivelé, sources d'eau réelles, refuges réels).
+   - Génération d'une checklist de préparation objective (GPS, eau recommandée, mode hors-ligne).
+
+4. **Validation par Tests :**
+   - Script d'intégration `scripts/test_voyageur_v4.ts` : **100% de réussite** (Nouveau profil, Profil actif 8 sessions, Recommandations explicables).
+   - `npm run type-check` (`tsc --noEmit`) : **0 ERREUR**.
+   - `npm run build` : **Compilation Next.js réussie**.
+
+
+
+
+
 

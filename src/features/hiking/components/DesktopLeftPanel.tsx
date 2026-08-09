@@ -29,7 +29,6 @@ export default function DesktopLeftPanel({
   startTime = '--:--',
   etaTime,
   elapsedTimeStr = '00m',
-  maxAltitudeM,
   waypoints = [],
 }: DesktopLeftPanelProps) {
   const pct = totalDistanceKm > 0
@@ -82,9 +81,6 @@ export default function DesktopLeftPanel({
         <div className="flex justify-between items-baseline">
           <span className="text-[11px] uppercase tracking-widest text-[#6B7A72] font-semibold">
             Itinéraire · {waypoints.length} étapes
-          </span>
-          <span className="font-mono text-[10px] text-[#8B978F] tracking-wide font-semibold">
-            GR9
           </span>
         </div>
 
@@ -150,54 +146,6 @@ export default function DesktopLeftPanel({
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Elevation Mini Profile inside Left Panel */}
-        <div className="pt-2">
-          <div className="flex justify-between items-baseline mb-2">
-            <span className="text-[11px] uppercase tracking-widest text-[#6B7A72] font-semibold">
-              Profil altimétrique
-            </span>
-            <span className="font-mono text-[10px] text-[#17402C] font-semibold tracking-wide">
-              MAX · {maxAltitudeM} M
-            </span>
-          </div>
-
-          <div className="bg-[#06120C] rounded-xl p-3 text-white relative overflow-hidden">
-            <svg className="w-full h-23 block" viewBox="0 0 300 92" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="altFillLeft" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#A8C8A0" stopOpacity="0.5" />
-                  <stop offset="100%" stopColor="#A8C8A0" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M0,72 L20,68 L40,60 L60,52 L80,42 L100,38 L120,28 L140,22 L160,14 L180,18 L200,28 L220,40 L240,52 L260,66 L280,74 L300,78 L300,92 L0,92 Z"
-                fill="url(#altFillLeft)"
-              />
-              <path
-                d="M0,72 L20,68 L40,60 L60,52 L80,42 L100,38 L120,28 L140,22 L160,14 L180,18 L200,28 L220,40 L240,52 L260,66 L280,74 L300,78"
-                fill="none"
-                stroke="#A8C8A0"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <circle cx="115" cy="32" r="4" fill="#A8C8A0" stroke="#06120C" strokeWidth="1.5" />
-              <line x1="115" y1="0" x2="115" y2="92" stroke="#C6DCBE" strokeWidth="0.5" strokeDasharray="2 3" opacity="0.5" />
-              <text x="115" y="9" fill="#C6DCBE" fontSize="7" fontFamily="monospace" textAnchor="middle" letterSpacing="1">
-                VOUS
-              </text>
-            </svg>
-
-            <div className="flex justify-between font-mono text-[8px] text-white/50 tracking-widest mt-1.5">
-              <span>0</span>
-              <span>3,5</span>
-              <span>7</span>
-              <span>10,5</span>
-              <span>14,2 KM</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>

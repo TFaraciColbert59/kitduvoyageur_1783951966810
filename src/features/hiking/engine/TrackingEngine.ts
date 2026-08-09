@@ -168,10 +168,18 @@ export class TrackingEngine {
 
   /**
    * Filter out low accuracy GPS readings (> 50 meters).
+   * Rejette aussi null/undefined/''/Infinity : Number(null) === 0 ferait accepter
+   * sans le vouloir des coordonnées à (0,0) puis planter la polyline Leaflet.
    */
   private isValidPosition(pos: GPSPosition): boolean {
-    if (isNaN(pos.latitude) || isNaN(pos.longitude)) return false;
-    if (pos.latitude < -90 || pos.latitude > 90 || pos.longitude < -180 || pos.longitude > 180) return false;
+    const lat = pos.latitude;
+    const lng = pos.longitude;
+    if (lat == null || lng == null) return false;
+    const nLat = Number(lat);
+    const nLng = Number(lng);
+    if (Number.isNaN(nLat) || Number.isNaN(nLng)) return false;
+    if (!Number.isFinite(nLat) || !Number.isFinite(nLng)) return false;
+    if (nLat < -90 || nLat > 90 || nLng < -180 || nLng > 180) return false;
     if (pos.accuracy != null && pos.accuracy > 50) return false;
     return true;
   }

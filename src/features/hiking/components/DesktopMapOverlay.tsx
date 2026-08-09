@@ -5,13 +5,22 @@ import ExplorerMap from '@/components/explorer/ExplorerMap';
 import { MapTrail } from '@/components/explorer/types';
 import { POI } from '../types';
 
+import { RouteTurnEvent } from '../services/RouteGeom';
+
 interface DesktopMapOverlayProps {
   userLoc: [number, number] | null;
   userPositions?: Array<{ latitude: number; longitude: number }>;
+  userAccuracy?: number | null;
   trails?: MapTrail[];
   selectedTrailId?: string | null;
   isNightMode?: boolean;
   nextPoi?: (POI & { distanceRemainingM: number }) | null;
+  nextTurn?: { turn: RouteTurnEvent; distanceRemainingM: number } | null;
+  headingDeg?: number | null;
+  routeBearingDeg?: number | null;
+  gpsHeadingDeg?: number | null;
+  autoFollow?: boolean;
+  onAutoFollowChange?: (enabled: boolean) => void;
   onRecentre?: () => void;
   onZoomIn?: () => void;
   onZoomOut?: () => void;
@@ -20,14 +29,33 @@ interface DesktopMapOverlayProps {
 export default function DesktopMapOverlay({
   userLoc,
   userPositions,
+  userAccuracy = null,
   trails = [],
   selectedTrailId,
   isNightMode = false,
   nextPoi,
+  nextTurn,
+  headingDeg = null,
+  routeBearingDeg = null,
+  gpsHeadingDeg = null,
+  autoFollow = true,
+  onAutoFollowChange,
   onRecentre,
 }: DesktopMapOverlayProps) {
-  const distM = nextPoi?.distanceRemainingM ?? 180;
-  const turnTitle = nextPoi ? `Tout droit · ${nextPoi.name}` : 'Tout droit · sommet';
+  const heading = headingDeg != null && Number.isFinite(headingDeg) ? headingDeg % 360 : null;
+  const routeBearing = routeBearingDeg != null && Number.isFinite(routeBearingDeg) ? ((routeBearingDeg % 360) + 360) % 360 : null;
+  const arrowRotation =
+    heading != null && routeBearing != null
+      ? (routeBearing - heading + 360) % 360
+      : null;
+  const arrowHtmlStyle = arrowRotation != null
+    ? { transform: `rotate(${arrowRotation}deg)` }
+    : {};
+
+  // Priorité d'affichage du guidage : virage imminent (< 150m) prioritaire sur POI
+  const showTurn = nextTurn && (!nextPoi || nextTurn.distanceRemainingM < 150 || nextTurn.distanceRemainingM < nextPoi.distanceRemainingM);
+  const activeGuidePoi = !showTurn ? nextPoi : null;
+  const activeGuideTurn = showTurn ? nextTurn : null;
 
   return (
     <div className="absolute inset-0 z-0 overflow-hidden select-none">
@@ -50,7 +78,7 @@ export default function DesktopMapOverlay({
           }}
         />
 
-        {/* Real Interactive Leaflet ExplorerMap Layer (Renders real trail polylines & real GPS position) */}
+        {/* Real Interactive Leaflet ExplorerMap Layer */}
         <div className="absolute inset-0 z-10">
           <ExplorerMap
             trails={trails}
@@ -58,29 +86,50 @@ export default function DesktopMapOverlay({
             onTrailClick={() => {}}
             userLocation={userLoc}
             userPositions={userPositions}
+            userAccuracy={userAccuracy}
+            headingDeg={gpsHeadingDeg}
+            autoFollow={autoFollow}
+            onAutoFollowChange={onAutoFollowChange}
           />
         </div>
       </div>
 
-      {/* Floating Center Turn Instruction Card */}
-      {nextPoi && (
+      {/* Floating Center Turn / POI Instruction Card */}
+      {activeGuideTurn && (
+        <div className="absolute top-[96px] left-1/2 -translate-x-1/2 px-5 py-3.5 bg-[#FBFAF6]/96 backdrop-blur-2xl border border-[#0B1F17]/07 rounded-2xl shadow-[0_12px_32px_rgba(11,31,23,0.10),0_2px_8px_rgba(11,31,23,0.04)] flex items-center gap-3.5 z-20 min-w-[360px] max-w-[90vw] select-none">
+          <div className="w-12 h-12 rounded-2xl bg-[#17402C] text-[#C6DCBE] flex items-center justify-center flex-shrink-0 relative shadow-md font-bold text-xl">
+            {activeGuideTurn.turn.turnType.includes('droite') ? '↱' : activeGuideTurn.turn.turnType.includes('gauche') ? '↰' : '↑'}
+            <span className="absolute -inset-1 rounded-2xl border-2 border-[#17402C] opacity-25 animate-ping pointer-events-none" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-mono text-[10px] tracking-widest uppercase font-semibold text-[#17402C] leading-none">
+              Prochain virage · Dans {activeGuideTurn.distanceRemainingM} m
+            </div>
+            <div className="text-base font-bold tracking-tight text-[#0B1F17] mt-1 truncate">
+              {activeGuideTurn.turn.instructionText}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeGuidePoi && (
         <div className="absolute top-[96px] left-1/2 -translate-x-1/2 px-5 py-3.5 bg-[#FBFAF6]/96 backdrop-blur-2xl border border-[#0B1F17]/07 rounded-2xl shadow-[0_12px_32px_rgba(11,31,23,0.10),0_2px_8px_rgba(11,31,23,0.04)] flex items-center gap-3.5 z-20 min-w-[360px] max-w-[90vw] select-none">
           <div className="w-12 h-12 rounded-2xl bg-[#17402C] text-white flex items-center justify-center flex-shrink-0 relative shadow-md">
-            <svg className="w-6 h-6 stroke-current stroke-[2.2] fill-none" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 stroke-current stroke-[2.2] fill-none" viewBox="0 0 24 24" style={arrowHtmlStyle}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 20V8M12 8l-4 4M12 8l4 4" />
             </svg>
             <span className="absolute -inset-1 rounded-2xl border-2 border-[#17402C] opacity-25 animate-ping pointer-events-none" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="font-mono text-[10px] tracking-widest uppercase font-semibold text-[#17402C] leading-none">
-              Prochain point · Dans {Math.round(nextPoi.distanceRemainingM)} m
+              Prochain point · Dans {Math.round(activeGuidePoi.distanceRemainingM)} m
             </div>
             <div className="text-base font-bold tracking-tight text-[#0B1F17] mt-1 truncate">
-              {nextPoi.name}
+              {activeGuidePoi.name}
             </div>
-            {nextPoi.category && (
+            {activeGuidePoi.category && (
               <div className="text-[10px] text-[#6B7A72] font-mono tracking-wide mt-0.5 uppercase">
-                {nextPoi.category}
+                {activeGuidePoi.category}
               </div>
             )}
           </div>
@@ -91,8 +140,12 @@ export default function DesktopMapOverlay({
       <div className="absolute right-[380px] bottom-[40px] flex flex-col gap-1.5 z-30 select-none">
         <button
           onClick={onRecentre}
-          className="w-11 h-11 rounded-xl bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#0B1F17]/07 shadow-lg flex items-center justify-center text-[#0B1F17] hover:bg-[#FBFAF6] active:scale-95 transition-transform"
-          title="Recentrer sur ma position"
+          className={`w-11 h-11 rounded-xl backdrop-blur-2xl border border-[#0B1F17]/07 shadow-lg flex items-center justify-center transition-all ${
+            autoFollow
+              ? 'bg-[#17402C] text-white shadow-emerald-950/30'
+              : 'bg-[#FBFAF6]/92 text-[#0B1F17] hover:bg-[#FBFAF6] active:scale-95'
+          }`}
+          title={autoFollow ? 'Auto-follow actif' : 'Recentrer sur ma position'}
         >
           <svg className="w-4.5 h-4.5 fill-none stroke-current stroke-[1.8]" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="3" />
@@ -126,3 +179,4 @@ export default function DesktopMapOverlay({
     </div>
   );
 }
+
