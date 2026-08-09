@@ -20,6 +20,8 @@ export * from './journal/JournalService';
 export * from './journal/JournalStore';
 export * from './safety/SafetyEngine';
 export * from './copilot/CopilotEngine';
+export * from './intelligence/TrailIntelligenceEngine';
+export * from './intelligence/TrailIntelligenceService';
 
 // Components
 export { default as TopHUD } from './components/TopHUD';
