@@ -1,0 +1,252 @@
+'use client';
+
+import React from 'react';
+
+interface WaypointItem {
+  id: string;
+  name: string;
+  italicPart?: string;
+  meta: string;
+  status: 'done' | 'current' | 'future';
+  iconType?: 'check' | 'dot' | 'photo' | 'summit';
+}
+
+interface DesktopLeftPanelProps {
+  distanceKm?: number;
+  totalDistanceKm?: number;
+  progressPercent?: number;
+  startTime?: string;
+  etaTime?: string;
+  elapsedTimeStr?: string;
+  maxAltitudeM?: number;
+  waypoints?: WaypointItem[];
+}
+
+export default function DesktopLeftPanel({
+  distanceKm = 6.8,
+  totalDistanceKm = 14.2,
+  progressPercent = 48,
+  startTime = '05:47',
+  etaTime = '15:42',
+  elapsedTimeStr = '2h18',
+  maxAltitudeM = 2082,
+  waypoints = [
+    {
+      id: 'wp1',
+      name: 'Col de Porte ·',
+      italicPart: 'départ',
+      meta: '05:47 · 1 326 M · 0 KM',
+      status: 'done',
+      iconType: 'check',
+    },
+    {
+      id: 'wp2',
+      name: 'Col du',
+      italicPart: 'Coq',
+      meta: '07:32 · 1 434 M · 3,2 KM',
+      status: 'done',
+      iconType: 'check',
+    },
+    {
+      id: 'wp3',
+      name: 'Habert ·',
+      italicPart: 'refuge',
+      meta: '08:58 · 1 640 M · 5,4 KM · PAUSE 16 MIN',
+      status: 'done',
+      iconType: 'check',
+    },
+    {
+      id: 'wp4',
+      name: 'Crête de',
+      italicPart: 'Bovinant',
+      meta: 'EN COURS · 1 780 M · 6,8 KM',
+      status: 'current',
+      iconType: 'dot',
+    },
+    {
+      id: 'wp5',
+      name: 'Panorama ·',
+      italicPart: 'Grésivaudan',
+      meta: 'ETA 11:42 · 1 842 M · 8,1 KM',
+      status: 'future',
+      iconType: 'photo',
+    },
+    {
+      id: 'wp6',
+      name: 'Sommet ·',
+      italicPart: 'Chamechaude',
+      meta: 'ETA 15:42 · 2 082 M · 14,2 KM',
+      status: 'future',
+      iconType: 'summit',
+    },
+  ],
+}: DesktopLeftPanelProps) {
+  const pct = Math.min(100, Math.max(0, progressPercent ?? (distanceKm / totalDistanceKm) * 100));
+
+  return (
+    <div className="absolute top-[96px] left-5 w-[320px] max-h-[calc(100%-180px)] flex flex-col gap-3.5 z-30 select-none overflow-y-auto custom-scrollbar">
+      {/* 1. Progression Panel */}
+      <div className="bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#0B1F17]/07 rounded-2xl shadow-[0_12px_32px_rgba(11,31,23,0.10),0_2px_8px_rgba(11,31,23,0.04)] overflow-hidden p-4">
+        <div className="flex justify-between items-baseline mb-2">
+          <span className="text-[11px] uppercase tracking-widest text-[#6B7A72] font-semibold">
+            Progression
+          </span>
+          <span className="font-mono text-[10px] text-[#8B978F] tracking-wide">
+            <em className="font-serif italic font-normal text-[#17402C] text-xs">{elapsedTimeStr}</em> écoulées
+          </span>
+        </div>
+
+        <div className="flex justify-between items-baseline mb-2">
+          <div className="text-2xl font-medium tracking-tight text-[#0B1F17]">
+            {distanceKm.toFixed(1)}
+            <em className="font-serif italic font-normal text-sm text-[#17402C] ml-0.5">
+              / {totalDistanceKm.toFixed(1)} km
+            </em>
+          </div>
+          <div className="font-mono text-[11px] font-semibold text-[#17402C] tracking-wide px-2 py-0.5 bg-[#C6DCBE]/40 rounded">
+            {Math.round(pct)} %
+          </div>
+        </div>
+
+        {/* Progress Bar with End Glow Dot */}
+        <div className="h-1 bg-[#0B1F17]/08 rounded-full overflow-hidden relative">
+          <div
+            className="h-full bg-[#17402C] rounded-full relative transition-all duration-500"
+            style={{ width: `${pct}%` }}
+          >
+            <div className="absolute -right-1.5 -top-0.5 w-2 h-2 rounded-full bg-[#17402C] shadow-[0_0_0_3px_rgba(23,64,44,0.15)]" />
+          </div>
+        </div>
+
+        <div className="mt-2.5 flex justify-between font-mono text-[10px] text-[#6B7A72] tracking-wide">
+          <span>DÉPART · {startTime}</span>
+          <span>ETA · {etaTime}</span>
+        </div>
+      </div>
+
+      {/* 2. Waypoints List Panel */}
+      <div className="bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#0B1F17]/07 rounded-2xl shadow-[0_12px_32px_rgba(11,31,23,0.10),0_2px_8px_rgba(11,31,23,0.04)] overflow-hidden p-4 space-y-3">
+        <div className="flex justify-between items-baseline">
+          <span className="text-[11px] uppercase tracking-widest text-[#6B7A72] font-semibold">
+            Itinéraire · {waypoints.length} étapes
+          </span>
+          <span className="font-mono text-[10px] text-[#8B978F] tracking-wide font-semibold">
+            GR9
+          </span>
+        </div>
+
+        {/* Waypoints Timeline */}
+        <div className="relative pl-1 space-y-2">
+          {/* Connecting Vertical Line */}
+          <div className="absolute left-[19px] top-3 bottom-5 w-[2px] bg-gradient-to-b from-[#17402C] via-[#17402C] to-[#0B1F17]/15" />
+
+          {waypoints.map((wp) => (
+            <div
+              key={wp.id}
+              className={`flex items-start gap-3 p-2 rounded-xl relative z-10 transition-colors ${
+                wp.status === 'current' ? 'bg-[#A8C8A0]/20' : ''
+              }`}
+            >
+              {/* Dot Icon */}
+              <div
+                className={`w-5.5 h-5.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 text-xs z-10 ${
+                  wp.status === 'done'
+                    ? 'bg-[#17402C] border-[#17402C] text-[#C6DCBE]'
+                    : wp.status === 'current'
+                    ? 'bg-[#A8C8A0] border-[#17402C] text-[#06120C] shadow-[0_0_0_4px_rgba(168,200,160,0.35)]'
+                    : 'bg-[#FBFAF6] border-[#0B1F17]/20 text-[#8B978F]'
+                }`}
+              >
+                {wp.status === 'done' ? (
+                  <svg className="w-3 h-3 stroke-current stroke-[2.6] fill-none" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12l5 5L20 7" />
+                  </svg>
+                ) : wp.status === 'current' ? (
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#06120C]" />
+                ) : wp.iconType === 'photo' ? (
+                  <svg className="w-2.5 h-2.5 stroke-current stroke-[1.8] fill-none" viewBox="0 0 24 24">
+                    <rect x="3" y="5" width="18" height="14" rx="2" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                ) : (
+                  <svg className="w-2.5 h-2.5 stroke-current stroke-[1.8] fill-none" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 21l3-9h12l3 9M6 12l6-8 6 8" />
+                  </svg>
+                )}
+              </div>
+
+              {/* Waypoint Text */}
+              <div className="flex-1 min-w-0 pt-0.5">
+                <div
+                  className={`text-xs font-medium leading-tight ${
+                    wp.status === 'future' ? 'text-[#6B7A72]' : 'text-[#0B1F17]'
+                  }`}
+                >
+                  {wp.name}{' '}
+                  {wp.italicPart && (
+                    <em className="font-serif italic font-normal text-[#17402C]">{wp.italicPart}</em>
+                  )}
+                </div>
+                <div
+                  className={`font-mono text-[10px] tracking-wide mt-0.5 ${
+                    wp.status === 'current' ? 'text-[#17402C] font-semibold' : 'text-[#6B7A72]'
+                  }`}
+                >
+                  {wp.meta}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Elevation Mini Profile inside Left Panel */}
+        <div className="pt-2">
+          <div className="flex justify-between items-baseline mb-2">
+            <span className="text-[11px] uppercase tracking-widest text-[#6B7A72] font-semibold">
+              Profil altimétrique
+            </span>
+            <span className="font-mono text-[10px] text-[#17402C] font-semibold tracking-wide">
+              MAX · {maxAltitudeM} M
+            </span>
+          </div>
+
+          <div className="bg-[#06120C] rounded-xl p-3 text-white relative overflow-hidden">
+            <svg className="w-full h-23 block" viewBox="0 0 300 92" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="altFillLeft" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#A8C8A0" stopOpacity="0.5" />
+                  <stop offset="100%" stopColor="#A8C8A0" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M0,72 L20,68 L40,60 L60,52 L80,42 L100,38 L120,28 L140,22 L160,14 L180,18 L200,28 L220,40 L240,52 L260,66 L280,74 L300,78 L300,92 L0,92 Z"
+                fill="url(#altFillLeft)"
+              />
+              <path
+                d="M0,72 L20,68 L40,60 L60,52 L80,42 L100,38 L120,28 L140,22 L160,14 L180,18 L200,28 L220,40 L240,52 L260,66 L280,74 L300,78"
+                fill="none"
+                stroke="#A8C8A0"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <circle cx="115" cy="32" r="4" fill="#A8C8A0" stroke="#06120C" strokeWidth="1.5" />
+              <line x1="115" y1="0" x2="115" y2="92" stroke="#C6DCBE" strokeWidth="0.5" strokeDasharray="2 3" opacity="0.5" />
+              <text x="115" y="9" fill="#C6DCBE" fontSize="7" fontFamily="monospace" textAnchor="middle" letterSpacing="1">
+                VOUS
+              </text>
+            </svg>
+
+            <div className="flex justify-between font-mono text-[8px] text-white/50 tracking-widest mt-1.5">
+              <span>0</span>
+              <span>3,5</span>
+              <span>7</span>
+              <span>10,5</span>
+              <span>14,2 KM</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

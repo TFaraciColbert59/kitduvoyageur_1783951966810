@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getChatCompletion } from '@/lib/ai/chatCompletion';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
 interface SpeciesResult {

@@ -32,6 +32,7 @@ export { default as CockpitBottomNav } from './components/CockpitBottomNav';
 export { default as OfflineIndicatorBanner } from './components/OfflineIndicatorBanner';
 export { default as SafetyCenterModal } from './components/SafetyCenterModal';
 export { default as CopilotPanel } from './components/CopilotPanel';
+export { default as CompletionView } from './components/CompletionView';
 export { default as HikingCockpitPage } from './components/HikingCockpitPage';
 
 

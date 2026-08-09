@@ -3,6 +3,7 @@ import { TrackingEngine } from '../engine/TrackingEngine';
 import { GPSService } from '../services/GPSService';
 import { WeatherService } from '../services/WeatherService';
 import { HikeSessionService } from '../services/HikeSessionService';
+import { createClient } from '@/lib/supabase/client';
 import {
   HikingState,
   GPSPosition,
@@ -31,7 +32,11 @@ export interface HikingControllerState {
   safetyAlerts: SafetyAlert[];
   batteryLevel: number | null;
   routeId: string | null;
+  routeTotalKm: number | null;
+  routeName: string | null;
 }
+
+const PERSISTENCE_KEY = 'lkdv_active_hike_session';
 
 export class HikingController {
   private stateMachine: HikingStateMachine;
@@ -43,6 +48,9 @@ export class HikingController {
   private timerId: NodeJS.Timeout | null = null;
   private unbindGPSPosition: (() => void) | null = null;
   private unbindGPSError: (() => void) | null = null;
+  private routePois: POI[] = [];
+  private reachedPois: Set<string> = new Set();
+  private offRouteBuffer: number[] = [];
 
   constructor() {
     this.stateMachine = new HikingStateMachine('IDLE');
@@ -69,6 +77,8 @@ export class HikingController {
       safetyAlerts: [],
       batteryLevel: null,
       routeId: null,
+      routeTotalKm: null,
+      routeName: null,
     };
 
     this.stateMachine.subscribe((nextState) => {
@@ -78,6 +88,8 @@ export class HikingController {
         isPaused: nextState === 'PAUSED',
       });
     });
+
+    this.restoreSession();
   }
 
   public getState(): HikingControllerState {
@@ -95,6 +107,8 @@ export class HikingController {
     if (!this.stateMachine.transitionTo('PREPARING')) return;
 
     this.trackingEngine.reset();
+    this.reachedPois.clear();
+    this.offRouteBuffer = [];
 
     this.updateState({
       routeId: routeId || null,
@@ -107,7 +121,16 @@ export class HikingController {
       estimatedEtaMinutes: null,
       positions: [],
       safetyAlerts: [],
+      progressPercent: 0,
+      isOffRoute: false,
+      deviation: null,
     });
+
+    if (routeId) {
+      await this.loadRouteDetails(routeId);
+    } else {
+      this.updateState({ routeName: 'Chamechaude', routeTotalKm: 14.2 });
+    }
 
     this.stateMachine.transitionTo('READY');
     this.stateMachine.transitionTo('TRACKING');
@@ -115,14 +138,18 @@ export class HikingController {
     this.bindGPS();
     this.startTimer();
     this.initBattery();
+    this.persistSession();
   }
 
   public pauseHike(): void {
     if (!this.stateMachine.transitionTo('PAUSED')) return;
+    this.persistSession();
   }
 
   public resumeHike(): void {
-    this.stateMachine.transitionTo('TRACKING');
+    if (this.stateMachine.transitionTo('TRACKING')) {
+      this.persistSession();
+    }
   }
 
   public async stopHike(carnetId?: string): Promise<{ sessionId: string } | null> {
@@ -156,6 +183,7 @@ export class HikingController {
       }
     }
 
+    this.clearPersistedSession();
     this.stateMachine.transitionTo('COMPLETED');
     this.stateMachine.transitionTo('IDLE');
 
@@ -164,9 +192,11 @@ export class HikingController {
 
   public dismissOffRoute(): void {
     this.updateState({ isOffRoute: false, deviation: null });
+    this.offRouteBuffer = [];
     if (this.stateMachine.getState() === 'OFF_ROUTE') {
       this.stateMachine.transitionTo('TRACKING');
     }
+    this.persistSession();
   }
 
   public async fetchWeather(lat: number, lon: number): Promise<WeatherSnapshot | null> {
@@ -189,6 +219,50 @@ export class HikingController {
 
   // ── PRIVATE HELPERS ─────────────────────────────────────────────────────────
 
+  private async loadRouteDetails(routeId: string): Promise<void> {
+    try {
+      const supabase = createClient();
+      const { data: route } = await supabase
+        .from('hiking_routes')
+        .select('id, name, distance_km, elevation_gain_m')
+        .eq('id', routeId)
+        .single();
+
+      if (route) {
+        this.updateState({
+          routeName: route.name || 'Itinéraire',
+          routeTotalKm: Number(route.distance_km) || 14.2,
+        });
+      }
+
+      const { data: pois } = await supabase
+        .from('trail_pois')
+        .select('name, geom, category')
+        .limit(10);
+
+      if (pois && pois.length > 0) {
+        this.routePois = pois
+          .filter((p) => p.name && p.geom)
+          .map((p, idx) => {
+            const match = p.geom?.match(/POINT\(([-\d.]+)\s+([-\d.]+)\)/);
+            const lon = match ? parseFloat(match[1]) : 5.8667;
+            const lat = match ? parseFloat(match[2]) : 45.2833;
+            return {
+              id: `poi-${idx}`,
+              name: p.name,
+              category: p.category || 'waypoint',
+              lat,
+              lon,
+              distance_m: 0,
+              bearing_deg: 0,
+            };
+          });
+      }
+    } catch (err) {
+      console.warn('[HikingController] Failed to load route details:', err);
+    }
+  }
+
   private updateState(partial: Partial<HikingControllerState>): void {
     this.state = { ...this.state, ...partial };
     this.listeners.forEach((l) => l(this.state));
@@ -202,7 +276,31 @@ export class HikingController {
 
       const accepted = this.trackingEngine.processPosition(pos);
       if (accepted) {
-        const metrics = this.trackingEngine.getMetrics();
+        const remainingKm = this.state.routeTotalKm
+          ? Math.max(0, this.state.routeTotalKm - this.state.distanceKm)
+          : null;
+        const metrics = this.trackingEngine.getMetrics(remainingKm);
+
+        const validPosList = this.trackingEngine.getValidPositions();
+        const totalKm = this.state.routeTotalKm || 14.2;
+        const progressPct = Math.min(100, Math.max(0, (metrics.distanceKm / totalKm) * 100));
+
+        // Next POI calculation
+        let nextPoi: (POI & { distanceRemainingM: number }) | null = null;
+        if (this.routePois.length > 0) {
+          for (const poi of this.routePois) {
+            if (!this.reachedPois.has(poi.name)) {
+              const dM = this.calcDistM(pos.latitude, pos.longitude, poi.lat, poi.lon);
+              if (dM < 30) {
+                this.reachedPois.add(poi.name);
+              } else {
+                nextPoi = { ...poi, distanceRemainingM: Math.round(dM) };
+                break;
+              }
+            }
+          }
+        }
+
         this.updateState({
           distanceKm: metrics.distanceKm,
           elevationGainM: metrics.elevationGainM,
@@ -210,8 +308,12 @@ export class HikingController {
           averageSpeedKmH: metrics.averageSpeedKmH,
           paceMinPerKm: metrics.paceMinPerKm,
           estimatedEtaMinutes: metrics.estimatedEtaMinutes,
-          positions: this.trackingEngine.getValidPositions(),
+          positions: validPosList,
+          progressPercent: progressPct,
+          nextPoi,
         });
+
+        this.persistSession();
       }
     });
 
@@ -224,6 +326,19 @@ export class HikingController {
     });
 
     this.gpsService.startTracking();
+  }
+
+  private calcDistM(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371000;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
   private unbindGPS(): void {
@@ -243,12 +358,17 @@ export class HikingController {
     this.timerId = setInterval(() => {
       if (this.state.isPaused) return;
 
-      const metrics = this.trackingEngine.getMetrics();
+      const remainingKm = this.state.routeTotalKm
+        ? Math.max(0, this.state.routeTotalKm - this.state.distanceKm)
+        : null;
+      const metrics = this.trackingEngine.getMetrics(remainingKm);
+
       this.updateState({
         durationSeconds: metrics.activeDurationSeconds,
         paceMinPerKm: metrics.paceMinPerKm,
         averageSpeedKmH: metrics.averageSpeedKmH,
       });
+      this.persistSession();
     }, 1000);
   }
 
@@ -288,5 +408,60 @@ export class HikingController {
     this.updateState({
       safetyAlerts: [...this.state.safetyAlerts, alert],
     });
+  }
+
+  private persistSession(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      if (this.state.isActive) {
+        localStorage.setItem(
+          PERSISTENCE_KEY,
+          JSON.stringify({
+            routeId: this.state.routeId,
+            routeName: this.state.routeName,
+            routeTotalKm: this.state.routeTotalKm,
+            distanceKm: this.state.distanceKm,
+            durationSeconds: this.state.durationSeconds,
+            elevationGainM: this.state.elevationGainM,
+            isPaused: this.state.isPaused,
+            positions: this.state.positions.slice(-200),
+          })
+        );
+      }
+    } catch {
+      /* ignore storage errors */
+    }
+  }
+
+  private restoreSession(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const saved = localStorage.getItem(PERSISTENCE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.positions && parsed.positions.length > 0) {
+          this.updateState({
+            routeId: parsed.routeId || null,
+            routeName: parsed.routeName || 'Chamechaude',
+            routeTotalKm: parsed.routeTotalKm || 14.2,
+            distanceKm: parsed.distanceKm || 0,
+            durationSeconds: parsed.durationSeconds || 0,
+            elevationGainM: parsed.elevationGainM || null,
+            positions: parsed.positions,
+          });
+        }
+      }
+    } catch {
+      /* ignore restore errors */
+    }
+  }
+
+  private clearPersistedSession(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.removeItem(PERSISTENCE_KEY);
+    } catch {
+      /* ignore */
+    }
   }
 }

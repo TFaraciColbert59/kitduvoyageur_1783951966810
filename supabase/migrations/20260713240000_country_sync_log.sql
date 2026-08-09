@@ -22,6 +22,9 @@ CREATE INDEX IF NOT EXISTS idx_country_sync_log_valid_until ON public.country_sy
 -- RLS: public read, only service role can write
 ALTER TABLE public.country_sync_log ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "country_sync_log_public_read" ON public.country_sync_log;
+DROP POLICY IF EXISTS "country_sync_log_service_write" ON public.country_sync_log;
+
 CREATE POLICY "country_sync_log_public_read"
   ON public.country_sync_log FOR SELECT
   USING (true);

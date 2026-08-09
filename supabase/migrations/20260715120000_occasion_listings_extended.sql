@@ -78,7 +78,7 @@ CREATE POLICY "listings_public_read" ON public.listings
   USING (
     statut = 'actif'
     AND (
-      listing_type != 'occasion'::public.listing_type
+      listing_type::text != 'occasion'
       OR occasion_statut = 'active'
     )
   );

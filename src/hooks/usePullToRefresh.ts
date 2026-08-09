@@ -23,7 +23,7 @@ export function usePullToRefresh(onRefresh: () => Promise<void>) {
       const diff = currentY - startY;
 
       if (diff > 0 && window.scrollY <= 0) {
-        e.cancelable && e.preventDefault();
+        if (e.cancelable) e.preventDefault();
         setPullProgress(Math.min(diff / threshold, 1));
       } else {
         isPulling = false;

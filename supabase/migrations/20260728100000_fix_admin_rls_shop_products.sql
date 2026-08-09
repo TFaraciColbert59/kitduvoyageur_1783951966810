@@ -29,6 +29,7 @@ $$;
 -- Drop the overly permissive policies that allow ANY authenticated user to write
 DROP POLICY IF EXISTS "admin_manage_shop_products" ON public.shop_products;
 DROP POLICY IF EXISTS "auth_admin_write_shop_products" ON public.shop_products;
+DROP POLICY IF EXISTS "admin_write_shop_products" ON public.shop_products;
 
 -- Re-create admin-only write policy
 CREATE POLICY "admin_write_shop_products" ON public.shop_products
@@ -39,6 +40,8 @@ CREATE POLICY "admin_write_shop_products" ON public.shop_products
 
 -- ── PART D: Enable RLS on carnet_gear_links ───────────────────────────────
 ALTER TABLE public.carnet_gear_links ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "public_read_carnet_gear_links" ON public.carnet_gear_links;
 
 -- Public read policy for carnet_gear_links (matching other content tables)
 CREATE POLICY "public_read_carnet_gear_links" ON public.carnet_gear_links

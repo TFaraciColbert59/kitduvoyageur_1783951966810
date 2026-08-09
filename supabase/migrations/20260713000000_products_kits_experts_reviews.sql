@@ -26,6 +26,17 @@ CREATE POLICY "users_update_own_profile" ON public.user_profiles FOR UPDATE TO a
 DROP POLICY IF EXISTS "users_insert_own_profile" ON public.user_profiles;
 CREATE POLICY "users_insert_own_profile" ON public.user_profiles FOR INSERT TO authenticated WITH CHECK (id = auth.uid());
 
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS activity TEXT[] DEFAULT '{}';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS badge TEXT DEFAULT '';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS featured BOOLEAN DEFAULT false;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS brand TEXT DEFAULT '';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS weight_g INTEGER DEFAULT 0;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS price_eur NUMERIC(10,2) DEFAULT 0;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 0;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS image TEXT DEFAULT '';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS image_alt TEXT DEFAULT '';
+
 -- 1. PRODUCTS (catalogue)
 CREATE TABLE IF NOT EXISTS public.products (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -45,6 +56,12 @@ CREATE TABLE IF NOT EXISTS public.products (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE public.kits ADD COLUMN IF NOT EXISTS activite TEXT DEFAULT '';
+ALTER TABLE public.kits ADD COLUMN IF NOT EXISTS alt TEXT DEFAULT '';
+ALTER TABLE public.kits ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';
+ALTER TABLE public.kits ADD COLUMN IF NOT EXISTS featured BOOLEAN DEFAULT false;
+ALTER TABLE public.kits ADD COLUMN IF NOT EXISTS conseils TEXT[] DEFAULT '{}';
 
 -- 2. KITS
 CREATE TABLE IF NOT EXISTS public.kits (
@@ -66,6 +83,11 @@ CREATE TABLE IF NOT EXISTS public.kits (
   conseils TEXT[] DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE public.kit_items ADD COLUMN IF NOT EXISTS slug TEXT DEFAULT '';
+ALTER TABLE public.kit_items ADD COLUMN IF NOT EXISTS image TEXT DEFAULT '';
+ALTER TABLE public.kit_items ADD COLUMN IF NOT EXISTS alt TEXT DEFAULT '';
+ALTER TABLE public.kit_items ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;
 
 -- 3. KIT ITEMS
 CREATE TABLE IF NOT EXISTS public.kit_items (
@@ -159,6 +181,7 @@ CREATE TABLE IF NOT EXISTS public.ambassadors (
   status TEXT DEFAULT 'active',
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ambassadors_promo_code ON public.ambassadors(promo_code);
 
 -- 9. PROMO CODES
 CREATE TABLE IF NOT EXISTS public.promo_codes (
@@ -170,6 +193,11 @@ CREATE TABLE IF NOT EXISTS public.promo_codes (
   status TEXT DEFAULT 'active',
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE public.promo_codes ADD COLUMN IF NOT EXISTS ambassador_id UUID REFERENCES public.ambassadors(id) ON DELETE SET NULL;
+ALTER TABLE public.promo_codes ADD COLUMN IF NOT EXISTS uses INTEGER DEFAULT 0;
+ALTER TABLE public.promo_codes ADD COLUMN IF NOT EXISTS revenue NUMERIC(10,2) DEFAULT 0;
+ALTER TABLE public.promo_codes ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
 
 -- 10. ORDERS
 CREATE TABLE IF NOT EXISTS public.orders (

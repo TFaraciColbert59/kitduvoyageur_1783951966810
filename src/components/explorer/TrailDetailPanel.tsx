@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import type { MapTrail } from './types';
 import { getChatCompletion, GEMINI_PROVIDER, GEMINI_DEFAULT_MODEL } from '@/lib/ai/chatCompletion';
 import { useOfflineDownload } from '@/hooks/useOfflineDownload';
@@ -46,6 +47,7 @@ function InfoChip({ icon, label, value }: { icon: React.ReactNode; label: string
 }
 
 export default function TrailDetailPanel({ trail, onClose }: Props) {
+  const router = useRouter();
   const imgUrl = getTrailImage(trail.id);
   const diffColor = getDifficultyColor(trail.difficulty);
   const diffLabel = getDifficultyLabel(trail.difficulty);
@@ -382,8 +384,18 @@ Ne sois pas redondant, ne fais pas juste la liste des chiffres, mais utilise-les
           </div>
 
           <button
+            onClick={() => {
+              router.push(`/randonnee-active?routeId=${trail.id}`);
+            }}
+            className="w-full py-3.5 bg-[#2D5A27] text-white text-sm font-bold rounded-xl shadow-lg hover:bg-[#1E3E1B] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          >
+            <span>🥾</span>
+            <span>Démarrer la randonnée</span>
+          </button>
+
+          <button
             onClick={onClose}
-            className="w-full py-3 bg-[#1C2620] text-white text-sm font-semibold rounded-xl hover:bg-[#2D3F35] active:scale-[0.98] transition-all"
+            className="w-full py-2.5 bg-[#F5F2EA] text-[#1C2620] text-sm font-semibold rounded-xl hover:bg-[#EAE6D8] active:scale-[0.98] transition-all"
           >
             Retour à la carte
           </button>

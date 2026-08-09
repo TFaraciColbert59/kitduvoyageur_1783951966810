@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS public.country_sync_log (
     statut public.sync_status NOT NULL DEFAULT 'pending'::public.sync_status,
     details JSONB
 );
+ALTER TABLE public.country_sync_log ADD COLUMN IF NOT EXISTS country_id TEXT;
 
 CREATE TABLE IF NOT EXISTS public.moderation_queue (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

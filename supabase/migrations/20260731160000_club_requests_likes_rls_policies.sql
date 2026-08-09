@@ -6,10 +6,15 @@ DELETE FROM public.club_join_requests a
 USING public.club_join_requests b
 WHERE a.id < b.id AND a.club_id = b.club_id AND a.user_id = b.user_id;
 
-ALTER TABLE public.club_join_requests
-  ADD CONSTRAINT club_join_requests_club_user_key UNIQUE (club_id, user_id);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'club_join_requests_club_user_key') THEN
+    ALTER TABLE public.club_join_requests
+      ADD CONSTRAINT club_join_requests_club_user_key UNIQUE (club_id, user_id);
+  END IF;
+END $$;
 
 -- 2) club_join_requests : lecture — ses propres demandes OU membre actif du club (les admins/modérateurs sont membres)
+DROP POLICY IF EXISTS club_join_requests_select ON public.club_join_requests;
 CREATE POLICY club_join_requests_select ON public.club_join_requests
   FOR SELECT TO authenticated
   USING (
@@ -23,11 +28,13 @@ CREATE POLICY club_join_requests_select ON public.club_join_requests
   );
 
 -- 3) club_join_requests : création — uniquement sa propre demande
+DROP POLICY IF EXISTS club_join_requests_insert ON public.club_join_requests;
 CREATE POLICY club_join_requests_insert ON public.club_join_requests
   FOR INSERT TO authenticated
   WITH CHECK (user_id = auth.uid());
 
 -- 4) club_join_requests : modération — admin/modérateur du club (approbation/refus)
+DROP POLICY IF EXISTS club_join_requests_moderate ON public.club_join_requests;
 CREATE POLICY club_join_requests_moderate ON public.club_join_requests
   FOR UPDATE TO authenticated
   USING (
@@ -52,6 +59,7 @@ CREATE POLICY club_join_requests_moderate ON public.club_join_requests
 
 -- 5) club_members : approbation d'une demande — l'admin/modérateur insère un membre
 --    (role = 'member' uniquement pour éviter toute élévation de privilège)
+DROP POLICY IF EXISTS club_members_admin_insert ON public.club_members;
 CREATE POLICY club_members_admin_insert ON public.club_members
   FOR INSERT TO authenticated
   WITH CHECK (
@@ -74,6 +82,7 @@ CREATE POLICY club_members_admin_insert ON public.club_members
 REVOKE UPDATE ON public.community_posts FROM anon, authenticated;
 GRANT UPDATE (likes_count) ON public.community_posts TO authenticated;
 
+DROP POLICY IF EXISTS auth_like_community_posts ON public.community_posts;
 CREATE POLICY auth_like_community_posts ON public.community_posts
   FOR UPDATE TO authenticated
   USING (true)

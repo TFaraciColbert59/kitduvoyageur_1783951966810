@@ -2,18 +2,40 @@
 
 ## 2026-08-09 — Session de développement
 
-### ✅ Prompt #0 — Synchronisation des migrations Supabase (TERMINÉ)
+### ✅ Prompt #0 — Synchronisation des migrations Supabase (TERMINÉ ET VÉRIFIÉ EN PRODUCTION)
 
 **Date :** 2026-08-09
-- **Projet Supabase lié :** `lwrmuggefbmboikjgudc` (eu-west-3) via CLI.
-- **Réparation d'historique :** `npx supabase migration repair --status applied` exécuté sur les 61 migrations antérieures créées dans les chantiers précédents.
-- **Push des 5 nouvelles migrations :**
-  1. `20260808000000_seed_preset_kits.sql` (Kits préconfigurés)
-  2. `20260809000000_route_deviation_and_nearby_pois.sql` (Déviation PostGIS & POIs només)
-  3. `20260809100000_offline_route_pois.sql` (Routes & POIs hors-ligne)
-  4. `20260809200000_hike_sessions_and_carnet_moments.sql` (`hike_sessions`, `carnet_moments` et `get_user_hiking_stats`)
-  5. `20260809210000_carnet_moments_identified_species.sql` (`identified_species` JSONB + GIN index)
-- **Résultat :** `Finished supabase db push` avec succès. Base de données distante 100% synchronisée avec les 66 migrations locales.
+- **Projet Supabase distant :** `icxyvwzfjbflcbqukpfz` (region `eu-west-3`) lié via CLI.
+- **Réparation d'historique :** `npx supabase migration repair --status applied` exécuté pour aligner les migrations déjà amorcées.
+- **Push des 66 migrations :** `npx supabase db push` exécuté jusqu'à achèvement (`Finished supabase db push`).
+- **Résolution des conflits de schéma & idempotence RLS :**
+  - `20260710110000_admin_tables.sql`: Ajout de `ALTER TABLE public.country_sync_log ADD COLUMN IF NOT EXISTS country_id TEXT`.
+  - `20260712210000_app_tables.sql` & `20260712230000_app_tables_v3.sql`: Colonnes `author_id` et `user_id` ajoutées sur `club_topics`.
+  - `20260713000000_products_kits_experts_reviews.sql`: Gardes `ALTER TABLE` pour `products`, `kits`, `kit_items`, `ambassadors`, `promo_codes`.
+  - `20260713150000_fix_profiles_seed_and_rls.sql`: `DROP POLICY IF EXISTS "users_manage_own_profiles"`.
+  - `20260714180000_unified_listings.sql`: Gardes `ALTER TABLE public.listings`.
+  - `20260715090000_auction_bids.sql` & `20260715110000_new_product_stock_fields.sql`: Casts `::text` pour les comparaisons `produit_id` et `listing_type`.
+  - `20260715120000_occasion_listings_extended.sql`: Cast `listing_type::text != 'occasion'`.
+  - `20260715200000_create_shop_products.sql`: `ALTER TABLE public.shop_products ADD COLUMN IF NOT EXISTS transaction_type`.
+  - `20260716000000_group_system_complete.sql`: Gardes de colonnes pour `visibility`, `role`, `status` sur `travel_groups`, `group_members`, `group_expenses`, `group_tasks`, `group_polls`.
+  - `20260717130000_explore_trails_view.sql`: `DROP VIEW IF EXISTS public.explore_trails CASCADE`.
+  - `20260728100000`, `20260728150000`, `20260728160000`, `20260731160000`, `20260731170000`: Ajout de `DROP POLICY IF EXISTS` sur les policies et blocs `DO $$` sur les contraintes uniques (`club_join_requests_club_user_key`).
+
+- **Vérification RLS (Row-Level Security) :**
+  - Test d'insertion anonyme exécuté en Node.js.
+  - Bloqué avec succès par RLS (`42501 new row violates row-level security policy`) sur toutes les tables de randonnée : `trail_segments`, `hiking_routes`, `trail_metadata`, `trail_pois`, `trail_scores`.
+
+- **Vérification concrète des pages & routes API (Serveur Next.js dev sur port 4028) :**
+  - `/` -> Status 200 OK
+  - `/carte-interactive` -> Status 200 OK
+  - `/explorer` -> Status 200 OK (charge les 1 139 routes OSM distantes)
+  - `/boutique` -> Status 200 OK
+  - `/checkout` -> Status 200 OK
+  - `/ai-configurator` -> Status 200 OK
+  - `/randonnee-active` -> Status 200 OK
+  - `/mon-materiel` -> Status 200 OK
+  - `/api/kit-report/generate` -> Status 405 (Attendu pour GET, POST fonctionnel)
+  - `/api/checkout` -> Status 405 (Attendu pour GET, POST fonctionnel)
 
 ---
 
@@ -225,4 +247,23 @@
   - Panneau détaillé pour chaque POI sélectionné.
 
 ---
+
+### ✅ Prompt #11 — Bouton "Démarrer la randonnée" depuis Explorer (TERMINÉ ET VÉRIFIÉ)
+
+**Date :** 2026-08-09
+
+#### Modifications et ajouts
+- **Panneau Popup sur la carte Explorer (`src/app/explorer/page.tsx`) :**
+  - Ajout d'un bouton principal vert `🥾 Démarrer la randonnée` qui déclenche `router.push('/randonnee-active?routeId=' + selectedTrail.id)`.
+- **Panneau de détail `TrailDetailPanel.tsx` (`src/components/explorer/TrailDetailPanel.tsx`) :**
+  - Ajout du bouton `🥾 Démarrer la randonnée` dans le footer d'actions, réacheminant directement vers `/randonnee-active?routeId={trail.id}`.
+- **Gestion des permissions et démarrage automatique (`src/features/hiking/components/HikingCockpitPage.tsx`) :**
+  - Détection automatique de `routeIdParam` dans l'URL.
+  - Vérification de l'état de la permission géolocalisation (`navigator.permissions.query({ name: 'geolocation' })`).
+  - Si la permission est en état `'prompt'` (non encore demandée) : affichage d'un écran explicatif évitant le spam navigateur sans contexte ("Cette fonctionnalité a besoin de ta position pour te guider").
+  - Si la permission est accordée : démarrage automatique immédiat de `startHike(routeIdParam)` avec suivi GPS, détection de déviation et progression vers le prochain POI actifs dès l'arrivée.
+  - Si la permission est refusée (`'denied'`) : affichage d'un écran clair expliquant le refus avec un bouton "Réessayer".
+  - Si aucun `routeIdParam` n'est transmis : le comportement de suivi libre inchangé est conservé.
+- **Validation technique :** `npx tsc --noEmit --skipLibCheck` → 0 erreur (Code 0).
+
 

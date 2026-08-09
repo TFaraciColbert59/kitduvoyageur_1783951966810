@@ -5,6 +5,7 @@
 -- 1. Add public read policy so unauthenticated users can see profiles
 DROP POLICY IF EXISTS "users_read_all_profiles" ON public.user_profiles;
 DROP POLICY IF EXISTS "public_read_profiles" ON public.user_profiles;
+DROP POLICY IF EXISTS "users_manage_own_profiles" ON public.user_profiles;
 
 CREATE POLICY "public_read_profiles" ON public.user_profiles
 FOR SELECT TO public USING (true);

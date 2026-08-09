@@ -12,6 +12,8 @@
 -- Consumer: /explorer frontend page via Supabase JS client
 -- ============================================================
 
+DROP VIEW IF EXISTS public.explore_trails CASCADE;
+
 CREATE OR REPLACE VIEW public.explore_trails AS
 SELECT
   id,

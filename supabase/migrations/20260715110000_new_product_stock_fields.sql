@@ -64,8 +64,8 @@ AS $$
     'occasion-' || l.id::TEXT AS listing_slug,
     l.prix_cents AS listing_prix_cents
   FROM public.listings l
-  WHERE l.produit_id = p_produit_id
-    AND l.listing_type = 'occasion'
+  WHERE l.produit_id::text = p_produit_id::text
+    AND l.listing_type::text = 'occasion'
     AND l.statut = 'actif'
   ORDER BY l.prix_cents ASC
   LIMIT 1;

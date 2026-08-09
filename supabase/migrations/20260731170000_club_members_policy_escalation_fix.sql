@@ -13,6 +13,10 @@
 
 -- 1) club_members : DROP de la policy FOR ALL héritée
 DROP POLICY IF EXISTS club_members_manage ON public.club_members;
+DROP POLICY IF EXISTS club_members_self_join ON public.club_members;
+DROP POLICY IF EXISTS club_members_creator_admin ON public.club_members;
+DROP POLICY IF EXISTS club_members_admin_moderate ON public.club_members;
+DROP POLICY IF EXISTS club_members_self_delete ON public.club_members;
 
 -- 2) INSERT self-join : uniquement son propre profil, en 'member',
 --    uniquement dans un club OUVRert (l'app route les clubs fermés vers
@@ -85,6 +89,7 @@ CREATE POLICY club_members_self_delete ON public.club_members
 --    passer en 'approved'/'rejected' (self-approval impossible).
 DROP POLICY IF EXISTS club_join_requests_manage ON public.club_join_requests;
 DROP POLICY IF EXISTS club_join_requests_read ON public.club_join_requests;
+DROP POLICY IF EXISTS club_join_requests_self_update ON public.club_join_requests;
 
 CREATE POLICY club_join_requests_self_update ON public.club_join_requests
   FOR UPDATE TO authenticated

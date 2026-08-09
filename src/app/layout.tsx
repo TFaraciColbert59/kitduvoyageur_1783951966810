@@ -15,6 +15,7 @@ import CookieConsentBanner from '@/components/CookieConsentBanner';
 import { getOrganizationSchema, getWebsiteSchema } from '@/lib/seo-utils';
 import ReactQueryProvider from '@/components/ReactQueryProvider';
 import PageTransition from '@/components/ui/PageTransition';
+import CustomCursor from '@/components/ui/CustomCursor';
 
 
 
@@ -239,6 +240,7 @@ export default function RootLayout({
                       <PageTransition>{children}</PageTransition>
                     </main>
                     <CookieConsentBanner />
+                    <CustomCursor />
                   </ReactQueryProvider>
                 </ErrorBoundaryWrapper>
               </SearchProvider>

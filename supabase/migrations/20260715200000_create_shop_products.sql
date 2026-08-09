@@ -4,6 +4,8 @@
 DROP TYPE IF EXISTS public.shop_transaction_type CASCADE;
 CREATE TYPE public.shop_transaction_type AS ENUM ('achat', 'location', 'occasion', 'enchere');
 
+ALTER TABLE public.shop_products ADD COLUMN IF NOT EXISTS transaction_type public.shop_transaction_type NOT NULL DEFAULT 'achat';
+
 CREATE TABLE IF NOT EXISTS public.shop_products (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug              TEXT NOT NULL UNIQUE,

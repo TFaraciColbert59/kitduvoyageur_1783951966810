@@ -230,7 +230,7 @@ export default function InteractiveMap() {
         layerGroupRef.current = null;
       }
 
-      // @ts-ignore
+      // @ts-expect-error markerClusterGroup plugin extension
       const clusterGroup = L.markerClusterGroup({
         showCoverageOnHover: false,
         maxClusterRadius: 45,
