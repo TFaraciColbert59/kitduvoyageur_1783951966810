@@ -11,6 +11,7 @@ import ContextualInsight from './ContextualInsight';
 import NavigationCard from './NavigationCard';
 import HikingControls from './HikingControls';
 import CockpitBottomNav, { CockpitTab } from './CockpitBottomNav';
+import OfflineIndicatorBanner from './OfflineIndicatorBanner';
 import { POI } from '../types';
 
 export default function HikingCockpitPage() {
@@ -85,6 +86,7 @@ export default function HikingCockpitPage() {
       <div className="relative w-full h-[100dvh] bg-[#0d1a12] flex flex-col justify-between overflow-hidden select-none">
         {/* Top Floating HUD */}
         <div className="z-40 w-full">
+          <OfflineIndicatorBanner />
           <TopHUD
             distanceKm={hikingStore.distanceKm}
             routeTotalKm={null}
