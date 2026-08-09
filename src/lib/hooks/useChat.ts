@@ -5,6 +5,7 @@ import Error from '@/app/boutique/error';
 
 
 
+
 export function useChat(provider: string, model: string, streaming: boolean = true) {
   const [response, setResponse] = useState('');
   const [fullResponse, setFullResponse] = useState<unknown>(null);

@@ -25,6 +25,13 @@ import CarnetCTACard from '@/components/groupes/CarnetCTACard';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 
+
+
+
+
+
+
+
 // Dynamically imported — only load when tab is active
 const DepensesCard = nextDynamic(() => import('@/components/groupes/DepensesCard'), { ssr: false });
 const DecisionsCard = nextDynamic(() => import('@/components/groupes/DecisionsCard'), { ssr: false });
