@@ -445,7 +445,7 @@ export default function BoussoleAugmenteePage() {
             }}
           >
             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>
-              Tourne-toi pour voir les points d'intérêt
+              Tourne-toi pour voir les points d&apos;intérêt
             </p>
           </div>
         )}
