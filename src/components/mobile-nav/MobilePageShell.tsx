@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 
 interface MobilePageShellProps {
   children: React.ReactNode;
@@ -14,11 +14,29 @@ interface MobilePageShellProps {
 export default function MobilePageShell({
   children,
 }: MobilePageShellProps) {
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      if (e.matches) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    };
+    
+    // Initial check
+    handleChange(mediaQuery);
+    
+    // Listen for changes
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
   return (
     <div
       style={{
         paddingBottom: 'calc(86px + env(safe-area-inset-bottom))',
-        height: '100dvh',
+        minHeight: '100dvh',
         overflowY: 'auto',
         overscrollBehavior: 'contain',
       }}

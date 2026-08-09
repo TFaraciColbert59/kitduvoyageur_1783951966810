@@ -24,6 +24,13 @@ CREATE TYPE public.group_task_status AS ENUM ('todo', 'in_progress', 'done');
 DROP TYPE IF EXISTS public.group_poll_status CASCADE;
 CREATE TYPE public.group_poll_status AS ENUM ('open', 'closed');
 
+ALTER TABLE public.travel_groups ADD COLUMN IF NOT EXISTS visibility public.group_visibility DEFAULT 'public'::public.group_visibility;
+ALTER TABLE public.group_members ADD COLUMN IF NOT EXISTS role public.group_member_role DEFAULT 'member'::public.group_member_role;
+ALTER TABLE public.group_members ADD COLUMN IF NOT EXISTS status public.group_member_status DEFAULT 'active'::public.group_member_status;
+ALTER TABLE public.group_expenses ADD COLUMN IF NOT EXISTS status public.group_expense_status DEFAULT 'pending'::public.group_expense_status;
+ALTER TABLE public.group_tasks ADD COLUMN IF NOT EXISTS status public.group_task_status DEFAULT 'todo'::public.group_task_status;
+ALTER TABLE public.group_polls ADD COLUMN IF NOT EXISTS status public.group_poll_status DEFAULT 'open'::public.group_poll_status;
+
 -- 2. CORE TABLES
 
 -- Travel Groups

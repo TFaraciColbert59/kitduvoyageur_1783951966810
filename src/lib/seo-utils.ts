@@ -125,9 +125,85 @@ export function getWebsiteSchema(siteUrl: string) {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: `${siteUrl}/search?q={search_term_string}`,
+        urlTemplate: `${siteUrl}/boutique?q={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
     },
+  };
+}
+
+/**
+ * Generate BreadcrumbList structured data
+ */
+export function getBreadcrumbSchema(
+  items: Array<{ name: string; url: string }>
+) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+}
+
+/**
+ * Generate FAQPage structured data
+ */
+export function getFAQSchema(
+  faqs: Array<{ question: string; answer: string }>
+) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  };
+}
+
+/**
+ * Generate Product structured data
+ */
+export function getProductSchema(product: {
+  name: string;
+  description: string;
+  url: string;
+  image?: string;
+  sku?: string;
+  brand?: string;
+  price?: number;
+  currency?: string;
+  availability?: 'InStock' | 'OutOfStock' | 'PreOrder';
+  category?: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description,
+    url: product.url,
+    ...(product.image && { image: product.image }),
+    ...(product.sku && { sku: product.sku }),
+    ...(product.brand && {
+      brand: { '@type': 'Brand', name: product.brand },
+    }),
+    ...(product.price && {
+      offers: {
+        '@type': 'Offer',
+        price: product.price,
+        priceCurrency: product.currency || 'EUR',
+        availability: `https://schema.org/${product.availability || 'InStock'}`,
+      },
+    }),
+    ...(product.category && { category: product.category }),
   };
 }

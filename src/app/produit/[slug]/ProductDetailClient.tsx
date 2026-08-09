@@ -175,7 +175,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                 <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
                 <Link href="/boutique" className="hover:text-[#1C2620] transition-colors">Boutique</Link>
                 <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
-                <Link href="/catalogue" className="hover:text-[#1C2620] transition-colors">{product.categorie}</Link>
+                <Link href="/boutique" className="hover:text-[#1C2620] transition-colors">{product.categorie}</Link>
                 <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
                 <span className="text-[#1C2620]">{product.nom}</span>
               </nav>
@@ -215,7 +215,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.3 }}
-                        src={product.images[activeImage]?.url}
+                        src={product.images[activeImage]?.url || '/assets/images/no_image.png'}
                         alt={product.images[activeImage]?.alt}
                         className="w-full h-full object-cover mix-blend-multiply"
                       />
@@ -325,7 +325,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
                     <div className="flex gap-3">
                       <button
-                        onClick={handleAddToCart}
+                        onClick={() => handleAddToCart()}
                         className={`flex-1 py-4 rounded-full font-semibold text-sm transition-all flex items-center justify-center gap-2 ${cartAdded ? 'bg-emerald-600 text-white' : 'bg-[#1C2620] hover:bg-[#2A3830] text-white'}`}
                       >
                         {cartAdded ? (

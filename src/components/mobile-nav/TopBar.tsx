@@ -4,6 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import LkvIcon from '@/components/ui/LkvIcon';
+import { useSearchContext } from '@/contexts/SearchContext';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface TopBarProps {
   variant?: 'standard' | 'on-image';
@@ -11,9 +13,11 @@ interface TopBarProps {
   title?: string;
   cartCount?: number;
   onMenuOpen?: () => void;
+  onSearchOpen?: () => void;
+  isMenuOpen?: boolean;
 }
 
-const ROOT_TABS = ['/', '/explorer', '/boutique', '/compte', '/profil', '/carnets'];
+const ROOT_TABS = ['/', '/explorer', '/boutique', '/compte', '/profil', '/carnets', '/terrain'];
 
 const PARENT_TAB: Record<string, string> = {
   '/carnets': '/carnets',
@@ -23,11 +27,13 @@ const PARENT_TAB: Record<string, string> = {
   '/evenements': '/explorer',
   '/feed': '/explorer',
   '/boutique': '/boutique',
-  '/shop': '/boutique',
   '/inventaire': '/compte',
+  '/mon-materiel': '/compte',
+  '/boussole': '/terrain',
+  '/hors-ligne': '/explorer',
+  '/randonnee-active': '/terrain',
   '/jumeau-3d': '/compte',
   '/kits': '/boutique',
-  '/catalogue': '/boutique',
   '/produit': '/boutique',
   '/occasion': '/boutique',
   '/location': '/boutique',
@@ -39,22 +45,26 @@ const PARENT_TAB: Record<string, string> = {
   '/compte': '/compte',
   '/abonnements': '/compte',
   '/fidelite': '/compte',
-  '/gamification': '/compte',
   '/alertes': '/compte',
   '/mes-aventures': '/compte',
   '/rapport-expedition': '/compte',
+  '/terrain': '/terrain',
+  '/naviguer': '/terrain',
 };
 
 const PAGE_TITLES: Record<string, string> = {
   '/': 'Le Kit du Voyageur',
   '/explorer': 'Explorer',
+  '/boussole': 'Boussole AR',
+  '/hors-ligne': 'Hors-Ligne',
+  '/mon-materiel': 'Mon Matériel',
+  '/randonnee-active': 'Randonnée Active',
   '/boutique': 'Boutique',
   '/carnets': 'Carnets',
   '/compte': 'Mon Compte',
   '/inventaire': 'Inventaire',
   '/jumeau-3d': 'Jumeau 3D',
   '/kits': 'Mes Kits',
-  '/catalogue': 'Catalogue',
   '/occasion': 'Occasion',
   '/location': 'Location',
   '/encheres': 'Enchères',
@@ -67,7 +77,6 @@ const PAGE_TITLES: Record<string, string> = {
   '/carte-interactive': 'Carte',
   '/abonnements': 'Abonnements',
   '/fidelite': 'Fidélité',
-  '/gamification': 'Récompenses',
   '/alertes': 'Alertes',
   '/mes-aventures': 'Mes Aventures',
   '/rapport-expedition': 'Rapport',
@@ -75,6 +84,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/checkout': 'Commande',
   '/connexion': 'Connexion',
   '/inscription': 'Inscription',
+  '/terrain': 'Mode Terrain',
 };
 
 function getTitle(pathname: string): string {
@@ -96,9 +106,10 @@ function getParentTab(pathname: string): string {
   return '/explorer';
 }
 
-export default function TopBar({ variant = 'standard', cartCount = 0, showBack, title, onMenuOpen }: TopBarProps) {
+export default function TopBar({ variant = 'standard', cartCount = 0, showBack, title, onMenuOpen, onSearchOpen }: TopBarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { haptic } = useHapticFeedback();
   const currentPath = pathname || '/';
   const displayTitle = title || getTitle(currentPath);
   const isHome = currentPath === '/';
@@ -107,6 +118,7 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
   const shouldShowBack = showBack !== undefined ? showBack : !isRootTab(currentPath);
 
   const handleBack = () => {
+    haptic('selection');
     if (typeof window !== 'undefined' && window.history.length > 1) {
       router.back();
     } else {
@@ -129,29 +141,33 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
   };
 
   const mBtnStandard: React.CSSProperties = {
-    width: '38px',
-    height: '38px',
+    width: '40px',
+    height: '40px',
     borderRadius: '999px',
-    background: 'rgba(255,255,255,0.9)',
-    border: '1px solid rgba(11,31,23,0.06)',
+    background: 'rgba(255,255,255,0.92)',
+    border: '1px solid rgba(11,31,23,0.08)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     color: '#0B1F17',
+    touchAction: 'manipulation',
+    transition: 'background-color 200ms ease, opacity 150ms ease',
   };
 
   const mBtnOnImage: React.CSSProperties = {
-    width: '38px',
-    height: '38px',
+    width: '40px',
+    height: '40px',
     borderRadius: '999px',
-    background: 'rgba(255,255,255,0.16)',
+    background: 'rgba(255,255,255,0.22)',
     backdropFilter: 'blur(20px)',
     WebkitBackdropFilter: 'blur(20px)',
-    border: '1px solid rgba(255,255,255,0.28)',
+    border: '1px solid rgba(255,255,255,0.35)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     color: '#fff',
+    touchAction: 'manipulation',
+    transition: 'background-color 200ms ease, opacity 150ms ease',
   };
 
   const mBtnStyle = isOnImage ? mBtnOnImage : mBtnStandard;
@@ -170,11 +186,12 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
         style={{ height: '52px', padding: '0 16px' }}
       >
         {/* Left */}
-        <div className="flex items-center gap-2" style={{ minWidth: '38px' }}>
+        <div className="flex items-center gap-2 relative z-10 pointer-events-auto" style={{ minWidth: '38px' }}>
           {shouldShowBack ? (
             <button
               onClick={handleBack}
               aria-label="Retour"
+              className="hover:opacity-85 active:opacity-75 transition-opacity"
               style={{
                 ...mBtnStyle,
                 cursor: 'pointer',
@@ -238,7 +255,7 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
         {/* Center title (only when back arrow is shown) */}
         {shouldShowBack && (
           <span
-            className="absolute left-1/2 -translate-x-1/2 max-w-[55vw] truncate text-center"
+            className="absolute left-1/2 -translate-x-1/2 max-w-[55vw] truncate text-center pointer-events-none z-0"
             style={{
               fontSize: '17px',
               fontWeight: 600,
@@ -251,20 +268,29 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
         )}
 
         {/* Right actions */}
-        <div className="flex items-center gap-1" style={{ minWidth: '38px', justifyContent: 'flex-end' }}>
-          {/* Search */}
-          {isHome && (
-            <Link
-              href="/explorer"
-              aria-label="Rechercher"
-              style={{
-                ...mBtnStyle,
-                textDecoration: 'none',
-              }}
-            >
-              <LkvIcon name="search" size={18} />
-            </Link>
-          )}
+        <div className="flex items-center gap-1 relative z-10 pointer-events-auto" style={{ minWidth: '38px', justifyContent: 'flex-end' }}>
+          {/* Search — visible on all pages */}
+          <button
+            onClick={() => {
+              haptic('selection');
+              onSearchOpen?.();
+            }}
+            aria-label="Rechercher"
+            style={{
+              ...mBtnStyle,
+              cursor: 'pointer',
+              outline: 'none',
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.outline = '2px solid #2D6B4A';
+              e.currentTarget.style.outlineOffset = '2px';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.outline = 'none';
+            }}
+          >
+            <LkvIcon name="search" size={18} />
+          </button>
 
           {/* Cart */}
           <Link

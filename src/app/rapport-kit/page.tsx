@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
@@ -872,6 +873,7 @@ function ConfiguratorForm({ onGenerate }: { onGenerate: (params: SessionParams, 
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function KitReportPage() {
+  const router = useRouter();
   const { user: _user } = useAuth();
   const [report, setReport] = useState<KitReport | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -960,7 +962,7 @@ export default function KitReportPage() {
   const handlePurchase = async () => {
     if (!report?.reportId) {
       // No saved report — redirect to cart with items
-      window.location.href = '/panier';
+      router.push('/panier');
       return;
     }
     setPurchasing(true);

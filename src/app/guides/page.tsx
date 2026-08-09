@@ -82,38 +82,8 @@ const GUIDES = [
 ];
 
 export default function GuidesPage() {
-  const featured = GUIDES.filter((g) => g.featured);
-  const rest = GUIDES.filter((g) => !g.featured);
-
-  const webPageSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: 'Guides de voyage — Le Kit du Voyageur',
-    url: `${siteUrl}/guides`,
-  };
-
-  const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Accueil', item: siteUrl },
-      { '@type': 'ListItem', position: 2, name: 'Guides', item: `${siteUrl}/guides` },
-    ],
-  };
-
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
-        suppressHydrationWarning
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-        suppressHydrationWarning
-      />
-
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
         <div className="min-h-screen bg-background text-foreground">

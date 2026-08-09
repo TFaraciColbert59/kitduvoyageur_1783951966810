@@ -32,7 +32,7 @@ export function useGoogleAnalytics() {
       window.gtag('config', measurementId);
     }
 
-    const url = pathname + (searchParams.toString() ? `?${searchParams}` : '');
+    const url = pathname + (searchParams?.toString() ? `?${searchParams}` : '');
     window.gtag('event', 'page_view', { page_path: url });
   }, [pathname, searchParams]);
 }

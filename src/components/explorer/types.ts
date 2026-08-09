@@ -2,7 +2,10 @@ export type FilterState = {
   difficulty: string[];
   duration: string[];
   terrain_type: string[];
+  type?: string[];
+  ambiance?: string[];
   family_friendly: boolean | null;
+  [key: string]: any;
 };
 
 export const DEFAULT_FILTERS: FilterState = {
@@ -31,6 +34,15 @@ export interface MapTrail {
   family_friendly?: boolean | null;
   season?: string | null;
   ai_description?: string | null;
+  region?: string | null;
+  altitude_m?: number | null;
+  capacity?: number | null;
+  is_staffed?: boolean | null;
+  has_meals?: boolean | null;
+  open_months?: string[] | null;
+  price_per_night?: number | null;
+  has_blankets?: boolean | null;
+  description?: string | null;
 }
 
 // Keep MapRefuge as alias for backwards compat
@@ -51,6 +63,68 @@ export function getTrailImage(id: string): string {
   if (!id) return DEFAULT_TRAIL_IMAGES[0];
   const sum = String(id).split('').reduce((s, c) => s + c.charCodeAt(0), 0);
   return DEFAULT_TRAIL_IMAGES[sum % DEFAULT_TRAIL_IMAGES.length];
+}
+
+/**
+ * Validation stricte d'une paire lat/lng avant toute création Leaflet.
+ * Rejette null/undefined/''/NaN/Infinity (Number(null)===0, Number('')===0
+ * créeraient un marqueur fantôme à (0,0)) ET les coordonnées hors bornes
+ * géographiques (lat -90..90, lng -180..180).
+ */
+export function isValidLatLng(lat: unknown, lng: unknown): boolean {
+  if (lat == null || lng == null) return false;
+  if (lat === '' || lng === '' || lat === 'NaN' || lng === 'NaN') return false;
+  const nLat = Number(lat);
+  const nLng = Number(lng);
+  if (Number.isNaN(nLat) || Number.isNaN(nLng)) return false;
+  if (!Number.isFinite(nLat) || !Number.isFinite(nLng)) return false;
+  return nLat >= -90 && nLat <= 90 && nLng >= -180 && nLng <= 180;
+}
+
+export function toValidLatLng(lat: unknown, lng: unknown): [number, number] | null {
+  if (!isValidLatLng(lat, lng)) return null;
+  return [Number(lat), Number(lng)];
+}
+
+/**
+ * Sanitisation centralisée d'un GeoJSON LineString/MultiLineString AVANT toute
+ * opération Leaflet (L.geoJSON, getBounds). Supprime les points dont les
+ * coordonnées sont invalides (null, NaN, Infinity, hors bornes géographiques)
+ * et les lignes devenues vides. Retourne null si rien de valide ne subsiste.
+ */
+export function sanitizeGeoJSON(geojson: unknown): Record<string, unknown> | null {
+  if (!geojson || typeof geojson !== 'object') return null;
+  const g = geojson as { type?: string; coordinates?: unknown };
+  if (g.type !== 'LineString' && g.type !== 'MultiLineString') return null;
+  if (!Array.isArray(g.coordinates)) return null;
+
+  const clean = (line: unknown): number[][] | null => {
+    if (!Array.isArray(line) || line.length === 0) return null;
+    const out: number[][] = [];
+    for (const pt of line) {
+      if (!Array.isArray(pt) || pt.length < 2) continue;
+      const lng = Number(pt[0]);
+      const lat = Number(pt[1]);
+      if (!Number.isFinite(lng) || !Number.isFinite(lat)) continue;
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) continue;
+      out.push([lng, lat]);
+    }
+    return out.length >= 2 ? out : null;
+  };
+
+  if (g.type === 'LineString') {
+    const cleaned = clean(g.coordinates);
+    return cleaned ? { type: 'LineString', coordinates: cleaned } : null;
+  }
+
+  const cleanedLines: number[][][] = [];
+  for (const line of g.coordinates as unknown[]) {
+    const c = clean(line);
+    if (c) cleanedLines.push(c);
+  }
+  return cleanedLines.length > 0
+    ? { type: 'MultiLineString', coordinates: cleanedLines }
+    : null;
 }
 
 export function getDifficultyColor(difficulty: string | null | undefined): string {

@@ -133,16 +133,16 @@ export default function CarnetView({ data }: CarnetViewProps) {
                 {data.meta.subtitleLine1}
               </p>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {data.stats && (
+                {(data.stats as any) && (
                   <>
                     <span style={{ background: 'rgba(255,255,255,0.1)', padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontFamily: 'ui-monospace, monospace' }}>
-                      📏 {data.stats.distance_km} km
+                      📏 {(data.stats as any).distance_km} km
                     </span>
                     <span style={{ background: 'rgba(255,255,255,0.1)', padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontFamily: 'ui-monospace, monospace' }}>
-                      ⛰️ {data.stats.denivele_m} m
+                      ⛰️ {(data.stats as any).denivele_m} m
                     </span>
                     <span style={{ background: 'rgba(255,255,255,0.1)', padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontFamily: 'ui-monospace, monospace' }}>
-                      📅 {data.stats.duree_jours} jours
+                      📅 {(data.stats as any).duree_jours} jours
                     </span>
                   </>
                 )}
@@ -156,13 +156,13 @@ export default function CarnetView({ data }: CarnetViewProps) {
                   Les <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>moments</em>
                 </h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {data.moments.map(m => (
+                  {data.moments.map((m: any) => (
                     <div key={m.id} style={{ background: '#fff', borderRadius: '14px', padding: '14px', border: '1px solid #E8E4D8' }}>
                       <p style={{ fontSize: '14px', fontWeight: '600', color: '#1C2620', margin: '0 0 4px' }}>{m.title}</p>
                       <p style={{ fontSize: '12px', color: '#5C6B5E', margin: 0, lineHeight: 1.4 }}>{m.description || m.content}</p>
                       {m.coordinates && (
                         <p style={{ fontSize: '10px', color: '#7A8A7D', fontFamily: 'ui-monospace, monospace', marginTop: '6px' }}>
-                          📍 {m.coordinates.lat.toFixed(4)}, {m.coordinates.lng.toFixed(4)}
+                          📍 {m.coordinates.lat?.toFixed(4)}, {m.coordinates.lng?.toFixed(4)}
                         </p>
                       )}
                     </div>
@@ -181,7 +181,7 @@ export default function CarnetView({ data }: CarnetViewProps) {
                   {data.kit.items.slice(0, 5).map(item => (
                     <div key={item.name} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: '#fff', borderRadius: '12px', border: '1px solid #E8E4D8', fontSize: '13px' }}>
                       <span style={{ fontWeight: '600', color: '#1C2620' }}>{item.name}</span>
-                      <span style={{ color: '#5C6B5E' }}>{item.weightG}g</span>
+                      <span style={{ color: '#5C6B5E' }}>{(item as any).weightG || (item as any).weight || 0}g</span>
                     </div>
                   ))}
                 </div>

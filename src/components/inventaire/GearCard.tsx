@@ -52,7 +52,7 @@ export default function GearCard({
           <div className="flex items-center gap-4 min-w-0">
             {/* Image */}
             <div className="w-14 h-14 rounded-xl overflow-hidden relative shrink-0 border border-[#E8E4D8] bg-[#F5F3ED]">
-              <Image src={item.image} alt={item.alt || item.name} fill className="object-cover" />
+              <Image src={item.image || '/assets/images/no_image.png'} alt={item.alt || item.name} fill className="object-cover" />
             </div>
 
             <div className="min-w-0">
@@ -110,7 +110,7 @@ export default function GearCard({
         {/* Top Image Container */}
         <div className="relative w-full h-44 bg-[#F5F3ED] overflow-hidden">
           <Image
-            src={item.image}
+            src={item.image || '/assets/images/no_image.png'}
             alt={item.alt || item.name}
             fill
             sizes="(max-width: 768px) 100vw, 400px"

@@ -203,8 +203,8 @@ AS $$
     nombre_encherisseurs
   FROM public.listings
   WHERE
-    produit_id = p_produit_id
-    AND listing_type = 'enchere'::public.listing_type
+    produit_id::text = p_produit_id::text
+    AND listing_type::text = 'enchere'
     AND statut = 'cloture'
     AND enchere_actuelle_cents > 0
   ORDER BY date_fin_enchere DESC

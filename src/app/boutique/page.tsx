@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export default function BoutiquePage() {
   const webPageSchema = {
     '@context': 'https://schema.org',
-    '@type': 'WebPage',
+    '@type': 'CollectionPage',
     name: 'Boutique — Équipement outdoor & matériel voyage',
     description: 'Découvrez notre sélection d\'equipements outdoor vérifiés et testés. Matériel de randonnée, camping, trekking et aventure.',
     url: `${siteUrl}/boutique`,

@@ -87,11 +87,14 @@ export default function FidelitePage() {
         setRedeemedIds(redemptions?.map((r) => r.reward_id) ?? []);
       }
     } catch (err) {
-      console.error(err);
+      console.error('Error loading loyalty data:', err);
+      setError('Impossible de charger les données de fidélité.');
     } finally {
       setLoading(false);
     }
   }, [user, supabase]);
+
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -136,6 +139,15 @@ export default function FidelitePage() {
 
     return (
       <>
+        {error && !loading && (
+          <div className={s('', 'max-w-7xl mx-auto px-4 mb-6')} style={s({ textAlign: 'center', padding: '40px 0' }, {})}>
+            <p className={s('text-3xl mb-3', 'text-4xl mb-3')}>⚠️</p>
+            <p className={s('text-xs text-muted-foreground mb-4', 'text-sm text-muted-foreground mb-4')}>{error}</p>
+            <button onClick={() => loadData()} className={s('px-4 py-2 bg-primary text-white rounded-lg text-xs font-600', 'px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-600')} style={{ border: 'none', cursor: 'pointer' }}>Réessayer</button>
+          </div>
+        )}
+        {!error && (
+        <>
         <section className={s('', 'bg-dark-bg text-white py-12 px-4 relative overflow-hidden')} style={s({ background: '#0B1F17', color: '#fff', padding: '20px', borderRadius: '12px', marginBottom: '16px' }, {})}>
           <div className={s('', 'absolute inset-0 opacity-5')}>
             {!isMobile && Array.from({ length: 20 }).map((_, i) => (
@@ -425,6 +437,8 @@ export default function FidelitePage() {
             </div>
           )}
         </div>
+      </>
+      )}
       </>
     );
   };

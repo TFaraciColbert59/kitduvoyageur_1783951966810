@@ -29,39 +29,51 @@ export default async function GuideDetailPage({ params }: Props) {
   const { slug } = await params;
   const title = slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
-  const webPageSchema = {
+  const schemaOrg = {
     '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: `${title} — Guides Le Kit du Voyageur`,
-    description: `Guide de voyage complet : ${title}. Conseils d'experts, checklists et équipement recommandé.`,
-    url: `${siteUrl}/guides/${slug}`,
-    isPartOf: {
-      '@type': 'WebSite',name: 'Le Kit du Voyageur',
-      url: siteUrl,
-    },
-  };
-
-  const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
+    '@graph': [
       {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Accueil',
-        item: siteUrl,
+        '@type': 'Article',
+        '@id': `${siteUrl}/guides/${slug}#article`,
+        headline: title,
+        description: `Guide de voyage complet : ${title}. Conseils d'experts, checklists et équipement recommandé.`,
+        url: `${siteUrl}/guides/${slug}`,
+        image: `${siteUrl}/assets/images/og-image.png`,
+        author: {
+          '@type': 'Organization',
+          name: 'Le Kit du Voyageur',
+          url: siteUrl,
+        },
+        publisher: {
+          '@type': 'Organization',
+          name: 'Le Kit du Voyageur',
+          url: siteUrl,
+        },
+        isPartOf: {
+          '@type': 'WebPage',
+          '@id': `${siteUrl}/guides/${slug}#webpage`,
+        },
+        mainEntityOfPage: {
+          '@type': 'WebPage',
+          '@id': `${siteUrl}/guides/${slug}#webpage`,
+        },
       },
       {
-        '@type': 'ListItem',
-        position: 2,
-        name: 'Guides',
-        item: `${siteUrl}/guides`,
+        '@type': 'WebPage',
+        '@id': `${siteUrl}/guides/${slug}#webpage`,
+        name: `${title} — Guides Le Kit du Voyageur`,
+        description: `Guide de voyage complet : ${title}. Conseils d'experts, checklists et équipement recommandé.`,
+        url: `${siteUrl}/guides/${slug}`,
+        isPartOf: { '@id': `${siteUrl}/#website` },
       },
       {
-        '@type': 'ListItem',
-        position: 3,
-        name: title,
-        item: `${siteUrl}/guides/${slug}`,
+        '@type': 'BreadcrumbList',
+        '@id': `${siteUrl}/guides/${slug}#breadcrumb`,
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Accueil', item: siteUrl },
+          { '@type': 'ListItem', position: 2, name: 'Guides', item: `${siteUrl}/guides` },
+          { '@type': 'ListItem', position: 3, name: title, item: `${siteUrl}/guides/${slug}` },
+        ],
       },
     ],
   };
@@ -70,12 +82,7 @@ export default async function GuideDetailPage({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
-        suppressHydrationWarning
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
         suppressHydrationWarning
       />
       <GuideDetailClient slug={slug} />

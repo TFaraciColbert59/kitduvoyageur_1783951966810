@@ -22,7 +22,7 @@ export default function CopilotePage() {
     const msg = text || input.trim();
     if (!msg) return;
     setInput('');
-    const newMessages = [...messages, { role: 'user', content: msg }];
+    const newMessages: { role: 'user' | 'assistant'; content: string }[] = [...messages, { role: 'user', content: msg }];
     setMessages(newMessages);
     const systemPrompt = 'Tu es un copilote d\'expédition expert pour Kit du Voyageur. Réponds en français.';
     await sendMessage([{ role: 'system', content: systemPrompt }, ...newMessages.map(m => ({ role: m.role, content: m.content }))], { max_tokens: 600 });

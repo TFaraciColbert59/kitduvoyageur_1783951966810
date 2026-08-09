@@ -842,7 +842,7 @@ Génère 8-12 articles pertinents avec prix et poids réalistes.`;
           <Icon name="ShoppingBagIcon" size={18} variant="outline" />
           Ajouter ce qui manque — {totalPriceEur} €
         </button>
-        <Link href="/catalogue" className="flex items-center justify-center gap-2 py-4 px-6 border-2 border-[#1C2620] text-[#1C2620] rounded-xl font-600 text-sm hover:bg-[#1C2620]/5 transition-colors">
+        <Link href="/boutique" className="btn-secondary justify-center py-3.5 text-base px-6">
           Voir le catalogue
         </Link>
       </div>

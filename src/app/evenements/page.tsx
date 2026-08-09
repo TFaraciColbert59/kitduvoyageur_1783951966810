@@ -109,7 +109,7 @@ function EventDetailModal({
         {/* Cover */}
         <div className="relative h-56 overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={event.cover_image} alt={event.cover_alt} className="w-full h-full object-cover" />
+          <img src={event.cover_image || '/assets/images/no_image.png'} alt={event.cover_alt} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
           <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-black/40 backdrop-blur-sm rounded-xl hover:bg-black/60 transition-colors">
             <Icon name="XMarkIcon" size={18} className="text-white" />
@@ -284,7 +284,7 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
     <div className="topo-card overflow-hidden">
       <button onClick={() => onViewDetail(event)} className="w-full relative aspect-[16/7] overflow-hidden block">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={event.cover_image} alt={event.cover_alt} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+        <img src={event.cover_image || '/assets/images/no_image.png'} alt={event.cover_alt} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
         <div className="absolute top-3 left-3 flex items-center gap-2">
           <span className={`text-[10px] font-700 px-2 py-0.5 rounded-full ${cfg.color}`}>
@@ -426,7 +426,7 @@ function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Eve
   return (
     <div style={{ background: '#F4F1EA', border: '1px solid rgba(11,31,23,0.06)', borderRadius: '12px', overflow: 'hidden', marginBottom: '12px' }}>
       <button onClick={() => onViewDetail(event)} style={{ width: '100%', position: 'relative', height: '160px', overflow: 'hidden', display: 'block', border: 'none', padding: 0, cursor: 'pointer' }}>
-        <img src={event.cover_image} alt={event.cover_alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <img src={event.cover_image || '/assets/images/no_image.png'} alt={event.cover_alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }} />
         <div style={{ position: 'absolute', top: '8px', left: '8px', display: 'flex', gap: '4px' }}>
           <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: typeBg, color: '#fff' }}>

@@ -4,6 +4,8 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
+
 export const metadata = {
   title: 'Politique de confidentialité | Le Kit du Voyageur',
   description: 'Politique de confidentialité et traitement des données personnelles — RGPD Art. 13 et 14. Le Kit du Voyageur.',
@@ -44,8 +46,28 @@ function MobilePCContent() {
 }
 
 export default function PolitiqueConfidentialitePage() {
+  const webPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: "Politique de confidentialit\u00e9 — Le Kit du Voyageur",
+    description: "Politique de confidentialit\u00e9 et traitement des donn\u00e9es personnelles — RGPD.",
+    url: `${siteUrl}/politique-confidentialite`,
+    isPartOf: { '@id': `${siteUrl}/#website` },
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Accueil', item: siteUrl },
+      { '@type': 'ListItem', position: 2, name: 'Politique de confidentialit\u00e9', item: `${siteUrl}/politique-confidentialite` },
+    ],
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} suppressHydrationWarning />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} suppressHydrationWarning />
       {/* DESKTOP */}
       <div className="hidden md:block">
         <div className="min-h-screen bg-background text-foreground">

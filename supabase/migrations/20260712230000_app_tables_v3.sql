@@ -557,30 +557,32 @@ DECLARE
   club_id_rando UUID;
   club_id_bush UUID;
   club_id_van UUID;
+  prof_id UUID;
 BEGIN
   SELECT id INTO club_id_rando FROM public.clubs WHERE slug = 'randonnee-alpine' LIMIT 1;
   SELECT id INTO club_id_bush FROM public.clubs WHERE slug = 'bushcraft-survie' LIMIT 1;
   SELECT id INTO club_id_van FROM public.clubs WHERE slug = 'vanlife-france' LIMIT 1;
+  SELECT id INTO prof_id FROM public.user_profiles LIMIT 1;
 
-  IF club_id_rando IS NOT NULL THEN
-    INSERT INTO public.club_topics (club_id, title, content) VALUES
-      (club_id_rando, 'Conditions sentiers Chamonix — juillet 2026', 'Quelqu''un a des infos sur l''état des sentiers côté Aiguille du Midi ?'),
-      (club_id_rando, 'Meilleur sac 60L pour le GR20 ?', 'Je cherche un sac entre 60 et 70L pour le GR20 en août. Vos recommandations ?'),
-      (club_id_rando, 'Retour circuit des Annapurnas mars 2026', 'Je viens de rentrer du circuit des Annapurnas, AMA !')
+  IF club_id_rando IS NOT NULL AND prof_id IS NOT NULL THEN
+    INSERT INTO public.club_topics (club_id, author_id, title, content) VALUES
+      (club_id_rando, prof_id, 'Conditions sentiers Chamonix — juillet 2026', 'Quelqu''un a des infos sur l''état des sentiers côté Aiguille du Midi ?'),
+      (club_id_rando, prof_id, 'Meilleur sac 60L pour le GR20 ?', 'Je cherche un sac entre 60 et 70L pour le GR20 en août. Vos recommandations ?'),
+      (club_id_rando, prof_id, 'Retour circuit des Annapurnas mars 2026', 'Je viens de rentrer du circuit des Annapurnas, AMA !')
     ON CONFLICT DO NOTHING;
   END IF;
 
-  IF club_id_bush IS NOT NULL THEN
-    INSERT INTO public.club_topics (club_id, title, content) VALUES
-      (club_id_bush, 'Techniques de feu par temps humide', 'Partage de techniques pour allumer un feu sous la pluie.'),
-      (club_id_bush, 'Couteau bushcraft : lequel choisir ?', 'Comparatif des meilleurs couteaux pour le bushcraft.')
+  IF club_id_bush IS NOT NULL AND prof_id IS NOT NULL THEN
+    INSERT INTO public.club_topics (club_id, author_id, title, content) VALUES
+      (club_id_bush, prof_id, 'Techniques de feu par temps humide', 'Partage de techniques pour allumer un feu sous la pluie.'),
+      (club_id_bush, prof_id, 'Couteau bushcraft : lequel choisir ?', 'Comparatif des meilleurs couteaux pour le bushcraft.')
     ON CONFLICT DO NOTHING;
   END IF;
 
-  IF club_id_van IS NOT NULL THEN
-    INSERT INTO public.club_topics (club_id, title, content) VALUES
-      (club_id_van, 'Aires de camping-car gratuites en Bretagne', 'Liste des meilleures aires gratuites en Bretagne.'),
-      (club_id_van, 'Aménagement van : isolation thermique', 'Conseils pour isoler son van pour l''hiver.')
+  IF club_id_van IS NOT NULL AND prof_id IS NOT NULL THEN
+    INSERT INTO public.club_topics (club_id, author_id, title, content) VALUES
+      (club_id_van, prof_id, 'Aires de camping-car gratuites en Bretagne', 'Liste des meilleures aires gratuites en Bretagne.'),
+      (club_id_van, prof_id, 'Aménagement van : isolation thermique', 'Conseils pour isoler son van pour l''hiver.')
     ON CONFLICT DO NOTHING;
   END IF;
 END $$;

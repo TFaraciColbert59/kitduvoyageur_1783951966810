@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import HikingProfileCard from '@/components/profile/HikingProfileCard';
 
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -238,17 +239,6 @@ function LoggedInProfile() {
       sub: '0 points',
     },
     {
-      href: '/gamification',
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-          <circle cx="12" cy="8" r="6" />
-          <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11" />
-        </svg>
-      ),
-      label: 'Badges & Progression',
-      sub: 'Niveau 1',
-    },
-    {
       href: '/messagerie',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
@@ -259,7 +249,7 @@ function LoggedInProfile() {
     },
   ];
 
-  const displayName = profile?.full_name || profile?.username || 'Voyageur';
+  const displayName = profile?.full_name || 'Voyageur';
   const initials = displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
 
   return (
@@ -378,6 +368,11 @@ function LoggedInProfile() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Profil randonneur (Prompt #7) */}
+      <div className="px-5 pt-3 pb-1">
+        <HikingProfileCard />
       </div>
 
       {/* Menu items */}

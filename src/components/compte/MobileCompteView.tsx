@@ -22,12 +22,13 @@ export default function MobileCompteView({
   onTabChange,
   onOpenEdit,
 }: MobileCompteViewProps) {
-  const { stats, constance } = profile;
+  const { stats } = profile;
+  const constance = (profile as any).constance;
 
   const tabs: { id: CompteTab; label: string }[] = [
     { id: 'vue-d-ensemble', label: 'Vue d\'ensemble' },
     { id: 'aventures', label: `Groupes ${profile.stats.sorties}` },
-    { id: 'carnets', label: `Carnets de route ${profile.stats.kilometres}` },
+    { id: 'carnets', label: `Carnets de route ${(profile.stats as any).kilometres || 0}` },
     { id: 'clubs', label: `Clubs ${profile.stats.clubs}` },
     { id: 'commandes', label: 'Commandes' },
     { id: 'fidelite', label: 'Fidélité' },
@@ -56,7 +57,7 @@ export default function MobileCompteView({
       {/* 2. Reduced Photo Hero */}
       <div className="relative w-full h-60 bg-[#1C2620] text-white overflow-hidden p-5 flex flex-col justify-end">
         <Image
-          src={profile.hero_image_url}
+          src={profile.hero_image_url || '/assets/images/no_image.png'}
           alt="Hero"
           fill
           className="object-cover opacity-40"
@@ -65,7 +66,7 @@ export default function MobileCompteView({
           <div className="relative shrink-0" onClick={onOpenEdit}>
             <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white relative shadow-md bg-emerald-900 cursor-pointer">
               <Image
-                src={profile.avatar_url}
+                src={profile.avatar_url || '/assets/images/no_image.png'}
                 alt="Avatar"
                 fill
                 className="object-cover"

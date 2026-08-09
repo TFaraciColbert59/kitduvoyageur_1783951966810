@@ -127,8 +127,7 @@ export async function getCarnetComplet(carnetId: string): Promise<CarnetData | n
       ? `${(totalWeightGrams / 1000).toFixed(2).replace('.', ',')} kg`
       : `${totalWeightGrams} g`;
 
-    // Dynamic kit intro
-    // TODO produit: si colonne kit_intro existe en base, l'utiliser en priorité
+    // Dynamic kit intro (avec fallback sur equipment_summary)
     const kitIntro = carnet.kit_intro || carnet.equipment_summary || 'Matériel et équipement d\'expédition archivés pour ce voyage.';
 
     // Format randonnees

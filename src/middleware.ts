@@ -32,12 +32,12 @@ export async function middleware(request: NextRequest) {
           getAll() {
             return request.cookies.getAll();
           },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value }) =>
+          setAll(cookiesToSet: any[]) {
+            cookiesToSet.forEach(({ name, value }: any) =>
               request.cookies.set(name, value)
             );
             response = NextResponse.next({ request });
-            cookiesToSet.forEach(({ name, value, options }) =>
+            cookiesToSet.forEach(({ name, value, options }: any) =>
               response.cookies.set(name, value, options)
             );
           },
@@ -74,17 +74,17 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // ─── /catalogue → /shop redirects (301) ──────────────────────────────────
+  // ─── /catalogue → /boutique redirects (301) ──────────────────────────────────
   if (pathname === '/catalogue' || pathname.startsWith('/catalogue/')) {
     const url = request.nextUrl.clone();
-    url.pathname = pathname.replace(/^\/catalogue/, '/shop');
+    url.pathname = '/boutique';
     return NextResponse.redirect(url, { status: 301 });
   }
 
-  // ─── /kits → /shop?type=kit redirect (301) ───────────────────────────────
+  // ─── /kits → /boutique?type=kit redirect (301) ───────────────────────────────
   if (pathname === '/kits') {
     const url = request.nextUrl.clone();
-    url.pathname = '/shop';
+    url.pathname = '/boutique';
     url.searchParams.set('type', 'kit');
     return NextResponse.redirect(url, { status: 301 });
   }
@@ -119,7 +119,6 @@ export const config = {
     '/checkout/:path*',
     '/compte/:path*',
     '/messagerie/:path*',
-    '/catalogue/:path*',
     '/kits',
     '/pays/:path*',
   ],

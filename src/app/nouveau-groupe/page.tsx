@@ -188,7 +188,7 @@ export default function NouveauGroupePage() {
             user_id: partner.id.startsWith('p') ? user.id : partner.id, // fallback
             role: 'member',
             status: 'invited',
-          }).catch(() => {});
+          }).then(undefined, () => {});
         }
       }
 
@@ -617,7 +617,7 @@ export default function NouveauGroupePage() {
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-[#EDEAE0] overflow-hidden flex-shrink-0">
-                          <img src={p.avatar_url} alt={p.full_name} className="object-cover w-full h-full" />
+                          <img src={p.avatar_url || '/assets/images/no_image.png'} alt={p.full_name} className="object-cover w-full h-full" />
                         </div>
                         <div>
                           <h5 className="font-600 text-xs text-[#1C2620]">{p.full_name}</h5>
@@ -851,7 +851,7 @@ export default function NouveauGroupePage() {
                   <img
                     key={p.id}
                     className="inline-block h-7 w-7 rounded-full ring-2 ring-white object-cover"
-                    src={p.avatar_url}
+                    src={p.avatar_url || '/assets/images/no_image.png'}
                     alt={p.full_name}
                   />
                 ))}

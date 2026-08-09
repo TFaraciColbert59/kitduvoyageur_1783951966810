@@ -138,7 +138,7 @@ function MobileFAQContent() {
 
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '20px' }}>
         {FAQ_DATA.map((cat, i) => (
-          <button key={i} onClick={() => setActiveCategory(i)} style={{ padding: '8px 14px', borderRadius: '10px', fontSize: '12px', fontWeight: 500, border: 'none', cursor: 'pointer', background: activeCategory === i ? '#17402C' : '#F4F1EA', color: activeCategory === i ? 'white' : 'rgba(28,38,32,0.6)', border: activeCategory === i ? 'none' : '1px solid rgba(11,31,23,0.06)' }}>
+          <button key={i} onClick={() => setActiveCategory(i)} style={{ padding: '8px 14px', borderRadius: '10px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', background: activeCategory === i ? '#17402C' : '#F4F1EA', color: activeCategory === i ? 'white' : 'rgba(28,38,32,0.6)', border: activeCategory === i ? 'none' : '1px solid rgba(11,31,23,0.06)' }}>
             {cat.title}
           </button>
         ))}
@@ -166,29 +166,9 @@ export default function FAQPage() {
     ),
   };
 
-  const webPageSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: 'Questions fréquentes — Le Kit du Voyageur',
-    description: 'Trouvez les réponses à vos questions sur les commandes, livraisons, retours, le configurateur IA et votre compte.',
-    url: `${siteUrl}/faq`,
-    isPartOf: { '@type': 'WebSite', name: 'Le Kit du Voyageur', url: siteUrl },
-  };
-
-  const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Accueil', item: siteUrl },
-      { '@type': 'ListItem', position: 2, name: 'Questions fréquentes', item: `${siteUrl}/faq` },
-    ],
-  };
-
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} suppressHydrationWarning />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} suppressHydrationWarning />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} suppressHydrationWarning />
 
       {/* DESKTOP */}
       <div className="hidden md:block">

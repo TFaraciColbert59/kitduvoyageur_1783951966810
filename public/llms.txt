@@ -1,0 +1,56 @@
+# Le Kit du Voyageur
+> Le guide ultime pour voyager léger et bien équipé. Configurateur IA, boutique e-commerce, fiches destinations, communauté outdoor, inventaire et outils terrain.
+
+## Boutique & Produits
+- [Boutique](https://lekitduvoyageur.fr/boutique): Équipement outdoor sélectionné et testé
+- [Kits de voyage](https://lekitduvoyageur.fr/kits): Kits complets par destination (Islande, Corse, Vanlife Europe)
+- [Configurateur IA](https://lekitduvoyageur.fr/ai-configurator): Assistant intelligent pour composer son sac à dos
+
+## Destinations
+- [Tous les pays](https://lekitduvoyageur.fr/pays): Fiches destinations avec météo, visa, équipement recommandé
+- [Carte interactive](https://lekitduvoyageur.fr/carte-interactive): Tracés de randonnée, refuges et points d'eau
+
+## Guides & Blog
+- [Guides de voyage](https://lekitduvoyageur.fr/guides): Checklists, conseils d'experts, équipement recommandé
+- [Blog](https://lekitduvoyageur.fr/blog): Articles outdoor, comparatifs, conseils pratiques
+
+## Communauté
+- [Communauté](https://lekitduvoyageur.fr/communaute): Carnets de voyage, avis, groupes, messagerie
+- [Explorer](https://lekitduvoyageur.fr/explorer): Aventures et découvertes
+- [Carnets de voyage](https://lekitduvoyageur.fr/carnets): Récits de voyage des membres
+- [Clubs](https://lekitduvoyageur.fr/clubs): Clubs de voyageurs
+
+## Outils
+- [Boîte à outils](https://lekitduvoyageur.fr/outils): Calculateur de poids, budget voyage, checklist, boussole, convertisseur
+- [Calculateur de poids](https://lekitduvoyageur.fr/outils/poids-sac): Pesez votre sac par catégorie avec jauge visuelle
+- [Budget voyage](https://lekitduvoyageur.fr/outils/budget-voyage): Planifiez votre budget par jour et par poste
+- [Convertisseur universel](https://lekitduvoyageur.fr/outils/convertisseur): Convertissez distances, poids, températures et devises
+- [Checklist interactive](https://lekitduvoyageur.fr/outils/checklist): Créez et personnalisez vos listes de voyage
+- [Convertisseur de tailles](https://lekitduvoyageur.fr/outils/tailles): Vêtements et chaussures entre standards FR, UK, US, EU, JP
+- [Fuseaux horaires](https://lekitduvoyageur.fr/outils/fuseaux): Comparez les heures entre pays et calculez le décalage
+- [Boussole & Niveau](https://lekitduvoyageur.fr/outils/boussole): Boussole et niveau à bulle via capteurs appareil
+- [Chronomètre rando](https://lekitduvoyageur.fr/outils/chronometre): Minuteur et chronomètre pour vos sorties
+- [Rations eau & nourriture](https://lekitduvoyageur.fr/outils/rations): Calculez vos besoins selon l'effort et la météo
+- [Calculateur de décompression](https://lekitduvoyageur.fr/outils/decompression): Paliers de décompression pour plongée
+- [Altimètre & Pression](https://lekitduvoyageur.fr/outils/altimetre): Mesurez altitude et pression atmosphérique
+- [Météo montagne](https://lekitduvoyageur.fr/outils/meteo-montagne): Interprétez les bulletins météo montagne
+- [Calculateur carbone voyage](https://lekitduvoyageur.fr/outils/carbone): Estimez l'empreinte carbone de vos voyages
+- [Calculateur débit rivière](https://lekitduvoyageur.fr/outils/debit-eau): Estimez le débit et la dangerosité d'une rivière
+- [Pharmacie de voyage](https://lekitduvoyageur.fr/outils/pharmacie): Composez votre pharmacie selon destination
+- [Vérificateur de visa](https://lekitduvoyageur.fr/outils/visa): Exigences de visa par nationalité et destination
+- [Recommandations vaccins](https://lekitduvoyageur.fr/outils/vaccins): Recommandations vaccinales par destination
+- [Phrases essentielles](https://lekitduvoyageur.fr/outils/langue): Phrases de survie dans 40 langues
+- [Guide des nœuds](https://lekitduvoyageur.fr/outils/noeud): Nœuds essentiels pour randonnée, escalade et camping
+- [Lever/coucher soleil](https://lekitduvoyageur.fr/outils/soleil): Calculez les heures pour n'importe quelle date
+
+## Services
+- [Abonnements](https://lekitduvoyageur.fr/abonnements): Forfaits premium
+- [Espace Pro B2B](https://lekitduvoyageur.fr/pro): Tarifs préférentiels professionnels
+- [Fidélité](https://lekitduvoyageur.fr/fidelite): Programme de fidélité
+
+## Informations légales
+- [Mentions légales](https://lekitduvoyageur.fr/mentions-legales)
+- [CGU](https://lekitduvoyageur.fr/cgu): Conditions Générales d'Utilisation
+- [CGV](https://lekitduvoyageur.fr/cgv): Conditions Générales de Vente
+- [Politique de confidentialité](https://lekitduvoyageur.fr/politique-confidentialite): RGPD et données personnelles
+- [Cookies](https://lekitduvoyageur.fr/cookies): Gestion des cookies

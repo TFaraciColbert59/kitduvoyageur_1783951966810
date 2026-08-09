@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-
 import Icon from '@/components/ui/AppIcon';
 import { useAuth } from '@/contexts/AuthContext';
 import GlobalSearchModal from '@/components/ui/GlobalSearchModal';
@@ -35,69 +34,91 @@ export default function Header() {
 
   return (
     <>
-      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-[1000px] px-4 transition-all duration-300">
+      <header className="fixed top-3 sm:top-4 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-[1020px] px-3 sm:px-4 pointer-events-none transition-all duration-300">
         <div
-          className={`w-full rounded-full px-5 transition-all duration-300 flex items-center justify-between ${
+          className={`w-full rounded-full px-4 sm:px-5 transition-all duration-300 flex items-center justify-between pointer-events-auto cursor-default ${
             scrolled
-              ? 'bg-white/85 backdrop-blur-xl shadow-lg border border-[#1C2620]/15 py-2'
+              ? 'bg-white/90 backdrop-blur-xl shadow-md border border-[#1C2620]/10 py-2'
               : 'bg-white/95 backdrop-blur-md shadow-sm border border-[#E8E4D8] py-2.5'
           }`}
         >
-          {/* Left: Logo */}
-          <Link href="/" className="flex items-center gap-2 group focus-visible:outline-none active:scale-95 transition-transform">
-            <div className="w-7 h-7 bg-[#1C2620] rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
+          {/* Left: Logo - Subtle opacity shift */}
+          <Link
+            href="/"
+            className="flex items-center gap-2 group focus-visible:outline-none opacity-100 hover:opacity-85 active:opacity-75 transition-opacity cursor-pointer touch-manipulation py-1"
+          >
+            <div className="w-7.5 h-7.5 bg-[#1C2620] rounded-xl flex items-center justify-center shadow-xs">
               <svg width="14" height="14" fill="white" viewBox="0 0 24 24">
                 <path d="M3 17l4-8 4 4 3-6 4 10H3z" />
               </svg>
             </div>
-            <span className="font-bold text-[#1C2620] text-sm group-hover:opacity-80 transition-opacity">Le Kit du Voyageur</span>
+            <span className="font-bold text-[#1C2620] text-sm tracking-tight">
+              Le Kit du Voyageur
+            </span>
           </Link>
 
-          {/* Center: Links (hidden on mobile) */}
-          <nav className="hidden md:flex items-center gap-6">
+          {/* Center: Navigation Links - Subtle color & background shift */}
+          <nav className="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar py-0.5">
             {NAV_LINKS.map((link) => {
-              const isActive = pathname === link.href || pathname?.startsWith(link.href);
+              const isActive = pathname === link.href || (link.href !== '/' && pathname?.startsWith(link.href));
               return (
                 <Link
                   key={link.label}
                   href={link.href}
-                  className={`relative text-[11px] font-bold tracking-wide uppercase transition-all duration-200 py-1 hover:text-[#2D5A3D] ${
-                    isActive ? 'text-[#1C2620]' : 'text-[#7A8A7D]'
+                  className={`relative text-[11px] sm:text-xs font-bold tracking-wide uppercase transition-colors duration-200 px-3 py-1.5 rounded-full cursor-pointer touch-manipulation whitespace-nowrap active:opacity-75 ${
+                    isActive
+                      ? 'text-[#1C2620] bg-[#1C2620]/06 font-extrabold'
+                      : 'text-[#6B7A72] hover:text-[#1C2620] hover:bg-[#1C2620]/04'
                   }`}
                 >
                   <span>{link.label}</span>
                   {isActive && (
-                    <span className="absolute -bottom-1 left-0 right-0 h-[2px] bg-[#1C2620] rounded-full animate-fadeIn" />
+                    <span className="absolute bottom-0.5 left-3 right-3 h-[2px] bg-[#1C2620] rounded-full" />
                   )}
                 </Link>
               );
             })}
           </nav>
 
-          {/* Right: Actions */}
-          <div className="flex items-center gap-3">
+          {/* Right: Actions - Lightweight & Discreet */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Bouton Lancer Rando */}
             <Link
-              href="/panier"
-              className="text-[#1C2620] hover:text-[#2D5A3D] transition-all p-1.5 rounded-full hover:bg-[#F5F2EA] active:scale-90 relative"
-              aria-label="Panier"
+              href="/randonnee-active"
+              className="hidden lg:inline-flex items-center gap-1.5 bg-[#2D6A4F] text-white text-[11px] font-bold px-3.5 py-1.5 rounded-full hover:bg-[#1B4332] active:opacity-85 transition-colors cursor-pointer touch-manipulation whitespace-nowrap shadow-xs"
+              title="Lancer le mode randonnée GPS"
             >
-              <Icon name="ShoppingBagIcon" size={16} />
+              <span>🥾</span>
+              <span>Lancer rando</span>
             </Link>
 
+            {/* Panier Button */}
+            <Link
+              href="/panier"
+              className="w-9 h-9 text-[#1C2620] hover:text-[#2D6A4F] hover:bg-[#1C2620]/05 active:opacity-70 transition-colors rounded-full flex items-center justify-center relative cursor-pointer touch-manipulation"
+              aria-label="Panier"
+              title="Panier"
+            >
+              <Icon name="ShoppingBagIcon" size={17} />
+            </Link>
+
+            {/* Recherche Button */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="text-[#1C2620] hover:text-[#2D5A3D] transition-all p-1.5 rounded-full hover:bg-[#F5F2EA] active:scale-90 flex items-center gap-1.5"
+              className="w-9 h-9 text-[#1C2620] hover:text-[#2D6A4F] hover:bg-[#1C2620]/05 active:opacity-70 transition-colors rounded-full flex items-center justify-center cursor-pointer touch-manipulation"
               aria-label="Rechercher sur tout le site"
               title="Rechercher sur tout le site"
             >
-              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+              <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
             </button>
 
+            {/* Mon Compte Button */}
             <Link
               href={user ? '/compte' : '/connexion'}
-              className="bg-[#1C2620] text-white text-[11px] font-bold px-4 py-2 rounded-full hover:bg-[#2D3F35] active:scale-95 transition-all shadow-sm hover:shadow-md whitespace-nowrap"
+              className="bg-[#1C2620] text-white text-[11px] font-bold px-3.5 py-1.5 rounded-full hover:bg-[#2D3F35] active:opacity-85 transition-colors whitespace-nowrap flex items-center justify-center cursor-pointer touch-manipulation shadow-xs"
             >
               {mounted && user ? 'Mon compte' : 'Se connecter'}
             </Link>

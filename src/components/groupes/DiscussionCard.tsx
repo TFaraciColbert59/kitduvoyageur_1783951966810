@@ -154,7 +154,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
         setLocating(false);
       },
       (err) => {
-        console.error('Geolocation error:', err);
+        console.warn('Geolocation error:', err?.message || `Code ${err?.code}` || err);
         alert('Impossible d\'obtenir votre position. Vérifiez les permissions de votre navigateur.');
         setLocating(false);
       },

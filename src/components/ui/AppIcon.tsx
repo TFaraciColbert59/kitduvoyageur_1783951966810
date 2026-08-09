@@ -11,6 +11,7 @@ interface IconProps extends Omit<React.SVGProps<SVGSVGElement>, 'onClick'> {
     variant?: IconVariant;
     size?: number;
     className?: string;
+    title?: string;
     onClick?: () => void;
     disabled?: boolean;
 }

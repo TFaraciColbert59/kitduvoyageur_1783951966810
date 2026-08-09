@@ -78,7 +78,7 @@ export default function MesAventuresCard({ aventures }: MesAventuresCardProps) {
             <div className="flex items-center gap-4 min-w-0 w-full sm:w-auto">
               <div className="w-14 h-14 rounded-xl overflow-hidden relative shrink-0 border border-[#1C2620]/10 shadow-sm">
                 <Image
-                  src={item.image_url}
+                  src={item.image_url || '/assets/images/no_image.png'}
                   alt={item.title}
                   fill
                   sizes="56px"

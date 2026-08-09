@@ -4,6 +4,8 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
+
 export const metadata = {
   title: 'Conditions Générales de Vente | Le Kit du Voyageur',
   description: 'Conditions générales de vente — e-commerce Le Kit du Voyageur. Droit de rétractation 14 jours, garanties légales, paiement Stripe.',
@@ -43,8 +45,28 @@ function MobileCGVContent() {
 }
 
 export default function CGVPage() {
+  const webPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: "Conditions G\u00e9n\u00e9rales de Vente — Le Kit du Voyageur",
+    description: "Conditions g\u00e9n\u00e9rales de vente de la boutique e-commerce Le Kit du Voyageur.",
+    url: `${siteUrl}/cgv`,
+    isPartOf: { '@id': `${siteUrl}/#website` },
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Accueil', item: siteUrl },
+      { '@type': 'ListItem', position: 2, name: "Conditions G\u00e9n\u00e9rales de Vente", item: `${siteUrl}/cgv` },
+    ],
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} suppressHydrationWarning />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} suppressHydrationWarning />
       {/* DESKTOP */}
       <div className="hidden md:block">
         <div className="min-h-screen bg-background text-foreground">

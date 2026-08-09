@@ -77,7 +77,7 @@ export default function InstallPrompt() {
       aria-label="Installer l'application"
       className="md:hidden fixed left-3 right-3 z-40 rounded-2xl shadow-lg flex items-center gap-3 px-4 py-3"
       style={{
-        bottom: 'calc(56px + env(safe-area-inset-bottom) + 8px)',
+        bottom: 'calc(86px + env(safe-area-inset-bottom))',
         background: '#1C2620',
         color: '#E7E3D6',
       }}

@@ -22,7 +22,7 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
     <section className="relative rounded-2xl overflow-hidden shadow-lg mt-6">
       <div className="relative aspect-w-16 aspect-h-9">
         <Image
-          src={images[current]}
+          src={images[current] || '/assets/images/no_image.png'}
           alt={`Photo ${current + 1}`}
           fill
           className="object-cover transition-opacity duration-500"

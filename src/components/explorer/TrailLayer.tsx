@@ -2,7 +2,7 @@
 import { useRef, useEffect } from 'react';
 import type { Map as LeafletMap } from 'leaflet';
 import type { MapTrail } from './types';
-
+import { isValidLatLng, sanitizeGeoJSON } from './types';
 
 interface TrailLayerProps {
   map: LeafletMap;
@@ -32,14 +32,16 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
 
       // Clean up previous layer group
       if (layerGroupRef.current) {
-        try { map.removeLayer(layerGroupRef.current); } catch {}
+        try { map.removeLayer(layerGroupRef.current); } catch {
+          // ignore layer removal errors
+        }
         layerGroupRef.current = null;
       }
 
       if (!trails.length) return;
 
       // Create a MarkerClusterGroup
-      // @ts-ignore
+      // @ts-expect-error - leaflet.markercluster types not available
       const clusterGroup = L.markerClusterGroup({
         showCoverageOnHover: false,
         maxClusterRadius: 45,
@@ -86,10 +88,35 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
         // 1. Render GeoJSON Trace ONLY IF SELECTED (Hide by default)
         if (trail.geojson && isSelected) {
           try {
-            const geoJsonLayer = L.geoJSON(trail.geojson as any, {
+            const parsedGeo = typeof trail.geojson === 'string' ? JSON.parse(trail.geojson) : trail.geojson;
+
+            // Sanitisation centralisée : aucune coordonnée invalide (null/NaN/
+            // Infinity/hors bornes) ne doit atteindre Leaflet — source du crash
+            // "Invalid LatLng object: (NaN, NaN)". Si le tracé est totalement
+            // invalide, on l'ignore plutôt que de casser la carte.
+            const cleanGeo = sanitizeGeoJSON(parsedGeo);
+            if (!cleanGeo) {
+              console.warn('TrailLayer: geometry invalide, tracé ignoré:', trail.name);
+              return;
+            }
+
+            // Outer casing for high contrast
+            const casingLayer = L.geoJSON(cleanGeo as any, {
               style: {
-                color: '#1C2620',
-                weight: 6,
+                color: '#FBFAF6',
+                weight: 9,
+                opacity: 0.9,
+                lineCap: 'round',
+                lineJoin: 'round',
+              },
+            });
+            linesGroup.addLayer(casingLayer);
+
+            // Core trail line
+            const geoJsonLayer = L.geoJSON(cleanGeo as any, {
+              style: {
+                color: '#17402C',
+                weight: 5,
                 opacity: 1.0,
                 lineCap: 'round',
                 lineJoin: 'round',
@@ -105,16 +132,23 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
             try {
               const bounds = geoJsonLayer.getBounds();
               if (bounds.isValid()) {
-                map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14, animate: true });
+                map.fitBounds(bounds, { padding: [80, 80], maxZoom: 15, animate: true });
               }
-            } catch {}
+            } catch {
+              // ignore bounds fitting errors
+            }
           } catch (e) {
             console.warn('Failed to parse GeoJSON for trail:', trail.name, e);
           }
         }
 
         // 2. Render KM Marker (Clean white pill style) added to Cluster!
-        if (trail.lat && trail.lng && !isNaN(trail.lat) && !isNaN(trail.lng)) {
+        // Coerce lat/lng first, exclude null/"" (Number(null)===0 → ghost marker
+        // à (0,0)) ainsi que tout non-fini (NaN, Infinity, "abc") et hors bornes
+        // géographiques (lat±90, lng±180).
+        const lat = Number(trail.lat);
+        const lng = Number(trail.lng);
+        if (isValidLatLng(trail.lat, trail.lng)) {
           const label = trail.distance_km ? `${Number(trail.distance_km).toFixed(1)}km`.replace('.', ',').replace(',0', '') : '';
           if (label) {
             const html = `
@@ -134,7 +168,7 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
                 justify-content: center;
               ">${label}</div>`;
             const icon = L.divIcon({ html, className: '', iconSize: [54, 24], iconAnchor: [27, 12] });
-            const marker = L.marker([trail.lat, trail.lng], { icon, zIndexOffset: isSelected ? 1000 : 10 });
+            const marker = L.marker([lat, lng], { icon, zIndexOffset: isSelected ? 1000 : 10 });
             marker.on('click', (e) => {
               L.DomEvent.stopPropagation(e);
               onTrailClick?.(trail);
@@ -156,11 +190,12 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
     return () => {
       isMounted = false;
       if (layerGroupRef.current && map) {
-        try { map.removeLayer(layerGroupRef.current); } catch {}
+        try { map.removeLayer(layerGroupRef.current); } catch {
+          // ignore layer removal errors on cleanup
+        }
       }
     };
   }, [map, trails, selectedTrailId, onTrailClick]);
 
   return null;
 }
-

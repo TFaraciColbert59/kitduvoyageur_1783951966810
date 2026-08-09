@@ -66,9 +66,9 @@ export default function ContactPage() {
               <form onSubmit={handleSubmit} className="space-y-4 p-7 rounded-2xl" style={{ background: '#fff', border: '1px solid #E8E4DA' }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div><label className="block text-xs font-medium text-foreground/70 mb-1.5">Nom complet *</label>
-                    <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Jean Dupont" className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/60 transition-colors" /></div>
+                    <input type="text" required autoComplete="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Jean Dupont" className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/60 transition-colors" /></div>
                   <div><label className="block text-xs font-medium text-foreground/70 mb-1.5">Email *</label>
-                    <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="jean@exemple.fr" className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/60 transition-colors" /></div>
+                    <input type="email" required autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="jean@exemple.fr" className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/60 transition-colors" /></div>
                 </div>
                 <div><label className="block text-xs font-medium text-foreground/70 mb-1.5">Sujet *</label>
                   <select required value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary/60 transition-colors">
@@ -126,9 +126,9 @@ export default function ContactPage() {
       ) : (
         <form onSubmit={handleSubmit}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: '#F4F1EA', padding: '16px', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
-            <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nom complet *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '13px', color: '#1C2620' }} />
-            <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '13px', color: '#1C2620' }} />
-            <select required value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '13px', color: '#1C2620' }}>
+            <input type="text" required autoComplete="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nom complet *" aria-label="Nom complet" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '13px', color: '#1C2620' }} />
+            <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email *" aria-label="Email" autoComplete="email" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '13px', color: '#1C2620' }} />
+            <select required value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} aria-label="Sujet" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '13px', color: '#1C2620' }}>
               <option value="">Sujet *</option>
               <option value="commande">Question sur ma commande</option>
               <option value="retour">Retour / Remboursement</option>
@@ -137,7 +137,7 @@ export default function ContactPage() {
               <option value="partenariat">Partenariat / B2B</option>
               <option value="autre">Autre</option>
             </select>
-            <textarea required rows={4} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Message *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '13px', color: '#1C2620', resize: 'none' }} />
+            <textarea required rows={4} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Message *" aria-label="Message" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '13px', color: '#1C2620', resize: 'none' }} />
             <button type="submit" disabled={submitting} style={{ background: '#17402C', color: 'white', border: 'none', padding: '12px 16px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.6 : 1 }}>
               {submitting ? 'Envoi en cours…' : 'Envoyer le message'}
             </button>

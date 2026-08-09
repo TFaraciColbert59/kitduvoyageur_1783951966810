@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,29 +25,41 @@ interface NavSection {
 
 const SECTIONS: NavSection[] = [
   {
-    label: 'Naviguer',
+    label: 'Découvrir & Terrain',
     items: [
-      { label: 'Aventures', icon: 'mountain', href: '/explorer' },
-      { label: 'Boutique', icon: 'bag', href: '/boutique' },
-      { label: 'Carte', icon: 'map-pin', href: '/carte-interactive' },
+      { label: 'Carte interactive', icon: 'map-pin', href: '/carte-interactive' },
+      { label: 'Boussole augmentée', icon: 'search', href: '/boussole' },
+      { label: 'Mode hors-ligne', icon: 'bookmark', href: '/hors-ligne' },
+      { label: 'Mon matériel', icon: 'bag', href: '/mon-materiel' },
       { label: 'Carnets', icon: 'doc', href: '/carnets' },
+      { label: 'Guides', icon: 'bookmark', href: '/guides' },
+      { label: 'Blog', icon: 'doc', href: '/blog' },
+      { label: 'Outils terrain', icon: 'search', href: '/outils' },
+      { label: 'Mode rando GPS/SOS', icon: 'map-pin', href: '/naviguer' },
     ],
   },
   {
-    label: 'Mon compte',
+    label: 'Vie pro & occasion',
     items: [
-      { label: 'Profil', icon: 'user', href: '/compte' },
-      { label: 'Inventaire', icon: 'bag', href: '/inventaire' },
-      { label: 'Fidélité', icon: 'star', href: '/fidelite' },
-      { label: 'Alertes', icon: 'bell', href: '/alertes' },
+      { label: 'Location', icon: 'bag', href: '/location' },
+      { label: 'Enchères', icon: 'star', href: '/encheres' },
+      { label: 'Espace Pro', icon: 'user', href: '/pro' },
+      { label: 'Ambassadeurs', icon: 'star', href: '/ambassadeurs' },
+      { label: 'Créateurs', icon: 'star', href: '/createurs' },
     ],
   },
   {
-    label: 'Maison',
+    label: 'Compte & légal',
     items: [
-      { label: 'Accueil', icon: 'home', href: '/' },
-      { label: 'Paramètres', icon: 'lock', href: '/compte' },
-      { label: 'Aide', icon: 'heart', href: '/faq' },
+      { label: 'Mes Aventures', icon: 'mountain', href: '/mes-aventures' },
+      { label: "Rapport d'Expédition", icon: 'doc', href: '/rapport-expedition' },
+      { label: 'Rapport Kit', icon: 'bag', href: '/rapport-kit' },
+      { label: 'Aide / FAQ', icon: 'heart', href: '/faq' },
+      { label: 'Contact', icon: 'heart', href: '/contact' },
+      { label: 'CGU', icon: 'lock', href: '/cgu' },
+      { label: 'CGV', icon: 'lock', href: '/cgv' },
+      { label: 'Mentions Légales', icon: 'lock', href: '/mentions-legales' },
+      { label: 'Politique de Confidentialité', icon: 'lock', href: '/politique-confidentialite' },
     ],
   },
 ];
@@ -107,18 +119,67 @@ const scrollableContentStyle: React.CSSProperties = {
 export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
   const pathname = usePathname();
   const { user, profile } = useAuth();
+  
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
-  // Lock body scroll when drawer is open
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth();
+  const season = currentMonth >= 2 && currentMonth <= 4 ? 'printemps'
+    : currentMonth >= 5 && currentMonth <= 7 ? 'été'
+    : currentMonth >= 8 && currentMonth <= 10 ? 'automne'
+    : 'hiver';
+  const version = 'v0.1.0'; // Should ideally come from package.json but hardcoded to package.json version for simplicity
+
+  // Lock body scroll and handle focus trap / escape key
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      previousFocusRef.current = document.activeElement as HTMLElement;
+      
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          onClose();
+        } else if (e.key === 'Tab') {
+          if (!panelRef.current) return;
+          const focusable = panelRef.current.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          );
+          if (focusable.length === 0) return;
+          
+          const first = focusable[0] as HTMLElement;
+          const last = focusable[focusable.length - 1] as HTMLElement;
+          
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      };
+      
+      document.addEventListener('keydown', handleKeyDown);
+      
+      // Focus close button or panel
+      setTimeout(() => {
+        if (panelRef.current) {
+          const closeBtn = panelRef.current.querySelector('button');
+          if (closeBtn) closeBtn.focus();
+        }
+      }, 50);
+
+      return () => {
+        document.body.style.overflow = '';
+        document.removeEventListener('keydown', handleKeyDown);
+        if (previousFocusRef.current) previousFocusRef.current.focus();
+      };
     } else {
       document.body.style.overflow = '';
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
   return (
     <AnimatePresence>
@@ -139,6 +200,8 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
           {/* Panel */}
           <motion.div
             key="drawer-panel"
+            id="mobile-drawer"
+            ref={panelRef}
             style={panelStyle}
             initial={{ x: '-100%' }}
             animate={{ x: 0 }}
@@ -159,7 +222,7 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
                 style={{
                   background: '#0B1F17',
                   color: '#fff',
-                  padding: '40px 20px 22px',
+                  padding: 'calc(40px + env(safe-area-inset-top)) 20px 22px',
                   position: 'relative',
                   overflow: 'hidden',
                 }}
@@ -186,8 +249,8 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
                     position: 'absolute',
                     top: '12px',
                     right: '12px',
-                    width: '34px',
-                    height: '34px',
+                    width: '44px',
+                    height: '44px',
                     borderRadius: '999px',
                     background: 'rgba(255,255,255,0.14)',
                     color: '#fff',
@@ -227,7 +290,7 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
                         fontSize: '12px',
                       }}
                     >
-                      édition automne · 2026
+                      édition {season} · {currentYear}
                     </em>
                   </div>
                 </div>
@@ -313,18 +376,13 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
                             ...itemStyle,
                             background: isActive
                               ? 'rgba(11,31,23,0.04)'
+                              : hoveredItem === item.href
+                              ? 'rgba(11,31,23,0.03)'
                               : 'transparent',
                             fontWeight: isActive ? 500 : 400,
                           }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background =
-                              'rgba(11,31,23,0.03)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = isActive
-                              ? 'rgba(11,31,23,0.04)'
-                              : 'transparent';
-                          }}
+                          onMouseEnter={() => setHoveredItem(item.href)}
+                          onMouseLeave={() => setHoveredItem(null)}
                         >
                           <LkvIcon
                             name={item.icon}
@@ -347,7 +405,7 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
               {/* Footer */}
               <footer
                 style={{
-                  padding: '14px 16px 20px',
+                  padding: '14px 16px calc(20px + env(safe-area-inset-bottom))',
                   borderTop: '1px solid rgba(11,31,23,0.06)',
                   background: '#F4F1EA',
                 }}
@@ -390,7 +448,7 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
                     fontFamily: 'ui-monospace, monospace',
                   }}
                 >
-                  v.2026.4 · GRENOBLE · FR
+                  {version} · GRENOBLE · FR
                 </div>
               </footer>
             </div>

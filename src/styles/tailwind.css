@@ -106,6 +106,34 @@
   --success: #2D5A3D;
   --warning: #8C6A1A;
   --danger: #9B2C2C;
+
+  /* ————— LE KIT DU VOYAGEUR — DESIGN TOKENS ————— */
+  --lkv-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  --lkv-font-serif: "Cormorant Garamond", "Playfair Display", Georgia, serif;
+  --lkv-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --lkv-forest-950: #06120C;
+  --lkv-forest-900: #0B1F17;
+  --lkv-forest-800: #17402C;
+  --lkv-forest-700: #205238;
+  --lkv-forest-600: #2D6B4A;
+
+  --lkv-sage-500: #A8C8A0;
+  --lkv-sage-300: #C6DCBE;
+  --lkv-sage-200: #DDE9D6;
+  --lkv-sage-100: #EAF1E5;
+
+  --lkv-stone-50: #F4F1EA;
+  --lkv-stone-100: #E9E4D9;
+  --lkv-stone-200: #DDD6C6;
+
+  --lkv-ink-900: #0B1F17;
+  --lkv-ink-700: #384A42;
+  --lkv-ink-500: #6B7A72;
+  --lkv-ink-400: #8B978F;
+  --lkv-ink-300: #AEB7B1;
+
+  --lkv-paper: #FBFAF6;
 }
 
 .dark {
@@ -150,6 +178,10 @@
     box-sizing: border-box;
     border-color: var(--border);
     -webkit-tap-highlight-color: transparent;
+  }
+
+  button, a, [role="button"] {
+    touch-action: manipulation;
   }
 
   html {
@@ -573,3 +605,43 @@
 }
 
 /* Mobile bottom bar padding — géré par MobilePageShell */
+
+/* ── Custom Scrollbars — Forest Theme ── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--forest-600);
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--forest-500);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--forest-600) transparent;
+}
+
+/* ── Custom Cursor — Grab/Pointer moderne ── */
+* {
+  cursor: default;
+}
+a, button, select, input, textarea, [role="button"], [tabindex]:not([tabindex="-1"]) {
+  cursor: pointer;
+}
+a:active, button:active, [role="button"]:active {
+  cursor: pointer;
+}
+
+/* ── Custom Cursor (CustomCursor.tsx) — masque le curseur natif sur devices pointage précis ── */
+/* Seulement sur desktop (souris) ; le composant renvoie null sur touch/coarse pointer. */
+@media (hover: hover) and (pointer: fine) {
+  * {
+    cursor: none !important;
+  }
+}

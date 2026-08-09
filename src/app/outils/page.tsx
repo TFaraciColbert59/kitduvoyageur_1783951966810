@@ -6,6 +6,8 @@ import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import TopoSeparator from '@/components/TopoSeparator';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
+
 export const metadata: Metadata = {
   title: 'Boîte à Outils — Kit du Voyageur',
   description: 'Suite d\'outils gratuits pour voyageurs et randonneurs : calculateur de poids, budget, convertisseurs, checklist, boussole, chronomètre et plus.',
@@ -213,8 +215,28 @@ const categorieColor: Record<string, string> = {
 };
 
 export default function OutilsPage() {
+  const webPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: "Bo\u00eete \u00e0 Outils — Kit du Voyageur",
+    description: "Suite d'outils gratuits pour voyageurs et randonneurs.",
+    url: `${siteUrl}/outils`,
+    isPartOf: { '@id': `${siteUrl}/#website` },
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Accueil', item: siteUrl },
+      { '@type': 'ListItem', position: 2, name: 'Bo\u00eete \u00e0 Outils', item: `${siteUrl}/outils` },
+    ],
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} suppressHydrationWarning />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} suppressHydrationWarning />
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
         <div className="min-h-screen bg-background text-foreground">

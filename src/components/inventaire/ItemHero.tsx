@@ -39,7 +39,7 @@ export default function ItemHero({
         <div className="lg:col-span-5 space-y-4">
           <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-[#F5F2EA] border border-[#E8E4D8] group">
             <Image
-              src={selectedImage || item.image}
+              src={selectedImage || item.image || '/assets/images/no_image.png'}
               alt={item.alt || item.name}
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"

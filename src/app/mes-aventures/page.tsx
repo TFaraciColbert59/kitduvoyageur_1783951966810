@@ -42,6 +42,7 @@ export default function MesAventuresPage() {
   const supabase = createClient();
   const [savedTrails, setSavedTrails] = useState<SavedTrail[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
 
   useEffect(() => {
@@ -51,10 +52,12 @@ export default function MesAventuresPage() {
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        setSavedTrails(data || []);
+      .then(({ data, error: err }) => {
+        if (err) { setError(err.message); setSavedTrails([]); }
+        else { setSavedTrails(data || []); }
         setLoading(false);
-      });
+      })
+      .then(undefined, (e: any) => { setError(e?.message || 'Erreur lors du chargement'); setLoading(false); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
@@ -105,6 +108,18 @@ export default function MesAventuresPage() {
       {loading && (
         <div className="flex items-center justify-center py-20">
           <div className="w-10 h-10 border-4 border-[#17402C] border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+
+      {/* Error state */}
+      {!loading && error && (
+        <div className="text-center py-20">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h2 className="text-white font-bold text-xl mb-2">Erreur de chargement</h2>
+          <p className="text-white/50 text-sm mb-6">{error}</p>
+          <button onClick={() => window.location.reload()} className="bg-[#17402C] text-white px-6 py-3 rounded-xl font-medium hover:opacity-90 transition-opacity cursor-pointer">
+            Réessayer
+          </button>
         </div>
       )}
 
@@ -242,6 +257,18 @@ export default function MesAventuresPage() {
       {loading && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 0' }}>
           <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#17402C', animation: 'spin 0.8s linear infinite' }} />
+        </div>
+      )}
+
+      {/* Error state */}
+      {!loading && error && (
+        <div style={{ textAlign: 'center', padding: '60px 0' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>Erreur de chargement</h2>
+          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '20px' }}>{error}</p>
+          <button onClick={() => window.location.reload()} style={{ background: '#17402C', color: '#fff', padding: '10px 24px', borderRadius: '10px', fontWeight: 600, fontSize: '14px', border: 'none', cursor: 'pointer', display: 'inline-block' }}>
+            Reessayer
+          </button>
         </div>
       )}
 

@@ -12,6 +12,7 @@ import AventureCard from '@/components/explorer/AventureCard';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import BackButton from '@/components/ui/BackButton';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import ExplorerMap from '@/components/explorer/ExplorerMap';
 
@@ -24,6 +25,7 @@ const DURATION_FILTERS = [
 ];
 
 export default function ExplorerPage() {
+  const router = useRouter();
   const [selectedTrailId, setSelectedTrailId] = useState<string | null>(null);
   const [selectedTrail, setSelectedTrail] = useState<MapTrail | null>(null);
   const [detailPanelOpen, setDetailPanelOpen] = useState(false);
@@ -375,14 +377,25 @@ export default function ExplorerPage() {
                       </button>
                     </div>
                     {/* CTA */}
-                    <div className="px-3 pb-3">
+                    <div className="px-3 pb-3 space-y-1.5">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          router.push(`/randonnee-active?routeId=${selectedTrail.id}`);
+                        }}
+                        className="w-full py-2 bg-[#2D5A27] text-white text-xs font-bold rounded-xl shadow-md hover:bg-[#1E3E1B] active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
+                      >
+                        <span>🥾</span>
+                        <span>Démarrer la randonnée</span>
+                      </button>
                       <button
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           setDetailPanelOpen(true);
                         }}
-                        className="w-full py-2 bg-[#1C2620] text-white text-xs font-semibold rounded-xl hover:bg-[#2D3F35] transition-colors"
+                        className="w-full py-1.5 bg-[#F5F2EA] text-[#1C2620] text-xs font-medium rounded-xl hover:bg-[#EAE6D8] transition-colors"
                       >
                         Voir le détail →
                       </button>
@@ -627,10 +640,10 @@ export default function ExplorerPage() {
               <AventureCard
                 key={trail.id}
                 difficulty={getDifficultyLabel(trail.difficulty)}
-                location={trail.network || trail.terrain_type || 'Chartreuse'}
+                location={trail.network || trail.terrain_type || ''}
                 title={trail.name}
-                distance={trail.distance_km ?? 0}
-                elevation={trail.elevation_gain ?? 0}
+                distance={formatDistance(trail.distance_km)}
+                elevation={trail.elevation_gain != null && trail.elevation_gain != undefined ? `+${Math.round(trail.elevation_gain)} m` : '—'}
                 duration={formatDuration(trail.duration_hours)}
                 onClick={() => {
                   setSelectedTrailId(trail.id);

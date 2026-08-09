@@ -11,7 +11,7 @@ const nextConfig = {
   },
 
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   eslint: {
     ignoreDuringBuilds: true,
@@ -27,27 +27,82 @@ const nextConfig = {
     qualities: [75, 80, 85, 90, 95],
   },
 
-  webpack(config, { dev }) {
-if (dev) {
-  config.module.rules.push({
-    test: /\.(jsx|tsx)$/,
-    exclude: [/node_modules/],
-    use: [{
-      loader: '@dhiwise/component-tagger/nextLoader',
-    }],
-  });
-  const ignoredPaths = (process.env.WATCH_IGNORED_PATHS || '')
-    .split(',')
-    .map((p) => p.trim())
-    .filter(Boolean);
-  config.watchOptions = {
-    ignored: ignoredPaths.length
-      ? ignoredPaths.map((p) => `**/${p.replace(/^\/+|\/+$/g, '')}/**`)
-      : undefined,
-  };
-}
+  transpilePackages: ['react-globe.gl', 'three', 'lucide-react'],
 
-    return config;
-  }
+  async redirects() {
+    return [
+      {
+        source: '/shop',
+        destination: '/boutique',
+        permanent: true,
+      },
+      {
+        source: '/catalogue/:path*',
+        destination: '/boutique',
+        permanent: true,
+      },
+      {
+        source: '/configurateur',
+        destination: '/ai-configurator',
+        permanent: true,
+      },
+      {
+        source: '/manifeste',
+        destination: '/explorer',
+        permanent: false,
+      },
+      {
+        source: '/ateliers',
+        destination: '/boutique',
+        permanent: false,
+      },
+      {
+        source: '/presse',
+        destination: '/contact',
+        permanent: false,
+      },
+      {
+        source: '/confidentialite',
+        destination: '/politique-confidentialite',
+        permanent: true,
+      },
+      {
+        source: '/carte',
+        destination: '/carte-interactive',
+        permanent: true,
+      },
+    ];
+  },
+
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()',
+          },
+        ],
+      },
+    ];
+  },
+
 };
 export default nextConfig;

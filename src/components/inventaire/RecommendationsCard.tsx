@@ -39,7 +39,7 @@ export default function RecommendationsCard({ recommendations }: Recommendations
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-12 h-12 rounded-xl overflow-hidden relative shrink-0 border border-[#E8E4D8] bg-white">
-                <Image src={p.image} alt={p.name} fill className="object-cover group-hover:scale-105 transition-transform" />
+                <Image src={p.image || '/assets/images/no_image.png'} alt={p.name} fill className="object-cover group-hover:scale-105 transition-transform" />
               </div>
               <div className="min-w-0">
                 <h5 className="font-extrabold text-xs text-[#132219] truncate group-hover:text-[#2D5A3D] transition-colors">

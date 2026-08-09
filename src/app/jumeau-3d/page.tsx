@@ -91,6 +91,7 @@ export default function Jumeau3DPage() {
   const [lastMouse, setLastMouse] = useState({ x: 0, y: 0 });
   const [showAddModal, setShowAddModal] = useState(false);
   const [viewMode, setViewMode] = useState<'3d' | 'list' | 'zones'>('3d');
+  const [activeZone, setActiveZone] = useState<string | null>(null);
   const bagRef = useRef<HTMLDivElement>(null);
 
   const loadItems = useCallback(async () => {
@@ -136,6 +137,25 @@ export default function Jumeau3DPage() {
   };
 
   const handleMouseUp = () => setIsDragging(false);
+
+  // ── Touch handlers (mobile) ──
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    setIsDragging(true);
+    setLastMouse({ x: t.clientX, y: t.clientY });
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const t = e.touches[0];
+    const dx = t.clientX - lastMouse.x;
+    const dy = t.clientY - lastMouse.y;
+    setRotateY(prev => prev + dx * 0.5);
+    setRotateX(prev => Math.max(-30, Math.min(30, prev + dy * 0.3)));
+    setLastMouse({ x: t.clientX, y: t.clientY });
+  };
+
+  const handleTouchEnd = () => setIsDragging(false);
 
   const togglePacked = async (id: string) => {
     const item = items.find(i => i.id === id);
@@ -638,33 +658,118 @@ export default function Jumeau3DPage() {
                 </div>
               </div>
 
-              {/* 3D Visualization Placeholder */}
-              <div style={{ margin: '0 16px 16px', padding: '16px', background: '#0B1F17', borderRadius: '12px', position: 'relative', minHeight: '200px' }}>
-                <p style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 4px 0' }}>
-                  Visualisation 3D
-                </p>
-                {/* Simplified zone representation */}
-                <div style={{ margin: '12px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                  {(['top', 'middle', 'bottom'] as const).map((zone, zi) => {
-                    const zItems = packedItems.filter(i => i.zone === zone);
-                    return (
-                      <div key={zone} style={{
-                        width: zi === 0 ? '70%' : zi === 1 ? '85%' : '90%',
-                        height: '36px',
-                        background: zItems.length > 0 ? '#17402C' : 'rgba(255,255,255,0.08)',
-                        borderRadius: '6px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                      }}>
-                        <span style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: 'rgba(255,255,255,0.5)' }}>
-                          {ZONE_LABELS[zone]} &middot; {zItems.length} art.
+              {/* 3D Visualization — interactive (touch + mouse drag) */}
+              <div style={{ margin: '0 16px 16px', padding: '16px', background: '#0B1F17', borderRadius: '16px', position: 'relative', minHeight: '300px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <p style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>
+                    Visualisation 3D
+                  </p>
+                  <p style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: 'rgba(255,255,255,0.3)', margin: 0, whiteSpace: 'nowrap' }}>
+                    Rotation: {Math.round(rotateY)}&deg; &middot; glisser pour tourner
+                  </p>
+                </div>
+
+                {/* Drag area — 3D bag, non-zero height */}
+                <div
+                  style={{
+                    height: 220,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    perspective: '800px',
+                    cursor: isDragging ? 'grabbing' : 'grab',
+                    touchAction: 'none',
+                    WebkitUserSelect: 'none',
+                    userSelect: 'none',
+                  }}
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchEnd}
+                >
+                  <div
+                    ref={bagRef}
+                    style={{
+                      width: 130,
+                      height: 210,
+                      transformStyle: 'preserve-3d',
+                      transform: `rotateY(${rotateY}deg) rotateX(${rotateX}deg)`,
+                      transition: isDragging ? 'none' : 'transform 0.1s ease',
+                      position: 'relative',
+                    }}
+                  >
+                    {/* Bag body */}
+                    <div style={{
+                      position: 'absolute', inset: 0,
+                      background: 'linear-gradient(160deg, #2A3A2E 0%, #1C2620 100%)',
+                      borderRadius: '10px 10px 8px 8px',
+                      border: '2px solid rgba(255,255,255,0.1)',
+                      boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+                    }} />
+
+                    {/* Zone sections — tappable */}
+                    {(['top', 'middle', 'bottom'] as const).map((zone, zi) => {
+                      const zItems = packedItems.filter(i => i.zone === zone);
+                      const zoneColors = zItems.map(i => i.color);
+                      const isActive = activeZone === zone;
+                      return (
+                        <button
+                          key={zone}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveZone(prev => prev === zone ? null : zone);
+                          }}
+                          style={{
+                            position: 'absolute',
+                            left: '8px', right: '8px',
+                            top: zi === 0 ? '8px' : zi === 1 ? '76px' : '144px',
+                            height: '60px',
+                            borderRadius: '6px',
+                            background: zoneColors.length > 0
+                              ? `linear-gradient(135deg, ${zoneColors.slice(0, 3).join(', ')})`
+                              : 'rgba(255,255,255,0.05)',
+                            border: isActive ? '2px solid #A3C4A3' : '1px solid rgba(255,255,255,0.08)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            overflow: 'hidden',
+                            cursor: 'pointer',
+                            WebkitTapHighlightColor: 'transparent',
+                          }}
+                          aria-label={`Zone ${ZONE_LABELS[zone]}`}
+                        >
+                          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '9px', fontFamily: 'monospace' }}>
+                            {ZONE_LABELS[zone]} &middot; {zItems.length}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Active zone items */}
+                {activeZone && (
+                  <div style={{ marginTop: '10px', padding: '10px 12px', background: 'rgba(255,255,255,0.06)', borderRadius: '10px' }}>
+                    <p style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 6px 0' }}>
+                      {ZONE_LABELS[activeZone]}
+                    </p>
+                    {packedItems.filter(i => i.zone === activeZone).map(item => (
+                      <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0' }}>
+                        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.85)' }}>{item.name}</span>
+                        <span style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: 'rgba(255,255,255,0.5)' }}>
+                          {item.weightG >= 1000 ? `${(item.weightG / 1000).toFixed(2)} kg` : `${item.weightG} g`}
                         </span>
                       </div>
-                    );
-                  })}
-                </div>
+                    ))}
+                    {packedItems.filter(i => i.zone === activeZone).length === 0 && (
+                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontFamily: 'Georgia, serif', fontStyle: 'italic', margin: 0 }}>
+                        Aucun article dans cette zone
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {/* Weight balance */}
                 <div style={{ marginTop: '12px' }}>

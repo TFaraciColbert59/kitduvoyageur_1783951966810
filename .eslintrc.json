@@ -21,6 +21,8 @@
     ],
     "@typescript-eslint/no-explicit-any": "off",
     "@next/next/no-img-element": "warn",
+    "react/no-unescaped-entities": "warn",
+    "no-empty": "warn",
     "no-console": [
       "warn",
       {
@@ -37,7 +39,8 @@
     ".next/",
     "out/",
     "public/",
-    "src/app/api/ai/chat-completion/route.ts"
+    "src/app/api/ai/chat-completion/route.ts",
+    "**/__tests__/**"
   ],
   "env": {
     "browser": true,

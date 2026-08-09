@@ -53,9 +53,9 @@ const AppImage = memo(function AppImage({
     loading = 'lazy',
     unoptimized = false,
 }: AppImageProps) {
-    const [imageSrc, setImageSrc] = useState(src);
+    const [imageSrc, setImageSrc] = useState(src || fallbackSrc);
     const [isLoading, setIsLoading] = useState(true);
-    const [hasError, setHasError] = useState(false);
+    const [hasError, setHasError] = useState(!src);
 
     const isExternalUrl = useMemo(() => typeof imageSrc === 'string' && imageSrc.startsWith('http'), [imageSrc]);
     const resolvedUnoptimized = unoptimized || isExternalUrl;

@@ -1,5 +1,5 @@
 -- ============================================================
--- KIT DU VOYAGEUR — Full App Tables Migration
+-- KIT DU VOYAGEUR — Migration: App tables v1
 -- ============================================================
 
 -- 1. USER PROFILES
@@ -44,10 +44,12 @@ CREATE TABLE IF NOT EXISTS public.club_topics (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   club_id UUID NOT NULL REFERENCES public.clubs(id) ON DELETE CASCADE,
   user_id UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
+  author_id UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
   title TEXT NOT NULL,
   content TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE public.club_topics ADD COLUMN IF NOT EXISTS author_id UUID REFERENCES public.user_profiles(id);
 
 -- 3. EVENTS
 CREATE TABLE IF NOT EXISTS public.events (
@@ -302,6 +304,7 @@ CREATE POLICY "auth_manage_own_membership" ON public.club_members
 FOR ALL TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 
 -- club_topics
+ALTER TABLE public.club_topics ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES public.user_profiles(id);
 DROP POLICY IF EXISTS "public_read_topics" ON public.club_topics;
 CREATE POLICY "public_read_topics" ON public.club_topics
 FOR SELECT TO public USING (true);
@@ -407,6 +410,8 @@ VALUES
   (gen_random_uuid(), '-20% Decathlon partenaire', 'Code de réduction exclusif sur la gamme Forclaz chez Decathlon.', 350, 'partner', '-20%', 'https://images.unsplash.com/photo-1637666544359-0e88de7b3206', 'Rayon équipement de randonnée dans un magasin de sport avec sacs et chaussures', true)
 ON CONFLICT (id) DO NOTHING;
 
+ALTER TABLE public.club_topics ADD COLUMN IF NOT EXISTS author_id UUID REFERENCES public.user_profiles(id);
+
 -- Seed clubs
 DO $$
 DECLARE
@@ -416,6 +421,7 @@ DECLARE
   club4_id UUID := gen_random_uuid();
   club5_id UUID := gen_random_uuid();
   club6_id UUID := gen_random_uuid();
+  prof_id UUID;
 BEGIN
   INSERT INTO public.clubs (id, slug, name, type, emoji, description, cover_color, members_count, active_this_month, min_trust_to_create)
   VALUES
@@ -427,17 +433,19 @@ BEGIN
     (club6_id, 'c-alpinisme', 'Club Alpinisme', 'activité', '⛏️', 'Alpinisme technique, escalade en haute montagne, courses glaciaires. Membres vérifiés par niveau.', 'from-slate-600 to-slate-800', 892, 134, 60)
   ON CONFLICT (slug) DO NOTHING;
 
-  -- Seed club topics
-  INSERT INTO public.club_topics (club_id, title)
-  VALUES
-    (club1_id, 'Meilleures chaussures pour terrain mixte'),
-    (club1_id, 'Filtration eau en montagne'),
-    (club1_id, 'Bivouac légal en France'),
-    (club4_id, 'Conditions juillet 2026 — rapport hebdo'),
-    (club4_id, 'Refuge Ciottulu di i Mori complet ?'),
-    (club5_id, 'Route F35 praticable en juillet ?'),
-    (club5_id, 'Camping sauvage réglementation 2026')
-  ON CONFLICT DO NOTHING;
+  SELECT id INTO prof_id FROM public.user_profiles LIMIT 1;
+  IF prof_id IS NOT NULL THEN
+    INSERT INTO public.club_topics (club_id, author_id, title)
+    VALUES
+      (club1_id, prof_id, 'Meilleures chaussures pour terrain mixte'),
+      (club1_id, prof_id, 'Filtration eau en montagne'),
+      (club1_id, prof_id, 'Bivouac légal en France'),
+      (club4_id, prof_id, 'Conditions juillet 2026 — rapport hebdo'),
+      (club4_id, prof_id, 'Refuge Ciottulu di i Mori complet ?'),
+      (club5_id, prof_id, 'Route F35 praticable en juillet ?'),
+      (club5_id, prof_id, 'Camping sauvage réglementation 2026')
+    ON CONFLICT DO NOTHING;
+  END IF;
 END $$;
 
 -- Seed events

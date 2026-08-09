@@ -73,8 +73,7 @@ export default function CheckoutPage() {
   const [shippingOption, setShippingOption] = useState<ShippingOption>('suivie');
   const [orderNumber, setOrderNumber] = useState('');
   const [stripeConfigured, setStripeConfigured] = useState(false);
-  const [newsletterOptIn, setNewsletterOptIn] = useState(true);
-  const [saveCard, setSaveCard] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     email: '', prenom: '', nom: '', adresse: '', complement: '',
@@ -150,10 +149,18 @@ export default function CheckoutPage() {
         }),
       });
       const data = await res.json();
-      if (data.url) { window.location.href = data.url; return; }
-      throw new Error('No redirect URL');
-    } catch {
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      throw new Error('No redirect URL from Stripe');
+    } catch (err) {
       setProcessing(false);
+      setError(
+        err instanceof Error && err.message === 'No redirect URL from Stripe'
+          ? "Le paiement n'a pas pu être initié. Vérifiez votre commande et réessayez."
+          : 'Impossible de contacter le service de paiement. Veuillez réessayer dans un instant.'
+      );
     }
   };
 
@@ -178,7 +185,7 @@ export default function CheckoutPage() {
       setStep('confirmation');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch {
-      // silent
+      setError("L'enregistrement de votre commande a échoué. Veuillez réessayer.");
     } finally {
       setProcessing(false);
     }
@@ -250,6 +257,7 @@ export default function CheckoutPage() {
                       <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Email</label>
                       <input
                         type="email"
+                        autoComplete="email"
                         value={shipping.email}
                         onChange={(e) => setShipping(prev => ({ ...prev, email: e.target.value }))}
                         className={`w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] ${errors.email ? 'ring-1 ring-red-500' : ''}`}
@@ -275,6 +283,7 @@ export default function CheckoutPage() {
                       <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Prénom</label>
                       <input
                         type="text"
+                        autoComplete="given-name"
                         value={shipping.prenom}
                         onChange={(e) => setShipping(prev => ({ ...prev, prenom: e.target.value }))}
                         className={`w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] ${errors.prenom ? 'ring-1 ring-red-500' : ''}`}
@@ -284,6 +293,7 @@ export default function CheckoutPage() {
                       <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Nom</label>
                       <input
                         type="text"
+                        autoComplete="family-name"
                         value={shipping.nom}
                         onChange={(e) => setShipping(prev => ({ ...prev, nom: e.target.value }))}
                         className={`w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] ${errors.nom ? 'ring-1 ring-red-500' : ''}`}
@@ -293,6 +303,7 @@ export default function CheckoutPage() {
                       <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Adresse</label>
                       <input
                         type="text"
+                        autoComplete="street-address"
                         value={shipping.adresse}
                         onChange={(e) => setShipping(prev => ({ ...prev, adresse: e.target.value }))}
                         className={`w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] ${errors.adresse ? 'ring-1 ring-red-500' : ''}`}
@@ -302,6 +313,7 @@ export default function CheckoutPage() {
                       <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Complément (Optionnel)</label>
                       <input
                         type="text"
+                        autoComplete="address-line2"
                         value={shipping.complement}
                         onChange={(e) => setShipping(prev => ({ ...prev, complement: e.target.value }))}
                         placeholder="Bâtiment - étage - digicode"
@@ -312,6 +324,8 @@ export default function CheckoutPage() {
                       <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Code postal</label>
                       <input
                         type="text"
+                        autoComplete="postal-code"
+                        inputMode="numeric"
                         value={shipping.codePostal}
                         onChange={(e) => setShipping(prev => ({ ...prev, codePostal: e.target.value }))}
                         className={`w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] ${errors.codePostal ? 'ring-1 ring-red-500' : ''}`}
@@ -321,6 +335,7 @@ export default function CheckoutPage() {
                       <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Ville</label>
                       <input
                         type="text"
+                        autoComplete="address-level2"
                         value={shipping.ville}
                         onChange={(e) => setShipping(prev => ({ ...prev, ville: e.target.value }))}
                         className={`w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] ${errors.ville ? 'ring-1 ring-red-500' : ''}`}
@@ -328,7 +343,7 @@ export default function CheckoutPage() {
                     </div>
                     <div>
                       <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Pays</label>
-                      <select className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] appearance-none">
+                      <select autoComplete="country" className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none focus:ring-1 focus:ring-[#1C2620] appearance-none">
                         <option>France</option>
                         <option>Belgique</option>
                         <option>Suisse</option>
@@ -337,7 +352,8 @@ export default function CheckoutPage() {
                     <div>
                       <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Téléphone</label>
                       <input
-                        type="text"
+                        type="tel"
+                        autoComplete="tel"
                         value={shipping.telephone}
                         onChange={(e) => setShipping(prev => ({ ...prev, telephone: e.target.value }))}
                         placeholder="+33 6 12 34 56 78"
@@ -385,6 +401,11 @@ export default function CheckoutPage() {
                   
                   {step === 'paiement' && (
                     <>
+                      {error && (
+                        <div className="mb-8 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm leading-relaxed">
+                          {error}
+                        </div>
+                      )}
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-8">
                         <button className="flex flex-col items-center justify-center p-3 border-2 border-[#1C2620] rounded-2xl bg-white text-[#1C2620]">
                           <Icon name="CreditCardIcon" size={24} className="mb-1" />
@@ -429,21 +450,21 @@ export default function CheckoutPage() {
                       <div className="space-y-4">
                         <div>
                           <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Numéro de carte</label>
-                          <input type="text" placeholder="1234 1234 1234 1234" className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none font-mono" />
+                          <input type="text" autoComplete="cc-number" inputMode="numeric" placeholder="1234 1234 1234 1234" className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none font-mono" />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Expiration</label>
-                            <input type="text" placeholder="MM / AA" className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none font-mono" />
+                            <input type="text" autoComplete="cc-exp" placeholder="MM / AA" className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none font-mono" />
                           </div>
                           <div>
                             <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Cryptogramme</label>
-                            <input type="text" placeholder="CVC" className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none font-mono" />
+                            <input type="text" autoComplete="cc-csc" inputMode="numeric" placeholder="CVC" className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none font-mono" />
                           </div>
                         </div>
                         <div>
                           <label className="block text-[10px] font-mono tracking-wider text-[#5C6B5E] uppercase mb-1.5">Nom du titulaire</label>
-                          <input type="text" placeholder="Comme écrit sur la carte" className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none uppercase" />
+                          <input type="text" autoComplete="cc-name" placeholder="Comme écrit sur la carte" className="w-full px-4 py-3 rounded-xl bg-[#EBE8DD] border-none text-sm focus:outline-none uppercase" />
                         </div>
                         
                         <label className="flex items-center gap-3 cursor-pointer mt-4 mb-6">
@@ -1352,6 +1373,12 @@ export default function CheckoutPage() {
             ))}
           </div>
         </div>
+
+        {error && (
+          <div style={{ margin: '0 16px 12px', padding: '12px 14px', background: '#FDEBE9', border: '1px solid #F2C4BC', borderRadius: '12px', color: '#A12B20', fontSize: '12px', lineHeight: 1.5 }}>
+            {error}
+          </div>
+        )}
 
         <div style={{ margin: '12px 16px', padding: '16px', background: '#06120C', borderRadius: '16px', color: '#FBFAF6' }}>
           <div style={{ fontSize: '11px', fontWeight: 500, marginBottom: '12px', opacity: 0.8 }}>Récapitulatif</div>

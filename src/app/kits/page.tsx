@@ -41,7 +41,7 @@ const KITS = [
 export default function KitsPage() {
   const webPageSchema = {
     '@context': 'https://schema.org',
-    '@type': 'WebPage',
+    '@type': 'CollectionPage',
     name: 'Kits de voyage prêts à partir — Le Kit du Voyageur',
     description: 'Découvrez nos kits de voyage complets et optimisés pour chaque destination. Équipement sélectionné, testé et prêt à partir.',
     url: `${siteUrl}/kits`,

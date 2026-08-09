@@ -4,6 +4,8 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
+
 export const metadata = {
   title: 'Conditions Générales d\'Utilisation | Le Kit du Voyageur',
   description: 'Conditions générales d\'utilisation de la plateforme Le Kit du Voyageur — marketplace, comptes utilisateurs, responsabilité plateforme.',
@@ -182,8 +184,28 @@ function MobileCGUSections() {
 }
 
 export default function CGUPage() {
+  const webPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: "Conditions G\u00e9n\u00e9rales d'Utilisation — Le Kit du Voyageur",
+    description: "Conditions g\u00e9n\u00e9rales d'utilisation de la plateforme Le Kit du Voyageur.",
+    url: `${siteUrl}/cgu`,
+    isPartOf: { '@id': `${siteUrl}/#website` },
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Accueil', item: siteUrl },
+      { '@type': 'ListItem', position: 2, name: "Conditions G\u00e9n\u00e9rales d'Utilisation", item: `${siteUrl}/cgu` },
+    ],
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} suppressHydrationWarning />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} suppressHydrationWarning />
       {/* DESKTOP */}
       <div className="hidden md:block">
         <div className="min-h-screen bg-background text-foreground">

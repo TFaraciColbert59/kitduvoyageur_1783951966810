@@ -17,9 +17,9 @@ const OFFSET_PROJECTS = [
   { id: 'p4', name: 'Biogaz Inde Rurale', location: 'Inde', type: 'Biogaz', pricePerTon: 6, rating: 4.5, certified: 'CDM', description: 'Conversion des déchets en biogaz.', icon: '♻️' },
 ];
 const ECO_GEAR = [
-  { name: 'Sac Patagonia Black Hole 25L', material: 'Nylon recyclé 100%', saving: '2.1 kg CO₂', badge: 'Recyclé', href: '/catalogue' },
-  { name: 'Doudoune Primaloft Bio', material: 'Isolant biosourcé', saving: '1.8 kg CO₂', badge: 'Biosourcé', href: '/catalogue' },
-  { name: 'Gourde Klean Kanteen 1L', material: 'Acier inox recyclé', saving: '3.4 kg CO₂', badge: 'Zéro plastique', href: '/catalogue' },
+  { name: 'Sac Patagonia Black Hole 25L', material: 'Nylon recyclé 100%', saving: '2.1 kg CO₂', badge: 'Recyclé', href: '/boutique' },
+  { name: 'Doudoune Primaloft Bio', material: 'Isolant biosourcé', saving: '1.8 kg CO₂', badge: 'Biosourcé', href: '/boutique' },
+  { name: 'Gourde Klean Kanteen 1L', material: 'Acier inox recyclé', saving: '3.4 kg CO₂', badge: 'Zéro plastique', href: '/boutique' },
 ];
 
 export default function CarbonePage() {

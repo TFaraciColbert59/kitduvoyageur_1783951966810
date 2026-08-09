@@ -57,7 +57,7 @@ export default function MesCarnetsCard({ carnets }: MesCarnetsCardProps) {
               {/* Card Image Header */}
               <div className="relative h-44 w-full overflow-hidden">
                 <Image
-                  src={item.image_url}
+                  src={item.image_url || '/assets/images/no_image.png'}
                   alt={item.title}
                   fill
                   sizes="(max-width: 768px) 100vw, 33vw"

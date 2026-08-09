@@ -9,6 +9,19 @@ CREATE TYPE public.listing_type AS ENUM ('neuf', 'kit', 'occasion', 'enchere', '
 DROP TYPE IF EXISTS public.occasion_etat CASCADE;
 CREATE TYPE public.occasion_etat AS ENUM ('comme_neuf', 'bon_etat', 'etat_correct');
 
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS vendeur_id UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS produit_id UUID REFERENCES public.products(id) ON DELETE CASCADE;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS prix_cents INTEGER DEFAULT 0;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS prix_depart_cents INTEGER DEFAULT 0;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS enchere_actuelle_cents INTEGER DEFAULT 0;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS increment_min_cents INTEGER DEFAULT 100;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS date_fin_enchere TIMESTAMPTZ;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS nombre_encherisseurs INTEGER DEFAULT 0;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS prix_jour_cents INTEGER DEFAULT 0;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS caution_cents INTEGER DEFAULT 0;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS etat TEXT DEFAULT 'bon_etat';
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS statut TEXT DEFAULT 'actif';
+
 -- 2. LISTINGS TABLE (unified)
 CREATE TABLE IF NOT EXISTS public.listings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

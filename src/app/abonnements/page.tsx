@@ -392,7 +392,7 @@ export default function AbonnementsPage() {
                 </div>
               )}
               <button style={{
-                width: '100%', padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, border: 'none', cursor: 'pointer',
+                width: '100%', padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer',
                 background: plan.id === 'expedition' ? '#f59e0b' : plan.id === 'aventurier' ? '#17402C' : 'transparent',
                 color: plan.id === 'expedition' ? '#000' : plan.id === 'aventurier' ? '#fff' : 'rgba(255,255,255,0.7)',
                 border: plan.id === 'explorer' ? '1px solid rgba(255,255,255,0.2)' : 'none',
