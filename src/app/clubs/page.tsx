@@ -744,7 +744,7 @@ function ClubCard({
   currentUserId,
 }: {
   club: Club;
-  onToggleMember: (clubId: string, joined: boolean) => void;
+  onToggleMember: (club: Club) => void;
   onOpenDetail: (_club: Club) => void;
   onEdit: (club: Club) => void;
   onDelete: (club: Club) => void;
@@ -756,7 +756,7 @@ function ClubCard({
   const handleToggle = async (e: React.MouseEvent) => {
     e.stopPropagation(); // prevent opening modal if clicking join
     setJoining(true);
-    await onToggleMember(club.id, !!club.is_member);
+    await onToggleMember(club);
     setJoining(false);
   };
 
@@ -1339,7 +1339,7 @@ export default function ClubsPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleToggleMember(c.id, !!c.is_member);
+                          handleToggleMember(c);
                         }}
                         style={{
                           padding: '6px 14px',

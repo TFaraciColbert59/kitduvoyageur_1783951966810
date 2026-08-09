@@ -35,7 +35,7 @@ interface Event {
   shared_kitty: number;
   kitty_goal: number;
   min_trust_to_organize: number;
-  status: 'upcoming' | 'full' | 'past';
+    status: 'upcoming' | 'full' | 'past' | 'live';
   expenses?: EventExpense[];
   is_registered?: boolean;
 }

@@ -11,7 +11,7 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import NewFooterSection from '@/app/components/home/NewFooterSection';
 
 
-type Step = 'coordonnees' | 'livraison' | 'confirmation';
+type Step = 'coordonnees' | 'livraison' | 'paiement' | 'confirmation';
 type PaymentMethod = 'card' | 'apple_pay' | 'paypal' | 'alma';
 type ShippingOption = 'suivie' | 'express' | 'atelier';
 
@@ -74,6 +74,8 @@ export default function CheckoutPage() {
   const [orderNumber, setOrderNumber] = useState('');
   const [stripeConfigured, setStripeConfigured] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [newsletterOptIn, setNewsletterOptIn] = useState(false);
+  const [saveCard, setSaveCard] = useState(false);
 
   const [form, setForm] = useState({
     email: '', prenom: '', nom: '', adresse: '', complement: '',
@@ -157,8 +159,7 @@ export default function CheckoutPage() {
     } catch (err) {
       setProcessing(false);
       setError(
-        err instanceof Error && err.message === 'No redirect URL from Stripe'
-          ? "Le paiement n'a pas pu être initié. Vérifiez votre commande et réessayez."
+        err instanceof Error && err.message === 'No redirect URL from Stripe' ? "Le paiement n'a pas pu être initié. Vérifiez votre commande et réessayez."
           : 'Impossible de contacter le service de paiement. Veuillez réessayer dans un instant.'
       );
     }
@@ -1350,7 +1351,7 @@ export default function CheckoutPage() {
         <div style={{ margin: '0 16px 12px', padding: '14px', background: '#FBFAF6', borderRadius: '14px', border: '1px solid rgba(11,31,23,0.06)' }}>
           <div style={{ fontSize: '11px', fontWeight: 500, color: '#0B1F17', marginBottom: '10px' }}>Mode d'expédition</div>
           {[{ id: 'standard', label: 'Livraison suivie', price: 'Offerte', desc: '3-5 jours ouvrés' }, { id: 'express', label: 'Express 48h', price: '9,90 €', desc: 'Livré à domicile' }].map(opt => (
-            <label key={opt.id} onClick={() => setShippingOption(opt.id)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderTop: '1px solid rgba(11,31,23,0.05)', cursor: 'pointer' }}>
+            <label key={opt.id} onClick={() => setShippingOption(opt.id as ShippingOption)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderTop: '1px solid rgba(11,31,23,0.05)', cursor: 'pointer' }}>
               <div style={{ width: '18px', height: '18px', borderRadius: '999px', border: '1.5px solid', borderColor: shippingOption === opt.id ? '#17402C' : '#A3C4A3', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 {shippingOption === opt.id && <div style={{ width: '10px', height: '10px', borderRadius: '999px', background: '#17402C' }} />}
               </div>
