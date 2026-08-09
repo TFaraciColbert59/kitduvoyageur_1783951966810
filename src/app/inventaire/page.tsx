@@ -17,14 +17,7 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  MOCK_INVENTAIRE_ITEMS,
-  MOCK_USER_KITS,
-  MOCK_LOANS,
-  MOCK_REPAIRS,
-  MOCK_RECOMMENDATIONS,
-  GearItemData,
-} from '@/lib/mock/inventaire-marceline';
+import { MOCK_INVENTAIRE_ITEMS, MOCK_USER_KITS, MOCK_RECOMMENDATIONS, GearItemData,  } from '@/lib/mock/inventaire-marceline';
 
 export default function InventairePage() {
   const [items, setItems] = useState<GearItemData[]>(MOCK_INVENTAIRE_ITEMS);

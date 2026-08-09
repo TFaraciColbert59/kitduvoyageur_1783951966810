@@ -1,5 +1,5 @@
-import { GPSPosition, WeatherSnapshot, POI, HikingStatistics } from '../types';
-import { HikeEngine } from '../engine/HikeEngine';
+import { WeatherSnapshot, POI, HikingStatistics } from '../types';
+
 
 export interface HikeContextSummary {
   distanceKm: number;

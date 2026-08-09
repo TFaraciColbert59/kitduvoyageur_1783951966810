@@ -482,7 +482,7 @@ function _StepUsage({ state, onChange }: { state: WizardState; onChange: (k: key
 }
 
 // ── Step 2: Durée ─────────────────────────────────────────────────────────────
-function _StepDuree({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string) => void }) {
+function _StepDuree({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string | number) => void }) {
   const _choices = [
     { id: 'weekend', icon: '🌅', title: 'Week-end,', titleItalic: '2–3 jours.', desc: 'Sac léger, minimum vital. On revient vite.' },
     { id: 'semaine', icon: '📅', title: 'Une semaine,', titleItalic: '4–7 jours.', desc: 'Équipement complet, quelques extras.' },
@@ -1086,7 +1086,7 @@ export default function ConfiguratorWizard() {
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
 
-  const update = (key: keyof WizardState, val: string) => {
+  const update = (key: keyof WizardState, val: string | number) => {
     setState(prev => ({ ...prev, [key]: val }));
   };
 

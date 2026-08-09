@@ -869,16 +869,11 @@ export default function ClubsPage() {
   const [_filterType, _setFilterType] = useState<'all' | 'activite' | 'pays'>('all');
   const [_filterPrivacy, _setFilterPrivacy] = useState<'all' | 'open' | 'closed'>('all');
   const [_selectedClub, _setSelectedClub] = useState<Club | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingClub, setEditingClub] = useState<Club | null>(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [editClub, setEditClub] = useState<Club | null>(null);
-  const [detailClub, setDetailClub] = useState<Club | null>(null);
-  const [deleteClub, setDeleteClub] = useState<Club | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [activeTab, setActiveTab] = useState<'activite' | 'pays' | 'mes-clubs'>('activite');
   const { user } = useAuth();
   const supabase = useMemo(() => createClient(), []);
 
@@ -1167,9 +1162,7 @@ export default function ClubsPage() {
                     {activeTab === 'mes-clubs' ? "Vous n'avez rejoint aucun club" : 'Espace encore vierge'}
                   </h3>
                   <p className="text-muted-foreground text-base max-w-md mb-8">
-                    {activeTab === 'mes-clubs'
-                      ? 'Explorez les clubs existants et trouvez votre prochaine équipe de choc pour vos aventures.'
-                      : "Il n'y a pas encore de club dans cette catégorie. Soyez le pionnier et créez le vôtre !"}
+                    {activeTab === 'mes-clubs' ?'Explorez les clubs existants et trouvez votre prochaine équipe de choc pour vos aventures.' : "Il n'y a pas encore de club dans cette catégorie. Soyez le pionnier et créez le vôtre !"}
                   </p>
 
                   {activeTab === 'mes-clubs' ? (
@@ -1293,8 +1286,7 @@ export default function ClubsPage() {
                   {activeTab === 'mes-clubs' ? "Vous n'avez rejoint aucun club" : 'Espace encore vierge'}
                 </h3>
                 <p style={{ fontSize: '13px', color: '#6B7A72', marginBottom: '16px' }}>
-                  {activeTab === 'mes-clubs'
-                    ? 'Explorez les clubs existants et trouvez votre prochaine équipe.'
+                  {activeTab === 'mes-clubs' ?'Explorez les clubs existants et trouvez votre prochaine équipe.'
                     : "Soyez le pionnier et créez le vôtre !"}
                 </p>
                 {activeTab === 'mes-clubs' ? (

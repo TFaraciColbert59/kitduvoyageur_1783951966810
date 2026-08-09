@@ -7,15 +7,13 @@ const nextConfig = {
   compress: true,
 
   eslint: {
-    ignoreDuringBuilds: true,
-  },
+    ignoreDuringBuilds: true},
 
   typescript: {
-    ignoreBuildErrors: false,
-  },
+    ignoreBuildErrors: false},
+
   eslint: {
-    ignoreDuringBuilds: true,
-  },
+    ignoreDuringBuilds: true},
 
   images: {
     remotePatterns: imageHosts,
@@ -24,8 +22,7 @@ const nextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     dangerouslyAllowSVG: true,
-    qualities: [75, 80, 85, 90, 95],
-  },
+    qualities: [75, 80, 85, 90, 95]},
 
   transpilePackages: ['react-globe.gl', 'three', 'lucide-react'],
 
@@ -34,44 +31,35 @@ const nextConfig = {
       {
         source: '/shop',
         destination: '/boutique',
-        permanent: true,
-      },
+        permanent: true},
       {
         source: '/catalogue/:path*',
         destination: '/boutique',
-        permanent: true,
-      },
+        permanent: true},
       {
         source: '/configurateur',
         destination: '/ai-configurator',
-        permanent: true,
-      },
+        permanent: true},
       {
         source: '/manifeste',
         destination: '/explorer',
-        permanent: false,
-      },
+        permanent: false},
       {
         source: '/ateliers',
         destination: '/boutique',
-        permanent: false,
-      },
+        permanent: false},
       {
         source: '/presse',
         destination: '/contact',
-        permanent: false,
-      },
+        permanent: false},
       {
         source: '/confidentialite',
         destination: '/politique-confidentialite',
-        permanent: true,
-      },
+        permanent: true},
       {
         source: '/carte',
         destination: '/carte-interactive',
-        permanent: true,
-      },
-    ];
+        permanent: true}];
   },
 
   async headers() {
@@ -81,28 +69,29 @@ const nextConfig = {
         headers: [
           {
             key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
+            value: 'max-age=63072000; includeSubDomains; preload'},
+          
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
+            value: 'nosniff'},
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
+            value: 'strict-origin-when-cross-origin'},
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()',
-          },
-        ],
-      },
-    ];
+            value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()'}]}];
   },
 
+  webpack(config, { dev }) {
+if (dev) {
+    config.module.rules.push({
+      test: /\.(jsx|tsx)$/,
+      exclude: [/node_modules/],
+      use: [{
+        loader: '@dhiwise/component-tagger/nextLoader'}]});
+  }
+
+    return config;
+  }
 };
 export default nextConfig;

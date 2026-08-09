@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
 import { getChatCompletion, getStreamingChatCompletion } from '@/lib/ai/chatCompletion';
+import Error from '@/app/boutique/error';
+
 
 export function useChat(provider: string, model: string, streaming: boolean = true) {
   const [response, setResponse] = useState('');

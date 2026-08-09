@@ -1,14 +1,7 @@
-import { SafetyAlert } from '../types';
+
 
 export type AlertType =
-  | 'OFF_ROUTE'
-  | 'GPS_WEAK'
-  | 'GPS_LOST'
-  | 'TURN'
-  | 'POI'
-  | 'ARRIVAL'
-  | 'LOW_BATTERY'
-  | 'OFFLINE';
+  | 'OFF_ROUTE' |'GPS_WEAK' |'GPS_LOST' |'TURN' |'POI' |'ARRIVAL' |'LOW_BATTERY' |'OFFLINE';
 
 export interface HikeAlert {
   id: string;

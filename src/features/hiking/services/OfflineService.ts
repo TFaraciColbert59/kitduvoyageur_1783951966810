@@ -1,5 +1,5 @@
 import { saveRouteOffline, getRouteOffline, deleteRouteOffline, listOfflineRoutes, formatSize, OfflineRoute } from '@/lib/offlineStorage';
-import { OfflineRegion } from '../types';
+
 
 export class OfflineService {
   public static async saveRoute(route: OfflineRoute) {

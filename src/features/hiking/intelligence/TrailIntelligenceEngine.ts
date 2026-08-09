@@ -1,4 +1,4 @@
-import { HikeSession, GPSPosition, Trail } from '../types';
+import { HikeSession, Trail } from '../types';
 
 export interface AnonymizedHikeSample {
   routeId: string | number;

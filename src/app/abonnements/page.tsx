@@ -19,6 +19,7 @@ interface Plan {
   box?: string;
   cta: string;
   highlighted?: boolean;
+  color?: string;
 }
 
 interface BoxContent {

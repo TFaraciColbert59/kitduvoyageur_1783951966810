@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Error from '@/app/boutique/error';
+
 
 interface CacheEntry<T> {
   data: T;

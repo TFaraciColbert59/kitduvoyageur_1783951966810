@@ -3,8 +3,11 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import { getAllCountries, type Country } from '@/lib/countries';
+import AppImage from '@/components/ui/AppImage';
+
 
 const CountryGlobe = dynamic(
   () => import('@/components/pays/CountryGlobe'),
@@ -46,6 +49,20 @@ const DANGER_LABELS: Record<string, string> = {
   medium: 'Vigilance',
   high: 'Risqué',
 };
+
+const DANGER_CONFIG: Record<string, { bg: string; color: string; border: string; label: string }> = {
+  low: { bg: 'rgba(45,106,79,0.12)', color: '#2D6A4F', border: 'rgba(45,106,79,0.25)', label: 'Sûr' },
+  medium: { bg: 'rgba(217,119,6,0.1)', color: '#D97706', border: 'rgba(217,119,6,0.2)', label: 'Vigilance' },
+  high: { bg: 'rgba(220,38,38,0.1)', color: '#DC2626', border: 'rgba(220,38,38,0.2)', label: 'Risqué' },
+};
+
+function getFlagEmoji(code: string): string {
+  return code
+    .toUpperCase()
+    .split('')
+    .map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65))
+    .join('');
+}
 
 const ALL_TAGS = Array.from(new Set(ALL_COUNTRIES.flatMap((c) => c.tags))).sort();
 

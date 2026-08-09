@@ -1,6 +1,6 @@
 import { HikeContextBuilder } from '../src/features/hiking/intelligence/HikeContext';
 import { HikeAlertEngine } from '../src/features/hiking/engine/HikeAlertEngine';
-import { HikeSyncQueue } from '../src/features/hiking/offline/HikeSyncQueue';
+
 import { HikeTimelineJournal } from '../src/features/hiking/journal/HikeTimelineJournal';
 
 function assert(cond: boolean, msg: string) {

@@ -5,9 +5,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/Header';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
-import AnimatedPage from '@/components/animations/AnimatedPage';
-import ScrollReveal from '@/components/animations/ScrollReveal';
-import StaggerGrid from '@/components/animations/StaggerGrid';
+
+
+
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
@@ -517,7 +517,7 @@ export default function HomePage() {
                     ['Mentions', '/mentions-legales'],
                     ['Confidentialité', '/politique-confidentialite'],
                     ['Cookies', '/cookies'],
-                  ].map(([label, href]) => (
+                  ]?.map(([label, href]) => (
                     <Link key={label} href={href} style={{ color: 'inherit', textDecoration: 'none' }}>{label}</Link>
                   ))}
                 </div>

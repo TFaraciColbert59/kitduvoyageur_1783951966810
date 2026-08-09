@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 export default function CommunityLoading() {
   return (
@@ -12,7 +12,7 @@ export default function CommunityLoading() {
         
         {/* Feed skeleton */}
         <div className="max-w-3xl mx-auto space-y-8">
-          {[1, 2, 3, 4].map(i => (
+          {[1, 2, 3, 4]?.map(i => (
             <div key={i} className="bg-white rounded-3xl p-6 space-y-6">
               <div className="flex items-center gap-4">
                 <Skeleton className="h-12 w-12 rounded-full" />

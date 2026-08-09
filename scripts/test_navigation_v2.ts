@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { loadRouteDetail } from '../src/features/hiking/services/RouteService';
-import { detectRouteTurns, nextTurnOnRoute, closestOnRoute } from '../src/features/hiking/services/RouteGeom';
+import { detectRouteTurns, nextTurnOnRoute } from '../src/features/hiking/services/RouteGeom';
 
 const SUPABASE_URL = 'https://icxyvwzfjbflcbqukpfz.supabase.co';
 const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljeHl2d3pmamJmbGNicXVrcGZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NDc3ODcsImV4cCI6MjA5OTUyMzc4N30.-zry9a_kzwgZU_SpLuguT6P4HMbd7czPdMzBJx7ICMA';

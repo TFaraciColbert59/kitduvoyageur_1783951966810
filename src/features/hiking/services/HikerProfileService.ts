@@ -1,4 +1,4 @@
-import { HikeSession, GPSPosition } from '../types';
+import { HikeSession } from '../types';
 
 export interface HikerProfileStats {
   totalSessions: number;

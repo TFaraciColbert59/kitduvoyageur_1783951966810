@@ -1,4 +1,4 @@
-import { HikeSession, GPSPosition, JournalEntry } from '../types';
+
 
 export interface PendingSyncItem {
   id: string;

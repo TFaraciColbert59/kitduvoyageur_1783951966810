@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import LkvIcon from '@/components/ui/LkvIcon';
-import { useSearchContext } from '@/contexts/SearchContext';
+
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface TopBarProps {

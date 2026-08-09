@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import 'leaflet/dist/leaflet.css';
 import type { Map as LeafletMap } from 'leaflet';
 import type { MapTrail } from './types';
-import { isValidLatLng, toValidLatLng } from './types';
+import { toValidLatLng } from './types';
 import TrailLayer from './TrailLayer';
 
 interface ExplorerMapProps {
