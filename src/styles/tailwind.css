@@ -628,21 +628,7 @@
   scrollbar-color: var(--forest-600) transparent;
 }
 
-/* ── Custom Cursor — Grab/Pointer moderne ── */
-* {
-  cursor: default;
-}
+/* ── Custom Cursor — Pointer moderne ── */
 a, button, select, input, textarea, [role="button"], [tabindex]:not([tabindex="-1"]) {
   cursor: pointer;
-}
-a:active, button:active, [role="button"]:active {
-  cursor: pointer;
-}
-
-/* ── Custom Cursor (CustomCursor.tsx) — masque le curseur natif sur devices pointage précis ── */
-/* Seulement sur desktop (souris) ; le composant renvoie null sur touch/coarse pointer. */
-@media (hover: hover) and (pointer: fine) {
-  * {
-    cursor: none !important;
-  }
 }
