@@ -86,7 +86,7 @@ export default function DesktopRightPanel({
   };
 
   return (
-    <div className="absolute top-[96px] right-5 w-[340px] max-h-[calc(100%-180px)] flex flex-col gap-3.5 z-30 select-none overflow-y-auto custom-scrollbar">
+    <div className="hidden md:flex absolute top-[96px] right-5 w-[340px] max-h-[calc(100%-180px)] flex-col gap-3.5 z-30 select-none overflow-y-auto custom-scrollbar">
       {/* 1. Live Stats Panel */}
       <div className="bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#0B1F17]/07 rounded-2xl shadow-[0_12px_32px_rgba(11,31,23,0.10),0_2px_8px_rgba(11,31,23,0.04)] overflow-hidden p-4 space-y-3">
         <div className="flex justify-between items-baseline">

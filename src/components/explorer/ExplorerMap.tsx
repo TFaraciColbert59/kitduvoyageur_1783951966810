@@ -84,9 +84,17 @@ export default function ExplorerMap({
         attributionControl: true,
       });
 
-      map.on('dragstart', () => {
+      const handleUserMove = () => {
         userDraggingRef.current = true;
         onAutoFollowChange?.(false);
+      };
+
+      map.on('dragstart', handleUserMove);
+      map.on('movestart', (e: any) => {
+        // Supprimer le suivi si le mouvement a été initiated par l'utilisateur
+        if (e.originalEvent) {
+          handleUserMove();
+        }
       });
       map.on('dragend', () => { userDraggingRef.current = false; });
 

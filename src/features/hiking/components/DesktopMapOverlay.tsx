@@ -94,16 +94,15 @@ export default function DesktopMapOverlay({
         </div>
       </div>
 
-      {/* Floating Center Turn / POI Instruction Card */}
+      {/* 1. Primary Priority: Imminent Turn Instruction Card */}
       {activeGuideTurn && (
-        <div className="absolute top-[96px] left-1/2 -translate-x-1/2 px-5 py-3.5 bg-[#FBFAF6]/96 backdrop-blur-2xl border border-[#0B1F17]/07 rounded-2xl shadow-[0_12px_32px_rgba(11,31,23,0.10),0_2px_8px_rgba(11,31,23,0.04)] flex items-center gap-3.5 z-20 min-w-[360px] max-w-[90vw] select-none">
-          <div className="w-12 h-12 rounded-2xl bg-[#17402C] text-[#C6DCBE] flex items-center justify-center flex-shrink-0 relative shadow-md font-bold text-xl">
+        <div className="absolute top-16 left-3 right-3 md:left-1/2 md:-translate-x-1/2 md:w-[420px] bg-[#FBFAF6]/95 backdrop-blur-2xl border border-[#0B1F17]/12 rounded-3xl p-4 shadow-[0_16px_40px_rgba(11,31,23,0.15)] flex items-center gap-3.5 z-30 select-none">
+          <div className="w-11 h-11 rounded-2xl bg-[#17402C] text-[#C6DCBE] flex items-center justify-center text-xl font-bold flex-shrink-0 shadow-md">
             {activeGuideTurn.turn.turnType.includes('droite') ? '↱' : activeGuideTurn.turn.turnType.includes('gauche') ? '↰' : '↑'}
-            <span className="absolute -inset-1 rounded-2xl border-2 border-[#17402C] opacity-25 animate-ping pointer-events-none" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="font-mono text-[10px] tracking-widest uppercase font-semibold text-[#17402C] leading-none">
-              Prochain virage · Dans {activeGuideTurn.distanceRemainingM} m
+              Prochain virage · Dans {Math.round(activeGuideTurn.distanceRemainingM)} m
             </div>
             <div className="text-base font-bold tracking-tight text-[#0B1F17] mt-1 truncate">
               {activeGuideTurn.turn.instructionText}
@@ -112,11 +111,13 @@ export default function DesktopMapOverlay({
         </div>
       )}
 
-      {activeGuidePoi && (
-        <div className="absolute top-[96px] left-1/2 -translate-x-1/2 px-5 py-3.5 bg-[#FBFAF6]/96 backdrop-blur-2xl border border-[#0B1F17]/07 rounded-2xl shadow-[0_12px_32px_rgba(11,31,23,0.10),0_2px_8px_rgba(11,31,23,0.04)] flex items-center gap-3.5 z-20 min-w-[360px] max-w-[90vw] select-none">
-          <div className="w-12 h-12 rounded-2xl bg-[#17402C] text-white flex items-center justify-center flex-shrink-0 relative shadow-md">
-            <svg className="w-6 h-6 stroke-current stroke-[2.2] fill-none" viewBox="0 0 24 24" style={arrowHtmlStyle}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 20V8M12 8l-4 4M12 8l4 4" />
+      {/* 2. Secondary Priority: Imminent POI Card (If turn is not imminent) */}
+      {!activeGuideTurn && activeGuidePoi && activeGuidePoi.distanceRemainingM < 300 && (
+        <div className="absolute top-16 left-3 right-3 md:left-1/2 md:-translate-x-1/2 md:w-[420px] bg-[#FBFAF6]/95 backdrop-blur-2xl border border-[#0B1F17]/12 rounded-3xl p-4 shadow-[0_16px_40px_rgba(11,31,23,0.15)] flex items-center gap-3.5 z-30 select-none">
+          <div className="w-11 h-11 rounded-2xl bg-[#A8C8A0] text-[#06120C] flex items-center justify-center flex-shrink-0 shadow-md relative">
+            <svg className="w-5 h-5 fill-none stroke-current stroke-[2.2]" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s-6-5.333-6-10a6 6 0 0112 0c0 4.667-6 10-6 10z" />
+              <circle cx="12" cy="11" r="2" fill="currentColor" />
             </svg>
             <span className="absolute -inset-1 rounded-2xl border-2 border-[#17402C] opacity-25 animate-ping pointer-events-none" />
           </div>
@@ -136,8 +137,8 @@ export default function DesktopMapOverlay({
         </div>
       )}
 
-      {/* Floating Map Tools (Right side above Dock) */}
-      <div className="absolute right-[380px] bottom-[40px] flex flex-col gap-1.5 z-30 select-none">
+      {/* Floating Map Tools (Recentre / Layers) */}
+      <div className="absolute right-3 bottom-[86px] md:right-[380px] md:bottom-[40px] flex flex-col gap-1.5 z-30 select-none">
         <button
           onClick={onRecentre}
           className={`w-11 h-11 rounded-xl backdrop-blur-2xl border border-[#0B1F17]/07 shadow-lg flex items-center justify-center transition-all ${
@@ -163,8 +164,8 @@ export default function DesktopMapOverlay({
         </button>
       </div>
 
-      {/* Map Legend (Bottom left) */}
-      <div className="absolute left-[360px] bottom-[40px] px-3.5 py-2 bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#0B1F17]/07 rounded-xl shadow-lg flex items-center gap-4 z-30 font-mono text-[10px] text-[#6B7A72] tracking-wider uppercase select-none">
+      {/* Map Legend (Desktop) */}
+      <div className="hidden lg:flex absolute left-[360px] bottom-[40px] px-3.5 py-2 bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#0B1F17]/07 rounded-xl shadow-lg items-center gap-4 z-30 font-mono text-[10px] text-[#6B7A72] tracking-wider uppercase select-none">
         <div className="flex items-center gap-1.5">
           <span className="w-5 h-1 rounded bg-gradient-to-r from-[#17402C] to-[#A8C8A0]" />
           <span>PARCOURU</span>
@@ -179,4 +180,3 @@ export default function DesktopMapOverlay({
     </div>
   );
 }
-
