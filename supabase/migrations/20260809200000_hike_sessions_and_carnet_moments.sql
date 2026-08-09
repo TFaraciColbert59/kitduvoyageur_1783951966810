@@ -77,7 +77,7 @@ AS $$
     COALESCE(AVG(hs.distance_km), 0),
     COALESCE(AVG(hs.duration_seconds / 60.0 / NULLIF(hs.distance_km, 0)), 0),
     COALESCE(AVG(hs.elevation_gain_m), 0),
-    MODE() WITHIN GROUP (ORDER BY hr.sac_scale),
+    MODE() WITHIN GROUP (ORDER BY hr.network),
     MODE() WITHIN GROUP (ORDER BY to_char(hs.started_at, 'Day'))
   FROM public.hike_sessions hs
   LEFT JOIN public.hiking_routes hr ON hr.id = hs.route_id
