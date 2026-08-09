@@ -11,6 +11,8 @@ export * from './services/WeatherService';
 export * from './services/HikeSessionService';
 export * from './services/CopilotService';
 export * from './services/OfflineService';
+export * from './navigation/NavigationEngine';
+export * from './navigation/VoiceGuidanceService';
 
 // Components
 export { default as TopHUD } from './components/TopHUD';
