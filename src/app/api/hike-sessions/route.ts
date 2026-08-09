@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
           elevation_m: body.elevationGainM ?? 0,
           duration: formatDuration(body.durationSeconds),
           author_id: userId,
-          status: 'published',
+          visibility: 'public',
           created_at: new Date().toISOString(),
         })
         .select('id')

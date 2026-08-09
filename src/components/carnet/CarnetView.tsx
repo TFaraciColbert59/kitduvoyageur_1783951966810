@@ -14,8 +14,15 @@ import CarnetFooter from '@/components/carnet/CarnetFooter';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { CarnetData } from '@/lib/mock/carnet-chartreuse';
 
-function downloadMockGPX(name: string) {
-  const gpxContent = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Le Kit du Voyageur"><metadata><name>${name}</name></metadata><trk><name>${name}</name><trkseg></trkseg></trk></gpx>`;
+function downloadGPX(name: string, traceGeojson?: any) {
+  let gpxContent = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Le Kit du Voyageur"><metadata><name>${name}</name></metadata><trk><name>${name}</name><trkseg>`;
+  const coords = (traceGeojson?.geometry?.coordinates || traceGeojson?.coordinates || []) as [number, number, number?][];
+  if (coords.length > 0) {
+    coords.forEach(([lng, lat, ele]) => {
+      gpxContent += `<trkpt lat="${lat}" lon="${lng}">${ele ? `<ele>${ele}</ele>` : ''}</trkpt>`;
+    });
+  }
+  gpxContent += `</trkseg></trk></gpx>`;
   const blob = new Blob([gpxContent], { type: 'application/gpx+xml' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -64,7 +71,12 @@ export default function CarnetView({ data }: CarnetViewProps) {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
-            <CarnetMap onDownloadGPX={() => downloadMockGPX(data.meta.titleLine1 || 'Carnet')} />
+            <CarnetMap
+              traceGeojson={data.traceGeojson}
+              distanceKm={data.stats.find((s) => s.label === 'DISTANCE')?.value ? parseFloat(data.stats.find((s) => s.label === 'DISTANCE')!.value) : undefined}
+              elevationM={data.stats.find((s) => s.label === 'DÉNIVELÉ +')?.value ? parseInt(data.stats.find((s) => s.label === 'DÉNIVELÉ +')!.value) : undefined}
+              onDownloadGPX={() => downloadGPX(data.meta.titleLine1 || 'Carnet', data.traceGeojson)}
+            />
             <TimelineJours jours={data.jours} hebergements={data.hebergements} />
           </div>
         </section>
