@@ -141,8 +141,8 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
   };
 
   const mBtnStandard: React.CSSProperties = {
-    width: '44px',
-    height: '44px',
+    width: '40px',
+    height: '40px',
     borderRadius: '999px',
     background: 'rgba(255,255,255,0.92)',
     border: '1px solid rgba(11,31,23,0.08)',
@@ -151,12 +151,12 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
     justifyContent: 'center',
     color: '#0B1F17',
     touchAction: 'manipulation',
-    transition: 'all 150ms ease-out',
+    transition: 'background-color 200ms ease, opacity 150ms ease',
   };
 
   const mBtnOnImage: React.CSSProperties = {
-    width: '44px',
-    height: '44px',
+    width: '40px',
+    height: '40px',
     borderRadius: '999px',
     background: 'rgba(255,255,255,0.22)',
     backdropFilter: 'blur(20px)',
@@ -167,7 +167,7 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
     justifyContent: 'center',
     color: '#fff',
     touchAction: 'manipulation',
-    transition: 'all 150ms ease-out',
+    transition: 'background-color 200ms ease, opacity 150ms ease',
   };
 
   const mBtnStyle = isOnImage ? mBtnOnImage : mBtnStandard;
@@ -191,7 +191,7 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
             <button
               onClick={handleBack}
               aria-label="Retour"
-              className="hover:scale-110 active:scale-90 transition-transform"
+              className="hover:opacity-85 active:opacity-75 transition-opacity"
               style={{
                 ...mBtnStyle,
                 cursor: 'pointer',
