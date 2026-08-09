@@ -42,68 +42,70 @@ export default function Header() {
               : 'bg-white/95 backdrop-blur-xl shadow-md border border-[#E8E4D8] py-2.5'
           }`}
         >
-          {/* Left: Logo */}
+          {/* Left: Logo with Hover scale & tilt */}
           <Link
             href="/"
-            className="flex items-center gap-2 group focus-visible:outline-none active:scale-95 transition-transform cursor-pointer touch-manipulation py-1"
+            className="flex items-center gap-2 group focus-visible:outline-none active:scale-95 transition-all duration-150 cursor-pointer touch-manipulation py-1"
           >
-            <div className="w-8 h-8 bg-[#1C2620] rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform shadow-sm">
-              <svg width="15" height="15" fill="white" viewBox="0 0 24 24">
+            <div className="w-8 h-8 bg-[#1C2620] rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:bg-[#2D6A4F] group-hover:rotate-3 transition-all duration-200 shadow-sm">
+              <svg width="15" height="15" fill="white" viewBox="0 0 24 24" className="transition-transform group-hover:scale-110">
                 <path d="M3 17l4-8 4 4 3-6 4 10H3z" />
               </svg>
             </div>
-            <span className="font-bold text-[#1C2620] text-sm tracking-tight group-hover:opacity-80 transition-opacity">
+            <span className="font-bold text-[#1C2620] text-sm tracking-tight group-hover:text-[#2D6A4F] transition-colors">
               Le Kit du Voyageur
             </span>
           </Link>
 
-          {/* Center: Navigation Links */}
-          <nav className="flex items-center gap-1 sm:gap-4 md:gap-6 overflow-x-auto no-scrollbar py-0.5">
+          {/* Center: Navigation Links with Pill Hover & Active scale */}
+          <nav className="flex items-center gap-1 sm:gap-2 md:gap-3 overflow-x-auto no-scrollbar py-0.5">
             {NAV_LINKS.map((link) => {
               const isActive = pathname === link.href || (link.href !== '/' && pathname?.startsWith(link.href));
               return (
                 <Link
                   key={link.label}
                   href={link.href}
-                  className={`relative text-[11px] sm:text-xs font-bold tracking-wide uppercase transition-all duration-200 px-2 py-2 rounded-full cursor-pointer touch-manipulation hover:text-[#2D5A3D] whitespace-nowrap ${
-                    isActive ? 'text-[#1C2620] bg-[#1C2620]/05' : 'text-[#6B7A72]'
+                  className={`relative text-[11px] sm:text-xs font-bold tracking-wide uppercase transition-all duration-200 px-3 py-1.5 rounded-full cursor-pointer touch-manipulation whitespace-nowrap active:scale-95 ${
+                    isActive
+                      ? 'text-[#1C2620] bg-[#1C2620]/10 shadow-xs'
+                      : 'text-[#6B7A72] hover:text-[#1C2620] hover:bg-[#1C2620]/06 hover:scale-105'
                   }`}
                 >
                   <span>{link.label}</span>
                   {isActive && (
-                    <span className="absolute bottom-0 left-2 right-2 h-[2px] bg-[#1C2620] rounded-full" />
+                    <span className="absolute bottom-0.5 left-3 right-3 h-[2px] bg-[#1C2620] rounded-full animate-fadeIn" />
                   )}
                 </Link>
               );
             })}
           </nav>
 
-          {/* Right: Actions */}
+          {/* Right: Action Buttons with Rich Micro-Interactions */}
           <div className="flex items-center gap-1.5 sm:gap-2.5">
             {/* Bouton Lancer Rando */}
             <Link
               href="/randonnee-active"
-              className="hidden lg:inline-flex items-center gap-1.5 bg-[#2D6A4F] text-white text-[11px] font-bold px-3.5 py-2 min-h-[38px] rounded-full hover:bg-[#1B4332] active:scale-95 transition-all shadow-sm cursor-pointer touch-manipulation whitespace-nowrap"
+              className="hidden lg:inline-flex items-center gap-1.5 bg-[#2D6A4F] text-white text-[11px] font-bold px-4 py-2 min-h-[38px] rounded-full hover:bg-[#1B4332] hover:scale-105 hover:shadow-md hover:shadow-emerald-950/20 active:scale-95 transition-all duration-150 cursor-pointer touch-manipulation whitespace-nowrap"
               title="Lancer le mode randonnée GPS"
             >
-              <span>🥾</span>
+              <span className="transition-transform group-hover:scale-110">🥾</span>
               <span>Lancer rando</span>
             </Link>
 
-            {/* Panier */}
+            {/* Panier Button */}
             <Link
               href="/panier"
-              className="w-10 h-10 text-[#1C2620] hover:text-[#2D5A3D] hover:bg-[#F5F2EA] transition-all rounded-full active:scale-90 flex items-center justify-center relative cursor-pointer touch-manipulation"
+              className="w-10 h-10 text-[#1C2620] hover:text-[#2D6A4F] hover:bg-[#1C2620]/08 hover:scale-110 active:scale-90 transition-all duration-150 rounded-full flex items-center justify-center relative cursor-pointer touch-manipulation"
               aria-label="Panier"
               title="Panier"
             >
               <Icon name="ShoppingBagIcon" size={18} />
             </Link>
 
-            {/* Recherche */}
+            {/* Recherche Button */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="w-10 h-10 text-[#1C2620] hover:text-[#2D5A3D] hover:bg-[#F5F2EA] transition-all rounded-full active:scale-90 flex items-center justify-center cursor-pointer touch-manipulation"
+              className="w-10 h-10 text-[#1C2620] hover:text-[#2D6A4F] hover:bg-[#1C2620]/08 hover:scale-110 active:scale-90 transition-all duration-150 rounded-full flex items-center justify-center cursor-pointer touch-manipulation"
               aria-label="Rechercher sur tout le site"
               title="Rechercher sur tout le site"
             >
@@ -113,10 +115,10 @@ export default function Header() {
               </svg>
             </button>
 
-            {/* Mon Compte */}
+            {/* Mon Compte Button */}
             <Link
               href={user ? '/compte' : '/connexion'}
-              className="bg-[#1C2620] text-white text-[11px] font-bold px-3.5 py-2 min-h-[38px] rounded-full hover:bg-[#2D3F35] active:scale-95 transition-all shadow-sm whitespace-nowrap flex items-center justify-center cursor-pointer touch-manipulation"
+              className="bg-[#1C2620] text-white text-[11px] font-bold px-4 py-2 min-h-[38px] rounded-full hover:bg-[#2D6A4F] hover:scale-105 hover:shadow-md active:scale-95 transition-all duration-150 whitespace-nowrap flex items-center justify-center cursor-pointer touch-manipulation"
             >
               {mounted && user ? 'Mon compte' : 'Se connecter'}
             </Link>

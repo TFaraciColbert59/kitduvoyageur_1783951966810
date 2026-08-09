@@ -151,6 +151,7 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
     justifyContent: 'center',
     color: '#0B1F17',
     touchAction: 'manipulation',
+    transition: 'all 150ms ease-out',
   };
 
   const mBtnOnImage: React.CSSProperties = {
@@ -166,6 +167,7 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
     justifyContent: 'center',
     color: '#fff',
     touchAction: 'manipulation',
+    transition: 'all 150ms ease-out',
   };
 
   const mBtnStyle = isOnImage ? mBtnOnImage : mBtnStandard;
@@ -189,6 +191,7 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
             <button
               onClick={handleBack}
               aria-label="Retour"
+              className="hover:scale-110 active:scale-90 transition-transform"
               style={{
                 ...mBtnStyle,
                 cursor: 'pointer',
