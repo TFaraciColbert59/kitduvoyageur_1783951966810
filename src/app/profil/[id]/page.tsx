@@ -24,8 +24,6 @@ interface ClubMembership { id: string; club_id: string; role: string; joined_at:
 interface EventParticipation { id: string; event_id: string; event?: { title: string; emoji: string; event_date: string; location: string; type: string; status: string }; }
 interface UserGroup { id: string; name: string; destination: string; theme: string; departure_date: string | null; return_date: string | null; visibility: string; group_level: number; optimization_score: number; my_role?: string; member_count?: number; }
 
-type ProfileTab = 'aventures' | 'photos' | 'recommandations';
-
 const HERO_IMAGES = [
   'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1600&q=80',
   'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80',
@@ -89,7 +87,10 @@ export default function ProfilPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [carnets, setCarnets] = useState<Carnet[]>([]);
   const [badges, setBadges] = useState<Badge[]>([]);
-  const [gearItems, setGearItems] = useState<GearItem[]>([]);
+  const [gearItems, setGearItems] = useState<any[]>([]);
+  const [clubs, setClubs] = useState<ClubMembership[]>([]);
+  const [events, setEvents] = useState<EventParticipation[]>([]);
+  const [groups, setGroups] = useState<UserGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ProfileTab>('aventures');
   const [isFollowing, setIsFollowing] = useState(false);
@@ -100,15 +101,21 @@ export default function ProfilPage() {
   const { user } = useAuth();
   const supabase = useMemo(() => createClient(), []);
 
+  const showToast = (message: string) => {
+    console.log(message);
+  };
+
   useEffect(() => {
     if (!profileId) return;
     const load = async () => {
       setLoading(true);
-      const [profileRes, carnetsRes, badgesRes, gearRes] = await Promise.all([
+      const [profileRes, carnetsRes, badgesRes, gearRes, clubsRes, eventsRes] = await Promise.all([
         supabase.from('user_profiles').select('*').eq('id', profileId).single(),
         supabase.from('carnets').select('*').eq('author_id', profileId).eq('visibility', 'public').order('created_at', { ascending: false }).limit(8),
         supabase.from('user_badges').select('badge_id, badge:badges(id, name, icon, rarity)').eq('user_id', profileId).limit(9),
         supabase.from('gear_items').select('id, name, category, weight_g, brand, condition').eq('user_id', profileId).limit(4),
+        supabase.from('club_members').select('id, club_id, role, joined_at, club:clubs(name, emoji, category, members_count, type)').eq('user_id', profileId).limit(8),
+        supabase.from('event_participants').select('id, event_id, event:events(title, emoji, event_date, location, type, status)').eq('user_id', profileId).limit(8),
       ]);
       setProfile(profileRes.data ?? null);
       setCarnets((carnetsRes.data ?? []) as Carnet[]);
