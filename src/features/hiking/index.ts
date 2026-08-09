@@ -13,6 +13,9 @@ export * from './services/CopilotService';
 export * from './services/OfflineService';
 export * from './navigation/NavigationEngine';
 export * from './navigation/VoiceGuidanceService';
+export * from './journal/JournalEventBuilder';
+export * from './journal/JournalService';
+export * from './journal/JournalStore';
 
 // Components
 export { default as TopHUD } from './components/TopHUD';
