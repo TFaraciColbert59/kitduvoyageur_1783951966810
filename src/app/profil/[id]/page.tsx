@@ -92,7 +92,7 @@ export default function ProfilPage() {
   const [events, setEvents] = useState<EventParticipation[]>([]);
   const [groups, setGroups] = useState<UserGroup[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<ProfileTab>('aventures');
+  const [activeTab, setActiveTab] = useState<ProfileTab>('publications');
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
