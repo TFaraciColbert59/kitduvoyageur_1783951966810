@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
@@ -816,7 +817,7 @@ function ClubCard({
           </div>
           <h3 className="font-display font-800 text-foreground text-xl leading-tight flex items-center gap-2 group-hover:text-primary transition-colors">
             {club.name}
-            {club.is_verified && <Icon name="CheckBadgeIcon" size={18} className="text-blue-500" title="Club vérifié" />}
+            {club.is_verified && <Icon name="CheckBadgeIcon" size={18} className="text-blue-500" />}
           </h3>
         </div>
 
@@ -856,6 +857,7 @@ function ClubCard({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function ClubsPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'activite' | 'pays' | 'mes-clubs'>('activite');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editClub, setEditClub] = useState<Club | null>(null);
@@ -1288,7 +1290,7 @@ export default function ClubsPage() {
                   <div
                     key={c.id}
                     style={{ background: '#FBFAF6', borderRadius: '16px', padding: '14px', border: '1px solid rgba(11,31,23,0.06)', cursor: 'pointer' }}
-                    onClick={() => window.location.href = `/clubs/${c.slug}`}
+                    onClick={() => router.push(`/clubs/${c.slug}`)}
                   >
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

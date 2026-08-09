@@ -230,7 +230,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
   }, [orders]);
 
   // Active orders (not delivered, not old)
-  const activeOrders = enrichedOrders.filter(o => o.derivedStatus !== 'delivered' && o.derivedStatus !== 'cancelled' && o.derivedStatus !== 'refunded');
+  const activeOrders = enrichedOrders.filter(o => o.derivedStatus !== 'delivered' && o.derivedStatus !== 'cancelled' && (o.derivedStatus as any) !== 'refunded');
   
   // History orders
   const historyOrders = enrichedOrders.filter(o => {

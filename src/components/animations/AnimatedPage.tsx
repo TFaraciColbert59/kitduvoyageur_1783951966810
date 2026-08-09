@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useAnimationControls } from 'framer-motion';
+import { motion, useAnimationControls, useReducedMotion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { springConfigs, pageTransitions } from '@/lib/animations/constants';
 
@@ -17,6 +17,7 @@ export default function AnimatedPage({
 }: AnimatedPageProps) {
   const router = useRouter();
   const controls = useAnimationControls();
+  const shouldReduceMotion = useReducedMotion();
 
   const handleSwipeRight = () => {
     if (gestureEnabled) {
@@ -27,11 +28,11 @@ export default function AnimatedPage({
 
   return (
     <motion.div
-      initial={pageTransitions[variant].initial}
-      animate={pageTransitions[variant].animate}
-      exit={pageTransitions[variant].exit}
+      initial={shouldReduceMotion ? { opacity: 0 } : pageTransitions[variant].initial}
+      animate={shouldReduceMotion ? { opacity: 1 } : pageTransitions[variant].animate}
+      exit={shouldReduceMotion ? { opacity: 0 } : pageTransitions[variant].exit}
       transition={springConfigs.smooth}
-      drag={gestureEnabled ? 'x' : false}
+      drag={gestureEnabled && !shouldReduceMotion ? 'x' : false}
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.2}
       onDragEnd={(e, { offset, velocity }) => {

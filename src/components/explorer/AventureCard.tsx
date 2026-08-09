@@ -2,6 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { GestureCard } from '@/components/animations/GestureCard';
+import { toast } from 'react-hot-toast';
 
 interface AventureCardProps {
   difficulty: string;
@@ -24,6 +27,7 @@ export default function AventureCard({
   href = '#',
   onClick,
 }: AventureCardProps) {
+  const router = useRouter();
   const content = (
     <div
       style={{
@@ -103,9 +107,21 @@ export default function AventureCard({
     </div>
   );
 
-  if (onClick) {
-    return <div onClick={onClick}>{content}</div>;
-  }
+  const handleTap = () => {
+    if (onClick) {
+      onClick();
+    } else {
+      router.push(href);
+    }
+  };
 
-  return <Link href={href}>{content}</Link>;
+  return (
+    <GestureCard
+      onSwipeLeft={() => toast.success('Partagé avec succès !')}
+      onSwipeRight={() => toast.success('Sauvegardé dans vos favoris')}
+      onTap={handleTap}
+    >
+      {content}
+    </GestureCard>
+  );
 }

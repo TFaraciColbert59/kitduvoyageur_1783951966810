@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
@@ -124,9 +125,10 @@ function MakeOfferModal({ item, onClose }: { item: OccasionItem; onClose: () => 
   const [sent, setSent] = useState(false);
   const [saving, setSaving] = useState(false);
   const { user } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async () => {
-    if (!user) { window.location.href = '/connexion'; return; }
+    if (!user) { router.push('/connexion'); return; }
     setSaving(true);
     try {
       const supabase = createClient();

@@ -116,14 +116,24 @@ export default function PaysPage() {
     <div style={{ width: '100vw', height: '100dvh', background: '#0B1F17', overflow: 'hidden', position: 'relative' }}>
       {/* ── Shared globe (desktop + mobile) ── */}
       {webglSupported ? (
-        <div style={{ position: 'absolute', inset: 0 }}>
-          <CountryGlobe
-            countries={filtered.slice(0, 180)}
-            onCountryClick={handleCountryClick}
-            focusCode={focusCode}
-            fullscreen
-          />
-        </div>
+        <>
+          <div className="hidden md:block" style={{ position: 'absolute', inset: 0 }}>
+            <CountryGlobe
+              countries={filtered.slice(0, 180)}
+              onCountryClick={handleCountryClick}
+              focusCode={focusCode}
+              fullscreen
+            />
+          </div>
+          <div className="md:hidden" style={{
+            position: 'absolute', inset: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'rgba(255,255,255,0.5)', fontSize: '14px',
+            padding: '20px', textAlign: 'center',
+          }}>
+            🌍 Globe 3D disponible sur ordinateur
+          </div>
+        </>
       ) : (
         <div style={{
           position: 'absolute', inset: 0,

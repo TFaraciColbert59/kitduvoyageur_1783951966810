@@ -64,23 +64,37 @@ export default function GearDetailPage() {
       setLoading(true);
       const userId = user?.id || 'guest';
 
-      const [itemData, img, kitData, loanData, hist] = await Promise.all([
-        fetchGearItem(itemId, userId, supabase),
-        fetchGearImages(itemId, supabase),
-        fetchItemKits(itemId, supabase),
-        fetchItemLoans(itemId, supabase),
-        fetchItemHistory(itemId, supabase),
-      ]);
+      try {
+        const [itemData, img, kitData, loanData, hist] = await Promise.all([
+          fetchGearItem(itemId, userId, supabase),
+          fetchGearImages(itemId, supabase),
+          fetchItemKits(itemId, supabase),
+          fetchItemLoans(itemId, supabase),
+          fetchItemHistory(itemId, supabase),
+        ]);
 
-      // Fallback to MOCK_INVENTAIRE_ITEMS if itemData is null
-      const finalItem = itemData || MOCK_INVENTAIRE_ITEMS.find((g) => g.id === itemId) || MOCK_INVENTAIRE_ITEMS[0];
+        // Fallback to MOCK_INVENTAIRE_ITEMS if itemData is null
+        const finalItem = itemData || MOCK_INVENTAIRE_ITEMS.find((g) => g.id === itemId) || MOCK_INVENTAIRE_ITEMS[0];
 
-      setGear(finalItem);
-      setImages(img.length > 0 ? img : finalItem.images || [finalItem.image]);
-      setKits(kitData);
-      setLoans(loanData);
-      setHistory(hist);
-      setLoading(false);
+        setGear(finalItem);
+        setImages(img.length > 0 ? img : finalItem.images || [finalItem.image]);
+        setKits(kitData);
+        setLoans(loanData);
+        setHistory(hist);
+      } catch (err) {
+        console.error('Impossible de charger la fiche article', err);
+        // Erreur côté serveur : on retombe sur les données mock pour ne pas
+        // bloquer l'utilisateur sur un écran vide.
+        const fallbackItem = MOCK_INVENTAIRE_ITEMS.find((g) => g.id === itemId) || MOCK_INVENTAIRE_ITEMS[0];
+        setGear(fallbackItem);
+        setImages(fallbackItem.images || [fallbackItem.image]);
+        setKits([]);
+        setLoans([]);
+        setHistory([]);
+      } finally {
+        // Toujours sortir de l'état loading, même si une requête rejette.
+        setLoading(false);
+      }
     };
 
     load();
@@ -425,7 +439,7 @@ export default function GearDetailPage() {
       <LendItemModal
         isOpen={lendOpen}
         onClose={() => setLendOpen(false)}
-        item={gear}
+        item={gear as any}
         onSaveLoan={handleSaveLoan}
       />
 

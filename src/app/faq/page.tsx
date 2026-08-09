@@ -145,7 +145,7 @@ function MobileFAQContent() {
 
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '20px' }}>
         {FAQ_DATA.map((cat, i) => (
-          <button key={i} onClick={() => setActiveCategory(i)} style={{ padding: '8px 14px', borderRadius: '10px', fontSize: '12px', fontWeight: 500, border: 'none', cursor: 'pointer', background: activeCategory === i ? '#17402C' : '#F4F1EA', color: activeCategory === i ? 'white' : 'rgba(28,38,32,0.6)', border: activeCategory === i ? 'none' : '1px solid rgba(11,31,23,0.06)' }}>
+          <button key={i} onClick={() => setActiveCategory(i)} style={{ padding: '8px 14px', borderRadius: '10px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', background: activeCategory === i ? '#17402C' : '#F4F1EA', color: activeCategory === i ? 'white' : 'rgba(28,38,32,0.6)', border: activeCategory === i ? 'none' : '1px solid rgba(11,31,23,0.06)' }}>
             {cat.title}
           </button>
         ))}

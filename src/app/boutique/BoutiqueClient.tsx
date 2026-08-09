@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import AppImage from '@/components/ui/AppImage';
 import BackButton from '@/components/ui/BackButton';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
@@ -233,6 +234,7 @@ function FilterTag({ label, onRemove }: { label: string, onRemove: () => void })
 }
 
 export default function BoutiqueClient() {
+  const router = useRouter();
   const { user } = useAuth();
   const [products, setProducts] = useState<ShopProduct[]>([]);
   const [gearItems, setGearItems] = useState<GearItem[]>([]);
@@ -281,7 +283,7 @@ export default function BoutiqueClient() {
 
   const handleAddToInventory = async (p: ShopProduct) => {
     if (!user) {
-      window.location.href = '/auth';
+      router.push('/connexion');
       return;
     }
     const { error } = await supabase.from('gear_items').insert({
@@ -441,7 +443,7 @@ export default function BoutiqueClient() {
 
                     return (
                       <div key={p.id} className={`group bg-white rounded-3xl overflow-hidden shadow-sm border transition-all duration-300 ${isOwned ? 'border-[#8BAF7C] ring-2 ring-[#8BAF7C]/20' : 'border-[#1C2620]/5 hover:shadow-xl hover:border-[#1C2620]/20'}`}>
-                        <div className="relative aspect-square overflow-hidden cursor-pointer" onClick={() => window.location.href = `/produit/${p.slug}`}>
+                        <div className="relative aspect-square overflow-hidden cursor-pointer" onClick={() => router.push(`/produit/${p.slug}`)}>
                           <AppImage src={p.image || 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80'} alt={p.image_alt || p.name} fill sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
                           {isOwned && (
                             <div className="absolute top-3 right-3 bg-[#8BAF7C] text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1">
@@ -617,7 +619,7 @@ export default function BoutiqueClient() {
                     >
                       <div
                         style={{ position: 'relative', aspectRatio: '1/1', cursor: 'pointer', overflow: 'hidden' }}
-                        onClick={() => window.location.href = `/produit/${p.slug}`}
+                        onClick={() => router.push(`/produit/${p.slug}`)}
                       >
                         <img
                           src={p.image || 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80'}

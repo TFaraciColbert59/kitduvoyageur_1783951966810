@@ -10,6 +10,8 @@ export async function callAIEndpoint(endpoint: string, payload: object) {
 
     if (!response.ok || data.error) {
       console.error('API Route Error:', {
+        status: response.status,
+        statusText: response.statusText,
         error: data.error,
         details: data.details,
       });

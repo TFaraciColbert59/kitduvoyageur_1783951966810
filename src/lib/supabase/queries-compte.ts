@@ -226,7 +226,7 @@ export async function fetchFullProfile(userId: string): Promise<CompteUserProfil
 
   const totalKm = (activities ?? []).reduce((sum, a) => sum + Number(a.distance_km ?? 0), 0);
 
-  const { first, last } = fullNameSplit(profile.full_name);
+  const { first, last } = fullNameSplit(profile.full_name ?? '');
 
   return {
     id: profile.id,
@@ -281,16 +281,20 @@ export async function fetchUserClubs(userId: string): Promise<CompteClubItem[]> 
     .select('role, clubs(*)')
     .eq('user_id', userId);
 
-  return (data ?? []).map((m: any) => ({
-    id: m.clubs.id,
-    name: m.clubs.name,
-    role: m.role === 'admin' ? 'Admin' as const : 'Membre' as const,
-    members_count: m.clubs.members_count ?? 0,
-    detail: m.clubs.type ?? '',
-    badge: m.clubs.is_verified ? 'Vérifié' : undefined,
-    logo_url: m.clubs.cover_image ?? 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=200&q=80',
-    slug: m.clubs.slug,
-  }));
+  return (data ?? [])
+    // Le join `clubs(*)` peut être NULL si le club a été supprimé : on ignore
+    // ces lignes au lieu de crasher sur `m.clubs.id`.
+    .filter((m: any) => m.clubs)
+    .map((m: any) => ({
+      id: m.clubs.id,
+      name: m.clubs.name,
+      role: m.role === 'admin' ? 'Admin' as const : 'Membre' as const,
+      members_count: m.clubs.members_count ?? 0,
+      detail: m.clubs.type ?? '',
+      badge: m.clubs.is_verified ? 'Vérifié' : undefined,
+      logo_url: m.clubs.cover_image ?? 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=200&q=80',
+      slug: m.clubs.slug,
+    }));
 }
 
 export async function fetchUserOrders(userId: string): Promise<CompteCommande[]> {

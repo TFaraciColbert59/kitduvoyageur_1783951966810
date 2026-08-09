@@ -188,7 +188,7 @@ export default function NouveauGroupePage() {
             user_id: partner.id.startsWith('p') ? user.id : partner.id, // fallback
             role: 'member',
             status: 'invited',
-          }).catch(() => {});
+          }).then(undefined, () => {});
         }
       }
 

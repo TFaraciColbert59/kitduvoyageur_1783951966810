@@ -570,7 +570,7 @@ export default function PublierPostPage() {
                             <button type="button" onClick={() => handleRemoveTag(tag)} className="text-white/70 hover:text-white text-[10px]">✕</button>
                           </span>
                         ))}
-                        <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleAddTag} placeholder="+ Ajouter un tag..." className="bg-transparent text-xs text-[#1C2620] focus:outline-none px-2 py-1 flex-1 min-w-[120px]" />
+                        <input type="text" enterKeyHint="done" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleAddTag} placeholder="+ Ajouter un tag..." className="bg-transparent text-xs text-[#1C2620] focus:outline-none px-2 py-1 flex-1 min-w-[120px]" />
                       </div>
                     </div>
 
@@ -583,7 +583,7 @@ export default function PublierPostPage() {
                             <button type="button" onClick={() => handleRemoveMention(m)} className="text-[#2D6A4F]/70 hover:text-[#2D6A4F] text-[10px]">✕</button>
                           </span>
                         ))}
-                        <input type="text" value={mentionInput} onChange={(e) => setMentionInput(e.target.value)} onKeyDown={handleAddMention} placeholder="Taper @ pour mentionner..." className="bg-transparent text-xs text-[#1C2620] focus:outline-none px-2 py-1 flex-1 min-w-[140px]" />
+                        <input type="text" enterKeyHint="done" value={mentionInput} onChange={(e) => setMentionInput(e.target.value)} onKeyDown={handleAddMention} placeholder="Taper @ pour mentionner..." className="bg-transparent text-xs text-[#1C2620] focus:outline-none px-2 py-1 flex-1 min-w-[140px]" />
                       </div>
                     </div>
                   </div>
@@ -914,7 +914,7 @@ export default function PublierPostPage() {
                     <button onClick={() => handleRemoveTag(tag)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: '10px', padding: 0 }}>✕</button>
                   </span>
                 ))}
-                <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={handleAddTag} placeholder="+ Tag" style={{ background: 'transparent', border: 'none', fontSize: '11px', color: '#1C2620', outline: 'none', flex: 1, minWidth: '80px', fontFamily: 'inherit' }} />
+                <input type="text" enterKeyHint="done" value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={handleAddTag} placeholder="+ Tag" style={{ background: 'transparent', border: 'none', fontSize: '11px', color: '#1C2620', outline: 'none', flex: 1, minWidth: '80px', fontFamily: 'inherit' }} />
               </div>
             </div>
 

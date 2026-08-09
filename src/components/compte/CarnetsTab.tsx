@@ -612,7 +612,7 @@ function DraftRow({
                 {draft.title || 'Brouillon sans titre'}
               </h5>
               <p className="text-[11px] text-[#9CA89E] mt-0.5">
-                {draft.travel_group && `Groupe · ${(draft.travel_group as any).name} · `}
+                {(draft as any).travel_group && `Groupe · ${((draft as any).travel_group as any).name} · `}
                 {draft.chapters_count ? `${draft.chapters_count} chapitres` : 'En cours de rédaction'}
                 {draft.word_count ? ` · ${draft.word_count.toLocaleString('fr')} mots` : ''}
               </p>

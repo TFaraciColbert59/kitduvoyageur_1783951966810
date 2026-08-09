@@ -40,6 +40,9 @@ export default function InventairePage() {
   const [addCategoryTarget, setAddCategoryTarget] = useState<string | undefined>();
   const [toast, setToast] = useState<string | null>(null);
 
+  const [userKits, setUserKits] = useState<any[]>(MOCK_USER_KITS);
+  const [recommendations, setRecommendations] = useState<any[]>(MOCK_RECOMMENDATIONS);
+
   const { user } = useAuth();
   const supabase = useMemo(() => createClient(), []);
 
@@ -100,6 +103,46 @@ export default function InventairePage() {
   useEffect(() => {
     loadGearFromDB();
   }, [loadGearFromDB]);
+
+  const loadKitsAndRecommendations = useCallback(async () => {
+    try {
+      const { data: kitsData } = await supabase.from('kits').select('*').limit(3);
+      if (kitsData && kitsData.length > 0) {
+        setUserKits(kitsData.map((k: any) => ({
+          id: k.id,
+          code: k.slug ? k.slug.substring(0, 4).toUpperCase() : k.id.substring(0, 4).toUpperCase(),
+          name: k.nom,
+          articles_count: k.nb_articles || 0,
+          weight_kg: (k.poids_total_g || 0) / 1000,
+          status: 'Complet'
+        })));
+      } else {
+        setUserKits([]);
+      }
+
+      const { data: recData } = await supabase.from('shop_products').select('*').limit(3);
+      if (recData && recData.length > 0) {
+        setRecommendations(recData.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          brand: p.brand,
+          reason: 'Sélection pour vous',
+          price_eur: p.price_eur,
+          image: p.image
+        })));
+      } else {
+        setRecommendations([]);
+      }
+    } catch (err) {
+      console.error(err);
+      setUserKits([]);
+      setRecommendations([]);
+    }
+  }, [supabase]);
+
+  useEffect(() => {
+    loadKitsAndRecommendations();
+  }, [loadKitsAndRecommendations]);
 
   // Toggle Favorite
   const handleToggleFavorite = async (id: string) => {
@@ -222,6 +265,31 @@ export default function InventairePage() {
     return counts;
   }, [items, totalArticles]);
 
+  const repairs = useMemo(() => {
+    return items
+      .filter(item => item.condition === 'à_réparer' || item.condition === 'à_remplacer')
+      .map(item => ({
+        id: item.id,
+        item_name: item.name,
+        brand: item.brand,
+        issue: item.notes || 'À contrôler',
+        status: item.condition,
+        urgency: item.condition === 'à_remplacer' ? 'high' : 'medium'
+      }));
+  }, [items]);
+
+  const loans = useMemo(() => {
+    return items
+      .filter(item => item.loan_status === 'prêté')
+      .map(item => ({
+        id: item.id,
+        item_name: item.name,
+        borrower_name: item.loan_to_name || 'Inconnu',
+        category: item.category,
+        date_lent: 'Récemment'
+      }));
+  }, [items]);
+
   // Filtered & Sorted Items
   const filteredItems = useMemo(() => {
     return items
@@ -278,9 +346,9 @@ export default function InventairePage() {
               <InventaireHero
                 totalArticles={totalArticles}
                 totalWeightKg={totalWeightKg}
-                kitsCount={MOCK_USER_KITS.length}
-                repairsCount={MOCK_REPAIRS.length}
-                loansCount={MOCK_LOANS.length}
+                kitsCount={userKits.length}
+                repairsCount={repairs.length}
+                loansCount={loans.length}
                 onOpenAddModal={() => { setEditingItem(null); setAddCategoryTarget(undefined); setIsAddModalOpen(true); }}
                 onOpenPhotoModal={() => showToast('Reconnaissance IA de photo activée !')}
               />
@@ -344,19 +412,19 @@ export default function InventairePage() {
                   <WeightDistributionCard items={items} />
 
                   {/* 2. User Kits Widget */}
-                  <KitsAssemblersCard kits={MOCK_USER_KITS} />
+                  <KitsAssemblersCard kits={userKits} />
 
                   {/* 3. Items to Repair / Replace Widget */}
                   <RepairsReplacementsCard
-                    repairs={MOCK_REPAIRS}
+                    repairs={repairs as any}
                     onAction={(r) => showToast(`Réparation engagée pour ${r.item_name}`)}
                   />
 
                   {/* 4. Active Loans Widget */}
-                  <LoansCard loans={MOCK_LOANS} />
+                  <LoansCard loans={loans} />
 
                   {/* 5. Boutique Recommendations Widget */}
-                  <RecommendationsCard recommendations={MOCK_RECOMMENDATIONS} />
+                  <RecommendationsCard recommendations={recommendations} />
 
                 </div>
 
@@ -394,7 +462,7 @@ export default function InventairePage() {
         <MobilePageShell>
           <MobileInventaireView
             items={items}
-            kits={MOCK_USER_KITS}
+            kits={userKits}
             totalArticles={totalArticles}
             totalWeightKg={totalWeightKg}
             activeCategory={activeCategory}

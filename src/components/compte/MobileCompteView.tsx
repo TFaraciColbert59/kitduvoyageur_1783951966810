@@ -22,12 +22,13 @@ export default function MobileCompteView({
   onTabChange,
   onOpenEdit,
 }: MobileCompteViewProps) {
-  const { stats, constance } = profile;
+  const { stats } = profile;
+  const constance = (profile as any).constance;
 
   const tabs: { id: CompteTab; label: string }[] = [
     { id: 'vue-d-ensemble', label: 'Vue d\'ensemble' },
     { id: 'aventures', label: `Groupes ${profile.stats.sorties}` },
-    { id: 'carnets', label: `Carnets de route ${profile.stats.kilometres}` },
+    { id: 'carnets', label: `Carnets de route ${(profile.stats as any).kilometres || 0}` },
     { id: 'clubs', label: `Clubs ${profile.stats.clubs}` },
     { id: 'commandes', label: 'Commandes' },
     { id: 'fidelite', label: 'Fidélité' },

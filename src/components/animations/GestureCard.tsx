@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useState } from 'react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
@@ -17,8 +17,9 @@ export function GestureCard({
   onSwipeRight,
   onTap
 }: GestureCardProps) {
-  const { light, medium } = useHapticFeedback();
+  const { haptic } = useHapticFeedback();
   const [isDragging, setIsDragging] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
 
   return (
     <motion.div
@@ -29,20 +30,21 @@ export function GestureCard({
       onDragEnd={(e, { offset, velocity }) => {
         setIsDragging(false);
         if (offset.x < -100 && velocity.x < -200 && onSwipeLeft) {
-          medium();
+          haptic('medium');
           onSwipeLeft();
         } else if (offset.x > 100 && velocity.x > 200 && onSwipeRight) {
-          medium();
+          haptic('medium');
           onSwipeRight();
         }
       }}
       onTap={() => {
         if (!isDragging && onTap) {
-          light();
+          haptic('light');
           onTap();
         }
       }}
-      whileTap={{ scale: 0.98 }}
+      whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
+      style={{ touchAction: shouldReduceMotion ? 'auto' : 'pan-y' }}
     >
       {children}
     </motion.div>

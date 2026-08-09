@@ -14,6 +14,7 @@ interface TopBarProps {
   cartCount?: number;
   onMenuOpen?: () => void;
   onSearchOpen?: () => void;
+  isMenuOpen?: boolean;
 }
 
 const ROOT_TABS = ['/', '/explorer', '/boutique', '/compte', '/profil', '/carnets', '/terrain'];
@@ -27,6 +28,10 @@ const PARENT_TAB: Record<string, string> = {
   '/feed': '/explorer',
   '/boutique': '/boutique',
   '/inventaire': '/compte',
+  '/mon-materiel': '/compte',
+  '/boussole': '/terrain',
+  '/hors-ligne': '/explorer',
+  '/randonnee-active': '/terrain',
   '/jumeau-3d': '/compte',
   '/kits': '/boutique',
   '/produit': '/boutique',
@@ -50,6 +55,10 @@ const PARENT_TAB: Record<string, string> = {
 const PAGE_TITLES: Record<string, string> = {
   '/': 'Le Kit du Voyageur',
   '/explorer': 'Explorer',
+  '/boussole': 'Boussole AR',
+  '/hors-ligne': 'Hors-Ligne',
+  '/mon-materiel': 'Mon Matériel',
+  '/randonnee-active': 'Randonnée Active',
   '/boutique': 'Boutique',
   '/carnets': 'Carnets',
   '/compte': 'Mon Compte',

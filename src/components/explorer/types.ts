@@ -2,7 +2,10 @@ export type FilterState = {
   difficulty: string[];
   duration: string[];
   terrain_type: string[];
+  type?: string[];
+  ambiance?: string[];
   family_friendly: boolean | null;
+  [key: string]: any;
 };
 
 export const DEFAULT_FILTERS: FilterState = {
@@ -31,6 +34,15 @@ export interface MapTrail {
   family_friendly?: boolean | null;
   season?: string | null;
   ai_description?: string | null;
+  region?: string | null;
+  altitude_m?: number | null;
+  capacity?: number | null;
+  is_staffed?: boolean | null;
+  has_meals?: boolean | null;
+  open_months?: string[] | null;
+  price_per_night?: number | null;
+  has_blankets?: boolean | null;
+  description?: string | null;
 }
 
 // Keep MapRefuge as alias for backwards compat
@@ -51,6 +63,21 @@ export function getTrailImage(id: string): string {
   if (!id) return DEFAULT_TRAIL_IMAGES[0];
   const sum = String(id).split('').reduce((s, c) => s + c.charCodeAt(0), 0);
   return DEFAULT_TRAIL_IMAGES[sum % DEFAULT_TRAIL_IMAGES.length];
+}
+
+/**
+ * Validation stricte d'une paire lat/lng avant toute création Leaflet.
+ * Rejette null/undefined/''/NaN/Infinity (Number(null)===0, Number('')===0
+ * créeraient un marqueur fantôme à (0,0)) ET les coordonnées hors bornes
+ * géographiques (lat -90..90, lng -180..180).
+ */
+export function isValidLatLng(lat: unknown, lng: unknown): boolean {
+  if (lat == null || lng == null) return false;
+  if (lat === '' || lng === '') return false;
+  const nLat = Number(lat);
+  const nLng = Number(lng);
+  if (!Number.isFinite(nLat) || !Number.isFinite(nLng)) return false;
+  return nLat >= -90 && nLat <= 90 && nLng >= -180 && nLng <= 180;
 }
 
 export function getDifficultyColor(difficulty: string | null | undefined): string {

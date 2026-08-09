@@ -49,7 +49,7 @@ export default function AdventureDetailPanel({ trail, onClose }: AdventureDetail
         content: `Analyse ce lieu pour moi :
 Nom : ${trail.name}
 Région : ${trail.region || 'non renseignée'}
-Altitude : ${trail.altitude_m > 0 ? trail.altitude_m + 'm' : 'non renseigné'}
+Altitude : ${(trail.altitude_m || 0) > 0 ? trail.altitude_m + 'm' : 'non renseigné'}
 Capacité : ${trail.capacity || 'non renseignée'} places
 Gardé : ${trail.is_staffed ? 'Oui' : 'Non'}
 
@@ -66,8 +66,8 @@ Donne-moi :
   const diffBg = 'bg-[#17402C]/15 text-[#17402C] border-[#17402C]/30';
 
   const stats = [
-    { icon: '🏔', label: 'Altitude', value: trail.altitude_m > 0 ? `${trail.altitude_m} m` : '—' },
-    { icon: '🛏', label: 'Capacité', value: trail.capacity > 0 ? `${trail.capacity} pers` : '—' },
+    { icon: '🏔', label: 'Altitude', value: (trail.altitude_m || 0) > 0 ? `${trail.altitude_m} m` : '—' },
+    { icon: '🛏', label: 'Capacité', value: (trail.capacity || 0) > 0 ? `${trail.capacity} pers` : '—' },
     { icon: '🍽', label: 'Repas', value: trail.has_meals ? 'Oui' : 'Non' },
     { icon: '🗓', label: 'Ouverture', value: trail.open_months?.length ? trail.open_months.slice(0,2).join(', ') + '...' : 'Variable' },
   ];

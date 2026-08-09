@@ -67,7 +67,7 @@ export default async function KitDetailPageWrapper({ params }: { params: Promise
   const meta = KIT_META[slug];
 
   if (!meta) {
-    return <KitDetailPage params={params} />;
+    return <KitDetailPage />;
   }
 
   const webPageSchema = {
@@ -120,7 +120,7 @@ export default async function KitDetailPageWrapper({ params }: { params: Promise
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
         suppressHydrationWarning
       />
-      <KitDetailPage params={params} />
+      <KitDetailPage />
     </>
   );
 }

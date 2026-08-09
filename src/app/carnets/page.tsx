@@ -246,7 +246,7 @@ function CarnetDetailModal({
     supabase.from('carnet_views').insert({
       carnet_id: carnet.id,
       user_id: user?.id || null,
-    }).then(() => {}).catch(() => {});
+    }).then(undefined, () => {});
 
     supabase
       .from('carnet_comments')

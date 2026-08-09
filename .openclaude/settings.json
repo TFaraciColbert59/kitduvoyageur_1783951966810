@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "ask": [
+      "À partir de maintenant, fonctionne en **mode agent autonome jusqu'à la fin de la tâche**.\n\nAprès chaque appel d'outil (`Read`, `Edit`, `Write`, Supabase MCP, Bash, etc.), **ne t'arrête jamais simplement après `Tool results received`**.\n\nTu dois systématiquement :\n\n1. Lire et analyser le résultat de l'outil.\n2. Déterminer l'étape suivante.\n3. Exécuter immédiatement l'outil nécessaire.\n4. Répéter cette boucle automatiquement jusqu'à ce que toute la tâche soit réellement terminée.\n5. Ne me demander aucune confirmation entre deux étapes, sauf si une décision irréversible ou une information réellement indispensable manque.\n\nUn simple résultat `[]`, un résultat vide, un succès SQL ou un retour d'outil normal **ne constitue pas une raison pour arrêter**.\n\nSi un outil échoue, analyse l'erreur, corrige le problème et réessaie automatiquement lorsque c'est possible.\n\n**Ne termine la réponse que lorsque toutes les étapes demandées sont exécutées, vérifiées et terminées.**\n\nNe me demande jamais « Continue » et ne t'arrête pas après `[Tool results received]`."
+    ]
+  }
+}

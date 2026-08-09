@@ -173,13 +173,13 @@ function OverviewSection() {
           productsDataResult,
           usersDataResult,
         ] = await Promise.all([
-          supabase.from('products').select('*', { count: 'exact', head: true }),
+          supabase.from('shop_products').select('*', { count: 'exact', head: true }),
           supabase.from('kits').select('*', { count: 'exact', head: true }),
           supabase.from('user_profiles').select('*', { count: 'exact', head: true }),
           supabase.from('community_posts').select('*', { count: 'exact', head: true }),
           supabase.from('clubs').select('*', { count: 'exact', head: true }),
           supabase.from('product_reviews').select('*', { count: 'exact', head: true }),
-          supabase.from('products').select('id, name, price_eur, stock').order('price_eur', { ascending: false }).limit(5),
+          supabase.from('shop_products').select('id, name, price_eur, stock').order('price_eur', { ascending: false }).limit(5),
           supabase.from('user_profiles').select('id, full_name, email, loyalty_level, created_at').order('created_at', { ascending: false }).limit(5),
         ]);
         const productsCount = productsCountResult.count;
@@ -326,7 +326,50 @@ function ProductsSection() {
 function OrdersSection() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [confirm, setConfirm] = useState<string | null>(null);
-  const filtered = statusFilter === 'all' ? ORDERS_DATA : ORDERS_DATA.filter(o => o.status === statusFilter);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const supabase = useMemo(() => createClient(), []);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          order_number,
+          status,
+          total_eur,
+          items,
+          created_at,
+          user_profiles ( full_name, email )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (data) {
+        setOrders(data.map((o: any) => {
+          let itemsCount = 0;
+          try { itemsCount = Array.isArray(o.items) ? o.items.length : JSON.parse(o.items).length; } catch(e){}
+          const p = Array.isArray(o.user_profiles) ? o.user_profiles[0] : o.user_profiles;
+          return {
+            id: o.order_number,
+            realId: o.id,
+            user: p?.full_name || 'Inconnu',
+            email: p?.email || '',
+            amount: o.total_eur,
+            status: o.status === 'pending' ? 'en_attente' : o.status === 'shipped' ? 'en_cours' : o.status === 'delivered' ? 'livré' : 'annulé',
+            date: o.created_at.substring(0, 10),
+            items: itemsCount
+          };
+        }));
+      }
+      setLoading(false);
+    };
+    fetchOrders();
+  }, [supabase]);
+
+  const filtered = statusFilter === 'all' ? orders : orders.filter(o => o.status === statusFilter);
 
   return (
     <div className="space-y-4">
@@ -363,31 +406,35 @@ function OrdersSection() {
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
-            {filtered.map(o => (
-              <tr key={o.id} className="hover:bg-white/3 transition-colors">
-                <td className="px-4 py-3 font-mono text-white/50" style={{ fontFamily: 'var(--font-mono)' }}>{o.id}</td>
-                <td className="px-4 py-3 text-white/80 font-medium">{o.user}</td>
-                <td className="px-4 py-3 text-white/35">{o.email}</td>
-                <td className="px-4 py-3 font-mono font-700 text-white" style={{ fontFamily: 'var(--font-mono)' }}>{o.amount}€</td>
-                <td className="px-4 py-3 font-mono text-white/50" style={{ fontFamily: 'var(--font-mono)' }}>{o.items}</td>
-                <td className="px-4 py-3">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${STATUS_COLORS[o.status]}`}>{o.status}</span>
-                </td>
-                <td className="px-4 py-3 text-white/35">{o.date.slice(5)}</td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-1">
-                    <button className="p-1.5 rounded-lg hover:bg-white/8 text-white/40 hover:text-white transition-all">
-                      <Icon name="EyeIcon" size={13} variant="outline" />
-                    </button>
-                    {o.status !== 'annulé' && (
-                      <button onClick={() => setConfirm(o.id)} className="p-1.5 rounded-lg hover:bg-amber-500/15 text-white/40 hover:text-amber-400 transition-all" title="Rembourser">
-                        <Icon name="ArrowUturnLeftIcon" size={13} variant="outline" />
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={8} className="px-4 py-8 text-center text-white/30">Chargement...</td></tr>
+            ) : filtered.length === 0 ? (
+              <tr><td colSpan={8} className="px-4 py-8 text-center text-white/30">Aucune commande</td></tr>
+            ) : filtered.map(o => (
+                <tr key={o.id} className="hover:bg-white/3 transition-colors">
+                  <td className="px-4 py-3 font-mono text-white/50" style={{ fontFamily: 'var(--font-mono)' }}>{o.id}</td>
+                  <td className="px-4 py-3 text-white/80 font-medium">{o.user}</td>
+                  <td className="px-4 py-3 text-white/35">{o.email}</td>
+                  <td className="px-4 py-3 font-mono font-700 text-white" style={{ fontFamily: 'var(--font-mono)' }}>{o.amount}€</td>
+                  <td className="px-4 py-3 font-mono text-white/50" style={{ fontFamily: 'var(--font-mono)' }}>{o.items}</td>
+                  <td className="px-4 py-3">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${STATUS_COLORS[o.status] || 'text-white/40 border-white/10'}`}>{o.status}</span>
+                  </td>
+                  <td className="px-4 py-3 text-white/35">{o.date}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-1">
+                      <button className="p-1.5 rounded-lg hover:bg-white/8 text-white/40 hover:text-white transition-all">
+                        <Icon name="EyeIcon" size={13} variant="outline" />
                       </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
+                      {o.status !== 'annulé' && (
+                        <button onClick={() => setConfirm(o.id)} className="p-1.5 rounded-lg hover:bg-amber-500/15 text-white/40 hover:text-amber-400 transition-all" title="Rembourser">
+                          <Icon name="ArrowUturnLeftIcon" size={13} variant="outline" />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
             ))}
           </tbody>
         </table>

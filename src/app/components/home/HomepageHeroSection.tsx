@@ -3,15 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import AppImage from '@/components/ui/AppImage';
 
 export default function HomepageHeroSection() {
+  const router = useRouter();
   const [query, setQuery] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      window.location.href = `/ai-configurator?q=${encodeURIComponent(query.trim())}`;
+      router.push(`/ai-configurator?q=${encodeURIComponent(query.trim())}`);
     }
   };
 

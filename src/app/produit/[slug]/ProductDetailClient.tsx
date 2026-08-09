@@ -324,7 +324,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
                     <div className="flex gap-3">
                       <button
-                        onClick={handleAddToCart}
+                        onClick={() => handleAddToCart()}
                         className={`flex-1 py-4 rounded-full font-semibold text-sm transition-all flex items-center justify-center gap-2 ${cartAdded ? 'bg-emerald-600 text-white' : 'bg-[#1C2620] hover:bg-[#2A3830] text-white'}`}
                       >
                         {cartAdded ? (

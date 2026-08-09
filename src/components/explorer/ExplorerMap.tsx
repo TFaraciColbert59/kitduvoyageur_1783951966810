@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import 'leaflet/dist/leaflet.css';
 import type { Map as LeafletMap } from 'leaflet';
 import type { MapTrail } from './types';
+import { isValidLatLng } from './types';
 import TrailLayer from './TrailLayer';
 
 interface ExplorerMapProps {
@@ -26,12 +27,6 @@ const OSM_TILE = {
 
 type TileMode = 'topo' | 'osm';
 type LocationState = 'idle' | 'locating' | 'located' | 'denied' | 'unavailable';
-
-// Guard strict : `lat != null` (loose) exclut null ET undefined, isFinite exclut NaN/Infinity.
-// `!== null` laisserait passer `undefined` (undefined !== null === true) → LatLng(NaN, NaN) → crash Leaflet.
-function isValidLatLng(lat: unknown, lng: unknown): boolean {
-  return lat != null && lng != null && isFinite(Number(lat)) && isFinite(Number(lng));
-}
 
 export default function ExplorerMap({ trails, selectedTrailId, onTrailClick, userLocation, onMapReady, onLocationUpdate }: ExplorerMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);

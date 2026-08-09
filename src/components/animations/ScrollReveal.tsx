@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useInView } from 'framer-motion';
+import { motion, useInView, useReducedMotion } from 'framer-motion';
 import { useRef } from 'react';
 import { springConfigs } from '@/lib/animations/constants';
 
@@ -17,12 +17,13 @@ export default function ScrollReveal({
 }: ScrollRevealProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: threshold });
+  const shouldReduceMotion = useReducedMotion();
 
   return (
     <motion.div
       ref={ref}
-      initial={{ y: 20, opacity: 0 }}
-      animate={isInView ? { y: 0, opacity: 1 } : { y: 20, opacity: 0 }}
+      initial={shouldReduceMotion ? { opacity: 0 } : { y: 20, opacity: 0 }}
+      animate={isInView ? (shouldReduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }) : (shouldReduceMotion ? { opacity: 0 } : { y: 20, opacity: 0 })}
       transition={{ ...springConfigs.smooth, delay }}
     >
       {children}

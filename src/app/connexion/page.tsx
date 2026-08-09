@@ -16,7 +16,7 @@ type AuthMode = 'connexion' | 'inscription';
 
 function AuthForm() {
   const searchParams = useSearchParams();
-  const initialMode = (searchParams.get('mode') as AuthMode) || 'connexion';
+  const initialMode = (searchParams?.get('mode') as AuthMode) || 'connexion';
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -100,7 +100,7 @@ function AuthForm() {
           ) : (
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {mode === 'inscription' && (
-                <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Prénom" aria-label="Prénom" style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#1C2620' }} />
+                <input id="name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Prénom" aria-label="Prénom" style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#1C2620' }} />
               )}
               <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Adresse email" autoComplete="email" aria-label="Adresse email" style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#1C2620' }} />
               <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === 'inscription' ? 'Minimum 8 caractères' : 'Mot de passe'} autoComplete={mode === 'inscription' ? 'new-password' : 'current-password'} aria-label={mode === 'inscription' ? 'Mot de passe' : 'Mot de passe'} style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#1C2620' }} />

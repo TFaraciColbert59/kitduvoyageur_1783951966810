@@ -64,15 +64,15 @@ export default function ExplorerFilterSheet({ open, onClose, filters, onChange }
   }, [open, onClose]);
 
   const toggle = (key: keyof FilterState, value: string) => {
-    const current = filters[key];
+    const current = (filters[key] as string[]) || [];
     const updated = current.includes(value)
-      ? current.filter((v) => v !== value)
+      ? current.filter((v: string) => v !== value)
       : [...current, value];
     onChange({ ...filters, [key]: updated });
   };
 
   const clearAll = () => {
-    onChange({ type: [], difficulty: [], duration: [], ambiance: [] });
+    onChange({ type: [], difficulty: [], duration: [], ambiance: [], terrain_type: [], family_friendly: null });
   };
 
   const totalActive = Object.values(filters).flat().length;
@@ -131,7 +131,7 @@ export default function ExplorerFilterSheet({ open, onClose, filters, onChange }
               </p>
               <div className="flex flex-wrap gap-2">
                 {section.options.map((opt) => {
-                  const active = filters[section.key].includes(opt.value);
+                  const active = ((filters[section.key] as string[]) || []).includes(opt.value);
                   return (
                     <button
                       key={opt.value}

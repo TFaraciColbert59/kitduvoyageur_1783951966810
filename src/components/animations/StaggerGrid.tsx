@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { springConfigs } from '@/lib/animations/constants';
 
 interface StaggerGridProps {
@@ -14,14 +14,16 @@ export default function StaggerGrid({
   columns = 2,
   staggerDelay = 0.05
 }: StaggerGridProps) {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <div className={`grid grid-cols-${columns} gap-4`}>
       {children.map((child, i) => (
         <motion.div
           key={i}
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ ...springConfigs.smooth, delay: i * staggerDelay }}
+          initial={shouldReduceMotion ? { opacity: 0 } : { y: 20, opacity: 0 }}
+          animate={shouldReduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
+          transition={shouldReduceMotion ? { duration: 0 } : { ...springConfigs.smooth, delay: i * staggerDelay }}
         >
           {child}
         </motion.div>

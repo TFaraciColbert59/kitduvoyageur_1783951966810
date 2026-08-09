@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import type { MapTrail } from './types';
 import { getChatCompletion, GEMINI_PROVIDER, GEMINI_DEFAULT_MODEL } from '@/lib/ai/chatCompletion';
+import { useOfflineDownload } from '@/hooks/useOfflineDownload';
+import { listOfflineRoutes } from '@/lib/offlineStorage';
 import {
   getTrailImage,
   getDifficultyColor,
@@ -50,8 +52,29 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
 
   const [description, setDescription] = useState<string | null>(null);
   const [loadingAI, setLoadingAI] = useState<boolean>(false);
+  const [isOfflineAvailable, setIsOfflineAvailable] = useState<boolean>(false);
 
   const cacheKey = `gemini_desc_${trail.id}`;
+
+  const offline = useOfflineDownload();
+
+  // Vérifier si la randonnée est déjà disponible hors-ligne
+  useEffect(() => {
+    listOfflineRoutes().then((routes) => {
+      setIsOfflineAvailable(routes.some((r) => r.routeId === String(trail.id)));
+    }).catch(() => {});
+  }, [trail.id]);
+
+  const handleOfflineToggle = useCallback(async () => {
+    if (isOfflineAvailable) {
+      await offline.deleteOffline(String(trail.id));
+      setIsOfflineAvailable(false);
+      offline.reset();
+    } else {
+      await offline.downloadForOffline(trail);
+      setIsOfflineAvailable(true);
+    }
+  }, [isOfflineAvailable, offline, trail]);
 
   // Generate AI Description
   useEffect(() => {
@@ -317,7 +340,47 @@ Ne sois pas redondant, ne fais pas juste la liste des chiffres, mais utilise-les
         </div>
 
         {/* Footer CTA */}
-        <div className="flex-shrink-0 p-4 border-t border-[#E8E4D8] bg-white">
+        <div className="flex-shrink-0 p-4 border-t border-[#E8E4D8] bg-white space-y-3">
+          {/* Bouton hors-ligne */}
+          <div>
+            {offline.status === 'downloading' ? (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs text-[#5A6A5D]">
+                  <span>📥 Téléchargement… {offline.downloaded}/{offline.total} tuiles</span>
+                  <span>{offline.progress}%</span>
+                </div>
+                <div className="w-full h-2 bg-[#E8E4D8] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#2D5A27] rounded-full transition-all duration-200"
+                    style={{ width: `${offline.progress}%` }}
+                  />
+                </div>
+              </div>
+            ) : offline.status === 'too_large' || offline.status === 'no_geom' || offline.status === 'error' ? (
+              <div className="text-xs text-red-500 bg-red-50 rounded-xl p-3 border border-red-200">
+                ⚠️ {offline.error}
+                <button onClick={offline.reset} className="ml-2 underline text-red-600">Réessayer</button>
+              </div>
+            ) : (
+              <button
+                id={`offline-btn-${trail.id}`}
+                onClick={handleOfflineToggle}
+                disabled={offline.status === 'checking'}
+                className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 border ${
+                  isOfflineAvailable
+                    ? 'bg-green-50 border-green-200 text-green-700 hover:bg-red-50 hover:border-red-200 hover:text-red-600'
+                    : 'bg-[#F5F2EA] border-[#E4E0D4] text-[#3A4A3D] hover:bg-[#EAE6D8]'
+                }`}
+              >
+                {isOfflineAvailable ? (
+                  <><span>✅</span> Disponible hors-ligne · Supprimer</>
+                ) : (
+                  <><span>📥</span> Télécharger pour hors-ligne</>
+                )}
+              </button>
+            )}
+          </div>
+
           <button
             onClick={onClose}
             className="w-full py-3 bg-[#1C2620] text-white text-sm font-semibold rounded-xl hover:bg-[#2D3F35] active:scale-[0.98] transition-all"

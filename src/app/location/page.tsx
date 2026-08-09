@@ -802,7 +802,7 @@ export default function LocationPage() {
                         <div>
                           <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#1C2620', margin: '0 0 4px', lineHeight: 1.3 }}>{listing.title}</h3>
                           <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '4px' }}>
-                            <span style={{ padding: '1px 6px', borderRadius: '4px', fontSize: '9px', fontWeight: '600', border: '1px solid', background: cond.bg, color: cond.text, borderColor: cond.border }}>
+                            <span className={cond.color} style={{ padding: '1px 6px', borderRadius: '4px', fontSize: '9px', fontWeight: '600', border: '1px solid' }}>
                               {cond.label}
                             </span>
                             {listing.tags.slice(0, 2).map((tag) => (

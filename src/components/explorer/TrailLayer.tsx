@@ -2,7 +2,7 @@
 import { useRef, useCallback, useEffect } from 'react';
 import type { Map as LeafletMap, LayerGroup } from 'leaflet';
 import type { MapTrail } from './types';
-import { getDifficultyColor } from './types';
+import { isValidLatLng } from './types';
 
 interface TrailLayerProps {
   map: LeafletMap;
@@ -114,7 +114,12 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
         }
 
         // 2. Render KM Marker (Clean white pill style) added to Cluster!
-        if (trail.lat && trail.lng && !isNaN(trail.lat) && !isNaN(trail.lng)) {
+        // Coerce lat/lng first, exclude null/"" (Number(null)===0 → ghost marker
+        // à (0,0)) ainsi que tout non-fini (NaN, Infinity, "abc") et hors bornes
+        // géographiques (lat±90, lng±180).
+        const lat = Number(trail.lat);
+        const lng = Number(trail.lng);
+        if (isValidLatLng(trail.lat, trail.lng)) {
           const label = trail.distance_km ? `${Number(trail.distance_km).toFixed(1)}km`.replace('.', ',').replace(',0', '') : '';
           if (label) {
             const html = `
@@ -134,7 +139,7 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick 
                 justify-content: center;
               ">${label}</div>`;
             const icon = L.divIcon({ html, className: '', iconSize: [54, 24], iconAnchor: [27, 12] });
-            const marker = L.marker([trail.lat, trail.lng], { icon, zIndexOffset: isSelected ? 1000 : 10 });
+            const marker = L.marker([lat, lng], { icon, zIndexOffset: isSelected ? 1000 : 10 });
             marker.on('click', (e) => {
               L.DomEvent.stopPropagation(e);
               onTrailClick?.(trail);

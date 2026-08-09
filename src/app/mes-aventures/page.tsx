@@ -57,7 +57,7 @@ export default function MesAventuresPage() {
         else { setSavedTrails(data || []); }
         setLoading(false);
       })
-      .catch((e) => { setError(e?.message || 'Erreur lors du chargement'); setLoading(false); });
+      .then(undefined, (e: any) => { setError(e?.message || 'Erreur lors du chargement'); setLoading(false); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 

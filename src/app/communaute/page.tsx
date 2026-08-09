@@ -55,7 +55,7 @@ function PostCard({ post, user }: { post: any, user: any }) {
     setLikesCount(newCount);
 
     const supabase = createClient();
-    const { error } = await supabase.from('community_posts').update({ likes_count: newCount }).eq('id', post.id);
+    const { error } = await supabase.rpc('toggle_community_post_like', { p_post_id: post.id });
     if (error) {
       console.error('Error updating like:', error);
       // Revert optimistic UI on error
@@ -257,11 +257,20 @@ function CarnetCard({ carnet, user }: { carnet: any, user: any }) {
     setLikesCount(newCount);
 
     const supabase = createClient();
-    const { error } = await supabase.from('carnets').update({ likes_count: newCount }).eq('id', carnet.id);
-    if (error) {
-      console.error('Error updating like for carnet:', error);
-      setIsLiked(isLiked);
-      setLikesCount(likesCount);
+    if (newLiked) {
+      const { error } = await supabase.from('carnet_likes').upsert({ carnet_id: carnet.id, user_id: user.id }, { onConflict: 'carnet_id,user_id' });
+      if (error) {
+        console.error('Error adding like for carnet:', error);
+        setIsLiked(isLiked);
+        setLikesCount(likesCount);
+      }
+    } else {
+      const { error } = await supabase.from('carnet_likes').delete().eq('carnet_id', carnet.id).eq('user_id', user.id);
+      if (error) {
+        console.error('Error removing like for carnet:', error);
+        setIsLiked(isLiked);
+        setLikesCount(likesCount);
+      }
     }
   };
 

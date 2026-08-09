@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import HikingProfileCard from '@/components/profile/HikingProfileCard';
 
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -248,7 +249,7 @@ function LoggedInProfile() {
     },
   ];
 
-  const displayName = profile?.full_name || profile?.username || 'Voyageur';
+  const displayName = profile?.full_name || 'Voyageur';
   const initials = displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
 
   return (
@@ -367,6 +368,11 @@ function LoggedInProfile() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Profil randonneur (Prompt #7) */}
+      <div className="px-5 pt-3 pb-1">
+        <HikingProfileCard />
       </div>
 
       {/* Menu items */}

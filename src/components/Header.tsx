@@ -76,6 +76,16 @@ export default function Header() {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-3">
+            {/* Bouton Démarrer la Randonnée */}
+            <Link
+              href="/randonnee-active"
+              className="hidden sm:flex items-center gap-1.5 bg-[#2D6A4F] text-white text-[11px] font-bold px-3.5 py-1.5 rounded-full hover:bg-[#1B4332] active:scale-95 transition-all shadow-sm"
+              title="Lancer le mode randonnée GPS"
+            >
+              <span>🥾</span>
+              <span>Lancer rando</span>
+            </Link>
+
             <Link
               href="/panier"
               className="text-[#1C2620] hover:text-[#2D5A3D] transition-all p-1.5 rounded-full hover:bg-[#F5F2EA] active:scale-90 relative"
