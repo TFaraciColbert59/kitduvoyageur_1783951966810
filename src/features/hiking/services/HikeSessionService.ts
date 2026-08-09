@@ -14,8 +14,12 @@ export class HikeSessionService {
     elevationGainM?: number | null;
     positions: GPSPosition[];
     poiEvents: { poiName: string; reachedAt: string; lat: number; lon: number }[];
-  }): Promise<{ sessionId: string }> {
-    const res = await fetch('/api/hike-sessions', {
+  }): Promise<{ sessionId: string; carnetId?: string | null }> {
+    const baseUrl = typeof window !== 'undefined'
+      ? ''
+      : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:4028');
+
+    const res = await fetch(`${baseUrl}/api/hike-sessions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),

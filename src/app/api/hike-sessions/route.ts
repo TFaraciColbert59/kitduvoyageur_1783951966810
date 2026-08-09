@@ -34,8 +34,16 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: 'Authentification requise' }, { status: 401 });
+      const guestSessionId = `guest-session-${Date.now()}`;
+      const guestCarnetId = `guest-carnet-${Date.now()}`;
+      return NextResponse.json({
+        sessionId: guestSessionId,
+        carnetId: guestCarnetId,
+        isGuest: true,
+      });
     }
+
+    const userId = user.id;
 
     const body: SaveHikeSessionBody = await req.json();
 
@@ -52,13 +60,69 @@ export async function POST(req: NextRequest) {
         }
       : null;
 
-    // Insérer la session
+    // 1. Check idempotency (prevent duplicate session creation)
+    let query = supabase
+      .from('hike_sessions')
+      .select('id, carnet_id')
+      .eq('started_at', body.startedAt);
+
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+
+    const { data: existingSession } = await query.maybeSingle();
+
+    if (existingSession) {
+      return NextResponse.json({
+        sessionId: existingSession.id,
+        carnetId: existingSession.carnet_id || null,
+      });
+    }
+
+    // 2. Automatic Carnet Creation if carnetId is not provided
+    let carnetId = body.carnetId || null;
+
+    if (!carnetId) {
+      let title = `Randonnée du ${new Date(body.startedAt).toLocaleDateString('fr-FR')}`;
+      if (body.routeId) {
+        const { data: rData } = await supabase
+          .from('hiking_routes')
+          .select('name')
+          .eq('id', Number(body.routeId))
+          .maybeSingle();
+        if (rData?.name) title = rData.name;
+      }
+
+      const { data: newCarnet, error: carnetErr } = await supabase
+        .from('carnets')
+        .insert({
+          title,
+          description: `Carnet d'expédition outdoor récapitulant ${body.distanceKm.toFixed(1)} km en ${formatDuration(body.durationSeconds)}.`,
+          destination: title,
+          distance_km: body.distanceKm,
+          elevation_m: body.elevationGainM ?? 0,
+          duration: formatDuration(body.durationSeconds),
+          author_id: userId,
+          status: 'published',
+          created_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
+
+      if (!carnetErr && newCarnet) {
+        carnetId = newCarnet.id;
+      } else {
+        console.warn('[hike-sessions] Automatic carnet creation notice:', carnetErr?.message);
+      }
+    }
+
+    // 3. Insert the hike session
     const { data: session, error: sessionError } = await supabase
       .from('hike_sessions')
       .insert({
-        user_id: user.id,
+        user_id: userId,
         route_id: body.routeId ? Number(body.routeId) : null,
-        carnet_id: body.carnetId || null,
+        carnet_id: carnetId,
         started_at: body.startedAt,
         ended_at: body.endedAt,
         distance_km: body.distanceKm,
@@ -72,16 +136,16 @@ export async function POST(req: NextRequest) {
 
     if (sessionError || !session) {
       console.error('[hike-sessions] Insert error:', sessionError);
-      return NextResponse.json({ error: 'Erreur lors de la sauvegarde' }, { status: 500 });
+      return NextResponse.json({ error: sessionError ? sessionError.message : 'Erreur lors de la sauvegarde de session' }, { status: 500 });
     }
 
     const sessionId = session.id;
 
-    // Générer les carnet_moments automatiques si carnetId fourni
-    if (body.carnetId) {
+    // 4. Generate auto moments for the carnet if carnetId exists
+    if (carnetId) {
       await generateAutoMoments(supabase, {
         sessionId,
-        carnetId: body.carnetId,
+        carnetId,
         startedAt: body.startedAt,
         endedAt: body.endedAt,
         distanceKm: body.distanceKm,
@@ -92,7 +156,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    return NextResponse.json({ sessionId });
+    return NextResponse.json({ sessionId, carnetId });
   } catch (err) {
     console.error('[hike-sessions] Unexpected error:', err);
     return NextResponse.json({ error: 'Erreur inattendue' }, { status: 500 });

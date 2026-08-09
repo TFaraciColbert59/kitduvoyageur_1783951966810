@@ -183,7 +183,7 @@ export class HikingController {
     }
   }
 
-  public async stopHike(carnetId?: string): Promise<{ sessionId: string } | null> {
+  public async stopHike(carnetId?: string): Promise<{ sessionId: string; carnetId?: string | null } | null> {
     if (!this.stateMachine.transitionTo('FINISHING')) return null;
 
     this.stopTimer();
@@ -195,6 +195,7 @@ export class HikingController {
     const startedAt = positions.length > 0 ? new Date(positions[0].timestamp).toISOString() : new Date().toISOString();
 
     let sessionId: string | null = null;
+    let savedCarnetId: string | null = carnetId || null;
 
     if (positions.length > 1 && this.state.distanceKm > 0) {
       try {
@@ -210,6 +211,7 @@ export class HikingController {
           poiEvents: this.poiEvents,
         });
         sessionId = res.sessionId;
+        if (res.carnetId) savedCarnetId = res.carnetId;
       } catch (err) {
         console.error('[HikingController] stopHike save error:', err);
       }
@@ -219,7 +221,7 @@ export class HikingController {
     this.stateMachine.transitionTo('COMPLETED');
     this.stateMachine.transitionTo('IDLE');
 
-    return sessionId ? { sessionId } : null;
+    return sessionId ? { sessionId, carnetId: savedCarnetId } : null;
   }
 
   public dismissOffRoute(): void {

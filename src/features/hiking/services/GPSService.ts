@@ -111,6 +111,10 @@ export class GPSService {
     return () => this.onErrorCallbacks.delete(callback);
   }
 
+  public injectPosition(pos: GPSPosition): void {
+    this.onPositionCallbacks.forEach((cb) => cb(pos));
+  }
+
   public isTracking(): boolean {
     return this.isTrackingActive;
   }
