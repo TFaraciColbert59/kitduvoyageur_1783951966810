@@ -11,3 +11,12 @@ export * from './services/WeatherService';
 export * from './services/HikeSessionService';
 export * from './services/CopilotService';
 export * from './services/OfflineService';
+
+// Components
+export { default as TopHUD } from './components/TopHUD';
+export { default as ContextualInsight } from './components/ContextualInsight';
+export { default as NavigationCard } from './components/NavigationCard';
+export { default as HikingControls } from './components/HikingControls';
+export { default as CockpitBottomNav } from './components/CockpitBottomNav';
+export { default as HikingCockpitPage } from './components/HikingCockpitPage';
+
