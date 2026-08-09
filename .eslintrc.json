@@ -21,6 +21,8 @@
     ],
     "@typescript-eslint/no-explicit-any": "off",
     "@next/next/no-img-element": "warn",
+    "react/no-unescaped-entities": "warn",
+    "no-empty": "warn",
     "no-console": [
       "warn",
       {

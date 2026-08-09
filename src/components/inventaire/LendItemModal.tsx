@@ -39,7 +39,7 @@ export default function LendItemModal({ isOpen, onClose, item, onSaveLoan }: Len
         <div className="flex justify-between items-center border-b border-[#E8E4D8] pb-4">
           <div>
             <h3 className="font-extrabold text-[#132219] text-xl font-display">
-              Prêter <span className="italic font-serif font-normal text-[#2D5A3D]">{item.name}</span>
+              Prêter <span className="italic font-serif font-normal text-[#2D5A3D]">{item?.name}</span>
             </h3>
             <p className="text-xs text-[#132219]/60 mt-0.5">
               Enregistrez le prêt pour garder une trace de vos équipements.

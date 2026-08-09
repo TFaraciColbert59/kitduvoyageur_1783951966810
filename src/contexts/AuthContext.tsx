@@ -16,6 +16,7 @@ interface UserProfile {
   location: string;
   xp: number;
   level: number;
+  username?: string;
 }
 
 interface AuthContextValue {
