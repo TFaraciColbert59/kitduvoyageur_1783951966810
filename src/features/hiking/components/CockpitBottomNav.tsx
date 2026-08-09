@@ -26,14 +26,14 @@ export default function CockpitBottomNav({ activeTab, onTabSelect }: CockpitBott
           <button
             key={tab.id}
             onClick={() => onTabSelect(tab.id)}
-            className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
+            className={`flex flex-col items-center justify-center min-w-[52px] min-h-[52px] px-3 py-1.5 rounded-2xl transition-all active:scale-95 ${
               isActive
-                ? 'bg-[#17402C] text-white font-bold border border-[#4E9F3D]/40 scale-105'
-                : 'text-[#A3C4A3]/70 hover:text-white hover:bg-white/5'
+                ? 'bg-[#17402C] text-white font-bold border border-[#4E9F3D]/50 shadow-lg'
+                : 'text-[#A3C4A3]/80 hover:text-white hover:bg-white/10'
             }`}
           >
-            <span className="text-lg">{tab.icon}</span>
-            <span className="text-[10px] font-mono leading-none">{tab.label}</span>
+            <span className="text-xl">{tab.icon}</span>
+            <span className="text-[10px] font-mono leading-none mt-0.5">{tab.label}</span>
           </button>
         );
       })}
