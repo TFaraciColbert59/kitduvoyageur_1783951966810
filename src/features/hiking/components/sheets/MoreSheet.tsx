@@ -11,6 +11,8 @@ interface MoreSheetProps {
   onOpenSafety: () => void;
   onOpenWeather: () => void;
   onOpenARCompass: () => void;
+  onOpen3DTerrain?: () => void;
+  onOpenGPXModal?: () => void;
   onStopHike: () => void;
 }
 
@@ -22,6 +24,8 @@ export default function MoreSheet({
   onOpenSafety,
   onOpenWeather,
   onOpenARCompass,
+  onOpen3DTerrain,
+  onOpenGPXModal,
   onStopHike,
 }: MoreSheetProps) {
   if (!isOpen) return null;
@@ -58,6 +62,36 @@ export default function MoreSheet({
 
         {/* Menu Grid */}
         <div className="grid grid-cols-2 gap-2.5">
+          {/* Vue 3D Relief */}
+          <button
+            onClick={() => {
+              onClose();
+              if (onOpen3DTerrain) onOpen3DTerrain();
+            }}
+            className="p-3.5 bg-[#F4F1EA] hover:bg-[#E9E4D9] rounded-2xl flex items-center gap-3 text-left transition-colors active:scale-95 border border-[#17402C]/10"
+          >
+            <span className="text-2xl">🏔️</span>
+            <div>
+              <div className="text-xs font-bold text-[#0B1F17]">Vue 3D Relief</div>
+              <div className="text-[10px] font-mono text-[#6B7A72]">Digital Twin terrain</div>
+            </div>
+          </button>
+
+          {/* Fichiers GPX */}
+          <button
+            onClick={() => {
+              onClose();
+              if (onOpenGPXModal) onOpenGPXModal();
+            }}
+            className="p-3.5 bg-[#F4F1EA] hover:bg-[#E9E4D9] rounded-2xl flex items-center gap-3 text-left transition-colors active:scale-95 border border-[#17402C]/10"
+          >
+            <span className="text-2xl">📥</span>
+            <div>
+              <div className="text-xs font-bold text-[#0B1F17]">Fichiers GPX</div>
+              <div className="text-[10px] font-mono text-[#6B7A72]">Import & Export</div>
+            </div>
+          </button>
+
           {/* Boussole AR */}
           <button
             onClick={() => {
@@ -69,7 +103,7 @@ export default function MoreSheet({
             <span className="text-2xl">🧭</span>
             <div>
               <div className="text-xs font-bold text-[#0B1F17]">Boussole AR</div>
-              <div className="text-[10px] font-mono text-[#6B7A72]">Superposition caméra</div>
+              <div className="text-[10px] font-mono text-[#6B7A72]">Caméra directionnelle</div>
             </div>
           </button>
 
@@ -91,31 +125,16 @@ export default function MoreSheet({
           {/* Mode Nuit Toggle */}
           <button
             onClick={onToggleNightMode}
-            className={`p-3.5 rounded-2xl flex items-center gap-3 text-left transition-colors active:scale-95 ${
+            className={`p-3.5 rounded-2xl flex items-center gap-3 text-left transition-colors active:scale-95 col-span-2 ${
               isNightMode ? 'bg-[#06120C] text-white' : 'bg-[#F4F1EA] text-[#0B1F17]'
             }`}
           >
             <span className="text-2xl">{isNightMode ? '🌙' : '☀️'}</span>
             <div>
-              <div className="text-xs font-bold">Mode Nuit</div>
+              <div className="text-xs font-bold">Mode Nuit Haute Visibilité</div>
               <div className="text-[10px] font-mono opacity-70">
-                {isNightMode ? 'Actif (Sombre)' : 'Inactif (Clair)'}
+                {isNightMode ? 'Actif (Palette Sombre)' : 'Inactif (Palette Claire)'}
               </div>
-            </div>
-          </button>
-
-          {/* Station Météo */}
-          <button
-            onClick={() => {
-              onClose();
-              onOpenWeather();
-            }}
-            className="p-3.5 bg-[#F4F1EA] hover:bg-[#E9E4D9] rounded-2xl flex items-center gap-3 text-left transition-colors active:scale-95"
-          >
-            <span className="text-2xl">🌦️</span>
-            <div>
-              <div className="text-xs font-bold text-[#0B1F17]">Station Météo</div>
-              <div className="text-[10px] font-mono text-[#6B7A72]">Prévisions d&apos;altitude</div>
             </div>
           </button>
         </div>

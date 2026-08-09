@@ -60,7 +60,7 @@ export async function generateMetadata(
     const ogImage = carnet.cover_image || '/assets/images/og-image.png';
     const canonicalUrl = `${siteUrl}/carnets/${id}`;
 
-    // TODO produit: décider si les carnets partagés doivent être indexables
+    // Configuration SEO pour carnets publics vs privés
     const isPublic = (carnet as any).is_public === true || carnet.visibility === 'public';
     const robots = isPublic
       ? { index: true, follow: true }

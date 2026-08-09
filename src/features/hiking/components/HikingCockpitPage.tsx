@@ -12,6 +12,8 @@ import NavigationCard from './NavigationCard';
 import CockpitBottomNav, { CockpitTab } from './CockpitBottomNav';
 import OfflineIndicatorBanner from './OfflineIndicatorBanner';
 import SafetyCenterModal from './SafetyCenterModal';
+import Terrain3DViewer from './Terrain3DViewer';
+import GPXImportExportModal from './GPXImportExportModal';
 import StatsSheet from './sheets/StatsSheet';
 import CaptureSheet from './sheets/CaptureSheet';
 import CopilotSheet from './sheets/CopilotSheet';
@@ -26,6 +28,8 @@ export default function HikingCockpitPage() {
   const [activeTab, setActiveTab] = useState<CockpitTab | null>(null);
   const [isNightMode, setIsNightMode] = useState(false);
   const [showSafetyModal, setShowSafetyModal] = useState(false);
+  const [show3DTerrain, setShow3DTerrain] = useState(false);
+  const [showGPXModal, setShowGPXModal] = useState(false);
   const [deviceHeading, setDeviceHeading] = useState<number | null>(15);
 
   // Fetch weather on mount
@@ -72,10 +76,6 @@ export default function HikingCockpitPage() {
     if (result?.sessionId) {
       router.push('/carnets');
     }
-  };
-
-  const handleCaptureAction = (type: 'PHOTO' | 'VIDEO' | 'VOICE' | 'NOTE' | 'MOMENT') => {
-    setActiveTab(null);
   };
 
   const currentPos = hikingStore.positions.length > 0
@@ -188,7 +188,7 @@ export default function HikingCockpitPage() {
         <CaptureSheet
           isOpen={activeTab === 'capture' || activeTab === 'carnet'}
           onClose={() => setActiveTab(null)}
-          onCaptureAction={handleCaptureAction}
+          onCaptureAction={() => setActiveTab(null)}
         />
 
         <CopilotSheet
@@ -208,6 +208,8 @@ export default function HikingCockpitPage() {
           onOpenSafety={() => setShowSafetyModal(true)}
           onOpenWeather={() => setActiveTab('copilot')}
           onOpenARCompass={() => router.push('/boussole')}
+          onOpen3DTerrain={() => setShow3DTerrain(true)}
+          onOpenGPXModal={() => setShowGPXModal(true)}
           onStopHike={handleConfirmStop}
         />
 
@@ -218,6 +220,23 @@ export default function HikingCockpitPage() {
           currentPos={currentPos}
           batteryLevel={78}
           isOffline={false}
+        />
+
+        {/* 3D Terrain Relief Viewer */}
+        <Terrain3DViewer
+          isOpen={show3DTerrain}
+          onClose={() => setShow3DTerrain(false)}
+          elevationGainM={hikingStore.elevationGainM}
+        />
+
+        {/* GPX Import/Export Modal */}
+        <GPXImportExportModal
+          isOpen={showGPXModal}
+          onClose={() => setShowGPXModal(false)}
+          positions={hikingStore.positions}
+          onImportParsedGPX={(parsed) => {
+            console.log('[Cockpit] GPX Imported:', parsed.title, parsed.positions.length);
+          }}
         />
       </div>
     </MobilePageShell>
