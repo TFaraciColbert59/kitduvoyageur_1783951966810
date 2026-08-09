@@ -278,11 +278,21 @@ export default function ExplorerMap({
 
   // Auto-zoom to selected trail
   const fitToTrail = useCallback((trail: MapTrail) => {
-    if (!mapRef.current) return;
-    const pt = toValidLatLng(trail?.lat, trail?.lng);
-    if (!pt) return;
+    if (!mapRef.current || !trail) return;
+    const pt = toValidLatLng(trail.lat, trail.lng);
+    if (!pt || !Number.isFinite(pt[0]) || !Number.isFinite(pt[1])) return;
+
+    const [lat, lng] = pt;
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
+
     import('leaflet').then(() => {
-      mapRef.current!.flyTo(pt, 14, { animate: true, duration: 1.2 });
+      if (mapRef.current && Number.isFinite(lat) && Number.isFinite(lng)) {
+        try {
+          mapRef.current.flyTo([lat, lng], 14, { animate: true, duration: 1.2 });
+        } catch {
+          // Safeguard against Leaflet LatLng conversion errors
+        }
+      }
     });
   }, []);
 

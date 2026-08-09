@@ -83,7 +83,10 @@ export function isValidLatLng(lat: unknown, lng: unknown): boolean {
 
 export function toValidLatLng(lat: unknown, lng: unknown): [number, number] | null {
   if (!isValidLatLng(lat, lng)) return null;
-  return [Number(lat), Number(lng)];
+  const nLat = Number(lat);
+  const nLng = Number(lng);
+  if (!Number.isFinite(nLat) || !Number.isFinite(nLng)) return null;
+  return [nLat, nLng];
 }
 
 /**
