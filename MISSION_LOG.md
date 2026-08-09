@@ -2,6 +2,21 @@
 
 ## 2026-08-09 — Session de développement
 
+### ✅ Prompt #0 — Synchronisation des migrations Supabase (TERMINÉ)
+
+**Date :** 2026-08-09
+- **Projet Supabase lié :** `lwrmuggefbmboikjgudc` (eu-west-3) via CLI.
+- **Réparation d'historique :** `npx supabase migration repair --status applied` exécuté sur les 61 migrations antérieures créées dans les chantiers précédents.
+- **Push des 5 nouvelles migrations :**
+  1. `20260808000000_seed_preset_kits.sql` (Kits préconfigurés)
+  2. `20260809000000_route_deviation_and_nearby_pois.sql` (Déviation PostGIS & POIs només)
+  3. `20260809100000_offline_route_pois.sql` (Routes & POIs hors-ligne)
+  4. `20260809200000_hike_sessions_and_carnet_moments.sql` (`hike_sessions`, `carnet_moments` et `get_user_hiking_stats`)
+  5. `20260809210000_carnet_moments_identified_species.sql` (`identified_species` JSONB + GIN index)
+- **Résultat :** `Finished supabase db push` avec succès. Base de données distante 100% synchronisée avec les 66 migrations locales.
+
+---
+
 ### ✅ Prompt #1 — Sécurité (TERMINÉ)
 
 #### P1.1: RLS sur `spatial_ref_sys`
