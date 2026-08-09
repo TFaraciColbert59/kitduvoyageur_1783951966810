@@ -1,5 +1,6 @@
 import { HikingStateMachine } from '../engine/HikingStateMachine';
-import { HikeEngine } from '../engine/HikeEngine';
+import { TrackingEngine } from '../engine/TrackingEngine';
+import { GPSService } from '../services/GPSService';
 import { WeatherService } from '../services/WeatherService';
 import { HikeSessionService } from '../services/HikeSessionService';
 import {
@@ -8,7 +9,6 @@ import {
   POI,
   WeatherSnapshot,
   SafetyAlert,
-  NavigationInstruction,
 } from '../types';
 
 export interface HikingControllerState {
@@ -19,6 +19,9 @@ export interface HikingControllerState {
   durationSeconds: number;
   elevationGainM: number | null;
   paceMinPerKm: number;
+  currentSpeedKmH: number;
+  averageSpeedKmH: number;
+  estimatedEtaMinutes: number | null;
   positions: GPSPosition[];
   progressPercent: number | null;
   nextPoi: (POI & { distanceRemainingM: number }) | null;
@@ -32,16 +35,20 @@ export interface HikingControllerState {
 
 export class HikingController {
   private stateMachine: HikingStateMachine;
+  private gpsService: GPSService;
+  private trackingEngine: TrackingEngine;
   private state: HikingControllerState;
   private listeners: ((state: HikingControllerState) => void)[] = [];
-  private watchId: number | null = null;
+  
   private timerId: NodeJS.Timeout | null = null;
-  private startTime: number = 0;
-  private pausedDuration: number = 0;
-  private pauseStartTime: number | null = null;
+  private unbindGPSPosition: (() => void) | null = null;
+  private unbindGPSError: (() => void) | null = null;
 
   constructor() {
     this.stateMachine = new HikingStateMachine('IDLE');
+    this.gpsService = new GPSService();
+    this.trackingEngine = new TrackingEngine();
+
     this.state = {
       state: 'IDLE',
       isActive: false,
@@ -50,6 +57,9 @@ export class HikingController {
       durationSeconds: 0,
       elevationGainM: null,
       paceMinPerKm: 0,
+      currentSpeedKmH: 0,
+      averageSpeedKmH: 0,
+      estimatedEtaMinutes: null,
       positions: [],
       progressPercent: null,
       nextPoi: null,
@@ -84,9 +94,7 @@ export class HikingController {
   public async startHike(routeId?: string): Promise<void> {
     if (!this.stateMachine.transitionTo('PREPARING')) return;
 
-    this.startTime = Date.now();
-    this.pausedDuration = 0;
-    this.pauseStartTime = null;
+    this.trackingEngine.reset();
 
     this.updateState({
       routeId: routeId || null,
@@ -94,6 +102,9 @@ export class HikingController {
       durationSeconds: 0,
       elevationGainM: null,
       paceMinPerKm: 0,
+      currentSpeedKmH: 0,
+      averageSpeedKmH: 0,
+      estimatedEtaMinutes: null,
       positions: [],
       safetyAlerts: [],
     });
@@ -101,21 +112,16 @@ export class HikingController {
     this.stateMachine.transitionTo('READY');
     this.stateMachine.transitionTo('TRACKING');
 
+    this.bindGPS();
     this.startTimer();
-    this.startGPSWatch();
     this.initBattery();
   }
 
   public pauseHike(): void {
     if (!this.stateMachine.transitionTo('PAUSED')) return;
-    this.pauseStartTime = Date.now();
   }
 
   public resumeHike(): void {
-    if (this.pauseStartTime) {
-      this.pausedDuration += Date.now() - this.pauseStartTime;
-      this.pauseStartTime = null;
-    }
     this.stateMachine.transitionTo('TRACKING');
   }
 
@@ -123,14 +129,15 @@ export class HikingController {
     if (!this.stateMachine.transitionTo('FINISHING')) return null;
 
     this.stopTimer();
-    this.stopGPSWatch();
+    this.unbindGPS();
 
     const endedAt = new Date().toISOString();
-    const startedAt = new Date(this.startTime).toISOString();
+    const positions = this.trackingEngine.getValidPositions();
+    const startedAt = positions.length > 0 ? new Date(positions[0].timestamp).toISOString() : new Date().toISOString();
 
     let sessionId: string | null = null;
 
-    if (this.state.positions.length > 0 && this.state.distanceKm > 0) {
+    if (positions.length > 0 && this.state.distanceKm > 0) {
       try {
         const res = await HikeSessionService.saveSession({
           routeId: this.state.routeId,
@@ -140,7 +147,7 @@ export class HikingController {
           distanceKm: this.state.distanceKm,
           durationSeconds: this.state.durationSeconds,
           elevationGainM: this.state.elevationGainM,
-          positions: this.state.positions,
+          positions,
           poiEvents: [],
         });
         sessionId = res.sessionId;
@@ -187,16 +194,61 @@ export class HikingController {
     this.listeners.forEach((l) => l(this.state));
   }
 
+  private bindGPS(): void {
+    this.unbindGPS();
+
+    this.unbindGPSPosition = this.gpsService.onPosition((pos) => {
+      if (this.state.isPaused) return;
+
+      const accepted = this.trackingEngine.processPosition(pos);
+      if (accepted) {
+        const metrics = this.trackingEngine.getMetrics();
+        this.updateState({
+          distanceKm: metrics.distanceKm,
+          elevationGainM: metrics.elevationGainM,
+          currentSpeedKmH: metrics.currentSpeedKmH,
+          averageSpeedKmH: metrics.averageSpeedKmH,
+          paceMinPerKm: metrics.paceMinPerKm,
+          estimatedEtaMinutes: metrics.estimatedEtaMinutes,
+          positions: this.trackingEngine.getValidPositions(),
+        });
+      }
+    });
+
+    this.unbindGPSError = this.gpsService.onError((err) => {
+      if (err.code === 3 || err.code === 2) {
+        if (this.stateMachine.getState() === 'TRACKING') {
+          this.stateMachine.transitionTo('GPS_WEAK');
+        }
+      }
+    });
+
+    this.gpsService.startTracking();
+  }
+
+  private unbindGPS(): void {
+    this.gpsService.stopTracking();
+    if (this.unbindGPSPosition) {
+      this.unbindGPSPosition();
+      this.unbindGPSPosition = null;
+    }
+    if (this.unbindGPSError) {
+      this.unbindGPSError();
+      this.unbindGPSError = null;
+    }
+  }
+
   private startTimer(): void {
     this.stopTimer();
     this.timerId = setInterval(() => {
       if (this.state.isPaused) return;
 
-      const elapsedMs = Date.now() - this.startTime - this.pausedDuration;
-      const durationSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
-      const paceMinPerKm = HikeEngine.calculatePaceMinPerKm(durationSeconds, this.state.distanceKm);
-
-      this.updateState({ durationSeconds, paceMinPerKm });
+      const metrics = this.trackingEngine.getMetrics();
+      this.updateState({
+        durationSeconds: metrics.activeDurationSeconds,
+        paceMinPerKm: metrics.paceMinPerKm,
+        averageSpeedKmH: metrics.averageSpeedKmH,
+      });
     }, 1000);
   }
 
@@ -205,64 +257,6 @@ export class HikingController {
       clearInterval(this.timerId);
       this.timerId = null;
     }
-  }
-
-  private startGPSWatch(): void {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) return;
-
-    this.stopGPSWatch();
-    this.watchId = navigator.geolocation.watchPosition(
-      (pos) => this.handleGPSUpdate(pos),
-      (err) => console.warn('[HikingController] GPS error:', err?.message || err),
-      { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
-    );
-  }
-
-  private stopGPSWatch(): void {
-    if (this.watchId !== null && typeof navigator !== 'undefined' && navigator.geolocation) {
-      navigator.geolocation.clearWatch(this.watchId);
-      this.watchId = null;
-    }
-  }
-
-  private handleGPSUpdate(pos: GeolocationPosition): void {
-    if (this.state.isPaused) return;
-
-    const newPos: GPSPosition = {
-      latitude: pos.coords.latitude,
-      longitude: pos.coords.longitude,
-      altitude: pos.coords.altitude,
-      accuracy: pos.coords.accuracy,
-      altitudeAccuracy: pos.coords.altitudeAccuracy,
-      heading: pos.coords.heading,
-      speed: pos.coords.speed,
-      timestamp: pos.timestamp,
-    };
-
-    const prevPositions = this.state.positions;
-    const lastPos = prevPositions.length > 0 ? prevPositions[prevPositions.length - 1] : null;
-
-    let addedDistKm = 0;
-    if (lastPos) {
-      addedDistKm = HikeEngine.calculateDistanceKm(
-        lastPos.latitude,
-        lastPos.longitude,
-        newPos.latitude,
-        newPos.longitude
-      );
-      // Filter out small jitter (< 5 meters)
-      if (addedDistKm < 0.005) addedDistKm = 0;
-    }
-
-    const updatedPositions = [...prevPositions, newPos];
-    const totalDistKm = this.state.distanceKm + addedDistKm;
-    const elevationGainM = HikeEngine.calculateElevationGain(updatedPositions);
-
-    this.updateState({
-      positions: updatedPositions,
-      distanceKm: totalDistKm,
-      elevationGainM,
-    });
   }
 
   private initBattery(): void {
@@ -279,6 +273,9 @@ export class HikingController {
               message: `Batterie faible (${level}%)`,
               timestamp: new Date().toISOString(),
             });
+            if (this.stateMachine.getState() === 'TRACKING') {
+              this.stateMachine.transitionTo('LOW_BATTERY');
+            }
           }
         };
         updateBattery();
