@@ -12,6 +12,7 @@ import NavigationCard from './NavigationCard';
 import HikingControls from './HikingControls';
 import CockpitBottomNav, { CockpitTab } from './CockpitBottomNav';
 import OfflineIndicatorBanner from './OfflineIndicatorBanner';
+import SafetyCenterModal from './SafetyCenterModal';
 import { POI } from '../types';
 
 export default function HikingCockpitPage() {
@@ -23,6 +24,7 @@ export default function HikingCockpitPage() {
   const [activeTab, setActiveTab] = useState<CockpitTab>('nav');
   const [showStopModal, setShowStopModal] = useState(false);
   const [showSpeciesModal, setShowSpeciesModal] = useState(false);
+  const [showSafetyModal, setShowSafetyModal] = useState(false);
   const [deviceHeading, setDeviceHeading] = useState<number | null>(null);
 
   // Fetch weather on mount
@@ -141,6 +143,26 @@ export default function HikingCockpitPage() {
 
           <CockpitBottomNav activeTab={activeTab} onTabSelect={handleTabSelect} />
         </div>
+
+        {/* Floating SOS Safety Trigger Button */}
+        <button
+          onClick={() => setShowSafetyModal(true)}
+          className="absolute top-28 right-4 z-40 w-11 h-11 rounded-2xl bg-red-950/80 border border-red-500/50 backdrop-blur-xl flex items-center justify-center text-white text-lg shadow-xl hover:scale-105 active:scale-95 transition-transform"
+          title="Centre de Sécurité & Urgence"
+        >
+          🛡️
+        </button>
+
+        {/* Safety Center Modal */}
+        <SafetyCenterModal
+          isOpen={showSafetyModal}
+          onClose={() => setShowSafetyModal(false)}
+          currentPos={hikingStore.positions.length > 0 ? hikingStore.positions[hikingStore.positions.length - 1] : null}
+          startPos={hikingStore.positions.length > 0 ? hikingStore.positions[0] : null}
+          batteryLevel={hikingStore.batteryLevel}
+          isOffline={false}
+          alerts={hikingStore.safetyAlerts}
+        />
 
         {/* Stop Confirmation Modal */}
         {showStopModal && (
