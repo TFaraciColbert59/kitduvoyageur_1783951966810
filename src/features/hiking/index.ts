@@ -19,6 +19,7 @@ export * from './journal/JournalEventBuilder';
 export * from './journal/JournalService';
 export * from './journal/JournalStore';
 export * from './safety/SafetyEngine';
+export * from './copilot/CopilotEngine';
 
 // Components
 export { default as TopHUD } from './components/TopHUD';
@@ -28,7 +29,9 @@ export { default as HikingControls } from './components/HikingControls';
 export { default as CockpitBottomNav } from './components/CockpitBottomNav';
 export { default as OfflineIndicatorBanner } from './components/OfflineIndicatorBanner';
 export { default as SafetyCenterModal } from './components/SafetyCenterModal';
+export { default as CopilotPanel } from './components/CopilotPanel';
 export { default as HikingCockpitPage } from './components/HikingCockpitPage';
+
 
 
 

@@ -13,6 +13,7 @@ import HikingControls from './HikingControls';
 import CockpitBottomNav, { CockpitTab } from './CockpitBottomNav';
 import OfflineIndicatorBanner from './OfflineIndicatorBanner';
 import SafetyCenterModal from './SafetyCenterModal';
+import CopilotPanel from './CopilotPanel';
 import { POI } from '../types';
 
 export default function HikingCockpitPage() {
@@ -25,6 +26,7 @@ export default function HikingCockpitPage() {
   const [showStopModal, setShowStopModal] = useState(false);
   const [showSpeciesModal, setShowSpeciesModal] = useState(false);
   const [showSafetyModal, setShowSafetyModal] = useState(false);
+  const [showCopilotModal, setShowCopilotModal] = useState(false);
   const [deviceHeading, setDeviceHeading] = useState<number | null>(null);
 
   // Fetch weather on mount
@@ -143,6 +145,30 @@ export default function HikingCockpitPage() {
 
           <CockpitBottomNav activeTab={activeTab} onTabSelect={handleTabSelect} />
         </div>
+
+        {/* Floating AI Copilot Trigger Button */}
+        <button
+          onClick={() => setShowCopilotModal(true)}
+          className="absolute top-44 right-4 z-40 w-11 h-11 rounded-2xl bg-[#17402C]/90 border border-[#4E9F3D]/50 backdrop-blur-xl flex items-center justify-center text-white text-lg shadow-xl hover:scale-105 active:scale-95 transition-transform"
+          title="Copilote IA Terrain"
+        >
+          🤖
+        </button>
+
+        {/* AI Copilot Panel Drawer */}
+        <CopilotPanel
+          isOpen={showCopilotModal}
+          onClose={() => setShowCopilotModal(false)}
+          context={{
+            distanceKm: hikingStore.distanceKm,
+            durationSeconds: hikingStore.durationSeconds,
+            elevationGainM: hikingStore.elevationGainM,
+            paceMinPerKm: hikingStore.paceMinPerKm,
+            progressPercent: hikingStore.progressPercent,
+            weather: hikingStore.weather,
+            nextPoi: hikingStore.nextPoi,
+          }}
+        />
 
         {/* Floating SOS Safety Trigger Button */}
         <button
