@@ -7,8 +7,10 @@
  */
 
 const DB_NAME = 'lkdv-offline';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Incremented for new stores
 const STORE_ROUTES = 'routes';
+export const STORE_INVENTORY = 'inventory';
+export const STORE_OFFLINE_ACTIONS = 'offline_actions';
 
 export interface OfflineRoute {
   routeId: string;
@@ -29,6 +31,13 @@ export interface OfflinePoi {
   lng: number;
 }
 
+export interface OfflineAction {
+  id: string;
+  type: string;
+  payload: any;
+  timestamp: number;
+}
+
 // ── Ouverture de la DB ────────────────────────────────────────────────────────
 
 function openDB(): Promise<IDBDatabase> {
@@ -39,6 +48,12 @@ function openDB(): Promise<IDBDatabase> {
       const db = (event.target as IDBOpenDBRequest).result;
       if (!db.objectStoreNames.contains(STORE_ROUTES)) {
         db.createObjectStore(STORE_ROUTES, { keyPath: 'routeId' });
+      }
+      if (!db.objectStoreNames.contains(STORE_INVENTORY)) {
+        db.createObjectStore(STORE_INVENTORY, { keyPath: 'userId' });
+      }
+      if (!db.objectStoreNames.contains(STORE_OFFLINE_ACTIONS)) {
+        db.createObjectStore(STORE_OFFLINE_ACTIONS, { keyPath: 'id' });
       }
     };
 
@@ -149,4 +164,43 @@ export function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} o`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+}
+
+// ── API publique pour Inventaire et Offline Actions ───────────────────────────────────
+
+export async function saveInventoryOffline(userId: string, inventory: any[]): Promise<void> {
+  const db = await openDB();
+  await storePut(db, STORE_INVENTORY, { userId, inventory, updatedAt: Date.now() });
+  db.close();
+}
+
+export async function getInventoryOffline(userId: string): Promise<any[] | undefined> {
+  const db = await openDB();
+  const result = await storeGet<{ userId: string; inventory: any[] }>(db, STORE_INVENTORY, userId);
+  db.close();
+  return result?.inventory;
+}
+
+export async function enqueueOfflineAction(action: Omit<OfflineAction, 'id' | 'timestamp'>): Promise<void> {
+  const db = await openDB();
+  const fullAction: OfflineAction = {
+    ...action,
+    id: crypto.randomUUID(),
+    timestamp: Date.now(),
+  };
+  await storePut(db, STORE_OFFLINE_ACTIONS, fullAction);
+  db.close();
+}
+
+export async function getOfflineActions(): Promise<OfflineAction[]> {
+  const db = await openDB();
+  const results = await storeGetAll<OfflineAction>(db, STORE_OFFLINE_ACTIONS);
+  db.close();
+  return results.sort((a, b) => a.timestamp - b.timestamp);
+}
+
+export async function clearOfflineAction(id: string): Promise<void> {
+  const db = await openDB();
+  await storeDelete(db, STORE_OFFLINE_ACTIONS, id);
+  db.close();
 }

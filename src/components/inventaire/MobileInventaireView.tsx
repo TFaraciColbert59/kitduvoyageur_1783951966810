@@ -117,18 +117,71 @@ export default function MobileInventaireView({
           <button onClick={onOpenAddModal} className="text-emerald-800 hover:underline">+ Ajouter</button>
         </div>
 
-        <div className="space-y-3">
-          {filteredItems.map((item) => (
-            <GearCard
-              key={item.id}
-              item={item}
-              viewMode="list"
-              onToggleFavorite={onToggleFavorite}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          ))}
-        </div>
+        {filteredItems.length === 0 ? (
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: '16px',
+              border: '1px dashed rgba(11,31,23,0.15)',
+              padding: '32px 20px',
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                width: '56px',
+                height: '56px',
+                margin: '0 auto 12px',
+                borderRadius: '50%',
+                background: '#EDF3ED',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '28px',
+              }}
+            >
+              🎒
+            </div>
+            <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0B1F17', margin: '0 0 6px' }}>
+              {items.length === 0 ? 'Mon inventaire est vide' : 'Aucun résultat'}
+            </h3>
+            <p style={{ fontSize: '13px', color: '#6B7A72', margin: '0 0 16px', lineHeight: 1.5 }}>
+              {items.length === 0
+                ? 'Ajoutez votre premier équipement pour préparer vos randonnées.'
+                : "Aucun article ne correspond à cette catégorie."}
+            </p>
+            {items.length === 0 && (
+              <button
+                onClick={onOpenAddModal}
+                style={{
+                  padding: '12px 20px',
+                  background: '#17402C',
+                  color: '#fff',
+                  borderRadius: '999px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                Ajouter mon premier équipement
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredItems.map((item) => (
+              <GearCard
+                key={item.id}
+                item={item}
+                viewMode="list"
+                onToggleFavorite={onToggleFavorite}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

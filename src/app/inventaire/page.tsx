@@ -17,18 +17,12 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import CompteFooter from '@/components/compte/CompteFooter';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  MOCK_INVENTAIRE_ITEMS,
-  MOCK_USER_KITS,
-  MOCK_LOANS,
-  MOCK_REPAIRS,
-  MOCK_RECOMMENDATIONS,
-  GearItemData,
-} from '@/lib/mock/inventaire-marceline';
+import type { GearItemData } from '@/lib/mock/inventaire-marceline';
 
 export default function InventairePage() {
-  const [items, setItems] = useState<GearItemData[]>(MOCK_INVENTAIRE_ITEMS);
+  const [items, setItems] = useState<GearItemData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorState, setErrorState] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [sortBy, setSortBy] = useState<SortOption>('weight');
@@ -40,8 +34,8 @@ export default function InventairePage() {
   const [addCategoryTarget, setAddCategoryTarget] = useState<string | undefined>();
   const [toast, setToast] = useState<string | null>(null);
 
-  const [userKits, setUserKits] = useState<any[]>(MOCK_USER_KITS);
-  const [recommendations, setRecommendations] = useState<any[]>(MOCK_RECOMMENDATIONS);
+  const [userKits, setUserKits] = useState<any[]>([]);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
 
   const { user } = useAuth();
   const supabase = useMemo(() => createClient(), []);
@@ -54,11 +48,13 @@ export default function InventairePage() {
   // Load items from Supabase DB
   const loadGearFromDB = useCallback(async () => {
     if (!user) {
-      setItems(MOCK_INVENTAIRE_ITEMS);
+      setItems([]);
+      setErrorState(null);
       setLoading(false);
       return;
     }
     setLoading(true);
+    setErrorState(null);
     try {
       const { data, error } = await supabase
         .from('gear_items')
@@ -80,7 +76,7 @@ export default function InventairePage() {
           weight_g: d.weight_g || 0,
           purchase_price: d.purchase_price || 0,
           purchase_date: d.purchase_date,
-          image: d.image || 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=800&q=80',
+          image: d.image || '/assets/images/no_image.png',
           alt: d.alt || d.name,
           quantity: d.quantity || 1,
           is_favorite: d.is_favorite || false,
@@ -91,10 +87,12 @@ export default function InventairePage() {
         }));
         setItems(mappedData);
       } else {
-        setItems(MOCK_INVENTAIRE_ITEMS);
+        setItems([]);
       }
-    } catch {
-      setItems(MOCK_INVENTAIRE_ITEMS);
+    } catch (err: any) {
+      console.error('Error fetching user inventory:', err);
+      setErrorState('Impossible de charger votre inventaire matériel.');
+      setItems([]);
     } finally {
       setLoading(false);
     }
@@ -215,7 +213,7 @@ export default function InventairePage() {
         weight_g: itemData.weight_g || 0,
         purchase_price: itemData.purchase_price || 0,
         quantity: itemData.quantity || 1,
-        image: itemData.image || 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=800&q=80',
+        image: itemData.image || '/assets/images/no_image.png',
         alt: itemData.name || 'Équipement',
         is_favorite: false,
         notes: itemData.notes || '',
@@ -224,21 +222,44 @@ export default function InventairePage() {
       setItems((prev) => [newItem, ...prev]);
 
       if (user) {
-        await supabase.from('gear_items').insert({
-          user_id: user.id,
-          name: newItem.name,
-          brand: newItem.brand,
-          model: newItem.model,
-          category: newItem.category,
-          condition: newItem.condition,
-          weight_g: newItem.weight_g,
-          purchase_price: newItem.purchase_price,
-          quantity: newItem.quantity,
-          image: newItem.image,
-          alt: newItem.alt,
-          notes: newItem.notes,
-          source: 'manuel',
-        });
+        const { data: inserted, error } = await supabase
+          .from('gear_items')
+          .insert({
+            user_id: user.id,
+            name: newItem.name,
+            brand: newItem.brand,
+            model: newItem.model,
+            category: newItem.category,
+            condition: newItem.condition,
+            weight_g: newItem.weight_g,
+            purchase_price: newItem.purchase_price,
+            quantity: newItem.quantity,
+            image: newItem.image,
+            alt: newItem.alt,
+            notes: newItem.notes,
+            source: 'manuel',
+          })
+          .select()
+          .single();
+
+        if (error) {
+          // Échec réel côté DB : on retire l'item optimiste et on alerte l'utilisateur.
+          setItems((prev) => prev.filter((i) => i.id !== newItem.id));
+          console.error('Erreur ajout équipement:', error);
+          showToast("Impossible d'ajouter l'équipement. Réessayez.");
+          return;
+        }
+
+        // Remplace l'id temporaire par l'id réel en base pour rester cohérent.
+        if (inserted) {
+          setItems((prev) =>
+            prev.map((i) =>
+              i.id === newItem.id
+                ? ({ ...i, id: inserted.id, user_id: inserted.user_id } as GearItemData)
+                : i
+            )
+          );
+        }
       }
       showToast('Article ajouté à votre inventaire !');
     }
@@ -386,14 +407,30 @@ export default function InventairePage() {
                         onAddCategoryItem={() => { setEditingItem(null); setAddCategoryTarget(catKey); setIsAddModalOpen(true); }}
                       />
                     ))
+                  ) : items.length === 0 && !loading ? (
+                    <div className="bg-white rounded-[2rem] p-12 border border-[#E8E4D8] text-center space-y-4 shadow-sm">
+                      <div className="w-16 h-16 rounded-full bg-[#EDF3ED] text-[#17402C] flex items-center justify-center text-3xl mx-auto">
+                        🎒
+                      </div>
+                      <h3 className="font-display font-800 text-xl text-[#132219]">Mon inventaire est vide</h3>
+                      <p className="text-xs text-[#132219]/60 max-w-md mx-auto">
+                        Ajoutez votre premier équipement pour préparer vos randonnées et connaître le poids de votre sac.
+                      </p>
+                      <button
+                        onClick={() => { setEditingItem(null); setAddCategoryTarget(undefined); setIsAddModalOpen(true); }}
+                        className="px-6 py-2.5 bg-[#17402C] text-white rounded-full text-xs font-bold hover:bg-[#0F2B1D] transition-colors"
+                      >
+                        Ajouter mon premier équipement
+                      </button>
+                    </div>
                   ) : (
                     <div className="bg-white rounded-[2rem] p-12 border border-[#E8E4D8] text-center space-y-4 shadow-sm">
                       <div className="w-16 h-16 rounded-full bg-[#F5F3ED] text-[#132219]/40 flex items-center justify-center text-3xl mx-auto">
-                        🎒
+                        🔍
                       </div>
-                      <h3 className="font-display font-800 text-xl text-[#132219]">Aucun équipement trouvé</h3>
+                      <h3 className="font-display font-800 text-xl text-[#132219]">Aucun résultat</h3>
                       <p className="text-xs text-[#132219]/60 max-w-md mx-auto">
-                        Aucun article ne correspond à votre recherche ou filtre actuel. Ajoutez un nouvel équipement !
+                        Aucun article ne correspond à votre recherche ou filtre actuel.
                       </p>
                       <button
                         onClick={() => { setSearch(''); setActiveCategory('all'); }}
@@ -441,7 +478,7 @@ export default function InventairePage() {
                   Un sac bien fait, <span className="font-serif italic font-normal text-emerald-200">c&apos;est déjà un voyage réussi.</span>
                 </h3>
                 <p className="text-xs text-white/60 mt-1 font-mono">
-                  © 2026 Le Kit du Voyageur — Inventaire de Marceline Chevrier · {totalArticles} articles pesés
+                  © 2026 Le Kit du Voyageur — Mon inventaire matériel · {totalArticles} article{totalArticles !== 1 ? 's' : ''} pesé{totalArticles !== 1 ? 's' : ''}
                 </p>
               </div>
               <button

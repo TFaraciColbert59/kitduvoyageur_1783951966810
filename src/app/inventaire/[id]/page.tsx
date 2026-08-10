@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import Header from '@/components/Header';
@@ -18,7 +18,7 @@ import {
   fetchItemHistory,
   updateGearItem,
 } from '@/lib/supabase/queries';
-import { GearItemData, MOCK_INVENTAIRE_ITEMS } from '@/lib/mock/inventaire-marceline';
+import type { GearItemData } from '@/lib/mock/inventaire-marceline';
 
 import ItemHero from '@/components/inventaire/ItemHero';
 import TechSpecTable from '@/components/inventaire/TechSpecTable';
@@ -35,7 +35,7 @@ export default function GearDetailPage() {
   const { user } = useAuth();
   const router = useRouter();
   const params = useParams();
-  const itemId = (params?.id as string) || 'g-1';
+  const itemId = (params?.id as string) || '';
 
   const supabase = useMemo(() => createClient(), []);
 
@@ -45,6 +45,7 @@ export default function GearDetailPage() {
   const [loans, setLoans] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorState, setErrorState] = useState<string | null>(null);
 
   // Active Tab State
   const [activeTab, setActiveTab] = useState<'fiche' | 'kits' | 'history' | 'loans' | 'notes'>('fiche');
@@ -59,46 +60,45 @@ export default function GearDetailPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      const userId = user?.id || 'guest';
+  const load = useCallback(async () => {
+    setLoading(true);
+    setErrorState(null);
+    if (!itemId || !user) {
+      setGear(null);
+      setLoading(false);
+      return;
+    }
 
-      try {
-        const [itemData, img, kitData, loanData, hist] = await Promise.all([
-          fetchGearItem(itemId, userId, supabase),
-          fetchGearImages(itemId, supabase),
-          fetchItemKits(itemId, supabase),
-          fetchItemLoans(itemId, supabase),
-          fetchItemHistory(itemId, supabase),
-        ]);
+    try {
+      const [itemData, img, kitData, loanData, hist] = await Promise.all([
+        fetchGearItem(itemId, user.id, supabase),
+        fetchGearImages(itemId, supabase),
+        fetchItemKits(itemId, supabase),
+        fetchItemLoans(itemId, supabase),
+        fetchItemHistory(itemId, supabase),
+      ]);
 
-        // Fallback to MOCK_INVENTAIRE_ITEMS if itemData is null
-        const finalItem = itemData || MOCK_INVENTAIRE_ITEMS.find((g) => g.id === itemId) || MOCK_INVENTAIRE_ITEMS[0];
-
-        setGear(finalItem);
-        setImages(img.length > 0 ? img : finalItem.images || [finalItem.image]);
-        setKits(kitData);
-        setLoans(loanData);
-        setHistory(hist);
-      } catch (err) {
-        console.error('Impossible de charger la fiche article', err);
-        // Erreur côté serveur : on retombe sur les données mock pour ne pas
-        // bloquer l'utilisateur sur un écran vide.
-        const fallbackItem = MOCK_INVENTAIRE_ITEMS.find((g) => g.id === itemId) || MOCK_INVENTAIRE_ITEMS[0];
-        setGear(fallbackItem);
-        setImages(fallbackItem.images || [fallbackItem.image]);
-        setKits([]);
-        setLoans([]);
-        setHistory([]);
-      } finally {
-        // Toujours sortir de l'état loading, même si une requête rejette.
-        setLoading(false);
+      // Aucun fallback : si l'article n'existe pas (null), on affiche l'état introuvable.
+      setGear(itemData);
+      if (itemData) {
+        const fallbackImage = itemData.image || '/assets/images/no_image.png';
+        setImages(img.length > 0 ? img : itemData.images?.length ? itemData.images : [fallbackImage]);
       }
-    };
-
-    load();
+      setKits(kitData);
+      setLoans(loanData);
+      setHistory(hist);
+    } catch (err) {
+      console.error('Impossible de charger la fiche article', err);
+      setErrorState('Impossible de charger la fiche article. Vérifiez votre connexion puis réessayez.');
+      setGear(null);
+    } finally {
+      setLoading(false);
+    }
   }, [itemId, user, supabase]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const handleSave = async (updated: Partial<GearItemData>) => {
     if (!gear) return;
@@ -159,6 +159,20 @@ export default function GearDetailPage() {
     </div>
   );
 
+  const desktopError = (
+    <div className="min-h-screen bg-[#FAF8F5] flex flex-col items-center justify-center p-6 text-center">
+      <p className="text-3xl mb-3">⚠️</p>
+      <h1 className="text-2xl font-extrabold text-[#132219]">Une erreur est survenue</h1>
+      <p className="mt-2 text-sm text-[#132219]/60 max-w-sm">{errorState}</p>
+      <button
+        onClick={() => load()}
+        className="mt-6 px-6 py-3 bg-[#132219] text-white rounded-full text-xs font-bold"
+      >
+        Réessayer
+      </button>
+    </div>
+  );
+
   const desktopGearContent = gear ? (
     <div className="min-h-screen bg-[#FAF8F5] text-[#132219] font-sans pt-20">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 space-y-6">
@@ -190,7 +204,7 @@ export default function GearDetailPage() {
             {[
               { id: 'fiche', label: 'Fiche technique' },
               { id: 'kits', label: `Kits associés (3)` },
-              { id: 'history', label: `Historique (${gear.history_events?.length || 6})` },
+              { id: 'history', label: `Historique (${(gear.history_events?.length || history.length)})` },
               { id: 'loans', label: 'Prêts & échanges' },
               { id: 'notes', label: 'Notes personnelles' },
             ].map((tab) => {
@@ -240,7 +254,7 @@ export default function GearDetailPage() {
             Un objet bien pesé, un voyage mieux <span className="italic font-serif font-normal text-[#82C39B]">préparé.</span>
           </h2>
           <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-white/60 pt-4 border-t border-white/10">
-            <span>© 2026 Le Kit du Voyageur — Fiche article de Marceline</span>
+            <span>© 2026 Le Kit du Voyageur — Fiche article</span>
             <span>•</span>
             <Link href="/aide" className="hover:text-white transition-colors">Aide & Support</Link>
             <span>•</span>
@@ -269,6 +283,18 @@ export default function GearDetailPage() {
       <button onClick={() => router.push('/inventaire')}
         style={{ padding: '12px 24px', background: '#17402C', color: '#fff', borderRadius: '20px', fontSize: '13px', fontWeight: 700, border: 'none', cursor: 'pointer' }}>
         Retour a l&apos;inventaire
+      </button>
+    </div>
+  );
+
+  const mobileError = (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60dvh', padding: '16px', textAlign: 'center' }}>
+      <p style={{ fontSize: '28px', marginBottom: '8px' }}>⚠️</p>
+      <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#1C2620', marginBottom: '8px' }}>Une erreur est survenue</h1>
+      <p style={{ fontSize: '14px', color: '#6B7A72', marginBottom: '20px' }}>{errorState}</p>
+      <button onClick={() => load()}
+        style={{ padding: '12px 24px', background: '#17402C', color: '#fff', borderRadius: '20px', fontSize: '13px', fontWeight: 700, border: 'none', cursor: 'pointer' }}>
+        Réessayer
       </button>
     </div>
   );
@@ -405,12 +431,13 @@ export default function GearDetailPage() {
 
   // Determine state
   const showLoading = loading;
-  const showNotFound = !loading && !gear;
+  const showError = !loading && !!errorState && !gear;
+  const showNotFound = !loading && !gear && !errorState;
   const showGear = !loading && gear;
 
-  const desktopRender = showLoading ? desktopLoading : showNotFound ? desktopNotFound : showGear ? desktopGearContent : null;
+  const desktopRender = showLoading ? desktopLoading : showError ? desktopError : showNotFound ? desktopNotFound : showGear ? desktopGearContent : null;
 
-  const mobileRender = showLoading ? mobileLoading : showNotFound ? mobileNotFound : showGear ? (
+  const mobileRender = showLoading ? mobileLoading : showError ? mobileError : showNotFound ? mobileNotFound : showGear ? (
     <MobilePageShell>
       {mobileGearContent}
     </MobilePageShell>
