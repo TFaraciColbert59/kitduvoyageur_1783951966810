@@ -291,108 +291,52 @@ export async function computeConnectedReport(params: {
   const missingItems: MissingShopItem[] = [];
   const inadequateAlerts: InadequateGearAlert[] = [];
 
-  // Helper to pick best product from real catalog matching sub-category
-  const findProductForCategory = (catName: string, fallbackName: string, fallbackPrice: number, fallbackWeight: number, fallbackImage: string): RealShopProduct => {
+  // Helper to pick a real product from the catalog matching a sub-category.
+  // Never fabricates a product: returns null when the catalog has no match.
+  const findProductForCategory = (catName: string): RealShopProduct | null => {
     const match = catalog.find((p) => p.category.toLowerCase().includes(catName.toLowerCase()) || p.name.toLowerCase().includes(catName.toLowerCase()));
-    if (match) return match;
+    return match || null;
+  };
 
-    // Return synthetic object backed by a deterministic ID if catalog lookup fails
-    return {
-      id: `shop-${catName.toLowerCase().replace(/\s+/g, '-')}`,
-      slug: `produit-${catName.toLowerCase().replace(/\s+/g, '-')}`,
-      name: fallbackName,
-      brand: 'Le Kit du Voyageur',
-      category: catName,
-      priceEur: fallbackPrice,
-      weightGrams: fallbackWeight,
-      image: fallbackImage,
-      stock: 10,
-    };
+  const pushIfReal = (prod: RealShopProduct | null, essentiality: MissingShopItem['essentiality'], reason: string) => {
+    if (!prod) return;
+    missingItems.push({
+      id: prod.id,
+      slug: prod.slug,
+      name: prod.name,
+      brand: prod.brand,
+      category: prod.category,
+      priceEur: prod.priceEur,
+      weightGrams: prod.weightGrams,
+      image: prod.image,
+      essentiality,
+      reason,
+    });
   };
 
   // 1. Sac à dos
   if (!hasSac) {
-    const prod = findProductForCategory('Sacs à dos', 'Sac à dos 45 L Ultra-Résistant', 249, 850, 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400');
-    missingItems.push({
-      id: prod.id,
-      slug: prod.slug,
-      name: prod.name,
-      brand: prod.brand,
-      category: prod.category,
-      priceEur: prod.priceEur,
-      weightGrams: prod.weightGrams,
-      image: prod.image,
-      essentiality: 'indispensable',
-      reason: 'Volume de portage essentiel pour la durée sélectionnée.',
-    });
+    pushIfReal(findProductForCategory('Sacs à dos'), 'indispensable', 'Volume de portage essentiel pour la durée sélectionnée.');
   }
 
   // 2. Couchage
   if (!hasDuvet) {
-    const prod = findProductForCategory('Couchage', 'Duvet 3 saisons 800 Cuin', 219, 520, 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=400');
-    missingItems.push({
-      id: prod.id,
-      slug: prod.slug,
-      name: prod.name,
-      brand: prod.brand,
-      category: prod.category,
-      priceEur: prod.priceEur,
-      weightGrams: prod.weightGrams,
-      image: prod.image,
-      essentiality: 'indispensable',
-      reason: 'Isolation thermique certifiée pour nuits en altitude.',
-    });
+    pushIfReal(findProductForCategory('Couchage'), 'indispensable', 'Isolation thermique certifiée pour nuits en altitude.');
   }
 
   // 3. Hydratation
   if (!hasEau) {
-    const prod = findProductForCategory('Eau', 'Gourde Titane 1 L + Filtre', 65, 140, 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400');
-    missingItems.push({
-      id: prod.id,
-      slug: prod.slug,
-      name: prod.name,
-      brand: prod.brand,
-      category: prod.category,
-      priceEur: prod.priceEur,
-      weightGrams: prod.weightGrams,
-      image: prod.image,
-      essentiality: 'indispensable',
-      reason: 'Garantit votre autonomie en eau potable.',
-    });
+    pushIfReal(findProductForCategory('Eau'), 'indispensable', 'Garantit votre autonomie en eau potable.');
   }
 
   // 4. Vêtement imperméable si météo humide
   if (!hasVeste && (weatherKey === 'pluvieux_vente' || weatherKey === 'frais_brumeux')) {
-    const prod = findProductForCategory('Vêtements', 'Veste 3 Couches Hardshell Imper 20k', 289, 340, 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400');
-    missingItems.push({
-      id: prod.id,
-      slug: prod.slug,
-      name: prod.name,
-      brand: prod.brand,
-      category: prod.category,
-      priceEur: prod.priceEur,
-      weightGrams: prod.weightGrams,
-      image: prod.image,
-      essentiality: 'indispensable',
-      reason: 'Protection contre la pluie battante et les rafales de vent.',
-    });
+    pushIfReal(findProductForCategory('Vêtements'), 'indispensable', 'Protection contre la pluie battante et les rafales de vent.');
   }
 
   // 5. Abri / Tente si voyage itinérant et pas de tente
   if (!hasTente && durationKey !== '1-2d') {
-    const prod = findProductForCategory('Tentes', 'Tente Bivouac 2 Places Ultralégère', 299, 1250, 'https://images.unsplash.com/photo-1478827536114-da961b7f86d2?w=400');
-    missingItems.push({
-      id: prod.id,
-      slug: prod.slug,
-      name: prod.name,
-      brand: prod.brand,
-      category: prod.category,
-      priceEur: prod.priceEur,
-      weightGrams: prod.weightGrams,
-      image: prod.image,
-      essentiality: 'recommande',
-      reason: 'Abri autonome pour les nuits en sauvage.',
-    });
+    pushIfReal(findProductForCategory('Tentes'), 'recommande', 'Abri autonome pour les nuits en sauvage.');
   }
 
   // Weather safety warnings

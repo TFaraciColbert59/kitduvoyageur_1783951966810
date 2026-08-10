@@ -53,42 +53,11 @@ interface GearInventoryItem {
 
 // ── Altimeter Loader ─────────────────────────────────────────────────────────────
 function AltimeterLoader({ active }: { active: boolean }) {
-  const [digits, setDigits] = useState([0, 0, 0, 0]);
-
-  useEffect(() => {
-    if (!active) return;
-    let frame: ReturnType<typeof setTimeout>;
-    let count = 0;
-    const tick = () => {
-      count++;
-      setDigits([
-        Math.floor(Math.random() * 10),
-        Math.floor(Math.random() * 10),
-        Math.floor(Math.random() * 10),
-        Math.floor(Math.random() * 10),
-      ]);
-      if (count < 20) {
-        frame = setTimeout(tick, 80);
-      } else {
-        setDigits([2, 4, 5, 0]);
-      }
-    };
-    frame = setTimeout(tick, 80);
-    return () => clearTimeout(frame);
-  }, [active]);
-
   if (!active) return null;
 
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-6" role="status" aria-live="polite" aria-label="Génération de votre liste en cours">
-      <div className="flex items-center gap-1">
-        {digits.map((d, i) => (
-          <span key={i} className="font-mono-data text-4xl font-600" style={{ color: 'var(--info)', fontFamily: 'var(--font-mono)' }}>
-            {d}
-          </span>
-        ))}
-        <span className="font-mono-data text-2xl text-muted-foreground ml-1" style={{ fontFamily: 'var(--font-mono)' }}>m</span>
-      </div>
+      <div className="w-10 h-10 border-2 border-[#1C2620] border-t-transparent rounded-full animate-spin" />
       <p className="text-sm text-muted-foreground font-mono-data uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>
         Analyse IA en cours…
       </p>
