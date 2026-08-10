@@ -8,8 +8,6 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import LkvIcon from '@/components/ui/LkvIcon';
 import { getGroupeComplet } from '@/lib/queries/groupe';
-import nextDynamic from 'next/dynamic';
-
 // Components — always visible
 import HeroVoyage from '@/components/groupes/HeroVoyage';
 import TabsGroupe from '@/components/groupes/TabsGroupe';
@@ -23,16 +21,14 @@ import ActiviteCard from '@/components/groupes/ActiviteCard';
 import AProposCard from '@/components/groupes/AProposCard';
 import CarnetCTACard from '@/components/groupes/CarnetCTACard';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import MobileGroupeView from '@/components/groupes/MobileGroupeView';
+import DepensesCard from '@/components/groupes/DepensesCard';
+import DecisionsCard from '@/components/groupes/DecisionsCard';
+import DiscussionCard from '@/components/groupes/DiscussionCard';
 
 
 
 
-
-// Dynamically imported — only load when tab is active
-const DepensesCard = nextDynamic(() => import('@/components/groupes/DepensesCard'), { ssr: false });
-const DecisionsCard = nextDynamic(() => import('@/components/groupes/DecisionsCard'), { ssr: false });
-const DiscussionCard = nextDynamic(() => import('@/components/groupes/DiscussionCard'), { ssr: false });
-const MobileGroupeView = nextDynamic(() => import('@/components/groupes/MobileGroupeView'), { ssr: false });
 
 export const dynamic = 'force-dynamic';
 
