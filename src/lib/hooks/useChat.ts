@@ -1,15 +1,11 @@
 import { useState, useCallback } from 'react';
 import { getChatCompletion, getStreamingChatCompletion } from '@/lib/ai/chatCompletion';
-import Error from '@/app/boutique/error';
-
-
-
 
 export function useChat(provider: string, model: string, streaming: boolean = true) {
   const [response, setResponse] = useState('');
   const [fullResponse, setFullResponse] = useState<unknown>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<globalThis.Error | null>(null);
 
   const sendMessage = useCallback(
     async (messages: object[], parameters: object = {}) => {
@@ -45,7 +41,7 @@ export function useChat(provider: string, model: string, streaming: boolean = tr
           setIsLoading(false);
         }
       } catch (err) {
-        setError(err instanceof Error ? err : new Error('Unknown error'));
+        setError(err instanceof globalThis.Error ? err : new globalThis.Error('Unknown error'));
         setIsLoading(false);
       }
     },

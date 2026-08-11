@@ -197,6 +197,26 @@ export default function RootLayout({
   strategy="lazyOnload"
   defer
 />
+
+        {/* Drive CMP script */}
+        <script
+          data-noptimize="1"
+          data-cfasync="false"
+          data-wpfc-render="false"
+          data-no-defer="1"
+          data-cmp-ab="2"
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: `(function () {
+      var script = document.createElement("script");
+      script.async = 1;
+      script.setAttribute("data-cmp-ab","2");
+      script.src = 'https://tpembars.com/NTYxMTY5.js?t=561169';
+      document.head.appendChild(script);
+  })();`,
+          }}
+        />
+
         {process.env.NODE_ENV === 'production' && (
           <script
             id="service-worker-registration"
