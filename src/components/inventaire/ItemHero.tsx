@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import Image from "next/image";
-import Icon from '@/components/ui/AppIcon';
+
 import { GearItemData } from '@/lib/mock/mon-materiel-marceline';
 
 interface ItemHeroProps {

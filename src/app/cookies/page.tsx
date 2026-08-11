@@ -6,6 +6,8 @@ import Header from '@/components/Header';
 
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { getStoredConsent, storeConsent } from '@/lib/cookieConsent';
+import NewFooterSection from '@/app/components/home/NewFooterSection';
+
 
 export default function CookiesPage() {
   const [analytics, setAnalytics] = useState(false);

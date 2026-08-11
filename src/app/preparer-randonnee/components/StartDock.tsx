@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Icon } from './PreparationIcons';
+
 
 interface StartDockProps {
   score: number;

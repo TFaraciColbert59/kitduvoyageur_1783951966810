@@ -868,7 +868,7 @@ export default function CountryPageClient({ code: rawCode }: { code: string }) {
                   <div className="mt-4 pt-4 border-t border-[#0B1F17]/10 text-[11px] text-[#0B1F17]/50 font-mono">
                     Source officielle : {country?.securite?.source_officielle?.nom || 'Ministère des Affaires Étrangères'}
                   </div>
-                </Card>
+                </div>
               </div>
             </div>
           </section>

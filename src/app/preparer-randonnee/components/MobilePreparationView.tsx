@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { PreparationResult } from '@/lib/preparation/PreparationEngine';
 import { WeatherSnapshot } from '@/features/hiking/types';
 
-import { PreparationHero } from './PreparationHero';
+
 import { PreparationScore } from './PreparationScore';
 import { PreparationConditions } from './PreparationConditions';
 import { EquipmentTabs, TabType } from './EquipmentTabs';

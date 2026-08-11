@@ -68,6 +68,14 @@ const levels = [
   { id: 'expert', label: 'Expert', desc: 'Haute montagne, conditions extrêmes.' },
 ];
 
+// ── Kit meta derived from wizard state ───────────────────────────────────────
+function getKitMeta(state: WizardState): { duree: string; meteo: string } {
+  return {
+    duree: state.duree || '—',
+    meteo: state.meteo || '—',
+  };
+}
+
 // ── Kit items that build up as user answers ──────────────────────────────────
 const _BASE_KIT_ITEMS = [
   { id: 'sac', name: 'Sac 45 L', priceEur: 340, weightG: 1200 },
@@ -87,6 +95,8 @@ function getKitItems(state: WizardState): Array<{ id: string; name: string; pric
 // ── Altimeter Loader ─────────────────────────────────────────────────────────────
 function AltimeterLoader({ active }: { active: boolean }) {
   if (!active) return null;
+  return null;
+}
 
 function _Stepper({ currentStep }: { currentStep: number }) {
   return (
@@ -1012,6 +1022,13 @@ const STEP_META = [
     titleItalic: 'est prêt.',
     desc: 'L\'IA a composé votre liste sur mesure. Ajustez les articles, puis ajoutez au panier.',
   },
+];
+
+const STEPS = [
+  { id: 1, label: 'Destination' },
+  { id: 2, label: 'Dates & Saison' },
+  { id: 3, label: 'Profil' },
+  { id: 4, label: 'Résultats' },
 ];
 
 // ── Main Wizard ──────────────────────────────────────────────────────────────

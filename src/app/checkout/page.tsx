@@ -206,7 +206,7 @@ export default function CheckoutPage() {
       const serverSubtotal = orderItems.reduce((s, it) => s + it.unit_price_eur * it.quantity, 0);
       const serverShipping = shippingCosts[shippingOption] ?? 5.9;
       const serverDiscountEligible = serverSubtotal >= 99;
-      const finalShippingEur = shippingOption === 'standard' && serverDiscountEligible ? 0 : serverShipping;
+      const finalShippingEur = shippingOption === 'suivie' && serverDiscountEligible ? 0 : serverShipping;
       const finalTotal = serverSubtotal + finalShippingEur;
 
       // order_number : généré par la base (défaut `KDV-…`), jamais par le client.
@@ -330,7 +330,7 @@ export default function CheckoutPage() {
     { id: 'confirmation', label: 'Confirmation', num: 3 },
   ];
 
-  const _stepIndex = STEPS.findIndex(s => s.id === step);
+  const _stepIndex = steps.findIndex(s => s.id === step);
 
   const SHIPPING_OPTIONS: { id: ShippingOption; label: string; sub: string; price: string; badge?: string }[] = [
     { id: 'suivie', label: 'Livraison suivie', sub: 'Colis-relais ou domicile · 3 à 5 jours ouvrés · CO₂ compensé', price: shippingCosts.suivie === 0 ? 'Offerte' : `${shippingCosts.suivie} €`, badge: 'Offerte' },
