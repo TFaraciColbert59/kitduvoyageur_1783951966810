@@ -60,21 +60,31 @@ export default function CarnetMap({ traceGeojson, distanceKm, elevationM, onDown
             const startPt = coords[0];
             const endPt = coords[coords.length - 1];
 
-            L.circleMarker([startPt[1], startPt[0]], {
-              radius: 7,
-              color: '#17402C',
-              fillColor: '#2D5A27',
-              fillOpacity: 1,
-              weight: 2,
-            }).addTo(map).bindPopup('🟢 Départ');
+            const isValidPt = (pt: [number, number]) =>
+              Array.isArray(pt) &&
+              pt.length >= 2 &&
+              Number.isFinite(Number(pt[0])) &&
+              Number.isFinite(Number(pt[1]));
 
-            L.circleMarker([endPt[1], endPt[0]], {
-              radius: 7,
-              color: '#B85838',
-              fillColor: '#D96B43',
-              fillOpacity: 1,
-              weight: 2,
-            }).addTo(map).bindPopup('🏁 Arrivée');
+            if (isValidPt(startPt)) {
+              L.circleMarker([startPt[1], startPt[0]], {
+                radius: 7,
+                color: '#17402C',
+                fillColor: '#2D5A27',
+                fillOpacity: 1,
+                weight: 2,
+              }).addTo(map).bindPopup('🟢 Départ');
+            }
+
+            if (isValidPt(endPt)) {
+              L.circleMarker([endPt[1], endPt[0]], {
+                radius: 7,
+                color: '#B85838',
+                fillColor: '#D96B43',
+                fillOpacity: 1,
+                weight: 2,
+              }).addTo(map).bindPopup('🏁 Arrivée');
+            }
           }
         }
       } catch (err) {

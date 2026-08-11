@@ -117,14 +117,18 @@ export default function InteractiveMap() {
     async function loadPOIs() {
       try {
         const [
-          { data: refuges },
-          { data: summits },
-          { data: waterPoints }
+          refugesResult,
+          summitsResult,
+          waterPointsResult
         ] = await Promise.all([
           supabase.from('map_refuges').select('*'),
           supabase.from('map_summits').select('*'),
           supabase.from('map_water_points').select('*')
         ]);
+
+        const refuges = refugesResult.data;
+        const summits = summitsResult.data;
+        const waterPoints = waterPointsResult.data;
 
         const formattedPois: MapPOI[] = [
           ...(refuges || []).map((r: any) => ({
@@ -174,10 +178,8 @@ export default function InteractiveMap() {
       if (tileLayerRef.current && mapRef.current) {
         mapRef.current.removeLayer(tileLayerRef.current);
       }
-      const url = mode === 'topo'
-        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'
-        : mode === 'satellite'
-        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+      const url = mode === 'topo' ?'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'
+        : mode === 'satellite' ?'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
         : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
       
       const newLayer = L.tileLayer(url, {
@@ -308,12 +310,9 @@ export default function InteractiveMap() {
           let greenColor = '#4ade80';
           switch ((trail.difficulty || '').toLowerCase()) {
             case 'facile': greenColor = '#86efac'; break;
-            case 'modérée':
-            case 'moderate': greenColor = '#4ade80'; break;
-            case 'difficile':
-            case 'difficult': greenColor = '#22c55e'; break;
-            case 'expert':
-            case 'très difficile': greenColor = '#16a34a'; break;
+            case 'modérée': case'moderate': greenColor = '#4ade80'; break;
+            case 'difficile': case'difficult': greenColor = '#22c55e'; break;
+            case 'expert': case'très difficile': greenColor = '#16a34a'; break;
           }
 
           if (trail.geojson && isSelected) {
@@ -452,7 +451,7 @@ export default function InteractiveMap() {
     import('leaflet').then((L) => {
       const coords: [number, number][] = [];
       trails.forEach(t => { if (t.lat && t.lng) coords.push([t.lat, t.lng]); });
-      filteredPois.forEach(p => coords.push([p.lat, p.lng]));
+      filteredPois.forEach(p => { if (!isNaN(p.lat) && !isNaN(p.lng)) coords.push([p.lat, p.lng]); });
       if (coords.length > 0) {
         mapRef.current!.fitBounds(L.latLngBounds(coords), { padding: [50, 50] });
       }
