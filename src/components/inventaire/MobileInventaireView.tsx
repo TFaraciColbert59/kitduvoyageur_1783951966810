@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import GearCard from './GearCard';
-import { GearItemData, UserKitData } from '@/lib/mock/inventaire-marceline';
+import { GearItemData, UserKitData } from '@/lib/mock/mon-materiel-marceline';
 
 interface MobileInventaireViewProps {
   items: GearItemData[];

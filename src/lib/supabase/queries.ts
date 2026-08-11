@@ -3,7 +3,7 @@
 // All functions assume an authenticated Supabase client is passed in.
 
 import { createClient } from '@/lib/supabase/client';
-import type { GearItemData } from '@/lib/mock/inventaire-marceline';
+import type { GearItemData } from '@/lib/mock/mon-materiel-marceline';
 
 /** Fetch a single gear item for the current user.
  *  Returns `null` when the item does not exist (PGRST116) for the user.
@@ -43,7 +43,7 @@ export async function fetchGearItem(
     loan_status: data.loan_status,
     loan_to_name: data.loan_to_name,
     is_listed_for_sale: data.is_listed_for_sale || false,
-  } as GearItemData;
+  } as unknown as GearItemData;
 }
 
 /** Fetch all images for a gear item – expects a separate table `gear_images` with column `url` */
@@ -135,4 +135,5 @@ export async function updateGearItem(
   }
   return true;
 }
+
 

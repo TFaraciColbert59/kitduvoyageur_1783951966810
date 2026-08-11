@@ -1,4 +1,4 @@
-// src/components/inventaire/LocationCard.tsx
+// src/components/mon-materiel/LocationCard.tsx
 'use client';
 
 import React from 'react';

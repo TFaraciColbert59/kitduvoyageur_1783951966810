@@ -83,9 +83,9 @@ async function validatePrices(items: CartItem[]): Promise<{ valid: boolean; erro
       continue;
     }
 
-    // Try shop_products for marketplace items
+    // Try products for marketplace items
     const { data: shopProduct, error: shopError } = await supabase
-      .from('shop_products')
+      .from('products')
       .select('price_eur, name')
       .eq('id', item.id)
       .eq('available', true)

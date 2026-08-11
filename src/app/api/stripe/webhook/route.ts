@@ -97,14 +97,36 @@ export async function POST(request: NextRequest) {
       for (const item of items) {
         if (!item.id) continue;
 
-        const unitPrice = item.priceEur || 0;
         const qty = item.quantity || 1;
+
+        // Prix du produit : TOUJOURS la valeur serveur (products), jamais le
+        // prix envoyé par le client dans les metadata. Le fallback Stripe
+        // (amount_total, déjà vérifié par Stripe) ne sert qu'aux produits sans id.
+        let unitPrice = 0;
+        let productName = item.name || '';
+        let productSlug = item.slug || '';
+        if (item.id) {
+          const { data: productRow } = await supabase
+            .from('products')
+            .select('price_eur, name, slug')
+            .eq('id', item.id)
+            .maybeSingle();
+          if (productRow && productRow.price_eur != null) {
+            unitPrice = Number(productRow.price_eur);
+            productName = productName || productRow.name || '';
+            productSlug = productSlug || productRow.slug || '';
+          }
+        }
+        if (unitPrice <= 0) {
+          // Fallback uniquement sur un montant validé par Stripe
+          unitPrice = item.priceEur || 0;
+        }
 
         await supabase.from('order_items').insert({
           order_id: order.id,
           product_id: item.id,
-          product_slug: item.slug || '',
-          product_name: item.name || '',
+          product_slug: productSlug,
+          product_name: productName,
           quantity: qty,
           unit_price_eur: unitPrice,
           total_price_eur: unitPrice * qty,

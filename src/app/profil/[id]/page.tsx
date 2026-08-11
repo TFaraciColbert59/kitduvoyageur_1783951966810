@@ -80,12 +80,12 @@ export default function ProfilPage() {
       setClubs((clubsRes.data ?? []) as unknown as ClubMembership[]);
       setEvents((eventsRes.data ?? []) as unknown as EventParticipation[]);
       setBadges(((badgesRes.data ?? []) as any[]).map((b) => b.badge).filter(Boolean));
-      const { data: memberData } = await supabase.from('group_members').select('group_id, role').eq('user_id', profileId).eq('status', 'active');
+      const { data: memberData } = await supabase.from('groupe_membres').select('group_id, role').eq('user_id', profileId).eq('status', 'active');
       if (memberData?.length) {
         const groupIds = memberData.map(m => m.group_id);
-        const { data: groupsData } = await supabase.from('travel_groups').select('id, name, destination, theme, departure_date, return_date, visibility, group_level, optimization_score').in('id', groupIds).order('created_at', { ascending: false }).limit(8);
+        const { data: groupsData } = await supabase.from('groupes').select('id, name, destination, theme, departure_date, return_date, visibility, group_level, optimization_score').in('id', groupIds).order('created_at', { ascending: false }).limit(8);
         const enriched = await Promise.all((groupsData || []).map(async (g) => {
-          const { count } = await supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('group_id', g.id).eq('status', 'active');
+          const { count } = await supabase.from('groupe_membres').select('*', { count: 'exact', head: true }).eq('group_id', g.id).eq('status', 'active');
           return { ...g, member_count: count || 0, my_role: memberData.find(m => m.group_id === g.id)?.role };
         }));
         setGroups(enriched);

@@ -33,11 +33,11 @@ const TABS: Tab[] = [
     matchPaths: ['/explorer', '/pays', '/carte-interactive', '/hors-ligne'],
   },
   {
-    href: '/terrain',
-    label: 'Terrain',
-    iconName: 'compass',
-    ariaLabel: 'Mode Terrain — GPS, kit, recherche',
-    matchPaths: ['/terrain', '/naviguer', '/randonnee-active', '/boussole', '/mon-materiel'],
+    href: '/mon-materiel',
+    label: 'Inventaire',
+    iconName: 'bag',
+    ariaLabel: 'Mon inventaire matériel',
+    matchPaths: ['/mon-materiel', '/mon-materiel'],
     isHero: true,
   },
   {
@@ -70,39 +70,26 @@ function TabLink({ tab, isActive }: { tab: Tab; isActive: boolean }) {
         aria-label={tab.ariaLabel}
         aria-current={isActive ? 'page' : undefined}
         onClick={handleTap}
-        className="relative flex flex-col items-center justify-center flex-1 h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-inset rounded-sm"
+        className="relative flex flex-col items-center justify-center flex-1 h-full focus-visible:outline-none rounded-full"
       >
         <div
           style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: '16px',
+            width: '38px',
+            height: '38px',
+            borderRadius: '999px',
             background: isActive ? '#17402C' : '#1E4D33',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: '#fff',
             boxShadow: isActive
-              ? '0 4px 14px rgba(23,64,44,0.4)'
-              : '0 2px 8px rgba(23,64,44,0.25)',
-            transition: 'box-shadow 0.2s ease',
+              ? '0 3px 10px rgba(23,64,44,0.35)'
+              : '0 2px 6px rgba(23,64,44,0.2)',
+            transition: 'all 0.2s ease',
           }}
         >
-          <LkvIcon name={tab.iconName} size={24} color="#fff" />
+          <LkvIcon name={tab.iconName} size={19} color="#fff" />
         </div>
-        <span
-          style={{
-            fontSize: '10px',
-            letterSpacing: '0.01em',
-            lineHeight: 1,
-            fontFamily: 'var(--font-sans)',
-            color: isActive ? '#17402C' : '#6B7A72',
-            fontWeight: isActive ? 600 : 500,
-            marginTop: '3px',
-          }}
-        >
-          {tab.label}
-        </span>
       </Link>
     );
   }
@@ -113,25 +100,25 @@ function TabLink({ tab, isActive }: { tab: Tab; isActive: boolean }) {
       aria-label={tab.ariaLabel}
       aria-current={isActive ? 'page' : undefined}
       onClick={handleTap}
-      className="relative flex flex-col items-center justify-center flex-1 h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-inset rounded-sm"
+      className="relative flex flex-col items-center justify-center flex-1 h-full focus-visible:outline-none rounded-full"
     >
       <div
         className="relative flex flex-col items-center justify-center"
-        style={{ gap: '3px' }}
+        style={{ gap: '2px' }}
       >
         <LkvIcon
           name={tab.iconName}
-          size={22}
+          size={19}
           color={isActive ? '#17402C' : '#6B7A72'}
         />
         <span
           style={{
-            fontSize: '10px',
-            letterSpacing: '0.01em',
+            fontSize: '9px',
+            letterSpacing: '0.02em',
             lineHeight: 1,
             fontFamily: 'var(--font-sans)',
             color: isActive ? '#17402C' : '#6B7A72',
-            fontWeight: isActive ? 600 : 500,
+            fontWeight: isActive ? 700 : 500,
           }}
         >
           {tab.label}
@@ -262,25 +249,25 @@ export default function BottomTabBar() {
       className="md:hidden"
       style={{
         position: 'fixed',
-        left: '12px',
-        right: '12px',
-        bottom: 'calc(12px + env(safe-area-inset-bottom))',
+        left: '16px',
+        right: '16px',
+        bottom: 'calc(10px + env(safe-area-inset-bottom))',
         zIndex: 50,
       }}
     >
       <div
         style={{
-          height: '62px',
-          background: 'rgba(255,255,255,0.85)',
-          backdropFilter: 'blur(24px) saturate(1.5)',
-          WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
-          borderRadius: '22px',
-          border: '1px solid rgba(11,31,23,0.06)',
-          boxShadow: '0 10px 30px rgba(11,31,23,0.1)',
+          height: '52px',
+          background: 'rgba(255,255,255,0.78)',
+          backdropFilter: 'blur(20px) saturate(1.8)',
+          WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
+          borderRadius: '999px',
+          border: '1px solid rgba(255,255,255,0.6)',
+          boxShadow: '0 8px 24px rgba(11,31,23,0.08)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-around',
-          padding: '0 8px',
+          padding: '0 10px',
         }}
       >
         {TABS.map((tab) => (

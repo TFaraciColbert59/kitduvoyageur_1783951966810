@@ -5,36 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
-
-const CONSENT_COOKIE_KEY = 'lkdv_cookie_consent';
-const CONSENT_VERSION = '1';
-
-type ConsentState = {
-  necessary: true;
-  analytics: boolean;
-  marketing: boolean;
-  version: string;
-};
-
-function getStoredConsent(): ConsentState | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = localStorage.getItem(CONSENT_COOKIE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function storeConsent(consent: Omit<ConsentState, 'version'>) {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(
-    CONSENT_COOKIE_KEY,
-    JSON.stringify({ ...consent, version: CONSENT_VERSION })
-  );
-  window.dispatchEvent(new CustomEvent('cookieConsentUpdated', { detail: consent }));
-}
+import { getStoredConsent, storeConsent } from '@/lib/cookieConsent';
 
 export default function CookiesPage() {
   const [analytics, setAnalytics] = useState(false);

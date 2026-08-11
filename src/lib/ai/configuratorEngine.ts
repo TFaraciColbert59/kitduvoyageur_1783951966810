@@ -74,13 +74,13 @@ export interface ConnectedKitReport {
 }
 
 /**
- * Fetch real products from the shop_products table in Supabase
+ * Fetch real products from the products table in Supabase
  */
 export async function fetchRealCatalog(): Promise<RealShopProduct[]> {
   try {
     const supabase = createClient();
     const { data } = await supabase
-      .from('shop_products')
+      .from('products')
       .select('id, slug, name, brand, category, price_eur, weight_g, image, stock')
       .eq('is_active', true)
       .gt('stock', 0)
@@ -200,7 +200,7 @@ export async function fetchGroupContext(groupId: string): Promise<{
       .maybeSingle();
 
     const { data: members } = await supabase
-      .from('group_members')
+      .from('groupe_membres')
       .select('id')
       .eq('group_id', groupId);
 

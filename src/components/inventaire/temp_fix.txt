@@ -1,0 +1,1 @@
+  const totalWeightG = items.reduce((sum, item) => sum + ((item.weight_g || item.weight * 1000) * (item.quantity || 1)), 0);

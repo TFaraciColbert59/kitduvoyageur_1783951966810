@@ -28,15 +28,16 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
   const [locating, setLocating] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const gpxInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [discussions]);
 
-  const handleSendMessage = async (e?: React.FormEvent, mediaUrl?: string, location?: { lat: number; lng: number }) => {
+  const handleSendMessage = async (e?: React.FormEvent, mediaUrl?: string, location?: { lat: number; lng: number }, gpxAttachment?: string) => {
     if (e) e.preventDefault();
     const msg = newMessage.trim();
-    if (!msg && !mediaUrl && !location) return;
+    if (!msg && !mediaUrl && !location && !gpxAttachment) return;
     if (!groupId || !user) return;
     
     setLoading(true);
@@ -44,7 +45,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
     const insertData: any = {
       group_id: groupId,
       user_id: user.id,
-      content: msg || (mediaUrl ? '📎 Pièce jointe' : `📍 Position partagée`),
+      content: msg || (gpxAttachment ? gpxAttachment : mediaUrl ? '📎 Pièce jointe' : `📍 Position partagée`),
     };
 
     if (mediaUrl) insertData.media_url = mediaUrl;
@@ -232,6 +233,20 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
         onChange={handleFileUpload}
       />
 
+      {/* Hidden GPX file input */}
+      <input
+        ref={gpxInputRef}
+        type="file"
+        accept=".gpx,application/gpx+xml"
+        className="hidden"
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file || !groupId || !user) return;
+          const fileName = file.name.replace('.gpx', '');
+          await handleSendMessage(undefined, undefined, undefined, `🗺️ Trace GPX : ${fileName}`);
+        }}
+      />
+
       <div className="relative flex-shrink-0">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <div className="w-8 h-8 rounded-full bg-[#33463C] flex items-center justify-center text-white text-xs font-bold">
@@ -245,9 +260,17 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
           onKeyDown={handleKeyDown}
           disabled={loading || uploading || locating}
           placeholder={uploading ? "Upload en cours..." : locating ? "Localisation..." : "Ajouter un message pour le groupe..."} 
-          className="w-full bg-[#E7E3D6]/30 border border-[#1C2620]/10 rounded-full py-3.5 pl-14 pr-28 text-sm text-[#1C2620] placeholder-[#1C2620]/40 focus:outline-none focus:ring-2 focus:ring-[#33463C]/20"
+          className="w-full bg-[#E7E3D6]/30 border border-[#1C2620]/10 rounded-full py-3.5 pl-14 pr-[152px] text-sm text-[#1C2620] placeholder-[#1C2620]/40 focus:outline-none focus:ring-2 focus:ring-[#33463C]/20"
         />
         <div className="absolute inset-y-0 right-0 pr-2 flex items-center gap-1">
+          <button 
+            onClick={() => gpxInputRef.current?.click()}
+            disabled={uploading || loading}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-[#17402C] hover:bg-[#17402C]/10 transition-colors font-bold text-xs"
+            title="Partager une trace GPX"
+          >
+            🗺️
+          </button>
           <button 
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading || loading}

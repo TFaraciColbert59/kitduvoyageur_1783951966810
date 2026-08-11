@@ -1,214 +1,254 @@
 import { createClient } from '@/lib/supabase/client';
-import { mockChartreuseData } from '@/lib/mock/groupe-chartreuse';
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function displayName(profile: any, fallback = 'Membre'): string {
+  if (!profile) return fallback;
+  return profile.full_name || profile.first_name || fallback;
+}
+
+function formatDateTime(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDateShort(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+
+function seasonLabel(dateIso: string | null | undefined): string {
+  if (!dateIso) return 'À CONFIRMER';
+  const d = new Date(dateIso);
+  if (isNaN(d.getTime())) return 'À CONFIRMER';
+  const month = d.getMonth() + 1; // 1-12
+  const year = d.getFullYear();
+  if (month >= 3 && month <= 5) return `PRINTEMPS ${year}`;
+  if (month >= 6 && month <= 8) return `ÉTÉ ${year}`;
+  if (month >= 9 && month <= 11) return `AUTOMNE ${year}`;
+  return `HIVER ${year}`;
+}
+
+/**
+ * Récupère un groupe complet (architecture `travel_groups` + `group_*`) avec
+ * toutes ses données réelles. Retourne `null` si le groupe est introuvable
+ * (contrôlé par RLS) ou si une erreur survient — aucune donnée de secours.
+ */
 export async function getGroupeComplet(groupeId: string) {
-  try {
-    const supabase = createClient();
+  const supabase = createClient();
 
-    // Find group by ID or by name
-    let query = supabase.from('travel_groups').select('*');
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(groupeId);
-    
-    if (isUuid) {
-      query = query.eq('id', groupeId);
-    } else {
-      query = query.eq('name', 'Traversée de la Chartreuse');
-    }
+  let groupeQuery = supabase.from('groupes').select('*');
+  if (UUID_REGEX.test(groupeId)) {
+    groupeQuery = groupeQuery.eq('id', groupeId);
+  } else {
+    groupeQuery = groupeQuery.eq('invite_code', groupeId.toUpperCase());
+  }
 
-    const { data: groupe } = await query.single();
-    if (!groupe) return mockChartreuseData;
+  const { data: groupe, error: groupeError } = await groupeQuery.maybeSingle();
+  if (groupeError || !groupe) return null;
 
-    const realGroupId = groupe.id;
+  const realGroupId = groupe.id;
 
-    // Fetch related tables in parallel
-    const [
-      { data: membres },
-      { data: etapes },
-      { data: hebergements },
-      { data: taches },
-      { data: equipement },
-      { data: depenses },
-      { data: votes },
-      { data: voteOptions },
-      { data: voteChoix },
-      { data: messages },
-      { data: activites },
-    ] = await Promise.all([
-      supabase.from('groupe_membres').select('*').eq('groupe_id', realGroupId).order('created_at', { ascending: true }),
-      supabase.from('groupe_etapes').select('*').eq('groupe_id', realGroupId).order('ordre', { ascending: true }),
-      supabase.from('groupe_hebergements').select('*').eq('groupe_id', realGroupId).order('apres_jour_numero', { ascending: true }),
-      supabase.from('groupe_taches').select('*, assigne:groupe_membres(nom_affichage)').eq('groupe_id', realGroupId).order('created_at', { ascending: false }),
-      supabase.from('groupe_equipement').select('*, apporte:groupe_membres(nom_affichage)').eq('groupe_id', realGroupId),
-      supabase.from('groupe_depenses').select('*, payeur:groupe_membres(nom_affichage)').eq('groupe_id', realGroupId).order('created_at', { ascending: false }),
-      supabase.from('groupe_votes').select('*').eq('groupe_id', realGroupId).eq('statut', 'actif'),
-      supabase.from('groupe_vote_options').select('*'),
-      supabase.from('groupe_vote_choix').select('*'),
-      supabase.from('groupe_messages').select('*, auteur:groupe_membres(nom_affichage, role)').eq('groupe_id', realGroupId).order('created_at', { ascending: false }).limit(5),
-      supabase.from('groupe_activites').select('*, membre:groupe_membres(nom_affichage)').eq('groupe_id', realGroupId).order('created_at', { ascending: false }).limit(5),
-    ]);
+  // Fetch related tables in parallel
+  const [
+    { data: membres },
+    { data: taches },
+    { data: equipement },
+    { data: depenses },
+    { data: messages },
+    { data: votes },
+  ] = await Promise.all([
+    supabase.from('groupe_membres').select('*, profile:user_profiles!groupe_membres_user_id_fkey(full_name, first_name)').eq('group_id', realGroupId).order('joined_at', { ascending: true }),
+    supabase.from('group_tasks').select('*, assigne:user_profiles!group_tasks_assigned_to_fkey(full_name, first_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }),
+    supabase.from('group_kit_items').select('*, apporte:user_profiles!group_kit_items_assigned_to_fkey(full_name, first_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }),
+    supabase.from('group_expenses').select('*, payeur:user_profiles!group_expenses_paid_by_fkey(full_name, first_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }),
+    supabase.from('group_messages').select('*, auteur:user_profiles!group_messages_user_id_fkey(full_name, first_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }).limit(200),
+    supabase.from('group_polls').select('*').eq('group_id', realGroupId).eq('status', 'open').order('created_at', { ascending: false }),
+  ]);
 
-    // Format tasks
-    const formattedTasks = (taches && taches.length > 0) ? taches.map((t: any) => ({
-      id: t.id,
-      title: t.titre,
-      assignee: t.assigne?.nom_affichage || 'Non attribué',
-      tags: t.statut === 'fait' ? ['Fait', t.categorie] : [t.categorie],
-      completed: t.statut === 'fait',
-      details: t.note || `${t.categorie} · ${t.statut === 'fait' ? 'résolu' : 'à faire'}`,
-    })) : mockChartreuseData.tasks;
+  const activeMembers = (membres || []).filter((m: any) => m.status === 'active');
+  const nbMembers = Math.max(activeMembers.length, 1);
 
-    // Format equipment
-    const formattedEquipment = (equipement && equipement.length > 0) ? equipement.map((e: any) => ({
-      id: e.id,
-      item: e.nom,
-      assignee: e.apporte?.nom_affichage || 'Non attribué',
-      weight: `${(e.poids_g / 1000).toFixed(1)} kg`,
-      status: e.statut === 'confirme' ? 'Confirmé' : e.statut === 'a_verifier' ? 'À vérifier' : 'À affecter',
-      notes: e.note || '',
-      statusColor: e.statut === 'confirme' ? 'bg-[#E7E3D6] text-[#5C6B5E]' : e.statut === 'a_verifier' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700',
-    })) : mockChartreuseData.equipment;
+  // Fetch votes for all open polls in one query
+  const pollIds = (votes || []).map((v: any) => v.id);
+  const { data: voteRows } = pollIds.length > 0
+    ? await supabase.from('group_poll_votes').select('*').in('poll_id', pollIds)
+    : { data: [] };
 
-    // Format expenses & calculation
-    const totalExpenseCents = (depenses || []).reduce((acc: number, d: any) => acc + (d.montant_cents || 0), 0);
-    const totalExpenseEur = Math.round(totalExpenseCents / 100);
-    const nbMembers = (membres && membres.length > 0) ? membres.length : 6;
-    const perPersonEur = Math.round(totalExpenseEur / (nbMembers || 1));
+  // Format tasks
+  const formattedTasks = (taches || []).map((t: any) => ({
+    id: t.id,
+    title: t.title,
+    assigneeId: t.assigned_to || undefined,
+    assignee: displayName(t.assigne, 'Non attribué'),
+    tags: t.status === 'done' ? ['Fait', 'Terminée'] : ['À faire'],
+    completed: t.status === 'done',
+    details: t.description || '',
+  }));
 
-    const formattedExpenses = {
-      total: totalExpenseEur || mockChartreuseData.expenses.total,
-      perPerson: perPersonEur || mockChartreuseData.expenses.perPerson,
-      userBalance: 0,
-      userDebts: `Total engagé : ${totalExpenseEur}€ · Part par personne : ${perPersonEur}€`,
-      items: (depenses && depenses.length > 0) ? depenses.map((d: any) => ({
-        id: d.id,
-        title: d.titre,
-        payer: `${d.payeur?.nom_affichage || 'Anonyme'} · ${d.statut}`,
-        parts: d.nb_parts || nbMembers,
-        amount: Math.round(d.montant_cents / 100),
-      })) : mockChartreuseData.expenses.items,
-    };
+  // Format equipment (group_kit_items)
+  const formattedEquipment = (equipement || []).map((e: any) => ({
+    id: e.id,
+    item: e.name,
+    assigneeId: e.assigned_to || undefined,
+    assignee: displayName(e.apporte, 'Non attribué'),
+    weight: `${((e.weight_grams || 0) / 1000).toFixed(1)} kg`,
+    status: e.is_shared ? 'Confirmé' : 'À affecter',
+    notes: e.notes || '',
+    statusColor: e.is_shared ? 'bg-[#E7E3D6] text-[#5C6B5E]' : 'bg-amber-100 text-amber-700',
+  }));
 
-    // Format decisions / votes
-    const formattedDecisions = (votes && votes.length > 0) ? votes.map((v: any) => {
-      const options = (voteOptions || []).filter((o: any) => o.vote_id === v.id);
-      const choices = (voteChoix || []).filter((c: any) => c.vote_id === v.id);
-      const totalChoices = choices.length || 1;
+  // Format expenses (amount stocké en euros)
+  const totalExpenseEur = (depenses || []).reduce((acc: number, d: any) => acc + Number(d.amount || 0), 0);
+  const perPersonEur = Math.round(totalExpenseEur / nbMembers);
 
+  const formattedExpenses = {
+    total: Math.round(totalExpenseEur),
+    perPerson: perPersonEur,
+    userBalance: 0,
+    userDebts: `Total engagé : ${Math.round(totalExpenseEur)}€ · Part par personne : ${perPersonEur}€`,
+    items: (depenses || []).map((d: any) => ({
+      id: d.id,
+      title: d.title,
+      payer: `${displayName(d.payeur, 'Anonyme')} · ${d.status === 'settled' ? 'réglée' : 'en attente'}`,
+      parts: (d.split_between && d.split_between.length ? d.split_between.length : nbMembers),
+      amount: Math.round(Number(d.amount || 0)),
+    })),
+  };
+
+  // Format decisions / votes (group_polls + group_poll_votes)
+  const formattedDecisions = (votes || []).map((v: any) => {
+    const rawOptions: any[] = Array.isArray(v.options) ? v.options : [];
+    const pollVotes = (voteRows || []).filter((c: any) => c.poll_id === v.id);
+    const totalChoices = pollVotes.length;
+
+    const options = rawOptions.map((opt: any, index: number) => {
+      const label = typeof opt === 'string' ? opt : (opt?.label || '');
+      const optVotes = pollVotes.filter((c: any) => c.option_index === index).length;
       return {
-        id: v.id,
-        author: 'Léna Vaudois',
-        tag: 'Admin',
-        meta: `Vote actif — ${v.contexte || ''}`,
-        question: v.question,
-        options: options.map((opt: any) => {
-          const optVotes = choices.filter((c: any) => c.option_id === opt.id).length;
-          const pct = Math.round((optVotes / totalChoices) * 100);
-          return {
-            id: opt.id,
-            label: opt.libelle,
-            votes: optVotes,
-            percentage: pct,
-            details: `${optVotes} votes · ${opt.detail || ''}`,
-            selected: false,
-          };
-        }),
-        footer: `${choices.length} votes exprimés`,
+        id: typeof opt === 'string' ? `opt-${index}` : (opt?.id || `opt-${index}`),
+        index,
+        label,
+        votes: optVotes,
+        percentage: totalChoices > 0 ? Math.round((optVotes / totalChoices) * 100) : 0,
+        details: `${optVotes} votes`,
+        selected: false,
       };
-    }) : mockChartreuseData.decisions;
-
-    // Format discussions / messages
-    const formattedDiscussions = (messages && messages.length > 0) ? messages.map((m: any) => ({
-      id: m.id,
-      author: m.auteur?.nom_affichage || 'Membre',
-      tag: m.auteur?.role || 'Membre',
-      time: new Date(m.created_at).toLocaleDateString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-      content: m.contenu,
-      attachment: m.lieu_nom ? `📍 ${m.lieu_nom}` : undefined,
-      likes: m.likes_count || 0,
-      replies: m.comments_count || 0,
-    })) : mockChartreuseData.discussions;
-
-    // Format travelers
-    const formattedTravelers = (membres && membres.length > 0) ? membres.map((m: any) => ({
-      id: m.id,
-      name: m.nom_affichage,
-      role: `${m.role.toUpperCase()} · ${m.role_note || ''}`,
-      status: m.statut_preparation === 'pret' ? 'Prêt' : 'En cours',
-      progress: m.pourcentage_pret || 100,
-    })) : mockChartreuseData.travelers;
-
-    // Format activities
-    const formattedActivities = (activites && activites.length > 0) ? activites.map((a: any) => ({
-      id: a.id,
-      content: `${a.membre?.nom_affichage || 'Un membre'} ${a.description}`,
-      time: new Date(a.created_at).toLocaleDateString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-    })) : mockChartreuseData.activities;
+    });
 
     return {
-      id: realGroupId,
-      meta: {
-        titlePrefix: groupe.name.split(' ')[0] || 'Traversée',
-        titleSuffix: groupe.name.split(' ').slice(1).join(' ') || 'de la Chartreuse',
-        description: groupe.description || mockChartreuseData.meta.description,
-        type: 'VOYAGE COLLABORATIF',
-        participantsCount: groupe.max_members || 6,
-        season: 'AUTOMNE 2026',
-        durationDays: groupe.departure_date && groupe.return_date ? Math.round((new Date(groupe.return_date).getTime() - new Date(groupe.departure_date).getTime()) / (1000 * 60 * 60 * 24)) : 3,
-        distanceKm: Number(groupe.group_xp) || 27.4,
-        elevationGain: groupe.optimization_score || 1620,
-        daysLeft: groupe.departure_date ? Math.round((new Date(groupe.departure_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 16,
-        startDate: groupe.departure_date ? new Date(groupe.departure_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '12 oct.',
-        endDate: groupe.return_date ? new Date(groupe.return_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '14 oct.',
-        fullStartDate: groupe.departure_date ? new Date(groupe.departure_date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Vendredi 12 octobre',
-        massif: groupe.destination || 'Chartreuse · Isère',
-        difficulty: `${groupe.group_level || 'Moyenne'} · dénivelé`,
-        budgetEstimate: `≈ ${groupe.budget_target || 85}€/pers`,
-        privacy: groupe.visibility === 'public' ? 'Groupe public' : 'Groupe privé',
-        meetingPoint: 'Point de rendez-vous à définir',
-        progression: 60,
-      },
-      tasks: formattedTasks,
-      equipment: formattedEquipment,
-      expenses: formattedExpenses,
-      decisions: formattedDecisions,
-      discussions: formattedDiscussions,
-      travelers: formattedTravelers,
-      activities: formattedActivities,
+      id: v.id,
+      author: 'Organisateur',
+      tag: 'Admin',
+      meta: `Vote actif — ${totalChoices} vote(s)`,
+      question: v.question,
+      options,
+      footer: `${totalChoices} votes exprimés`,
     };
-  } catch (err) {
-    console.error('getGroupeComplet error:', err);
-    return mockChartreuseData;
-  }
+  });
+
+  // Format discussions / messages
+  const formattedDiscussions = (messages || []).map((m: any) => ({
+    id: m.id,
+    author: displayName(m.auteur, 'Membre'),
+    time: formatDateTime(m.created_at),
+    content: m.content,
+    attachment: m.media_url || undefined,
+    likes: 0,
+    replies: 0,
+  }));
+
+  // Format travelers (actif uniquement) — expose user_id + profile pour la gestion
+  const formattedTravelers = activeMembers.map((m: any) => {
+    const role = m.role === 'organizer' ? 'ORGANISATEUR' : m.role === 'co_organizer' ? 'CO-ORGANISATEUR' : m.role === 'observer' ? 'OBSERVATEUR' : 'MEMBRE';
+    return {
+      id: m.id,
+      user_id: m.user_id,
+      name: displayName(m.profile, 'Membre'),
+      role,
+      status: 'Prêt',
+      progress: 100,
+      user_profiles: m.profile,
+      role_code: m.role,
+      status_code: m.status,
+    };
+  });
+
+  const departure = groupe.departure_date ? new Date(groupe.departure_date) : null;
+  const returnd = groupe.return_date ? new Date(groupe.return_date) : null;
+  const daysLeft = departure && !isNaN(departure.getTime())
+    ? Math.ceil((departure.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+  const durationDays = departure && returnd && !isNaN(departure.getTime()) && !isNaN(returnd.getTime())
+    ? Math.max(1, Math.round((returnd.getTime() - departure.getTime()) / (1000 * 60 * 60 * 24)))
+    : null;
+
+  return {
+    id: realGroupId,
+    meta: {
+      titlePrefix: (groupe.name?.split(' ')[0] || 'Groupe'),
+      titleSuffix: (groupe.name?.split(' ').slice(1).join(' ') || ''),
+      description: groupe.description || '',
+      type: 'VOYAGE COLLABORATIF',
+      participantsCount: String(nbMembers),
+      season: seasonLabel(groupe.departure_date),
+      durationDays: durationDays ?? 0,
+      distanceKm: 0,
+      elevationGain: 0,
+      daysLeft: daysLeft ?? 0,
+      startDate: formatDateShort(groupe.departure_date),
+      endDate: formatDateShort(groupe.return_date),
+      fullStartDate: departure && !isNaN(departure.getTime())
+        ? departure.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+        : '',
+      massif: groupe.destination || 'À définir',
+      difficulty: groupe.group_level ? `Niveau ${groupe.group_level} · dénivelé` : '—',
+      budgetEstimate: groupe.budget_target ? `≈ ${Number(groupe.budget_target)}€/pers` : '—',
+      privacy: groupe.visibility === 'public' ? 'Groupe public' : 'Groupe privé',
+      meetingPoint: 'Point de rendez-vous à définir',
+      progression: Math.min(100, Math.max(0, Number(groupe.optimization_score) || 0)),
+    },
+    tasks: formattedTasks,
+    equipment: formattedEquipment,
+    expenses: formattedExpenses,
+    decisions: formattedDecisions,
+    discussions: formattedDiscussions,
+    travelers: formattedTravelers,
+    activities: [],
+  };
 }
 
 export async function toggleGroupeTaskStatus(taskId: string, currentCompleted: boolean) {
   const supabase = createClient();
-  const newStatut = currentCompleted ? 'a_faire' : 'fait';
-  const completedAt = newStatut === 'fait' ? new Date().toISOString() : null;
-
+  const newStatus = currentCompleted ? 'todo' : 'done';
   return supabase
-    .from('groupe_taches')
-    .update({ statut: newStatut, completed_at: completedAt })
+    .from('group_tasks')
+    .update({ status: newStatus })
     .eq('id', taskId);
 }
 
 export async function voteInGroupeOption(voteId: string, optionId: string, membreId: string) {
   const supabase = createClient();
+  const optionIndex = Number(optionId.replace(/^opt-/, ''));
   return supabase
-    .from('groupe_vote_choix')
-    .upsert({ vote_id: voteId, option_id: optionId, membre_id: membreId }, { onConflict: 'vote_id,membre_id' });
+    .from('group_poll_votes')
+    .upsert({ poll_id: voteId, user_id: membreId, option_index: Number.isFinite(optionIndex) ? optionIndex : 0 }, { onConflict: 'poll_id,user_id' });
 }
 
 export async function addGroupeTask(groupeId: string, titre: string, categorie: string = 'general', assigneA?: string) {
   const supabase = createClient();
   return supabase
-    .from('groupe_taches')
-    .insert({ groupe_id: groupeId, titre, categorie, assigne_a: assigneA, statut: 'a_faire' });
+    .from('group_tasks')
+    .insert({ group_id: groupeId, title: titre, description: categorie === 'general' ? null : categorie, assigned_to: assigneA || null, status: 'todo' });
 }
 
-export async function addGroupeMessage(groupeId: string, contenu: string, auteurId?: string, lieuNom?: string) {
+export async function addGroupeMessage(groupeId: string, contenu: string, auteurId?: string) {
   const supabase = createClient();
   return supabase
-    .from('groupe_messages')
-    .insert({ groupe_id: groupeId, contenu, auteur_id: auteurId, lieu_nom: lieuNom });
+    .from('group_messages')
+    .insert({ group_id: groupeId, content: contenu, user_id: auteurId || null });
 }

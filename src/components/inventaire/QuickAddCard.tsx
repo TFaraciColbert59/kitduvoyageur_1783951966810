@@ -1,10 +1,10 @@
-// src/components/inventaire/QuickAddCard.tsx
+// src/components/mon-materiel/QuickAddCard.tsx
 'use client';
 
 import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { GearItemData } from '@/lib/mock/inventaire-marceline';
+import type { GearItemData } from '@/lib/mock/mon-materiel-marceline';
 
 interface QuickAddCardProps {
   onAddSuccess?: (newItem: Partial<GearItemData>) => void;

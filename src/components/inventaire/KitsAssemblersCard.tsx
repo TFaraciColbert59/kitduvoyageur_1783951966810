@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
-import { UserKitData } from '@/lib/mock/inventaire-marceline';
+import { UserKitData } from '@/lib/mock/mon-materiel-marceline';
 
 interface KitsAssemblersCardProps {
   kits: UserKitData[];

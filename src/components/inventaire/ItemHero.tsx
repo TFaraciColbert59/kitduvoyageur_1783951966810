@@ -1,10 +1,10 @@
-// src/components/inventaire/ItemHero.tsx
+﻿// src/components/mon-materiel/ItemHero.tsx
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
+import Image from "next/image";
 import Icon from '@/components/ui/AppIcon';
-import { GearItemData } from '@/lib/mock/inventaire-marceline';
+import { GearItemData } from '@/lib/mock/mon-materiel-marceline';
 
 interface ItemHeroProps {
   item: GearItemData;
@@ -21,15 +21,15 @@ export default function ItemHero({
   onLend,
   onToggleFavorite,
 }: ItemHeroProps) {
-  const images = item.images && item.images.length > 0 ? item.images : [item.image];
+  const images = item.image ? [item.image] : [];
   const [selectedImage, setSelectedImage] = useState(images[0]);
 
   const formattedWeight =
-    item.weight_g >= 1000
+    item.weight_g && item.weight_g >= 1000
       ? `${(item.weight_g / 1000).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} kg`
-      : `${item.weight_g} g`;
+      : item.weight_g !== undefined ? `${item.weight_g} g` : '0 g';
 
-  const wearPercent = item.wear_percentage || 68;
+  const wearPercent = item.wear_percentage !== undefined ? item.wear_percentage : 68;
 
   return (
     <section className="bg-white rounded-3xl p-6 lg:p-8 border border-[#E8E4D8] shadow-sm mb-8">
@@ -105,7 +105,7 @@ export default function ItemHero({
 
             {/* Title with serif styling */}
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#132219] tracking-tight font-display">
-              {item.name.includes(item.brand) ? (
+              {item.brand && item.name.includes(item.brand) ? (
                 <>
                   {item.name.split(item.brand)[0]}
                   <span className="italic font-serif font-normal text-[#2D5A3D]">{item.brand}</span>
@@ -126,7 +126,7 @@ export default function ItemHero({
                 <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                 </svg>
-                <span>{item.rating || 4.6} / 5</span>
+                <span>{item.rating !== undefined ? item.rating : 4.6} / 5</span>
               </div>
             </div>
 
@@ -156,17 +156,17 @@ export default function ItemHero({
 
             <div className="bg-[#F5F2EA] rounded-2xl p-3 sm:p-4 border border-[#E8E4D8]/60">
               <span className="block text-[10px] font-bold tracking-wider text-[#132219]/60 uppercase">KM PARCOURUS</span>
-              <span className="text-base sm:text-lg font-extrabold text-[#132219] mt-0.5 block">{item.km_parcourus || 380} km</span>
+              <span className="text-base sm:text-lg font-extrabold text-[#132219] mt-0.5 block">{item.km_parcourus !== undefined ? item.km_parcourus : 380} km</span>
             </div>
 
             <div className="bg-[#F5F2EA] rounded-2xl p-3 sm:p-4 border border-[#E8E4D8]/60">
               <span className="block text-[10px] font-bold tracking-wider text-[#132219]/60 uppercase">SORTIES</span>
-              <span className="text-base sm:text-lg font-extrabold text-[#132219] mt-0.5 block">{item.sorties_count || 24} sorties</span>
+              <span className="text-base sm:text-lg font-extrabold text-[#132219] mt-0.5 block">{item.sorties_count !== undefined ? item.sorties_count : 24} sorties</span>
             </div>
 
             <div className="bg-[#F5F2EA] rounded-2xl p-3 sm:p-4 border border-[#E8E4D8]/60">
               <span className="block text-[10px] font-bold tracking-wider text-[#132219]/60 uppercase">RESTE AVANT REMPL.</span>
-              <span className="text-base sm:text-lg font-extrabold text-[#132219] mt-0.5 block">~{item.reste_km || 180} km</span>
+              <span className="text-base sm:text-lg font-extrabold text-[#132219] mt-0.5 block">~{item.reste_km !== undefined ? item.reste_km : 180} km</span>
             </div>
           </div>
 

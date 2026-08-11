@@ -101,7 +101,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const supabase = await createClient();
     const { data: products } = await supabase
-      .from('shop_products')
+      .from('products')
       .select('slug, updated_at')
       .order('score_kdv', { ascending: false })
       .limit(1000);

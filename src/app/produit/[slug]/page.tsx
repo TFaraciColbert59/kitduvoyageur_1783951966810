@@ -17,7 +17,7 @@ export async function generateStaticParams() {
   try {
     const supabase = await createClient();
     const { data } = await supabase
-      .from('shop_products')
+      .from('products')
       .select('slug')
       .order('score_kdv', { ascending: false })
       .limit(500); // Limit to prevent build timeout
@@ -40,7 +40,7 @@ export async function generateMetadata(
   try {
     const supabase = await createClient();
     const { data: product } = await supabase
-      .from('shop_products')
+      .from('products')
       .select(
         'id, slug, name, brand, description_why, price_eur, weight_g, image, image_alt, category_main, score_kdv, rating, review_count'
       )
@@ -116,7 +116,7 @@ export default async function ProduitPage({ params }: Props) {
   try {
     const supabase = await createClient();
     const { data: product } = await supabase
-      .from('shop_products')
+      .from('products')
       .select(
         'id, slug, name, brand, description_why, price_eur, weight_g, image, image_alt, category_main, score_kdv, rating, review_count'
       )

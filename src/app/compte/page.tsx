@@ -16,7 +16,7 @@ import BadgesCard from '@/components/compte/BadgesCard';
 import ConstanceCard from '@/components/compte/ConstanceCard';
 import ActiviteCard from '@/components/compte/ActiviteCard';
 import AbonnementCard from '@/components/compte/AbonnementCard';
-import InventaireCTACard from '@/components/compte/InventaireCTACard';
+import InventaireCTACard from '@/components/compte/mon-materielCTACard';
 import ParametresCompteCard from '@/components/compte/ParametresCompteCard';
 import EditProfileModal from '@/components/compte/EditProfileModal';
 import MobileCompteView from '@/components/compte/MobileCompteView';

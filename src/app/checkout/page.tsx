@@ -40,11 +40,12 @@ export default function CheckoutPage() {
     // Check if Stripe is configured
     const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
     setStripeConfigured(!!stripeKey && !stripeKey.includes('your-stripe'));
-    // Check for success redirect from Stripe
+    // Check for success redirect from Stripe — le numéro de commande est créé
+    // côté serveur par le webhook (jamais fabriqué côté client).
     const params = new URLSearchParams(window.location.search);
     if (params.get('success') === 'true') {
       setStep('confirmation');
-      setOrderNumber(`KDV-2026-${Math.floor(Math.random() * 9000 + 1000)}`);
+      setOrderNumber('');
     }
   }, []);
 
@@ -114,9 +115,8 @@ export default function CheckoutPage() {
     e.preventDefault();
     setProcessing(true);
     try {
-      await saveOrderToSupabase('virement');
-      const num = `KDV-2026-${Math.floor(Math.random() * 9000 + 1000)}`;
-      setOrderNumber(num);
+      const realNumber = await saveOrderToSupabase('virement');
+      setOrderNumber(realNumber);
       setStep('confirmation');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch {
@@ -126,70 +126,90 @@ export default function CheckoutPage() {
     }
   };
 
-  const saveOrderToSupabase = async (method: string) => {
+  const saveOrderToSupabase = async (method: string): Promise<string> => {
     try {
-      const num = `KDV-2026-${Math.floor(Math.random() * 9000 + 1000)}`;
-      const orderItems = items.map((i) => ({
-        name: i.name,
-        quantity: i.quantity,
-        unit_price_eur: i.priceEur,
-        slug: i.slug,
-      }));
+      // Prix serveur uniquement (products) — jamais les prix du panier client.
+      const slugs = items.map((i) => i.slug).filter(Boolean);
+      const { data: serverProducts } = slugs.length > 0
+        ? await supabase.from('products').select('id, slug, name, price_eur').in('slug', slugs)
+        : { data: [] };
+      const priceBySlug = new Map<string, { id: string; slug: string; name: string; price_eur: number }>(
+        (serverProducts || []).map((p: any) => [p.slug, p])
+      );
 
+      const orderItems = items.map((i) => {
+        const server = i.slug ? priceBySlug.get(i.slug) : null;
+        return {
+          name: server?.name || i.name,
+          quantity: i.quantity,
+          unit_price_eur: Number(server?.price_eur ?? 0),
+          slug: i.slug,
+        };
+      });
+
+      const serverSubtotal = orderItems.reduce((s, it) => s + it.unit_price_eur * it.quantity, 0);
+      const serverShipping = shippingCosts[shippingOption] ?? 5.9;
+      const serverDiscountEligible = serverSubtotal >= 99;
+      const finalShippingEur = shippingOption === 'standard' && serverDiscountEligible ? 0 : serverShipping;
+      const finalTotal = serverSubtotal + finalShippingEur;
+
+      // order_number : généré par la base (défaut `KDV-…`), jamais par le client.
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .insert({
           user_id: user?.id ?? null,
-          order_number: num,
           status: 'confirmed',
           payment_method: method,
           shipping_address: shipping,
           items: orderItems,
-          subtotal_eur: totalPriceEur,
-          shipping_eur: shippingEur,
-          total_eur: grandTotal,
-          loyalty_points_earned: Math.floor(grandTotal * 10),
+          subtotal_eur: serverSubtotal,
+          shipping_eur: finalShippingEur,
+          total_eur: finalTotal,
+          loyalty_points_earned: Math.floor(finalTotal * 10),
         })
-        .select('id')
+        .select('id, order_number')
         .single();
 
       if (orderError) throw orderError;
 
+      const realNumber = orderData?.order_number || '';
+
       // Decrement stock
       for (const item of items) {
         if (!item.slug) continue;
-        const { data: productData } = await supabase
-          .from('shop_products')
-          .select('id, stock, name, slug')
-          .eq('slug', item.slug)
+        const productData = priceBySlug.get(item.slug);
+        if (!productData) continue;
+
+        const { data: currentRow } = await supabase
+          .from('products')
+          .select('stock')
+          .eq('id', productData.id)
           .single();
+        const currentStock = Number(currentRow?.stock ?? 0);
+        const newStock = Math.max(0, currentStock - item.quantity);
+        await supabase.from('products').update({
+          stock: newStock,
+          updated_at: new Date().toISOString(),
+        }).eq('id', productData.id);
 
-        if (productData) {
-          const newStock = Math.max(0, (productData.stock ?? 0) - item.quantity);
-          await supabase.from('shop_products').update({
-            stock: newStock,
-            updated_at: new Date().toISOString(),
-          }).eq('id', productData.id);
-
-          await supabase.from('stock_movements').insert({
-            product_id: productData.id,
-            product_slug: productData.slug,
-            product_name: productData.name,
-            movement_type: 'sale',
-            quantity_change: -item.quantity,
-            quantity_before: productData.stock ?? 0,
-            quantity_after: newStock,
-            reference_type: 'order',
-            reference_id: orderData?.id ?? null,
-            user_id: user?.id ?? null,
-            notes: `Vente via commande ${num}`,
-          });
-        }
+        await supabase.from('stock_movements').insert({
+          product_id: productData.id,
+          product_slug: productData.slug,
+          product_name: productData.name,
+          movement_type: 'sale',
+          quantity_change: -item.quantity,
+          quantity_before: currentStock,
+          quantity_after: newStock,
+          reference_type: 'order',
+          reference_id: orderData?.id ?? null,
+          user_id: user?.id ?? null,
+          notes: realNumber ? `Vente via commande ${realNumber}` : 'Vente via commande',
+        });
       }
 
       // Award loyalty points
       if (user) {
-        const pointsEarned = Math.floor(grandTotal * 10);
+        const pointsEarned = Math.floor(finalTotal * 10);
         try {
           await supabase.rpc('increment_loyalty_points' as never, {
             p_user_id: user.id,
@@ -209,8 +229,8 @@ export default function CheckoutPage() {
 
         await supabase.from('loyalty_history').insert({
           user_id: user.id,
-          action: `Commande ${num}`,
-          points: Math.floor(grandTotal * 10),
+          action: realNumber ? `Commande ${realNumber}` : 'Commande virement',
+          points: Math.floor(finalTotal * 10),
           type: 'earned',
         });
       }
@@ -232,7 +252,7 @@ export default function CheckoutPage() {
               weight_g: 0,
               brand: '',
               model: '',
-              notes: `Importé automatiquement depuis la commande ${num}`,
+              notes: realNumber ? `Importé automatiquement depuis la commande ${realNumber}` : 'Importé automatiquement depuis une commande',
               acquired_at: new Date().toISOString().split('T')[0],
             });
           }
@@ -240,9 +260,12 @@ export default function CheckoutPage() {
           // Best-effort
         }
       }
+
+      return realNumber;
     } catch (err) {
       console.error('Order save error:', err);
     }
+    return '';
   };
 
   const steps: { id: Step; label: string; num: number }[] = [
@@ -542,11 +565,17 @@ export default function CheckoutPage() {
                   <Icon name="CheckIcon" size={32} className="text-[#1C2620]" />
                 </div>
                 <h2 className="font-display font-800 text-3xl mb-4">Commande confirmée.</h2>
-                <p className="text-[#5C6B5E] mb-2">Numéro de commande : <span className="font-mono font-600 text-[#1C2620]">{orderNumber}</span></p>
+                <p className="text-[#5C6B5E] mb-2">
+                  {orderNumber ? (
+                    <>Numéro de commande : <span className="font-mono font-600 text-[#1C2620]">{orderNumber}</span></>
+                  ) : (
+                    'Votre numéro de commande vous sera envoyé par email.'
+                  )}
+                </p>
                 <p className="text-sm text-[#5C6B5E] mb-8 max-w-sm mx-auto leading-relaxed">
                   Merci ! Un email de confirmation vous a été envoyé. Préparez-vous pour l'aventure.
                 </p>
-                <Link href="/inventaire" className="inline-flex items-center gap-2 bg-[#1C2620] text-white px-8 py-3.5 rounded-xl font-600 text-sm hover:bg-[#2A3830] transition-colors">
+                <Link href="/mon-materiel" className="inline-flex items-center gap-2 bg-[#1C2620] text-white px-8 py-3.5 rounded-xl font-600 text-sm hover:bg-[#2A3830] transition-colors">
                   Voir mon inventaire
                 </Link>
               </div>

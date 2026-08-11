@@ -115,7 +115,7 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
         {/* SINGLE INVENTORY BUTTON - GREENISH LIQUID GLASS EFFECT */}
         <div className="w-full lg:w-auto flex justify-end shrink-0">
           <Link
-            href="/inventaire"
+            href="/mon-materiel"
             className="group relative w-full sm:w-auto px-6 py-3 bg-emerald-950/40 hover:bg-emerald-900/50 backdrop-blur-xl border border-emerald-400/30 hover:border-emerald-300/60 text-emerald-100 font-display font-800 text-xs sm:text-sm rounded-full shadow-lg shadow-emerald-950/30 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 overflow-hidden"
           >
             {/* Shimmer light glass shine */}

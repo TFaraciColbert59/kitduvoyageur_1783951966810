@@ -1,8 +1,8 @@
-// src/components/inventaire/TechSpecTable.tsx
+// src/components/mon-materiel/TechSpecTable.tsx
 'use client';
 
 import React from 'react';
-import { GearItemData } from '@/lib/mock/inventaire-marceline';
+import { GearItemData } from '@/lib/mock/mon-materiel-marceline';
 
 interface TechSpecTableProps {
   item: GearItemData;
@@ -11,7 +11,7 @@ interface TechSpecTableProps {
 
 export default function TechSpecTable({ item, onEdit }: TechSpecTableProps) {
   const formattedWeight =
-    item.weight_g >= 1000 ? `${item.weight_g} g (${(item.weight_g / 1000).toFixed(1)} kg)` : `${item.weight_g} g`;
+    item.weight_g !== undefined && item.weight_g >= 1000 ? `${item.weight_g} g (${(item.weight_g / 1000).toFixed(1)} kg)` : `${item.weight_g !== undefined ? item.weight_g : 0} g`;
 
   const specRows = [
     {

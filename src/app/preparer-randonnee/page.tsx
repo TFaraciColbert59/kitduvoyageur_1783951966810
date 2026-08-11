@@ -32,7 +32,7 @@ export default async function PreparerRandonneePage({
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F2EA]">
+    <div className="h-screen w-screen overflow-y-auto md:overflow-hidden bg-[#F5F2EA]">
       <PreparationClient route={route} userId={user?.id} />
     </div>
   );

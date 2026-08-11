@@ -260,7 +260,7 @@ body {
    ═══════════════════════════════════════════════════════════════ */
 .score-panel {
   position: relative;
-  margin: -32px 16px 0;
+  margin: 0;
   background: var(--lkv-paper);
   border-radius: 22px;
   padding: 16px 18px;

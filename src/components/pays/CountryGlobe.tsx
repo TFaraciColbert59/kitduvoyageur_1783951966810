@@ -6,7 +6,7 @@ import { getCountryCoordinates } from '@/lib/countryCoordinates';
 import type { Country } from '@/lib/countries';
 import type { GlobeMethods } from 'react-globe.gl';
 
-const Globe = dynamic(() => import('react-globe.gl'), { ssr: false }) as React.ComponentType<any>;
+const Globe = dynamic(() => import('react-globe.gl'), { ssr: false }) as any;
 
 // ── Couleurs polygons par niveau de danger (semi-transparent pour voir le relief) ──
 const DANGER_COLORS: Record<string, string> = {
@@ -59,6 +59,7 @@ export default function CountryGlobe({
   const hoveredRef = useRef<Country | null>(null);
   const [geoFeatures, setGeoFeatures] = useState<any[]>([]);
   const [geoLoaded, setGeoLoaded] = useState(false);
+  const [isGlobeReady, setIsGlobeReady] = useState(false);
   const ctrlRef = useRef<any>(null);
 
   // ── Load GeoJSON Natural Earth ──
@@ -76,7 +77,7 @@ export default function CountryGlobe({
     const ro = new ResizeObserver(entries => {
       for (const e of entries) {
         const { width, height } = e.contentRect;
-        if (width > 0 && height > 0) setDimensions({ width, height });
+        if (width > 0 && height > 0) setDimensions(p => p.width === width && p.height === height ? p : { width, height });
       }
     });
     ro.observe(el);
@@ -85,7 +86,8 @@ export default function CountryGlobe({
 
   // ── Auto-rotation initiale + DPR mobile (performance) ──
   useEffect(() => {
-    if (!geoLoaded || !globeRef.current) return;
+    if (!isGlobeReady || !globeRef.current) return;
+    if (typeof globeRef.current.controls !== 'function') return;
     const ctrl = globeRef.current.controls();
     ctrlRef.current = ctrl;
     ctrl.autoRotate = true;
@@ -97,14 +99,14 @@ export default function CountryGlobe({
         renderer.setPixelRatio(dpr);
       }
     } catch (_e) { /* non-critical */ }
-  }, [geoLoaded]);
+  }, [isGlobeReady]);
 
   // ── Focus caméra ──
   useEffect(() => {
-    if (!focusCode || !globeRef.current) return;
+    if (!isGlobeReady || !focusCode || !globeRef.current) return;
     const coords = getCountryCoordinates(focusCode);
-    if (coords) globeRef.current.pointOfView({ lat: coords.lat, lng: coords.lng, altitude: 1.5 }, 1000);
-  }, [focusCode]);
+    if (coords && typeof globeRef.current.pointOfView === 'function') globeRef.current.pointOfView({ lat: coords.lat, lng: coords.lng, altitude: 1.5 }, 1000);
+  }, [isGlobeReady, focusCode]);
 
   // ── Fusion GeoJSON × nos données ──
   const polygonsData = useMemo(() => {
@@ -193,13 +195,13 @@ export default function CountryGlobe({
         WebkitTapHighlightColor: 'transparent',
       }}
     >
-      {typeof window !== 'undefined' && geoLoaded && (
+      {true && (
         <Globe
           ref={globeRef}
           width={dimensions.width}
           height={dimensions.height}
-          globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
-          bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
+          globeImageUrl="https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+          bumpImageUrl="https://unpkg.com/three-globe/example/img/earth-topology.png"
           backgroundColor="#0B1F17"
           showAtmosphere
           atmosphereColor="#A8C8A0"
@@ -232,6 +234,7 @@ export default function CountryGlobe({
 
           // ── Caméra ──
           onZoom={handleZoom}
+          onGlobeReady={() => setIsGlobeReady(true)}
         />
       )}
 

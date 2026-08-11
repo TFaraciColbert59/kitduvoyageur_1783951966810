@@ -1,8 +1,8 @@
-// src/components/inventaire/KitsList.tsx
+// src/components/mon-materiel/KitsList.tsx
 'use client';
 
 import React, { useState } from 'react';
-import type { UserKitData } from '@/lib/mock/inventaire-marceline';
+import type { UserKitData } from '@/lib/mock/mon-materiel-marceline';
 
 interface KitsListProps {
   kits?: UserKitData[];

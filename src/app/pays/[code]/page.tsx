@@ -1,183 +1,92 @@
-import { Metadata, ResolvingMetadata } from 'next';
-import { notFound } from 'next/navigation';
-import CountryPageClient from './CountryPageClient';
-import { getCountryByCode, getPublishedCountries } from '@/lib/countries';
+// page.tsx - Page détail d'un pays
+// Redesign premium avec EarthLayout
 
-interface Props {
+'use client';
+
+import React from 'react';
+import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import { getCountryByCode, type Country } from '@/lib/countries';
+
+// Composants Earth
+import EarthLayout from '@/components/earth/EarthLayout';
+import CountryDetailsHeader from '@/components/earth/CountryDetailsHeader';
+import CountryClimatePanel from '@/components/earth/CountryClimatePanel';
+import CountrySafetyPanel from '@/components/earth/CountrySafetyPanel';
+import CountryActivitiesPanel from '@/components/earth/CountryActivitiesPanel';
+
+// Globe 3D
+const CountryGlobe = dynamic(
+  () => import('@/components/pays/CountryGlobe'),
+  { ssr: false }
+);
+
+interface PageProps {
   params: Promise<{ code: string }>;
 }
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
-
-/**
- * Generate static params for published countries only
- * Unpublished countries still render but with noindex
- */
-export async function generateStaticParams() {
-  const publishedCountries = getPublishedCountries();
-  return publishedCountries.map((country) => ({
-    code: country.code.toLowerCase(),
-  }));
-}
-
-export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata
-): Promise<Metadata> {
-  const { code } = await params;
-  const country = getCountryByCode(code);
+export default function CountryPage({ params }: PageProps) {
+  const router = useRouter();
+  const { code } = React.use(params);
+  const country = getCountryByCode(code.toLowerCase());
 
   if (!country) {
-    return {
-      title: 'Pays non trouvé',
-      robots: { index: false, follow: false },
-    };
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-center p-8 max-w-md">
+          <div className="text-6xl mb-4">🗺️</div>
+          <h1 className="text-3xl font-bold text-white mb-4">Pays non trouvé</h1>
+          <p className="text-white/70 mb-6">
+            Le pays que vous recherchez n existe pas ou son code est invalide.
+          </p>
+          <button
+            onClick={() => router.push("/pays")}
+            className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors"
+          >
+            Retour a Earth
+          </button>
+        </div>
+      </div>
+    );
   }
-
-  const isPublished = country.published;
-  const canonicalUrl = `${siteUrl}/pays/${country.code.toLowerCase()}`;
-  const title = `Voyager en ${country.nom} — Fiche pays complète`;
-  const description = `Tout ce qu'il faut savoir pour voyager en ${country.nom} : météo, visa, vaccins, équipement recommandé et kits optimisés.`;
-
-  return {
-    title,
-    description,
-    keywords: [
-      country.nom,
-      'voyage',
-      'fiche pays',
-      'équipement',
-      'randonnée',
-      ...country.tags,
-    ],
-    alternates: {
-      canonical: canonicalUrl,
-    },
-    openGraph: {
-      type: 'website',
-      title: `Voyager en ${country.nom} — Le Kit du Voyageur`,
-      description,
-      url: canonicalUrl,
-      images: [
-        {
-          url: '/assets/images/og-image.png',
-          width: 1200,
-          height: 630,
-          alt: `Voyager en ${country.nom} — Le Kit du Voyageur`,
-          type: 'image/png',
-        },
-      ],
-      siteName: 'Le Kit du Voyageur',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `Voyager en ${country.nom}`,
-      description,
-      images: ['/assets/images/og-image.png'],
-    },
-    robots: {
-      index: isPublished,
-      follow: true,
-      googleBot: {
-        index: isPublished,
-        follow: true,
-      },
-    },
-  };
-}
-
-export default async function PaysPage({ params }: Props) {
-  const { code } = await params;
-  const country = getCountryByCode(code);
-
-  if (!country) {
-    notFound();
-  }
-
-  const canonicalUrl = `${siteUrl}/pays/${country.code.toLowerCase()}`;
-
-  // JSON-LD: TouristDestination + BreadcrumbList + FAQPage
-  const schemaOrg = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'TouristDestination',
-        '@id': `${canonicalUrl}#destination`,
-        name: country.nom,
-        url: canonicalUrl,
-        description: `Tout ce qu'il faut savoir pour voyager en ${country.nom} : météo, visa, vaccins, équipement recommandé et kits optimisés.`,
-        touristType: ['Randonneur', 'Aventurier', 'Trekker'],
-        containedInPlace: {
-          '@type': 'Continent',
-          name: country.continent,
-        },
-        areaServed: {
-          '@type': 'Country',
-          name: country.nom,
-        },
-      },
-      {
-        '@type': 'BreadcrumbList','@id': `${canonicalUrl}#breadcrumb`,
-        itemListElement: [
-          {
-            '@type': 'ListItem',position: 1,name: 'Accueil',
-            item: siteUrl,
-          },
-          {
-            '@type': 'ListItem',position: 2,name: 'Pays',
-            item: `${siteUrl}/pays`,
-          },
-          {
-            '@type': 'ListItem',
-            position: 3,
-            name: country.nom,
-            item: canonicalUrl,
-          },
-        ],
-      },
-      {
-        '@type': 'FAQPage','@id': `${canonicalUrl}#faq`,
-        mainEntity: [
-          {
-            '@type': 'Question',
-            name: `Quelle est la meilleure saison pour voyager en ${country.nom} ?`,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: `La meilleure saison pour voyager en ${country.nom} est ${country.meilleure_saison}. C'est la période idéale pour profiter des conditions météorologiques optimales et des paysages à leur meilleur.`,
-            },
-          },
-          {
-            '@type': 'Question',
-            name: `Quel équipement recommandez-vous pour ${country.nom} ?`,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: `Pour ${country.nom}, nous recommandons un équipement adapté aux conditions locales. Consultez notre fiche pays complète pour les kits optimisés et les équipements essentiels.`,
-            },
-          },
-          {
-            '@type': 'Question',
-            name: `Quel est le niveau de sécurité en ${country.nom} ?`,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: `Le niveau de sécurité en ${country.nom} est classé comme ${country.danger_level === 'low' ? 'faible' : country.danger_level === 'medium' ? 'moyen' : 'élevé'}. Consultez les informations officielles avant de voyager.`,
-            },
-          },
-        ],
-      },
-    ],
-  };
 
   return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
-        suppressHydrationWarning
-      />
-      <CountryPageClient code={country.code.toLowerCase()} />
-    </>
+    <EarthLayout
+      className="bg-slate-950"
+      isCountryPage={true}
+      topContent={
+        <CountryDetailsHeader
+          country={country}
+          onBack={() => router.push("/pays")}
+        />
+      }
+      leftContent={
+        <div className="max-h-[80vh] overflow-y-auto custom-scrollbar pb-4">
+          <CountryClimatePanel country={country} />
+        </div>
+      }
+      centerContent={
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="w-full max-w-4xl">
+            <CountryGlobe
+              countries={[country]}
+              onCountryClick={() => {}}
+              focusCode={country.code.toLowerCase()}
+              fullscreen={false}
+            />
+          </div>
+        </div>
+      }
+      rightContent={
+        <div className="max-h-[80vh] overflow-y-auto custom-scrollbar pb-4">
+          <CountrySafetyPanel country={country} />
+        </div>
+      }
+      bottomContent={
+        <div className="mt-4">
+          <CountryActivitiesPanel country={country} />
+        </div>
+      }
+    />
   );
 }
-
-// ISR: Revalidate every 24 hours (countries data changes infrequently)
-export const revalidate = 86400;

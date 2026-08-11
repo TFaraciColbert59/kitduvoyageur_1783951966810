@@ -74,16 +74,16 @@ function GroupesPageInner() {
   const loadMyGroups = useCallback(async () => {
     if (!user) { setMyGroups([]); return; }
     try {
-      const { data: memberData } = await supabase.from('group_members').select('group_id, role').eq('user_id', user.id).eq('status', 'active');
+      const { data: memberData } = await supabase.from('groupe_membres').select('group_id, role').eq('user_id', user.id).eq('status', 'active');
       if (!memberData?.length) { setMyGroups([]); return; }
       const groupIds = memberData.map(m => m.group_id);
       const { data: groups } = await supabase
-        .from('travel_groups')
-        .select('*, owner:user_profiles!travel_groups_owner_id_fkey(full_name, avatar_url)')
+        .from('groupes')
+        .select('*, owner:user_profiles!groupes_owner_id_fkey(full_name, avatar_url)')
         .in('id', groupIds)
         .order('created_at', { ascending: false });
       const enriched = await Promise.all((groups || []).map(async (g) => {
-        const { count } = await supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('group_id', g.id).eq('status', 'active');
+        const { count } = await supabase.from('groupe_membres').select('*', { count: 'exact', head: true }).eq('group_id', g.id).eq('status', 'active');
         return { ...g, member_count: count || 0, my_role: memberData.find(m => m.group_id === g.id)?.role };
       }));
       setMyGroups(enriched);
@@ -97,13 +97,13 @@ function GroupesPageInner() {
   const loadPublicGroups = useCallback(async () => {
     try {
       const { data } = await supabase
-        .from('travel_groups')
-        .select('*, owner:user_profiles!travel_groups_owner_id_fkey(full_name, avatar_url)')
+        .from('groupes')
+        .select('*, owner:user_profiles!groupes_owner_id_fkey(full_name, avatar_url)')
         .eq('visibility', 'public')
         .order('created_at', { ascending: false })
         .limit(30);
       const enriched = await Promise.all((data || []).map(async (g) => {
-        const { count } = await supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('group_id', g.id).eq('status', 'active');
+        const { count } = await supabase.from('groupe_membres').select('*', { count: 'exact', head: true }).eq('group_id', g.id).eq('status', 'active');
         return { ...g, member_count: count || 0 };
       }));
       setPublicGroups(enriched || []);
@@ -128,7 +128,7 @@ function GroupesPageInner() {
     e.preventDefault();
     if (!editingGroup) return;
     try {
-      const { error } = await supabase.from('travel_groups').update({
+      const { error } = await supabase.from('groupes').update({
         name: createForm.name, description: createForm.description, destination: createForm.destination,
         theme: createForm.theme, visibility: createForm.visibility,
         departure_date: createForm.departure_date || null, return_date: createForm.return_date || null,
@@ -146,7 +146,7 @@ function GroupesPageInner() {
     if (!user) { toast('Connectez-vous pour rejoindre un groupe', 'error'); return; }
     setJoining(groupId);
     try {
-      const { error } = await supabase.from('group_members').insert({ group_id: groupId, user_id: user.id, role: 'member', status: 'active' });
+      const { error } = await supabase.from('groupe_membres').insert({ group_id: groupId, user_id: user.id, role: 'member', status: 'active' });
       if (error && error.code !== '23505') throw error;
       toast('Vous avez rejoint le groupe !', 'success');
       await Promise.all([loadMyGroups(), loadPublicGroups()]);
@@ -159,7 +159,7 @@ function GroupesPageInner() {
     if (!user) return;
     if (!confirm('Quitter ce groupe ?')) return;
     try {
-      await supabase.from('group_members').delete().eq('group_id', groupId).eq('user_id', user.id);
+      await supabase.from('groupe_membres').delete().eq('group_id', groupId).eq('user_id', user.id);
       toast('Vous avez quitté le groupe', 'success');
       await loadMyGroups();
     } catch (err: unknown) { toast((err as Error).message || 'Erreur', 'error'); }
@@ -168,7 +168,7 @@ function GroupesPageInner() {
   async function handleDeleteGroup(groupId: string) {
     if (!confirm('Supprimer définitivement ce groupe ? Cette action est irréversible.')) return;
     try {
-      await supabase.from('travel_groups').delete().eq('id', groupId);
+      await supabase.from('groupes').delete().eq('id', groupId);
       toast('Groupe supprimé', 'success');
       await Promise.all([loadMyGroups(), loadPublicGroups()]);
     } catch (err: unknown) { toast((err as Error).message || 'Erreur', 'error'); }
@@ -179,9 +179,9 @@ function GroupesPageInner() {
     if (!joinCode.trim()) return;
     setJoiningByCode(true);
     try {
-      const { data: group } = await supabase.from('travel_groups').select('*').eq('invite_code', joinCode.trim().toUpperCase()).maybeSingle();
+      const { data: group } = await supabase.from('groupes').select('*').eq('invite_code', joinCode.trim().toUpperCase()).maybeSingle();
       if (!group) { toast('Code invalide', 'error'); return; }
-      const { error } = await supabase.from('group_members').insert({ group_id: group.id, user_id: user.id, role: 'member', status: 'active' });
+      const { error } = await supabase.from('groupe_membres').insert({ group_id: group.id, user_id: user.id, role: 'member', status: 'active' });
       if (error && error.code !== '23505') throw error;
       toast(`Vous avez rejoint "${group.name}" !`, 'success');
       setJoinCode('');

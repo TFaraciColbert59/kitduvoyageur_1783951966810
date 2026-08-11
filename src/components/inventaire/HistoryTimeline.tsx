@@ -1,4 +1,4 @@
-// src/components/inventaire/HistoryTimeline.tsx
+// src/components/mon-materiel/HistoryTimeline.tsx
 'use client';
 
 import React from 'react';

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
+import Link from "next/link";
 import { usePathname, useRouter } from 'next/navigation';
 import LkvIcon from '@/components/ui/LkvIcon';
 import { useSearchContext } from '@/contexts/SearchContext';
@@ -27,7 +27,6 @@ const PARENT_TAB: Record<string, string> = {
   '/evenements': '/explorer',
   '/feed': '/explorer',
   '/boutique': '/boutique',
-  '/inventaire': '/compte',
   '/mon-materiel': '/compte',
   '/boussole': '/terrain',
   '/hors-ligne': '/explorer',
@@ -57,12 +56,11 @@ const PAGE_TITLES: Record<string, string> = {
   '/explorer': 'Explorer',
   '/boussole': 'Boussole AR',
   '/hors-ligne': 'Hors-Ligne',
-  '/mon-materiel': 'Mon Matériel',
+  '/mon-materiel': 'Inventaire',
   '/randonnee-active': 'Randonnée Active',
   '/boutique': 'Boutique',
   '/carnets': 'Carnets',
   '/compte': 'Mon Compte',
-  '/inventaire': 'Inventaire',
   '/jumeau-3d': 'Jumeau 3D',
   '/kits': 'Mes Kits',
   '/occasion': 'Occasion',
@@ -141,11 +139,12 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
   };
 
   const mBtnStandard: React.CSSProperties = {
-    width: '40px',
-    height: '40px',
+    width: '34px',
+    height: '34px',
     borderRadius: '999px',
-    background: 'rgba(255,255,255,0.92)',
-    border: '1px solid rgba(11,31,23,0.08)',
+    background: 'rgba(255,255,255,0.85)',
+    backdropFilter: 'blur(16px)',
+    border: '1px solid rgba(255,255,255,0.5)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -155,13 +154,13 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
   };
 
   const mBtnOnImage: React.CSSProperties = {
-    width: '40px',
-    height: '40px',
+    width: '34px',
+    height: '34px',
     borderRadius: '999px',
-    background: 'rgba(255,255,255,0.22)',
-    backdropFilter: 'blur(20px)',
-    WebkitBackdropFilter: 'blur(20px)',
-    border: '1px solid rgba(255,255,255,0.35)',
+    background: 'rgba(28,38,32,0.65)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+    border: '1px solid rgba(255,255,255,0.25)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -183,7 +182,7 @@ export default function TopBar({ variant = 'standard', cartCount = 0, showBack, 
     >
       <div
         className="flex items-center justify-between"
-        style={{ height: '52px', padding: '0 16px' }}
+        style={{ height: '46px', padding: '0 14px' }}
       >
         {/* Left */}
         <div className="flex items-center gap-2 relative z-10 pointer-events-auto" style={{ minWidth: '38px' }}>

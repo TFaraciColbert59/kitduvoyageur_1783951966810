@@ -13,6 +13,7 @@ import './design/prep.css';
 
 import { MobilePreparationView } from './components/MobilePreparationView';
 import { DesktopPreparationView } from './components/DesktopPreparationView';
+import { StartDistanceModal } from '@/components/ui/StartDistanceModal';
 
 interface PreparationClientProps {
   route: any;
@@ -177,7 +178,50 @@ export default function PreparationClient({ route, userId }: PreparationClientPr
     showToast(`${itemName} ajouté`);
   };
 
+  const [distanceModalOpen, setDistanceModalOpen] = useState(false);
+  const [userDistanceKm, setUserDistanceKm] = useState<number>(0);
+
+  const getDistanceMeters = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) *
+        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Math.round(R * c);
+  };
+
   const handleStart = () => {
+    const sLat = Number(startPt?.lat ?? route.lat ?? route.start_lat ?? 0);
+    const sLng = Number(startPt?.lng ?? route.lng ?? route.start_lng ?? 0);
+
+    if (sLat !== 0 && sLng !== 0 && typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const distM = getDistanceMeters(pos.coords.latitude, pos.coords.longitude, sLat, sLng);
+          if (distM > 200) {
+            setUserDistanceKm(distM / 1000);
+            setDistanceModalOpen(true);
+          } else {
+            router.push(`/randonnee-active?routeId=${route.id}`);
+          }
+        },
+        () => {
+          router.push(`/randonnee-active?routeId=${route.id}`);
+        },
+        { timeout: 4000 }
+      );
+    } else {
+      router.push(`/randonnee-active?routeId=${route.id}`);
+    }
+  };
+
+  const handleConfirmStartAnyway = () => {
+    setDistanceModalOpen(false);
     router.push(`/randonnee-active?routeId=${route.id}`);
   };
 
@@ -243,14 +287,40 @@ export default function PreparationClient({ route, userId }: PreparationClientPr
     oState,
   };
 
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkIsMobile = () => setIsMobile(window.innerWidth < 768);
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
+
+  const sLat = Number(startPt?.lat ?? route.lat ?? route.start_lat ?? 0);
+  const sLng = Number(startPt?.lng ?? route.lng ?? route.start_lng ?? 0);
+
   return (
     <>
-      <div className="block lg:hidden">
-         <MobilePreparationView {...viewProps} />
-      </div>
-      <div className="hidden lg:block h-screen w-screen overflow-hidden">
-         <DesktopPreparationView {...viewProps} />
-      </div>
+      {isMobile !== false && (
+        <div className="block md:hidden">
+          <MobilePreparationView {...viewProps} />
+        </div>
+      )}
+      {isMobile !== true && (
+        <div className="hidden md:block h-screen w-screen overflow-hidden">
+          <DesktopPreparationView {...viewProps} />
+        </div>
+      )}
+
+      <StartDistanceModal
+        isOpen={distanceModalOpen}
+        distanceKm={userDistanceKm}
+        startLat={sLat}
+        startLng={sLng}
+        routeName={route.name}
+        onConfirmStart={handleConfirmStartAnyway}
+        onClose={() => setDistanceModalOpen(false)}
+      />
     </>
   );
 }

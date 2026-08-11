@@ -53,13 +53,14 @@ export default function GroupesPage() {
   };
 
   useEffect(() => {
-    const rawId = (params?.groupId as string) || 'chartreuse-1';
-    loadData(rawId);
+    const rawId = params?.groupId as string;
+    if (rawId) loadData(rawId);
+    else setLoading(false);
   }, [params?.groupId]);
 
   const refreshData = () => {
-    const rawId = (params?.groupId as string) || 'chartreuse-1';
-    loadData(rawId);
+    const rawId = params?.groupId as string;
+    if (rawId) loadData(rawId);
   };
 
   if (loading) {
@@ -71,12 +72,20 @@ export default function GroupesPage() {
       <div className="min-h-screen bg-[#E7E3D6] flex flex-col items-center justify-center">
         <h2 className="font-display text-2xl text-[#1C2620] mb-4">Groupe introuvable</h2>
         <p className="text-sm text-[#1C2620]/60 mb-6">Ce groupe n'existe pas ou vous n'y avez pas accès.</p>
-        <Link href="/groupes" className="px-5 py-2.5 bg-[#33463C] text-[#E7E3D6] rounded-full text-sm font-bold">Retour aux groupes</Link>
+        <div className="flex gap-3">
+          <button
+            onClick={refreshData}
+            className="px-5 py-2.5 bg-[#17402C] text-[#E7E3D6] rounded-full text-sm font-bold hover:bg-[#0F2B1D] transition-colors"
+          >
+            Réessayer
+          </button>
+          <Link href="/groupes" className="px-5 py-2.5 bg-[#33463C] text-[#E7E3D6] rounded-full text-sm font-bold">Retour aux groupes</Link>
+        </div>
       </div>
     );
   }
 
-  const groupId = formattedData.id || 'chartreuse-1';
+  const groupId = formattedData.id || '';
   const members = formattedData.travelers || [];
 
   return (

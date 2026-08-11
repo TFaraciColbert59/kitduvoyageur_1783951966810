@@ -56,15 +56,11 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Admin routes: verify role
+        // Admin routes: verify role
     if (isAdmin(pathname)) {
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
+      const { data: isAdminRole } = await supabase.rpc('is_admin');
 
-      if (!profile || profile.role !== 'admin') {
+      if (!isAdminRole) {
         const homeUrl = request.nextUrl.clone();
         homeUrl.pathname = '/';
         return NextResponse.redirect(homeUrl);

@@ -164,6 +164,44 @@ export default function InteractiveMap() {
     loadPOIs();
   }, [supabase]);
 
+  const [tileMode, setTileMode] = useState<'osm' | 'topo' | 'satellite'>('osm');
+  const tileLayerRef = useRef<any>(null);
+
+  const handleTileChange = (mode: 'osm' | 'topo' | 'satellite') => {
+    setTileMode(mode);
+    if (!mapRef.current) return;
+    import('leaflet').then((L) => {
+      if (tileLayerRef.current && mapRef.current) {
+        mapRef.current.removeLayer(tileLayerRef.current);
+      }
+      const url = mode === 'topo'
+        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'
+        : mode === 'satellite'
+        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+        : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+      
+      const newLayer = L.tileLayer(url, {
+        attribution: '&copy; OpenStreetMap / CARTO / Esri',
+        maxZoom: 19,
+        maxNativeZoom: 18,
+        keepBuffer: 6,
+      }).addTo(mapRef.current!);
+      tileLayerRef.current = newLayer;
+    });
+  };
+
+  const handleZoomIn = () => {
+    if (mapRef.current && (mapRef.current as any)._loaded) {
+      mapRef.current.zoomIn();
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (mapRef.current && (mapRef.current as any)._loaded) {
+      mapRef.current.zoomOut();
+    }
+  };
+
   // 3. Initialize Leaflet Map
   useEffect(() => {
     if (!containerRef.current || mapRef.current || typeof window === 'undefined') return;
@@ -182,14 +220,15 @@ export default function InteractiveMap() {
         zoomControl: false,
       });
 
-      L.control.zoom({ position: 'topright' }).addTo(map);
-
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      const initialLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
         subdomains: 'abcd',
         maxZoom: 19,
+        maxNativeZoom: 18,
+        keepBuffer: 6,
       }).addTo(map);
 
+      tileLayerRef.current = initialLayer;
       mapRef.current = map;
       setMapReady(true);
     });
@@ -621,6 +660,54 @@ export default function InteractiveMap() {
       {/* ── MAP CONTAINER ── */}
       <div className="flex-1 h-full relative">
         <div ref={containerRef} className="w-full h-full z-0" />
+
+        {/* Floating Zoom Controls */}
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-[400] flex flex-col gap-2">
+          <div className="flex flex-col bg-white/80 backdrop-blur-md border border-white/60 rounded-2xl shadow-xl overflow-hidden text-[#1C2620]">
+            <button
+              onClick={handleZoomIn}
+              title="Zoom avant"
+              className="w-9 h-9 flex items-center justify-center font-bold text-lg hover:bg-[#8BAF7C]/35 hover:text-[#17402C] transition-all border-b border-black/10 cursor-pointer active:scale-95"
+            >
+              +
+            </button>
+            <button
+              onClick={handleZoomOut}
+              title="Zoom arrière"
+              className="w-9 h-9 flex items-center justify-center font-bold text-lg hover:bg-[#8BAF7C]/35 hover:text-[#17402C] transition-all cursor-pointer active:scale-95"
+            >
+              −
+            </button>
+          </div>
+        </div>
+
+        {/* Floating Tile Switcher (Carte / Relief / Satellite) */}
+        <div className="absolute bottom-20 right-3 sm:bottom-6 sm:right-4 z-[400] flex items-center p-1 bg-white/80 backdrop-blur-md border border-white/60 rounded-2xl shadow-xl">
+          <button
+            onClick={() => handleTileChange('osm')}
+            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+              tileMode === 'osm' ? 'bg-[#17402C] text-white shadow-sm' : 'text-[#5C6B5E] hover:bg-[#8BAF7C]/35 hover:text-[#17402C]'
+            }`}
+          >
+            🗺️ Carte
+          </button>
+          <button
+            onClick={() => handleTileChange('topo')}
+            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+              tileMode === 'topo' ? 'bg-[#17402C] text-white shadow-sm' : 'text-[#5C6B5E] hover:bg-[#8BAF7C]/35 hover:text-[#17402C]'
+            }`}
+          >
+            ⛰️ Relief
+          </button>
+          <button
+            onClick={() => handleTileChange('satellite')}
+            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+              tileMode === 'satellite' ? 'bg-[#17402C] text-white shadow-sm' : 'text-[#5C6B5E] hover:bg-[#8BAF7C]/35 hover:text-[#17402C]'
+            }`}
+          >
+            🛰️ Satellite
+          </button>
+        </div>
 
         {/* Selected Trail Overlay Card */}
         {selectedTrail && (

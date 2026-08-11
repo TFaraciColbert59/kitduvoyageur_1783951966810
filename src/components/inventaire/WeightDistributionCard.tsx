@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { GearItemData } from '@/lib/mock/inventaire-marceline';
+import { GearItemData } from '@/lib/mock/mon-materiel-marceline';
 
 interface WeightDistributionCardProps {
   items: GearItemData[];
@@ -18,12 +18,12 @@ const CATEGORY_COLORS: Record<string, { label: string; color: string }> = {
 };
 
 export default function WeightDistributionCard({ items }: WeightDistributionCardProps) {
-  const totalWeightG = items.reduce((sum, item) => sum + item.weight_g * item.quantity, 0) || 1;
+  const totalWeightG = items.reduce((sum, item) => sum + (item.weight_g || 0) * (item.quantity || 1), 0) || 1;
 
   const categoryWeights: Record<string, number> = {};
   items.forEach((item) => {
     const cat = item.category || 'autre';
-    categoryWeights[cat] = (categoryWeights[cat] || 0) + item.weight_g * item.quantity;
+    categoryWeights[cat] = (categoryWeights[cat] || 0) + (item.weight_g || 0) * (item.quantity || 1);
   });
 
   const categoriesList = Object.entries(categoryWeights)

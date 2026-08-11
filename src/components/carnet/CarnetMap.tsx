@@ -37,6 +37,8 @@ export default function CarnetMap({ traceGeojson, distanceKm, elevationM, onDown
       // Topo tile layer
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         maxZoom: 19,
+        maxNativeZoom: 18,
+        keepBuffer: 6,
       }).addTo(map);
 
       try {

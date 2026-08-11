@@ -1087,7 +1087,7 @@ export default function KitReportPage() {
                     <p className="text-sm font-600 text-emerald-800">Kit ajouté à votre inventaire personnel</p>
                     <p className="text-xs text-emerald-600 mt-0.5">
                       Retrouvez tous vos articles dans{' '}
-                      <Link href="/inventaire" className="underline font-medium">Mon Inventaire</Link>
+                      <Link href="/mon-materiel" className="underline font-medium">Mon Inventaire</Link>
                       {' '}ou dans{' '}
                       <Link href="/compte" className="underline font-medium">Mon Compte</Link>.
                     </p>
@@ -1392,7 +1392,7 @@ export default function KitReportPage() {
                   <div>
                     <p style={{ fontSize: '13px', fontWeight: 600, color: '#065F46', margin: '0 0 2px 0' }}>Kit ajout&eacute; &agrave; votre inventaire</p>
                     <p style={{ fontSize: '11px', color: '#047857', margin: 0 }}>
-                      Retrouvez tous vos articles dans <Link href="/inventaire" style={{ textDecoration: 'underline', fontWeight: 500, color: '#065F46' }}>Mon Inventaire</Link>.
+                      Retrouvez tous vos articles dans <Link href="/mon-materiel" style={{ textDecoration: 'underline', fontWeight: 500, color: '#065F46' }}>Mon Inventaire</Link>.
                     </p>
                   </div>
                 </div>

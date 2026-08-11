@@ -16,9 +16,11 @@ const InteractiveMap = dynamic(() => import('@/components/map/InteractiveMap'), 
 
 export default function CarteClient() {
   return (
-    <div className="min-h-screen bg-[#F5F3ED] flex flex-col">
-      <Header />
-      <main className="flex-1 pt-16 flex flex-col">
+    <div className="h-screen w-screen overflow-hidden bg-[#F5F3ED] flex flex-col">
+      <div className="hidden md:block">
+        <Header />
+      </div>
+      <main className="flex-1 md:pt-16 flex flex-col relative w-full h-full">
         <InteractiveMap />
       </main>
     </div>

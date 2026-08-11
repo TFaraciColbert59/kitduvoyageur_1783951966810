@@ -318,7 +318,7 @@ export default function KitConfiguratorWizard() {
               <nav className="hidden sm:flex items-center gap-5 text-xs text-[#526356] font-medium">
                 <Link href="/explorer" className="hover:text-[#1C3829] transition-colors">Aventures</Link>
                 <Link href="/boutique" className="hover:text-[#1C3829] transition-colors">Boutique</Link>
-                <Link href="/inventaire" className="hover:text-[#1C3829] transition-colors">Mon Inventaire</Link>
+                <Link href="/mon-materiel" className="hover:text-[#1C3829] transition-colors">Mon Inventaire</Link>
               </nav>
 
               <Link href="/" className="text-xs text-[#7A8A7D] hover:text-[#1C3829] transition-colors font-medium">
@@ -452,7 +452,7 @@ export default function KitConfiguratorWizard() {
                     )}
                   </div>
 
-                  {/* Section: Missing Items (from real shop_products) */}
+                  {/* Section: Missing Items (from real products) */}
                   <div className="bg-white p-4 rounded-2xl border border-[#E2DDD0] shadow-sm">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-xs font-mono uppercase tracking-wider text-[#17402C] font-bold">

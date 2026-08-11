@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
+import Image from "next/image";
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
-import { GearItemData } from '@/lib/mock/inventaire-marceline';
+import { GearItemData } from '@/lib/mock/mon-materiel-marceline';
 
 interface GearCardProps {
   item: GearItemData;
@@ -34,33 +34,31 @@ export default function GearCard({
 }: GearCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const cond = CONDITION_STYLES[item.condition] || {
-    label: item.condition,
+  const cond = CONDITION_STYLES[item.condition || 'excellent'] || {
+    label: item.condition || 'Excellente',
     bg: 'bg-gray-100',
     text: 'text-gray-800',
     border: 'border-gray-200',
   };
 
-  const formattedWeight = item.weight_g >= 1000
+  const formattedWeight = item.weight_g && item.weight_g >= 1000
     ? `${(item.weight_g / 1000).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} kg`
-    : `${item.weight_g} g`;
+    : item.weight_g !== undefined ? `${item.weight_g} g` : '0 g';
 
   if (viewMode === 'list') {
     return (
-      <Link href={`/inventaire/${item.id}`} className="block group" onClick={e => e.stopPropagation()}>
+      <Link href={`/mon-materiel/${item.id}`} className="block group" onClick={e => e.stopPropagation()}>
         <div className="bg-white rounded-2xl p-4 border border-[#E8E4D8] hover:border-[#132219]/30 transition-all shadow-sm flex items-center justify-between gap-4 font-sans group">
           <div className="flex items-center gap-4 min-w-0">
-            {/* Image */}
             <div className="w-14 h-14 rounded-xl overflow-hidden relative shrink-0 border border-[#E8E4D8] bg-[#F5F3ED]">
               <Image src={item.image || '/assets/images/no_image.png'} alt={item.alt || item.name} fill className="object-cover" />
             </div>
-
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${cond.bg} ${cond.text} ${cond.border}`}>
                   {cond.label}
                 </span>
-                {item.quantity > 1 && (
+                {item.quantity && item.quantity > 1 && (
                   <span className="text-[10px] font-mono font-bold bg-[#132219] text-white px-2 py-0.5 rounded-full">
                     ×{item.quantity}
                   </span>
@@ -72,13 +70,10 @@ export default function GearCard({
               </p>
             </div>
           </div>
-
-          {/* Right Info & Actions */}
           <div className="flex items-center gap-4 shrink-0">
             <span className="font-mono font-bold text-xs bg-[#F5F3ED] text-[#132219] px-3 py-1 rounded-full border border-[#E8E4D8]">
               {formattedWeight}
             </span>
-
             <button
               onClick={(e) => { e.preventDefault(); onToggleFavorite(item.id); }}
               className="w-8 h-8 rounded-full bg-[#F5F3ED] hover:bg-[#E8E4D8] flex items-center justify-center transition-colors"
@@ -90,7 +85,6 @@ export default function GearCard({
                 className={item.is_favorite ? 'text-red-500' : 'text-[#132219]/40'}
               />
             </button>
-
             <button
               onClick={(e) => { e.preventDefault(); onEdit(item); }}
               className="px-3 py-1.5 bg-[#132219] text-white rounded-full text-xs font-bold hover:bg-[#2D5A3D] transition-colors"
@@ -104,10 +98,8 @@ export default function GearCard({
   }
 
   return (
-    <Link href={`/inventaire/${item.id}`} className="block group" onClick={e => e.stopPropagation()}>
+    <Link href={`/mon-materiel/${item.id}`} className="block group" onClick={e => e.stopPropagation()}>
       <div className="bg-white rounded-3xl border border-[#E8E4D8] hover:border-[#132219]/30 transition-all shadow-sm hover:shadow-md overflow-hidden flex flex-col justify-between font-sans group relative">
-        
-        {/* Top Image Container */}
         <div className="relative w-full h-44 bg-[#F5F3ED] overflow-hidden">
           <Image
             src={item.image || '/assets/images/no_image.png'}
@@ -116,20 +108,16 @@ export default function GearCard({
             sizes="(max-width: 768px) 100vw, 400px"
             className="object-cover group-hover:scale-105 transition-transform duration-500"
           />
-
-          {/* Condition Tag Top Left */}
           <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5">
             <span className={`text-[10px] font-mono font-bold px-3 py-1 rounded-full border shadow-sm backdrop-blur-md ${cond.bg} ${cond.text} ${cond.border}`}>
               {cond.label}
             </span>
-            {item.quantity > 1 && (
+            {item.quantity && item.quantity > 1 && (
               <span className="text-[10px] font-mono font-bold bg-[#132219] text-white px-2 py-1 rounded-full shadow-sm">
                 ×{item.quantity}
               </span>
             )}
           </div>
-
-          {/* Favorite Heart Button Top Right */}
           <button
             onClick={(e) => { e.preventDefault(); onToggleFavorite(item.id); }}
             className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md shadow-md flex items-center justify-center hover:scale-110 transition-transform"
@@ -142,14 +130,10 @@ export default function GearCard({
               className={item.is_favorite ? 'text-red-500' : 'text-[#132219]/50'}
             />
           </button>
-
-          {/* Weight Tag Badge Bottom Right */}
           <div className="absolute bottom-3 right-3 z-10 bg-[#132219]/90 backdrop-blur-md text-white px-3 py-1 rounded-full text-xs font-mono font-bold shadow-md border border-white/20">
             {formattedWeight}
           </div>
         </div>
-
-        {/* Card Body */}
         <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
           <div>
             <h4 className="font-extrabold text-sm sm:text-base text-[#132219] leading-snug line-clamp-2">
@@ -159,16 +143,12 @@ export default function GearCard({
               {item.brand} {item.model}
             </p>
           </div>
-
           {item.notes && (
             <p className="text-[11px] text-[#132219]/70 italic line-clamp-1 bg-[#F5F3ED] px-2.5 py-1 rounded-lg">
               {item.notes}
             </p>
           )}
-
-          {/* Footer Actions */}
           <div className="pt-2 border-t border-[#1C2620]/5 flex items-center justify-between text-xs text-[#132219]/70">
-            
             <div className="flex items-center gap-2 text-[10px] font-mono text-[#132219]/60">
               {item.loan_status === 'prêté' ? (
                 <span className="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
@@ -178,8 +158,6 @@ export default function GearCard({
                 <span>Prix: {item.purchase_price}€</span>
               )}
             </div>
-
-            {/* Quick Action Button */}
             <div className="relative">
               <button
                 onClick={(e) => { e.preventDefault(); setMenuOpen(!menuOpen); }}
@@ -187,7 +165,6 @@ export default function GearCard({
               >
                 <Icon name="EllipsisHorizontalIcon" size={18} />
               </button>
-
               {menuOpen && (
                 <div className="absolute right-0 bottom-8 z-30 w-44 bg-white rounded-2xl shadow-xl border border-[#E8E4D8] p-1.5 space-y-1 animate-fade-in text-xs font-semibold">
                   <button
@@ -197,7 +174,6 @@ export default function GearCard({
                     <Icon name="PencilIcon" size={14} />
                     <span>Modifier</span>
                   </button>
-                  
                   {onLoan && (
                     <button
                       onClick={(e) => { e.preventDefault(); setMenuOpen(false); onLoan(item); }}
@@ -207,7 +183,6 @@ export default function GearCard({
                       <span>{item.loan_status === 'prêté' ? 'Marquer restitué' : 'Prêter cet article'}</span>
                     </button>
                   )}
-
                   <button
                     onClick={(e) => { e.preventDefault(); setMenuOpen(false); onDelete(item.id); }}
                     className="w-full text-left px-3 py-2 rounded-xl hover:bg-red-50 text-red-600 flex items-center gap-2"

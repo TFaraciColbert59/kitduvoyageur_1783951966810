@@ -35,7 +35,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
     
     setLoadingId(memberId);
     const { error } = await supabase
-      .from('group_members')
+      .from('groupe_membres')
       .delete()
       .eq('id', memberId);
       
@@ -49,7 +49,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
     
     setLoadingId(memberId);
     const { error } = await supabase
-      .from('group_members')
+      .from('groupe_membres')
       .update({ role: newRole })
       .eq('id', memberId);
       
@@ -64,7 +64,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
     setJoining(true);
     try {
       const { data: targetGroup } = await supabase
-        .from('travel_groups')
+        .from('groupes')
         .select('*')
         .eq('invite_code', joinCode.trim().toUpperCase())
         .maybeSingle();
@@ -75,7 +75,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
         return;
       }
       
-      const { error } = await supabase.from('group_members').insert({
+      const { error } = await supabase.from('groupe_membres').insert({
         group_id: targetGroup.id,
         user_id: user.id,
         role: 'member',

@@ -40,6 +40,8 @@ interface MobilePreparationViewProps {
   oState: any;
 }
 
+import ExplorerMap from '@/components/explorer/ExplorerMap';
+
 export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
   route,
   report,
@@ -63,6 +65,26 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
   const [activeTab, setActiveTab] = useState<TabType>('missing');
   const diffLabel = getDifficultyLabel(route.difficulty);
 
+  const mapTrails = [
+    {
+      id: String(route.id),
+      name: route.name || 'Randonnée',
+      difficulty: route.difficulty || 'moderate',
+      distance_km: route.distance_km || route.distanceKm || 0,
+      duration_hours: route.duration_hours || route.durationHours || 0,
+      elevation_gain: route.elevation_gain || route.elevationGainM || 0,
+      lat: route.start?.lat || route.start_lat || 45.0,
+      lng: route.start?.lng || route.start_lng || 6.0,
+      geojson: route.geom || route.geojson || null,
+      ref: route.ref,
+      network: route.network,
+      terrain_type: route.terrainType || route.terrain_type,
+      season: route.season,
+      family_friendly: route.familyFriendly || route.family_friendly,
+      ai_description: route.aiDescription || route.ai_description,
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-[#EAE6DF] font-sans pb-[230px] relative overflow-x-hidden">
       {!isOnline && (
@@ -71,40 +93,48 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
          </div>
       )}
 
-      <PreparationHero
-        hikeName={{ pre: 'Préparation ·', em: route.name }}
-        location={route.location || route.network || 'France'}
-        distance={String(route.distanceKm ?? route.distance_km ?? 0)}
-        duration={route.durationHours ? `${route.durationHours}h` : route.duration_hours ? `${route.duration_hours}h` : 'N/A'}
-        ascent={String(route.elevationGainM ?? route.elevation_gain ?? 0)}
-        difficulty={diffLabel}
-        onBack={() => {
-          if (typeof window !== 'undefined' && window.history.length > 1) {
-            router.back();
-          } else {
-            router.push('/explorer');
-          }
-        }}
-        onSave={() => {
-          if (toastMsg !== null) return;
-          // Trigger feedback toast
-          const el = document.getElementById('prep-toast');
-          if (el) {
-            el.classList.add('on');
-            setTimeout(() => el.classList.remove('on'), 1800);
-          }
-        }}
-      />
+      {/* ── HALF SCREEN REAL INTERACTIVE MAP (50vh) ── */}
+      <div className="relative w-full h-[48vh] min-h-[340px] z-0 shadow-lg border-b border-[#1C2620]/10 overflow-hidden">
+        <ExplorerMap
+          trails={mapTrails as any}
+          selectedTrailId={String(route.id)}
+          onTrailClick={() => {}}
+          controlsPosition="right"
+        />
 
-      <PreparationScore
-        score={report.score}
-        totalOk={dispoItems.length}
-        totalNeeds={missingItems.length + matchedItems.length}
-        missingCount={missingItems.length}
-        partialCount={insufItems.length}
-      />
+        {/* Floating Glass Header Bar */}
+        <div className="absolute top-3 left-3 right-3 z-[400] flex items-center justify-between pointer-events-none">
+          <button
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.history.length > 1) {
+                router.back();
+              } else {
+                router.push('/explorer');
+              }
+            }}
+            className="w-9 h-9 rounded-full bg-[#1C2620]/85 backdrop-blur-md text-white border border-white/20 shadow-xl flex items-center justify-center pointer-events-auto active:scale-95 transition-all text-sm font-bold cursor-pointer"
+            aria-label="Retour"
+          >
+            ←
+          </button>
 
-      <div className="content">
+          <div className="bg-[#1C2620]/85 backdrop-blur-md text-white border border-white/20 rounded-2xl px-3.5 py-1.5 shadow-xl flex items-center gap-2 pointer-events-auto max-w-[75%]">
+            <span className="text-xs font-bold font-display truncate">{route.name}</span>
+            <span className="text-[10px] font-mono text-[#8BAF7C] uppercase tracking-wider shrink-0">{diffLabel}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 2. SCROLLABLE PREPARATION BODY SHEET ── */}
+      <div className="w-full flex flex-col gap-4 p-4 pb-40">
+        <PreparationScore
+          score={report.score}
+          totalOk={dispoItems.length}
+          totalNeeds={missingItems.length + matchedItems.length}
+          missingCount={missingItems.length}
+          partialCount={insufItems.length}
+        />
+
         <PreparationConditions
           distance={String(route.distanceKm ?? route.distance_km ?? 0)}
           ascent={String(route.elevationGainM ?? route.elevation_gain ?? 0)}

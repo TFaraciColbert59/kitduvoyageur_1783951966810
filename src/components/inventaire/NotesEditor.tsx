@@ -1,4 +1,4 @@
-// src/components/inventaire/NotesEditor.tsx
+// src/components/mon-materiel/NotesEditor.tsx
 'use client';
 
 import React, { useState } from 'react';

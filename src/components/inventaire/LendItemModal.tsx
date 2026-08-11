@@ -1,8 +1,8 @@
-// src/components/inventaire/LendItemModal.tsx
+// src/components/mon-materiel/LendItemModal.tsx
 'use client';
 
 import React, { useState } from 'react';
-import { GearItemData } from '@/lib/mock/inventaire-marceline';
+import { GearItemData } from '@/lib/mock/mon-materiel-marceline';
 
 interface LendItemModalProps {
   isOpen: boolean;

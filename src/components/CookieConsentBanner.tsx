@@ -2,55 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { getStoredConsent, storeConsent, CONSENT_VERSION } from '@/lib/cookieConsent';
 
-type ConsentState = {
-  necessary: true;
-  analytics: boolean;
-  marketing: boolean;
-};
-
-const CONSENT_COOKIE_KEY = 'lkdv_cookie_consent';
-const CONSENT_VERSION = '1';
-
-function getStoredConsent(): (ConsentState & { version: string }) | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = localStorage.getItem(CONSENT_COOKIE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function storeConsent(consent: ConsentState) {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(
-    CONSENT_COOKIE_KEY,
-    JSON.stringify({ ...consent, version: CONSENT_VERSION })
-  );
-  window.dispatchEvent(new CustomEvent('cookieConsentUpdated', { detail: consent }));
-}
-
-export function useCookieConsent() {
-  const [consent, setConsent] = useState<ConsentState | null>(null);
-
-  useEffect(() => {
-    const stored = getStoredConsent();
-    if (stored) {
-      setConsent({ necessary: true, analytics: stored.analytics, marketing: stored.marketing });
-    }
-
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent<ConsentState>).detail;
-      setConsent(detail);
-    };
-    window.addEventListener('cookieConsentUpdated', handler);
-    return () => window.removeEventListener('cookieConsentUpdated', handler);
-  }, []);
-
-  return consent;
-}
+export { useCookieConsent } from '@/lib/cookieConsent';
 
 export default function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);

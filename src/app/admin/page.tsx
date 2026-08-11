@@ -173,13 +173,13 @@ function OverviewSection() {
           productsDataResult,
           usersDataResult,
         ] = await Promise.all([
-          supabase.from('shop_products').select('*', { count: 'exact', head: true }),
+          supabase.from('products').select('*', { count: 'exact', head: true }),
           supabase.from('kits').select('*', { count: 'exact', head: true }),
           supabase.from('user_profiles').select('*', { count: 'exact', head: true }),
           supabase.from('community_posts').select('*', { count: 'exact', head: true }),
           supabase.from('clubs').select('*', { count: 'exact', head: true }),
           supabase.from('product_reviews').select('*', { count: 'exact', head: true }),
-          supabase.from('shop_products').select('id, name, price_eur, stock').order('price_eur', { ascending: false }).limit(5),
+          supabase.from('products').select('id, name, price_eur, stock').order('price_eur', { ascending: false }).limit(5),
           supabase.from('user_profiles').select('id, full_name, email, loyalty_level, created_at').order('created_at', { ascending: false }).limit(5),
         ]);
         const productsCount = productsCountResult.count;

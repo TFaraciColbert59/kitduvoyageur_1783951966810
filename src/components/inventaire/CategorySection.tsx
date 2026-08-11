@@ -1,8 +1,8 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import GearCard from './GearCard';
-import { GearItemData } from '@/lib/mock/inventaire-marceline';
+import { GearItemData } from '@/lib/mock/mon-materiel-marceline';
 
 interface CategorySectionProps {
   title: string;
@@ -30,7 +30,7 @@ export default function CategorySection({
 }: CategorySectionProps) {
   if (items.length === 0) return null;
 
-  const totalWeightG = items.reduce((sum, item) => sum + (item.weight_g * item.quantity), 0);
+  const totalWeightG = items.reduce((sum, item) => sum + ((item.weight_g || item.weight * 1000) * (item.quantity || 1)), 0);
   const totalWeightKg = (totalWeightG / 1000).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const avgWeightG = Math.round(totalWeightG / items.length);
 

@@ -78,7 +78,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
       try {
         const supabase = createClient();
         const { data, error } = await supabase
-          .from('shop_products')
+          .from('products')
           .select('*')
           .eq('slug', slug)
           .single();

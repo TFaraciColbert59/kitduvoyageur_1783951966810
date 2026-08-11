@@ -150,7 +150,7 @@ export default function NouveauGroupePage() {
 
       // 1. Insert group into travel_groups
       const { data: newGroup, error: groupErr } = await supabase
-        .from('travel_groups')
+        .from('groupes')
         .insert({
           name: name.trim(),
           description: description.trim() || null,
@@ -171,7 +171,7 @@ export default function NouveauGroupePage() {
       }
 
       // 2. Insert Owner as organizer in group_members
-      await supabase.from('group_members').insert({
+      await supabase.from('groupe_membres').insert({
         group_id: newGroup.id,
         user_id: user.id,
         role: 'organizer',
@@ -183,7 +183,7 @@ export default function NouveauGroupePage() {
         // Add invited partners if they exist
         for (const partner of invitedPartners) {
           // If partner has real user_id, add them
-          await supabase.from('group_members').insert({
+          await supabase.from('groupe_membres').insert({
             group_id: newGroup.id,
             user_id: partner.id.startsWith('p') ? user.id : partner.id, // fallback
             role: 'member',
