@@ -35,6 +35,7 @@ export default function MobilePageShell({
   return (
     <div
       style={{
+        paddingTop: 'calc(46px + env(safe-area-inset-top))',
         paddingBottom: 'calc(86px + env(safe-area-inset-bottom))',
         minHeight: '100dvh',
         overflowY: 'auto',

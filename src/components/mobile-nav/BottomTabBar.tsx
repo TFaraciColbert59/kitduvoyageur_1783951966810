@@ -189,7 +189,7 @@ export default function BottomTabBar() {
           left: '12px',
           right: '12px',
           bottom: 'calc(12px + env(safe-area-inset-bottom))',
-          zIndex: 50,
+          zIndex: 9000,
         }}
       >
         <div
@@ -252,7 +252,7 @@ export default function BottomTabBar() {
         left: '16px',
         right: '16px',
         bottom: 'calc(10px + env(safe-area-inset-bottom))',
-        zIndex: 50,
+        zIndex: 9000,
       }}
     >
       <div
