@@ -3,10 +3,11 @@
 // All functions assume an authenticated Supabase client is passed in.
 
 import { createClient } from '@/lib/supabase/client';
-import type { GearItemData } from '@/lib/mock/inventaire-marceline';
-import { MOCK_INVENTAIRE_ITEMS } from '@/lib/mock/inventaire-marceline';
+import type { GearItemData } from '@/lib/mock/mon-materiel-marceline';
 
-/** Fetch a single gear item for the current user */
+/** Fetch a single gear item for the current user.
+ *  Returns `null` when the item does not exist (PGRST116) for the user.
+ *  Throws for real network/DB errors so the UI can show a retry state. */
 export async function fetchGearItem(
   gearId: string,
   userId: string,
@@ -17,11 +18,10 @@ export async function fetchGearItem(
     .select('*')
     .eq('id', gearId)
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
   if (error) {
     console.error('fetchGearItem error', error);
-    // fallback to mock data when not found in DB
-    return findMockGearItem(gearId);
+    throw error;
   }
   if (!data) return null;
   return {
@@ -43,7 +43,7 @@ export async function fetchGearItem(
     loan_status: data.loan_status,
     loan_to_name: data.loan_to_name,
     is_listed_for_sale: data.is_listed_for_sale || false,
-  } as GearItemData;
+  } as unknown as GearItemData;
 }
 
 /** Fetch all images for a gear item – expects a separate table `gear_images` with column `url` */
@@ -136,9 +136,4 @@ export async function updateGearItem(
   return true;
 }
 
-// Helper to find a gear item in mock data as fallback
-function findMockGearItem(id: string): GearItemData | null {
-  const item = MOCK_INVENTAIRE_ITEMS.find((g) => g.id === id);
-  return item ? { ...item } : null;
-}
 

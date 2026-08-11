@@ -350,11 +350,10 @@ export default function MesAventuresPage() {
                   Sauvegarde le {new Date(saved.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </p>
 
-                {/* Action */}
-                <Link href="/carte-interactive"
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#17402C', color: '#fff', fontSize: '12px', fontWeight: 500, padding: '10px', borderRadius: '10px', textDecoration: 'none' }}>
-                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
-                  Voir sur la carte
+                {/* Action button */}
+                <Link href={`/preparer-randonnee?routeId=${saved.trail_id}`}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#17402C', color: '#fff', fontSize: '12px', fontWeight: 600, padding: '10px', borderRadius: '10px', textDecoration: 'none' }}>
+                  🎒 Préparer ma randonnée
                 </Link>
               </div>
             );

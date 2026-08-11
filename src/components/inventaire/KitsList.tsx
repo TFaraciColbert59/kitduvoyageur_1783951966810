@@ -1,22 +1,17 @@
-// src/components/inventaire/KitsList.tsx
+// src/components/mon-materiel/KitsList.tsx
 'use client';
 
 import React, { useState } from 'react';
-import { UserKitData, MOCK_USER_KITS } from '@/lib/mock/inventaire-marceline';
+import type { UserKitData } from '@/lib/mock/mon-materiel-marceline';
 
 interface KitsListProps {
   kits?: UserKitData[];
   onToggleKitAssociation?: (kitId: string, isAssociated: boolean) => void;
 }
 
-export default function KitsList({ kits = MOCK_USER_KITS, onToggleKitAssociation }: KitsListProps) {
-  // Local state for interactive switches
-  const [associatedState, setAssociatedState] = useState<Record<string, boolean>>({
-    'k-1': true, // Bivouac Estival / C
-    'k-2': false, // Bivouac Hivernal / B
-    'k-3': true, // Randonnée journée / A
-    'k-4': false, // Trail compétition / D
-  });
+export default function KitsList({ kits = [], onToggleKitAssociation }: KitsListProps) {
+  // Local state for interactive switches (empty by default — no invented associations)
+  const [associatedState, setAssociatedState] = useState<Record<string, boolean>>({});
 
   const handleToggle = (kitId: string) => {
     const nextVal = !associatedState[kitId];
@@ -34,6 +29,24 @@ export default function KitsList({ kits = MOCK_USER_KITS, onToggleKitAssociation
     C: 'bg-emerald-100 text-emerald-800 border-emerald-200',
     D: 'bg-gray-100 text-gray-800 border-gray-200',
   };
+
+  if (kits.length === 0) {
+    return (
+      <div className="bg-white rounded-3xl p-6 lg:p-8 border border-[#E8E4D8] shadow-sm">
+        <h2 className="text-xl font-extrabold text-[#132219] font-display">Kits associés</h2>
+        <p className="text-xs text-[#132219]/60 mt-0.5">
+          Cochez pour inclure cet article dans un kit. Le poids du kit se met à jour automatiquement.
+        </p>
+        <div className="mt-8 py-10 text-center bg-[#FAF8F5] rounded-2xl border border-dashed border-[#E8E4D8]">
+          <p className="text-2xl mb-2">🎒</p>
+          <p className="text-sm font-semibold text-[#132219]">Aucun kit pour le moment</p>
+          <p className="text-xs text-[#132219]/60 mt-1 max-w-sm mx-auto">
+            Cet article n&apos;est associé à aucun kit existant.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-3xl p-6 lg:p-8 border border-[#E8E4D8] shadow-sm space-y-4">
@@ -55,12 +68,6 @@ export default function KitsList({ kits = MOCK_USER_KITS, onToggleKitAssociation
         {kits.map((kit, index) => {
           const letterCode = kit.code || String.fromCharCode(65 + index);
           const isIncluded = associatedState[kit.id] ?? false;
-
-          let statusNote = 'Inclus dans ce kit';
-          if (letterCode === 'B') statusNote = 'Vous portez plutôt des Nival Cube en hiver';
-          if (letterCode === 'D') statusNote = 'Vous portez des Salomon S/Lab Ultra en trail';
-          if (letterCode === 'A') statusNote = 'Utilisé 28 fois';
-          if (letterCode === 'C') statusNote = 'Utilisé 12 fois';
 
           return (
             <div
@@ -86,8 +93,8 @@ export default function KitsList({ kits = MOCK_USER_KITS, onToggleKitAssociation
                     </h3>
                   </div>
                   <p className="text-xs text-[#132219]/60 truncate mt-0.5">
-                    {kit.articles_count} items • {kit.weight_kg} kg total •{' '}
-                    <span className="italic">{statusNote}</span>
+                    {kit.articles_count} items • {kit.weight_kg} kg total
+                    {isIncluded && <span className="italic"> • Inclus dans ce kit</span>}
                   </p>
                 </div>
               </div>

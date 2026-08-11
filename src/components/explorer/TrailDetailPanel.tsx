@@ -395,12 +395,12 @@ Ne sois pas redondant, ne fais pas juste la liste des chiffres, mais utilise-les
 
           <button
             onClick={() => {
-              router.push(`/randonnee-active?routeId=${trail.id}`);
+              router.push(`/preparer-randonnee?routeId=${trail.id}`);
             }}
-            className="w-full py-3.5 bg-[#2D5A27] text-white text-sm font-bold rounded-xl shadow-lg hover:bg-[#1E3E1B] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-[#17402C] text-white text-sm font-bold rounded-xl shadow-lg hover:bg-[#0F2B1D] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
-            <span>🥾</span>
-            <span>Démarrer la randonnée</span>
+            <span>🎒</span>
+            <span>Préparer ma randonnée</span>
           </button>
 
           <button

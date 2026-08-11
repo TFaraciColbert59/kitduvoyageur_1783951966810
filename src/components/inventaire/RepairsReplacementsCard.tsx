@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
-import { RepairItemData } from '@/lib/mock/inventaire-marceline';
+import Link from "next/link";
+import { RepairItemData } from '@/lib/mock/mon-materiel-marceline';
 
 interface RepairsReplacementsCardProps {
   repairs: RepairItemData[];
@@ -34,20 +34,20 @@ export default function RepairsReplacementsCard({ repairs, onAction }: RepairsRe
             </div>
 
             <div className="shrink-0">
-              {r.status === 'à_réparer' ? (
-                <button
-                  onClick={() => onAction && onAction(r)}
-                  className="px-3 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-full text-[10px] font-mono font-bold transition-colors"
-                >
-                  Réparer
-                </button>
-              ) : (
+              {r.status === 'terminé' ? (
                 <Link
                   href="/boutique"
                   className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-full text-[10px] font-mono font-bold transition-colors inline-block"
                 >
                   Remplacer
                 </Link>
+              ) : (
+                <button
+                  onClick={() => onAction && onAction(r)}
+                  className="px-3 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-full text-[10px] font-mono font-bold transition-colors"
+                >
+                  Réparer
+                </button>
               )}
             </div>
           </div>

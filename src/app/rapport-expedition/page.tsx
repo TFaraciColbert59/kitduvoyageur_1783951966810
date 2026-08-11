@@ -260,10 +260,7 @@ export default function RapportExpeditionPage() {
     setLoadingReports(true);
     try {
       const { data } = await supabase
-        .from('expedition_reports')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .from('kit_reports').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
       if (data) {
         const mapped: PastReport[] = data.map((r) => ({
           id: r.id,
@@ -271,10 +268,10 @@ export default function RapportExpeditionPage() {
           country: r.country,
           date: new Date(r.created_at).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }),
           duration: r.duration || '?j',
-          score: r.score || 0,
-          budgetDelta: (r.budget_real || 0) - (r.budget_estimated || 0),
-          image: r.image || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b',
-          alt: r.alt || r.destination,
+          score: 0,
+          budgetDelta: 0,
+          image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b',
+          alt: r.destination,
           type: r.type || 'Trekking',
           notes: r.notes,
           budget_estimated: r.budget_estimated,
@@ -366,21 +363,33 @@ export default function RapportExpeditionPage() {
           });
         }
 
-        await supabase.from('expedition_reports').insert({
-          user_id: user.id,
-          destination: form.destination,
-          country: form.country,
-          start_date: form.startDate || null,
-          end_date: form.endDate || null,
-          duration,
-          type: form.type,
-          score: form.score * 20,
-          notes: form.notes,
-          budget_estimated: form.budget_estimated || 0,
-          budget_real: form.budget_real || 0,
-          image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b',
-          alt: `Expédition ${form.destination}`,
-        });
+                  // Consomme l'API kit-report au lieu de supabase directement
+          const res = await fetch('/api/kit-report/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionParams: {
+                destination: form.destination,
+                country: form.country,
+                startDate: form.startDate,
+                endDate: form.endDate,
+                season: 'Eté',
+                activity: form.type,
+                level: 'Intermédiaire',
+                maxWeightG: 10000,
+                budgetEur: form.budget_estimated || form.budget_real || 0
+              },
+              selectedItems: [] // Simulate empty or add logic to extract from form if needed
+            })
+          });
+          const { reportId } = await res.json();
+          if (reportId) {
+            await fetch('/api/kit-report/save', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reportId })
+            });
+          }
 
         // Award loyalty points for creating a report
         await supabase.from('loyalty_history').insert({

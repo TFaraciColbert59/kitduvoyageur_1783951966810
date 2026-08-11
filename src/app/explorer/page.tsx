@@ -36,6 +36,7 @@ export default function ExplorerPage() {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string>('Tout');
+  const [mobileTab, setMobileTab] = useState<'map' | 'list'>('map');
 
   const { data: trailsData, isLoading, error } = useQuery<MapTrail[]>({
     queryKey: ['hikes'],
@@ -382,12 +383,12 @@ export default function ExplorerPage() {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          router.push(`/randonnee-active?routeId=${selectedTrail.id}`);
+                          router.push(`/preparer-randonnee?routeId=${selectedTrail.id}`);
                         }}
-                        className="w-full py-2 bg-[#2D5A27] text-white text-xs font-bold rounded-xl shadow-md hover:bg-[#1E3E1B] active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
+                        className="w-full py-2 bg-[#17402C] text-white text-xs font-bold rounded-xl shadow-md hover:bg-[#0F2B1D] active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
                       >
-                        <span>🥾</span>
-                        <span>Démarrer la randonnée</span>
+                        <span>🎒</span>
+                        <span>Préparer la randonnée</span>
                       </button>
                       <button
                         onClick={(e) => {
@@ -428,7 +429,13 @@ export default function ExplorerPage() {
       {/* ── MOBILE VIEW ── */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <AventuresHero activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
+          <AventuresHero
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            totalTrailsCount={filteredTrails.length}
+          />
           {/* Mobile-adapted interactive map */}
           <div style={{ height: '250px', width: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(11,31,23,0.08)' }}>
             <ExplorerMap
@@ -639,16 +646,24 @@ export default function ExplorerPage() {
             {!isLoading && !error && filteredTrails.map((trail) => (
               <AventureCard
                 key={trail.id}
+                trailId={trail.id}
                 difficulty={getDifficultyLabel(trail.difficulty)}
-                location={trail.network || trail.terrain_type || ''}
+                location={trail.network || trail.terrain_type || 'Alpes'}
                 title={trail.name}
                 distance={formatDistance(trail.distance_km)}
                 elevation={trail.elevation_gain != null && trail.elevation_gain != undefined ? `+${Math.round(trail.elevation_gain)} m` : '—'}
                 duration={formatDuration(trail.duration_hours)}
+                imageUrl={getTrailImage(trail.id)}
                 onClick={() => {
                   setSelectedTrailId(trail.id);
                   setSelectedTrail(trail);
                   setDetailPanelOpen(true);
+                }}
+                onPrepareClick={() => {
+                  router.push(`/preparer-randonnee?routeId=${trail.id}`);
+                }}
+                onStartClick={() => {
+                  router.push(`/randonnee-active?routeId=${trail.id}`);
                 }}
               />
             ))}

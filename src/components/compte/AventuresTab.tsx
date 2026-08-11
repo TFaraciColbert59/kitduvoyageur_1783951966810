@@ -33,7 +33,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
         }
 
         const { data, error } = await supabase
-          .from('travel_groups')
+          .from('groupes')
           .select('*')
           .eq('owner_id', user.id)
           .order('departure_date', { ascending: false });

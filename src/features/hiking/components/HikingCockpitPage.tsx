@@ -35,7 +35,7 @@ export default function HikingCockpitPage() {
   const [showSafetyModal, setShowSafetyModal] = useState(false);
   const [show3DTerrain, setShow3DTerrain] = useState(false);
   const [showGPXModal, setShowGPXModal] = useState(false);
-  const [deviceHeading, setDeviceHeading] = useState<number | null>(24);
+  const [deviceHeading, setDeviceHeading] = useState<number | null>(null);
   const [isCompleted, setIsCompleted] = useState(false);
   const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
   const [autoFollow, setAutoFollow] = useState(true);
@@ -234,10 +234,17 @@ export default function HikingCockpitPage() {
     }
   };
 
+  const [showStopModal, setShowStopModal] = useState(false);
+  const [savedCarnetId, setSavedCarnetId] = useState<string | null>(null);
+
   const handleConfirmStop = async () => {
+    setShowStopModal(false);
     const result = await hikingStore.stopHike();
     if (result?.sessionId) {
       setSavedSessionId(result.sessionId);
+    }
+    if (result?.carnetId) {
+      setSavedCarnetId(result.carnetId);
     }
     setIsCompleted(true);
   };
@@ -248,8 +255,6 @@ export default function HikingCockpitPage() {
 
   const userLoc: [number, number] | null = currentPos
     ? [currentPos.latitude, currentPos.longitude]
-    : dbRouteData?.startLat != null && dbRouteData?.startLon != null
-    ? [dbRouteData.startLat, dbRouteData.startLon]
     : null;
 
   const totalDistanceKm = dbRouteData?.distanceKm || hikingStore.routeTotalKm || 0;
@@ -318,7 +323,9 @@ export default function HikingCockpitPage() {
               averageSpeedKmH={hikingStore.averageSpeedKmH}
               maxAltitudeM={currentPos?.altitude ? Math.round(currentPos.altitude) : null}
               onViewCarnet={() => {
-                if (savedSessionId) {
+                if (savedCarnetId) {
+                  router.push(`/carnets/${savedCarnetId}`);
+                } else if (savedSessionId) {
                   router.push(`/carnets?sessionId=${savedSessionId}`);
                 } else {
                   router.push('/carnets');
@@ -414,15 +421,46 @@ export default function HikingCockpitPage() {
                 isPaused={hikingStore.isPaused}
                 durationSeconds={hikingStore.durationSeconds}
                 onTabSelect={(tab) => {
-                  if (tab === 'voix' || tab === 'moment') {
+                  if (tab === 'moment') {
                     setActiveTab('capture');
                   } else {
                     setActiveTab(tab);
                   }
                 }}
                 onToggleHike={handleToggleHike}
-                onStopHike={handleConfirmStop}
+                onStopHike={() => setShowStopModal(true)}
               />
+
+              {/* Confirmation Dialog Modal pour l'Arrêt */}
+              {showStopModal && (
+                <div className="fixed inset-0 z-[500] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+                  <div className="bg-[#FBFAF6] border border-[#0B1F17]/12 rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center space-y-4">
+                    <div className="w-12 h-12 rounded-2xl bg-[#B85838]/10 text-[#B85838] flex items-center justify-center mx-auto text-xl font-bold">
+                      🏁
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-[#0B1F17]">Terminer la randonnée ?</h3>
+                      <p className="text-xs text-[#6B7A72] mt-1.5 leading-relaxed">
+                        Votre session sera finalisée et votre carnet d'expédition sera automatiquement généré à partir des données réelles.
+                      </p>
+                    </div>
+                    <div className="flex gap-2.5 pt-2">
+                      <button
+                        onClick={() => setShowStopModal(false)}
+                        className="flex-1 py-3 px-4 rounded-xl border border-[#E8E4D8] text-xs font-semibold text-[#0B1F17] hover:bg-[#F5F2EA] transition-colors"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        onClick={handleConfirmStop}
+                        className="flex-1 py-3 px-4 rounded-xl bg-[#B85838] text-white text-xs font-bold shadow-md hover:bg-[#963F22] active:scale-[0.98] transition-all"
+                      >
+                        Oui, terminer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Interactive Modals */}
               <StatsSheet
@@ -464,7 +502,7 @@ export default function HikingCockpitPage() {
                 onOpenARCompass={() => router.push('/boussole')}
                 onOpen3DTerrain={() => setShow3DTerrain(true)}
                 onOpenGPXModal={() => setShowGPXModal(true)}
-                onStopHike={handleConfirmStop}
+                onStopHike={() => setShowStopModal(true)}
               />
 
               <SafetyCenterModal

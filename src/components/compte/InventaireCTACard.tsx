@@ -33,7 +33,7 @@ export default function InventaireCTACard({ inventaire }: InventaireCTACardProps
       {/* CTA Button */}
       <div className="pt-2">
         <Link
-          href="/inventaire"
+          href="/mon-materiel"
           className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#132219] hover:bg-[#2D5A3D] text-white font-extrabold text-xs rounded-full shadow-xl transition-all hover:scale-105"
         >
           <span>🎒 Ouvrir mon inventaire</span>

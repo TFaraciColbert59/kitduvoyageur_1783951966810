@@ -1,547 +1,465 @@
-'use client';
+"use client";
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import Header from '@/components/Header';
-import { getAllCountries, type Country } from '@/lib/countries';
-import AppImage from '@/components/ui/AppImage';
+import '@/app/pays/styles/tokens.css';
+import '@/app/pays/styles/shop.css';
+import '@/app/pays/styles/earth.css';
 
+import React, { useState, useCallback } from "react";
+import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import { getAllCountries, type Country } from "@/lib/countries";
+import EarthCountryPanel from "@/components/earth/EarthCountryPanel";
 
+// Globe 3D dynamique
 const CountryGlobe = dynamic(
-  () => import('@/components/pays/CountryGlobe'),
+  () => import("@/components/pays/CountryGlobe"),
   { ssr: false }
 );
 
 const ALL_COUNTRIES = getAllCountries();
 
-const CONTINENTS = ['Tous', 'Europe', 'Asie', 'Afrique', 'Amérique du Nord', 'Amérique du Sud', 'Océanie'];
-
-const CONTINENT_EMOJIS: Record<string, string> = {
-  'Tous': '🌍',
-  'Europe': '🏔️',
-  'Asie': '🗺️',
-  'Afrique': '🦁',
-  'Amérique du Nord': '🦅',
-  'Amérique du Sud': '🌿',
-  'Océanie': '🌊',
-};
-
-const GLASS_TOP = 'rgba(11,31,23,0.75)';
-const GLASS_BORDER = 'rgba(255,255,255,0.08)';
-
-const glassSx: React.CSSProperties = {
-  background: GLASS_TOP,
-  backdropFilter: 'blur(24px) saturate(1.5)',
-  WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
-  border: `1px solid ${GLASS_BORDER}`,
-};
-
-const DANGER_DOTS: Record<string, string> = {
-  low: '#2D6A4F',
-  medium: '#D97706',
-  high: '#DC2626',
-};
-
-const DANGER_LABELS: Record<string, string> = {
-  low: 'Sûr',
-  medium: 'Vigilance',
-  high: 'Risqué',
-};
-
-const DANGER_CONFIG: Record<string, { bg: string; color: string; border: string; label: string }> = {
-  low: { bg: 'rgba(45,106,79,0.12)', color: '#2D6A4F', border: 'rgba(45,106,79,0.25)', label: 'Sûr' },
-  medium: { bg: 'rgba(217,119,6,0.1)', color: '#D97706', border: 'rgba(217,119,6,0.2)', label: 'Vigilance' },
-  high: { bg: 'rgba(220,38,38,0.1)', color: '#DC2626', border: 'rgba(220,38,38,0.2)', label: 'Risqué' },
-};
-
-function getFlagEmoji(code: string): string {
-  return code
-    .toUpperCase()
-    .split('')
-    .map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65))
-    .join('');
-}
-
-const ALL_TAGS = Array.from(new Set(ALL_COUNTRIES.flatMap((c) => c.tags))).sort();
-
-// ─── Country Card ─────────────────────────────────────────────────────────────
-
-function CountryCard({ country }: { country: ReturnType<typeof getAllCountries>[0] }) {
-  const danger = DANGER_CONFIG[country.danger_level] || DANGER_CONFIG.medium;
-
-  return (
-    <Link
-      href={`/pays/${country.code.toLowerCase()}`}
-      className="group block"
-      style={{
-        background: '#FFFFFF',
-        border: '1px solid #E8E4DA',
-        borderRadius: '16px',
-        padding: '20px',
-        transition: 'all 0.25s ease',
-        boxShadow: '0 1px 3px rgba(28,38,32,0.04)',
-      }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(28,38,32,0.2)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(28,38,32,0.08)'; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E8E4DA'; (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(28,38,32,0.04)'; }}
-    >
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <span className="text-3xl" role="img" aria-label={`Drapeau ${country.nom}`}>
-            {getFlagEmoji(country.code)}
-          </span>
-          <div>
-            <h3
-              style={{
-                fontFamily: 'Georgia, serif',
-                fontWeight: 700,
-                fontSize: '1rem',
-                color: '#1C2620',
-                lineHeight: '1.2',
-                marginBottom: '2px',
-              }}
-            >
-              {country.nom}
-            </h3>
-            <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#8A8578', letterSpacing: '0.08em' }}>
-              {country.capital}
-            </p>
-          </div>
-        </div>
-        <span
-          className="px-2 py-1 text-xs font-medium flex-shrink-0"
-          style={{
-            background: danger.bg,
-            color: danger.color,
-            border: `1px solid ${danger.border}`,
-            borderRadius: '6px',
-            fontFamily: 'var(--font-mono)',
-            fontSize: '10px',
-            letterSpacing: '0.08em',
-          }}
-        >
-          {danger.label}
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between mb-3">
-        <p style={{ fontSize: '11px', color: '#8A8578', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
-          Meilleure saison
-        </p>
-        <p style={{ fontSize: '11px', color: '#5C6B5E', fontFamily: 'var(--font-sans)' }}>
-          {country.meilleure_saison}
-        </p>
-      </div>
-
-      <div className="flex flex-wrap gap-1.5">
-        {country.tags.slice(0, 3).map((tag) => (
-          <span
-            key={tag}
-            className="px-2 py-0.5"
-            style={{
-              background: '#F5F2EC',
-              border: '1px solid #E8E4DA',
-              borderRadius: '5px',
-              fontSize: '10px',
-              color: '#8A8578',
-              fontFamily: 'var(--font-mono)',
-              letterSpacing: '0.05em',
-            }}
-          >
-            {tag}
-          </span>
-        ))}
-      </div>
-
-      {!country.published && (
-        <div
-          className="mt-3 px-2.5 py-1.5"
-          style={{
-            background: 'rgba(217,119,6,0.06)',
-            border: '1px solid rgba(217,119,6,0.15)',
-            borderRadius: '6px',
-          }}
-        >
-          <p style={{ fontSize: '10px', color: '#D97706', fontFamily: 'var(--font-mono)' }}>⚠ En cours de vérification</p>
-        </div>
-      )}
-    </Link>
-  );
-}
-
-// ─── Featured Card ────────────────────────────────────────────────────────────
-
-const COUNTRY_IMAGES: Record<string, { src: string; alt: string }> = {
-  JP: { src: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800&q=80', alt: 'Mont Fuji enneigé reflété dans un lac japonais au lever du soleil' },
-  NP: { src: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80', alt: 'Panorama de l\'Himalaya avec les sommets enneigés du Népal' },
-  IS: { src: 'https://images.unsplash.com/photo-1504893524553-b855bce32c67?w=800&q=80', alt: 'Paysage volcanique islandais avec vapeurs géothermiques et montagnes colorées' },
-  NO: { src: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&q=80', alt: 'Fjord norvégien avec montagnes enneigées et reflets dans l\'eau calme' },
-  NZ: { src: 'https://images.unsplash.com/photo-1507699622108-4be3abd695ad?w=800&q=80', alt: 'Paysage verdoyant de Nouvelle-Zélande avec collines et ciel dramatique' },
-  MA: { src: 'https://images.unsplash.com/photo-1539020140153-e479b8c22e70?w=800&q=80', alt: 'Médina de Marrakech avec ses ruelles colorées et architecture traditionnelle' },
-  IN: { src: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800&q=80', alt: 'Taj Mahal au lever du soleil avec ses reflets dans le bassin d\'eau' },
-  PT: { src: 'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=800&q=80', alt: 'Lisbonne avec ses toits de tuiles oranges et le Tage en arrière-plan' },
-  SE: { src: 'https://images.unsplash.com/photo-1509356843151-3e7d96241e11?w=800&q=80', alt: 'Forêt suédoise automnale avec lac et reflets dorés' },
-  MH: { src: 'https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=800&q=80', alt: 'Atoll des Îles Marshall avec lagon turquoise et plage de sable blanc' },
-};
-
-function FeaturedCountryCard({ country }: { country: ReturnType<typeof getAllCountries>[0] }) {
-  const img = COUNTRY_IMAGES[country.code.toUpperCase()];
-  const danger = DANGER_CONFIG[country.danger_level] || DANGER_CONFIG.medium;
-
-  return (
-    <Link
-      href={`/pays/${country.code.toLowerCase()}`}
-      className="group relative overflow-hidden block"
-      style={{ borderRadius: '16px', height: '260px' }}
-    >
-      {img ? (
-        <>
-          <AppImage
-            src={img.src}
-            alt={img.alt}
-            fill
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, 25vw"
-          />
-          <div
-            className="absolute inset-0"
-            style={{ background: 'linear-gradient(to top, rgba(14,21,18,0.88) 0%, rgba(14,21,18,0.25) 60%, transparent 100%)' }}
-          />
-        </>
-      ) : (
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{ background: '#1C2620' }}
-        >
-          <span className="text-6xl">{getFlagEmoji(country.code)}</span>
-        </div>
-      )}
-
-      <div className="absolute inset-0 flex flex-col justify-between p-5">
-        <div className="flex justify-between items-start">
-          <span className="text-3xl">{getFlagEmoji(country.code)}</span>
-          <span
-            className="px-2 py-1"
-            style={{
-              background: 'rgba(14,21,18,0.7)',
-              border: '1px solid rgba(231,227,214,0.15)',
-              borderRadius: '6px',
-              fontSize: '10px',
-              color: danger.color,
-              fontFamily: 'var(--font-mono)',
-              backdropFilter: 'blur(8px)',
-            }}
-          >
-            {danger.label}
-          </span>
-        </div>
-
-        <div>
-          <p style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'rgba(231,227,214,0.5)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '4px' }}>
-            {country.continent}
-          </p>
-          <h3
-            style={{
-              fontFamily: 'Georgia, serif',
-              fontWeight: 700,
-              fontStyle: 'italic',
-              fontSize: '1.3rem',
-              color: '#FFFFFF',
-              lineHeight: '1.1',
-              marginBottom: '6px',
-            }}
-          >
-            {country.nom}
-          </h3>
-          <div className="flex flex-wrap gap-1.5">
-            {country.tags.slice(0, 2).map((tag) => (
-              <span
-                key={tag}
-                className="px-2 py-0.5"
-                style={{
-                  background: 'rgba(14,21,18,0.6)',
-                  border: '1px solid rgba(231,227,214,0.12)',
-                  borderRadius: '5px',
-                  fontSize: '10px',
-                  color: 'rgba(231,227,214,0.7)',
-                  fontFamily: 'var(--font-mono)',
-                  backdropFilter: 'blur(4px)',
-                }}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
-export default function PaysPage() {
+export default function EarthPage() {
   const router = useRouter();
-  const [search, setSearch] = useState('');
-  const [continent, setContinent] = useState('Tous');
-  const [dangerFilter, setDangerFilter] = useState<string>('Tous');
-  const [tagFilter, setTagFilter] = useState<string>('');
+  
+  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
+  const [showCountryPanel, setShowCountryPanel] = useState(false);
   const [focusCode, setFocusCode] = useState<string | undefined>(undefined);
-  const [webglSupported, setWebglSupported] = useState(true);
+  const [selectedContinent, setSelectedContinent] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("Chartreuse");
 
-  // WebGL detection
-  useEffect(() => {
-    if (typeof document !== 'undefined') {
-      const canvas = document.createElement('canvas');
-      const gl = canvas.getContext('webgl') || canvas.getContext('webgl2');
-      if (!gl) setWebglSupported(false);
+  const handleCountryClick = useCallback((code: string) => {
+    const country = ALL_COUNTRIES.find(c => c.code.toLowerCase() === code.toLowerCase());
+    if (country) {
+      setSelectedCountry(country);
+      setShowCountryPanel(true);
+      setFocusCode(code.toLowerCase());
     }
   }, []);
 
-  const handleCountryClick = useCallback(
-    (code: string) => router.push(`/pays/${code.toLowerCase()}`),
-    [router]
-  );
-
-  // Search → focus camera
-  useEffect(() => {
-    if (!search || search.length < 2) { setFocusCode(undefined); return; }
-    const match = ALL_COUNTRIES.find(
-      (c) =>
-        c.nom.toLowerCase().includes(search.toLowerCase()) ||
-        c.capital.toLowerCase().includes(search.toLowerCase())
-    );
-    setFocusCode(match?.code.toLowerCase() ?? undefined);
-  }, [search]);
-
-  const filtered = useMemo(() => {
-    return ALL_COUNTRIES.filter((c) => {
-      const matchSearch =
-        !search ||
-        c.nom.toLowerCase().includes(search.toLowerCase()) ||
-        c.capital.toLowerCase().includes(search.toLowerCase()) ||
-        c.tags.some((tag) => tag.toLowerCase().includes(search.toLowerCase()));
-      const matchContinent = continent === 'Tous' || c.continent === continent;
-      const matchDanger = dangerFilter === 'Tous' || c.danger_level === dangerFilter;
-      const matchTag = tagFilter === '' || c.tags.includes(tagFilter);
-      return matchSearch && matchContinent && matchDanger && matchTag;
-    });
-  }, [search, continent, dangerFilter, tagFilter]);
-
-  const hasActiveFilters = search || continent !== 'Tous' || dangerFilter !== 'Tous' || tagFilter;
-
-  const resetFilters = () => {
-    setSearch('');
-    setContinent('Tous');
-    setDangerFilter('Tous');
-    setTagFilter('');
-  };
+  const handleExploreCountry = useCallback((code: string) => {
+    router.push(`/pays/${code.toLowerCase()}`);
+  }, [router]);
 
   return (
-    <>
-      {/* Header fixe au-dessus du globe */}
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, pointerEvents: 'auto' }}>
-        <Header />
-      </div>
+    <div className="min-h-screen w-full bg-[#F5F2EA] text-[#1C2620] flex flex-col overflow-x-hidden font-sans">
+      {/* Site Header */}
+      <Header />
 
-    <div style={{ width: '100vw', height: '100dvh', background: '#0B1F17', overflow: 'hidden', position: 'relative' }}>
-      {/* ── Shared globe (desktop + mobile) ── */}
-      {webglSupported ? (
-        <>
-          <div className="hidden md:block" style={{ position: 'absolute', inset: 0 }}>
-            <CountryGlobe
-              countries={filtered.slice(0, 180)}
-              onCountryClick={handleCountryClick}
-              focusCode={focusCode}
-              fullscreen
-            />
-          </div>
-          <div className="md:hidden" style={{
-            position: 'absolute', inset: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'rgba(255,255,255,0.5)', fontSize: '14px',
-            padding: '20px', textAlign: 'center',
-          }}>
-            🌍 Globe 3D disponible sur ordinateur
-          </div>
-        </>
-      ) : (
-        <div style={{
-          position: 'absolute', inset: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'rgba(255,255,255,0.5)', fontSize: '14px',
-          padding: '20px', textAlign: 'center',
-        }}>
-          🌍 Globe 3D non disponible sur cet appareil
+      {/* Main Content */}
+      <main className="flex-1 w-full pt-20 pb-12">
+        <div className="max-w-[1500px] mx-auto px-2 sm:px-4">
+          {/* EARTH HERO CONTAINER (Floating Dark Green Stage on Light Background) */}
+          <section className="earth-hero w-full relative rounded-3xl sm:rounded-[36px] shadow-2xl overflow-hidden my-2">
+            {/* Ambient Orbits */}
+            <div className="orbit o1"></div>
+            <div className="orbit o2"></div>
+            <div className="orbit o3"></div>
+
+            {/* HEADING */}
+            <div className="hero-head max-w-5xl mx-auto pt-10 sm:pt-14 pb-6">
+              <div className="eye">
+                <span className="dot"></span>Earth · Cartographie vivante · 137 pays
+              </div>
+              <h1>Le monde,<br/><em>à hauteur de sentier.</em></h1>
+              <p>Faites tourner la planète, choisissez un pays, découvrez les itinéraires testés par la communauté. Chaque point est une histoire de terrain.</p>
+            </div>
+
+            {/* GLOBE STAGE */}
+            <div className="globe-stage w-full max-w-[1400px] mx-auto relative">
+              {/* Search bar */}
+              <div className="globe-search">
+                <svg className="lkv-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Chercher un pays, une région, un massif…"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setFocusCode(e.target.value || undefined);
+                  }}
+                />
+                <span className="kbd"><span>⌘</span><span>K</span></span>
+                <button className="go-btn" onClick={() => setFocusCode(searchQuery)}>Lancer</button>
+              </div>
+
+              {/* Left: Continents panel */}
+              <aside className="globe-side hidden md:block">
+                <div className="lbl">Continents <span>7 / 7</span></div>
+                <div className={`cont-row ${selectedContinent === "europe" || selectedContinent === "all" ? "on" : ""}`} onClick={() => setSelectedContinent("europe")}>
+                  <div className="l"><span className="k">01</span> Europe</div>
+                  <div className="r">44 pays</div>
+                </div>
+                <div className={`cont-row ${selectedContinent === "asia" ? "on" : ""}`} onClick={() => setSelectedContinent("asia")}>
+                  <div className="l"><span className="k">02</span> Asie</div>
+                  <div className="r">48 pays</div>
+                </div>
+                <div className={`cont-row ${selectedContinent === "africa" ? "on" : ""}`} onClick={() => setSelectedContinent("africa")}>
+                  <div className="l"><span className="k">03</span> Afrique</div>
+                  <div className="r">54 pays</div>
+                </div>
+                <div className={`cont-row ${selectedContinent === "north-america" ? "on" : ""}`} onClick={() => setSelectedContinent("north-america")}>
+                  <div className="l"><span className="k">04</span> Amérique N.</div>
+                  <div className="r">23 pays</div>
+                </div>
+                <div className={`cont-row ${selectedContinent === "south-america" ? "on" : ""}`} onClick={() => setSelectedContinent("south-america")}>
+                  <div className="l"><span className="k">05</span> Amérique S.</div>
+                  <div className="r">12 pays</div>
+                </div>
+                <div className={`cont-row ${selectedContinent === "oceania" ? "on" : ""}`} onClick={() => setSelectedContinent("oceania")}>
+                  <div className="l"><span className="k">06</span> Océanie</div>
+                  <div className="r">14 pays</div>
+                </div>
+                <div className="cont-row">
+                  <div className="l"><span className="k">07</span> Antarctique</div>
+                  <div className="r">— · zones</div>
+                </div>
+              </aside>
+
+              {/* Globe Canvas */}
+              <div id="globeViz" className="w-full h-full flex items-center justify-center">
+                <CountryGlobe
+                  countries={ALL_COUNTRIES}
+                  onCountryClick={handleCountryClick}
+                  focusCode={focusCode}
+                  fullscreen={true}
+                />
+              </div>
+
+              {/* Right: Destination info card */}
+              <aside className="globe-info-card hidden md:block">
+                <div className="flag">🇫🇷 · France · Rhône-Alpes</div>
+                <h3>Chartreuse<em>, massif</em></h3>
+                <div className="region">45.35°N · 5.86°E · 2 082 m max</div>
+                <div className="stats-row">
+                  <div>
+                    <div className="n">312</div>
+                    <div className="l">Itinéraires</div>
+                  </div>
+                  <div>
+                    <div className="n">4 850</div>
+                    <div className="l">Voyageurs</div>
+                  </div>
+                  <div>
+                    <div className="n">47</div>
+                    <div className="l">Refuges</div>
+                  </div>
+                  <div>
+                    <div className="n">6</div>
+                    <div className="l">Testeurs LKV</div>
+                  </div>
+                </div>
+                <Link href="/pays/fr" className="cta">
+                  Explorer la Chartreuse
+                  <svg className="lkv-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </Link>
+              </aside>
+
+              {/* Bottom: Controls */}
+              <div className="globe-controls">
+                <button className="gc-btn on">
+                  <svg className="lkv-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg>
+                  Vue mondiale
+                </button>
+                <button className="gc-btn">
+                  <svg className="lkv-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 12h20M12 2v20"/></svg>
+                  Grille
+                </button>
+                <button className="gc-btn">
+                  <svg className="lkv-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zM12 8v4l3 2"/></svg>
+                  Nuit
+                </button>
+                <div className="sep"></div>
+                <button className="gc-btn" aria-label="Layout">
+                  <svg className="lkv-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>
+                </button>
+                <button className="gc-btn" aria-label="Suivant">
+                  <svg className="lkv-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12h16M14 6l6 6-6 6"/></svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Bottom Hints */}
+            <div className="earth-bottom max-w-[1400px] mx-auto px-6">
+              <div className="hints">
+                <div className="hint"><span className="k">Cliquer</span>un pays pour zoomer</div>
+                <div className="hint"><span className="k">Glisser</span>pour tourner</div>
+                <div className="hint"><span className="k">Scroll</span>pour mezoomer</div>
+              </div>
+              <div className="marker"><span className="d"></span>Données mises à jour il y a 3 minutes · 8 428 points actifs</div>
+            </div>
+          </section>
+
+          {/* DESTINATIONS SECTION */}
+          <section className="dest-section w-full rounded-3xl mt-8">
+            <div className="max-w-[1400px] mx-auto">
+              <div className="dest-head">
+                <div className="l">
+                  <div className="lkv-eyebrow">Découvertes · saison automne 2026</div>
+                  <h2>Six pays<br/><em>qui montent.</em></h2>
+                  <p>Les destinations où la communauté trace de nouveaux itinéraires ce trimestre. Sélection humaine, pas d'algorithme.</p>
+                </div>
+                <div className="filters">
+                  <button className="on">Tendance</button>
+                  <button>Populaires</button>
+                  <button>Sauvage</button>
+                  <button>Proche</button>
+                </div>
+              </div>
+
+              <div className="dest-grid">
+                <Link href="/pays/fr" className="dest-card wide">
+                  <div className="bg" style={{ backgroundImage: `url('https://images.pexels.com/photos/2166559/pexels-photo-2166559.jpeg?auto=compress&cs=tinysrgb&w=1200')` }}></div>
+                  <div className="top">
+                    <div className="flag-code"><span className="fc">FR</span> France</div>
+                    <button className="fav" aria-label="Favori">
+                      <svg className="lkv-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+                    </button>
+                  </div>
+                  <div className="info">
+                    <h3>Massif de la<br/><em>Chartreuse.</em></h3>
+                    <div className="sub">Alpes du Nord <span className="sep">·</span> 312 itinéraires <span className="sep">·</span> refuges gardés</div>
+                    <div className="meta">
+                      <span className="m-chip"><span className="k">Alt</span>2 082 m</span>
+                      <span className="m-chip"><span className="k">Saison</span>Mai–Oct</span>
+                      <span className="m-chip"><span className="k">Diff</span>Modérée</span>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link href="/pays/is" className="dest-card">
+                  <div className="bg" style={{ backgroundImage: `url('https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg?auto=compress&cs=tinysrgb&w=800')` }}></div>
+                  <div className="top">
+                    <div className="flag-code"><span className="fc">IS</span> Islande</div>
+                    <button className="fav" aria-label="Favori">
+                      <svg className="lkv-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+                    </button>
+                  </div>
+                  <div className="info">
+                    <h3>Landmannalaugar<em>.</em></h3>
+                    <div className="sub">Hautes terres <span className="sep">·</span> 4 j</div>
+                    <div className="meta">
+                      <span className="m-chip"><span className="k">Type</span>Trek</span>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link href="/pays/jp" className="dest-card">
+                  <div className="bg" style={{ backgroundImage: `url('https://images.pexels.com/photos/691637/pexels-photo-691637.jpeg?auto=compress&cs=tinysrgb&w=800')` }}></div>
+                  <div className="top">
+                    <div className="flag-code"><span className="fc">JP</span> Japon</div>
+                    <button className="fav" aria-label="Favori">
+                      <svg className="lkv-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+                    </button>
+                  </div>
+                  <div className="info">
+                    <h3>Kumano<br/><em>Kodō.</em></h3>
+                    <div className="sub">Kii · 7 jours</div>
+                    <div className="meta">
+                      <span className="m-chip"><span className="k">Type</span>Pèlerinage</span>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+
+              <div className="dest-grid row-2">
+                <Link href="/pays/no" className="dest-card">
+                  <div className="bg" style={{ backgroundImage: `url('https://images.pexels.com/photos/572897/pexels-photo-572897.jpeg?auto=compress&cs=tinysrgb&w=800')` }}></div>
+                  <div className="top">
+                    <div className="flag-code"><span className="fc">NO</span> Norvège</div>
+                    <button className="fav" aria-label="Favori">
+                      <svg className="lkv-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+                    </button>
+                  </div>
+                  <div className="info">
+                    <h3>Lofoten<em>.</em></h3>
+                    <div className="sub">Archipel · 5 j</div>
+                    <div className="meta">
+                      <span className="m-chip"><span className="k">Type</span>Côtier</span>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link href="/pays/np" className="dest-card">
+                  <div className="bg" style={{ backgroundImage: `url('https://images.pexels.com/photos/814499/pexels-photo-814499.jpeg?auto=compress&cs=tinysrgb&w=800')` }}></div>
+                  <div className="top">
+                    <div className="flag-code"><span className="fc">NP</span> Népal</div>
+                    <button className="fav" aria-label="Favori">
+                      <svg className="lkv-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+                    </button>
+                  </div>
+                  <div className="info">
+                    <h3>Vallée du<br/><em>Langtang.</em></h3>
+                    <div className="sub">Himalaya · 10 j</div>
+                    <div className="meta">
+                      <span className="m-chip"><span className="k">Alt</span>4 984 m</span>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link href="/pays/cl" className="dest-card wide">
+                  <div className="bg" style={{ backgroundImage: `url('https://images.pexels.com/photos/2437291/pexels-photo-2437291.jpeg?auto=compress&cs=tinysrgb&w=1200')` }}></div>
+                  <div className="top">
+                    <div className="flag-code"><span className="fc">CL</span> Chili</div>
+                    <button className="fav" aria-label="Favori">
+                      <svg className="lkv-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+                    </button>
+                  </div>
+                  <div className="info">
+                    <h3>Torres del<br/><em>Paine.</em></h3>
+                    <div className="sub">Patagonie <span className="sep">·</span> 8 jours <span className="sep">·</span> circuit W</div>
+                    <div className="meta">
+                      <span className="m-chip"><span className="k">Alt</span>1 200 m</span>
+                      <span className="m-chip"><span className="k">Saison</span>Déc–Fév</span>
+                      <span className="m-chip"><span className="k">Diff</span>Soutenue</span>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </section>
+
+          {/* LIVE + STATS */}
+          <section className="live-section w-full rounded-3xl mt-8">
+            <div className="max-w-[1400px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-10">
+              {/* Live Feed */}
+              <div className="live-panel lg:col-span-5">
+                <div className="head">
+                  <div className="l"><span className="dot"></span><span>Activité live</span></div>
+                  <div className="cnt">14:32 · 8 428 en ligne</div>
+                </div>
+                <h3>Ce qui se passe<br/><em>en ce moment.</em></h3>
+                <div className="live-feed">
+                  <div className="live-item">
+                    <div className="av" style={{ backgroundImage: `url('https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
+                    <div className="txt">
+                      <div className="n">Léna a bivouaqué au <em>Grand Som</em></div>
+                      <div className="m">FR · Chartreuse · il y a 4 min</div>
+                    </div>
+                    <div className="code">FR · 45.3N</div>
+                  </div>
+                  <div className="live-item">
+                    <div className="av" style={{ backgroundImage: `url('https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
+                    <div className="txt">
+                      <div className="n">Antoine a publié un carnet <em>Kumano</em></div>
+                      <div className="m">JP · Kii · il y a 12 min</div>
+                    </div>
+                    <div className="code">JP · 33.8N</div>
+                  </div>
+                  <div className="live-item">
+                    <div className="av" style={{ backgroundImage: `url('https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
+                    <div className="txt">
+                      <div className="n">Hélène cherche un binôme pour <em>Landmannalaugar</em></div>
+                      <div className="m">IS · Août 2026 · il y a 28 min</div>
+                    </div>
+                    <div className="code">IS · 63.9N</div>
+                  </div>
+                  <div className="live-item">
+                    <div className="av" style={{ backgroundImage: `url('https://images.pexels.com/photos/1043473/pexels-photo-1043473.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
+                    <div className="txt">
+                      <div className="n">Bertrand a rejoint le club <em>Patagonie 2026</em></div>
+                      <div className="m">CL · Torres del Paine · il y a 41 min</div>
+                    </div>
+                    <div className="code">CL · 50.9S</div>
+                  </div>
+                  <div className="live-item">
+                    <div className="av" style={{ backgroundImage: `url('https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
+                    <div className="txt">
+                      <div className="n">Marie a validé le refuge <em>Bellefond</em></div>
+                      <div className="m">FR · Vercors · il y a 1 h</div>
+                    </div>
+                    <div className="code">FR · 45.0N</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div className="stats-panel lg:col-span-7">
+                <div className="stat-card">
+                  <div className="lbl">
+                    <div className="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" width="12" height="12"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg></div>
+                    Pays cartographiés
+                  </div>
+                  <div className="n">137<em> / 195</em></div>
+                  <div className="desc">70 % du globe. On avance département par département, jamais par claim marketing.<span className="delta">+8 ce mois</span></div>
+                </div>
+
+                <div className="stat-card dark">
+                  <div className="lbl">
+                    <div className="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" width="12" height="12"><path d="M9 20l-5-5 5-5M4 15h11a5 5 0 000-10H9"/></svg></div>
+                    Itinéraires vérifiés
+                  </div>
+                  <div className="n">2 481</div>
+                  <div className="desc">Chaque itinéraire passe par un testeur avant publication. Aucun accord commercial.<span className="delta">+12 % T3</span></div>
+                </div>
+
+                <div className="stat-card feat">
+                  <div>
+                    <div className="lbl">
+                      <div className="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" width="12" height="12"><path d="M12 22s-8-9-8-14a8 8 0 1116 0c0 5-8 14-8 14z"/><circle cx="12" cy="8" r="3"/></svg></div>
+                      Focus région · Été 2026
+                    </div>
+                    <h4>La Chartreuse<br/>en <em>six semaines.</em></h4>
+                    <p className="desc">Trois testeurs, 42 nuits en bivouac, 312 itinéraires notés. Le journal complet arrive en septembre.</p>
+                    <Link href="/journal" className="lkv-btn lkv-btn-primary lkv-btn-sm cta">
+                      Lire les carnets
+                      <svg className="lkv-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </Link>
+                  </div>
+                  <div className="mini-map">
+                    <div className="pin p1"></div>
+                    <div className="pin p2"></div>
+                    <div className="pin p3"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* METHOD SECTION */}
+          <section className="method-section w-full rounded-3xl mt-8">
+            <div className="max-w-[1400px] mx-auto">
+              <div className="method-head">
+                <div className="lkv-eyebrow">Notre méthode · terrain d'abord</div>
+                <h2>On cartographie<br/><em>ce qu'on a marché.</em></h2>
+                <p>Pas de scraping. Pas d'IA générative pour peupler la carte. Chaque point vient d'un carnet signé, relu, situé.</p>
+              </div>
+              <div className="method-grid">
+                <div className="method-card">
+                  <div className="num">01 · Terrain</div>
+                  <h4>Six semaines<br/>de <em>marche.</em></h4>
+                  <p>Chaque région est visitée par trois testeurs partenaires. Ils partent avec un carnet vierge et rentrent avec des points GPS, des relevés météo, des noms d'aubergistes.</p>
+                </div>
+                <div className="method-card">
+                  <div className="num">02 · Relecture</div>
+                  <h4>Une carte<br/><em>relue</em> à deux voix.</h4>
+                  <p>Chaque itinéraire est confié à un second testeur, indépendant du premier. Ce qu'ils voient différemment, on le note. Ce qui casse, on le retire.</p>
+                </div>
+                <div className="method-card">
+                  <div className="num">03 · Publication</div>
+                  <h4>Publié quand<br/>on est <em>sûrs.</em></h4>
+                  <p>Un pays ne monte sur l'atlas qu'après avoir traversé nos deux filtres. On préfère 137 pays vérifiés à 195 pays approximatifs.</p>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
-      )}
+      </main>
 
-      {/* ── Glass top bar: search + filters ── */}
-      <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0,
-        padding: '16px 20px',
-        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 88px)',
-        background: 'linear-gradient(180deg, rgba(11,31,23,0.9) 0%, rgba(11,31,23,0.4) 70%, transparent 100%)',
-        zIndex: 20,
-        display: 'flex', flexDirection: 'column', gap: '10px',
-      }}>
-        {/* Search row */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '12px',
-          ...glassSx,
-          borderRadius: '14px', padding: '4px 12px 4px 16px',
-        }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2">
-            <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Rechercher un pays, une capitale..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              flex: 1,
-              background: 'none', border: 'none', outline: 'none',
-              color: '#fff', fontSize: '14px', fontWeight: 400,
-              padding: '8px 0',
-            }}
-            onFocus={(e) => e.target.style.outline = 'none'}
-          />
-          {search && (
-            <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '16px', padding: '4px' }}>
-              ✕
-            </button>
-          )}
-          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', fontFamily: 'ui-monospace, monospace', whiteSpace: 'nowrap' }}>
-            {filtered.length}
-          </span>
-        </div>
+      {/* Site Footer */}
+      <Footer />
 
-        {/* Filter pills row */}
-        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-          {/* Continent pills */}
-          {CONTINENTS.map((c) => (
-            <button
-              key={c}
-              onClick={() => setContinent(c)}
-              style={{
-                padding: '5px 12px',
-                borderRadius: '999px',
-                fontSize: '11px',
-                fontWeight: continent === c ? 600 : 400,
-                whiteSpace: 'nowrap',
-                border: `1px solid ${continent === c ? 'rgba(255,255,255,0.2)' : GLASS_BORDER}`,
-                background: continent === c ? 'rgba(255,255,255,0.15)' : GLASS_TOP,
-                backdropFilter: 'blur(16px) saturate(1.3)',
-                WebkitBackdropFilter: 'blur(16px) saturate(1.3)',
-                color: continent === c ? '#fff' : 'rgba(255,255,255,0.7)',
-                cursor: 'pointer',
-                flexShrink: 0,
-                transition: 'all 0.15s',
-              }}
-            >
-              {CONTINENT_EMOJIS[c]} {c}
-            </button>
-          ))}
-
-          {/* Danger filter */}
-          <select
-            value={dangerFilter}
-            onChange={(e) => setDangerFilter(e.target.value)}
-            style={{
-              padding: '5px 12px',
-              borderRadius: '999px',
-              fontSize: '11px',
-              fontWeight: 500,
-              border: `1px solid ${GLASS_BORDER}`,
-              background: GLASS_TOP,
-              backdropFilter: 'blur(16px) saturate(1.3)',
-              WebkitBackdropFilter: 'blur(16px) saturate(1.3)',
-              color: 'rgba(255,255,255,0.8)',
-              cursor: 'pointer',
-              flexShrink: 0,
-              outline: 'none',
-            }}
-          >
-            <option value="Tous" style={{ background: '#1C2620' }}>🟡 Sécurité</option>
-            <option value="low" style={{ background: '#1C2620' }}>🟢 Sûr</option>
-            <option value="medium" style={{ background: '#1C2620' }}>🟡 Vigilance</option>
-            <option value="high" style={{ background: '#1C2620' }}>🔴 Risqué</option>
-          </select>
-
-          {/* Tag filter */}
-          <select
-            value={tagFilter}
-            onChange={(e) => setTagFilter(e.target.value)}
-            style={{
-              padding: '5px 12px',
-              borderRadius: '999px',
-              fontSize: '11px',
-              fontWeight: 500,
-              border: `1px solid ${GLASS_BORDER}`,
-              background: GLASS_TOP,
-              backdropFilter: 'blur(16px) saturate(1.3)',
-              WebkitBackdropFilter: 'blur(16px) saturate(1.3)',
-              color: 'rgba(255,255,255,0.8)',
-              cursor: 'pointer',
-              flexShrink: 0,
-              outline: 'none',
-            }}
-          >
-            <option value="" style={{ background: '#1C2620' }}>🏷️ Activité</option>
-            {ALL_TAGS.map((tag) => (
-              <option key={tag} value={tag} style={{ background: '#1C2620' }}>{tag}</option>
-            ))}
-          </select>
-
-          {/* Reset */}
-          {hasActiveFilters && (
-            <button
-              onClick={resetFilters}
-              style={{
-                padding: '5px 10px',
-                borderRadius: '999px',
-                fontSize: '11px',
-                fontWeight: 500,
-                border: '1px solid rgba(255,255,255,0.15)',
-                background: 'rgba(255,255,255,0.08)',
-                color: 'rgba(255,255,255,0.6)',
-                cursor: 'pointer',
-                flexShrink: 0,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              ✕ Réinitialiser
-            </button>
-          )}
-
-        </div>
-      </div>
-
-      {/* ── Glass bottom bar: legend + safety dots ── */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0,
-        padding: '12px 20px',
-        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 88px)',
-        background: 'linear-gradient(0deg, rgba(11,31,23,0.9) 0%, rgba(11,31,23,0.3) 70%, transparent 100%)',
-        zIndex: 20,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          {Object.entries(DANGER_DOTS).map(([level, color]) => (
-            <span key={level} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: 'rgba(255,255,255,0.6)', fontWeight: 500 }}>
-              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: color, display: 'inline-block' }} />
-              {DANGER_LABELS[level]}
-            </span>
-          ))}
-        </div>
-        <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', fontFamily: 'ui-monospace, monospace' }}>
-          {filtered.length} pays · Cliquer pour explorer
-        </span>
-      </div>
-
+      {/* Country Detail Modal */}
+      <EarthCountryPanel
+        country={selectedCountry}
+        isVisible={showCountryPanel}
+        onClose={() => setShowCountryPanel(false)}
+        onExploreCountry={handleExploreCountry}
+      />
     </div>
-    </>
   );
 }

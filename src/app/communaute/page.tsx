@@ -626,7 +626,7 @@ export default function CommunautePage() {
 
         // Fetch Travel Groups (user-created groups from the wizard)
         const { data: travelGroupsData } = await supabase
-          .from('travel_groups')
+          .from('groupes')
           .select('*, owner:user_profiles!travel_groups_owner_id_fkey(full_name, avatar_url)')
           .eq('visibility', 'public')
           .order('created_at', { ascending: false })

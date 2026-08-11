@@ -1,10 +1,10 @@
-// src/components/inventaire/LoansList.tsx
+// src/components/mon-materiel/LoansList.tsx
 
 'use client';
 
 import React from 'react';
-import LoansCard from '@/components/inventaire/LoansCard';
-import { LoanItemData } from '@/lib/mock/inventaire-marceline';
+import LoansCard from './LoansCard';
+import { LoanItemData } from '@/lib/mock/mon-materiel-marceline';
 
 interface LoansListProps {
   loans: LoanItemData[];
@@ -34,3 +34,4 @@ export default function LoansList({ loans }: LoansListProps) {
     </div>
   );
 }
+

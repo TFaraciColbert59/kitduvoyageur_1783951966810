@@ -84,75 +84,24 @@ function getKitItems(state: WizardState): Array<{ id: string; name: string; pric
   return items;
 }
 
-function getKitMeta(state: WizardState) {
-  const dureeMap: Record<string, string> = {
-    weekend: '2 jours',
-    semaine: '7 jours',
-    long: '14 jours',
-    expedition: '30+ jours',
-  };
-  const meteoMap: Record<string, string> = {
-    sec: 'Sec, chaud',
-    frais: 'Frais, brumeux',
-    pluvieux: 'Pluvieux, venté',
-    froid: 'Froid sec',
-  };
-  return {
-    duree: dureeMap[state.duree] || '—',
-    meteo: meteoMap[state.meteo] || '—',
-  };
-}
-
-// ── Stepper ──────────────────────────────────────────────────────────────────
-const STEPS = [
-  { id: 1, label: 'Usage' },
-  { id: 2, label: 'Durée' },
-  { id: 3, label: 'Météo' },
-  { id: 4, label: 'Confort' },
-  { id: 5, label: 'Récap' },
-];
+// ── Altimeter Loader ─────────────────────────────────────────────────────────────
+function AltimeterLoader({ active }: { active: boolean }) {
+  if (!active) return null;
 
 function _Stepper({ currentStep }: { currentStep: number }) {
   return (
-    <div className="flex items-center gap-0" role="progressbar" aria-valuenow={currentStep} aria-valuemin={1} aria-valuemax={5}>
-      {STEPS.map((step, idx) => (
-        <React.Fragment key={step.id}>
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-600 transition-all duration-300 ${
-                currentStep > step.id
-                  ? 'bg-[#1C2620] text-white'
-                  : currentStep === step.id
-                  ? 'bg-[#1C2620] text-white ring-2 ring-[#1C2620] ring-offset-2'
-                  : 'bg-transparent border border-[#C5BFB0] text-[#8A8478]'
-              }`}
-            >
-              {currentStep > step.id ? (
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              ) : (
-                <span>{step.id}</span>
-              )}
-            </div>
-            <span
-              className={`text-xs font-500 hidden sm:block transition-colors ${
-                currentStep === step.id ? 'text-[#1C2620]' : 'text-[#8A8478]'
-              }`}
-            >
-              {step.label}
-            </span>
-          </div>
-          {idx < STEPS.length - 1 && (
-            <div
-              className={`flex-1 h-px mx-3 transition-all duration-300 ${
-                currentStep > step.id ? 'bg-[#1C2620]' : 'bg-[#C5BFB0]'
-              }`}
-              style={{ minWidth: 20 }}
-            />
-          )}
-        </React.Fragment>
-      ))}
+    <div className="flex flex-col items-center justify-center py-20 gap-6" role="status" aria-live="polite" aria-label="Génération de votre liste en cours">
+      <div className="w-10 h-10 border-2 border-[#1C2620] border-t-transparent rounded-full animate-spin" />
+      <p className="text-sm text-muted-foreground font-mono-data uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>
+        Analyse IA en cours…
+      </p>
+      <div className="flex gap-1.5">
+        {[0, 1, 2].map((i) => (
+          <span key={i} className="w-2 h-2 rounded-full bg-primary"
+            style={{ animation: `pulseOrange 1.2s ${i * 0.2}s infinite` }}
+          />
+        ))}
+      </div>
     </div>
   );
 }

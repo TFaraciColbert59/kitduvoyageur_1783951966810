@@ -19,11 +19,12 @@ interface ExplorerMapProps {
   onAutoFollowChange?: (enabled: boolean) => void;
   onMapReady?: () => void;
   onLocationUpdate?: (loc: [number, number]) => void;
+  controlsPosition?: 'left' | 'right';
 }
 
 const TOPO_TILE = {
-  url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-  attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
+  url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+  attribution: '&copy; <a href="https://www.esri.com">Esri</a>, USGS, NOAA',
 };
 
 const OSM_TILE = {
@@ -31,7 +32,12 @@ const OSM_TILE = {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
 };
 
-type TileMode = 'topo' | 'osm';
+const SATELLITE_TILE = {
+  url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  attribution: '&copy; <a href="https://www.esri.com">Esri</a>, Earthstar Geographics',
+};
+
+type TileMode = 'topo' | 'osm' | 'satellite';
 type LocationState = 'idle' | 'locating' | 'located' | 'denied' | 'unavailable';
 
 export default function ExplorerMap({
@@ -47,6 +53,7 @@ export default function ExplorerMap({
   onAutoFollowChange,
   onMapReady,
   onLocationUpdate,
+  controlsPosition = 'left',
 }: ExplorerMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
@@ -55,18 +62,55 @@ export default function ExplorerMap({
   const accuracyCircleRef = useRef<import('leaflet').Circle | null>(null);
   const userTrackPolylineRef = useRef<import('leaflet').Polyline | null>(null);
   const userDraggingRef = useRef(false);
+
   const [mapInstance, setMapInstance] = useState<LeafletMap | null>(null);
-  const [tileMode, setTileMode] = useState<TileMode>('topo');
+  const [tileMode, setTileMode] = useState<TileMode>('osm');
   const [mapReady, setMapReady] = useState(false);
   const [locationState, setLocationState] = useState<LocationState>('idle');
+  const [isUserPanned, setIsUserPanned] = useState(false);
   const geoAttemptedRef = useRef(false);
 
-  // Initialize map
+  const handleRecenter = useCallback(() => {
+    userDraggingRef.current = false;
+    setIsUserPanned(false);
+    onAutoFollowChange?.(true);
+
+    let targetLoc: [number, number] | null = userLocation ? toValidLatLng(userLocation[0], userLocation[1]) : null;
+    if (!targetLoc && userPositions && userPositions.length > 0) {
+      const lastP = userPositions[userPositions.length - 1];
+      targetLoc = toValidLatLng(lastP?.latitude, lastP?.longitude);
+    }
+
+    if (targetLoc && mapRef.current && (mapRef.current as any)._loaded) {
+      try {
+        mapRef.current.flyTo(targetLoc, 16, { animate: true, duration: 1.0 });
+      } catch (err) {
+        console.warn('[ExplorerMap] recenter flyTo error:', err);
+      }
+    }
+  }, [userLocation, userPositions, onAutoFollowChange]);
+
+  const handleTileChange = (mode: TileMode) => {
+    setTileMode(mode);
+  };
+
+  const handleZoomIn = () => {
+    if (mapRef.current && (mapRef.current as any)._loaded) {
+      mapRef.current.zoomIn();
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (mapRef.current && (mapRef.current as any)._loaded) {
+      mapRef.current.zoomOut();
+    }
+  };
+
+  // Initialize Leaflet map instance
   useEffect(() => {
     if (!containerRef.current || mapRef.current || typeof window === 'undefined') return;
 
     import('leaflet').then((L) => {
-      // Clear any pre-existing Leaflet container instance
       if ((containerRef.current as any)?._leaflet_id) {
         (containerRef.current as any)._leaflet_id = null;
       }
@@ -88,23 +132,26 @@ export default function ExplorerMap({
 
       const handleUserMove = () => {
         userDraggingRef.current = true;
+        setIsUserPanned(true);
         onAutoFollowChange?.(false);
       };
 
       map.on('dragstart', handleUserMove);
       map.on('movestart', (e: any) => {
-        // Supprimer le suivi si le mouvement a été initiated par l'utilisateur
         if (e.originalEvent) {
           handleUserMove();
         }
       });
-      map.on('dragend', () => { userDraggingRef.current = false; });
+      map.on('dragend', () => {
+        userDraggingRef.current = false;
+      });
 
-      L.control.zoom({ position: 'topright' }).addTo(map);
-
-      const tile = L.tileLayer(TOPO_TILE.url, {
-        attribution: TOPO_TILE.attribution,
-        maxZoom: 17,
+      const initialCfg = OSM_TILE;
+      const tile = L.tileLayer(initialCfg.url, {
+        attribution: initialCfg.attribution,
+        maxZoom: 18,
+        maxNativeZoom: 18,
+        keepBuffer: 6,
       });
       tile.addTo(map);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -130,7 +177,7 @@ export default function ExplorerMap({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto-geolocation on mount — fires as soon as map is ready
+  // Auto-geolocation on mount
   useEffect(() => {
     if (!mapReady || geoAttemptedRef.current) return;
     geoAttemptedRef.current = true;
@@ -146,19 +193,26 @@ export default function ExplorerMap({
       (position) => {
         const { longitude, latitude } = position.coords;
         const validPos = toValidLatLng(latitude, longitude);
-        if (validPos) {
+        if (validPos && mapRef.current) {
           setLocationState('located');
           onLocationUpdate?.(validPos);
-          if (mapRef.current) {
-            mapRef.current.flyTo(validPos, 13, { duration: 1.5 });
+          if (mapRef.current && (mapRef.current as any)._loaded) {
+            try {
+              mapRef.current.flyTo(validPos, 13, { duration: 1.5 });
+            } catch (err) {
+              console.warn('[ExplorerMap] flyTo position error:', err);
+            }
           }
         }
       },
       () => {
         setLocationState('denied');
-        // Fallback: France center
-        if (mapRef.current) {
-          mapRef.current.flyTo([46.6, 2.5], 5, { duration: 1.0 });
+        if (mapRef.current && (mapRef.current as any)._loaded) {
+          try {
+            mapRef.current.flyTo([46.6, 2.5], 5, { duration: 1.0 });
+          } catch (err) {
+            console.warn('[ExplorerMap] flyTo fallback error:', err);
+          }
         }
       },
       { enableHighAccuracy: true, timeout: 8000 }
@@ -172,16 +226,20 @@ export default function ExplorerMap({
       if (tileLayerRef.current) {
         try { mapRef.current!.removeLayer(tileLayerRef.current as unknown as import('leaflet').Layer); } catch { /* ignore */ }
       }
-      const cfg = tileMode === 'topo' ? TOPO_TILE : OSM_TILE;
-      const tile = L.tileLayer(cfg.url, { attribution: cfg.attribution, maxZoom: 17 });
+      const cfg = tileMode === 'topo' ? TOPO_TILE : tileMode === 'satellite' ? SATELLITE_TILE : OSM_TILE;
+      const tile = L.tileLayer(cfg.url, {
+        attribution: cfg.attribution,
+        maxZoom: 18,
+        maxNativeZoom: 18,
+        keepBuffer: 6,
+      });
       tile.addTo(mapRef.current!);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       tileLayerRef.current = tile as any;
     });
   }, [tileMode, mapReady]);
 
-  // User location marker & accuracy circle (from prop) — orienté par le heading GPS réel si dispo,
-  // sinon point neutre (jamais d'orientation inventée).
+  // User location marker & accuracy circle
   useEffect(() => {
     const validLoc = userLocation ? toValidLatLng(userLocation[0], userLocation[1]) : null;
     if (!mapRef.current || !mapReady || !validLoc) return;
@@ -193,7 +251,6 @@ export default function ExplorerMap({
         try { mapRef.current!.removeLayer(accuracyCircleRef.current); } catch { /* ignore */ }
       }
 
-      // Cercle d'incertitude GPS (accuracyM)
       if (userAccuracy != null && Number.isFinite(userAccuracy) && userAccuracy > 0) {
         const circle = L.circle(validLoc, {
           radius: Math.min(200, userAccuracy),
@@ -211,19 +268,19 @@ export default function ExplorerMap({
         : null;
 
       const html = heading != null
-        ? `<div style="position:relative;width:18px;height:18px">
-             <div style="position:absolute;inset:0;background:#2D5A27;border:3px solid #8BAF7C;border-radius:50%;box-shadow:0 0 0 4px #2D5A2740"></div>
-             <svg width="16" height="16" viewBox="0 0 24 24" style="position:absolute;top:1px;left:1px;transform:rotate(${heading}deg);transform-origin:center">
-               <path d="M12 2 L7 22 L12 17 L17 22 Z" fill="#2D5A27" stroke="#FBFAF6" stroke-width="1.5"/>
+        ? `<div style="position:relative;width:20px;height:20px">
+             <div style="position:absolute;inset:0;background:#17402C;border:3px solid #8BAF7C;border-radius:50%;box-shadow:0 0 0 4px rgba(23,64,44,0.3)"></div>
+             <svg width="18" height="18" viewBox="0 0 24 24" style="position:absolute;top:1px;left:1px;transform:rotate(${heading}deg);transform-origin:center">
+               <path d="M12 2 L7 22 L12 17 L17 22 Z" fill="#17402C" stroke="#FBFAF6" stroke-width="1.5"/>
              </svg>
            </div>`
-        : `<div style="width:14px;height:14px;background:#2D5A27;border:3px solid #8BAF7C;border-radius:50%;box-shadow:0 0 0 4px #2D5A2740"></div>`;
+        : `<div style="width:16px;height:16px;background:#17402C;border:3px solid #8BAF7C;border-radius:50%;box-shadow:0 0 0 4px rgba(23,64,44,0.3)"></div>`;
 
       const icon = L.divIcon({
         html,
         className: '',
-        iconSize: heading != null ? [18, 18] : [14, 14],
-        iconAnchor: heading != null ? [9, 9] : [7, 7],
+        iconSize: heading != null ? [20, 20] : [16, 16],
+        iconAnchor: heading != null ? [10, 10] : [8, 8],
       });
       const marker = L.marker(validLoc, { icon });
       marker.addTo(mapRef.current!);
@@ -258,25 +315,49 @@ export default function ExplorerMap({
     });
   }, [userPositions, mapReady]);
 
-  // Auto-follow GPS pendant une randonnée active (userPositions fourni) :
-  // la carte suit la position réelle, sauf si l'utilisateur est en train de
-  // faire glisser la carte (il reprend la main à ce moment-là).
+  // Real-time GPS auto-following & camera centering (Google Maps Turn-by-Turn style)
   useEffect(() => {
-    if (!mapRef.current || !mapReady || !userPositions || userPositions.length < 2) return;
-    if (userDraggingRef.current) return;
+    if (!mapRef.current || !mapReady || isUserPanned || userDraggingRef.current) return;
 
-    let lastValid: [number, number] | null = null;
-    for (const p of userPositions) {
-      const pt = toValidLatLng(p?.latitude, p?.longitude);
-      if (pt) lastValid = pt;
+    let targetLoc: [number, number] | null = userLocation ? toValidLatLng(userLocation[0], userLocation[1]) : null;
+    if (!targetLoc && userPositions && userPositions.length > 0) {
+      for (let i = userPositions.length - 1; i >= 0; i--) {
+        const pt = toValidLatLng(userPositions[i]?.latitude, userPositions[i]?.longitude);
+        if (pt) {
+          targetLoc = pt;
+          break;
+        }
+      }
     }
-    if (!lastValid) return;
+    if (!targetLoc) return;
 
-    const currentCenter = mapRef.current.getCenter();
-    const [cLat, cLng] = lastValid;
-    if (Math.abs(currentCenter.lat - cLat) < 1e-8 && Math.abs(currentCenter.lng - cLng) < 1e-8) return;
-    mapRef.current.panTo(lastValid, { animate: true, duration: 0.4 });
-  }, [userPositions, mapReady]);
+    try {
+      if (mapRef.current && (mapRef.current as any)._loaded) {
+        const center = mapRef.current.getCenter();
+        const distDeg = Math.hypot(center.lat - targetLoc[0], center.lng - targetLoc[1]);
+        if (distDeg > 0.00001) {
+          mapRef.current.panTo(targetLoc, { animate: true, duration: 0.8, easeLinearity: 0.25 });
+        }
+      }
+    } catch (e) {
+      console.warn('[ExplorerMap] panTo autoFollow error:', e);
+    }
+  }, [userLocation, userPositions, mapReady, isUserPanned]);
+
+  // Automatic map rotation based on orientation / movement heading
+  useEffect(() => {
+    if (!mapRef.current || !mapReady) return;
+    const mapPane = mapRef.current.getPane('mapPane');
+    if (!mapPane) return;
+
+    const heading = headingDeg != null && Number.isFinite(headingDeg) && headingDeg >= 0 && headingDeg < 360
+      ? Math.round(headingDeg)
+      : 0;
+
+    mapPane.style.transition = 'transform 0.4s ease-out';
+    mapPane.style.transformOrigin = 'center center';
+    mapPane.style.transform = heading !== 0 ? `rotate(${-heading}deg)` : 'none';
+  }, [headingDeg, mapReady]);
 
   // Auto-zoom to selected trail
   const fitToTrail = useCallback((trail: MapTrail) => {
@@ -287,24 +368,22 @@ export default function ExplorerMap({
     const [lat, lng] = pt;
     if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
 
-    import('leaflet').then(() => {
-      if (mapRef.current && Number.isFinite(lat) && Number.isFinite(lng)) {
-        try {
-          mapRef.current.flyTo([lat, lng], 14, { animate: true, duration: 1.2 });
-        } catch {
-          // Safeguard against Leaflet LatLng conversion errors
-        }
+    if (mapRef.current && (mapRef.current as any)._loaded && Number.isFinite(lat) && Number.isFinite(lng)) {
+      try {
+        mapRef.current.flyTo([lat, lng], 14, { animate: true, duration: 1.2 });
+      } catch (e) {
+        console.warn('[ExplorerMap] flyTo trail error:', e);
       }
-    });
+    }
   }, []);
 
   useEffect(() => {
     if (!selectedTrailId || !mapReady) return;
-    const trail = trails.find((t) => t.id === selectedTrailId);
+    const trail = trails.find((t) => String(t.id) === String(selectedTrailId));
     if (trail) fitToTrail(trail);
   }, [selectedTrailId, trails, mapReady, fitToTrail]);
 
-  // Auto-fit all trails on load (only if geolocation not available)
+  // Auto-fit all trails on load
   useEffect(() => {
     if (!mapReady || !trails.length || !mapRef.current) return;
     if (locationState === 'located' || locationState === 'locating') return;
@@ -315,9 +394,13 @@ export default function ExplorerMap({
         if (pt) coords.push(pt);
       });
       if (!coords.length) return;
-      const allBounds = L.latLngBounds(coords);
-      if (allBounds.isValid()) {
-        mapRef.current!.fitBounds(allBounds, { padding: [40, 40], maxZoom: 10 });
+      try {
+        const allBounds = L.latLngBounds(coords);
+        if (allBounds.isValid() && mapRef.current && (mapRef.current as any)._loaded) {
+          mapRef.current.fitBounds(allBounds, { padding: [40, 40], maxZoom: 10 });
+        }
+      } catch (e) {
+        console.warn('[ExplorerMap] fitBounds error:', e);
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -330,12 +413,14 @@ export default function ExplorerMap({
       (position) => {
         const { longitude, latitude } = position.coords;
         const validLoc = toValidLatLng(latitude, longitude);
-        if (validLoc) {
+        if (validLoc && mapRef.current && (mapRef.current as any)._loaded) {
           setLocationState('located');
           onLocationUpdate?.(validLoc);
-          mapRef.current!.flyTo(validLoc, 13, { duration: 1.5 });
-        } else {
-          setLocationState('denied');
+          try {
+            mapRef.current.flyTo(validLoc, 15, { duration: 1.0 });
+          } catch (err) {
+            console.warn('[ExplorerMap] flyTo position error:', err);
+          }
         }
       },
       () => setLocationState('denied'),
@@ -344,35 +429,41 @@ export default function ExplorerMap({
   };
 
   return (
-    <div className="relative w-full h-full">
-      <div ref={containerRef} className="w-full h-full" />
+    <div className="relative w-full h-full bg-[#EAE6DF] overflow-hidden select-none">
+      <div ref={containerRef} className="w-full h-full z-0" />
 
-      {mapReady && mapInstance && (
-        <TrailLayer
-          map={mapInstance}
-          trails={trails}
-          selectedTrailId={selectedTrailId}
-          onTrailClick={onTrailClick}
-          progressFrac={progressFrac}
-        />
+      {mapReady && mapInstance && trails.length > 0 && (
+        <TrailLayer map={mapInstance} trails={trails} selectedTrailId={selectedTrailId} onTrailClick={onTrailClick} />
       )}
 
-      {/* Location status indicator */}
-      {locationState === 'locating' && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[40] bg-[#0d1a12]/90 border border-[#2D5A27]/40 rounded-xl px-4 py-2 flex items-center gap-2 backdrop-blur-sm">
-          <div className="w-3 h-3 border-2 border-[#2D5A27]/30 border-t-[#8BAF7C] rounded-full animate-spin" />
-          <span className="text-[#8BAF7C] text-xs font-mono">Localisation…</span>
+      {/* Floating Zoom Controls (+ / −) */}
+      <div className={`absolute z-30 pointer-events-auto flex flex-col gap-2 ${controlsPosition === 'left' ? 'left-4 top-[180px]' : 'right-3 top-3'}`}>
+        <div className="flex flex-col bg-white/80 backdrop-blur-md border border-white/60 rounded-2xl shadow-xl overflow-hidden text-[#1C2620]">
+          <button
+            onClick={handleZoomIn}
+            title="Zoom avant"
+            className="w-9 h-9 flex items-center justify-center font-bold text-lg hover:bg-[#8BAF7C]/35 hover:text-[#17402C] transition-all border-b border-black/10 cursor-pointer active:scale-95"
+          >
+            +
+          </button>
+          <button
+            onClick={handleZoomOut}
+            title="Zoom arrière"
+            className="w-9 h-9 flex items-center justify-center font-bold text-lg hover:bg-[#8BAF7C]/35 hover:text-[#17402C] transition-all cursor-pointer active:scale-95"
+          >
+            −
+          </button>
         </div>
-      )}
+      </div>
 
-      {/* Denied — show button to retry */}
+      {/* Denied / Manual locate button */}
       {locationState === 'denied' && (
-        <div className="absolute z-[40]" style={{ bottom: '80px', left: '12px' }}>
+        <div className={`absolute z-30 pointer-events-auto ${controlsPosition === 'left' ? 'left-4 bottom-[140px]' : 'left-3 bottom-[80px]'}`}>
           <button
             onClick={handleManualLocate}
-            className="flex items-center gap-2 bg-white/95 border border-[#E4E0D4] rounded-xl px-3 py-2 text-[#1C2620] text-xs font-medium shadow-md hover:bg-[#F5F2EA] transition-colors"
+            className="flex items-center gap-2 bg-white/80 backdrop-blur-md border border-white/60 rounded-xl px-3 py-1.5 text-[#1C2620] text-xs font-bold shadow-xl hover:bg-[#8BAF7C]/30 transition-all cursor-pointer"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
             </svg>
             Activer ma position
@@ -380,51 +471,58 @@ export default function ExplorerMap({
         </div>
       )}
 
-      {/* Tile switcher */}
-      <div className="absolute z-[40] flex items-center p-1 bg-white/95 backdrop-blur-sm border border-[#E4E0D4] rounded-2xl shadow-md" style={{ bottom: '80px', right: '12px' }}>
+      {/* Floating "Recentrer sur moi" Button */}
+      {isUserPanned && (
+        <div className="absolute top-14 left-1/2 -translate-x-1/2 z-[500] pointer-events-auto">
+          <button
+            onClick={handleRecenter}
+            className="flex items-center gap-2 px-4 py-2 bg-white/92 backdrop-blur-md border border-[#17402C]/30 text-[#17402C] text-xs font-bold rounded-full shadow-2xl hover:bg-[#17402C] hover:text-white transition-all cursor-pointer active:scale-95"
+          >
+            <span className="w-2.5 h-2.5 rounded-full bg-[#22c55e] animate-ping shrink-0" />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+            </svg>
+            Recentrer sur moi
+          </button>
+        </div>
+      )}
+
+      {/* Tile switcher (Carte / Relief / Satellite) */}
+      <div className={`absolute z-30 pointer-events-auto flex items-center p-1 bg-white/80 backdrop-blur-md border border-white/60 rounded-2xl shadow-xl ${controlsPosition === 'left' ? 'left-4 bottom-[85px]' : 'right-3 bottom-14'}`}>
         <button
-          onClick={() => setTileMode('osm')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl transition-all ${
-            tileMode === 'osm' ? 'bg-[#1C2620] text-white shadow-sm' : 'text-[#7A8A7D] hover:bg-[#F5F2EA] hover:text-[#1C2620]'
+          onClick={() => handleTileChange('osm')}
+          className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+            tileMode === 'osm' ? 'bg-[#17402C] text-white shadow-sm' : 'text-[#5C6B5E] hover:bg-[#8BAF7C]/30 hover:text-[#17402C]'
           }`}
         >
-          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
             <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path><path d="M9 3v12"></path><path d="M15 6v12"></path>
           </svg>
           Carte
         </button>
         <button
-          onClick={() => setTileMode('topo')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl transition-all ${
-            tileMode === 'topo' ? 'bg-[#1C2620] text-white shadow-sm' : 'text-[#7A8A7D] hover:bg-[#F5F2EA] hover:text-[#1C2620]'
+          onClick={() => handleTileChange('topo')}
+          className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+            tileMode === 'topo' ? 'bg-[#17402C] text-white shadow-sm' : 'text-[#5C6B5E] hover:bg-[#8BAF7C]/30 hover:text-[#17402C]'
           }`}
         >
-          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
             <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
           </svg>
           Relief
         </button>
-      </div>
-
-      {/* Difficulty legend */}
-      <div
-        className="absolute left-3 z-[40] bg-white/95 border border-[#E4E0D4] rounded-xl px-3 py-2 shadow-sm"
-        style={{ bottom: '80px' }}
-      >
-        <p className="text-[9px] font-mono text-[#7A8A7D] uppercase tracking-widest mb-1.5">Difficulté</p>
-        {[
-          { key: 'easy', label: 'Facile', color: '#22c55e' },
-          { key: 'moderate', label: 'Modérée', color: '#f97316' },
-          { key: 'hard', label: 'Difficile', color: '#ef4444' },
-          { key: 'expert', label: 'Expert', color: '#7c3aed' },
-        ].map((d) => (
-          <div key={d.key} className="flex items-center gap-1.5 mb-0.5">
-            <div className="w-4 h-0.5 rounded-full" style={{ backgroundColor: d.color }} />
-            <span className="text-[9px] text-[#7A8A7D]">{d.label}</span>
-          </div>
-        ))}
+        <button
+          onClick={() => handleTileChange('satellite')}
+          className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+            tileMode === 'satellite' ? 'bg-[#17402C] text-white shadow-sm' : 'text-[#5C6B5E] hover:bg-[#8BAF7C]/30 hover:text-[#17402C]'
+          }`}
+        >
+          <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path>
+          </svg>
+          Satellite
+        </button>
       </div>
     </div>
   );
 }
-

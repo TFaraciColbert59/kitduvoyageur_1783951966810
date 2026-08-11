@@ -83,7 +83,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
       try {
         // 1. Search shop products
         const { data: products } = await supabase
-          .from('shop_products')
+          .from('products')
           .select('id, name, category, price, image_url')
           .or(`name.ilike.%${q}%,category.ilike.%${q}%`)
           .limit(5);

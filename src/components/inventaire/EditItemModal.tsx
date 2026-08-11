@@ -1,10 +1,10 @@
-// src/components/inventaire/EditItemModal.tsx
+// src/components/mon-materiel/EditItemModal.tsx
 
 'use client';
 
 import React from 'react';
 import AddEditGearModal from './AddEditGearModal';
-import { GearItemData } from '@/lib/mock/inventaire-marceline';
+import { GearItemData } from '@/lib/mock/mon-materiel-marceline';
 
 interface EditItemModalProps {
   isOpen: boolean;

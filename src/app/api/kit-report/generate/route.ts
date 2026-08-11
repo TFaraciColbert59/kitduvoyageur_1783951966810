@@ -44,9 +44,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Paramètres manquants' }, { status: 400 });
     }
 
-    // Fetch products from shop_products table
+    // Fetch products from products table
     const { data: dbProducts } = await supabase
-      .from('shop_products')
+      .from('products')
       .select('id, slug, name, brand, category, weight_g, price_eur, image, stock')
       .gt('stock', 0)
       .order('category');

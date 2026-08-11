@@ -62,28 +62,6 @@ interface ClubEvent {
   is_featured?: boolean;
 }
 
-// ─── Fake clubs data fallback ────────────────────────────────────────────────
-const FAKE_CLUBS: Club[] = [
-  {
-    id: 'fake-club-1',
-    slug: 'club-himalaya-trek',
-    name: 'Bivouacs Étoilés',
-    type: 'activité',
-    emoji: '🏕️',
-    description: "Le club dédié aux passionnés de trekking et de nuits à la belle étoile. Partagez vos expériences, préparez vos expéditions et trouvez des compagnons de cordée pour vos prochaines aventures.",
-    cover_color: 'from-amber-700 to-emerald-900',
-    category: 'Trekking haute altitude',
-    rules: "1. Respect mutuel, partage d'expériences authentiques. 2. Pas de publicité commerciale. 3. Les récits doivent être basés sur des expériences réelles. 4. Soyez respectueux de la nature.",
-    privacy: 'open',
-    members_count: 89,
-    active_this_month: 32,
-    is_verified: true,
-    created_by: 'fake-user-1',
-    created_at: '2023-11-15T10:00:00Z',
-    location: 'Annecy, France',
-  },
-];
-
 const TAB_LINKS = ['Tous les contenus', 'Sorties', 'Membres', 'Photos', 'Discussions', 'Guides & Astuces', 'Parcours'];
 
 export default function ClubDetailPage() {
@@ -94,6 +72,7 @@ export default function ClubDetailPage() {
   const [members, setMembers] = useState<ClubMember[]>([]);
   const [events, setEvents] = useState<ClubEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [activeTab, setActiveTab] = useState('Tous les contenus');
   const [isMember, setIsMember] = useState(false);
   const [joining, setJoining] = useState(false);
@@ -157,29 +136,9 @@ export default function ClubDetailPage() {
         }
       }
     } else {
-      // Dynamic fallback based on the actual clicked clubId/slug
-      const formattedTitle = clubId
-        .replace(/-/g, ' ')
-        .replace(/\b\w/g, (char) => char.toUpperCase());
-
-      setClub({
-        id: clubId,
-        slug: clubId,
-        name: formattedTitle,
-        type: 'activité',
-        emoji: '🏔️',
-        description: `Bienvenue sur le club ${formattedTitle}. Échangez avec les passionnés, découvrez les sorties et participez à nos prochaines expéditions.`,
-        cover_color: 'from-emerald-800 to-slate-900',
-        category: 'Montagne & Outdoor',
-        rules: '1. Respect mutuel. 2. Entraide & sécurité. 3. Partage de traces et conseils.',
-        privacy: 'open',
-        members_count: 148,
-        active_this_month: 24,
-        is_verified: true,
-        created_by: 'system',
-        created_at: new Date().toISOString(),
-        location: 'Alpes, France'
-      });
+      // Club introuvable (ou inaccessible) : vrai état vide, aucune donnée fictive.
+      setClub(null);
+      setNotFound(true);
     }
     setLoading(false);
   };
@@ -191,7 +150,7 @@ export default function ClubDetailPage() {
 
   const handleToggleMember = async () => {
     if (!user) { showToast('Connectez-vous pour rejoindre ce club'); return; }
-    if (!club || club.id.startsWith('fake-')) { showToast('Fonctionnalité disponible avec un compte'); return; }
+    if (!club) { showToast('Club indisponible'); return; }
     setJoining(true);
     if (isMember) {
       await supabase.from('club_members').delete().eq('club_id', club.id).eq('user_id', user.id);
@@ -359,6 +318,65 @@ export default function ClubDetailPage() {
             </div>
           </MobilePageShell>
           
+        </div>
+      </>
+    );
+  }
+
+  if (!club && notFound) {
+    return (
+      <>
+        {/* DESKTOP NOT FOUND */}
+        <div className="hidden md:block">
+          <div className="min-h-screen bg-[#F5F3ED] selection:bg-emerald-900/20 flex flex-col">
+            <Header />
+            <main className="flex-1 flex flex-col items-center justify-center text-center px-6 py-24">
+              <div className="w-20 h-20 rounded-3xl bg-emerald-900/10 flex items-center justify-center mb-6">
+                <Icon name="users" size={32} className="text-emerald-900/40" />
+              </div>
+              <h1 className="font-display font-800 text-3xl mb-3">Club introuvable</h1>
+              <p className="text-emerald-900/60 max-w-md mb-8">
+                Ce club n'existe pas, a été supprimé, ou vous n'en êtes pas membre.
+              </p>
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => { setNotFound(false); loadData(); }}
+                  className="px-6 py-3 rounded-full bg-emerald-900 text-white text-sm font-700 hover:bg-emerald-800 transition-colors"
+                >
+                  Réessayer
+                </button>
+                <Link href="/clubs" className="px-6 py-3 rounded-full border border-emerald-900/20 text-emerald-900 text-sm font-700 hover:bg-emerald-900/5 transition-colors">
+                  Tous les clubs
+                </Link>
+              </div>
+            </main>
+            <Footer />
+          </div>
+        </div>
+        {/* MOBILE NOT FOUND */}
+        <div className="block md:hidden">
+          <MobilePageShell>
+            <div style={{ padding: '32px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', paddingTop: '15vh' }}>
+              <div style={{ width: 72, height: 72, borderRadius: 24, background: 'rgba(11,31,23,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+                <Icon name="users" size={28} className="text-emerald-900/40" />
+              </div>
+              <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 24, fontWeight: 700, color: '#0B1F17', marginBottom: 8 }}>Club introuvable</h1>
+              <p style={{ color: '#6B7A72', fontSize: 15, lineHeight: 1.5, maxWidth: 300, marginBottom: 24 }}>
+                Ce club n'existe pas, a été supprimé, ou vous n'en êtes pas membre.
+              </p>
+              <button
+                type="button"
+                onClick={() => { setNotFound(false); loadData(); }}
+                style={{ width: '100%', maxWidth: 300, padding: '14px 0', borderRadius: 999, background: '#17402C', color: '#FBFAF6', fontSize: 15, fontWeight: 700, marginBottom: 12 }}
+              >
+                Réessayer
+              </button>
+              <Link href="/clubs" style={{ width: '100%', maxWidth: 300, padding: '14px 0', borderRadius: 999, border: '1px solid rgba(11,31,23,0.2)', color: '#0B1F17', fontSize: 15, fontWeight: 700, textAlign: 'center' }}>
+                Tous les clubs
+              </Link>
+            </div>
+          </MobilePageShell>
         </div>
       </>
     );

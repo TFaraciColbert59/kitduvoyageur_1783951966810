@@ -7,9 +7,18 @@ const CATEGORIES = ['Tout', 'Refuge', 'Itinéraire', 'Bivouac', 'Escalade', 'Mul
 interface AventuresHeroProps {
   activeCategory?: string;
   onCategoryChange?: (cat: string) => void;
+  searchQuery?: string;
+  onSearchChange?: (q: string) => void;
+  totalTrailsCount?: number;
 }
 
-export default function AventuresHero({ activeCategory = 'Tout', onCategoryChange }: AventuresHeroProps) {
+export default function AventuresHero({
+  activeCategory = 'Tout',
+  onCategoryChange,
+  searchQuery = '',
+  onSearchChange,
+  totalTrailsCount = 48,
+}: AventuresHeroProps) {
   return (
     <div style={{ padding: '12px 16px 16px', background: '#FBFAF6' }}>
       <div
@@ -21,15 +30,15 @@ export default function AventuresHero({ activeCategory = 'Tout', onCategoryChang
           fontWeight: 500,
         }}
       >
-        48 itinéraires · Chartreuse & Vercors
+        {totalTrailsCount} itinéraires · Chartreuse & Vercors
       </div>
       <h1
         style={{
-          fontSize: '30px',
-          fontWeight: 500,
+          fontSize: '28px',
+          fontWeight: 600,
           letterSpacing: '-0.025em',
-          lineHeight: 1,
-          margin: '4px 0',
+          lineHeight: 1.1,
+          margin: '4px 0 10px',
         }}
       >
         Où voulez-vous
@@ -51,46 +60,59 @@ export default function AventuresHero({ activeCategory = 'Tout', onCategoryChang
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
-          padding: '12px 14px',
+          padding: '10px 14px',
           background: '#F4F1EA',
-          border: '1px solid rgba(11,31,23,0.05)',
+          border: '1px solid rgba(11,31,23,0.08)',
           borderRadius: '999px',
           color: '#6B7A72',
           fontSize: '13px',
         }}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" style={{ flexShrink: 0 }}>
           <circle cx="11" cy="11" r="7" />
           <path d="M20 20l-3.5-3.5" />
         </svg>
-        <span style={{ flex: 1 }}>Massif, refuge, distance…</span>
-        <button
+        <input
+          type="text"
+          placeholder="Rechercher massif, sentier, refuge..."
+          value={searchQuery}
+          onChange={(e) => onSearchChange?.(e.target.value)}
           style={{
-            position: 'relative',
-            background: 'none',
+            flex: 1,
+            background: 'transparent',
             border: 'none',
-            padding: 0,
-            cursor: 'pointer',
-            color: '#6B7A72',
-            display: 'flex',
-            alignItems: 'center',
+            outline: 'none',
+            color: '#1C2620',
+            fontSize: '13px',
+            fontFamily: 'inherit',
           }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M4 6h16M7 12h10M10 18h4" />
-          </svg>
-          <span
+        />
+        {searchQuery ? (
+          <button
+            onClick={() => onSearchChange?.('')}
             style={{
-              position: 'absolute',
-              top: '-4px',
-              right: '-4px',
-              width: '6px',
-              height: '6px',
-              borderRadius: '50%',
-              background: '#17402C',
+              background: 'none',
+              border: 'none',
+              padding: '2px',
+              cursor: 'pointer',
+              color: '#6B7A72',
+              display: 'flex',
+              alignItems: 'center',
             }}
-          />
-        </button>
+            aria-label="Effacer la recherche"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        ) : (
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 6h16M7 12h10M10 18h4" />
+            </svg>
+          </div>
+        )}
       </div>
       {/* Category chips */}
       <div

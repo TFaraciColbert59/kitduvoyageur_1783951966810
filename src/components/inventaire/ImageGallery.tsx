@@ -1,4 +1,4 @@
-// src/components/inventaire/ImageGallery.tsx
+// src/components/mon-materiel/ImageGallery.tsx
 'use client';
 
 import React, { useState } from 'react';

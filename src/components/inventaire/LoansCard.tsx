@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { LoanItemData } from '@/lib/mock/inventaire-marceline';
+import { LoanItemData } from '@/lib/mock/mon-materiel-marceline';
 
 interface LoansCardProps {
   loans: LoanItemData[];

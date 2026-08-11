@@ -16,37 +16,41 @@ export default function LocalCarnetRenderer({ id }: { id: string }) {
       const found = localCarnets.find((c: any) => c.id === id || c.title === decodedId || c.title === id || c.id === decodedId);
       
       if (found) {
+        const distStr = found.distance_km ? `${found.distance_km} km` : undefined;
+        const elevStr = found.elevation_m ? `${found.elevation_m} m D+` : undefined;
+
         setData({
           meta: {
-            badge: `CARNET OUVERT · ${(found.destination || 'EXPÉDITION').toUpperCase()}`,
-            titleLine1: found.title,
+            badge: `CARNET OUVERT · ${(found.destination || found.title || 'EXPÉDITION').toUpperCase()}`,
+            titleLine1: found.title || 'Carnet local',
             titleLine2: '',
             subtitleLine1: found.description || '',
             subtitleLine2: '',
-            voyageurs: 1,
-            dateRange: 'Octobre 2026',
-            itineraire: found.destination || 'Chartreuse',
+            voyageurs: found.nb_voyageurs || 1,
+            dateRange: found.created_at ? new Date(found.created_at).toLocaleDateString('fr-FR') : '',
+            itineraire: found.destination || found.title || '',
           },
           stats: [
-            { value: `${found.distance_km || 27} km`, label: 'DISTANCE', hidden: false },
-            { value: `${found.elevation_m || 1620} m`, label: 'DÉNIVELÉ +', hidden: false },
-            { value: '3', label: 'NUITS', hidden: false },
-            { value: '4', label: 'MOMENTS', hidden: false },
-          ],
+            { value: distStr || '', label: 'DISTANCE', hidden: !distStr },
+            { value: elevStr || '', label: 'DÉNIVELÉ +', hidden: !elevStr },
+          ].filter((s) => !s.hidden),
           jours: [
             { 
               id: 'j1', 
               dayNumber: 1, 
               label: 'JOUR 1', 
-              title: 'Départ → ', 
-              titleItalic: 'Découverte', 
-              recit: found.description || 'Récit de cette première étape...', 
-              stats: [{ icon: '📏', label: `${found.distance_km || 12} km` }, { icon: '⛰', label: `${found.elevation_m || 850} m D+` }] 
+              title: found.lieu_depart ? `${found.lieu_depart} → ` : 'Départ → ', 
+              titleItalic: found.lieu_arrivee || 'Arrivée', 
+              recit: found.description || 'Récit de cette étape...', 
+              stats: [
+                { icon: '📏', label: distStr || '' },
+                { icon: '⛰', label: elevStr || '' },
+              ].filter((s) => Boolean(s.label))
             }
           ],
           hebergements: [],
           moments: [],
-          kit: { intro: 'Sac d\'expédition préparé pour ce carnet.', totalWeight: '1.4 kg', items: [] },
+          kit: { intro: found.description ? 'Sac d\'expédition préparé pour ce carnet.' : '', totalWeight: '', items: [] },
           randonnees: []
         });
       }

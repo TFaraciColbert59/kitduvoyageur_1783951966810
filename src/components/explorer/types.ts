@@ -97,7 +97,23 @@ export function toValidLatLng(lat: unknown, lng: unknown): [number, number] | nu
  */
 export function sanitizeGeoJSON(geojson: unknown): Record<string, unknown> | null {
   if (!geojson || typeof geojson !== 'object') return null;
-  const g = geojson as { type?: string; coordinates?: unknown };
+  let g = geojson as any;
+  if (g.type === 'Feature' && g.geometry) {
+    g = g.geometry;
+  }
+  if (g.type === 'FeatureCollection' && Array.isArray(g.features)) {
+    const lines: number[][][] = [];
+    for (const feat of g.features) {
+      const sub = sanitizeGeoJSON(feat?.geometry || feat);
+      if (sub?.type === 'LineString' && Array.isArray(sub.coordinates)) {
+        lines.push(sub.coordinates as number[][]);
+      } else if (sub?.type === 'MultiLineString' && Array.isArray(sub.coordinates)) {
+        lines.push(...(sub.coordinates as number[][][]));
+      }
+    }
+    return lines.length > 0 ? { type: 'MultiLineString', coordinates: lines } : null;
+  }
+
   if (g.type !== 'LineString' && g.type !== 'MultiLineString') return null;
   if (!Array.isArray(g.coordinates)) return null;
 

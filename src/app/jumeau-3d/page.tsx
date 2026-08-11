@@ -258,7 +258,7 @@ export default function Jumeau3DPage() {
               <p className="font-display font-700 text-foreground text-xl mb-2">Votre sac est vide</p>
               <p className="text-muted-foreground text-sm mb-6">Ajoutez des articles depuis votre inventaire pour les visualiser ici.</p>
               <div className="flex gap-3 justify-center">
-                <a href="/inventaire" className="btn-secondary inline-flex items-center gap-2 px-6 py-3">Voir l&apos;inventaire</a>
+                <a href="/mon-materiel" className="btn-secondary inline-flex items-center gap-2 px-6 py-3">Voir l&apos;inventaire</a>
                 <button onClick={() => setShowAddModal(true)} className="btn-primary inline-flex items-center gap-2 px-6 py-3">
                   <Icon name="PlusIcon" size={16} variant="outline" />
                   Ajouter un article
@@ -609,7 +609,7 @@ export default function Jumeau3DPage() {
               <p style={{ fontSize: '18px', fontWeight: 600, color: '#0B1F17', marginBottom: '8px' }}>Votre sac est vide</p>
               <p style={{ fontSize: '13px', color: '#6B7A72', marginBottom: '20px' }}>Ajoutez des articles depuis votre inventaire.</p>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                <a href="/inventaire" style={{ padding: '12px 20px', background: '#F4F1EA', color: '#0B1F17', borderRadius: '12px', fontSize: '14px', fontWeight: 500, textDecoration: 'none', border: '1px solid rgba(11,31,23,0.06)' }}>
+                <a href="/mon-materiel" style={{ padding: '12px 20px', background: '#F4F1EA', color: '#0B1F17', borderRadius: '12px', fontSize: '14px', fontWeight: 500, textDecoration: 'none', border: '1px solid rgba(11,31,23,0.06)' }}>
                   Voir l&apos;inventaire
                 </a>
                 <button onClick={() => setShowAddModal(true)} style={{ padding: '12px 20px', background: '#17402C', color: '#fff', borderRadius: '12px', fontSize: '14px', fontWeight: 500, border: 'none', cursor: 'pointer' }}>

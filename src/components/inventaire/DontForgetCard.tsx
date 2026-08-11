@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import type { GearItemData } from '@/lib/mock/inventaire-marceline';
+import type { GearItemData } from '@/lib/mock/mon-materiel-marceline';
 
 interface DontForgetCardProps {
   items: GearItemData[];

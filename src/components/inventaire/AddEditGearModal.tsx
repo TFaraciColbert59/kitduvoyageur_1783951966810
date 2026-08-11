@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Icon from '@/components/ui/AppIcon';
-import { GearItemData } from '@/lib/mock/inventaire-marceline';
+import { GearItemData } from '@/lib/mock/mon-materiel-marceline';
 
 interface AddEditGearModalProps {
   isOpen: boolean;

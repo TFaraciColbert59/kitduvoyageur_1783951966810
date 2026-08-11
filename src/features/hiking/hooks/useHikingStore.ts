@@ -10,7 +10,7 @@ export function useHikingStore(): HikingControllerState & {
   startHike: (routeId?: string) => Promise<void>;
   pauseHike: () => void;
   resumeHike: () => void;
-  stopHike: (carnetId?: string) => Promise<{ sessionId: string } | null>;
+  stopHike: (carnetId?: string) => Promise<{ sessionId: string; carnetId?: string | null } | null>;
   dismissOffRoute: () => void;
   fetchWeather: (lat: number, lon: number) => Promise<unknown>;
 } {

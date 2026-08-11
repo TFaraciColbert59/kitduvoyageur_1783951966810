@@ -33,43 +33,18 @@ interface Product {
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 function mapToProduct(data: Record<string, unknown>): Product {
+  const name = (data.name as string) || 'Produit';
+  const image = (data.image as string) || '/assets/images/no_image.png';
   return {
     id: data.id as string,
     slug: data.slug as string,
-    nom: (data.name as string) ?? 'Sac 45 L toile cirée',
-    marque: (data.brand as string) ?? 'Marque',
-    categorie: (data.category_main as string) ?? (data.category as string) ?? 'Équipement',
-    description: (data.description_why as string) ?? "Trois compartiments, une bandoulière ventrale, un point d'accroche pour tapis de sol. Coton huilé 12 oz, fabriqué dans les Alpes-de-Haute-Provence, réparable à vie.",
-    prix_cents: Math.round(Number(data.price_eur ?? 340) * 100),
-    poids_g: (data.weight_g as number) ?? 1200,
-    images: [
-      { url: (data.image as string) ?? 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80', alt: (data.name as string) ?? '' },
-      { url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80', alt: 'Détail 1' },
-      { url: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800&q=80', alt: 'Détail 2' },
-      { url: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=800&q=80', alt: 'Détail 3' },
-      { url: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=800&q=80', alt: 'Détail 4' },
-    ],
-    tags: [],
-  };
-}
-
-function fallbackProduct(slug: string): Product {
-  return {
-    id: slug,
-    slug,
-    nom: 'Sac 45 L toile cirée',
-    marque: 'Le Kit du Voyageur',
-    categorie: 'Portage',
-    description: "Trois compartiments, une bandoulière ventrale, un point d'accroche pour tapis de sol. Coton huilé 12 oz, fabriqué dans les Alpes-de-Haute-Provence, réparable à vie.",
-    prix_cents: 34000,
-    poids_g: 1200,
-    images: [
-      { url: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80', alt: 'Sac 45 L toile cirée' },
-      { url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80', alt: 'Détail' },
-      { url: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800&q=80', alt: 'Détail 2' },
-      { url: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=800&q=80', alt: 'Détail 3' },
-      { url: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=800&q=80', alt: 'Détail 4' },
-    ],
+    nom: name,
+    marque: (data.brand as string) || 'Le Kit du Voyageur',
+    categorie: (data.category_main as string) || (data.category as string) || 'Équipement',
+    description: (data.description_why as string) || '',
+    prix_cents: Number.isFinite(Number(data.price_eur)) ? Math.round(Number(data.price_eur) * 100) : 0,
+    poids_g: Number.isFinite(Number(data.weight_g)) ? Number(data.weight_g) : 0,
+    images: [{ url: image, alt: (data.image_alt as string) || name }],
     tags: [],
   };
 }
@@ -82,6 +57,8 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
     initialProduct ? mapToProduct(initialProduct) : null
   );
   const [loading, setLoading] = useState(!initialProduct);
+  const [loadError, setLoadError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
   const [activeImage, setActiveImage] = useState(0);
   const [cartAdded, setCartAdded] = useState(false);
   const [selectedColor, setSelectedColor] = useState('vert');
@@ -94,29 +71,43 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
     // If we already have initial data, skip the client fetch
     if (initialProduct) return;
 
+    let cancelled = false;
+
     async function load() {
+      setLoading(true);
+      setLoadError(false);
       try {
         const supabase = createClient();
         const { data, error } = await supabase
-          .from('shop_products')
+          .from('products')
           .select('*')
           .eq('slug', slug)
           .single();
 
+        if (cancelled) return;
+
         if (data && !error) {
           setProduct(mapToProduct(data));
         } else {
-          // Fallback matching mockup
-          setProduct(fallbackProduct(slug));
+          setProduct(null);
+          setLoadError(true);
         }
       } catch (err) {
-        console.error(err);
+        if (!cancelled) {
+          console.error(err);
+          setProduct(null);
+          setLoadError(true);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     load();
-  }, [slug, initialProduct]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, initialProduct, retryKey]);
 
   if (loading) {
     return (
@@ -124,6 +115,37 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
         <Header />
         <div className="pt-24 max-w-7xl mx-auto px-4 flex items-center justify-center min-h-[60vh]">
           <div className="w-8 h-8 border-2 border-[#1C2620] border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!product && loadError) {
+    return (
+      <div className="min-h-screen bg-[#EBE8DD]">
+        <Header />
+        <div className="pt-24 pb-16 max-w-7xl mx-auto px-4">
+          <div className="bg-white border border-[#E8E4D8] rounded-[2rem] max-w-lg mx-auto p-10 text-center">
+            <div className="text-5xl mb-4">⚠️</div>
+            <h1 className="font-display font-800 text-2xl text-[#1C2620] mb-2">Produit introuvable</h1>
+            <p className="text-sm text-[#5C6B5E] mb-6">
+              Impossible de charger ce produit. Il a peut-être été retiré du catalogue.
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={() => setRetryKey((k) => k + 1)}
+                className="px-5 py-2.5 bg-[#17402C] text-white rounded-full text-xs font-700 hover:bg-[#0F2B1D] transition-colors"
+              >
+                Réessayer
+              </button>
+              <Link
+                href="/boutique"
+                className="px-5 py-2.5 border border-[#C8C3B0] text-[#5C6B5E] hover:text-[#1C2620] rounded-full text-xs font-600 transition-colors"
+              >
+                Retour à la boutique
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -314,8 +336,8 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                   <div className="border-t border-[#C8C3B0] pt-6 mb-8">
                     <div className="flex justify-between items-end mb-5">
                       <div className="flex items-baseline gap-2">
-                        <span className="font-display font-800 text-[28px] text-[#1C2620]">{(product.prix_cents / 100).toFixed(0)} €</span>
-                        <span className="text-xs text-[#5C6B5E]">- TVA incluse</span>
+                        <span className="font-display font-800 text-[28px] text-[#1C2620]">{product.prix_cents > 0 ? `${(product.prix_cents / 100).toFixed(0)} €` : '—'}</span>
+                        {product.prix_cents > 0 && <span className="text-xs text-[#5C6B5E]">- TVA incluse</span>}
                       </div>
                       <div className="flex items-center gap-1.5 text-[10px] font-medium text-[#2D5A3D]">
                         <span className="w-1.5 h-1.5 bg-[#2D5A3D] rounded-full"></span>
@@ -611,29 +633,11 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
               }}
             >
               <span style={{ fontSize: '22px', fontWeight: 500, color: '#17402C' }}>
-                {(product.prix_cents / 100).toFixed(0)} €
+                {product.prix_cents > 0 ? `${(product.prix_cents / 100).toFixed(0)} €` : '—'}
               </span>
-              <span
-                style={{
-                  fontSize: '12px',
-                  color: '#8B978F',
-                  textDecoration: 'line-through',
-                }}
-              >
-                {((product.prix_cents / 100) * 1.14).toFixed(0)} €
-              </span>
-              <span
-                style={{
-                  fontSize: '9px',
-                  fontWeight: 600,
-                  color: '#fff',
-                  background: '#2D6B4A',
-                  padding: '2px 6px',
-                  borderRadius: '999px',
-                }}
-              >
-                −14 %
-              </span>
+              {product.prix_cents > 0 && (
+                <span style={{ fontSize: '11px', color: '#8B978F' }}>TVA incluse</span>
+              )}
             </div>
 
             {/* Stars */}

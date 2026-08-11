@@ -4,7 +4,8 @@ import { NextResponse } from 'next/server';
 // Route API pour insérer les données seed directement
 // Accessible via POST /api/seed (protégée par un token secret)
 
-const SEED_SECRET = process.env.SEED_SECRET || 'kitduvoyageur-seed-2026';
+// Aucun secret par défaut : sans SEED_SECRET explicite, l'endpoint est inerte.
+const SEED_SECRET = process.env.SEED_SECRET || '';
 
 const u1  = 'a1000000-0000-0000-0000-000000000001';
 const u2  = 'a1000000-0000-0000-0000-000000000002';

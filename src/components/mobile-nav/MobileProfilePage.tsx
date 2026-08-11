@@ -218,7 +218,7 @@ function LoggedInProfile() {
       sub: '0 carnet',
     },
     {
-      href: '/inventaire',
+      href: '/mon-materiel',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
           <rect x="2" y="7" width="20" height="14" rx="2" />

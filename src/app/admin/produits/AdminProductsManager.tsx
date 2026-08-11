@@ -150,9 +150,9 @@ const EMPTY_PRODUCT: Partial<ShopProduct> = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function logAudit(supabase: ReturnType<typeof createClient>, action: string, targetId: string, targetName: string, oldData?: unknown, newData?: unknown) {
-  return supabase.from('admin_audit_logs').insert({
+  return supabase.from('admin_audit_log').insert({
     action,
-    target_table: 'shop_products',
+    target_table: 'products',
     target_id: targetId,
     target_name: targetName,
     old_data: oldData ?? null,
@@ -535,7 +535,7 @@ Réponds UNIQUEMENT en JSON: {"description_why": "...", "justification_ai": "...
         if (m) {
           const parsed = JSON.parse(m[0]);
           if (parsed.description_why) {
-            await supabase.from('shop_products').update({
+            await supabase.from('products').update({
               description_why: parsed.description_why,
               justification_ai: parsed.justification_ai || '',
             }).eq('id', p.id);
@@ -1694,7 +1694,7 @@ Réponds en JSON: {"mapping": {"colonne_csv": "colonne_attendue_ou_null"}}`;
         description_why: row.description_why || '',
         is_active: true,
       };
-      const { error } = await supabase.from('shop_products').upsert(product, { onConflict: 'product_id' });
+      const { error } = await supabase.from('products').upsert(product, { onConflict: 'product_id' });
       if (error) fail++;
       else success++;
     }
@@ -1796,7 +1796,7 @@ function AuditSection() {
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
-    supabase.from('admin_audit_logs').select('*').order('created_at', { ascending: false }).limit(100).then(({ data }) => {
+    supabase.from('admin_audit_log').select('*').order('created_at', { ascending: false }).limit(100).then(({ data }) => {
       setLogs(data ?? []);
       setLoading(false);
     });
@@ -1854,7 +1854,7 @@ export default function AdminProductsManager() {
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.from('shop_products').select('*').order('score_kdv', { ascending: false });
+    const { data } = await supabase.from('products').select('*').order('score_kdv', { ascending: false });
     setProducts((data ?? []) as ShopProduct[]);
     setLoading(false);
   }, [supabase]);
@@ -1873,14 +1873,14 @@ export default function AdminProductsManager() {
 
   const handleSave = async (data: Partial<ShopProduct>) => {
     if (editProduct?.id) {
-      const { error } = await supabase.from('shop_products').update(data).eq('id', editProduct.id);
+      const { error } = await supabase.from('products').update(data).eq('id', editProduct.id);
       if (!error) {
         await logAudit(supabase, 'UPDATE', editProduct.id, data.name || editProduct.name, editProduct, data);
         await loadProducts();
         setView('list');
       }
     } else {
-      const { data: created, error } = await supabase.from('shop_products').insert(data).select().single();
+      const { data: created, error } = await supabase.from('products').insert(data).select().single();
       if (!error && created) {
         await logAudit(supabase, 'CREATE', created.id, data.name || '', null, data);
         await loadProducts();
@@ -1891,7 +1891,7 @@ export default function AdminProductsManager() {
 
   const handleDelete = async (ids: string[]) => {
     const now = new Date().toISOString();
-    await supabase.from('shop_products').update({ deleted_at: now, is_active: false }).in('id', ids);
+    await supabase.from('products').update({ deleted_at: now, is_active: false }).in('id', ids);
     for (const id of ids) {
       const p = products.find(x => x.id === id);
       await logAudit(supabase, 'DELETE', id, p?.name || '');
@@ -1901,10 +1901,10 @@ export default function AdminProductsManager() {
 
   const handleBulkAction = async (action: string, ids: string[]) => {
     if (action === 'activate') {
-      await supabase.from('shop_products').update({ is_active: true, deleted_at: null }).in('id', ids);
+      await supabase.from('products').update({ is_active: true, deleted_at: null }).in('id', ids);
       await logAudit(supabase, 'BULK_ACTIVATE', ids.join(','), `${ids.length} produits`);
     } else if (action === 'deactivate') {
-      await supabase.from('shop_products').update({ is_active: false }).in('id', ids);
+      await supabase.from('products').update({ is_active: false }).in('id', ids);
       await logAudit(supabase, 'BULK_DEACTIVATE', ids.join(','), `${ids.length} produits`);
     }
     await loadProducts();

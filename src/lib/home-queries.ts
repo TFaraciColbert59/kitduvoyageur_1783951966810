@@ -1,3 +1,14 @@
+export interface FeaturedCarnet {
+  id: string;
+  title: string;
+  destination: string | null;
+  cover_image_url: string | null;
+  excerpt: string | null;
+  author_name: string | null;
+  likes_count: number | null;
+  created_at: string | null;
+}
+
 import { createClient } from '@/lib/supabase/server';
 
 export interface TrailOfDay {
@@ -12,17 +23,6 @@ export interface TrustStats {
   userCount: number;
   routeCount: number;
   kitCount: number;
-}
-
-export interface FeaturedCarnet {
-  id: string;
-  title: string;
-  destination: string | null;
-  cover_image_url: string | null;
-  excerpt: string | null;
-  author_name: string | null;
-  likes_count: number;
-  created_at: string;
 }
 
 // Sentier du jour — pseudo-random stable per day, revalidated every 24h
@@ -88,3 +88,4 @@ export async function getFeaturedCarnets(): Promise<FeaturedCarnet[]> {
     return [];
   }
 }
+

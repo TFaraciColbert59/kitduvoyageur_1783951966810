@@ -3,7 +3,6 @@ import type { Metadata, Viewport } from 'next';
 import { DM_Sans, Manrope, IBM_Plex_Mono } from 'next/font/google';
 import '../styles/tailwind.css';
 import { AuthProvider } from '@/contexts/AuthContext';
-import Script from 'next/script';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
 import { SearchProvider } from '@/contexts/SearchContext';
@@ -12,6 +11,7 @@ import GoogleAnalytics from '@/components/GoogleAnalytics';
 import MobileNavWrapper from '@/components/mobile-nav/MobileNavWrapper';
 
 import CookieConsentBanner from '@/components/CookieConsentBanner';
+import RocketConsentScripts from '@/components/RocketConsentScripts';
 import { getOrganizationSchema, getWebsiteSchema } from '@/lib/seo-utils';
 import ReactQueryProvider from '@/components/ReactQueryProvider';
 import PageTransition from '@/components/ui/PageTransition';
@@ -185,38 +185,8 @@ export default function RootLayout({
           }}
         />
 
-        {/* Rocket analytics scripts */}
-
-        <Script
-  src="https://static.rocket.new/rocket-web.js?_cfg=https://kitduvoyag4153back.builtwithrocket.new&_be=https://appanalytics.rocket.new&_v=0.1.19"
-  strategy="lazyOnload"
-  async
-/>
-        <Script
-  src="https://static.rocket.new/rocket-shot.js?v=0.0.2"
-  strategy="lazyOnload"
-  defer
-/>
-
-        {/* Drive CMP script */}
-        <script
-          data-noptimize="1"
-          data-cfasync="false"
-          data-wpfc-render="false"
-          data-no-defer="1"
-          data-cmp-ab="2"
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{
-            __html: `(function () {
-      var script = document.createElement("script");
-      script.async = 1;
-      script.setAttribute("data-cmp-ab","2");
-      script.src = 'https://tpembars.com/NTYxMTY5.js?t=561169';
-      document.head.appendChild(script);
-  })();`,
-          }}
-        />
-
+        {/* Rocket analytics scripts — chargés uniquement après consentement */}
+        <RocketConsentScripts />
         {process.env.NODE_ENV === 'production' && (
           <script
             id="service-worker-registration"

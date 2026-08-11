@@ -216,3 +216,104 @@ export interface DatabaseCarnetKitItem {
   couleur_tag: string | null;
   sort_order: number;
 }
+
+// ── Géographie (Phase 2 GEODATA) ─────────────────────────────
+// Types alignés sur le schéma Phase 2 (migrations
+// 20230801000200_create_geodata_tables.sql +
+// 20260811000000_geodata_phase2_schema.sql).
+
+export type GeoFeatureClass = 'A' | 'H' | 'L' | 'P' | 'R' | 'S' | 'T' | 'U' | 'V';
+
+export type GeoFeatureCode =
+  | 'PCLI' | 'PCL' | 'PCLD' | 'PCLF' | 'PCLIX' | 'PCLS' | 'TERR' | 'PCLX'
+  | 'ADM1' | 'ADM2' | 'ADM3' | 'ADM4' | 'ADMD' | 'PRK' | 'H'
+  | 'PPL' | 'PPLA' | 'PPLA2' | 'PPLA3' | 'PPLA4' | 'PPLC' | 'PPLCH' | 'PPLF'
+  | 'PPLG' | 'PPLH' | 'PPLL' | 'PPLQ' | 'PPLR' | 'PPLS' | 'PPLW' | 'PPLX'
+  | 'STLMT' | 'PSCL';
+
+export type GeoCountryGeometrySource = 'natural_earth' | 'geonames' | 'osm' | 'manual';
+
+export interface CountryGeo {
+  id: string;
+  iso_a2: string;
+  name: string;
+  continent: string | null;
+  capital: string | null;
+  currency: string | null;
+  population: number | null;
+  geometry: unknown;
+  geoname_id: number | null;
+  iso_a3: string | null;
+  iso_numeric: string | null;
+  fips_code: string | null;
+  tld: string | null;
+  phone_code: string | null;
+  currency_code: string | null;
+  currency_name: string | null;
+  postal_code_format: string | null;
+  postal_code_regex: string | null;
+  languages: string[];
+  neighbours: string[];
+  area_km2: number | null;
+  name_ascii: string | null;
+  name_en: string | null;
+  name_short: string | null;
+  geometry_source: GeoCountryGeometrySource;
+  is_sovereign: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdminRegionGeo {
+  id: string;
+  country_id: string | null;
+  country_iso_a2: string | null;
+  admin_code: string | null;
+  admin_code_full: string | null;
+  name: string;
+  level: number | null;
+  name_ascii: string | null;
+  name_en: string | null;
+  admin_parent_id: string | null;
+  geometry: unknown;
+  population: number | null;
+  geoname_id: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlaceGeo {
+  id: string;
+  admin_region_id: string | null;
+  country_iso_a2: string | null;
+  name: string;
+  feature_class: GeoFeatureClass | null;
+  feature_code: string | null;
+  geometry: unknown;
+  latitude: number | null;
+  longitude: number | null;
+  elevation: number | null;
+  population: number | null;
+  population_rank: number | null;
+  timezone: string | null;
+  geoname_id: number | null;
+  is_capital: boolean;
+  is_major_city: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlaceNameGeo {
+  id: string;
+  place_id: string | null;
+  geoname_id: number | null;
+  name: string;
+  lang: string | null;
+  country_iso_a2: string | null;
+  is_preferred: boolean | null;
+  is_short_name: boolean;
+  is_colloquial: boolean;
+  is_historic: boolean;
+  created_at: string;
+  updated_at: string;
+}

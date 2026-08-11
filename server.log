@@ -1,0 +1,336 @@
+
+> kitduvoyageur@0.1.0 dev
+> next dev . -p 4028
+
+   ▲ Next.js 15.5.18
+   - Local:        http://localhost:4028
+   - Network:      http://192.168.1.123:4028
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1278ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1719ms (2999 modules)
+ GET / 200 in 2594ms
+ GET / 200 in 102ms
+ ○ Compiling /explorer ...
+ ✓ Compiled /explorer in 1199ms (3069 modules)
+ GET /explorer 200 in 1324ms
+ ✓ Compiled /api/hikes in 376ms (3146 modules)
+ GET /api/hikes 200 in 1589ms
+ GET / 200 in 58ms
+ GET /explorer 200 in 46ms
+ GET /explorer 200 in 29ms
+ GET /explorer 200 in 39ms
+ GET /explorer 200 in 25ms
+ GET / 200 in 23ms
+ GET /explorer 200 in 62ms
+ GET /explorer 200 in 26ms
+ GET / 200 in 24ms
+ GET /explorer 200 in 32ms
+ GET /explorer 200 in 25ms
+ ✓ Compiled in 2.1s (3072 modules)
+ GET /explorer 200 in 129ms
+ ✓ Compiled / in 246ms (1613 modules)
+ GET / 200 in 417ms
+ GET / 200 in 24ms
+ GET / 200 in 275ms
+ GET / 200 in 93ms
+ GET /explorer 200 in 43ms
+ ✓ Compiled /api/hikes in 266ms (1690 modules)
+ GET /api/hikes 200 in 1271ms
+ GET / 200 in 50ms
+ ✓ Compiled /middleware in 148ms (170 modules)
+ ○ Compiling /pays ...
+ ✓ Compiled /pays in 1506ms (4033 modules)
+ GET /pays 200 in 1621ms
+ GET /pays 200 in 28ms
+ GET /pays 200 in 25ms
+ GET /pays 200 in 314ms
+ ✓ Compiled in 914ms (3970 modules)
+ GET /pays 200 in 138ms
+ ✓ Compiled in 477ms (3970 modules)
+ GET /pays 200 in 69ms
+ ✓ Compiled in 513ms (3970 modules)
+ ⨯ Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'
+    at async L (C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\server\app\pays\page.js:1:47039) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json',
+  page: '/pays'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 653ms (4303 modules)
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'
+    at async L (C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\server\app\pays\page.js:1:47039) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json',
+  page: '/pays'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+ GET /pays 500 in 2089ms
+ GET /pays 500 in 38ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json',
+  page: '/pays'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json',
+  page: '/pays'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+ GET /pays 500 in 363ms
+ GET /pays 500 in 45ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json',
+  page: '/pays'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json',
+  page: '/pays'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+ GET /pays 500 in 291ms
+ GET /pays 500 in 45ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json',
+  page: '/pays'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json',
+  page: '/pays'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+ GET /pays 500 in 314ms
+ GET /pays 500 in 36ms
+ ✓ Compiled in 455ms (4317 modules)
+ ✓ Compiled in 399ms (4221 modules)
+ ✓ Compiled in 442ms (4221 modules)
+ ✓ Compiled in 525ms (4221 modules)
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json',
+  page: '/'
+}
+ ✓ Compiled /_error in 414ms (4303 modules)
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+ GET / 500 in 879ms
+ GET / 500 in 47ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+ GET / 500 in 335ms
+ GET / 500 in 36ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+ GET / 500 in 359ms
+ GET / 500 in 45ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\.next\\routes-manifest.json'
+}
+ GET / 500 in 332ms
+ GET / 500 in 36ms
+[?25h

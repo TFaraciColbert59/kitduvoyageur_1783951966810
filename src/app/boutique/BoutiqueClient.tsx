@@ -164,7 +164,7 @@ function InventorySidebar({
                   )}
                 </ul>
               )}
-              <Link href="/inventaire" className="text-xs font-bold text-[#2D5A3D] hover:underline flex items-center gap-1">
+              <Link href="/mon-materiel" className="text-xs font-bold text-[#2D5A3D] hover:underline flex items-center gap-1">
                 Gérer mon inventaire <span>→</span>
               </Link>
             </div>
@@ -263,7 +263,7 @@ export default function BoutiqueClient() {
       // Products
       let { data } = await supabase.from('products').select('*');
       if (!data || data.length === 0) {
-        const fallback = await supabase.from('shop_products').select('*').eq('is_active', true);
+        const fallback = await supabase.from('products').select('*').eq('is_active', true);
         data = fallback.data;
       }
       if (data) setProducts(data as ShopProduct[]);

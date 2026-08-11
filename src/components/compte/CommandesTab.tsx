@@ -142,26 +142,24 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      let query = supabase
+      // Only ever show the authenticated user's own orders
+      if (!user) {
+        setOrders([]);
+        return;
+      }
+
+      const query = supabase
         .from('orders')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-
-      if (user) {
-        query = query.eq('user_id', user.id);
-      }
 
       const { data } = await query;
 
       if (data && data.length > 0) {
         setOrders(data as OrderDB[]);
       } else {
-        // Fallback: load ALL orders for demo if not logged in or no orders
-        const { data: allOrders } = await supabase
-          .from('orders')
-          .select('*')
-          .order('created_at', { ascending: false });
-        if (allOrders) setOrders(allOrders as OrderDB[]);
+        setOrders([]);
       }
     } catch (err) {
       console.error('CommandesTab fetch error:', err);
@@ -386,79 +384,6 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
     }
   };
 
-  // Function to seed fake orders for testing
-  const seedFakeOrders = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      showToast('Erreur: Vous devez être connecté pour générer des commandes sur votre compte.');
-      return;
-    }
-
-    setLoading(true);
-    
-    // Create some fake data resembling recent purchases
-    const newOrders = [
-      {
-        user_id: user.id,
-        order_number: `KDV-2026-${Math.floor(Math.random() * 9000 + 1000)}`,
-        status: 'confirmed',
-        payment_method: 'card',
-        shipping_address: { city: "Paris", street: "10 rue Fake" },
-        items: [
-          { name: "Veste Gore-Tex Arc'teryx Beta AR", slug: "veste-impermeable-001", quantity: 1, unit_price_eur: 389, size: "M", color: "Noir" }
-        ],
-        subtotal_eur: 389,
-        shipping_eur: 0,
-        total_eur: 389,
-        loyalty_points_earned: 3890,
-        notes: "Généré automatiquement"
-      },
-      {
-        user_id: user.id,
-        order_number: `KDV-2026-${Math.floor(Math.random() * 9000 + 1000)}`,
-        status: 'confirmed', // will be converted to preparing based on created_at override
-        payment_method: 'paypal',
-        shipping_address: { city: "Paris", street: "10 rue Fake" },
-        items: [
-          { name: "Frontale Petzl NAO RL 1500 lm", slug: "lampe-frontale-001", quantity: 1, unit_price_eur: 189, sku: "PZ-NAO-1500" }
-        ],
-        subtotal_eur: 189,
-        shipping_eur: 5.9,
-        total_eur: 194.9,
-        loyalty_points_earned: 1890,
-        notes: "Généré automatiquement",
-        created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString() // 4 days ago -> Preparing
-      },
-      {
-        user_id: user.id,
-        order_number: `KDV-2025-${Math.floor(Math.random() * 9000 + 1000)}`,
-        status: 'confirmed', // will be delivered because it's old
-        payment_method: 'card',
-        shipping_address: { city: "Paris", street: "10 rue Fake" },
-        items: [
-          { name: "Chaussures Salomon Quest 4 GTX", slug: "salomon-x-ultra-4", quantity: 1, unit_price_eur: 219, size: "43" }
-        ],
-        subtotal_eur: 219,
-        shipping_eur: 0,
-        total_eur: 219,
-        loyalty_points_earned: 2190,
-        notes: "Généré automatiquement",
-        created_at: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString() // 40 days ago -> Delivered
-      }
-    ];
-
-    const { error } = await supabase.from('orders').insert(newOrders);
-    
-    if (error) {
-      console.error(error);
-      showToast('Erreur lors de la génération.');
-      setLoading(false);
-    } else {
-      showToast('3 fausses commandes ajoutées à votre compte !');
-      fetchOrders(); // reload
-    }
-  };
-
   // ─── loading skeleton ─────────────────────
   if (loading) {
     return (
@@ -541,14 +466,6 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
             </div>
           )}
           
-          <button 
-            onClick={seedFakeOrders}
-            className="w-full py-3 bg-[#EBE8DD] text-[#5C6B5E] hover:text-[#1C2620] hover:bg-[#E2DFD3] rounded-xl text-sm font-600 transition-colors border border-transparent hover:border-[#C8C3B0] flex items-center justify-center gap-2"
-          >
-            <Icon name="SparklesIcon" size={16} />
-            Générer de fausses commandes sur mon compte (Debug)
-          </button>
-
           {/* ── Historique ── */}
           <div className="bg-white border border-[#E8E4D8] rounded-2xl p-6">
             <div className="flex items-center justify-between mb-1">

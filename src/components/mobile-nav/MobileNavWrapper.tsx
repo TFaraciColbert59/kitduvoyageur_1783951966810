@@ -14,10 +14,16 @@ export default function MobileNavWrapper() {
   const { openSearch } = useSearchContext();
   const pathname = usePathname();
 
-  // Hide general site navigation on active hiking cockpit to allow full-screen map & cockpit focus
-  if (pathname === '/randonnee-active' || pathname?.startsWith('/randonnee-active')) {
+  // Hide general top site navigation on map-heavy views to allow full-screen map focus
+  const isMapHeavyRoute = 
+    pathname?.startsWith('/randonnee-active') || 
+    pathname?.startsWith('/preparer-randonnee') || 
+    pathname?.startsWith('/carte-interactive');
+
+  if (isMapHeavyRoute) {
     return (
       <>
+        <BottomTabBar />
         <OfflineBanner />
       </>
     );

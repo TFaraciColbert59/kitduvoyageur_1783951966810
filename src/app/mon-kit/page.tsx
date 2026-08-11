@@ -26,7 +26,7 @@ function InventaireTab() {
         <div className="flex-1"><p className="font-semibold text-sm">Jumeau numérique 3D</p><p className="text-xs mt-0.5" style={{ color: '#9AAD9E' }}>Visualiser votre équipement en 3D</p></div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9AAD9E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6" /></svg>
       </Link>
-      <Link href="/inventaire" className="flex items-center gap-3 rounded-2xl p-4" style={{ background: '#EDEAE0', border: '1px solid rgba(28,38,32,0.1)' }} aria-label="Gérer mon inventaire complet">
+      <Link href="/mon-materiel" className="flex items-center gap-3 rounded-2xl p-4" style={{ background: '#EDEAE0', border: '1px solid rgba(28,38,32,0.1)' }} aria-label="Gérer mon inventaire complet">
         <div className="flex items-center justify-center rounded-xl flex-shrink-0" style={{ width: '44px', height: '44px', background: 'rgba(92,138,58,0.15)' }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5C8A3A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></svg>
         </div>

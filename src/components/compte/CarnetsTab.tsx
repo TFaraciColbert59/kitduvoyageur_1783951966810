@@ -35,7 +35,7 @@ interface FideleReader {
   full_name: string;
   avatar_url: string | null;
   location: string | null;
-  carnets_read: number;
+  carnets_read?: number;
 }
 
 interface RythmeMonth {
@@ -55,6 +55,21 @@ interface CarnetsTabProps {
 // Helpers
 // ─────────────────────────────────────────────
 const MONTHS_SHORT = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+
+function buildEmptyMonths(): RythmeMonth[] {
+  const now = new Date();
+  const months: RythmeMonth[] = [];
+  for (let i = 10; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({
+      month: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      short: MONTHS_SHORT[d.getMonth()],
+      count: 0,
+      current: i === 0,
+    });
+  }
+  return months;
+}
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -100,50 +115,42 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      // 1 – Carnets query with fallback so carnets ALWAYS display
+      // 1 – Only ever show the authenticated user's own carnets
       let dbCarnets: any[] = [];
-      if (user) {
-        const { data: userCarnets } = await supabase
-          .from('carnets')
-          .select(`
-            id, title, visibility, cover_image, description,
-            created_at, views_count, likes_count, comments_count
-          `)
-          .eq('author_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (userCarnets && userCarnets.length > 0) {
-          dbCarnets = userCarnets;
-        }
+      if (!user) {
+        setPublished([]);
+        setDrafts([]);
+        setRythme(buildEmptyMonths());
+        setLoading(false);
+        return;
       }
 
-      // Fallback if no specific user carnets found or user not logged in
-      if (dbCarnets.length === 0) {
-        const { data: allCarnets } = await supabase
-          .from('carnets')
-          .select(`
-            id, title, visibility, cover_image, description,
-            created_at, views_count, likes_count, comments_count
-          `)
-          .order('created_at', { ascending: false });
+      const { data: userCarnets } = await supabase
+        .from('carnets')
+        .select(`
+          id, title, visibility, cover_image, description,
+          created_at, views_count, likes_count, comments_count
+        `)
+        .eq('author_id', user.id)
+        .order('created_at', { ascending: false });
 
-        if (allCarnets) {
-          dbCarnets = allCarnets;
-        }
+      if (userCarnets && userCarnets.length > 0) {
+        dbCarnets = userCarnets;
       }
 
       let parsedCarnets: CarnetDB[] = [];
       if (dbCarnets && dbCarnets.length > 0) {
-        // Map to our UI format, since the DB doesn't have all the fields we designed
+        // The schema has no status column yet: private visibility is treated as a draft.
+        // chapters_count / word_count / draft_progress have no real source column and
+        // are intentionally left undefined rather than fabricated.
         parsedCarnets = dbCarnets.map((c: any) => {
-          // Fake draft/published logic based solely on visibility since there is no status column in DB
           const isDraft = c.visibility === 'private';
           return {
             ...c,
             status: isDraft ? 'draft' : 'published',
-            chapters_count: isDraft ? 0 : Math.floor(Math.random() * 8) + 1,
-            word_count: isDraft ? Math.floor(Math.random() * 2000) + 500 : 0,
-            draft_progress: isDraft ? Math.floor(Math.random() * 80) + 10 : 100,
+            chapters_count: undefined,
+            word_count: undefined,
+            draft_progress: undefined,
             published_at: isDraft ? null : c.created_at,
             slug: c.id
           };
@@ -171,24 +178,15 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
             full_name: f.follower?.full_name || 'Voyageur',
             avatar_url: f.follower?.avatar_url || null,
             location: f.follower?.location || null,
-            carnets_read: Math.floor(Math.random() * 15) + 1,
+            // No read-count column exists: left undefined rather than fabricated
+            carnets_read: undefined,
           }));
           setFideles(mapped);
         }
       }
 
       // 3 – Rythme (publications par mois sur les 11 derniers mois + mois courant)
-      const now = new Date();
-      const months: RythmeMonth[] = [];
-      for (let i = 10; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        months.push({
-          month: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-          short: MONTHS_SHORT[d.getMonth()],
-          count: 0,
-          current: i === 0,
-        });
-      }
+      const months: RythmeMonth[] = buildEmptyMonths();
       // Count publications per month
       if (parsedCarnets) {
         parsedCarnets.filter(c => c.status === 'published' && c.published_at).forEach(c => {
@@ -443,7 +441,7 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
                     {f.location && <p className="text-[10px] text-[#9CA89E] truncate">{f.location} · abonné</p>}
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="font-mono font-700 text-sm text-[#1C2620]">{f.carnets_read}</p>
+                    <p className="font-mono font-700 text-sm text-[#1C2620]">{f.carnets_read ?? '—'}</p>
                     <p className="text-[9px] text-[#9CA89E] uppercase tracking-wider">CARNETS LUS</p>
                   </div>
                 </div>
@@ -593,8 +591,9 @@ function DraftRow({
   onPublish: (id: string) => void;
 }) {
   const router = useRouter();
-  const progress = draft.draft_progress ?? Math.min(95, 20 + idx * 25);
-  const progressColor = progress >= 80 ? '#22C55E' : progress >= 50 ? '#17402C' : '#C8C3B0';
+  // No real progress source exists for drafts yet: only render the bar when real data is present
+  const progress = typeof draft.draft_progress === 'number' ? draft.draft_progress : null;
+  const progressColor = progress !== null ? (progress >= 80 ? '#22C55E' : progress >= 50 ? '#17402C' : '#C8C3B0') : '#C8C3B0';
   const roman = ['I', 'II', 'III', 'IV', 'V'][idx] || String(idx + 1);
 
   return (
@@ -641,16 +640,18 @@ function DraftRow({
               </button>
             </div>
           </div>
-          {/* Progress bar */}
-          <div className="mt-2.5 flex items-center gap-3">
-            <div className="flex-1 h-1.5 bg-[#EDEAE0] rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all"
-                style={{ width: `${progress}%`, backgroundColor: progressColor }}
-              />
+          {/* Progress bar (only shown when real progress data exists) */}
+          {progress !== null && (
+            <div className="mt-2.5 flex items-center gap-3">
+              <div className="flex-1 h-1.5 bg-[#EDEAE0] rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{ width: `${progress}%`, backgroundColor: progressColor }}
+                />
+              </div>
+              <span className="text-[10px] font-mono font-700 text-[#9CA89E] flex-shrink-0">{progress}%</span>
             </div>
-            <span className="text-[10px] font-mono font-700 text-[#9CA89E] flex-shrink-0">{progress}%</span>
-          </div>
+          )}
         </div>
       </div>
     </div>

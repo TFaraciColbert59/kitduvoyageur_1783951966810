@@ -382,9 +382,9 @@ export async function fetchNextTrip(userId: string): Promise<CompteProchainVoyag
   const supabase = createClient();
 
   const { data } = await supabase
-    .from('travel_groups')
-    .select('*, group_members!inner(user_id)')
-    .eq('group_members.user_id', userId)
+    .from('groupes')
+    .select('*, groupe_membres!inner(user_id)')
+    .eq('groupe_membres.user_id', userId)
     .gte('departure_date', new Date().toISOString().split('T')[0])
     .order('departure_date', { ascending: true })
     .limit(1);

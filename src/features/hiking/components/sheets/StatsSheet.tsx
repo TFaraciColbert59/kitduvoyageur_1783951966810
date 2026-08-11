@@ -32,6 +32,8 @@ function formatPace(paceMinPerKm: number | null | undefined): string {
   return `${mins}'${String(secs).padStart(2, '0')}"`;
 }
 
+import ElevationProfileChart from '@/components/hiking/ElevationProfileChart';
+
 export default function StatsSheet({
   isOpen,
   onClose,
@@ -78,6 +80,14 @@ export default function StatsSheet({
             ✕
           </button>
         </div>
+
+        {/* Interactive Elevation Profile Curve Chart */}
+        <ElevationProfileChart
+          totalDistanceKm={routeTotalKm || distanceKm || 12.5}
+          totalElevationGainM={elevationGainM || 650}
+          totalElevationLossM={elevationLossM || 620}
+          currentProgressKm={distanceKm || 0}
+        />
 
         {/* 4 Stat Cells Grid */}
         <div className="grid grid-cols-2 gap-2.5">

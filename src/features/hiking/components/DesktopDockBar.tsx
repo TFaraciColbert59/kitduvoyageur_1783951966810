@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-export type DesktopDockTab = 'stats' | 'carnet' | 'capture' | 'voix' | 'moment' | 'more' | 'copilot';
+export type DesktopDockTab = 'stats' | 'carnet' | 'capture' | 'moment' | 'more' | 'copilot';
 
 interface DesktopDockBarProps {
   activeTab: DesktopDockTab | null;
@@ -136,22 +136,6 @@ export default function DesktopDockBar({
             <path strokeLinecap="round" d="M8 2v3M16 2v3" />
           </svg>
           <span className="text-[11px] font-mono tracking-wider uppercase font-medium">Capture</span>
-        </button>
-
-        <button
-          onClick={() => onTabSelect('voix')}
-          className={`h-[58px] px-3.5 rounded-2xl flex items-center gap-2 transition-all duration-200 ${
-            activeTab === 'voix'
-              ? 'bg-[#17402C] text-[#C6DCBE] border border-[#C6DCBE]/30 shadow-[0_0_16px_rgba(168,200,160,0.2)] font-semibold scale-[1.02]'
-              : 'text-white/70 hover:text-white hover:bg-white/06'
-          }`}
-          title="Dictée vocale"
-        >
-          <svg className="w-5 h-5 stroke-current stroke-[1.9] fill-none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M18 10c0 4-2 6-6 6s-6-2-6-6M12 16v4M9 20h6" />
-          </svg>
-          <span className="text-[11px] font-mono tracking-wider uppercase font-medium">Voix</span>
         </button>
 
         <button

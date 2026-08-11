@@ -580,7 +580,7 @@ export default function OccasionPage() {
               Vendre un article
             </button>
             {user && (
-              <Link href="/inventaire" className="btn-secondary flex items-center gap-2 whitespace-nowrap">
+              <Link href="/mon-materiel" className="btn-secondary flex items-center gap-2 whitespace-nowrap">
                 <Icon name="ArchiveBoxIcon" size={16} variant="outline" />
                 Depuis mon inventaire
               </Link>
@@ -705,7 +705,7 @@ export default function OccasionPage() {
                   <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-700 text-xs flex items-center gap-2">
                     <Icon name="LightBulbIcon" size={14} variant="outline" />
                     Astuce : vendez directement depuis votre{' '}
-                    <Link href="/inventaire" className="font-600 underline" onClick={() => setShowSellModal(false)}>inventaire</Link>
+                    <Link href="/mon-materiel" className="font-600 underline" onClick={() => setShowSellModal(false)}>inventaire</Link>
                     {' '}pour un prix suggéré automatique.
                   </div>
                 )}

@@ -47,15 +47,8 @@ function readFromCache(code: string): CountryDataV2 | null {
       const envelope = JSON.parse(raw) as CacheEnvelope;
       // Support both v2 envelope and legacy flat format
       if (envelope.version === 'v2' && envelope.data) {
-        const validUntil = new Date(envelope.valid_until).getTime();
-        if (Date.now() < validUntil) {
-          return envelope.data;
-        }
-        // Cache expired — delete it
-        fs.unlinkSync(filePath);
-        return null;
+        return envelope.data;
       }
-      // Legacy v1 cache — ignore, will regenerate
       return null;
     }
   } catch {
