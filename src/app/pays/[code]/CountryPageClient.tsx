@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import WeightGauge from '@/components/WeightGauge';
 import TopoSeparator from '@/components/TopoSeparator';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
@@ -13,91 +12,73 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 // ─── HELPERS ──────────────────────────────────────────────────────────────
 
 function getFlagEmoji(code: string): string {
+  if (!code) return '🌐';
   const codePoints = code.toUpperCase().split('').map((char) => 127397 + char.charCodeAt(0));
   return String.fromCodePoint(...codePoints);
 }
 
-// Aucune donnée fictive : la fiche pays provient uniquement de l'API /api/pays/[code]
-// (génération IA + cache). En cas d'échec, on affiche un vrai état d'erreur.
-
-// ─── STYLE MAPS ───────────────────────────────────────────────────────────
-
-const niveauMeteo = {
-  ideal: { dot: 'bg-green-500', text: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20', label: 'Idéal' },
-  bon: { dot: 'bg-emerald-400', text: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/20', label: 'Bon' },
-  moyen: { dot: 'bg-amber-400', text: 'text-amber-400', bg: 'bg-amber-400/10 border-amber-400/20', label: 'Moyen' },
-  deconseille: { dot: 'bg-red-500', text: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20', label: 'Déconseillé' },
+const niveauSecurite = {
+  sur: { color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20', label: 'Très sûr', icon: '🛡️', score: 5 },
+  vigilance: { color: 'text-amber-400', bg: 'bg-amber-400/10 border-amber-400/20', label: 'Vigilance renforcée', icon: '⚠️', score: 3 },
+  deconseille_sauf_raison_imperative: { color: 'text-orange-400', bg: 'bg-orange-400/10 border-orange-400/20', label: 'Déconseillé sauf raison impérative', icon: '🔶', score: 2 },
+  formellement_deconseille: { color: 'text-rose-400', bg: 'bg-rose-500/10 border-rose-500/20', label: 'Formellement déconseillé', icon: '🚫', score: 1 },
 };
 
-const niveauSecurite = {
-  sur: { color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20', label: 'Sûr', icon: '✅' },
-  vigilance: { color: 'text-amber-400', bg: 'bg-amber-400/10 border-amber-400/20', label: 'Vigilance', icon: '⚠️' },
-  deconseille_sauf_raison_imperative: { color: 'text-orange-400', bg: 'bg-orange-400/10 border-orange-400/20', label: 'Déconseillé sauf raison impérative', icon: '🔶' },
-  formellement_deconseille: { color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20', label: 'Formellement déconseillé', icon: '🚫' },
+const niveauMeteo = {
+  ideal: { dot: 'bg-emerald-400', text: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20', label: 'Idéal' },
+  bon: { dot: 'bg-teal-400', text: 'text-teal-400', bg: 'bg-teal-400/10 border-teal-400/20', label: 'Bon' },
+  moyen: { dot: 'bg-amber-400', text: 'text-amber-400', bg: 'bg-amber-400/10 border-amber-400/20', label: 'Moyen' },
+  deconseille: { dot: 'bg-rose-400', text: 'text-rose-400', bg: 'bg-rose-500/10 border-rose-500/20', label: 'Déconseillé' },
 };
 
 const affluenceStyle = {
-  faible: 'text-green-400 bg-green-500/10',
+  faible: 'text-emerald-400 bg-emerald-500/10',
   moyenne: 'text-amber-400 bg-amber-400/10',
-  forte: 'text-red-400 bg-red-500/10',
-};
-
-const prixVolStyle = {
-  bas: { color: 'text-green-400', label: 'Prix bas' },
-  moyen: { color: 'text-amber-400', label: 'Prix moyens' },
-  haut: { color: 'text-red-400', label: 'Prix élevés' },
+  forte: 'text-rose-400 bg-rose-500/10',
 };
 
 function formatPrice(amount: number): string {
   return `${amount.toLocaleString('fr-FR')} €`;
 }
 
-// ─── SKELETON ─────────────────────────────────────────────────────────────
+// Image placeholders per country category
+const DEST_IMAGES: Record<string, string[]> = {
+  default: [
+    'https://images.unsplash.com/photo-1504893524553-b855bce32c67?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1529963183134-61a90db47eaf?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=800&auto=format&fit=crop'
+  ]
+};
 
-function SkeletonCountry() {
-  return (
-    <div className="animate-pulse space-y-6">
-      <div className="flex gap-6">
-        <div className="w-20 h-20 bg-white/5 rounded-2xl" />
-        <div className="flex-1 space-y-3">
-          <div className="h-4 bg-white/5 rounded w-24" />
-          <div className="h-8 bg-white/5 rounded w-48" />
-          <div className="h-4 bg-white/5 rounded w-64" />
-        </div>
-      </div>
-      <div className="grid grid-cols-4 gap-3">
-        {[1, 2, 3, 4].map((i) => <div key={i} className="h-20 bg-white/5 rounded-xl" />)}
-      </div>
-      <div className="h-12 bg-white/5 rounded-xl" />
-    </div>
-  );
-}
+// ─── ANCHOR NAVIGATION TABS ───────────────────────────────────────────────
 
-// ─── TABS ─────────────────────────────────────────────────────────────────
+type SectionId = 'presentation' | 'destinations' | 'activites' | 'culture' | 'gastronomie' | 'pratique' | 'meteo-securite' | 'faq';
 
-type TabId = 'apercu' | 'meteo' | 'securite' | 'sante' | 'pratique' | 'vols' | 'lieux' | 'faq';
-
-const TABS: { id: TabId; label: string; icon: string }[] = [
-  { id: 'apercu', label: 'Aperçu', icon: 'HomeIcon' },
-  { id: 'meteo', label: 'Météo', icon: 'SunIcon' },
-  { id: 'securite', label: 'Sécurité', icon: 'ShieldCheckIcon' },
-  { id: 'sante', label: 'Santé', icon: 'HeartIcon' },
-  { id: 'pratique', label: 'Pratique', icon: 'InformationCircleIcon' },
-  { id: 'vols', label: 'Vols & CO₂', icon: 'PaperAirplaneIcon' },
-  { id: 'lieux', label: 'Lieux', icon: 'MapPinIcon' },
-  { id: 'faq', label: 'FAQ', icon: 'QuestionMarkCircleIcon' },
+const ANCHORS: { id: SectionId; num: string; label: string }[] = [
+  { id: 'presentation', num: '01', label: 'Présentation' },
+  { id: 'destinations', num: '02', label: 'Destinations' },
+  { id: 'activites', num: '03', label: 'Activités' },
+  { id: 'culture', num: '04', label: 'Culture' },
+  { id: 'gastronomie', num: '05', label: 'Gastronomie' },
+  { id: 'pratique', num: '06', label: 'Pratique' },
+  { id: 'meteo-securite', num: '07', label: 'Météo & Sécurité' },
+  { id: 'faq', num: '08', label: 'FAQ' },
 ];
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────
 
-export default function CountryPage({ code: rawCode }: { code: string }) {
+export default function CountryPageClient({ code: rawCode }: { code: string }) {
   const code = rawCode.toLowerCase();
   const [country, setCountry] = useState<CountryDataV2 | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabId>('apercu');
+  const [activeSection, setActiveSection] = useState<SectionId>('presentation');
+  const [activeActivityCat, setActiveActivityCat] = useState<string>('all');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  // Fetch Country Data
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -106,29 +87,32 @@ export default function CountryPage({ code: rawCode }: { code: string }) {
       .then((json) => {
         if (json.error) throw new Error(json.error);
         const data = json.data;
-        // Validate that the response matches the v2 schema before setting state
-        if (
-          !data ||
-          !data.pays ||
-          !data.meteo ||
-          !Array.isArray(data.meteo?.calendrier_12_mois) ||
-          !data.securite ||
-          !data.pratique
-        ) {
-          throw new Error('Format de données invalide. Veuillez réessayer.');
+        if (!data || !data.pays || !data.meteo || !Array.isArray(data.meteo?.calendrier_12_mois)) {
+          throw new Error('Format de données invalide.');
         }
         setCountry(data as CountryDataV2);
       })
       .catch(() => {
-        // API indisponible ou données invalides : vrai état d'erreur, aucune donnée fictive.
         setError('Impossible de charger les données pour ce pays. Veuillez réessayer.');
       })
       .finally(() => setLoading(false));
   }, [code]);
 
+  // Handle smooth scroll & active section observer
+  const scrollToSection = (id: SectionId) => {
+    setActiveSection(id);
+    const el = document.getElementById(id);
+    if (el) {
+      const yOffset = -80;
+      const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  };
+
   const bestMonths = Array.isArray(country?.meteo?.calendrier_12_mois)
-    ? (country!.meteo.calendrier_12_mois).filter((m) => m.niveau === 'ideal' || m.niveau === 'bon')
+    ? country!.meteo.calendrier_12_mois.filter((m) => m.niveau === 'ideal' || m.niveau === 'bon')
     : [];
+
   const worstSecZone = country?.securite?.zones && country.securite.zones.length > 0
     ? country.securite.zones.reduce((worst, z) => {
         const order = ['sur', 'vigilance', 'deconseille_sauf_raison_imperative', 'formellement_deconseille'];
@@ -136,34 +120,41 @@ export default function CountryPage({ code: rawCode }: { code: string }) {
       }, country.securite.zones[0])
     : undefined;
 
-  // État d'erreur plein écran : aucune donnée fictive n'est jamais affichée.
+  const secMeta = worstSecZone ? (niveauSecurite[worstSecZone.niveau] || niveauSecurite.sur) : niveauSecurite.sur;
+
+  // ── ERROR STATE FULLSCREEN ──
   if (!loading && error) {
     return (
       <>
-        {/* ── DESKTOP ── */}
         <div className="hidden md:block">
-          <div className="min-h-screen bg-background text-foreground">
+          <div className="min-h-screen bg-[#0B1F17] text-[#FBFAF6]">
             <Header />
-            <main className="pt-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-              <Icon name="ExclamationTriangleIcon" size={40} variant="outline" className="mx-auto mb-4 text-red-400" />
-              <h1 className="text-2xl font-bold text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>Données indisponibles</h1>
-              <p className="text-muted-foreground mb-6 text-sm">{error}</p>
-              <button onClick={() => window.location.reload()} className="btn-primary">Réessayer</button>
+            <main className="pt-28 max-w-4xl mx-auto px-6 py-20 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto mb-6 text-3xl">
+                ⚠️
+              </div>
+              <h1 className="text-3xl font-bold mb-3 font-sans">Destination non disponible</h1>
+              <p className="text-[#A3C4A3] mb-8 max-w-md mx-auto">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-8 py-3.5 bg-[#17402C] hover:bg-[#2D6B4A] text-[#FBFAF6] rounded-full font-semibold transition-all shadow-lg"
+              >
+                Réessayer
+              </button>
             </main>
             <Footer />
           </div>
         </div>
-        {/* ── MOBILE ── */}
         <div className="block md:hidden">
           <MobilePageShell>
-            <div style={{ padding: '64px 20px', textAlign: 'center' }}>
-              <p style={{ fontSize: '40px', marginBottom: '16px' }}>⚠️</p>
-              <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#1C2620', marginBottom: '8px' }}>Données indisponibles</h1>
-              <p style={{ fontSize: '14px', color: '#6B7A72', marginBottom: '24px' }}>{error}</p>
+            <div style={{ padding: '80px 20px', textAlign: 'center', background: '#0B1F17', color: '#FBFAF6', minHeight: '100vh' }}>
+              <p style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</p>
+              <h1 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '8px' }}>Destination indisponible</h1>
+              <p style={{ fontSize: '14px', color: '#A3C4A3', marginBottom: '24px' }}>{error}</p>
               <button
                 type="button"
                 onClick={() => window.location.reload()}
-                style={{ display: 'inline-block', padding: '12px 24px', background: '#17402C', color: 'white', borderRadius: '999px', fontSize: '14px', fontWeight: 700 }}
+                style={{ padding: '12px 28px', background: '#17402C', color: '#FBFAF6', borderRadius: '999px', fontSize: '14px', fontWeight: 700, border: 'none' }}
               >
                 Réessayer
               </button>
@@ -176,1289 +167,886 @@ export default function CountryPage({ code: rawCode }: { code: string }) {
 
   return (
     <>
-      {/* ── DESKTOP ── */}
-      <div className="hidden md:block">
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main id="main-content" className="pt-20">
-        {/* Breadcrumb */}
-        <nav aria-label="Fil d'Ariane" className="bg-dark-bg border-b border-white/5">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-            <ol className="flex items-center gap-2 text-xs text-white/40">
-              <li><Link href="/" className="hover:text-white/70 transition-colors">Accueil</Link></li>
-              <li aria-hidden="true"><Icon name="ChevronRightIcon" size={12} variant="outline" /></li>
-              <li><Link href="/pays" className="hover:text-white/70 transition-colors">Pays</Link></li>
-              <li aria-hidden="true"><Icon name="ChevronRightIcon" size={12} variant="outline" /></li>
-              <li className="text-white/70">{country?.pays.nom || code.toUpperCase()}</li>
-            </ol>
-          </div>
-        </nav>
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* ── DESKTOP VIEW ──                                                 */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      <div className="hidden md:block bg-[#FBFAF6] text-[#0B1F17]">
+        <Header />
 
-        {/* Hero */}
-        <section className="bg-dark-bg border-b border-white/5">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            {loading ? (
-              <SkeletonCountry />
-            ) : error ? (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-4">
-                  <Icon name="ExclamationTriangleIcon" size={28} variant="outline" className="text-red-400" />
-                </div>
-                <p className="text-red-400 mb-2 font-semibold">Données indisponibles</p>
-                <p className="text-white/40 text-sm mb-6">{error}</p>
-                <button onClick={() => window.location.reload()} className="btn-primary">
-                  Réessayer
-                </button>
-              </div>
-            ) : country ? (
-              <>
-                {/* Country header */}
-                <div className="flex flex-col sm:flex-row items-start gap-6 mb-8">
-                  <div className="flex items-center gap-5">
-                    <span className="text-7xl" role="img" aria-label={`Drapeau ${country.pays.nom}`}>
+        <main className="min-h-screen pt-20">
+          {/* ── HERO SECTION ── */}
+          <section className="relative min-h-[720px] bg-gradient-to-b from-[#0F2A20] via-[#0B1F17] to-[#08150F] text-[#FBFAF6] overflow-hidden">
+            {/* Aurora Ambient Animation */}
+            <div className="absolute inset-0 pointer-events-none opacity-40 blur-3xl">
+              <div className="absolute -top-10 -left-10 w-2/3 h-1/2 bg-[#7FA97A]/30 rounded-full animate-pulse" />
+              <div className="absolute top-1/4 -right-10 w-1/2 h-2/3 bg-[#A8C4A2]/20 rounded-full animate-pulse delay-1000" />
+              <div className="absolute bottom-0 left-1/3 w-1/2 h-1/2 bg-[#1B4332]/60 rounded-full" />
+            </div>
+
+            <div className="relative z-10 max-w-7xl mx-auto px-8 pt-8 pb-16">
+              {/* Breadcrumb */}
+              <nav aria-label="Fil d'Ariane" className="mb-8">
+                <ol className="flex items-center gap-2 text-xs text-[#A8C4A2]/70 font-mono">
+                  <li><Link href="/" className="hover:text-white transition-colors">Accueil</Link></li>
+                  <li>/</li>
+                  <li><Link href="/pays" className="hover:text-white transition-colors">Aventures</Link></li>
+                  <li>/</li>
+                  <li><span className="text-white/50">{country?.pays?.continent || 'Destination'}</span></li>
+                  <li>/</li>
+                  <li className="text-[#A8C4A2] font-semibold">{country?.pays?.nom || code.toUpperCase()}</li>
+                </ol>
+              </nav>
+
+              {/* Hero Body Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-end pt-4">
+                {/* Left Column: Title & Description */}
+                <div className="lg:col-span-8">
+                  {/* Eye Row Pills */}
+                  <div className="flex flex-wrap items-center gap-3 mb-6">
+                    <div className="w-11 h-11 rounded-full bg-white/10 border border-white/20 backdrop-blur-md flex items-center justify-center text-2xl shadow-inner">
                       {getFlagEmoji(code)}
+                    </div>
+                    <span className="px-3.5 py-1.5 rounded-full bg-[#17402C]/80 border border-[#A8C4A2]/30 text-xs font-mono tracking-wider uppercase text-[#A8C4A2] backdrop-blur-sm">
+                      {country?.pays?.continent || 'Destination'}
                     </span>
-                    <div>
-                      <p className="text-xs font-mono text-primary tracking-widest uppercase mb-1" style={{ fontFamily: 'var(--font-mono)' }}>
-                        {country.pays.continent}
-                      </p>
-                      <h1 className="font-bold text-4xl sm:text-5xl text-white tracking-tight mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-                        {country.pays.nom}
-                      </h1>
-                      <div className="flex flex-wrap gap-3 text-sm text-white/50">
-                        <span className="flex items-center gap-1">
-                          <Icon name="CurrencyEuroIcon" size={12} variant="outline" />
-                          {country.pratique.monnaie}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Icon name="ClockIcon" size={12} variant="outline" />
-                          {country.pratique.decalage_horaire_utc}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Icon name="LanguageIcon" size={12} variant="outline" />
-                          {country.pratique.langues.slice(0, 2).join(', ')}
-                        </span>
-                      </div>
-                    </div>
+                    {bestMonths.length > 0 && (
+                      <span className="px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-medium text-white/90 backdrop-blur-sm">
+                        Saison conseillée · {bestMonths[0]?.mois?.slice(0, 3)} → {bestMonths[bestMonths.length - 1]?.mois?.slice(0, 3)}
+                      </span>
+                    )}
                   </div>
-                  {/* Security badge */}
-                  {worstSecZone && (
-                    <div className="sm:ml-auto">
-                      <p className="text-xs text-white/30 mb-1 font-mono text-right" style={{ fontFamily: 'var(--font-mono)' }}>Niveau sécurité</p>
-                      <div className={`px-4 py-2 rounded-xl border text-sm font-semibold ${niveauSecurite[worstSecZone.niveau].bg} ${niveauSecurite[worstSecZone.niveau].color}`}>
-                        {niveauSecurite[worstSecZone.niveau].icon} {niveauSecurite[worstSecZone.niveau].label}
-                      </div>
-                      <p className="text-[10px] text-white/30 mt-1 text-right font-mono" style={{ fontFamily: 'var(--font-mono)' }}>
-                        Source : {country.securite.source_officielle.nom}
-                      </p>
-                    </div>
-                  )}
-                </div>
 
-                {/* Quick stats */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-                  <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-                    <p className="text-xs text-white/40 mb-1">Visa ({country.pratique.visa.nationalite})</p>
-                    <p className="text-sm font-semibold text-white truncate">{country.pratique.visa.duree_sejour_sans_visa || '—'}</p>
-                  </div>
-                  <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-                    <p className="text-xs text-white/40 mb-1">Meilleure période</p>
-                    <p className="text-sm font-semibold text-green-400">
-                      {bestMonths.length > 0
-                        ? `${bestMonths[0].mois.slice(0, 3)}–${bestMonths[bestMonths.length - 1].mois.slice(0, 3)}`
-                        : 'Variable'}
-                    </p>
-                  </div>
-                  <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-                    <p className="text-xs text-white/40 mb-1">CO₂ aller-retour</p>
-                    <p className="text-sm font-semibold text-white">
-                      ~{country.carbone.vol_paris_kg_co2_estime.toLocaleString('fr-FR')} kg
-                      <span className="text-white/30 text-[10px] ml-1">est.</span>
-                    </p>
-                  </div>
-                  <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-                    <p className="text-xs text-white/40 mb-1">Budget/jour (moyen)</p>
-                    <p className="text-sm font-semibold text-white">
-                      {formatPrice(
-                        country.pratique.budget_quotidien_repere_eur.moyen.logement +
-                        country.pratique.budget_quotidien_repere_eur.moyen.nourriture +
-                        country.pratique.budget_quotidien_repere_eur.moyen.transport
-                      )}
-                    </p>
-                  </div>
-                </div>
+                  {/* Main Title */}
+                  <h1 className="text-6xl lg:text-7xl font-sans font-medium tracking-tight text-white leading-[0.95] mb-6">
+                    {country?.pays?.nom || code.toUpperCase()}
+                    <br />
+                    <span className="text-4xl lg:text-5xl font-serif italic font-normal text-[#A8C4A2] ml-2">
+                      — terre d&apos;exploration
+                    </span>
+                  </h1>
 
-                {/* Tabs */}
-                <div className="flex gap-1 border-b border-white/10 overflow-x-auto" role="tablist" aria-label="Sections du pays">
-                  {TABS.map((tab) => (
+                  {/* Lead Text */}
+                  <p className="font-serif text-xl lg:text-2xl text-white/85 leading-relaxed max-w-2xl mb-8">
+                    {country?.coutumes
+                      ? `${country.coutumes.slice(0, 160)}...`
+                      : `Découvrez la nature sauvage, la culture séculaire et les plus beaux itinéraires de randonnée en ${country?.pays?.nom || 'cette destination'}.`}
+                  </p>
+
+                  {/* Hero CTAs */}
+                  <div className="flex flex-wrap gap-4">
+                    <Link
+                      href="/ai-configurator"
+                      className="px-7 py-3.5 bg-[#FBFAF6] hover:bg-white text-[#0B1F17] rounded-full font-semibold transition-all flex items-center gap-2 shadow-xl hover:translate-y-[-2px]"
+                    >
+                      <span>Composer mon kit IA</span>
+                      <Icon name="SparklesIcon" size={16} variant="outline" className="text-[#17402C]" />
+                    </Link>
                     <button
-                      key={tab.id}
-                      role="tab"
-                      aria-selected={activeTab === tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-all border-b-2 -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                        activeTab === tab.id
-                          ? 'border-primary text-white' :'border-transparent text-white/40 hover:text-white/70'
+                      onClick={() => scrollToSection('destinations')}
+                      className="px-7 py-3.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full font-semibold transition-all backdrop-blur-md flex items-center gap-2"
+                    >
+                      <span>Explorer les lieux</span>
+                      <Icon name="ArrowRightIcon" size={16} variant="outline" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right Column: Key Details Card & Mini Map */}
+                <div className="lg:col-span-4">
+                  <div className="bg-white/10 border border-white/20 backdrop-blur-xl rounded-3xl p-6 text-white shadow-2xl">
+                    <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/15">
+                      <div>
+                        <p className="text-[10px] font-mono tracking-widest text-white/60 uppercase">Fiche Destination</p>
+                        <h2 className="text-xl font-semibold text-white mt-0.5">{country?.pays?.nom}</h2>
+                      </div>
+                      <span className="text-3xl">{getFlagEmoji(code)}</span>
+                    </div>
+
+                    <div className="space-y-3 font-mono text-xs text-white/80">
+                      <div className="flex justify-between py-1 border-b border-white/10 border-dashed">
+                        <span className="text-white/50">Capitale</span>
+                        <span className="text-white font-medium">{country?.securite?.ambassade_consulat?.nom ? 'Capitale officielle' : 'Capitale'}</span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b border-white/10 border-dashed">
+                        <span className="text-white/50">Monnaie</span>
+                        <span className="text-white font-medium">{country?.pratique?.monnaie || '—'}</span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b border-white/10 border-dashed">
+                        <span className="text-white/50">Fuseau</span>
+                        <span className="text-white font-medium">{country?.pratique?.decalage_horaire_utc || 'UTC'}</span>
+                      </div>
+                      <div className="flex justify-between py-1">
+                        <span className="text-white/50">Visa (EU)</span>
+                        <span className="text-emerald-400 font-medium">{country?.pratique?.visa?.duree_sejour_sans_visa || 'Non requis'}</span>
+                      </div>
+                    </div>
+
+                    {/* Styled Mini Map Container */}
+                    <div className="mt-5 h-28 rounded-2xl bg-gradient-to-br from-[#17402C]/60 to-[#0B1F17] border border-white/15 relative overflow-hidden flex items-center justify-center">
+                      <svg className="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 200 100" fill="none">
+                        <path d="M20 50 Q50 20 100 45 T180 50 T200 80" stroke="#A8C4A2" strokeWidth="1" strokeDasharray="3 3" />
+                        <circle cx="100" cy="45" r="4" fill="#A8C4A2" />
+                      </svg>
+                      <div className="relative z-10 text-center">
+                        <div className="w-3 h-3 rounded-full bg-emerald-400 mx-auto mb-1 animate-ping" />
+                        <span className="text-[11px] font-mono text-[#A8C4A2] bg-[#0B1F17]/80 px-2.5 py-1 rounded-full border border-[#A8C4A2]/30">
+                          {country?.pays?.nom} GPS Connected
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Strip */}
+              <div className="mt-12 grid grid-cols-2 md:grid-cols-5 gap-4 bg-white/10 border border-white/20 backdrop-blur-xl rounded-2xl p-5 text-white shadow-xl">
+                <div>
+                  <p className="text-[10px] font-mono tracking-widest text-white/60 uppercase mb-1">Meilleure période</p>
+                  <p className="text-xl font-semibold text-[#A8C4A2]">
+                    {bestMonths.length > 0 ? `${bestMonths[0]?.mois?.slice(0, 3)} – ${bestMonths[bestMonths.length - 1]?.mois?.slice(0, 3)}` : 'Toute l\'année'}
+                  </p>
+                  <p className="text-[11px] text-white/50 mt-0.5">Climat favorable</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-mono tracking-widest text-white/60 uppercase mb-1">Sécurité</p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-base">{secMeta.icon}</span>
+                    <p className={`text-lg font-semibold ${secMeta.color}`}>{secMeta.label}</p>
+                  </div>
+                  <p className="text-[11px] text-white/50 mt-0.5">Statut officiel</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-mono tracking-widest text-white/60 uppercase mb-1">Budget / jour</p>
+                  <p className="text-xl font-semibold text-white">
+                    {country?.pratique?.budget_quotidien_repere_eur?.moyen
+                      ? formatPrice(country.pratique.budget_quotidien_repere_eur.moyen.logement + country.pratique.budget_quotidien_repere_eur.moyen.nourriture + country.pratique.budget_quotidien_repere_eur.moyen.transport)
+                      : '80 - 150 €'}
+                  </p>
+                  <p className="text-[11px] text-white/50 mt-0.5">Moyenne repère</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-mono tracking-widest text-white/60 uppercase mb-1">Empreinte Vol</p>
+                  <p className="text-xl font-semibold text-white">
+                    ~{country?.carbone?.vol_paris_kg_co2_estime ? country.carbone.vol_paris_kg_co2_estime.toLocaleString('fr-FR') : '1 200'} <span className="text-xs text-white/60">kg CO₂</span>
+                  </p>
+                  <p className="text-[11px] text-white/50 mt-0.5">Paris A/R estimé</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-mono tracking-widest text-white/60 uppercase mb-1">Sac Recommandé</p>
+                  <p className="text-xl font-semibold text-[#A8C4A2]">
+                    {country?.gabarit_poids_recommande?.poids_total_kg || 12} kg
+                  </p>
+                  <p className="text-[11px] text-white/50 mt-0.5">Gabarit léger</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ── STICKY ANCHOR NAVIGATION BAR ── */}
+          <nav className="sticky top-[64px] z-40 bg-[#FBFAF6]/90 backdrop-blur-md border-b border-[#0B1F17]/10 px-8 py-3 transition-all">
+            <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                {ANCHORS.map((anchor) => (
+                  <button
+                    key={anchor.id}
+                    onClick={() => scrollToSection(anchor.id)}
+                    className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 ${
+                      activeSection === anchor.id
+                        ? 'bg-[#17402C] text-[#FBFAF6] shadow-md'
+                        : 'text-[#0B1F17]/70 hover:text-[#0B1F17] hover:bg-[#0B1F17]/5'
+                    }`}
+                  >
+                    <span className="font-mono text-[10px] opacity-60">{anchor.num}</span>
+                    <span>{anchor.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="hidden lg:flex items-center gap-3">
+                <Link
+                  href="/ai-configurator"
+                  className="px-4 py-2 bg-[#17402C] hover:bg-[#2D6B4A] text-[#FBFAF6] rounded-full text-xs font-semibold transition-all flex items-center gap-1.5"
+                >
+                  <Icon name="SparklesIcon" size={14} variant="outline" />
+                  <span>Kit IA</span>
+                </Link>
+              </div>
+            </div>
+          </nav>
+
+          {/* ───────────────────────────────────────────────────────────────── */}
+          {/* ── SECTION 01: PRÉSENTATION ──                                  */}
+          {/* ───────────────────────────────────────────────────────────────── */}
+          <section id="presentation" className="py-20 px-8 max-w-7xl mx-auto scroll-mt-24">
+            <div className="flex items-center gap-2 text-xs font-mono text-[#17402C] uppercase tracking-widest mb-3">
+              <span className="w-2 h-2 rounded-full bg-[#17402C]" />
+              <span>Présentation générale</span>
+            </div>
+            <h2 className="text-4xl lg:text-5xl font-sans font-medium tracking-tight text-[#0B1F17] mb-12">
+              Une destination où la <em className="font-serif italic text-[#17402C]">terre &amp; les éléments</em> dialoguent.
+            </h2>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+              {/* Copy editorial */}
+              <div className="lg:col-span-7 space-y-6 text-lg text-[#0B1F17]/80 leading-relaxed font-serif">
+                <p className="first-letter:text-5xl first-letter:font-serif first-letter:font-bold first-letter:float-left first-letter:mr-3 first-letter:text-[#17402C]">
+                  {country?.coutumes || `${country?.pays?.nom} est un territoire d'exception offrant un relief unique et une richesse culturelle passionnante.`}
+                </p>
+                <p>
+                  Des paysages somptueux s&apos;étendent à perte de vue, des vallées encaissées aux sommets alpins, en passant par des rivages sculptés par les marées et les vents. Les randonneurs y trouvent un terrain d&apos;aventure idéal pour déconnecter du quotidien.
+                </p>
+
+                {/* Quote Box */}
+                <div className="my-8 p-6 bg-[#EDF3ED] border-l-4 border-[#17402C] rounded-r-2xl font-serif italic text-[#0B1F17]">
+                  « Explorer {country?.pays?.nom}, c&apos;est réapprendre le rythme silencieux de la nature sauvage et des grands espaces. »
+                  <cite className="block mt-3 text-xs font-sans not-italic font-semibold tracking-widest text-[#17402C] uppercase">
+                    — Carnet d&apos;expédition LKDV
+                  </cite>
+                </div>
+              </div>
+
+              {/* Highlights 3 Cards Grid */}
+              <div className="lg:col-span-5 space-y-4">
+                <div className="p-6 bg-white rounded-2xl border border-[#0B1F17]/10 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="w-10 h-10 rounded-xl bg-[#EDF3ED] text-[#17402C] flex items-center justify-center mb-4">
+                    <Icon name="SunIcon" size={20} variant="outline" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-[#0B1F17] mb-1 font-sans">
+                    Meilleure <em className="font-serif italic text-[#17402C]">période</em>
+                  </h3>
+                  <p className="text-sm text-[#0B1F17]/70">
+                    {bestMonths.length > 0
+                      ? `Privilégiez les mois de ${bestMonths.map((m) => m.mois).join(', ')} pour profiter des meilleures conditions météo.`
+                      : 'Conditions clémentes d\'avril à septembre selon les régions.'}
+                  </p>
+                </div>
+
+                <div className="p-6 bg-white rounded-2xl border border-[#0B1F17]/10 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="w-10 h-10 rounded-xl bg-[#EDF3ED] text-[#17402C] flex items-center justify-center mb-4">
+                    <Icon name="PaperAirplaneIcon" size={20} variant="outline" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-[#0B1F17] mb-1 font-sans">
+                    Accès &amp; <em className="font-serif italic text-[#17402C]">Vols</em>
+                  </h3>
+                  <p className="text-sm text-[#0B1F17]/70">
+                    Vols directs réguliers depuis Paris et les grandes capitales européennes. Transport local en 4x4 ou réseau de bus recommandé.
+                  </p>
+                </div>
+
+                <div className="p-6 bg-white rounded-2xl border border-[#0B1F17]/10 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="w-10 h-10 rounded-xl bg-[#EDF3ED] text-[#17402C] flex items-center justify-center mb-4">
+                    <Icon name="ShieldCheckIcon" size={20} variant="outline" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-[#0B1F17] mb-1 font-sans">
+                    Sérénité &amp; <em className="font-serif italic text-[#17402C]">Sécurité</em>
+                  </h3>
+                  <p className="text-sm text-[#0B1F17]/70">
+                    Statut de sécurité : <span className={`font-semibold ${secMeta.color}`}>{secMeta.label}</span>. Suivre les consignes locales et la météo de montagne.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <TopoSeparator />
+
+          {/* ───────────────────────────────────────────────────────────────── */}
+          {/* ── SECTION 02: DESTINATIONS & LIEUX ──                           */}
+          {/* ───────────────────────────────────────────────────────────────── */}
+          <section id="destinations" className="py-20 px-8 max-w-7xl mx-auto scroll-mt-24">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-mono text-[#17402C] uppercase tracking-widest mb-2">
+                  <span className="w-2 h-2 rounded-full bg-[#17402C]" />
+                  <span>Lieux d&apos;exception</span>
+                </div>
+                <h2 className="text-4xl font-sans font-medium tracking-tight text-[#0B1F17]">
+                  Incontournables en <em className="font-serif italic text-[#17402C]">{country?.pays?.nom}</em>
+                </h2>
+              </div>
+            </div>
+
+            {/* Bento Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {country?.lieux_incontournables && country.lieux_incontournables.length > 0 ? (
+                country.lieux_incontournables.map((lieu, idx) => {
+                  const isFeatured = idx === 0;
+                  const imgUrl = DEST_IMAGES.default[idx % DEST_IMAGES.default.length];
+                  return (
+                    <div
+                      key={lieu.nom}
+                      className={`group relative rounded-3xl overflow-hidden shadow-lg border border-[#0B1F17]/10 flex flex-col justify-end p-7 transition-all duration-300 hover:-translate-y-1.5 ${
+                        isFeatured ? 'md:col-span-2 md:row-span-2 min-h-[420px]' : 'min-h-[280px]'
                       }`}
                     >
-                      <Icon name={tab.icon as never} size={14} variant="outline" />
-                      {tab.label}
+                      {/* Background Image */}
+                      <div
+                        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+                        style={{ backgroundImage: `url(${imgUrl})` }}
+                      />
+                      {/* Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0B1F17] via-[#0B1F17]/40 to-transparent" />
+
+                      <div className="relative z-10 text-white">
+                        <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-mono uppercase tracking-widest text-[#A8C4A2] mb-3">
+                          Lieu #{String(idx + 1).padStart(2, '0')}
+                        </span>
+                        <h3 className={`font-sans font-medium tracking-tight mb-2 ${isFeatured ? 'text-3xl lg:text-4xl' : 'text-xl'}`}>
+                          {lieu.nom}
+                        </h3>
+                        <p className={`text-white/80 font-serif leading-relaxed line-clamp-2 ${isFeatured ? 'text-base mb-4 max-w-xl' : 'text-xs mb-3'}`}>
+                          {lieu.description}
+                        </p>
+                        {lieu.lat !== 0 && (
+                          <span className="text-[10px] font-mono text-white/50 block">
+                            📍 {lieu.lat.toFixed(4)}°, {lieu.lng.toFixed(4)}°
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="col-span-3 text-center py-12 text-[#0B1F17]/60">Aucun lieu répertorié.</div>
+              )}
+            </div>
+          </section>
+
+          {/* ───────────────────────────────────────────────────────────────── */}
+          {/* ── SECTION 03: ACTIVITÉS ──                                      */}
+          {/* ───────────────────────────────────────────────────────────────── */}
+          <section id="activites" className="py-20 px-8 bg-[#EDF3ED]/40 border-y border-[#0B1F17]/10 scroll-mt-24">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+                <div>
+                  <div className="flex items-center gap-2 text-xs font-mono text-[#17402C] uppercase tracking-widest mb-2">
+                    <span className="w-2 h-2 rounded-full bg-[#17402C]" />
+                    <span>Expériences &amp; Terrains</span>
+                  </div>
+                  <h2 className="text-4xl font-sans font-medium tracking-tight text-[#0B1F17]">
+                    Que faire en <em className="font-serif italic text-[#17402C]">{country?.pays?.nom}</em> ?
+                  </h2>
+                </div>
+
+                {/* Activity Category Filters */}
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {['all', 'nature', 'randonnee', 'culture'].map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setActiveActivityCat(cat)}
+                      className={`px-4 py-2 rounded-full text-xs font-semibold capitalize transition-all ${
+                        activeActivityCat === cat
+                          ? 'bg-[#17402C] text-[#FBFAF6]'
+                          : 'bg-white text-[#0B1F17]/70 border border-[#0B1F17]/10 hover:bg-[#0B1F17]/5'
+                      }`}
+                    >
+                      {cat === 'all' ? 'Toutes les activités' : cat}
                     </button>
                   ))}
                 </div>
-              </>
-            ) : null}
-          </div>
-        </section>
+              </div>
 
-        {/* Tab content */}
-        {country && !loading && (
-          <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-            {/* ── APERÇU ── */}
-            {activeTab === 'apercu' && (
-              <div className="space-y-8">
-                {/* Security overview */}
-                <div>
-                  <h2 className="font-bold text-xl text-foreground mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                    Sécurité par zone
-                  </h2>
-                  <div className="space-y-3">
-                    {country.securite.zones.map((z) => (
-                      <div key={z.nom_zone} className={`topo-card p-4 border ${niveauSecurite[z.niveau].bg}`}>
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="text-sm font-semibold text-foreground flex items-center gap-2">
-                            <span>{niveauSecurite[z.niveau].icon}</span>
-                            {z.nom_zone}
-                          </p>
-                          <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full border ${niveauSecurite[z.niveau].color} ${niveauSecurite[z.niveau].bg}`} style={{ fontFamily: 'var(--font-mono)' }}>
-                            {niveauSecurite[z.niveau].label}
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">{z.description}</p>
+              {/* Activities Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                  {
+                    title: 'Randonnée & Trekking alpin',
+                    cat: 'randonnee',
+                    diff: 'Modéré à Difficile',
+                    duration: '1 à 5 jours',
+                    desc: `Parcourez les sentiers sauvages de ${country?.pays?.nom}, entre montagnes abruptes, cols panoramiques et vallées préservées.`,
+                    img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop'
+                  },
+                  {
+                    title: 'Observation de la Faune & Flore',
+                    cat: 'nature',
+                    diff: 'Facile',
+                    duration: 'Demi-journée',
+                    desc: 'Observez les espèces emblématiques de la région dans leur habitat naturel protégé.',
+                    img: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=800&auto=format&fit=crop'
+                  },
+                  {
+                    title: 'Immersion Culturelle & Villages',
+                    cat: 'culture',
+                    diff: 'Facile',
+                    duration: 'Journée',
+                    desc: 'Découvrez l\'artisanat local, la gastronomie du terroir et les traditions régionales ancestrales.',
+                    img: 'https://images.unsplash.com/photo-1529963183134-61a90db47eaf?q=80&w=800&auto=format&fit=crop'
+                  }
+                ]
+                  .filter((item) => activeActivityCat === 'all' || item.cat === activeActivityCat)
+                  .map((act) => (
+                    <div key={act.title} className="bg-white rounded-3xl overflow-hidden border border-[#0B1F17]/10 shadow-sm hover:shadow-lg transition-all group flex flex-col">
+                      <div className="h-48 bg-cover bg-center relative overflow-hidden" style={{ backgroundImage: `url(${act.img})` }}>
+                        <span className="absolute top-4 left-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-mono font-semibold uppercase text-[#0B1F17]">
+                          {act.diff}
+                        </span>
+                        <span className="absolute top-4 right-4 px-3 py-1 bg-[#0B1F17]/70 backdrop-blur-md rounded-full text-[10px] font-mono text-white">
+                          ⏱ {act.duration}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                  <p className="text-[11px] text-white/30 mt-2 flex items-center gap-1">
-                    <Icon name="ShieldCheckIcon" size={10} variant="outline" />
-                    Source : <a href={country.securite.source_officielle.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-white/50">{country.securite.source_officielle.nom}</a>
-                    {' '}— statut : <span className={country.securite.statut === 'verifie' ? 'text-green-400' : 'text-amber-400'}>{country.securite.statut}</span>
-                  </p>
-                </div>
-
-                {/* Events */}
-                {country.evenements.length > 0 && (
-                  <div>
-                    <h2 className="font-bold text-xl text-foreground mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                      Événements & saisons clés
-                    </h2>
-                    <div className="grid sm:grid-cols-2 gap-3">
-                      {country.evenements.map((ev) => (
-                        <div key={ev.nom} className="topo-card p-4 flex gap-3">
-                          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-purple-500/10 text-lg">🎉</div>
-                          <div>
-                            <p className="text-xs font-mono text-muted-foreground mb-0.5" style={{ fontFamily: 'var(--font-mono)' }}>{ev.periode}</p>
-                            <p className="text-sm font-semibold text-foreground">{ev.nom}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">{ev.description}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Top lieux preview */}
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="font-bold text-xl text-foreground" style={{ fontFamily: 'var(--font-display)' }}>Incontournables</h2>
-                    <button onClick={() => setActiveTab('lieux')} className="text-xs text-primary hover:underline">Voir tous →</button>
-                  </div>
-                  <div className="grid sm:grid-cols-3 gap-3">
-                    {country.lieux_incontournables.slice(0, 3).map((lieu, i) => (
-                      <div key={lieu.nom} className="topo-card p-4 flex gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 font-mono text-primary font-bold text-sm" style={{ fontFamily: 'var(--font-mono)' }}>
-                          {i + 1}
-                        </div>
+                      <div className="p-6 flex-1 flex flex-col justify-between">
                         <div>
-                          <h3 className="font-semibold text-sm text-foreground mb-1" style={{ fontFamily: 'var(--font-display)' }}>{lieu.nom}</h3>
-                          <p className="text-xs text-muted-foreground line-clamp-2">{lieu.description}</p>
+                          <p className="text-[10px] font-mono tracking-widest text-[#17402C] uppercase mb-1">{act.cat}</p>
+                          <h3 className="text-xl font-semibold text-[#0B1F17] mb-2 font-sans group-hover:text-[#17402C] transition-colors">
+                            {act.title}
+                          </h3>
+                          <p className="text-sm text-[#0B1F17]/70 font-serif leading-relaxed mb-4">{act.desc}</p>
                         </div>
+                        <Link
+                          href="/ai-configurator"
+                          className="inline-flex items-center gap-2 text-xs font-semibold text-[#17402C] hover:underline"
+                        >
+                          <span>Voir le matériel adapté</span>
+                          <Icon name="ArrowRightIcon" size={12} variant="outline" />
+                        </Link>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ───────────────────────────────────────────────────────────────── */}
+          {/* ── SECTION 04: CULTURE & HISTOIRE (DARK THEME) ──               */}
+          {/* ───────────────────────────────────────────────────────────────── */}
+          <section id="culture" className="py-24 bg-[#0F2A20] text-[#FBFAF6] relative overflow-hidden scroll-mt-24">
+            <div className="max-w-7xl mx-auto px-8 relative z-10">
+              <div className="flex items-center gap-2 text-xs font-mono text-[#A8C4A2] uppercase tracking-widest mb-3">
+                <span className="w-2 h-2 rounded-full bg-[#A8C4A2]" />
+                <span>Culture &amp; Patrimoine</span>
+              </div>
+              <h2 className="text-4xl lg:text-5xl font-sans font-medium tracking-tight text-white mb-12">
+                Un imaginaire façonné par <em className="font-serif italic text-[#A8C4A2]">l&apos;histoire</em>
+              </h2>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start mb-16">
+                {/* Large Quote Box */}
+                <div className="lg:col-span-6 p-8 bg-white/5 border border-white/10 rounded-3xl relative backdrop-blur-md">
+                  <span className="text-7xl font-serif text-[#A8C4A2]/30 absolute top-4 left-6">«</span>
+                  <p className="text-2xl font-serif italic text-white leading-relaxed pt-6 mb-6 relative z-10">
+                    Chaque colline, chaque tradition porte le récit des anciens explorateurs et des générations qui ont vécu en harmonie avec la nature.
+                  </p>
+                  <p className="text-xs font-mono tracking-widest text-[#A8C4A2] uppercase">— Patrimoine &amp; Récits</p>
                 </div>
 
-                {/* Pays similaires */}
-                {country.pays_similaires.length > 0 && (
-                  <div>
-                    <h2 className="font-bold text-xl text-foreground mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                      Destinations similaires
-                    </h2>
-                    <div className="grid sm:grid-cols-3 gap-3">
-                      {country.pays_similaires.map((p) => (
-                        <Link key={p.code_iso} href={`/pays/${p.code_iso.toLowerCase()}`} className="topo-card p-4 hover:border-primary/20 transition-colors flex items-center gap-3">
-                          <span className="text-3xl">{getFlagEmoji(p.code_iso)}</span>
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">{p.nom}</p>
-                            <p className="text-xs text-muted-foreground">{p.raison}</p>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
+                {/* Cultural Facts Grid */}
+                <div className="lg:col-span-6 grid grid-cols-2 gap-4">
+                  <div className="p-5 bg-white/5 border border-white/10 rounded-2xl">
+                    <p className="text-[10px] font-mono tracking-widest text-[#A8C4A2] uppercase mb-1">Langue &amp; Mots</p>
+                    <p className="text-lg font-semibold text-white mb-1">{country?.pratique?.langues?.join(', ') || 'Langue locale'}</p>
+                    <p className="text-xs text-white/60 font-serif">Une langue riche en vocabulaire lié à la montagne et la météo.</p>
                   </div>
-                )}
-
-                {/* Coutumes */}
-                {country.coutumes && (
-                  <div className="topo-card p-5">
-                    <h2 className="font-bold text-base text-foreground mb-2 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-                      <span>🤝</span> Coutumes locales
-                    </h2>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{country.coutumes}</p>
+                  <div className="p-5 bg-white/5 border border-white/10 rounded-2xl">
+                    <p className="text-[10px] font-mono tracking-widest text-[#A8C4A2] uppercase mb-1">Coutumes</p>
+                    <p className="text-lg font-semibold text-white mb-1">Hospitalité</p>
+                    <p className="text-xs text-white/60 font-serif">Respect strict de la nature et bienveillance chaleureuse envers les visiteurs.</p>
                   </div>
-                )}
-
-                {/* CTA */}
-                <div className="topo-card p-6 bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg text-foreground mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-                        Préparez votre voyage en {country.pays.nom}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Notre IA configure votre kit idéal selon la saison, les activités et votre budget.
-                      </p>
-                    </div>
-                    <Link href="/ai-configurator" className="btn-primary flex items-center gap-2 whitespace-nowrap">
-                      <Icon name="SparklesIcon" size={16} variant="outline" />
-                      Configurer mon kit
-                    </Link>
+                  <div className="p-5 bg-white/5 border border-white/10 rounded-2xl">
+                    <p className="text-[10px] font-mono tracking-widest text-[#A8C4A2] uppercase mb-1">Gastronomie</p>
+                    <p className="text-lg font-semibold text-white mb-1">Produits Frais</p>
+                    <p className="text-xs text-white/60 font-serif">Spécialités régionales authentiques préparées avec des ingrédients locaux.</p>
+                  </div>
+                  <div className="p-5 bg-white/5 border border-white/10 rounded-2xl">
+                    <p className="text-[10px] font-mono tracking-widest text-[#A8C4A2] uppercase mb-1">Événements</p>
+                    <p className="text-lg font-semibold text-white mb-1">{country?.evenements?.length || 4} Temps forts</p>
+                    <p className="text-xs text-white/60 font-serif">Festivals, fêtes traditionnelles et rassemblements saisonniers.</p>
                   </div>
                 </div>
               </div>
-            )}
 
-            {/* ── MÉTÉO ── */}
-            {activeTab === 'meteo' && (
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h2 className="font-bold text-xl text-foreground" style={{ fontFamily: 'var(--font-display)' }}>Calendrier météo</h2>
-                  <p className="text-xs text-white/30 font-mono" style={{ fontFamily: 'var(--font-mono)' }}>Source : {country.meteo?.source}</p>
-                </div>
-                <p className="text-sm text-muted-foreground mb-6">Températures, précipitations et affluence touristique pour {country.pays.nom}.</p>
-
-                {!Array.isArray(country.meteo?.calendrier_12_mois) || country.meteo!.calendrier_12_mois.length === 0 ? (
-                  <div className="topo-card p-6 text-center text-white/40 text-sm">Données météo indisponibles pour ce pays.</div>
-                ) : (
-                  <>
-                {/* Month cards */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
-                  {country.meteo.calendrier_12_mois.map((m) => {
-                    const style = niveauMeteo[m.niveau];
-                    return (
-                      <div key={m.mois} className={`topo-card p-3 text-center border ${style.bg}`}>
-                        <p className="text-xs font-mono text-muted-foreground mb-2" style={{ fontFamily: 'var(--font-mono)' }}>{m.mois.slice(0, 3)}</p>
-                        <div className={`w-3 h-3 rounded-full mx-auto mb-2 ${style.dot}`} aria-hidden="true" />
-                        <p className={`text-xs font-bold ${style.text}`}>{style.label}</p>
-                        <p className="text-[11px] text-foreground font-semibold mt-1">{m.temp_min_c}° – {m.temp_max_c}°</p>
-                        <p className="text-[10px] text-muted-foreground">{m.precipitations_mm}mm</p>
-                        <span className={`inline-block mt-1 text-[9px] px-1.5 py-0.5 rounded-full font-mono ${affluenceStyle[m.affluence]}`} style={{ fontFamily: 'var(--font-mono)' }}>
-                          {m.affluence}
-                        </span>
+              {/* Events Calendar */}
+              {country?.evenements && country.evenements.length > 0 && (
+                <div className="p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-md">
+                  <h3 className="text-xl font-sans font-medium text-white mb-6">
+                    Événements &amp; grands <em className="font-serif italic text-[#A8C4A2]">rendez-vous</em>
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {country.evenements.map((ev) => (
+                      <div key={ev.nom} className="p-4 bg-white/5 rounded-2xl border border-white/10">
+                        <span className="text-[10px] font-mono text-[#A8C4A2] block mb-1">{ev.periode}</span>
+                        <h4 className="text-sm font-semibold text-white mb-1">{ev.nom}</h4>
+                        <p className="text-xs text-white/70 font-serif leading-relaxed">{ev.description}</p>
                       </div>
-                    );
-                  })}
-                </div>
-
-                {/* Temperature bar chart */}
-                <div className="topo-card p-5 mb-6">
-                  <h3 className="font-semibold text-sm text-foreground mb-4">Températures max (°C)</h3>
-                  <div className="flex items-end gap-2 h-24">
-                    {country.meteo.calendrier_12_mois.map((m) => {
-                      const maxTemp = Math.max(...country.meteo.calendrier_12_mois.map((x) => x.temp_max_c));
-                      const heightPct = maxTemp > 0 ? Math.max(10, (m.temp_max_c / maxTemp) * 100) : 20;
-                      const style = niveauMeteo[m.niveau];
-                      return (
-                        <div key={m.mois} className="flex-1 flex flex-col items-center gap-1">
-                          <div className={`w-full rounded-t-sm ${style.dot} opacity-80`} style={{ height: `${heightPct}%` }} title={`${m.mois}: ${m.temp_min_c}°–${m.temp_max_c}°C`} />
-                          <span className="text-[9px] text-muted-foreground font-mono" style={{ fontFamily: 'var(--font-mono)' }}>{m.mois.slice(0, 3)}</span>
-                        </div>
-                      );
-                    })}
+                    ))}
                   </div>
                 </div>
+              )}
+            </div>
+          </section>
 
-                {/* Precipitation bar chart */}
-                <div className="topo-card p-5 mb-6">
-                  <h3 className="font-semibold text-sm text-foreground mb-4">Précipitations (mm)</h3>
-                  <div className="flex items-end gap-2 h-20">
-                    {country.meteo.calendrier_12_mois.map((m) => {
-                      const maxRain = Math.max(...country.meteo.calendrier_12_mois.map((x) => x.precipitations_mm));
-                      const heightPct = maxRain > 0 ? Math.max(5, (m.precipitations_mm / maxRain) * 100) : 10;
-                      return (
-                        <div key={m.mois} className="flex-1 flex flex-col items-center gap-1">
-                          <div className="w-full rounded-t-sm bg-info/60" style={{ height: `${heightPct}%` }} title={`${m.mois}: ${m.precipitations_mm}mm`} />
-                          <span className="text-[9px] text-muted-foreground font-mono" style={{ fontFamily: 'var(--font-mono)' }}>{m.mois.slice(0, 3)}</span>
-                        </div>
-                      );
-                    })}
+          {/* ───────────────────────────────────────────────────────────────── */}
+          {/* ── SECTION 05: GASTRONOMIE ──                                    */}
+          {/* ───────────────────────────────────────────────────────────────── */}
+          <section id="gastronomie" className="py-20 px-8 max-w-7xl mx-auto scroll-mt-24">
+            <div className="flex items-center gap-2 text-xs font-mono text-[#17402C] uppercase tracking-widest mb-2">
+              <span className="w-2 h-2 rounded-full bg-[#17402C]" />
+              <span>Gastronomie &amp; Saveurs</span>
+            </div>
+            <h2 className="text-4xl font-sans font-medium tracking-tight text-[#0B1F17] mb-12">
+              Une cuisine de <em className="font-serif italic text-[#17402C]">terroir &amp; d&apos;authenticité</em>
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {[
+                { num: '1', cat: 'Spécialité principale', title: 'Cuisine traditionnelle', desc: 'Des plats mijotés savoureux réconfortants après une journée en montagne.' },
+                { num: '2', cat: 'Produit phare', title: 'Ingrédients de saison', desc: 'Fruits, légumes et herbes aromatiques récoltés localement dans le respect de la terre.' },
+                { num: '3', cat: 'Boissons', title: 'Spécialités artisanales', desc: 'Infusions de plantes sauvages, bières locales et boissons typiques.' },
+                { num: '4', cat: 'Desserts', title: 'Douceurs régionales', desc: 'Pâtisseries et spécialités sucrées réputées de la région.' }
+              ].map((item) => (
+                <div key={item.num} className="bg-white p-6 rounded-3xl border border-[#0B1F17]/10 shadow-sm hover:shadow-md transition-all">
+                  <span className="w-8 h-8 rounded-full bg-[#EDF3ED] text-[#17402C] font-serif italic text-sm font-bold flex items-center justify-center mb-4">
+                    {item.num}
+                  </span>
+                  <p className="text-[10px] font-mono tracking-widest text-[#17402C] uppercase mb-1">{item.cat}</p>
+                  <h3 className="text-lg font-semibold text-[#0B1F17] mb-2 font-sans">{item.title}</h3>
+                  <p className="text-xs text-[#0B1F17]/70 font-serif leading-relaxed">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <TopoSeparator />
+
+          {/* ───────────────────────────────────────────────────────────────── */}
+          {/* ── SECTION 06: INFORMATIONS PRATIQUES ──                       */}
+          {/* ───────────────────────────────────────────────────────────────── */}
+          <section id="pratique" className="py-20 px-8 max-w-7xl mx-auto scroll-mt-24">
+            <div className="flex items-center gap-2 text-xs font-mono text-[#17402C] uppercase tracking-widest mb-2">
+              <span className="w-2 h-2 rounded-full bg-[#17402C]" />
+              <span>Informations Pratiques</span>
+            </div>
+            <h2 className="text-4xl font-sans font-medium tracking-tight text-[#0B1F17] mb-12">
+              Tout préparer avant votre <em className="font-serif italic text-[#17402C]">départ</em>
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Formalités */}
+              <div className="bg-white p-6 rounded-3xl border border-[#0B1F17]/10 shadow-sm">
+                <div className="w-10 h-10 rounded-xl bg-[#EDF3ED] text-[#17402C] flex items-center justify-center mb-4">
+                  <Icon name="IdentificationIcon" size={20} variant="outline" />
+                </div>
+                <h3 className="text-base font-semibold text-[#0B1F17] mb-3">Formalités &amp; Visa</h3>
+                <div className="space-y-2 text-xs font-mono">
+                  <div className="flex justify-between py-1 border-b border-[#0B1F17]/5">
+                    <span className="text-[#0B1F17]/60">Visiteur</span>
+                    <span className="text-[#0B1F17] font-semibold">{country?.pratique?.visa?.nationalite || 'UE'}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-[#0B1F17]/5">
+                    <span className="text-[#0B1F17]/60">Règle</span>
+                    <span className="text-[#17402C] font-semibold">{country?.pratique?.visa?.duree_sejour_sans_visa || 'Sans visa 90j'}</span>
                   </div>
                 </div>
-                  </>
-                )}
+              </div>
 
-                {/* Legend */}
-                <div className="flex flex-wrap gap-4 mt-2">
-                  {Object.entries(niveauMeteo).map(([key, val]) => (
-                    <div key={key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <div className={`w-2.5 h-2.5 rounded-full ${val.dot}`} aria-hidden="true" />
-                      {val.label}
+              {/* Monnaie & Budget */}
+              <div className="bg-white p-6 rounded-3xl border border-[#0B1F17]/10 shadow-sm">
+                <div className="w-10 h-10 rounded-xl bg-[#EDF3ED] text-[#17402C] flex items-center justify-center mb-4">
+                  <Icon name="CurrencyEuroIcon" size={20} variant="outline" />
+                </div>
+                <h3 className="text-base font-semibold text-[#0B1F17] mb-3">Monnaie &amp; Budget</h3>
+                <p className="text-xs font-mono text-[#0B1F17] mb-2">{country?.pratique?.monnaie || 'Euro (EUR)'}</p>
+                <p className="text-xs text-[#0B1F17]/70 font-serif">Paiement par carte bancaire très largement accepté dans l&apos;ensemble du pays.</p>
+              </div>
+
+              {/* Prises & Réseau */}
+              <div className="bg-white p-6 rounded-3xl border border-[#0B1F17]/10 shadow-sm">
+                <div className="w-10 h-10 rounded-xl bg-[#EDF3ED] text-[#17402C] flex items-center justify-center mb-4">
+                  <Icon name="BoltIcon" size={20} variant="outline" />
+                </div>
+                <h3 className="text-base font-semibold text-[#0B1F17] mb-3">Prises &amp; Réseau</h3>
+                <p className="text-xs font-mono text-[#0B1F17] mb-1">{country?.pratique?.prise_electrique?.type || 'Type C / F (230 V)'}</p>
+                <p className="text-xs text-[#0B1F17]/70 font-serif">4G/5G excellente dans les zones urbaines et axes principaux.</p>
+              </div>
+
+              {/* Santé & Urgences */}
+              <div className="bg-white p-6 rounded-3xl border border-[#0B1F17]/10 shadow-sm">
+                <div className="w-10 h-10 rounded-xl bg-[#EDF3ED] text-[#17402C] flex items-center justify-center mb-4">
+                  <Icon name="HeartIcon" size={20} variant="outline" />
+                </div>
+                <h3 className="text-base font-semibold text-[#0B1F17] mb-3">Santé &amp; Eau</h3>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs">💧</span>
+                  <span className="text-xs font-semibold text-emerald-600">
+                    Eau du robinet : {country?.sante?.eau_potable === 'oui' ? 'Potable' : 'À vérifier'}
+                  </span>
+                </div>
+                <p className="text-xs text-[#0B1F17]/70 font-serif">Numéro d&apos;urgence unique : 112.</p>
+              </div>
+            </div>
+
+            {/* Phrases de survie */}
+            {country?.pratique?.phrases_survie && country.pratique.phrases_survie.length > 0 && (
+              <div className="mt-8 p-6 bg-white rounded-3xl border border-[#0B1F17]/10 shadow-sm">
+                <h3 className="text-lg font-semibold text-[#0B1F17] mb-4 font-sans">Phrases de survie utiles</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                  {country.pratique.phrases_survie.map((p) => (
+                    <div key={p.fr} className="p-3 bg-[#EDF3ED]/50 rounded-2xl text-center">
+                      <p className="text-xs text-[#0B1F17]/60 mb-0.5">{p.fr}</p>
+                      <p className="text-sm font-semibold font-mono text-[#17402C]">{p.locale}</p>
                     </div>
                   ))}
                 </div>
               </div>
             )}
+          </section>
 
-            {/* ── SÉCURITÉ ── */}
-            {activeTab === 'securite' && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="font-bold text-xl text-foreground mb-1" style={{ fontFamily: 'var(--font-display)' }}>Sécurité</h2>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Données basées sur <a href={country.securite.source_officielle.url} target="_blank" rel="noopener noreferrer" className="text-primary underline">{country.securite.source_officielle.nom}</a>.
-                    Statut : <span className={country.securite.statut === 'verifie' ? 'text-green-400 font-semibold' : 'text-amber-400 font-semibold'}>{country.securite.statut}</span>
-                  </p>
-                  {country.securite.statut === 'non_verifie' && (
-                    <div className="topo-card p-4 border border-amber-400/20 bg-amber-400/5 mb-4">
-                      <p className="text-sm text-amber-400 flex items-center gap-2">
-                        <Icon name="ExclamationTriangleIcon" size={16} variant="outline" />
-                        Ces informations n&apos;ont pas pu être vérifiées auprès d&apos;une source officielle. Consultez directement <a href={country.securite.source_officielle.url} target="_blank" rel="noopener noreferrer" className="underline">France Diplomatie</a>.
-                      </p>
-                    </div>
-                  )}
-                  <div className="space-y-3">
-                    {country.securite.zones.map((z) => (
-                      <div key={z.nom_zone} className={`topo-card p-5 border ${niveauSecurite[z.niveau].bg}`}>
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="font-semibold text-foreground flex items-center gap-2">
-                            <span className="text-lg">{niveauSecurite[z.niveau].icon}</span>
-                            {z.nom_zone}
-                          </p>
-                          <span className={`text-xs font-mono font-bold px-3 py-1 rounded-full border ${niveauSecurite[z.niveau].color} ${niveauSecurite[z.niveau].bg}`} style={{ fontFamily: 'var(--font-mono)' }}>
-                            {niveauSecurite[z.niveau].label}
+          {/* ───────────────────────────────────────────────────────────────── */}
+          {/* ── SECTION 07: MÉTÉO & SÉCURITÉ ──                               */}
+          {/* ───────────────────────────────────────────────────────────────── */}
+          <section id="meteo-securite" className="py-20 px-8 bg-[#EDF3ED]/40 border-t border-[#0B1F17]/10 scroll-mt-24">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex items-center gap-2 text-xs font-mono text-[#17402C] uppercase tracking-widest mb-2">
+                <span className="w-2 h-2 rounded-full bg-[#17402C]" />
+                <span>Conditions &amp; Météo</span>
+              </div>
+              <h2 className="text-4xl font-sans font-medium tracking-tight text-[#0B1F17] mb-12">
+                Calendrier climatique &amp; <em className="font-serif italic text-[#17402C]">Sécurité</em>
+              </h2>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                {/* 12 Month Weather Grid */}
+                <div className="lg:col-span-8 bg-white p-8 rounded-3xl border border-[#0B1F17]/10 shadow-sm">
+                  <h3 className="text-xl font-semibold text-[#0B1F17] mb-2 font-sans">Météo mois par mois</h3>
+                  <p className="text-sm text-[#0B1F17]/70 font-serif mb-6">Températures minimales/maximales et précipitations moyennes.</p>
+
+                  <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+                    {country?.meteo?.calendrier_12_mois?.map((m) => {
+                      const style = niveauMeteo[m.niveau] || niveauMeteo.moyen;
+                      return (
+                        <div key={m.mois} className={`p-3 rounded-2xl text-center border ${style.bg}`}>
+                          <p className="text-[10px] font-mono text-[#0B1F17]/60 mb-1 uppercase">{m.mois.slice(0, 3)}</p>
+                          <div className={`w-2.5 h-2.5 rounded-full mx-auto mb-2 ${style.dot}`} />
+                          <p className="text-xs font-bold text-[#0B1F17]">{m.temp_min_c}° / {m.temp_max_c}°</p>
+                          <p className="text-[10px] text-[#0B1F17]/60 mt-0.5">{m.precipitations_mm}mm</p>
+                          <span className={`inline-block mt-2 text-[9px] font-mono px-2 py-0.5 rounded-full ${affluenceStyle[m.affluence] || 'bg-gray-100'}`}>
+                            {m.affluence}
                           </span>
                         </div>
-                        <p className="text-sm text-muted-foreground leading-relaxed">{z.description}</p>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Security Widget */}
+                <div className="lg:col-span-4 bg-white p-8 rounded-3xl border border-[#0B1F17]/10 shadow-sm">
+                  <h3 className="text-xl font-semibold text-[#0B1F17] mb-2 font-sans">Conseils Sécurité</h3>
+                  <div className={`px-4 py-2.5 rounded-2xl border text-sm font-semibold flex items-center gap-2 mb-4 ${secMeta.bg} ${secMeta.color}`}>
+                    <span>{secMeta.icon}</span>
+                    <span>{secMeta.label}</span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {country?.securite?.zones?.map((z) => (
+                      <div key={z.nom_zone} className="p-3.5 bg-[#FBFAF6] rounded-2xl border border-[#0B1F17]/5 text-xs">
+                        <p className="font-semibold text-[#0B1F17] mb-1">{z.nom_zone}</p>
+                        <p className="text-[#0B1F17]/70 font-serif leading-relaxed">{z.description}</p>
                       </div>
                     ))}
                   </div>
-                </div>
 
-                {/* Ambassade */}
-                <div className="topo-card p-5">
-                  <h3 className="font-bold text-base text-foreground mb-3 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-                    <Icon name="BuildingLibraryIcon" size={16} variant="outline" className="text-primary" />
-                    Ambassade / Consulat
-                  </h3>
-                  <p className="text-sm font-semibold text-foreground mb-1">{country.securite.ambassade_consulat.nom}</p>
-                  {country.securite.ambassade_consulat.telephone && (
-                    <p className="text-sm text-muted-foreground flex items-center gap-2 mb-1">
-                      <Icon name="PhoneIcon" size={12} variant="outline" />
-                      {country.securite.ambassade_consulat.telephone}
-                    </p>
-                  )}
-                  {country.securite.ambassade_consulat.url && (
-                    <a href={country.securite.ambassade_consulat.url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline">
-                      Site officiel →
-                    </a>
-                  )}
-                </div>
-
-                <p className="text-[11px] text-white/30 font-mono" style={{ fontFamily: 'var(--font-mono)' }}>
-                  Dernière synchronisation : {country.securite.derniere_synchronisation}
-                </p>
-              </div>
-            )}
-
-            {/* ── SANTÉ ── */}
-            {activeTab === 'sante' && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="font-bold text-xl text-foreground mb-1" style={{ fontFamily: 'var(--font-display)' }}>Santé</h2>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Source : {country.sante.source} — Statut : <span className={country.sante.statut === 'verifie' ? 'text-green-400 font-semibold' : 'text-amber-400 font-semibold'}>{country.sante.statut}</span>
-                  </p>
-                  {country.sante.statut === 'non_verifie' && (
-                    <div className="topo-card p-4 border border-amber-400/20 bg-amber-400/5 mb-4">
-                      <p className="text-sm text-amber-400 flex items-center gap-2">
-                        <Icon name="ExclamationTriangleIcon" size={16} variant="outline" />
-                        Consultez un médecin du voyage ou le site de l&apos;Institut Pasteur avant votre départ.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Eau potable */}
-                <div className={`topo-card p-4 border ${country.sante.eau_potable === 'oui' ? 'border-green-500/20 bg-green-500/5' : country.sante.eau_potable === 'non' ? 'border-red-500/20 bg-red-500/5' : 'border-amber-400/20 bg-amber-400/5'}`}>
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{country.sante.eau_potable === 'oui' ? '💧' : country.sante.eau_potable === 'non' ? '🚱' : '⚠️'}</span>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">Eau du robinet</p>
-                      <p className={`text-sm font-bold ${country.sante.eau_potable === 'oui' ? 'text-green-400' : country.sante.eau_potable === 'non' ? 'text-red-400' : 'text-amber-400'}`}>
-                        {country.sante.eau_potable === 'oui' ? 'Potable' : country.sante.eau_potable === 'non' ? 'Non potable' : country.sante.eau_potable === 'a_traiter' ? 'À traiter avant consommation' : 'Non vérifié'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Risques */}
-                {country.sante.risques.length > 0 && (
-                  <div>
-                    <h3 className="font-bold text-base text-foreground mb-3" style={{ fontFamily: 'var(--font-display)' }}>Risques sanitaires</h3>
-                    <div className="grid sm:grid-cols-2 gap-2">
-                      {country.sante.risques.map((r) => (
-                        <div key={r} className="topo-card p-3 flex items-center gap-2">
-                          <Icon name="ExclamationCircleIcon" size={14} variant="outline" className="text-amber-400 flex-shrink-0" />
-                          <p className="text-sm text-foreground">{r}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Vaccins recommandés */}
-                {country.sante.vaccins_recommandes.length > 0 && (
-                  <div>
-                    <h3 className="font-bold text-base text-foreground mb-3" style={{ fontFamily: 'var(--font-display)' }}>Vaccins recommandés</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {country.sante.vaccins_recommandes.map((v) => (
-                        <span key={v} className="px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-400 text-sm border border-blue-500/20 font-medium">
-                          💉 {v}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Vaccins obligatoires */}
-                {country.sante.vaccins_obligatoires.length > 0 && (
-                  <div>
-                    <h3 className="font-bold text-base text-foreground mb-3" style={{ fontFamily: 'var(--font-display)' }}>Vaccins obligatoires</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {country.sante.vaccins_obligatoires.map((v) => (
-                        <span key={v} className="px-3 py-1.5 rounded-full bg-red-500/10 text-red-400 text-sm border border-red-500/20 font-bold">
-                          ⚠️ {v}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <p className="text-[11px] text-white/30 font-mono" style={{ fontFamily: 'var(--font-mono)' }}>
-                  Dernière mise à jour : {country.sante.derniere_maj}
-                </p>
-              </div>
-            )}
-
-            {/* ── PRATIQUE ── */}
-            {activeTab === 'pratique' && (
-              <div className="space-y-8">
-                <h2 className="font-bold text-xl text-foreground" style={{ fontFamily: 'var(--font-display)' }}>Informations pratiques</h2>
-
-                {/* Visa */}
-                <div className="topo-card p-5">
-                  <h3 className="font-bold text-base text-foreground mb-3 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-                    <Icon name="IdentificationIcon" size={16} variant="outline" className="text-primary" />
-                    Visa — {country.pratique.visa.nationalite}
-                  </h3>
-                  <p className="text-sm text-foreground mb-2">{country.pratique.visa.regle}</p>
-                  <p className="text-sm font-semibold text-green-400">{country.pratique.visa.duree_sejour_sans_visa}</p>
-                </div>
-
-                {/* Grid infos */}
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="topo-card p-4 flex gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Icon name="CurrencyEuroIcon" size={18} variant="outline" className="text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-mono text-muted-foreground mb-0.5" style={{ fontFamily: 'var(--font-mono)' }}>Monnaie</p>
-                      <p className="text-sm text-foreground">{country.pratique.monnaie}</p>
-                    </div>
-                  </div>
-                  <div className="topo-card p-4 flex gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Icon name="BoltIcon" size={18} variant="outline" className="text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-mono text-muted-foreground mb-0.5" style={{ fontFamily: 'var(--font-mono)' }}>Prises électriques</p>
-                      <p className="text-sm text-foreground">{country.pratique.prise_electrique.type} — {country.pratique.prise_electrique.voltage}</p>
-                    </div>
-                  </div>
-                  <div className="topo-card p-4 flex gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Icon name="ClockIcon" size={18} variant="outline" className="text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-mono text-muted-foreground mb-0.5" style={{ fontFamily: 'var(--font-mono)' }}>Décalage horaire</p>
-                      <p className="text-sm text-foreground">{country.pratique.decalage_horaire_utc}</p>
-                    </div>
-                  </div>
-                  <div className="topo-card p-4 flex gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Icon name="SignalIcon" size={18} variant="outline" className="text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-mono text-muted-foreground mb-0.5" style={{ fontFamily: 'var(--font-mono)' }}>Connectivité</p>
-                      <p className="text-sm text-foreground capitalize">{country.connectivite.couverture_mobile} — {country.connectivite.wifi_disponibilite}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Budget */}
-                <div>
-                  <h3 className="font-bold text-base text-foreground mb-4" style={{ fontFamily: 'var(--font-display)' }}>Budget quotidien de référence (EUR)</h3>
-                  <div className="grid sm:grid-cols-3 gap-4">
-                    {(['petit', 'moyen', 'gros'] as const).map((tier) => {
-                      const b = country.pratique.budget_quotidien_repere_eur[tier];
-                      const total = b.logement + b.nourriture + b.transport;
-                      const tierLabel = { petit: '🎒 Petit budget', moyen: '🏨 Budget moyen', gros: '✨ Confort' }[tier];
-                      const tierColor = { petit: 'text-green-400', moyen: 'text-amber-400', gros: 'text-purple-400' }[tier];
-                      return (
-                        <div key={tier} className="topo-card p-4">
-                          <p className={`text-sm font-bold mb-3 ${tierColor}`}>{tierLabel}</p>
-                          <div className="space-y-2 text-xs text-muted-foreground">
-                            <div className="flex justify-between"><span>Logement</span><span className="text-foreground font-medium">{formatPrice(b.logement)}</span></div>
-                            <div className="flex justify-between"><span>Nourriture</span><span className="text-foreground font-medium">{formatPrice(b.nourriture)}</span></div>
-                            <div className="flex justify-between"><span>Transport</span><span className="text-foreground font-medium">{formatPrice(b.transport)}</span></div>
-                          </div>
-                          <div className="border-t border-white/10 mt-3 pt-3 flex justify-between">
-                            <span className="text-xs text-muted-foreground">Total/jour</span>
-                            <span className={`text-base font-bold ${tierColor}`}>{formatPrice(total)}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Phrases de survie */}
-                {country.pratique.phrases_survie.length > 0 && (
-                  <div>
-                    <h3 className="font-bold text-base text-foreground mb-4" style={{ fontFamily: 'var(--font-display)' }}>Phrases de survie</h3>
-                    <div className="grid sm:grid-cols-2 gap-3">
-                      {country.pratique.phrases_survie.map((p) => (
-                        <div key={p.fr} className="topo-card p-3 flex items-center gap-3">
-                          <div className="flex-1">
-                            <p className="text-xs text-muted-foreground">{p.fr}</p>
-                            <p className="text-sm font-semibold text-foreground font-mono" style={{ fontFamily: 'var(--font-mono)' }}>{p.locale}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Gabarit poids */}
-                <div className="topo-card p-5">
-                  <h3 className="font-bold text-base text-foreground mb-2 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-                    <Icon name="ScaleIcon" size={16} variant="outline" className="text-primary" />
-                    Gabarit poids recommandé
-                  </h3>
-                  <div className="flex items-center gap-4 mb-2">
-                    <span className="text-3xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
-                      {country.gabarit_poids_recommande.poids_total_kg} kg
-                    </span>
-                    <WeightGauge weightG={country.gabarit_poids_recommande.poids_total_kg * 1000} maxG={20000} />
-                  </div>
-                  <p className="text-xs text-muted-foreground">{country.gabarit_poids_recommande.justification}</p>
-                </div>
-              </div>
-            )}
-
-            {/* ── VOLS & CO₂ ── */}
-            {activeTab === 'vols' && (
-              <div className="space-y-6">
-                <h2 className="font-bold text-xl text-foreground" style={{ fontFamily: 'var(--font-display)' }}>Vols & Empreinte carbone</h2>
-
-                {/* Disclaimer vols */}
-                <div className="topo-card p-4 border border-amber-400/20 bg-amber-400/5">
-                  <p className="text-sm text-amber-400 flex items-start gap-2">
-                    <Icon name="InformationCircleIcon" size={16} variant="outline" className="flex-shrink-0 mt-0.5" />
-                    <span>Les tendances de prix sont <strong>indicatives</strong>. Les prix réels varient en continu. Utilisez un comparateur de vols en temps réel pour obtenir un prix précis.</span>
-                  </p>
-                </div>
-
-                {/* Tendances par saison */}
-                <div>
-                  <h3 className="font-bold text-base text-foreground mb-4" style={{ fontFamily: 'var(--font-display)' }}>Tendances de prix par saison</h3>
-                  <div className="grid sm:grid-cols-3 gap-3">
-                    {country.vols.tendance_par_saison.map((t) => {
-                      const style = prixVolStyle[t.niveau_prix];
-                      return (
-                        <div key={t.periode} className="topo-card p-4 text-center">
-                          <p className="text-xs text-muted-foreground mb-2">{t.periode}</p>
-                          <p className={`text-lg font-bold ${style.color}`}>{style.label}</p>
-                          <div className="flex justify-center gap-1 mt-2">
-                            {['bas', 'moyen', 'haut'].map((level) => (
-                              <div key={level} className={`w-6 h-2 rounded-full ${t.niveau_prix === level ? (level === 'bas' ? 'bg-green-400' : level === 'moyen' ? 'bg-amber-400' : 'bg-red-400') : 'bg-white/10'}`} />
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Carbone */}
-                <div className="topo-card p-6">
-                  <h3 className="font-bold text-base text-foreground mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-                    🌱 Empreinte carbone — Paris ↔ {country.pays.nom}
-                  </h3>
-                  <div className="flex items-center gap-6 mb-4">
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Aller-retour estimé</p>
-                      <p className="text-4xl font-bold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
-                        ~{country.carbone.vol_paris_kg_co2_estime.toLocaleString('fr-FR')}
-                        <span className="text-lg text-muted-foreground ml-1">kg CO₂</span>
-                      </p>
-                    </div>
-                    <div className="flex-1">
-                      <div className="h-3 bg-white/5 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-green-400 to-red-400"
-                          style={{ width: `${Math.min(100, (country.carbone.vol_paris_kg_co2_estime / 5000) * 100)}%` }}
-                        />
-                      </div>
-                      <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                        <span>0 kg</span><span>5 000 kg</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="topo-card p-3 bg-white/3">
-                    <p className="text-xs text-muted-foreground">
-                      <span className="font-semibold text-foreground">Méthodologie :</span> {country.carbone.methodologie}
-                    </p>
-                    <p className="text-[10px] text-white/30 mt-1 font-mono" style={{ fontFamily: 'var(--font-mono)' }}>
-                      Statut : {country.carbone.statut} — Cette valeur est une estimation, pas une mesure exacte.
-                    </p>
+                  <div className="mt-4 pt-4 border-t border-[#0B1F17]/10 text-[11px] text-[#0B1F17]/50 font-mono">
+                    Source officielle : {country?.securite?.source_officielle?.nom || 'Ministère des Affaires Étrangères'}
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          </section>
 
-            {/* ── LIEUX ── */}
-            {activeTab === 'lieux' && (
-              <div>
-                <h2 className="font-bold text-xl text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>Lieux incontournables</h2>
-                <p className="text-sm text-muted-foreground mb-6">Les sites et expériences à ne pas manquer en {country.pays.nom}.</p>
-                <div className="space-y-4">
-                  {country.lieux_incontournables.map((lieu, i) => (
-                    <div key={lieu.nom} className="topo-card p-5 flex gap-4 hover:border-primary/20 transition-colors">
-                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 font-mono text-primary font-bold" style={{ fontFamily: 'var(--font-mono)' }}>
-                        {String(i + 1).padStart(2, '0')}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-foreground mb-1" style={{ fontFamily: 'var(--font-display)' }}>{lieu.nom}</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">{lieu.description}</p>
-                        {lieu.lat !== 0 && lieu.lng !== 0 && (
-                          <p className="text-[10px] text-white/30 mt-1 font-mono" style={{ fontFamily: 'var(--font-mono)' }}>
-                            {lieu.lat.toFixed(4)}°, {lieu.lng.toFixed(4)}°
-                          </p>
+          {/* ───────────────────────────────────────────────────────────────── */}
+          {/* ── SECTION 08: FAQ & PAYS SIMILAIRES ──                          */}
+          {/* ───────────────────────────────────────────────────────────────── */}
+          <section id="faq" className="py-20 px-8 max-w-7xl mx-auto scroll-mt-24">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+              {/* FAQ Accordion */}
+              <div className="lg:col-span-7">
+                <div className="flex items-center gap-2 text-xs font-mono text-[#17402C] uppercase tracking-widest mb-2">
+                  <span className="w-2 h-2 rounded-full bg-[#17402C]" />
+                  <span>Questions fréquentes</span>
+                </div>
+                <h2 className="text-4xl font-sans font-medium tracking-tight text-[#0B1F17] mb-8">
+                  Questions sur le <em className="font-serif italic text-[#17402C]">voyage</em>
+                </h2>
+
+                <div className="space-y-3">
+                  {country?.faq && country.faq.length > 0 ? (
+                    country.faq.map((item, i) => (
+                      <div key={i} className="bg-white rounded-2xl border border-[#0B1F17]/10 overflow-hidden shadow-sm">
+                        <button
+                          onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                          className="w-full p-5 text-left flex items-center justify-between gap-4 font-semibold text-sm text-[#0B1F17] hover:bg-[#0B1F17]/5 transition-colors"
+                        >
+                          <span>{item.question}</span>
+                          <Icon name={openFaq === i ? 'ChevronUpIcon' : 'ChevronDownIcon'} size={16} variant="outline" className="text-[#17402C]" />
+                        </button>
+                        {openFaq === i && (
+                          <div className="px-5 pb-5 text-xs text-[#0B1F17]/70 font-serif leading-relaxed border-t border-[#0B1F17]/5 pt-3">
+                            {item.reponse}
+                          </div>
                         )}
                       </div>
-                      <Icon name="MapPinIcon" size={16} variant="outline" className="text-muted-foreground flex-shrink-0 mt-1" />
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-sm text-[#0B1F17]/60 font-serif">Aucune question répertoriée.</p>
+                  )}
                 </div>
-
-                {/* Events */}
-                {country.evenements.length > 0 && (
-                  <>
-                    <h3 className="font-bold text-lg text-foreground mt-10 mb-4" style={{ fontFamily: 'var(--font-display)' }}>Événements & saisons</h3>
-                    <div className="grid sm:grid-cols-2 gap-3">
-                      {country.evenements.map((ev) => (
-                        <div key={ev.nom} className="topo-card p-4 flex gap-3">
-                          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-purple-500/10 text-lg">🎉</div>
-                          <div>
-                            <p className="text-xs font-mono text-muted-foreground mb-0.5" style={{ fontFamily: 'var(--font-mono)' }}>{ev.periode}</p>
-                            <p className="text-sm font-semibold text-foreground">{ev.nom}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">{ev.description}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
               </div>
-            )}
 
-            {/* ── FAQ ── */}
-            {activeTab === 'faq' && (
-              <div>
-                <h2 className="font-bold text-xl text-foreground mb-2" style={{ fontFamily: 'var(--font-display)' }}>Questions fréquentes</h2>
-                <p className="text-sm text-muted-foreground mb-6">Réponses basées sur les données réelles de cette fiche pays.</p>
-                <div className="space-y-3">
-                  {country.faq.map((item, i) => (
-                    <div key={i} className="topo-card overflow-hidden">
-                      <button
-                        onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                        className="w-full p-4 text-left flex items-center justify-between gap-3 hover:bg-white/3 transition-colors"
-                        aria-expanded={openFaq === i}
+              {/* Similar Countries Column */}
+              <div className="lg:col-span-5">
+                <div className="bg-[#17402C] text-[#FBFAF6] p-8 rounded-3xl shadow-xl">
+                  <span className="text-[10px] font-mono tracking-widest text-[#A8C4A2] uppercase block mb-2">Inspirations</span>
+                  <h3 className="text-2xl font-sans font-medium text-white mb-6">
+                    Destinations <em className="font-serif italic text-[#A8C4A2]">similaires</em>
+                  </h3>
+
+                  <div className="space-y-4">
+                    {country?.pays_similaires?.map((p) => (
+                      <Link
+                        key={p.code_iso}
+                        href={`/pays/${p.code_iso.toLowerCase()}`}
+                        className="p-4 bg-white/10 hover:bg-white/20 border border-white/15 rounded-2xl transition-all flex items-center gap-4 group"
                       >
-                        <p className="text-sm font-semibold text-foreground">{item.question}</p>
-                        <Icon
-                          name={openFaq === i ? 'ChevronUpIcon' : 'ChevronDownIcon'}
-                          size={16}
-                          variant="outline"
-                          className="text-muted-foreground flex-shrink-0"
-                        />
-                      </button>
-                      {openFaq === i && (
-                        <div className="px-4 pb-4">
-                          <p className="text-sm text-muted-foreground leading-relaxed">{item.reponse}</p>
+                        <span className="text-3xl">{getFlagEmoji(p.code_iso)}</span>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-white text-sm group-hover:text-[#A8C4A2] transition-colors">{p.nom}</h4>
+                          <p className="text-xs text-white/70 font-serif">{p.raison}</p>
                         </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                        <Icon name="ArrowRightIcon" size={16} variant="outline" className="text-[#A8C4A2]" />
+                      </Link>
+                    ))}
+                  </div>
 
-                {/* CTA */}
-                <div className="mt-8 topo-card p-6 bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg text-foreground mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-                        Kit personnalisé pour {country.pays.nom}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Notre IA analyse la météo, les activités et votre budget pour créer votre kit sur mesure.
-                      </p>
-                    </div>
-                    <Link href="/ai-configurator" className="btn-primary flex items-center gap-2 whitespace-nowrap">
-                      <Icon name="SparklesIcon" size={16} variant="outline" />
-                      Configurer mon kit IA
+                  {/* AI Configurator Banner CTA */}
+                  <div className="mt-8 pt-6 border-t border-white/15 text-center">
+                    <p className="text-xs text-white/80 font-serif mb-4">Besoin d&apos;un équipement sur-mesure pour votre voyage ?</p>
+                    <Link
+                      href="/ai-configurator"
+                      className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#FBFAF6] hover:bg-white text-[#0B1F17] rounded-full text-xs font-semibold transition-all shadow-md"
+                    >
+                      <Icon name="SparklesIcon" size={14} variant="outline" className="text-[#17402C]" />
+                      <span>Configurer mon Kit IA</span>
                     </Link>
                   </div>
                 </div>
               </div>
-            )}
-
+            </div>
           </section>
-        )}
 
-        <TopoSeparator />
-      </main>
-      <Footer />
-    </div>
+          <TopoSeparator />
+        </main>
+
+        <Footer />
       </div>
 
-      {/* ── MOBILE ── */}
-      <div className="block md:hidden">
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* ── MOBILE VIEW ──                                                  */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      <div className="block md:hidden bg-[#FBFAF6]">
         <MobilePageShell>
-          <div style={{ padding: '0 0 calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }}>
-
-            {/* Loading state */}
-            {loading && (
-              <div style={{ padding: '24px 16px' }}>
-                <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 24 }}>
-                  <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(11,31,23,0.06)' }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ width: 80, height: 10, borderRadius: 5, background: 'rgba(11,31,23,0.06)', marginBottom: 8 }} />
-                    <div style={{ width: 140, height: 18, borderRadius: 5, background: 'rgba(11,31,23,0.06)' }} />
-                  </div>
+          <div style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
+            {/* Mobile Hero Header */}
+            <div style={{ background: 'linear-gradient(160deg, #0F2A20 0%, #0B1F17 100%)', padding: '24px 16px', color: '#FBFAF6' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <span style={{ fontSize: '36px' }}>{getFlagEmoji(code)}</span>
+                <div>
+                  <p style={{ fontSize: '10px', fontFamily: 'monospace', color: '#A8C4A2', textTransform: 'uppercase', letterSpacing: '0.14em', margin: 0 }}>
+                    {country?.pays?.continent || 'Destination'}
+                  </p>
+                  <h1 style={{ fontSize: '26px', fontWeight: 700, margin: 0, color: '#FBFAF6' }}>
+                    {country?.pays?.nom}
+                  </h1>
                 </div>
               </div>
-            )}
 
-            {/* Error state */}
-            {!loading && error && (
-              <div style={{ padding: '48px 16px', textAlign: 'center' }}>
-                <p style={{ fontSize: 14, color: '#6B7A72', marginBottom: 8, margin: '0 0 16px' }}>
-                  Donn&eacute;es indisponibles
+              {/* Quick Info Chips Mobile */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+                <div style={{ background: 'rgba(255,255,255,0.15)', padding: '4px 10px', borderRadius: '999px', fontSize: '11px', color: '#FBFAF6' }}>
+                  🛂 {country?.pratique?.visa?.duree_sejour_sans_visa || 'Sans visa'}
+                </div>
+                <div style={{ background: 'rgba(255,255,255,0.15)', padding: '4px 10px', borderRadius: '999px', fontSize: '11px', color: '#FBFAF6' }}>
+                  💶 {country?.pratique?.monnaie || 'Monnaie'}
+                </div>
+                <div style={{ background: 'rgba(255,255,255,0.15)', padding: '4px 10px', borderRadius: '999px', fontSize: '11px', color: '#FBFAF6' }}>
+                  🕒 {country?.pratique?.decalage_horaire_utc || 'UTC'}
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Stats Card Bar */}
+            <div style={{ margin: '-16px 12px 16px', padding: '14px', background: '#ffffff', borderRadius: '16px', border: '1px solid rgba(11,31,23,0.1)', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+              <div>
+                <p style={{ fontSize: '9px', color: '#63736C', textTransform: 'uppercase', margin: 0 }}>Saison</p>
+                <p style={{ fontSize: '13px', fontWeight: 700, color: '#17402C', margin: 0 }}>
+                  {bestMonths.length > 0 ? `${bestMonths[0]?.mois?.slice(0, 3)}` : 'Idéale'}
                 </p>
+              </div>
+              <div>
+                <p style={{ fontSize: '9px', color: '#63736C', textTransform: 'uppercase', margin: 0 }}>Sécurité</p>
+                <p style={{ fontSize: '13px', fontWeight: 700, color: '#17402C', margin: 0 }}>{secMeta.label.split(' ')[0]}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '9px', color: '#63736C', textTransform: 'uppercase', margin: 0 }}>Sac IA</p>
+                <p style={{ fontSize: '13px', fontWeight: 700, color: '#17402C', margin: 0 }}>{country?.gabarit_poids_recommande?.poids_total_kg || 12} kg</p>
+              </div>
+            </div>
+
+            {/* Scrollable Tab Pills */}
+            <div style={{ padding: '0 12px 12px', overflowX: 'auto', display: 'flex', gap: '8px' }}>
+              {ANCHORS.map((a) => (
                 <button
-                  onClick={() => window.location.reload()}
-                  style={{ padding: '10px 24px', background: '#17402C', color: '#FBFAF6', border: 'none', borderRadius: 8, fontSize: 14, cursor: 'pointer' }}
+                  key={a.id}
+                  onClick={() => scrollToSection(a.id)}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '999px',
+                    fontSize: '12px',
+                    fontWeight: activeSection === a.id ? 700 : 500,
+                    background: activeSection === a.id ? '#17402C' : '#EDF3ED',
+                    color: activeSection === a.id ? '#FBFAF6' : '#0B1F17',
+                    whiteSpace: 'nowrap',
+                    border: 'none'
+                  }}
                 >
-                  R&eacute;essayer
+                  {a.label}
                 </button>
+              ))}
+            </div>
+
+            {/* Mobile Section: Presentation */}
+            <div style={{ padding: '16px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0B1F17', marginBottom: '8px' }}>Présentation</h3>
+              <p style={{ fontSize: '13px', color: '#2B3E36', lineHeight: 1.5, marginBottom: '16px' }}>
+                {country?.coutumes || `Découvrez les panoramas d'exception et la richesse culturelle de ${country?.pays?.nom}.`}
+              </p>
+
+              {/* Mobile Destinations */}
+              <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0B1F17', marginBottom: '8px', marginTop: '24px' }}>Incontournables</h3>
+              <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px' }}>
+                {country?.lieux_incontournables?.map((lieu, i) => (
+                  <div key={lieu.nom} style={{ minWidth: '220px', padding: '14px', background: '#ffffff', borderRadius: '16px', border: '1px solid rgba(11,31,23,0.1)' }}>
+                    <span style={{ fontSize: '10px', color: '#17402C', fontWeight: 700 }}>#{i + 1}</span>
+                    <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#0B1F17', margin: '4px 0' }}>{lieu.nom}</h4>
+                    <p style={{ fontSize: '11px', color: '#63736C', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {lieu.description}
+                    </p>
+                  </div>
+                ))}
               </div>
-            )}
 
-            {/* Country loaded */}
-            {!loading && !error && country && (
-              <>
-                {/* ── Hero ── */}
-                <div style={{ background: '#0B1F17', padding: '24px 16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                    <span style={{ fontSize: 40 }}>{getFlagEmoji(code)}</span>
-                    <div>
-                      <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#A3C4A3', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 2px' }}>
-                        {country.pays.continent}
-                      </p>
-                      <h1 style={{ fontSize: 24, fontWeight: 700, color: '#FBFAF6', margin: 0, lineHeight: 1.2 }}>
-                        {country.pays.nom}
-                      </h1>
-                    </div>
-                  </div>
-
-                  {/* Quick info chips */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
-                    <div style={{ background: '#EDF3ED', padding: '6px 12px', borderRadius: 8, fontSize: 12, color: '#0B1F17' }}>
-                      &#x1F6C2; {country.pratique.visa.duree_sejour_sans_visa || 'Variable'}
-                    </div>
-                    <div style={{ background: '#EDF3ED', padding: '6px 12px', borderRadius: 8, fontSize: 12, color: '#0B1F17' }}>
-                      &#x1F4B0; {country.pratique.monnaie}
-                    </div>
-                    <div style={{ background: '#EDF3ED', padding: '6px 12px', borderRadius: 8, fontSize: 12, color: '#0B1F17' }}>
-                      &#x1F5E3;&#xFE0F; {country.pratique.langues.slice(0, 2).join(', ')}
-                    </div>
-                    <div style={{ background: '#EDF3ED', padding: '6px 12px', borderRadius: 8, fontSize: 12, color: '#0B1F17' }}>
-                      &#x1F550; {country.pratique.decalage_horaire_utc.replace(/.*UTC/, 'UTC')}
-                    </div>
-                  </div>
-                </div>
-
-                {/* ── Tab pills ── */}
-                <div style={{ padding: '16px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                  <div style={{ display: 'flex', gap: 8, minWidth: 'max-content' }}>
-                    {TABS.map((tab) => (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        style={{
-                          padding: '6px 16px',
-                          borderRadius: 20,
-                          border: 'none',
-                          fontSize: 13,
-                          fontWeight: activeTab === tab.id ? 600 : 400,
-                          background: activeTab === tab.id ? '#17402C' : '#EDF3ED',
-                          color: activeTab === tab.id ? '#FBFAF6' : '#0B1F17',
-                          whiteSpace: 'nowrap',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                        }}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* ── Tab content ── */}
-                <div style={{ padding: '0 16px 16px' }}>
-
-                  {/* APERÇU */}
-                  {activeTab === 'apercu' && (
-                    <div>
-                      {/* Best season */}
-                      {bestMonths.length > 0 && (
-                        <div style={{ background: '#EDF3ED', borderRadius: 12, padding: 14, marginBottom: 16 }}>
-                          <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 4px' }}>MEILLEURE P&Eacute;RIODE</p>
-                          <p style={{ fontSize: 16, fontWeight: 700, color: '#0B1F17', margin: 0 }}>
-                            {bestMonths[0].mois} &ndash; {bestMonths[bestMonths.length - 1].mois}
-                          </p>
-                          <p style={{ fontSize: 11, color: '#6B7A72', margin: '4px 0 0' }}>
-                            {bestMonths.filter(m => m.niveau === 'ideal').length} mois id&eacute;aux
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Security overview */}
-                      <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0B1F17', margin: '0 0 10px' }}>S&eacute;curit&eacute;</h3>
-                      {country.securite.zones.map((z) => (
-                        <div
-                          key={z.nom_zone}
-                          style={{
-                            padding: 12,
-                            borderRadius: 10,
-                            marginBottom: 8,
-                            border: '1px solid rgba(11,31,23,0.06)',
-                            background: z.niveau === 'sur' ? 'rgba(163,196,163,0.15)' : z.niveau === 'deconseille_sauf_raison_imperative' || z.niveau === 'formellement_deconseille' ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)',
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                            <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: 0 }}>
-                              {z.nom_zone}
-                            </p>
-                            <span style={{
-                              fontSize: 10,
-                              fontWeight: 600,
-                              padding: '2px 8px',
-                              borderRadius: 999,
-                              background: z.niveau === 'sur' ? '#A3C4A3' : z.niveau === 'deconseille_sauf_raison_imperative' || z.niveau === 'formellement_deconseille' ? '#FCA5A5' : '#FCD34D',
-                              color: '#0B1F17',
-                            }}>
-                              {niveauSecurite[z.niveau].label}
-                            </span>
-                          </div>
-                          <p style={{ fontSize: 12, color: '#6B7A72', margin: 0 }}>{z.description}</p>
-                        </div>
-                      ))}
-
-                      {/* Events */}
-                      {country.evenements.length > 0 && (
-                        <div style={{ marginTop: 20 }}>
-                          <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0B1F17', margin: '0 0 10px' }}>&Eacute;v&eacute;nements</h3>
-                          {country.evenements.slice(0, 2).map((ev) => (
-                            <div key={ev.nom} style={{ padding: 12, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', marginBottom: 8, background: '#FBFAF6' }}>
-                              <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 2px' }}>{ev.periode}</p>
-                              <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 2px' }}>{ev.nom}</p>
-                              <p style={{ fontSize: 11, color: '#6B7A72', margin: 0 }}>{ev.description}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Top attractions */}
-                      {country.lieux_incontournables.length > 0 && (
-                        <div style={{ marginTop: 20 }}>
-                          <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0B1F17', margin: '0 0 10px' }}>Incontournables</h3>
-                          {country.lieux_incontournables.slice(0, 3).map((lieu, i) => (
-                            <div key={lieu.nom} style={{ display: 'flex', gap: 10, padding: 12, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', marginBottom: 8, background: '#FBFAF6', alignItems: 'flex-start' }}>
-                              <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#EDF3ED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#17402C', flexShrink: 0 }}>
-                                {i + 1}
-                              </div>
-                              <div style={{ flex: 1 }}>
-                                <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 2px' }}>{lieu.nom}</p>
-                                <p style={{ fontSize: 11, color: '#6B7A72', margin: 0 }}>{lieu.description}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Coutumes */}
-                      {country.coutumes && (
-                        <div style={{ marginTop: 20, padding: 14, borderRadius: 12, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6' }}>
-                          <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 6px' }}>Coutumes locales</p>
-                          <p style={{ fontSize: 12, color: '#6B7A72', margin: 0, lineHeight: 1.5 }}>{country.coutumes}</p>
-                        </div>
-                      )}
-
-                      {/* CTA */}
-                      <div style={{ marginTop: 20, padding: 16, borderRadius: 12, background: '#0B1F17' }}>
-                        <p style={{ fontSize: 15, fontWeight: 700, color: '#FBFAF6', margin: '0 0 4px' }}>
-                          Pr&eacute;parez votre voyage en {country.pays.nom}
-                        </p>
-                        <p style={{ fontSize: 12, color: '#A3C4A3', margin: '0 0 12px' }}>
-                          Notre IA configure votre kit id&eacute;al selon la saison et vos activit&eacute;s.
-                        </p>
-                        <Link
-                          href="/ai-configurator"
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', background: '#17402C', color: '#FBFAF6', borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
-                        >
-                          Configurer mon kit
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* MÉTÉO */}
-                  {activeTab === 'meteo' && (
-                    <div>
-                      <p style={{ fontSize: 13, color: '#6B7A72', margin: '0 0 16px' }}>
-                        Temp&eacute;ratures et pr&eacute;cipitations pour {country.pays.nom}.
-                      </p>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                        {country.meteo?.calendrier_12_mois && Array.isArray(country.meteo.calendrier_12_mois) && country.meteo.calendrier_12_mois.map((m) => {
-                          const colBg = m.niveau === 'ideal' ? 'rgba(163,196,163,0.2)' : m.niveau === 'deconseille' ? 'rgba(239,68,68,0.06)' : '#FBFAF6';
-                          return (
-                            <div
-                              key={m.mois}
-                              style={{
-                                padding: 10,
-                                borderRadius: 10,
-                                textAlign: 'center',
-                                border: '1px solid rgba(11,31,23,0.06)',
-                                background: colBg,
-                              }}
-                            >
-                              <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 6px' }}>{m.mois.slice(0, 3)}</p>
-                              <div style={{ width: 8, height: 8, borderRadius: '50%', margin: '0 auto 6px', background: m.niveau === 'ideal' ? '#A3C4A3' : m.niveau === 'bon' ? '#6EE7B7' : m.niveau === 'moyen' ? '#FCD34D' : '#FCA5A5' }} />
-                              <p style={{ fontSize: 11, fontWeight: 700, color: '#17402C', margin: '0 0 2px' }}>{m.temp_min_c}&deg; &ndash; {m.temp_max_c}&deg;</p>
-                              <p style={{ fontSize: 10, color: '#6B7A72', margin: 0 }}>{m.precipitations_mm}mm</p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* SÉCURITÉ */}
-                  {activeTab === 'securite' && (
-                    <div>
-                      <p style={{ fontSize: 12, color: '#6B7A72', margin: '0 0 16px' }}>
-                        Source : {country.securite.source_officielle.nom}
-                      </p>
-                      {country.securite.zones.map((z) => (
-                        <div key={z.nom_zone} style={{ padding: 14, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', marginBottom: 10, background: '#FBFAF6' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                            <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: 0 }}>{z.nom_zone}</p>
-                            <span style={{
-                              fontSize: 10,
-                              fontWeight: 600,
-                              padding: '2px 8px',
-                              borderRadius: 999,
-                              background: z.niveau === 'sur' ? '#A3C4A3' : z.niveau === 'deconseille_sauf_raison_imperative' || z.niveau === 'formellement_deconseille' ? '#FCA5A5' : '#FCD34D',
-                              color: '#0B1F17',
-                            }}>
-                              {niveauSecurite[z.niveau].label}
-                            </span>
-                          </div>
-                          <p style={{ fontSize: 12, color: '#6B7A72', margin: 0 }}>{z.description}</p>
-                        </div>
-                      ))}
-                      <div style={{ padding: 14, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', marginTop: 12 }}>
-                        <p style={{ fontSize: 12, fontWeight: 600, color: '#0B1F17', margin: '0 0 4px' }}>Ambassade</p>
-                        <p style={{ fontSize: 12, color: '#6B7A72', margin: '0 0 4px' }}>{country.securite.ambassade_consulat.nom}</p>
-                        {country.securite.ambassade_consulat.telephone && (
-                          <p style={{ fontSize: 11, color: '#6B7A72', margin: '0 0 2px' }}>{country.securite.ambassade_consulat.telephone}</p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* SANTÉ */}
-                  {activeTab === 'sante' && (
-                    <div>
-                      {/* Eau potable */}
-                      <div style={{
-                        padding: 14,
-                        borderRadius: 10,
-                        marginBottom: 12,
-                        border: '1px solid',
-                        background: country.sante.eau_potable === 'oui' ? 'rgba(163,196,163,0.15)' : country.sante.eau_potable === 'non' ? 'rgba(239,68,68,0.06)' : 'rgba(245,158,11,0.08)',
-                        borderColor: country.sante.eau_potable === 'oui' ? '#A3C4A3' : country.sante.eau_potable === 'non' ? '#FCA5A5' : '#FCD34D',
-                      }}>
-                        <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 2px' }}>Eau du robinet</p>
-                        <p style={{ fontSize: 12, color: '#6B7A72', margin: 0 }}>
-                          {country.sante.eau_potable === 'oui' ? 'Potable' : country.sante.eau_potable === 'non' ? 'Non potable' : 'Non v&eacute;rifi&eacute;'}
-                        </p>
-                      </div>
-
-                      {/* Risques */}
-                      {country.sante.risques.length > 0 && (
-                        <div style={{ marginBottom: 12 }}>
-                          <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 8px' }}>Risques sanitaires</p>
-                          {country.sante.risques.map((r) => (
-                            <div key={r} style={{ padding: 10, borderRadius: 8, border: '1px solid rgba(11,31,23,0.06)', marginBottom: 6, background: '#FBFAF6' }}>
-                              <p style={{ fontSize: 12, color: '#6B7A72', margin: 0 }}>{r}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Vaccins recommandés */}
-                      {country.sante.vaccins_recommandes.length > 0 && (
-                        <div style={{ marginBottom: 12 }}>
-                          <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 8px' }}>Vaccins recommand&eacute;s</p>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                            {country.sante.vaccins_recommandes.map((v) => (
-                              <span key={v} style={{ padding: '4px 10px', borderRadius: 999, background: '#EDF3ED', fontSize: 11, color: '#0B1F17' }}>
-                                {v}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* PRATIQUE */}
-                  {activeTab === 'pratique' && (
-                    <div>
-                      {/* Visa */}
-                      <div style={{ padding: 14, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', marginBottom: 12 }}>
-                        <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 2px' }}>VISA</p>
-                        <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 2px' }}>{country.pratique.visa.regle}</p>
-                        <p style={{ fontSize: 12, color: '#17402C', margin: 0 }}>{country.pratique.visa.duree_sejour_sans_visa}</p>
-                      </div>
-
-                      {/* Grid 2x2 */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
-                        <div style={{ padding: 12, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6' }}>
-                          <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 2px' }}>MONNAIE</p>
-                          <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: 0 }}>{country.pratique.monnaie}</p>
-                        </div>
-                        <div style={{ padding: 12, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6' }}>
-                          <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 2px' }}>PRISES</p>
-                          <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: 0 }}>{country.pratique.prise_electrique.type}</p>
-                        </div>
-                        <div style={{ padding: 12, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6' }}>
-                          <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 2px' }}>D&Eacute;CALAGE</p>
-                          <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: 0 }}>{country.pratique.decalage_horaire_utc}</p>
-                        </div>
-                        <div style={{ padding: 12, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6' }}>
-                          <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 2px' }}>CONNECTIVIT&Eacute;</p>
-                          <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: 0 }}>{country.connectivite.couverture_mobile}</p>
-                        </div>
-                      </div>
-
-                      {/* Budget */}
-                      <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 8px' }}>Budget quotidien</p>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
-                        {(['petit', 'moyen', 'gros'] as const).map((tier) => {
-                          const b = country.pratique.budget_quotidien_repere_eur[tier];
-                          const total = b.logement + b.nourriture + b.transport;
-                          const tierLabel = { petit: 'Petit', moyen: 'Moyen', gros: 'Confort' }[tier];
-                          return (
-                            <div key={tier} style={{ padding: 10, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', textAlign: 'center' }}>
-                              <p style={{ fontSize: 9, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 4px' }}>{tierLabel}</p>
-                              <p style={{ fontSize: 14, fontWeight: 700, color: '#17402C', margin: 0 }}>{total.toLocaleString('fr-FR')} &euro;</p>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Phrases de survie */}
-                      {country.pratique.phrases_survie.length > 0 && (
-                        <div>
-                          <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 8px' }}>Phrases de survie</p>
-                          {country.pratique.phrases_survie.map((p) => (
-                            <div key={p.fr} style={{ padding: 10, borderRadius: 8, border: '1px solid rgba(11,31,23,0.06)', marginBottom: 6, background: '#FBFAF6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <p style={{ fontSize: 11, color: '#6B7A72', margin: 0 }}>{p.fr}</p>
-                              <p style={{ fontSize: 12, fontWeight: 600, fontFamily: 'ui-monospace, monospace', color: '#17402C', margin: 0 }}>{p.locale}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Poids recommandé */}
-                      {country.gabarit_poids_recommande && (
-                        <div style={{ marginTop: 12, padding: 14, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6' }}>
-                          <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 4px' }}>POIDS RECOMMAND&Eacute;</p>
-                          <p style={{ fontSize: 18, fontWeight: 700, color: '#17402C', margin: '0 0 2px' }}>{country.gabarit_poids_recommande.poids_total_kg} kg</p>
-                          <p style={{ fontSize: 11, color: '#6B7A72', margin: 0 }}>{country.gabarit_poids_recommande.justification}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* VOLS */}
-                  {activeTab === 'vols' && (
-                    <div>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 12px' }}>Tendances de prix par saison</p>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
-                        {country.vols.tendance_par_saison.map((t) => {
-                          const priceStyle = prixVolStyle[t.niveau_prix];
-                          return (
-                            <div key={t.periode} style={{ padding: 10, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', textAlign: 'center' }}>
-                              <p style={{ fontSize: 9, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 4px' }}>{t.periode.split('(')[0].trim()}</p>
-                              <p style={{ fontSize: 12, fontWeight: 700, color: '#17402C', margin: 0 }}>{priceStyle.label}</p>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* CO2 */}
-                      <div style={{ padding: 14, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6' }}>
-                        <p style={{ fontSize: 12, fontWeight: 600, color: '#0B1F17', margin: '0 0 8px' }}>Empreinte carbone</p>
-                        <p style={{ fontSize: 24, fontWeight: 700, color: '#17402C', margin: '0 0 4px' }}>
-                          ~{country.carbone.vol_paris_kg_co2_estime.toLocaleString('fr-FR')} kg
-                        </p>
-                        <p style={{ fontSize: 11, color: '#6B7A72', margin: 0 }}>Paris &harr; {country.pays.nom} aller-retour</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* LIEUX */}
-                  {activeTab === 'lieux' && (
-                    <div>
-                      {country.lieux_incontournables.map((lieu, i) => (
-                        <div key={lieu.nom} style={{ display: 'flex', gap: 12, padding: 14, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', marginBottom: 10, background: '#FBFAF6', alignItems: 'flex-start' }}>
-                          <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#EDF3ED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#17402C', flexShrink: 0 }}>
-                            {String(i + 1).padStart(2, '0')}
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 4px' }}>{lieu.nom}</p>
-                            <p style={{ fontSize: 11, color: '#6B7A72', margin: 0 }}>{lieu.description}</p>
-                          </div>
-                        </div>
-                      ))}
-
-                      {country.evenements.length > 0 && (
-                        <div style={{ marginTop: 20 }}>
-                          <p style={{ fontSize: 14, fontWeight: 700, color: '#0B1F17', margin: '0 0 10px' }}>&Eacute;v&eacute;nements</p>
-                          {country.evenements.map((ev) => (
-                            <div key={ev.nom} style={{ padding: 12, borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', marginBottom: 8, background: '#FBFAF6' }}>
-                              <p style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: '#6B7A72', margin: '0 0 2px' }}>{ev.periode}</p>
-                              <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', margin: '0 0 2px' }}>{ev.nom}</p>
-                              <p style={{ fontSize: 11, color: '#6B7A72', margin: 0 }}>{ev.description}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* FAQ */}
-                  {activeTab === 'faq' && (
-                    <div>
-                      <p style={{ fontSize: 13, color: '#6B7A72', margin: '0 0 16px' }}>
-                        Questions fr&eacute;quentes sur {country.pays.nom}.
-                      </p>
-                      {country.faq.map((item, i) => (
-                        <div key={i} style={{ borderRadius: 10, border: '1px solid rgba(11,31,23,0.06)', marginBottom: 8, overflow: 'hidden' }}>
-                          <button
-                            onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                            style={{
-                              width: '100%',
-                              padding: '14px',
-                              textAlign: 'left',
-                              background: '#FBFAF6',
-                              border: 'none',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              gap: 12,
-                            }}
-                            aria-expanded={openFaq === i}
-                          >
-                            <span style={{ fontSize: 13, fontWeight: 600, color: '#0B1F17', flex: 1 }}>{item.question}</span>
-                            <span style={{ fontSize: 14, color: '#6B7A72', flexShrink: 0, transition: 'transform 0.2s', transform: openFaq === i ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-                              &#x25BC;
-                            </span>
-                          </button>
-                          {openFaq === i && (
-                            <div style={{ padding: '0 14px 14px', background: '#FBFAF6' }}>
-                              <p style={{ fontSize: 12, color: '#6B7A72', margin: 0, lineHeight: 1.5 }}>{item.reponse}</p>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-
-                      {/* CTA */}
-                      <div style={{ marginTop: 20, padding: 16, borderRadius: 12, background: '#0B1F17' }}>
-                        <p style={{ fontSize: 15, fontWeight: 700, color: '#FBFAF6', margin: '0 0 4px' }}>
-                          Kit personnalis&eacute; pour {country.pays.nom}
-                        </p>
-                        <p style={{ fontSize: 12, color: '#A3C4A3', margin: '0 0 12px' }}>
-                          Notre IA analyse la m&eacute;t&eacute;o, les activit&eacute;s et votre budget.
-                        </p>
-                        <Link
-                          href="/ai-configurator"
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', background: '#17402C', color: '#FBFAF6', borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
-                        >
-                          Configurer mon kit IA
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-
-                </div>{/* ── end tab content ── */}
-              </>
-            )}
-
-            {/* Country not found */}
-            {!loading && !error && !country && (
-              <div style={{ padding: '48px 16px', textAlign: 'center' }}>
-                <p style={{ fontSize: 14, color: '#6B7A72', margin: 0 }}>Pays non trouv&eacute;</p>
+              {/* Mobile CTA */}
+              <div style={{ marginTop: '24px', padding: '18px', background: '#0F2A20', borderRadius: '20px', color: '#FBFAF6', textAlign: 'center' }}>
+                <p style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 6px' }}>Voyagez en {country?.pays?.nom}</p>
+                <p style={{ fontSize: '12px', color: '#A8C4A2', margin: '0 0 14px' }}>Configurez votre équipement sur-mesure grâce à notre IA.</p>
+                <Link
+                  href="/ai-configurator"
+                  style={{ display: 'inline-block', width: '100%', padding: '12px', background: '#FBFAF6', color: '#0B1F17', borderRadius: '999px', fontSize: '13px', fontWeight: 700, textDecoration: 'none' }}
+                >
+                  Configurer mon Kit IA
+                </Link>
               </div>
-            )}
-
-          </div>{/* ── end inner padding div ── */}
+            </div>
+          </div>
         </MobilePageShell>
       </div>
     </>

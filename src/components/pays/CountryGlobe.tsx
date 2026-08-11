@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
@@ -195,8 +195,7 @@ export default function CountryGlobe({
         WebkitTapHighlightColor: 'transparent',
       }}
     >
-      {true && (
-        <Globe
+      <Globe
           ref={globeRef}
           width={dimensions.width}
           height={dimensions.height}
@@ -236,7 +235,6 @@ export default function CountryGlobe({
           onZoom={handleZoom}
           onGlobeReady={() => setIsGlobeReady(true)}
         />
-      )}
 
       {/* Label flottant au survol */}
       {hoveredD && (

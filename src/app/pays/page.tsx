@@ -1,33 +1,25 @@
-// page.tsx - Redesign complet EARTH
-// Design basé sur Earth.html - Globe central absolu avec panels contextuels
+"use client";
 
-'"'"'use client'"'"';
+import '@/app/pays/styles/tokens.css';
+import '@/app/pays/styles/shop.css';
+import '@/app/pays/styles/earth.css';
 
-import React, { useState, useMemo, useEffect, useCallback } from '"'"'react'"'"';
-import dynamic from '"'"'next/dynamic'"'"';
-import { useRouter } from '"'"'next/navigation'"'"';
-import Link from '"'"'next/link'"'"';
-import { getAllCountries, type Country } from '"'"'@/lib/countries'"'"';
+import React, { useState, useCallback } from "react";
+import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import { getAllCountries, type Country } from "@/lib/countries";
+import EarthCountryPanel from "@/components/earth/EarthCountryPanel";
 
-// Composants Earth
-import EarthLayout from '"'"'@/components/earth/EarthLayout'"'"';
-import EarthHeader from '"'"'@/components/earth/EarthHeader'"'"';
-import EarthExplorer from '"'"'@/components/earth/EarthExplorer'"'"';
-import EarthStats from '"'"'@/components/earth/EarthStats'"'"';
-import EarthNavigation from '"'"'@/components/earth/EarthNavigation'"'"';
-import EarthCountryPanel from '"'"'@/components/earth/EarthCountryPanel'"'"';
-
-// Globe 3D
+// Globe 3D dynamique
 const CountryGlobe = dynamic(
-  () => import('"'"'@/components/pays/CountryGlobe'"'"'),
+  () => import("@/components/pays/CountryGlobe"),
   { ssr: false }
 );
 
 const ALL_COUNTRIES = getAllCountries();
-
-// Types pour les continents
-type ContinentFilter = '"'"'all'"'"' | '"'"'europe'"'"' | '"'"'asia'"'"' | '"'"'africa'"'"' | '"'"'north-america'"'"' | '"'"'south-america'"'"' | '"'"'oceania'"'"';
-type DangerFilter = '"'"'all'"'"' | '"'"'low'"'"' | '"'"'medium'"'"' | '"'"'high'"'"';
 
 export default function EarthPage() {
   const router = useRouter();
@@ -35,16 +27,8 @@ export default function EarthPage() {
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [showCountryPanel, setShowCountryPanel] = useState(false);
   const [focusCode, setFocusCode] = useState<string | undefined>(undefined);
-  const [webglSupported, setWebglSupported] = useState(true);
-
-  // Détection WebGL
-  useEffect(() => {
-    if (typeof document !== '"'"'undefined'"'"') {
-      const canvas = document.createElement('"'"'canvas'"'"');
-      const gl = canvas.getContext('"'"'webgl'"'"') || canvas.getContext('"'"'webgl2'"'"');
-      if (!gl) setWebglSupported(false);
-    }
-  }, []);
+  const [selectedContinent, setSelectedContinent] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("Chartreuse");
 
   const handleCountryClick = useCallback((code: string) => {
     const country = ALL_COUNTRIES.find(c => c.code.toLowerCase() === code.toLowerCase());
@@ -59,79 +43,85 @@ export default function EarthPage() {
     router.push(`/pays/${code.toLowerCase()}`);
   }, [router]);
 
-  const handleResetView = useCallback(() => {
-    setSelectedCountry(null);
-    setShowCountryPanel(false);
-    setFocusCode(undefined);
-  }, []);
-
-  // Fallback WebGL
-  if (!webglSupported) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 flex items-center justify-center">
-        <div className="text-center p-8 max-w-md">
-          <div className="text-6xl mb-4">🌍</div>
-          <h1 className="text-3xl font-bold text-white mb-4">WebGL requis</h1>
-          <p className="text-white/70 mb-6">
-            Votre navigateur ne supporte pas WebGL, nécessaire pour l'"'"'expérience Earth 3D.
-            Essayez avec Chrome, Firefox ou Edge récent.
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors"
-          >
-            Rafraîchir la page
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <>
-      {/* Navigation overlay */}
-      <div className="fixed top-0 left-0 right-0 z-50 px-6 md:px-10 lg:px-16 pt-6">
-        <div className="max-w-7xl mx-auto">
-          <nav className="bg-[rgba(10,30,23,0.55)] backdrop-blur-[20px] saturate-[1.4] border-b border-[rgba(168,196,162,0.10)] rounded-[999px] px-4 py-3 md:py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="text-white">
-                  <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18M3 12h18" />
-                  </svg>
-                </div>
-                <span className="text-white font-semibold tracking-wide">Le Kit du Voyageur</span>
+    <div className="min-h-screen w-full bg-[#F5F2EA] text-[#1C2620] flex flex-col overflow-x-hidden font-sans">
+      {/* Site Header */}
+      <Header />
+
+      {/* Main Content */}
+      <main className="flex-1 w-full pt-20 pb-12">
+        <div className="max-w-[1500px] mx-auto px-2 sm:px-4">
+          {/* EARTH HERO CONTAINER (Floating Dark Green Stage on Light Background) */}
+          <section className="earth-hero w-full relative rounded-3xl sm:rounded-[36px] shadow-2xl overflow-hidden my-2">
+            {/* Ambient Orbits */}
+            <div className="orbit o1"></div>
+            <div className="orbit o2"></div>
+            <div className="orbit o3"></div>
+
+            {/* HEADING */}
+            <div className="hero-head max-w-5xl mx-auto pt-10 sm:pt-14 pb-6">
+              <div className="eye">
+                <span className="dot"></span>Earth · Cartographie vivante · 137 pays
               </div>
-              <div className="flex items-center gap-6">
-                <Link href="/pays" className="text-[rgba(255,255,255,0.75)] hover:text-white text-[13px] transition-colors">Earth</Link>
-                <Link href="/aventures" className="text-[rgba(255,255,255,0.75)] hover:text-white text-[13px] transition-colors">Aventures</Link>
-                <Link href="/refuges" className="text-[rgba(255,255,255,0.75)] hover:text-white text-[13px] transition-colors">Refuges</Link>
-                <Link href="/massifs" className="text-[rgba(255,255,255,0.75)] hover:text-white text-[13px] transition-colors">Massifs</Link>
-                <button className="text-[rgba(255,255,255,0.75)] hover:text-white hover:bg-[rgba(255,255,255,0.08)] rounded-full p-2 transition-colors">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                  </svg>
-                </button>
-              </div>
+              <h1>Le monde,<br/><em>à hauteur de sentier.</em></h1>
+              <p>Faites tourner la planète, choisissez un pays, découvrez les itinéraires testés par la communauté. Chaque point est une histoire de terrain.</p>
             </div>
-          </nav>
-        </div>
-      </div>
-      
-      <EarthLayout
-        topContent={<EarthHeader onSearchChange={(v) => setFocusCode(v || undefined)} searchValue={focusCode || '"'"''"'"'} />}
-        leftContent={
-          <EarthExplorer 
-            onContinentSelect={(c) => setFocusCode(undefined)}
-            selectedContinent="all"
-            selectedDanger="all"
-          />
-        }
-        centerContent={
-          <div className="relative w-full h-full">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-full h-full max-w-4xl max-h-[70vh]">
+
+            {/* GLOBE STAGE */}
+            <div className="globe-stage w-full max-w-[1400px] mx-auto relative">
+              {/* Search bar */}
+              <div className="globe-search">
+                <svg className="lkv-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Chercher un pays, une région, un massif…"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setFocusCode(e.target.value || undefined);
+                  }}
+                />
+                <span className="kbd"><span>⌘</span><span>K</span></span>
+                <button className="go-btn" onClick={() => setFocusCode(searchQuery)}>Lancer</button>
+              </div>
+
+              {/* Left: Continents panel */}
+              <aside className="globe-side hidden md:block">
+                <div className="lbl">Continents <span>7 / 7</span></div>
+                <div className={`cont-row ${selectedContinent === "europe" || selectedContinent === "all" ? "on" : ""}`} onClick={() => setSelectedContinent("europe")}>
+                  <div className="l"><span className="k">01</span> Europe</div>
+                  <div className="r">44 pays</div>
+                </div>
+                <div className={`cont-row ${selectedContinent === "asia" ? "on" : ""}`} onClick={() => setSelectedContinent("asia")}>
+                  <div className="l"><span className="k">02</span> Asie</div>
+                  <div className="r">48 pays</div>
+                </div>
+                <div className={`cont-row ${selectedContinent === "africa" ? "on" : ""}`} onClick={() => setSelectedContinent("africa")}>
+                  <div className="l"><span className="k">03</span> Afrique</div>
+                  <div className="r">54 pays</div>
+                </div>
+                <div className={`cont-row ${selectedContinent === "north-america" ? "on" : ""}`} onClick={() => setSelectedContinent("north-america")}>
+                  <div className="l"><span className="k">04</span> Amérique N.</div>
+                  <div className="r">23 pays</div>
+                </div>
+                <div className={`cont-row ${selectedContinent === "south-america" ? "on" : ""}`} onClick={() => setSelectedContinent("south-america")}>
+                  <div className="l"><span className="k">05</span> Amérique S.</div>
+                  <div className="r">12 pays</div>
+                </div>
+                <div className={`cont-row ${selectedContinent === "oceania" ? "on" : ""}`} onClick={() => setSelectedContinent("oceania")}>
+                  <div className="l"><span className="k">06</span> Océanie</div>
+                  <div className="r">14 pays</div>
+                </div>
+                <div className="cont-row">
+                  <div className="l"><span className="k">07</span> Antarctique</div>
+                  <div className="r">— · zones</div>
+                </div>
+              </aside>
+
+              {/* Globe Canvas */}
+              <div id="globeViz" className="w-full h-full flex items-center justify-center">
                 <CountryGlobe
                   countries={ALL_COUNTRIES}
                   onCountryClick={handleCountryClick}
@@ -139,225 +129,337 @@ export default function EarthPage() {
                   fullscreen={true}
                 />
               </div>
-            </div>
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/30 via-transparent to-slate-950/30"></div>
-              <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-slate-950 to-transparent"></div>
-              <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-slate-950 to-transparent"></div>
-            </div>
-          </div>
-        }
-        rightContent={<EarthStats />}
-        bottomContent={
-          <EarthNavigation
-            selectedCountry={selectedCountry?.nom || null}
-            totalCountries={ALL_COUNTRIES.length}
-            filteredCountries={ALL_COUNTRIES.length}
-            onResetView={handleResetView}
-          />
-        }
-      />
 
+              {/* Right: Destination info card */}
+              <aside className="globe-info-card hidden md:block">
+                <div className="flag">🇫🇷 · France · Rhône-Alpes</div>
+                <h3>Chartreuse<em>, massif</em></h3>
+                <div className="region">45.35°N · 5.86°E · 2 082 m max</div>
+                <div className="stats-row">
+                  <div>
+                    <div className="n">312</div>
+                    <div className="l">Itinéraires</div>
+                  </div>
+                  <div>
+                    <div className="n">4 850</div>
+                    <div className="l">Voyageurs</div>
+                  </div>
+                  <div>
+                    <div className="n">47</div>
+                    <div className="l">Refuges</div>
+                  </div>
+                  <div>
+                    <div className="n">6</div>
+                    <div className="l">Testeurs LKV</div>
+                  </div>
+                </div>
+                <Link href="/pays/fr" className="cta">
+                  Explorer la Chartreuse
+                  <svg className="lkv-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </Link>
+              </aside>
+
+              {/* Bottom: Controls */}
+              <div className="globe-controls">
+                <button className="gc-btn on">
+                  <svg className="lkv-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg>
+                  Vue mondiale
+                </button>
+                <button className="gc-btn">
+                  <svg className="lkv-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 12h20M12 2v20"/></svg>
+                  Grille
+                </button>
+                <button className="gc-btn">
+                  <svg className="lkv-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zM12 8v4l3 2"/></svg>
+                  Nuit
+                </button>
+                <div className="sep"></div>
+                <button className="gc-btn" aria-label="Layout">
+                  <svg className="lkv-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>
+                </button>
+                <button className="gc-btn" aria-label="Suivant">
+                  <svg className="lkv-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12h16M14 6l6 6-6 6"/></svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Bottom Hints */}
+            <div className="earth-bottom max-w-[1400px] mx-auto px-6">
+              <div className="hints">
+                <div className="hint"><span className="k">Cliquer</span>un pays pour zoomer</div>
+                <div className="hint"><span className="k">Glisser</span>pour tourner</div>
+                <div className="hint"><span className="k">Scroll</span>pour mezoomer</div>
+              </div>
+              <div className="marker"><span className="d"></span>Données mises à jour il y a 3 minutes · 8 428 points actifs</div>
+            </div>
+          </section>
+
+          {/* DESTINATIONS SECTION */}
+          <section className="dest-section w-full rounded-3xl mt-8">
+            <div className="max-w-[1400px] mx-auto">
+              <div className="dest-head">
+                <div className="l">
+                  <div className="lkv-eyebrow">Découvertes · saison automne 2026</div>
+                  <h2>Six pays<br/><em>qui montent.</em></h2>
+                  <p>Les destinations où la communauté trace de nouveaux itinéraires ce trimestre. Sélection humaine, pas d'algorithme.</p>
+                </div>
+                <div className="filters">
+                  <button className="on">Tendance</button>
+                  <button>Populaires</button>
+                  <button>Sauvage</button>
+                  <button>Proche</button>
+                </div>
+              </div>
+
+              <div className="dest-grid">
+                <Link href="/pays/fr" className="dest-card wide">
+                  <div className="bg" style={{ backgroundImage: `url('https://images.pexels.com/photos/2166559/pexels-photo-2166559.jpeg?auto=compress&cs=tinysrgb&w=1200')` }}></div>
+                  <div className="top">
+                    <div className="flag-code"><span className="fc">FR</span> France</div>
+                    <button className="fav" aria-label="Favori">
+                      <svg className="lkv-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+                    </button>
+                  </div>
+                  <div className="info">
+                    <h3>Massif de la<br/><em>Chartreuse.</em></h3>
+                    <div className="sub">Alpes du Nord <span className="sep">·</span> 312 itinéraires <span className="sep">·</span> refuges gardés</div>
+                    <div className="meta">
+                      <span className="m-chip"><span className="k">Alt</span>2 082 m</span>
+                      <span className="m-chip"><span className="k">Saison</span>Mai–Oct</span>
+                      <span className="m-chip"><span className="k">Diff</span>Modérée</span>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link href="/pays/is" className="dest-card">
+                  <div className="bg" style={{ backgroundImage: `url('https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg?auto=compress&cs=tinysrgb&w=800')` }}></div>
+                  <div className="top">
+                    <div className="flag-code"><span className="fc">IS</span> Islande</div>
+                    <button className="fav" aria-label="Favori">
+                      <svg className="lkv-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+                    </button>
+                  </div>
+                  <div className="info">
+                    <h3>Landmannalaugar<em>.</em></h3>
+                    <div className="sub">Hautes terres <span className="sep">·</span> 4 j</div>
+                    <div className="meta">
+                      <span className="m-chip"><span className="k">Type</span>Trek</span>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link href="/pays/jp" className="dest-card">
+                  <div className="bg" style={{ backgroundImage: `url('https://images.pexels.com/photos/691637/pexels-photo-691637.jpeg?auto=compress&cs=tinysrgb&w=800')` }}></div>
+                  <div className="top">
+                    <div className="flag-code"><span className="fc">JP</span> Japon</div>
+                    <button className="fav" aria-label="Favori">
+                      <svg className="lkv-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+                    </button>
+                  </div>
+                  <div className="info">
+                    <h3>Kumano<br/><em>Kodō.</em></h3>
+                    <div className="sub">Kii · 7 jours</div>
+                    <div className="meta">
+                      <span className="m-chip"><span className="k">Type</span>Pèlerinage</span>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+
+              <div className="dest-grid row-2">
+                <Link href="/pays/no" className="dest-card">
+                  <div className="bg" style={{ backgroundImage: `url('https://images.pexels.com/photos/572897/pexels-photo-572897.jpeg?auto=compress&cs=tinysrgb&w=800')` }}></div>
+                  <div className="top">
+                    <div className="flag-code"><span className="fc">NO</span> Norvège</div>
+                    <button className="fav" aria-label="Favori">
+                      <svg className="lkv-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+                    </button>
+                  </div>
+                  <div className="info">
+                    <h3>Lofoten<em>.</em></h3>
+                    <div className="sub">Archipel · 5 j</div>
+                    <div className="meta">
+                      <span className="m-chip"><span className="k">Type</span>Côtier</span>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link href="/pays/np" className="dest-card">
+                  <div className="bg" style={{ backgroundImage: `url('https://images.pexels.com/photos/814499/pexels-photo-814499.jpeg?auto=compress&cs=tinysrgb&w=800')` }}></div>
+                  <div className="top">
+                    <div className="flag-code"><span className="fc">NP</span> Népal</div>
+                    <button className="fav" aria-label="Favori">
+                      <svg className="lkv-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+                    </button>
+                  </div>
+                  <div className="info">
+                    <h3>Vallée du<br/><em>Langtang.</em></h3>
+                    <div className="sub">Himalaya · 10 j</div>
+                    <div className="meta">
+                      <span className="m-chip"><span className="k">Alt</span>4 984 m</span>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link href="/pays/cl" className="dest-card wide">
+                  <div className="bg" style={{ backgroundImage: `url('https://images.pexels.com/photos/2437291/pexels-photo-2437291.jpeg?auto=compress&cs=tinysrgb&w=1200')` }}></div>
+                  <div className="top">
+                    <div className="flag-code"><span className="fc">CL</span> Chili</div>
+                    <button className="fav" aria-label="Favori">
+                      <svg className="lkv-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+                    </button>
+                  </div>
+                  <div className="info">
+                    <h3>Torres del<br/><em>Paine.</em></h3>
+                    <div className="sub">Patagonie <span className="sep">·</span> 8 jours <span className="sep">·</span> circuit W</div>
+                    <div className="meta">
+                      <span className="m-chip"><span className="k">Alt</span>1 200 m</span>
+                      <span className="m-chip"><span className="k">Saison</span>Déc–Fév</span>
+                      <span className="m-chip"><span className="k">Diff</span>Soutenue</span>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </section>
+
+          {/* LIVE + STATS */}
+          <section className="live-section w-full rounded-3xl mt-8">
+            <div className="max-w-[1400px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-10">
+              {/* Live Feed */}
+              <div className="live-panel lg:col-span-5">
+                <div className="head">
+                  <div className="l"><span className="dot"></span><span>Activité live</span></div>
+                  <div className="cnt">14:32 · 8 428 en ligne</div>
+                </div>
+                <h3>Ce qui se passe<br/><em>en ce moment.</em></h3>
+                <div className="live-feed">
+                  <div className="live-item">
+                    <div className="av" style={{ backgroundImage: `url('https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
+                    <div className="txt">
+                      <div className="n">Léna a bivouaqué au <em>Grand Som</em></div>
+                      <div className="m">FR · Chartreuse · il y a 4 min</div>
+                    </div>
+                    <div className="code">FR · 45.3N</div>
+                  </div>
+                  <div className="live-item">
+                    <div className="av" style={{ backgroundImage: `url('https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
+                    <div className="txt">
+                      <div className="n">Antoine a publié un carnet <em>Kumano</em></div>
+                      <div className="m">JP · Kii · il y a 12 min</div>
+                    </div>
+                    <div className="code">JP · 33.8N</div>
+                  </div>
+                  <div className="live-item">
+                    <div className="av" style={{ backgroundImage: `url('https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
+                    <div className="txt">
+                      <div className="n">Hélène cherche un binôme pour <em>Landmannalaugar</em></div>
+                      <div className="m">IS · Août 2026 · il y a 28 min</div>
+                    </div>
+                    <div className="code">IS · 63.9N</div>
+                  </div>
+                  <div className="live-item">
+                    <div className="av" style={{ backgroundImage: `url('https://images.pexels.com/photos/1043473/pexels-photo-1043473.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
+                    <div className="txt">
+                      <div className="n">Bertrand a rejoint le club <em>Patagonie 2026</em></div>
+                      <div className="m">CL · Torres del Paine · il y a 41 min</div>
+                    </div>
+                    <div className="code">CL · 50.9S</div>
+                  </div>
+                  <div className="live-item">
+                    <div className="av" style={{ backgroundImage: `url('https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
+                    <div className="txt">
+                      <div className="n">Marie a validé le refuge <em>Bellefond</em></div>
+                      <div className="m">FR · Vercors · il y a 1 h</div>
+                    </div>
+                    <div className="code">FR · 45.0N</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div className="stats-panel lg:col-span-7">
+                <div className="stat-card">
+                  <div className="lbl">
+                    <div className="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" width="12" height="12"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg></div>
+                    Pays cartographiés
+                  </div>
+                  <div className="n">137<em> / 195</em></div>
+                  <div className="desc">70 % du globe. On avance département par département, jamais par claim marketing.<span className="delta">+8 ce mois</span></div>
+                </div>
+
+                <div className="stat-card dark">
+                  <div className="lbl">
+                    <div className="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" width="12" height="12"><path d="M9 20l-5-5 5-5M4 15h11a5 5 0 000-10H9"/></svg></div>
+                    Itinéraires vérifiés
+                  </div>
+                  <div className="n">2 481</div>
+                  <div className="desc">Chaque itinéraire passe par un testeur avant publication. Aucun accord commercial.<span className="delta">+12 % T3</span></div>
+                </div>
+
+                <div className="stat-card feat">
+                  <div>
+                    <div className="lbl">
+                      <div className="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" width="12" height="12"><path d="M12 22s-8-9-8-14a8 8 0 1116 0c0 5-8 14-8 14z"/><circle cx="12" cy="8" r="3"/></svg></div>
+                      Focus région · Été 2026
+                    </div>
+                    <h4>La Chartreuse<br/>en <em>six semaines.</em></h4>
+                    <p className="desc">Trois testeurs, 42 nuits en bivouac, 312 itinéraires notés. Le journal complet arrive en septembre.</p>
+                    <Link href="/journal" className="lkv-btn lkv-btn-primary lkv-btn-sm cta">
+                      Lire les carnets
+                      <svg className="lkv-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </Link>
+                  </div>
+                  <div className="mini-map">
+                    <div className="pin p1"></div>
+                    <div className="pin p2"></div>
+                    <div className="pin p3"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* METHOD SECTION */}
+          <section className="method-section w-full rounded-3xl mt-8">
+            <div className="max-w-[1400px] mx-auto">
+              <div className="method-head">
+                <div className="lkv-eyebrow">Notre méthode · terrain d'abord</div>
+                <h2>On cartographie<br/><em>ce qu'on a marché.</em></h2>
+                <p>Pas de scraping. Pas d'IA générative pour peupler la carte. Chaque point vient d'un carnet signé, relu, situé.</p>
+              </div>
+              <div className="method-grid">
+                <div className="method-card">
+                  <div className="num">01 · Terrain</div>
+                  <h4>Six semaines<br/>de <em>marche.</em></h4>
+                  <p>Chaque région est visitée par trois testeurs partenaires. Ils partent avec un carnet vierge et rentrent avec des points GPS, des relevés météo, des noms d'aubergistes.</p>
+                </div>
+                <div className="method-card">
+                  <div className="num">02 · Relecture</div>
+                  <h4>Une carte<br/><em>relue</em> à deux voix.</h4>
+                  <p>Chaque itinéraire est confié à un second testeur, indépendant du premier. Ce qu'ils voient différemment, on le note. Ce qui casse, on le retire.</p>
+                </div>
+                <div className="method-card">
+                  <div className="num">03 · Publication</div>
+                  <h4>Publié quand<br/>on est <em>sûrs.</em></h4>
+                  <p>Un pays ne monte sur l'atlas qu'après avoir traversé nos deux filtres. On préfère 137 pays vérifiés à 195 pays approximatifs.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      {/* Site Footer */}
+      <Footer />
+
+      {/* Country Detail Modal */}
       <EarthCountryPanel
         country={selectedCountry}
         isVisible={showCountryPanel}
         onClose={() => setShowCountryPanel(false)}
         onExploreCountry={handleExploreCountry}
       />
-
-      {/* Destinations section */}
-      <section className="relative z-20 py-16 px-6 md:px-10 lg:px-16 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-10">
-            <div className="text-sm text-emerald-600 mb-3">Découvertes · saison automne 2026</div>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-              Six pays <em className="font-serif text-emerald-700">qui montent.</em>
-            </h2>
-            <p className="text-lg text-slate-600 max-w-2xl">
-              Les destinations où la communauté trace de nouveaux itinéraires ce trimestre.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-8">
-            {/* Wide card */}
-            <div className="lg:col-span-4.8 relative group overflow-hidden rounded-2xl aspect-[4/5] bg-slate-100 cursor-pointer transition-transform hover:-translate-y-1">
-              <img src="https://images.pexels.com/photos/2166559/pexels-photo-2166559.jpeg?auto=compress&cs=tinysrgb&w=1200" alt="Chartreuse" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-106" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-              <div className="absolute top-4 left-4">
-                <div className="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-slate-900 flex items-center gap-1">
-                  <span className="text-lg">🇫🇷</span> FR
-                </div>
-              </div>
-              <button className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/15 backdrop-blur flex items-center justify-center text-white hover:bg-white/25 transition-colors">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-              </button>
-              <div className="absolute bottom-5 left-5 right-5">
-                <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">Massif de la Chartreuse <em className="font-serif text-emerald-300">,</em></h3>
-                <p className="text-sm text-white/70 mb-3">Alpes du Nord · 312 itinéraires · refuges gardés</p>
-                <div className="flex gap-2 flex-wrap">
-                  <span className="px-3 py-1 bg-white/15 backdrop-blur rounded-full text-[10px] font-medium text-white"><span className="opacity-60">Alt</span> 2082 m</span>
-                  <span className="px-3 py-1 bg-white/15 backdrop-blur rounded-full text-[10px] font-medium text-white"><span className="opacity-60">Saison</span> Mai–Oct</span>
-                  <span className="px-3 py-1 bg-white/15 backdrop-blur rounded-full text-[10px] font-medium text-white"><span className="opacity-60">Diff</span> Modérée</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Two regular cards */}
-            <div className="lg:col-span-2.4 relative group overflow-hidden rounded-2xl aspect-[4/5] bg-slate-100 cursor-pointer transition-transform hover:-translate-y-1">
-              <img src="https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Landmannalaugar" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-106" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-              <div className="absolute top-4 left-4">
-                <div className="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-slate-900 flex items-center gap-1">
-                  <span className="text-lg">🇮🇸</span> IS
-                </div>
-              </div>
-              <button className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/15 backdrop-blur flex items-center justify-center text-white hover:bg-white/25 transition-colors">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-              </button>
-              <div className="absolute bottom-5 left-5 right-5">
-                <h3 className="text-xl md:text-2xl font-bold text-white mb-2">Landmannalaugar <em className="font-serif text-emerald-300">.</em></h3>
-                <p className="text-sm text-white/70 mb-3">Hautes terres · 4 j</p>
-                <div className="flex gap-2 flex-wrap">
-                  <span className="px-3 py-1 bg-white/15 backdrop-blur rounded-full text-[10px] font-medium text-white"><span className="opacity-60">Type</span> Trek</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="lg:col-span-2.4 relative group overflow-hidden rounded-2xl aspect-[4/5] bg-slate-100 cursor-pointer transition-transform hover:-translate-y-1">
-              <img src="https://images.pexels.com/photos/691637/pexels-photo-691637.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Kumano" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-106" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-              <div className="absolute top-4 left-4">
-                <div className="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-slate-900 flex items-center gap-1">
-                  <span className="text-lg">🇯🇵</span> JP
-                </div>
-              </div>
-              <button className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/15 backdrop-blur flex items-center justify-center text-white hover:bg-white/25 transition-colors">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-              </button>
-              <div className="absolute bottom-5 left-5 right-5">
-                <h3 className="text-xl md:text-2xl font-bold text-white mb-2">Kumano <em className="font-serif text-emerald-300">Kodō.</em></h3>
-                <p className="text-sm text-white/70 mb-3">Kii · 7 jours</p>
-                <div className="flex gap-2 flex-wrap">
-                  <span className="px-3 py-1 bg-white/15 backdrop-blur rounded-full text-[10px] font-medium text-white"><span className="opacity-60">Type</span> Pèlerinage</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Three cards row 2 */}
-            <div className="lg:col-span-2.4 relative group overflow-hidden rounded-2xl aspect-[4/5] bg-slate-100 cursor-pointer transition-transform hover:-translate-y-1">
-              <img src="https://images.pexels.com/photos/572897/pexels-photo-572897.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Lofoten" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-106" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-              <div className="absolute top-4 left-4">
-                <div className="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-slate-900 flex items-center gap-1">
-                  <span className="text-lg">🇳🇴</span> NO
-                </div>
-              </div>
-              <button className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/15 backdrop-blur flex items-center justify-center text-white hover:bg-white/25 transition-colors">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-              </button>
-              <div className="absolute bottom-5 left-5 right-5">
-                <h3 className="text-xl md:text-2xl font-bold text-white mb-2">Lofoten <em className="font-serif text-emerald-300">.</em></h3>
-                <p className="text-sm text-white/70 mb-3">Archipel · 5 j</p>
-                <div className="flex gap-2 flex-wrap">
-                  <span className="px-3 py-1 bg-white/15 backdrop-blur rounded-full text-[10px] font-medium text-white"><span className="opacity-60">Type</span> Côtier</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="lg:col-span-2.4 relative group overflow-hidden rounded-2xl aspect-[4/5] bg-slate-100 cursor-pointer transition-transform hover:-translate-y-1">
-              <img src="https://images.pexels.com/photos/814499/pexels-photo-814499.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Langtang" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-106" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-              <div className="absolute top-4 left-4">
-                <div className="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-slate-900 flex items-center gap-1">
-                  <span className="text-lg">🇳🇵</span> NP
-                </div>
-              </div>
-              <button className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/15 backdrop-blur flex items-center justify-center text-white hover:bg-white/25 transition-colors">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-              </button>
-              <div className="absolute bottom-5 left-5 right-5">
-                <h3 className="text-xl md:text-2xl font-bold text-white mb-2">Vallée du Langtang <em className="font-serif text-emerald-300">.</em></h3>
-                <p className="text-sm text-white/70 mb-3">Himalaya · 10 j</p>
-                <div className="flex gap-2 flex-wrap">
-                  <span className="px-3 py-1 bg-white/15 backdrop-blur rounded-full text-[10px] font-medium text-white"><span className="opacity-60">Alt</span> 4984 m</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="lg:col-span-4.8 relative group overflow-hidden rounded-2xl aspect-[4/5] bg-slate-100 cursor-pointer transition-transform hover:-translate-y-1">
-              <img src="https://images.pexels.com/photos/2437291/pexels-photo-2437291.jpeg?auto=compress&cs=tinysrgb&w=1200" alt="Torres del Paine" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-106" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-              <div className="absolute top-4 left-4">
-                <div className="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-slate-900 flex items-center gap-1">
-                  <span className="text-lg">🇨🇱</span> CL
-                </div>
-              </div>
-              <button className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/15 backdrop-blur flex items-center justify-center text-white hover:bg-white/25 transition-colors">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-              </button>
-              <div className="absolute bottom-5 left-5 right-5">
-                <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">Torres del Paine <em className="font-serif text-emerald-300">.</em></h3>
-                <p className="text-sm text-white/70 mb-3">Patagonie · 8 jours · circuit W</p>
-                <div className="flex gap-2 flex-wrap">
-                  <span className="px-3 py-1 bg-white/15 backdrop-blur rounded-full text-[10px] font-medium text-white"><span className="opacity-60">Alt</span> 1200 m</span>
-                  <span className="px-3 py-1 bg-white/15 backdrop-blur rounded-full text-[10px] font-medium text-white"><span className="opacity-60">Saison</span> Déc–Fév</span>
-                  <span className="px-3 py-1 bg-white/15 backdrop-blur rounded-full text-[10px] font-medium text-white"><span className="opacity-60">Diff</span> Soutenue</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats section */}
-      <section className="relative z-20 py-16 px-6 md:px-10 lg:px-16 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-slate-900 rounded-2xl p-6 text-white">
-              <div className="text-sm text-emerald-300 mb-2">🌍 Pays cartographiés</div>
-              <div className="text-4xl font-bold mb-2">137 <span className="text-2xl text-emerald-400">/ 195</span></div>
-              <div className="text-sm text-slate-400">70 % du globe. On avance département par département.</div>
-            </div>
-            <div className="bg-emerald-900 rounded-2xl p-6 text-white">
-              <div className="text-sm text-emerald-200 mb-2">🧭 Itinéraires vérifiés</div>
-              <div className="text-4xl font-bold mb-2">2 481</div>
-              <div className="text-sm text-emerald-100/80">Chaque itinéraire passe par un testeur avant publication.</div>
-            </div>
-          </div>
-          
-          <div className="bg-slate-50 rounded-2xl p-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div>
-                <div className="text-sm text-emerald-700 mb-3">01 · Terrain</div>
-                <h4 className="text-xl font-bold mb-3">Six semaines de marche.</h4>
-                <p className="text-sm text-slate-600">Chaque région est visitée par trois testeurs partenaires.</p>
-              </div>
-              <div>
-                <div className="text-sm text-emerald-700 mb-3">02 · Relecture</div>
-                <h4 className="text-xl font-bold mb-3">Une carte relue à deux voix.</h4>
-                <p className="text-sm text-slate-600">Chaque itinéraire est confié à un second testeur.</p>
-              </div>
-              <div>
-                <div className="text-sm text-emerald-700 mb-3">03 · Publication</div>
-                <h4 className="text-xl font-bold mb-3">Publié quand on est sûrs.</h4>
-                <p className="text-sm text-slate-600">On préfère 137 pays vérifiés à 195 pays approximatifs.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </>
+    </div>
   );
 }
