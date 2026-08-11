@@ -451,8 +451,8 @@ export default function InteractiveMap() {
     if (!mapRef.current) return;
     import('leaflet').then((L) => {
       const coords: [number, number][] = [];
-      trails.forEach(t => { if (t.lat && t.lng) coords.push([t.lat, t.lng]); });
-      filteredPois.forEach(p => { if (!isNaN(p.lat) && !isNaN(p.lng)) coords.push([p.lat, p.lng]); });
+      trails.forEach(t => { if (Number.isFinite(t.lat) && Number.isFinite(t.lng)) coords.push([t.lat as number, t.lng as number]); });
+      filteredPois.forEach(p => { if (Number.isFinite(p.lat) && Number.isFinite(p.lng)) coords.push([p.lat, p.lng]); });
       if (coords.length > 0) {
         mapRef.current!.fitBounds(L.latLngBounds(coords), { padding: [50, 50] });
       }

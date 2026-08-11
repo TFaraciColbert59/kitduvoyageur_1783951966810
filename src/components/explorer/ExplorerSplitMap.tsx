@@ -101,6 +101,7 @@ export default function ExplorerSplitMap({
 
       // Add markers
       listings.forEach((listing) => {
+        if (!Number.isFinite(listing.lat) || !Number.isFinite(listing.lng)) return;
         const icon = buildIcon(listing, listing.id === selectedId, L);
         const marker = L.marker([listing.lat, listing.lng], { icon });
         marker.on('click', () => onMarkerClick(listing));
@@ -135,7 +136,7 @@ export default function ExplorerSplitMap({
       // Pan to selected
       if (selectedId) {
         const listing = listings.find((l) => l.id === selectedId);
-        if (listing && mapRef.current) {
+        if (listing && mapRef.current && Number.isFinite(listing.lat) && Number.isFinite(listing.lng)) {
           mapRef.current.panTo([listing.lat, listing.lng], { animate: true, duration: 0.5 });
         }
       }
