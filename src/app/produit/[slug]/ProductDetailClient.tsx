@@ -26,6 +26,12 @@ interface Product {
   poids_g: number;
   images: { url: string; alt: string }[];
   tags: string[];
+  materials?: string;
+  dimensions?: string;
+  warranty?: string;
+  variants?: any[];
+  rating?: number;
+  review_count?: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -33,7 +39,7 @@ interface Product {
 // ─────────────────────────────────────────────────────────────────────────────
 function mapToProduct(data: Record<string, unknown>): Product {
   const name = (data.name as string) || 'Produit';
-  const image = (data.image as string) || '/assets/images/no_image.png';
+  const image = (data.image as string) || 'https://via.placeholder.com/400x300?text=No+Image';
   return {
     id: data.id as string,
     slug: data.slug as string,
@@ -42,9 +48,15 @@ function mapToProduct(data: Record<string, unknown>): Product {
     categorie: (data.category_main as string) || (data.category as string) || 'Équipement',
     description: (data.description_why as string) || '',
     prix_cents: Number.isFinite(Number(data.price_eur)) ? Math.round(Number(data.price_eur) * 100) : 0,
-    poids_g: Number.isFinite(Number(data.weight_g)) ? Number(data.weight_g) : 0,
+    poids_g: Number.isFinite(Number(data.weight_g)) ? Number(data.weight_g) : Number(data.weight_grams) || 0,
     images: [{ url: image, alt: (data.image_alt as string) || name }],
-    tags: [],
+    tags: Array.isArray(data.tags) ? (data.tags as string[]) : [],
+    materials: (data.materials as string) || '',
+    dimensions: (data.dimensions as string) || '',
+    warranty: (data.warranty as string) || '',
+    variants: Array.isArray(data.variants) ? (data.variants as any[]) : [],
+    rating: Number(data.rating) || 4.9,
+    review_count: Number(data.review_count) || 12,
   };
 }
 
@@ -67,9 +79,6 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
   const { user } = useAuth();
 
   useEffect(() => {
-    // If we already have initial data, skip the client fetch
-    if (initialProduct) return;
-
     let cancelled = false;
 
     async function load() {
@@ -77,16 +86,36 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
       setLoadError(false);
       try {
         const supabase = createClient();
-        const { data, error } = await supabase
-          .from('products')
-          .select('*')
-          .eq('slug', slug)
-          .single();
+        let currentProdData = initialProduct;
+
+        if (!currentProdData) {
+          const { data, error } = await supabase
+            .from('shop_products')
+            .select('*')
+            .eq('slug', slug)
+            .single();
+          if (error) throw error;
+          currentProdData = data;
+        }
 
         if (cancelled) return;
 
-        if (data && !error) {
-          setProduct(mapToProduct(data));
+        if (currentProdData) {
+          const mapped = mapToProduct(currentProdData);
+          
+          // Fetch images associated with this product
+          const { data: imgData } = await supabase
+            .from('product_images')
+            .select('url, alt')
+            .eq('product_id', currentProdData.id)
+            .order('sort_order', { ascending: true });
+
+          if (!cancelled) {
+            if (imgData && imgData.length > 0) {
+              mapped.images = imgData.map(img => ({ url: img.url, alt: img.alt || mapped.nom }));
+            }
+            setProduct(mapped);
+          }
         } else {
           setProduct(null);
           setLoadError(true);
@@ -236,7 +265,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.3 }}
-                        src={product.images[activeImage]?.url || '/assets/images/no_image.png'}
+                        src={product.images[activeImage]?.url || 'https://via.placeholder.com/400x300?text=No+Image'}
                         alt={product.images[activeImage]?.alt}
                         className="w-full h-full object-cover mix-blend-multiply"
                       />
@@ -493,303 +522,161 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
       <div className="block md:hidden">
         <MobilePageShell>
           {/* Gallery */}
-          <div
-            style={{
-              height: '380px',
-              background: 'linear-gradient(160deg, #2D6B4A 0%, #17402C 60%, #0B1F17 100%)',
-              position: 'relative',
-              overflow: 'hidden',
-            }}
-          >
-            {/* Chips overlay */}
-            <div
-              style={{
-                position: 'absolute',
-                top: '12px',
-                left: '16px',
-                display: 'flex',
-                gap: '6px',
-                zIndex: 2,
-              }}
-            >
-              <span
-                style={{
-                  padding: '4px 10px',
-                  background: 'rgba(255,255,255,0.9)',
-                  borderRadius: '999px',
-                  fontSize: '9px',
-                  fontWeight: 600,
-                  color: '#17402C',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
-                }}
-              >
-                Nouveauté
-              </span>
-              <span
-                style={{
-                  padding: '4px 10px',
-                  background: 'rgba(255,255,255,0.9)',
-                  borderRadius: '999px',
-                  fontSize: '9px',
-                  fontWeight: 600,
-                  color: '#17402C',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
-                }}
-              >
-                -14 %
-              </span>
+          <div className="relative w-full aspect-square bg-[#E8E4D8] overflow-hidden">
+            {/* Back button */}
+            <div className="absolute top-4 left-4 z-20 flex gap-2">
+              <Link href="/boutique" className="w-9 h-9 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-[#1C2620] shadow-sm">
+                <Icon name="ChevronLeftIcon" size={18} variant="outline" />
+              </Link>
             </div>
 
-            {/* Center SVG icon */}
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+            {/* Favorite button */}
+            <button
+              onClick={() => setIsFavorite(!isFavorite)}
+              className="absolute top-4 right-4 z-20 w-9 h-9 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-[#1C2620] shadow-sm"
             >
-              <svg width="140" height="140" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="0.8">
-                <path d="M3 17l4-8 4 4 3-6 4 10H3z" />
-                <circle cx="12" cy="6" r="2.5" />
-                <path d="M8 20v-4a4 4 0 0 1 8 0v4" />
-              </svg>
-            </div>
+              <Icon name="HeartIcon" size={18} variant={isFavorite ? "solid" : "outline"} className={isFavorite ? "text-red-500" : ""} />
+            </button>
 
-            {/* Pagination dots */}
-            <div
-              style={{
-                position: 'absolute',
-                bottom: '16px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                display: 'flex',
-                gap: '6px',
+            {/* Image Slider */}
+            <div 
+              className="w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide" 
+              id="mobile-gallery"
+              onScroll={(e) => {
+                const target = e.currentTarget;
+                const index = Math.round(target.scrollLeft / target.clientWidth);
+                if (index !== activeImage) setActiveImage(index);
               }}
             >
-              {[0, 1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  style={{
-                    width: i === 0 ? '20px' : '6px',
-                    height: '6px',
-                    borderRadius: '999px',
-                    background: i === 0 ? '#fff' : 'rgba(255,255,255,0.3)',
-                    transition: 'width 200ms ease',
-                  }}
-                />
+              {product.images.map((img, i) => (
+                <div key={i} className="w-full h-full flex-shrink-0 snap-start flex items-center justify-center bg-[#E3DFD2]">
+                  <img src={img.url} alt={img.alt || product.nom} className="w-full h-full object-cover mix-blend-multiply" />
+                </div>
               ))}
-            </div>
-          </div>
-
-          {/* Info section */}
-          <div style={{ padding: '16px 20px 8px' }}>
-            <div
-              style={{
-                fontSize: '10px',
-                letterSpacing: '0.14em',
-                textTransform: 'uppercase',
-                color: '#6B7A72',
-                fontWeight: 500,
-              }}
-            >
-              LE KIT · N°01 · PORTAGE
-            </div>
-            <h1
-              style={{
-                fontSize: '24px',
-                fontWeight: 500,
-                letterSpacing: '-0.02em',
-                lineHeight: 1.1,
-                margin: '4px 0',
-                color: '#0B1F17',
-              }}
-            >
-              {product.nom.split(' ').slice(0, -1).join(' ')}{' '}
-              <em
-                style={{
-                  fontFamily: 'Georgia, serif',
-                  fontStyle: 'italic',
-                  color: '#17402C',
-                  fontWeight: 400,
-                }}
-              >
-                {product.nom.split(' ').slice(-1)}
-              </em>
-            </h1>
-
-            {/* Price */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '8px',
-                marginTop: '8px',
-              }}
-            >
-              <span style={{ fontSize: '22px', fontWeight: 500, color: '#17402C' }}>
-                {product.prix_cents > 0 ? `${(product.prix_cents / 100).toFixed(0)} €` : '—'}
-              </span>
-              {product.prix_cents > 0 && (
-                <span style={{ fontSize: '11px', color: '#8B978F' }}>TVA incluse</span>
+              {product.images.length === 0 && (
+                <div className="w-full h-full flex items-center justify-center bg-[#E3DFD2] text-sm text-[#5C6B5E]">
+                  Aucune image disponible
+                </div>
               )}
             </div>
 
-            {/* Stars */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                marginTop: '6px',
-              }}
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="#A8C8A0" stroke="#A8C8A0" strokeWidth="1">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-              <span style={{ fontSize: '11px', color: '#6B7A72' }}>4.9 (125 avis)</span>
-            </div>
-          </div>
-
-          {/* Attributes grid 2×2 */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '8px',
-              padding: '12px 20px',
-            }}
-          >
-            {[
-              { label: 'Capacité', value: '45', unit: 'litres' },
-              { label: 'Poids', value: '1,4', unit: 'kg' },
-              { label: 'Matière', value: 'Coton huilé', unit: '12 oz' },
-              { label: 'Origine', value: 'Alpes-de-Haute-Provence', unit: 'France' },
-            ].map((attr) => (
-              <div
-                key={attr.label}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '10px 12px',
-                  background: '#F4F1EA',
-                  borderRadius: '14px',
-                }}
-              >
-                <div
-                  style={{
-                    width: '30px',
-                    height: '30px',
-                    borderRadius: '8px',
-                    background: '#EAF1E5',
-                    color: '#17402C',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '12px',
-                    fontWeight: 500,
-                    fontFamily: 'ui-monospace, monospace',
-                    flexShrink: 0,
-                  }}
-                >
-                  {attr.label === 'Capacité' ? '45' : attr.label === 'Poids' ? '1' : attr.label === 'Matière' ? '•' : '★'}
-                </div>
-                <div>
-                  <div
-                    style={{
-                      fontSize: '9px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.1em',
-                      color: '#6B7A72',
-                    }}
-                  >
-                    {attr.label}
-                  </div>
-                  <div style={{ fontSize: '12px', fontWeight: 500, color: '#0B1F17' }}>
-                    {attr.value}{' '}
-                    <em
-                      style={{
-                        fontFamily: 'Georgia, serif',
-                        fontStyle: 'italic',
-                        color: '#17402C',
-                        fontSize: '11px',
-                      }}
-                    >
-                      {attr.unit}
-                    </em>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Color selector */}
-          <div style={{ padding: '8px 20px' }}>
-            <div
-              style={{
-                fontSize: '12px',
-                fontWeight: 500,
-                color: '#0B1F17',
-                marginBottom: '10px',
-              }}
-            >
-              Coloris
-            </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              {COLORS.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => setSelectedColor(c.id)}
-                  style={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: '14px',
-                    border: selectedColor === c.id ? '2px solid #17402C' : '2px solid transparent',
-                    padding: '2px',
-                    background: 'transparent',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
+            {/* Paging indicators */}
+            {product.images.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-black/10 backdrop-blur px-2.5 py-1 rounded-full">
+                {product.images.map((_, i) => (
                   <span
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      borderRadius: '10px',
-                      backgroundColor: c.color,
-                      display: 'block',
-                    }}
+                    key={i}
+                    className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${i === activeImage ? 'w-4 bg-white' : 'bg-white/40'}`}
                   />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Thumbnails list */}
+          {product.images.length > 1 && (
+            <div className="flex gap-2 px-4 py-2 overflow-x-auto scrollbar-hide bg-[#F5F2E9]">
+              {product.images.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setActiveImage(i);
+                    const gallery = document.getElementById('mobile-gallery');
+                    if (gallery) {
+                      gallery.scrollTo({ left: gallery.clientWidth * i, behavior: 'smooth' });
+                    }
+                  }}
+                  className={`w-12 h-12 rounded-xl overflow-hidden border-2 flex-shrink-0 bg-[#E3DFD2] ${i === activeImage ? 'border-[#1C2620]' : 'border-transparent'}`}
+                >
+                  <img src={img.url} alt="" className="w-full h-full object-cover mix-blend-multiply" />
                 </button>
               ))}
             </div>
-            <div
-              style={{
-                fontSize: '10px',
-                color: '#6B7A72',
-                marginTop: '6px',
-                fontFamily: 'ui-monospace, monospace',
-              }}
-            >
-              {selectedColor}
+          )}
+
+          {/* Info section */}
+          <div className="px-5 pt-6 pb-4">
+            <span className="inline-block bg-[#D3DFD7] text-[#2C5A3D] text-[9px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full mb-2">
+              {product.categorie}
+            </span>
+            <h1 className="font-display font-800 text-2xl text-[#0B1F17] leading-tight">
+              {product.nom}
+            </h1>
+            <div className="text-xs text-[#5C6B5E] mt-1 font-medium">
+              Par <span className="font-semibold text-[#1C2620]">{product.marque}</span>
+            </div>
+
+            {/* Price & Rating */}
+            <div className="flex items-center justify-between mt-4 pb-4 border-b border-[#E8E4D8]">
+              <div>
+                <span className="text-2xl font-bold text-[#17402C]">
+                  {product.prix_cents > 0 ? `${(product.prix_cents / 100).toFixed(2)} €` : '—'}
+                </span>
+                <span className="text-[10px] text-[#8B978F] block">TVA incluse</span>
+              </div>
+              
+              <div className="flex items-center gap-1.5 text-xs text-[#5C6B5E] bg-[#F4F1EA] px-2.5 py-1.5 rounded-xl">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="#A8C8A0" stroke="#A8C8A0">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+                <span className="font-bold text-[#1C2620]">{product.rating}</span>
+                <span>({product.review_count || 12} avis)</span>
+              </div>
             </div>
           </div>
 
+          {/* Specifications Accordion/Grid */}
+          <div className="px-5 py-2">
+            <h3 className="text-xs font-bold text-[#1C2620] uppercase tracking-wider mb-3">Caractéristiques</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-[#F4F1EA] p-3 rounded-2xl">
+                <div className="text-[10px] uppercase text-[#6B7A72] tracking-wider">Poids</div>
+                <div className="text-sm font-semibold text-[#0B1F17] mt-0.5">
+                  {product.poids_g > 0 ? `${(product.poids_g / 1000).toFixed(2)} kg` : '—'}
+                </div>
+              </div>
+              <div className="bg-[#F4F1EA] p-3 rounded-2xl">
+                <div className="text-[10px] uppercase text-[#6B7A72] tracking-wider">Matière</div>
+                <div className="text-sm font-semibold text-[#0B1F17] mt-0.5 truncate" title={product.materials || '—'}>
+                  {product.materials || 'Non spécifiée'}
+                </div>
+              </div>
+              <div className="bg-[#F4F1EA] p-3 rounded-2xl">
+                <div className="text-[10px] uppercase text-[#6B7A72] tracking-wider">Dimensions</div>
+                <div className="text-sm font-semibold text-[#0B1F17] mt-0.5 truncate" title={product.dimensions || '—'}>
+                  {product.dimensions || 'Non spécifiées'}
+                </div>
+              </div>
+              <div className="bg-[#F4F1EA] p-3 rounded-2xl">
+                <div className="text-[10px] uppercase text-[#6B7A72] tracking-wider">Garantie</div>
+                <div className="text-sm font-semibold text-[#0B1F17] mt-0.5">
+                  {product.warranty || '2 ans'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Dynamic variants */}
+          {product.variants && product.variants.length > 0 && (
+            <div className="px-5 py-4">
+              <h3 className="text-xs font-bold text-[#1C2620] uppercase tracking-wider mb-2">Options</h3>
+              <div className="flex flex-wrap gap-2">
+                {product.variants.map((v: any, i: number) => (
+                  <button
+                    key={i}
+                    className="px-3.5 py-2 rounded-xl text-xs font-semibold border bg-white border-[#E8E4D8] text-[#1C2620]"
+                  >
+                    {v.size || v.name || v.sku}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Description */}
-          <div style={{ padding: '8px 20px 16px' }}>
-            <p
-              style={{
-                fontSize: '13px',
-                color: '#384A42',
-                lineHeight: 1.6,
-              }}
-            >
+          <div className="px-5 py-4 pb-24">
+            <h3 className="text-xs font-bold text-[#1C2620] uppercase tracking-wider mb-2">Présentation</h3>
+            <p className="text-sm text-[#384A42] leading-relaxed whitespace-pre-line">
               {product.description}
             </p>
           </div>

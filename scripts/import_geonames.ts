@@ -18,10 +18,10 @@ import * as fs from "fs";
 import * as readline from "readline";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 if (!supabaseUrl || !supabaseKey) {
   console.error(
-    "Identifiants Supabase manquants. Définissez NEXT_PUBLIC_SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY (ex: .env.local)."
+    "Identifiants Supabase manquants. Définissez NEXT_PUBLIC_SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY (ou utilisez la clé anon)."
   );
   process.exit(1);
 }
@@ -218,6 +218,10 @@ async function importPlaces(filePath: string) {
       continue;
     }
     const pop = parseInt(population, 10) || 0;
+    if (pop < MAJOR_CITY_POPULATION) {
+      skipped++;
+      continue;
+    }
     batch.push({
       geoname_id: parseInt(geonameId, 10),
       name,

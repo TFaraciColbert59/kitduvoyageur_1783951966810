@@ -17,7 +17,7 @@ export async function getCarnetComplet(carnetId: string): Promise<CarnetData | n
     // 1. Fetch main Carnet row
     let { data: carnet } = await supabase
       .from('carnets')
-      .select('*, groupe:groupes(*)')
+      .select('*')
       .eq('id', carnetId)
       .maybeSingle();
 
@@ -32,7 +32,7 @@ export async function getCarnetComplet(carnetId: string): Promise<CarnetData | n
       if (session?.carnet_id) {
         const { data: linkedCarnet } = await supabase
           .from('carnets')
-          .select('*, groupe:groupes(*)')
+          .select('*')
           .eq('id', session.carnet_id)
           .maybeSingle();
         carnet = linkedCarnet;
@@ -45,7 +45,7 @@ export async function getCarnetComplet(carnetId: string): Promise<CarnetData | n
     }
 
     const realCarnetId = carnet.id;
-    const realGroupeId = carnet.groupe_id || carnet.groupe?.id;
+    const realGroupeId = carnet.groupe_id ?? null;
 
     // 2. Fetch associated Hike Session (GPS trace, POIs, exact metrics)
     const { data: hikeSession } = await supabase
@@ -101,6 +101,39 @@ export async function getCarnetComplet(carnetId: string): Promise<CarnetData | n
           ].filter((s) => Boolean(s.label)),
         }))
       : [];
+
+    // Build a day-by-day timeline from carnet_moments when no groupe_etapes exist
+    if (formattedJours.length === 0 && (moments || []).length > 0) {
+      const dayMap: Record<number, any[]> = {};
+      (moments || []).forEach((m: any) => {
+        const d = m.jour_numero || 1;
+        (dayMap[d] = dayMap[d] || []).push(m);
+      });
+      const dayNumbers = Object.keys(dayMap).map(Number).sort((a, b) => a - b);
+      const totalDist = hikeSession?.distance_km || carnet.distance_km || 0;
+      const totalElev = hikeSession?.elevation_gain_m ?? carnet.denivele_m ?? 0;
+
+      formattedJours = dayNumbers.map((d, idx) => {
+        const ms = dayMap[d];
+        const first = ms[0];
+        const last = ms[ms.length - 1];
+        const recit = ms.map((m: any) => m.citation).filter(Boolean).join(' … ');
+        return {
+          id: `moment-jour-${d}`,
+          dayNumber: d,
+          label: `JOUR ${d}`,
+          title: `${first?.lieu || 'Départ'} → `,
+          titleItalic: last?.lieu || 'Arrivée',
+          recit: (recit || `Dernière étape du jour — ${ms.length} moment${ms.length > 1 ? 's' : ''} marquant${ms.length > 1 ? 's' : ''}.`),
+          stats: [
+            ...(totalDist ? [{ icon: '📏', label: `${(totalDist / dayNumbers.length).toFixed(1)} km` }] : []),
+            ...(totalElev ? [{ icon: '⛰', label: `${Math.round(totalElev / dayNumbers.length)} m D+` }] : []),
+            { icon: '🕐', label: `${ms.length} moment${ms.length > 1 ? 's' : ''}` },
+            { icon: '📍', label: last?.lieu || '' },
+          ].filter((s) => Boolean(s.label)),
+        };
+      });
+    }
 
     // Synthesize a factual stage if no groupe_etapes exist but a hike session exists
     if (formattedJours.length === 0 && hikeSession) {

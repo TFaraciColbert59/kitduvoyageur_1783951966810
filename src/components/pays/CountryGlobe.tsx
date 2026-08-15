@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
@@ -95,7 +95,8 @@ export default function CountryGlobe({
     try {
       const renderer = globeRef.current.renderer();
       if (renderer && typeof renderer.setPixelRatio === 'function') {
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+        const dpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 1.5);
         renderer.setPixelRatio(dpr);
       }
     } catch (_e) { /* non-critical */ }

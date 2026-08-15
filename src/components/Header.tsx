@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Icon from '@/components/ui/AppIcon';
+
 import { useAuth } from '@/contexts/AuthContext';
 import GlobalSearchModal from '@/components/ui/GlobalSearchModal';
 
@@ -34,6 +35,7 @@ export default function Header() {
 
   return (
     <>
+      <div className="hidden md:block">
       <header className="fixed top-3 sm:top-4 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-[1020px] px-3 sm:px-4 pointer-events-none transition-all duration-300">
         <div
           className={`w-full rounded-full px-4 sm:px-5 transition-all duration-300 flex items-center justify-between pointer-events-auto cursor-default ${
@@ -80,6 +82,7 @@ export default function Header() {
             })}
           </nav>
 
+
           {/* Right: Actions - Lightweight & Discreet */}
           <div className="flex items-center gap-1.5 sm:gap-2">
             {/* Bouton Lancer Rando */}
@@ -100,6 +103,17 @@ export default function Header() {
               title="Panier"
             >
               <Icon name="ShoppingBagIcon" size={17} />
+            </Link>
+
+            {/* Notifications Button — unique point d'accès aux notifications */}
+            <Link
+              href="/alertes"
+              className="w-9 h-9 text-[#1C2620] hover:text-[#2D6A4F] hover:bg-[#1C2620]/05 active:opacity-70 transition-colors rounded-full flex items-center justify-center cursor-pointer touch-manipulation relative"
+              aria-label="Notifications"
+              title="Notifications"
+            >
+              <Icon name="BellIcon" size={16} />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#2D6A4F]" />
             </Link>
 
             {/* Recherche Button */}
@@ -125,6 +139,7 @@ export default function Header() {
           </div>
         </div>
       </header>
+      </div>
 
       {/* Global Site Search Overlay */}
       <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />

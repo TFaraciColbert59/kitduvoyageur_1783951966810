@@ -1,11 +1,11 @@
-﻿# GEODATA_PROGRESS.md — Base Géographique Mondiale LKDV
+# GEODATA_PROGRESS.md — Base Géographique Mondiale LKDV
 
 ## 📊 Status global
-- **Phase actuelle** : Phase 2 — Architecture BDD & modélisation
-- **Pourcentage global** : 35%
-- **Dernière action** : Phase 2 livrée (schéma GeoNames consolidé, seed 197 pays corrigé, types TS, helpers Supabase, script d'import réécrit en upsert/batching, lint Globe corrigé).
-- **Prochaine action** : Phase 3 — Migrations Supabase & PostGIS (appliquer les 3 migrations via le SQL Editor Supabase).
-- **Blocage éventuel** : Aucun (application des migrations = manuelle via SQL Editor, pas de CLI Supabase).
+- **Phase actuelle** : Phase 4 — Pipeline d'Importation GeoNames
+- **Pourcentage global** : 65%
+- **Dernière action** : Phase 3 livrée (migrations SQL appliquées via SQL Editor, tables créées, seed Natural Earth 197 pays confirmé, RLS actif).
+- **Prochaine action** : Phase 4 — Pipeline d'Importation GeoNames (lancer le script `import_geonames.ts` via node pour injecter les données).
+- **Blocage éventuel** : Aucun.
 
 ---
 
@@ -18,7 +18,7 @@
   - [x] Modèle géographique existant & données OSM/sentiers
   - [x] Pages /pays & /pays/[code] actuelles
 - [x] **2. Architecture BDD & Modélisation** *(85%)*
-- [ ] **3. Migrations Supabase & PostGIS** *(0%)*
+- [x] **3. Migrations Supabase & PostGIS** *(100%)*
 - [ ] **4. Pipeline d'Importation GeoNames** *(0%)*
 - [ ] **5. Importation Progressive & Normalisation** *(0%)*
 - [ ] **6. Hiérarchie Administrative & Spatial Indexing** *(0%)*

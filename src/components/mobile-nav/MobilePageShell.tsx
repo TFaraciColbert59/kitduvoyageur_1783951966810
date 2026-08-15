@@ -1,44 +1,34 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 
 interface MobilePageShellProps {
   children: React.ReactNode;
+  /**
+   * Couleur de fond de la page mobile. Par défaut : le token global
+   * `--background` (#F5F3EE), identique au rendu desktop.
+   */
+  background?: string;
 }
 
 /**
  * MobilePageShell — wrapper for mobile page content.
  * TopBar and BottomTabBar are rendered globally in layout.tsx.
  * This component only provides the correct padding/spacing.
+ * (Pas de bascule mode sombre : les fonds mobiles restent clairs.)
  */
 export default function MobilePageShell({
   children,
+  background = 'var(--background)',
 }: MobilePageShellProps) {
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      if (e.matches) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    };
-    
-    // Initial check
-    handleChange(mediaQuery);
-    
-    // Listen for changes
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
-
   return (
     <div
       style={{
-        paddingBottom: 'calc(86px + env(safe-area-inset-bottom))',
+        background,
+        paddingBottom: 'calc(76px + env(safe-area-inset-bottom))',
         minHeight: '100dvh',
-        overflowY: 'auto',
-        overscrollBehavior: 'contain',
+        // NOTE: pas de overflowY ici — il casserait position: sticky (tabs Compte).
+        overflowX: 'hidden',
       }}
     >
       {children}

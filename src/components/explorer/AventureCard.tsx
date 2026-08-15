@@ -138,7 +138,8 @@ export default function AventureCard({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
+              flexWrap: 'wrap',
+              gap: '6px',
               fontSize: '11px',
               color: '#6B7A72',
               fontFamily: 'var(--font-mono), monospace',
@@ -160,6 +161,7 @@ export default function AventureCard({
           padding: '8px 12px 10px',
           borderTop: '1px solid rgba(11,31,23,0.05)',
           background: 'rgba(255,255,255,0.6)',
+          marginTop: 'auto',
         }}
       >
         <button
@@ -170,11 +172,12 @@ export default function AventureCard({
           }}
           style={{
             width: '100%',
+            minHeight: '44px',
             padding: '9px 12px',
             background: '#17402C',
             color: '#fff',
             border: 'none',
-            borderRadius: '10px',
+            borderRadius: '12px',
             fontSize: '12px',
             fontWeight: 600,
             cursor: 'pointer',
@@ -183,6 +186,7 @@ export default function AventureCard({
             justifyContent: 'center',
             gap: '6px',
             boxShadow: '0 2px 6px rgba(23,64,44,0.2)',
+            touchAction: 'manipulation',
           }}
         >
           <span>🎒</span>

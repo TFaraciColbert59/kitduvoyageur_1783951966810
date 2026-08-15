@@ -19,6 +19,7 @@ import CustomCursor from '@/components/ui/CustomCursor';
 
 
 
+
 // Only load weights actually used in the app
 const dmSans = DM_Sans({
   subsets: ['latin'],

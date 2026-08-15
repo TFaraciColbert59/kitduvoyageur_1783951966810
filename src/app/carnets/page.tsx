@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
@@ -329,11 +329,22 @@ function CarnetDetailModal({
             <h2 className="font-display font-800 text-white text-2xl leading-tight mb-2">{carnet.title}</h2>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[#17402C]/30 flex items-center justify-center text-xs font-700 text-white">
-                  {carnet.author?.full_name?.[0] ?? '?'}
-                </div>
-                <span className="text-white/80 text-sm font-500">{carnet.author?.full_name ?? 'Anonyme'}</span>
-              </div>
+              {carnet.author_id ? (
+                <Link href={`/profil/${carnet.author_id}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                  <div className="w-7 h-7 rounded-lg bg-[#17402C]/30 flex items-center justify-center text-xs font-700 text-white">
+                    {carnet.author?.full_name?.[0] ?? '?'}
+                  </div>
+                  <span className="text-white/80 text-sm font-500">{carnet.author?.full_name ?? 'Anonyme'}</span>
+                </Link>
+              ) : (
+                <>
+                  <div className="w-7 h-7 rounded-lg bg-[#17402C]/30 flex items-center justify-center text-xs font-700 text-white">
+                    {carnet.author?.full_name?.[0] ?? '?'}
+                  </div>
+                  <span className="text-white/80 text-sm font-500">{carnet.author?.full_name ?? 'Anonyme'}</span>
+                </>
+              )}
+            </div>
               <span className="text-white/40">·</span>
               <span className="text-white/60 text-xs">{new Date(carnet.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
             </div>
@@ -421,7 +432,9 @@ function CarnetDetailModal({
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-600 text-[#1C2620]">{point.label}</p>
-                        <p className="text-[10px] text-[#5C6B5E] font-mono">{point.lat.toFixed(4)}, {point.lng.toFixed(4)}</p>
+                        {point.lat != null && point.lng != null && (
+                          <p className="text-[10px] text-[#5C6B5E] font-mono">{point.lat.toFixed(4)}, {point.lng.toFixed(4)}</p>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -492,22 +505,48 @@ function CarnetDetailModal({
                 <p className="text-sm text-[#5C6B5E] text-center py-4">Aucun commentaire. Soyez le premier !</p>
               ) : (
                 <div className="space-y-3 mb-4">
-                  {comments.map((c) => (
-                    <CommentItem
-                      key={c.id}
-                      comment={c}
-                      currentUser={user}
-                      tableName="carnet_comments"
-                      onUpdate={(id, newContent) =>
-                        setComments((prev) => prev.map((item) => (item.id === id ? { ...item, content: newContent } : item)))
+                  {(() => {
+                    const roots: Comment[] = comments.filter((c) => !(c as any).parent_id);
+                    const byParent: Record<string, Comment[]> = {};
+                    comments.forEach((c) => {
+                      if ((c as any).parent_id) {
+                        (byParent[(c as any).parent_id] = byParent[(c as any).parent_id] || []).push(c);
                       }
-                      onDelete={(id) => {
-                        setComments((prev) => prev.filter((item) => item.id !== id));
-                        setCommentCount((prev) => Math.max(0, prev - 1));
-                        onCommentCountChange(carnet.id, -1);
-                      }}
-                    />
-                  ))}
+                    });
+                    const replyCore = (c: Comment) => (
+                      <CommentItem
+                        key={c.id}
+                        comment={c}
+                        currentUser={user}
+                        tableName="carnet_comments"
+                        onUpdate={(id, newContent) =>
+                          setComments((prev) => prev.map((item) => (item.id === id ? { ...item, content: newContent } : item)))
+                        }
+                        onDelete={(id) => {
+                          setComments((prev) => prev.filter((item) => item.id !== id));
+                          setCommentCount((prev) => Math.max(0, prev - 1));
+                          onCommentCountChange(carnet.id, -1);
+                        }}
+                        onReply={(parentId, reply) => {
+                          setComments((prev) => [...prev, { ...reply, carnet_id: carnet!.id } as Comment]);
+                          setCommentCount((prev) => prev + 1);
+                          onCommentCountChange(carnet.id, 1);
+                        }}
+                        replyTargetName={c.author?.full_name}
+                      />
+                    );
+                    const renderBranch = (c: Comment, depth: number): React.ReactNode => (
+                      <div key={c.id}>
+                        {replyCore(c)}
+                        {(byParent[c.id] || []).map((child) => (
+                          <div key={child.id} className={depth < 2 ? 'ml-8' : ''}>
+                            {renderBranch(child, depth + 1)}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                    return roots.map((c) => renderBranch(c, 0));
+                  })()}
                 </div>
               )}
               {user ? (
@@ -907,7 +946,11 @@ export default function CarnetsPage() {
   }, []);
 
   const handleShare = (_carnet: Carnet) => {
-    const url = `${window.location.origin}/carnets`;
+    const url = `${window.location.origin}/carnets/${_carnet.id}`;
+    if (navigator.share) {
+      navigator.share({ title: _carnet.title, url }).then(() => {}, () => {});
+      return;
+    }
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url);
       showToast('Lien copié dans le presse-papier !');
@@ -1051,7 +1094,7 @@ export default function CarnetsPage() {
 
       {/* MOBILE VIEW */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <MobilePageShell background="#E7E3D6">
           {/* Hero */}
           <div style={{ padding: '12px 16px 16px', background: '#FBFAF6' }}>
             <div style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '6px' }}>
@@ -1130,10 +1173,25 @@ export default function CarnetsPage() {
                         <div style={{ fontSize: '14px', fontWeight: 500, color: '#0B1F17', marginTop: '2px', lineHeight: 1.2 }}>{c.title}</div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', color: '#6B7A72' }}>
-                        <div style={{ width: '18px', height: '18px', borderRadius: '999px', background: '#A3C4A3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', color: '#0B1F17', fontWeight: 600 }}>
-                          {authorInitial}
-                        </div>
-                        <span>{authorName}</span>
+                        {c.author_id ? (
+                          <Link
+                            href={`/profil/${c.author_id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none', color: '#6B7A72' }}
+                          >
+                            <div style={{ width: '18px', height: '18px', borderRadius: '999px', background: '#A3C4A3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', color: '#0B1F17', fontWeight: 600 }}>
+                              {authorInitial}
+                            </div>
+                            <span style={{ fontWeight: 600, color: '#0B1F17' }}>{authorName}</span>
+                          </Link>
+                        ) : (
+                          <>
+                            <div style={{ width: '18px', height: '18px', borderRadius: '999px', background: '#A3C4A3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', color: '#0B1F17', fontWeight: 600 }}>
+                              {authorInitial}
+                            </div>
+                            <span>{authorName}</span>
+                          </>
+                        )}
                         {c.likes_count !== undefined && c.likes_count > 0 && (
                           <>
                             <span>·</span>

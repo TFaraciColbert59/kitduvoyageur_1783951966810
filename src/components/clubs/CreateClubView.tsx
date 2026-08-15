@@ -19,6 +19,7 @@ export default function CreateClubView() {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [inviteSlug, setInviteSlug] = useState('cimes-partagees-vdK');
 
   // Form State
   const [form, setForm] = useState({
@@ -112,35 +113,23 @@ export default function CreateClubView() {
       const supabase = createClient();
       
       const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const authorId = currentUser?.id;
       const slug = `c-${form.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}-${Date.now()}`;
 
       const payload = {
         name: form.title,
         slug,
-        type: 'activite', // Fallback for old schema
-        emoji: '🏕️', // Fallback for old schema
-        cover_color: 'from-emerald-600 to-teal-700', // Fallback for old schema
-        created_by: currentUser?.id,
-        slogan: form.slogan,
+        type: 'activite',
+        emoji: '🏕️',
         description: form.description,
+        cover_color: 'from-emerald-600 to-teal-700',
         cover_image: form.coverImage,
-        logo_image: form.logoImage,
         category: form.category,
-        location: form.location,
-        tags: form.zones,
-        max_members: form.maxMembers,
-        visibility: form.visibility,
-        privacy: form.visibility === 'public' ? 'open' : form.visibility === 'private' ? 'secret' : 'closed', // Map to old schema
-        rules: JSON.stringify(form.rules), // Convert array to string if column expects TEXT
-        settings: {
-          manualValidation: form.manualValidation,
-          membersCanCreateOutings: form.membersCanCreateOutings,
-          openDiscussionThread: form.openDiscussionThread,
-          rhythm: form.rhythm
-        },
+        rules: JSON.stringify(form.rules),
+        privacy: form.visibility === 'public' ? 'open' : form.visibility === 'private' ? 'secret' : 'closed',
         members_count: 1,
         active_this_month: 0,
-        created_at: new Date().toISOString()
+        created_by: authorId,
       };
 
       const { data: newClub, error } = await supabase
@@ -150,7 +139,19 @@ export default function CreateClubView() {
         .single();
 
       if (error) {
-        console.warn("Supabase insert warning:", error);
+        alert("Impossible de créer le club : " + (error.message || 'erreur serveur'));
+        setSaving(false);
+        return;
+      }
+
+      // Auto-join the creator as admin
+      if (newClub?.id && authorId) {
+        await supabase.from('club_members').insert({
+          club_id: newClub.id,
+          user_id: authorId,
+          role: 'admin',
+          status: 'active',
+        }).then(undefined, () => {});
       }
 
       setSaveSuccess(true);
@@ -158,10 +159,8 @@ export default function CreateClubView() {
       // Persist to localStorage for instant local reflection
       try {
         const localClubs = JSON.parse(localStorage.getItem('user_clubs_data') || '[]');
-        localClubs.push({ ...payload, id: `local-${Date.now()}`, members_count: 1 });
+        localClubs.push({ ...payload, id: newClub?.id || `local-${Date.now()}`, members_count: 1 });
         localStorage.setItem('user_clubs_data', JSON.stringify(localClubs));
-
-        // Dispatch event for other tabs/components
         window.dispatchEvent(new Event('club_created'));
       } catch (e) {
         console.error(e);
@@ -169,7 +168,11 @@ export default function CreateClubView() {
 
       setTimeout(() => {
         setSaveSuccess(false);
-        router.push('/clubs');
+        if (newClub?.slug) {
+          router.push(`/clubs/${newClub.slug}`);
+        } else {
+          router.push('/clubs');
+        }
       }, 800);
     } catch (err) {
       console.error("Error creating club:", err);
@@ -177,6 +180,22 @@ export default function CreateClubView() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSaveDraft = () => {
+    try {
+      const drafts = JSON.parse(localStorage.getItem('club_draft') || '[]');
+      drafts.push({ ...form, slug: inviteSlug, savedAt: new Date().toISOString() });
+      localStorage.setItem('club_draft', JSON.stringify(drafts.slice(-5)));
+      alert('Brouillon enregistré localement !');
+    } catch (e) {
+      console.error(e);
+      alert('Impossible d\'enregistrer le brouillon.');
+    }
+  };
+
+  const handleRegenerateSlug = () => {
+    setInviteSlug(`club-${Math.random().toString(36).substring(2, 8)}-${Date.now().toString(36).slice(-4)}`);
   };
 
   return (
@@ -641,13 +660,13 @@ export default function CreateClubView() {
                 <input
                   type="text"
                   readOnly
-                  value="cimes-partagees-vdK"
+                  value={inviteSlug}
                   className="bg-transparent border-none text-xs font-bold text-[#1C2620] focus:ring-0 p-1 flex-1 font-mono"
                 />
                 <button 
                   type="button" 
                   onClick={() => {
-                    navigator.clipboard.writeText("cimes-partagees-vdK");
+                    navigator.clipboard.writeText(inviteSlug);
                     alert("Lien copié dans le presse-papier !");
                   }}
                   className="px-4 py-2 bg-[#1C2620] text-white text-[10px] font-bold rounded-xl hover:bg-[#2D5A3D] transition-colors"
@@ -657,7 +676,9 @@ export default function CreateClubView() {
               </div>
               <div className="flex justify-between items-center mt-2 px-2">
                 <span className="text-[10px] text-[#5C6B5E]">À partager en privé</span>
-                <button className="text-[10px] text-[#2D5A3D] font-bold underline">Régénérer le lien</button>
+                <button type="button" onClick={handleRegenerateSlug} className="text-[10px] text-[#2D5A3D] font-bold underline">
+                  Régénérer le lien
+                </button>
               </div>
             </div>
           </div>
@@ -738,7 +759,7 @@ export default function CreateClubView() {
             <p className="text-xs text-white/70 leading-relaxed relative z-10">
               Pour une sortie ponctuelle avec 5 amis, mieux vaut créer un groupe. Ce club est fait pour des mois d'aventures partagées.
             </p>
-            <button className="text-[10px] text-white font-bold underline decoration-white/30 hover:decoration-white transition-all pt-2 relative z-10">
+            <button type="button" onClick={() => router.push('/nouveau-groupe')} className="text-[10px] text-white font-bold underline decoration-white/30 hover:decoration-white transition-all pt-2 relative z-10">
               Créer un groupe/sortie →
             </button>
           </div>
@@ -755,7 +776,9 @@ export default function CreateClubView() {
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-          <button 
+          <button
+            type="button"
+            onClick={handleSaveDraft}
             className="px-4 py-2 text-xs font-semibold text-[#5C6B5E] hover:text-[#1C2620] transition-colors"
           >
             Enregistrer en brouillon

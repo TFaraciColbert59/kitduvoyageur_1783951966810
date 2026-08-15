@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import { ActiviteItem } from '@/lib/mock/compte-marceline';
 
@@ -38,9 +39,9 @@ export default function ActiviteCard({ activites }: ActiviteCardProps) {
           </p>
         </div>
 
-        <button className="text-xs font-extrabold text-emerald-700 hover:text-emerald-900 transition-colors">
+        <Link href="/activite" className="text-xs font-extrabold text-emerald-700 hover:text-emerald-900 transition-colors">
           Tout →
-        </button>
+        </Link>
       </div>
 
       {/* List */}

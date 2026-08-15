@@ -579,34 +579,6 @@ export default function ExplorerPage() {
                 </div>
               </div>
             )}
-
-            {!selectedTrail && (
-              <Link
-                href="/naviguer"
-                style={{
-                  position: 'absolute',
-                  bottom: '16px',
-                  right: '16px',
-                  zIndex: 400,
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '50%',
-                  background: '#17402C',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 4px 12px rgba(11,31,23,0.15)',
-                  cursor: 'pointer',
-                  textDecoration: 'none',
-                }}
-                aria-label="Naviguer"
-              >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="white" />
-                </svg>
-              </Link>
-            )}
           </div>
 
           {/* Results header */}

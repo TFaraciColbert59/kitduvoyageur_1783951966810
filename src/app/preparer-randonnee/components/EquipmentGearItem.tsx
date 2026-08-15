@@ -11,6 +11,7 @@ export interface EquipmentGearItemProps {
   available: number;
   required: number;
   onAdd: () => void;
+  onAddToCart?: () => void;
 }
 
 export const EquipmentGearItem: React.FC<EquipmentGearItemProps> = ({
@@ -21,6 +22,7 @@ export const EquipmentGearItem: React.FC<EquipmentGearItemProps> = ({
   available,
   required,
   onAdd,
+  onAddToCart,
 }) => {
   const iconName = getIconForCategory(label);
   
@@ -69,12 +71,17 @@ export const EquipmentGearItem: React.FC<EquipmentGearItemProps> = ({
         <div className="gear-actions">
           {status === 'missing' && (
             <button className="primary" onClick={onAdd}>
-              <Icon name="plus" /> Ajouter
+              <Icon name="plus" /> J'ai cet équipement
             </button>
           )}
           {status === 'partial' && (
             <button className="primary" onClick={onAdd}>
               <Icon name="plus" /> Compléter
+            </button>
+          )}
+          {onAddToCart && (
+            <button className="secondary" onClick={onAddToCart}>
+              <Icon name="bag" /> Panier
             </button>
           )}
         </div>

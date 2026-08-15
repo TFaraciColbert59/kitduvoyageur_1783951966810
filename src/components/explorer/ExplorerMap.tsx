@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import 'leaflet/dist/leaflet.css';
 import type { Map as LeafletMap } from 'leaflet';
@@ -20,6 +20,8 @@ interface ExplorerMapProps {
   onMapReady?: () => void;
   onLocationUpdate?: (loc: [number, number]) => void;
   controlsPosition?: 'left' | 'right';
+  /** Mode compact : contrôles réduits, plaqués aux bords, sans chevauchement (mobile). */
+  compact?: boolean;
 }
 
 const TOPO_TILE = {
@@ -54,12 +56,24 @@ export default function ExplorerMap({
   onMapReady,
   onLocationUpdate,
   controlsPosition = 'left',
+  compact = false,
 }: ExplorerMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const tileLayerRef = useRef<ReturnType<typeof import('leaflet')['tileLayer']> | null>(null);
   const userMarkerRef = useRef<import('leaflet').Marker | null>(null);
   const accuracyCircleRef = useRef<import('leaflet').Circle | null>(null);
+
+  // Auto-compact sur mobile (toutes les instances de la carte)
+  const [isAutoCompact, setIsAutoCompact] = useState(false);
+  useEffect(() => {
+    const check = () => setIsAutoCompact(typeof window !== 'undefined' && window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  // Uniformité : le même jeu de boutons compact que « Préparer la randonnée », partout.
+  const effectiveCompact = true;
   const userTrackPolylineRef = useRef<import('leaflet').Polyline | null>(null);
   const userDraggingRef = useRef(false);
 
@@ -429,98 +443,70 @@ export default function ExplorerMap({
   };
 
   return (
-    <div className="relative w-full h-full bg-[#EAE6DF] overflow-hidden select-none">
+    <div className="relative w-full h-full min-h-[220px] bg-[#EAE6DF] overflow-hidden select-none">
       <div ref={containerRef} className="w-full h-full z-0" />
 
       {mapReady && mapInstance && trails.length > 0 && (
         <TrailLayer map={mapInstance} trails={trails} selectedTrailId={selectedTrailId} onTrailClick={onTrailClick} />
       )}
 
-      {/* Floating Zoom Controls (+ / −) */}
-      <div className={`absolute z-30 pointer-events-auto flex flex-col gap-2 ${controlsPosition === 'left' ? 'left-4 top-[180px]' : 'right-3 top-3'}`}>
-        <div className="flex flex-col bg-white/80 backdrop-blur-md border border-white/60 rounded-2xl shadow-xl overflow-hidden text-[#1C2620]">
+{/* Floating Zoom Controls (+ / −) — fixes, non compressibles */}
+      <div className={`absolute z-[400] pointer-events-auto flex flex-col gap-2 ${effectiveCompact ? 'left-2 bottom-2' : controlsPosition === 'left' ? 'left-4 top-[180px]' : 'right-3 top-3'}`}>
+        <div className={`flex flex-col bg-white/80 backdrop-blur-md border border-white/60 rounded-2xl shadow-xl overflow-hidden text-[#1C2620] shrink-0 ${effectiveCompact ? 'rounded-xl' : ''}`}>
           <button
             onClick={handleZoomIn}
             title="Zoom avant"
-            className="w-9 h-9 flex items-center justify-center font-bold text-lg hover:bg-[#8BAF7C]/35 hover:text-[#17402C] transition-all border-b border-black/10 cursor-pointer active:scale-95"
+            className={`${effectiveCompact ? 'w-8 h-8 text-base' : 'w-9 h-9 text-lg'} flex-shrink-0 flex items-center justify-center font-bold hover:bg-[#8BAF7C]/35 hover:text-[#17402C] transition-all border-b border-black/10 cursor-pointer active:scale-95`}
           >
             +
           </button>
           <button
             onClick={handleZoomOut}
             title="Zoom arrière"
-            className="w-9 h-9 flex items-center justify-center font-bold text-lg hover:bg-[#8BAF7C]/35 hover:text-[#17402C] transition-all cursor-pointer active:scale-95"
+            className={`${effectiveCompact ? 'w-8 h-8 text-base' : 'w-9 h-9 text-lg'} flex-shrink-0 flex items-center justify-center font-bold hover:bg-[#8BAF7C]/35 hover:text-[#17402C] transition-all cursor-pointer active:scale-95`}
           >
             −
-          </button>
-        </div>
+</button>
+</div>
       </div>
 
-      {/* Denied / Manual locate button */}
-      {locationState === 'denied' && (
-        <div className={`absolute z-30 pointer-events-auto ${controlsPosition === 'left' ? 'left-4 bottom-[140px]' : 'left-3 bottom-[80px]'}`}>
-          <button
-            onClick={handleManualLocate}
-            className="flex items-center gap-2 bg-white/80 backdrop-blur-md border border-white/60 rounded-xl px-3 py-1.5 text-[#1C2620] text-xs font-bold shadow-xl hover:bg-[#8BAF7C]/30 transition-all cursor-pointer"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
-            </svg>
-            Activer ma position
-          </button>
-        </div>
-      )}
-
-      {/* Floating "Recentrer sur moi" Button */}
-      {isUserPanned && (
-        <div className="absolute top-14 left-1/2 -translate-x-1/2 z-[500] pointer-events-auto">
-          <button
-            onClick={handleRecenter}
-            className="flex items-center gap-2 px-4 py-2 bg-white/92 backdrop-blur-md border border-[#17402C]/30 text-[#17402C] text-xs font-bold rounded-full shadow-2xl hover:bg-[#17402C] hover:text-white transition-all cursor-pointer active:scale-95"
-          >
-            <span className="w-2.5 h-2.5 rounded-full bg-[#22c55e] animate-ping shrink-0" />
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
-            </svg>
-            Recentrer sur moi
-          </button>
-        </div>
-      )}
-
       {/* Tile switcher (Carte / Relief / Satellite) */}
-      <div className={`absolute z-30 pointer-events-auto flex items-center p-1 bg-white/80 backdrop-blur-md border border-white/60 rounded-2xl shadow-xl ${controlsPosition === 'left' ? 'left-4 bottom-[85px]' : 'right-3 bottom-14'}`}>
+      <div className={`absolute z-30 pointer-events-auto flex items-center bg-white/80 backdrop-blur-md border border-white/60 rounded-2xl shadow-xl shrink-0 flex-nowrap whitespace-nowrap ${effectiveCompact ? 'right-2 bottom-2 px-1 py-1 gap-1' : controlsPosition === 'left' ? 'left-4 bottom-[85px]' : 'right-3 bottom-14'}`}>
         <button
           onClick={() => handleTileChange('osm')}
-          className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+          className={`flex items-center gap-1.5 rounded-xl transition-all cursor-pointer shrink-0 ${effectiveCompact ? 'w-8 h-8 justify-center' : 'px-2.5 py-1 text-xs font-bold'} ${
             tileMode === 'osm' ? 'bg-[#17402C] text-white shadow-sm' : 'text-[#5C6B5E] hover:bg-[#8BAF7C]/30 hover:text-[#17402C]'
           }`}
+          title="Carte"
         >
           <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
             <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path><path d="M9 3v12"></path><path d="M15 6v12"></path>
           </svg>
-          Carte
+          {!effectiveCompact && (<span>Carte</span>)}
         </button>
         <button
           onClick={() => handleTileChange('topo')}
-          className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+          className={`flex items-center gap-1.5 rounded-xl transition-all cursor-pointer shrink-0 ${effectiveCompact ? 'w-8 h-8 justify-center' : 'px-2.5 py-1 text-xs font-bold'} ${
             tileMode === 'topo' ? 'bg-[#17402C] text-white shadow-sm' : 'text-[#5C6B5E] hover:bg-[#8BAF7C]/30 hover:text-[#17402C]'
           }`}
+          title="Relief"
         >
           <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
             <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
           </svg>
-          Relief
+          {!effectiveCompact && (<span>Relief</span>)}
         </button>
         <button
           onClick={() => handleTileChange('satellite')}
-          className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+          className={`flex items-center gap-1.5 rounded-xl transition-all cursor-pointer shrink-0 ${effectiveCompact ? 'w-8 h-8 justify-center' : 'px-2.5 py-1 text-xs font-bold'} ${
             tileMode === 'satellite' ? 'bg-[#17402C] text-white shadow-sm' : 'text-[#5C6B5E] hover:bg-[#8BAF7C]/30 hover:text-[#17402C]'
           }`}
+          title="Satellite"
         >
           <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path>
           </svg>
-          Satellite
+          {!effectiveCompact && (<span>Satellite</span>)}
         </button>
       </div>
     </div>

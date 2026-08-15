@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -65,6 +65,7 @@ const TAB_LINKS = ['Tous les contenus', 'Sorties', 'Membres', 'Photos', 'Discuss
 
 export default function ClubDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const clubId = params?.id as string;
   const [club, setClub] = useState<Club | null>(null);
   const [topics, setTopics] = useState<ClubTopic[]>([]);
@@ -154,10 +155,25 @@ export default function ClubDetailPage() {
       await supabase.from('club_members').delete().eq('club_id', club.id).eq('user_id', user.id);
       setIsMember(false);
       showToast('Vous avez quitté le club');
+    } else if (club.privacy === 'open') {
+      const { error } = await supabase.from('club_members').insert({ club_id: club.id, user_id: user.id, role: 'member', status: 'active' });
+      if (error) {
+        showToast("Erreur lors de l'adhésion");
+      } else {
+        setIsMember(true);
+        showToast('Bienvenue dans le club !');
+      }
     } else {
-      await supabase.from('club_members').insert({ club_id: club.id, user_id: user.id, role: 'member', status: 'active' });
-      setIsMember(true);
-      showToast('Bienvenue dans le club !');
+      // Closed / secret club: send a join request instead of auto-joining
+      const { error } = await supabase.from('club_join_requests').upsert(
+        { club_id: club.id, user_id: user.id, status: 'pending' },
+        { onConflict: 'club_id,user_id' }
+      );
+      if (error) {
+        showToast("Erreur lors de la demande d'adhésion");
+      } else {
+        showToast("Demande d'adhésion envoyée !");
+      }
     }
     setJoining(false);
   };
@@ -222,6 +238,14 @@ export default function ClubDetailPage() {
     } else {
       showToast("Erreur lors de la publication");
     }
+  };
+
+  // Répondre directement à un membre précis
+  const startReplyTo = (topicId: string, authorName?: string) => {
+    if (!user) { showToast('Connectez-vous pour répondre'); return; }
+    setReplyingToTopic(topicId);
+    setReplyContent(authorName ? `@${authorName} ` : '');
+    handleLoadReplies(topicId);
   };
 
   const [submitting, setSubmitting] = useState(false);
@@ -328,7 +352,7 @@ export default function ClubDetailPage() {
             <Header />
             <main className="flex-1 flex flex-col items-center justify-center text-center px-6 py-24">
               <div className="w-20 h-20 rounded-3xl bg-emerald-900/10 flex items-center justify-center mb-6">
-                <Icon name="users" size={32} className="text-emerald-900/40" />
+                <Icon name="UserGroupIcon" size={32} className="text-emerald-900/40" />
               </div>
               <h1 className="font-display font-800 text-3xl mb-3">Club introuvable</h1>
               <p className="text-emerald-900/60 max-w-md mb-8">
@@ -355,7 +379,7 @@ export default function ClubDetailPage() {
           <MobilePageShell>
             <div style={{ padding: '32px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', paddingTop: '15vh' }}>
               <div style={{ width: 72, height: 72, borderRadius: 24, background: 'rgba(11,31,23,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-                <Icon name="users" size={28} className="text-emerald-900/40" />
+                <Icon name="UserGroupIcon" size={28} className="text-emerald-900/40" />
               </div>
               <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 24, fontWeight: 700, color: '#0B1F17', marginBottom: 8 }}>Club introuvable</h1>
               <p style={{ color: '#6B7A72', fontSize: 15, lineHeight: 1.5, maxWidth: 300, marginBottom: 24 }}>
@@ -428,7 +452,11 @@ export default function ClubDetailPage() {
           <h2 className="font-display font-800 text-2xl mb-6">Membres du club ({members.length})</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {members.map(member => (
-              <div key={member.id} className="flex items-center gap-4 p-4 rounded-xl hover:bg-emerald-50 transition-colors border border-transparent hover:border-emerald-100">
+              <Link
+                key={member.id}
+                href={member.user_id ? `/profil/${member.user_id}` : '/clubs'}
+                className="flex items-center gap-4 p-4 rounded-xl hover:bg-emerald-50 transition-colors border border-transparent hover:border-emerald-100"
+              >
                 <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-950 font-800 border border-emerald-200">
                   {member.user?.full_name[0] || '?'}
                 </div>
@@ -436,7 +464,7 @@ export default function ClubDetailPage() {
                   <h4 className="font-700">{member.user?.full_name}</h4>
                   <span className="text-xs text-emerald-900/60 uppercase font-800 tracking-wider">{member.role}</span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </section>
@@ -509,7 +537,10 @@ export default function ClubDetailPage() {
                           <div className="bg-emerald-50 rounded-2xl rounded-tl-none p-4 flex-1">
                             <div className="flex justify-between items-baseline mb-1">
                               <span className="font-800 text-sm">{reply.author?.full_name || 'Anonyme'}</span>
-                              <span className="text-[10px] text-emerald-900/50">{new Date(reply.created_at).toLocaleDateString('fr-FR')}</span>
+                              <span className="text-[10px] text-emerald-900/50 flex items-center gap-2">
+                                {new Date(reply.created_at).toLocaleDateString('fr-FR')}
+                                <button onClick={() => startReplyTo(topic.id, reply.author?.full_name)} className="font-700 text-emerald-700 hover:underline">Répondre</button>
+                              </span>
                             </div>
                             <p className="text-sm text-emerald-900/80">{reply.content}</p>
                           </div>
@@ -621,7 +652,7 @@ export default function ClubDetailPage() {
                       <span className="text-xs text-emerald-900/50 font-600">Posté le {new Date(topic.created_at).toLocaleDateString('fr-FR')}</span>
                     </div>
                   </div>
-                  <button className="text-emerald-900/40 hover:text-emerald-900"><Icon name="EllipsisHorizontalIcon" size={24} /></button>
+                  <button onClick={() => { setReplyingToTopic(replyingToTopic === topic.id ? null : topic.id); if (replyingToTopic !== topic.id) handleLoadReplies(topic.id); }} className="text-emerald-900/40 hover:text-emerald-900" title="Voir les réponses"><Icon name="EllipsisHorizontalIcon" size={24} /></button>
                 </div>
                 <div className="mb-4">
                   <h3 className="font-800 text-xl mb-2">{topic.title}</h3>
@@ -655,7 +686,10 @@ export default function ClubDetailPage() {
                             <div className="bg-emerald-50 rounded-2xl rounded-tl-none p-4 flex-1">
                               <div className="flex justify-between items-baseline mb-1">
                                 <span className="font-800 text-sm">{reply.author?.full_name || 'Anonyme'}</span>
-                                <span className="text-[10px] text-emerald-900/50">{new Date(reply.created_at).toLocaleDateString('fr-FR')}</span>
+                                <span className="text-[10px] text-emerald-900/50 flex items-center gap-2">
+                                  {new Date(reply.created_at).toLocaleDateString('fr-FR')}
+                                  <button onClick={() => startReplyTo(topic.id, reply.author?.full_name)} className="font-700 text-emerald-700 hover:underline">Répondre</button>
+                                </span>
                               </div>
                               <p className="text-sm text-emerald-900/80">{reply.content}</p>
                             </div>
@@ -740,8 +774,9 @@ export default function ClubDetailPage() {
                 </div>
 
                 <div className="absolute top-6 right-6 sm:top-10 sm:right-10 z-20 flex items-center gap-3">
-                  <button className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors"><Icon name="MagnifyingGlassIcon" size={16} /></button>
-                  <button className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors"><Icon name="BellIcon" size={16} /></button>
+                  <button onClick={() => setActiveTab('Tous les contenus')} className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors" title="Rechercher">
+                    <Icon name="MagnifyingGlassIcon" size={16} />
+                  </button>
                   <Link href={user ? `/profil/${user.id}` : "/auth"} className="w-8 h-8 rounded-full bg-black/50 overflow-hidden border border-white/20 hover:scale-105 transition-transform">
                     <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'guest'}`} alt="User" />
                   </Link>
@@ -800,7 +835,7 @@ export default function ClubDetailPage() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <button className="w-10 h-10 bg-black/40 backdrop-blur-md rounded-full border border-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-colors"><Icon name="MagnifyingGlassIcon" size={16} /></button>
+                      <button onClick={() => setActiveTab('Tous les contenus')} className="w-10 h-10 bg-black/40 backdrop-blur-md rounded-full border border-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-colors" title="Tout consulter"><Icon name="MagnifyingGlassIcon" size={16} /></button>
                       <button onClick={handleShare} className="w-10 h-10 bg-black/40 backdrop-blur-md rounded-full border border-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-colors"><Icon name="ShareIcon" size={16} /></button>
                       <button onClick={() => showToast('Options du club')} className="w-10 h-10 bg-black/40 backdrop-blur-md rounded-full border border-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-colors"><Icon name="EllipsisHorizontalIcon" size={16} /></button>
                     </div>
@@ -905,8 +940,8 @@ export default function ClubDetailPage() {
                   </div>
                   <div className="space-y-4">
                     {admins.map(admin => (
-                      <div key={admin.id} className="flex items-center justify-between group cursor-pointer hover:bg-emerald-50 p-2 rounded-xl -mx-2 transition-colors">
-                        <div className="flex items-center gap-3">
+                      <div key={admin.id} className="flex items-center justify-between group hover:bg-emerald-50 p-2 rounded-xl -mx-2 transition-colors">
+                        <Link href={admin.user_id ? `/profil/${admin.user_id}` : '/clubs'} className="flex items-center gap-3 group-hover:text-emerald-700 transition-colors">
                           <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-950 font-800 text-sm">
                             {admin.user?.full_name[0] || '?'}
                           </div>
@@ -914,7 +949,7 @@ export default function ClubDetailPage() {
                             <h4 className="font-700 text-sm group-hover:text-emerald-700 transition-colors">{admin.user?.full_name}</h4>
                             <span className="text-[10px] font-800 uppercase tracking-widest text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{admin.role}</span>
                           </div>
-                        </div>
+                        </Link>
                         <button onClick={(e) => { e.stopPropagation(); showToast('Contacter ' + admin.user?.full_name); }} className="w-8 h-8 rounded-full bg-[#F5F3ED] flex items-center justify-center text-emerald-900/50 hover:bg-emerald-200 hover:text-emerald-900 transition-colors">
                           <Icon name="ChatBubbleLeftIcon" size={14} />
                         </button>
@@ -930,7 +965,7 @@ export default function ClubDetailPage() {
                   </div>
                   <h3 className="font-display font-800 text-lg mb-2">Passez en compte pro pour gérer votre communauté</h3>
                   <p className="text-sm text-amber-900/70 mb-4">Statistiques avancées, outils de modération et événements payants.</p>
-                  <button className="px-5 py-2.5 bg-amber-950 text-white rounded-full text-xs font-800 hover:bg-black transition-colors w-full">
+                  <button className="px-5 py-2.5 bg-amber-950 text-white rounded-full text-xs font-800 hover:bg-black transition-colors w-full" onClick={() => router.push('/abonnements')}>
                     Découvrir l'offre Club
                   </button>
                 </div>
@@ -1054,7 +1089,11 @@ export default function ClubDetailPage() {
               {activeTab === 'Membres' && (
                 <div>
                   {members.map(member => (
-                    <div key={member.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: '1px solid rgba(11,31,23,0.04)' }}>
+                    <Link
+                      key={member.id}
+                      href={member.user_id ? `/profil/${member.user_id}` : '/clubs'}
+                      style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: '1px solid rgba(11,31,23,0.04)', textDecoration: 'none' }}
+                    >
                       <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#EDF3ED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: '#0B1F17', fontSize: '14px' }}>
                         {member.user?.full_name[0] || '?'}
                       </div>
@@ -1062,7 +1101,7 @@ export default function ClubDetailPage() {
                         <div style={{ fontSize: '13px', fontWeight: 700, color: '#0B1F17' }}>{member.user?.full_name}</div>
                         <div style={{ fontSize: '10px', color: '#6B7A72', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>{member.role}</div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                   {members.length === 0 && <p style={{ color: '#6B7A72', fontSize: '13px' }}>Aucun membre.</p>}
                 </div>
@@ -1159,7 +1198,10 @@ export default function ClubDetailPage() {
                                 <div key={reply.id} style={{ display: 'flex', gap: '8px', marginBottom: '8px', fontSize: '12px' }}>
                                   <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#EDF3ED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '9px', color: '#0B1F17', flexShrink: 0 }}>{reply.author?.full_name[0] || '?'}</div>
                                   <div style={{ background: '#EDF3ED', borderRadius: '12px', padding: '8px 12px', flex: 1 }}>
-                                    <div style={{ fontWeight: 700, marginBottom: '2px' }}>{reply.author?.full_name || 'Anonyme'}</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
+                                      <span style={{ fontWeight: 700 }}>{reply.author?.full_name || 'Anonyme'}</span>
+                                      <button onClick={() => startReplyTo(topic.id, reply.author?.full_name)} style={{ background: 'none', border: 'none', fontSize: '10px', fontWeight: 700, color: '#17402C', cursor: 'pointer', fontFamily: 'inherit' }}>Répondre</button>
+                                    </div>
                                     <div style={{ color: '#0B1F17', opacity: 0.8 }}>{reply.content}</div>
                                   </div>
                                 </div>
@@ -1261,7 +1303,11 @@ export default function ClubDetailPage() {
                 </div>
               ) : (
                 eventParticipants.map(participant => (
-                  <div key={participant.user_id} className="flex items-center gap-4 p-3 hover:bg-emerald-50 rounded-2xl transition-colors cursor-pointer border border-transparent hover:border-emerald-100">
+                  <Link
+                    key={participant.user_id}
+                    href={participant.user_id ? `/profil/${participant.user_id}` : '/clubs'}
+                    className="flex items-center gap-4 p-3 hover:bg-emerald-50 rounded-2xl transition-colors cursor-pointer border border-transparent hover:border-emerald-100"
+                  >
                     <div className="relative">
                       <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm bg-emerald-100 flex items-center justify-center text-emerald-950 font-800 text-lg">
                         {participant.user?.avatar_url ? (
@@ -1280,7 +1326,7 @@ export default function ClubDetailPage() {
                       <h4 className="font-800 text-emerald-950">{participant.user?.full_name || 'Utilisateur'}</h4>
                       <p className="text-xs text-emerald-900/50">Inscrit le {new Date(participant.joined_at).toLocaleDateString('fr-FR')}</p>
                     </div>
-                  </div>
+                  </Link>
                 ))
               )}
             </div>

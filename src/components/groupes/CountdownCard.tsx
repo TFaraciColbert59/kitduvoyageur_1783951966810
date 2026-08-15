@@ -1,11 +1,27 @@
+'use client';
+
 import React from 'react';
 import Icon from '@/components/ui/AppIcon';
+import { useToast } from '@/contexts/ToastContext';
 
 interface CountdownCardProps {
   data: any;
 }
 
 export default function CountdownCard({ data }: CountdownCardProps) {
+  const { toast } = useToast();
+  const inviteCode = data.inviteCode || '';
+
+  const handleInvite = async () => {
+    if (!inviteCode) { toast('Aucun code d\'invitation disponible', 'error'); return; }
+    try {
+      await navigator.clipboard.writeText(inviteCode);
+      toast(`Code d'invitation copié : ${inviteCode}`, 'success');
+    } catch {
+      toast(`Code d'invitation : ${inviteCode}`, 'success');
+    }
+  };
+
   return (
     <div className="bg-[#33463C] rounded-[2rem] p-6 text-[#E7E3D6] shadow-sm relative overflow-hidden">
       <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 blur-[40px] rounded-full pointer-events-none" />
@@ -54,7 +70,11 @@ export default function CountdownCard({ data }: CountdownCardProps) {
           <p className="text-xs font-semibold text-white">{data.meta.participantsCount} confirmés</p>
           <p className="text-[10px] font-mono text-white/50">2 places restantes</p>
         </div>
-        <button className="w-8 h-8 rounded-full bg-white text-[#1C2620] flex items-center justify-center hover:bg-white/90 transition-colors">
+        <button
+          onClick={handleInvite}
+          className="w-8 h-8 rounded-full bg-white text-[#1C2620] flex items-center justify-center hover:bg-white/90 transition-colors"
+          title="Inviter (copier le code)"
+        >
           <Icon name="PlusIcon" size={14} />
         </button>
       </div>

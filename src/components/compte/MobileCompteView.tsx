@@ -123,19 +123,19 @@ export default function MobileCompteView({
         </Link>
       </div>
 
-      {/* 4. Horizontal Scrollable Tabs */}
-      <div className="px-4 mt-5">
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+      {/* 4. Sticky Horizontal Scrollable Tabs */}
+      <div className="sticky top-0 z-30 bg-[#F5F3ED]/95 backdrop-blur-md px-4 py-3 border-b border-[#1C2620]/10 shadow-xs transition-all">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
           {tabs.map((t) => {
             const isActive = activeTab === t.id;
             return (
               <button
                 key={t.id}
                 onClick={() => onTabChange(t.id)}
-                className={`px-4 py-2 rounded-full text-xs font-extrabold whitespace-nowrap transition-all ${
+                className={`px-4 py-2 rounded-full text-xs font-extrabold whitespace-nowrap transition-all touch-manipulation min-h-[44px] flex items-center justify-center shrink-0 ${
                   isActive
                     ? 'bg-[#1C2620] text-white shadow-md'
-                    : 'bg-white text-[#1C2620]/70 border border-[#1C2620]/10 hover:bg-[#F5F3ED]'
+                    : 'bg-white text-[#1C2620]/75 border border-[#1C2620]/12 hover:bg-[#EAE7DC] active:bg-[#E2DEC5]'
                 }`}
               >
                 {t.label}

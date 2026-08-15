@@ -43,13 +43,23 @@ export default function CookieConsentBanner() {
       role="region"
       aria-label="Gestion des cookies"
       aria-describedby="cookie-banner-desc"
-      className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none"
+      className="fixed bottom-0 left-0 right-0 z-[60] pointer-events-none"
       style={{ paddingBottom: 'max(0px, env(safe-area-inset-bottom))' }}
     >
       <div
-        className="pointer-events-auto max-w-2xl mx-auto mb-3 mx-3 sm:mx-auto bg-[#1C2620] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
-        style={{ margin: '0 12px 12px' }}
+        className="pointer-events-auto max-w-[min(42rem,calc(100vw-24px))] mx-auto bg-[#1C2620] border border-white/10 rounded-2xl shadow-2xl overflow-hidden transition-all duration-300"
+        style={{
+          margin: '0 auto',
+          marginBottom: 'calc(72px + env(safe-area-inset-bottom))',
+        }}
       >
+        <style jsx>{`
+          @media (min-width: 640px) {
+            div {
+              margin-bottom: calc(16px + env(safe-area-inset-bottom)) !important;
+            }
+          }
+        `}</style>
         {!showDetails ? (
           <div className="p-4 sm:p-5">
             <div className="flex items-start gap-3 mb-3">
@@ -60,33 +70,35 @@ export default function CookieConsentBanner() {
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold text-white text-sm mb-0.5">Nous respectons votre vie privée</h2>
-                <p id="cookie-banner-desc" className="text-white/55 text-xs leading-relaxed">
+                <p id="cookie-banner-desc" className="text-white/60 text-xs leading-relaxed">
                   Cookies nécessaires au fonctionnement + cookies analytiques (Google Analytics) avec votre accord.{' '}
-                  <Link href="/cookies" className="text-[#17402C] hover:underline">
+                  <Link href="/cookies" className="text-[#A8C8A0] hover:text-white hover:underline underline-offset-2">
                     En savoir plus
                   </Link>
                 </p>
               </div>
             </div>
-            <div className="flex flex-row gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 onClick={acceptAll}
-                className="flex-1 bg-[#17402C] hover:bg-[#cc3d10] text-white px-3 py-2 rounded-xl text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[#17402C] focus:ring-offset-2 focus:ring-offset-[#1C2620] min-h-[36px]"
+                className="w-full sm:flex-1 bg-[#17402C] hover:bg-[#113021] text-white px-3 py-2.5 rounded-xl text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[#17402C] focus:ring-offset-2 focus:ring-offset-[#1C2620] min-h-[44px] flex items-center justify-center text-center"
               >
                 Tout accepter
               </button>
-              <button
-                onClick={rejectAll}
-                className="flex-1 bg-white/8 hover:bg-white/15 text-white/70 px-3 py-2 rounded-xl text-xs font-medium transition-all focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-[#1C2620] min-h-[36px]"
-              >
-                Refuser
-              </button>
-              <button
-                onClick={() => setShowDetails(true)}
-                className="border border-white/15 hover:border-white/30 text-white/50 hover:text-white/80 px-3 py-2 rounded-xl text-xs transition-all focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-[#1C2620] min-h-[36px]"
-              >
-                Gérer
-              </button>
+              <div className="flex gap-2 w-full sm:w-auto sm:flex-1">
+                <button
+                  onClick={rejectAll}
+                  className="flex-1 bg-white/[0.08] hover:bg-white/15 text-white/85 px-3 py-2.5 rounded-xl text-xs font-medium transition-all focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-[#1C2620] min-h-[44px] flex items-center justify-center text-center"
+                >
+                  Refuser
+                </button>
+                <button
+                  onClick={() => setShowDetails(true)}
+                  className="flex-1 border border-white/15 hover:border-white/30 text-white/60 hover:text-white/90 px-3 py-2.5 rounded-xl text-xs transition-all focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-[#1C2620] min-h-[44px] flex items-center justify-center text-center"
+                >
+                  Gérer
+                </button>
+              </div>
             </div>
           </div>
         ) : (
@@ -149,13 +161,13 @@ export default function CookieConsentBanner() {
             <div className="flex gap-2">
               <button
                 onClick={saveCustom}
-                className="flex-1 bg-[#17402C] hover:bg-[#cc3d10] text-white px-3 py-2 rounded-xl text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[#17402C] focus:ring-offset-2 focus:ring-offset-[#1C2620] min-h-[36px]"
+                className="flex-1 bg-[#17402C] hover:bg-[#cc3d10] text-white px-3 py-2 rounded-xl text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[#17402C] focus:ring-offset-2 focus:ring-offset-[#1C2620] min-h-[44px]"
               >
                 Enregistrer
               </button>
               <button
                 onClick={rejectAll}
-                className="border border-white/15 hover:border-white/30 text-white/50 hover:text-white/80 px-3 py-2 rounded-xl text-xs transition-all focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-[#1C2620] min-h-[36px]"
+                className="border border-white/15 hover:border-white/30 text-white/50 hover:text-white/80 px-3 py-2 rounded-xl text-xs transition-all focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-[#1C2620] min-h-[44px]"
               >
                 Tout refuser
               </button>

@@ -34,9 +34,12 @@ export default function GroupeToCarnetCTA() {
               >
                 Voir mes groupes →
               </Link>
-              <button className="inline-flex items-center gap-2 border border-[#E7E3D6]/20 text-[#E7E3D6]/80 px-6 py-3 rounded-full text-sm font-medium hover:border-[#E7E3D6]/40 hover:text-[#E7E3D6] transition-colors">
+              <Link
+                href="/guides"
+                className="inline-flex items-center gap-2 border border-[#E7E3D6]/20 text-[#E7E3D6]/80 px-6 py-3 rounded-full text-sm font-medium hover:border-[#E7E3D6]/40 hover:text-[#E7E3D6] transition-colors"
+              >
                 Comment ça marche
-              </button>
+              </Link>
             </div>
           </div>
 

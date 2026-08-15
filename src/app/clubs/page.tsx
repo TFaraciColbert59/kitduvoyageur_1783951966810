@@ -281,6 +281,8 @@ function ClubDetailModal({
   const [postingTopic, setPostingTopic] = useState(false);
   const [newEvent, setNewEvent] = useState({ title: '', description: '', event_date: '', location: '', max_participants: 20 });
   const [postingEvent, setPostingEvent] = useState(false);
+  const [joinedChallenges, setJoinedChallenges] = useState<Record<string, boolean>>({});
+  const [registeredEvents, setRegisteredEvents] = useState<Record<string, boolean>>({});
   const [toast, setToast] = useState<string | null>(null);
   const supabase = useMemo(() => createClient(), []);
 
@@ -302,12 +304,21 @@ function ClubDetailModal({
     setChallenges((challengesRes.data as ClubChallenge[]) ?? []);
     setEvents((eventsRes.data as ClubEvent[]) ?? []);
 
+    if (currentUserId) {
+      const [entriesRes, partsRes] = await Promise.all([
+        supabase.from('club_challenge_entries').select('challenge_id').eq('user_id', currentUserId),
+        supabase.from('club_event_participants').select('event_id').eq('user_id', currentUserId),
+      ]);
+      setJoinedChallenges(Object.fromEntries(((entriesRes.data as { challenge_id: string }[]) ?? []).map(e => [e.challenge_id, true])));
+      setRegisteredEvents(Object.fromEntries(((partsRes.data as { event_id: string }[]) ?? []).map(e => [e.event_id, true])));
+    }
+
     if (isAdmin) {
       const { data: pending } = await supabase.from('club_join_requests').select('*, user:user_profiles(full_name, avatar_url, trust_score)').eq('club_id', club.id).eq('status', 'pending');
       setPendingRequests((pending as ClubMember[]) ?? []);
     }
     setLoading(false);
-  }, [club, supabase, isAdmin]);
+  }, [club, supabase, isAdmin, currentUserId]);
 
   useEffect(() => { if (club) loadData(); }, [club, loadData]);
 
@@ -372,6 +383,35 @@ function ClubDetailModal({
     setPostingEvent(false);
     showToast('Événement ajouté à l\'agenda !');
     await loadData();
+  };
+
+  const handleJoinChallenge = async (challengeId: string) => {
+    if (!currentUserId) { showToast('Connectez-vous pour participer'); return; }
+    if (joinedChallenges[challengeId]) { showToast('Vous participez déjà à ce défi'); return; }
+    const { error } = await supabase.from('club_challenge_entries').insert({ challenge_id: challengeId, user_id: currentUserId });
+    if (error) {
+      showToast('Erreur lors de la participation');
+      return;
+    }
+    setJoinedChallenges(prev => ({ ...prev, [challengeId]: true }));
+    showToast('Vous participez au défi !');
+  };
+
+  const handleToggleEventRegistration = async (eventId: string) => {
+    if (!currentUserId) { showToast('Connectez-vous pour vous inscrire'); return; }
+    const isReg = registeredEvents[eventId];
+    if (isReg) {
+      await supabase.from('club_event_participants').delete().eq('event_id', eventId).eq('user_id', currentUserId);
+      setEvents(prev => prev.map(ev => ev.id === eventId ? { ...ev, participants_count: Math.max(0, (ev.participants_count || 0) - 1) } : ev));
+      setRegisteredEvents(prev => ({ ...prev, [eventId]: false }));
+      showToast('Désinscription validée');
+    } else {
+      const { error } = await supabase.from('club_event_participants').insert({ event_id: eventId, user_id: currentUserId });
+      if (error) { showToast("Erreur d'inscription"); return; }
+      setEvents(prev => prev.map(ev => ev.id === eventId ? { ...ev, participants_count: (ev.participants_count || 0) + 1 } : ev));
+      setRegisteredEvents(prev => ({ ...prev, [eventId]: true }));
+      showToast("Inscription validée !");
+    }
   };
 
   if (!club) return null;
@@ -594,8 +634,11 @@ function ClubDetailModal({
                               {ch.deadline && <span className="text-muted-foreground flex items-center gap-1.5"><Icon name="ClockIcon" size={14} /> Fin le {new Date(ch.deadline).toLocaleDateString('fr-FR')}</span>}
                             </div>
                           </div>
-                          <button className="w-full sm:w-auto px-6 py-3 bg-foreground text-background rounded-xl text-sm font-700 hover:bg-primary hover:text-white hover:-translate-y-1 hover:shadow-xl transition-all">
-                            Participer
+                          <button
+                            onClick={() => handleJoinChallenge(ch.id)}
+                            className={`w-full sm:w-auto px-6 py-3 rounded-xl text-sm font-700 transition-all ${joinedChallenges[ch.id] ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30' : 'bg-foreground text-background hover:bg-primary hover:text-white hover:-translate-y-1 hover:shadow-xl'}`}
+                          >
+                            {joinedChallenges[ch.id] ? '✓ Vous participez' : 'Participer'}
                           </button>
                         </div>
                       </div>
@@ -672,8 +715,11 @@ function ClubDetailModal({
                           </div>
                         </div>
                         <div className="flex items-center sm:border-l sm:border-border sm:pl-6">
-                          <button className="w-full sm:w-auto px-6 py-3 bg-primary/10 text-primary border border-primary/20 rounded-xl text-sm font-700 hover:bg-primary hover:text-white transition-all">
-                            S&apos;inscrire
+                          <button
+                            onClick={() => handleToggleEventRegistration(ev.id)}
+                            className={`w-full sm:w-auto px-6 py-3 rounded-xl text-sm font-700 transition-all ${registeredEvents[ev.id] ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white'}`}
+                          >
+                            {registeredEvents[ev.id] ? '✓ Inscrit' : 'S&apos;inscrire'}
                           </button>
                         </div>
                       </div>

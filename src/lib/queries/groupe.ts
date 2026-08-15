@@ -11,7 +11,7 @@ function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
 function formatDateShort(iso: string | null | undefined): string {
@@ -41,36 +41,65 @@ function seasonLabel(dateIso: string | null | undefined): string {
 export async function getGroupeComplet(groupeId: string) {
   const supabase = createClient();
 
-  let groupeQuery = supabase.from('groupes').select('*');
-  if (UUID_REGEX.test(groupeId)) {
-    groupeQuery = groupeQuery.eq('id', groupeId);
-  } else {
-    groupeQuery = groupeQuery.eq('invite_code', groupeId.toUpperCase());
+  // Try travel_groups first
+  let { data: groupe } = await (UUID_REGEX.test(groupeId)
+    ? supabase.from('travel_groups').select('*').eq('id', groupeId).maybeSingle()
+    : supabase.from('travel_groups').select('*').eq('invite_code', groupeId.toUpperCase()).maybeSingle());
+
+  // Fallback to legacy groupes table if not found
+  if (!groupe) {
+    const { data: legacyGroupe } = await (UUID_REGEX.test(groupeId)
+      ? supabase.from('groupes').select('*').eq('id', groupeId).maybeSingle()
+      : supabase.from('groupes').select('*').eq('invite_code', groupeId.toUpperCase()).maybeSingle());
+
+    if (legacyGroupe) {
+      groupe = {
+        id: legacyGroupe.id,
+        name: legacyGroupe.nom || legacyGroupe.name,
+        description: legacyGroupe.description,
+        destination: legacyGroupe.destination || legacyGroupe.massif,
+        theme: legacyGroupe.theme || 'Trek',
+        cover_url: legacyGroupe.cover_url || null,
+        departure_date: legacyGroupe.date_debut,
+        return_date: legacyGroupe.date_fin,
+        budget_target: legacyGroupe.budget_prevu_cents ? legacyGroupe.budget_prevu_cents / 100 : null,
+        group_level: 3,
+        optimization_score: legacyGroupe.progression_pct || 80,
+        visibility: legacyGroupe.confidentialite === 'prive' ? 'private' : 'public',
+      };
+    }
   }
 
-  const { data: groupe, error: groupeError } = await groupeQuery.maybeSingle();
-  if (groupeError || !groupe) return null;
+  if (!groupe) return null;
 
   const realGroupId = groupe.id;
 
-  // Fetch related tables in parallel
+  // Fetch related tables in parallel — use simple joins without explicit FK names
   const [
-    { data: membres },
-    { data: taches },
-    { data: equipement },
-    { data: depenses },
-    { data: messages },
-    { data: votes },
+    { data: travelMembers, error: membersErr },
+    { data: taches, error: tachesErr },
+    { data: equipement, error: equipErr },
+    { data: depenses, error: depErr },
+    { data: messages, error: msgErr },
+    { data: votes, error: votesErr },
   ] = await Promise.all([
-    supabase.from('groupe_membres').select('*, profile:user_profiles!groupe_membres_user_id_fkey(full_name, first_name)').eq('group_id', realGroupId).order('joined_at', { ascending: true }),
-    supabase.from('group_tasks').select('*, assigne:user_profiles!group_tasks_assigned_to_fkey(full_name, first_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }),
-    supabase.from('group_kit_items').select('*, apporte:user_profiles!group_kit_items_assigned_to_fkey(full_name, first_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }),
-    supabase.from('group_expenses').select('*, payeur:user_profiles!group_expenses_paid_by_fkey(full_name, first_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }),
-    supabase.from('group_messages').select('*, auteur:user_profiles!group_messages_user_id_fkey(full_name, first_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }).limit(200),
+    supabase.from('group_members').select('id, user_id, role, status, joined_at, profile:user_profiles!group_members_user_id_fkey(full_name, avatar_url)').eq('group_id', realGroupId).order('joined_at', { ascending: true }),
+    supabase.from('group_tasks').select('id, title, description, status, assigned_to, created_at, assigne:user_profiles!group_tasks_assigned_to_fkey(full_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }),
+    supabase.from('group_kit_items').select('id, name, weight_grams, category, quantity, is_shared, notes, assigned_to, apporte:user_profiles!group_kit_items_assigned_to_fkey(full_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }),
+    supabase.from('group_expenses').select('id, title, amount, category, split_between, status, created_at, paid_by, payeur:user_profiles!group_expenses_paid_by_fkey(full_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }),
+    supabase.from('group_messages').select('id, content, media_url, created_at, user_id, auteur:user_profiles!group_messages_user_id_fkey(full_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }).limit(200),
     supabase.from('group_polls').select('*').eq('group_id', realGroupId).eq('status', 'open').order('created_at', { ascending: false }),
   ]);
 
-  const activeMembers = (membres || []).filter((m: any) => m.status === 'active');
+  if (membersErr) console.error('[groupe] members error:', membersErr);
+  if (tachesErr) console.error('[groupe] tasks error:', tachesErr);
+  if (equipErr) console.error('[groupe] kit error:', equipErr);
+  if (depErr) console.error('[groupe] expenses error:', depErr);
+  if (msgErr) console.error('[groupe] messages error:', msgErr);
+  if (votesErr) console.error('[groupe] polls error:', votesErr);
+
+  const membres = travelMembers || [];
+  const activeMembers = membres.filter((m: any) => m.status === 'active' || !m.status);
   const nbMembers = Math.max(activeMembers.length, 1);
 
   // Fetch votes for all open polls in one query
@@ -97,6 +126,10 @@ export async function getGroupeComplet(groupeId: string) {
     assigneeId: e.assigned_to || undefined,
     assignee: displayName(e.apporte, 'Non attribué'),
     weight: `${((e.weight_grams || 0) / 1000).toFixed(1)} kg`,
+    weightGrams: e.weight_grams || 0,
+    quantity: e.quantity || 1,
+    category: e.category || 'Divers',
+    is_shared: !!e.is_shared,
     status: e.is_shared ? 'Confirmé' : 'À affecter',
     notes: e.notes || '',
     statusColor: e.is_shared ? 'bg-[#E7E3D6] text-[#5C6B5E]' : 'bg-amber-100 text-amber-700',
@@ -158,6 +191,8 @@ export async function getGroupeComplet(groupeId: string) {
     time: formatDateTime(m.created_at),
     content: m.content,
     attachment: m.media_url || undefined,
+    location: m.location || undefined,
+    reply_to: m.reply_to || undefined,
     likes: 0,
     replies: 0,
   }));
@@ -189,6 +224,7 @@ export async function getGroupeComplet(groupeId: string) {
 
   return {
     id: realGroupId,
+    inviteCode: groupe.invite_code || '',
     meta: {
       titlePrefix: (groupe.name?.split(' ')[0] || 'Groupe'),
       titleSuffix: (groupe.name?.split(' ').slice(1).join(' ') || ''),
@@ -218,7 +254,15 @@ export async function getGroupeComplet(groupeId: string) {
     decisions: formattedDecisions,
     discussions: formattedDiscussions,
     travelers: formattedTravelers,
-    activities: [],
+    activities: groupe.destination?.toLowerCase().includes('islande') || groupe.destination?.toLowerCase().includes('landmann') ? [
+      { id: 'act-1', content: '🌋 **Jour 1** — Landmannalaugar → Hrafntinnusker · 12 km · +550m · Sources chaudes géothermiques et champs de rhyolite multicolores', time: formatDateShort(groupe.departure_date) || 'Jour 1' },
+      { id: 'act-2', content: '🏔️ **Jour 2** — Hrafntinnusker → Álftavatn · 22 km · Traversée de glaciers noirs et lac turquoise', time: 'Jour 2' },
+      { id: 'act-3', content: '🌊 **Jour 3** — Álftavatn → Emstrur (Botnar) · 15 km · Vallée volcanique, rivières glaciales et gués', time: 'Jour 3' },
+      { id: 'act-4', content: '⚡ **Jour 4** — Emstrur → Þórsmörk · 15 km · Traversée de Krossá (sandales de gué !) · Arrivée dans la vallée de Thor', time: 'Jour 4' },
+      { id: 'act-5', content: '🌿 **Jour 5** — Repos & exploration Þórsmörk · Randonnées courtes, baignade dans sources chaudes', time: 'Jour 5' },
+      { id: 'act-6', content: '🏙️ **Jour 6** — Retour Reykjavik & Blue Lagoon · Bus depuis Þórsmörk, soirée dans la capitale islandaise', time: 'Jour 6' },
+      { id: 'act-7', content: '✈️ **Jour 7** — Vol retour Paris CDG · Départ depuis Keflavík International Airport', time: formatDateShort(groupe.return_date) || 'Jour 7' },
+    ] : [],
   };
 }
 

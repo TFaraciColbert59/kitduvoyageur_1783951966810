@@ -47,6 +47,11 @@ export interface GearRequirement {
   unit: Unit;
   priority: Priority;
   reason: string;
+  /** Contenance (ou quantité) maximale raisonnablement transportable.
+   *  Au-delà, la valeur demandée est plafonnée et l'interface invite à prévoir un ravitaillement. */
+  maxCarryable?: number;
+  /** Vrai quand le besoin dépasse la contenance transportable → « prévoir ravitaillement ». */
+  needsRefill?: boolean;
 }
 
 export interface MatchingDetail {
@@ -105,7 +110,10 @@ export function analyzeNeeds(context: HikeContext): GearRequirement[] {
     required: waterNeeded,
     unit: 'L',
     priority: 'vital',
-    reason: `Calcul basé sur ${duration.toFixed(1)}h de marche${waterPoints > 0 ? ' avec points d\'eau' : ' sans point d\'eau'}.`,
+    maxCarryable: 4,
+    needsRefill: waterNeeded > 4,
+    reason: `Calcul basé sur ${duration.toFixed(1)}h de marche${waterPoints > 0 ? ' avec points d\'eau' : ' sans point d\'eau'}.`
+      + (waterNeeded > 4 ? ' Contenance maximale transportable ≈ 4 L : prévoir un ravitaillement en cours de route.' : ''),
   });
 
   // --- NOURRITURE (Repas) ---
@@ -115,10 +123,14 @@ export function analyzeNeeds(context: HikeContext): GearRequirement[] {
     label: 'Nourriture (Repas / Encas)',
     categoryKeywords: ['nourriture', 'repas', 'alimentation', 'nutrition'],
     nameKeywords: ['barre', 'repas', 'lyophilisé', 'gel', 'ration'],
-    required: foodNeeded,
+    required: Math.min(foodNeeded, 8),
     unit: 'repas',
     priority: 'vital',
-    reason: 'Maintenir son niveau d\'énergie est crucial.',
+    maxCarryable: 8,
+    needsRefill: foodNeeded > 8,
+    reason: foodNeeded > 8
+      ? 'Maintenir son niveau d\'énergie est crucial. Espace limité dans le sac : prévoir un ravitaillement en nourriture en cours de route (max ≈ 8 repas).'
+      : 'Maintenir son niveau d\'énergie est crucial.',
   });
 
   // --- SAC À DOS (L Volume) ---

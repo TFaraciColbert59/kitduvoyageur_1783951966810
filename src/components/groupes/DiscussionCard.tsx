@@ -9,6 +9,8 @@ interface Message {
   time: string;
   content: string;
   attachment?: string | null;
+  location?: { lat: number; lng: number } | string | null;
+  reply_to?: string | null;
   likes: number;
   replies: number;
 }
@@ -29,6 +31,8 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const gpxInputRef = useRef<HTMLInputElement>(null);
+  const composerInputRef = useRef<HTMLInputElement>(null);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -46,6 +50,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
       group_id: groupId,
       user_id: user.id,
       content: msg || (gpxAttachment ? gpxAttachment : mediaUrl ? '📎 Pièce jointe' : `📍 Position partagée`),
+      ...(replyingTo ? { reply_to: replyingTo.id } : {}),
     };
 
     if (mediaUrl) insertData.media_url = mediaUrl;
@@ -58,6 +63,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
       alert('Erreur: ' + error.message);
     } else {
       setNewMessage('');
+      setReplyingTo(null);
       if (onRefresh) onRefresh();
     }
     setLoading(false);
@@ -175,7 +181,12 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
       </div>
       
       <div className="flex justify-end mb-4 flex-shrink-0">
-        <button className="text-xs font-medium text-[#17402C] hover:underline font-sans">Voir tout</button>
+        <button
+          onClick={() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); composerInputRef.current?.focus(); }}
+          className="text-xs font-medium text-[#17402C] hover:underline font-sans"
+        >
+          Voir tout
+        </button>
       </div>
       
       <div className="flex-1 overflow-y-auto space-y-6 pr-2 mb-4 custom-scrollbar">
@@ -193,8 +204,20 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
                 {msg.tag && (
                   <span className="text-[9px] font-mono uppercase tracking-widest bg-[#17402C]/10 text-[#17402C] px-1.5 py-0.5 rounded-sm">{msg.tag}</span>
                 )}
+                <button
+                  onClick={() => { setReplyingTo(replyingTo?.id === msg.id ? null : msg); setNewMessage(''); composerInputRef.current?.focus(); }}
+                  className="text-[10px] font-medium text-[#17402C] hover:underline ml-1"
+                >
+                  Répondre
+                </button>
                 <span className="text-xs text-[#1C2620]/40 ml-auto">{msg.time}</span>
               </div>
+              
+              {msg.reply_to && (
+                <p className="text-[10px] text-[#1C2620]/40 italic mb-1">
+                  ↩ en réponse à {discussions.find((d) => d.id === msg.reply_to)?.author || 'un message'}
+                </p>
+              )}
               
               <div className="bg-[#E7E3D6]/30 border border-[#1C2620]/5 rounded-2xl rounded-tl-none p-4 mb-2">
                 <p className="text-sm text-[#1C2620] font-sans leading-relaxed whitespace-pre-wrap">
@@ -212,10 +235,34 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
                       <p className="text-xs font-semibold text-[#1C2620]">{msg.attachment}</p>
                       <p className="text-[10px] text-[#1C2620]/50 font-mono">Pièce jointe</p>
                     </div>
-                    <button className="ml-auto w-8 h-8 rounded-full bg-[#1C2620]/5 flex items-center justify-center text-[#1C2620] hover:bg-[#1C2620]/10">
+                    <button
+                      onClick={() => {
+                        const src = msg.attachment;
+                        if (!src) return;
+                        const a = document.createElement('a');
+                        a.href = src.trim().startsWith('http') ? src.trim() : `https://${src.trim()}`;
+                        a.target = '_blank';
+                        a.rel = 'noopener noreferrer';
+                        a.click();
+                      }}
+                      className="ml-auto w-8 h-8 rounded-full bg-[#1C2620]/5 flex items-center justify-center text-[#1C2620] hover:bg-[#1C2620]/10"
+                      title="Ouvrir la pièce jointe"
+                    >
                       <Icon name="ArrowDownTrayIcon" size={14} />
                     </button>
                   </div>
+                )}
+                {msg.location && (
+                  <a
+                    href={`https://www.google.com/maps?q=${typeof msg.location === 'string' ? msg.location : `${(msg.location as any).lat},${(msg.location as any).lng}`}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center gap-2 px-3 py-2 bg-[#17402C]/10 text-[#17402C] rounded-xl text-xs font-semibold hover:bg-[#17402C]/20 transition-colors"
+                  >
+                    <Icon name="MapPinIcon" size={14} />
+                    {typeof msg.location === 'string' ? msg.location : `📍 ${(msg.location as any).lat?.toFixed(5)}, ${(msg.location as any).lng?.toFixed(5)}`}
+                    <span className="text-[10px] font-medium opacity-70">Ouvrir</span>
+                  </a>
                 )}
               </div>
             </div>
@@ -248,12 +295,20 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
       />
 
       <div className="relative flex-shrink-0">
+        {replyingTo && (
+          <div className="flex items-center gap-2 mb-2 px-3 py-2 bg-[#17402C]/5 border border-[#17402C]/20 rounded-xl text-xs text-[#1C2620]">
+            <span className="font-semibold">↩ Répondre à {replyingTo.author}</span>
+            <span className="text-[#1C2620]/50 truncate flex-1">« {replyingTo.content.slice(0, 60)}{replyingTo.content.length > 60 ? '…' : ''} »</span>
+            <button onClick={() => setReplyingTo(null)} className="text-[#1C2620]/40 hover:text-red-500 font-bold px-1">✕</button>
+          </div>
+        )}
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <div className="w-8 h-8 rounded-full bg-[#33463C] flex items-center justify-center text-white text-xs font-bold">
             {user?.user_metadata?.first_name ? user.user_metadata.first_name.charAt(0) : (user?.user_metadata?.full_name ? user.user_metadata.full_name.charAt(0) : 'V')}
           </div>
         </div>
         <input 
+          ref={composerInputRef}
           type="text" 
           value={newMessage}
           onChange={e => setNewMessage(e.target.value)}

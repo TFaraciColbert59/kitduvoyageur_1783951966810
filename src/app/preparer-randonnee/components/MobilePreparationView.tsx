@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { PreparationResult } from '@/lib/preparation/PreparationEngine';
 import { WeatherSnapshot } from '@/features/hiking/types';
@@ -8,9 +8,7 @@ import { WeatherSnapshot } from '@/features/hiking/types';
 import { PreparationHero } from './PreparationHero';
 import { PreparationScore } from './PreparationScore';
 import { PreparationConditions } from './PreparationConditions';
-import { EquipmentTabs, TabType } from './EquipmentTabs';
-import { EquipmentGearItem } from './EquipmentGearItem';
-import { EquipmentOkItem } from './EquipmentOkItem';
+import { EquipmentUnifiedList } from './EquipmentUnifiedList';
 import { PreparationSafety } from './PreparationSafety';
 import { StartDock } from './StartDock';
 import { Icon } from './PreparationIcons';
@@ -25,7 +23,8 @@ interface MobilePreparationViewProps {
   batteryLevel: number | null;
   isOfflineReady: boolean;
   isOnline: boolean;
-  handleAddInventory: (itemName: string, itemCategory: string) => void;
+   handleAddInventory: (itemName: string, itemCategory: string) => void;
+   handleAddToCart: (itemName: string, itemCategory: string) => void;
   handleStart: () => void;
   toastMsg: string | null;
   dispoItems: any[];
@@ -38,6 +37,10 @@ interface MobilePreparationViewProps {
   gState: any;
   bState: any;
   oState: any;
+  equipmentList: any[];
+  canEdit: boolean;
+  handleQty: (itemId: string, delta: number) => void;
+  handleDeleteItem: (itemId: string) => void;
 }
 
 import ExplorerMap from '@/components/explorer/ExplorerMap';
@@ -48,6 +51,7 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
   weatherData,
   isOnline,
   handleAddInventory,
+  handleAddToCart,
   handleStart,
   toastMsg,
   dispoItems,
@@ -60,9 +64,12 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
   gState,
   bState,
   oState,
+  equipmentList,
+  canEdit,
+  handleQty,
+  handleDeleteItem,
 }) => {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabType>('missing');
   const diffLabel = getDifficultyLabel(route.difficulty);
 
   const mapTrails = [
@@ -86,23 +93,24 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-[#EAE6DF] font-sans pb-[230px] relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#EAE6DF] font-sans pb-[190px] relative overflow-x-hidden">
       {!isOnline && (
          <div className="w-full bg-[#B85838] text-white text-[10px] uppercase tracking-widest font-mono text-center py-1 absolute top-0 z-50">
            Mode Hors-Ligne Actif
          </div>
       )}
 
-      {/* ── HALF SCREEN REAL INTERACTIVE MAP (50vh) ── */}
-      <div className="relative w-full h-[48vh] min-h-[340px] z-0 shadow-lg border-b border-[#1C2620]/10 overflow-hidden">
+      {/* ── LARGE REAL INTERACTIVE MAP (62vh) ── */}
+      <div className="relative w-full h-[62vh] min-h-[430px] z-0 shadow-lg border-b border-[#1C2620]/10 overflow-hidden">
         <ExplorerMap
           trails={mapTrails as any}
           selectedTrailId={String(route.id)}
           onTrailClick={() => {}}
           controlsPosition="right"
+          compact
         />
 
-        {/* Floating Glass Header Bar */}
+        {/* Floating Glass Header Bar — boutons réduits, déplacés en hauteur */}
         <div className="absolute top-3 left-3 right-3 z-[400] flex items-center justify-between pointer-events-none">
           <button
             onClick={() => {
@@ -112,15 +120,15 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
                 router.push('/explorer');
               }
             }}
-            className="w-9 h-9 rounded-full bg-[#1C2620]/85 backdrop-blur-md text-white border border-white/20 shadow-xl flex items-center justify-center pointer-events-auto active:scale-95 transition-all text-sm font-bold cursor-pointer"
+            className="w-8 h-8 rounded-full bg-[#1C2620]/80 backdrop-blur-md text-white border border-white/20 shadow-lg flex items-center justify-center pointer-events-auto active:scale-95 transition-all text-sm font-bold cursor-pointer"
             aria-label="Retour"
           >
             ←
           </button>
 
-          <div className="bg-[#1C2620]/85 backdrop-blur-md text-white border border-white/20 rounded-2xl px-3.5 py-1.5 shadow-xl flex items-center gap-2 pointer-events-auto max-w-[75%]">
-            <span className="text-xs font-bold font-display truncate">{route.name}</span>
-            <span className="text-[10px] font-mono text-[#8BAF7C] uppercase tracking-wider shrink-0">{diffLabel}</span>
+          <div className="bg-[#1C2620]/80 backdrop-blur-md text-white border border-white/20 rounded-full px-3 py-1 shadow-lg flex items-center gap-2 pointer-events-auto max-w-[72%]">
+            <span className="text-[11px] font-bold font-display truncate">{route.name}</span>
+            <span className="text-[9px] font-mono text-white/70 uppercase tracking-wider shrink-0">{diffLabel}</span>
           </div>
         </div>
       </div>
@@ -145,112 +153,49 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
           windSpeed={weatherData?.windKmH ? Math.round(weatherData.windKmH) : '--'}
         />
 
-        <EquipmentTabs
-          activeTab={activeTab}
-          onChange={setActiveTab}
-          missingCount={allMissingOrPartial.length}
-          okCount={dispoItems.length}
-          ctxCount={report.warnings.length}
+        {/* Équipement — liste unique, manquant en haut / possédé en bas */}
+        <div className="section-head" style={{ paddingTop: 0 }}>
+          <div className="h">Équipement à <em>préparer</em><span className="badge ok">{equipmentList.length}</span></div>
+          <div className="s">Coche ce que tu possèdes : +/− pour ajuster, 🗑 pour retirer.</div>
+        </div>
+
+        <EquipmentUnifiedList
+          items={equipmentList}
+          canEdit={canEdit}
+          onAdd={handleAddInventory}
+          onAddToCart={handleAddToCart}
+          onQty={handleQty}
+          onDelete={handleDeleteItem}
         />
 
-        {activeTab === 'missing' && (
-          <div className="pane on">
-             {allMissingOrPartial.length > 0 ? (
-               <>
-                 {insufItems.map((match, i) => (
-                   <EquipmentGearItem
-                     key={`p-${i}`}
-                     label={match.requirement.label}
-                     why={match.requirement.reason}
-                     priority={match.requirement.priority}
-                     status="partial"
-                     available={match.available}
-                     required={match.requirement.required}
-                     onAdd={() => handleAddInventory(match.requirement.label, match.requirement.categoryKeywords[0] || 'Autre')}
-                   />
-                 ))}
-                 {missingItems.map((req, i) => (
-                   <EquipmentGearItem
-                     key={`m-${i}`}
-                     label={req.label}
-                     why={req.reason}
-                     priority={req.priority}
-                     status="missing"
-                     available={0}
-                     required={req.required}
-                     onAdd={() => handleAddInventory(req.label, req.categoryKeywords[0] || 'Autre')}
-                   />
-                 ))}
-               </>
-             ) : (
-               <div className="empty">
-                 <div className="ic"><Icon name="check" /></div>
-                 <div className="t">Rien ne <em>manque.</em></div>
-                 <div className="s">Tu as tout ce qu'il faut pour partir.</div>
-               </div>
-             )}
-          </div>
-        )}
+        {/* Sécurité randonnée */}
+        <div className="section-head" style={{ marginTop: 12 }}>
+          <div className="h">Sécurité <em>randonnée</em></div>
+        </div>
+        <PreparationSafety
+          score={report.score}
+          weatherState={wState}
+          gpsState={gState}
+          offlineState={oState}
+          batteryState={bState}
+          alerts={report.warnings}
+        />
 
-        {activeTab === 'ok' && (
-          <div className="pane on">
-            <div className="section-head" style={{ paddingTop: 0 }}>
-              <div className="h">Ton <em>équipement</em> est suffisant<span className="badge ok">{dispoItems.length}</span></div>
-            </div>
-            {dispoItems.length > 0 ? (
-              <div className="ok-list">
-                {dispoItems.map((match, i) => (
-                   <EquipmentOkItem
-                     key={`o-${i}`}
-                     label={match.requirement.label}
-                     qty={match.available}
-                   />
-                ))}
-              </div>
-            ) : (
-              <div className="empty">
-                 <div className="ic"><Icon name="info" /></div>
-                 <div className="t">Ton inventaire est <em>vide.</em></div>
-                 <div className="s">Commence par ajouter ce qu'il te manque.</div>
-              </div>
-            )}
-            
-            <div className="section-head" style={{ marginTop: 8 }}>
-              <div className="h">Sécurité <em>randonnée</em></div>
-            </div>
-            <PreparationSafety
-              score={report.score}
-              weatherState={wState}
-              gpsState={gState}
-              offlineState={oState}
-              batteryState={bState}
-              alerts={report.warnings}
-            />
-          </div>
-        )}
-
-        {activeTab === 'ctx' && (
+        {/* Recommandations selon les conditions */}
+        {report.warnings.length > 0 && (
           <div className="pane on">
             <div className="section-head" style={{ paddingTop: 0 }}>
               <div className="h">Recommandé <em>selon</em> les conditions</div>
             </div>
-            {report.warnings.length > 0 ? (
-              report.warnings.map((warn, i) => (
-                <div key={i} className="gear-item" style={{ marginBottom: 8, padding: '10px 12px' }}>
-                   <div className="icon"><Icon name="info" /></div>
-                   <div className="body">
-                     <div className="n">Alerte Météo/Terrain</div>
-                     <div className="why">{warn}</div>
-                   </div>
+            {report.warnings.map((warn, i) => (
+              <div key={i} className="gear-item" style={{ marginBottom: 8, padding: '10px 12px' }}>
+                <div className="icon"><Icon name="info" /></div>
+                <div className="body">
+                  <div className="n">Alerte Météo/Terrain</div>
+                  <div className="why">{warn}</div>
                 </div>
-              ))
-            ) : (
-               <div className="empty">
-                 <div className="ic"><Icon name="check" /></div>
-                 <div className="t">Rien de <em>particulier.</em></div>
-                 <div className="s">Les conditions sont favorables.</div>
-               </div>
-            )}
+              </div>
+            ))}
           </div>
         )}
       </div>

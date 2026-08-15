@@ -1,14 +1,18 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 
-export default function ParcoursCard() {
+export default function ParcoursCard({ groupId }: { groupId?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current || typeof window === 'undefined') return;
+    const container = containerRef.current;
+    // Safety : évite "Map container is already initialized" (StrictMode/HMR double-mount)
+    if ((container as any)._leaflet_id) return;
 
     import('leaflet').then((L) => {
       delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -18,7 +22,9 @@ export default function ParcoursCard() {
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
 
-      const map = L.map(containerRef.current!, {
+      if ((container as any)._leaflet_id) return;
+
+      const map = L.map(container, {
         center: [45.33, 5.82],
         zoom: 11,
         zoomControl: false,
@@ -71,9 +77,35 @@ export default function ParcoursCard() {
       if (mapRef.current) {
         try { mapRef.current.remove(); } catch {}
         mapRef.current = null;
+        // Permet à Leaflet de ré-initialiser ce même nœud DOM (StrictMode / HMR)
+        try { delete (container as any)._leaflet_id; } catch {}
       }
     };
   }, []);
+
+  const handleDownloadGpx = () => {
+    const routeCoords: [number, number][] = [
+      [45.31, 5.78],
+      [45.325, 5.81],
+      [45.34, 5.83],
+      [45.355, 5.85],
+    ];
+    const trackPoints = routeCoords
+      .map(([lat, lon], i) =>
+        `      <trkpt lat="${lat}" lon="${lon}"><ele>${800 + i * 120}</ele></trkpt>`
+      )
+      .join('\n');
+    const gpx = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Le Kit du Voyageur" xmlns="http://www.topografix.com/GPX/1/1">\n  <trk>\n    <name>Parcours du groupe</name>\n    <trkseg>\n${trackPoints}\n    </trkseg>\n  </trk>\n</gpx>`;
+    const blob = new Blob([gpx], { type: 'application/gpx+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'parcours-groupe.gpx';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="bg-white rounded-[2rem] p-6 border border-[#1C2620]/10 shadow-sm relative overflow-hidden group">
@@ -86,12 +118,21 @@ export default function ParcoursCard() {
           </div>
         </div>
         <div className="flex gap-2">
-          <button className="px-3 py-1.5 rounded-full bg-[#1C2620]/5 text-[#1C2620] font-sans font-medium text-xs hover:bg-[#1C2620]/10 transition-colors flex items-center gap-1.5 cursor-pointer">
+          <button onClick={handleDownloadGpx} className="px-3 py-1.5 rounded-full bg-[#1C2620]/5 text-[#1C2620] font-sans font-medium text-xs hover:bg-[#1C2620]/10 transition-colors flex items-center gap-1.5 cursor-pointer">
             <Icon name="ArrowDownTrayIcon" size={12} /> GPX
           </button>
-          <button className="px-3 py-1.5 rounded-full bg-[#1C2620]/5 text-[#1C2620] font-sans font-medium text-xs hover:bg-[#1C2620]/10 transition-colors cursor-pointer">
-            Modifier
-          </button>
+          {groupId ? (
+            <Link
+              href={`/ai-configurator?groupId=${groupId}`}
+              className="px-3 py-1.5 rounded-full bg-[#1C2620]/5 text-[#1C2620] font-sans font-medium text-xs hover:bg-[#1C2620]/10 transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              Modifier
+            </Link>
+          ) : (
+            <span className="px-3 py-1.5 rounded-full bg-[#1C2620]/5 text-[#1C2620] font-sans font-medium text-xs cursor-default opacity-60">
+              Modifier
+            </span>
+          )}
         </div>
       </div>
       

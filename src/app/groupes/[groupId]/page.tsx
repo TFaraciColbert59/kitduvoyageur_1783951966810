@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,9 +39,14 @@ export default function GroupesPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [formattedData, setFormattedData] = useState<any>(null);
+  const loadedRef = useRef(false);
 
   const loadData = async (rawGroupId: string) => {
-    setLoading(true);
+    // N'affiche le plein écran de chargement que pour le tout premier chargement.
+    // Les rafraîchissements silencieux (toggle, ajout, suppression…) ne font pas
+    // s'effondrer la page (évite le « scroll remonté en haut » à chaque action).
+    const isFirstLoad = !loadedRef.current;
+    if (isFirstLoad) setLoading(true);
     try {
       const data = await getGroupeComplet(rawGroupId);
       setFormattedData(data);
@@ -49,6 +54,7 @@ export default function GroupesPage() {
       console.error('Error loading group data:', err);
     } finally {
       setLoading(false);
+      loadedRef.current = true;
     }
   };
 
@@ -87,6 +93,9 @@ export default function GroupesPage() {
 
   const groupId = formattedData.id || '';
   const members = formattedData.travelers || [];
+  const isCurrentUserOrganizer = !!user && members.some(
+    (m: any) => m.user_id === user.id && (m.role_code === 'organizer' || m.role_code === 'co_organizer')
+  );
 
   return (
     <div className="min-h-screen bg-[#E7E3D6] font-sans">
@@ -108,7 +117,7 @@ export default function GroupesPage() {
             <span className="text-[#1C2620]">{formattedData.meta.titlePrefix} {formattedData.meta.titleSuffix}</span>
           </div>
 
-          <HeroVoyage data={formattedData} />
+          <HeroVoyage data={formattedData} groupId={groupId} inviteCode={formattedData.inviteCode} onOpenChat={() => setActiveTab('discussion')} />
           
           <TabsGroupe activeTab={activeTab} setActiveTab={setActiveTab} data={formattedData} />
 
@@ -118,7 +127,7 @@ export default function GroupesPage() {
               
               {activeTab === 'overview' && (
                 <>
-                  <ParcoursCard />
+                  <ParcoursCard groupId={groupId} />
                   <TachesCard tasks={formattedData.tasks} groupId={groupId} onRefresh={refreshData} user={user} members={members} />
                   <EquipementCard equipment={formattedData.equipment} groupId={groupId} onRefresh={refreshData} user={user} members={members} />
                 </>
@@ -129,11 +138,12 @@ export default function GroupesPage() {
               {activeTab === 'expenses' && <DepensesCard expenses={formattedData.expenses} groupId={groupId} onRefresh={refreshData} user={user} members={members} />}
               {activeTab === 'decisions' && <DecisionsCard decisions={formattedData.decisions} groupId={groupId} onRefresh={refreshData} user={user} />}
               {activeTab === 'discussion' && <DiscussionCard discussions={formattedData.discussions} groupId={groupId} onRefresh={refreshData} user={user} />}
+              {activeTab === 'members' && <VoyageursCard travelers={formattedData.travelers} groupId={groupId} onRefresh={refreshData} user={user} members={members} group={formattedData} isOrganizer={isCurrentUserOrganizer} />}
             </div>
 
             <div className="col-span-12 lg:col-span-4 space-y-6">
               <CountdownCard data={formattedData} />
-              <VoyageursCard travelers={formattedData.travelers} groupId={groupId} onRefresh={refreshData} user={user} members={members} group={formattedData} isOrganizer={true} />
+              <VoyageursCard travelers={formattedData.travelers} groupId={groupId} onRefresh={refreshData} user={user} members={members} group={formattedData} isOrganizer={isCurrentUserOrganizer} />
               <ActiviteCard activities={formattedData.activities} />
               <AProposCard data={formattedData} />
               <CarnetCTACard />

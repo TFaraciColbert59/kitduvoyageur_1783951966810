@@ -37,47 +37,89 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
   const [newQuestion, setNewQuestion] = useState('');
   const [newOptions, setNewOptions] = useState(['', '']);
   const [loading, setLoading] = useState(false);
+  const [savingVoteId, setSavingVoteId] = useState<string | null>(null);
 
   React.useEffect(() => {
     setDecisions(initialDecisions);
   }, [initialDecisions]);
 
+  // Load the current user's votes so their choice stays selected after reload
+  React.useEffect(() => {
+    if (!user || decisions.length === 0) return;
+    const pollIds = decisions.map(d => d.id);
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('group_poll_votes')
+          .select('poll_id, option_index')
+          .eq('user_id', user.id)
+          .in('poll_id', pollIds);
+        if (!data) return;
+        const votes = Object.fromEntries((data as any[]).map(v => [v.poll_id, v.option_index]));
+        setDecisions(prev => prev.map(d => ({
+          ...d,
+          options: d.options.map(o => ({ ...o, selected: votes[d.id] === o.index })),
+        })));
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+  }, [user, decisions.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleVote = async (pollId: string, optionIndex: number) => {
-    if (!groupId || !user) return;
-    
-    // Simulate optimistic UI update
-    setDecisions(decisions.map(decision => {
+    if (!groupId || !user) {
+      alert('Connectez-vous pour voter.');
+      return;
+    }
+    if (savingVoteId) return; // évite les doubles clics rapides
+
+    const isCurrentlySelected = decisions.find(d => d.id === pollId)?.options.find(o => o.index === optionIndex)?.selected;
+
+    setSavingVoteId(pollId);
+
+    // Optimistic UI update — choix unique : désélectionne les autres options
+    setDecisions(prev => prev.map(decision => {
       if (decision.id !== pollId) return decision;
-      
+
       const newOpts = decision.options.map(opt => {
         const previouslySelected = opt.selected;
         const nowSelected = opt.index === optionIndex;
         let diff = 0;
         if (nowSelected && !previouslySelected) diff = 1;
         if (!nowSelected && previouslySelected) diff = -1;
-        
+
         return {
           ...opt,
-          selected: nowSelected,
+          selected: (!isCurrentlySelected && nowSelected) ? true : (previouslySelected && opt.index !== optionIndex ? false : opt.selected),
           votes: Math.max(0, opt.votes + diff),
         };
       });
-      
-      const total = newOpts.reduce((acc, o) => acc + o.votes, 0);
-      newOpts.forEach(o => {
+
+      // Single choice: force one selected option
+      const corrected = newOpts.map(o => ({ ...o, selected: o.index === optionIndex }));
+
+      const total = corrected.reduce((acc, o) => acc + o.votes, 0);
+      corrected.forEach(o => {
         o.percentage = total > 0 ? Math.round((o.votes / total) * 100) : 0;
       });
-      
-      return { ...decision, options: newOpts };
+
+      return { ...decision, options: corrected };
     }));
 
-    // Insert or update the vote in group_poll_votes table
+    // Insert/update the vote (upsert on conflict → unique par utilisateur)
     const { error } = await supabase.from('group_poll_votes').upsert(
       { poll_id: pollId, user_id: user.id, option_index: optionIndex },
       { onConflict: 'poll_id,user_id' }
     );
-    
-    if (!error && onRefresh) onRefresh();
+
+    setSavingVoteId(null);
+
+    if (error) {
+      console.error('Vote error:', error);
+      alert('Erreur lors du vote : ' + error.message);
+    } else if (onRefresh) {
+      onRefresh();
+    }
   };
 
   const handleAddOption = () => {
@@ -131,7 +173,7 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
       </div>
       
       <div className="flex justify-between items-center mb-6">
-        <button className="text-xs font-medium text-[#17402C] hover:underline font-sans">Historique</button>
+        <span />
         <button 
           onClick={() => setIsAdding(!isAdding)}
           className="px-3 py-1.5 rounded-full bg-[#33463C] text-white font-sans font-medium text-xs hover:bg-[#33463C]/90 transition-colors flex items-center gap-1"
@@ -217,9 +259,11 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
                 
                 return (
                 <button 
+                  type="button"
                   key={option.index}
                   onClick={() => handleVote(decision.id, option.index)}
-                  className={`w-full relative overflow-hidden rounded-xl border text-left transition-colors
+                  disabled={savingVoteId === decision.id}
+                  className={`group w-full relative overflow-hidden rounded-xl border text-left transition-colors disabled:opacity-70 disabled:cursor-wait
                     ${option.selected ? 'border-[#33463C] bg-white' : 'border-[#1C2620]/10 bg-white hover:border-[#33463C]/30'}`}
                 >
                   <div className="absolute inset-0 bg-[#33463C]/5" />
@@ -233,8 +277,8 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
                   <div className="relative p-3 flex items-center justify-between z-10">
                     <div className="flex items-center gap-3">
                       <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors
-                        ${option.selected ? 'border-[#33463C] bg-[#33463C] text-white' : 'border-[#1C2620]/20 bg-transparent text-transparent'}`}>
-                        <Icon name="CheckIcon" size={12} />
+                        ${option.selected ? 'border-[#33463C] bg-[#33463C] text-white' : 'border-[#1C2620]/20 bg-white text-transparent group-hover:border-[#33463C]'}`}>
+                        {option.selected && <Icon name="CheckIcon" size={12} />}
                       </div>
                       <div>
                         <p className={`text-sm font-semibold ${option.selected ? 'text-[#1C2620]' : 'text-[#1C2620]/70'}`}>{option.label}</p>

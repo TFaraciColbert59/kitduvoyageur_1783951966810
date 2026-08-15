@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { PreparationResult } from '@/lib/preparation/PreparationEngine';
 import { WeatherSnapshot } from '@/features/hiking/types';
 import { Icon } from './PreparationIcons';
+import { EquipmentUnifiedList } from './EquipmentUnifiedList';
 import { getDifficultyLabel } from '@/components/explorer/types';
 import ExplorerMap from '@/components/explorer/ExplorerMap';
 
@@ -17,7 +18,8 @@ interface DesktopPreparationViewProps {
   batteryLevel: number | null;
   isOfflineReady: boolean;
   isOnline: boolean;
-  handleAddInventory: (itemName: string, itemCategory: string) => void;
+   handleAddInventory: (itemName: string, itemCategory: string) => void;
+   handleAddToCart: (itemName: string, itemCategory: string) => void;
   handleStart: () => void;
   toastMsg: string | null;
   dispoItems: any[];
@@ -30,6 +32,10 @@ interface DesktopPreparationViewProps {
   gState: any;
   bState: any;
   oState: any;
+  equipmentList: any[];
+  canEdit: boolean;
+  handleQty: (itemId: string, delta: number) => void;
+  handleDeleteItem: (itemId: string) => void;
 }
 
 export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
@@ -38,6 +44,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
   weatherData,
   isOnline,
   handleAddInventory,
+  handleAddToCart,
   handleStart,
   toastMsg,
   dispoItems,
@@ -50,6 +57,10 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
   gState,
   bState,
   oState,
+  equipmentList,
+  canEdit,
+  handleQty,
+  handleDeleteItem,
 }) => {
   const router = useRouter();
   const diffLabel = getDifficultyLabel(route.difficulty);
@@ -83,12 +94,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
       ai_description: route.aiDescription || route.ai_description,
     }
   ];
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
+
 
   return (
     <div className="fixed inset-0 z-50 h-screen w-screen overflow-hidden font-sans text-[#1C2620] bg-[#1C2620]">
@@ -217,51 +223,20 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
         {/* Scrollable Inventory Area (80% Transparent Scroll) */}
         <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6 custom-scrollbar">
           
-          {/* Section: À Ajouter */}
-          {missingAndPartial.length > 0 && (
-            <section>
-              <h4 className="flex items-center gap-2 text-xs font-mono font-black tracking-widest text-[#9A3412] uppercase mb-3 drop-shadow-sm">
-                À Ajouter <span className="bg-[#9A3412]/20 text-[#9A3412] px-2 py-0.5 rounded-full border border-[#9A3412]/30">{missingAndPartial.length}</span>
-              </h4>
-              <div className="grid gap-3">
-                {missingAndPartial.map((item, idx) => (
-                  <div key={idx} className="bg-white/20 backdrop-blur-md p-4 rounded-2xl border border-white/40 shadow-[0_4px_20px_rgba(0,0,0,0.06)] flex items-start gap-4 transition-all hover:bg-white/30 hover:border-white/60 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] hover:-translate-y-0.5 duration-200">
-                     <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-sm ${item.status === 'missing' ? 'bg-[#9A3412]/25 text-[#9A3412] border border-[#9A3412]/40' : 'bg-amber-500/25 text-amber-950 border border-amber-500/40'}`}>
-                       <Icon name={item.status === 'missing' ? 'x' : 'info'} className="w-4 h-4" />
-                     </div>
-                     <div className="flex-1 min-w-0">
-                       <div className="flex items-center gap-2 mb-1">
-                         <p className="font-black text-sm text-[#1C2620] truncate drop-shadow-sm">{item.label}</p>
-                         {item.priority === 'vital' && (
-                           <span className="text-[9px] font-black uppercase tracking-wider text-white bg-[#9A3412] px-1.5 py-0.5 rounded shadow-sm">Vital</span>
-                         )}
-                       </div>
-                       <p className="text-[11px] font-bold text-[#1C2620]/90 mb-2 leading-relaxed drop-shadow-xs">{item.reason}</p>
-                       <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/30">
-                         <div className="flex items-center gap-3">
-                           <div className="flex flex-col">
-                             <span className="text-[9px] font-mono text-[#1C2620]/80 font-black uppercase">Possédé</span>
-                             <span className="text-xs font-black text-[#1C2620]">{item.available}</span>
-                           </div>
-                           <div className="w-px h-5 bg-white/30"></div>
-                           <div className="flex flex-col">
-                             <span className="text-[9px] font-mono text-[#1C2620]/80 font-black uppercase">Requis</span>
-                             <span className="text-xs font-black text-[#1C2620]">{item.required} {item.unit}</span>
-                           </div>
-                         </div>
-                         <button
-                           onClick={() => handleAddInventory(item.label, item.categoryKeywords[0] || 'Autre')}
-                           className="bg-[#1C2620] hover:bg-[#2D4034] text-white text-[11px] font-black px-3.5 py-1.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer border border-white/20"
-                         >
-                           <Icon name="plus" className="w-3.5 h-3.5" /> J'ai cet équipement
-                         </button>
-                       </div>
-                     </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+          {/* Section: Équipement à préparer (fusion manquant + possédé, trié) */}
+          <section>
+            <h4 className="flex items-center gap-2 text-xs font-mono font-black tracking-widest text-[#1C2620] uppercase mb-3 drop-shadow-sm">
+              Équipement à préparer <span className="bg-white/20 text-[#1C2620] px-2 py-0.5 rounded-full border border-white/30 font-black">{equipmentList.length}</span>
+            </h4>
+            <EquipmentUnifiedList
+              items={equipmentList}
+              canEdit={canEdit}
+              onAdd={handleAddInventory}
+              onAddToCart={handleAddToCart}
+              onQty={handleQty}
+              onDelete={handleDeleteItem}
+            />
+          </section>
 
           {/* Section: Recommandations */}
           {report.warnings.length > 0 && (
@@ -281,32 +256,6 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
               </div>
             </section>
           )}
-
-          {/* Section: Déjà dans ton sac */}
-          <section>
-             <h4 className="flex items-center gap-2 text-xs font-mono font-black tracking-widest text-[#1C2620] uppercase mb-3">
-               Déjà dans ton inventaire <span className="bg-white/20 text-[#1C2620] px-2 py-0.5 rounded-full border border-white/30 font-black">{dispoItems.length}</span>
-             </h4>
-             {dispoItems.length > 0 ? (
-               <div className="grid grid-cols-2 gap-2.5">
-                 {dispoItems.map((match, idx) => (
-                   <div key={idx} className="bg-white/20 backdrop-blur-md p-3 rounded-xl border border-white/35 shadow-sm flex items-center gap-2.5 hover:bg-white/30 transition-all">
-                      <div className="w-7 h-7 rounded-full bg-emerald-600/25 text-emerald-950 flex items-center justify-center shrink-0 border border-emerald-600/35">
-                        <Icon name="check" className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-black text-xs text-[#1C2620] truncate drop-shadow-sm">{match.requirement.label}</p>
-                        <p className="text-[10px] font-mono text-[#1C2620] font-black">{match.available} {match.requirement.unit}</p>
-                      </div>
-                   </div>
-                 ))}
-               </div>
-             ) : (
-               <div className="bg-white/20 backdrop-blur-md p-6 rounded-2xl border border-white/30 border-dashed text-center">
-                 <p className="text-xs text-[#1C2620] font-black">Ton sac est vide.</p>
-               </div>
-             )}
-          </section>
 
         </div>
 

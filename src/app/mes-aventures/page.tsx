@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
@@ -375,7 +375,7 @@ export default function MesAventuresPage() {
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <MobilePageShell background="#1C2620">
           {mobileContent}
         </MobilePageShell>
         

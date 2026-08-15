@@ -119,10 +119,20 @@ function PostCard({ post, user }: { post: any, user: any }) {
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <img src={post.author?.avatar_url || 'https://i.pravatar.cc/150'} alt={post.author?.full_name} className="w-10 h-10 rounded-full border-2 border-[#F5F2E8] object-cover" />
+          {post.author_id ? (
+            <Link href={`/profil/${post.author_id}`}>
+              <img src={post.author?.avatar_url || 'https://i.pravatar.cc/150'} alt={post.author?.full_name} className="w-10 h-10 rounded-full border-2 border-[#F5F2E8] object-cover hover:opacity-80 transition-opacity" />
+            </Link>
+          ) : (
+            <img src={post.author?.avatar_url || 'https://i.pravatar.cc/150'} alt={post.author?.full_name} className="w-10 h-10 rounded-full border-2 border-[#F5F2E8] object-cover" />
+          )}
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-sm text-[#1C2620]">{post.author?.full_name || 'Utilisateur inconnu'}</span>
+              {post.author_id ? (
+                <Link href={`/profil/${post.author_id}`} className="font-bold text-sm text-[#1C2620] hover:text-[#2D5A3D] hover:underline">{post.author?.full_name || 'Utilisateur inconnu'}</Link>
+              ) : (
+                <span className="font-bold text-sm text-[#1C2620]">{post.author?.full_name || 'Utilisateur inconnu'}</span>
+              )}
               <span className="bg-[#D3DFD7] text-[#2D5A3D] text-[8px] font-mono tracking-widest px-1.5 py-0.5 rounded uppercase">
                 {post.author?.loyalty_level || 'EXPLORATEUR'}
               </span>
@@ -196,21 +206,44 @@ function PostCard({ post, user }: { post: any, user: any }) {
                 {comments.length === 0 ? (
                   <p className="text-xs text-[#5C6B5E] text-center italic">Aucun commentaire pour l'instant. Soyez le premier !</p>
                 ) : (
-                  comments.map((c, i) => (
-                    <CommentItem
-                      key={c.id || i}
-                      comment={c}
-                      currentUser={user}
-                      tableName="post_comments"
-                      onUpdate={(id, newContent) =>
-                        setComments((prev) => prev.map((item) => (item.id === id ? { ...item, content: newContent } : item)))
-                      }
-                      onDelete={(id) => {
-                        setComments((prev) => prev.filter((item) => item.id !== id));
-                        setCommentsCount((prev: number) => Math.max(0, prev - 1));
-                      }}
-                    />
-                  ))
+                  (() => {
+                      const roots = (comments as any[]).filter((cm) => !cm.parent_id);
+                      const byParent: Record<string, any[]> = {};
+                      (comments as any[]).forEach((cm) => {
+                        if (cm.parent_id) (byParent[cm.parent_id] = byParent[cm.parent_id] || []).push(cm);
+                      });
+                      const core = (c: any) => (
+                        <CommentItem
+                          key={c.id || c.created_at}
+                          comment={c}
+                          currentUser={user}
+                          tableName="post_comments"
+                          onUpdate={(id, newContent) =>
+                            setComments((prev) => prev.map((item) => (item.id === id ? { ...item, content: newContent } : item)))
+                          }
+                          onDelete={(id) => {
+                            setComments((prev) => prev.filter((item) => item.id !== id));
+                            setCommentsCount((prev: number) => Math.max(0, prev - 1));
+                          }}
+                          onReply={(parentId, reply) => {
+                            setComments((prev) => [...prev, { ...reply, parent_id: parentId }]);
+                            setCommentsCount((prev: number) => prev + 1);
+                          }}
+                          replyTargetName={c.author?.full_name}
+                        />
+                      );
+                      const branch = (c: any, depth: number): React.ReactNode => (
+                        <div key={c.id || c.created_at}>
+                          {core(c)}
+                          {(byParent[c.id] || []).map((child) => (
+                            <div key={child.id} className={depth < 1 ? 'ml-8' : ''}>
+                              {branch(child, depth + 1)}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                      return roots.map((c) => branch(c, 0));
+                    })()
                 )}
               </div>
             )}
@@ -406,16 +439,20 @@ function CarnetCard({ carnet, user }: { carnet: any, user: any }) {
           <div className="flex items-center justify-between gap-2">
             {/* Author profile */}
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="relative shrink-0">
+              <Link href={carnet.author_id ? `/profil/${carnet.author_id}` : '#'} className="relative shrink-0">
                 <img 
                   src={carnet.author?.avatar_url || 'https://i.pravatar.cc/150'} 
                   alt={carnet.author?.full_name || 'Voyageur'}
-                  className="w-8 h-8 rounded-full border border-[#E8E4D8] object-cover" 
+                  className="w-8 h-8 rounded-full border border-[#E8E4D8] object-cover hover:opacity-80 transition-opacity" 
                 />
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />
-              </div>
+              </Link>
               <div className="truncate">
-                <span className="font-bold text-xs text-[#1C2620] block truncate">{carnet.author?.full_name || 'Voyageur'}</span>
+                {carnet.author_id ? (
+                  <Link href={`/profil/${carnet.author_id}`} className="font-bold text-xs text-[#1C2620] block truncate hover:text-[#2D5A3D] hover:underline">{carnet.author?.full_name || 'Voyageur'}</Link>
+                ) : (
+                  <span className="font-bold text-xs text-[#1C2620] block truncate">{carnet.author?.full_name || 'Voyageur'}</span>
+                )}
                 <span className="text-[10px] text-[#7A8A7D] block">Explorateur</span>
               </div>
             </div>
@@ -543,6 +580,7 @@ export default function CommunautePage() {
   const [events, setEvents] = useState<any[]>([]);
   const [newMembers, setNewMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Modal State
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
@@ -555,112 +593,112 @@ export default function CommunautePage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!user) return;
+  const fetchData = useCallback(async () => {
+    const supabase = createClient();
+    setLoading(true);
+    setError(null);
     
-    async function fetchData() {
-      const supabase = createClient();
-      setLoading(true);
-      
+    try {
+      // Fetch Community Posts (Feed)
+      const { data: postsData } = await supabase
+        .from('community_posts')
+        .select(`
+          *,
+          author:user_profiles!community_posts_author_id_fkey(full_name, avatar_url, loyalty_level)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (postsData) setPosts(postsData);
+
+      // Fetch Carnets (Long form & LocalStorage sync)
+      let localCarnets: any[] = [];
       try {
-        // Fetch Community Posts (Feed)
-        const { data: postsData } = await supabase
-          .from('community_posts')
-          .select(`
-            *,
-            author:user_profiles!community_posts_author_id_fkey(full_name, avatar_url, loyalty_level)
-          `)
-          .order('created_at', { ascending: false })
-          .limit(20);
-
-        if (postsData) setPosts(postsData);
-
-        // Fetch Carnets (Long form & LocalStorage sync)
-        let localCarnets: any[] = [];
-        try {
-          localCarnets = JSON.parse(localStorage.getItem('user_carnets_data') || '[]');
-        } catch (e) {
-          console.error(e);
-        }
-
-        const { data: carnetsData } = await supabase
-          .from('carnets')
-          .select(`*, author:user_profiles!author_id(full_name, avatar_url)`)
-          .order('created_at', { ascending: false })
-          .limit(20);
-          
-        let remoteCarnets = carnetsData || [];
-        if (!carnetsData) {
-          const { data: cData2 } = await supabase.from('carnets').select(`*, author:user_profiles(full_name, avatar_url)`).limit(20);
-          if (cData2) remoteCarnets = cData2;
-        }
-
-        const allCarnets = [...localCarnets, ...remoteCarnets];
-        const uniqueCarnets = Array.from(new Map(allCarnets.map(item => [item.id || item.title, item])).values());
-        setCarnets(uniqueCarnets);
-
-        // Fetch Clubs with user membership check
-        const { data: clubsData } = await supabase
-          .from('clubs')
-          .select('*')
-          .order('members_count', { ascending: false });
-
-        if (clubsData) {
-          let memberMap: Record<string, { role: string; status: string }> = {};
-          if (user) {
-            const { data: memberships } = await supabase
-              .from('club_members')
-              .select('club_id, role, status')
-              .eq('user_id', user.id);
-            if (memberships) {
-              memberMap = Object.fromEntries(memberships.map((m: any) => [m.club_id, { role: m.role, status: m.status }]));
-            }
-          }
-          setClubs(clubsData.map((c: any) => ({
-            ...c,
-            is_member: !!memberMap[c.id] && memberMap[c.id].status === 'active',
-            member_role: memberMap[c.id]?.role,
-            member_status: memberMap[c.id]?.status,
-          })));
-        }
-
-        // Fetch Travel Groups (user-created groups from the wizard)
-        const { data: travelGroupsData } = await supabase
-          .from('groupes')
-          .select('*, owner:user_profiles!travel_groups_owner_id_fkey(full_name, avatar_url)')
-          .eq('visibility', 'public')
-          .order('created_at', { ascending: false })
-          .limit(20);
-
-        if (travelGroupsData) setTravelGroups(travelGroupsData);
-
-        // Fetch Events
-        const { data: eventsData } = await supabase
-          .from('club_events')
-          .select('*')
-          .order('event_date', { ascending: true })
-          .limit(3);
-
-        if (eventsData) setEvents(eventsData);
-
-        // Fetch New Members
-        const { data: membersData } = await supabase
-          .from('user_profiles')
-          .select('avatar_url')
-          .order('created_at', { ascending: false })
-          .limit(5);
-
-        if (membersData) setNewMembers(membersData);
-
-      } catch (err) {
-        console.error('Error fetching community data:', err);
-      } finally {
-        setLoading(false);
+        localCarnets = JSON.parse(localStorage.getItem('user_carnets_data') || '[]');
+      } catch (e) {
+        console.error(e);
       }
-    }
 
-    fetchData();
+      const { data: carnetsData } = await supabase
+        .from('carnets')
+        .select(`*, author:user_profiles!author_id(full_name, avatar_url)`)
+        .order('created_at', { ascending: false })
+        .limit(20);
+        
+      let remoteCarnets = carnetsData || [];
+      if (!carnetsData) {
+        const { data: cData2 } = await supabase.from('carnets').select(`*, author:user_profiles(full_name, avatar_url)`).limit(20);
+        if (cData2) remoteCarnets = cData2;
+      }
+
+      const allCarnets = [...localCarnets, ...remoteCarnets];
+      const uniqueCarnets = Array.from(new Map(allCarnets.map(item => [item.id || item.title, item])).values());
+      setCarnets(uniqueCarnets);
+
+      // Fetch Clubs with user membership check
+      const { data: clubsData } = await supabase
+        .from('clubs')
+        .select('*')
+        .order('members_count', { ascending: false });
+
+      if (clubsData) {
+        let memberMap: Record<string, { role: string; status: string }> = {};
+        if (user) {
+          const { data: memberships } = await supabase
+            .from('club_members')
+            .select('club_id, role, status')
+            .eq('user_id', user.id);
+          if (memberships) {
+            memberMap = Object.fromEntries(memberships.map((m: any) => [m.club_id, { role: m.role, status: m.status }]));
+          }
+        }
+        setClubs(clubsData.map((c: any) => ({
+          ...c,
+          is_member: !!memberMap[c.id] && memberMap[c.id].status === 'active',
+          member_role: memberMap[c.id]?.role,
+          member_status: memberMap[c.id]?.status,
+        })));
+      }
+
+      // Fetch Travel Groups (user-created groups from the wizard)
+      const { data: travelGroupsData } = await supabase
+        .from('travel_groups')
+        .select('*, owner:user_profiles!travel_groups_owner_id_fkey(full_name, avatar_url)')
+        .eq('visibility', 'public')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (travelGroupsData) setTravelGroups(travelGroupsData);
+
+      // Fetch Events
+      const { data: eventsData } = await supabase
+        .from('club_events')
+        .select('*')
+        .order('event_date', { ascending: true })
+        .limit(3);
+
+      if (eventsData) setEvents(eventsData);
+
+      // Fetch New Members
+      const { data: membersData } = await supabase
+        .from('user_profiles')
+        .select('avatar_url')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (membersData) setNewMembers(membersData);
+
+    } catch (err: any) {
+      console.error('Error fetching community data:', err);
+      setError(err.message || 'Impossible de charger la communauté');
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   useEffect(() => {
     const handleCarnetCreated = () => {
@@ -875,64 +913,6 @@ export default function CommunautePage() {
     }
   };
 
-  // Si l'utilisateur n'est pas connecté
-  if (!user) {
-    return (
-      <>
-        {/* DESKTOP */}
-        <div className="hidden md:block">
-          <div className="min-h-screen bg-[#F5F2E8] font-sans flex flex-col">
-            <Header />
-            <main className="flex-1 pt-24 px-4 flex items-center justify-center">
-              <div className="text-center max-w-md w-full">
-                <div className="w-20 h-20 bg-[#1C2620] rounded-[2rem] mx-auto flex items-center justify-center text-white mb-8 shadow-xl">
-                  <Icon name="UserGroupIcon" size={32} />
-                </div>
-                <h1 className="font-display font-800 text-3xl sm:text-4xl text-[#1C2620] mb-4">
-                  Rejoignez la <em className="font-serif italic font-normal text-[#2D5A3D]">Communauté</em>
-                </h1>
-                <p className="text-sm text-[#5C6B5E] mb-8 leading-relaxed">
-                  Le Hub Voyageurs est un espace privé réservé aux explorateurs pour partager leurs récits, leurs traces et leurs conseils en toute bienveillance.
-                </p>
-                <Link
-                  href="/connexion"
-                  className="inline-flex items-center gap-2 bg-[#1C2620] hover:bg-[#2A3830] text-white px-8 py-4 rounded-full font-semibold text-sm transition-all shadow-md"
-                >
-                  Se connecter ou s'inscrire
-                </Link>
-              </div>
-            </main>
-            <Footer />
-          </div>
-        </div>
-
-        {/* MOBILE */}
-        <div className="block md:hidden">
-          <MobilePageShell>
-            <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-              <div style={{ width: '80px', height: '80px', background: '#0B1F17', borderRadius: '24px', margin: '0 auto 24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: '32px', color: '#fff' }}>👥</span>
-              </div>
-              <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0B1F17', marginBottom: '12px', lineHeight: 1.1 }}>
-                Rejoignez la <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>Communauté</em>
-              </h1>
-              <p style={{ fontSize: '13px', color: '#6B7A72', marginBottom: '24px', lineHeight: 1.5 }}>
-                Le Hub Voyageurs est un espace privé réservé aux explorateurs.
-              </p>
-              <Link
-                href="/connexion"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '14px 28px', background: '#0B1F17', color: '#fff', borderRadius: '999px', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}
-              >
-                Se connecter ou s'inscrire
-              </Link>
-            </div>
-          </MobilePageShell>
-          
-        </div>
-      </>
-    );
-  }
-
   return (
     <>
       {/* ── DESKTOP ── */}
@@ -1029,9 +1009,31 @@ export default function CommunautePage() {
 
                   {/* TABS CONTENT */}
                   <div className="space-y-8">
-                    {loading ? (
-                      <div className="flex justify-center py-20">
-                        <div className="w-8 h-8 border-2 border-[#2D5A3D] border-t-transparent rounded-full animate-spin"></div>
+                    {error ? (
+                      <div className="text-center py-16 bg-white rounded-[2rem] border border-red-200 p-8 shadow-sm">
+                        <div className="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <Icon name="ExclamationTriangleIcon" size={24} />
+                        </div>
+                        <h3 className="font-bold text-base text-[#1C2620] mb-1">Erreur de chargement</h3>
+                        <p className="text-xs text-[#5C6B5E] mb-4 max-w-sm mx-auto">{error}</p>
+                        <button onClick={() => fetchData()} className="px-5 py-2.5 bg-[#17402C] text-white rounded-full text-xs font-bold hover:bg-[#113021] transition-colors">
+                          Réessayer
+                        </button>
+                      </div>
+                    ) : loading ? (
+                      <div className="space-y-4">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="bg-white rounded-[2rem] p-6 border border-[#E8E4D8] animate-pulse space-y-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-[#E8E4D8] rounded-full" />
+                              <div className="space-y-2 flex-1">
+                                <div className="h-4 bg-[#E8E4D8] rounded w-1/3" />
+                                <div className="h-3 bg-[#E8E4D8] rounded w-1/4" />
+                              </div>
+                            </div>
+                            <div className="h-16 bg-[#E8E4D8] rounded-xl" />
+                          </div>
+                        ))}
                       </div>
                     ) : activeTab === 'Feed' ? (
                       // TAB: FEED
@@ -1317,9 +1319,9 @@ export default function CommunautePage() {
                   <div className="bg-[#1C2620] rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-[#2D5A3D] rounded-full blur-3xl opacity-30 -mr-10 -mt-10"></div>
                     <div className="flex items-center gap-4 mb-6 relative z-10">
-                      <img src={user.user_metadata?.avatar_url || 'https://i.pravatar.cc/150'} alt="Mon profil" className="w-14 h-14 rounded-full border-2 border-white/20 object-cover" />
+                      <img src={user?.user_metadata?.avatar_url || 'https://i.pravatar.cc/150'} alt="Mon profil" className="w-14 h-14 rounded-full border-2 border-white/20 object-cover" />
                       <div>
-                        <div className="font-display font-800 text-lg leading-tight">{user.user_metadata?.full_name || 'Mon Profil'}</div>
+                        <div className="font-display font-800 text-lg leading-tight">{user?.user_metadata?.full_name || 'Mon Profil'}</div>
                         <div className="text-[10px] text-white/50 font-mono mt-1">Voyageur certifié</div>
                       </div>
                     </div>

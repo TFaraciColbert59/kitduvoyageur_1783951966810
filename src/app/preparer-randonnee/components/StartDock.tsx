@@ -23,15 +23,18 @@ export const StartDock: React.FC<StartDockProps> = ({
   const dotColor = anyEssentialMissing ? 'bg-[#B85838]' : missingCount > 0 ? 'bg-[#E8B87A]' : 'bg-[#22c55e]';
 
   return (
-    <div className="fixed left-4 right-4 bottom-[calc(74px+env(safe-area-inset-bottom))] sm:bottom-6 z-[60] bg-white/95 backdrop-blur-xl border border-white/90 rounded-full p-1.5 pl-4 shadow-2xl flex items-center justify-between gap-3 pointer-events-auto">
+    <div
+      className="fixed left-3 right-3 z-[70] bg-white/85 backdrop-blur-xl border border-white/70 rounded-full p-1 pl-4 shadow-xl flex items-center justify-between gap-2 pointer-events-auto"
+      style={{ bottom: 'calc(env(safe-area-inset-bottom) + 62px + 8px)' }}
+    >
       {/* Left compact status */}
       <div className="flex items-center gap-2 min-w-0">
         <span className={`w-2 h-2 rounded-full shrink-0 ${dotColor}`} />
         <div className="flex flex-col min-w-0">
-          <span className="text-[11px] font-bold text-[#1C2620] truncate font-display">
+          <span className="text-[10px] font-bold text-[#1C2620] truncate font-display">
             {anyEssentialMissing ? 'Essentiels manquants' : missingCount > 0 ? `${missingCount} à compléter` : 'Prêt à partir'}
           </span>
-          <span className="text-[9px] font-mono text-[#5C6B5E]">
+          <span className="text-[8px] font-mono text-[#5C6B5E] truncate">
             {score}% · {totalOk}/{totalNeeds} équipés
           </span>
         </div>

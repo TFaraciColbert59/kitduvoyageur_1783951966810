@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import 'leaflet/dist/leaflet.css';
@@ -658,54 +658,57 @@ export default function InteractiveMap() {
       )}
 
       {/* ── MAP CONTAINER ── */}
-      <div className="flex-1 h-full relative">
+      <div className="flex-1 h-full relative min-h-[240px]">
         <div ref={containerRef} className="w-full h-full z-0" />
 
-        {/* Floating Zoom Controls */}
-        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-[400] flex flex-col gap-2">
-          <div className="flex flex-col bg-white/80 backdrop-blur-md border border-white/60 rounded-2xl shadow-xl overflow-hidden text-[#1C2620]">
+        {/* Floating Zoom Controls — identiques à « Préparer la randonnée » (compact, bord gauche) */}
+        <div className="absolute left-2 bottom-2 z-[400] flex flex-col gap-2">
+          <div className="flex flex-col bg-white/80 backdrop-blur-md border border-white/60 rounded-xl shadow-xl overflow-hidden text-[#1C2620]">
             <button
               onClick={handleZoomIn}
               title="Zoom avant"
-              className="w-9 h-9 flex items-center justify-center font-bold text-lg hover:bg-[#8BAF7C]/35 hover:text-[#17402C] transition-all border-b border-black/10 cursor-pointer active:scale-95"
+              className="w-8 h-8 flex items-center justify-center font-bold text-base hover:bg-[#8BAF7C]/35 hover:text-[#17402C] transition-all border-b border-black/10 cursor-pointer active:scale-95"
             >
               +
             </button>
             <button
               onClick={handleZoomOut}
               title="Zoom arrière"
-              className="w-9 h-9 flex items-center justify-center font-bold text-lg hover:bg-[#8BAF7C]/35 hover:text-[#17402C] transition-all cursor-pointer active:scale-95"
+              className="w-8 h-8 flex items-center justify-center font-bold text-base hover:bg-[#8BAF7C]/35 hover:text-[#17402C] transition-all cursor-pointer active:scale-95"
             >
               −
             </button>
           </div>
         </div>
 
-        {/* Floating Tile Switcher (Carte / Relief / Satellite) */}
-        <div className="absolute bottom-20 right-3 sm:bottom-6 sm:right-4 z-[400] flex items-center p-1 bg-white/80 backdrop-blur-md border border-white/60 rounded-2xl shadow-xl">
+        {/* Floating Tile Switcher — identiques à « Préparer la randonnée » (icônes seules, bord droit) */}
+        <div className="absolute right-2 bottom-2 z-[400] flex items-center bg-white/80 backdrop-blur-md border border-white/60 rounded-xl shadow-xl px-1 py-1 gap-1 shrink-0 flex-nowrap whitespace-nowrap">
           <button
             onClick={() => handleTileChange('osm')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-              tileMode === 'osm' ? 'bg-[#17402C] text-white shadow-sm' : 'text-[#5C6B5E] hover:bg-[#8BAF7C]/35 hover:text-[#17402C]'
-            }`}
+            className={`flex items-center rounded-xl transition-all cursor-pointer shrink-0 w-8 h-8 justify-center ${tileMode === 'osm' ? 'bg-[#17402C] text-white shadow-sm' : 'text-[#5C6B5E] hover:bg-[#8BAF7C]/30 hover:text-[#17402C]'}`}
+            title="Carte"
           >
-            🗺️ Carte
+            <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path><path d="M9 3v12"></path><path d="M15 6v12"></path>
+            </svg>
           </button>
           <button
             onClick={() => handleTileChange('topo')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-              tileMode === 'topo' ? 'bg-[#17402C] text-white shadow-sm' : 'text-[#5C6B5E] hover:bg-[#8BAF7C]/35 hover:text-[#17402C]'
-            }`}
+            className={`flex items-center rounded-xl transition-all cursor-pointer shrink-0 w-8 h-8 justify-center ${tileMode === 'topo' ? 'bg-[#17402C] text-white shadow-sm' : 'text-[#5C6B5E] hover:bg-[#8BAF7C]/30 hover:text-[#17402C]'}`}
+            title="Relief"
           >
-            ⛰️ Relief
+            <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
+            </svg>
           </button>
           <button
             onClick={() => handleTileChange('satellite')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-              tileMode === 'satellite' ? 'bg-[#17402C] text-white shadow-sm' : 'text-[#5C6B5E] hover:bg-[#8BAF7C]/35 hover:text-[#17402C]'
-            }`}
+            className={`flex items-center rounded-xl transition-all cursor-pointer shrink-0 w-8 h-8 justify-center ${tileMode === 'satellite' ? 'bg-[#17402C] text-white shadow-sm' : 'text-[#5C6B5E] hover:bg-[#8BAF7C]/30 hover:text-[#17402C]'}`}
+            title="Satellite"
           >
-            🛰️ Satellite
+            <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path>
+            </svg>
           </button>
         </div>
 

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -191,32 +191,35 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
     try {
       const supabase = createClient();
       const { data: { user: currentUser } } = await supabase.auth.getUser();
-
-      const finalStatus = isDraft || form.publishTiming === 'brouillon' || form.visibility === 'private' ? 'Brouillon' : 'Publié';
+      const authorId = currentUser?.id;
 
       const payload = {
         title: form.title,
         destination: form.subtitle || 'Alpes',
         description: form.chapeau,
         cover_image: form.coverImage,
-        duration: '3 jours',
-        distance_km: 27,
-        elevation_m: 1620,
-        author_id: currentUser?.id || null,
+        cover_image_alt: form.title,
+        tags: [...form.selectedThemes],
+        visibility: form.visibility === 'private' ? 'private' : form.visibility === 'subscribers' ? 'friends' : 'public',
+        is_collaborative: false,
+        author_id: authorId || null,
         likes_count: 0,
         comments_count: 0,
-        status: finalStatus,
-        created_at: new Date().toISOString()
+        favorites_count: 0,
+        views_count: 0,
+        verified: false,
       };
 
       const { data: newCarnet, error } = await supabase
         .from('carnets')
         .insert(payload)
-        .select()
+        .select('id')
         .single();
 
       if (error) {
-        console.warn("Supabase insert warning:", error);
+        alert("Impossible de publier le carnet : " + (error.message || 'erreur serveur'));
+        setSaving(false);
+        return;
       }
 
       setSaveSuccess(true);
@@ -224,7 +227,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
       // Persist to localStorage for instant local reflection in community feed & user profile
       try {
         const existing = JSON.parse(localStorage.getItem('user_carnets_data') || '[]');
-        const localRecord = newCarnet || { ...payload, id: `local-${Date.now()}` };
+        const localRecord = newCarnet ? { ...payload, id: newCarnet.id } : { ...payload, id: `local-${Date.now()}` };
         localStorage.setItem('user_carnets_data', JSON.stringify([localRecord, ...existing]));
         window.dispatchEvent(new Event('carnet_created'));
       } catch (e) {
@@ -235,8 +238,10 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
         setSaveSuccess(false);
         if (onCloseModal) {
           onCloseModal();
+        } else if (newCarnet?.id) {
+          router.push(`/carnets/${newCarnet.id}`);
         } else {
-          router.push('/communaute');
+          router.push('/carnets');
         }
       }, 800);
     } catch (err) {
@@ -838,7 +843,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <MobilePageShell background="#F5F2E8">
           {/* Sticky header */}
           <div style={{ position: 'sticky', top: 0, zIndex: 40, background: 'rgba(251,250,246,0.92)', backdropFilter: 'blur(16px) saturate(1.5)', WebkitBackdropFilter: 'blur(16px) saturate(1.5)', borderBottom: '1px solid rgba(11,31,23,0.06)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

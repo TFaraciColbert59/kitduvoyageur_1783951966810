@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 
 export default function CarnetCTACard() {
@@ -18,10 +19,13 @@ export default function CarnetCTACard() {
         Étapes, photos, hébergements et dépenses seront automatiquement archivés dans votre Carnet le 15 octobre.
       </p>
       
-      <button className="w-full py-3 bg-[#17402C] text-white rounded-full flex items-center justify-center gap-2 text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
+      <Link
+        href="/carnets"
+        className="w-full py-3 bg-[#17402C] text-white rounded-full flex items-center justify-center gap-2 text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
+      >
         <Icon name="BookOpenIcon" size={16} />
         Voir le Carnet
-      </button>
+      </Link>
     </div>
   );
 }

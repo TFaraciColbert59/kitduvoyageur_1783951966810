@@ -2,7 +2,7 @@
 import React from 'react';
 
 interface LkvIconProps {
-  name: 'home' | 'mountain' | 'bag' | 'doc' | 'user' | 'search' | 'chevron-left' | 'chevron-right' | 'heart' | 'bookmark' | 'bell' | 'map-pin' | 'star' | 'minus' | 'plus' | 'close' | 'menu' | 'arrow-right' | 'lock' | 'filter' | 'users' | 'compass';
+  name: 'home' | 'mountain' | 'bag' | 'doc' | 'user' | 'search' | 'chevron-left' | 'chevron-right' | 'heart' | 'bookmark' | 'bell' | 'map-pin' | 'star' | 'minus' | 'plus' | 'close' | 'menu' | 'arrow-right' | 'lock' | 'filter' | 'users' | 'compass' | 'box';
   size?: number;
   color?: string;
 }
@@ -30,6 +30,7 @@ const PATHS: Record<LkvIconProps['name'], string | string[]> = {
   heart: 'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z',
   users: ['M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8', 'M20 21c0-4-4-6-8-6s-8 2-8 6', 'M17 8a3 3 0 1 0 0-6', 'M22 21c0-3-2.5-5-5-5'],
   compass: ['M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z', 'M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z'],
+  box: ['M2 7l10-4 10 4-10 4z', 'M2 7v10l10 4 10-4V7', 'M2 7l10 4 10-4', 'M12 11v10'],
 };
 
 export default function LkvIcon({ name, size = 20, color = 'currentColor' }: LkvIconProps) {

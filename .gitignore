@@ -46,3 +46,24 @@ turbo/
 # Country data cache (API responses, generated at build time)
 .country-cache/
 .aider*
+
+# Runtime / logs
+.dev-server.pid
+dev-server.log
+dev-server.err.log
+*.log
+
+# Géodonnées volumineuses générées (3 Go)
+geo_data/
+pays-data/
+*cache*
+
+# Design de référence local (hors app)
+Front end/
+
+# Actifs générés non référencés
+public/assets/images/products/
+
+# Tooling
+.kilo/
+MOBILE_OPTIMIZATION_PROGRESS.md

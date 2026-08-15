@@ -86,9 +86,14 @@ export default function NouveauGroupePage() {
     autoArchive: true,
   });
 
-  // Generate Invite Code
-  const inviteCode = 'CHARTREUSE-OCT-H9X2';
-  const inviteUrl = `lekit.co/g/${inviteCode.toLowerCase()}`;
+  // Generate Invite Code (lazy, once)
+  const [inviteCode, setInviteCode] = useState('');
+  useEffect(() => {
+    if (!inviteCode) {
+      setInviteCode(Math.random().toString(36).substring(2, 8).toUpperCase());
+    }
+  }, [inviteCode]);
+  const inviteUrl = `groupes?code=${inviteCode}`;
 
   // Formatting dates for preview
   const formatDatesPreview = () => {
@@ -145,12 +150,9 @@ export default function NouveauGroupePage() {
 
     setLoading(true);
     try {
-      // Generate clean invite code
-      const generatedCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-
       // 1. Insert group into travel_groups
       const { data: newGroup, error: groupErr } = await supabase
-        .from('groupes')
+        .from('travel_groups')
         .insert({
           name: name.trim(),
           description: description.trim() || null,
@@ -161,7 +163,7 @@ export default function NouveauGroupePage() {
           theme: pictogram,
           destination: linkedAdventure || name.trim(),
           visibility: 'invite_only',
-          invite_code: generatedCode,
+          invite_code: inviteCode,
         })
         .select()
         .single();
@@ -171,24 +173,38 @@ export default function NouveauGroupePage() {
       }
 
       // 2. Insert Owner as organizer in group_members
-      await supabase.from('groupe_membres').insert({
+      await supabase.from('group_members').insert({
         group_id: newGroup.id,
         user_id: user.id,
         role: 'organizer',
         status: 'active',
       });
 
-      // 3. Insert invited members if sendInvites
+      // 3. Insert invited members if sendInvites (resolve real user ids only)
       if (sendInvites) {
-        // Add invited partners if they exist
-        for (const partner of invitedPartners) {
-          // If partner has real user_id, add them
-          await supabase.from('groupe_membres').insert({
-            group_id: newGroup.id,
-            user_id: partner.id.startsWith('p') ? user.id : partner.id, // fallback
-            role: 'member',
-            status: 'invited',
-          }).then(undefined, () => {});
+        const inviteNames = new Set([
+          ...invitedPartners.map(p => p.full_name),
+          ...customInvites.map(c => c.name),
+        ]);
+        if (inviteNames.size > 0) {
+          const { data: profiles } = await supabase
+            .from('user_profiles')
+            .select('id, full_name, email')
+            .or(inviteNames.size > 1
+              ? Array.from(inviteNames).map(n => `full_name.ilike.${n.replace(/'/g, "''")}`).join(',')
+              : `full_name.ilike.${Array.from(inviteNames)[0].replace(/'/g, "''")}`);
+          if (profiles && profiles.length > 0) {
+            const invitedIds = profiles.map((p: any) => p.id);
+            await supabase.from('group_members').upsert(
+              invitedIds.map((invitedId: string) => ({
+                group_id: newGroup.id,
+                user_id: invitedId,
+                role: 'member',
+                status: 'pending',
+              })),
+              { onConflict: 'group_id,user_id' }
+            );
+          }
         }
       }
 
@@ -656,7 +672,7 @@ export default function NouveauGroupePage() {
                 <button
                   type="button"
                   onClick={() => {
-                    navigator.clipboard.writeText(`https://${inviteUrl}`);
+                    navigator.clipboard.writeText(`${window.location.origin}/groupes?code=${inviteCode}`);
                     setLinkCopied(true);
                     toast('Lien copié dans le presse-papier !', 'success');
                     setTimeout(() => setLinkCopied(false), 3000);

@@ -4,11 +4,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 /* stage — canvas of artboards */
-body {
-  background: #EAE6DF;
-  padding: 40px 0 80px;
-  min-height: 100vh;
-}
+
 .stage-title {
   max-width: 1720px;
   margin: 0 auto 32px;
@@ -650,6 +646,15 @@ body {
   border-color: transparent;
 }
 .gear-actions button.primary:hover { background: var(--lkv-forest-900); }
+.gear-actions button.secondary {
+  background: rgba(251,250,246,0.7);
+  color: var(--lkv-ink-800);
+  border-color: rgba(11,31,23,0.10);
+}
+.gear-actions button.secondary:hover {
+  background: #fff;
+  border-color: rgba(11,31,23,0.20);
+}
 .gear-actions button.ghost {
   background: transparent;
   color: var(--lkv-ink-500);
@@ -735,6 +740,25 @@ body {
   flex-shrink: 0;
 }
 .ok-item .check svg { width: 8px; height: 8px; }
+.ok-item .cart-btn svg { width: 14px; height: 14px; }
+.ok-item .cart-btn {
+  width: 26px; height: 26px;
+  border-radius: 8px;
+  background: rgba(23,64,44,0.06);
+  color: var(--lkv-forest-800);
+  border: 1px solid rgba(11,31,23,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all var(--lkv-dur) var(--lkv-ease-out);
+}
+.ok-item .cart-btn:hover {
+  background: var(--lkv-forest-800);
+  color: #fff;
+  border-color: transparent;
+}
 
 /* ═══════════════════════════════════════════════════════════════
    SAFETY GRID
@@ -1042,7 +1066,6 @@ body {
    RESPONSIVE — single-column full-viewport if narrow
    ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 900px) {
-  body { padding: 0; background: #0B1F17; }
   .stage-title { display: none; }
   .stage {
     padding: 0;

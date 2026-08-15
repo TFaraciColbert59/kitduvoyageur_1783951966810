@@ -11,7 +11,7 @@ import LkvIcon from '@/components/ui/LkvIcon';
 interface Tab {
   href: string;
   label: string;
-  iconName: 'home' | 'mountain' | 'bag' | 'users' | 'user' | 'compass';
+  iconName: 'home' | 'mountain' | 'bag' | 'box' | 'users' | 'user' | 'compass';
   ariaLabel: string;
   matchPaths?: string[];
   isHero?: boolean;
@@ -35,9 +35,9 @@ const TABS: Tab[] = [
   {
     href: '/mon-materiel',
     label: 'Inventaire',
-    iconName: 'bag',
+    iconName: 'box',
     ariaLabel: 'Mon inventaire matériel',
-    matchPaths: ['/mon-materiel', '/mon-materiel'],
+    matchPaths: ['/mon-materiel'],
     isHero: true,
   },
   {
@@ -124,20 +124,6 @@ function TabLink({ tab, isActive }: { tab: Tab; isActive: boolean }) {
           {tab.label}
         </span>
         
-        {/* Unread badge for Communauté (mocked unread count > 0) */}
-        {tab.label === 'Communauté' && (
-          <div
-            style={{
-              position: 'absolute',
-              top: '6px',
-              right: '25%',
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              background: '#D92D20', // Red color for notifications (avoids forbidden orange)
-            }}
-          />
-        )}
       </div>
 
       {/* Active dot indicator */}

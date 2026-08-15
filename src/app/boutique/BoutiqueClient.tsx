@@ -261,9 +261,9 @@ export default function BoutiqueClient() {
   useEffect(() => {
     async function initData() {
       // Products
-      let { data } = await supabase.from('products').select('*');
+      let { data } = await supabase.from('shop_products').select('*');
       if (!data || data.length === 0) {
-        const fallback = await supabase.from('products').select('*').eq('is_active', true);
+        const fallback = await supabase.from('shop_products').select('*').eq('is_active', true);
         data = fallback.data;
       }
       if (data) setProducts(data as ShopProduct[]);

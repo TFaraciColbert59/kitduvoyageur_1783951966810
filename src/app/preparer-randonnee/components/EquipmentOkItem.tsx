@@ -6,9 +6,10 @@ import { getIconForCategory, Icon } from './PreparationIcons';
 interface EquipmentOkItemProps {
   label: string;
   qty: number;
+  onAddToCart?: () => void;
 }
 
-export const EquipmentOkItem: React.FC<EquipmentOkItemProps> = ({ label, qty }) => {
+export const EquipmentOkItem: React.FC<EquipmentOkItemProps> = ({ label, qty, onAddToCart }) => {
   const iconName = getIconForCategory(label);
   
   return (
@@ -23,6 +24,11 @@ export const EquipmentOkItem: React.FC<EquipmentOkItemProps> = ({ label, qty }) 
       <div className="check">
         <Icon name="check" />
       </div>
+      {onAddToCart && (
+        <button className="cart-btn" onClick={onAddToCart}>
+          <Icon name="bag" />
+        </button>
+      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
@@ -65,6 +65,8 @@ function GroupesPageInner() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingGroup, setEditingGroup] = useState<TravelGroup | null>(null);
   const [creating, setCreating] = useState(false);
+  const [pendingInvites, setPendingInvites] = useState<Array<{ id: string; group_id: string; name: string; owner_id: string }>>([]);
+  const [inviteBusy, setInviteBusy] = useState<string | null>(null);
   const [createForm, setCreateForm] = useState({
     name: '', description: '', destination: '', theme: 'Trek',
     visibility: 'public', departure_date: '', return_date: '',
@@ -74,16 +76,16 @@ function GroupesPageInner() {
   const loadMyGroups = useCallback(async () => {
     if (!user) { setMyGroups([]); return; }
     try {
-      const { data: memberData } = await supabase.from('groupe_membres').select('group_id, role').eq('user_id', user.id).eq('status', 'active');
+      const { data: memberData } = await supabase.from('group_members').select('group_id, role').eq('user_id', user.id).eq('status', 'active');
       if (!memberData?.length) { setMyGroups([]); return; }
       const groupIds = memberData.map(m => m.group_id);
       const { data: groups } = await supabase
-        .from('groupes')
-        .select('*, owner:user_profiles!groupes_owner_id_fkey(full_name, avatar_url)')
+        .from('travel_groups')
+        .select('*, owner:user_profiles!travel_groups_owner_id_fkey(full_name, avatar_url)')
         .in('id', groupIds)
         .order('created_at', { ascending: false });
       const enriched = await Promise.all((groups || []).map(async (g) => {
-        const { count } = await supabase.from('groupe_membres').select('*', { count: 'exact', head: true }).eq('group_id', g.id).eq('status', 'active');
+        const { count } = await supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('group_id', g.id).eq('status', 'active');
         return { ...g, member_count: count || 0, my_role: memberData.find(m => m.group_id === g.id)?.role };
       }));
       setMyGroups(enriched);
@@ -97,13 +99,13 @@ function GroupesPageInner() {
   const loadPublicGroups = useCallback(async () => {
     try {
       const { data } = await supabase
-        .from('groupes')
-        .select('*, owner:user_profiles!groupes_owner_id_fkey(full_name, avatar_url)')
+        .from('travel_groups')
+        .select('*, owner:user_profiles!travel_groups_owner_id_fkey(full_name, avatar_url)')
         .eq('visibility', 'public')
         .order('created_at', { ascending: false })
         .limit(30);
       const enriched = await Promise.all((data || []).map(async (g) => {
-        const { count } = await supabase.from('groupe_membres').select('*', { count: 'exact', head: true }).eq('group_id', g.id).eq('status', 'active');
+        const { count } = await supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('group_id', g.id).eq('status', 'active');
         return { ...g, member_count: count || 0 };
       }));
       setPublicGroups(enriched || []);
@@ -114,21 +116,74 @@ function GroupesPageInner() {
     }
   }, [supabase]);
 
+  const loadPendingInvites = useCallback(async () => {
+    if (!user) { setPendingInvites([]); return; }
+    try {
+      const { data } = await supabase
+        .from('group_members')
+        .select('id, group_id, group:travel_groups!group_members_group_id_fkey(name, owner_id)')
+        .eq('user_id', user.id)
+        .eq('status', 'pending');
+      setPendingInvites((data ?? []).map((r: any) => ({ id: r.id, group_id: r.group_id, name: r.group?.name || 'Groupe', owner_id: r.group?.owner_id || '' })));
+    } catch (err) {
+      console.error('Error loading invites:', err);
+    }
+  }, [user, supabase]);
+
+  async function handleInvite(groupId: string, accept: boolean) {
+    if (!user) return;
+    setInviteBusy(groupId);
+    try {
+      if (accept) {
+        await supabase.from('group_members').update({ status: 'active' }).eq('group_id', groupId).eq('user_id', user.id);
+        toast('Invitation acceptée, vous faites partie du groupe !', 'success');
+      } else {
+        await supabase.from('group_members').delete().eq('group_id', groupId).eq('user_id', user.id);
+        toast('Invitation refusée', 'success');
+      }
+      await Promise.all([loadPendingInvites(), loadMyGroups()]);
+    } catch (err: unknown) {
+      toast((err as Error).message || 'Erreur', 'error');
+    } finally {
+      setInviteBusy(null);
+    }
+  }
+
+  const loadAll = () => Promise.all([loadMyGroups(), loadPublicGroups(), loadPendingInvites()]);
+
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      await Promise.all([loadMyGroups(), loadPublicGroups()]);
+      await loadAll();
       setLoading(false);
     };
     load();
-  }, [loadMyGroups, loadPublicGroups]);
+  }, [loadMyGroups, loadPublicGroups, loadPendingInvites]);
+
+  // Auto-join via invite link: /groupes?code=XXXX
+  useEffect(() => {
+    const code = searchParams?.get('code');
+    if (!code) return;
+    const normalized = code.trim().toUpperCase();
+    setJoinCode(normalized);
+    const t = setTimeout(() => {
+      if (user) {
+        handleJoinByCode(normalized);
+      } else {
+        router.push(`/connexion?next=/groupes?code=${encodeURIComponent(normalized)}`);
+      }
+    }, 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, searchParams]);
 
 
   async function handleEditGroup(e: React.FormEvent) {
     e.preventDefault();
     if (!editingGroup) return;
+    setCreating(true);
     try {
-      const { error } = await supabase.from('groupes').update({
+      const { error } = await supabase.from('travel_groups').update({
         name: createForm.name, description: createForm.description, destination: createForm.destination,
         theme: createForm.theme, visibility: createForm.visibility,
         departure_date: createForm.departure_date || null, return_date: createForm.return_date || null,
@@ -140,13 +195,14 @@ function GroupesPageInner() {
       setEditingGroup(null);
       await Promise.all([loadMyGroups(), loadPublicGroups()]);
     } catch (err: unknown) { toast((err as Error).message || 'Erreur', 'error'); }
+    finally { setCreating(false); }
   }
 
   async function handleJoinGroup(groupId: string) {
     if (!user) { toast('Connectez-vous pour rejoindre un groupe', 'error'); return; }
     setJoining(groupId);
     try {
-      const { error } = await supabase.from('groupe_membres').insert({ group_id: groupId, user_id: user.id, role: 'member', status: 'active' });
+      const { error } = await supabase.from('group_members').insert({ group_id: groupId, user_id: user.id, role: 'member', status: 'active' });
       if (error && error.code !== '23505') throw error;
       toast('Vous avez rejoint le groupe !', 'success');
       await Promise.all([loadMyGroups(), loadPublicGroups()]);
@@ -159,7 +215,7 @@ function GroupesPageInner() {
     if (!user) return;
     if (!confirm('Quitter ce groupe ?')) return;
     try {
-      await supabase.from('groupe_membres').delete().eq('group_id', groupId).eq('user_id', user.id);
+      await supabase.from('group_members').delete().eq('group_id', groupId).eq('user_id', user.id);
       toast('Vous avez quitté le groupe', 'success');
       await loadMyGroups();
     } catch (err: unknown) { toast((err as Error).message || 'Erreur', 'error'); }
@@ -168,20 +224,26 @@ function GroupesPageInner() {
   async function handleDeleteGroup(groupId: string) {
     if (!confirm('Supprimer définitivement ce groupe ? Cette action est irréversible.')) return;
     try {
-      await supabase.from('groupes').delete().eq('id', groupId);
+      await supabase.from('travel_groups').delete().eq('id', groupId);
       toast('Groupe supprimé', 'success');
       await Promise.all([loadMyGroups(), loadPublicGroups()]);
     } catch (err: unknown) { toast((err as Error).message || 'Erreur', 'error'); }
   }
 
-  async function handleJoinByCode() {
+  async function handleJoinByCode(codeOverride?: string) {
     if (!user) { toast('Connectez-vous pour rejoindre un groupe', 'error'); return; }
-    if (!joinCode.trim()) return;
+    const code = (codeOverride ?? joinCode).trim();
+    if (!code) return;
     setJoiningByCode(true);
     try {
-      const { data: group } = await supabase.from('groupes').select('*').eq('invite_code', joinCode.trim().toUpperCase()).maybeSingle();
+      const { data: group } = await supabase.from('travel_groups').select('*').eq('invite_code', code.toUpperCase()).maybeSingle();
       if (!group) { toast('Code invalide', 'error'); return; }
-      const { error } = await supabase.from('groupe_membres').insert({ group_id: group.id, user_id: user.id, role: 'member', status: 'active' });
+      const { error } = await supabase.from('group_members').insert({ group_id: group.id, user_id: user.id, role: 'member', status: 'active' });
+      if (error && error.code === '42501') {
+        toast('Ce groupe est privé — une invitation de l’organisateur est requise.', 'error');
+        router.push(`/groupes/${group.id}`);
+        return;
+      }
       if (error && error.code !== '23505') throw error;
       toast(`Vous avez rejoint "${group.name}" !`, 'success');
       setJoinCode('');
@@ -456,7 +518,7 @@ function GroupesPageInner() {
                 className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#17402C]/60 w-36"
                 onKeyDown={e => e.key === 'Enter' && handleJoinByCode()}
               />
-              <button onClick={handleJoinByCode} disabled={joiningByCode} className="bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm px-3 py-2 rounded-xl transition-colors">
+              <button onClick={() => handleJoinByCode()} disabled={joiningByCode} className="bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm px-3 py-2 rounded-xl transition-colors">
                 {joiningByCode ? '...' : 'Rejoindre'}
               </button>
               <Link href="/nouveau-groupe" className="flex items-center gap-2 bg-[#17402C] hover:bg-[#17402C]/90 text-white text-sm px-4 py-2 rounded-xl transition-colors font-600">
@@ -511,7 +573,7 @@ function GroupesPageInner() {
             <h2 className="font-display font-700 text-xl text-[#1C2620] mb-2">Erreur de chargement</h2>
             <p className="text-sm text-[#5C6B5E] mb-6">{error}</p>
             <button
-              onClick={() => { setError(null); setLoading(true); Promise.all([loadMyGroups(), loadPublicGroups()]).finally(() => setLoading(false)); }}
+              onClick={() => { setError(null); setLoading(true); loadAll().finally(() => setLoading(false)); }}
               className="inline-flex items-center gap-2 px-6 py-3 bg-[#17402C] text-white rounded-xl font-700 hover:bg-[#17402C]/90 transition-colors cursor-pointer"
             >
               Réessayer
@@ -519,6 +581,40 @@ function GroupesPageInner() {
           </div>
         ) : activeTab === 'mes-groupes' ? (
           <div>
+            {user && pendingInvites.length > 0 && (
+              <div className="mb-6 p-5 bg-[#17402C]/5 border border-[#17402C]/20 rounded-2xl">
+                <div className="flex items-center gap-2 mb-3">
+                  <Icon name="EnvelopeOpenIcon" size={16} className="text-[#17402C]" />
+                  <h3 className="font-display font-700 text-[#1C2620]">{pendingInvites.length} invitation{pendingInvites.length > 1 ? 's' : ''} à rejoindre</h3>
+                </div>
+                <div className="space-y-2">
+                  {pendingInvites.map(inv => (
+                    <div key={inv.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-white rounded-xl border border-[#C8C3B0]">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-600 text-[#1C2620]">{inv.name}</p>
+                        <p className="text-xs text-[#5C6B5E]">Vous avez été invité à rejoindre ce groupe.</p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => handleInvite(inv.group_id, true)}
+                          disabled={inviteBusy === inv.group_id}
+                          className="px-4 py-2 bg-[#17402C] text-white rounded-xl text-xs font-700 enabled:hover:bg-[#17402C]/90 disabled:opacity-50 transition-colors"
+                        >
+                          {inviteBusy === inv.group_id ? '...' : 'Accepter'}
+                        </button>
+                        <button
+                          onClick={() => handleInvite(inv.group_id, false)}
+                          disabled={inviteBusy === inv.group_id}
+                          className="px-4 py-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl text-xs font-600 enabled:hover:text-red-500 enabled:hover:border-red-300 disabled:opacity-50 transition-colors"
+                        >
+                          Refuser
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {!user ? (
               <div className="text-center py-16">
                 <p className="text-5xl mb-4">🗺️</p>
@@ -648,7 +744,7 @@ function GroupesPageInner() {
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <MobilePageShell background="#F5F2E8">
           <div style={{ padding: '16px' }}>
             {/* Mobile header */}
             <div style={{ marginBottom: '20px' }}>
@@ -687,7 +783,7 @@ function GroupesPageInner() {
                   onKeyDown={e => e.key === 'Enter' && handleJoinByCode()}
                 />
                 <button
-                  onClick={handleJoinByCode}
+                  onClick={() => handleJoinByCode()}
                   disabled={joiningByCode}
                   style={{
                     padding: '12px 16px', background: '#F4F1EA', border: '1px solid rgba(11,31,23,0.08)',
@@ -734,7 +830,7 @@ function GroupesPageInner() {
                 <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0B1F17', marginBottom: '8px' }}>Erreur de chargement</h2>
                 <p style={{ fontSize: '13px', color: '#6B7A72', marginBottom: '16px' }}>{error}</p>
                 <button
-                  onClick={() => { setError(null); setLoading(true); Promise.all([loadMyGroups(), loadPublicGroups()]).finally(() => setLoading(false)); }}
+                  onClick={() => { setError(null); setLoading(true); loadAll().finally(() => setLoading(false)); }}
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '12px 24px',
                     background: '#17402C', color: '#fff', borderRadius: '999px',
@@ -745,7 +841,28 @@ function GroupesPageInner() {
                 </button>
               </div>
             ) : activeTab === 'mes-groupes' ? (
-              !user ? (
+              user && pendingInvites.length > 0 ? (
+                <div style={{ marginBottom: '16px', padding: '14px', background: 'rgba(23,64,44,0.05)', borderRadius: '16px', border: '1px solid rgba(23,64,44,0.2)' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#0B1F17', marginBottom: '10px' }}>
+                    {pendingInvites.length} invitation{pendingInvites.length > 1 ? 's' : ''}
+                  </div>
+                  {pendingInvites.map(inv => (
+                    <div key={inv.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px', background: '#fff', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)', marginBottom: '8px' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{inv.name}</div>
+                        <div style={{ fontSize: '11px', color: '#6B7A72' }}>Invitation à rejoindre</div>
+                      </div>
+                      <button onClick={() => handleInvite(inv.group_id, true)} disabled={inviteBusy === inv.group_id} style={{ padding: '8px 14px', background: '#17402C', color: '#fff', borderRadius: '999px', border: 'none', fontSize: '11px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                        {inviteBusy === inv.group_id ? '...' : 'Accepter'}
+                      </button>
+                      <button onClick={() => handleInvite(inv.group_id, false)} disabled={inviteBusy === inv.group_id} style={{ padding: '8px 14px', background: '#F4F1EA', color: '#6B7A72', borderRadius: '999px', border: '1px solid rgba(11,31,23,0.08)', fontSize: '11px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                        Refuser
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                !user ? (
                 <div style={{ textAlign: 'center', padding: '40px 16px' }}>
                   <p style={{ fontSize: '32px', marginBottom: '12px' }}>🗺️</p>
                   <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0B1F17', marginBottom: '8px' }}>Connectez-vous</h2>
@@ -796,6 +913,7 @@ function GroupesPageInner() {
                     ))}
                   </div>
                 </div>
+              )
               )
             ) : (
               /* Discover */

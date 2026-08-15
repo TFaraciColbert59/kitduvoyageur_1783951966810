@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
@@ -64,7 +64,7 @@ export default function HorsLignePage() {
   const totalTiles = routes.reduce((sum, r) => sum + r.tileCount, 0);
 
   return (
-    <MobilePageShell>
+    <MobilePageShell background="#F8F5EE">
       <div className="min-h-screen bg-[#F8F5EE]">
         {/* Header */}
         <div className="bg-[#1C2620] text-white px-4 pt-8 pb-6">

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -214,8 +214,8 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
   return (
     <div className="min-h-screen bg-[#F5F2E8] font-sans text-[#1C2620] pb-28">
-      {/* 1. TOP STICKY NAVBAR */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-[#E8E4D8] px-4 sm:px-8 py-3 flex items-center justify-between shadow-sm">
+      {/* 1. TOP STICKY NAVBAR — desktop uniquement (le mobile a sa propre barre + la barre de validation) */}
+      <header className="hidden md:flex sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-[#E8E4D8] px-4 sm:px-8 py-3 items-center justify-between shadow-sm">
         <div className="flex items-center gap-4">
           <Link href="/compte" className="flex items-center gap-2 text-xs font-semibold text-[#5C6B5E] hover:text-[#1C2620] transition-colors">
             <Icon name="ArrowLeftIcon" size={16} />
@@ -254,7 +254,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
         <div className="text-[10px] font-mono tracking-widest text-[#5C6B5E] uppercase font-bold mb-2">
           — ÉDITION PROFIL · {form.firstName} {form.lastName}
         </div>
-        <h1 className="font-display font-800 text-3xl sm:text-5xl text-[#1C2620] tracking-tight mb-3">
+        <h1 className="font-display font-800 text-2xl sm:text-4xl text-[#1C2620] tracking-tight mb-3">
           Racontez qui vous êtes, <br className="hidden sm:inline" />
           <em className="font-serif italic font-normal text-[#2D5A3D]">et où vous allez.</em>
         </h1>
@@ -271,9 +271,9 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
           
           {/* ─── SECTION 01: IDENTITÉ PUBLIQUE ──────────────────────── */}
           <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#F5F2E8]">
               <div>
-                <h2 className="font-display font-800 text-xl text-[#1C2620]">Identité publique</h2>
+                <h2 className="font-display font-800 text-lg sm:text-xl text-[#1C2620]">Identité publique</h2>
                 <p className="text-xs text-[#5C6B5E] mt-0.5">Nom, avatar, couverture. Ce que la communauté voit en premier.</p>
               </div>
               <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F5F2E8] px-2.5 py-1 rounded-full text-[#5C6B5E]">
@@ -318,7 +318,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                   </label>
                 </div>
                 <div className="mb-2">
-                  <h3 className="font-display font-800 text-xl text-[#1C2620]">{form.firstName} {form.lastName}</h3>
+                  <h3 className="font-display font-800 text-lg sm:text-xl text-[#1C2620]">{form.firstName} {form.lastName}</h3>
                   <p className="text-xs text-[#5C6B5E] font-mono">Membre depuis mars 2023 · 12 carnets publiés</p>
                 </div>
               </div>
@@ -426,9 +426,9 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
           {/* ─── SECTION 02: ANCRAGE GÉOGRAPHIQUE ───────────────────── */}
           <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#F5F2E8]">
               <div>
-                <h2 className="font-display font-800 text-xl text-[#1C2620]">Ancrage géographique</h2>
+                <h2 className="font-display font-800 text-lg sm:text-xl text-[#1C2620]">Ancrage géographique</h2>
                 <p className="text-xs text-[#5C6B5E] mt-0.5">Pour proposer les bons refuges, les clubs proches et suggérer votre profil aux voyageurs.</p>
               </div>
               <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F5F2E8] px-2.5 py-1 rounded-full text-[#5C6B5E]">
@@ -524,9 +524,9 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
           {/* ─── SECTION 03: PRATIQUE & NIVEAU ──────────────────────── */}
           <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#F5F2E8]">
               <div>
-                <h2 className="font-display font-800 text-xl text-[#1C2620]">Pratique & niveau</h2>
+                <h2 className="font-display font-800 text-lg sm:text-xl text-[#1C2620]">Pratique & niveau</h2>
                 <p className="text-xs text-[#5C6B5E] mt-0.5">Ces informations aident à me mettre en relation avec des personnes d'expérience compatible.</p>
               </div>
               <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F5F2E8] px-2.5 py-1 rounded-full text-[#5C6B5E]">
@@ -628,9 +628,9 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
           {/* ─── SECTION 04: COMPTES LIÉS ───────────────────────────── */}
           <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#F5F2E8]">
               <div>
-                <h2 className="font-display font-800 text-xl text-[#1C2620]">Comptes liés</h2>
+                <h2 className="font-display font-800 text-lg sm:text-xl text-[#1C2620]">Comptes liés</h2>
                 <p className="text-xs text-[#5C6B5E] mt-0.5">Importez vos traces depuis les plateformes que vous utilisez déjà.</p>
               </div>
               <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F5F2E8] px-2.5 py-1 rounded-full text-[#5C6B5E]">
@@ -684,9 +684,9 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
           {/* ─── SECTION 05: CONFIDENTIALITÉ ────────────────────────── */}
           <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#F5F2E8]">
               <div>
-                <h2 className="font-display font-800 text-xl text-[#1C2620]">Qui peut voir quoi</h2>
+                <h2 className="font-display font-800 text-lg sm:text-xl text-[#1C2620]">Qui peut voir quoi</h2>
                 <p className="text-xs text-[#5C6B5E] mt-0.5">Et avec qui vous partagez vos traces. Vos carnets peuvent être publics, tout en gardant vos sorties privées.</p>
               </div>
               <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F5F2E8] px-2.5 py-1 rounded-full text-[#5C6B5E]">
@@ -805,24 +805,27 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
       </div>
 
-      {/* 4. FLOATING BOTTOM BAR */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1C2620]/95 backdrop-blur-md text-white px-6 py-3.5 rounded-full shadow-2xl flex items-center gap-6 border border-[#2D5A3D] max-w-xl w-11/12 justify-between">
-        <div className="text-xs text-white/80 hidden sm:flex items-center gap-2">
+      {/* 4. FLOATING BOTTOM BAR — au-dessus de la BottomTabBar sur mobile */}
+      <div
+        className="fixed z-50 bg-[#1C2620]/95 backdrop-blur-md text-white px-4 py-3 rounded-full shadow-2xl flex items-center justify-between gap-3 border border-[#2D5A3D] left-2 right-2 bottom-[calc(env(safe-area-inset-bottom)+62px+8px)] md:left-1/2 md:right-auto md:-translate-x-1/2 md:bottom-6 md:max-w-xl md:w-11/12 md:px-6 md:py-3.5"
+      >
+        <div className="text-xs text-white/80 hidden md:flex items-center gap-2">
           <span>⚡</span>
           <span>Brouillon enregistré automatiquement</span>
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-          <Link href="/compte" className="px-4 py-2 text-xs font-semibold text-white/70 hover:text-white transition-colors">
+        <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto justify-end">
+          <Link href="/compte" className="px-3 md:px-4 py-2 text-xs font-semibold text-white/70 hover:text-white transition-colors whitespace-nowrap">
             Annuler
           </Link>
-          
+
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-6 py-2.5 bg-[#2D5A3D] hover:bg-[#17402C] text-white rounded-full text-xs font-bold shadow-lg transition-all disabled:opacity-50"
+            className="px-4 md:px-6 py-2.5 bg-[#2D5A3D] hover:bg-[#17402C] text-white rounded-full text-[11px] md:text-xs font-bold shadow-lg transition-all disabled:opacity-50 whitespace-nowrap"
           >
-            {saving ? 'Enregistrement...' : saveSuccess ? '✓ Enregistré !' : 'Enregistrer les changements'}
+            {saving ? 'Enregistrement…' : saveSuccess ? '✓ Enregistré !' : 'Enregistrer'}
+            <span className="hidden md:inline"> les changements</span>
           </button>
         </div>
       </div>

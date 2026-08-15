@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
 export interface CommentData {
@@ -21,6 +22,8 @@ interface CommentItemProps {
   tableName: 'post_comments' | 'carnet_comments' | 'club_topic_replies';
   onUpdate: (updatedId: string, newContent: string) => void;
   onDelete: (deletedId: string) => void;
+  onReply?: (parentId: string, reply: CommentData) => void;
+  replyTargetName?: string;
 }
 
 export default function CommentItem({
@@ -29,10 +32,15 @@ export default function CommentItem({
   tableName,
   onUpdate,
   onDelete,
+  onReply,
+  replyTargetName,
 }: CommentItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(comment.content);
   const [isSaving, setIsSaving] = useState(false);
+  const [isReplying, setIsReplying] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
 
   // Reporting State
   const [isReporting, setIsReporting] = useState(false);
@@ -48,6 +56,18 @@ export default function CommentItem({
     (currentUserId && comment.author?.id === currentUserId) ||
     (currentUserName && comment.author?.full_name === currentUserName);
 
+  const profileId = comment.author_id || comment.author?.id;
+  const authorBlock = (
+    <div className="w-7 h-7 rounded-full mt-1 object-cover border border-[#E8E4D8] shrink-0 overflow-hidden bg-[#E7E3D6] flex items-center justify-center text-[10px] font-bold text-[#1C2620]">
+      {comment.author?.avatar_url ? (
+        <img src={comment.author.avatar_url} alt={comment.author?.full_name || 'Utilisateur'} className="w-full h-full object-cover" />
+      ) : comment.author?.full_name?.charAt(0) || 'V'}
+    </div>
+  );
+  const avatarArea = profileId ? (
+    <Link href={`/profil/${profileId}`} className="shrink-0" title="Voir le profil">{authorBlock}</Link>
+  ) : authorBlock;
+
   // Handle Save Edit
   const handleSaveEdit = async () => {
     if (!editText.trim()) return;
@@ -60,7 +80,7 @@ export default function CommentItem({
         .eq('id', comment.id);
 
       if (error) {
-        console.error('Error updating comment:', error);
+        console.error('Error updating comment:', error?.message || error?.details || error?.code || error);
       }
       onUpdate(comment.id, editText.trim());
       setIsEditing(false);
@@ -106,21 +126,82 @@ export default function CommentItem({
     setTimeout(() => setReportSuccessMsg(null), 4000);
   };
 
+  // Réponse directe à la personne concernée
+  const handleSendReply = async () => {
+    if (!currentUser?.id || !replyText.trim() || sendingReply) return;
+    setSendingReply(true);
+    try {
+      const supabase = createClient();
+      const tableExtra =
+        tableName === 'carnet_comments'
+          ? { carnet_id: (comment as any).carnet_id }
+          : tableName === 'post_comments'
+          ? { post_id: (comment as any).post_id }
+          : {};
+      const basePayload: Record<string, unknown> = {
+        ...tableExtra,
+        author_id: currentUser.id,
+        content: replyText.trim(),
+      };
+      // Tentative 1 : réponse imbriquée (colonne parent_id)
+      // Fallback : réponse plate si la BDD live ne possède pas encore la colonne
+      let inserted: any = null;
+      for (const withParent of [true, false]) {
+        const payload = { ...basePayload, ...(withParent ? { parent_id: comment.id } : {}) };
+        const { data, error } = await supabase
+          .from(tableName)
+          .insert(payload)
+          .select(`*, author:user_profiles(full_name, avatar_url)`)
+          .single();
+        if (!error && data) { inserted = data; break; }
+        const msg = (error as any)?.message || '';
+        if (!withParent || !/parent_id|column|does not exist/i.test(msg)) {
+          console.error('Reply error:', (error as any)?.message || (error as any)?.details || (error as any)?.code || error);
+          break;
+        }
+      }
+
+      if (inserted) {
+        setReplyText('');
+        setIsReplying(false);
+        onReply?.(comment.id, inserted as CommentData);
+      } else {
+        setReplyText('');
+        setIsReplying(false);
+      }
+    } catch (err) {
+      console.error('Reply error:', err);
+    } finally {
+      setSendingReply(false);
+    }
+  };
+
   return (
     <div className="flex gap-3 text-sm group/comment relative">
-      <img
-        src={comment.author?.avatar_url || 'https://i.pravatar.cc/150'}
-        alt={comment.author?.full_name || 'Utilisateur'}
-        className="w-7 h-7 rounded-full mt-1 object-cover border border-[#E8E4D8] shrink-0"
-      />
+      {avatarArea}
 
       <div className="flex-1 bg-[#F5F2E8] rounded-2xl rounded-tl-none p-3 relative">
         {/* Comment Header */}
         <div className="flex items-center justify-between gap-2 mb-1">
-          <div className="font-bold text-xs text-[#1C2620]">
-            {comment.author?.full_name || 'Voyageur'}
-          </div>
+          {profileId ? (
+            <Link href={`/profil/${profileId}`} className="font-bold text-xs text-[#1C2620] hover:text-[#2D5A3D] transition-colors">
+              {comment.author?.full_name || 'Voyageur'}
+            </Link>
+          ) : (
+            <div className="font-bold text-xs text-[#1C2620]">
+              {comment.author?.full_name || 'Voyageur'}
+            </div>
+          )}
 
+          {onReply && (
+            <button
+              onClick={() => setIsReplying(!isReplying)}
+              className="text-[10px] font-semibold text-[#5C6B5E] hover:text-[#2D5A3D] flex items-center gap-0.5 ml-2"
+              title={`Répondre à ${comment.author?.full_name || 'cette personne'}`}
+            >
+              💬 <span>Répondre</span>
+            </button>
+          )}
           {/* Action buttons (Edit / Delete / Report) */}
           <div className="flex items-center gap-2 opacity-80 group-hover/comment:opacity-100 transition-opacity">
             {isOwnComment ? (
@@ -220,6 +301,33 @@ export default function CommentItem({
         {reportSuccessMsg && (
           <div className="mt-2 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg">
             {reportSuccessMsg}
+          </div>
+        )}
+
+        {/* Reply to this person */}
+        {isReplying && onReply && (
+          <div className="mt-3">
+            <p className="text-[10px] font-bold text-[#2D5A3D] mb-1.5">
+              Répondre à {replyTargetName || comment.author?.full_name || 'cette personne'}
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={replyText}
+                onChange={e => setReplyText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply(); } }}
+                placeholder={`Écrire une réponse à ${comment.author?.full_name || '…'}`}
+                className="flex-1 bg-white border border-[#E4E0D4] rounded-xl px-3 py-2 text-xs text-[#1C2620] focus:outline-none focus:border-[#2D5A3D]"
+                disabled={sendingReply}
+              />
+              <button
+                onClick={handleSendReply}
+                disabled={sendingReply || !replyText.trim()}
+                className="px-3 py-2 bg-[#2D5A3D] text-white rounded-xl text-[10px] font-bold hover:bg-[#1C2620] disabled:opacity-50"
+              >
+                {sendingReply ? '…' : 'Envoyer'}
+              </button>
+            </div>
           </div>
         )}
       </div>

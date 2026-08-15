@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -355,7 +355,7 @@ export default function PanierPage() {
 
     {/* ── MOBILE VIEW ── */}
     <div className="block md:hidden">
-      <MobilePageShell>
+      <MobilePageShell background="#F5F2E8">
         {items.length === 0 ? (
           <div style={{ padding: '60px 20px', textAlign: 'center' }}>
             <div style={{ fontSize: '22px', fontWeight: 500, color: '#0B1F17', marginBottom: '8px' }}>

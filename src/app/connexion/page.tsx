@@ -17,6 +17,9 @@ type AuthMode = 'connexion' | 'inscription';
 function AuthForm() {
   const searchParams = useSearchParams();
   const initialMode = (searchParams?.get('mode') as AuthMode) || 'connexion';
+  const requestedNext = searchParams?.get('next');
+  // Only allow internal relative paths (no open redirect via external URL)
+  const nextPath = requestedNext && requestedNext.startsWith('/') && !requestedNext.startsWith('//') ? requestedNext : null;
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -52,7 +55,7 @@ function AuthForm() {
         if (result?.user) await ensureProfile(result.user.id, result.user.email ?? email, '');
         trackEvent('login', { method: 'email' });
         toast('Connexion réussie ! Bienvenue.', 'success');
-        router.push('/compte');
+        router.push(nextPath ?? '/compte');
         router.refresh();
       } else {
         const result = (await signUp(email, password, { fullName: name })) as { user?: { id: string; email?: string }; session?: unknown };
@@ -60,7 +63,7 @@ function AuthForm() {
           if (result?.user) await ensureProfile(result.user.id, result.user.email ?? email, name);
           trackEvent('sign_up', { method: 'email' });
           toast('Compte créé !', 'success');
-          router.push('/compte');
+          router.push(nextPath ?? '/compte');
           router.refresh();
         } else {
           if (result?.user) await ensureProfile(result.user.id, result.user.email ?? email, name);

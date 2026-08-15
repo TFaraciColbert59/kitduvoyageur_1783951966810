@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -112,7 +112,7 @@ export default function ActivitePage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <MobilePageShell background="#E7E3D6">
           <main id="main-content" style={{ background: '#E7E3D6', minHeight: '100dvh' }}>
             {/* Segmented control */}
             <div style={{ padding: '12px 16px', position: 'sticky', top: 0, background: 'rgba(231, 227, 214, 0.95)', backdropFilter: 'blur(8px)', borderBottom: '1px solid rgba(28,38,32,0.08)', zIndex: 10 }}>

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -111,7 +111,7 @@ export default function MonMaterielPage() {
   const totalWeight = filtered.reduce((sum, g) => sum + (g.weight_g || 0), 0);
 
   return (
-    <MobilePageShell>
+    <MobilePageShell background="#F8F5EE">
       <div className="min-h-screen bg-[#F8F5EE]">
 
         {/* Header */}

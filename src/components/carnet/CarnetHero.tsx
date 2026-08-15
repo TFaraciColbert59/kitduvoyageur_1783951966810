@@ -1,7 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Icon from '@/components/ui/AppIcon';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
+import { createClient } from '@/lib/supabase/client';
 
 interface CarnetHeroProps {
   meta: {
@@ -15,9 +18,58 @@ interface CarnetHeroProps {
     itineraire: string;
   };
   onExport: () => void;
+  carnetId?: string;
 }
 
-export default function CarnetHero({ meta, onExport }: CarnetHeroProps) {
+export default function CarnetHero({ meta, onExport, carnetId }: CarnetHeroProps) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [isSaved, setIsSaved] = useState(false);
+  const supabase = createClient();
+
+  useEffect(() => {
+    if (!user || !carnetId) return;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('carnet_favorites')
+          .select('id')
+          .eq('carnet_id', carnetId)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        setIsSaved(!!data);
+      } catch (err) {
+        console.error('Error checking favorite:', err);
+      }
+    })();
+  }, [user, carnetId, supabase]);
+
+  const handleShare = async () => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `${meta.titleLine1} ${meta.titleLine2}`, url });
+      } catch (err) {}
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    toast('Lien copié dans le presse-papier !', 'success');
+  };
+
+  const handleToggleSave = async () => {
+    if (!user) { toast('Connectez-vous pour enregistrer ce carnet', 'error'); return; }
+    if (!carnetId) { toast('Carnet indisponible', 'error'); return; }
+    if (isSaved) {
+      await supabase.from('carnet_favorites').delete().eq('carnet_id', carnetId).eq('user_id', user.id);
+      setIsSaved(false);
+      toast('Retiré des favoris', 'success');
+    } else {
+      await supabase.from('carnet_favorites').insert({ carnet_id: carnetId, user_id: user.id });
+      setIsSaved(true);
+      toast('Ajouté aux favoris', 'success');
+    }
+  };
+
   return (
     <section className="relative bg-gradient-to-b from-[#1C2620] via-[#1C2620] to-[#33463C] text-[#E7E3D6] overflow-hidden">
       {/* Subtle texture overlay */}
@@ -26,11 +78,19 @@ export default function CarnetHero({ meta, onExport }: CarnetHeroProps) {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
         {/* Action bar */}
         <div className="flex items-center justify-end gap-3 pt-6 pb-4">
-          <button className="p-2 rounded-full hover:bg-white/10 transition-colors text-[#E7E3D6]/70 hover:text-[#E7E3D6]" aria-label="Partager">
+          <button
+            onClick={handleShare}
+            className="p-2 rounded-full hover:bg-white/10 transition-colors text-[#E7E3D6]/70 hover:text-[#E7E3D6]"
+            aria-label="Partager"
+          >
             <Icon name="ShareIcon" size={18} />
           </button>
-          <button className="p-2 rounded-full hover:bg-white/10 transition-colors text-[#E7E3D6]/70 hover:text-[#E7E3D6]" aria-label="Enregistrer">
-            <Icon name="BookmarkIcon" size={18} />
+          <button
+            onClick={handleToggleSave}
+            className={`p-2 rounded-full transition-colors ${isSaved ? 'bg-amber-500/20 text-amber-400' : 'hover:bg-white/10 text-[#E7E3D6]/70 hover:text-[#E7E3D6]'}`}
+            aria-label="Enregistrer"
+          >
+            <Icon name={isSaved ? 'BookmarkSolidIcon' : 'BookmarkIcon'} size={18} />
           </button>
           <button
             onClick={onExport}

@@ -45,8 +45,12 @@ export default function MobileGroupeView({ data, groupId, user, members, onRefre
             </p>
           </div>
         </div>
-        <button className="w-10 h-10 rounded-full flex items-center justify-center text-[#1C2620]/70 hover:bg-[#1C2620]/5">
-          <Icon name="Bars3Icon" size={24} />
+        <button
+          className="w-10 h-10 rounded-full flex items-center justify-center text-[#1C2620]/70 hover:bg-[#1C2620]/5"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          aria-label="Revenir en haut"
+        >
+          <Icon name="ArrowUpIcon" size={20} />
         </button>
       </div>
 

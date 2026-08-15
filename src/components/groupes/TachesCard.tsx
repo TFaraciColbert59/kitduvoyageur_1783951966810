@@ -29,6 +29,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
   const [assignedTo, setAssignedTo] = useState('');
   const [loading, setLoading] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [selectingAll, setSelectingAll] = useState(false);
 
   // Sync tasks state when initialTasks prop updates from parent
   useEffect(() => {
@@ -69,6 +70,46 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
       onRefresh();
     }
     setTogglingId(null);
+  };
+
+  const handleSelectAll = async () => {
+    if (!groupId) {
+      alert("Erreur: Aucun groupe sélectionné.");
+      return;
+    }
+    if (!user) {
+      alert("Vous devez être connecté pour modifier les tâches.");
+      return;
+    }
+    if (tasks.length === 0) return;
+
+    setSelectingAll(true);
+    const allDone = tasks.every(t => t.completed);
+    const targetStatus = allDone ? 'todo' : 'done';
+
+    setTasks(prev => prev.map(t => ({
+      ...t,
+      completed: !allDone,
+      tags: allDone ? ['À faire'] : ['Fait']
+    })));
+
+    const { error } = await supabase
+      .from('group_tasks')
+      .update({ status: targetStatus })
+      .in('id', tasks.map(t => t.id));
+
+    if (error) {
+      console.error('Select all error:', error);
+      alert('Erreur lors de la modification des tâches : ' + error.message);
+      setTasks(prev => prev.map(t => ({
+        ...t,
+        completed: allDone,
+        tags: allDone ? ['Fait'] : ['À faire']
+      })));
+    } else if (onRefresh) {
+      onRefresh();
+    }
+    setSelectingAll(false);
   };
 
   const handleAddTask = async (e: React.FormEvent) => {
@@ -169,6 +210,13 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
           Chacun s'attribue une tâche. Les rappels partent 48h avant l'échéance.
         </p>
         <div className="flex gap-2 w-full sm:w-auto justify-end">
+          <button
+            onClick={handleSelectAll}
+            disabled={selectingAll || tasks.length === 0}
+            className="px-3 py-1.5 rounded-full bg-[#1C2620]/5 text-[#1C2620] font-sans font-medium text-xs hover:bg-[#1C2620]/10 transition-colors disabled:opacity-50"
+          >
+            {selectingAll ? '...' : 'Tout →'}
+          </button>
           <select 
             value={filter}
             onChange={(e) => setFilter(e.target.value as any)}
@@ -228,16 +276,17 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
         {filteredTasks.map((task) => (
           <div key={task.id} className="flex gap-4 p-3 rounded-xl hover:bg-[#E7E3D6]/30 transition-colors group items-center">
             <button 
+              type="button"
               onClick={() => toggleTask(task.id, task.completed)}
               disabled={togglingId === task.id}
               className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 transition-colors border disabled:opacity-50
-                ${task.completed ? 'bg-[#33463C] border-[#33463C] text-white' : 'bg-transparent border-[#1C2620]/30 text-transparent group-hover:border-[#33463C]'}`}
+                ${task.completed ? 'bg-[#33463C] border-[#33463C] text-white' : 'bg-white border-[#1C2620]/30 text-transparent group-hover:border-[#33463C] group-hover:text-[#33463C]'}`}
             >
               {togglingId === task.id ? (
                 <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
+              ) : task.completed ? (
                 <Icon name="CheckIcon" size={14} />
-              )}
+              ) : null}
             </button>
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2">

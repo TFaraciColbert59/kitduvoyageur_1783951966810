@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -652,7 +652,7 @@ export default function CheckoutPage() {
     </div>
 
     <div className="block md:hidden">
-      <MobilePageShell>
+      <MobilePageShell background="#F5F2E8">
         <div style={{ padding: '12px 16px 20px' }}>
           <div style={{ display: 'flex', gap: '6px', marginBottom: '16px' }}>
             {[0,1,2,3].map(i => (

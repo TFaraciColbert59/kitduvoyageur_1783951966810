@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 
 interface Activity {
@@ -16,7 +17,7 @@ export default function ActiviteCard({ activities }: ActiviteCardProps) {
     <div className="bg-white rounded-[2rem] p-6 border border-[#1C2620]/10 shadow-sm">
       <div className="flex justify-between items-start mb-2">
         <h2 className="font-display text-xl text-[#1C2620]">Activité <span className="font-serif italic font-bold">récente</span></h2>
-        <button className="text-xs font-medium text-[#17402C] hover:underline font-sans">Tout →</button>
+        <Link href="/activite" className="text-xs font-medium text-[#17402C] hover:underline font-sans">Tout →</Link>
       </div>
       
       <p className="text-sm text-[#1C2620]/80 font-sans mb-6">

@@ -10,11 +10,13 @@ import { useAuth } from '@/contexts/AuthContext';
 interface MobileDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  onSearchOpen?: () => void;
 }
 
 interface NavItem {
   label: string;
   href: string;
+  action?: 'search';
   icon: 'home' | 'mountain' | 'bag' | 'doc' | 'user' | 'search' | 'chevron-left' | 'chevron-right' | 'heart' | 'bookmark' | 'bell' | 'map-pin' | 'star' | 'minus' | 'plus' | 'close' | 'menu' | 'arrow-right' | 'lock' | 'filter';
 }
 
@@ -27,6 +29,8 @@ const SECTIONS: NavSection[] = [
   {
     label: 'Découvrir & Terrain',
     items: [
+      { label: 'Rechercher', icon: 'search', href: '', action: 'search' },
+      { label: 'Panier', icon: 'bag', href: '/panier' },
       { label: 'Carte interactive', icon: 'map-pin', href: '/carte-interactive' },
       { label: 'Boussole augmentée', icon: 'search', href: '/boussole' },
       { label: 'Mode hors-ligne', icon: 'bookmark', href: '/hors-ligne' },
@@ -116,7 +120,7 @@ const scrollableContentStyle: React.CSSProperties = {
   WebkitOverflowScrolling: 'touch',
 };
 
-export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
+export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDrawerProps) {
   const pathname = usePathname();
   const { user, profile } = useAuth();
   
@@ -368,6 +372,28 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
                         (item.href !== '/' && pathname?.startsWith(item.href));
 
                       return (
+                        item.action === 'search' ? (
+                          <button
+                            key={item.href + item.label}
+                            type="button"
+                            onClick={() => {
+                              onClose();
+                              onSearchOpen?.();
+                            }}
+                            style={{
+                              ...itemStyle,
+                              width: '100%',
+                              border: 'none',
+                              background: 'transparent',
+                              fontFamily: 'inherit',
+                              textAlign: 'left',
+                            }}
+                          >
+                            <LkvIcon name="search" size={20} color="#0B1F17" />
+                            <span style={{ flex: 1 }}>{item.label}</span>
+                            <LkvIcon name="chevron-right" size={16} color="#AEB7B1" />
+                          </button>
+                        ) : (
                         <Link
                           key={item.href + item.label}
                           href={item.href}
@@ -396,6 +422,7 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
                             color="#AEB7B1"
                           />
                         </Link>
+                        )
                       );
                     })}
                   </div>

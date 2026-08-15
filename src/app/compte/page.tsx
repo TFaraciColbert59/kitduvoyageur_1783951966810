@@ -19,7 +19,7 @@ import AbonnementCard from '@/components/compte/AbonnementCard';
 import InventaireCTACard from '@/components/compte/mon-materielCTACard';
 import ParametresCompteCard from '@/components/compte/ParametresCompteCard';
 import EditProfileModal from '@/components/compte/EditProfileModal';
-import MobileCompteView from '@/components/compte/MobileCompteView';
+import MobileCompteV2 from '@/components/compte/MobileCompteV2';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import CompteFooter from '@/components/compte/CompteFooter';
 import dynamic from 'next/dynamic';
@@ -78,7 +78,7 @@ export default function ComptePage() {
     );
   }
 
-  if (!user || !dashboardData) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-[#F5F3ED] flex items-center justify-center">
         <div className="text-center max-w-md">
@@ -96,7 +96,10 @@ export default function ComptePage() {
     );
   }
 
-  const { profile, prochainVoyage, aventures, carnets, clubs, commandes, badges, constance, activite, abonnement, inventaire } = dashboardData;
+  const dashboard = dashboardData;
+  const { profile, prochainVoyage, aventures, carnets, clubs, commandes, badges, constance, activite, abonnement, inventaire } = dashboard ?? {
+    profile: null, prochainVoyage: null, aventures: [], carnets: [], clubs: [], commandes: [], badges: [], constance: null, activite: [], abonnement: null, inventaire: null,
+  } as any;
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -152,24 +155,15 @@ export default function ComptePage() {
   return (
     <div className="min-h-screen bg-[#F5F3ED] text-[#1C2620] selection:bg-emerald-900/20 font-sans">
 
-      {/* Mobile-only app-like view */}
+      {/* Mobile-only app-like view (refonte) */}
       <div className="block md:hidden">
-        <MobilePageShell>
-          <MobileCompteView
-            profile={profile as any}
-            prochainVoyage={prochainVoyage}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            onOpenEdit={() => setEditModalOpen(true)}
-          />
-          {/* Tab content rendered below the mobile header */}
-          <div className="px-4 pb-24">
-            {renderTabContent()}
-          </div>
+        <MobilePageShell background="#FAF7F1">
+          <MobileCompteV2 />
         </MobilePageShell>
       </div>
 
-      {/* Desktop view (md and above) */}
+      {/* Desktop view (md and above) — strictement inchangé */}
+      {dashboard && (
       <div className="hidden md:block">
         <Header />
 
@@ -233,6 +227,7 @@ export default function ComptePage() {
         {/* 6. Full-Width Footer */}
         <CompteFooter profile={profile as any} />
       </div>
+      )}
 
       {/* Edit Profile Modal (Accessible from both Desktop & Mobile) */}
       <EditProfileModal

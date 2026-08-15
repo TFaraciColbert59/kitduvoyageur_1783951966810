@@ -57,7 +57,7 @@ export default function EditProfilePage() {
           </span>
           <div style={{ width: '60px' }} />
         </div>
-        <div style={{ paddingTop: '48px' }}>
+        <div style={{ paddingTop: 'calc(env(safe-area-inset-top) + 60px)' }}>
           <EditProfileView />
         </div>
       </div>

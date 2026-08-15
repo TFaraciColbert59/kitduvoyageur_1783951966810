@@ -86,7 +86,12 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
       </div>
       
       <div className="flex justify-between items-center mb-6">
-        <button className="text-xs font-medium text-[#17402C] hover:underline font-sans">Historique</button>
+        <button
+          onClick={() => setShowBalanceModal(true)}
+          className="text-xs font-medium text-[#17402C] hover:underline font-sans"
+        >
+          Historique
+        </button>
         <button 
           onClick={() => setIsAdding(!isAdding)}
           className="px-3 py-1.5 rounded-full bg-[#33463C] text-white font-sans font-medium text-xs hover:bg-[#33463C]/90 transition-colors flex items-center gap-1"

@@ -34,6 +34,7 @@ export const ICONS: Record<string, React.ReactNode> = {
   spark: <path d="M12 3l1.5 5 5 1.5-5 1.5L12 16l-1.5-5-5-1.5 5-1.5z"/>,
   timer: <><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 3h6"/></>,
   eye: <><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></>,
+  bag: <><path d="M6 2h12a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V5a3 3 0 0 1 3-3z"/><path d="M16 2V5a4 4 0 0 1-8 0V2"/></>,
   // Fallbacks map for engine labels to icons
   tente: <path d="M3 20l9-15 9 15z" />,
   water: <path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>,

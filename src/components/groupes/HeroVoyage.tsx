@@ -1,11 +1,48 @@
+'use client';
+
 import React from 'react';
 import Icon from '@/components/ui/AppIcon';
+import { useToast } from '@/contexts/ToastContext';
 
 interface HeroVoyageProps {
   data: any;
+  groupId?: string;
+  inviteCode?: string;
+  onOpenChat?: () => void;
 }
 
-export default function HeroVoyage({ data }: HeroVoyageProps) {
+export default function HeroVoyage({ data, groupId, inviteCode, onOpenChat }: HeroVoyageProps) {
+  const { toast } = useToast();
+
+  const inviteUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/groupes/${inviteCode || groupId}`
+    : '';
+
+  const handleInvite = async () => {
+    if (inviteCode) {
+      try {
+        await navigator.clipboard.writeText(inviteUrl);
+        toast(`Code d'invitation : ${inviteCode}`, 'success');
+      } catch {
+        toast(`Code d'invitation : ${inviteCode}`, 'success');
+      }
+    } else {
+      toast('Aucun code d&apos;invitation disponible', 'error');
+    }
+  };
+
+  const handleShare = async () => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `${data.meta.titlePrefix} ${data.meta.titleSuffix}`, url });
+      } catch (err) {}
+      return;
+    }
+    navigator.clipboard.writeText(url);
+    toast('Lien copié dans le presse-papier !', 'success');
+  };
+
   return (
     <div className="bg-gradient-to-br from-[#1C2620] to-[#33463C] rounded-[2rem] p-8 sm:p-10 text-[#E7E3D6] relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-end gap-6 shadow-sm">
       {/* Decors */}
@@ -55,19 +92,34 @@ export default function HeroVoyage({ data }: HeroVoyageProps) {
           <span className="font-mono text-[9px] uppercase tracking-widest text-white/70 text-center px-2">avant le<br/>départ</span>
         </div>
         
-        <button className="w-full md:w-auto px-6 py-3 bg-[#E7E3D6] text-[#1C2620] font-sans font-bold text-sm rounded-full hover:bg-white transition-colors flex items-center justify-center gap-2">
+        <button
+          onClick={handleInvite}
+          className="w-full md:w-auto px-6 py-3 bg-[#E7E3D6] text-[#1C2620] font-sans font-bold text-sm rounded-full hover:bg-white transition-colors flex items-center justify-center gap-2"
+        >
           <Icon name="PlusIcon" size={16} />
           Inviter un ami
         </button>
         
         <div className="flex items-center gap-3 mt-2">
-          <button className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+          <button
+            onClick={onOpenChat}
+            className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+            title="Ouvrir la discussion"
+          >
             <Icon name="ChatBubbleLeftIcon" size={16} />
           </button>
-          <button className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+          <button
+            onClick={handleShare}
+            className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+            title="Partager"
+          >
             <Icon name="ShareIcon" size={16} />
           </button>
-          <button className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+          <button
+            onClick={handleInvite}
+            className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+            title="Options"
+          >
             <Icon name="EllipsisHorizontalIcon" size={16} />
           </button>
         </div>
