@@ -134,6 +134,8 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
       
     if (!error && onRefresh) onRefresh();
     setLoadingId(null);
+  };
+
   const handleLeaveGroup = async () => {
     if (!groupId || !user) return;
     const myMembership = members?.find((m: any) => m.user_id === user.id);

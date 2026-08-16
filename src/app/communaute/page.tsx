@@ -19,6 +19,7 @@ import dynamic from 'next/dynamic';
 const CarnetFormModal = dynamic(() => import('@/components/communaute/CarnetFormModal'), { ssr: false });
 const ClubFormModal = dynamic(() => import('@/components/communaute/ClubFormModal'), { ssr: false });
 const ClubDetailModal = dynamic(() => import('@/components/communaute/ClubDetailModal'), { ssr: false });
+const EventDetailModal = dynamic(() => import('@/components/communaute/EventDetailModal'), { ssr: false });
 
 // Helper formatting functions
 const formatDateString = (dateString: string) => {
@@ -618,7 +619,8 @@ export default function CommunautePage() {
   const [clubSearchQuery, setClubSearchQuery] = useState('');
   const [isCreateClubModalOpen, setIsCreateClubModalOpen] = useState(false);
   const [selectedDetailClub, setSelectedDetailClub] = useState<any | null>(null);
-  const [isSavingClub, setIsSavingClub] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -733,14 +735,26 @@ export default function CommunautePage() {
 
       if (travelGroupsData) setTravelGroups(travelGroupsData);
 
-      // Fetch Events
+      // Fetch Events with club & organizer info
       const { data: eventsData } = await supabase
         .from('club_events')
-        .select('*')
+        .select(`
+          *,
+          club:clubs(name, emoji, slug),
+          organizer:user_profiles!club_events_organizer_id_fkey(full_name, avatar_url)
+        `)
         .order('event_date', { ascending: true })
-        .limit(3);
+        .limit(10);
 
-      if (eventsData) setEvents(eventsData);
+      if (eventsData) {
+        setEvents(eventsData.map((ev: any) => ({
+          ...ev,
+          club_name: ev.club?.name,
+          club_emoji: ev.club?.emoji,
+          club_slug: ev.club?.slug,
+          organizer_name: ev.organizer?.full_name,
+        })));
+      }
 
       // Fetch New Members
       const { data: membersData } = await supabase
@@ -1447,25 +1461,42 @@ export default function CommunautePage() {
 
                   {/* Sorties */}
                   {events.length > 0 && (
-                    <div className="bg-white rounded-[0.75rem] p-6 shadow-sm border border-[#E8E4D8] active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
+                    <div className="bg-white rounded-[0.75rem] p-6 shadow-sm border border-[#E8E4D8]">
                       <div className="flex items-center justify-between mb-5">
                         <h3 className="font-display font-800 text-lg text-[#1C2620]">Sorties <em className="font-serif italic font-normal text-[#2D5A3D]">à venir</em></h3>
-                        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="text-[10px] font-bold text-[#5C6B5E] hover:text-[#1C2620] uppercase tracking-wider">Tout voir</motion.button>
+                        <motion.button 
+                          whileHover={{ scale: 1.05 }} 
+                          whileTap={{ scale: 0.95 }} 
+                          onClick={() => {
+                            setSelectedEvent(events[0]);
+                            setIsEventModalOpen(true);
+                          }}
+                          className="text-[10px] font-bold text-[#5C6B5E] hover:text-[#1C2620] uppercase tracking-wider"
+                        >
+                          Tout voir ({events.length})
+                        </motion.button>
                       </div>
-                      <div className="space-y-4">
-                        {events.map((ev, i) => {
+                      <div className="space-y-3">
+                        {events.slice(0, 4).map((ev, i) => {
                           const date = formatDateString(ev.event_date);
                           return (
-                            <div key={ev.id || i} className="flex items-center gap-4 group cursor-pointer">
+                            <div 
+                              key={ev.id || i} 
+                              onClick={() => {
+                                setSelectedEvent(ev);
+                                setIsEventModalOpen(true);
+                              }}
+                              className="flex items-center gap-4 group cursor-pointer p-2 rounded-xl hover:bg-[#F5F2E8] transition-colors"
+                            >
                               <div className="w-12 h-12 rounded-2xl bg-[#F5F2E8] border border-[#E8E4D8] flex flex-col items-center justify-center flex-shrink-0 group-hover:border-[#2D5A3D] transition-colors">
                                 <span className="text-[9px] font-mono text-[#5C6B5E] leading-none mb-1">{date.month}</span>
                                 <span className="font-display font-800 text-base text-[#1C2620] leading-none">{date.day}</span>
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="font-bold text-xs text-[#1C2620] mb-0.5 group-hover:text-[#2D5A3D] transition-colors truncate">{ev.title}</div>
-                                <div className="text-[10px] text-[#5C6B5E] truncate">{ev.location || 'Localisation TBD'}</div>
+                                <div className="text-[10px] text-[#5C6B5E] truncate">{ev.club_name || ev.location || 'Localisation TBD'}</div>
                               </div>
-                              <div className="bg-[#EAF0EB] text-[#2D5A3D] text-[9px] font-bold px-2 py-1 rounded hidden sm:block">Bientôt</div>
+                              <div className="bg-[#EAF0EB] text-[#2D5A3D] text-[9px] font-bold px-2 py-1 rounded hidden sm:block">Détails →</div>
                             </div>
                           );
                         })}
@@ -1475,19 +1506,30 @@ export default function CommunautePage() {
 
                   {/* Clubs */}
                   {clubs.length > 0 && (
-                    <div className="bg-white rounded-[0.75rem] p-6 shadow-sm border border-[#E8E4D8] active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
+                    <div className="bg-white rounded-[0.75rem] p-6 shadow-sm border border-[#E8E4D8]">
                       <div className="flex items-center justify-between mb-5">
                         <h3 className="font-display font-800 text-lg text-[#1C2620]">Clubs <em className="font-serif italic font-normal text-[#2D5A3D]">actifs</em></h3>
-                        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="text-[10px] font-bold text-[#5C6B5E] hover:text-[#1C2620] uppercase tracking-wider">Voir tout</motion.button>
+                        <motion.button 
+                          whileHover={{ scale: 1.05 }} 
+                          whileTap={{ scale: 0.95 }} 
+                          onClick={() => setActiveTab('Clubs')}
+                          className="text-[10px] font-bold text-[#5C6B5E] hover:text-[#1C2620] uppercase tracking-wider"
+                        >
+                          Voir tout ({clubs.length})
+                        </motion.button>
                       </div>
-                      <div className="space-y-4">
+                      <div className="space-y-3">
                         {clubs.slice(0, 4).map((club, i) => (
-                          <div key={club.id || i} onClick={() => router.push(`/clubs/${club.slug}`)} className="flex items-center justify-between group cursor-pointer">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-[#F5F2E8] flex items-center justify-center text-lg">{club.emoji}</div>
-                              <div><div className="font-bold text-xs text-[#1C2620] group-hover:text-[#2D5A3D] transition-colors">{club.name}</div><div className="text-[10px] text-[#5C6B5E]">{club.members_count} membres</div></div>
+                          <div 
+                            key={club.id || i} 
+                            onClick={() => router.push(`/clubs/${club.slug || club.id}`)} 
+                            className="flex items-center justify-between p-2 rounded-xl hover:bg-[#F5F2E8] group cursor-pointer transition-colors"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-10 h-10 rounded-xl bg-[#F5F2E8] group-hover:bg-white flex items-center justify-center text-lg shrink-0 transition-colors shadow-sm">{club.emoji || '🏔️'}</div>
+                              <div className="min-w-0"><div className="font-bold text-xs text-[#1C2620] group-hover:text-[#2D5A3D] transition-colors truncate">{club.name}</div><div className="text-[10px] text-[#5C6B5E] truncate">{club.members_count || 0} membres</div></div>
                             </div>
-                            <Icon name="ChevronRightIcon" size={14} className="text-[#C8C3B0] group-hover:text-[#1C2620] transition-colors" />
+                            <Icon name="ChevronRightIcon" size={14} className="text-[#C8C3B0] group-hover:text-[#1C2620] transition-colors shrink-0" />
                           </div>
                         ))}
                       </div>
@@ -1544,6 +1586,15 @@ export default function CommunautePage() {
               if (data) setClubs(prev => data.map(c => ({ ...c, is_member: prev.find(p => p.id === c.id)?.is_member })));
             });
           }} />
+
+          {/* EVENT DETAIL MODAL */}
+          <EventDetailModal 
+            event={selectedEvent} 
+            onClose={() => { setSelectedEvent(null); setIsEventModalOpen(false); }} 
+            currentUserId={user?.id} 
+            allEvents={events} 
+            onSelectEvent={(ev: any) => setSelectedEvent(ev)} 
+          />
 
           {/* TOAST NOTIFICATION */}
           {toastMessage && (
@@ -1801,6 +1852,14 @@ export default function CommunautePage() {
           if (data) setClubs(prev => data.map(c => ({ ...c, is_member: prev.find(p => p.id === c.id)?.is_member })));
         });
       }} />
+
+      <EventDetailModal 
+        event={selectedEvent} 
+        onClose={() => { setSelectedEvent(null); setIsEventModalOpen(false); }} 
+        currentUserId={user?.id} 
+        allEvents={events} 
+        onSelectEvent={(ev: any) => setSelectedEvent(ev)} 
+      />
 
       {toastMessage && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[110] bg-[#1C2620] text-white px-6 py-3 rounded-full text-xs font-bold shadow-2xl flex items-center gap-2 border border-[#2D5A3D]">
