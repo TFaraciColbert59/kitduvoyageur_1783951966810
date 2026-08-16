@@ -48,7 +48,7 @@ export default function ContextualInsight({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 10 }}
-        className={`absolute left-3 right-3 bottom-[100px] z-20 p-3.5 rounded-3xl backdrop-blur-2xl border shadow-xl flex items-center gap-3 select-none ${
+        className={`absolute left-3 right-3 bottom-[100px] z-20 p-3.5 rounded-[0.75rem] backdrop-blur-2xl border shadow-xl flex items-center gap-3 select-none ${
           priorityType === 'off-route'
             ? 'bg-[#E8B87A]/95 text-[#4A2E0E] border-[#7A4A15]/20 shadow-amber-900/20'
             : priorityType === 'weather'

@@ -12,29 +12,17 @@ package-lock.json
 # Next.js build output
 .next/
 out/
-
-# Production build
 build/
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# OS-specific files
-.DS_Store
-Thumbs.db
-
-# Vercel deployment
 .vercel/
 
 # Optional: if using TypeScript
 *.tsbuildinfo
 
-# Optional: if using testing tools
+# Testing & Performance tools
 coverage/
 jest-test-results.json
+lighthouse_results/
+baseline_home.json
 
 # Optional: if using IDEs
 .vscode/
@@ -43,7 +31,7 @@ jest-test-results.json
 # Optional: if using TurboRepo or monorepo
 turbo/
 
-# Country data cache (API responses, generated at build time)
+# Country data cache
 .country-cache/
 .aider*
 

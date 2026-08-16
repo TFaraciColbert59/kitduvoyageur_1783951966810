@@ -258,7 +258,7 @@ export default function FideliteTab({ profile }: FideliteTabProps) {
 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-[#1C2620]/40 backdrop-blur-sm animate-fade-in">
-        <div className="bg-[#F5F3ED] rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden">
+        <div className="bg-[#F5F3ED] rounded-[0.75rem] w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden">
           {/* Header */}
           <div className="p-6 border-b border-[#E8E4D8] flex items-center justify-between bg-white relative z-10">
             <div>
@@ -341,8 +341,8 @@ export default function FideliteTab({ profile }: FideliteTabProps) {
   if (loading && totalBadges === 0) {
     return (
       <div className="animate-pulse space-y-8">
-        <div className="h-64 bg-white border border-[#E8E4D8] rounded-3xl" />
-        <div className="h-96 bg-white border border-[#E8E4D8] rounded-3xl" />
+        <div className="h-64 bg-white border border-[#E8E4D8] rounded-[0.75rem]" />
+        <div className="h-96 bg-white border border-[#E8E4D8] rounded-[0.75rem]" />
       </div>
     );
   }
@@ -484,11 +484,11 @@ export default function FideliteTab({ profile }: FideliteTabProps) {
           </div>
 
           {history.length === 0 ? (
-            <div className="bg-white border border-[#E8E4D8] rounded-3xl p-8 text-center text-[#9CA89E] text-sm">
+            <div className="bg-white border border-[#E8E4D8] rounded-[0.75rem] p-8 text-center text-[#9CA89E] text-sm">
               Aucun historique disponible.
             </div>
           ) : (
-            <div className="bg-white border border-[#E8E4D8] rounded-3xl overflow-hidden divide-y divide-[#E8E4D8]">
+            <div className="bg-white border border-[#E8E4D8] rounded-[0.75rem] overflow-hidden divide-y divide-[#E8E4D8]">
               {history.slice(0, 10).map((item) => {
                 const style = getHistoryIconAndColors(item.type, item.points);
                 return (
@@ -526,7 +526,7 @@ export default function FideliteTab({ profile }: FideliteTabProps) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {rewards.map((reward) => (
-              <div key={reward.id} className="bg-white border border-[#E8E4D8] rounded-3xl p-6 flex flex-col hover:border-[#C8C3B0] transition-colors">
+              <div key={reward.id} className="bg-white border border-[#E8E4D8] rounded-[0.75rem] p-6 flex flex-col hover:border-[#C8C3B0] transition-colors">
                 <div className="w-10 h-10 rounded-xl bg-[#EDEAE0] text-[#5C6B5E] flex items-center justify-center mb-4">
                   <Icon name={(reward.image || 'StarIcon') as any} size={20} />
                 </div>
@@ -560,7 +560,7 @@ export default function FideliteTab({ profile }: FideliteTabProps) {
       <div className="lg:col-span-4 space-y-5">
 
         {/* ── Règles d'obtention ── */}
-        <div className="bg-white border border-[#E8E4D8] rounded-3xl p-6">
+        <div className="bg-white border border-[#E8E4D8] rounded-[0.75rem] p-6">
           <h4 className="font-display font-700 text-[#1C2620] text-lg mb-1">
             Gagner <em className="font-serif font-normal not-italic">des points</em>
           </h4>
@@ -582,7 +582,7 @@ export default function FideliteTab({ profile }: FideliteTabProps) {
         </div>
 
         {/* ── Échelle des niveaux ── */}
-        <div className="bg-white border border-[#E8E4D8] rounded-3xl p-6">
+        <div className="bg-white border border-[#E8E4D8] rounded-[0.75rem] p-6">
           <h4 className="font-display font-700 text-[#1C2620] text-lg mb-1">
             Échelle <em className="font-serif font-normal not-italic">des niveaux</em>
           </h4>

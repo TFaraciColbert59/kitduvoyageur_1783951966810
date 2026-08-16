@@ -23,7 +23,7 @@ export default function CartLoading() {
           
           {/* Summary */}
           <div className="w-full lg:w-1/3">
-            <div className="bg-white rounded-3xl p-6 space-y-6 sticky top-32">
+            <div className="bg-white rounded-[0.75rem] p-6 space-y-6 sticky top-32 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
               <Skeleton className="h-8 w-48" />
               <div className="space-y-4 pt-4 border-t border-[#F0ECE1]">
                 <Skeleton className="h-5 w-full" />

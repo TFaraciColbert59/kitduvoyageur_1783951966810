@@ -238,7 +238,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
   };
 
   return (
-    <div className="bg-white rounded-[2rem] p-6 border border-[#1C2620]/10 shadow-sm">
+    <div className="bg-white rounded-[0.75rem] p-6 border border-[#1C2620]/10 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
       <div className="flex justify-between items-start mb-2">
         <h2 className="font-display text-xl text-[#1C2620]">Équipement <span className="font-serif italic font-bold">partagé</span></h2>
         <div className="flex items-center gap-2">
@@ -527,7 +527,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
       {/* Import modal */}
       {isImporting && (
         <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2rem] w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl">
+          <div className="bg-white rounded-[0.75rem] w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex items-center justify-between p-6 border-b border-[#1C2620]/10">
               <h3 className="font-display text-lg text-[#1C2620]">Importer depuis mon <span className="font-serif italic font-bold">inventaire</span></h3>
               <button onClick={() => setIsImporting(false)} className="text-[#1C2620]/50 hover:text-[#1C2620]"><Icon name="XMarkIcon" size={20} /></button>

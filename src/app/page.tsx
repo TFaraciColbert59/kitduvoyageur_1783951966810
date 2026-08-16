@@ -132,7 +132,7 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Card 1 */}
-            <div className="relative h-[480px] rounded-3xl overflow-hidden group cursor-pointer">
+            <div className="relative h-[480px] rounded-[0.75rem] overflow-hidden group cursor-pointer">
               <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80" alt="Chartreuse" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
@@ -150,7 +150,7 @@ export default function HomePage() {
             </div>
 
             {/* Card 2 */}
-            <div className="relative h-[480px] rounded-3xl overflow-hidden group cursor-pointer">
+            <div className="relative h-[480px] rounded-[0.75rem] overflow-hidden group cursor-pointer">
               <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80" alt="Vercors" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
@@ -167,7 +167,7 @@ export default function HomePage() {
             </div>
 
             {/* Card 3 */}
-            <div className="relative h-[480px] rounded-3xl overflow-hidden group cursor-pointer">
+            <div className="relative h-[480px] rounded-[0.75rem] overflow-hidden group cursor-pointer">
               <img src="https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=800&q=80" alt="Kayak" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
@@ -228,7 +228,7 @@ export default function HomePage() {
           </div>
           
           <div className="flex-1 w-full">
-            <div className="relative rounded-3xl overflow-hidden aspect-[4/5] lg:aspect-auto lg:h-[700px]">
+            <div className="relative rounded-[0.75rem] overflow-hidden aspect-[4/5] lg:aspect-auto lg:h-[700px]">
               <img src="https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=1000&q=80" alt="Montagne" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#1C2620] via-transparent to-transparent opacity-80" />
               <div className="absolute bottom-8 left-8 right-8">
@@ -244,7 +244,7 @@ export default function HomePage() {
       <section className="py-24 px-4 bg-[#F7FAF8]">
         <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row items-center gap-16">
           <div className="flex-1 w-full">
-            <div className="relative rounded-3xl overflow-hidden aspect-square bg-[#E8E4D8]">
+            <div className="relative rounded-[0.75rem] overflow-hidden aspect-square bg-[#E8E4D8]">
               <img src="https://images.unsplash.com/photo-1550ed4e1b-3b47bd21096a?w=1000&q=80" alt="Sac à dos en toile cirée" className="w-full h-full object-cover" />
               <div className="absolute top-6 left-6">
                 <span className="bg-white/90 backdrop-blur px-3 py-1.5 rounded-full text-[10px] font-bold text-[#1C2620] tracking-wide uppercase shadow-sm">

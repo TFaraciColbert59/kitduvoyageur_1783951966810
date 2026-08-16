@@ -94,7 +94,7 @@ export default function GPXImportExportModal({
         )}
 
         {/* Upload GPX Button Box */}
-        <div className="p-5 border-2 border-dashed border-[#17402C]/30 bg-[#F4F1EA] rounded-3xl text-center space-y-2">
+        <div className="p-5 border-2 border-dashed border-[#17402C]/30 bg-[#F4F1EA] rounded-[0.75rem] text-center space-y-2">
           <span className="text-3xl block">📥</span>
           <div className="text-xs font-bold text-[#0B1F17]">Importer un fichier GPX</div>
           <p className="text-[10px] font-mono text-[#6B7A72]">

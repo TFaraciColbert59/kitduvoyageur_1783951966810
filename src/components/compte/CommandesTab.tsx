@@ -1005,7 +1005,7 @@ function AddressModal({ onClose, onSave, initialData }: { onClose: () => void, o
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1C2620]/40 backdrop-blur-sm animate-fade-in">
-      <div className="bg-[#F5F3ED] rounded-3xl p-8 w-full max-w-md shadow-2xl relative">
+      <div className="bg-[#F5F3ED] rounded-[0.75rem] p-8 w-full max-w-md shadow-2xl relative">
         <button onClick={onClose} className="absolute top-6 right-6 p-2 text-[#9CA89E] hover:text-[#1C2620] transition-colors rounded-full hover:bg-black/5">
           <Icon name="XMarkIcon" size={20} />
         </button>
@@ -1068,7 +1068,7 @@ function CardModal({ onClose, onSave }: { onClose: () => void, onSave: (c: Payme
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1C2620]/40 backdrop-blur-sm animate-fade-in">
-      <div className="bg-[#F5F3ED] rounded-3xl p-8 w-full max-w-md shadow-2xl relative">
+      <div className="bg-[#F5F3ED] rounded-[0.75rem] p-8 w-full max-w-md shadow-2xl relative">
         <button onClick={onClose} className="absolute top-6 right-6 p-2 text-[#9CA89E] hover:text-[#1C2620] transition-colors rounded-full hover:bg-black/5">
           <Icon name="XMarkIcon" size={20} />
         </button>

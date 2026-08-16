@@ -154,7 +154,7 @@ export default function StatsSheet({
         </div>
 
         {/* Voltage Speed card (bonus, data-driven) */}
-        <div className="p-4 bg-[#06120C] text-white rounded-3xl space-y-3 shadow-xl">
+        <div className="p-4 bg-[#06120C] text-white rounded-[0.75rem] space-y-3 shadow-xl">
           <div className="flex items-baseline justify-between">
             <div className="text-sm font-medium">
               Vitesse <em className="font-serif italic text-[#C6DCBE]">instantanée</em>

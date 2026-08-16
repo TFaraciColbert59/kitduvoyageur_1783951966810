@@ -38,7 +38,7 @@ export function StartDistanceModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="w-full max-w-sm bg-[#FBFAF6] border border-[#17402C]/15 rounded-3xl p-6 shadow-2xl flex flex-col text-center select-none"
+          className="w-full max-w-sm bg-[#FBFAF6] border border-[#17402C]/15 rounded-[0.75rem] p-6 shadow-2xl flex flex-col text-center select-none"
         >
           {/* Top Icon Badge */}
           <div className="w-14 h-14 rounded-2xl bg-[#17402C]/10 text-[#17402C] mx-auto flex items-center justify-center mb-4 border border-[#17402C]/20 shadow-inner">

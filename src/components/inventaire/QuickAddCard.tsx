@@ -86,7 +86,7 @@ export default function QuickAddCard({ onAddSuccess }: QuickAddCardProps) {
   };
 
   return (
-    <div className="bg-[#132219] text-white rounded-3xl p-6 shadow-xl border border-[#23382B] space-y-5">
+    <div className="bg-[#132219] text-white rounded-[0.75rem] p-6 shadow-xl border border-[#23382B] space-y-5">
       {/* Top Header Badge */}
       <div className="flex items-center justify-between">
         <span className="text-[10px] font-extrabold tracking-widest text-[#82C39B] bg-[#23382B] px-3 py-1 rounded-full uppercase">

@@ -16,7 +16,7 @@ export default function MomentCard({ moment }: MomentCardProps) {
   const gradient = gradients[idx % gradients.length];
 
   return (
-    <div className="bg-white rounded-[2rem] overflow-hidden border border-[#1C2620]/10 shadow-sm hover:shadow-md hover:border-[#1C2620]/20 transition-all group">
+    <div className="bg-white rounded-[0.75rem] overflow-hidden border border-[#1C2620]/10 shadow-sm hover:shadow-md hover:border-[#1C2620]/20 transition-all group active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
       {/* Photo placeholder */}
       <div className={`aspect-[4/3] bg-gradient-to-br ${gradient} relative`}>
         <div className="absolute inset-0 flex items-end p-4">

@@ -14,7 +14,15 @@ import BackButton from '@/components/ui/BackButton';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import ExplorerMap from '@/components/explorer/ExplorerMap';
+const ExplorerMap = dynamic(() => import('@/components/explorer/ExplorerMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full bg-[#FAF8F5] flex items-center justify-center text-xs text-[#6B7A72] font-semibold font-mono">
+      <div className="w-4 h-4 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin mr-2" />
+      Chargement de la carte...
+    </div>
+  ),
+});
 
 const DIFFICULTY_FILTERS = ['Facile', 'Modérée', 'Difficile', 'Expert'];
 const DURATION_FILTERS = [

@@ -35,7 +35,7 @@ export default function DontForgetCard({ items }: DontForgetCardProps) {
   if (missing.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-[2rem] p-5 border border-amber-200 shadow-sm relative overflow-hidden">
+    <div className="bg-white rounded-[0.75rem] p-5 border border-amber-200 shadow-sm relative overflow-hidden active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
       <div className="absolute top-0 left-0 w-1 h-full bg-amber-400" />
       <h3 className="text-[11px] font-bold tracking-widest uppercase text-amber-600 mb-3">À ne pas oublier</h3>
       <ul className="space-y-4">

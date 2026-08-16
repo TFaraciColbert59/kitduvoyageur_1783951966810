@@ -10,7 +10,7 @@ export default function CheckoutLoading() {
         <div className="flex flex-col lg:flex-row gap-12">
           {/* Form */}
           <div className="w-full lg:w-2/3 space-y-8">
-            <div className="bg-white rounded-3xl p-6 sm:p-8 space-y-6">
+            <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
               <Skeleton className="h-8 w-40 mb-6" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <Skeleton className="h-14 w-full rounded-xl" />
@@ -18,7 +18,7 @@ export default function CheckoutLoading() {
                 <Skeleton className="h-14 w-full rounded-xl col-span-1 sm:col-span-2" />
               </div>
             </div>
-            <div className="bg-white rounded-3xl p-6 sm:p-8 space-y-6">
+            <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
               <Skeleton className="h-8 w-48 mb-6" />
               <Skeleton className="h-14 w-full rounded-xl" />
               <Skeleton className="h-14 w-full rounded-xl" />
@@ -27,7 +27,7 @@ export default function CheckoutLoading() {
           
           {/* Order Summary */}
           <div className="w-full lg:w-1/3">
-            <div className="bg-white rounded-3xl p-6 space-y-6 sticky top-32">
+            <div className="bg-white rounded-[0.75rem] p-6 space-y-6 sticky top-32 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
               <Skeleton className="h-8 w-48" />
               <div className="space-y-4 pt-4 border-t border-[#F0ECE1]">
                 <div className="flex gap-4">

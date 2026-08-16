@@ -311,7 +311,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
           
           {/* Featured Club Banner ("Club à la une") */}
           {featuredClub && (
-            <div className="relative rounded-3xl overflow-hidden shadow-xl border border-[#C8C3B0]/60 bg-[#1C2620] text-white">
+            <div className="relative rounded-[0.75rem] overflow-hidden shadow-xl border border-[#C8C3B0]/60 bg-[#1C2620] text-white">
               {/* Cover Image Background */}
               <div className="absolute inset-0 z-0">
                 <Image
@@ -397,7 +397,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
           )}
 
           {/* Mes clubs Section */}
-          <div className="bg-white p-6 sm:p-7 rounded-3xl border border-[#C8C3B0]/60 shadow-sm space-y-6">
+          <div className="bg-white p-6 sm:p-7 rounded-[0.75rem] border border-[#C8C3B0]/60 shadow-sm space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#C8C3B0]/40 pb-5">
               <div>
                 <h2 className="text-2xl font-display font-extrabold text-[#1C2620]">
@@ -490,7 +490,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
           </div>
 
           {/* Activité récente Section */}
-          <div className="bg-white p-6 sm:p-7 rounded-3xl border border-[#C8C3B0]/60 shadow-sm space-y-6">
+          <div className="bg-white p-6 sm:p-7 rounded-[0.75rem] border border-[#C8C3B0]/60 shadow-sm space-y-6">
             <div className="flex items-center justify-between border-b border-[#C8C3B0]/40 pb-4">
               <div>
                 <h2 className="text-xl font-display font-extrabold text-[#1C2620]">
@@ -567,7 +567,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
         <div className="lg:col-span-4 space-y-8">
           
           {/* Invitations en attente Card */}
-          <div className="bg-[#FAF8F5] p-6 rounded-3xl border border-[#C8C3B0]/60 shadow-sm space-y-5">
+          <div className="bg-[#FAF8F5] p-6 rounded-[0.75rem] border border-[#C8C3B0]/60 shadow-sm space-y-5">
             <div>
               <h2 className="text-lg font-display font-extrabold text-[#1C2620]">
                 Invitations <span className="italic font-serif font-normal">en attente</span>
@@ -615,7 +615,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
           </div>
 
           {/* À découvrir Card */}
-          <div className="bg-white p-6 rounded-3xl border border-[#C8C3B0]/60 shadow-sm space-y-5">
+          <div className="bg-white p-6 rounded-[0.75rem] border border-[#C8C3B0]/60 shadow-sm space-y-5">
             <div>
               <h2 className="text-lg font-display font-extrabold text-[#1C2620]">
                 À découvrir
@@ -666,7 +666,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
           </div>
 
           {/* Dark Green Promo Card: "Créer votre propre club" */}
-          <div className="bg-[#1C2620] p-7 rounded-3xl text-white shadow-xl space-y-4 border border-[#2A3830] relative overflow-hidden">
+          <div className="bg-[#1C2620] p-7 rounded-[0.75rem] text-white shadow-xl space-y-4 border border-[#2A3830] relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
             <h3 className="text-lg font-display font-extrabold text-white leading-tight">
               Créer votre <span className="italic font-serif font-normal text-emerald-300">propre club</span>

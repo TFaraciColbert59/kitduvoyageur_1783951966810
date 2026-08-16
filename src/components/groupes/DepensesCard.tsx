@@ -77,7 +77,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
   };
 
   return (
-    <div className="bg-white rounded-[2rem] p-6 border border-[#1C2620]/10 shadow-sm relative">
+    <div className="bg-white rounded-[0.75rem] p-6 border border-[#1C2620]/10 shadow-sm relative active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
       <div className="flex justify-between items-start mb-2">
         <h2 className="font-display text-xl text-[#1C2620]">Dépenses <span className="font-serif italic font-bold">du voyage</span></h2>
         <div className="flex items-center gap-2">
@@ -217,7 +217,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
 
       {showBalanceModal && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2rem] p-8 max-w-md w-full shadow-2xl relative">
+          <div className="bg-white rounded-[0.75rem] p-8 max-w-md w-full shadow-2xl relative active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <button 
               onClick={() => setShowBalanceModal(false)}
               className="absolute top-6 right-6 text-[#1C2620]/50 hover:text-[#1C2620]"

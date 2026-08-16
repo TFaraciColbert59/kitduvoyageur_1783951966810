@@ -62,7 +62,7 @@ export default function EarthCountryPanel({
         </button>
 
         {/* Contenu du panel */}
-        <div className="bg-gradient-to-b from-slate-900/95 to-slate-950/95 backdrop-blur-xl border border-white/20 rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl">
+        <div className="bg-gradient-to-b from-slate-900/95 to-slate-950/95 backdrop-blur-xl border border-white/20 rounded-2xl md:rounded-[0.75rem] overflow-hidden shadow-2xl">
           {/* Header avec drapeau et nom */}
           <div className="p-6 bg-gradient-to-r from-white/5 to-transparent">
             <div className="flex items-center justify-between mb-4">

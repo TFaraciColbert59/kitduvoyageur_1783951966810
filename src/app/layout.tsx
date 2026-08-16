@@ -20,6 +20,7 @@ import CustomCursor from '@/components/ui/CustomCursor';
 
 
 
+
 // Only load weights actually used in the app
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -227,6 +228,7 @@ export default function RootLayout({
                     </a>
                     {/* Mobile navigation — hidden on desktop (md+) */}
                     <MobileNavWrapper />
+
                     <main id="main-content">
                       <PageTransition>{children}</PageTransition>
                     </main>

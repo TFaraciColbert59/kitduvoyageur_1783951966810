@@ -12,7 +12,7 @@ export default function StatsBandeau({ profile }: StatsBandeauProps) {
   const progressPercent = Math.round((level.current_pts / level.max_pts) * 100);
 
   return (
-    <div className="w-full bg-[#1C2620] text-white rounded-[2rem] p-5 sm:p-7 shadow-2xl border border-white/10 my-6 font-sans">
+    <div className="w-full bg-[#1C2620] text-white rounded-[0.75rem] p-5 sm:p-7 shadow-2xl border border-white/10 my-6 font-sans">
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-6">
         
         {/* Level Badge Card (Left) */}

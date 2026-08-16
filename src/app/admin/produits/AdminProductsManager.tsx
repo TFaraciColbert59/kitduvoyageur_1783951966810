@@ -1481,7 +1481,7 @@ export default function AdminProductsManager() {
 
         {/* ─── TAB 2: 9-TAB PRODUCT EDITOR ───────────────────────────────────── */}
         {activeTab === 'editor' && editingProduct && (
-          <section className="bg-[#15231D] border border-white/10 rounded-3xl p-6 lg:p-8 space-y-6 shadow-2xl">
+          <section className="bg-[#15231D] border border-white/10 rounded-[0.75rem] p-6 lg:p-8 space-y-6 shadow-2xl">
             {/* Header / Save Bar */}
             <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-white/10">
               <div>
@@ -2580,7 +2580,7 @@ export default function AdminProductsManager() {
       {/* ─── MODAL: Quick Stock Adjustment ──────────────────────────────────── */}
       {quickStockItem && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#15231D] border border-white/15 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-scale-in">
+          <div className="bg-[#15231D] border border-white/15 rounded-[0.75rem] p-6 max-w-md w-full space-y-4 shadow-2xl animate-scale-in">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-white text-base">Ajustement de Stock Rapide</h3>
               <button onClick={() => setQuickStockItem(null)} className="text-white/40 hover:text-white">
@@ -2649,7 +2649,7 @@ export default function AdminProductsManager() {
       {/* ─── MODAL: Bulk Actions ─────────────────────────────────────────────── */}
       {isBulkModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#15231D] border border-white/15 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-scale-in">
+          <div className="bg-[#15231D] border border-white/15 rounded-[0.75rem] p-6 max-w-md w-full space-y-4 shadow-2xl animate-scale-in">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-white text-base">Actions Groupées ({selectedIds.size} sélectionnés)</h3>
               <button onClick={() => setIsBulkModalOpen(false)} className="text-white/40 hover:text-white">
@@ -2750,7 +2750,7 @@ export default function AdminProductsManager() {
       {/* ─── MODAL: Confirmation Dialog ─────────────────────────────────────── */}
       {confirmModal.isOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#15231D] border border-white/15 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-scale-in">
+          <div className="bg-[#15231D] border border-white/15 rounded-[0.75rem] p-6 max-w-md w-full space-y-4 shadow-2xl animate-scale-in">
             <h3 className={`font-bold text-base ${confirmModal.danger ? 'text-red-400' : 'text-white'}`}>
               {confirmModal.title}
             </h3>

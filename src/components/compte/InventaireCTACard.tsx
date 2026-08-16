@@ -13,7 +13,7 @@ interface InventaireCTACardProps {
 
 export default function InventaireCTACard({ inventaire }: InventaireCTACardProps) {
   return (
-    <div className="bg-gradient-to-br from-[#E6C587]/90 via-[#D4A359] to-[#c29248] border border-[#D4A359]/60 rounded-[2rem] p-6 text-[#132219] shadow-lg space-y-4 font-sans relative overflow-hidden group">
+    <div className="bg-gradient-to-br from-[#E6C587]/90 via-[#D4A359] to-[#c29248] border border-[#D4A359]/60 rounded-[0.75rem] p-6 text-[#132219] shadow-lg space-y-4 font-sans relative overflow-hidden group">
       
       {/* Badge */}
       <div className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-[#132219]/10 border border-[#132219]/20 rounded-full text-[10px] font-mono font-bold uppercase tracking-widest text-[#132219]">

@@ -10,8 +10,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import MobilePageShell from "@/components/mobile-nav/MobilePageShell";
 import { getAllCountries, type Country } from "@/lib/countries";
-import EarthCountryPanel from "@/components/earth/EarthCountryPanel";
 
 // Globe 3D dynamique
 const CountryGlobe = dynamic(
@@ -24,40 +24,35 @@ const ALL_COUNTRIES = getAllCountries();
 export default function EarthPage() {
   const router = useRouter();
   
-  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
-  const [showCountryPanel, setShowCountryPanel] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const [focusCode, setFocusCode] = useState<string | undefined>(undefined);
   const [selectedContinent, setSelectedContinent] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("Chartreuse");
 
   const handleCountryClick = useCallback((code: string) => {
-    const country = ALL_COUNTRIES.find(c => c.code.toLowerCase() === code.toLowerCase());
-    if (country) {
-      setSelectedCountry(country);
-      setShowCountryPanel(true);
-      setFocusCode(code.toLowerCase());
-    }
-  }, []);
-
-  const handleExploreCountry = useCallback((code: string) => {
     router.push(`/pays/${code.toLowerCase()}`);
   }, [router]);
 
   return (
     <div className="min-h-screen w-full bg-[#F5F2EA] text-[#1C2620] flex flex-col overflow-x-hidden font-sans">
-      {/* Site Header */}
-      <Header />
+      {/* ── DESKTOP ── */}
+      <div className="hidden md:block">
+        {/* Site Header */}
+        <Header />
 
-      {/* Main Content */}
-      <main className="flex-1 w-full pt-20 pb-12">
+        {/* Main Content */}
+        <main className="flex-1 w-full pt-20 pb-12">
         <div className="max-w-[1500px] mx-auto px-2 sm:px-4">
           {/* EARTH HERO CONTAINER (Floating Dark Green Stage on Light Background) */}
-          <section className="earth-hero w-full relative rounded-3xl sm:rounded-[36px] shadow-2xl overflow-hidden my-2">
-            {/* Ambient Orbits */}
-            <div className="orbit o1"></div>
-            <div className="orbit o2"></div>
-            <div className="orbit o3"></div>
-
+          <section className="earth-hero w-full relative rounded-[0.75rem] sm:rounded-[36px] shadow-2xl overflow-hidden my-2">
             {/* HEADING */}
             <div className="hero-head max-w-5xl mx-auto pt-10 sm:pt-14 pb-6">
               <div className="eye">
@@ -65,11 +60,8 @@ export default function EarthPage() {
               </div>
               <h1>Le monde,<br/><em>à hauteur de sentier.</em></h1>
               <p>Faites tourner la planète, choisissez un pays, découvrez les itinéraires testés par la communauté. Chaque point est une histoire de terrain.</p>
-            </div>
 
-            {/* GLOBE STAGE */}
-            <div className="globe-stage w-full max-w-[1400px] mx-auto relative">
-              {/* Search bar */}
+              {/* Search bar moved here to avoid overlapping the globe */}
               <div className="globe-search">
                 <svg className="lkv-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
@@ -86,6 +78,10 @@ export default function EarthPage() {
                 <span className="kbd"><span>⌘</span><span>K</span></span>
                 <button className="go-btn" onClick={() => setFocusCode(searchQuery)}>Lancer</button>
               </div>
+            </div>
+
+            {/* GLOBE STAGE */}
+            <div className="globe-stage w-full max-w-[1400px] mx-auto relative">
 
               {/* Left: Continents panel */}
               <aside className="globe-side hidden md:block">
@@ -122,13 +118,20 @@ export default function EarthPage() {
 
               {/* Globe Canvas */}
               <div id="globeViz" className="w-full h-full flex items-center justify-center">
-                <CountryGlobe
-                  countries={ALL_COUNTRIES}
-                  onCountryClick={handleCountryClick}
-                  focusCode={focusCode}
-                  fullscreen={true}
-                />
+                {!isMobile && (
+                  <CountryGlobe
+                    countries={ALL_COUNTRIES}
+                    onCountryClick={handleCountryClick}
+                    focusCode={focusCode}
+                    fullscreen={true}
+                  />
+                )}
               </div>
+
+              {/* Ambient Orbits */}
+              <div className="orbit o1"></div>
+              <div className="orbit o2"></div>
+              <div className="orbit o3"></div>
 
               {/* Right: Destination info card */}
               <aside className="globe-info-card hidden md:block">
@@ -195,7 +198,7 @@ export default function EarthPage() {
           </section>
 
           {/* DESTINATIONS SECTION */}
-          <section className="dest-section w-full rounded-3xl mt-8">
+          <section className="dest-section w-full rounded-[0.75rem] mt-8">
             <div className="max-w-[1400px] mx-auto">
               <div className="dest-head">
                 <div className="l">
@@ -324,7 +327,7 @@ export default function EarthPage() {
           </section>
 
           {/* LIVE + STATS */}
-          <section className="live-section w-full rounded-3xl mt-8">
+          <section className="live-section w-full rounded-[0.75rem] mt-8">
             <div className="max-w-[1400px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-10">
               {/* Live Feed */}
               <div className="live-panel lg:col-span-5">
@@ -421,7 +424,7 @@ export default function EarthPage() {
           </section>
 
           {/* METHOD SECTION */}
-          <section className="method-section w-full rounded-3xl mt-8">
+          <section className="method-section w-full rounded-[0.75rem] mt-8">
             <div className="max-w-[1400px] mx-auto">
               <div className="method-head">
                 <div className="lkv-eyebrow">Notre méthode · terrain d'abord</div>
@@ -452,14 +455,144 @@ export default function EarthPage() {
 
       {/* Site Footer */}
       <Footer />
+      </div>
 
-      {/* Country Detail Modal */}
-      <EarthCountryPanel
-        country={selectedCountry}
-        isVisible={showCountryPanel}
-        onClose={() => setShowCountryPanel(false)}
-        onExploreCountry={handleExploreCountry}
-      />
+      {/* ── MOBILE ── */}
+      <div className="block md:hidden">
+        <MobilePageShell background="var(--lkv-forest-950)">
+          <div className="m-earth">
+            <div className="m-earth-body">
+              {/* Hero (Title, Search) */}
+              <div className="m-earth-hero">
+                <div className="m-eye">
+                  <span className="d"></span>137 pays cartographiés
+                </div>
+                <h1>Le monde,<br/><em>à hauteur de sentier.</em></h1>
+                <p>Faites tourner la planète, plongez dans les régions.</p>
+                <div className="m-search">
+                  <svg className="lkv-icon" viewBox="0 0 24 24" width="14" height="14" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                    <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="France, Népal, Chartreuse…"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setFocusCode(e.target.value || undefined);
+                    }}
+                  />
+                  <button className="b active:scale-95 transition-transform duration-100" onClick={() => setFocusCode(searchQuery)}>Go</button>
+                </div>
+              </div>
+
+              {/* Globe */}
+              <div className="m-globe-stage w-full h-[360px] mb-8 relative">
+                <div className="w-full h-full relative" id="mGlobeViz">
+                  {isMobile && (
+                    <CountryGlobe
+                      countries={ALL_COUNTRIES}
+                      onCountryClick={handleCountryClick}
+                      focusCode={focusCode}
+                      fullscreen={false}
+                    />
+                  )}
+                </div>
+                <div className="m-orbit o1"></div>
+                <div className="m-orbit o2"></div>
+              </div>
+
+              {/* Continent strip */}
+              <div className="m-cont-strip">
+                <div className={`p ${selectedContinent === "europe" || selectedContinent === "all" ? "on" : ""} active:scale-95 transition-transform duration-100 cursor-pointer`} onClick={() => setSelectedContinent("europe")}>
+                  <span className="k">01</span>Europe
+                </div>
+                <div className={`p ${selectedContinent === "asia" ? "on" : ""} active:scale-95 transition-transform duration-100 cursor-pointer`} onClick={() => setSelectedContinent("asia")}>
+                  <span className="k">02</span>Asie
+                </div>
+                <div className={`p ${selectedContinent === "africa" ? "on" : ""} active:scale-95 transition-transform duration-100 cursor-pointer`} onClick={() => setSelectedContinent("africa")}>
+                  <span className="k">03</span>Afrique
+                </div>
+                <div className={`p ${selectedContinent === "north-america" ? "on" : ""} active:scale-95 transition-transform duration-100 cursor-pointer`} onClick={() => setSelectedContinent("north-america")}>
+                  <span className="k">04</span>Am. N.
+                </div>
+                <div className={`p ${selectedContinent === "south-america" ? "on" : ""} active:scale-95 transition-transform duration-100 cursor-pointer`} onClick={() => setSelectedContinent("south-america")}>
+                  <span className="k">05</span>Am. S.
+                </div>
+                <div className={`p ${selectedContinent === "oceania" ? "on" : ""} active:scale-95 transition-transform duration-100 cursor-pointer`} onClick={() => setSelectedContinent("oceania")}>
+                  <span className="k">06</span>Océanie
+                </div>
+              </div>
+
+              {/* Body Content */}
+              <div className="m-body">
+                <h3 className="m-sec-title">Six pays qui <em>montent</em></h3>
+                <div className="m-dest-grid">
+                  <Link href="/pays/fr" className="m-dest active:scale-[0.98] transition-transform duration-100">
+                    <div className="bg" style={{ backgroundImage: `url('https://images.pexels.com/photos/2166559/pexels-photo-2166559.jpeg?auto=compress&cs=tinysrgb&w=400')` }}></div>
+                    <div className="fc">FR</div>
+                    <div className="info">
+                      <h5>Chartreuse<em>.</em></h5>
+                      <div className="sub">312 itinéraires</div>
+                    </div>
+                  </Link>
+
+                  <Link href="/pays/is" className="m-dest active:scale-[0.98] transition-transform duration-100">
+                    <div className="bg" style={{ backgroundImage: `url('https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg?auto=compress&cs=tinysrgb&w=400')` }}></div>
+                    <div className="fc">IS</div>
+                    <div className="info">
+                      <h5>Landmanna<em>laugar.</em></h5>
+                      <div className="sub">Hautes terres</div>
+                    </div>
+                  </Link>
+
+                  <Link href="/pays/jp" className="m-dest active:scale-[0.98] transition-transform duration-100">
+                    <div className="bg" style={{ backgroundImage: `url('https://images.pexels.com/photos/691637/pexels-photo-691637.jpeg?auto=compress&cs=tinysrgb&w=400')` }}></div>
+                    <div className="fc">JP</div>
+                    <div className="info">
+                      <h5>Kumano <em>Kodō.</em></h5>
+                      <div className="sub">7 jours</div>
+                    </div>
+                  </Link>
+
+                  <Link href="/pays/cl" className="m-dest active:scale-[0.98] transition-transform duration-100">
+                    <div className="bg" style={{ backgroundImage: `url('https://images.pexels.com/photos/2437291/pexels-photo-2437291.jpeg?auto=compress&cs=tinysrgb&w=400')` }}></div>
+                    <div className="fc">CL</div>
+                    <div className="info">
+                      <h5>Torres del <em>Paine.</em></h5>
+                      <div className="sub">Patagonie</div>
+                    </div>
+                  </Link>
+                </div>
+
+                {/* Live Activity Box */}
+                <div className="m-live-box bg-white/5 border border-white/10 rounded-2xl p-4 mt-5">
+                  <div className="h flex items-center gap-2 mb-3">
+                    <span className="d w-1.5 h-1.5 rounded-full bg-[#8BAF7C] shadow-[0_0_8px_#8BAF7C] animate-pulse"></span>
+                    <span className="text-[10px] uppercase tracking-widest text-[#A8C4A2] font-semibold">Activité live · 8 428 en ligne</span>
+                  </div>
+                  <div className="m-live-item flex items-center gap-3 py-2 border-t border-white/5 first:border-t-0">
+                    <div className="av w-7 h-7 rounded-full bg-cover bg-center shrink-0 border border-white/10" style={{ backgroundImage: `url('https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
+                    <div className="n flex-1 text-xs text-white/85">Léna · bivouac au <em className="font-serif italic text-[#A8C4A2]">Grand Som</em></div>
+                    <div className="t font-mono text-[10px] text-white/40">4 m</div>
+                  </div>
+                  <div className="m-live-item flex items-center gap-3 py-2 border-t border-white/5 first:border-t-0">
+                    <div className="av w-7 h-7 rounded-full bg-cover bg-center shrink-0 border border-white/10" style={{ backgroundImage: `url('https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
+                    <div className="n flex-1 text-xs text-white/85">Antoine · carnet <em className="font-serif italic text-[#A8C4A2]">Kumano</em></div>
+                    <div className="t font-mono text-[10px] text-white/40">12 m</div>
+                  </div>
+                  <div className="m-live-item flex items-center gap-3 py-2 border-t border-white/5 first:border-t-0">
+                    <div className="av w-7 h-7 rounded-full bg-cover bg-center shrink-0 border border-white/10" style={{ backgroundImage: `url('https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
+                    <div className="n flex-1 text-xs text-white/85">Hélène · binôme <em className="font-serif italic text-[#A8C4A2]">Islande</em></div>
+                    <div className="t font-mono text-[10px] text-white/40">28 m</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </MobilePageShell>
+      </div>
+
     </div>
   );
 }

@@ -40,7 +40,7 @@ export default function InventaireToolbar({
   ];
 
   return (
-    <div className="bg-white rounded-[2rem] p-4 sm:p-5 border border-[#E8E4D8] shadow-sm mb-8 space-y-4 font-sans">
+    <div className="bg-white rounded-[0.75rem] p-4 sm:p-5 border border-[#E8E4D8] shadow-sm mb-8 space-y-4 font-sans active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
         
         {/* Search Input */}

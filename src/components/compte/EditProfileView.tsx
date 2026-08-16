@@ -270,7 +270,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
         <div className="lg:col-span-8 space-y-8">
           
           {/* ─── SECTION 01: IDENTITÉ PUBLIQUE ──────────────────────── */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#F5F2E8]">
               <div>
                 <h2 className="font-display font-800 text-lg sm:text-xl text-[#1C2620]">Identité publique</h2>
@@ -425,7 +425,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
 
           {/* ─── SECTION 02: ANCRAGE GÉOGRAPHIQUE ───────────────────── */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#F5F2E8]">
               <div>
                 <h2 className="font-display font-800 text-lg sm:text-xl text-[#1C2620]">Ancrage géographique</h2>
@@ -523,7 +523,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
 
           {/* ─── SECTION 03: PRATIQUE & NIVEAU ──────────────────────── */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#F5F2E8]">
               <div>
                 <h2 className="font-display font-800 text-lg sm:text-xl text-[#1C2620]">Pratique & niveau</h2>
@@ -627,7 +627,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
 
           {/* ─── SECTION 04: COMPTES LIÉS ───────────────────────────── */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#F5F2E8]">
               <div>
                 <h2 className="font-display font-800 text-lg sm:text-xl text-[#1C2620]">Comptes liés</h2>
@@ -683,7 +683,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
 
           {/* ─── SECTION 05: CONFIDENTIALITÉ ────────────────────────── */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#F5F2E8]">
               <div>
                 <h2 className="font-display font-800 text-lg sm:text-xl text-[#1C2620]">Qui peut voir quoi</h2>
@@ -733,7 +733,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
         <div className="lg:col-span-4 space-y-6 sticky top-20">
           
           {/* WIDGET 1: APERÇU PROFIL PUBLIC (Live Card) */}
-          <div className="bg-[#1C2620] rounded-[2.5rem] p-6 text-white shadow-xl relative overflow-hidden space-y-4">
+          <div className="bg-[#1C2620] rounded-[0.75rem] p-6 text-white shadow-xl relative overflow-hidden space-y-4">
             <div className="text-[9px] font-mono tracking-widest text-[#17402C] uppercase font-bold">APERÇU · PROFIL PUBLIC</div>
 
             <div className="flex items-center gap-4">
@@ -762,7 +762,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
 
           {/* WIDGET 2: PROFIL COMPLÉTÉ À X% */}
-          <div className="bg-white rounded-[2.5rem] p-6 border border-[#E8E4D8] shadow-sm space-y-4">
+          <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8] shadow-sm space-y-4 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex items-center justify-between">
               <h3 className="font-display font-800 text-sm text-[#1C2620]">Profil complété à {completionScore}%</h3>
               <span className="text-xs font-mono font-bold text-[#2D5A3D]">{completionScore}/100</span>
@@ -793,7 +793,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
 
           {/* WIDGET 3: ASTUCES & CONSEILS */}
-          <div className="bg-[#EAF0EB] rounded-[2.5rem] p-6 text-[#1C2620] space-y-2 border border-[#2D5A3D]/20">
+          <div className="bg-[#EAF0EB] rounded-[0.75rem] p-6 text-[#1C2620] space-y-2 border border-[#2D5A3D]/20">
             <div className="text-[10px] font-mono tracking-widest text-[#2D5A3D] uppercase font-bold">CONSEIL DE LA COMMUNAUTÉ</div>
             <h4 className="font-display font-800 text-sm">Une bio qui inspire.</h4>
             <p className="text-xs text-[#4A574C] leading-relaxed">

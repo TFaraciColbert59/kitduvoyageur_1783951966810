@@ -182,7 +182,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
       <div className="absolute inset-0" onClick={onClose} />
 
       {/* Search Container Card */}
-      <div className="relative z-10 w-full max-w-2xl bg-[#1C2620] text-white rounded-3xl shadow-2xl border border-white/10 overflow-hidden flex flex-col max-h-[85vh] animate-slide-up">
+      <div className="relative z-10 w-full max-w-2xl bg-[#1C2620] text-white rounded-[0.75rem] shadow-2xl border border-white/10 overflow-hidden flex flex-col max-h-[85vh] animate-slide-up">
         
         {/* Search Header Input */}
         <form onSubmit={handleFormSubmit} className="p-4 sm:p-5 border-b border-white/10 flex items-center gap-3">

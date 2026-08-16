@@ -318,8 +318,8 @@ export default function ClubDetailPage() {
               <div className="h-[400px] bg-emerald-900/10 mx-auto w-full max-w-[1400px] rounded-b-[3rem] mt-16" />
               <div className="max-w-7xl mx-auto px-6 py-12 flex gap-8">
                 <div className="flex-[2] space-y-6">
-                  <div className="h-64 bg-emerald-900/10 rounded-[2rem]" />
-                  <div className="h-96 bg-emerald-900/10 rounded-[2rem]" />
+                  <div className="h-64 bg-emerald-900/10 rounded-[0.75rem]" />
+                  <div className="h-96 bg-emerald-900/10 rounded-[0.75rem]" />
                 </div>
               </div>
             </main>
@@ -351,7 +351,7 @@ export default function ClubDetailPage() {
           <div className="min-h-screen bg-[#F5F3ED] selection:bg-emerald-900/20 flex flex-col">
             <Header />
             <main className="flex-1 flex flex-col items-center justify-center text-center px-6 py-24">
-              <div className="w-20 h-20 rounded-3xl bg-emerald-900/10 flex items-center justify-center mb-6">
+              <div className="w-20 h-20 rounded-[0.75rem] bg-emerald-900/10 flex items-center justify-center mb-6">
                 <Icon name="UserGroupIcon" size={32} className="text-emerald-900/40" />
               </div>
               <h1 className="font-display font-800 text-3xl mb-3">Club introuvable</h1>
@@ -415,7 +415,7 @@ export default function ClubDetailPage() {
           {events.length === 0 ? <p className="text-emerald-900/60">Aucune sortie prévue.</p> : events.map((ev) => {
             const dateObj = ev.event_date ? new Date(ev.event_date) : null;
             return (
-              <div key={ev.id} className="bg-white rounded-3xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-6 border border-emerald-900/5 shadow-sm">
+              <div key={ev.id} className="bg-white rounded-[0.75rem] p-6 flex flex-col sm:flex-row items-start sm:items-center gap-6 border border-emerald-900/5 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                 <div className="w-20 h-20 bg-emerald-950 text-white rounded-2xl flex flex-col items-center justify-center shrink-0">
                   <span className="text-xs font-800 uppercase tracking-wider">{dateObj ? dateObj.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase() : 'TBD'}</span>
                   <span className="text-3xl font-900 leading-none">{dateObj ? dateObj.getDate() : '-'}</span>
@@ -448,7 +448,7 @@ export default function ClubDetailPage() {
 
     if (activeTab === 'Membres') {
       return (
-        <section className="bg-white rounded-[2rem] p-8 border border-emerald-900/5 shadow-sm">
+        <section className="bg-white rounded-[0.75rem] p-8 border border-emerald-900/5 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
           <h2 className="font-display font-800 text-2xl mb-6">Membres du club ({members.length})</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {members.map(member => (
@@ -473,7 +473,7 @@ export default function ClubDetailPage() {
 
     if (activeTab === 'Photos') {
       return (
-        <section className="bg-white rounded-[2rem] p-8 border border-emerald-900/5 shadow-sm">
+        <section className="bg-white rounded-[0.75rem] p-8 border border-emerald-900/5 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
           <h2 className="font-display font-800 text-2xl mb-6">Photos partagées</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {topics.filter(t => t.image_url).map(topic => (
@@ -498,7 +498,7 @@ export default function ClubDetailPage() {
             </button>
           </div>
           {filteredTopics.length === 0 ? <p className="text-emerald-900/60">Aucune discussion trouvée.</p> : filteredTopics.map(topic => (
-            <div key={topic.id} className="bg-white rounded-[2rem] p-6 sm:p-8 border border-emerald-900/5 shadow-sm hover:shadow-md transition-shadow">
+            <div key={topic.id} className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-emerald-900/5 shadow-sm hover:shadow-md transition-shadow active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-950 font-800">
@@ -573,7 +573,7 @@ export default function ClubDetailPage() {
 
     if (activeTab === 'Parcours') {
       return (
-        <section className="bg-white rounded-[2rem] p-8 border border-emerald-900/5 shadow-sm text-center py-20">
+        <section className="bg-white rounded-[0.75rem] p-8 border border-emerald-900/5 shadow-sm text-center py-20 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
           <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-900">
             <Icon name="MapIcon" size={32} />
           </div>
@@ -598,7 +598,7 @@ export default function ClubDetailPage() {
               const month = dateObj ? dateObj.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase() : 'TBD';
               const day = dateObj ? dateObj.getDate() : '-';
               return (
-                <div key={ev.id} className="bg-white rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-5 border border-emerald-900/5 shadow-sm hover:shadow-md transition-shadow">
+                <div key={ev.id} className="bg-white rounded-[0.75rem] p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-5 border border-emerald-900/5 shadow-sm hover:shadow-md transition-shadow active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                   <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex flex-col items-center justify-center shrink-0 ${idx === 0 ? 'bg-emerald-950 text-white' : 'bg-[#F5F3ED] text-emerald-950'}`}>
                     <span className="text-xs font-800 uppercase tracking-wider">{month}</span>
                     <span className="text-2xl sm:text-3xl font-900 leading-none">{day}</span>
@@ -638,7 +638,7 @@ export default function ClubDetailPage() {
           </div>
           <div className="space-y-6">
             {topics.slice(0, 5).map(topic => (
-              <div key={topic.id} className="bg-white rounded-[2rem] p-6 sm:p-8 border border-emerald-900/5 shadow-sm">
+              <div key={topic.id} className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-emerald-900/5 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-950 font-800 text-lg border border-emerald-200">
@@ -720,7 +720,7 @@ export default function ClubDetailPage() {
         </section>
 
         {/* Discussions mini list */}
-        <section className="bg-white rounded-[2rem] p-6 sm:p-8 border border-emerald-900/5 shadow-sm">
+        <section className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-emerald-900/5 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-display font-800 text-2xl">Discussions récentes</h2>
             <button onClick={() => setActiveTab('Discussions')} className="px-4 py-2 bg-emerald-950 text-white rounded-full text-xs font-700">Toutes les discussions</button>
@@ -755,7 +755,7 @@ export default function ClubDetailPage() {
           <main className="pb-24">
             {/* HERO SECTION */}
             <div className="relative w-full max-w-[1440px] mx-auto pt-20 px-4 sm:px-6">
-              <div className="relative w-full h-[380px] sm:h-[450px] lg:h-[500px] rounded-[2rem] sm:rounded-[3rem] overflow-hidden shadow-2xl flex flex-col justify-end p-6 sm:p-10 lg:p-14">
+              <div className="relative w-full h-[380px] sm:h-[450px] lg:h-[500px] rounded-[0.75rem] sm:rounded-[3rem] overflow-hidden shadow-2xl flex flex-col justify-end p-6 sm:p-10 lg:p-14">
                 <div className="absolute inset-0 z-0">
                   <img
                     src="https://images.unsplash.com/photo-1504280387948-406560940733?q=80&w=2000&auto=format&fit=crop"
@@ -812,7 +812,7 @@ export default function ClubDetailPage() {
                   </div>
 
                   <div className="w-full lg:w-auto flex flex-col items-end gap-4">
-                    <div className="flex items-center gap-4 bg-black/40 backdrop-blur-xl border border-white/10 p-3 sm:p-4 rounded-3xl w-full lg:w-auto shadow-2xl">
+                    <div className="flex items-center gap-4 bg-black/40 backdrop-blur-xl border border-white/10 p-3 sm:p-4 rounded-[0.75rem] w-full lg:w-auto shadow-2xl">
                       <div className="flex -space-x-3 sm:-space-x-4 cursor-pointer" onClick={() => setActiveTab('Membres')}>
                         {members.slice(0, 4).map((m, i) => (
                           <div key={m.id} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-black/50 overflow-hidden bg-emerald-900 flex justify-center items-center text-xs font-bold text-white z-10" style={{ zIndex: 10 - i }}>
@@ -871,7 +871,7 @@ export default function ClubDetailPage() {
               {/* RIGHT COLUMN */}
               <div className="flex-1 space-y-6 lg:max-w-[360px]">
                 {featuredEvent && (
-                  <div className="bg-emerald-950 rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden">
+                  <div className="bg-emerald-950 rounded-[0.75rem] p-6 text-white shadow-xl relative overflow-hidden">
                     <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-800 rounded-full blur-[30px] opacity-50 pointer-events-none" />
                     <div className="relative z-10">
                       <div className="flex items-center gap-2 mb-4">
@@ -907,7 +907,7 @@ export default function ClubDetailPage() {
                   </div>
                 )}
 
-                <div className="bg-white rounded-[2rem] p-6 border border-emerald-900/5 shadow-sm">
+                <div className="bg-white rounded-[0.75rem] p-6 border border-emerald-900/5 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                   <h3 className="font-display font-800 text-xl mb-4">À propos du club</h3>
                   <p className="text-sm text-emerald-900/70 mb-6 leading-relaxed">
                     {club.description}
@@ -933,7 +933,7 @@ export default function ClubDetailPage() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-[2rem] p-6 border border-emerald-900/5 shadow-sm">
+                <div className="bg-white rounded-[0.75rem] p-6 border border-emerald-900/5 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="font-display font-800 text-xl">Membres de l'équipe</h3>
                     <button onClick={() => setActiveTab('Membres')} className="text-xs font-700 text-emerald-900/40 hover:text-emerald-900">Afficher tout</button>
@@ -958,7 +958,7 @@ export default function ClubDetailPage() {
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-amber-100 to-amber-200 rounded-[2rem] p-6 text-amber-950 shadow-sm border border-amber-300/50">
+                <div className="bg-gradient-to-br from-amber-100 to-amber-200 rounded-[0.75rem] p-6 text-amber-950 shadow-sm border border-amber-300/50">
                   <div className="flex items-center gap-2 mb-2">
                     <Icon name="StarIcon" size={18} className="text-amber-600" />
                     <span className="text-xs font-800 uppercase tracking-widest text-amber-700">Outils & Avantages</span>
@@ -1243,7 +1243,7 @@ export default function ClubDetailPage() {
       {/* CREATE POST MODAL */}
       {createPostModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-slide-up">
+          <div className="bg-white rounded-[0.75rem] w-full max-w-lg shadow-2xl overflow-hidden animate-slide-up active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="p-6 border-b border-emerald-900/10 flex justify-between items-center">
               <h3 className="font-display font-800 text-2xl text-emerald-950">{createPostType === 'guide' ? 'Créer un guide' : 'Créer une discussion'}</h3>
               <button onClick={() => setCreatePostModalOpen(false)} className="text-emerald-900/50 hover:text-emerald-900 bg-emerald-50 w-8 h-8 rounded-full flex items-center justify-center">
@@ -1288,7 +1288,7 @@ export default function ClubDetailPage() {
       {/* PARTICIPANTS MODAL */}
       {participantsModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-slide-up flex flex-col max-h-[80vh]">
+          <div className="bg-white rounded-[0.75rem] w-full max-w-sm shadow-2xl overflow-hidden animate-slide-up flex flex-col max-h-[80vh] active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="p-6 border-b border-emerald-900/10 flex justify-between items-center">
               <h3 className="font-display font-800 text-xl text-emerald-950">
                 Membres inscrits ({eventParticipants.length})

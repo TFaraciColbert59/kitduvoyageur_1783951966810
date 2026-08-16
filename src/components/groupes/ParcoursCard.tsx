@@ -108,7 +108,7 @@ export default function ParcoursCard({ groupId }: { groupId?: string }) {
   };
 
   return (
-    <div className="bg-white rounded-[2rem] p-6 border border-[#1C2620]/10 shadow-sm relative overflow-hidden group">
+    <div className="bg-white rounded-[0.75rem] p-6 border border-[#1C2620]/10 shadow-sm relative overflow-hidden group active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
       <div className="flex justify-between items-start mb-4">
         <div>
           <h2 className="font-display text-xl text-[#1C2620]">Le <span className="font-serif italic font-bold">parcours</span></h2>

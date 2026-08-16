@@ -30,7 +30,7 @@ export default function NotesEditor({ notes, onSave }: NotesEditorProps) {
   };
 
   return (
-    <div className="bg-white rounded-3xl p-6 border border-[#E8E4D8] shadow-sm space-y-4">
+    <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8] shadow-sm space-y-4 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
       <div>
         <h3 className="text-lg font-extrabold text-[#132219] font-display">
           Notes <span className="italic font-serif font-normal text-[#2D5A3D]">personnelles</span>

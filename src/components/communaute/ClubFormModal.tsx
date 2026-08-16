@@ -30,7 +30,7 @@ export default function ClubFormModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white border border-[#E8E4D8] shadow-2xl rounded-[2.5rem] w-full max-w-lg my-4 overflow-hidden flex flex-col p-6 sm:p-8">
+      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white border border-[#E8E4D8] shadow-2xl rounded-[0.75rem] w-full max-w-lg my-4 overflow-hidden flex flex-col p-6 sm:p-8">
         <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
           <div>
             <h3 className="font-display font-800 text-2xl text-[#1C2620]">Créer un nouveau club</h3>

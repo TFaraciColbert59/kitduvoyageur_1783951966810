@@ -134,6 +134,24 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
       
     if (!error && onRefresh) onRefresh();
     setLoadingId(null);
+  const handleLeaveGroup = async () => {
+    if (!groupId || !user) return;
+    const myMembership = members?.find((m: any) => m.user_id === user.id);
+    if (!myMembership) return;
+    if (!confirm('Voulez-vous quitter ce groupe ? Vous pourrez rejoindre un autre groupe sans aucune pénalité.')) return;
+
+    setLoadingId(myMembership.id);
+    const { error } = await supabase
+      .from('group_members')
+      .delete()
+      .eq('id', myMembership.id)
+      .eq('user_id', user.id);
+
+    if (!error) {
+      toast('Vous avez quitté le groupe.', 'info');
+      if (onRefresh) onRefresh();
+    }
+    setLoadingId(null);
   };
 
   const handleJoinByCode = async () => {
@@ -180,7 +198,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
   };
 
   return (
-    <div className="bg-white rounded-[2rem] p-6 border border-[#1C2620]/10 shadow-sm">
+    <div className="bg-white rounded-[0.75rem] p-6 border border-[#1C2620]/10 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
       <div className="flex justify-between items-start mb-2">
         <h2 className="font-display text-xl text-[#1C2620]">Voyageurs <span className="font-serif italic font-bold">du groupe</span></h2>
         {isOrganizer && (
@@ -273,12 +291,22 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
             + Inviter un ami
           </button>
         )}
+
+        {!isOrganizer && members?.some((m: any) => m.user_id === user?.id) && (
+          <button
+            onClick={handleLeaveGroup}
+            disabled={loadingId !== null}
+            className="w-full py-2.5 bg-red-500/10 border border-red-500/20 text-red-700 hover:bg-red-500/20 rounded-xl text-xs font-semibold transition-colors mt-1"
+          >
+            Quitter le groupe (sans pénalité)
+          </button>
+        )}
       </div>
 
       {/* Modal de gestion (Admin Only) */}
       {showManageModal && isOrganizer && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2rem] p-8 max-w-md w-full shadow-2xl relative">
+          <div className="bg-white rounded-[0.75rem] p-8 max-w-md w-full shadow-2xl relative active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <button 
               onClick={() => setShowManageModal(false)}
               className="absolute top-6 right-6 text-[#1C2620]/50 hover:text-[#1C2620]"

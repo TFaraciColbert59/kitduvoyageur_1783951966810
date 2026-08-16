@@ -329,7 +329,7 @@ export default function PublierPostPage() {
               <div className="lg:col-span-8 space-y-6">
 
                 {/* SECTION 01: Type de publication */}
-                <div className="bg-white rounded-3xl p-6 border border-[#E8E4D8] shadow-sm">
+                <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8] shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                   <div className="flex items-center justify-between mb-2">
                     <h2 className="text-base font-bold text-[#1C2620]">
                       Type de <em className="font-serif italic font-normal text-[#2D5A27]">publication</em>
@@ -411,7 +411,7 @@ export default function PublierPostPage() {
                 </div>
 
                 {/* SECTION 02: Le contenu */}
-                <div className="bg-white rounded-3xl p-6 border border-[#E8E4D8] shadow-sm">
+                <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8] shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                   <div className="flex items-center justify-between mb-2">
                     <h2 className="text-base font-bold text-[#1C2620]">Le contenu</h2>
                     <span className="text-[10px] font-mono text-[#7A8A7D] uppercase">02 — Ce que vous partagez</span>
@@ -507,7 +507,7 @@ export default function PublierPostPage() {
                 </div>
 
                 {/* SECTION 03: Photos & vidéos */}
-                <div className="bg-white rounded-3xl p-6 border border-[#E8E4D8] shadow-sm">
+                <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8] shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                   <div className="flex items-center justify-between mb-2">
                     <h2 className="text-base font-bold text-[#1C2620]">Photos <em className="font-serif italic font-normal text-[#2D5A27]">& vidéos</em></h2>
                     <span className="text-[10px] font-mono text-[#7A8A7D] uppercase">03 — Médias</span>
@@ -536,7 +536,7 @@ export default function PublierPostPage() {
                 </div>
 
                 {/* SECTION 04: Liens internes */}
-                <div className="bg-white rounded-3xl p-6 border border-[#E8E4D8] shadow-sm">
+                <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8] shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                   <div className="flex items-center justify-between mb-2">
                     <h2 className="text-base font-bold text-[#1C2620]">Liens <em className="font-serif italic font-normal text-[#2D5A27]">internes</em></h2>
                     <span className="text-[10px] font-mono text-[#7A8A7D] uppercase">04 — Contexte</span>
@@ -606,7 +606,7 @@ export default function PublierPostPage() {
                 </div>
 
                 {/* SECTION 05: Où publier */}
-                <div className="bg-white rounded-3xl p-6 border border-[#E8E4D8] shadow-sm">
+                <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8] shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                   <div className="flex items-center justify-between mb-2">
                     <h2 className="text-base font-bold text-[#1C2620]">Où publier</h2>
                     <span className="text-[10px] font-mono text-[#7A8A7D] uppercase">05 — Destination</span>
@@ -700,7 +700,7 @@ export default function PublierPostPage() {
               <div className="lg:col-span-4 space-y-6 sticky top-28">
 
                 {/* CARD 1: LIVE PREVIEW */}
-                <div className="bg-white rounded-3xl p-5 border border-[#E8E4D8] shadow-sm">
+                <div className="bg-white rounded-[0.75rem] p-5 border border-[#E8E4D8] shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                   <div className="text-[10px] font-mono text-[#7A8A7D] uppercase tracking-wider mb-3">APERÇU · FIL COMMUNAUTÉ</div>
 
                   <div className="space-y-3">
@@ -738,7 +738,7 @@ export default function PublierPostPage() {
                 </div>
 
                 {/* CARD 2: POST BIEN PENSÉ */}
-                <div className="bg-white rounded-3xl p-5 border border-[#E8E4D8] shadow-sm">
+                <div className="bg-white rounded-[0.75rem] p-5 border border-[#E8E4D8] shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                   <h3 className="text-sm font-bold text-[#1C2620] mb-1">Post <em className="font-serif italic font-normal text-[#2D5A27]">bien pensé</em></h3>
                   <p className="text-[11px] text-[#7A8A7D] mb-4">Les posts avec image + mention + regroupement ont en moyenne 3x plus d&apos;interactions.</p>
 
@@ -777,7 +777,7 @@ export default function PublierPostPage() {
                 </div>
 
                 {/* CARD 3: MEILLEUR MOMENT BANNER */}
-                <div className="bg-[#1C2620] text-white rounded-3xl p-5 shadow-lg border border-[#2D3F35]">
+                <div className="bg-[#1C2620] text-white rounded-[0.75rem] p-5 shadow-lg border border-[#2D3F35]">
                   <div className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider mb-1">MEILLEUR MOMENT</div>
                   <h4 className="text-base font-bold mb-1">Publier vers 18h.</h4>
                   <p className="text-xs text-white/70 leading-relaxed font-light">C&apos;est l&apos;heure de votre audience — randonneurs actifs — regarde le fil, entre le trajet retour et le dîner.</p>

@@ -10,6 +10,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 import CommentItem from '@/components/communaute/CommentItem';
 import dynamic from 'next/dynamic';
@@ -144,7 +146,7 @@ function PostCard({ post, user }: { post: any, user: any }) {
   };
 
   return (
-    <div className="bg-white rounded-[0.75rem] p-6 shadow-sm border border-[#E8E4D8] flex flex-col gap-3">
+<div className="bg-white rounded-[0.75rem] p-6 shadow-sm border border-[#E8E4D8] flex flex-col gap-3 mb-4 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -208,7 +210,7 @@ function PostCard({ post, user }: { post: any, user: any }) {
             whileHover={{ scale: 1.1 }} 
             whileTap={{ scale: 0.9 }} 
             onClick={handleToggleComments}
-            className="flex items-center gap-1.5 text-xs text-[#5C6B5E] hover:text-[#1C2620] transition-colors"
+            className="hidden sm:flex items-center gap-1.5 text-xs text-[#5C6B5E] hover:text-[#1C2620] transition-colors"
           >
             <Icon name="ChatBubbleLeftIcon" size={18} variant={showComments ? "solid" : "outline"} className={showComments ? "text-[#1C2620]" : ""} />
             <span className="font-mono">{commentsCount}</span>
@@ -419,7 +421,7 @@ function CarnetCard({ carnet, user }: { carnet: any, user: any }) {
   return (
     <div 
       onClick={() => router.push(`/carnets/${carnet.id || encodeURIComponent(carnet.title)}`)}
-      className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-[#E8E4D8] flex flex-col group cursor-pointer hover:border-[#2D5A3D] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full"
+      className="bg-white rounded-[0.75rem] overflow-hidden shadow-sm border border-[#E8E4D8] flex flex-col group cursor-pointer hover:border-[#2D5A3D] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer"
     >
       {/* Cover Image Header */}
       <div className="w-full aspect-[16/10] overflow-hidden relative bg-[#E7E3D6]">
@@ -639,6 +641,8 @@ export default function CommunautePage() {
   const [newMembers, setNewMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [postPage, setPostPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Modal State
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
@@ -655,6 +659,7 @@ export default function CommunautePage() {
     const supabase = createClient();
     setLoading(true);
     setError(null);
+    setPostPage(1);
     
     try {
       // Fetch Community Posts (Feed)
@@ -757,6 +762,37 @@ export default function CommunautePage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const loadMorePosts = useCallback(async () => {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const supabase = createClient();
+      const nextPage = postPage + 1;
+      const { data: newPosts } = await supabase
+        .from('community_posts')
+        .select(`
+          *,
+          author:user_profiles!community_posts_author_id_fkey(full_name, avatar_url, loyalty_level)
+        `)
+        .order('created_at', { ascending: false })
+        .range(nextPage * 10 - 10, nextPage * 10 - 1);
+      if (newPosts && newPosts.length > 0) {
+        setPosts(prev => [...prev, ...newPosts]);
+        setPostPage(nextPage);
+      }
+    } catch (e) {
+      console.error('Error loading more posts:', e);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [postPage, loadingMore]);
+
+  const { sentinelRef } = useInfiniteScroll(loadMorePosts);
+
+  const { isRefreshing, pullProgress } = usePullToRefresh(async () => {
+    await fetchData();
+  });
 
   useEffect(() => {
     const handleCarnetCreated = () => {
@@ -998,7 +1034,7 @@ export default function CommunautePage() {
 
             {/* HERO SECTION */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-              <div className="relative w-full min-h-[450px] rounded-[2.5rem] overflow-hidden flex flex-col justify-end p-8 sm:p-10 md:p-14 shadow-xl">
+              <div className="relative w-full min-h-[450px] rounded-[0.75rem] overflow-hidden flex flex-col justify-end p-8 sm:p-10 md:p-14 shadow-xl">
                 {/* Background Image */}
                 <div className="absolute inset-0">
                   <img
@@ -1084,7 +1120,7 @@ export default function CommunautePage() {
                   {/* TABS CONTENT */}
                   <div className="space-y-8">
                     {error ? (
-                      <div className="text-center py-16 bg-white rounded-[2rem] border border-red-200 p-8 shadow-sm">
+                      <div className="text-center py-16 bg-white rounded-[0.75rem] border border-red-200 p-8 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                         <div className="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-3">
                           <Icon name="ExclamationTriangleIcon" size={24} />
                         </div>
@@ -1097,7 +1133,7 @@ export default function CommunautePage() {
                     ) : loading ? (
                       <div className="space-y-4">
                         {[1, 2, 3].map((i) => (
-                          <div key={i} className="bg-white rounded-[2rem] p-6 border border-[#E8E4D8] animate-pulse space-y-4">
+                          <div key={i} className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8] animate-pulse space-y-4 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 bg-[#E8E4D8] rounded-full" />
                               <div className="space-y-2 flex-1">
@@ -1114,7 +1150,7 @@ export default function CommunautePage() {
                       posts.length > 0 ? (
                         posts.map((post, i) => <PostCard key={post.id || i} post={post} user={user} />)
                       ) : (
-                        <div className="text-center py-20 bg-white rounded-[2rem] border border-[#E8E4D8]">
+                        <div className="text-center py-20 bg-white rounded-[0.75rem] border border-[#E8E4D8] active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                           <Icon name="DocumentTextIcon" size={32} className="mx-auto text-[#C8C3B0] mb-4" />
                           <p className="text-[#5C6B5E] font-medium">Le fil est vide. Soyez le premier à publier !</p>
                         </div>
@@ -1123,7 +1159,7 @@ export default function CommunautePage() {
                       // TAB: CARNETS
                       <div className="space-y-10">
                         {/* ... same desktop carnet content as before ... */}
-                        <div className="bg-white rounded-[2.5rem] p-6 sm:p-10 border border-[#E8E4D8] shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="bg-white rounded-[0.75rem] p-6 sm:p-10 border border-[#E8E4D8] shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                           <div className="space-y-3 max-w-xl">
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EAF0EB] text-[#2D5A3D] text-[10px] font-mono tracking-widest uppercase">
                               <span>📖</span> LES CARNETS DE VOYAGE
@@ -1188,7 +1224,7 @@ export default function CommunautePage() {
                         </div>
 
                         {carnets.length > 0 && (
-                          <div className="bg-white rounded-[2.5rem] overflow-hidden border border-[#E8E4D8] shadow-sm flex flex-col md:flex-row group">
+                          <div className="bg-white rounded-[0.75rem] overflow-hidden border border-[#E8E4D8] shadow-sm flex flex-col md:flex-row group active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                             <div className="w-full md:w-5/12 relative min-h-[220px] md:min-h-[300px] overflow-hidden shrink-0">
                               <img src={carnets[0].cover_image || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1000'} alt={carnets[0].title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                               <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
@@ -1229,7 +1265,7 @@ export default function CommunautePage() {
                             <span className="text-xs text-[#5C6B5E] font-mono">{filteredCarnets.length} carnets trouvés</span>
                           </div>
                           {filteredCarnets.length === 0 ? (
-                            <div className="text-center py-16 bg-white rounded-[2rem] border border-[#E8E4D8] space-y-3">
+                            <div className="text-center py-16 bg-white rounded-[0.75rem] border border-[#E8E4D8] space-y-3 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                               <Icon name="BookOpenIcon" size={32} className="mx-auto text-[#C8C3B0]" />
                               <h4 className="font-bold text-base text-[#1C2620]">Aucun carnet trouvé</h4>
                               <p className="text-xs text-[#5C6B5E] max-w-sm mx-auto">Soyez le premier à publier un récit de voyage dans cette catégorie !</p>
@@ -1249,7 +1285,7 @@ export default function CommunautePage() {
                     ) : activeTab === 'Clubs' ? (
                       // TAB: CLUBS (keep all existing desktop club content)
                       <div className="space-y-8">
-                        <div className="bg-[#1C2620] rounded-[2.5rem] p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6 border border-[#2D5A3D]/40">
+                        <div className="bg-[#1C2620] rounded-[0.75rem] p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6 border border-[#2D5A3D]/40">
                           <div className="absolute top-0 right-0 w-72 h-72 bg-[#17402C] rounded-full blur-[110px] opacity-25 pointer-events-none" />
                           <div className="relative z-10 space-y-2 text-center sm:text-left">
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white/80 text-[10px] font-mono tracking-widest uppercase border border-white/10"><span>🏕️</span> ESPACES COMMUNAUTAIRES</div>
@@ -1292,7 +1328,7 @@ export default function CommunautePage() {
                           }
                           return true;
                         }).length === 0 ? (
-                          <div className="text-center py-16 bg-white rounded-[2rem] border border-[#E8E4D8] space-y-3">
+                          <div className="text-center py-16 bg-white rounded-[0.75rem] border border-[#E8E4D8] space-y-3 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                             <div className="w-16 h-16 bg-[#F5F2E8] rounded-full flex items-center justify-center text-3xl mx-auto text-[#5C6B5E]">🏕️</div>
                             <h4 className="font-bold text-base text-[#1C2620]">Aucun club ne correspond</h4>
                             <p className="text-xs text-[#5C6B5E] max-w-sm mx-auto">Essayez un autre terme de recherche ou fondez le premier club de cette catégorie !</p>
@@ -1310,7 +1346,7 @@ export default function CommunautePage() {
                               }
                               return true;
                             }).map(club => (
-                              <motion.div key={club.id} whileHover={{ y: -4 }} className="bg-white rounded-[2rem] p-6 shadow-sm border border-[#E8E4D8] flex flex-col justify-between hover:border-[#2D5A3D] transition-all group relative overflow-hidden">
+                              <motion.div key={club.id} whileHover={{ y: -4 }} className="bg-white rounded-[0.75rem] p-6 shadow-sm border border-[#E8E4D8] flex flex-col justify-between hover:border-[#2D5A3D] transition-all group relative overflow-hidden active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                                 <div className="flex items-start justify-between mb-4">
                                   <div className="w-14 h-14 bg-gradient-to-br from-[#F5F2E8] to-[#E8E4D8] rounded-2xl flex items-center justify-center text-3xl shadow-sm group-hover:scale-110 transition-transform">{club.emoji || '🏔️'}</div>
                                   <div className="flex items-center gap-2">
@@ -1343,7 +1379,7 @@ export default function CommunautePage() {
                     ) : (
                       // TAB: GROUPES
                       <div className="space-y-6">
-                        <div className="bg-[#1C2620] rounded-[2.5rem] p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6 border border-[#2D5A3D]/40">
+                        <div className="bg-[#1C2620] rounded-[0.75rem] p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6 border border-[#2D5A3D]/40">
                           <div className="absolute top-0 right-0 w-64 h-64 bg-[#17402C] rounded-full blur-[100px] opacity-25 pointer-events-none" />
                           <div className="relative z-10 space-y-2 text-center sm:text-left">
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white/80 text-[10px] font-mono tracking-widest uppercase border border-white/10"><span>🏕️</span> Cockpit Collaboratif</div>
@@ -1353,13 +1389,13 @@ export default function CommunautePage() {
                           <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => router.push('/nouveau-groupe')} className="relative z-10 px-7 py-3.5 bg-[#17402C] hover:bg-[#cc3d10] text-white rounded-full font-extrabold text-sm tracking-wide shadow-lg flex items-center gap-2 whitespace-nowrap"><Icon name="PlusIcon" size={18} /> Créer un groupe</motion.button>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                          <div onClick={() => router.push('/nouveau-groupe')} className="bg-white/60 hover:bg-white rounded-[2rem] p-6 border-2 border-dashed border-[#17402C]/40 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#17402C] transition-all group min-h-[220px]">
+                          <div onClick={() => router.push('/nouveau-groupe')} className="bg-white/60 hover:bg-white rounded-[0.75rem] p-6 border-2 border-dashed border-[#17402C]/40 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#17402C] transition-all group min-h-[220px] active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                             <div className="w-14 h-14 bg-[#17402C]/10 text-[#17402C] rounded-2xl flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition-transform"><Icon name="PlusIcon" size={24} /></div>
                             <h4 className="font-display font-800 text-base text-[#1C2620] mb-1">Créer un nouveau groupe</h4>
                             <p className="text-xs text-[#5C6B5E]">Lancer un parcours guidé en 4 étapes simples</p>
                           </div>
                           {travelGroups.length > 0 ? travelGroups.map(group => (
-                            <div key={group.id} onClick={() => router.push(`/groupes/${group.id}`)} className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-[#E8E4D8] flex flex-col cursor-pointer hover:border-[#1C2620] transition-colors group">
+                            <div key={group.id} onClick={() => router.push(`/groupes/${group.id}`)} className="bg-white rounded-[0.75rem] overflow-hidden shadow-sm border border-[#E8E4D8] flex flex-col cursor-pointer hover:border-[#1C2620] transition-colors group active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                               {group.cover_url && <div className="h-32 w-full overflow-hidden"><img src={group.cover_url} alt={group.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" /></div>}
                               <div className="p-5 flex flex-col items-center text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-[#2D5A3D]/20 to-[#17402C]/20 rounded-2xl flex items-center justify-center text-2xl mb-3 -mt-10 bg-white border-2 border-white shadow-md relative z-10">
@@ -1375,7 +1411,7 @@ export default function CommunautePage() {
                               </div>
                             </div>
                           )) : (
-                            <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8] mb-4 space-y-3 flex flex-col items-center justify-center text-center col-span-full">
+                            <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8] mb-4 space-y-3 flex flex-col items-center justify-center text-center col-span-full active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                               <p className="text-sm text-[#5C6B5E] mb-2">Aucun groupe public pour l&apos;instant.</p>
                               <p className="text-xs text-[#5C6B5E]/70">Créez le premier en cliquant sur le bouton ci-dessus !</p>
                             </div>
@@ -1390,7 +1426,7 @@ export default function CommunautePage() {
                 <div className="lg:col-span-4 space-y-6">
 
                   {/* Profile Card */}
-                  <div className="bg-[#1C2620] rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden">
+                  <div className="bg-[#1C2620] rounded-[0.75rem] p-6 text-white shadow-xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-[#2D5A3D] rounded-full blur-3xl opacity-30 -mr-10 -mt-10"></div>
                     <div className="flex items-center gap-4 mb-6 relative z-10">
                       <img src={user?.user_metadata?.avatar_url || 'https://i.pravatar.cc/150'} alt="Mon profil" className="w-14 h-14 rounded-full border-2 border-white/20 object-cover" />
@@ -1411,7 +1447,7 @@ export default function CommunautePage() {
 
                   {/* Sorties */}
                   {events.length > 0 && (
-                    <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-[#E8E4D8]">
+                    <div className="bg-white rounded-[0.75rem] p-6 shadow-sm border border-[#E8E4D8] active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                       <div className="flex items-center justify-between mb-5">
                         <h3 className="font-display font-800 text-lg text-[#1C2620]">Sorties <em className="font-serif italic font-normal text-[#2D5A3D]">à venir</em></h3>
                         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="text-[10px] font-bold text-[#5C6B5E] hover:text-[#1C2620] uppercase tracking-wider">Tout voir</motion.button>
@@ -1439,7 +1475,7 @@ export default function CommunautePage() {
 
                   {/* Clubs */}
                   {clubs.length > 0 && (
-                    <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-[#E8E4D8]">
+                    <div className="bg-white rounded-[0.75rem] p-6 shadow-sm border border-[#E8E4D8] active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                       <div className="flex items-center justify-between mb-5">
                         <h3 className="font-display font-800 text-lg text-[#1C2620]">Clubs <em className="font-serif italic font-normal text-[#2D5A3D]">actifs</em></h3>
                         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="text-[10px] font-bold text-[#5C6B5E] hover:text-[#1C2620] uppercase tracking-wider">Voir tout</motion.button>
@@ -1469,7 +1505,7 @@ export default function CommunautePage() {
             {isPublishModalOpen && (
               <>
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" onClick={() => setIsPublishModalOpen(false)} />
-                <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-lg bg-white rounded-[2rem] p-6 shadow-2xl z-[101] max-h-[90vh] overflow-y-auto">
+                <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-lg bg-white rounded-[0.75rem] p-6 shadow-2xl z-[101] max-h-[90vh] overflow-y-auto active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="font-display font-800 text-2xl text-[#1C2620]">Créer une publication</h3>
                     <button onClick={() => setIsPublishModalOpen(false)} className="w-8 h-8 rounded-full bg-[#F5F2E8] flex items-center justify-center text-[#5C6B5E] hover:bg-[#E8E4D8] transition-colors"><Icon name="XMarkIcon" size={16} /></button>
@@ -1522,6 +1558,39 @@ export default function CommunautePage() {
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
         <MobilePageShell>
+          {/* Pull to refresh indicator */}
+          {(isRefreshing || pullProgress > 0) && (
+            <div
+              style={{
+                position: 'fixed',
+                top: '10px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 100,
+                background: 'rgba(255, 255, 255, 0.95)',
+                borderRadius: '999px',
+                boxShadow: '0 4px 12px rgba(11,31,23,0.15)',
+                padding: '6px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '11px',
+                fontWeight: 600,
+                color: '#17402C',
+                transition: 'opacity 0.2s',
+                opacity: isRefreshing ? 1 : pullProgress,
+              }}
+            >
+              {isRefreshing ? (
+                <>
+                  <div style={{ width: '12px', height: '12px', border: '2px solid #17402C', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                  Mise à jour...
+                </>
+              ) : (
+                'Glisser pour rafraîchir'
+              )}
+            </div>
+          )}
           <div>
             {/* Compact Hero */}
             <div style={{ background: 'linear-gradient(180deg, #0B1F17 0%, #1C2620 100%)', borderRadius: '0 0 24px 24px', padding: '20px 16px', marginBottom: '16px' }}>
@@ -1566,9 +1635,18 @@ export default function CommunautePage() {
                   <div style={{ textAlign: 'center', padding: '40px 16px', color: '#6B7A72' }}>
                     <p style={{ fontSize: '13px' }}>Le fil est vide. Soyez le premier à publier !</p>
                   </div>
-                ) : posts.slice(0, 10).map((post, i) => (
-                  <PostCard key={post.id || i} post={post} user={user} />
-                ))}
+                ) : (
+                  <>
+                    {posts.map((post, i) => (
+                      <PostCard key={post.id || i} post={post} user={user} />
+                    ))}
+                    <div ref={sentinelRef} style={{ height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '10px 0' }}>
+                      {loadingMore && (
+                        <div style={{ width: '16px', height: '16px', border: '2px solid #17402C', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             ) : activeTab === 'Carnets' ? (
               <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1689,7 +1767,7 @@ export default function CommunautePage() {
         {isPublishModalOpen && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" onClick={() => setIsPublishModalOpen(false)} />
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-lg bg-white rounded-[2rem] p-6 shadow-2xl z-[101] max-h-[90vh] overflow-y-auto">
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-lg bg-white rounded-[0.75rem] p-6 shadow-2xl z-[101] max-h-[90vh] overflow-y-auto active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="font-display font-800 text-2xl text-[#1C2620]">Créer une publication</h3>
                 <button onClick={() => setIsPublishModalOpen(false)} className="w-8 h-8 rounded-full bg-[#F5F2E8] flex items-center justify-center text-[#5C6B5E] hover:bg-[#E8E4D8] transition-colors"><Icon name="XMarkIcon" size={16} /></button>

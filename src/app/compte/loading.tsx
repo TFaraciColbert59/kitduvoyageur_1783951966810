@@ -5,7 +5,7 @@ export default function AccountLoading() {
   return (
     <div className="min-h-screen bg-[#F0EBE1] pb-24 lg:pb-12 pt-24 lg:pt-32">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-sm space-y-8">
+        <div className="bg-white rounded-[0.75rem] p-6 sm:p-10 shadow-sm space-y-8 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
           <div className="flex items-center gap-6 border-b border-[#F0ECE1] pb-8">
             <Skeleton className="h-24 w-24 rounded-full" />
             <div className="space-y-3">

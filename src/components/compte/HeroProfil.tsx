@@ -14,7 +14,7 @@ interface HeroProfilProps {
 
 export default function HeroProfil({ profile, onEditProfile, onShareProfile }: HeroProfilProps) {
   return (
-    <div className="relative w-full rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden shadow-2xl min-h-[440px] sm:min-h-[500px] flex flex-col justify-between p-6 sm:p-10 lg:p-14 text-white font-sans border border-white/10">
+    <div className="relative w-full rounded-[0.75rem] sm:rounded-[3rem] overflow-hidden shadow-2xl min-h-[440px] sm:min-h-[500px] flex flex-col justify-between p-6 sm:p-10 lg:p-14 text-white font-sans border border-white/10">
       {/* Photographic Mountain Hero Background */}
       <div className="absolute inset-0 z-0">
         <Image

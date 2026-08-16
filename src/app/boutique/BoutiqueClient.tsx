@@ -1,15 +1,17 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AppImage from '@/components/ui/AppImage';
 import BackButton from '@/components/ui/BackButton';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import Header from '@/components/Header';
+import useOwnedEquipment from '@/app/boutique/useOwnedEquipment';
 import { createClient } from '@/lib/supabase/client';
 import { getCart, addToCart, removeFromCart, updateQuantity, getCartTotals, CartItem } from '@/lib/cart';
 import { useAuth } from '@/contexts/AuthContext';
+import { SkeletonCard } from '@/components/ui/Skeleton';
 
 // --- Types ---
 interface ShopProduct {
@@ -236,11 +238,10 @@ function FilterTag({ label, onRemove }: { label: string, onRemove: () => void })
 export default function BoutiqueClient() {
   const router = useRouter();
   const { user } = useAuth();
-  const [products, setProducts] = useState<ShopProduct[]>([]);
-  const [gearItems, setGearItems] = useState<GearItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const { products, gearItems, loading, handleAddToInventory, handleAddToCart, refreshCart } = useOwnedEquipment(user, setCartCount);
+  // products are provided by useOwnedEquipment hook
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Filters State
   const [search, setSearch] = useState('');
@@ -250,58 +251,7 @@ export default function BoutiqueClient() {
   const [inventoryStatus, setInventoryStatus] = useState<'all' | 'owned' | 'missing'>('all');
   const [sortBy, setSortBy] = useState<'price_asc' | 'price_desc' | 'weight_asc' | 'score_desc'>('score_desc');
 
-  const supabase = useMemo(() => createClient(), []);
-
-  const loadGear = useCallback(async () => {
-    if (!user) return;
-    const { data } = await supabase.from('gear_items').select('*').eq('user_id', user.id);
-    if (data) setGearItems(data);
-  }, [user, supabase]);
-
-  useEffect(() => {
-    async function initData() {
-      // Products
-      let { data } = await supabase.from('shop_products').select('*');
-      if (!data || data.length === 0) {
-        const fallback = await supabase.from('shop_products').select('*').eq('is_active', true);
-        data = fallback.data;
-      }
-      if (data) setProducts(data as ShopProduct[]);
-      
-      // Gear
-      await loadGear();
-      setCartCount(getCart().reduce((acc, i) => acc + i.quantity, 0));
-      setLoading(false);
-    }
-    initData();
-  }, [user, supabase, loadGear]);
-
-  const refreshCart = () => {
-    setCartCount(getCart().reduce((acc, i) => acc + i.quantity, 0));
-    // Optional: trigger a small UI notification here
-  };
-
-  const handleAddToInventory = async (p: ShopProduct) => {
-    if (!user) {
-      router.push('/connexion');
-      return;
-    }
-    const { error } = await supabase.from('gear_items').insert({
-      user_id: user.id,
-      name: p.name,
-      brand: p.brand,
-      category: p.category_main || p.category || 'Autre',
-      purchase_price: p.price_eur,
-      weight_g: p.weight_g || p.weight_grams || 0,
-      image: p.image || 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80',
-      condition: 'neuf',
-      source: 'catalogue',
-      product_id: p.id
-    });
-    if (!error) {
-      await loadGear();
-    }
-  };
+// refreshCart is provided by useOwnedEquipment hook (duplicate removed)
 
   const activeFiltersCount = [category, maxPrice, maxWeight, search, inventoryStatus !== 'all'].filter(Boolean).length;
 
@@ -426,11 +376,13 @@ export default function BoutiqueClient() {
 
               {/* Grid */}
               {loading ? (
-                <div className="flex justify-center items-center h-64">
-                  <span className="inline-block w-8 h-8 border-4 border-[#1C2620]/20 border-t-[#1C2620] rounded-full animate-spin" />
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                  {[...Array(8)].map((_, i) => (
+                    <SkeletonCard key={i} />
+                  ))}
                 </div>
               ) : filteredProducts.length === 0 ? (
-                <div className="text-center py-20 bg-white rounded-3xl border border-[#1C2620]/5">
+                <div className="text-center py-20 bg-white rounded-[0.75rem] border border-[#1C2620]/5 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                   <h3 className="text-2xl font-serif italic text-[#1C2620]/50 mb-2">Aucun produit trouvé</h3>
                   <p className="text-sm text-[#1C2620]/40">Modifiez vos filtres pour voir plus de résultats.</p>
                   <button onClick={resetFilters} className="mt-6 px-6 py-2 bg-[#1C2620] text-white rounded-full text-sm font-bold">Effacer les filtres</button>
@@ -442,7 +394,7 @@ export default function BoutiqueClient() {
                     const weight = p.weight_g || p.weight_grams || 0;
 
                     return (
-                      <div key={p.id} className={`group bg-white rounded-3xl overflow-hidden shadow-sm border transition-all duration-300 ${isOwned ? 'border-[#8BAF7C] ring-2 ring-[#8BAF7C]/20' : 'border-[#1C2620]/5 hover:shadow-xl hover:border-[#1C2620]/20'}`}>
+                      <div key={p.id} className={`group bg-white rounded-[0.75rem] overflow-hidden shadow-sm border transition-all duration-300 ${isOwned ? 'border-[#8BAF7C] ring-2 ring-[#8BAF7C]/20' : 'border-[#1C2620]/5 hover:shadow-xl hover:border-[#1C2620]/20'}`}>
                         <div className="relative aspect-square overflow-hidden cursor-pointer" onClick={() => router.push(`/produit/${p.slug}`)}>
                           <AppImage src={p.image || 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80'} alt={p.image_alt || p.name} fill sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
                           {isOwned && (

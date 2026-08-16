@@ -368,7 +368,7 @@ export default function RecompensesPage() {
         {/* Withdrawal Section & Guide */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Cash-out Form */}
-          <div className="lg:col-span-7 bg-[#FBFAF6] border border-stone-200/60 rounded-3xl p-6 shadow-sm space-y-6">
+          <div className="lg:col-span-7 bg-[#FBFAF6] border border-stone-200/60 rounded-[0.75rem] p-6 shadow-sm space-y-6">
             <div className="flex items-center justify-between border-b border-stone-200/60 pb-3">
               <h3 className="font-display font-800 text-[#0B1F17] text-sm tracking-tight flex items-center gap-1.5">
                 <Icon name="CurrencyEuroIcon" size={18} className="text-[#17402C]" />
@@ -495,7 +495,7 @@ export default function RecompensesPage() {
           </div>
 
           {/* Guide Section */}
-          <div className="lg:col-span-5 bg-white border border-stone-200/40 rounded-3xl p-6 shadow-sm space-y-4">
+          <div className="lg:col-span-5 bg-white border border-stone-200/40 rounded-[0.75rem] p-6 shadow-sm space-y-4">
             <h3 className="font-display font-800 text-[#0B1F17] text-sm tracking-tight flex items-center gap-1.5">
               <Icon name="BookOpenIcon" size={18} className="text-[#17402C]" />
               Règles et Fonctionnement
@@ -520,7 +520,7 @@ export default function RecompensesPage() {
         {/* Ledger & Withdrawals lists */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
           {/* Ledger of points transactions */}
-          <div className="bg-[#FBFAF6] border border-stone-200/60 rounded-3xl p-6 shadow-sm space-y-4">
+          <div className="bg-[#FBFAF6] border border-stone-200/60 rounded-[0.75rem] p-6 shadow-sm space-y-4">
             <h3 className="font-display font-800 text-[#0B1F17] text-sm tracking-tight flex items-center gap-1.5">
               <Icon name="ClipboardDocumentListIcon" size={18} className="text-[#17402C]" />
               Historique de points (Ledger)
@@ -556,7 +556,7 @@ export default function RecompensesPage() {
           </div>
 
           {/* History of Cash-out withdrawals */}
-          <div className="bg-[#FBFAF6] border border-stone-200/60 rounded-3xl p-6 shadow-sm space-y-4">
+          <div className="bg-[#FBFAF6] border border-stone-200/60 rounded-[0.75rem] p-6 shadow-sm space-y-4">
             <h3 className="font-display font-800 text-[#0B1F17] text-sm tracking-tight flex items-center gap-1.5">
               <Icon name="WrenchScrewdriverIcon" size={18} className="text-[#17402C]" />
               Demandes de virements

@@ -14,7 +14,7 @@ interface MesCarnetsCardProps {
 export default function MesCarnetsCard({ carnets }: MesCarnetsCardProps) {
   const router = useRouter();
   return (
-    <div className="bg-white rounded-[2rem] p-6 sm:p-8 border border-[#1C2620]/5 shadow-sm space-y-6 my-6">
+    <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#1C2620]/5 shadow-sm space-y-6 my-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#1C2620]/5 pb-4">

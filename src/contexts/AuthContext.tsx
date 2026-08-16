@@ -100,6 +100,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (session?.user) {
         ensureProfile(session.user);
       }
+    }).catch((err) => {
+      console.error('[AuthContext] getSession error:', err);
+    }).finally(() => {
       setLoading(false);
     });
 

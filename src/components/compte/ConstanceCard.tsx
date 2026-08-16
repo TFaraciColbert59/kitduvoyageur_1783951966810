@@ -21,7 +21,7 @@ export default function ConstanceCard({ constance }: ConstanceCardProps) {
   ];
 
   return (
-    <div className="bg-white rounded-[2rem] p-6 border border-[#1C2620]/5 shadow-sm space-y-4 font-sans my-6">
+    <div className="bg-white rounded-[0.75rem] p-6 border border-[#1C2620]/5 shadow-sm space-y-4 font-sans my-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
       
       {/* Header */}
       <div className="flex items-center justify-between">

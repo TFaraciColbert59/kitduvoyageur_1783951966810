@@ -44,7 +44,7 @@ export default function HeroVoyage({ data, groupId, inviteCode, onOpenChat }: He
   };
 
   return (
-    <div className="bg-gradient-to-br from-[#1C2620] to-[#33463C] rounded-[2rem] p-8 sm:p-10 text-[#E7E3D6] relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-end gap-6 shadow-sm">
+    <div className="bg-gradient-to-br from-[#1C2620] to-[#33463C] rounded-[0.75rem] p-8 sm:p-10 text-[#E7E3D6] relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-end gap-6 shadow-sm">
       {/* Decors */}
       <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-white opacity-5 blur-[100px] rounded-full pointer-events-none" />
       

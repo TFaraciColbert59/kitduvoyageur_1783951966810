@@ -22,6 +22,7 @@ import VoyageursCard from '@/components/groupes/VoyageursCard';
 import ActiviteCard from '@/components/groupes/ActiviteCard';
 import AProposCard from '@/components/groupes/AProposCard';
 import CarnetCTACard from '@/components/groupes/CarnetCTACard';
+import SafetyReminderCard from '@/components/groupes/SafetyReminderCard';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 // Dynamically imported — only load when tab is active
@@ -142,6 +143,7 @@ export default function GroupesPage() {
             </div>
 
             <div className="col-span-12 lg:col-span-4 space-y-6">
+              <SafetyReminderCard />
               <CountdownCard data={formattedData} />
               <VoyageursCard travelers={formattedData.travelers} groupId={groupId} onRefresh={refreshData} user={user} members={members} group={formattedData} isOrganizer={isCurrentUserOrganizer} />
               <ActiviteCard activities={formattedData.activities} />

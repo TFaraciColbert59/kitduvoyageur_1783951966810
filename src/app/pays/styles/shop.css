@@ -4,10 +4,6 @@
    ============================================ */
 
 /* ————— Stage / artboards ————— */
-body {
-  background: #F5F2EA;
-  min-height: 100vh;
-}
 
 .stage-title {
   max-width: 1720px;

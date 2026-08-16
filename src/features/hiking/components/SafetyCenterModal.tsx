@@ -63,7 +63,7 @@ export default function SafetyCenterModal({
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-[#0d1a12] border border-[#2D5A27]/60 rounded-3xl p-5 max-w-sm w-full text-white shadow-2xl space-y-4 relative"
+        className="bg-[#0d1a12] border border-[#2D5A27]/60 rounded-[0.75rem] p-5 max-w-sm w-full text-white shadow-2xl space-y-4 relative"
       >
         {/* Close Button */}
         <button

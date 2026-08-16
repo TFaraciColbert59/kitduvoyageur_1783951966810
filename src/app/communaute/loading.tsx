@@ -13,7 +13,7 @@ export default function CommunityLoading() {
         {/* Feed skeleton */}
         <div className="max-w-3xl mx-auto space-y-8">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="bg-white rounded-3xl p-6 space-y-6">
+            <div key={i} className="bg-white rounded-[0.75rem] p-6 space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
               <div className="flex items-center gap-4">
                 <Skeleton className="h-12 w-12 rounded-full" />
                 <div className="space-y-2">

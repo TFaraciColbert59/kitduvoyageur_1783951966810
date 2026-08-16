@@ -434,7 +434,7 @@ export default function HikingCockpitPage() {
               {/* Confirmation Dialog Modal pour l'Arrêt */}
               {showStopModal && (
                 <div className="fixed inset-0 z-[500] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-                  <div className="bg-[#FBFAF6] border border-[#0B1F17]/12 rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center space-y-4">
+                  <div className="bg-[#FBFAF6] border border-[#0B1F17]/12 rounded-[0.75rem] p-6 max-w-sm w-full shadow-2xl text-center space-y-4">
                     <div className="w-12 h-12 rounded-2xl bg-[#B85838]/10 text-[#B85838] flex items-center justify-center mx-auto text-xl font-bold">
                       🏁
                     </div>
@@ -531,7 +531,7 @@ export default function HikingCockpitPage() {
               {/* Geolocation Permission Request Modal */}
               {routeIdParam && !hikingStore.isActive && geoPermissionState === 'prompt' && (
                 <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
-                  <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#E4E0D4] text-center space-y-4">
+                  <div className="bg-white rounded-[0.75rem] max-w-md w-full p-6 shadow-2xl border border-[#E4E0D4] text-center space-y-4">
                     <div className="w-16 h-16 rounded-full bg-[#EBF2EA] text-[#2D5A27] flex items-center justify-center mx-auto text-2xl shadow-inner">
                       📍
                     </div>
@@ -557,7 +557,7 @@ export default function HikingCockpitPage() {
               {/* Geolocation Permission Denied Modal */}
               {routeIdParam && !hikingStore.isActive && geoPermissionState === 'denied' && (
                 <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
-                  <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-red-200 text-center space-y-4">
+                  <div className="bg-white rounded-[0.75rem] max-w-md w-full p-6 shadow-2xl border border-red-200 text-center space-y-4">
                     <div className="w-16 h-16 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto text-2xl">
                       ⚠️
                     </div>

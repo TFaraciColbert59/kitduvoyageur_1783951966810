@@ -286,7 +286,7 @@ export default function NouveauGroupePage() {
         <div className="lg:col-span-8 space-y-8">
 
           {/* ── SECTION 01: LE GROUPE ── */}
-          <div className="bg-white border border-[#E8E4D8] rounded-[2rem] p-6 sm:p-8 space-y-6 shadow-sm">
+          <div className="bg-white border border-[#E8E4D8] rounded-[0.75rem] p-6 sm:p-8 space-y-6 shadow-sm">
             <div className="flex items-center justify-between border-b border-[#E8E4D8] pb-4">
               <div>
                 <h2 className="font-display font-700 text-xl text-[#1C2620]">
@@ -401,7 +401,7 @@ export default function NouveauGroupePage() {
           </div>
 
           {/* ── SECTION 02: SORTIE CONCERNÉE ── */}
-          <div className="bg-white border border-[#E8E4D8] rounded-[2rem] p-6 sm:p-8 space-y-6 shadow-sm">
+          <div className="bg-white border border-[#E8E4D8] rounded-[0.75rem] p-6 sm:p-8 space-y-6 shadow-sm">
             <div className="flex items-center justify-between border-b border-[#E8E4D8] pb-4">
               <div>
                 <h2 className="font-display font-700 text-xl text-[#1C2620]">
@@ -531,7 +531,7 @@ export default function NouveauGroupePage() {
           </div>
 
           {/* ── SECTION 03: INVITER LES PARTICIPANTS ── */}
-          <div className="bg-white border border-[#E8E4D8] rounded-[2rem] p-6 sm:p-8 space-y-6 shadow-sm">
+          <div className="bg-white border border-[#E8E4D8] rounded-[0.75rem] p-6 sm:p-8 space-y-6 shadow-sm">
             <div className="flex items-center justify-between border-b border-[#E8E4D8] pb-4">
               <div>
                 <h2 className="font-display font-700 text-xl text-[#1C2620]">
@@ -689,7 +689,7 @@ export default function NouveauGroupePage() {
           </div>
 
           {/* ── SECTION 04: PERMISSIONS DU GROUPE ── */}
-          <div className="bg-white border border-[#E8E4D8] rounded-[2rem] p-6 sm:p-8 space-y-6 shadow-sm">
+          <div className="bg-white border border-[#E8E4D8] rounded-[0.75rem] p-6 sm:p-8 space-y-6 shadow-sm">
             <div className="flex items-center justify-between border-b border-[#E8E4D8] pb-4">
               <div>
                 <h2 className="font-display font-700 text-xl text-[#1C2620]">
@@ -840,7 +840,7 @@ export default function NouveauGroupePage() {
         <div className="lg:col-span-4 space-y-5">
 
           {/* Mini Live Preview Box */}
-          <div className="bg-[#EAF3ED] border border-[#172A20]/15 rounded-[2rem] p-5 space-y-3">
+          <div className="bg-[#EAF3ED] border border-[#172A20]/15 rounded-[0.75rem] p-5 space-y-3">
             <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 rounded-xl text-white flex items-center justify-center text-xl font-bold shadow-sm"
@@ -879,7 +879,7 @@ export default function NouveauGroupePage() {
           </div>
 
           {/* Groupe ou club ? box */}
-          <div className="bg-white border border-[#E8E4D8] rounded-[2rem] p-5 space-y-4">
+          <div className="bg-white border border-[#E8E4D8] rounded-[0.75rem] p-5 space-y-4">
             <div>
               <h4 className="font-display font-700 text-base text-[#1C2620]">
                 Groupe <em className="font-serif font-normal not-italic text-[#9CA89E]">ou club ?</em>
@@ -922,7 +922,7 @@ export default function NouveauGroupePage() {
           </div>
 
           {/* Conseil Organisation Card */}
-          <div className="bg-[#172A20] text-white rounded-[2rem] p-6 space-y-3 shadow-md">
+          <div className="bg-[#172A20] text-white rounded-[0.75rem] p-6 space-y-3 shadow-md">
             <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-emerald-400 font-700">
               CONSEIL · ORGANISATION
             </p>

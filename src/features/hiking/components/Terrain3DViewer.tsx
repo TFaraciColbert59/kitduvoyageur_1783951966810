@@ -57,7 +57,7 @@ export default function Terrain3DViewer({
         </motion.div>
 
         {/* Floating Info Overlay */}
-        <div className="absolute bottom-6 left-6 right-6 p-4 bg-[#0B1F17]/90 backdrop-blur-2xl border border-white/15 rounded-3xl space-y-1.5 shadow-2xl">
+        <div className="absolute bottom-6 left-6 right-6 p-4 bg-[#0B1F17]/90 backdrop-blur-2xl border border-white/15 rounded-[0.75rem] space-y-1.5 shadow-2xl">
           <div className="flex justify-between items-center text-xs font-mono text-[#A8C8A0]">
             <span>DÉNIVELÉ +: +{elevationGainM != null ? Math.round(elevationGainM) : '—'} m</span>
           </div>

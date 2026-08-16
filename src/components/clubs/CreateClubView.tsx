@@ -254,7 +254,7 @@ export default function CreateClubView() {
         <div className="lg:col-span-8 space-y-8">
           
           {/* ─── SECTION 01: L'IDENTITÉ DU CLUB ──────────────────────── */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
               <div>
                 <h2 className="font-display font-800 text-xl text-[#1C2620]">L'identité du <em className="font-serif italic text-[#2D5A3D] font-normal">club</em></h2>
@@ -373,7 +373,7 @@ export default function CreateClubView() {
 
 
           {/* ─── SECTION 02: THÉMATIQUE & TERRAIN ─────────────────────── */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
               <div>
                 <h2 className="font-display font-800 text-xl text-[#1C2620]">Thématique <em className="font-serif italic text-[#2D5A3D] font-normal">& terrain</em></h2>
@@ -474,7 +474,7 @@ export default function CreateClubView() {
 
 
           {/* ─── SECTION 03: LES RÈGLES DU CLUB ───────────────────────── */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
               <div>
                 <h2 className="font-display font-800 text-xl text-[#1C2620]">Les règles <em className="font-serif italic text-[#2D5A3D] font-normal">du club</em></h2>
@@ -528,7 +528,7 @@ export default function CreateClubView() {
 
 
           {/* ─── SECTION 04: ADMINS & PERMISSIONS ────────────────────── */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
               <div>
                 <h2 className="font-display font-800 text-xl text-[#1C2620]">Admins <em className="font-serif italic text-[#2D5A3D] font-normal">& permissions</em></h2>
@@ -614,7 +614,7 @@ export default function CreateClubView() {
 
 
           {/* ─── SECTION 05: VISIBILITÉ & ADHÉSION ────────────────────── */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
               <div>
                 <h2 className="font-display font-800 text-xl text-[#1C2620]">Visibilité <em className="font-serif italic text-[#2D5A3D] font-normal">& adhésion</em></h2>
@@ -690,7 +690,7 @@ export default function CreateClubView() {
         <div className="lg:col-span-4 space-y-6 sticky top-20">
           
           {/* WIDGET 1: Info Box */}
-          <div className="bg-white rounded-[2.5rem] p-6 border border-[#E8E4D8] shadow-sm space-y-3">
+          <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8] shadow-sm space-y-3 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <h3 className="font-display font-800 text-sm text-[#1C2620]">Créer un club</h3>
             <p className="text-xs text-[#5C6B5E] leading-relaxed">
               Un club rassemble des voyageurs autour d'une pratique ou d'un esprit, dans la durée. Après sa création, vous pourrez inviter les premiers membres et planifier une première sortie.
@@ -698,7 +698,7 @@ export default function CreateClubView() {
           </div>
 
           {/* WIDGET 2: Checklist */}
-          <div className="bg-white rounded-[2.5rem] p-6 border border-[#E8E4D8] shadow-sm space-y-4">
+          <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8] shadow-sm space-y-4 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <h3 className="font-display font-800 text-sm text-[#1C2620]">À vérifier <em className="font-serif italic text-[#2D5A3D] font-normal">avant publication</em></h3>
             <p className="text-xs text-[#5C6B5E] leading-relaxed">
               6 éléments essentiels avant de rendre le club public. Les clubs sans description ou sans règles sont refusés par la modération.
@@ -752,7 +752,7 @@ export default function CreateClubView() {
 
 
           {/* WIDGET 3: Promo / Tip Box */}
-          <div className="bg-[#1C2620] rounded-[2.5rem] p-6 text-white space-y-3 relative overflow-hidden shadow-lg border border-[#2D5A3D]">
+          <div className="bg-[#1C2620] rounded-[0.75rem] p-6 text-white space-y-3 relative overflow-hidden shadow-lg border border-[#2D5A3D]">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#2D5A3D]/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
             <div className="text-[10px] font-mono tracking-widest text-[#2D5A3D] uppercase font-bold relative z-10">AVIS DE VOYAGEUR</div>
             <h4 className="font-display font-800 text-sm relative z-10">Un club vit dans la durée.</h4>

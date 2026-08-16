@@ -194,7 +194,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
   const totalMessages = discussions.length;
 
   return (
-    <div className="bg-white rounded-[2rem] p-6 border border-[#1C2620]/10 shadow-sm flex flex-col h-[600px]">
+    <div className="bg-white rounded-[0.75rem] p-6 border border-[#1C2620]/10 shadow-sm flex flex-col h-[600px] active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
       <div className="flex justify-between items-start mb-2 flex-shrink-0">
         <h2 className="font-display text-xl text-[#1C2620]">Discussion <span className="font-serif italic font-bold">du voyage</span></h2>
         <div className="flex items-center gap-2">

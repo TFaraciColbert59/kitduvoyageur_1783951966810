@@ -37,7 +37,7 @@ export default function StatsGrid({ stats }: StatsGridProps) {
       {items.map((item) => (
         <div
           key={item.label}
-          className="bg-white rounded-3xl p-5 border border-[#1C2620]/5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
+          className="bg-white rounded-[0.75rem] p-5 border border-[#1C2620]/5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer"
         >
           <span className="text-[10px] font-mono font-bold text-[#1C2620]/50 tracking-widest uppercase mb-2">
             {item.label}

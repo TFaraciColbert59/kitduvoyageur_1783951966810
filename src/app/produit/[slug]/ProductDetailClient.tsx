@@ -435,7 +435,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
             {/* FABRICATION SECTION */}
             <section className="mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-20 items-center">
-                <div className="aspect-[4/5] rounded-[2rem] overflow-hidden">
+                <div className="aspect-[4/5] rounded-[0.75rem] overflow-hidden">
                   <img src="https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80" alt="Atelier de fabrication" className="w-full h-full object-cover grayscale-[30%]" />
                 </div>
                 <div>
@@ -466,7 +466,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
             </section>
 
             {/* SPECS SECTION */}
-            <section className="mt-24 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 bg-white rounded-[2rem] p-8 md:p-12 shadow-sm border border-[#E8E4D8]">
+            <section className="mt-24 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 bg-white rounded-[0.75rem] p-8 md:p-12 shadow-sm border border-[#E8E4D8] active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
               <h3 className="font-display font-800 text-2xl mb-8">Spécifications <em className="font-serif italic font-normal text-[#2D5A3D]">techniques.</em></h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4 text-xs">

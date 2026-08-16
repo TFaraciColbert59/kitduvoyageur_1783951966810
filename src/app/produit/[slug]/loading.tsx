@@ -8,7 +8,7 @@ export default function ProductLoading() {
         <div className="flex flex-col lg:flex-row gap-12">
           {/* Image skeleton */}
           <div className="w-full lg:w-1/2">
-            <Skeleton className="w-full aspect-square rounded-3xl" />
+            <Skeleton className="w-full aspect-square rounded-[0.75rem]" />
             <div className="flex gap-4 mt-4">
               {[1, 2, 3].map(i => <Skeleton key={i} className="w-20 h-20 rounded-xl" />)}
             </div>

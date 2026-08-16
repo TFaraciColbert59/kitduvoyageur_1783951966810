@@ -100,6 +100,13 @@ export default function CountryGlobe({
         renderer.setPixelRatio(dpr);
       }
     } catch (_e) { /* non-critical */ }
+    // Initial camera view to prevent overlaps and keep globe centered/uncrowded
+    try {
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+      if (typeof globeRef.current.pointOfView === 'function') {
+        globeRef.current.pointOfView({ lat: 20, lng: 10, altitude: isMobile ? 2.5 : 2.2 }, 0);
+      }
+    } catch (_e) { /* non-critical */ }
   }, [isGlobeReady]);
 
   // ── Focus caméra ──
@@ -186,7 +193,7 @@ export default function CountryGlobe({
       onMouseUp={() => { document.body.style.cursor = hoveredRef.current ? 'pointer' : 'grab'; }}
       style={{
         width: '100%',
-        height: fullscreen ? '100%' : '500px',
+        height: '100%',
         position: 'relative',
         borderRadius: fullscreen ? 0 : '16px',
         overflow: 'hidden',

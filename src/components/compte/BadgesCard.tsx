@@ -10,7 +10,7 @@ interface BadgesCardProps {
 
 export default function BadgesCard({ badges }: BadgesCardProps) {
   return (
-    <div className="bg-[#1C2620] text-white rounded-[2rem] p-6 border border-white/10 shadow-xl space-y-5 font-sans">
+    <div className="bg-[#1C2620] text-white rounded-[0.75rem] p-6 border border-white/10 shadow-xl space-y-5 font-sans">
       
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/10 pb-3">

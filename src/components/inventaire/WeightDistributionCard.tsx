@@ -37,7 +37,7 @@ export default function WeightDistributionCard({ items }: WeightDistributionCard
     .sort((a, b) => b.percentage - a.percentage);
 
   return (
-    <div className="bg-[#132219] text-white rounded-[2rem] p-6 shadow-xl border border-white/10 space-y-4 font-sans">
+    <div className="bg-[#132219] text-white rounded-[0.75rem] p-6 shadow-xl border border-white/10 space-y-4 font-sans">
       <div className="flex items-center justify-between">
         <div>
           <h4 className="font-display font-800 text-lg text-white">Répartition <span className="font-serif italic font-normal text-emerald-200">du poids</span></h4>

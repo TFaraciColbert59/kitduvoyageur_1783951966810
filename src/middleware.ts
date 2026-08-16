@@ -20,6 +20,17 @@ function isAdmin(pathname: string) {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  // ─── Mobile landing redirect to /explorer ──────────────────────────────────
+  if (pathname === '/') {
+    const userAgent = request.headers.get('user-agent') || '';
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    if (isMobile) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/explorer';
+      return NextResponse.redirect(url, { status: 302 });
+    }
+  }
+
   // ─── Auth protection ──────────────────────────────────────────────────────
   if (isProtected(pathname)) {
     let response = NextResponse.next({ request });
@@ -110,6 +121,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/',
     '/admin',
     '/admin/:path*',
     '/checkout/:path*',

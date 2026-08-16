@@ -12,7 +12,7 @@ interface ProchainVoyageCardProps {
 
 export default function ProchainVoyageCard({ voyage, compact = false }: ProchainVoyageCardProps) {
   return (
-    <div className={`w-full bg-gradient-to-br from-[#1C2620] via-[#23332A] to-[#121A15] text-white p-6 sm:p-8 shadow-2xl border border-white/10 relative overflow-hidden font-sans group ${compact ? 'rounded-3xl' : 'rounded-[2rem]'}`}>
+    <div className={`w-full bg-gradient-to-br from-[#1C2620] via-[#23332A] to-[#121A15] text-white p-6 sm:p-8 shadow-2xl border border-white/10 relative overflow-hidden font-sans group ${compact ? 'rounded-[0.75rem]' : 'rounded-[0.75rem]'}`}>
       
       {/* Background Subtle Gradient glow */}
       <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-[90px] pointer-events-none" />

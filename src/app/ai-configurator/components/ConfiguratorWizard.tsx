@@ -886,7 +886,7 @@ export default function ConfiguratorWizard() {
           </div>
 
           {/* Step card */}
-          <div className="bg-white border border-[#C8C3B0] rounded-3xl p-6 sm:p-10 shadow-sm">
+          <div className="bg-white border border-[#C8C3B0] rounded-[0.75rem] p-6 sm:p-10 shadow-sm">
             {/* Step header */}
             <div className="mb-8 pb-6 border-b border-[#C8C3B0]">
               <div className="flex items-center gap-4">

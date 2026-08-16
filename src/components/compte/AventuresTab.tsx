@@ -133,7 +133,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
 
       {/* STATS ROW */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#E8E4D8]">
+        <div className="bg-white rounded-[0.75rem] p-6 shadow-sm border border-[#E8E4D8] active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
           <h3 className="text-[10px] font-mono tracking-widest text-[#5C6B5E] uppercase mb-2">DISTANCE 2026</h3>
           <div className="flex items-baseline gap-1 mb-2">
             <span className="font-display font-800 text-3xl sm:text-4xl text-[#1C2620]">786</span>
@@ -144,7 +144,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
             <span className="text-[#2D5A3D] font-bold">+ 15 %</span> vs 2025 - 89 % de l'objectif annuel
           </p>
         </div>
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#E8E4D8]">
+        <div className="bg-white rounded-[0.75rem] p-6 shadow-sm border border-[#E8E4D8] active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
           <h3 className="text-[10px] font-mono tracking-widest text-[#5C6B5E] uppercase mb-2">DÉNIVELÉ POSITIF</h3>
           <div className="flex items-baseline gap-1 mb-2">
             <span className="font-display font-800 text-3xl sm:text-4xl text-[#1C2620]">32,4</span>
@@ -154,7 +154,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
             + 2 400 m ce mois - 12 sommets &gt; 2000m
           </p>
         </div>
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#E8E4D8]">
+        <div className="bg-white rounded-[0.75rem] p-6 shadow-sm border border-[#E8E4D8] active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
           <h3 className="text-[10px] font-mono tracking-widest text-[#5C6B5E] uppercase mb-2">NUITS EN REFUGE</h3>
           <div className="flex items-baseline gap-1 mb-2">
             <span className="font-display font-800 text-3xl sm:text-4xl text-[#1C2620]">28</span>
@@ -164,7 +164,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
             12 refuges différents - 5 nuits en bivouac
           </p>
         </div>
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#E8E4D8]">
+        <div className="bg-white rounded-[0.75rem] p-6 shadow-sm border border-[#E8E4D8] active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
           <h3 className="text-[10px] font-mono tracking-widest text-[#5C6B5E] uppercase mb-2">CO2 ÉCONOMISÉ</h3>
           <div className="flex items-baseline gap-1 mb-2">
             <span className="font-display font-800 text-3xl sm:text-4xl text-[#1C2620]">142</span>
@@ -181,7 +181,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
         <div className="lg:col-span-8 space-y-8">
           
           {/* ACTIVITY CHART */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 shadow-sm border border-[#E8E4D8]">
+          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 shadow-sm border border-[#E8E4D8] active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h3 className="font-display font-800 text-xl text-[#1C2620]">
@@ -241,7 +241,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
           </div>
 
           {/* HISTORIQUE COMPLET */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 shadow-sm border border-[#E8E4D8]">
+          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 shadow-sm border border-[#E8E4D8] active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <div>
                 <h3 className="font-display font-800 text-xl text-[#1C2620]">
@@ -356,7 +356,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
           </div>
 
           {/* VOS TERRAINS DE JEU */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 shadow-sm border border-[#E8E4D8]">
+          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 shadow-sm border border-[#E8E4D8] active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h3 className="font-display font-800 text-xl text-[#1C2620]">
@@ -371,7 +371,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
               </div>
             </div>
 
-            <div className="relative w-full h-64 bg-[#C2D6C6] rounded-3xl overflow-hidden border border-[#9BB8A1] shadow-inner">
+            <div className="relative w-full h-64 bg-[#C2D6C6] rounded-[0.75rem] overflow-hidden border border-[#9BB8A1] shadow-inner">
               {/* Simulated Map SVG graphic lines */}
               <svg className="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 800 300" preserveAspectRatio="none">
                 <path d="M0 150 Q 200 50, 400 150 T 800 150" fill="none" stroke="#2D5A3D" strokeWidth="1" />
@@ -431,7 +431,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
           <ProchainVoyageCard voyage={{ id: '', title: 'Aucun', title_highlight: 'voyage prévu', days_left: 0, date_range: '', companions: '', refuges_count: 0, preparation_percentage: 0, preparation_detail: '', tasks_left: 0, group_id: '' } as any} compact={true} />
           
           {/* TOP MASSIFS */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#E8E4D8]">
+          <div className="bg-white rounded-[0.75rem] p-6 shadow-sm border border-[#E8E4D8] active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <h3 className="font-display font-800 text-lg text-[#1C2620] mb-1">
               Top <em className="font-serif italic text-[#2D5A3D] font-normal">massifs</em>
             </h3>
@@ -467,7 +467,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
           </div>
 
           {/* MEILLEUR MOIS */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#E8E4D8] text-center">
+          <div className="bg-white rounded-[0.75rem] p-6 shadow-sm border border-[#E8E4D8] text-center active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <h3 className="font-display font-800 text-lg text-[#1C2620] mb-1">
               Meilleur <em className="font-serif italic text-[#2D5A3D] font-normal">mois</em>
             </h3>

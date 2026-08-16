@@ -25,7 +25,7 @@ export default function InventaireHero({
   onOpenPhotoModal,
 }: InventaireHeroProps) {
   return (
-    <div className="relative w-full rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden shadow-2xl bg-[#132219] text-white font-sans border border-white/10 p-6 sm:p-10 lg:p-12 min-h-[460px] flex flex-col justify-between mb-8">
+    <div className="relative w-full rounded-[0.75rem] sm:rounded-[3rem] overflow-hidden shadow-2xl bg-[#132219] text-white font-sans border border-white/10 p-6 sm:p-10 lg:p-12 min-h-[460px] flex flex-col justify-between mb-8">
       {/* Background Bivouac Alpine Image */}
       <div className="absolute inset-0 z-0">
         <Image
@@ -73,7 +73,7 @@ export default function InventaireHero({
 
         {/* Floating Weight Pill Card (Right Overlay) */}
         <div className="shrink-0 self-end">
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-5 sm:p-6 text-white text-center shadow-2xl min-w-[200px]">
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[0.75rem] p-5 sm:p-6 text-white text-center shadow-2xl min-w-[200px]">
             <span className="font-mono font-900 text-3xl sm:text-4xl text-white block">
               {totalWeightKg.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} <span className="text-base font-normal">kg</span>
             </span>

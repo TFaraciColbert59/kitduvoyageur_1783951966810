@@ -102,7 +102,7 @@ export default function ClubDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-[#F5F2E8] border border-[#E8E4D8] shadow-2xl rounded-[2.5rem] w-full max-w-3xl my-4 overflow-hidden flex flex-col max-h-[85vh]">
+      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-[#F5F2E8] border border-[#E8E4D8] shadow-2xl rounded-[0.75rem] w-full max-w-3xl my-4 overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
         <div className="bg-[#1C2620] text-white p-6 sm:p-8 relative overflow-hidden shrink-0">
           <div className="absolute top-0 right-0 w-48 h-48 bg-[#17402C] rounded-full blur-[80px] opacity-30 pointer-events-none" />

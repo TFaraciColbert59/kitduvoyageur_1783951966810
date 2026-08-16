@@ -335,7 +335,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
         <div className="lg:col-span-8 space-y-8">
           
           {/* ─── SECTION 01: COUVERTURE & TITRE ──────────────────────── */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
               <div>
                 <h2 className="font-display font-800 text-xl text-[#1C2620]">Couverture & titre</h2>
@@ -427,7 +427,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
 
 
           {/* ─── SECTION 02: AVENTURE ASSOCIÉE ─────────────────────── */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
               <div>
                 <h2 className="font-display font-800 text-xl text-[#1C2620]">Aventure associée</h2>
@@ -487,7 +487,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
 
 
           {/* ─── SECTION 03: STYLE DE LECTURE ───────────────────────── */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
               <div>
                 <h2 className="font-display font-800 text-xl text-[#1C2620]">Style de lecture</h2>
@@ -531,7 +531,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
 
 
           {/* ─── SECTION 04: L'ÉTAPE PAR ÉTAPE (CHAPITRES) ──────────── */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
               <div>
                 <h2 className="font-display font-800 text-xl text-[#1C2620]">L'Étape par Étape</h2>
@@ -593,7 +593,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
 
 
           {/* ─── SECTION 05: MOTS-CLÉS & CLASSEMENT ──────────────────── */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
               <div>
                 <h2 className="font-display font-800 text-xl text-[#1C2620]">Mots-clés & classement</h2>
@@ -656,7 +656,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
 
 
           {/* ─── SECTION 06: DIFFUSION & AUDIENCE ───────────────────── */}
-          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
               <div>
                 <h2 className="font-display font-800 text-xl text-[#1C2620]">Diffusion & audience</h2>
@@ -759,7 +759,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
         <div className="lg:col-span-4 space-y-6 sticky top-20">
           
           {/* WIDGET 1: CARNET EN BROUILLON (Live Preview) */}
-          <div className="bg-[#1C2620] rounded-[2.5rem] p-6 text-white shadow-xl relative overflow-hidden space-y-4">
+          <div className="bg-[#1C2620] rounded-[0.75rem] p-6 text-white shadow-xl relative overflow-hidden space-y-4">
             <div className="text-[9px] font-mono tracking-widest text-[#17402C] uppercase font-bold">CARNET EN BROUILLON</div>
 
             <div className="relative rounded-2xl overflow-hidden aspect-[16/9]">
@@ -786,7 +786,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
 
 
           {/* WIDGET 2: RÉDACTION X% */}
-          <div className="bg-white rounded-[2.5rem] p-6 border border-[#E8E4D8] shadow-sm space-y-4">
+          <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8] shadow-sm space-y-4 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex items-center justify-between">
               <h3 className="font-display font-800 text-sm text-[#1C2620]">Rédaction {completionScore}%</h3>
               <span className="text-xs font-mono font-bold text-[#2D5A3D]">{completionScore}/100</span>
@@ -817,7 +817,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
 
 
           {/* WIDGET 3: ASTUCES RÉDACTION */}
-          <div className="bg-[#EAF0EB] rounded-[2.5rem] p-6 text-[#1C2620] space-y-2 border border-[#2D5A3D]/20">
+          <div className="bg-[#EAF0EB] rounded-[0.75rem] p-6 text-[#1C2620] space-y-2 border border-[#2D5A3D]/20">
             <div className="text-[10px] font-mono tracking-widest text-[#2D5A3D] uppercase font-bold">CONSEIL RÉDACTION</div>
             <h4 className="font-display font-800 text-sm">Une image tous les 300 mots.</h4>
             <p className="text-xs text-[#4A574C] leading-relaxed">
@@ -1043,7 +1043,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
       {/* 5. CHAPTER EDIT MODAL */}
       {editingChapterId && (
         <div className="fixed inset-0 z-[350] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2.5rem] border border-[#E8E4D8] p-6 sm:p-8 w-full max-w-lg shadow-2xl space-y-4 animate-scale-in">
+          <div className="bg-white rounded-[0.75rem] border border-[#E8E4D8] p-6 sm:p-8 w-full max-w-lg shadow-2xl space-y-4 animate-scale-in active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <div className="flex items-center justify-between pb-3 border-b border-[#F5F2E8]">
               <h3 className="font-display font-800 text-lg text-[#1C2620]">Modifier le chapitre</h3>
               <button onClick={() => setEditingChapterId(null)} className="text-gray-400 hover:text-gray-600">✕</button>
@@ -1158,7 +1158,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
           }`}>
 
             {/* Cover Banner */}
-            <div className="relative rounded-[2.5rem] overflow-hidden min-h-[350px] sm:min-h-[450px] shadow-2xl bg-[#1C2620] text-white p-8 sm:p-12 flex flex-col justify-end">
+            <div className="relative rounded-[0.75rem] overflow-hidden min-h-[350px] sm:min-h-[450px] shadow-2xl bg-[#1C2620] text-white p-8 sm:p-12 flex flex-col justify-end">
               <img src={form.coverImage} alt={form.title} className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
 
@@ -1190,7 +1190,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
 
             {/* Chapeau Quote Box */}
             {form.chapeau && (
-              <div className="bg-white p-8 rounded-[2rem] border border-[#E8E4D8] shadow-sm">
+              <div className="bg-white p-8 rounded-[0.75rem] border border-[#E8E4D8] shadow-sm">
                 <p className="italic text-base sm:text-lg text-[#1C2620] leading-relaxed">
                   {form.chapeau}
                 </p>
@@ -1199,7 +1199,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
 
             {/* Linked Adventure Badge */}
             {selectedAdventure && (
-              <div className="bg-[#EAF0EB] p-6 rounded-[2rem] border border-[#2D5A3D]/20 flex items-center justify-between gap-4">
+              <div className="bg-[#EAF0EB] p-6 rounded-[0.75rem] border border-[#2D5A3D]/20 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-[#2D5A3D] text-white flex items-center justify-center text-xl shadow-md">
                     🏔️
@@ -1224,7 +1224,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
               </h2>
 
               {form.chapters.map(ch => (
-                <div key={ch.id} className="bg-white p-8 rounded-[2.5rem] border border-[#E8E4D8] shadow-sm space-y-4">
+                <div key={ch.id} className="bg-white p-8 rounded-[0.75rem] border border-[#E8E4D8] shadow-sm space-y-4">
                   <div className="flex items-center gap-3">
                     <span className="w-8 h-8 rounded-full bg-[#2D5A3D] text-white flex items-center justify-center font-bold text-sm">
                       {ch.num}
@@ -1246,7 +1246,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
             </div>
 
             {/* Tags & Themes */}
-            <div className="bg-white p-6 rounded-[2rem] border border-[#E8E4D8] shadow-sm space-y-3">
+            <div className="bg-white p-6 rounded-[0.75rem] border border-[#E8E4D8] shadow-sm space-y-3">
               <h4 className="text-xs font-mono uppercase tracking-widest text-[#5C6B5E] font-bold">Mots-clés & Thématiques</h4>
               <div className="flex flex-wrap gap-2">
                 {form.selectedThemes.map(t => (

@@ -715,7 +715,7 @@ export default function InteractiveMap() {
         {/* Selected Trail Overlay Card */}
         {selectedTrail && (
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[500] w-full max-w-sm px-4">
-            <div className="bg-[#1C2620] text-white rounded-3xl p-5 shadow-2xl border border-white/20 relative">
+            <div className="bg-[#1C2620] text-white rounded-[0.75rem] p-5 shadow-2xl border border-white/20 relative">
               <button 
                 onClick={() => setSelectedTrailId(null)}
                 className="absolute top-4 right-4 text-white/60 hover:text-white text-xs bg-white/10 w-6 h-6 rounded-full flex items-center justify-center"

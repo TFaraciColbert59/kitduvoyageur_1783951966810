@@ -253,7 +253,7 @@ export default function CountryPageClient({ code: rawCode }: { code: string }) {
 
                 {/* Right Column: Key Details Card & Mini Map */}
                 <div className="lg:col-span-4">
-                  <div className="bg-white/10 border border-white/20 backdrop-blur-xl rounded-3xl p-6 text-white shadow-2xl">
+                  <div className="bg-white/10 border border-white/20 backdrop-blur-xl rounded-[0.75rem] p-6 text-white shadow-2xl">
                     <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/15">
                       <div>
                         <p className="text-[10px] font-mono tracking-widest text-white/60 uppercase">Fiche Destination</p>
@@ -475,7 +475,7 @@ export default function CountryPageClient({ code: rawCode }: { code: string }) {
                   return (
                     <div
                       key={lieu.nom}
-                      className={`group relative rounded-3xl overflow-hidden shadow-lg border border-[#0B1F17]/10 flex flex-col justify-end p-7 transition-all duration-300 hover:-translate-y-1.5 ${
+                      className={`group relative rounded-[0.75rem] overflow-hidden shadow-lg border border-[#0B1F17]/10 flex flex-col justify-end p-7 transition-all duration-300 hover:-translate-y-1.5 ${
                         isFeatured ? 'md:col-span-2 md:row-span-2 min-h-[420px]' : 'min-h-[280px]'
                       }`}
                     >
@@ -576,7 +576,7 @@ export default function CountryPageClient({ code: rawCode }: { code: string }) {
                 ]
                   .filter((item) => activeActivityCat === 'all' || item.cat === activeActivityCat)
                   .map((act) => (
-                    <div key={act.title} className="bg-white rounded-3xl overflow-hidden border border-[#0B1F17]/10 shadow-sm hover:shadow-lg transition-all group flex flex-col">
+                    <div key={act.title} className="bg-white rounded-[0.75rem] overflow-hidden border border-[#0B1F17]/10 shadow-sm hover:shadow-lg transition-all group flex flex-col active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                       <div className="h-48 bg-cover bg-center relative overflow-hidden" style={{ backgroundImage: `url(${act.img})` }}>
                         <span className="absolute top-4 left-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-mono font-semibold uppercase text-[#0B1F17]">
                           {act.diff}
@@ -622,7 +622,7 @@ export default function CountryPageClient({ code: rawCode }: { code: string }) {
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start mb-16">
                 {/* Large Quote Box */}
-                <div className="lg:col-span-6 p-8 bg-white/5 border border-white/10 rounded-3xl relative backdrop-blur-md">
+                <div className="lg:col-span-6 p-8 bg-white/5 border border-white/10 rounded-[0.75rem] relative backdrop-blur-md">
                   <span className="text-7xl font-serif text-[#A8C4A2]/30 absolute top-4 left-6">«</span>
                   <p className="text-2xl font-serif italic text-white leading-relaxed pt-6 mb-6 relative z-10">
                     Chaque colline, chaque tradition porte le récit des anciens explorateurs et des générations qui ont vécu en harmonie avec la nature.
@@ -657,7 +657,7 @@ export default function CountryPageClient({ code: rawCode }: { code: string }) {
 
               {/* Events Calendar */}
               {country?.evenements && country.evenements.length > 0 && (
-                <div className="p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-md">
+                <div className="p-8 bg-white/5 border border-white/10 rounded-[0.75rem] backdrop-blur-md">
                   <h3 className="text-xl font-sans font-medium text-white mb-6">
                     Événements &amp; grands <em className="font-serif italic text-[#A8C4A2]">rendez-vous</em>
                   </h3>
@@ -694,7 +694,7 @@ export default function CountryPageClient({ code: rawCode }: { code: string }) {
                 { num: '3', cat: 'Boissons', title: 'Spécialités artisanales', desc: 'Infusions de plantes sauvages, bières locales et boissons typiques.' },
                 { num: '4', cat: 'Desserts', title: 'Douceurs régionales', desc: 'Pâtisseries et spécialités sucrées réputées de la région.' }
               ].map((item) => (
-                <div key={item.num} className="bg-white p-6 rounded-3xl border border-[#0B1F17]/10 shadow-sm hover:shadow-md transition-all">
+                <div key={item.num} className="bg-white p-6 rounded-[0.75rem] border border-[#0B1F17]/10 shadow-sm hover:shadow-md transition-all">
                   <span className="w-8 h-8 rounded-full bg-[#EDF3ED] text-[#17402C] font-serif italic text-sm font-bold flex items-center justify-center mb-4">
                     {item.num}
                   </span>
@@ -722,7 +722,7 @@ export default function CountryPageClient({ code: rawCode }: { code: string }) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Formalités */}
-              <div className="bg-white p-6 rounded-3xl border border-[#0B1F17]/10 shadow-sm">
+              <div className="bg-white p-6 rounded-[0.75rem] border border-[#0B1F17]/10 shadow-sm">
                 <div className="w-10 h-10 rounded-xl bg-[#EDF3ED] text-[#17402C] flex items-center justify-center mb-4">
                   <Icon name="IdentificationIcon" size={20} variant="outline" />
                 </div>
@@ -740,7 +740,7 @@ export default function CountryPageClient({ code: rawCode }: { code: string }) {
               </div>
 
               {/* Monnaie & Budget */}
-              <div className="bg-white p-6 rounded-3xl border border-[#0B1F17]/10 shadow-sm">
+              <div className="bg-white p-6 rounded-[0.75rem] border border-[#0B1F17]/10 shadow-sm">
                 <div className="w-10 h-10 rounded-xl bg-[#EDF3ED] text-[#17402C] flex items-center justify-center mb-4">
                   <Icon name="CurrencyEuroIcon" size={20} variant="outline" />
                 </div>
@@ -750,7 +750,7 @@ export default function CountryPageClient({ code: rawCode }: { code: string }) {
               </div>
 
               {/* Prises & Réseau */}
-              <div className="bg-white p-6 rounded-3xl border border-[#0B1F17]/10 shadow-sm">
+              <div className="bg-white p-6 rounded-[0.75rem] border border-[#0B1F17]/10 shadow-sm">
                 <div className="w-10 h-10 rounded-xl bg-[#EDF3ED] text-[#17402C] flex items-center justify-center mb-4">
                   <Icon name="BoltIcon" size={20} variant="outline" />
                 </div>
@@ -760,7 +760,7 @@ export default function CountryPageClient({ code: rawCode }: { code: string }) {
               </div>
 
               {/* Santé & Urgences */}
-              <div className="bg-white p-6 rounded-3xl border border-[#0B1F17]/10 shadow-sm">
+              <div className="bg-white p-6 rounded-[0.75rem] border border-[#0B1F17]/10 shadow-sm">
                 <div className="w-10 h-10 rounded-xl bg-[#EDF3ED] text-[#17402C] flex items-center justify-center mb-4">
                   <Icon name="HeartIcon" size={20} variant="outline" />
                 </div>
@@ -777,7 +777,7 @@ export default function CountryPageClient({ code: rawCode }: { code: string }) {
 
             {/* Phrases de survie */}
             {country?.pratique?.phrases_survie && country.pratique.phrases_survie.length > 0 && (
-              <div className="mt-8 p-6 bg-white rounded-3xl border border-[#0B1F17]/10 shadow-sm">
+              <div className="mt-8 p-6 bg-white rounded-[0.75rem] border border-[#0B1F17]/10 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
                 <h3 className="text-lg font-semibold text-[#0B1F17] mb-4 font-sans">Phrases de survie utiles</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                   {country.pratique.phrases_survie.map((p) => (
@@ -806,7 +806,7 @@ export default function CountryPageClient({ code: rawCode }: { code: string }) {
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 {/* 12 Month Weather Grid */}
-                <div className="lg:col-span-8 bg-white p-8 rounded-3xl border border-[#0B1F17]/10 shadow-sm">
+                <div className="lg:col-span-8 bg-white p-8 rounded-[0.75rem] border border-[#0B1F17]/10 shadow-sm">
                   <h3 className="text-xl font-semibold text-[#0B1F17] mb-2 font-sans">Météo mois par mois</h3>
                   <p className="text-sm text-[#0B1F17]/70 font-serif mb-6">Températures minimales/maximales et précipitations moyennes.</p>
 
@@ -829,7 +829,7 @@ export default function CountryPageClient({ code: rawCode }: { code: string }) {
                 </div>
 
                 {/* Security Widget */}
-                <div className="lg:col-span-4 bg-white p-8 rounded-3xl border border-[#0B1F17]/10 shadow-sm">
+                <div className="lg:col-span-4 bg-white p-8 rounded-[0.75rem] border border-[#0B1F17]/10 shadow-sm">
                   <h3 className="text-xl font-semibold text-[#0B1F17] mb-2 font-sans">Conseils Sécurité</h3>
                   <div className={`px-4 py-2.5 rounded-2xl border text-sm font-semibold flex items-center gap-2 mb-4 ${secMeta.bg} ${secMeta.color}`}>
                     <span>{secMeta.icon}</span>
@@ -894,7 +894,7 @@ export default function CountryPageClient({ code: rawCode }: { code: string }) {
 
               {/* Similar Countries Column */}
               <div className="lg:col-span-5">
-                <div className="bg-[#17402C] text-[#FBFAF6] p-8 rounded-3xl shadow-xl">
+                <div className="bg-[#17402C] text-[#FBFAF6] p-8 rounded-[0.75rem] shadow-xl">
                   <span className="text-[10px] font-mono tracking-widest text-[#A8C4A2] uppercase block mb-2">Inspirations</span>
                   <h3 className="text-2xl font-sans font-medium text-white mb-6">
                     Destinations <em className="font-serif italic text-[#A8C4A2]">similaires</em>

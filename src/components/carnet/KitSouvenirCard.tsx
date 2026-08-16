@@ -8,7 +8,7 @@ interface KitSouvenirCardProps {
 
 export default function KitSouvenirCard({ intro, items }: KitSouvenirCardProps) {
   return (
-    <div className="bg-white rounded-[2rem] p-6 md:p-8 border border-[#1C2620]/10 shadow-sm">
+    <div className="bg-white rounded-[0.75rem] p-6 md:p-8 border border-[#1C2620]/10 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
       <div className="flex items-start justify-between mb-2">
         <h3 className="font-display text-lg text-[#1C2620]">
           Ce que j'avais <em className="font-serif italic">dans le sac</em>

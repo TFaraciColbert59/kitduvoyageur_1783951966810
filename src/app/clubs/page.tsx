@@ -132,7 +132,7 @@ function ClubFormModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto transition-opacity duration-300">
-      <div className="bg-card/95 backdrop-blur-xl border border-white/10 shadow-2xl rounded-[2rem] w-full max-w-xl my-4 overflow-hidden flex flex-col transform transition-transform duration-300 scale-100">
+      <div className="bg-card/95 backdrop-blur-xl border border-white/10 shadow-2xl rounded-[0.75rem] w-full max-w-xl my-4 overflow-hidden flex flex-col transform transition-transform duration-300 scale-100">
         
         {/* Header */}
         <div className="flex items-center justify-between p-6 sm:px-8 pt-8 pb-4 relative z-10">
@@ -426,7 +426,7 @@ function ClubDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 transition-opacity duration-300">
-      <div className="bg-card border border-white/5 shadow-2xl rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="bg-card border border-white/5 shadow-2xl rounded-[0.75rem] w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header - Immersive */}
         <div className={`bg-gradient-to-br ${club.cover_color} p-8 relative overflow-hidden shrink-0`}>
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-[80px] rounded-full pointer-events-none" />
@@ -523,7 +523,7 @@ function ClubDetailModal({
                     </div>
                   )}
                   {topics.length === 0 ? (
-                    <div className="text-center py-16 border border-dashed border-border rounded-3xl">
+                    <div className="text-center py-16 border border-dashed border-border rounded-[0.75rem]">
                       <div className="text-5xl mb-4 opacity-50">💬</div>
                       <p className="text-foreground font-700 text-lg mb-1">Aucune discussion</p>
                       <p className="text-muted-foreground text-sm">Soyez le premier à lancer un sujet !</p>
@@ -614,7 +614,7 @@ function ClubDetailModal({
               {activeTab === 'challenges' && (
                 <div className="space-y-4">
                   {challenges.length === 0 ? (
-                    <div className="text-center py-16 border border-dashed border-border rounded-3xl">
+                    <div className="text-center py-16 border border-dashed border-border rounded-[0.75rem]">
                       <div className="text-5xl mb-4 opacity-50">🏆</div>
                       <p className="text-foreground font-700 text-lg mb-1">Aucun défi en cours</p>
                     </div>
@@ -687,7 +687,7 @@ function ClubDetailModal({
                     </div>
                   )}
                   {events.length === 0 ? (
-                    <div className="text-center py-16 border border-dashed border-border rounded-3xl">
+                    <div className="text-center py-16 border border-dashed border-border rounded-[0.75rem]">
                       <div className="text-5xl mb-4 opacity-50">📅</div>
                       <p className="text-foreground font-700 text-lg mb-1">Aucun événement planifié</p>
                     </div>
@@ -809,7 +809,7 @@ function ClubCard({
   return (
     <Link 
       href={`/clubs/${club.slug}`}
-      className="group relative flex flex-col bg-card rounded-[2rem] border border-border hover:border-white/20 hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden cursor-pointer h-full block"
+      className="group relative flex flex-col bg-card rounded-[0.75rem] border border-border hover:border-white/20 hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden cursor-pointer h-full block"
     >
       {/* Decorative Blur Background */}
       <div className={`absolute -top-32 -right-32 w-64 h-64 bg-gradient-to-br ${club.cover_color} rounded-full blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 pointer-events-none`} />
@@ -1167,7 +1167,7 @@ export default function ClubsPage() {
               {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="h-80 rounded-[2rem] bg-card border border-white/5 animate-pulse flex flex-col p-6">
+                    <div key={i} className="h-80 rounded-[0.75rem] bg-card border border-white/5 animate-pulse flex flex-col p-6">
                       <div className="w-16 h-16 rounded-2xl bg-muted/50 mb-6" />
                       <div className="w-1/3 h-4 bg-muted/50 rounded-full mb-3" />
                       <div className="w-2/3 h-6 bg-muted/50 rounded-full mb-6" />
@@ -1410,7 +1410,7 @@ export default function ClubsPage() {
       {/* Delete confirm Modal */}
       {deleteClub && (
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-card border border-border shadow-2xl rounded-3xl p-8 max-w-sm w-full text-center transform transition-all scale-100">
+          <div className="bg-card border border-border shadow-2xl rounded-[0.75rem] p-8 max-w-sm w-full text-center transform transition-all scale-100">
             <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-5">
               <Icon name="ExclamationTriangleIcon" size={32} className="text-red-500" />
             </div>

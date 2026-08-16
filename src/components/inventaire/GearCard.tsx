@@ -99,7 +99,7 @@ export default function GearCard({
 
   return (
     <Link href={`/mon-materiel/${item.id}`} className="block group" onClick={e => e.stopPropagation()}>
-      <div className="bg-white rounded-3xl border border-[#E8E4D8] hover:border-[#132219]/30 transition-all shadow-sm hover:shadow-md overflow-hidden flex flex-col justify-between font-sans group relative">
+      <div className="bg-white rounded-[0.75rem] border border-[#E8E4D8] hover:border-[#132219]/30 transition-all shadow-sm hover:shadow-md overflow-hidden flex flex-col justify-between font-sans group relative active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
         <div className="relative w-full h-44 bg-[#F5F3ED] overflow-hidden">
           <Image
             src={item.image || '/assets/images/no_image.png'}

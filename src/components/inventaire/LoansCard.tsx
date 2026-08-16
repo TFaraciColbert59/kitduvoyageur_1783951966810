@@ -9,7 +9,7 @@ interface LoansCardProps {
 
 export default function LoansCard({ loans }: LoansCardProps) {
   return (
-    <div className="bg-white rounded-[2rem] p-6 border border-[#E8E4D8] shadow-sm space-y-4 font-sans">
+    <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8] shadow-sm space-y-4 font-sans active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
       <div className="flex items-center justify-between border-b border-[#1C2620]/5 pb-3">
         <div>
           <h4 className="font-display font-800 text-lg text-[#132219]">Prêts <span className="font-serif italic font-normal text-emerald-800">en cours</span></h4>

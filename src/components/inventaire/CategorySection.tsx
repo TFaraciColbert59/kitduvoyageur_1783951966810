@@ -77,7 +77,7 @@ export default function CategorySection({
         {onAddCategoryItem && viewMode === 'grid' && (
           <button
             onClick={onAddCategoryItem}
-            className="border-2 border-dashed border-[#E8E4D8] hover:border-[#132219]/40 rounded-3xl p-6 min-h-[220px] flex flex-col items-center justify-center text-center gap-3 transition-colors bg-[#FAF8F5]/50 group cursor-pointer"
+            className="border-2 border-dashed border-[#E8E4D8] hover:border-[#132219]/40 rounded-[0.75rem] p-6 min-h-[220px] flex flex-col items-center justify-center text-center gap-3 transition-colors bg-[#FAF8F5]/50 group cursor-pointer"
           >
             <div className="w-12 h-12 rounded-full bg-[#132219] text-white flex items-center justify-center text-xl font-bold group-hover:scale-110 transition-transform shadow-md">
               +

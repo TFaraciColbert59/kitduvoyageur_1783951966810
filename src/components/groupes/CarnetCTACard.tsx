@@ -4,7 +4,7 @@ import Icon from '@/components/ui/AppIcon';
 
 export default function CarnetCTACard() {
   return (
-    <div className="bg-gradient-to-br from-[#E7E3D6] to-[#F1EBE0] rounded-[2rem] p-6 border border-[#B5652D]/20 shadow-sm relative overflow-hidden group">
+    <div className="bg-gradient-to-br from-[#E7E3D6] to-[#F1EBE0] rounded-[0.75rem] p-6 border border-[#B5652D]/20 shadow-sm relative overflow-hidden group">
       <div className="absolute top-0 right-0 w-32 h-32 bg-[#17402C] opacity-5 blur-[40px] rounded-full pointer-events-none group-hover:opacity-10 transition-opacity" />
       
       <div className="inline-block px-3 py-1 bg-[#B5652D]/10 rounded-full mb-4">

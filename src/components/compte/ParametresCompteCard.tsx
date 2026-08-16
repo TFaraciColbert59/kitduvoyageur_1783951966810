@@ -298,7 +298,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
       />
 
       {/* 1. Header Block */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E8E4D8] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
         <div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-[#132219] font-display tracking-tight">
             Réglages <span className="italic font-serif font-normal text-[#2D5A3D]">du compte.</span>
@@ -332,7 +332,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* Left Navigation Sidebar */}
-        <aside className="lg:col-span-4 bg-white rounded-3xl p-4 border border-[#E8E4D8] shadow-sm space-y-2 lg:sticky lg:top-24">
+        <aside className="lg:col-span-4 bg-white rounded-[0.75rem] p-4 border border-[#E8E4D8] shadow-sm space-y-2 lg:sticky lg:top-24 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
           
           {/* User mini badge top */}
           <div className="p-3 mb-2 rounded-2xl bg-[#FAF8F5] border border-[#E8E4D8] flex items-center gap-3">
@@ -397,7 +397,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
           
           {/* SECTION 1: PROFIL & IDENTITÉ */}
           {(activeSection === 'profil' || activeSection === 'danger') && (
-            <div className="bg-white rounded-3xl p-6 lg:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+            <div className="bg-white rounded-[0.75rem] p-6 lg:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
               <div className="flex items-center justify-between border-b border-[#E8E4D8] pb-4">
                 <div>
                   <h3 className="text-xl font-extrabold text-[#132219] font-display">
@@ -550,7 +550,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
           {/* SECTION 2: NOTIFICATIONS & RAPPELS */}
           {(activeSection === 'notifications' || activeSection === 'danger') && (
-            <div className="bg-white rounded-3xl p-6 lg:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+            <div className="bg-white rounded-[0.75rem] p-6 lg:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
               <div className="flex items-center justify-between border-b border-[#E8E4D8] pb-4">
                 <div>
                   <h3 className="text-xl font-extrabold text-[#132219] font-display">
@@ -655,7 +655,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
           {/* SECTION 3: CONFIDENTIALITÉ & VISIBILITÉ */}
           {(activeSection === 'confidentialite' || activeSection === 'danger') && (
-            <div className="bg-white rounded-3xl p-6 lg:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+            <div className="bg-white rounded-[0.75rem] p-6 lg:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
               <div className="flex items-center justify-between border-b border-[#E8E4D8] pb-4">
                 <div>
                   <h3 className="text-xl font-extrabold text-[#132219] font-display">
@@ -797,7 +797,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
           {/* SECTION 4: LANGUE & RÉGION */}
           {(activeSection === 'langue' || activeSection === 'danger') && (
-            <div className="bg-white rounded-3xl p-6 lg:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+            <div className="bg-white rounded-[0.75rem] p-6 lg:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
               <div className="flex items-center justify-between border-b border-[#E8E4D8] pb-4">
                 <div>
                   <h3 className="text-xl font-extrabold text-[#132219] font-display">
@@ -914,7 +914,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
           {/* SECTION 5: SÉCURITÉ & SESSIONS */}
           {(activeSection === 'securite' || activeSection === 'danger') && (
-            <div className="bg-white rounded-3xl p-6 lg:p-8 border border-[#E8E4D8] shadow-sm space-y-6">
+            <div className="bg-white rounded-[0.75rem] p-6 lg:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
               <div className="flex items-center justify-between border-b border-[#E8E4D8] pb-4">
                 <div>
                   <h3 className="text-xl font-extrabold text-[#132219] font-display">
@@ -1101,7 +1101,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
           )}
 
           {/* SECTION 6: ZONE DE DANGER */}
-          <div className="bg-[#FFF5F5] rounded-3xl p-6 lg:p-8 border border-rose-200 shadow-sm space-y-6">
+          <div className="bg-[#FFF5F5] rounded-[0.75rem] p-6 lg:p-8 border border-rose-200 shadow-sm space-y-6">
             <div>
               <h3 className="text-xl font-extrabold text-rose-900 font-display">
                 Zone <span className="italic font-serif font-normal text-rose-700">de danger</span>
@@ -1182,7 +1182,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
       {/* 4. Pause Account Modal */}
       {pauseModalOpen && (
         <div className="fixed inset-0 z-[300] bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4">
+          <div className="bg-white rounded-[0.75rem] p-6 max-w-md w-full space-y-4 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <h3 className="font-extrabold text-[#132219] text-xl font-display">Mettre le compte en pause ?</h3>
             <p className="text-xs text-[#132219]/70 leading-relaxed">
               Votre profil sera masqué et vous ne recevrez plus de notifications. Vous pourrez le réactiver à tout moment en vous re-connectant.
@@ -1211,7 +1211,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
       {/* 5. Delete Account Modal */}
       {deleteModalOpen && (
         <div className="fixed inset-0 z-[300] bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4">
+          <div className="bg-white rounded-[0.75rem] p-6 max-w-md w-full space-y-4 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
             <h3 className="font-extrabold text-rose-900 text-xl font-display">Suppression définitive</h3>
             <p className="text-xs text-[#132219]/80 leading-relaxed">
               Cette action est <strong>irréversible</strong>. Pour me confirmer la suppression, tapez <strong>SUPPRIMER</strong> ci-dessous :
@@ -1249,7 +1249,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
       )}
 
       {/* Footer slogan */}
-      <div className="bg-[#132219] text-white py-12 px-6 rounded-3xl text-center space-y-2 mt-12">
+      <div className="bg-[#132219] text-white py-12 px-6 rounded-[0.75rem] text-center space-y-2 mt-12">
         <h3 className="text-xl sm:text-2xl font-extrabold font-display">
           Vos réglages, <span className="italic font-serif font-normal text-[#82C39B]">votre silence.</span>
         </h3>

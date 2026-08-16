@@ -32,7 +32,7 @@ export default function ItemHero({
   const wearPercent = item.wear_percentage !== undefined ? item.wear_percentage : 68;
 
   return (
-    <section className="bg-white rounded-3xl p-6 lg:p-8 border border-[#E8E4D8] shadow-sm mb-8">
+    <section className="bg-white rounded-[0.75rem] p-6 lg:p-8 border border-[#E8E4D8] shadow-sm mb-8 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
         
         {/* Left Column: Image Gallery */}

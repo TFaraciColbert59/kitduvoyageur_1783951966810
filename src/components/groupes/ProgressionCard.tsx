@@ -17,7 +17,7 @@ export default function ProgressionCard({ progression }: ProgressionCardProps) {
   ];
 
   return (
-    <div className="bg-[#33463C] rounded-[2rem] p-6 text-[#E7E3D6] shadow-sm relative overflow-hidden">
+    <div className="bg-[#33463C] rounded-[0.75rem] p-6 text-[#E7E3D6] shadow-sm relative overflow-hidden">
       <div className="flex justify-between items-start mb-2">
         <h2 className="font-display text-xl text-white">Progression <span className="font-serif italic text-[#E7E3D6] font-bold">du voyage</span></h2>
         <span className="font-display font-bold text-2xl text-white">{progression}%</span>

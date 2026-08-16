@@ -1,5 +1,6 @@
-// "use client";
+'use client';
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -12,7 +13,7 @@ import { getCart } from '@/lib/cart';
 interface Tab {
   href: string;
   label: string;
-  iconName: 'home' | 'mountain' | 'bag' | 'box' | 'users' | 'user' | 'compass';
+  iconName: 'home' | 'mountain' | 'bag' | 'box' | 'users' | 'user' | 'compass' | 'menu' | 'search';
   ariaLabel: string;
   matchPaths?: string[];
   isHero?: boolean;
@@ -20,18 +21,18 @@ interface Tab {
 
 const TABS: Tab[] = [
   {
-    href: '/boutique',
-    label: 'Boutique',
-    iconName: 'bag',
-    ariaLabel: 'Boutique',
-    matchPaths: ['/boutique', '/kits', '/occasion', '/produit', '/panier', '/checkout'],
+    href: '/pays',
+    label: 'Earth',
+    iconName: 'compass',
+    ariaLabel: 'Earth, cartographie mondiale',
+    matchPaths: ['/pays'],
   },
   {
     href: '/explorer',
     label: 'Aventures',
     iconName: 'mountain',
     ariaLabel: 'Explorer les sentiers et destinations',
-    matchPaths: ['/explorer', '/pays', '/carte-interactive', '/hors-ligne'],
+    matchPaths: ['/explorer', '/carte-interactive', '/hors-ligne'],
   },
   {
     href: '/mon-materiel',
@@ -46,7 +47,18 @@ const TABS: Tab[] = [
     label: 'Communauté',
     iconName: 'users',
     ariaLabel: 'Communauté, clubs, événements',
-    matchPaths: ['/communaute', '/communaute/publier', '/clubs', '/groupes', '/entraide', '/createurs', '/experts', '/evenements', '/feed', '/messagerie'],
+    matchPaths: [
+      '/communaute',
+      '/communaute/publier',
+      '/clubs',
+      '/groupes',
+      '/entraide',
+      '/createurs',
+      '/experts',
+      '/evenements',
+      '/feed',
+      '/messagerie',
+    ],
   },
   {
     href: '/compte',
@@ -57,11 +69,13 @@ const TABS: Tab[] = [
   },
 ];
 
-function TabLink({ tab, isActive }: { tab: Tab; isActive: boolean }) {
+function TabLink({ tab, isActive, onPress }: { tab: Tab; isActive: boolean; onPress: (href: string) => void }) {
   const { haptic } = useHapticFeedback();
+  const router = useRouter();
 
   const handleTap = () => {
     haptic(isActive ? 'selection' : 'medium');
+    onPress(tab.href);
   };
 
   if (tab.isHero) {
@@ -71,6 +85,7 @@ function TabLink({ tab, isActive }: { tab: Tab; isActive: boolean }) {
         aria-label={tab.ariaLabel}
         aria-current={isActive ? 'page' : undefined}
         onClick={handleTap}
+        onMouseEnter={() => router.prefetch(tab.href)}
         className="relative flex flex-col items-center justify-center flex-1 h-full focus-visible:outline-none rounded-full"
       >
         <div
@@ -99,24 +114,25 @@ function TabLink({ tab, isActive }: { tab: Tab; isActive: boolean }) {
       aria-label={tab.ariaLabel}
       aria-current={isActive ? 'page' : undefined}
       onClick={handleTap}
+      onMouseEnter={() => router.prefetch(tab.href)}
       className="relative flex flex-col items-center justify-center flex-1 h-full focus-visible:outline-none rounded-full"
     >
       <div className="relative flex flex-col items-center justify-center" style={{ gap: '2px' }}>
-          <LkvIcon name={tab.iconName} size={19} color={isActive ? '#17402C' : '#6B7A72'} />
-          {isActive && (
-            <span
-              style={{
-                fontSize: '12px',
-                letterSpacing: '0.02em',
-                lineHeight: 1,
-                fontFamily: 'var(--font-sans)',
-                color: '#17402C',
-                fontWeight: 700,
-              }}
-            >
-              {tab.label}
-            </span>
-          )}
+        <LkvIcon name={tab.iconName} size={19} color={isActive ? '#17402C' : '#6B7A72'} />
+        {isActive && (
+          <span
+            style={{
+              fontSize: '12px',
+              letterSpacing: '0.02em',
+              lineHeight: 1,
+              fontFamily: 'var(--font-sans)',
+              color: '#17402C',
+              fontWeight: 700,
+            }}
+          >
+            {tab.label}
+          </span>
+        )}
       </div>
       {isActive && (
         <motion.div
@@ -145,46 +161,43 @@ export default function BottomTabBar() {
   const { openSearch } = useSearchContext();
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [pressedTab, setPressedTab] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Reset pressed visual state when navigation changes
+  useEffect(() => {
+    setPressedTab(null);
+  }, [pathname]);
+
   const isActive = (tab: Tab): boolean => {
+    if (pressedTab && pressedTab === tab.href) return true;
     if (!tab.matchPaths) return pathname === tab.href;
     return tab.matchPaths.some(p => pathname === p || pathname?.startsWith(p + '/'));
   };
 
   if (loading || !mounted) {
     return (
-      <nav role="navigation" aria-label="Chargement de la navigation" className="md:hidden" style={{
-        position: 'fixed',
-        left: '12px',
-        right: '12px',
-        bottom: 'calc(12px + env(safe-area-inset-bottom))',
-        zIndex: 50,
-      }}>
-        <div style={{
-          height: '62px',
-          background: 'rgba(255,255,255,0.85)',
-          backdropFilter: 'blur(24px) saturate(1.5)',
-          WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
-          borderRadius: '22px',
-          border: '1px solid rgba(11,31,23,0.06)',
-          boxShadow: '0 10px 30px rgba(11,31,23,0.1)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-around',
-          padding: '0 8px',
-        }}>
+      <nav role="navigation" aria-label="Chargement de la navigation" className="md:hidden" style={{ position: 'fixed', left: '12px', right: '12px', bottom: 'calc(12px + env(safe-area-inset-bottom))', zIndex: 50 }}>
+        <div
+          style={{
+            height: '62px',
+            background: 'rgba(255,255,255,0.85)',
+            backdropFilter: 'blur(24px) saturate(1.5)',
+            WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
+            borderRadius: '22px',
+            border: '1px solid rgba(11,31,23,0.06)',
+            boxShadow: '0 10px 30px rgba(11,31,23,0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 8px',
+          }}
+        >
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="animate-pulse" style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '4px',
-              width: '48px',
-            }}>
+            <div key={i} className="animate-pulse" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', width: '48px' }}>
               <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#E2E8E4' }} />
               <div style={{ width: '32px', height: '6px', borderRadius: '4px', background: '#E2E8E4' }} />
             </div>
@@ -195,28 +208,24 @@ export default function BottomTabBar() {
   }
 
   return (
-    <nav role="navigation" aria-label="Navigation principale" className="md:hidden" style={{
-      position: 'fixed',
-      left: '16px',
-      right: '16px',
-      bottom: 'calc(10px + env(safe-area-inset-bottom))',
-      zIndex: 50,
-    }}>
-      <div style={{
-        height: '52px',
-        background: 'rgba(255,255,255,0.78)',
-        backdropFilter: 'blur(20px) saturate(1.8)',
-        WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
-        borderRadius: '999px',
-        border: '1px solid rgba(255,255,255,0.6)',
-        boxShadow: '0 8px 24px rgba(11,31,23,0.08)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-around',
-        padding: '0 10px',
-      }}>
+    <nav role="navigation" aria-label="Navigation principale" className="md:hidden" style={{ position: 'fixed', left: '16px', right: '16px', bottom: 'calc(10px + env(safe-area-inset-bottom))', zIndex: 50 }}>
+      <div
+        style={{
+          height: '52px',
+          background: 'rgba(255,255,255,0.78)',
+          backdropFilter: 'blur(20px) saturate(1.8)',
+          WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
+          borderRadius: '999px',
+          border: '1px solid rgba(255,255,255,0.6)',
+          boxShadow: '0 8px 24px rgba(11,31,23,0.08)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-around',
+          padding: '0 10px',
+        }}
+      >
         {TABS.map(tab => (
-          <TabLink key={tab.href} tab={tab} isActive={isActive(tab)} />
+          <TabLink key={tab.href} tab={tab} isActive={isActive(tab)} onPress={setPressedTab} />
         ))}
         {/* Hamburger menu for actions */}
         <div style={{ position: 'relative' }}>
@@ -259,7 +268,10 @@ export default function BottomTabBar() {
             >
               {/* Search */}
               <button
-                onClick={() => { setMenuOpen(false); openSearch?.(); }}
+                onClick={() => {
+                  setMenuOpen(false);
+                  openSearch?.();
+                }}
                 aria-label="Rechercher"
                 style={{
                   display: 'flex',

@@ -23,7 +23,7 @@ export default function CountdownCard({ data }: CountdownCardProps) {
   };
 
   return (
-    <div className="bg-[#33463C] rounded-[2rem] p-6 text-[#E7E3D6] shadow-sm relative overflow-hidden">
+    <div className="bg-[#33463C] rounded-[0.75rem] p-6 text-[#E7E3D6] shadow-sm relative overflow-hidden">
       <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 blur-[40px] rounded-full pointer-events-none" />
       
       <div className="inline-block px-3 py-1 bg-white/10 rounded-full mb-6 border border-white/20">

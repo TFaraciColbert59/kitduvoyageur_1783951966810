@@ -140,7 +140,7 @@ export default function PanierPage() {
 
       {confirmDeleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm" role="dialog" aria-modal="true">
-          <div className="bg-white border border-[#C8C3B0] rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
+          <div className="bg-white border border-[#C8C3B0] rounded-[0.75rem] p-8 max-w-sm w-full shadow-2xl text-center">
             <h2 className="font-display font-700 text-xl mb-3">Retirer cet article ?</h2>
             <p className="text-sm text-[#5C6B5E] mb-6">
               {items.find((i) => i.id === confirmDeleteId)?.name} sera retiré de votre panier.
@@ -183,7 +183,7 @@ export default function PanierPage() {
                 
                 {/* Cart items */}
                 {items.map((item) => (
-                  <div key={item.id} className={`bg-white border border-transparent hover:border-[#C8C3B0] rounded-3xl p-6 flex gap-6 transition-all duration-300 ${removingId === item.id ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+                  <div key={item.id} className={`bg-white border border-transparent hover:border-[#C8C3B0] rounded-[0.75rem] p-6 flex gap-6 transition-all duration-300 ${removingId === item.id ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
                     <div className="w-32 h-32 flex-shrink-0 rounded-2xl overflow-hidden bg-[#F5F2E8] border border-[#EBE8DD]">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover mix-blend-multiply" /> : null}
@@ -239,7 +239,7 @@ export default function PanierPage() {
                 ))}
 
                 {/* Upsell Section */}
-                <div className="bg-[#EAF0EB] rounded-3xl p-6 flex items-center justify-between mt-4">
+                <div className="bg-[#EAF0EB] rounded-[0.75rem] p-6 flex items-center justify-between mt-4">
                   <div className="flex items-center gap-6">
                     <div className="w-20 h-20 flex-shrink-0 rounded-2xl bg-white/50 mix-blend-multiply overflow-hidden flex items-center justify-center p-2">
                       <img src="https://images.unsplash.com/photo-1572007886481-64539dc31d04?w=400&q=80" alt="Lampe" className="w-full h-full object-cover rounded-xl" />
@@ -258,7 +258,7 @@ export default function PanierPage() {
 
               {/* Order summary */}
               <div className="lg:col-span-5 xl:col-span-4">
-                <div className="bg-white border border-[#C8C3B0] rounded-3xl p-8 sticky top-24">
+                <div className="bg-white border border-[#C8C3B0] rounded-[0.75rem] p-8 sticky top-24">
                   <h3 className="font-display font-700 text-xl mb-6">Récapitulatif</h3>
                   
                   <div className="space-y-4 mb-8">

@@ -26,17 +26,17 @@
 }
 
 /* ambient orbits */
-.earth-hero .orbit {
+.globe-stage .orbit {
   position: absolute;
-  left: 50%; top: 58%;
+  left: 50%; top: 50%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   border: 1px solid rgba(168,196,162,0.10);
   pointer-events: none;
 }
-.earth-hero .orbit.o1 { width: 720px; height: 720px; }
-.earth-hero .orbit.o2 { width: 900px; height: 900px; border-color: rgba(168,196,162,0.06); }
-.earth-hero .orbit.o3 { width: 1120px; height: 1120px; border-color: rgba(168,196,162,0.04); }
+.globe-stage .orbit.o1 { width: 720px; height: 720px; }
+.globe-stage .orbit.o2 { width: 900px; height: 900px; border-color: rgba(168,196,162,0.06); }
+.globe-stage .orbit.o3 { width: 1120px; height: 1120px; border-color: rgba(168,196,162,0.04); }
 
 /* Nav overlay */
 .earth-hero .shop-nav {
@@ -126,8 +126,9 @@
 .globe-stage {
   position: relative;
   height: 640px;
-  margin-top: -40px;
+  margin-top: 48px;
   z-index: 1;
+  overflow: hidden;
 }
 #globeViz {
   position: absolute; inset: 0;
@@ -136,9 +137,8 @@
 
 /* Search bar floats above globe */
 .globe-search {
-  position: absolute;
-  left: 50%; top: 32px;
-  transform: translateX(-50%);
+  position: relative;
+  margin: 32px auto 0;
   z-index: 5;
   display: flex; align-items: center; gap: 10px;
   padding: 8px 8px 8px 20px;
@@ -820,7 +820,7 @@
 
 .m-globe-stage {
   position: relative;
-  height: 320px;
+  height: 360px;
   background: radial-gradient(ellipse at center, #0F3A2A 0%, #0A1E17 60%, #050D0A 100%);
 }
 #mGlobeViz {

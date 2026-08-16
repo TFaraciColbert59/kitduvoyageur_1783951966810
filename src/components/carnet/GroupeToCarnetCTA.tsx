@@ -44,7 +44,7 @@ export default function GroupeToCarnetCTA() {
           </div>
 
           {/* Right: Pipeline card */}
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-6 md:p-8">
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-[0.75rem] p-6 md:p-8">
             <div className="space-y-5">
               {steps.map((step, i) => (
                 <div key={i} className="flex items-start gap-4">

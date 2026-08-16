@@ -92,7 +92,7 @@ export default function CarnetMap({ traceGeojson, distanceKm, elevationM, onDown
   }, [traceGeojson]);
 
   return (
-    <div className="bg-white rounded-[2rem] border border-[#1C2620]/10 shadow-sm overflow-hidden flex flex-col">
+    <div className="bg-white rounded-[0.75rem] border border-[#1C2620]/10 shadow-sm overflow-hidden flex flex-col active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
       {/* Map Container */}
       <div className="relative aspect-[4/3] bg-[#E7E3D6] overflow-hidden">
         {traceGeojson ? (

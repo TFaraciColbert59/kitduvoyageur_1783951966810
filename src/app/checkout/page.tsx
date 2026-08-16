@@ -315,7 +315,7 @@ export default function CheckoutPage() {
               <div className="space-y-6">
                 
                 {/* ── STEP 1: Vos coordonnées ── */}
-                <div className={`bg-white border border-[#C8C3B0] rounded-3xl p-8 transition-opacity ${step !== 'livraison' ? 'opacity-50 pointer-events-none' : ''}`}>
+                <div className={`bg-white border border-[#C8C3B0] rounded-[0.75rem] p-8 transition-opacity ${step !== 'livraison' ? 'opacity-50 pointer-events-none' : ''}`}>
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="font-display font-700 text-xl flex items-center gap-3">
                       <span className="font-400 italic text-[#5C6B5E]">01</span> Vos coordonnées
@@ -344,7 +344,7 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* ── STEP 2: Livraison ── */}
-                <div className={`bg-white border border-[#C8C3B0] rounded-3xl p-8 transition-opacity ${step !== 'livraison' ? 'opacity-50 pointer-events-none' : ''}`}>
+                <div className={`bg-white border border-[#C8C3B0] rounded-[0.75rem] p-8 transition-opacity ${step !== 'livraison' ? 'opacity-50 pointer-events-none' : ''}`}>
                   <h2 className="font-display font-700 text-xl flex items-center gap-3 mb-6">
                     <span className="font-400 italic text-[#5C6B5E]">02</span> Livraison
                   </h2>
@@ -465,7 +465,7 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* ── STEP 3: Paiement ── */}
-                <div className={`bg-white border border-[#C8C3B0] rounded-3xl p-8 transition-opacity ${step !== 'paiement' ? 'opacity-50 pointer-events-none' : ''}`}>
+                <div className={`bg-white border border-[#C8C3B0] rounded-[0.75rem] p-8 transition-opacity ${step !== 'paiement' ? 'opacity-50 pointer-events-none' : ''}`}>
                   <h2 className="font-display font-700 text-xl flex items-center gap-3 mb-6">
                     <span className="font-400 italic text-[#5C6B5E]">03</span> Paiement
                   </h2>
@@ -560,7 +560,7 @@ export default function CheckoutPage() {
               </div>
             ) : (
               /* ── STEP 3: Confirmation ── */
-              <div className="bg-white border border-[#C8C3B0] rounded-3xl p-12 text-center h-full flex flex-col items-center justify-center min-h-[500px]">
+              <div className="bg-white border border-[#C8C3B0] rounded-[0.75rem] p-12 text-center h-full flex flex-col items-center justify-center min-h-[500px]">
                 <div className="w-20 h-20 bg-[#F5F2E8] border border-[#C8C3B0] rounded-full flex items-center justify-center mb-6">
                   <Icon name="CheckIcon" size={32} className="text-[#1C2620]" />
                 </div>
@@ -584,7 +584,7 @@ export default function CheckoutPage() {
 
           {/* Order summary sidebar */}
           <div className="lg:col-span-5 xl:col-span-4">
-            <div className="bg-white border border-[#C8C3B0] rounded-3xl p-8 sticky top-24">
+            <div className="bg-white border border-[#C8C3B0] rounded-[0.75rem] p-8 sticky top-24">
               <h3 className="font-display font-700 text-lg mb-6">Votre commande</h3>
               <div className="space-y-4 mb-6">
                 {items.map((item) => (

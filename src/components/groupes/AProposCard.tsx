@@ -7,7 +7,7 @@ interface AProposCardProps {
 
 export default function AProposCard({ data }: AProposCardProps) {
   return (
-    <div className="bg-white rounded-[2rem] p-6 border border-[#1C2620]/10 shadow-sm">
+    <div className="bg-white rounded-[0.75rem] p-6 border border-[#1C2620]/10 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
       <h2 className="font-display text-xl text-[#1C2620] mb-2">À propos <span className="font-serif italic font-bold">du voyage</span></h2>
       <p className="text-sm text-[#1C2620]/80 font-sans mb-6">
         Les paramètres essentiels du groupe.
