@@ -37,6 +37,7 @@ export interface CompteUserProfile {
   last_active: string;
   avatar_url: string;
   hero_image_url: string;
+  trust_score?: number;
   level: CompteLevel;
   stats: CompteStats;
 }
@@ -241,6 +242,7 @@ export async function fetchFullProfile(userId: string): Promise<CompteUserProfil
     last_active: 'En ligne',
     avatar_url: profile.avatar_url ?? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
     hero_image_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2000&q=85',
+    trust_score: profile.trust_score ?? 50,
     level: romanLevel(profile.level ?? 1, profile.xp ?? 0),
     stats: {
       sorties,
