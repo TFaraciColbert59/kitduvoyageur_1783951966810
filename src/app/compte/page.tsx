@@ -173,27 +173,6 @@ export default function ComptePage() {
           {/* Main Container */}
           <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
 
-            {/* 3.1 Page Header Title */}
-            <div className="mb-6">
-              <h1 className="font-display font-900 text-3xl sm:text-4xl text-[#1C2620] tracking-tight">
-                Compte — Dashboard voyageur
-              </h1>
-              <p className="text-sm text-[#1C2620]/60 font-medium mt-1">
-                Vue d&apos;ensemble · aventures, carnets, clubs, fidélité
-              </p>
-            </div>
-
-            {/* 3.3 Breadcrumb */}
-            <div className="flex items-center gap-2 text-xs font-semibold text-[#1C2620]/50 mb-6">
-              <Link href="/" className="hover:text-[#1C2620] transition-colors">Accueil</Link>
-              <span>›</span>
-              <span className="text-[#1C2620]/70">Mon compte</span>
-              <span>›</span>
-              <span className="text-[#1C2620] font-bold uppercase tracking-wider text-[11px]">
-                {activeTab.replace('-', ' ')}
-              </span>
-            </div>
-
             {/* 3.4 Photographic Profile Hero */}
             <HeroProfil
               profile={profile as any}
