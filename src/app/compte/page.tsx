@@ -143,7 +143,7 @@ export default function ComptePage() {
 
             {/* RIGHT COLUMN (≈35%) */}
             <div className="lg:col-span-4 space-y-6">
-              <BadgesCard badges={badges as any} />
+              <BadgesCard badges={badges as any} trustScore={profile?.trust_score ?? 50} />
               <ConstanceCard constance={constance} />
               <ActiviteCard activites={activite as any} />
               <AbonnementCard subscription={abonnement} />

@@ -108,6 +108,14 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
                 <Icon name="ClockIcon" size={14} className="text-[#A3C9A8]" />
                 {profile.last_active}
               </span>
+              <Link
+                href="/profil"
+                className="flex items-center gap-1.5 bg-emerald-950/80 hover:bg-emerald-900 px-3.5 py-1 rounded-full border border-emerald-400/30 text-emerald-200 transition-colors shadow-md cursor-pointer"
+                title="Trust Score de confiance certifié LKDV"
+              >
+                <span>🛡️</span>
+                <span className="font-mono font-bold">Trust Score : {profile.trust_score ?? 50}/100</span>
+              </Link>
             </div>
           </div>
         </div>

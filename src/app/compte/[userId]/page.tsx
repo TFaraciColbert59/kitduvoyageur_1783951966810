@@ -131,7 +131,7 @@ export default function PublicProfilePage() {
                   <MesClubsCard clubs={clubs as any} />
                 </div>
                 <div className="lg:col-span-4 space-y-6">
-                  <BadgesCard badges={badges as any} />
+                  <BadgesCard badges={badges as any} trustScore={profile?.trust_score ?? 50} />
                   <ConstanceCard constance={{
                     streak_weeks: 0,
                     subtitle: 'Activité récente',

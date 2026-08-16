@@ -237,8 +237,13 @@ export default function MobileCompteV2() {
           <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em', color: C.ink900, margin: 0 }}>{fullName || 'Voyageur'}</p>
           <svg width="14" height="14" viewBox="0 0 24 24" fill={C.forest800}><path d="M12 1l2.4 2.2 3.2-.4.8 3.2 3 1.4-1.2 3 1.2 3-3 1.4-.8 3.2-3.2-.4L12 20l-2.4-1.4-3.2.4-.8-3.2-3-1.4 1.2-3-1.2-3 3-1.4.8-3.2 3.2.4L12 1zm-1.2 12.6l6-6-1.4-1.4-4.6 4.6-2-2-1.4 1.4 3.4 3.4z" /></svg>
         </div>
-        <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 12, color: C.ink500, margin: '2px 0 8px' }}>
-          {handle} · Niv. {String(level).padStart(2, '0')}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '2px 0 8px', flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 12, color: C.ink500 }}>
+            {handle} · Niv. {String(level).padStart(2, '0')}
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: C.sage100, color: C.forest800, padding: '2px 8px', borderRadius: 999, fontSize: 11, fontWeight: 700, fontFamily: 'ui-monospace, monospace' }}>
+            🛡️ Trust {profile?.trust_score ?? 50}/100
+          </span>
         </div>
         {bio && <p style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 15, lineHeight: 1.45, color: C.ink900, margin: '0 0 8px' }}>{bio}</p>}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 12, color: C.ink500, flexWrap: 'wrap' }}>
