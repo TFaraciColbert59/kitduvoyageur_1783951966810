@@ -375,17 +375,17 @@
 .dest-head .filters button.on { background: var(--lkv-forest-800); color: #fff; }
 .dest-head .filters button:not(.on):hover { color: var(--lkv-ink-900); }
 
-.dest-grid {
+.dest-section .dest-grid {
   display: grid;
   grid-template-columns: 1.4fr 1fr 1fr;
   gap: 20px;
   margin-bottom: 20px;
 }
-.dest-grid.row-2 {
+.dest-section .dest-grid.row-2 {
   grid-template-columns: 1fr 1fr 1.4fr;
 }
 
-.dest-card {
+.dest-section .dest-card {
   position: relative;
   border-radius: 24px;
   overflow: hidden;
@@ -394,24 +394,24 @@
   cursor: pointer; text-decoration: none;
   transition: transform var(--lkv-dur) var(--lkv-ease-out);
 }
-.dest-card.wide { aspect-ratio: 16/12; }
-.dest-card:hover { transform: translateY(-4px); }
-.dest-card .bg {
+.dest-section .dest-card.wide { aspect-ratio: 16/12; }
+.dest-section .dest-card:hover { transform: translateY(-4px); }
+.dest-section .dest-card .bg {
   position: absolute; inset: 0;
   background-size: cover; background-position: center;
   transition: transform 600ms var(--lkv-ease-out);
 }
-.dest-card:hover .bg { transform: scale(1.06); }
-.dest-card::after {
+.dest-section .dest-card:hover .bg { transform: scale(1.06); }
+.dest-section .dest-card::after {
   content: ""; position: absolute; inset: 0;
   background: linear-gradient(180deg, transparent 45%, rgba(11,31,23,0.75) 100%);
 }
-.dest-card .top {
+.dest-section .dest-card .top {
   position: absolute; top: 16px; left: 16px; right: 16px;
   z-index: 2;
   display: flex; justify-content: space-between; align-items: flex-start;
 }
-.dest-card .flag-code {
+.dest-section .dest-card .flag-code {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 5px 11px;
   background: rgba(255,255,255,0.92);
@@ -421,43 +421,43 @@
   color: var(--lkv-ink-900);
   letter-spacing: 0.08em;
 }
-.dest-card .flag-code .fc {
+.dest-section .dest-card .flag-code .fc {
   padding: 2px 6px; background: var(--lkv-forest-800); color: #fff;
   border-radius: 4px; font-family: var(--lkv-font-mono); font-size: 9px;
 }
-.dest-card .fav {
+.dest-section .dest-card .fav {
   width: 34px; height: 34px; border-radius: 999px;
   background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);
   border: 1px solid rgba(255,255,255,0.24);
   display: flex; align-items: center; justify-content: center;
   color: #fff; border: none; cursor: pointer;
 }
-.dest-card .fav:hover { background: rgba(255,255,255,0.28); }
-.dest-card .info {
+.dest-section .dest-card .fav:hover { background: rgba(255,255,255,0.28); }
+.dest-section .dest-card .info {
   position: absolute; bottom: 20px; left: 20px; right: 20px;
   z-index: 2; color: #fff;
 }
-.dest-card .info h3 {
+.dest-section .dest-card .info h3 {
   font-family: var(--lkv-font-sans);
   font-size: 26px; font-weight: 500;
   letter-spacing: -0.02em; line-height: 1;
   margin: 0 0 6px;
 }
-.dest-card .info h3 em {
+.dest-section .dest-card .info h3 em {
   font-family: var(--lkv-font-serif); font-style: italic;
   color: var(--lkv-sage-200); font-weight: 400;
 }
-.dest-card.wide .info h3 { font-size: 40px; }
-.dest-card .info .sub {
+.dest-section .dest-card.wide .info h3 { font-size: 40px; }
+.dest-section .dest-card .info .sub {
   font-size: 12px; color: rgba(255,255,255,0.7);
   display: flex; align-items: center; gap: 8px;
   margin-bottom: 12px;
 }
-.dest-card .info .sub .sep { opacity: 0.5; }
-.dest-card .info .meta {
+.dest-section .dest-card .info .sub .sep { opacity: 0.5; }
+.dest-section .dest-card .info .meta {
   display: flex; gap: 6px;
 }
-.dest-card .info .m-chip {
+.dest-section .dest-card .info .m-chip {
   padding: 4px 10px;
   background: rgba(255,255,255,0.14);
   backdrop-filter: blur(10px);
@@ -468,7 +468,7 @@
   letter-spacing: 0.04em;
   display: inline-flex; align-items: center; gap: 5px;
 }
-.dest-card .info .m-chip .k { opacity: 0.6; font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em; }
+.dest-section .dest-card .info .m-chip .k { opacity: 0.6; font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em; }
 
 /* SECTION: Live activity + stats */
 .live-section {

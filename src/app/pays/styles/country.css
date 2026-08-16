@@ -705,14 +705,17 @@
 /* ————— SECTION 02 : DESTINATIONS (Bento Grid) ————— */
 #destinations { background: var(--lkv-stone-50, #F4F1EA); }
 
-.dest-grid {
+.dest-grid,
+#destinations .dest-grid {
   display: grid;
   grid-template-columns: 1.4fr 1fr 1fr;
   grid-template-rows: 320px 320px;
   gap: 20px;
+  min-height: 660px;
 }
 
-.dest-card {
+.dest-card,
+#destinations .dest-card {
   position: relative;
   border-radius: 36px;
   overflow: hidden;
@@ -720,10 +723,19 @@
   color: #fff;
   cursor: pointer;
   text-decoration: none;
+  aspect-ratio: auto !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
   transition: transform var(--lkv-dur) var(--lkv-ease-out);
 }
-.dest-card:hover { transform: translateY(-4px); }
-.dest-card.big { grid-row: span 2; }
+.dest-card:hover,
+#destinations .dest-card:hover { transform: translateY(-4px); }
+.dest-card.big,
+#destinations .dest-card.big { 
+  grid-row: span 2; 
+  height: 100% !important;
+}
 
 .dest-card .im {
   position: absolute;
