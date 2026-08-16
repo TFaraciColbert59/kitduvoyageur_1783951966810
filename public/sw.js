@@ -166,3 +166,44 @@ self.addEventListener('fetch', (event) => {
     fetch(event.request).catch(() => caches.match(event.request))
   );
 });
+
+// ─── PUSH NOTIFICATIONS ──────────────────────────────────────────────────────
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  try {
+    const data = event.data.json();
+    const title = data.title || 'Le Kit du Voyageur';
+    const options = {
+      body: data.body || '',
+      icon: data.icon || '/assets/logo.png',
+      badge: data.badge || '/favicon.ico',
+      data: data.data || {}
+    };
+    event.waitUntil(self.registration.showNotification(title, options));
+  } catch (err) {
+    const text = event.data.text();
+    event.waitUntil(
+      self.registration.showNotification('Le Kit du Voyageur', {
+        body: text,
+        icon: '/assets/logo.png'
+      })
+    );
+  }
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const urlToOpen = event.notification.data?.url || '/';
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      for (let client of windowClients) {
+        if (client.url === urlToOpen && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});

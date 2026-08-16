@@ -3,7 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import LkvIcon from '@/components/ui/LkvIcon';
 import Icon from '@/components/ui/AppIcon';
+import { FOREGROUND_900, FOREGROUND_800, SAGE_100, STONE_100 } from '@/lib/designTokens';
+import { shadow } from '@/lib/styleHelpers';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { addToCart } from '@/lib/cart';
@@ -139,10 +142,10 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#EBE8DD]">
+      <div style={{ minHeight: '100vh', background: STONE_100 }}>
         <Header />
-        <div className="pt-24 max-w-7xl mx-auto px-4 flex items-center justify-center min-h-[60vh]">
-          <div className="w-8 h-8 border-2 border-[#1C2620] border-t-transparent rounded-full animate-spin" />
+        <div style={{ paddingTop: '6rem', maxWidth: '1120px', margin: '0 auto', paddingLeft: '1rem', paddingRight: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+          <div style={{ width: '2rem', height: '2rem', borderWidth: '2px', borderColor: FOREGROUND_900, borderTopColor: 'transparent', borderRadius: '9999px', animation: 'spin 1s linear infinite' }} />
         </div>
       </div>
     );
@@ -150,25 +153,25 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
   if (!product && loadError) {
     return (
-      <div className="min-h-screen bg-[#EBE8DD]">
+      <div style={{ minHeight: '100vh', background: STONE_100 }}>
         <Header />
-        <div className="pt-24 pb-16 max-w-7xl mx-auto px-4">
-          <div className="bg-white border border-[#E8E4D8] rounded-[2rem] max-w-lg mx-auto p-10 text-center">
-            <div className="text-5xl mb-4">⚠️</div>
-            <h1 className="font-display font-800 text-2xl text-[#1C2620] mb-2">Produit introuvable</h1>
-            <p className="text-sm text-[#5C6B5E] mb-6">
+        <div style={{ paddingTop: '6rem', paddingBottom: '4rem', maxWidth: '1120px', margin: '0 auto', paddingLeft: '1rem', paddingRight: '1rem' }}>
+          <div style={{ background: 'white', border: `1px solid ${STONE_100}`, borderRadius: '2rem', maxWidth: '32rem', margin: '0 auto', padding: '2.5rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
+            <h1 style={{ fontFamily: 'display', fontWeight: 800, fontSize: '2rem', color: FOREGROUND_900, marginBottom: '0.5rem' }}>Produit introuvable</h1>
+            <p style={{ fontSize: '0.875rem', color: '#5C6B5E', marginBottom: '1.5rem' }}>
               Impossible de charger ce produit. Il a peut-être été retiré du catalogue.
             </p>
-            <div className="flex items-center justify-center gap-3">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
               <button
                 onClick={() => setRetryKey((k) => k + 1)}
-                className="px-5 py-2.5 bg-[#17402C] text-white rounded-full text-xs font-700 hover:bg-[#0F2B1D] transition-colors"
+                style={{ paddingLeft: '1.25rem', paddingRight: '1.25rem', paddingTop: '0.625rem', paddingBottom: '0.625rem', background: FOREGROUND_900, color: 'white', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
               >
                 Réessayer
               </button>
               <Link
                 href="/boutique"
-                className="px-5 py-2.5 border border-[#C8C3B0] text-[#5C6B5E] hover:text-[#1C2620] rounded-full text-xs font-600 transition-colors"
+                style={{ paddingLeft: '1.25rem', paddingRight: '1.25rem', paddingTop: '0.625rem', paddingBottom: '0.625rem', border: `1px solid ${STONE_100}`, color: '#5C6B5E', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
               >
                 Retour à la boutique
               </Link>
@@ -212,22 +215,22 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
   return (
     <>
       {/* ── DESKTOP VIEW ── */}
-      <div className="hidden md:block">
-        <div className="min-h-screen bg-[#EBE8DD] text-[#1C2620] font-sans selection:bg-[#17402C]/20">
+      <div >
+        <div style={{ minHeight: '100vh', background: STONE_100, color: FOREGROUND_900, fontFamily: 'sans-serif', userSelect: 'text' }}>
           <Header />
 
           <main id="main-content" className="pt-24 pb-16">
 
             {/* BREADCRUMB */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
-              <nav className="flex items-center gap-2 text-[11px] text-[#5C6B5E] font-medium tracking-wide">
-                <Link href="/" className="hover:text-[#1C2620] transition-colors">Accueil</Link>
-                <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
+              <nav style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.6875rem', color: '#5C6B5E', fontWeight: 500, letterSpacing: '0.05em' }}>
+                <Link href="/" style={{ cursor: 'pointer' }}>Accueil</Link>
+                <Icon name="ChevronRightIcon" size={10} variant="outline" style={{ opacity: 0.5 }} />
                 <Link href="/boutique" className="hover:text-[#1C2620] transition-colors">Boutique</Link>
-                <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
+                <Icon name="ChevronRightIcon" size={10} variant="outline" style={{ opacity: 0.5 }} />
                 <Link href="/boutique" className="hover:text-[#1C2620] transition-colors">{product.categorie}</Link>
-                <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
-                <span className="text-[#1C2620]">{product.nom}</span>
+                <Icon name="ChevronRightIcon" size={10} variant="outline" style={{ opacity: 0.5 }} />
+                <span style={{ color: FOREGROUND_900 }}>{product.nom}</span>
               </nav>
             </div>
 
@@ -236,15 +239,15 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
 
                 {/* GALLERY (Left) */}
-                <div className="lg:col-span-7 flex flex-col-reverse md:flex-row gap-4 h-auto md:h-[650px]">
+                <div className="col-span-12 lg:col-span-7 flex flex-col-reverse md:flex-row gap-4 h-auto md:h-[650px]">
 
                   {/* Thumbnails */}
-                  <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto w-full md:w-24 flex-shrink-0 scrollbar-hide py-1">
+                  <div className="flex flex-col gap-3 overflow-x-auto md:overflow-y-auto w-full md:w-24 flex-shrink-0 pt-1 pb-1">
                     {product.images.map((img, i) => (
                       <button
                         key={i}
                         onClick={() => setActiveImage(i)}
-                        className={`relative w-20 md:w-full aspect-square rounded-2xl overflow-hidden border-2 transition-all flex-shrink-0 bg-[#E3DFD2] ${i === activeImage ? 'border-[#1C2620] shadow-sm' : 'border-transparent hover:border-[#1C2620]/30'}`}
+                        style={{ position: 'relative', width: '5rem', height: '5rem', aspectRatio: '1 / 1', borderRadius: '0.5rem', overflow: 'hidden', borderWidth: '2px', background: SAGE_100, borderColor: i === activeImage ? FOREGROUND_900 : 'transparent', boxShadow: i === activeImage ? shadow(1) : 'none', cursor: 'pointer' }}
                       >
                         <img src={img.url} alt={`Miniature ${i+1}`} className="w-full h-full object-cover mix-blend-multiply opacity-90" />
                       </button>
@@ -252,8 +255,8 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                   </div>
 
                   {/* Main Image */}
-                  <div className="relative flex-1 rounded-3xl overflow-hidden bg-[#E3DFD2] border border-[#DBD6C6] group">
-                    <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur text-[10px] font-semibold text-[#1C2620] px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
+                  <div className="group" style={{ position: 'relative', flex: 1, borderRadius: '1.5rem', overflow: 'hidden', background: SAGE_100, border: `1px solid ${STONE_100}` }}>
+                    <div style={{ position: 'absolute', top: '1rem', left: '1rem', zIndex: 10, background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)', fontSize: '0.625rem', fontWeight: '600', color: FOREGROUND_900, paddingLeft: '0.75rem', paddingRight: '0.75rem', paddingTop: '0.375rem', paddingBottom: '0.375rem', borderRadius: '9999px', boxShadow: shadow(1), display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                       <span className="w-1.5 h-1.5 bg-[#B5652D] rounded-full"></span>
                       Édition automne
                     </div>
@@ -265,30 +268,30 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.3 }}
-                        src={product.images[activeImage]?.url || 'https://via.placeholder.com/400x300?text=No+Image'}
+                        src={product.images[activeImage]?.url || '/assets/images/no_image.png'}
                         alt={product.images[activeImage]?.alt}
                         className="w-full h-full object-cover mix-blend-multiply"
                       />
                     </AnimatePresence>
 
-                    <button className="absolute bottom-4 right-4 w-10 h-10 bg-white/80 backdrop-blur rounded-full flex items-center justify-center text-[#1C2620] shadow-sm hover:bg-white hover:scale-105 transition-all opacity-0 group-hover:opacity-100">
+                    <button className="absolute bottom-4 right-4 w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white hover:scale-105 transition-opacity duration-200 opacity-0 group-hover:opacity-100 transform" style={{ color: FOREGROUND_900, boxShadow: shadow(1) }}>
                       <Icon name="ArrowsPointingOutIcon" size={16} variant="outline" />
                     </button>
                   </div>
                 </div>
 
                 {/* PRODUCT INFO (Right) */}
-                <div className="lg:col-span-5 flex flex-col justify-center">
+                <div className="flex flex-col justify-center lg:col-span-5">
 
-                  <div className="mb-4">
-                    <span className="inline-block bg-[#D3DFD7] text-[#2D5A3D] text-[9px] font-mono tracking-[0.2em] uppercase px-2.5 py-1 rounded-full mb-4">
+                  <div style={{ marginBottom: '1rem' }}>
+                    <span style={{ display: 'inline-block', background: '#D3DFD7', color: '#2D5A3D', fontSize: '0.5625rem', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', paddingLeft: '0.625rem', paddingRight: '0.625rem', paddingTop: '0.25rem', paddingBottom: '0.25rem', borderRadius: '9999px', marginBottom: '1rem' }}>
                       Le sac essentiel
                     </span>
-                    <h1 className="font-display font-800 text-4xl lg:text-[44px] leading-[1.1] text-[#1C2620] tracking-tight mb-3">
-                      {firstWords} <em className="font-serif italic font-normal text-[#5C6B5E]">{lastWords}</em>.
+                    <h1 className="font-display font-extrabold text-2xl lg:text-[44px] leading-[1.1] tracking-[-0.02em] mb-3" style={{ color: FOREGROUND_900 }}>
+                      {firstWords} <em style={{ fontFamily: 'serif', fontStyle: 'italic', fontWeight: 'normal', color: '#5C6B5E' }}>{lastWords}</em>.
                     </h1>
-                    <div className="flex items-center gap-2 text-xs font-medium text-[#5C6B5E]">
-                      <span className="flex items-center gap-1 text-[#B5652D]"><Icon name="StarIcon" size={12} /> 4.9</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', fontWeight: 500, color: '#5C6B5E' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#B5652D' }}><Icon name="StarIcon" size={12} /> 4.9</span>
                       <span className="w-1 h-1 bg-[#C8C3B0] rounded-full"></span>
                       <span>125 avis</span>
                       <span className="w-1 h-1 bg-[#C8C3B0] rounded-full"></span>
@@ -499,14 +502,14 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                   { label: 'HYDRATATION', title: 'Gourde titane 1 L', price: '68 €', img: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=200&q=80' },
                   { label: 'VÊTEMENTS', title: 'Veste 3 couches', price: '212 €', img: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=200&q=80' },
                 ].map(item => (
-                  <div key={item.title} className="bg-white rounded-2xl p-3 pr-5 flex items-center gap-4 shadow-sm border border-[#E8E4D8] hover:border-[#1C2620] transition-colors cursor-pointer group">
-                    <div className="w-16 h-16 rounded-xl bg-[#EBE8DD] overflow-hidden flex-shrink-0">
-                      <img src={item.img} alt={item.title} className="w-full h-full object-cover mix-blend-multiply opacity-90 group-hover:scale-110 transition-transform duration-500" />
+                  <div key={item.title} style={{ backgroundColor: 'white', borderRadius: '1rem', padding: '0.75rem 1.25rem 0.75rem 0.75rem', display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', border: '1px solid #E8E4D8', cursor: 'pointer' }} className="hover:border-[#1C2620] transition-colors group">
+                    <div style={{ width: '4rem', height: '4rem', borderRadius: '0.75rem', backgroundColor: '#EBE8DD', overflow: 'hidden', flexShrink: 0 }}>
+                      <img src={item.img} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'multiply', opacity: 0.9 }} className="group-hover:scale-110 transition-transform duration-500" />
                     </div>
                     <div>
-                      <div className="text-[8px] font-mono tracking-widest text-[#5C6B5E] uppercase mb-0.5">{item.label}</div>
-                      <div className="text-xs font-bold text-[#1C2620]">{item.title}</div>
-                      <div className="text-xs text-[#1C2620] mt-0.5">{item.price}</div>
+                      <div style={{ fontSize: '0.5rem', fontFamily: 'monospace', letterSpacing: '0.1em', color: '#5C6B5E', textTransform: 'uppercase', marginBottom: '0.125rem' }}>{item.label}</div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1C2620' }}>{item.title}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#1C2620', marginTop: '0.125rem' }}>{item.price}</div>
                     </div>
                   </div>
                 ))}
@@ -520,41 +523,48 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
       {/* ── MOBILE VIEW ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <MobilePageShell background={STONE_100}>
           {/* Gallery */}
-          <div className="relative w-full aspect-square bg-[#E8E4D8] overflow-hidden">
+          <div style={{ position: 'relative', width: '100%', aspectRatio: '1/1', background: SAGE_100, overflow: 'hidden' }}>
             {/* Back button */}
-            <div className="absolute top-4 left-4 z-20 flex gap-2">
-              <Link href="/boutique" className="w-9 h-9 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-[#1C2620] shadow-sm">
-                <Icon name="ChevronLeftIcon" size={18} variant="outline" />
+            <div style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 20, display: 'flex', gap: '8px' }}>
+              <Link href="/boutique" style={{ width: '36px', height: '36px', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: FOREGROUND_900, boxShadow: shadow(2), textDecoration: 'none' }}>
+                <LkvIcon name="chevron-left" size={18} />
               </Link>
             </div>
 
             {/* Favorite button */}
             <button
               onClick={() => setIsFavorite(!isFavorite)}
-              className="absolute top-4 right-4 z-20 w-9 h-9 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-[#1C2620] shadow-sm"
+              style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 20, width: '36px', height: '36px', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', color: FOREGROUND_900, boxShadow: shadow(2), cursor: 'pointer' }}
             >
-              <Icon name="HeartIcon" size={18} variant={isFavorite ? "solid" : "outline"} className={isFavorite ? "text-red-500" : ""} />
+              <LkvIcon name="heart" size={18} color={isFavorite ? '#EF4444' : 'inherit'} />
             </button>
 
             {/* Image Slider */}
             <div 
-              className="w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide" 
               id="mobile-gallery"
               onScroll={(e) => {
                 const target = e.currentTarget;
                 const index = Math.round(target.scrollLeft / target.clientWidth);
                 if (index !== activeImage) setActiveImage(index);
               }}
+              style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                overflowX: 'auto',
+                scrollSnapType: 'x mandatory',
+                scrollbarWidth: 'none',
+              }}
             >
               {product.images.map((img, i) => (
-                <div key={i} className="w-full h-full flex-shrink-0 snap-start flex items-center justify-center bg-[#E3DFD2]">
-                  <img src={img.url} alt={img.alt || product.nom} className="w-full h-full object-cover mix-blend-multiply" />
+                <div key={i} style={{ width: '100%', height: '100%', flexShrink: 0, scrollSnapAlign: 'start', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#E3DFD2' }}>
+                  <img src={img.url} alt={img.alt || product.nom} style={{ width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'multiply' }} />
                 </div>
               ))}
               {product.images.length === 0 && (
-                <div className="w-full h-full flex items-center justify-center bg-[#E3DFD2] text-sm text-[#5C6B5E]">
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#E3DFD2', fontSize: '13px', color: '#6B7A72' }}>
                   Aucune image disponible
                 </div>
               )}
@@ -562,11 +572,17 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
             {/* Paging indicators */}
             {product.images.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-black/10 backdrop-blur px-2.5 py-1 rounded-full">
+              <div style={{ position: 'absolute', bottom: '16px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '6px', zIndex: 10, background: 'rgba(0,0,0,0.1)', backdropFilter: 'blur(4px)', padding: '4px 10px', borderRadius: '999px' }}>
                 {product.images.map((_, i) => (
                   <span
                     key={i}
-                    className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${i === activeImage ? 'w-4 bg-white' : 'bg-white/40'}`}
+                    style={{
+                      width: i === activeImage ? '16px' : '6px',
+                      height: '6px',
+                      borderRadius: '999px',
+                      background: i === activeImage ? '#fff' : 'rgba(255,255,255,0.4)',
+                      transition: 'all 0.2s ease',
+                    }}
                   />
                 ))}
               </div>
@@ -575,7 +591,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
           {/* Thumbnails list */}
           {product.images.length > 1 && (
-            <div className="flex gap-2 px-4 py-2 overflow-x-auto scrollbar-hide bg-[#F5F2E9]">
+            <div style={{ display: 'flex', gap: '8px', padding: '8px 16px', overflowX: 'auto', background: '#F5F2E9', scrollbarWidth: 'none' }}>
               {product.images.map((img, i) => (
                 <button
                   key={i}
@@ -586,70 +602,81 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                       gallery.scrollTo({ left: gallery.clientWidth * i, behavior: 'smooth' });
                     }
                   }}
-                  className={`w-12 h-12 rounded-xl overflow-hidden border-2 flex-shrink-0 bg-[#E3DFD2] ${i === activeImage ? 'border-[#1C2620]' : 'border-transparent'}`}
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    border: '2px solid',
+                    borderColor: i === activeImage ? '#0B1F17' : 'transparent',
+                    flexShrink: 0,
+                    background: '#E3DFD2',
+                    padding: 0,
+                    cursor: 'pointer',
+                  }}
                 >
-                  <img src={img.url} alt="" className="w-full h-full object-cover mix-blend-multiply" />
+                  <img src={img.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'multiply' }} />
                 </button>
               ))}
             </div>
           )}
 
           {/* Info section */}
-          <div className="px-5 pt-6 pb-4">
-            <span className="inline-block bg-[#D3DFD7] text-[#2C5A3D] text-[9px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full mb-2">
+          <div style={{ padding: '24px 20px 16px' }}>
+            <span style={{ display: 'inline-block', background: SAGE_100, border: '1px solid rgba(11,31,23,0.06)', color: FOREGROUND_800, fontSize: '10px', fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '2px 10px', borderRadius: '999px', marginBottom: '8px', fontWeight: 500 }}>
               {product.categorie}
             </span>
-            <h1 className="font-display font-800 text-2xl text-[#0B1F17] leading-tight">
+            <h1 style={{ fontSize: '24px', fontWeight: 600, color: FOREGROUND_900, margin: 0, letterSpacing: '-0.02em', lineHeight: 1.2 }}>
               {product.nom}
             </h1>
-            <div className="text-xs text-[#5C6B5E] mt-1 font-medium">
-              Par <span className="font-semibold text-[#1C2620]">{product.marque}</span>
+            <div style={{ fontSize: '12px', color: '#6B7A72', marginTop: '4px', fontWeight: 500 }}>
+              Par <span style={{ fontWeight: 600, color: '#0B1F17' }}>{product.marque}</span>
             </div>
 
             {/* Price & Rating */}
-            <div className="flex items-center justify-between mt-4 pb-4 border-b border-[#E8E4D8]">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '16px', paddingBottom: '16px', borderBottom: '1px solid rgba(11,31,23,0.06)' }}>
               <div>
-                <span className="text-2xl font-bold text-[#17402C]">
+                <span style={{ fontSize: '24px', fontWeight: 700, color: FOREGROUND_800 }}>
                   {product.prix_cents > 0 ? `${(product.prix_cents / 100).toFixed(2)} €` : '—'}
                 </span>
-                <span className="text-[10px] text-[#8B978F] block">TVA incluse</span>
+                <span style={{ fontSize: '10px', color: '#6B7A72', display: 'block', marginTop: '2px' }}>TVA incluse</span>
               </div>
               
-              <div className="flex items-center gap-1.5 text-xs text-[#5C6B5E] bg-[#F4F1EA] px-2.5 py-1.5 rounded-xl">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="#A8C8A0" stroke="#A8C8A0">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#6B7A72', background: SAGE_100, padding: '6px 12px', borderRadius: '12px' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill={FOREGROUND_800} stroke={FOREGROUND_800}>
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                 </svg>
-                <span className="font-bold text-[#1C2620]">{product.rating}</span>
+                <span style={{ fontWeight: 700, color: '#0B1F17' }}>{product.rating}</span>
                 <span>({product.review_count || 12} avis)</span>
               </div>
             </div>
           </div>
 
-          {/* Specifications Accordion/Grid */}
-          <div className="px-5 py-2">
-            <h3 className="text-xs font-bold text-[#1C2620] uppercase tracking-wider mb-3">Caractéristiques</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-[#F4F1EA] p-3 rounded-2xl">
-                <div className="text-[10px] uppercase text-[#6B7A72] tracking-wider">Poids</div>
-                <div className="text-sm font-semibold text-[#0B1F17] mt-0.5">
+          {/* Specifications Grid */}
+          <div style={{ padding: '8px 20px' }}>
+            <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#0B1F17', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 12px' }}>Caractéristiques</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div style={{ background: STONE_100, border: '1px solid rgba(11,31,23,0.06)', padding: '12px', borderRadius: '16px' }}>
+                <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#6B7A72', letterSpacing: '0.05em' }}>Poids</div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#0B1F17', marginTop: '2px' }}>
                   {product.poids_g > 0 ? `${(product.poids_g / 1000).toFixed(2)} kg` : '—'}
                 </div>
               </div>
-              <div className="bg-[#F4F1EA] p-3 rounded-2xl">
-                <div className="text-[10px] uppercase text-[#6B7A72] tracking-wider">Matière</div>
-                <div className="text-sm font-semibold text-[#0B1F17] mt-0.5 truncate" title={product.materials || '—'}>
+              <div style={{ background: STONE_100, border: '1px solid rgba(11,31,23,0.06)', padding: '12px', borderRadius: '16px' }}>
+                <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#6B7A72', letterSpacing: '0.05em' }}>Matière</div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#0B1F17', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={product.materials || '—'}>
                   {product.materials || 'Non spécifiée'}
                 </div>
               </div>
-              <div className="bg-[#F4F1EA] p-3 rounded-2xl">
-                <div className="text-[10px] uppercase text-[#6B7A72] tracking-wider">Dimensions</div>
-                <div className="text-sm font-semibold text-[#0B1F17] mt-0.5 truncate" title={product.dimensions || '—'}>
+              <div style={{ background: STONE_100, border: '1px solid rgba(11,31,23,0.06)', padding: '12px', borderRadius: '16px' }}>
+                <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#6B7A72', letterSpacing: '0.05em' }}>Dimensions</div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#0B1F17', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={product.dimensions || '—'}>
                   {product.dimensions || 'Non spécifiées'}
                 </div>
               </div>
-              <div className="bg-[#F4F1EA] p-3 rounded-2xl">
-                <div className="text-[10px] uppercase text-[#6B7A72] tracking-wider">Garantie</div>
-                <div className="text-sm font-semibold text-[#0B1F17] mt-0.5">
+              <div style={{ background: STONE_100, border: '1px solid rgba(11,31,23,0.06)', padding: '12px', borderRadius: '16px' }}>
+                <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#6B7A72', letterSpacing: '0.05em' }}>Garantie</div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#0B1F17', marginTop: '2px' }}>
                   {product.warranty || '2 ans'}
                 </div>
               </div>
@@ -658,13 +685,13 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
           {/* Dynamic variants */}
           {product.variants && product.variants.length > 0 && (
-            <div className="px-5 py-4">
-              <h3 className="text-xs font-bold text-[#1C2620] uppercase tracking-wider mb-2">Options</h3>
-              <div className="flex flex-wrap gap-2">
+            <div style={{ padding: '16px 20px' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#0B1F17', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 10px' }}>Options</h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {product.variants.map((v: any, i: number) => (
                   <button
                     key={i}
-                    className="px-3.5 py-2 rounded-xl text-xs font-semibold border bg-white border-[#E8E4D8] text-[#1C2620]"
+                    style={{ padding: '8px 14px', borderRadius: '12px', fontSize: '12px', fontWeight: 600, border: `1px solid ${SAGE_100}`, background: STONE_100, color: FOREGROUND_900, cursor: 'pointer', fontFamily: 'inherit' }}
                   >
                     {v.size || v.name || v.sku}
                   </button>
@@ -674,9 +701,9 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
           )}
 
           {/* Description */}
-          <div className="px-5 py-4 pb-24">
-            <h3 className="text-xs font-bold text-[#1C2620] uppercase tracking-wider mb-2">Présentation</h3>
-            <p className="text-sm text-[#384A42] leading-relaxed whitespace-pre-line">
+          <div style={{ padding: '16px 20px 100px' }}>
+            <h3 style={{ fontSize: '11px', fontWeight: 700, color: FOREGROUND_900, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 8px' }}>Présentation</h3>
+            <p style={{ fontSize: '14px', color: '#384A42', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-line' }}>
               {product.description}
             </p>
           </div>

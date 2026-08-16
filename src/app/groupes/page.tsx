@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import LkvIcon from '@/components/ui/LkvIcon';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import MobileGroupesV2 from '@/components/groupes/MobileGroupesV2';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -745,230 +746,21 @@ function GroupesPageInner() {
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
         <MobilePageShell background="#F5F2E8">
-          <div style={{ padding: '16px' }}>
-            {/* Mobile header */}
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '8px', fontWeight: 500 }}>
-                Groupes de voyage
-              </div>
-              <h1 style={{ fontSize: '26px', fontWeight: 700, color: '#0B1F17', letterSpacing: '-0.02em', lineHeight: 1.2, marginBottom: '4px' }}>
-                Voyager <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>ensemble</em>
-              </h1>
-              <p style={{ fontSize: '13px', color: '#6B7A72', marginBottom: '16px' }}>
-                Créez ou rejoignez des groupes de voyage collaboratifs
-              </p>
-            </div>
-
-            {/* Create & Join buttons */}
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-              <Link
-                href="/nouveau-groupe"
-                style={{
-                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                  padding: '12px 16px', background: '#17402C', color: '#fff', borderRadius: '999px',
-                  fontSize: '13px', fontWeight: 600, textDecoration: 'none',
-                }}
-              >
-                <LkvIcon name="plus" size={16} color="#fff" /> Créer
-              </Link>
-              <div style={{ flex: 1, display: 'flex', gap: '6px' }}>
-                <input
-                  value={joinCode}
-                  onChange={e => setJoinCode(e.target.value.toUpperCase())}
-                  placeholder="Code"
-                  style={{
-                    flex: 1, padding: '12px', background: '#F4F1EA', border: '1px solid rgba(11,31,23,0.08)',
-                    borderRadius: '999px', fontSize: '12px', color: '#0B1F17', outline: 'none', minWidth: 0,
-                  }}
-                  onKeyDown={e => e.key === 'Enter' && handleJoinByCode()}
-                />
-                <button
-                  onClick={() => handleJoinByCode()}
-                  disabled={joiningByCode}
-                  style={{
-                    padding: '12px 16px', background: '#F4F1EA', border: '1px solid rgba(11,31,23,0.08)',
-                    borderRadius: '999px', fontSize: '12px', fontWeight: 600, color: '#0B1F17',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {joiningByCode ? '...' : 'OK'}
-                </button>
-              </div>
-            </div>
-
-            {/* Tabs */}
-            <div style={{ display: 'flex', gap: '4px', marginBottom: '16px', borderBottom: '1px solid rgba(11,31,23,0.06)' }}>
-              {[
-                { id: 'mes-groupes', label: `Mes groupes${myGroups.length > 0 ? ` (${myGroups.length})` : ''}` },
-                { id: 'decouvrir', label: 'Découvrir' },
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as MainTab)}
-                  style={{
-                    flex: 1, padding: '10px 16px', fontSize: '12px', fontWeight: 600,
-                    color: activeTab === tab.id ? '#0B1F17' : '#6B7A72',
-                    borderBottom: activeTab === tab.id ? '2px solid #17402C' : '2px solid transparent',
-                    background: 'none', cursor: 'pointer',
-                  }}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Loading */}
-            {loading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {[1, 2].map(i => (
-                  <div key={i} style={{ height: '160px', background: '#F4F1EA', borderRadius: '16px', opacity: 0.5 }} />
-                ))}
-              </div>
-            ) : error ? (
-              <div style={{ textAlign: 'center', padding: '40px 16px' }}>
-                <p style={{ fontSize: '32px', marginBottom: '12px' }}>⚠️</p>
-                <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0B1F17', marginBottom: '8px' }}>Erreur de chargement</h2>
-                <p style={{ fontSize: '13px', color: '#6B7A72', marginBottom: '16px' }}>{error}</p>
-                <button
-                  onClick={() => { setError(null); setLoading(true); loadAll().finally(() => setLoading(false)); }}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '12px 24px',
-                    background: '#17402C', color: '#fff', borderRadius: '999px',
-                    fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer',
-                  }}
-                >
-                  Réessayer
-                </button>
-              </div>
-            ) : activeTab === 'mes-groupes' ? (
-              user && pendingInvites.length > 0 ? (
-                <div style={{ marginBottom: '16px', padding: '14px', background: 'rgba(23,64,44,0.05)', borderRadius: '16px', border: '1px solid rgba(23,64,44,0.2)' }}>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#0B1F17', marginBottom: '10px' }}>
-                    {pendingInvites.length} invitation{pendingInvites.length > 1 ? 's' : ''}
-                  </div>
-                  {pendingInvites.map(inv => (
-                    <div key={inv.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px', background: '#fff', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)', marginBottom: '8px' }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{inv.name}</div>
-                        <div style={{ fontSize: '11px', color: '#6B7A72' }}>Invitation à rejoindre</div>
-                      </div>
-                      <button onClick={() => handleInvite(inv.group_id, true)} disabled={inviteBusy === inv.group_id} style={{ padding: '8px 14px', background: '#17402C', color: '#fff', borderRadius: '999px', border: 'none', fontSize: '11px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                        {inviteBusy === inv.group_id ? '...' : 'Accepter'}
-                      </button>
-                      <button onClick={() => handleInvite(inv.group_id, false)} disabled={inviteBusy === inv.group_id} style={{ padding: '8px 14px', background: '#F4F1EA', color: '#6B7A72', borderRadius: '999px', border: '1px solid rgba(11,31,23,0.08)', fontSize: '11px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                        Refuser
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                !user ? (
-                <div style={{ textAlign: 'center', padding: '40px 16px' }}>
-                  <p style={{ fontSize: '32px', marginBottom: '12px' }}>🗺️</p>
-                  <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0B1F17', marginBottom: '8px' }}>Connectez-vous</h2>
-                  <p style={{ fontSize: '13px', color: '#6B7A72', marginBottom: '16px' }}>Pour voir vos groupes de voyage</p>
-                  <Link
-                    href="/connexion"
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '12px 24px',
-                      background: '#17402C', color: '#fff', borderRadius: '999px',
-                      fontSize: '13px', fontWeight: 600, textDecoration: 'none',
-                    }}
-                  >
-                    <LkvIcon name="lock" size={14} color="#fff" /> Se connecter
-                  </Link>
-                </div>
-              ) : myGroups.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px 16px' }}>
-                  <p style={{ fontSize: '32px', marginBottom: '12px' }}>🗺️</p>
-                  <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0B1F17', marginBottom: '8px' }}>Aucun groupe</h2>
-                  <p style={{ fontSize: '13px', color: '#6B7A72', marginBottom: '16px' }}>Créez votre premier groupe ou rejoignez-en un</p>
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                    <Link
-                      href="/nouveau-groupe"
-                      style={{
-                        display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '12px 20px',
-                        background: '#17402C', color: '#fff', borderRadius: '999px',
-                        fontSize: '13px', fontWeight: 600, textDecoration: 'none',
-                      }}
-                    >
-                      <LkvIcon name="plus" size={14} color="#fff" /> Créer
-                    </Link>
-                    <button
-                      onClick={() => setActiveTab('decouvrir')}
-                      style={{
-                        padding: '12px 20px', background: '#F4F1EA', border: '1px solid rgba(11,31,23,0.08)',
-                        borderRadius: '999px', fontSize: '12px', fontWeight: 600, color: '#0B1F17',
-                      }}
-                    >
-                      Découvrir
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {myGroups.map(group => (
-                      <MobileGroupCard key={group.id} group={group} showActions />
-                    ))}
-                  </div>
-                </div>
-              )
-              )
-            ) : (
-              /* Discover */
-              <div>
-                {/* Search */}
-                <div style={{ position: 'relative', marginBottom: '12px' }}>
-                  <LkvIcon name="search" size={16} color="#6B7A72" />
-                  <input
-                    style={{
-                      width: '100%', padding: '12px 16px 12px 40px', background: '#F4F1EA',
-                      border: '1px solid rgba(11,31,23,0.08)', borderRadius: '999px',
-                      fontSize: '13px', color: '#0B1F17', outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
-                    placeholder="Rechercher..."
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                  />
-                </div>
-
-                {/* Theme filters (horizontal scroll) */}
-                <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '12px' }}>
-                  {['Tous', ...THEMES].map(theme => (
-                    <button
-                      key={theme}
-                      onClick={() => setSelectedTheme(theme)}
-                      style={{
-                        padding: '6px 12px', borderRadius: '999px', fontSize: '11px', fontWeight: 600,
-                        whiteSpace: 'nowrap',
-                        background: selectedTheme === theme ? '#17402C' : '#F4F1EA',
-                        color: selectedTheme === theme ? '#fff' : '#6B7A72',
-                        border: 'none', cursor: 'pointer',
-                      }}
-                    >
-                      {theme !== 'Tous' ? `${THEME_EMOJI[theme]} ` : ''}{theme}
-                    </button>
-                  ))}
-                </div>
-
-                {filteredPublic.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '40px 16px', color: '#6B7A72' }}>
-                    <p style={{ fontSize: '28px', marginBottom: '8px' }}>🔍</p>
-                    <p style={{ fontSize: '15px', fontWeight: 600, color: '#0B1F17', marginBottom: '4px' }}>Aucun groupe trouvé</p>
-                    <p style={{ fontSize: '12px' }}>{search ? `Aucun résultat pour "${search}"` : 'Aucun groupe public disponible'}</p>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {filteredPublic.map(group => (
-                      <MobileGroupCard key={group.id} group={group} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <MobileGroupesV2
+            user={user}
+            myGroups={myGroups}
+            publicGroups={publicGroups}
+            pendingInvites={pendingInvites}
+            loading={loading}
+            error={error}
+            onRetry={() => { setError(null); setLoading(true); loadAll().finally(() => setLoading(false)); }}
+            onJoin={handleJoinGroup}
+            onLeave={handleLeaveGroup}
+            onDelete={handleDeleteGroup}
+            onEdit={openEditModal}
+            onAcceptInvite={(gid) => handleInvite(gid, true)}
+            onDeclineInvite={(gid) => handleInvite(gid, false)}
+          />
         </MobilePageShell>
       </div>
     </>

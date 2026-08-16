@@ -213,6 +213,22 @@ export default function PublierPostPage() {
         throw new Error(error.message || error.details || 'Erreur lors de l\'insertion');
       }
 
+      // Call rewards engine pipeline to claim points
+      try {
+        await fetch('/api/rewards/claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action_type: 'post',
+            target_id: data.id,
+            target_type: 'post',
+            metadata: { content: fullContent }
+          })
+        });
+      } catch (rewardsErr) {
+        console.warn('Rewards claim error:', rewardsErr);
+      }
+
       setToastMessage(draft ? 'Brouillon sauvegardé !' : 'Post publié avec succès sur le fil ! 🎉');
       setTimeout(() => {
         router.push('/communaute');

@@ -1170,7 +1170,7 @@ export default function KitReportPage() {
               {/* Report Header */}
               <div style={{ margin: '16px', padding: '20px', background: '#0B1F17', borderRadius: '12px', position: 'relative', overflow: 'hidden' }}>
                 <div style={{ position: 'relative', zIndex: 1 }}>
-                  <p style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 6px 0' }}>
+                  <p style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: '#A3C4A3', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 6px 0' }}>
                     RAPPORT KIT PERSONNALIS&Eacute;
                   </p>
                   <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#fff', margin: '0 0 4px 0' }}>
@@ -1478,10 +1478,8 @@ export default function KitReportPage() {
             </div>
           )}
 
-          {/* Footer spacer for form/error states */}
-          {!report && (
-            <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
-          )}
+          {/* Footer spacer */}
+          <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
         </MobilePageShell>
       </div>
     </>

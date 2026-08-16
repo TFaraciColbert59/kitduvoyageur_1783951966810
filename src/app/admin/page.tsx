@@ -9,7 +9,7 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 type AdminSection =
-  | 'overview' | 'products' | 'kits' | 'categories' |'orders'| 'configurator' | 'countries' | 'toolbox' |'users' | 'moderation' | 'content' | 'audit';
+  | 'overview' | 'products' | 'kits' | 'categories' |'orders'| 'configurator' | 'countries' | 'toolbox' |'users' | 'moderation' | 'content' | 'audit' | 'rewards';
 
 // ─── Sidebar config ────────────────────────────────────────────────────────────
 const SIDEBAR_ITEMS: { id: AdminSection; label: string; icon: string; badge?: string; group?: string }[] = [
@@ -24,6 +24,7 @@ const SIDEBAR_ITEMS: { id: AdminSection; label: string; icon: string; badge?: st
   { id: 'content', label: 'Guides', icon: 'BookOpenIcon', group: 'Contenu' },
   { id: 'users', label: 'Utilisateurs', icon: 'UsersIcon', group: 'Gestion' },
   { id: 'moderation', label: 'Modération', icon: 'ShieldCheckIcon', badge: '7', group: 'Gestion' },
+  { id: 'rewards', label: 'Récompenses & Sim', icon: 'GiftIcon', group: 'Gestion' },
   { id: 'audit', label: 'Audit & Paramètres', icon: 'Cog6ToothIcon', group: 'Gestion' },
 ];
 
@@ -943,6 +944,465 @@ function CategoriesSection() {
   );
 }
 
+function RewardsSection() {
+  const [config, setConfig] = useState<any>({});
+  const [activePeriod, setActivePeriod] = useState<any>(null);
+  const [withdrawals, setWithdrawals] = useState<any[]>([]);
+  const [suspects, setSuspects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  // Simulator state
+  const [simRevenue, setSimRevenue] = useState(25000);
+  const [simActiveEarners, setSimActiveEarners] = useState(150);
+  const [simPoolPct, setSimPoolPct] = useState(15);
+  const [simFraudRate, setSimFraudRate] = useState(5);
+  const [simReserve, setSimReserve] = useState(500);
+
+  // Period finalization state
+  const [finalizeRevenue, setFinalizeRevenue] = useState('20000');
+  const [finalizing, setFinalizing] = useState(false);
+
+  const supabase = useMemo(() => createClient(), []);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data: cData } = await supabase.from('reward_config').select('*');
+      const configMap = (cData || []).reduce((acc: any, row: any) => {
+        acc[row.key] = row.value;
+        return acc;
+      }, {});
+      setConfig(configMap);
+
+      const { data: pData } = await supabase.from('reward_periods').select('*').eq('status', 'OPEN').limit(1).maybeSingle();
+      setActivePeriod(pData);
+
+      const { data: wData } = await supabase
+        .from('reward_withdrawals')
+        .select('*, user:user_profiles(full_name, email, trust_score)')
+        .in('status', ['pending', 'under_review'])
+        .order('requested_at', { ascending: true });
+      setWithdrawals(wData || []);
+
+      const { data: sData } = await supabase
+        .from('reward_accounts')
+        .select('*, user:user_profiles(full_name, email)')
+        .in('status', ['suspect', 'limited'])
+        .limit(10);
+      setSuspects(sData || []);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleToggleSwitch = async (key: string, field: string, currentValue: boolean) => {
+    try {
+      const updatedSwitches = { ...config[key], [field]: !currentValue };
+      const response = await fetch('/api/admin/rewards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_config',
+          key,
+          value: updatedSwitches
+        })
+      });
+      if (!response.ok) throw new Error('Erreur lors de la mise à jour.');
+      setSuccess('Kill switch mis à jour avec succès.');
+      loadData();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleFinalizePeriod = async () => {
+    if (!activePeriod) return;
+    setFinalizing(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const response = await fetch('/api/admin/rewards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'finalize_period',
+          period_id: activePeriod.id,
+          eligible_revenue: parseFloat(finalizeRevenue)
+        })
+      });
+      const resData = await response.json();
+      if (!response.ok) throw new Error(resData.error || 'Erreur lors de la clôture.');
+      setSuccess(`Période ${activePeriod.id} clôturée avec succès et fonds distribués.`);
+      loadData();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setFinalizing(false);
+    }
+  };
+
+  const handleProcessWithdrawal = async (withdrawalId: string, approve: boolean) => {
+    let reference = null;
+    let reason = null;
+
+    if (approve) {
+      reference = prompt('Entrez la référence de transaction bancaire (ex: TXN123456) :');
+      if (reference === null) return;
+    } else {
+      reason = prompt('Entrez le motif du rejet :');
+      if (reason === null) return;
+    }
+
+    try {
+      const response = await fetch('/api/admin/rewards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'process_withdrawal',
+          withdrawal_id: withdrawalId,
+          approve,
+          reference,
+          reason
+        })
+      });
+      const resData = await response.json();
+      if (!response.ok) throw new Error(resData.error || 'Erreur lors de la modération.');
+      setSuccess(approve ? 'Retrait approuvé et versé.' : 'Retrait rejeté et remboursé.');
+      loadData();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const simPoolSize = Math.max(0, Math.min(simRevenue * (simPoolPct / 100), 5000) - simReserve);
+  const simFraudValue = simPoolSize * (simFraudRate / 100);
+  const simDistributable = Math.max(0, simPoolSize - simFraudValue);
+  const simMedianPayout = simActiveEarners > 0 ? (simDistributable / simActiveEarners).toFixed(2) : '0.00';
+  const simMarginRemaining = simRevenue - simPoolSize;
+
+  return (
+    <div className="space-y-6 text-white">
+      {error && (
+        <div className="p-4 bg-rose-955/40 border border-rose-800/80 text-rose-200 rounded-xl text-xs">
+          ⚠️ {error}
+        </div>
+      )}
+      {success && (
+        <div className="p-4 bg-emerald-955/40 border border-emerald-800/80 text-emerald-200 rounded-xl text-xs">
+          ✅ {success}
+        </div>
+      )}
+
+      {/* Row 1: Kill Switches & Active Period */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        {/* Kill Switches */}
+        <div className="md:col-span-5 bg-[#1E2B25] border border-white/8 rounded-2xl p-5 space-y-4">
+          <h3 className="text-xs font-mono uppercase tracking-wider text-white/50 flex items-center gap-1.5">
+            <Icon name="WrenchScrewdriverIcon" size={14} className="text-[#A3C4A3]" />
+            Arrêt d&apos;urgence (Kill Switches)
+          </h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-3 bg-black/20 rounded-xl border border-white/5">
+              <div>
+                <p className="text-xs font-bold">Acquisition de Récompenses</p>
+                <p className="text-[10px] text-white/40">Génération de points sur les actions</p>
+              </div>
+              <button
+                onClick={() => handleToggleSwitch('kill_switches', 'rewards_active', config.kill_switches?.rewards_active)}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all ${
+                  config.kill_switches?.rewards_active
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    : 'bg-rose-600 hover:bg-rose-700 text-white'
+                }`}
+              >
+                {config.kill_switches?.rewards_active ? 'ON / ACTIF' : 'PAUSÉ'}
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-black/20 rounded-xl border border-white/5">
+              <div>
+                <p className="text-xs font-bold">Retraits de Fonds</p>
+                <p className="text-[10px] text-white/40">Demandes de cash-out en SEPA/Paypal</p>
+              </div>
+              <button
+                onClick={() => handleToggleSwitch('kill_switches', 'cashout_active', config.kill_switches?.cashout_active)}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all ${
+                  config.kill_switches?.cashout_active
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    : 'bg-rose-600 hover:bg-rose-700 text-white'
+                }`}
+              >
+                {config.kill_switches?.cashout_active ? 'ON / ACTIF' : 'PAUSÉ'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Active Period Finalizer */}
+        <div className="md:col-span-7 bg-[#1E2B25] border border-white/8 rounded-2xl p-5 space-y-4">
+          <h3 className="text-xs font-mono uppercase tracking-wider text-white/50 flex items-center gap-1.5">
+            <Icon name="CalendarIcon" size={14} className="text-[#A3C4A3]" />
+            Clôture de la période active
+          </h3>
+          {activePeriod ? (
+            <div className="space-y-4">
+              <div className="flex justify-between text-xs bg-black/20 p-3 rounded-xl border border-white/5 font-mono">
+                <span>Période : {activePeriod.id}</span>
+                <span>Début : {new Date(activePeriod.start_date).toLocaleDateString()}</span>
+                <span>Fin : {new Date(activePeriod.end_date).toLocaleDateString()}</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-white/50 mb-1">Revenu éligible net (€)</label>
+                  <input
+                    type="number"
+                    value={finalizeRevenue}
+                    onChange={(e) => setFinalizeRevenue(e.target.value)}
+                    className="w-full bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#A3C4A3]"
+                    placeholder="15000"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button
+                    onClick={handleFinalizePeriod}
+                    disabled={finalizing || !finalizeRevenue}
+                    className="w-full py-2 bg-[#17402C] hover:bg-[#2D6B4A] disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                  >
+                    {finalizing ? 'Finalisation...' : 'Clôturer la Période & Distribuer'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-white/40 py-6 text-center">Aucune période ouverte disponible pour la clôture.</p>
+          )}
+        </div>
+      </div>
+
+      {/* Row 2: Economic Simulator */}
+      <div className="bg-[#1E2B25] border border-white/8 rounded-2xl p-6 space-y-6">
+        <h3 className="text-xs font-mono uppercase tracking-wider text-white/50 flex items-center gap-1.5">
+          <Icon name="ArrowTrendingUpIcon" size={14} className="text-[#A3C4A3]" />
+          Simulateur Économique (Modélisation de scénarios)
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Sliders */}
+          <div className="md:col-span-2 space-y-4">
+            <div>
+              <div className="flex justify-between text-xs mb-1">
+                <span>Revenu éligible net : <strong>{simRevenue} €</strong></span>
+              </div>
+              <input
+                type="range"
+                min="1000"
+                max="100000"
+                step="1000"
+                value={simRevenue}
+                onChange={(e) => setSimRevenue(parseInt(e.target.value))}
+                className="w-full accent-[#A3C4A3] bg-black/20 h-1 rounded-lg"
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between text-xs mb-1">
+                <span>Contributeurs rémunérés (earners) : <strong>{simActiveEarners}</strong></span>
+              </div>
+              <input
+                type="range"
+                min="10"
+                max="2000"
+                step="10"
+                value={simActiveEarners}
+                onChange={(e) => setSimActiveEarners(parseInt(e.target.value))}
+                className="w-full accent-[#A3C4A3] bg-black/20 h-1 rounded-lg"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-[9px] uppercase text-white/40 mb-1">Part Pool (%)</label>
+                <input
+                  type="number"
+                  value={simPoolPct}
+                  onChange={(e) => setSimPoolPct(parseInt(e.target.value))}
+                  className="w-full bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-xs text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-[9px] uppercase text-white/40 mb-1">Taux Fraude (%)</label>
+                <input
+                  type="number"
+                  value={simFraudRate}
+                  onChange={(e) => setSimFraudRate(parseInt(e.target.value))}
+                  className="w-full bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-xs text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-[9px] uppercase text-white/40 mb-1">Trésorerie Réserve (€)</label>
+                <input
+                  type="number"
+                  value={simReserve}
+                  onChange={(e) => setSimReserve(parseInt(e.target.value))}
+                  className="w-full bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-xs text-white"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Simulated Outcomes */}
+          <div className="bg-black/20 border border-white/5 rounded-xl p-5 space-y-4 font-mono text-xs">
+            <h4 className="text-[10px] font-mono uppercase tracking-wider text-white/40">Résultats simulés</h4>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span>Reward Pool Brut :</span>
+                <span className="font-bold text-white">{(simRevenue * (simPoolPct / 100)).toFixed(2)} €</span>
+              </div>
+              <div className="flex justify-between border-b border-white/5 pb-2">
+                <span>Réserve déduite :</span>
+                <span className="text-white/60">-{simReserve.toFixed(2)} €</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Reward Pool Net :</span>
+                <span className="font-bold text-amber-400">{simPoolSize.toFixed(2)} €</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Pertes Fraude estimées :</span>
+                <span className="text-rose-400">-{simFraudValue.toFixed(2)} €</span>
+              </div>
+              <div className="flex justify-between font-bold text-emerald-400 border-t border-white/5 pt-2">
+                <span>Gains Medians / user :</span>
+                <span>{simMedianPayout} €</span>
+              </div>
+              <div className="flex justify-between text-white/40 text-[9px] mt-2">
+                <span>Marge brute plateforme :</span>
+                <span>{simMarginRemaining.toFixed(2)} €</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Row 3: Pending Withdrawals Moderation */}
+      <div className="bg-[#1E2B25] border border-white/8 rounded-2xl p-6 space-y-4">
+        <h3 className="text-xs font-mono uppercase tracking-wider text-white/50 flex items-center gap-1.5">
+          <Icon name="WrenchScrewdriverIcon" size={14} className="text-[#A3C4A3]" />
+          Demandes de retraits en attente de validation
+        </h3>
+
+        <div className="overflow-x-auto">
+          {withdrawals.length === 0 ? (
+            <p className="text-xs text-white/30 py-8 text-center bg-black/10 rounded-xl">Aucune demande de retrait en attente.</p>
+          ) : (
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-white/10 text-white/40 uppercase font-mono text-[9px] tracking-wider">
+                  <th className="pb-2">Utilisateur</th>
+                  <th className="pb-2 text-right">Montant</th>
+                  <th className="pb-2 text-center">Méthode</th>
+                  <th className="pb-2">Coordonnées</th>
+                  <th className="pb-2 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 font-mono">
+                {withdrawals.map((w) => (
+                  <tr key={w.id} className="hover:bg-white/2">
+                    <td className="py-3 font-sans">
+                      <p className="font-bold text-white/85">{w.user?.full_name || 'Utilisateur inconnu'}</p>
+                      <p className="text-[10px] text-white/40">{w.user?.email || ''} · Confiance : {w.user?.trust_score || 50}/100</p>
+                    </td>
+                    <td className="py-3 text-right font-bold text-amber-400">{w.amount.toFixed(2)} €</td>
+                    <td className="py-3 text-center font-bold text-white/70">
+                      {w.payment_provider === 'bank_transfer' ? 'Banque' : 'Paypal'}
+                    </td>
+                    <td className="py-3 text-white/60 text-[10px]">
+                      {w.payment_provider === 'bank_transfer' ? (
+                        <>
+                          <p>IBAN: {w.metadata?.iban || 'N/A'}</p>
+                          <p>BIC: {w.metadata?.bic || 'N/A'}</p>
+                        </>
+                      ) : (
+                        <p>Paypal: {w.metadata?.paypal_email || 'N/A'}</p>
+                      )}
+                    </td>
+                    <td className="py-3 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => handleProcessWithdrawal(w.id, true)}
+                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[10px] tracking-wide"
+                        >
+                          Valider (Payé)
+                        </button>
+                        <button
+                          onClick={() => handleProcessWithdrawal(w.id, false)}
+                          className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-[10px] tracking-wide"
+                        >
+                          Rejeter
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
+      {/* Row 4: Suspect Users List */}
+      <div className="bg-[#1E2B25] border border-white/8 rounded-2xl p-6 space-y-4">
+        <h3 className="text-xs font-mono uppercase tracking-wider text-white/50 flex items-center gap-1.5">
+          <Icon name="ShieldCheckIcon" size={14} className="text-[#A3C4A3]" />
+          Utilisateurs sous surveillance (Spam / Triche)
+        </h3>
+
+        <div className="overflow-x-auto">
+          {suspects.length === 0 ? (
+            <p className="text-xs text-white/30 py-8 text-center bg-black/10 rounded-xl">Aucun utilisateur suspect détecté.</p>
+          ) : (
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-white/10 text-white/40 uppercase font-mono text-[9px] tracking-wider">
+                  <th className="pb-2">Utilisateur</th>
+                  <th className="pb-2 text-right">Points Actifs</th>
+                  <th className="pb-2 text-right">Points Invalides</th>
+                  <th className="pb-2 text-center">Statut Compte</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {suspects.map((s) => (
+                  <tr key={s.user_id} className="hover:bg-white/2">
+                    <td className="py-2.5">
+                      <p className="font-bold text-white/80">{s.user?.full_name || 'Inconnu'}</p>
+                      <p className="text-[10px] text-white/40">{s.user?.email || ''}</p>
+                    </td>
+                    <td className="py-2.5 text-right font-bold text-white/85">{s.eligible_points} pts</td>
+                    <td className="py-2.5 text-right text-rose-400 font-bold">{s.invalid_points} pts</td>
+                    <td className="py-2.5 text-center font-bold text-rose-300">
+                      <span className="px-2 py-0.5 bg-rose-950/40 border border-rose-800/40 rounded-full text-[9px] uppercase tracking-wide">
+                        {s.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Admin Page ───────────────────────────────────────────────────────────
 export default function AdminPage() {
   const router = useRouter();
@@ -999,6 +1459,7 @@ export default function AdminPage() {
     moderation: 'Modération',
     content: 'Guides & Contenu',
     audit: 'Audit & Paramètres',
+    rewards: 'Gestion des Récompenses & Simulateur Économique',
   };
 
   return (
@@ -1137,6 +1598,7 @@ export default function AdminPage() {
               {activeSection === 'moderation' && <ModerationSection />}
               {activeSection === 'content' && <ContentSection />}
               {activeSection === 'audit' && <AuditSection />}
+              {activeSection === 'rewards' && <RewardsSection />}
             </div>
           </main>
         </div>
@@ -1160,7 +1622,7 @@ export default function AdminPage() {
             <h1 style={{
               fontFamily: 'Georgia, serif',
               fontStyle: 'italic',
-              color: '#17402C',
+              color: '#EDF3ED',
               fontWeight: 400,
               fontSize: '18px',
               margin: 0,
@@ -1171,7 +1633,7 @@ export default function AdminPage() {
               width: '28px',
               height: '28px',
               borderRadius: '8px',
-              backgroundColor: 'rgba(23,64,44,0.2)',
+              backgroundColor: 'rgba(163,196,163,0.15)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -1180,7 +1642,7 @@ export default function AdminPage() {
                 fontFamily: 'ui-monospace, monospace',
                 fontSize: '10px',
                 fontWeight: 700,
-                color: '#17402C',
+                color: '#A3C4A3',
               }}>JA</span>
             </div>
           </div>
@@ -1240,6 +1702,7 @@ export default function AdminPage() {
             {activeSection === 'moderation' && <ModerationSection />}
             {activeSection === 'content' && <ContentSection />}
             {activeSection === 'audit' && <AuditSection />}
+            {activeSection === 'rewards' && <RewardsSection />}
           </div>
 
           {/* Footer spacer */}

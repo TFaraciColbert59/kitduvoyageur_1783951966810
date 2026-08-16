@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { DM_Sans, Manrope, IBM_Plex_Mono } from 'next/font/google';
-import '../styles/tailwind.css';
+import '@/styles/index.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';

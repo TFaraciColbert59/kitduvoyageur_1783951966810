@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import HeroProfil from '@/components/compte/HeroProfil';
 import StatsBandeau from '@/components/compte/StatsBandeau';
@@ -34,6 +35,7 @@ import { fetchDashboardData, type CompteDashboardData } from '@/lib/supabase/que
 
 export default function ComptePage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<CompteTab>('vue-d-ensemble');
   const [toast, setToast] = useState<string | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -157,7 +159,7 @@ export default function ComptePage() {
 
       {/* Mobile-only app-like view (refonte) */}
       <div className="block md:hidden">
-        <MobilePageShell background="#FAF7F1">
+        <MobilePageShell background="#F5F3EE">
           <MobileCompteV2 />
         </MobilePageShell>
       </div>
@@ -206,6 +208,10 @@ export default function ComptePage() {
             <TabsCompte
               activeTab={activeTab}
               onTabChange={(tab) => {
+                if (tab === 'recompenses') {
+                  router.push('/recompenses');
+                  return;
+                }
                 setActiveTab(tab);
                 showToast(`Onglet : ${tab.replace('-', ' ')}`);
               }}

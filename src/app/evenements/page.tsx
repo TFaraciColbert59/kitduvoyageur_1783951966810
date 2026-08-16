@@ -724,7 +724,12 @@ export default function EvenementsPage() {
       {/* Events list */}
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '3px solid rgba(11,31,23,0.1)', borderTopColor: '#17402C', animation: 'spin 0.8s linear infinite' }} />
+          <div style={{ width: '28px', height: '28px', borderRadius: '50%', border: '2px solid rgba(11,31,23,0.12)', borderTopColor: '#17402C', animation: 'lkdv-spin 0.8s linear infinite' }} />
+          <style jsx>{`
+            @keyframes lkdv-spin {
+              to { transform: rotate(360deg); }
+            }
+          `}</style>
         </div>
       ) : filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '40px 0', color: '#6B7A72' }}>
@@ -759,8 +764,8 @@ export default function EvenementsPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           {mobileContent}
+          <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
         </MobilePageShell>
-        
       </div>
 
       {/* Shared: Create event modal */}

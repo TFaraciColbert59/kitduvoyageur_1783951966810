@@ -35,7 +35,7 @@ export default function HomePage() {
       <Header />
       
       {/* ── HERO ── */}
-      <section className="relative min-h-[90vh] flex flex-col pt-32 px-4 pb-12 overflow-hidden">
+      <section className="relative min-h-[90vh] flex flex-col pt-40 px-4 pb-12 overflow-hidden">
         {/* Background elements */}
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-gradient-to-br from-[#E4EFE8] via-[#F7FAF8] to-white" />
@@ -83,7 +83,7 @@ export default function HomePage() {
 
           {/* Right Card */}
           <div className="w-full max-w-[340px] flex-shrink-0">
-            <div className="bg-[#1C2620]/5 backdrop-blur-xl border border-white/20 rounded-3xl p-6 shadow-2xl shadow-black/5 relative overflow-hidden">
+            <div className="bg-[#1C2620]/5 backdrop-blur-xl border border-white/20 rounded-[0.75rem] p-6 shadow-2xl shadow-black/5 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/10" />
               <div className="relative z-10">
                 <p className="text-[9px] font-mono tracking-widest text-[#5A6A5D] uppercase mb-1">ESPACE DE RÉSERVE</p>

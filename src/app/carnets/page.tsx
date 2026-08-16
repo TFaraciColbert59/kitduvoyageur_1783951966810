@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
@@ -879,9 +879,25 @@ export default function CarnetsPage() {
         if (uErr) throw uErr;
         showToast('Carnet mis à jour !');
       } else {
-        const { error: iErr } = await supabase.from('carnets').insert(payload);
+        const { data: newC, error: iErr } = await supabase.from('carnets').insert(payload).select('id').single();
         if (iErr) throw iErr;
         showToast('Carnet publié !');
+
+        // Trigger reward
+        try {
+          await fetch('/api/rewards/claim', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action_type: 'carnet',
+              target_id: newC?.id,
+              target_type: 'carnet',
+              metadata: { title: form.title, description: form.description }
+            })
+          });
+        } catch (rewardsErr) {
+          console.warn('Rewards claim error:', rewardsErr);
+        }
       }
       setShowCreate(false);
       setEditCarnet(null);

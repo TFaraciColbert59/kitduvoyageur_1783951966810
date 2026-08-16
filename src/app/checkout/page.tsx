@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -732,7 +732,7 @@ export default function CheckoutPage() {
           </button>
         </div>
 
-        
+        <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
       </MobilePageShell>
     </div>
   </>

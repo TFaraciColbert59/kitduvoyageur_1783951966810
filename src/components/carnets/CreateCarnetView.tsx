@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -220,6 +220,22 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
         alert("Impossible de publier le carnet : " + (error.message || 'erreur serveur'));
         setSaving(false);
         return;
+      }
+
+      // Trigger reward
+      try {
+        await fetch('/api/rewards/claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action_type: 'carnet',
+            target_id: newCarnet.id,
+            target_type: 'carnet',
+            metadata: { title: form.title, description: form.chapeau }
+          })
+        });
+      } catch (rewardsErr) {
+        console.warn('Rewards claim error:', rewardsErr);
       }
 
       setSaveSuccess(true);

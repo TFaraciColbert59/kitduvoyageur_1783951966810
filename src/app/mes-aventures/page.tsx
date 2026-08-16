@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
@@ -256,7 +256,12 @@ export default function MesAventuresPage() {
       {/* Loading */}
       {loading && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 0' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#17402C', animation: 'spin 0.8s linear infinite' }} />
+          <div style={{ width: '28px', height: '28px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.15)', borderTopColor: '#17402C', animation: 'lkdv-spin 0.8s linear infinite' }} />
+          <style jsx>{`
+            @keyframes lkdv-spin {
+              to { transform: rotate(360deg); }
+            }
+          `}</style>
         </div>
       )}
 
@@ -317,7 +322,7 @@ export default function MesAventuresPage() {
                     style={{ color: 'rgba(255,255,255,0.2)', border: 'none', background: 'none', cursor: 'pointer', padding: '4px', flexShrink: 0 }}
                   >
                     {removing === saved.id ? (
-                      <div style={{ width: '14px', height: '14px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+                      <div style={{ width: '14px', height: '14px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)', borderTopColor: 'transparent', animation: 'lkdv-spin 0.8s linear infinite' }} />
                     ) : (
                       <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     )}

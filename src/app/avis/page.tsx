@@ -71,24 +71,104 @@ function WriteReviewModal({ onClose, onSubmit }: { onClose: () => void; onSubmit
   const [rating, setRating] = useState(0); const [hovered, setHovered] = useState(0); const [submitted, setSubmitted] = useState(false); const [submitting, setSubmitting] = useState(false); const [form, setForm] = useState({ type: 'produit', target_name: '', title: '', comment: '' });
   const handleSubmit = async () => { if (!rating || !form.title || !form.comment || !form.target_name) return; setSubmitting(true); await onSubmit({ ...form, rating }); setSubmitting(false); setSubmitted(true); setTimeout(() => { onClose(); }, 2000); };
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-card rounded-2xl border border-border p-6 max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
+      <div style={{ backgroundColor: '#FBFAF6', border: '1px solid rgba(11,31,23,0.08)', borderRadius: '16px', padding: '24px', width: '100%', maxWidth: '480px', boxShadow: '0 10px 25px rgba(11,31,23,0.15)', boxSizing: 'border-box' }} onClick={(e) => e.stopPropagation()}>
         {!submitted ? (
           <>
-            <div className="flex items-center justify-between mb-5"><h3 className="font-display font-700 text-foreground text-lg">Laisser un avis</h3><button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors"><Icon name="XMarkIcon" size={18} /></button></div>
-            <div className="space-y-4">
-              <div><label className="text-xs font-600 text-muted-foreground uppercase tracking-wider block mb-2">Type d&apos;avis</label>
-                <div className="grid grid-cols-2 gap-2">{Object.entries(typeConfig).map(([key, val]) => <button key={key} onClick={() => setForm((f) => ({ ...f, type: key }))} className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all text-sm text-left ${form.type === key ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary hover:bg-primary/5'}`}><Icon name={val.icon} size={14} className="text-muted-foreground" />{val.label}</button>)}</div>
-              </div>
-              <input value={form.target_name} onChange={(e) => setForm((f) => ({ ...f, target_name: e.target.value }))} className="input-field w-full" placeholder="Nom du produit ou kit" />
-              <div><label className="text-xs font-600 text-muted-foreground uppercase tracking-wider block mb-2">Note</label><div className="flex gap-1">{[1, 2, 3, 4, 5].map((star) => <button key={star} onMouseEnter={() => setHovered(star)} onMouseLeave={() => setHovered(0)} onClick={() => setRating(star)}><Icon name="StarIcon" size={28} className={`transition-colors ${star <= (hovered || rating) ? 'text-amber-500 fill-amber-500' : 'text-border'}`} /></button>)}</div></div>
-              <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} className="input-field w-full" placeholder="Résumez votre expérience" />
-              <textarea value={form.comment} onChange={(e) => setForm((f) => ({ ...f, comment: e.target.value }))} className="input-field resize-none w-full" rows={4} placeholder="Décrivez votre expérience..." />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0B1F17', margin: 0 }}>Laisser un avis</h3>
+              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: '#6B7A72' }}>
+                <Icon name="XMarkIcon" size={18} />
+              </button>
             </div>
-            <div className="flex gap-3 mt-6"><button onClick={onClose} className="btn-secondary flex-1 justify-center py-3">Annuler</button><button onClick={handleSubmit} disabled={submitting || !rating || !form.title || !form.comment} className="btn-primary flex-1 justify-center py-3 disabled:opacity-50"><Icon name="PaperAirplaneIcon" size={16} />{submitting ? 'Publication...' : 'Publier l\'avis'}</button></div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#6B7A72', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '8px' }}>Type d&apos;avis</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  {Object.entries(typeConfig).map(([key, val]) => (
+                    <button
+                      key={key}
+                      onClick={() => setForm((f) => ({ ...f, type: key }))}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px',
+                        borderRadius: '12px',
+                        border: form.type === key ? '2px solid #17402C' : '1px solid rgba(11,31,23,0.12)',
+                        background: form.type === key ? 'rgba(23,64,44,0.05)' : '#fff',
+                        color: '#0B1F17',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      <Icon name={val.icon} size={14} className="text-muted-foreground" />
+                      {val.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#6B7A72', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>Cible</label>
+                <input
+                  value={form.target_name}
+                  onChange={(e) => setForm((f) => ({ ...f, target_name: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(11,31,23,0.12)', background: '#fff', fontSize: '14px', boxSizing: 'border-box' }}
+                  placeholder="Nom du produit ou kit"
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#6B7A72', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '8px' }}>Note</label>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button key={star} onMouseEnter={() => setHovered(star)} onMouseLeave={() => setHovered(0)} onClick={() => setRating(star)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+                      <Icon name="StarIcon" size={28} className={`transition-colors ${star <= (hovered || rating) ? 'text-amber-500 fill-amber-500' : 'text-border'}`} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#6B7A72', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>Titre</label>
+                <input
+                  value={form.title}
+                  onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(11,31,23,0.12)', background: '#fff', fontSize: '14px', boxSizing: 'border-box' }}
+                  placeholder="Résumez votre expérience"
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#6B7A72', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>Commentaire</label>
+                <textarea
+                  value={form.comment}
+                  onChange={(e) => setForm((f) => ({ ...f, comment: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(11,31,23,0.12)', background: '#fff', fontSize: '14px', boxSizing: 'border-box', fontFamily: 'inherit', resize: 'none' }}
+                  rows={4}
+                  placeholder="Décrivez votre expérience..."
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+              <button type="button" onClick={onClose} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.12)', background: 'transparent', color: '#0B1F17', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Annuler
+              </button>
+              <button type="button" onClick={handleSubmit} disabled={submitting || !rating || !form.title || !form.comment} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: '#17402C', color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: (submitting || !rating || !form.title || !form.comment) ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <Icon name="PaperAirplaneIcon" size={16} />
+                {submitting ? 'Publication...' : 'Publier l\'avis'}
+              </button>
+            </div>
           </>
         ) : (
-          <div className="text-center py-8"><div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4"><Icon name="CheckIcon" size={28} className="text-emerald-600" /></div><h3 className="font-display font-700 text-foreground text-lg mb-2">Avis publié !</h3><button onClick={onClose} className="btn-primary justify-center px-8 py-3">Fermer</button></div>
+          <div style={{ textAlign: 'center', padding: '32px 0' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#EDF3ED', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <Icon name="CheckIcon" size={28} style={{ color: '#17402C' }} />
+            </div>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0B1F17', marginBottom: '8px' }}>Avis publié !</h3>
+            <button onClick={onClose} style={{ padding: '10px 32px', background: '#17402C', color: '#fff', border: 'none', borderRadius: '999px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+              Fermer
+            </button>
+          </div>
         )}
       </div>
     </div>

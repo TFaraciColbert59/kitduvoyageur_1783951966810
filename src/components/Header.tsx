@@ -7,6 +7,7 @@ import Icon from '@/components/ui/AppIcon';
 
 import { useAuth } from '@/contexts/AuthContext';
 import GlobalSearchModal from '@/components/ui/GlobalSearchModal';
+import { createClient } from '@/lib/supabase/client';
 
 const NAV_LINKS = [
   { label: 'Aventures', href: '/explorer' },
@@ -21,6 +22,47 @@ export default function Header() {
   const [mounted, setMounted] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
+
+    const supabase = createClient();
+
+    const fetchUnread = async () => {
+      const { count } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('read', false);
+      setUnreadCount(count || 0);
+    };
+
+    fetchUnread();
+
+    const channel = supabase
+      .channel('notifications-header-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          fetchUnread();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   useEffect(() => {
     setMounted(true);
@@ -40,7 +82,7 @@ export default function Header() {
         <div
           className={`w-full rounded-full px-4 sm:px-5 transition-all duration-300 flex items-center justify-between pointer-events-auto cursor-default ${
             scrolled
-              ? 'bg-white/90 backdrop-blur-xl shadow-md border border-[#1C2620]/10 py-2'
+              ? 'bg-white/90 backdrop-blur-xl shadow-md border border-${FOREGROUND_900}/10 py-2'
               : 'bg-white/95 backdrop-blur-md shadow-sm border border-[#E8E4D8] py-2.5'
           }`}
         >
@@ -113,7 +155,11 @@ export default function Header() {
               title="Notifications"
             >
               <Icon name="BellIcon" size={16} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#2D6A4F]" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] flex items-center justify-center bg-[#2D6A4F] text-white text-[8px] font-bold rounded-full px-1 border border-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </Link>
 
             {/* Recherche Button */}

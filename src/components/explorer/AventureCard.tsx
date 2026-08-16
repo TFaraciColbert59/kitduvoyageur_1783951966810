@@ -44,7 +44,7 @@ export default function AventureCard({
       style={{
         background: '#FBFAF6',
         border: '1px solid rgba(11,31,23,0.08)',
-        borderRadius: '18px',
+        borderRadius: '16px',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',

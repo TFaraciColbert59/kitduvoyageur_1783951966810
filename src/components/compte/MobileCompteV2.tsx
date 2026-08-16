@@ -8,14 +8,14 @@ import { createClient } from '@/lib/supabase/client';
 
 /* ─── Design tokens (refonte mobile /compte) ─────────────────────────────── */
 const C = {
-  paper: '#FAF7F1',
+  paper: '#F5F3EE',
   stone: '#F4F1EB',
   ink900: '#17211D',
   ink700: '#3A463F',
   ink500: '#6B7671',
   ink300: '#B9C0BB',
   forest900: '#0B1F17',
-  forest800: '#12352A',
+  forest800: '#17402C',
   sage100: '#E1EBDD',
   sage300: '#A9C6B0',
   warm500: '#C9924A',
@@ -253,12 +253,12 @@ export default function MobileCompteV2() {
       </div>
 
       {/* Actions */}
-      <div style={{ display: 'flex', gap: 6, padding: '0 20px 20px' }}>
-        <button onClick={() => router.push('/compte/modifier')} style={{ flex: 1, height: 34, borderRadius: 10, background: C.forest800, color: '#fff', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer', border: 'none' }}>
+      <div style={{ display: 'flex', gap: 8, padding: '0 20px 20px' }}>
+        <button onClick={() => router.push('/compte/modifier')} style={{ flex: 1, height: 38, borderRadius: 999, background: C.forest800, color: '#fff', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer', border: 'none' }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3l4 4L8 20l-5 1 1-5L17 3z" /></svg>
           Modifier le profil
         </button>
-        <button onClick={shareProfile} style={{ flex: 1, height: 34, borderRadius: 10, background: C.stone, color: C.ink900, fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer', border: 'none' }}>
+        <button onClick={shareProfile} style={{ flex: 1, height: 38, borderRadius: 999, background: C.stone, color: C.ink900, fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer', border: 'none' }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" /><path d="M16 6l-4-4-4 4" /><path d="M12 2v13" /></svg>
           Partager
         </button>
@@ -311,7 +311,7 @@ export default function MobileCompteV2() {
             <Link
               key={`${c.kind}-${c.id}`}
               href={c.kind === 'carnet' ? `/carnets/${c.id}` : c.kind === 'groupe' ? `/groupes/${c.id}` : `/clubs/${c.slug || c.id}`}
-              style={{ position: 'relative', aspectRatio: '1 / 1', background: c.cover ? `url(${c.cover}) center/cover` : `linear-gradient(135deg, ${C.forest800}, ${C.forest900})`, backgroundColor: C.stone, overflow: 'hidden', display: 'block', textDecoration: 'none' }}
+              style={{ position: 'relative', aspectRatio: '1 / 1', background: c.cover ? `url(${c.cover}) center/cover` : `linear-gradient(135deg, ${C.forest800}, ${C.forest900})`, backgroundColor: C.stone, overflow: 'hidden', display: 'block', textDecoration: 'none', borderRadius: 12 }}
             >
               {!c.cover && (
                 <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, color: '#fff' }}>
@@ -342,13 +342,14 @@ export default function MobileCompteV2() {
       {menuOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 70 }}>
           <button onClick={() => setMenuOpen(false)} aria-label="Fermer" style={{ position: 'absolute', inset: 0, background: 'rgba(11,31,23,0.35)', border: 'none', cursor: 'pointer' }} />
-          <div style={{ position: 'absolute', left: 12, right: 12, bottom: 'calc(env(safe-area-inset-bottom) + 76px)', background: C.paper, borderRadius: 20, border: '1px solid rgba(11,31,23,0.08)', boxShadow: '0 20px 48px rgba(11,31,23,0.14)', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', left: 12, right: 12, bottom: 'calc(env(safe-area-inset-bottom) + 76px)', background: C.paper, borderRadius: 24, border: '1px solid rgba(11,31,23,0.08)', boxShadow: '0 20px 48px rgba(11,31,23,0.14)', overflow: 'hidden' }}>
             {([
               { l: 'Mon inventaire', h: '/mon-materiel' },
               { l: 'Mes carnets', h: '/carnets' },
               { l: 'Mes groupes', h: '/groupes' },
               { l: 'Mes clubs', h: '/clubs' },
               { l: 'Fidélité & récompenses', h: '/fidelite' },
+              { l: 'Gains & Récompenses', h: '/recompenses' },
               { l: 'Abonnements', h: '/abonnements' },
               { l: 'Boutique & commandes', h: '/boutique' },
               { l: 'Paramètres', h: '/compte/modifier' },

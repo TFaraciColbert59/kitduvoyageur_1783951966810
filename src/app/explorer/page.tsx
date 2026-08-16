@@ -38,7 +38,7 @@ export default function ExplorerPage() {
   const [activeCategory, setActiveCategory] = useState<string>('Tout');
   const [mobileTab, setMobileTab] = useState<'map' | 'list'>('map');
 
-  const { data: trailsData, isLoading, error } = useQuery<MapTrail[]>({
+  const { data: trailsData, isLoading, error, refetch } = useQuery<MapTrail[]>({
     queryKey: ['hikes'],
     queryFn: async () => {
       const res = await fetch('/api/hikes');
@@ -598,20 +598,58 @@ export default function ExplorerPage() {
           {/* Card list */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '0 16px 16px' }}>
             {isLoading && (
-              <div style={{ padding: '20px', textAlign: 'center', color: '#6B7A72', fontSize: '13px' }}>
-                Chargement…
+              <div style={{ padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                <div
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '999px',
+                    border: '2px solid rgba(11,31,23,0.12)',
+                    borderTopColor: '#17402C',
+                    animation: 'lkdv-spin 0.8s linear infinite',
+                  }}
+                />
+                <span style={{ fontSize: '12px', color: '#6B7A72', fontFamily: 'ui-monospace, monospace', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                  Chargement des sentiers…
+                </span>
+                <style jsx>{`
+                  @keyframes lkdv-spin {
+                    to { transform: rotate(360deg); }
+                  }
+                `}</style>
               </div>
             )}
 
             {!isLoading && error && (
-              <div style={{ padding: '20px', textAlign: 'center', color: '#6B7A72', fontSize: '13px' }}>
-                Erreur de chargement
+              <div style={{ padding: '40px 20px', textAlign: 'center', background: '#FBFAF6', borderRadius: '16px', border: '1px solid rgba(11,31,23,0.06)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                <div style={{ fontSize: '24px' }}>⚠️</div>
+                <div style={{ fontSize: '14px', fontWeight: 500, color: '#0B1F17' }}>Impossible de charger les sentiers</div>
+                <button
+                  onClick={() => refetch()}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#17402C',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '999px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Réessayer
+                </button>
               </div>
             )}
 
             {!isLoading && !error && filteredTrails.length === 0 && (
-              <div style={{ padding: '20px', textAlign: 'center', color: '#6B7A72', fontSize: '13px' }}>
-                Aucun résultat
+              <div style={{ padding: '40px 20px', textAlign: 'center', background: '#FBFAF6', borderRadius: '16px', border: '1px solid rgba(11,31,23,0.06)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                <div style={{ fontSize: '24px' }}>🧭</div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#0B1F17' }}>Aucun itinéraire trouvé</div>
+                <div style={{ fontSize: '12px', color: '#6B7A72', maxWidth: '240px', lineHeight: 1.4 }}>
+                  Ajustez vos filtres de recherche ou de difficulté pour explorer de nouvelles aventures.
+                </div>
               </div>
             )}
 

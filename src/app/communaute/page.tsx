@@ -61,6 +61,20 @@ function PostCard({ post, user }: { post: any, user: any }) {
       // Revert optimistic UI on error
       setIsLiked(isLiked);
       setLikesCount(likesCount);
+    } else if (newLiked) {
+      try {
+        await fetch('/api/rewards/claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action_type: 'like',
+            target_id: post.id,
+            target_type: 'post'
+          })
+        });
+      } catch (rewardsErr) {
+        console.warn('Rewards claim error:', rewardsErr);
+      }
     }
   };
 
@@ -111,11 +125,26 @@ function PostCard({ post, user }: { post: any, user: any }) {
     if (error) {
       console.error("Comment insert error:", error);
       alert("Erreur lors de l'ajout du commentaire.");
+    } else {
+      try {
+        await fetch('/api/rewards/claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action_type: 'comment',
+            target_id: post.id,
+            target_type: 'post',
+            metadata: { content: newComment.content }
+          })
+        });
+      } catch (rewardsErr) {
+        console.warn('Rewards claim error:', rewardsErr);
+      }
     }
   };
 
   return (
-    <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-[#E8E4D8]">
+    <div className="bg-white rounded-[0.75rem] p-6 shadow-sm border border-[#E8E4D8] flex flex-col gap-3">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -133,11 +162,11 @@ function PostCard({ post, user }: { post: any, user: any }) {
               ) : (
                 <span className="font-bold text-sm text-[#1C2620]">{post.author?.full_name || 'Utilisateur inconnu'}</span>
               )}
-              <span className="bg-[#D3DFD7] text-[#2D5A3D] text-[8px] font-mono tracking-widest px-1.5 py-0.5 rounded uppercase">
+              <span className="bg-[#D3DFD7] text-[#2D5A3D] text-[12px] font-mono tracking-widest px-1.5 py-0.5 rounded uppercase">
                 {post.author?.loyalty_level || 'EXPLORATEUR'}
               </span>
             </div>
-            <div className="text-[11px] text-[#5C6B5E] mt-0.5">{timeAgo(post.created_at)}</div>
+            <div className="text-[12px] text-[#5C6B5E] mt-0.5">{timeAgo(post.created_at)}</div>
           </div>
         </div>
         <button className="text-[#C8C3B0] hover:text-[#1C2620] transition-colors p-1">
@@ -152,7 +181,7 @@ function PostCard({ post, user }: { post: any, user: any }) {
 
       {/* Image (Optional) */}
       {post.image_url && (
-        <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] rounded-[1.5rem] overflow-hidden mb-5">
+        <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] rounded-[0.75rem] overflow-hidden mb-5">
           <img src={post.image_url} alt={post.image_alt || "Post image"} className="w-full h-full object-cover" />
           {post.location && (
             <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5 text-[10px] font-semibold text-[#1C2620]">
@@ -185,8 +214,8 @@ function PostCard({ post, user }: { post: any, user: any }) {
             <span className="font-mono">{commentsCount}</span>
           </motion.button>
         </div>
-        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="text-[#5C6B5E] hover:text-[#1C2620] transition-colors p-1">
-          <Icon name="BookmarkIcon" size={18} variant="outline" />
+        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="hidden sm:inline-flex text-[#5C6B5E] hover:text-[#1C2620] transition-colors p-1">
+            <Icon name="BookmarkIcon" size={18} variant="outline" />
         </motion.button>
       </div>
 
@@ -296,6 +325,20 @@ function CarnetCard({ carnet, user }: { carnet: any, user: any }) {
         console.error('Error adding like for carnet:', error);
         setIsLiked(isLiked);
         setLikesCount(likesCount);
+      } else {
+        try {
+          await fetch('/api/rewards/claim', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action_type: 'like',
+              target_id: carnet.id,
+              target_type: 'carnet'
+            })
+          });
+        } catch (rewardsErr) {
+          console.warn('Rewards claim error:', rewardsErr);
+        }
       }
     } else {
       const { error } = await supabase.from('carnet_likes').delete().eq('carnet_id', carnet.id).eq('user_id', user.id);
@@ -355,6 +398,21 @@ function CarnetCard({ carnet, user }: { carnet: any, user: any }) {
     if (error) {
       console.error("Comment insert error:", error);
       alert("Erreur lors de l'ajout du commentaire.");
+    } else {
+      try {
+        await fetch('/api/rewards/claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action_type: 'comment',
+            target_id: carnet.id,
+            target_type: 'carnet',
+            metadata: { content: newComment.content }
+          })
+        });
+      } catch (rewardsErr) {
+        console.warn('Rewards claim error:', rewardsErr);
+      }
     }
   };
 
@@ -827,6 +885,22 @@ export default function CommunautePage() {
       `).single();
 
       if (error) throw error;
+
+      // Trigger reward
+      try {
+        await fetch('/api/rewards/claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action_type: 'carnet',
+            target_id: newCarnet.id,
+            target_type: 'carnet',
+            metadata: { title: form.title, description: form.description }
+          })
+        });
+      } catch (rewardsErr) {
+        console.warn('Rewards claim error:', rewardsErr);
+      }
 
       if (newCarnet) {
         setCarnets([newCarnet, ...carnets]);
@@ -1301,7 +1375,7 @@ export default function CommunautePage() {
                               </div>
                             </div>
                           )) : (
-                            <div className="bg-white/60 rounded-[2rem] p-8 border border-[#E8E4D8] flex flex-col items-center justify-center text-center col-span-full">
+                            <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8] mb-4 space-y-3 flex flex-col items-center justify-center text-center col-span-full">
                               <p className="text-sm text-[#5C6B5E] mb-2">Aucun groupe public pour l&apos;instant.</p>
                               <p className="text-xs text-[#5C6B5E]/70">Créez le premier en cliquant sur le bouton ci-dessus !</p>
                             </div>
@@ -1605,6 +1679,7 @@ export default function CommunautePage() {
               </div>
             )}
           </div>
+          <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
         </MobilePageShell>
         
       </div>
@@ -1631,7 +1706,7 @@ export default function CommunautePage() {
                   <input type="file" accept="image/*,video/*" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
                   <button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 rounded-full border border-[#E8E4D8] flex items-center justify-center text-[#5C6B5E] hover:text-[#2D5A3D] hover:border-[#2D5A3D] transition-colors" title="Ajouter une photo ou vidéo"><Icon name="PhotoIcon" size={20} /></button>
                 </div>
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handlePublish} disabled={isPublishing || (!newPostContent.trim() && !selectedFile)} className="bg-[#17402C] hover:bg-[#cc3d10] text-white px-6 py-2.5 rounded-full font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handlePublish} disabled={isPublishing || (!newPostContent.trim() && !selectedFile)} className="bg-[#17402C] hover:bg-[#2D6B4A] text-white px-6 py-2.5 rounded-full font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
                   {isPublishing ? 'Publication...' : 'Publier'}
                 </motion.button>
               </div>

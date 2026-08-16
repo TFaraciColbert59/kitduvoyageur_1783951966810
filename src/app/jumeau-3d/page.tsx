@@ -948,63 +948,63 @@ function AddItemModal({ userId, onClose, onAdd }: { userId: string; onClose: () 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-card rounded-2xl border border-border p-6 w-full max-w-md shadow-2xl">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-display font-700">Ajouter un article</h2>
-          <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors">
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+      <div style={{ backgroundColor: '#FBFAF6', border: '1px solid rgba(11,31,23,0.08)', borderRadius: '16px', padding: '24px', width: '100%', maxWidth: '400px', boxShadow: '0 10px 25px rgba(11,31,23,0.15)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0B1F17', margin: 0 }}>Ajouter un article</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: '#6B7A72' }}>
             <Icon name="XMarkIcon" size={20} variant="outline" />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1">Nom de l&apos;article</label>
+            <label style={{ fontSize: '12px', fontWeight: 500, color: '#6B7A72', display: 'block', marginBottom: '4px' }}>Nom de l&apos;article</label>
             <input
               type="text"
               value={form.name}
               onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(11,31,23,0.12)', background: '#fff', fontSize: '14px', boxSizing: 'border-box' }}
               placeholder="Ex: Tente 2 places"
               required
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
-              <label className="text-xs font-medium text-muted-foreground block mb-1">Catégorie</label>
+              <label style={{ fontSize: '12px', fontWeight: 500, color: '#6B7A72', display: 'block', marginBottom: '4px' }}>Catégorie</label>
               <select
                 value={form.category}
                 onChange={e => setForm(p => ({ ...p, category: e.target.value as BagItem['category'] }))}
-                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(11,31,23,0.12)', background: '#fff', fontSize: '14px', boxSizing: 'border-box' }}
               >
                 {Object.entries(CATEGORY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground block mb-1">Zone</label>
+              <label style={{ fontSize: '12px', fontWeight: 500, color: '#6B7A72', display: 'block', marginBottom: '4px' }}>Zone</label>
               <select
                 value={form.zone}
                 onChange={e => setForm(p => ({ ...p, zone: e.target.value as BagItem['zone'] }))}
-                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(11,31,23,0.12)', background: '#fff', fontSize: '14px', boxSizing: 'border-box' }}
               >
                 {Object.entries(ZONE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
             </div>
           </div>
           <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1">Poids (g)</label>
+            <label style={{ fontSize: '12px', fontWeight: 500, color: '#6B7A72', display: 'block', marginBottom: '4px' }}>Poids (g)</label>
             <input
               type="number"
               value={form.weightG}
               onChange={e => setForm(p => ({ ...p, weightG: Number(e.target.value) }))}
-              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(11,31,23,0.12)', background: '#fff', fontSize: '14px', boxSizing: 'border-box' }}
               min={1}
             />
           </div>
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors">
+          <div style={{ display: 'flex', gap: '12px', paddingTop: '8px' }}>
+            <button type="button" onClick={onClose} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.12)', background: 'transparent', color: '#0B1F17', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
               Annuler
             </button>
-            <button type="submit" disabled={saving} className="flex-1 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
+            <button type="submit" disabled={saving} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: '#17402C', color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: saving ? 0.5 : 1 }}>
               {saving ? 'Enregistrement...' : 'Ajouter'}
             </button>
           </div>

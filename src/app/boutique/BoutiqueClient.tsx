@@ -594,7 +594,12 @@ export default function BoutiqueClient() {
             {/* Product Grid */}
             {loading ? (
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '48px 0' }}>
-                <span style={{ display: 'inline-block', width: '32px', height: '32px', border: '3px solid rgba(11,31,23,0.1)', borderTopColor: '#1C2620', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                <span style={{ display: 'inline-block', width: '28px', height: '28px', borderRadius: '50%', border: '2px solid rgba(11,31,23,0.12)', borderTopColor: '#17402C', animation: 'lkdv-spin 0.8s linear infinite' }} />
+                <style jsx>{`
+                  @keyframes lkdv-spin {
+                    to { transform: rotate(360deg); }
+                  }
+                `}</style>
               </div>
             ) : filteredProducts.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '32px 0' }}>
@@ -673,6 +678,7 @@ export default function BoutiqueClient() {
               </div>
             )}
           </div>
+          <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
         </MobilePageShell>
         
       </div>
