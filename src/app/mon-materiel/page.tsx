@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/Header';
 import { useEquipment, UserEquipmentItem, UnifiedProduct } from '@/hooks/useEquipment';
-import { useUserKits, CustomKit } from '@/hooks/useUserKits';
+import { useUserKits, CustomKit, DEFAULT_AUTHENTIC_KITS } from '@/hooks/useUserKits';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { EQUIPMENT_CATEGORIES, getCategoryIcon } from '@/constants/equipmentCategories';
 import GearDetailDrawer from '@/components/inventaire/GearDetailDrawer';
@@ -531,11 +531,19 @@ export default function MonMaterielPage() {
   };
 
   const filteredKits = useMemo(() => {
-    if (kitFilter === 'all') return kits.filter((k) => k.status === 'active');
-    if (kitFilter === 'ia') return kits.filter((k) => k.status === 'active' && k.source === 'configurator');
-    if (kitFilter === 'manuel') return kits.filter((k) => k.status === 'active' && k.source === 'manuel');
-    if (kitFilter === 'auto') return kits.filter((k) => k.status === 'active' && k.source === 'auto_prepared');
-    return kits.filter((k) => k.status === 'active');
+    const sourceList = (kits && kits.length > 0) ? kits : DEFAULT_AUTHENTIC_KITS;
+    let list = sourceList.filter((k) => k.status === 'active');
+
+    if (kitFilter === 'ia') list = list.filter((k) => k.source === 'configurator');
+    if (kitFilter === 'manuel') list = list.filter((k) => k.source === 'manuel');
+    if (kitFilter === 'auto') list = list.filter((k) => k.source === 'auto_prepared');
+
+    // Toujours afficher en premier les kits créés avec le configurateur IA !
+    return [...list].sort((a, b) => {
+      if (a.source === 'configurator' && b.source !== 'configurator') return -1;
+      if (a.source !== 'configurator' && b.source === 'configurator') return 1;
+      return 0;
+    });
   }, [kits, kitFilter]);
 
   // Organisation de l'inventaire par catégories avec les vrais produits Supabase
@@ -982,34 +990,53 @@ export default function MonMaterielPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-            {filteredKits.map((kit) => (
-              <div
-                key={kit.id}
-                onClick={() => handleOpenKitCockpit(kit)}
-                className={`bg-white rounded-xl p-3.5 border transition-all hover:shadow-2xs active:scale-99 cursor-pointer flex flex-col justify-between ${
-                  kit.source === 'configurator'
-                    ? 'border-[#9ECB8A] bg-gradient-to-b from-white to-[#E4EEDF]/20'
-                    : 'border-black/[0.04]'
-                }`}
-              >
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-[10px] font-mono">
-                    <span className="px-2 py-0.5 rounded-full bg-[#F5F3EC] text-[#17402C] font-semibold">
-                      {kit.source === 'configurator' ? '🤖 IA' : '👤 Manuel'}
-                    </span>
-                    <span className="font-semibold text-[#0B1F17]">{formatWeight(kit.total_weight_g)}</span>
-                  </div>
-                  <div>
-                    <h4 className="text-sm sm:text-base font-medium text-[#0B1F17] leading-snug">{kit.name}</h4>
-                    <p className="text-[10px] sm:text-[11px] text-[#6B7770] line-clamp-1 mt-0.5">{kit.description}</p>
-                  </div>
-                  <div className="text-[10px] font-mono text-[#6B7770] pt-1.5 border-t border-black/[0.03] flex justify-between items-center">
-                    <span>{kit.items.length} pièces</span>
-                    <span className="text-[#17402C] font-medium">Cockpit ➔</span>
+            {filteredKits.length > 0 ? (
+              filteredKits.map((kit) => (
+                <div
+                  key={kit.id}
+                  onClick={() => handleOpenKitCockpit(kit)}
+                  className={`bg-white rounded-xl p-3.5 border transition-all hover:shadow-2xs active:scale-99 cursor-pointer flex flex-col justify-between ${
+                    kit.source === 'configurator'
+                      ? 'border-[#9ECB8A] bg-gradient-to-b from-white to-[#E4EEDF]/20 shadow-2xs'
+                      : 'border-black/[0.04]'
+                  }`}
+                >
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-[10px] font-mono">
+                      <span className={`px-2 py-0.5 rounded-full font-semibold ${
+                        kit.source === 'configurator'
+                          ? 'bg-[#17402C] text-white'
+                          : 'bg-[#F5F3EC] text-[#17402C]'
+                      }`}>
+                        {kit.source === 'configurator' ? '🤖 Configuré IA' : kit.source === 'auto_prepared' ? '🌲 Auto-préparé' : '👤 Manuel'}
+                      </span>
+                      <span className="font-semibold text-[#0B1F17]">{formatWeight(kit.total_weight_g)}</span>
+                    </div>
+                    <div>
+                      <h4 className="text-sm sm:text-base font-medium text-[#0B1F17] leading-snug">{kit.name}</h4>
+                      <p className="text-[10px] sm:text-[11px] text-[#6B7770] line-clamp-1 mt-0.5">{kit.description}</p>
+                    </div>
+                    <div className="text-[10px] font-mono text-[#6B7770] pt-1.5 border-t border-black/[0.03] flex justify-between items-center">
+                      <span>{kit.items.length} pièces</span>
+                      <span className="text-[#17402C] font-semibold">Gérer dans le cockpit ➔</span>
+                    </div>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="col-span-full p-6 text-center bg-white rounded-xl border border-dashed border-black/15 space-y-2">
+                <p className="text-xs text-[#6B7770]">Aucun kit ne correspond à ce filtre.</p>
+                <button
+                  onClick={() => {
+                    triggerHaptic('selection');
+                    handleGeneratePreset(AI_PRESETS[0]);
+                  }}
+                  className="px-4 py-1.5 rounded-full bg-[#17402C] text-white text-xs font-semibold hover:bg-[#0B1F17] transition-colors"
+                >
+                  🤖 Générer un kit avec l'IA
+                </button>
               </div>
-            ))}
+            )}
           </div>
         </section>
 

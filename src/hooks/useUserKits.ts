@@ -40,9 +40,88 @@ export interface CustomKit {
 
 const GUEST_KITS_STORAGE_KEY = 'lkdv_guest_kits';
 
+export const DEFAULT_AUTHENTIC_KITS: CustomKit[] = [
+  {
+    id: 'kit-trek-montagne-3j',
+    user_id: 'guest',
+    name: 'Trek Montagne 3 jours',
+    description: 'Kit complet optimisé pour autonomie en altitude (bivouac, couchage, cuisine).',
+    for_destination: 'Massif Alpin',
+    season: 'Été',
+    activity: 'Trek Alpin',
+    total_weight_g: 9400,
+    source: 'configurator',
+    status: 'active',
+    is_favorite: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    items: [
+      { id: 'ki-1', kit_id: 'kit-trek-montagne-3j', item_name: 'Osprey Farpoint 40', category: 'Sacs & Portage', weight_g: 1420, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-2', kit_id: 'kit-trek-montagne-3j', item_name: 'MSR Hubba Hubba NX 2P', category: 'Couchage & Tentes', weight_g: 1720, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-3', kit_id: 'kit-trek-montagne-3j', item_name: 'Sea to Summit Spark SP1', category: 'Couchage & Tentes', weight_g: 490, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-4', kit_id: 'kit-trek-montagne-3j', item_name: 'Therm-a-Rest NeoAir XLite', category: 'Couchage & Tentes', weight_g: 340, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-5', kit_id: 'kit-trek-montagne-3j', item_name: 'Patagonia Torrentshell 3L', category: 'Vêtements & Vestes', weight_g: 394, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-6', kit_id: 'kit-trek-montagne-3j', item_name: 'MSR PocketRocket 2', category: 'Cuisine & Réchauds', weight_g: 73, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-7', kit_id: 'kit-trek-montagne-3j', item_name: 'Filtre Sawyer Mini', category: 'Eau & Filtres', weight_g: 57, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-8', kit_id: 'kit-trek-montagne-3j', item_name: 'Petzl Actik Core 450lm', category: 'Lampes & Éclairage', weight_g: 85, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-9', kit_id: 'kit-trek-montagne-3j', item_name: 'Garmin inReach Mini 2', category: 'Navigation & GPS', weight_g: 100, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-10', kit_id: 'kit-trek-montagne-3j', item_name: 'Trousse Care Plus Mountaineer', category: 'Sécurité & Soins', weight_g: 450, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-11', kit_id: 'kit-trek-montagne-3j', item_name: 'Couteau Opinel N°8 Inox', category: 'Accessoires & Outils', weight_g: 45, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-12', kit_id: 'kit-trek-montagne-3j', item_name: 'Batterie Anker PowerCore 10 000', category: 'Accessoires & Outils', weight_g: 180, quantity: 1, is_essential: true, is_checked: true },
+    ],
+  },
+  {
+    id: 'kit-bivouac-foret-2j',
+    user_id: 'guest',
+    name: 'Bivouac Forêt & Massif 2j',
+    description: 'Kit préparé pour sorties nature avec abri et popote.',
+    for_destination: 'Forêt & Massifs',
+    season: 'Printemps/Automne',
+    activity: 'Bivouac Forêt',
+    total_weight_g: 7800,
+    source: 'auto_prepared',
+    status: 'active',
+    is_favorite: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    items: [
+      { id: 'ki-21', kit_id: 'kit-bivouac-foret-2j', item_name: 'Osprey Farpoint 40', category: 'Sacs & Portage', weight_g: 1420, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-22', kit_id: 'kit-bivouac-foret-2j', item_name: 'MSR Hubba Hubba NX 2P', category: 'Couchage & Tentes', weight_g: 1720, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-23', kit_id: 'kit-bivouac-foret-2j', item_name: 'Sea to Summit Spark SP1', category: 'Couchage & Tentes', weight_g: 490, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-24', kit_id: 'kit-bivouac-foret-2j', item_name: 'Therm-a-Rest NeoAir XLite', category: 'Couchage & Tentes', weight_g: 340, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-25', kit_id: 'kit-bivouac-foret-2j', item_name: 'MSR PocketRocket 2', category: 'Cuisine & Réchauds', weight_g: 73, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-26', kit_id: 'kit-bivouac-foret-2j', item_name: 'Filtre Sawyer Mini', category: 'Eau & Filtres', weight_g: 57, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-27', kit_id: 'kit-bivouac-foret-2j', item_name: 'Petzl Actik Core 450lm', category: 'Lampes & Éclairage', weight_g: 85, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-28', kit_id: 'kit-bivouac-foret-2j', item_name: 'Couteau Opinel N°8 Inox', category: 'Accessoires & Outils', weight_g: 45, quantity: 1, is_essential: true, is_checked: true },
+    ],
+  },
+  {
+    id: 'kit-journee-estivale',
+    user_id: 'guest',
+    name: 'Randonnée Journée Légère',
+    description: 'Kit ultra-léger 15–25 km sans bivouac.',
+    for_destination: 'Moyenne Montagne',
+    season: 'Été',
+    activity: 'Randonnée Journée',
+    total_weight_g: 3200,
+    source: 'manuel',
+    status: 'active',
+    is_favorite: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    items: [
+      { id: 'ki-31', kit_id: 'kit-journee-estivale', item_name: 'Osprey Farpoint 40', category: 'Sacs & Portage', weight_g: 1420, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-32', kit_id: 'kit-journee-estivale', item_name: 'Patagonia Torrentshell 3L', category: 'Vêtements & Vestes', weight_g: 394, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-33', kit_id: 'kit-journee-estivale', item_name: 'Filtre Sawyer Mini', category: 'Eau & Filtres', weight_g: 57, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-34', kit_id: 'kit-journee-estivale', item_name: 'Petzl Actik Core 450lm', category: 'Lampes & Éclairage', weight_g: 85, quantity: 1, is_essential: true, is_checked: true },
+      { id: 'ki-35', kit_id: 'kit-journee-estivale', item_name: 'Couteau Opinel N°8 Inox', category: 'Accessoires & Outils', weight_g: 45, quantity: 1, is_essential: true, is_checked: true },
+    ],
+  },
+];
+
 export function useUserKits(userEquipment: UserEquipmentItem[] = []) {
   const { user } = useAuth();
-  const [kits, setKits] = useState<CustomKit[]>([]);
+  const [kits, setKits] = useState<CustomKit[]>(DEFAULT_AUTHENTIC_KITS);
   const [loading, setLoading] = useState(true);
 
   // Charger les kits depuis Supabase ou localStorage
@@ -114,31 +193,51 @@ export function useUserKits(userEquipment: UserEquipmentItem[] = []) {
             };
           });
 
+          // Trier : kits créés avec le configurateur en premier !
+          formattedKits.sort((a, b) => {
+            if (a.source === 'configurator' && b.source !== 'configurator') return -1;
+            if (a.source !== 'configurator' && b.source === 'configurator') return 1;
+            return 0;
+          });
+
           setKits(formattedKits);
         } else {
-          setKits([]);
+          setKits(DEFAULT_AUTHENTIC_KITS);
         }
       } else {
         // Mode Invité / LocalStorage
         const local = localStorage.getItem(GUEST_KITS_STORAGE_KEY);
         if (local) {
           const parsed = JSON.parse(local);
-          // Filtrer corbeille > 10 jours en local
           const now = Date.now();
-          const validKits = parsed.filter((k: CustomKit) => {
-            if (k.status === 'trash' && k.deleted_at) {
-              const diffDays = (now - new Date(k.deleted_at).getTime()) / (1000 * 3600 * 24);
-              return diffDays <= 10;
-            }
-            return true;
+          const validKits = Array.isArray(parsed) && parsed.length > 0
+            ? parsed.filter((k: CustomKit) => {
+                if (k.status === 'trash' && k.deleted_at) {
+                  const diffDays = (now - new Date(k.deleted_at).getTime()) / (1000 * 3600 * 24);
+                  return diffDays <= 10;
+                }
+                return true;
+              })
+            : DEFAULT_AUTHENTIC_KITS;
+
+          // Trier : configurateur IA toujours en premier
+          validKits.sort((a: CustomKit, b: CustomKit) => {
+            if (a.source === 'configurator' && b.source !== 'configurator') return -1;
+            if (a.source !== 'configurator' && b.source === 'configurator') return 1;
+            return 0;
           });
+
           setKits(validKits);
         } else {
-          setKits([]);
+          setKits(DEFAULT_AUTHENTIC_KITS);
+          try {
+            localStorage.setItem(GUEST_KITS_STORAGE_KEY, JSON.stringify(DEFAULT_AUTHENTIC_KITS));
+          } catch {}
         }
       }
     } catch (err) {
-      console.warn('[useUserKits] loadKits error:', err);
+      console.warn('[useUserKits] loadKits fallback:', err);
+      setKits(DEFAULT_AUTHENTIC_KITS);
     } finally {
       setLoading(false);
     }
