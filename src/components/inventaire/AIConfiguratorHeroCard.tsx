@@ -14,6 +14,7 @@ interface AIConfiguratorHeroCardProps {
     for_destination: string;
     season: string;
     activity: string;
+    source?: string;
     gearItems: Array<{ item_name: string; category?: string; weight_g?: number }>;
   }) => Promise<any>;
 }

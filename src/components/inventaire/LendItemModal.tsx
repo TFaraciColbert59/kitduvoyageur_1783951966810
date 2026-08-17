@@ -3,15 +3,24 @@
 
 import React, { useState } from 'react';
 import { GearItemData } from '@/lib/mock/mon-materiel-marceline';
+import { UserEquipmentItem } from '@/hooks/useEquipment';
+
+export interface LendFormData {
+  loan_status: string;
+  loan_to_name: string;
+  expiry_date?: string;
+  notes?: string;
+}
 
 interface LendItemModalProps {
   isOpen: boolean;
   onClose: () => void;
-  item: GearItemData | null;
-  onSaveLoan: (borrowerName: string, returnDate?: string, notes?: string) => Promise<void>;
+  item: GearItemData | UserEquipmentItem | null;
+  onSaveLoan?: (borrowerName: string, returnDate?: string, notes?: string) => Promise<void>;
+  onSave?: (lendData: LendFormData) => Promise<void>;
 }
 
-export default function LendItemModal({ isOpen, onClose, item, onSaveLoan }: LendItemModalProps) {
+export default function LendItemModal({ isOpen, onClose, item, onSaveLoan, onSave }: LendItemModalProps) {
   // initialValue computed from item (may be null) — safe read prevents
   // "Cannot read properties of null (reading 'loan_to_name')" on mount
   const [borrowerName, setBorrowerName] = useState(item?.loan_to_name || '');
@@ -26,7 +35,16 @@ export default function LendItemModal({ isOpen, onClose, item, onSaveLoan }: Len
     if (!borrowerName.trim()) return;
     setSubmitting(true);
     try {
-      await onSaveLoan(borrowerName, returnDate, notes);
+      if (onSave) {
+        await onSave({
+          loan_status: 'prêté',
+          loan_to_name: borrowerName.trim(),
+          expiry_date: returnDate || undefined,
+          notes: notes.trim() || undefined,
+        });
+      } else if (onSaveLoan) {
+        await onSaveLoan(borrowerName, returnDate, notes);
+      }
       onClose();
     } finally {
       setSubmitting(false);

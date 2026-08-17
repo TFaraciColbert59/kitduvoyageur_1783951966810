@@ -266,6 +266,7 @@ export default function MonMaterielPage() {
         uvIndex: 6,
         condition: 'Partiellement nuageux',
         isAlert: false,
+        fetchedAt: new Date().toISOString(),
       },
     };
 
@@ -285,7 +286,17 @@ export default function MonMaterielPage() {
           isOvernight: activeHike.isOvernight ?? false,
           nightsCount: activeHike.nightsCount ?? 0,
           startDate: activeHike.targetDate,
-          weather: activeHike.weather || defaultHikeContext.weather,
+          weather: activeHike.weather
+            ? {
+                tempC: activeHike.weather.tempC ?? 18,
+                precipitationProbability: activeHike.weather.precipitationProbability ?? 0.25,
+                windKmH: activeHike.weather.windKmH ?? 18,
+                uvIndex: activeHike.weather.uvIndex ?? 6,
+                condition: activeHike.weather.condition ?? 'Partiellement nuageux',
+                isAlert: Boolean(activeHike.weather.isAlert),
+                fetchedAt: activeHike.weather.fetchedAt || new Date().toISOString(),
+              }
+            : defaultHikeContext.weather,
         }
       : defaultHikeContext;
 
@@ -498,7 +509,7 @@ export default function MonMaterielPage() {
         brand: formBrand.trim(),
         category: formCategory,
         weight_g: formWeight ? parseInt(formWeight) : 0,
-        price_eur: formPrice ? parseFloat(formPrice) : undefined,
+        purchase_price: formPrice ? parseFloat(formPrice) : undefined,
         condition: formCondition,
         notes: formNotes.trim(),
       });
@@ -1289,7 +1300,7 @@ export default function MonMaterielPage() {
           setFormBrand(item.brand || '');
           setFormCategory(item.category);
           setFormWeight(item.weight_g ? item.weight_g.toString() : '');
-          setFormPrice(item.price_eur ? item.price_eur.toString() : '');
+          setFormPrice(item.purchase_price ? item.purchase_price.toString() : '');
           setFormCondition(item.condition);
           setFormNotes(item.notes || '');
           setIsDrawerOpen(false);
