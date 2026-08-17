@@ -635,3 +635,74 @@
 a, button, select, input, textarea, [role="button"], [tabindex]:not([tabindex="-1"]) {
   cursor: pointer;
 }
+
+/* ============================================================
+   DESIGN SYSTEM LKDV — Mon Matériel Cockpit Vertical
+   ============================================================ */
+:root {
+  --lkv-paper: #FBFAF6;
+  --lkv-stone-50: #F5F3EC;
+  --lkv-stone-100: #EAE7DD;
+  --lkv-stone-200: #DAD5C4;
+
+  --lkv-ink-900: #0B1F17;
+  --lkv-ink-700: #2A3A31;
+  --lkv-ink-500: #6B7770;
+  --lkv-ink-400: #9AA39C;
+  --lkv-ink-300: #C4CAC5;
+
+  --lkv-forest-950: #05130C;
+  --lkv-forest-900: #0B1F17;
+  --lkv-forest-800: #17402C;
+  --lkv-forest-700: #1F5C3E;
+
+  --lkv-sage-100: #E4EEDF;
+  --lkv-sage-200: #C7DDBB;
+  --lkv-sage-300: #9ECB8A;
+  --lkv-sage-500: #6BAA55;
+
+  --lkv-warm-300: #F1DAB1;
+  --lkv-warm-500: #E4C695;
+  --lkv-warm-700: #B08A4E;
+
+  --lkv-danger: #C0532E;
+  --lkv-danger-bg: #FBE9E1;
+
+  --lkv-border: rgba(11,31,23,0.06);
+  --lkv-border-strong: rgba(11,31,23,0.12);
+
+  --lkv-shadow-xs: 0 1px 2px rgba(11,31,23,0.04), 0 0 0 1px rgba(11,31,23,0.03);
+  --lkv-shadow-sm: 0 2px 8px rgba(11,31,23,0.05), 0 0 0 1px rgba(11,31,23,0.03);
+  --lkv-shadow-md: 0 10px 24px rgba(11,31,23,0.08);
+  --lkv-shadow-lg: 0 24px 48px rgba(11,31,23,0.12);
+
+  --lkv-dur: 220ms;
+  --lkv-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --lkv-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.font-serif-lkv {
+  font-family: var(--font-serif), 'Instrument Serif', Georgia, serif;
+}
+
+.lkv-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 999px; font-size: 13px; font-weight: 500; transition: all var(--lkv-dur) var(--lkv-ease); cursor: pointer; white-space: nowrap; }
+.lkv-btn-primary { background: var(--lkv-forest-800); color: #fff; }
+.lkv-btn-primary:hover { background: var(--lkv-forest-900); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(23,64,44,0.25); }
+.lkv-btn-ghost { background: transparent; color: var(--lkv-ink-700); border: 1px solid var(--lkv-border-strong); }
+.lkv-btn-ghost:hover { border-color: var(--lkv-forest-800); color: var(--lkv-forest-800); }
+.lkv-btn-sm { padding: 6px 12px; font-size: 12px; }
+.lkv-btn-lg { padding: 14px 24px; font-size: 14px; }
+
+.lkv-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; background: var(--lkv-sage-100); color: var(--lkv-forest-800); border-radius: 999px; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; }
+.lkv-eyebrow { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lkv-ink-500); font-weight: 500; }
+
+.kbd { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; background: #fff; border: 1px solid var(--lkv-border-strong); border-bottom-width: 2px; border-radius: 6px; font-family: var(--font-mono), monospace; font-size: 11px; color: var(--lkv-ink-700); }
+
+/* Animation pulse */
+@keyframes pulse-lkv {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.5); }
+}
+.animate-pulse-lkv {
+  animation: pulse-lkv 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}

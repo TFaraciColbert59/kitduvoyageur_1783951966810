@@ -21,7 +21,9 @@ import CustomCursor from '@/components/ui/CustomCursor';
 
 
 
-// Only load weights actually used in the app
+import { DM_Sans, Manrope, IBM_Plex_Mono, Instrument_Serif } from 'next/font/google';
+
+// Fonts
 const dmSans = DM_Sans({
   subsets: ['latin'],
   variable: '--font-sans',
@@ -36,12 +38,19 @@ const manrope = Manrope({
   weight: ['400', '500', '600', '700', '800'],
 });
 
-// Mono font: defer preload — only used for labels/stats, not critical path
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
   display: 'swap',
   weight: ['400', '500', '600'],
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ['latin'],
+  variable: '--font-serif',
+  display: 'swap',
+  weight: ['400'],
+  style: ['normal', 'italic'],
 });
 
 export const viewport: Viewport = {
@@ -209,7 +218,7 @@ export default function RootLayout({
           />
         )}
       </head>
-      <body className={dmSans.className}>
+      <body className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable} ${dmSans.className}`}>
         <AuthProvider>
           <WishlistProvider>
             <ToastProvider>
