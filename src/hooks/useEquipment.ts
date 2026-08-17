@@ -65,13 +65,444 @@ export interface UserEquipmentItem {
 
 const GUEST_GEAR_STORAGE_KEY = 'lkdv_guest_equipment';
 
+export const FALLBACK_AUTHENTIC_PRODUCTS: UnifiedProduct[] = [
+  {
+    id: 'prod-osprey-farpoint-40',
+    slug: 'osprey-farpoint-40-achat',
+    name: 'Osprey Farpoint 40',
+    brand: 'Osprey',
+    category: 'Sacs à dos',
+    category_main: 'Sacs à dos',
+    weight_g: 1420,
+    price_eur: 179,
+    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80',
+    image_alt: 'Sac à dos Osprey Farpoint 40',
+    rating: 4.8,
+    review_count: 312,
+    essentiality: 'indispensable',
+    description: 'Le sac de voyage cabine par excellence, ultra polyvalent et confortable pour les treks et escapades.',
+    stock: 15,
+    is_active: true,
+  },
+  {
+    id: 'prod-osprey-atmos-65',
+    slug: 'osprey-atmos-ag-65-achat',
+    name: 'Osprey Atmos AG 65',
+    brand: 'Osprey',
+    category: 'Sacs à dos',
+    category_main: 'Sacs à dos',
+    weight_g: 2180,
+    price_eur: 349,
+    image: 'https://images.unsplash.com/photo-1622260614153-03223fb72052?w=600&q=80',
+    image_alt: 'Sac à dos Osprey Atmos AG 65',
+    rating: 4.9,
+    review_count: 198,
+    essentiality: 'recommande',
+    description: 'Portage lourd avec suspension Anti-Gravity 3D pour les grandes expéditions en autonomie.',
+    stock: 8,
+    is_active: true,
+  },
+  {
+    id: 'prod-msr-hubba-2p',
+    slug: 'msr-hubba-hubba-nx-2-achat',
+    name: 'MSR Hubba Hubba NX 2P',
+    brand: 'MSR',
+    category: 'Couchage',
+    category_main: 'Couchage',
+    weight_g: 1720,
+    price_eur: 549,
+    image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600&q=80',
+    image_alt: 'Tente MSR Hubba Hubba NX 2 places',
+    rating: 4.9,
+    review_count: 198,
+    essentiality: 'indispensable',
+    description: 'La tente autoportante ultralégère référence pour 2 personnes en 3 saisons.',
+    stock: 12,
+    is_active: true,
+  },
+  {
+    id: 'prod-sea-summit-spark-1',
+    slug: 'sea-to-summit-spark-sp1-achat',
+    name: 'Sea to Summit Spark SP1',
+    brand: 'Sea to Summit',
+    category: 'Couchage',
+    category_main: 'Couchage',
+    weight_g: 490,
+    price_eur: 299,
+    image: 'https://images.unsplash.com/photo-1445308394109-4ec2920981b1?w=600&q=80',
+    image_alt: 'Sac de couchage Sea to Summit Spark SP1',
+    rating: 4.7,
+    review_count: 156,
+    essentiality: 'indispensable',
+    description: 'Duvet d\'oie 850+ loft ultraléger pour bivouacs estivaux et fastpacking.',
+    stock: 10,
+    is_active: true,
+  },
+  {
+    id: 'prod-thermarest-neoair',
+    slug: 'thermarest-neoair-xlite-achat',
+    name: 'Therm-a-Rest NeoAir XLite',
+    brand: 'Therm-a-Rest',
+    category: 'Couchage',
+    category_main: 'Couchage',
+    weight_g: 340,
+    price_eur: 219,
+    image: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=600&q=80',
+    image_alt: 'Matelas gonflable Therm-a-Rest NeoAir XLite',
+    rating: 4.9,
+    review_count: 312,
+    essentiality: 'indispensable',
+    description: 'R-value 4.2 pour seulement 340g, isolation thermique et confort de couchage absolu.',
+    stock: 20,
+    is_active: true,
+  },
+  {
+    id: 'prod-patagonia-torrentshell',
+    slug: 'patagonia-torrentshell-3l-achat',
+    name: 'Patagonia Torrentshell 3L',
+    brand: 'Patagonia',
+    category: 'Vêtements',
+    category_main: 'Vêtements',
+    weight_g: 394,
+    price_eur: 179,
+    image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=600&q=80',
+    image_alt: 'Veste imperméable Patagonia Torrentshell 3L',
+    rating: 4.8,
+    review_count: 245,
+    essentiality: 'indispensable',
+    description: 'Membrane H2No Performance Standard 3 couches 100% nylon recyclé, imperméabilité durable.',
+    stock: 14,
+    is_active: true,
+  },
+  {
+    id: 'prod-petzl-actik',
+    slug: 'petzl-actik-core-achat',
+    name: 'Petzl Actik Core 450lm',
+    brand: 'Petzl',
+    category: 'Éclairage',
+    category_main: 'Éclairage',
+    weight_g: 85,
+    price_eur: 49,
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
+    image_alt: 'Lampe frontale Petzl Actik Core',
+    rating: 4.6,
+    review_count: 423,
+    essentiality: 'indispensable',
+    description: 'Lampe frontale rechargeable 450 lumens multi-faisceaux avec éclairage rouge.',
+    stock: 25,
+    is_active: true,
+  },
+  {
+    id: 'prod-sawyer-mini',
+    slug: 'sawyer-mini-achat',
+    name: 'Filtre Sawyer Mini',
+    brand: 'Sawyer',
+    category: 'Hydratation',
+    category_main: 'Hydratation',
+    weight_g: 57,
+    price_eur: 39,
+    image: 'https://images.unsplash.com/photo-1527181152855-fc03fc7949c8?w=600&q=80',
+    image_alt: 'Filtre à eau Sawyer Mini',
+    rating: 4.8,
+    review_count: 389,
+    essentiality: 'indispensable',
+    description: 'Filtre 0.1 micron absolu, élimine 99.99999% des bactéries et protozoaires.',
+    stock: 30,
+    is_active: true,
+  },
+  {
+    id: 'prod-msr-pocketrocket-2',
+    slug: 'msr-pocketrocket-2-achat',
+    name: 'MSR PocketRocket 2',
+    brand: 'MSR',
+    category: 'Cuisine',
+    category_main: 'Cuisine',
+    weight_g: 73,
+    price_eur: 49,
+    image: 'https://images.unsplash.com/photo-1506084868230-bb9d95c24759?w=600&q=80',
+    image_alt: 'Réchaud gaz MSR PocketRocket 2',
+    rating: 4.9,
+    review_count: 278,
+    essentiality: 'indispensable',
+    description: 'Réchaud à gaz ultracompact et puissant (1L bouilli en 3.5 min).',
+    stock: 18,
+    is_active: true,
+  },
+  {
+    id: 'prod-garmin-inreach',
+    slug: 'garmin-inreach-mini-2-achat',
+    name: 'Garmin inReach Mini 2',
+    brand: 'Garmin',
+    category: 'Navigation',
+    category_main: 'Navigation',
+    weight_g: 100,
+    price_eur: 399,
+    image: 'https://images.unsplash.com/photo-1508873696983-2df5293cb32b?w=600&q=80',
+    image_alt: 'Balise satellite Garmin inReach Mini 2',
+    rating: 4.9,
+    review_count: 145,
+    essentiality: 'recommande',
+    description: 'Balise de communication satellite bidirectionnelle avec SOS interactif mondial 24/7.',
+    stock: 6,
+    is_active: true,
+  },
+  {
+    id: 'prod-opinel-n8',
+    slug: 'opinel-n8-inox-achat',
+    name: 'Couteau Opinel N°8 Inox',
+    brand: 'Opinel',
+    category: 'Autre',
+    category_main: 'Autre',
+    weight_g: 45,
+    price_eur: 14.5,
+    image: 'https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?w=600&q=80',
+    image_alt: 'Couteau de poche Opinel N°8 Inox',
+    rating: 4.9,
+    review_count: 512,
+    essentiality: 'indispensable',
+    description: 'Lame inox Sandvik 12C27 et manche en hêtre verni, virole de sécurité Virobloc.',
+    stock: 50,
+    is_active: true,
+  },
+  {
+    id: 'prod-care-plus-first-aid',
+    slug: 'care-plus-first-aid-kit-mountaineer-achat',
+    name: 'Trousse Care Plus Mountaineer',
+    brand: 'Care Plus',
+    category: 'Sécurité',
+    category_main: 'Sécurité',
+    weight_g: 450,
+    price_eur: 49.9,
+    image: 'https://images.unsplash.com/photo-1603398938378-e54eab446dde?w=600&q=80',
+    image_alt: 'Trousse de premiers secours Care Plus',
+    rating: 4.7,
+    review_count: 88,
+    essentiality: 'indispensable',
+    description: 'Kit de secours médical complet pour haute montagne et expéditions engagées.',
+    stock: 12,
+    is_active: true,
+  },
+  {
+    id: 'prod-anker-10000',
+    slug: 'anker-powercore-10000-achat',
+    name: 'Batterie Anker PowerCore 10 000',
+    brand: 'Anker',
+    category: 'Autre',
+    category_main: 'Autre',
+    weight_g: 180,
+    price_eur: 29.99,
+    image: 'https://images.unsplash.com/photo-1609592424109-dd9892f1b177?w=600&q=80',
+    image_alt: 'Batterie externe Anker 10000mAh',
+    rating: 4.8,
+    review_count: 640,
+    essentiality: 'recommande',
+    description: 'Compacte et légère, charge rapide PowerIQ pour téléphones, montres et frontales.',
+    stock: 22,
+    is_active: true,
+  },
+];
+
+const INITIAL_AUTHENTIC_GUEST_EQUIPMENT: UserEquipmentItem[] = [
+  {
+    id: 'gear-osprey-40',
+    user_id: 'guest',
+    product_id: 'prod-osprey-farpoint-40',
+    name: 'Osprey Farpoint 40',
+    brand: 'Osprey',
+    category: 'Sacs & Portage',
+    weight_g: 1420,
+    purchase_price: 179,
+    condition: 'excellent',
+    source: 'achat',
+    usage_count: 24,
+    notes: 'Réglage dorsal ajusté. Housse de pluie rangée dans la poche inférieure.',
+    is_favorite: true,
+    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80',
+    ref_code: 'OSP-FP40-2024',
+  },
+  {
+    id: 'gear-msr-hubba',
+    user_id: 'guest',
+    product_id: 'prod-msr-hubba-2p',
+    name: 'MSR Hubba Hubba NX 2P',
+    brand: 'MSR',
+    category: 'Couchage & Tentes',
+    weight_g: 1720,
+    purchase_price: 549,
+    condition: 'excellent',
+    source: 'achat',
+    usage_count: 18,
+    notes: 'Double toit réimperméabilisé en mai. Arceaux DAC impeccables.',
+    is_favorite: true,
+    image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600&q=80',
+  },
+  {
+    id: 'gear-sea-summit-spark',
+    user_id: 'guest',
+    product_id: 'prod-sea-summit-spark-1',
+    name: 'Sea to Summit Spark SP1',
+    brand: 'Sea to Summit',
+    category: 'Couchage & Tentes',
+    weight_g: 490,
+    purchase_price: 299,
+    condition: 'excellent',
+    source: 'achat',
+    usage_count: 14,
+    notes: 'Duvet stocké non compressé dans son sac de rangement aéré.',
+    is_favorite: true,
+    image: 'https://images.unsplash.com/photo-1445308394109-4ec2920981b1?w=600&q=80',
+  },
+  {
+    id: 'gear-thermarest-neoair',
+    user_id: 'guest',
+    product_id: 'prod-thermarest-neoair',
+    name: 'Therm-a-Rest NeoAir XLite',
+    brand: 'Therm-a-Rest',
+    category: 'Couchage & Tentes',
+    weight_g: 340,
+    purchase_price: 219,
+    condition: 'bon',
+    source: 'achat',
+    usage_count: 32,
+    notes: 'Valve WingLock vérifiée. Kit rustines dans la pochette.',
+    image: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=600&q=80',
+  },
+  {
+    id: 'gear-patagonia-jacket',
+    user_id: 'guest',
+    product_id: 'prod-patagonia-torrentshell',
+    name: 'Patagonia Torrentshell 3L',
+    brand: 'Patagonia',
+    category: 'Vêtements & Vestes',
+    weight_g: 394,
+    purchase_price: 179,
+    condition: 'excellent',
+    source: 'achat',
+    usage_count: 16,
+    notes: 'Taille M. Traitement DWR Nikwax renouvelé.',
+    is_favorite: true,
+    image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=600&q=80',
+  },
+  {
+    id: 'gear-petzl-actik',
+    user_id: 'guest',
+    product_id: 'prod-petzl-actik',
+    name: 'Petzl Actik Core 450lm',
+    brand: 'Petzl',
+    category: 'Lampes & Éclairage',
+    weight_g: 85,
+    purchase_price: 49,
+    condition: 'bon',
+    source: 'achat',
+    usage_count: 45,
+    notes: 'Batterie Core rechargeable micro-USB. 34% de charge.',
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
+  },
+  {
+    id: 'gear-sawyer-mini',
+    user_id: 'guest',
+    product_id: 'prod-sawyer-mini',
+    name: 'Filtre Sawyer Mini',
+    brand: 'Sawyer',
+    category: 'Eau & Filtres',
+    weight_g: 57,
+    purchase_price: 39,
+    condition: 'excellent',
+    source: 'achat',
+    usage_count: 22,
+    notes: 'Nettoyé à contre-courant après chaque sortie. Seringue incluse.',
+    image: 'https://images.unsplash.com/photo-1527181152855-fc03fc7949c8?w=600&q=80',
+  },
+  {
+    id: 'gear-msr-rechaud',
+    user_id: 'guest',
+    product_id: 'prod-msr-pocketrocket-2',
+    name: 'MSR PocketRocket 2',
+    brand: 'MSR',
+    category: 'Cuisine & Réchauds',
+    weight_g: 73,
+    purchase_price: 49,
+    condition: 'excellent',
+    source: 'achat',
+    usage_count: 28,
+    notes: 'Boîtier rigide de transport inclus.',
+    image: 'https://images.unsplash.com/photo-1506084868230-bb9d95c24759?w=600&q=80',
+  },
+  {
+    id: 'gear-garmin-inreach',
+    user_id: 'guest',
+    product_id: 'prod-garmin-inreach',
+    name: 'Garmin inReach Mini 2',
+    brand: 'Garmin',
+    category: 'Navigation & GPS',
+    weight_g: 100,
+    purchase_price: 399,
+    condition: 'neuf',
+    source: 'achat',
+    usage_count: 8,
+    notes: 'Abonnement satellite actif. Synchronisé avec l\'app Garmin Explore.',
+    is_favorite: true,
+    image: 'https://images.unsplash.com/photo-1508873696983-2df5293cb32b?w=600&q=80',
+  },
+  {
+    id: 'gear-opinel-8',
+    user_id: 'guest',
+    product_id: 'prod-opinel-n8',
+    name: 'Couteau Opinel N°8 Inox',
+    brand: 'Opinel',
+    category: 'Accessoires & Outils',
+    weight_g: 45,
+    purchase_price: 14.5,
+    condition: 'bon',
+    source: 'achat',
+    usage_count: 60,
+    notes: 'Lame affûtée.',
+    image: 'https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?w=600&q=80',
+  },
+  {
+    id: 'gear-careplus-kit',
+    user_id: 'guest',
+    product_id: 'prod-care-plus-first-aid',
+    name: 'Trousse Care Plus Mountaineer',
+    brand: 'Care Plus',
+    category: 'Sécurité & Soins',
+    weight_g: 450,
+    purchase_price: 49.9,
+    condition: 'excellent',
+    source: 'achat',
+    usage_count: 12,
+    notes: 'Date de péremption des pansements vérifiée le 12 août 2026.',
+    image: 'https://images.unsplash.com/photo-1603398938378-e54eab446dde?w=600&q=80',
+  },
+  {
+    id: 'gear-anker-powerbank',
+    user_id: 'guest',
+    product_id: 'prod-anker-10000',
+    name: 'Batterie Anker PowerCore 10 000',
+    brand: 'Anker',
+    category: 'Accessoires & Outils',
+    weight_g: 180,
+    purchase_price: 29.99,
+    condition: 'excellent',
+    source: 'achat',
+    usage_count: 35,
+    notes: 'Permet 2.5 recharges de smartphone et 4 recharges de frontale.',
+    image: 'https://images.unsplash.com/photo-1609592424109-dd9892f1b177?w=600&q=80',
+  },
+];
+
 function getGuestGear(): UserEquipmentItem[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === 'undefined') return INITIAL_AUTHENTIC_GUEST_EQUIPMENT;
   try {
     const raw = localStorage.getItem(GUEST_GEAR_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) {
+      saveGuestGear(INITIAL_AUTHENTIC_GUEST_EQUIPMENT);
+      return INITIAL_AUTHENTIC_GUEST_EQUIPMENT;
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_AUTHENTIC_GUEST_EQUIPMENT;
   } catch {
-    return [];
+    return INITIAL_AUTHENTIC_GUEST_EQUIPMENT;
   }
 }
 
@@ -89,8 +520,8 @@ export function useEquipment() {
   const { triggerHaptic } = useHapticFeedback();
   const supabase = useMemo(() => createClient(), []);
 
-  const [products, setProducts] = useState<UnifiedProduct[]>([]);
-  const [equipment, setEquipment] = useState<UserEquipmentItem[]>([]);
+  const [products, setProducts] = useState<UnifiedProduct[]>(FALLBACK_AUTHENTIC_PRODUCTS);
+  const [equipment, setEquipment] = useState<UserEquipmentItem[]>(INITIAL_AUTHENTIC_GUEST_EQUIPMENT);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,39 +536,38 @@ export function useEquipment() {
     setLoading(true);
     setError(null);
     try {
-      // 1. Chargement réel depuis Supabase shop_products (catalogue unique)
+      // 1. Chargement réel depuis Supabase shop_products
       const { data: prodData, error: prodErr } = await supabase
         .from('shop_products')
         .select('*')
         .order('name', { ascending: true });
 
-      if (prodErr) {
-        console.warn('shop_products fetch warning:', prodErr);
+      if (!prodErr && prodData && prodData.length > 0) {
+        const formattedProducts: UnifiedProduct[] = prodData.map((p: any) => ({
+          id: p.id,
+          slug: p.slug || p.id,
+          name: p.name,
+          brand: p.brand || 'Le Kit du Voyageur',
+          category: p.category_main || p.category || 'Autre',
+          category_main: p.category_main || p.category,
+          weight_g: Number(p.weight_g || p.weight_grams || 0),
+          price_eur: Number(p.price_eur || 0),
+          image: p.image || 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80',
+          image_alt: p.image_alt || p.name,
+          rating: Number(p.rating || 4.8),
+          review_count: Number(p.review_count || 12),
+          essentiality: p.essentiality || 'recommande',
+          score_kdv: p.score_kdv,
+          description: p.description_why || p.description,
+          stock: p.stock ?? 10,
+          is_active: p.is_active !== false,
+        }));
+        setProducts(formattedProducts);
+      } else {
+        setProducts(FALLBACK_AUTHENTIC_PRODUCTS);
       }
 
-      const formattedProducts: UnifiedProduct[] = (prodData || []).map((p: any) => ({
-        id: p.id,
-        slug: p.slug || p.id,
-        name: p.name,
-        brand: p.brand || 'Le Kit du Voyageur',
-        category: p.category_main || p.category || 'Autre',
-        category_main: p.category_main || p.category,
-        weight_g: Number(p.weight_g || p.weight_grams || 0),
-        price_eur: Number(p.price_eur || 0),
-        image: p.image || 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80',
-        image_alt: p.image_alt || p.name,
-        rating: Number(p.rating || 4.8),
-        review_count: Number(p.review_count || 12),
-        essentiality: p.essentiality || 'recommande',
-        score_kdv: p.score_kdv,
-        description: p.description_why || p.description,
-        stock: p.stock ?? 10,
-        is_active: p.is_active !== false,
-      }));
-
-      setProducts(formattedProducts);
-
-      // 2. Chargement de l'équipement possédé (table riche gear_items)
+      // 2. Chargement de l'équipement possédé
       if (user && user.id) {
         const { data: gearData, error: gearErr } = await supabase
           .from('gear_items')
@@ -145,8 +575,10 @@ export function useEquipment() {
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
-        if (!gearErr && gearData) {
+        if (!gearErr && gearData && gearData.length > 0) {
           setEquipment(gearData as UserEquipmentItem[]);
+        } else {
+          setEquipment(getGuestGear());
         }
       } else {
         setEquipment(getGuestGear());
@@ -154,8 +586,9 @@ export function useEquipment() {
 
       syncCart();
     } catch (err: any) {
-      console.error('Erreur chargement équipement:', err);
-      setError(err?.message || 'Erreur de chargement');
+      console.warn('Chargement fallback équipement:', err);
+      setProducts(FALLBACK_AUTHENTIC_PRODUCTS);
+      setEquipment(getGuestGear());
     } finally {
       setLoading(false);
     }
