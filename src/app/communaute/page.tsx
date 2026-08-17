@@ -1550,68 +1550,6 @@ export default function CommunautePage() {
           </main>
 
           <Footer />
-
-          {/* PUBLISH MODAL */}
-          <AnimatePresence>
-            {isPublishModalOpen && (
-              <>
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" onClick={() => setIsPublishModalOpen(false)} />
-                <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-lg bg-white rounded-[0.75rem] p-6 shadow-2xl z-[101] max-h-[90vh] overflow-y-auto active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-                  <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-display font-800 text-2xl text-[#1C2620]">Créer une publication</h3>
-                    <button onClick={() => setIsPublishModalOpen(false)} className="w-8 h-8 rounded-full bg-[#F5F2E8] flex items-center justify-center text-[#5C6B5E] hover:bg-[#E8E4D8] transition-colors"><Icon name="XMarkIcon" size={16} /></button>
-                  </div>
-                  <textarea value={newPostContent} onChange={(e) => setNewPostContent(e.target.value)} placeholder="Racontez votre dernière aventure, partagez une photo, un conseil..." className="w-full h-32 bg-[#F5F2E8] border-none rounded-xl p-4 text-[#1C2620] text-sm focus:ring-2 focus:ring-[#2D5A3D] resize-none mb-4" />
-                  {previewUrl && (
-                    <div className="relative mb-4 w-full h-48 rounded-xl overflow-hidden bg-black/5">
-                      <img src={previewUrl} alt="Aperçu" className="w-full h-full object-cover" />
-                      <button onClick={handleRemoveFile} className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-full hover:bg-black/70 transition-colors"><Icon name="XMarkIcon" size={14} /></button>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <input type="file" accept="image/*,video/*" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
-                      <button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 rounded-full border border-[#E8E4D8] flex items-center justify-center text-[#5C6B5E] hover:text-[#2D5A3D] hover:border-[#2D5A3D] transition-colors" title="Ajouter une photo ou vidéo"><Icon name="PhotoIcon" size={20} /></button>
-                    </div>
-                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handlePublish} disabled={isPublishing || (!newPostContent.trim() && !selectedFile)} className="bg-[#17402C] hover:bg-[#cc3d10] text-white px-6 py-2.5 rounded-full font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-                      {isPublishing ? 'Publication...' : 'Publier'}
-                    </motion.button>
-                  </div>
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
-
-          {/* CREATE CARNET MODAL */}
-          <CarnetFormModal isOpen={isCreateCarnetModalOpen} onClose={() => setIsCreateCarnetModalOpen(false)} onSave={handleSaveCarnet} saving={isSavingCarnet} />
-
-          {/* CREATE CLUB MODAL */}
-          <ClubFormModal isOpen={isCreateClubModalOpen} onClose={() => setIsCreateClubModalOpen(false)} onSave={handleSaveClub} saving={isSavingClub} />
-
-          {/* CLUB DETAIL MODAL */}
-          <ClubDetailModal club={selectedDetailClub} onClose={() => setSelectedDetailClub(null)} currentUserId={user?.id} onRefresh={() => {
-            const supabase = createClient();
-            supabase.from('clubs').select('*').order('members_count', { ascending: false }).then(({ data }) => {
-              if (data) setClubs(prev => data.map(c => ({ ...c, is_member: prev.find(p => p.id === c.id)?.is_member })));
-            });
-          }} />
-
-          {/* EVENT DETAIL MODAL */}
-          <EventDetailModal 
-            event={selectedEvent} 
-            onClose={() => { setSelectedEvent(null); setIsEventModalOpen(false); }} 
-            currentUserId={user?.id} 
-            allEvents={events} 
-            onSelectEvent={(ev: any) => setSelectedEvent(ev)} 
-          />
-
-          {/* TOAST NOTIFICATION */}
-          {toastMessage && (
-            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[110] bg-[#1C2620] text-white px-6 py-3 rounded-full text-xs font-bold shadow-2xl flex items-center gap-2 border border-[#2D5A3D]">
-              <span>✨</span>
-              <span>{toastMessage}</span>
-            </div>
-          )}
         </div>
       </div>
 
@@ -1881,6 +1819,7 @@ export default function CommunautePage() {
       }} />
 
       <EventDetailModal 
+        isOpen={isEventModalOpen}
         event={selectedEvent} 
         onClose={() => { setSelectedEvent(null); setIsEventModalOpen(false); }} 
         currentUserId={user?.id} 

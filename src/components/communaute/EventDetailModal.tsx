@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 
 interface Props {
   event: any | null;
+  isOpen?: boolean;
   onClose: () => void;
   currentUserId?: string;
   allEvents?: any[];
@@ -16,6 +17,7 @@ interface Props {
 
 export default function EventDetailModal({
   event,
+  isOpen,
   onClose,
   currentUserId,
   allEvents,
@@ -26,10 +28,11 @@ export default function EventDetailModal({
   const [viewAll, setViewAll] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  if (!event && (!allEvents || allEvents.length === 0)) return null;
+  // If isOpen is explicitly passed, respect it. Otherwise, require event to be non-null.
+  if (isOpen !== undefined && !isOpen) return null;
+  if (!event) return null;
 
-  const current = event || allEvents?.[0];
-  if (!current) return null;
+  const current = event;
 
   const eventDate = new Date(current.event_date);
   const isPast = eventDate < new Date();
