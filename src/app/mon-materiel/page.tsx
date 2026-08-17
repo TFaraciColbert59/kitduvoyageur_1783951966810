@@ -20,40 +20,9 @@ function formatWeight(g: number): string {
   return `${g} g`;
 }
 
-// Brand filter pills (Column 3 top ribbon)
-const BRAND_FILTERS = [
-  { name: 'Tous', icon: '✦' },
-  { name: 'MSR', icon: '⛺' },
-  { name: 'Osprey', icon: '🎒' },
-  { name: 'Salomon', icon: '🥾' },
-  { name: 'Petzl', icon: '🔦' },
-  { name: 'Therm-a-Rest', icon: '🛌' },
-  { name: 'Sea to Summit', icon: '🌊' },
-  { name: 'Patagonia', icon: '🧥' },
-];
+const CATEGORIES = ['all', 'couchage', 'portage', 'cuisine', 'vêtement', 'navigation'];
 
-const AI_PRESET_COMBOS = [
-  {
-    id: 'bivouac-3s',
-    title: 'Kit Bivouac 3 Saisons',
-    weightStr: '9,4 kg',
-    savedWeight: '-1,8 kg',
-    desc: 'Tente 2P + Duvet 0°C + Réchaud',
-    image: '/assets/images/adventure-bivouac.jpg',
-    gearQuery: 'MSR',
-  },
-  {
-    id: 'ultra-light',
-    title: 'Pack Ultra-Light 48h',
-    weightStr: '4,2 kg',
-    savedWeight: '-3,1 kg',
-    desc: 'Tarp + Matelas NeoAir + Popote',
-    image: '/assets/images/adventure-hiking.jpg',
-    gearQuery: 'NeoAir',
-  },
-];
-
-export default function MonMaterielKarZentraPage() {
+export default function MonMaterielCockpitPage() {
   const { triggerHaptic } = useHapticFeedback();
 
   // Supabase Hooks
@@ -89,26 +58,6 @@ export default function MonMaterielKarZentraPage() {
   const [selectedKitForCockpit, setSelectedKitForCockpit] = useState<CustomKit | null>(null);
   const [isLendModalOpen, setIsLendModalOpen] = useState(false);
 
-  // AI Prompt cycling
-  const [aiPromptIndex, setAiPromptIndex] = useState(0);
-  const aiPrompts = [
-    {
-      q: "Peux-tu m'optimiser un pack bivouac 3 jours sous 9,5 kg avec une excellente isolation ?",
-      hl1: "bivouac 3 jours",
-      hl2: "sous 9,5 kg",
-    },
-    {
-      q: "Détecte le matériel usé ou à remplacer avant mon départ pour la traversée du GR20.",
-      hl1: "matériel usé",
-      hl2: "GR20",
-    },
-    {
-      q: "Compare le poids et l'encombrement de mes tentes et duvets pour une randonnée ultra-light.",
-      hl1: "tentes et duvets",
-      hl2: "ultra-light",
-    },
-  ];
-
   // Set default selected item
   useEffect(() => {
     if (equipment.length > 0) {
@@ -118,7 +67,7 @@ export default function MonMaterielKarZentraPage() {
     }
   }, [equipment, selectedItemId]);
 
-  // Filtered equipment list for Column 1
+  // Filtered equipment list
   const filteredEquipment = useMemo(() => {
     return equipment.filter((item) => {
       if (activeNav === 'favorites' && !item.is_favorite) return false;
@@ -155,6 +104,28 @@ export default function MonMaterielKarZentraPage() {
     return equipment.reduce((sum, it) => sum + (it.weight_g || 0) * (it.quantity || 1), 0);
   }, [equipment]);
 
+  // Total value
+  const totalValue = useMemo(() => {
+    return equipment.reduce((sum, it) => sum + (Number(it.purchase_price) || 0) * (it.quantity || 1), 0);
+  }, [equipment]);
+
+  // Favorites count
+  const favoritesCount = useMemo(() => equipment.filter((e) => e.is_favorite).length, [equipment]);
+
+  // Category distribution (top by weight)
+  const categoryStats = useMemo(() => {
+    const map = new Map<string, number>();
+    equipment.forEach((it) => {
+      const cat = (it.category || 'Autre').split(/[&/]/)[0].trim();
+      map.set(cat, (map.get(cat) || 0) + (it.weight_g || 0) * (it.quantity || 1));
+    });
+    const total = Array.from(map.values()).reduce((a, b) => a + b, 0) || 1;
+    return Array.from(map.entries())
+      .map(([label, grams]) => ({ label, grams, pct: Math.round((grams / total) * 100) }))
+      .sort((a, b) => b.grams - a.grams)
+      .slice(0, 4);
+  }, [equipment]);
+
   // Reset all filters
   const handleResetFilters = () => {
     triggerHaptic('light');
@@ -173,143 +144,108 @@ export default function MonMaterielKarZentraPage() {
     });
   };
 
+  const glassCard =
+    'rounded-[28px] border border-white/10 bg-white/[0.06] backdrop-blur-2xl backdrop-saturate-150 shadow-[0_20px_60px_-15px_rgba(11,31,23,0.55)]';
+
   return (
-    <div className="fixed inset-0 z-50 h-screen w-screen overflow-hidden bg-[#0A0C10] text-white select-none flex flex-col p-3 sm:p-4 font-sans">
-      
-      {/* ─────────────────────────────────────────────────────────────
-          1. BACKGROUND LAYER: Deep Luxury Dark Alpine Atmosphere
-      ───────────────────────────────────────────────────────────── */}
+    <div className="fixed inset-0 z-50 h-dvh w-screen overflow-hidden bg-[#0B1F17] text-white select-none font-sans flex flex-col p-3 sm:p-4">
+
+      {/* ═══════════════ BACKGROUND : Blurred alpine trek landscape ═══════════════ */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <Image
-          src="/assets/images/detail-hero.jpg"
-          alt="Atmosphère Montagneuse LKDV"
+          src="/assets/images/hero-misty.jpg"
+          alt="Paysage de montagne — trek alpin"
           fill
           priority
           sizes="100vw"
-          className="object-cover object-center opacity-30"
+          className="object-cover object-center scale-110"
+          style={{ filter: 'blur(28px) saturate(1.15)' }}
         />
-        {/* Soft Vignette Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0C10] via-[#0A0C10]/75 to-[#0A0C10]/55" />
+        {/* Depth overlays */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0B1F17]/70 via-[#0B1F17]/55 to-[#0B1F17]/80" />
         <div
           className="absolute inset-0"
           style={{
-            background: 'radial-gradient(ellipse at center, transparent 25%, rgba(10, 12, 16, 0.9) 100%)',
+            background:
+              'radial-gradient(ellipse at 50% 30%, transparent 20%, rgba(11,31,23,0.85) 100%)',
           }}
         />
       </div>
 
-      {/* ─────────────────────────────────────────────────────────────
-          2. TOP FLOATING ISLAND BAR (Header KarZentra)
-      ───────────────────────────────────────────────────────────── */}
-      <header className="relative z-10 flex items-center justify-between gap-3 shrink-0 h-10 px-2 mb-2">
-        
-        {/* Left Brand Identity */}
-        <div className="flex items-center gap-2.5">
-          <span className="font-extrabold tracking-widest text-sm text-[#D4F973] uppercase font-mono">
-            LE KIT DU VOYAGEUR
+      {/* ═══════════════ TOP FLOATING GLASS BAR ═══════════════ */}
+      <header className="relative z-10 flex items-center justify-between gap-3 shrink-0 h-12 px-3 mb-3 rounded-full border border-white/10 bg-white/[0.07] backdrop-blur-2xl backdrop-saturate-150 shadow-[0_12px_40px_-12px_rgba(11,31,23,0.6)]">
+        <div className="flex items-center gap-2.5 pl-1">
+          <span className="w-8 h-8 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center shadow-inner">
+            <svg viewBox="0 0 32 32" width="17" height="17" fill="none">
+              <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="#A3C4A3" strokeWidth="2.2" strokeLinejoin="round" />
+              <path d="M2 24 L30 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
           </span>
-          <span className="text-white/20 hidden sm:inline">/</span>
-          <span className="text-xs text-white/70 font-medium hidden sm:inline">
-            Cockpit Télémétrique v2.5
+          <span className="font-semibold tracking-wide text-sm text-white">Mon Équipement</span>
+          <span className="text-white/25 hidden sm:inline">·</span>
+          <span className="text-[11px] text-white/60 font-medium hidden sm:inline tracking-wide">
+            Cockpit d&apos;équipement
           </span>
         </div>
 
-        {/* Right Floating Capsule Bar */}
-        <div className="flex items-center gap-1.5 p-1 rounded-full bg-[#151921]/90 backdrop-blur-xl border border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.6)]">
-          
-          <button
-            type="button"
-            onClick={() => {
-              triggerHaptic('light');
-              setActiveCategory('all');
-            }}
-            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
-              activeCategory === 'all'
-                ? 'bg-[#D4F973] text-[#0A0C10] shadow-[0_0_14px_rgba(212,249,115,0.45)]'
-                : 'text-white/70 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            Mon Matériel
-          </button>
-
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => {
               triggerHaptic('light');
               setIsKitDrawerOpen(true);
             }}
-            className="px-3.5 py-1.5 rounded-full text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+            className="px-3.5 py-1.5 rounded-full text-xs font-medium text-white/80 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all active:scale-95 hidden sm:inline-block"
           >
-            Kits Assemblés
+            Kits assemblés
           </button>
-
           <Link
             href="/boutique"
-            className="px-3.5 py-1.5 rounded-full text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors hidden sm:inline-block"
+            className="px-3.5 py-1.5 rounded-full text-xs font-medium text-white/80 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all active:scale-95 hidden md:inline-block"
           >
             Boutique
           </Link>
-
-          {/* Location Badge */}
-          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 text-[11px] text-[#AECBB4] font-medium border border-white/10">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#D4F973] animate-pulse" />
+          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 text-[11px] text-[#C7DCC7] font-medium border border-white/10">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#A3C4A3] animate-pulse" />
             <span>Massif Alpin · 2 450 m</span>
           </div>
-
-          {/* Bell Icon */}
-          <button
-            type="button"
-            className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center text-xs text-white transition-transform active:scale-90"
-          >
-            🔔
-          </button>
-
-          {/* Avatar */}
           <Link
             href="/compte"
-            className="w-7 h-7 rounded-full bg-[#D4F973] text-[#0A0C10] flex items-center justify-center text-[10px] font-extrabold shadow-sm"
+            className="w-8 h-8 rounded-full bg-[#A3C4A3] text-[#0B1F17] flex items-center justify-center text-[11px] font-extrabold shadow-sm transition-transform active:scale-90"
           >
             MC
           </Link>
         </div>
       </header>
 
-      {/* ─────────────────────────────────────────────────────────────
-          3. MAIN 3-COLUMNS COCKPIT (100% Fullscreen Height, No Scroll)
-      ───────────────────────────────────────────────────────────── */}
-      <div className="relative z-10 flex-1 flex gap-3 min-h-0 max-h-full overflow-hidden">
-        
-        {/* ─── DOCK LATÉRAL GAUCHE (KarZentra Left Rail) ─── */}
-        <aside className="w-12 sm:w-14 shrink-0 flex flex-col items-center justify-between py-3 px-1 rounded-2xl bg-[#151921]/80 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
-          {/* Logo Mark */}
+      {/* ═══════════════ MAIN COCKPIT — 100% viewport, no page scroll ═══════════════ */}
+      <div className="relative z-10 flex-1 flex gap-3 sm:gap-4 min-h-0 max-h-full overflow-hidden">
+
+        {/* ─── LEFT RAIL (glass dock) ─── */}
+        <aside className={`w-14 shrink-0 hidden sm:flex flex-col items-center justify-between py-4 px-1.5 ${glassCard}`}>
           <Link
             href="/"
-            className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-transform active:scale-95 shadow-sm"
+            className="w-10 h-10 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-transform active:scale-95"
             title="Accueil LKDV"
           >
             <svg viewBox="0 0 32 32" width="18" height="18" fill="none">
-              <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="#D4F973" strokeWidth="2.2" strokeLinejoin="round" />
+              <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="#A3C4A3" strokeWidth="2.2" strokeLinejoin="round" />
               <path d="M2 24 L30 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </Link>
 
-          {/* Navigation Icons Dock */}
           <div className="flex flex-col gap-3">
-            {/* Inventory Icon (Active: Vibrant Lime Rounded Square) */}
             <button
               type="button"
-              onClick={() => {
-                triggerHaptic('light');
-                setActiveNav('inventory');
-              }}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+              onClick={() => { triggerHaptic('light'); setActiveNav('inventory'); }}
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all active:scale-95 ${
                 activeNav === 'inventory'
-                  ? 'bg-[#D4F973] text-[#0A0C10] shadow-[0_0_18px_rgba(212,249,115,0.5)] scale-105'
-                  : 'text-white/50 hover:text-white hover:bg-white/5'
+                  ? 'bg-[#A3C4A3] text-[#0B1F17] shadow-[0_0_20px_rgba(163,196,163,0.45)] scale-105'
+                  : 'text-white/55 hover:text-white hover:bg-white/8'
               }`}
               title="Inventaire"
             >
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.1">
                 <rect x="3" y="3" width="7" height="7" rx="2" />
                 <rect x="14" y="3" width="7" height="7" rx="2" />
                 <rect x="3" y="14" width="7" height="7" rx="2" />
@@ -317,32 +253,24 @@ export default function MonMaterielKarZentraPage() {
               </svg>
             </button>
 
-            {/* Kits & Telemetry */}
             <button
               type="button"
-              onClick={() => {
-                triggerHaptic('light');
-                setIsKitDrawerOpen(true);
-              }}
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all"
-              title="Kits & Télémétrie"
+              onClick={() => { triggerHaptic('light'); setIsKitDrawerOpen(true); }}
+              className="w-10 h-10 rounded-2xl flex items-center justify-center text-white/55 hover:text-white hover:bg-white/8 transition-all active:scale-95"
+              title="Kits assemblés"
             >
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
               </svg>
             </button>
 
-            {/* Favorites */}
             <button
               type="button"
-              onClick={() => {
-                triggerHaptic('light');
-                setActiveNav(activeNav === 'favorites' ? 'inventory' : 'favorites');
-              }}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+              onClick={() => { triggerHaptic('light'); setActiveNav(activeNav === 'favorites' ? 'inventory' : 'favorites'); }}
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all active:scale-95 ${
                 activeNav === 'favorites'
-                  ? 'bg-[#D4F973] text-[#0A0C10] shadow-[0_0_18px_rgba(212,249,115,0.5)] scale-105'
-                  : 'text-white/50 hover:text-white hover:bg-white/5'
+                  ? 'bg-[#A3C4A3] text-[#0B1F17] shadow-[0_0_20px_rgba(163,196,163,0.45)] scale-105'
+                  : 'text-white/55 hover:text-white hover:bg-white/8'
               }`}
               title="Favoris"
             >
@@ -352,79 +280,58 @@ export default function MonMaterielKarZentraPage() {
             </button>
           </div>
 
-          {/* Settings */}
           <Link
             href="/compte"
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-colors"
+            className="w-10 h-10 rounded-2xl flex items-center justify-center text-white/55 hover:text-white hover:bg-white/8 transition-all active:scale-95"
             title="Paramètres"
           >
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
             </svg>
           </Link>
         </aside>
 
-        {/* ─── COLONNE 1 : LISTE D'ÉQUIPEMENT (KarZentra Column 1) ─── */}
-        <div className="w-[280px] lg:w-[310px] xl:w-[330px] shrink-0 flex flex-col h-full rounded-3xl bg-[#151921]/80 backdrop-blur-xl border border-white/10 p-3.5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-hidden">
-          
-          {/* Header Title & Counter */}
+        {/* ─── COLUMN 1 : INVENTORY LIST (glass) ─── */}
+        <div className={`w-[280px] lg:w-[320px] xl:w-[340px] shrink-0 flex flex-col h-full p-3.5 overflow-hidden ${glassCard}`}>
+          {/* Header + counter */}
           <div className="space-y-2.5 pb-3 border-b border-white/10 shrink-0">
             <div className="flex items-baseline justify-between">
-              <h2 className="text-base font-bold tracking-tight text-white">
-                Mon Équipement
-              </h2>
-              <span className="text-xs font-mono text-[#D4F973] font-bold">
-                {filteredEquipment.length} items · {formatWeight(totalWeightG)}
+              <h2 className="text-base font-bold tracking-tight text-white">Inventaire</h2>
+              <span className="text-xs font-mono text-[#A3C4A3] font-bold">
+                {filteredEquipment.length} · {formatWeight(totalWeightG)}
               </span>
             </div>
 
-            {/* Search Input Bar */}
+            {/* Search */}
             <div className="relative flex items-center">
-              <svg
-                viewBox="0 0 24 24"
-                width="14"
-                height="14"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="absolute left-3 text-white/40"
-              >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 text-white/40">
                 <circle cx="11" cy="11" r="7" />
                 <path d="M20 20l-3.5-3.5" />
               </svg>
               <input
                 type="text"
-                placeholder="Rechercher équipement..."
+                placeholder="Rechercher équipement…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-7 py-2 bg-[#0A0C10]/60 rounded-xl border border-white/10 text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#D4F973]/50 shadow-inner transition-colors"
+                className="w-full pl-9 pr-7 py-2 bg-black/25 rounded-2xl border border-white/10 text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#A3C4A3]/50 transition-colors"
               />
               {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 text-white/40 hover:text-white text-xs"
-                >
-                  ✕
-                </button>
+                <button type="button" onClick={() => setSearchQuery('')} className="absolute right-2.5 text-white/40 hover:text-white text-xs">✕</button>
               )}
             </div>
 
-            {/* Category Filter Pills */}
+            {/* Category pills */}
             <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none text-[11px]">
-              {['all', 'couchage', 'portage', 'cuisine', 'vêtement', 'navigation'].map((cat) => (
+              {CATEGORIES.map((cat) => (
                 <button
                   key={cat}
                   type="button"
-                  onClick={() => {
-                    triggerHaptic('light');
-                    setActiveCategory(cat);
-                  }}
-                  className={`px-3 py-1 rounded-lg capitalize whitespace-nowrap transition-colors ${
+                  onClick={() => { triggerHaptic('light'); setActiveCategory(cat); }}
+                  className={`px-3 py-1 rounded-full capitalize whitespace-nowrap transition-colors ${
                     activeCategory === cat
-                      ? 'bg-[#D4F973] text-[#0A0C10] font-bold shadow-xs'
-                      : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/5'
+                      ? 'bg-[#A3C4A3] text-[#0B1F17] font-bold'
+                      : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10'
                   }`}
                 >
                   {cat === 'all' ? 'Tous' : cat}
@@ -433,11 +340,11 @@ export default function MonMaterielKarZentraPage() {
             </div>
           </div>
 
-          {/* Stack of Floating Item Cards */}
-          <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-0.5 pt-2.5 custom-scrollbar">
+          {/* Item cards (internal scroll only) */}
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-0.5 pt-2.5">
             {isLoading && equipment.length === 0 ? (
               <div className="space-y-2">
-                {[1, 2, 3, 4].map((n) => (
+                {[1, 2, 3, 4, 5].map((n) => (
                   <div key={n} className="p-3 rounded-2xl bg-white/5 animate-pulse flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-white/10 shrink-0" />
                     <div className="flex-1 space-y-1.5">
@@ -448,13 +355,13 @@ export default function MonMaterielKarZentraPage() {
                 ))}
               </div>
             ) : filteredEquipment.length === 0 ? (
-              <div className="p-4 rounded-2xl bg-white/5 text-center space-y-2.5 my-3 border border-white/5">
+              <div className="p-4 rounded-2xl bg-white/5 text-center space-y-2.5 my-3 border border-white/10">
                 <span className="text-2xl block">🧭</span>
                 <p className="text-xs text-white/70 font-medium">Aucun équipement trouvé</p>
                 <button
                   type="button"
                   onClick={handleResetFilters}
-                  className="px-3.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold"
+                  className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all active:scale-95"
                 >
                   Réinitialiser
                 </button>
@@ -465,23 +372,17 @@ export default function MonMaterielKarZentraPage() {
                 return (
                   <div
                     key={item.id}
-                    onClick={() => {
-                      triggerHaptic('light');
-                      setSelectedItemId(item.id);
-                    }}
+                    onClick={() => { triggerHaptic('light'); setSelectedItemId(item.id); }}
                     className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 relative group ${
                       isSelected
-                        ? 'bg-[#1C222C]/95 border-[#D4F973]/60 shadow-[0_4px_20px_rgba(0,0,0,0.4)] ring-1 ring-[#D4F973]/30'
-                        : 'bg-white/[0.04] border-white/5 hover:bg-white/[0.08] hover:border-white/15'
+                        ? 'bg-white/[0.12] border-[#A3C4A3]/50 ring-1 ring-[#A3C4A3]/30 shadow-[0_8px_24px_-8px_rgba(11,31,23,0.6)]'
+                        : 'bg-white/[0.04] border-white/8 hover:bg-white/[0.08] hover:border-white/15'
                     }`}
                   >
-                    {/* Active Left Indicator Bar */}
                     {isSelected && (
-                      <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-full bg-[#D4F973] shadow-[0_0_10px_rgba(212,249,115,0.8)]" />
+                      <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-full bg-[#A3C4A3] shadow-[0_0_10px_rgba(163,196,163,0.8)]" />
                     )}
-
-                    {/* Image Thumbnail Box */}
-                    <div className="w-12 h-12 rounded-xl bg-[#0A0C10]/90 overflow-hidden relative shrink-0 border border-white/10 flex items-center justify-center p-1.5 shadow-inner">
+                    <div className="w-12 h-12 rounded-xl bg-black/30 overflow-hidden relative shrink-0 border border-white/10 flex items-center justify-center p-1.5 shadow-inner">
                       <Image
                         src={item.image || '/assets/images/no_image.png'}
                         alt={item.name}
@@ -490,20 +391,14 @@ export default function MonMaterielKarZentraPage() {
                         className="object-contain max-h-full max-w-full"
                       />
                     </div>
-
-                    {/* Text Info */}
                     <div className="min-w-0 flex-1">
-                      <h4 className="text-xs sm:text-[13px] font-bold text-white truncate leading-tight">
-                        {item.name}
-                      </h4>
+                      <h4 className="text-xs sm:text-[13px] font-bold text-white truncate leading-tight">{item.name}</h4>
                       <div className="flex items-center gap-1.5 text-[11px] text-white/50 mt-0.5 truncate">
                         <span>{item.brand || 'Outdoor'}</span>
                         <span>·</span>
-                        <span className="font-mono text-[#D4F973] font-bold">{formatWeight(item.weight_g || 0)}</span>
+                        <span className="font-mono text-[#A3C4A3] font-bold">{formatWeight(item.weight_g || 0)}</span>
                       </div>
                     </div>
-
-                    {/* Open Drawer Icon */}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -511,7 +406,7 @@ export default function MonMaterielKarZentraPage() {
                         setSelectedItemId(item.id);
                         setIsDetailDrawerOpen(true);
                       }}
-                      className="text-white/40 hover:text-[#D4F973] p-1 transition-colors"
+                      className="text-white/40 hover:text-[#A3C4A3] p-1 transition-colors"
                       title="Ouvrir la fiche"
                     >
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
@@ -523,181 +418,37 @@ export default function MonMaterielKarZentraPage() {
               })
             )}
 
-            {/* + Add Button */}
             <button
               type="button"
-              onClick={() => {
-                setEditingItem(null);
-                setIsAddModalOpen(true);
-              }}
-              className="w-full py-2.5 rounded-2xl border border-dashed border-white/20 hover:border-[#D4F973] bg-white/[0.03] hover:bg-white/[0.08] text-white/80 hover:text-[#D4F973] text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+              onClick={() => { setEditingItem(null); setIsAddModalOpen(true); }}
+              className="w-full py-2.5 rounded-2xl border border-dashed border-white/20 hover:border-[#A3C4A3] bg-white/[0.03] hover:bg-white/[0.08] text-white/80 hover:text-[#A3C4A3] text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
             >
               <span className="text-sm">+</span> Ajouter un article
             </button>
           </div>
         </div>
 
-        {/* ─── COLONNE 2 : COPILOTE IA & COMBOS (KarZentra Column 2) ─── */}
-        <div className="hidden md:flex w-[290px] lg:w-[320px] xl:w-[350px] shrink-0 flex-col h-full rounded-3xl bg-[#151921]/80 backdrop-blur-xl border border-white/10 p-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-hidden justify-between space-y-3">
-          
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-white/10 pb-2.5 shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="text-amber-400 text-sm">⭐</span>
-              <div>
-                <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">
-                  Copilote IA Équipement
-                </h3>
-                <span className="text-[9px] text-[#D4F973] font-mono font-bold uppercase tracking-wider">Assistance active</span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setAiPromptIndex((prev) => (prev + 1) % aiPrompts.length)}
-              className="w-6 h-6 rounded-lg bg-white/5 hover:bg-white/15 flex items-center justify-center text-xs text-white/80 transition-colors"
-              title="Prompt suivant"
-            >
-              ↗
-            </button>
-          </div>
-
-          {/* AI Conversational Prompt Box */}
-          <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 shadow-inner">
-            <p className="text-xs text-white/90 leading-relaxed font-sans">
-              "Peux-tu m'optimiser un pack{' '}
-              <span className="text-[#D4F973] font-semibold italic">{aiPrompts[aiPromptIndex].hl1}</span>{' '}
-              <span className="text-[#D4F973] font-semibold italic">{aiPrompts[aiPromptIndex].hl2}</span> ?"
-            </p>
-            <div className="mt-3 flex items-center justify-between text-[11px]">
-              <span className="text-[#D4F973] font-mono font-bold">✦ Recommandation prête</span>
-              <button
-                type="button"
-                onClick={() => setIsKitDrawerOpen(true)}
-                className="text-white/60 hover:text-white font-medium underline"
-              >
-                Voir l'analyse
-              </button>
-            </div>
-          </div>
-
-          {/* 2 Side-by-Side Mini Combo Cards */}
-          <div className="grid grid-cols-2 gap-2.5 flex-1 min-h-0">
-            {AI_PRESET_COMBOS.map((combo) => (
-              <div
-                key={combo.id}
-                onClick={() => {
-                  const gear = equipment.find((e) => e.name.toLowerCase().includes(combo.gearQuery.toLowerCase()));
-                  if (gear) setSelectedItemId(gear.id);
-                }}
-                className="rounded-2xl bg-white/[0.04] border border-white/10 p-2.5 flex flex-col justify-between cursor-pointer hover:bg-white/[0.08] hover:border-[#D4F973]/40 transition-all group shadow-sm"
-              >
-                <div className="relative aspect-[16/10] w-full rounded-xl overflow-hidden bg-black/50 flex items-center justify-center">
-                  <Image
-                    src={combo.image}
-                    alt={combo.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform"
-                  />
-                  <span className="absolute top-1 right-1 px-1.5 py-0.5 rounded-md bg-[#0A0C10]/90 text-[9px] font-mono text-[#D4F973] font-bold border border-[#D4F973]/30">
-                    {combo.savedWeight}
-                  </span>
-                </div>
-                <div className="pt-2">
-                  <h5 className="text-xs font-bold text-white truncate">{combo.title}</h5>
-                  <div className="flex items-center justify-between text-[11px] text-white/60 mt-0.5">
-                    <span className="font-mono text-[#D4F973] font-bold">{combo.weightStr}</span>
-                    <span className="text-white/40">1-Tap</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Bottom Audio Siri / Waveform Pill */}
-          <div className="h-10 rounded-2xl bg-[#0A0C10]/80 border border-white/10 px-3.5 flex items-center justify-between text-xs text-white/70 shadow-inner shrink-0">
-            <button
-              type="button"
-              className="w-6 h-6 rounded-full hover:bg-white/10 flex items-center justify-center text-white text-xs"
-              title="Historique"
-            >
-              ⏱️
-            </button>
-
-            {/* Waveform Equalizer */}
-            <div className="flex items-center gap-1">
-              <span className="w-0.5 h-2 bg-emerald-400/80 rounded-full animate-pulse" />
-              <span className="w-0.5 h-4 bg-[#D4F973] rounded-full animate-pulse" />
-              <span className="w-0.5 h-2 bg-emerald-400/80 rounded-full animate-pulse" />
-              
-              {/* Glowing Multi-color Siri Orb */}
-              <div className="w-5 h-5 mx-1.5 rounded-full bg-gradient-to-tr from-cyan-400 via-emerald-400 to-[#D4F973] shadow-[0_0_14px_rgba(212,249,115,0.7)] animate-spin-slow" />
-              
-              <span className="w-0.5 h-3.5 bg-emerald-400/80 rounded-full animate-pulse" />
-              <span className="w-0.5 h-1.5 bg-[#D4F973] rounded-full animate-pulse" />
-              <span className="w-0.5 h-2.5 bg-emerald-400/80 rounded-full animate-pulse" />
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setAiPromptIndex((prev) => (prev + 1) % aiPrompts.length)}
-              className="w-6 h-6 rounded-full hover:bg-white/10 flex items-center justify-center text-white text-xs"
-              title="Discussion"
-            >
-              💬
-            </button>
-          </div>
-
-        </div>
-
-        {/* ─── COLONNE 3 : HERO SPOTLIGHT & TÉLÉMÉTRIE (KarZentra Column 3) ─── */}
-        <div className="flex-1 min-w-0 flex flex-col h-full rounded-3xl bg-[#151921]/80 backdrop-blur-xl border border-white/10 p-4 sm:p-5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-hidden justify-between space-y-3">
-          
-          {/* Top Brand Filter Circles Ribbon */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-white/10 scrollbar-none shrink-0">
-            {BRAND_FILTERS.map((b) => {
-              const isSelected = selectedBrand === b.name;
-              return (
-                <button
-                  key={b.name}
-                  type="button"
-                  onClick={() => {
-                    triggerHaptic('light');
-                    setSelectedBrand(b.name);
-                  }}
-                  className={`px-3.5 py-1.5 rounded-full flex items-center gap-1.5 text-xs transition-all shrink-0 ${
-                    isSelected
-                      ? 'bg-[#D4F973] text-[#0A0C10] font-extrabold shadow-[0_0_12px_rgba(212,249,115,0.4)] scale-105'
-                      : 'bg-white/5 hover:bg-white/10 text-white/75 border border-white/10'
-                  }`}
-                  title={b.name}
-                >
-                  <span>{b.icon}</span>
-                  <span>{b.name}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Active Item Title & Top CTA Header */}
+        {/* ─── COLUMN 2 : HERO SPOTLIGHT of active item (glass) ─── */}
+        <div className={`flex-1 min-w-0 flex flex-col h-full p-4 sm:p-5 overflow-hidden ${glassCard}`}>
+          {/* Top: title + actions */}
           {activeItem ? (
             <div className="flex items-start justify-between gap-3 shrink-0">
-              <div>
-                <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white leading-tight">
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white leading-tight truncate">
                   {activeItem.name}
                 </h1>
-                <p className="text-xs text-white/60 font-sans mt-0.5">
-                  {activeItem.brand || 'Outdoor'} · Catégorie <span className="capitalize font-bold text-[#D4F973]">{activeItem.category}</span>
+                <p className="text-xs text-white/60 mt-0.5">
+                  {activeItem.brand || 'Outdoor'} · Catégorie{' '}
+                  <span className="capitalize font-bold text-[#A3C4A3]">{activeItem.category}</span>
                 </p>
               </div>
-
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsDetailDrawerOpen(true)}
-                  className="px-5 py-2 rounded-full bg-[#D4F973] hover:bg-[#c2e862] text-[#0A0C10] font-extrabold text-xs transition-all shadow-[0_0_18px_rgba(212,249,115,0.4)] active:scale-95"
+                  className="px-5 py-2 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] font-extrabold text-xs transition-all shadow-[0_0_20px_rgba(163,196,163,0.4)] active:scale-95"
                 >
-                  Fiche Complète
+                  Fiche complète
                 </button>
                 <button
                   type="button"
@@ -713,35 +464,26 @@ export default function MonMaterielKarZentraPage() {
             <div className="text-sm text-white/60">Sélectionnez un équipement</div>
           )}
 
-          {/* Large Hero Stage with Physical Floor Shadow & Studio Light */}
-          <div className="relative flex-1 min-h-[160px] rounded-2xl bg-gradient-to-b from-white/[0.04] to-black/40 border border-white/10 overflow-hidden flex flex-col items-center justify-center p-4 group">
-            
-            {/* Ambient Studio Lighting (Top Left) */}
+          {/* Big hero stage */}
+          <div className="relative flex-1 min-h-0 mt-3 rounded-[24px] bg-gradient-to-b from-white/[0.06] to-black/20 border border-white/10 overflow-hidden flex items-center justify-center p-4 group">
+            {/* highlight sheen */}
             <div
               className="absolute inset-0 pointer-events-none"
-              style={{
-                background: 'radial-gradient(circle at 25% 20%, rgba(255, 255, 255, 0.12) 0%, transparent 60%)',
-              }}
+              style={{ background: 'radial-gradient(circle at 28% 18%, rgba(255,255,255,0.14) 0%, transparent 58%)' }}
             />
-
-            {/* Floor Contact Shadow */}
+            {/* floor shadow */}
             <div
-              className="absolute bottom-5 w-56 sm:w-72 h-6 rounded-[100%] pointer-events-none"
-              style={{
-                background: 'radial-gradient(ellipse at center, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 70%)',
-                filter: 'blur(10px)',
-              }}
+              className="absolute bottom-6 w-56 sm:w-72 h-6 rounded-[100%] pointer-events-none"
+              style={{ background: 'radial-gradient(ellipse at center, rgba(11,31,23,0.8) 0%, rgba(11,31,23,0) 70%)', filter: 'blur(10px)' }}
             />
-
-            {/* Hero Product Image */}
             {activeItem ? (
-              <div className="relative z-10 w-full h-full max-h-[220px] flex items-center justify-center">
+              <div className="relative z-10 w-full h-full flex items-center justify-center">
                 <Image
                   src={activeItem.image || '/assets/images/no_image.png'}
                   alt={activeItem.name}
-                  width={320}
-                  height={220}
-                  className="object-contain max-h-full max-w-full drop-shadow-[0_16px_28px_rgba(0,0,0,0.65)] group-hover:scale-105 transition-transform duration-500"
+                  width={340}
+                  height={260}
+                  className="object-contain max-h-full max-w-full drop-shadow-[0_20px_32px_rgba(11,31,23,0.7)] group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
             ) : (
@@ -749,77 +491,175 @@ export default function MonMaterielKarZentraPage() {
             )}
           </div>
 
-          {/* Price & Weight Key Metrics Bar */}
-          {activeItem ? (
-            <div className="flex items-center justify-between px-2 pt-1 border-t border-white/10 shrink-0">
+          {/* Key metrics bar */}
+          {activeItem && (
+            <div className="flex items-center justify-between px-2 pt-3 mt-3 border-t border-white/10 shrink-0">
               <div>
-                <span className="text-[10px] text-white/50 uppercase tracking-widest block font-mono font-semibold">POIDS PESÉ</span>
-                <span className="text-2xl font-bold font-mono text-[#D4F973]">
-                  {formatWeight(activeItem.weight_g || 0)}
-                </span>
+                <span className="text-[10px] text-white/50 uppercase tracking-widest block font-mono font-semibold">Poids pesé</span>
+                <span className="text-2xl font-bold font-mono text-[#A3C4A3]">{formatWeight(activeItem.weight_g || 0)}</span>
+              </div>
+              <div className="text-center">
+                <span className="text-[10px] text-white/50 uppercase tracking-widest block font-mono font-semibold">État</span>
+                <span className="text-base font-bold capitalize text-white">{activeItem.condition || 'Excellent'}</span>
               </div>
               <div className="text-right">
-                <span className="text-[10px] text-white/50 uppercase tracking-widest block font-mono font-semibold">VALEUR NEUF</span>
+                <span className="text-[10px] text-white/50 uppercase tracking-widest block font-mono font-semibold">Valeur</span>
                 <span className="text-2xl font-bold font-mono text-white">
-                  {activeItem.purchase_price ? `${activeItem.purchase_price} €` : '179 €'}
+                  {activeItem.purchase_price ? `${activeItem.purchase_price} €` : '— €'}
                 </span>
               </div>
             </div>
-          ) : null}
+          )}
 
-          {/* 3 Specifications Horizontal HUD Tiles (KarZentra Bottom Tiles) */}
-          <div className="grid grid-cols-3 gap-2.5 shrink-0">
-            
-            {/* Tile 1: Condition */}
-            <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center gap-2.5 shadow-sm">
-              <span className="text-lg">⏱️</span>
-              <div className="min-w-0">
-                <span className="text-xs font-bold text-white block truncate leading-none capitalize">
-                  {activeItem?.condition || 'Excellent'}
-                </span>
-                <span className="text-[9px] text-white/50 uppercase font-mono mt-1 block truncate font-semibold">
-                  ÉTAT D'USURE
-                </span>
-              </div>
+          {/* Action row */}
+          {activeItem && (
+            <div className="grid grid-cols-3 gap-2.5 shrink-0 mt-3">
+              <button
+                type="button"
+                onClick={() => { setEditingItem(activeItem); setIsAddModalOpen(true); }}
+                className="py-2.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95"
+              >
+                ✎ Éditer
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsLendModalOpen(true)}
+                className="py-2.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95"
+              >
+                🤝 Prêter
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('selection');
+                  addToCart({
+                    id: activeItem.product_id || activeItem.id,
+                    slug: 'equipement',
+                    name: activeItem.name,
+                    brand: activeItem.brand || 'LKDV',
+                    priceEur: activeItem.purchase_price || 99,
+                    weightG: activeItem.weight_g || 100,
+                    image: activeItem.image || '/assets/images/no_image.png',
+                    imageAlt: activeItem.name,
+                    category: activeItem.category || 'équipement',
+                  });
+                }}
+                className="py-2.5 rounded-2xl bg-[#A3C4A3]/15 hover:bg-[#A3C4A3]/25 border border-[#A3C4A3]/40 text-[#A3C4A3] text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95"
+              >
+                ↻ Racheter
+              </button>
             </div>
-
-            {/* Tile 2: Polyvalence */}
-            <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center gap-2.5 shadow-sm">
-              <span className="text-lg">🏕️</span>
-              <div className="min-w-0">
-                <span className="text-xs font-bold text-white block truncate leading-none">
-                  3 Saisons
-                </span>
-                <span className="text-[9px] text-white/50 uppercase font-mono mt-1 block truncate font-semibold">
-                  POLYVALENCE
-                </span>
-              </div>
-            </div>
-
-            {/* Tile 3: Score KDV */}
-            <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center gap-2.5 shadow-sm">
-              <span className="text-lg text-[#D4F973]">⚡</span>
-              <div className="min-w-0">
-                <span className="text-xs font-bold text-[#D4F973] block truncate leading-none">
-                  9.6 / 10
-                </span>
-                <span className="text-[9px] text-white/50 uppercase font-mono mt-1 block truncate font-semibold">
-                  SCORE KDV
-                </span>
-              </div>
-            </div>
-
-          </div>
-
+          )}
         </div>
 
+        {/* ─── COLUMN 3 : TELEMETRY + AI COPILOT (glass) ─── */}
+        <div className="hidden md:flex w-[290px] lg:w-[320px] xl:w-[350px] shrink-0 flex-col h-full gap-3 sm:gap-4 overflow-hidden">
+
+          {/* Telemetry card */}
+          <div className={`p-4 shrink-0 ${glassCard}`}>
+            <div className="flex items-center justify-between pb-2.5 border-b border-white/10">
+              <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">Télémétrie du pack</h3>
+              <span className="text-[9px] text-[#A3C4A3] font-mono font-bold uppercase tracking-wider">Live</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2 mt-3">
+              <div className="rounded-2xl bg-white/[0.05] border border-white/10 p-2.5 text-center">
+                <span className="block text-lg font-bold font-mono text-[#A3C4A3]">{equipment.length}</span>
+                <span className="block text-[9px] text-white/50 uppercase font-mono mt-0.5">Articles</span>
+              </div>
+              <div className="rounded-2xl bg-white/[0.05] border border-white/10 p-2.5 text-center">
+                <span className="block text-lg font-bold font-mono text-white">{formatWeight(totalWeightG)}</span>
+                <span className="block text-[9px] text-white/50 uppercase font-mono mt-0.5">Poids</span>
+              </div>
+              <div className="rounded-2xl bg-white/[0.05] border border-white/10 p-2.5 text-center">
+                <span className="block text-lg font-bold font-mono text-white">{favoritesCount}</span>
+                <span className="block text-[9px] text-white/50 uppercase font-mono mt-0.5">Favoris</span>
+              </div>
+            </div>
+            {/* Distribution bars */}
+            <div className="mt-3 space-y-1.5">
+              {categoryStats.map((c) => (
+                <div key={c.label}>
+                  <div className="flex items-center justify-between text-[10px] text-white/60 mb-0.5">
+                    <span className="capitalize truncate">{c.label}</span>
+                    <span className="font-mono text-[#A3C4A3]">{formatWeight(c.grams)}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
+                    <div className="h-full rounded-full bg-[#A3C4A3]" style={{ width: `${c.pct}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 flex items-center justify-between text-[11px] text-white/60 pt-2.5 border-t border-white/10">
+              <span>Valeur totale du kit</span>
+              <span className="font-mono font-bold text-white">{Math.round(totalValue)} €</span>
+            </div>
+          </div>
+
+          {/* AI Copilot card (fills remaining space) */}
+          <div className={`flex-1 min-h-0 flex flex-col p-4 overflow-hidden ${glassCard}`}>
+            <div className="flex items-center gap-2 pb-2.5 border-b border-white/10 shrink-0">
+              <span className="text-sm">✦</span>
+              <div>
+                <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">Copilote IA Équipement</h3>
+                <span className="text-[9px] text-[#A3C4A3] font-mono font-bold uppercase tracking-wider">Assistance active</span>
+              </div>
+            </div>
+
+            <div className="flex-1 min-h-0 overflow-y-auto mt-3 space-y-2.5 pr-0.5">
+              <div className="p-3.5 rounded-2xl bg-white/[0.05] border border-white/10 shadow-inner">
+                <p className="text-xs text-white/90 leading-relaxed">
+                  Peux-tu m&apos;optimiser un pack{' '}
+                  <span className="text-[#A3C4A3] font-semibold italic">bivouac 3 jours</span>{' '}
+                  <span className="text-[#A3C4A3] font-semibold italic">sous 9,5 kg</span> ?
+                </p>
+                <div className="mt-2.5 flex items-center justify-between text-[11px]">
+                  <span className="text-[#A3C4A3] font-mono font-bold">✦ Recommandation prête</span>
+                  <button
+                    type="button"
+                    onClick={() => setIsKitDrawerOpen(true)}
+                    className="text-white/60 hover:text-white font-medium underline"
+                  >
+                    Voir l&apos;analyse
+                  </button>
+                </div>
+              </div>
+
+              {kits.slice(0, 3).map((kit) => (
+                <button
+                  key={kit.id}
+                  type="button"
+                  onClick={() => { setSelectedKitForCockpit(kit as CustomKit); setIsKitDrawerOpen(true); }}
+                  className="w-full text-left p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/10 hover:border-[#A3C4A3]/40 transition-all active:scale-[0.98]"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white truncate">{kit.name || 'Kit assemblé'}</span>
+                    <span className="text-[10px] font-mono text-[#A3C4A3]">→</span>
+                  </div>
+                  <span className="text-[10px] text-white/50">Kit personnalisé</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Waveform pill */}
+            <div className="h-11 mt-3 rounded-2xl bg-black/25 border border-white/10 px-3.5 flex items-center justify-between text-white/70 shadow-inner shrink-0">
+              <button type="button" className="w-6 h-6 rounded-full hover:bg-white/10 flex items-center justify-center text-white text-xs" title="Historique">⏱️</button>
+              <div className="flex items-center gap-1">
+                <span className="w-0.5 h-2 bg-[#A3C4A3]/70 rounded-full animate-pulse" />
+                <span className="w-0.5 h-4 bg-[#A3C4A3] rounded-full animate-pulse" />
+                <span className="w-0.5 h-2 bg-[#A3C4A3]/70 rounded-full animate-pulse" />
+                <div className="w-5 h-5 mx-1.5 rounded-full bg-gradient-to-tr from-[#2D6B4A] via-[#A3C4A3] to-white/80 shadow-[0_0_14px_rgba(163,196,163,0.7)]" />
+                <span className="w-0.5 h-3.5 bg-[#A3C4A3]/70 rounded-full animate-pulse" />
+                <span className="w-0.5 h-1.5 bg-[#A3C4A3] rounded-full animate-pulse" />
+                <span className="w-0.5 h-2.5 bg-[#A3C4A3]/70 rounded-full animate-pulse" />
+              </div>
+              <button type="button" className="w-6 h-6 rounded-full hover:bg-white/10 flex items-center justify-center text-white text-xs" title="Discussion">💬</button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* ─────────────────────────────────────────────────────────────
-          MODALS & DRAWERS
-      ───────────────────────────────────────────────────────────── */}
-      
-      {/* Item Detail Drawer */}
+      {/* ═══════════════ MODALS & DRAWERS ═══════════════ */}
+
       <GearDetailDrawer
         isOpen={isDetailDrawerOpen}
         item={activeItem}
@@ -833,11 +673,11 @@ export default function MonMaterielKarZentraPage() {
           removeFromEquipment(id);
           setIsDetailDrawerOpen(false);
         }}
-        onLend={(item) => {
+        onLend={() => {
           setIsDetailDrawerOpen(false);
           setIsLendModalOpen(true);
         }}
-        onToggleFavorite={(id) => {
+        onToggleFavorite={() => {
           if (activeItem) handleToggleFavorite(activeItem);
         }}
         onAddToCart={(p) => {
@@ -855,7 +695,6 @@ export default function MonMaterielKarZentraPage() {
         }}
       />
 
-      {/* Add / Edit Item Modal */}
       <AddEditGearModal
         isOpen={isAddModalOpen}
         initialItem={
@@ -916,7 +755,6 @@ export default function MonMaterielKarZentraPage() {
         }}
       />
 
-      {/* Kit Cockpit Drawer */}
       <KitCockpitDrawer
         isOpen={isKitDrawerOpen}
         kit={selectedKitForCockpit || kits[0] || null}
@@ -961,7 +799,6 @@ export default function MonMaterielKarZentraPage() {
         }}
       />
 
-      {/* Lend Item Modal */}
       <LendItemModal
         isOpen={isLendModalOpen}
         item={activeItem}
