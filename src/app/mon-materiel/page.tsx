@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEquipment, UserEquipmentItem } from '@/hooks/useEquipment';
@@ -13,16 +12,7 @@ import KitCockpitDrawer from '@/components/inventaire/KitCockpitDrawer';
 import LendItemModal from '@/components/inventaire/LendItemModal';
 import { addToCart } from '@/lib/cart';
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   KARZENTRA / APPLE DARK TITANIUM LIQUID GLASS DESIGN SYSTEM
-   
-   - Palette: Dark Charcoal Titanium (#0E1116, #161A22, #1C222C)
-   - Accent: Electric Neon Chartreuse (#D4F973 / #E2F83B)
-   - Glass: Translucent smoked obsidian with crisp 1px specular top highlights
-   - Depth: High contrast text, no nested backdrop-filter blur blowout
-───────────────────────────────────────────────────────────────────────────── */
-
-// Formatters
+// Formatter
 function formatWeight(g: number): string {
   if (g >= 1000) {
     return `${(g / 1000).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 2 })} kg`;
@@ -30,7 +20,7 @@ function formatWeight(g: number): string {
   return `${g} g`;
 }
 
-// Brand filter pills for Column 3 top ribbon (KarZentra style circular buttons)
+// Brand filter pills (Column 3 top ribbon)
 const BRAND_FILTERS = [
   { name: 'Tous', icon: '✦' },
   { name: 'MSR', icon: '⛺' },
@@ -63,7 +53,7 @@ const AI_PRESET_COMBOS = [
   },
 ];
 
-export default function MonMaterielKarZentraCockpitPage() {
+export default function MonMaterielKarZentraPage() {
   const { triggerHaptic } = useHapticFeedback();
 
   // Supabase Hooks
@@ -84,7 +74,7 @@ export default function MonMaterielKarZentraCockpitPage() {
 
   const isLoading = equipmentLoading || kitsLoading;
 
-  // Cockpit States
+  // States
   const [activeNav, setActiveNav] = useState<'inventory' | 'telemetry' | 'favorites' | 'settings'>('inventory');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBrand, setSelectedBrand] = useState<string>('Tous');
@@ -99,7 +89,7 @@ export default function MonMaterielKarZentraCockpitPage() {
   const [selectedKitForCockpit, setSelectedKitForCockpit] = useState<CustomKit | null>(null);
   const [isLendModalOpen, setIsLendModalOpen] = useState(false);
 
-  // AI Prompt Interactive Suggestion
+  // AI Prompt cycling
   const [aiPromptIndex, setAiPromptIndex] = useState(0);
   const aiPrompts = [
     {
@@ -184,36 +174,37 @@ export default function MonMaterielKarZentraCockpitPage() {
   };
 
   return (
-    <div className="fixed inset-0 z-40 h-screen w-screen overflow-hidden text-white select-none flex flex-col p-2 sm:p-3 font-sans bg-[#0B0D11]">
+    <div className="fixed inset-0 z-50 h-screen w-screen overflow-hidden bg-[#0A0C10] text-white select-none flex flex-col p-3 sm:p-4 font-sans">
       
       {/* ─────────────────────────────────────────────────────────────
-          1. BACKGROUND SCENE: Dark Luxury Chalet & Alpine Panorama
+          1. BACKGROUND LAYER: Deep Luxury Dark Alpine Atmosphere
       ───────────────────────────────────────────────────────────── */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <Image
           src="/assets/images/detail-hero.jpg"
-          alt="Massif alpin LKDV"
+          alt="Atmosphère Montagneuse LKDV"
           fill
           priority
           sizes="100vw"
-          className="object-cover object-center opacity-45"
+          className="object-cover object-center opacity-30"
         />
-        {/* Dark Luxury Vignette & Smoked Wash */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B0D11] via-[#0B0D11]/70 to-[#0B0D11]/50" />
+        {/* Soft Vignette Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0C10] via-[#0A0C10]/75 to-[#0A0C10]/55" />
         <div
           className="absolute inset-0"
           style={{
-            background: 'radial-gradient(ellipse at center, transparent 20%, rgba(11, 13, 17, 0.85) 100%)',
+            background: 'radial-gradient(ellipse at center, transparent 25%, rgba(10, 12, 16, 0.9) 100%)',
           }}
         />
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          2. HEADER CAPSULE BAR (KarZentra Top Bar)
+          2. TOP FLOATING ISLAND BAR (Header KarZentra)
       ───────────────────────────────────────────────────────────── */}
-      <header className="relative z-10 flex items-center justify-between gap-3 shrink-0 h-10 px-1 mb-1">
-        {/* Logo & Title */}
-        <div className="flex items-center gap-2">
+      <header className="relative z-10 flex items-center justify-between gap-3 shrink-0 h-10 px-2 mb-2">
+        
+        {/* Left Brand Identity */}
+        <div className="flex items-center gap-2.5">
           <span className="font-extrabold tracking-widest text-sm text-[#D4F973] uppercase font-mono">
             LE KIT DU VOYAGEUR
           </span>
@@ -223,17 +214,18 @@ export default function MonMaterielKarZentraCockpitPage() {
           </span>
         </div>
 
-        {/* Center Floating Island Capsule */}
-        <div className="flex items-center gap-1 p-1 rounded-full bg-[#181C24]/85 backdrop-blur-xl border border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)]">
+        {/* Right Floating Capsule Bar */}
+        <div className="flex items-center gap-1.5 p-1 rounded-full bg-[#151921]/90 backdrop-blur-xl border border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.6)]">
+          
           <button
             type="button"
             onClick={() => {
               triggerHaptic('light');
               setActiveCategory('all');
             }}
-            className={`px-3.5 py-1 rounded-full text-xs font-bold transition-all ${
+            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
               activeCategory === 'all'
-                ? 'bg-[#D4F973] text-[#0B0D11] shadow-[0_0_14px_rgba(212,249,115,0.45)]'
+                ? 'bg-[#D4F973] text-[#0A0C10] shadow-[0_0_14px_rgba(212,249,115,0.45)]'
                 : 'text-white/70 hover:text-white hover:bg-white/5'
             }`}
           >
@@ -246,19 +238,19 @@ export default function MonMaterielKarZentraCockpitPage() {
               triggerHaptic('light');
               setIsKitDrawerOpen(true);
             }}
-            className="px-3.5 py-1 rounded-full text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+            className="px-3.5 py-1.5 rounded-full text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors"
           >
             Kits Assemblés
           </button>
 
           <Link
             href="/boutique"
-            className="px-3.5 py-1 rounded-full text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors hidden sm:inline-block"
+            className="px-3.5 py-1.5 rounded-full text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors hidden sm:inline-block"
           >
             Boutique
           </Link>
 
-          {/* Location Chip */}
+          {/* Location Badge */}
           <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 text-[11px] text-[#AECBB4] font-medium border border-white/10">
             <span className="w-1.5 h-1.5 rounded-full bg-[#D4F973] animate-pulse" />
             <span>Massif Alpin · 2 450 m</span>
@@ -275,7 +267,7 @@ export default function MonMaterielKarZentraCockpitPage() {
           {/* Avatar */}
           <Link
             href="/compte"
-            className="w-7 h-7 rounded-full bg-[#D4F973] text-[#0B0D11] flex items-center justify-center text-[10px] font-extrabold shadow-sm"
+            className="w-7 h-7 rounded-full bg-[#D4F973] text-[#0A0C10] flex items-center justify-center text-[10px] font-extrabold shadow-sm"
           >
             MC
           </Link>
@@ -283,27 +275,27 @@ export default function MonMaterielKarZentraCockpitPage() {
       </header>
 
       {/* ─────────────────────────────────────────────────────────────
-          3. MAIN 3-COLUMNS COCKPIT STAGE (100% Fullscreen, No Window Scroll)
+          3. MAIN 3-COLUMNS COCKPIT (100% Fullscreen Height, No Scroll)
       ───────────────────────────────────────────────────────────── */}
-      <div className="relative z-10 flex-1 flex gap-2.5 min-h-0 max-h-full overflow-hidden">
+      <div className="relative z-10 flex-1 flex gap-3 min-h-0 max-h-full overflow-hidden">
         
-        {/* ─── DOCK LATÉRAL GAUCHE (KarZentra Left Dock) ─── */}
-        <aside className="w-12 sm:w-14 shrink-0 flex flex-col items-center justify-between py-3 px-1 rounded-2xl bg-[#141820]/80 backdrop-blur-2xl border border-white/10 border-t-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+        {/* ─── DOCK LATÉRAL GAUCHE (KarZentra Left Rail) ─── */}
+        <aside className="w-12 sm:w-14 shrink-0 flex flex-col items-center justify-between py-3 px-1 rounded-2xl bg-[#151921]/80 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
           {/* Logo Mark */}
           <Link
             href="/"
-            className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-transform active:scale-95"
+            className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-transform active:scale-95 shadow-sm"
             title="Accueil LKDV"
           >
             <svg viewBox="0 0 32 32" width="18" height="18" fill="none">
-              <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="#D4F973" strokeWidth="2" strokeLinejoin="round" />
+              <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="#D4F973" strokeWidth="2.2" strokeLinejoin="round" />
               <path d="M2 24 L30 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </Link>
 
           {/* Navigation Icons Dock */}
           <div className="flex flex-col gap-3">
-            {/* Inventory Icon (Active: Vibrant Lime Pill) */}
+            {/* Inventory Icon (Active: Vibrant Lime Rounded Square) */}
             <button
               type="button"
               onClick={() => {
@@ -312,7 +304,7 @@ export default function MonMaterielKarZentraCockpitPage() {
               }}
               className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
                 activeNav === 'inventory'
-                  ? 'bg-[#D4F973] text-[#0B0D11] shadow-[0_0_18px_rgba(212,249,115,0.5)] scale-105'
+                  ? 'bg-[#D4F973] text-[#0A0C10] shadow-[0_0_18px_rgba(212,249,115,0.5)] scale-105'
                   : 'text-white/50 hover:text-white hover:bg-white/5'
               }`}
               title="Inventaire"
@@ -325,7 +317,7 @@ export default function MonMaterielKarZentraCockpitPage() {
               </svg>
             </button>
 
-            {/* Kits / Telemetry */}
+            {/* Kits & Telemetry */}
             <button
               type="button"
               onClick={() => {
@@ -349,7 +341,7 @@ export default function MonMaterielKarZentraCockpitPage() {
               }}
               className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
                 activeNav === 'favorites'
-                  ? 'bg-[#D4F973] text-[#0B0D11] shadow-[0_0_18px_rgba(212,249,115,0.5)] scale-105'
+                  ? 'bg-[#D4F973] text-[#0A0C10] shadow-[0_0_18px_rgba(212,249,115,0.5)] scale-105'
                   : 'text-white/50 hover:text-white hover:bg-white/5'
               }`}
               title="Favoris"
@@ -368,26 +360,26 @@ export default function MonMaterielKarZentraCockpitPage() {
           >
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
             </svg>
           </Link>
         </aside>
 
         {/* ─── COLONNE 1 : LISTE D'ÉQUIPEMENT (KarZentra Column 1) ─── */}
-        <div className="w-[280px] lg:w-[310px] xl:w-[330px] shrink-0 flex flex-col h-full rounded-2xl bg-[#141820]/80 backdrop-blur-2xl border border-white/10 border-t-white/20 p-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-hidden">
+        <div className="w-[280px] lg:w-[310px] xl:w-[330px] shrink-0 flex flex-col h-full rounded-3xl bg-[#151921]/80 backdrop-blur-xl border border-white/10 p-3.5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-hidden">
           
           {/* Header Title & Counter */}
-          <div className="space-y-2 pb-2.5 border-b border-white/10 shrink-0">
+          <div className="space-y-2.5 pb-3 border-b border-white/10 shrink-0">
             <div className="flex items-baseline justify-between">
-              <h2 className="text-sm font-bold tracking-tight text-white">
+              <h2 className="text-base font-bold tracking-tight text-white">
                 Mon Équipement
               </h2>
-              <span className="text-[11px] font-mono text-[#D4F973] font-bold">
+              <span className="text-xs font-mono text-[#D4F973] font-bold">
                 {filteredEquipment.length} items · {formatWeight(totalWeightG)}
               </span>
             </div>
 
-            {/* Search Input Bar with Icons */}
+            {/* Search Input Bar */}
             <div className="relative flex items-center">
               <svg
                 viewBox="0 0 24 24"
@@ -396,7 +388,7 @@ export default function MonMaterielKarZentraCockpitPage() {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
-                className="absolute left-2.5 text-white/40"
+                className="absolute left-3 text-white/40"
               >
                 <circle cx="11" cy="11" r="7" />
                 <path d="M20 20l-3.5-3.5" />
@@ -406,13 +398,13 @@ export default function MonMaterielKarZentraCockpitPage() {
                 placeholder="Rechercher équipement..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-7 py-1.5 bg-[#0B0D11]/60 rounded-xl border border-white/10 text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#D4F973]/50 shadow-inner transition-colors"
+                className="w-full pl-9 pr-7 py-2 bg-[#0A0C10]/60 rounded-xl border border-white/10 text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#D4F973]/50 shadow-inner transition-colors"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2 text-white/40 hover:text-white text-xs"
+                  className="absolute right-2.5 text-white/40 hover:text-white text-xs"
                 >
                   ✕
                 </button>
@@ -420,7 +412,7 @@ export default function MonMaterielKarZentraCockpitPage() {
             </div>
 
             {/* Category Filter Pills */}
-            <div className="flex gap-1 overflow-x-auto pb-0.5 scrollbar-none text-[11px]">
+            <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none text-[11px]">
               {['all', 'couchage', 'portage', 'cuisine', 'vêtement', 'navigation'].map((cat) => (
                 <button
                   key={cat}
@@ -429,9 +421,9 @@ export default function MonMaterielKarZentraCockpitPage() {
                     triggerHaptic('light');
                     setActiveCategory(cat);
                   }}
-                  className={`px-2.5 py-0.5 rounded-lg capitalize whitespace-nowrap transition-colors ${
+                  className={`px-3 py-1 rounded-lg capitalize whitespace-nowrap transition-colors ${
                     activeCategory === cat
-                      ? 'bg-[#D4F973] text-[#0B0D11] font-bold shadow-xs'
+                      ? 'bg-[#D4F973] text-[#0A0C10] font-bold shadow-xs'
                       : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/5'
                   }`}
                 >
@@ -441,13 +433,13 @@ export default function MonMaterielKarZentraCockpitPage() {
             </div>
           </div>
 
-          {/* List of Item Cards */}
-          <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-0.5 pt-2 custom-scrollbar">
+          {/* Stack of Floating Item Cards */}
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-0.5 pt-2.5 custom-scrollbar">
             {isLoading && equipment.length === 0 ? (
               <div className="space-y-2">
                 {[1, 2, 3, 4].map((n) => (
-                  <div key={n} className="p-2.5 rounded-xl bg-white/5 animate-pulse flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-lg bg-white/10 shrink-0" />
+                  <div key={n} className="p-3 rounded-2xl bg-white/5 animate-pulse flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-white/10 shrink-0" />
                     <div className="flex-1 space-y-1.5">
                       <div className="w-3/4 h-3 rounded bg-white/15" />
                       <div className="w-1/2 h-2.5 rounded bg-white/10" />
@@ -456,13 +448,13 @@ export default function MonMaterielKarZentraCockpitPage() {
                 ))}
               </div>
             ) : filteredEquipment.length === 0 ? (
-              <div className="p-4 rounded-xl bg-white/5 text-center space-y-2.5 my-2 border border-white/5">
+              <div className="p-4 rounded-2xl bg-white/5 text-center space-y-2.5 my-3 border border-white/5">
                 <span className="text-2xl block">🧭</span>
                 <p className="text-xs text-white/70 font-medium">Aucun équipement trouvé</p>
                 <button
                   type="button"
                   onClick={handleResetFilters}
-                  className="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold"
+                  className="px-3.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold"
                 >
                   Réinitialiser
                 </button>
@@ -477,9 +469,9 @@ export default function MonMaterielKarZentraCockpitPage() {
                       triggerHaptic('light');
                       setSelectedItemId(item.id);
                     }}
-                    className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center gap-3 relative group ${
+                    className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 relative group ${
                       isSelected
-                        ? 'bg-white/15 border-[#D4F973]/50 shadow-[0_4px_20px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.2)]'
+                        ? 'bg-[#1C222C]/95 border-[#D4F973]/60 shadow-[0_4px_20px_rgba(0,0,0,0.4)] ring-1 ring-[#D4F973]/30'
                         : 'bg-white/[0.04] border-white/5 hover:bg-white/[0.08] hover:border-white/15'
                     }`}
                   >
@@ -488,8 +480,8 @@ export default function MonMaterielKarZentraCockpitPage() {
                       <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-full bg-[#D4F973] shadow-[0_0_10px_rgba(212,249,115,0.8)]" />
                     )}
 
-                    {/* Image Thumbnail Stage */}
-                    <div className="w-12 h-12 rounded-lg bg-[#0B0D11]/80 overflow-hidden relative shrink-0 border border-white/10 flex items-center justify-center p-1 shadow-inner">
+                    {/* Image Thumbnail Box */}
+                    <div className="w-12 h-12 rounded-xl bg-[#0A0C10]/90 overflow-hidden relative shrink-0 border border-white/10 flex items-center justify-center p-1.5 shadow-inner">
                       <Image
                         src={item.image || '/assets/images/no_image.png'}
                         alt={item.name}
@@ -504,7 +496,7 @@ export default function MonMaterielKarZentraCockpitPage() {
                       <h4 className="text-xs sm:text-[13px] font-bold text-white truncate leading-tight">
                         {item.name}
                       </h4>
-                      <div className="flex items-center gap-1.5 text-[11px] text-white/60 mt-0.5 truncate">
+                      <div className="flex items-center gap-1.5 text-[11px] text-white/50 mt-0.5 truncate">
                         <span>{item.brand || 'Outdoor'}</span>
                         <span>·</span>
                         <span className="font-mono text-[#D4F973] font-bold">{formatWeight(item.weight_g || 0)}</span>
@@ -538,7 +530,7 @@ export default function MonMaterielKarZentraCockpitPage() {
                 setEditingItem(null);
                 setIsAddModalOpen(true);
               }}
-              className="w-full py-2.5 rounded-xl border border-dashed border-white/20 hover:border-[#D4F973] bg-white/[0.03] hover:bg-white/[0.08] text-white/80 hover:text-[#D4F973] text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+              className="w-full py-2.5 rounded-2xl border border-dashed border-white/20 hover:border-[#D4F973] bg-white/[0.03] hover:bg-white/[0.08] text-white/80 hover:text-[#D4F973] text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
             >
               <span className="text-sm">+</span> Ajouter un article
             </button>
@@ -546,10 +538,10 @@ export default function MonMaterielKarZentraCockpitPage() {
         </div>
 
         {/* ─── COLONNE 2 : COPILOTE IA & COMBOS (KarZentra Column 2) ─── */}
-        <div className="hidden md:flex w-[290px] lg:w-[320px] xl:w-[350px] shrink-0 flex-col h-full rounded-2xl bg-[#141820]/80 backdrop-blur-2xl border border-white/10 border-t-white/20 p-3.5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-hidden justify-between space-y-2.5">
+        <div className="hidden md:flex w-[290px] lg:w-[320px] xl:w-[350px] shrink-0 flex-col h-full rounded-3xl bg-[#151921]/80 backdrop-blur-xl border border-white/10 p-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-hidden justify-between space-y-3">
           
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-white/10 pb-2 shrink-0">
+          <div className="flex items-center justify-between border-b border-white/10 pb-2.5 shrink-0">
             <div className="flex items-center gap-2">
               <span className="text-amber-400 text-sm">⭐</span>
               <div>
@@ -571,13 +563,13 @@ export default function MonMaterielKarZentraCockpitPage() {
           </div>
 
           {/* AI Conversational Prompt Box */}
-          <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10 shadow-inner">
+          <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 shadow-inner">
             <p className="text-xs text-white/90 leading-relaxed font-sans">
               "Peux-tu m'optimiser un pack{' '}
               <span className="text-[#D4F973] font-semibold italic">{aiPrompts[aiPromptIndex].hl1}</span>{' '}
               <span className="text-[#D4F973] font-semibold italic">{aiPrompts[aiPromptIndex].hl2}</span> ?"
             </p>
-            <div className="mt-2.5 flex items-center justify-between text-[11px]">
+            <div className="mt-3 flex items-center justify-between text-[11px]">
               <span className="text-[#D4F973] font-mono font-bold">✦ Recommandation prête</span>
               <button
                 type="button"
@@ -590,7 +582,7 @@ export default function MonMaterielKarZentraCockpitPage() {
           </div>
 
           {/* 2 Side-by-Side Mini Combo Cards */}
-          <div className="grid grid-cols-2 gap-2 flex-1 min-h-0">
+          <div className="grid grid-cols-2 gap-2.5 flex-1 min-h-0">
             {AI_PRESET_COMBOS.map((combo) => (
               <div
                 key={combo.id}
@@ -598,22 +590,22 @@ export default function MonMaterielKarZentraCockpitPage() {
                   const gear = equipment.find((e) => e.name.toLowerCase().includes(combo.gearQuery.toLowerCase()));
                   if (gear) setSelectedItemId(gear.id);
                 }}
-                className="rounded-xl bg-white/[0.04] border border-white/10 p-2 flex flex-col justify-between cursor-pointer hover:bg-white/[0.08] hover:border-[#D4F973]/40 transition-all group"
+                className="rounded-2xl bg-white/[0.04] border border-white/10 p-2.5 flex flex-col justify-between cursor-pointer hover:bg-white/[0.08] hover:border-[#D4F973]/40 transition-all group shadow-sm"
               >
-                <div className="relative aspect-[16/10] w-full rounded-lg overflow-hidden bg-black/50 flex items-center justify-center">
+                <div className="relative aspect-[16/10] w-full rounded-xl overflow-hidden bg-black/50 flex items-center justify-center">
                   <Image
                     src={combo.image}
                     alt={combo.title}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform"
                   />
-                  <span className="absolute top-1 right-1 px-1.5 py-0.5 rounded-md bg-[#0B0D11]/90 text-[9px] font-mono text-[#D4F973] font-bold border border-[#D4F973]/30">
+                  <span className="absolute top-1 right-1 px-1.5 py-0.5 rounded-md bg-[#0A0C10]/90 text-[9px] font-mono text-[#D4F973] font-bold border border-[#D4F973]/30">
                     {combo.savedWeight}
                   </span>
                 </div>
-                <div className="pt-1.5">
-                  <h5 className="text-[11px] font-bold text-white truncate">{combo.title}</h5>
-                  <div className="flex items-center justify-between text-[10px] text-white/60 mt-0.5">
+                <div className="pt-2">
+                  <h5 className="text-xs font-bold text-white truncate">{combo.title}</h5>
+                  <div className="flex items-center justify-between text-[11px] text-white/60 mt-0.5">
                     <span className="font-mono text-[#D4F973] font-bold">{combo.weightStr}</span>
                     <span className="text-white/40">1-Tap</span>
                   </div>
@@ -622,11 +614,11 @@ export default function MonMaterielKarZentraCockpitPage() {
             ))}
           </div>
 
-          {/* Apple / Siri Waveform Bar */}
-          <div className="h-10 rounded-xl bg-[#0B0D11]/70 border border-white/10 px-3 flex items-center justify-between text-xs text-white/70 shadow-inner shrink-0">
+          {/* Bottom Audio Siri / Waveform Pill */}
+          <div className="h-10 rounded-2xl bg-[#0A0C10]/80 border border-white/10 px-3.5 flex items-center justify-between text-xs text-white/70 shadow-inner shrink-0">
             <button
               type="button"
-              className="w-6 h-6 rounded-full hover:bg-white/10 flex items-center justify-center text-white text-[11px]"
+              className="w-6 h-6 rounded-full hover:bg-white/10 flex items-center justify-center text-white text-xs"
               title="Historique"
             >
               ⏱️
@@ -649,7 +641,7 @@ export default function MonMaterielKarZentraCockpitPage() {
             <button
               type="button"
               onClick={() => setAiPromptIndex((prev) => (prev + 1) % aiPrompts.length)}
-              className="w-6 h-6 rounded-full hover:bg-white/10 flex items-center justify-center text-white text-[11px]"
+              className="w-6 h-6 rounded-full hover:bg-white/10 flex items-center justify-center text-white text-xs"
               title="Discussion"
             >
               💬
@@ -659,10 +651,10 @@ export default function MonMaterielKarZentraCockpitPage() {
         </div>
 
         {/* ─── COLONNE 3 : HERO SPOTLIGHT & TÉLÉMÉTRIE (KarZentra Column 3) ─── */}
-        <div className="flex-1 min-w-0 flex flex-col h-full rounded-2xl bg-[#141820]/80 backdrop-blur-2xl border border-white/10 border-t-white/20 p-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-hidden justify-between space-y-2.5">
+        <div className="flex-1 min-w-0 flex flex-col h-full rounded-3xl bg-[#151921]/80 backdrop-blur-xl border border-white/10 p-4 sm:p-5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-hidden justify-between space-y-3">
           
-          {/* Top Brand Circles Ribbon (KarZentra Top Brand Circles) */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-white/10 scrollbar-none shrink-0">
+          {/* Top Brand Filter Circles Ribbon */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-white/10 scrollbar-none shrink-0">
             {BRAND_FILTERS.map((b) => {
               const isSelected = selectedBrand === b.name;
               return (
@@ -673,9 +665,9 @@ export default function MonMaterielKarZentraCockpitPage() {
                     triggerHaptic('light');
                     setSelectedBrand(b.name);
                   }}
-                  className={`px-3 py-1 rounded-full flex items-center gap-1.5 text-xs transition-all shrink-0 ${
+                  className={`px-3.5 py-1.5 rounded-full flex items-center gap-1.5 text-xs transition-all shrink-0 ${
                     isSelected
-                      ? 'bg-[#D4F973] text-[#0B0D11] font-bold shadow-[0_0_12px_rgba(212,249,115,0.4)]'
+                      ? 'bg-[#D4F973] text-[#0A0C10] font-extrabold shadow-[0_0_12px_rgba(212,249,115,0.4)] scale-105'
                       : 'bg-white/5 hover:bg-white/10 text-white/75 border border-white/10'
                   }`}
                   title={b.name}
@@ -703,7 +695,7 @@ export default function MonMaterielKarZentraCockpitPage() {
                 <button
                   type="button"
                   onClick={() => setIsDetailDrawerOpen(true)}
-                  className="px-5 py-2 rounded-full bg-[#D4F973] hover:bg-[#c2e862] text-[#0B0D11] font-extrabold text-xs transition-all shadow-[0_0_18px_rgba(212,249,115,0.4)] active:scale-95"
+                  className="px-5 py-2 rounded-full bg-[#D4F973] hover:bg-[#c2e862] text-[#0A0C10] font-extrabold text-xs transition-all shadow-[0_0_18px_rgba(212,249,115,0.4)] active:scale-95"
                 >
                   Fiche Complète
                 </button>
@@ -722,7 +714,7 @@ export default function MonMaterielKarZentraCockpitPage() {
           )}
 
           {/* Large Hero Stage with Physical Floor Shadow & Studio Light */}
-          <div className="relative flex-1 min-h-[160px] rounded-xl bg-gradient-to-b from-white/[0.06] to-black/30 border border-white/10 overflow-hidden flex flex-col items-center justify-center p-4 group">
+          <div className="relative flex-1 min-h-[160px] rounded-2xl bg-gradient-to-b from-white/[0.04] to-black/40 border border-white/10 overflow-hidden flex flex-col items-center justify-center p-4 group">
             
             {/* Ambient Studio Lighting (Top Left) */}
             <div
@@ -736,7 +728,7 @@ export default function MonMaterielKarZentraCockpitPage() {
             <div
               className="absolute bottom-5 w-56 sm:w-72 h-6 rounded-[100%] pointer-events-none"
               style={{
-                background: 'radial-gradient(ellipse at center, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 70%)',
+                background: 'radial-gradient(ellipse at center, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 70%)',
                 filter: 'blur(10px)',
               }}
             />
@@ -747,7 +739,7 @@ export default function MonMaterielKarZentraCockpitPage() {
                 <Image
                   src={activeItem.image || '/assets/images/no_image.png'}
                   alt={activeItem.name}
-                  width={340}
+                  width={320}
                   height={220}
                   className="object-contain max-h-full max-w-full drop-shadow-[0_16px_28px_rgba(0,0,0,0.65)] group-hover:scale-105 transition-transform duration-500"
                 />
@@ -776,42 +768,42 @@ export default function MonMaterielKarZentraCockpitPage() {
           ) : null}
 
           {/* 3 Specifications Horizontal HUD Tiles (KarZentra Bottom Tiles) */}
-          <div className="grid grid-cols-3 gap-2 shrink-0">
+          <div className="grid grid-cols-3 gap-2.5 shrink-0">
             
             {/* Tile 1: Condition */}
-            <div className="p-2.5 rounded-xl bg-white/[0.05] border border-white/10 flex items-center gap-2 shadow-sm">
-              <span className="text-base">⏱️</span>
+            <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center gap-2.5 shadow-sm">
+              <span className="text-lg">⏱️</span>
               <div className="min-w-0">
                 <span className="text-xs font-bold text-white block truncate leading-none capitalize">
                   {activeItem?.condition || 'Excellent'}
                 </span>
-                <span className="text-[9px] text-white/50 uppercase font-mono mt-0.5 block truncate font-semibold">
+                <span className="text-[9px] text-white/50 uppercase font-mono mt-1 block truncate font-semibold">
                   ÉTAT D'USURE
                 </span>
               </div>
             </div>
 
             {/* Tile 2: Polyvalence */}
-            <div className="p-2.5 rounded-xl bg-white/[0.05] border border-white/10 flex items-center gap-2 shadow-sm">
-              <span className="text-base">🏕️</span>
+            <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center gap-2.5 shadow-sm">
+              <span className="text-lg">🏕️</span>
               <div className="min-w-0">
                 <span className="text-xs font-bold text-white block truncate leading-none">
                   3 Saisons
                 </span>
-                <span className="text-[9px] text-white/50 uppercase font-mono mt-0.5 block truncate font-semibold">
+                <span className="text-[9px] text-white/50 uppercase font-mono mt-1 block truncate font-semibold">
                   POLYVALENCE
                 </span>
               </div>
             </div>
 
             {/* Tile 3: Score KDV */}
-            <div className="p-2.5 rounded-xl bg-white/[0.05] border border-white/10 flex items-center gap-2 shadow-sm">
-              <span className="text-base text-[#D4F973]">⚡</span>
+            <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center gap-2.5 shadow-sm">
+              <span className="text-lg text-[#D4F973]">⚡</span>
               <div className="min-w-0">
                 <span className="text-xs font-bold text-[#D4F973] block truncate leading-none">
                   9.6 / 10
                 </span>
-                <span className="text-[9px] text-white/50 uppercase font-mono mt-0.5 block truncate font-semibold">
+                <span className="text-[9px] text-white/50 uppercase font-mono mt-1 block truncate font-semibold">
                   SCORE KDV
                 </span>
               </div>
