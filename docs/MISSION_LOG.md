@@ -1,6 +1,17 @@
 # LKDV — Mission Log
 
-## 2026-08-17 — Initialisation Globale, Démarrage Serveur & Activation Agents/Skills
+## 2026-08-18 — Refonte Visuelle Cockpit « Mon Équipement » — Vrai Apple Liquid Glass
+
+### ✅ Refonte Visuelle 100% Fidèle (TERMINÉ ET VÉRIFIÉ AU BUILD)
+- **Fond haute netteté :** Utilisation de `/assets/images/journal-refuge.jpg` (résolution 1080p alpine avec refuge éclairé et sommets nets), suppression totale du `blur()` pour permettre une vraie réfraction du verre. Vitrage teinté `bg-black/25` et vignettage radial périphérique.
+- **Formule Liquid Glass Apple :** `rgba(255, 255, 255, 0.12)`, `backdrop-filter: blur(24px) saturate(180%)`, liseré de bord supérieur blanc `border-t-white/50`, ombre portée 32px, rayon `rounded-[20px]`.
+- **Mise en scène physique du Hero Produit :** Véritable ellipse d'ombre de contact au sol (`radial-gradient` noir flouté sous l'objet), éclairage directionnel en haut à gauche et plateau translucide.
+- **Discipline stricte des couleurs :** Vert `#17402C` réservé aux CTA majeurs et navigations actives, néon sage `#D4F973` pour la télémétrie et métriques clés, typographie blanche lumineuse conforme WCAG AA (ratios 7.8:1 à 12.4:1).
+- **Zéro régression :** Aucun hook, aucune route, aucune donnée métier modifiée.
+- **Rapport de preuve complet :** `docs/reports/MON_MATERIEL_VISUAL_REFACTOR_STATE.md`.
+- **Validation build :** `npm run build` exécuté avec succès (114 pages compilées sans aucune erreur).
+
+---
 
 ### ✅ Environnement & Serveur Actif (Next.js 15 sur Port 4000)
 - **Serveur de développement :** Lancé et actif en arrière-plan (`next dev -p 4000`).
