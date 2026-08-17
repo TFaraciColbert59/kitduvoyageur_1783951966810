@@ -88,7 +88,7 @@ export default function CustomCursor() {
     };
   }, []);
 
-  if (isTouchDevice || !isVisible) return null;
+  if (isTouchDevice || !isVisible || position.x < 0 || position.y < 0) return null;
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden select-none">

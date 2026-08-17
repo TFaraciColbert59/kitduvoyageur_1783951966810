@@ -206,7 +206,21 @@ export default function MonMaterielPage() {
       imageAlt: product.name,
       category: product.category || 'Matériel',
     });
-    setCartToast(`« ${product.name} » ajouté à votre panier !`);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('cart-updated'));
+    }
+    setCartToast(`🛒 « ${product.name} » ajouté à votre panier !`);
+    setTimeout(() => setCartToast(null), 4000);
+  };
+
+  // Ajout rapide d'un article catalogue à son inventaire possédé
+  const handleQuickAddProductToInventory = async (product: any) => {
+    triggerHaptic('selection');
+    await addToEquipment(product, {
+      source: 'catalogue',
+      condition: 'bon',
+    });
+    setCartToast(`✓ « ${product.name} » ajouté à vos équipements possédés !`);
     setTimeout(() => setCartToast(null), 4000);
   };
 
@@ -562,7 +576,7 @@ export default function MonMaterielPage() {
                   </p>
                 </div>
                 <span className="text-[10px] font-mono text-[#6B7A72]">
-                  {activeHike.distanceKm} km · +{activeHike.elevationGain || 0}m D+
+                  {Number(activeHike.distanceKm || 0).toFixed(1)} km · +{Math.round(activeHike.elevationGain || 0)}m D+
                 </span>
               </div>
 
@@ -888,12 +902,7 @@ export default function MonMaterielPage() {
                           key={item.key}
                           product={item.product}
                           isOwned={false}
-                          onAddProductToInventory={() => {
-                            addToEquipment(item.product, {
-                              source: 'catalogue',
-                              condition: 'neuf',
-                            });
-                          }}
+                          onAddProductToInventory={() => handleQuickAddProductToInventory(item.product)}
                           onAddToCart={() => handleAddToCart(item.product)}
                         />
                       );

@@ -16,6 +16,8 @@ const NAV_LINKS = [
   { label: 'Communauté', href: '/communaute' },
 ];
 
+import { getCart } from '@/lib/cart';
+
 export default function Header() {
   const pathname = usePathname();
   const { user } = useAuth();
@@ -23,6 +25,22 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    const updateCartCount = () => {
+      const items = getCart();
+      const total = items.reduce((s, i) => s + (i.quantity || 1), 0);
+      setCartCount(total);
+    };
+    updateCartCount();
+    window.addEventListener('cart-updated', updateCartCount);
+    window.addEventListener('storage', updateCartCount);
+    return () => {
+      window.removeEventListener('cart-updated', updateCartCount);
+      window.removeEventListener('storage', updateCartCount);
+    };
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -145,6 +163,11 @@ export default function Header() {
               title="Panier"
             >
               <Icon name="ShoppingBagIcon" size={17} />
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] flex items-center justify-center bg-[#17402C] text-white text-[9px] font-bold rounded-full px-1 border border-white">
+                  {cartCount > 9 ? '9+' : cartCount}
+                </span>
+              )}
             </Link>
 
             {/* Notifications Button — unique point d'accès aux notifications */}

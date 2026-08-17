@@ -86,13 +86,13 @@ export default function UnifiedGearCard({
         style={{ boxShadow: '0 1px 3px rgba(11,31,23,0.06)' }}
       >
         {/* Image */}
-        <div className="relative aspect-[4/3] bg-[#FBFAF6] overflow-hidden">
+        <div className="relative aspect-[4/3] bg-[#FBFAF6] overflow-hidden flex items-center justify-center p-2">
           <Image
             src={image}
             alt={name}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover opacity-75 group-hover:opacity-100 transition-opacity duration-300"
+            className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
           />
           <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-xs text-white text-[9px] font-mono px-2 py-0.5 rounded-md">
             À compléter
@@ -156,7 +156,7 @@ export default function UnifiedGearCard({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 0.97 }}
-      className="group relative bg-white rounded-2xl overflow-hidden cursor-pointer"
+      className="group relative bg-white rounded-2xl overflow-hidden cursor-pointer border border-black/[0.05]"
       style={{ boxShadow: '0 1px 3px rgba(11,31,23,0.06)' }}
       onClick={onOpenDetail}
       role="button"
@@ -169,13 +169,13 @@ export default function UnifiedGearCard({
       }}
     >
       {/* Image */}
-      <div className="relative aspect-[4/3] bg-[#FBFAF6] overflow-hidden">
+      <div className="relative aspect-[4/3] bg-[#FBFAF6] overflow-hidden flex items-center justify-center p-2">
         <Image
           src={image}
           alt={name}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className="object-cover group-hover:scale-[1.03] transition-transform duration-500 ease-out"
+          className="object-contain p-2 group-hover:scale-105 transition-transform duration-500 ease-out"
         />
 
         {/* Single priority indicator dot */}

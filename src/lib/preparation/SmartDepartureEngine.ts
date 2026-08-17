@@ -82,19 +82,19 @@ export function calculateHikeConsumables(context: DepartureHikeContext): Consuma
   const duration = context.durationHours || Math.max(1, Math.round((context.distanceKm / 3.8) * 10) / 10);
   const elevation = context.elevationGain || 0;
   const temp = context.weather?.tempC ?? 18;
-  const rainRisk = (context.weather?.precipitationProbability ?? 0) * 100;
+  const rawRain = context.weather?.precipitationProbability ?? 0;
+  const rainRisk = rawRain > 1 ? Math.min(100, Math.round(rawRain)) : Math.min(100, Math.round(rawRain * 100));
 
-  // Calcul Eau
-  let water = duration * 0.5; // 0.5L par heure standard
-  if (elevation > 600) water += 0.5;
-  if (elevation > 1200) water += 0.5;
-  if (temp > 24) water += duration * 0.25;
-  if (temp > 30) water += duration * 0.35;
+  // Calcul Eau : plafonné à la capacité physique d'un sac (1.5L à 3.0L max porté)
+  let water = duration * 0.45;
+  if (elevation > 600) water += 0.4;
+  if (temp > 24) water += 0.5;
 
-  // Si des points d'eau sont attestés sur le sentier
   const hasRefills = context.hasWaterPoints || (context.waterPointsCount && context.waterPointsCount > 0);
-  if (hasRefills && water > 2.0) {
-    water = Math.max(1.5, water * 0.65); // Allègement du sac grâce aux sources identifiées
+  if (hasRefills) {
+    water = Math.min(2.0, Math.max(1.0, water * 0.5));
+  } else {
+    water = Math.min(3.0, Math.max(1.2, water));
   }
   water = Math.round(water * 10) / 10;
 
@@ -102,16 +102,16 @@ export function calculateHikeConsumables(context: DepartureHikeContext): Consuma
   const meals = context.isOvernight
     ? (context.nightsCount || 1) * 2 + 1
     : duration >= 5 ? 1 : 0;
-  const snacks = Math.max(1, Math.floor(duration / 2.5));
+  const snacks = Math.min(6, Math.max(1, Math.floor(duration / 2.5)));
 
   // Gaz / Réchaud
   const fuel = meals > 0 ? meals * 15 + 10 : 0;
 
   return {
-    waterLiters: Math.max(1.0, water),
+    waterLiters: water,
     waterReason: hasRefills
-      ? `${water}L conseillés (points d'eau disponibles pour ravitailler)`
-      : `${water}L nécessaires (aucun point d'eau identifié)`,
+      ? `${water}L dans le sac (points d'eau sur le parcours pour recharger)`
+      : `${water}L emportés en autonomie complète`,
     foodMealsCount: meals,
     snacksCount: snacks,
     fuelGrams: fuel,
@@ -334,10 +334,13 @@ export function resolveDeparturePlan(
 
   // Synthèse Météo
   const temp = context.weather?.tempC ?? 18;
+  const rawPrecip = context.weather?.precipitationProbability ?? 0;
+  const safeRainPct = rawPrecip > 1 ? Math.min(100, Math.round(rawPrecip)) : Math.min(100, Math.round(rawPrecip * 100));
+
   const weatherSummary = {
     tempMinMax: `${Math.round(temp - 3)}°C — ${Math.round(temp + 2)}°C`,
     condition: context.weather?.condition || (consumables.rainProtectionNeeded ? 'Risque d\'averses' : 'Conditions dégagées'),
-    rainRiskPct: Math.round((context.weather?.precipitationProbability ?? 0) * 100),
+    rainRiskPct: safeRainPct,
     windKmh: Math.round(context.weather?.windKmH ?? 15),
     advice: consumables.rainProtectionNeeded
       ? 'Prévoyez votre veste imperméable en haut de sac.'

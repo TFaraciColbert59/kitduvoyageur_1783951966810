@@ -24,51 +24,52 @@ export default function InventaireHeroBanner({
   totalItemsCount,
   totalWeightG,
   weightDistribution,
-  onFilterCategory,
 }: InventaireHeroBannerProps) {
   return (
-    <header className="pb-8">
-      {/* Title row */}
-      <div className="flex items-baseline justify-between gap-4 mb-1">
-        <h1 className="text-[28px] sm:text-[34px] font-bold tracking-tight text-[#0B1F17] leading-tight">
-          Mon matériel
-        </h1>
-        <p className="text-sm font-medium text-[#5C6B63] tabular-nums shrink-0">
-          {totalItemsCount} article{totalItemsCount !== 1 ? 's' : ''}
-        </p>
-      </div>
-
-      {/* Weight summary — only show when there's weight data */}
-      {totalWeightG > 0 && (
-        <div className="mt-4 flex items-center gap-5">
-          <div>
-            <p className="text-[11px] uppercase tracking-wider text-[#5C6B63] font-medium mb-0.5">
-              Poids total
-            </p>
-            <p className="text-xl font-bold text-[#0B1F17] tabular-nums tracking-tight">
-              {formatWeight(totalWeightG)}
-            </p>
+    <div className="bg-white rounded-3xl p-5 sm:p-6 border border-black/[0.06] shadow-2xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#17402C] bg-[#E1EBDD] px-2.5 py-0.5 rounded-full font-bold">
+              🎒 Sac & Équipements
+            </span>
+            <span className="text-xs font-medium text-[#6B7A72]">
+              {totalItemsCount} article{totalItemsCount !== 1 ? 's' : ''} possédé{totalItemsCount !== 1 ? 's' : ''}
+            </span>
           </div>
+          <h1 className="text-xl sm:text-2xl font-bold font-display text-[#0B1F17] tracking-tight">
+            Mon Matériel
+          </h1>
+          <p className="text-xs text-[#6B7A72] mt-0.5">
+            {totalItemsCount === 0
+              ? 'Votre sac est prêt à être composé. Utilisez le configurateur IA ci-dessus ou ajoutez vos affaires.'
+              : 'Vue consolidée de votre inventaire de randonnée et métriques de portage.'}
+          </p>
+        </div>
 
-          {/* Weight bar — compact, inline */}
+        <div className="flex items-center gap-4 bg-[#FBFAF6] px-4 py-3 rounded-2xl border border-black/[0.04] self-start sm:self-auto">
+          <div>
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#6B7A72]">
+              Poids total net
+            </span>
+            <div className="text-xl font-bold font-mono text-[#0B1F17]">
+              {formatWeight(totalWeightG)}
+            </div>
+          </div>
           {weightDistribution.length > 0 && (
-            <div className="flex-1 min-w-0">
-              <div className="w-full h-2 bg-black/[0.04] rounded-full overflow-hidden flex">
-                {weightDistribution.map((cat) => (
-                  <button
-                    key={cat.key}
-                    style={{ width: `${Math.max(cat.pct, 2)}%`, backgroundColor: cat.color }}
-                    className="h-full first:rounded-l-full last:rounded-r-full transition-all duration-300 hover:opacity-70 cursor-pointer border-none p-0"
-                    title={`${cat.label}: ${formatWeight(cat.weight)} (${cat.pct}%)`}
-                    onClick={() => onFilterCategory(cat.key)}
-                    aria-label={`Filtrer ${cat.label}`}
-                  />
-                ))}
-              </div>
+            <div className="w-32 sm:w-44 h-2.5 bg-black/[0.06] rounded-full overflow-hidden flex">
+              {weightDistribution.map((cat) => (
+                <div
+                  key={cat.key}
+                  style={{ width: `${Math.max(cat.pct, 4)}%`, backgroundColor: cat.color }}
+                  className="h-full first:rounded-l-full last:rounded-r-full"
+                  title={`${cat.label}: ${formatWeight(cat.weight)} (${cat.pct}%)`}
+                />
+              ))}
             </div>
           )}
         </div>
-      )}
-    </header>
+      </div>
+    </div>
   );
 }
