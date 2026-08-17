@@ -9,7 +9,6 @@ import { SearchProvider } from '@/contexts/SearchContext';
 import ErrorBoundaryWrapper from '@/components/ErrorBoundaryWrapper';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import MobileNavWrapper from '@/components/mobile-nav/MobileNavWrapper';
-
 import CookieConsentBanner from '@/components/CookieConsentBanner';
 import RocketConsentScripts from '@/components/RocketConsentScripts';
 import { getOrganizationSchema, getWebsiteSchema } from '@/lib/seo-utils';

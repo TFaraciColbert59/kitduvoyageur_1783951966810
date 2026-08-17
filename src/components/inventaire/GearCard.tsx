@@ -56,12 +56,8 @@ export default function GearCard({
     if (name.includes('spark')) return 'sea-to-summit-spark-sp1-achat';
     if (name.includes('neoair')) return 'thermarest-neoair-xlite-achat';
     if (name.includes('torrentshell')) return 'patagonia-torrentshell-3l-achat';
-    if (name.includes('actik')) return 'petzl-actik-core-achat';
-    if (name.includes('sawyer')) return 'sawyer-mini-achat';
-    if (name.includes('pocketrocket')) return 'msr-pocketrocket-2-achat';
-    if (name.includes('inreach')) return 'garmin-inreach-mini-2-achat';
     if (name.includes('opinel')) return 'opinel-n8-inoa-achat';
-    return item.product_id || null;
+    return (item as any).product_id || null;
   }, [item]);
 
   if (viewMode === 'list') {

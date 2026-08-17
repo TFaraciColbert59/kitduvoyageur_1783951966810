@@ -1,0 +1,60 @@
+/* Le Kit du Voyageur — Design Tokens */
+:root {
+  /* Colors — Neutrals / Paper */
+  --lkv-paper: #F8FAF8;
+  --lkv-stone-50: #F1EFEA;
+  --lkv-stone-100: #E7E3DB;
+  --lkv-stone-200: #D8D2C6;
+
+  /* Ink (text) */
+  --lkv-ink-900: #0B1F17;
+  --lkv-ink-800: #1A2E24;
+  --lkv-ink-700: #384C42;
+  --lkv-ink-500: #6B7A72;
+  --lkv-ink-400: #8B9990;
+  --lkv-ink-300: #B4BEB7;
+
+  /* Brand — Forest (deep pine) */
+  --lkv-forest-900: #142F24;
+  --lkv-forest-800: #1F4A3A;
+  --lkv-forest-700: #2C5D4B;
+
+  /* Brand — Sage (accent) */
+  --lkv-sage-500: #7BA383;
+  --lkv-sage-400: #94B69A;
+  --lkv-sage-300: #B9D0BC;
+
+  /* Warm accents (rare) */
+  --lkv-warm-500: #C97C4F;
+  --lkv-warm-300: #E6B99A;
+
+  /* Shadows */
+  --lkv-shadow-xs: 0 1px 2px rgba(11,31,23,0.05), 0 1px 3px rgba(11,31,23,0.04);
+  --lkv-shadow-sm: 0 2px 6px rgba(11,31,23,0.06), 0 1px 2px rgba(11,31,23,0.04);
+  --lkv-shadow-md: 0 8px 24px rgba(11,31,23,0.08);
+  --lkv-shadow-lg: 0 30px 80px rgba(11,31,23,0.14);
+
+  /* Fonts */
+  --lkv-font-sans: "Söhne", "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --lkv-font-serif: "Cormorant Garamond", "EB Garamond", "Playfair Display", Georgia, serif;
+  --lkv-font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  font-family: var(--lkv-font-sans);
+  color: var(--lkv-ink-900);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+
+.lkv-icon {
+  stroke: currentColor;
+  stroke-width: 1.6;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

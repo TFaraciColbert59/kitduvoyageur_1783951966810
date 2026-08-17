@@ -1,0 +1,2316 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Islande · Pays — Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="shop.css"/>
+<style>
+  body { background: #EAE6DF; padding: 40px 0; }
+
+  /* ————— STAGE (comme les autres pages LKV) ————— */
+  .stage-title {
+    max-width: 1720px; margin: 0 auto 32px; padding: 0 40px;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 24px;
+    color: var(--lkv-ink-700);
+  }
+  .stage-title .h { font-family: var(--lkv-font-sans); font-size: 24px; font-weight: 500; letter-spacing: -0.015em; color: var(--lkv-ink-900); }
+  .stage-title .sub { font-size: 14px; color: var(--lkv-ink-500); }
+  .stage-title a { color: var(--lkv-forest-800); font-weight: 500; margin-left: 24px; }
+  .stage-title .right { display: flex; gap: 8px; align-items: center; }
+  .country-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px 6px 6px;
+    background: #fff; border-radius: 999px;
+    border: 1px solid rgba(11,31,23,0.08);
+    font-size: 13px; color: var(--lkv-ink-700);
+    cursor: pointer;
+    transition: border-color var(--lkv-dur) var(--lkv-ease);
+  }
+  .country-pill:hover { border-color: var(--lkv-forest-800); }
+  .country-pill .flag {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; background: var(--lkv-stone-100);
+  }
+  .country-pill.on { background: var(--lkv-forest-800); color: #fff; border-color: var(--lkv-forest-800); }
+  .country-pill.on .flag { background: rgba(255,255,255,0.16); }
+
+  .stage {
+    display: flex; gap: 40px;
+    max-width: 1720px; margin: 0 auto; padding: 0 40px;
+    align-items: flex-start;
+  }
+  .artboard-desktop {
+    width: 1280px; flex-shrink: 0;
+    border-radius: 32px; overflow: hidden;
+    background: var(--lkv-paper);
+    box-shadow: 0 30px 80px rgba(11,31,23,0.14);
+  }
+  .artboard-mobile {
+    width: 380px; flex-shrink: 0;
+    border-radius: 44px; overflow: hidden;
+    background: #000; padding: 12px;
+    box-shadow: 0 30px 80px rgba(11,31,23,0.18);
+    align-self: flex-start;
+    position: sticky; top: 24px;
+  }
+  .artboard-mobile .screen {
+    width: 100%; height: 780px;
+    border-radius: 34px; overflow-y: auto; overflow-x: hidden;
+    background: var(--lkv-paper); position: relative;
+  }
+  .board-caption {
+    margin-top: 14px; font-size: 12px; color: var(--lkv-ink-500);
+    text-align: center; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+
+  /* ————— NAV glass ————— */
+  .page-header {
+    position: relative;
+    padding: 20px 20px 0;
+    z-index: 5;
+  }
+  .top-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 10px 10px 24px;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.20);
+    box-shadow: 0 8px 24px rgba(11,31,23,0.10);
+    color: #fff;
+  }
+  .top-nav .lkv-logo {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 600; letter-spacing: -0.01em;
+    color: #fff;
+  }
+  .top-nav .lkv-logo svg { color: var(--lkv-sage-300); }
+  .top-nav .links { display: flex; gap: 28px; }
+  .top-nav .links a {
+    font-size: 14px; color: rgba(255,255,255,0.82);
+    transition: color var(--lkv-dur) var(--lkv-ease);
+    position: relative; padding: 6px 0;
+  }
+  .top-nav .links a:hover { color: #fff; }
+  .top-nav .links a.active { color: #fff; }
+  .top-nav .links a.active::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -2px;
+    height: 2px; background: var(--lkv-sage-300); border-radius: 2px;
+  }
+  .top-nav .right { display: flex; align-items: center; gap: 10px; }
+  .top-nav .search {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 999px;
+    font-size: 13px; color: rgba(255,255,255,0.75);
+    min-width: 200px;
+  }
+  .top-nav .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--lkv-warm-300), var(--lkv-warm-500));
+    color: var(--lkv-forest-900);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.35);
+  }
+
+  /* ————— HERO ————— */
+  .p-hero {
+    position: relative;
+    min-height: 780px;
+    color: #fff;
+    overflow: hidden;
+    margin-top: -84px;
+    padding-top: 84px;
+  }
+  .p-hero .bg {
+    position: absolute; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse at 20% 30%, rgba(120,171,131,0.20) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 70%, rgba(200,154,90,0.18) 0%, transparent 50%),
+      linear-gradient(160deg, #0F2A22 0%, #0B1F17 40%, #08150F 100%);
+  }
+  /* Photo placeholder — stripes */
+  .p-hero .bg::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 22px),
+      radial-gradient(ellipse at 70% 20%, rgba(159,191,165,0.15), transparent 60%);
+    mix-blend-mode: overlay;
+  }
+  .p-hero .bg::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0.15) 0%, rgba(11,31,23,0.0) 30%, rgba(11,31,23,0.65) 88%, rgba(11,31,23,0.9) 100%);
+  }
+  /* Aurora strips */
+  .p-hero .aurora {
+    position: absolute; inset: 0; z-index: 0; opacity: 0.55;
+    filter: blur(60px);
+    pointer-events: none;
+  }
+  .p-hero .aurora span {
+    position: absolute;
+    display: block;
+    border-radius: 50%;
+    animation: floaty 14s ease-in-out infinite;
+  }
+  .p-hero .aurora .a1 { top: -10%; left: -5%; width: 60%; height: 40%; background: rgba(120,171,131,0.35); }
+  .p-hero .aurora .a2 { top: 10%; right: -10%; width: 55%; height: 55%; background: rgba(159,191,165,0.28); animation-delay: -3s; }
+  .p-hero .aurora .a3 { bottom: -15%; left: 20%; width: 60%; height: 45%; background: rgba(31,74,58,0.55); animation-delay: -7s; }
+  @keyframes floaty {
+    0%,100% { transform: translate(0,0) scale(1); }
+    50% { transform: translate(30px,-20px) scale(1.08); }
+  }
+  .p-hero > *:not(.bg):not(.aurora) { position: relative; z-index: 2; }
+
+  .breadcrumb {
+    padding: 24px 60px 0;
+    font-size: 12px; color: rgba(255,255,255,0.65);
+    letter-spacing: 0.04em;
+  }
+  .breadcrumb a { color: rgba(255,255,255,0.85); }
+  .breadcrumb .sep { margin: 0 10px; color: rgba(255,255,255,0.32); }
+
+  .hero-body {
+    padding: 40px 60px 40px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 60px;
+    align-items: end;
+    min-height: 500px;
+  }
+  .hero-left { max-width: 780px; }
+  .hero-eye-row {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+  .hero-eye-row .flag-circle {
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.20);
+    backdrop-filter: blur(20px);
+  }
+  .hero-left h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 108px; font-weight: 500;
+    letter-spacing: -0.04em; line-height: 0.92;
+    margin: 0 0 24px;
+    text-wrap: balance;
+  }
+  .hero-left h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .hero-left .lead {
+    font-family: var(--lkv-font-serif);
+    font-size: 22px; line-height: 1.4;
+    color: rgba(255,255,255,0.88);
+    max-width: 620px; margin: 0 0 32px;
+  }
+  .hero-left .cta { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  /* Right card: coordonnées + drapeau */
+  .hero-right {
+    width: 320px;
+    padding: 24px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.16);
+    backdrop-filter: blur(28px) saturate(1.4);
+    -webkit-backdrop-filter: blur(28px) saturate(1.4);
+    border-radius: 24px;
+    color: #fff;
+  }
+  .hero-right .rh {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 16px; margin-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.14);
+  }
+  .hero-right .rh .l { font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255,255,255,0.6); }
+  .hero-right .rh .flag2 { font-size: 32px; }
+  .hero-right .coord-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 10px 0;
+    font-family: var(--lkv-font-mono);
+    font-size: 12px;
+    color: rgba(255,255,255,0.72);
+    border-bottom: 1px dashed rgba(255,255,255,0.10);
+  }
+  .hero-right .coord-row:last-of-type { border-bottom: 0; }
+  .hero-right .coord-row .k { color: rgba(255,255,255,0.5); }
+  .hero-right .coord-row .v { color: #fff; }
+  .hero-right .mini-map {
+    margin-top: 12px;
+    height: 120px;
+    border-radius: 14px;
+    background:
+      radial-gradient(circle at 62% 30%, rgba(120,171,131,0.5) 0%, transparent 40%),
+      linear-gradient(135deg, rgba(11,31,23,0.4), rgba(11,31,23,0.7));
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.10);
+  }
+  .mini-map svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .mini-map .pin {
+    position: absolute; top: 30%; left: 60%;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--lkv-warm-500);
+    box-shadow: 0 0 0 6px rgba(200,154,90,0.25), 0 0 0 12px rgba(200,154,90,0.10);
+    animation: lkv-pulse 2.2s var(--lkv-ease) infinite;
+  }
+
+  /* Stats strip */
+  .stats-strip {
+    position: relative;
+    margin: 0 60px 40px;
+    padding: 22px 28px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 24px;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(28px) saturate(1.4);
+    -webkit-backdrop-filter: blur(28px) saturate(1.4);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 22px;
+    color: #fff;
+  }
+  .stats-strip .s .l {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 6px;
+  }
+  .stats-strip .s .n {
+    font-family: var(--lkv-font-sans);
+    font-size: 26px; font-weight: 500; letter-spacing: -0.02em; line-height: 1;
+  }
+  .stats-strip .s .n em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+    font-size: 16px; margin-left: 2px;
+  }
+  .stats-strip .s .u { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 4px; }
+
+  /* ————— ANCHOR NAV STICKY ————— */
+  .anchor-bar {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(247,243,236,0.86);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    padding: 14px 60px;
+    display: flex; justify-content: space-between; align-items: center; gap: 24px;
+  }
+  .anchor-nav { display: flex; gap: 4px; }
+  .anchor-nav a {
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+    color: var(--lkv-ink-500);
+    transition: color var(--lkv-dur) var(--lkv-ease), background var(--lkv-dur) var(--lkv-ease);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .anchor-nav a:hover { color: var(--lkv-ink-900); }
+  .anchor-nav a.on {
+    background: var(--lkv-forest-800); color: #fff;
+  }
+  .anchor-nav a .n {
+    font-family: var(--lkv-font-mono);
+    font-size: 10px;
+    opacity: 0.6;
+  }
+  .anchor-actions { display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--lkv-ink-500); }
+
+  /* ————— SECTIONS ————— */
+  .section {
+    padding: 96px 60px;
+    scroll-margin-top: 60px;
+  }
+  .section-head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 40px; margin-bottom: 40px;
+  }
+  .section-head .kicker {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 4px 12px; border-radius: 999px;
+    background: rgba(31,74,58,0.08);
+    color: var(--lkv-forest-800);
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .section-head .kicker .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-sage-500); }
+  .section-head h2 {
+    font-family: var(--lkv-font-sans);
+    font-size: 60px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 0.98;
+    color: var(--lkv-ink-900);
+    margin: 0;
+    max-width: 780px; text-wrap: balance;
+  }
+  .section-head h2 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .section-head .side {
+    max-width: 340px;
+    font-size: 15px; line-height: 1.5;
+    color: var(--lkv-ink-500);
+  }
+  .section-head .see-all {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 500;
+    color: var(--lkv-forest-800);
+    transition: gap var(--lkv-dur) var(--lkv-ease);
+    margin-top: 12px;
+  }
+  .section-head .see-all:hover { gap: 10px; }
+
+  /* Présentation — editorial */
+  #presentation {
+    background: var(--lkv-paper);
+  }
+  .pres-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 60px;
+    align-items: start;
+  }
+  .pres-copy p {
+    font-family: var(--lkv-font-serif);
+    font-size: 21px; line-height: 1.55;
+    color: var(--lkv-ink-700);
+    margin-bottom: 20px;
+  }
+  .pres-copy p:first-of-type::first-letter {
+    font-family: var(--lkv-font-serif);
+    font-size: 68px;
+    float: left;
+    line-height: 0.9;
+    padding: 6px 10px 0 0;
+    color: var(--lkv-forest-800);
+    font-style: italic;
+  }
+  .pres-copy .quote {
+    margin: 32px 0;
+    padding: 20px 24px;
+    border-left: 3px solid var(--lkv-sage-500);
+    background: var(--lkv-stone-50);
+    border-radius: 4px 14px 14px 4px;
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 18px;
+    color: var(--lkv-ink-800);
+  }
+  .pres-copy .quote cite {
+    display: block; margin-top: 10px;
+    font-family: var(--lkv-font-sans); font-style: normal;
+    font-size: 12px; color: var(--lkv-ink-500);
+    text-transform: uppercase; letter-spacing: 0.1em;
+  }
+
+  .pres-map {
+    aspect-ratio: 1/1;
+    background: linear-gradient(135deg, var(--lkv-stone-50), var(--lkv-stone-100));
+    border-radius: 28px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(11,31,23,0.06);
+  }
+  .pres-map svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .pres-map .cap {
+    position: absolute; bottom: 20px; left: 20px; right: 20px;
+    display: flex; justify-content: space-between; align-items: end;
+    color: var(--lkv-ink-700);
+  }
+  .pres-map .cap .k { font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--lkv-ink-500); }
+  .pres-map .cap .v { font-family: var(--lkv-font-mono); font-size: 12px; }
+  .pres-map .pin {
+    position: absolute;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--lkv-forest-800);
+    transform: translate(-50%,-50%);
+  }
+  .pres-map .pin::after {
+    content: attr(data-l);
+    position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
+    font-family: var(--lkv-font-sans);
+    font-size: 10px; font-weight: 500;
+    background: var(--lkv-forest-800); color: #fff;
+    padding: 3px 8px; border-radius: 999px;
+    white-space: nowrap;
+  }
+  .pres-map .pin.capital {
+    background: var(--lkv-warm-500);
+    box-shadow: 0 0 0 4px rgba(200,154,90,0.20), 0 0 0 10px rgba(200,154,90,0.08);
+  }
+  .pres-map .pin.capital::after { background: var(--lkv-warm-500); color: var(--lkv-forest-900); }
+
+  /* Highlights row under présentation */
+  .high-row {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 20px; margin-top: 40px;
+  }
+  .high-card {
+    padding: 24px;
+    background: #fff;
+    border-radius: 20px;
+    border: 1px solid rgba(11,31,23,0.05);
+    box-shadow: var(--lkv-shadow-xs);
+    transition: transform var(--lkv-dur) var(--lkv-ease), box-shadow var(--lkv-dur) var(--lkv-ease);
+  }
+  .high-card:hover { transform: translateY(-3px); box-shadow: var(--lkv-shadow-md); }
+  .high-card .ic {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--lkv-sage-100); color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px;
+  }
+  .high-card h4 {
+    font-size: 18px; font-weight: 500; letter-spacing: -0.01em;
+    color: var(--lkv-ink-900); margin: 0 0 6px;
+  }
+  .high-card h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .high-card p { font-size: 13px; line-height: 1.5; color: var(--lkv-ink-500); margin: 0; }
+
+  /* ————— DESTINATIONS ————— */
+  #destinations { background: var(--lkv-stone-50); }
+  .dest-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    grid-template-rows: 320px 320px;
+    gap: 20px;
+  }
+  .dest-card {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    background: var(--lkv-forest-800);
+    color: #fff;
+    cursor: pointer;
+    transition: transform var(--lkv-dur) var(--lkv-ease-out);
+  }
+  .dest-card:hover { transform: translateY(-4px); }
+  .dest-card.big { grid-row: span 2; }
+  .dest-card .im {
+    position: absolute; inset: 0; z-index: 0;
+    background-size: cover;
+    background-position: center;
+    transition: transform 800ms var(--lkv-ease-out);
+  }
+  .dest-card:hover .im { transform: scale(1.06); }
+  .dest-card .im::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0) 40%, rgba(11,31,23,0.85) 100%);
+  }
+  .dest-card .body {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 1;
+    padding: 20px 22px;
+    display: flex; align-items: end; justify-content: space-between; gap: 16px;
+  }
+  .dest-card .body .t .cat {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-sage-300);
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-bottom: 6px;
+  }
+  .dest-card .body .t .cat .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--lkv-sage-500); }
+  .dest-card .body .t h3 {
+    font-size: 24px; font-weight: 500; letter-spacing: -0.015em; line-height: 1.05;
+    margin: 0;
+  }
+  .dest-card.big .body .t h3 { font-size: 34px; }
+  .dest-card .body .t h3 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-200); font-weight: 400; }
+  .dest-card .body .t .meta {
+    margin-top: 6px;
+    font-family: var(--lkv-font-mono);
+    font-size: 11px; color: rgba(255,255,255,0.68);
+    display: flex; gap: 10px; align-items: center;
+  }
+  .dest-card .body .t .meta .sep { color: rgba(255,255,255,0.28); }
+  .dest-card .body .arr {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.24);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    transition: transform var(--lkv-dur) var(--lkv-ease-out), background var(--lkv-dur) var(--lkv-ease-out);
+    flex-shrink: 0;
+  }
+  .dest-card:hover .body .arr { transform: translate(4px, -4px); background: #fff; color: var(--lkv-forest-800); }
+
+  /* Placeholder image backgrounds (stripes + gradients) */
+  .ph-1 { background: linear-gradient(135deg, #1a3a4a, #0d1e28), repeating-linear-gradient(30deg, rgba(255,255,255,0.05) 0 3px, transparent 3px 20px); background-blend-mode: overlay; }
+  .ph-2 { background: linear-gradient(135deg, #2a1a12, #4a2818); }
+  .ph-3 { background: linear-gradient(135deg, #143028, #0a1e18); }
+  .ph-4 { background: linear-gradient(135deg, #3a3018, #1e1c10); }
+  .ph-5 { background: linear-gradient(135deg, #1a2a3a, #0f1a26); }
+  .ph-6 { background: linear-gradient(135deg, #2a1e2a, #1a1224); }
+  .ph-7 { background: linear-gradient(135deg, #1e2818, #0e1810); }
+
+  /* ————— ACTIVITÉS ————— */
+  #activites { background: var(--lkv-paper); }
+  .act-cats {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 32px;
+    padding: 6px;
+    background: #fff;
+    border-radius: 999px;
+    border: 1px solid rgba(11,31,23,0.05);
+    width: fit-content;
+  }
+  .act-cats button {
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+    color: var(--lkv-ink-500);
+    transition: all var(--lkv-dur) var(--lkv-ease);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .act-cats button.on { background: var(--lkv-forest-800); color: #fff; }
+  .act-cats button:not(.on):hover { color: var(--lkv-ink-900); }
+  .act-cats button .n { font-family: var(--lkv-font-mono); font-size: 10px; opacity: 0.6; }
+  .act-cats button.on .n { color: var(--lkv-sage-300); opacity: 1; }
+
+  .act-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .act-card {
+    background: #fff;
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid rgba(11,31,23,0.05);
+    transition: transform var(--lkv-dur) var(--lkv-ease-out), box-shadow var(--lkv-dur) var(--lkv-ease-out);
+    cursor: pointer;
+    display: flex; flex-direction: column;
+  }
+  .act-card:hover { transform: translateY(-4px); box-shadow: var(--lkv-shadow-lg); }
+  .act-card .cover {
+    height: 200px;
+    background-size: cover; background-position: center;
+    position: relative;
+  }
+  .act-card .cover .diff {
+    position: absolute; top: 14px; left: 14px;
+    padding: 4px 10px; border-radius: 999px;
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500;
+    background: rgba(255,255,255,0.90);
+    color: var(--lkv-ink-900);
+    backdrop-filter: blur(6px);
+  }
+  .act-card .cover .diff.med { background: rgba(228,198,149,0.92); color: var(--lkv-forest-900); }
+  .act-card .cover .diff.hard { background: rgba(193,83,83,0.90); color: #fff; }
+  .act-card .cover .season {
+    position: absolute; top: 14px; right: 14px;
+    padding: 5px 10px; border-radius: 999px;
+    font-family: var(--lkv-font-mono);
+    font-size: 10px;
+    background: rgba(11,31,23,0.55);
+    color: #fff;
+    backdrop-filter: blur(6px);
+  }
+  .act-card .b { padding: 20px 22px 22px; }
+  .act-card .b .cat {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-forest-800); font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .act-card .b h3 {
+    font-size: 20px; font-weight: 500; letter-spacing: -0.01em;
+    color: var(--lkv-ink-900); margin: 0 0 8px; line-height: 1.15;
+  }
+  .act-card .b h3 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .act-card .b p { font-size: 13px; line-height: 1.5; color: var(--lkv-ink-500); margin: 0 0 16px; }
+  .act-card .b .meta {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 14px; border-top: 1px solid rgba(11,31,23,0.06);
+    font-size: 12px;
+  }
+  .act-card .b .meta .m { display: inline-flex; align-items: center; gap: 6px; color: var(--lkv-ink-500); }
+  .act-card .b .meta .m strong { color: var(--lkv-ink-900); font-weight: 500; font-family: var(--lkv-font-mono); font-size: 11px; }
+
+  /* ————— CULTURE ————— */
+  #culture {
+    background: var(--lkv-forest-900);
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  #culture::before {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(120,171,131,0.16) 0%, transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(200,154,90,0.10) 0%, transparent 45%);
+    pointer-events: none;
+  }
+  #culture > * { position: relative; }
+  #culture .section-head h2 { color: #fff; }
+  #culture .section-head h2 em { color: var(--lkv-sage-300); }
+  #culture .section-head .kicker { background: rgba(255,255,255,0.10); color: var(--lkv-sage-300); border: 1px solid rgba(255,255,255,0.15); }
+  #culture .section-head .side { color: rgba(255,255,255,0.72); }
+
+  .cult-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+  .cult-quote {
+    padding: 40px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 28px;
+    position: relative;
+  }
+  .cult-quote::before {
+    content: "«";
+    position: absolute; top: 6px; left: 24px;
+    font-family: var(--lkv-font-serif);
+    font-size: 120px; line-height: 1;
+    color: rgba(159,191,165,0.24);
+  }
+  .cult-quote .txt {
+    position: relative;
+    font-family: var(--lkv-font-serif);
+    font-size: 26px; line-height: 1.4; font-style: italic;
+    color: #fff;
+    text-wrap: pretty;
+  }
+  .cult-quote .att {
+    margin-top: 20px;
+    font-family: var(--lkv-font-sans); font-style: normal;
+    font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-sage-300);
+  }
+
+  .cult-facts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .cult-fact {
+    padding: 22px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 20px;
+    transition: background var(--lkv-dur) var(--lkv-ease);
+  }
+  .cult-fact:hover { background: rgba(255,255,255,0.08); }
+  .cult-fact .k {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-sage-300); margin-bottom: 10px;
+  }
+  .cult-fact .v {
+    font-family: var(--lkv-font-sans);
+    font-size: 22px; font-weight: 500; letter-spacing: -0.015em;
+    line-height: 1.2;
+    color: #fff;
+  }
+  .cult-fact .v em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .cult-fact .d {
+    margin-top: 6px;
+    font-size: 12px; line-height: 1.5;
+    color: rgba(255,255,255,0.62);
+  }
+
+  /* Fêtes / calendrier */
+  .cult-cal {
+    margin-top: 40px;
+    padding: 32px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 24px;
+  }
+  .cult-cal h4 {
+    font-size: 18px; font-weight: 500; letter-spacing: -0.01em;
+    margin-bottom: 20px; color: #fff;
+  }
+  .cult-cal h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .cal-months {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 6px;
+  }
+  .cal-month {
+    padding: 10px 6px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    text-align: center;
+    font-family: var(--lkv-font-mono);
+    font-size: 10px;
+    color: rgba(255,255,255,0.48);
+    position: relative;
+  }
+  .cal-month.event { background: var(--lkv-forest-700); color: #fff; }
+  .cal-month.event.warm { background: var(--lkv-warm-500); color: var(--lkv-forest-900); }
+  .cal-month.event .lbl {
+    display: block;
+    margin-top: 4px;
+    font-family: var(--lkv-font-sans);
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.9;
+  }
+
+  /* ————— GASTRONOMIE ————— */
+  #gastronomie { background: var(--lkv-paper); }
+  .gast-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  .gast-card {
+    background: #fff;
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid rgba(11,31,23,0.05);
+    transition: transform var(--lkv-dur) var(--lkv-ease-out), box-shadow var(--lkv-dur) var(--lkv-ease-out);
+  }
+  .gast-card:hover { transform: translateY(-4px); box-shadow: var(--lkv-shadow-md); }
+  .gast-card .im {
+    aspect-ratio: 4/3;
+    background-size: cover; background-position: center;
+    position: relative;
+  }
+  .gast-card .im .num {
+    position: absolute; top: 12px; left: 12px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.90);
+    color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 14px;
+    backdrop-filter: blur(6px);
+  }
+  .gast-card .b { padding: 18px 20px 22px; }
+  .gast-card .b .cat {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-warm-700); font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .gast-card .b h3 {
+    font-size: 18px; font-weight: 500; letter-spacing: -0.01em;
+    color: var(--lkv-ink-900); margin: 0 0 6px; line-height: 1.15;
+  }
+  .gast-card .b h3 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .gast-card .b p { font-size: 13px; line-height: 1.5; color: var(--lkv-ink-500); margin: 0; }
+
+  /* ————— INFOS PRATIQUES ————— */
+  #pratique { background: var(--lkv-stone-50); }
+  .prat-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+  .prat-main {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .prat-card {
+    padding: 24px;
+    background: #fff;
+    border-radius: 22px;
+    border: 1px solid rgba(11,31,23,0.05);
+    box-shadow: var(--lkv-shadow-xs);
+  }
+  .prat-card .h {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .prat-card .h .ic {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--lkv-sage-100); color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .prat-card .h .t {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-ink-500); font-weight: 500;
+  }
+  .prat-card .row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 8px 0;
+    font-size: 13px; color: var(--lkv-ink-700);
+  }
+  .prat-card .row + .row { border-top: 1px dashed rgba(11,31,23,0.06); }
+  .prat-card .row .k { color: var(--lkv-ink-500); }
+  .prat-card .row .v { color: var(--lkv-ink-900); font-weight: 500; }
+  .prat-card .row .v.mono { font-family: var(--lkv-font-mono); font-weight: 400; }
+
+  /* Météo sidebar */
+  .weather-card {
+    padding: 28px;
+    border-radius: 24px;
+    background: linear-gradient(155deg, #1F4A3A 0%, #12332A 100%);
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  .weather-card::before {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 80% 20%, rgba(228,198,149,0.20) 0%, transparent 50%),
+      radial-gradient(circle at 10% 80%, rgba(159,191,165,0.15) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .weather-card > * { position: relative; }
+  .weather-card .h {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 20px;
+  }
+  .weather-card .h .k {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-sage-300); font-weight: 500;
+  }
+  .weather-card .h .live {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--lkv-font-mono); font-size: 10px;
+    color: rgba(255,255,255,0.7);
+  }
+  .weather-card .h .live .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--lkv-sage-500);
+    animation: lkv-pulse 2s var(--lkv-ease) infinite;
+  }
+  .weather-card .now {
+    display: flex; align-items: flex-end; gap: 16px;
+    margin-bottom: 4px;
+  }
+  .weather-card .now .t {
+    font-family: var(--lkv-font-sans);
+    font-size: 72px; font-weight: 500;
+    letter-spacing: -0.04em; line-height: 0.9;
+  }
+  .weather-card .now .t em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; font-size: 40px; }
+  .weather-card .now .icn {
+    width: 64px; height: 64px;
+    color: var(--lkv-sage-300);
+    margin-bottom: 8px;
+  }
+  .weather-card .cond {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 16px; color: rgba(255,255,255,0.72);
+    margin-bottom: 24px;
+  }
+  .weather-card .cond span { color: #fff; font-style: normal; font-family: var(--lkv-font-sans); font-weight: 500; }
+  .weather-year {
+    display: flex; justify-content: space-between; gap: 4px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.10);
+  }
+  .weather-year .m {
+    flex: 1;
+    text-align: center;
+    font-family: var(--lkv-font-mono); font-size: 10px;
+    color: rgba(255,255,255,0.5);
+  }
+  .weather-year .m .bar {
+    display: block;
+    height: 40px;
+    margin-bottom: 6px;
+    background: linear-gradient(to top, var(--lkv-sage-500), var(--lkv-sage-300));
+    border-radius: 3px;
+    opacity: 0.7;
+    transform-origin: bottom;
+  }
+  .weather-year .m.now-m { color: var(--lkv-warm-300); }
+  .weather-year .m.now-m .bar { background: linear-gradient(to top, var(--lkv-warm-500), var(--lkv-warm-300)); opacity: 1; }
+
+  /* Sécurité */
+  .safe-card {
+    margin-top: 16px;
+    padding: 24px;
+    border-radius: 22px;
+    background: #fff;
+    border: 1px solid rgba(11,31,23,0.05);
+  }
+  .safe-card .h {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+  }
+  .safe-card .h .t {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-ink-500);
+  }
+  .safe-card .level {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 999px;
+    font-size: 12px; font-weight: 500;
+    background: var(--lkv-sage-100);
+    color: var(--lkv-forest-800);
+  }
+  .safe-card .level.med { background: rgba(228,198,149,0.35); color: var(--lkv-warm-700); }
+  .safe-card .level.high { background: rgba(193,83,83,0.16); color: var(--lkv-danger); }
+  .safe-card .level .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .safe-card .scale {
+    display: flex; gap: 4px; margin-bottom: 20px;
+  }
+  .safe-card .scale .b {
+    flex: 1; height: 6px; border-radius: 3px;
+    background: var(--lkv-stone-100);
+  }
+  .safe-card .scale .b.on { background: var(--lkv-sage-500); }
+  .safe-card ul {
+    list-style: none; padding: 0; margin: 0;
+  }
+  .safe-card li {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 12px 0;
+    font-size: 13px; line-height: 1.5;
+    color: var(--lkv-ink-700);
+    border-top: 1px dashed rgba(11,31,23,0.06);
+  }
+  .safe-card li:first-child { border-top: 0; padding-top: 0; }
+  .safe-card li svg {
+    color: var(--lkv-forest-800); flex-shrink: 0; margin-top: 2px;
+  }
+  .safe-card li strong { color: var(--lkv-ink-900); font-weight: 500; }
+
+  /* ————— CHOISIR UN PAYS (globe) ————— */
+  #globe-select {
+    padding: 96px 60px;
+    background: linear-gradient(180deg, var(--lkv-stone-50) 0%, var(--lkv-paper) 100%);
+  }
+  .globe-wrap {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 60px; align-items: center;
+  }
+  .globe-ill {
+    aspect-ratio: 1/1;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .globe-ill svg { width: 100%; height: 100%; }
+  .globe-ill .halo {
+    position: absolute; inset: 10%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(31,74,58,0.12) 0%, transparent 65%);
+    animation: floaty 8s ease-in-out infinite;
+  }
+  .globe-list h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 48px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 1;
+    margin: 0 0 20px;
+    color: var(--lkv-ink-900);
+  }
+  .globe-list h3 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .globe-list p {
+    font-family: var(--lkv-font-serif);
+    font-size: 18px; line-height: 1.5;
+    color: var(--lkv-ink-700);
+    margin: 0 0 28px;
+    max-width: 460px;
+  }
+  .globe-search {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 18px;
+    background: #fff;
+    border-radius: 999px;
+    border: 1px solid rgba(11,31,23,0.08);
+    margin-bottom: 20px;
+    box-shadow: var(--lkv-shadow-xs);
+  }
+  .globe-search input {
+    flex: 1;
+    border: 0; background: transparent; outline: none;
+    font-family: inherit; font-size: 14px; color: var(--lkv-ink-900);
+  }
+  .globe-search svg { color: var(--lkv-ink-500); }
+  .globe-search .k {
+    padding: 3px 8px; border-radius: 6px;
+    background: var(--lkv-stone-100);
+    font-family: var(--lkv-font-mono); font-size: 11px;
+    color: var(--lkv-ink-500);
+  }
+  .globe-chips {
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  .globe-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px 8px 8px;
+    background: #fff;
+    border-radius: 999px;
+    border: 1px solid rgba(11,31,23,0.08);
+    font-size: 13px; color: var(--lkv-ink-700);
+    cursor: pointer;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .globe-chip:hover { border-color: var(--lkv-forest-800); transform: translateY(-2px); }
+  .globe-chip .flag {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--lkv-stone-100);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+  }
+  .globe-chip .k {
+    color: var(--lkv-ink-500);
+    font-family: var(--lkv-font-mono); font-size: 10px;
+  }
+  .globe-chip.on { background: var(--lkv-forest-800); color: #fff; border-color: var(--lkv-forest-800); }
+  .globe-chip.on .flag { background: rgba(255,255,255,0.16); }
+  .globe-chip.on .k { color: var(--lkv-sage-300); }
+
+  /* ————— FOOTER ————— */
+  .footer {
+    background: var(--lkv-forest-950);
+    color: rgba(255,255,255,0.7);
+    padding: 64px 60px 40px;
+  }
+  .footer-top {
+    display: grid;
+    grid-template-columns: 1.4fr repeat(3, 1fr);
+    gap: 48px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+  }
+  .footer .brand {
+    display: flex; align-items: center; gap: 10px;
+    color: #fff; font-weight: 600; letter-spacing: -0.01em;
+    margin-bottom: 16px;
+  }
+  .footer .brand svg { color: var(--lkv-sage-300); }
+  .footer .tag {
+    font-family: var(--lkv-font-serif);
+    font-size: 17px; line-height: 1.5;
+    color: rgba(255,255,255,0.72);
+    max-width: 340px;
+  }
+  .footer h5 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 16px; font-weight: 500;
+  }
+  .footer ul { list-style: none; padding: 0; margin: 0; }
+  .footer li { padding: 6px 0; }
+  .footer li a { font-size: 14px; color: rgba(255,255,255,0.8); transition: color var(--lkv-dur) var(--lkv-ease); }
+  .footer li a:hover { color: var(--lkv-sage-300); }
+  .footer-bot {
+    padding-top: 24px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+  }
+
+  /* ————— MOBILE (dans artboard-mobile) ————— */
+  .m-wrap {
+    background: var(--lkv-paper);
+    min-height: 100%;
+    position: relative;
+  }
+  .m-hero {
+    position: relative;
+    height: 400px;
+    background: linear-gradient(160deg, #0F2A22, #08150F);
+    color: #fff;
+    padding: 16px;
+    overflow: hidden;
+  }
+  .m-hero::before {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 70% 25%, rgba(120,171,131,0.35), transparent 60%),
+      radial-gradient(circle at 20% 80%, rgba(200,154,90,0.20), transparent 55%);
+  }
+  .m-hero::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(11,31,23,0.85));
+  }
+  .m-hero > * { position: relative; z-index: 1; }
+  .m-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 4px;
+  }
+  .m-topbar .back {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.24);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+  }
+  .m-topbar .acts { display: flex; gap: 8px; }
+  .m-topbar .acts .b {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.24);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+  }
+  .m-hero-body { padding: 60px 8px 20px; }
+  .m-hero-body .eye {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.20);
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .m-hero-body .eye .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--lkv-sage-300); }
+  .m-hero-body h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 42px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 0.92;
+    color: #fff;
+    margin: 0 0 10px;
+  }
+  .m-hero-body h1 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .m-hero-body p {
+    font-family: var(--lkv-font-serif);
+    font-size: 14px; line-height: 1.4;
+    color: rgba(255,255,255,0.85);
+    margin: 0;
+  }
+
+  .m-stats {
+    display: flex; gap: 8px;
+    padding: 12px;
+    margin: -30px 12px 0;
+    position: relative;
+    background: rgba(255,255,255,0.10);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.20);
+    border-radius: 16px;
+    color: #fff;
+    z-index: 2;
+  }
+  .m-stats .s {
+    flex: 1;
+    text-align: center;
+  }
+  .m-stats .s .l { font-size: 8px; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,255,255,0.6); margin-bottom: 2px; }
+  .m-stats .s .n { font-size: 15px; font-weight: 500; letter-spacing: -0.01em; }
+  .m-stats .s .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; font-size: 11px; }
+
+  .m-anchors {
+    display: flex; gap: 6px;
+    overflow-x: auto;
+    padding: 20px 12px 8px;
+    scrollbar-width: none;
+  }
+  .m-anchors::-webkit-scrollbar { display: none; }
+  .m-anchors button {
+    padding: 6px 12px; border-radius: 999px;
+    background: #fff;
+    border: 1px solid rgba(11,31,23,0.08);
+    font-size: 11px; font-weight: 500;
+    color: var(--lkv-ink-700);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .m-anchors button.on { background: var(--lkv-forest-800); color: #fff; border-color: var(--lkv-forest-800); }
+
+  .m-sec { padding: 20px 16px; }
+  .m-sec .kicker {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 8px; border-radius: 999px;
+    background: rgba(31,74,58,0.08);
+    color: var(--lkv-forest-800);
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .m-sec h2 {
+    font-family: var(--lkv-font-sans);
+    font-size: 26px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.02;
+    color: var(--lkv-ink-900);
+    margin: 0 0 12px;
+  }
+  .m-sec h2 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .m-sec p {
+    font-family: var(--lkv-font-serif);
+    font-size: 14px; line-height: 1.5;
+    color: var(--lkv-ink-700);
+    margin: 0 0 12px;
+  }
+
+  .m-dest-scroll {
+    display: flex; gap: 12px;
+    overflow-x: auto;
+    padding: 0 16px 8px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .m-dest-scroll::-webkit-scrollbar { display: none; }
+  .m-dest-card {
+    flex: 0 0 220px;
+    height: 260px;
+    border-radius: 20px;
+    background: var(--lkv-forest-800);
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+    scroll-snap-align: start;
+  }
+  .m-dest-card .im { position: absolute; inset: 0; background-size: cover; }
+  .m-dest-card .im::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(11,31,23,0.9)); }
+  .m-dest-card .b { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px; z-index: 1; }
+  .m-dest-card .b .cat { font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--lkv-sage-300); margin-bottom: 4px; }
+  .m-dest-card .b h4 { font-size: 16px; font-weight: 500; letter-spacing: -0.01em; margin: 0; }
+  .m-dest-card .b h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-200); font-weight: 400; }
+
+  .m-prat-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    padding: 0 16px;
+  }
+  .m-prat-card {
+    padding: 14px;
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid rgba(11,31,23,0.05);
+  }
+  .m-prat-card .k { font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--lkv-ink-500); margin-bottom: 4px; }
+  .m-prat-card .v { font-size: 15px; font-weight: 500; color: var(--lkv-ink-900); letter-spacing: -0.01em; }
+  .m-prat-card .v em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; font-size: 12px; }
+
+  .m-cta {
+    margin: 20px 16px;
+    padding: 20px;
+    border-radius: 20px;
+    background: linear-gradient(155deg, var(--lkv-forest-800), var(--lkv-forest-900));
+    color: #fff;
+  }
+  .m-cta h4 {
+    font-family: var(--lkv-font-sans); font-size: 22px; font-weight: 500;
+    letter-spacing: -0.015em; margin: 0 0 6px;
+    line-height: 1.05;
+  }
+  .m-cta h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .m-cta p { font-size: 12px; color: rgba(255,255,255,0.75); margin: 0 0 14px; line-height: 1.4; }
+  .m-cta button {
+    width: 100%; padding: 12px;
+    background: #fff; color: var(--lkv-forest-800);
+    border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+  }
+
+  /* Fade-in on scroll */
+  .reveal {
+    opacity: 0; transform: translateY(24px);
+    transition: opacity 800ms var(--lkv-ease-out), transform 800ms var(--lkv-ease-out);
+  }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+
+  /* Small responsive tweaks under 1720px viewport */
+  @media (max-width: 1720px) {
+    .stage { flex-direction: column; align-items: center; }
+    .artboard-desktop { width: 100%; max-width: 1280px; }
+    .artboard-mobile { position: static; margin-top: 32px; }
+  }
+  @media (max-width: 900px) {
+    body { padding: 20px 0; }
+    .stage-title { padding: 0 20px; flex-wrap: wrap; }
+    .stage { padding: 0 12px; gap: 24px; }
+    .artboard-desktop { border-radius: 20px; }
+    .hero-body { grid-template-columns: 1fr; padding: 32px 24px; }
+    .hero-right { width: 100%; }
+    .hero-left h1 { font-size: 60px; }
+    .section { padding: 60px 24px; }
+    .section-head { flex-direction: column; align-items: flex-start; }
+    .section-head h2 { font-size: 40px; }
+    .pres-grid { grid-template-columns: 1fr; }
+    .high-row { grid-template-columns: 1fr; }
+    .dest-grid { grid-template-columns: 1fr; grid-template-rows: none; }
+    .dest-card.big { grid-row: auto; height: 340px; }
+    .dest-card { height: 260px; }
+    .act-grid { grid-template-columns: 1fr; }
+    .cult-grid { grid-template-columns: 1fr; }
+    .cult-facts { grid-template-columns: 1fr 1fr; }
+    .cal-months { grid-template-columns: repeat(6, 1fr); }
+    .gast-grid { grid-template-columns: 1fr 1fr; }
+    .prat-grid { grid-template-columns: 1fr; }
+    .prat-main { grid-template-columns: 1fr; }
+    .globe-wrap { grid-template-columns: 1fr; }
+    .stats-strip { grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 0 24px 32px; }
+    .anchor-bar { padding: 12px 24px; flex-wrap: wrap; }
+    .anchor-nav { overflow-x: auto; width: 100%; scrollbar-width: none; }
+    .anchor-nav::-webkit-scrollbar { display: none; }
+    .footer-top { grid-template-columns: 1fr 1fr; gap: 32px; }
+    .breadcrumb { padding: 24px 24px 0; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ==================== STAGE TITLE ==================== -->
+  <div class="stage-title">
+    <div>
+      <div class="h">Pays — Fiche destination</div>
+      <div class="sub">Hero, présentation, destinations, activités, culture, gastronomie, pratique</div>
+    </div>
+    <div class="right">
+      <span class="country-pill on"><span class="flag">🇮🇸</span> Islande</span>
+      <a href="#">Voir Japon →</a>
+      <a href="#">Voir Pérou →</a>
+    </div>
+  </div>
+
+  <div class="stage">
+
+    <!-- ==================== DESKTOP ARTBOARD ==================== -->
+    <div>
+      <div class="artboard-desktop" id="desktop-art" data-screen-label="01 Pays · Desktop">
+
+        <!-- ————— HERO ————— -->
+        <section class="p-hero">
+          <div class="bg"></div>
+          <div class="aurora"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
+
+          <div class="page-header">
+            <nav class="top-nav">
+              <a href="#" class="lkv-logo">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 7v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7l-8-5z"/><path d="M9 12l2 2 4-4"/></svg>
+                Le Kit du Voyageur
+              </a>
+              <div class="links">
+                <a href="#" class="active">Aventures</a>
+                <a href="#">Boutique</a>
+                <a href="#">Carnet</a>
+                <a href="#">Communauté</a>
+              </div>
+              <div class="right">
+                <div class="search">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+                  Chercher un pays, une aventure…
+                </div>
+                <button class="lkv-btn lkv-btn-icon lkv-btn-ghost-light lkv-btn-sm" title="Favoris">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                </button>
+                <div class="avatar">LK</div>
+              </div>
+            </nav>
+          </div>
+
+          <div class="breadcrumb">
+            <a href="#">Aventures</a><span class="sep">/</span>
+            <a href="#">Pays</a><span class="sep">/</span>
+            <a href="#">Europe du Nord</a><span class="sep">/</span>
+            <span>Islande</span>
+          </div>
+
+          <div class="hero-body">
+            <div class="hero-left reveal">
+              <div class="hero-eye-row">
+                <div class="flag-circle">🇮🇸</div>
+                <span class="lkv-eye on-dark"><span class="dot"></span>Cercle polaire · Europe du Nord</span>
+                <span class="lkv-eye on-dark">Saison recommandée · juin → août</span>
+              </div>
+              <h1>Islande<br/>— feu &amp; <em>glace</em></h1>
+              <p class="lead">Une île volcanique posée au bord de l&rsquo;Arctique où la lumière glisse sans jamais s&rsquo;éteindre. Glaciers millénaires, aurores et sources chaudes composent le plus improbable des terrains de jeu du Nord.</p>
+              <div class="cta">
+                <button class="lkv-btn lkv-btn-light lkv-btn-lg">
+                  Composer une aventure
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                </button>
+                <button class="lkv-btn lkv-btn-ghost-light lkv-btn-lg">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 3"/></svg>
+                  Voir le carnet
+                </button>
+              </div>
+            </div>
+
+            <aside class="hero-right reveal">
+              <div class="rh">
+                <div>
+                  <div class="l">Fiche pays</div>
+                  <div style="font-size: 18px; font-weight: 500; letter-spacing: -0.01em; margin-top: 2px;">République d'Islande</div>
+                </div>
+                <div class="flag2">🇮🇸</div>
+              </div>
+              <div class="coord-row"><span class="k">Latitude</span><span class="v">64°08′ N</span></div>
+              <div class="coord-row"><span class="k">Longitude</span><span class="v">21°56′ O</span></div>
+              <div class="coord-row"><span class="k">Fuseau</span><span class="v">UTC ±00:00</span></div>
+              <div class="coord-row"><span class="k">Continent</span><span class="v">Europe</span></div>
+              <div class="mini-map" aria-hidden="true">
+                <svg viewBox="0 0 200 120" fill="none" stroke="rgba(159,191,165,0.35)" stroke-width="0.5">
+                  <path d="M20 60 Q40 40 70 45 T130 40 T180 55 T200 90 T160 100 T80 95 T20 80 Z" fill="rgba(159,191,165,0.10)"/>
+                  <path d="M0 30 L200 30 M0 60 L200 60 M0 90 L200 90" opacity="0.5"/>
+                  <path d="M50 0 L50 120 M100 0 L100 120 M150 0 L150 120" opacity="0.5"/>
+                </svg>
+                <div class="pin" title="Reykjavík"></div>
+              </div>
+            </aside>
+          </div>
+
+          <div class="stats-strip reveal">
+            <div class="s"><div class="l">Superficie</div><div class="n">103<em>km²</em></div><div class="u">103 000 km²</div></div>
+            <div class="s"><div class="l">Population</div><div class="n">376<em>k</em></div><div class="u">≈ 3,7 hab/km²</div></div>
+            <div class="s"><div class="l">Capitale</div><div class="n">Reykjavík</div><div class="u">≈ 140 000 hab</div></div>
+            <div class="s"><div class="l">Langue</div><div class="n">Islandais<em>· en</em></div><div class="u">Anglais très répandu</div></div>
+            <div class="s"><div class="l">Monnaie</div><div class="n">ISK <em>couronne</em></div><div class="u">1 € ≈ 148 ISK</div></div>
+          </div>
+        </section>
+
+        <!-- ————— ANCHOR NAV ————— -->
+        <div class="anchor-bar">
+          <nav class="anchor-nav">
+            <a href="#presentation" class="on"><span class="n">01</span>Présentation</a>
+            <a href="#destinations"><span class="n">02</span>Destinations</a>
+            <a href="#activites"><span class="n">03</span>Activités</a>
+            <a href="#culture"><span class="n">04</span>Culture</a>
+            <a href="#gastronomie"><span class="n">05</span>Gastronomie</a>
+            <a href="#pratique"><span class="n">06</span>Pratique</a>
+          </nav>
+          <div class="anchor-actions">
+            <span>Dernière mise à jour · <strong style="color:var(--lkv-ink-900);font-weight:500;">08 août 2026</strong></span>
+            <button class="lkv-btn lkv-btn-ghost lkv-btn-sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Guide PDF
+            </button>
+          </div>
+        </div>
+
+        <!-- ————— PRÉSENTATION ————— -->
+        <section id="presentation" class="section">
+          <div class="section-head">
+            <div>
+              <span class="kicker"><span class="dot"></span>Présentation</span>
+              <h2>Une île où la <em>terre respire</em>, encore.</h2>
+            </div>
+            <div class="side">
+              L&rsquo;Islande tient dans un paradoxe : la plus jeune terre d&rsquo;Europe, taillée par l&rsquo;écartement des plaques tectoniques, et l&rsquo;un des plus anciens parlements du monde. Un pays qui se raconte au présent — parce qu&rsquo;il se refait chaque année.
+            </div>
+          </div>
+
+          <div class="pres-grid">
+            <div class="pres-copy reveal">
+              <p>Posée à la jonction des plaques nord-américaine et eurasienne, l&rsquo;Islande est une géologie en mouvement — un archipel volcanique de 103 000&nbsp;km² où trente systèmes actifs sculptent en direct des paysages qui ailleurs prendraient des millénaires. Les glaciers couvrent encore 11&nbsp;% du territoire ; la vapeur des sources chaudes, elle, s&rsquo;échappe partout.</p>
+              <p>C&rsquo;est un pays de contrastes exécutés à l&rsquo;échelle : plages de sable noir léchées par l&rsquo;Atlantique, champs de lave figés en champs verts par la mousse, lagons turquoise perdus entre les fjords. Ici, la <em class="serif-em">Ring Road</em> — 1&nbsp;332 km d&rsquo;asphalte parfait — enlace l&rsquo;île comme une invitation à ne rien manquer.</p>
+              <div class="quote">
+                « Il n&rsquo;y a pas de forêts en Islande, mais chaque pierre est un arbre. »
+                <cite>Halldór Laxness — Prix Nobel de littérature</cite>
+              </div>
+              <p>Trois heures de vol depuis Paris, deux fuseaux avec Montréal : l&rsquo;Islande est le nord le plus accessible d&rsquo;Europe. On y vient pour les aurores en hiver, la nuit blanche en été, et cette impression tenace, quel que soit le mois, d&rsquo;habiter provisoirement une planète qui n&rsquo;a pas fini de se former.</p>
+            </div>
+
+            <div class="pres-map reveal" aria-hidden="true">
+              <svg viewBox="0 0 400 400">
+                <defs>
+                  <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(11,31,23,0.05)" stroke-width="0.5"/>
+                  </pattern>
+                </defs>
+                <rect width="400" height="400" fill="url(#grid)"/>
+                <!-- Iceland silhouette stylised -->
+                <path d="M80 200
+                         C 80 160, 120 130, 170 130
+                         C 210 128, 240 140, 260 138
+                         C 290 135, 320 155, 335 190
+                         C 342 210, 335 235, 315 250
+                         C 300 262, 280 265, 255 258
+                         C 235 253, 218 265, 200 268
+                         C 175 272, 150 265, 130 250
+                         C 105 232, 80 225, 80 200 Z"
+                      fill="rgba(31,74,58,0.12)" stroke="var(--lkv-forest-800)" stroke-width="1.6"/>
+                <!-- fjords hints -->
+                <path d="M85 195 L100 210 M110 175 L125 190 M330 195 L315 210" stroke="var(--lkv-forest-800)" stroke-width="1.2" opacity="0.5"/>
+                <!-- coordinate labels -->
+                <text x="10" y="20" font-family="ui-monospace,monospace" font-size="9" fill="#8E9A91">64° N</text>
+                <text x="360" y="395" font-family="ui-monospace,monospace" font-size="9" fill="#8E9A91">20° O</text>
+              </svg>
+              <div class="pin capital" data-l="Reykjavík" style="top:71%;left:32%"></div>
+              <div class="pin" data-l="Akureyri" style="top:37%;left:56%"></div>
+              <div class="pin" data-l="Vík" style="top:80%;left:47%"></div>
+              <div class="pin" data-l="Höfn" style="top:73%;left:72%"></div>
+              <div class="pin" data-l="Ísafjörður" style="top:36%;left:22%"></div>
+              <div class="cap">
+                <div><div class="k">Repère</div><div class="v">Carte administrative</div></div>
+                <div style="text-align:right"><div class="k">Échelle</div><div class="v">1 : 4 200 000</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="high-row">
+            <div class="high-card reveal">
+              <div class="ic">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3M16 3v3M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>
+              </div>
+              <h4>Meilleure <em>saison</em></h4>
+              <p>Juin → août pour la nuit blanche et les hauts plateaux accessibles. Novembre → février pour les aurores boréales et les glaciers illuminés.</p>
+            </div>
+            <div class="high-card reveal">
+              <div class="ic">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M4.93 10.93l4.24 4.24M2 18h6M4.93 25.07l4.24-4.24"/><circle cx="12" cy="12" r="4"/></svg>
+              </div>
+              <h4>Vol <em>direct</em></h4>
+              <p>Paris → Keflavík · 3 h 30. Vols quotidiens Icelandair, réguliers Play. Location de 4x4 recommandée dès qu&rsquo;on quitte la Ring Road.</p>
+            </div>
+            <div class="high-card reveal">
+              <div class="ic">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11a8 8 0 0 1 16 0c0 6.5-8 11-8 11z"/><circle cx="12" cy="11" r="3"/></svg>
+              </div>
+              <h4>Densité <em>de rêve</em></h4>
+              <p>3,7 habitants/km². Deux tiers de la population vivent dans la région de Reykjavík : l&rsquo;essentiel de l&rsquo;île est un désert habité par la géologie.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ————— DESTINATIONS ————— -->
+        <section id="destinations" class="section">
+          <div class="section-head">
+            <div>
+              <span class="kicker"><span class="dot"></span>Destinations</span>
+              <h2>Neuf lieux, un <em>tour complet</em>.</h2>
+            </div>
+            <div class="side">
+              Sélection éditoriale du Kit. Chaque destination est associée à un carnet de terrain, une carte offline et les activités des guides partenaires.
+              <a href="#" class="see-all">Voir les 47 destinations
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <div class="dest-grid">
+            <a class="dest-card big reveal" href="#">
+              <div class="im ph-1"></div>
+              <div class="body">
+                <div class="t">
+                  <div class="cat"><span class="dot"></span>Site majeur · Sud</div>
+                  <h3>Jökulsárlón<br/>lagon <em>glaciaire</em></h3>
+                  <div class="meta">
+                    <span>64°04′ N</span><span class="sep">·</span>
+                    <span>≈ 4 h de Reykjavík</span><span class="sep">·</span>
+                    <span>Été · Hiver</span>
+                  </div>
+                </div>
+                <div class="arr">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
+                </div>
+              </div>
+            </a>
+
+            <a class="dest-card reveal" href="#">
+              <div class="im ph-2"></div>
+              <div class="body">
+                <div class="t">
+                  <div class="cat"><span class="dot"></span>Ville · Capitale</div>
+                  <h3>Reykjavík</h3>
+                  <div class="meta"><span>Point d&rsquo;entrée</span><span class="sep">·</span><span>Toute l&rsquo;année</span></div>
+                </div>
+                <div class="arr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 17L17 7M7 7h10v10"/></svg></div>
+              </div>
+            </a>
+
+            <a class="dest-card reveal" href="#">
+              <div class="im ph-3"></div>
+              <div class="body">
+                <div class="t">
+                  <div class="cat"><span class="dot"></span>Nature · Nord</div>
+                  <h3><em>Þingvellir</em></h3>
+                  <div class="meta"><span>UNESCO</span><span class="sep">·</span><span>Faille tectonique</span></div>
+                </div>
+                <div class="arr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 17L17 7M7 7h10v10"/></svg></div>
+              </div>
+            </a>
+
+            <a class="dest-card reveal" href="#">
+              <div class="im ph-5"></div>
+              <div class="body">
+                <div class="t">
+                  <div class="cat"><span class="dot"></span>Fjords · Ouest</div>
+                  <h3>Westfjords</h3>
+                  <div class="meta"><span>Sauvage</span><span class="sep">·</span><span>Été uniquement</span></div>
+                </div>
+                <div class="arr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 17L17 7M7 7h10v10"/></svg></div>
+              </div>
+            </a>
+
+            <a class="dest-card reveal" href="#">
+              <div class="im ph-4"></div>
+              <div class="body">
+                <div class="t">
+                  <div class="cat"><span class="dot"></span>Bain · Péninsule</div>
+                  <h3>Blue <em>Lagoon</em></h3>
+                  <div class="meta"><span>Thermal</span><span class="sep">·</span><span>Toute l&rsquo;année</span></div>
+                </div>
+                <div class="arr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 17L17 7M7 7h10v10"/></svg></div>
+              </div>
+            </a>
+          </div>
+        </section>
+
+        <!-- ————— ACTIVITÉS ————— -->
+        <section id="activites" class="section">
+          <div class="section-head">
+            <div>
+              <span class="kicker"><span class="dot"></span>Activités</span>
+              <h2>Ce qu&rsquo;on <em>vient chercher</em> ici.</h2>
+            </div>
+            <div class="side">
+              Trente-six activités classées par saison, difficulté et durée. Cliquer pour l&rsquo;équipement recommandé et les guides partenaires.
+            </div>
+          </div>
+
+          <div class="act-cats" role="tablist">
+            <button class="on" data-cat="all">Toutes <span class="n">36</span></button>
+            <button data-cat="nature">Nature <span class="n">14</span></button>
+            <button data-cat="aqua">Eau &amp; bains <span class="n">7</span></button>
+            <button data-cat="rand">Randonnée <span class="n">9</span></button>
+            <button data-cat="cult">Culture <span class="n">6</span></button>
+          </div>
+
+          <div class="act-grid">
+            <article class="act-card reveal" data-cat="nature">
+              <div class="cover ph-3">
+                <span class="diff hard">Difficile</span>
+                <span class="season">Nov → Fév</span>
+              </div>
+              <div class="b">
+                <div class="cat">Nature — Nuit</div>
+                <h3>Chasse aux <em>aurores</em> boréales</h3>
+                <p>Guide météo + prévision KP en direct. Départ Reykjavík à la tombée du jour, retour vers 2 h du matin.</p>
+                <div class="meta">
+                  <span class="m"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg><strong>4-6&nbsp;h</strong></span>
+                  <span class="m">à partir de <strong>€89</strong></span>
+                </div>
+              </div>
+            </article>
+
+            <article class="act-card reveal" data-cat="rand">
+              <div class="cover ph-1">
+                <span class="diff med">Modérée</span>
+                <span class="season">Mai → Sep</span>
+              </div>
+              <div class="b">
+                <div class="cat">Randonnée — Sud</div>
+                <h3>Trek du <em>Laugavegur</em></h3>
+                <p>55 km de vallées volcaniques, sources chaudes et déserts noirs. Refuges FI, portage léger, 4 jours.</p>
+                <div class="meta">
+                  <span class="m"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg><strong>4 jours</strong></span>
+                  <span class="m">à partir de <strong>€620</strong></span>
+                </div>
+              </div>
+            </article>
+
+            <article class="act-card reveal" data-cat="aqua">
+              <div class="cover ph-4">
+                <span class="diff">Facile</span>
+                <span class="season">Toute l'année</span>
+              </div>
+              <div class="b">
+                <div class="cat">Bain — Bienêtre</div>
+                <h3>Sources <em>chaudes</em> secrètes</h3>
+                <p>Circuit privé en 4x4 vers trois hverir naturels loin des foules. Guide local, boissons chaudes fournies.</p>
+                <div class="meta">
+                  <span class="m"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg><strong>1 jour</strong></span>
+                  <span class="m">à partir de <strong>€145</strong></span>
+                </div>
+              </div>
+            </article>
+
+            <article class="act-card reveal" data-cat="nature">
+              <div class="cover ph-7">
+                <span class="diff hard">Difficile</span>
+                <span class="season">Sep → Avr</span>
+              </div>
+              <div class="b">
+                <div class="cat">Glace — Vatnajökull</div>
+                <h3>Randonnée sur <em>glacier</em></h3>
+                <p>Encordé, crampons, piolet. Traversée d&rsquo;une langue glaciaire et descente dans une grotte de glace.</p>
+                <div class="meta">
+                  <span class="m"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg><strong>6&nbsp;h</strong></span>
+                  <span class="m">à partir de <strong>€199</strong></span>
+                </div>
+              </div>
+            </article>
+
+            <article class="act-card reveal" data-cat="aqua">
+              <div class="cover ph-5">
+                <span class="diff med">Modérée</span>
+                <span class="season">Mai → Sep</span>
+              </div>
+              <div class="b">
+                <div class="cat">Mer — Húsavík</div>
+                <h3>Observation <em>des baleines</em></h3>
+                <p>La capitale mondiale du whale-watching. Petits groupes, bateau silencieux, biologiste à bord.</p>
+                <div class="meta">
+                  <span class="m"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg><strong>3&nbsp;h</strong></span>
+                  <span class="m">à partir de <strong>€75</strong></span>
+                </div>
+              </div>
+            </article>
+
+            <article class="act-card reveal" data-cat="cult">
+              <div class="cover ph-2">
+                <span class="diff">Facile</span>
+                <span class="season">Toute l'année</span>
+              </div>
+              <div class="b">
+                <div class="cat">Culture — Reykjavík</div>
+                <h3>Sagas &amp; <em>street-art</em></h3>
+                <p>Deux siècles de récits nordiques racontés dans les ruelles peintes de la capitale. Guide bilingue.</p>
+                <div class="meta">
+                  <span class="m"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg><strong>2&nbsp;h</strong></span>
+                  <span class="m">à partir de <strong>€35</strong></span>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- ————— CULTURE ————— -->
+        <section id="culture" class="section">
+          <div class="section-head">
+            <div>
+              <span class="kicker"><span class="dot"></span>Culture</span>
+              <h2>Une <em>petite nation</em> à l&rsquo;imaginaire immense.</h2>
+            </div>
+            <div class="side">
+              370 000 habitants, un des taux d&rsquo;alphabétisation les plus élevés du monde, une littérature qui remonte au XIIᵉ&nbsp;siècle. En Islande, tout le monde a un cousin poète.
+            </div>
+          </div>
+
+          <div class="cult-grid">
+            <div class="cult-quote reveal">
+              <div class="txt">Le mot <span class="serif-em" style="color:var(--lkv-sage-300);">Þjóð</span> — le peuple — se dit ici en une syllabe qui contient à la fois le paysage, la langue, et l&rsquo;idée qu&rsquo;on partage un même destin volcanique.</div>
+              <div class="att">Auður Ava Ólafsdóttir · Écrivaine</div>
+            </div>
+
+            <div class="cult-facts reveal">
+              <div class="cult-fact">
+                <div class="k">Langue</div>
+                <div class="v">Islandais<em>·á·ð·þ</em></div>
+                <div class="d">Peu changé depuis l&rsquo;époque des Vikings — un Islandais lit les sagas du XIIᵉ&nbsp;siècle dans le texte.</div>
+              </div>
+              <div class="cult-fact">
+                <div class="k">Croyance</div>
+                <div class="v">54% <em>croient</em></div>
+                <div class="d">Aux <em class="serif-em">Huldufólk</em>, le peuple caché des elfes. Les routes contournent parfois leurs rochers.</div>
+              </div>
+              <div class="cult-fact">
+                <div class="k">Musique</div>
+                <div class="v">Björk<em>· Sigur Rós</em></div>
+                <div class="d">Une scène musicale exportée sans commune mesure avec la taille du pays.</div>
+              </div>
+              <div class="cult-fact">
+                <div class="k">Politique</div>
+                <div class="v">930<em> apr. J-C.</em></div>
+                <div class="d">Fondation de l&rsquo;<em class="serif-em">Alþingi</em>, plus ancien parlement au monde encore en activité.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cult-cal reveal">
+            <h4>Calendrier <em>des fêtes</em> et grands rendez-vous</h4>
+            <div class="cal-months">
+              <div class="cal-month">Jan</div>
+              <div class="cal-month event warm">Fév<span class="lbl">Þorrablót</span></div>
+              <div class="cal-month">Mar</div>
+              <div class="cal-month">Avr</div>
+              <div class="cal-month">Mai</div>
+              <div class="cal-month event">Jui<span class="lbl">Fête nationale</span></div>
+              <div class="cal-month event">Jul<span class="lbl">Nuit blanche</span></div>
+              <div class="cal-month">Aoû</div>
+              <div class="cal-month">Sep</div>
+              <div class="cal-month">Oct</div>
+              <div class="cal-month event warm">Nov<span class="lbl">Iceland Airwaves</span></div>
+              <div class="cal-month event">Déc<span class="lbl">Yule &amp; aurores</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ————— GASTRONOMIE ————— -->
+        <section id="gastronomie" class="section">
+          <div class="section-head">
+            <div>
+              <span class="kicker"><span class="dot"></span>Gastronomie</span>
+              <h2>Une cuisine de la <em>rareté</em> et du feu.</h2>
+            </div>
+            <div class="side">
+              Peu de céréales, pas d&rsquo;arbres fruitiers : l&rsquo;alimentation s&rsquo;est bâtie sur la mer, le mouton et la conservation. Aujourd&rsquo;hui, une jeune scène réinvente cet héritage.
+            </div>
+          </div>
+
+          <div class="gast-grid">
+            <div class="gast-card reveal">
+              <div class="im ph-1"><span class="num">1</span></div>
+              <div class="b">
+                <div class="cat">Poisson</div>
+                <h3>Plokk<em>fiskur</em></h3>
+                <p>Cabillaud effeuillé, pommes de terre, béchamel, pain de seigle noir. Le confort ultime.</p>
+              </div>
+            </div>
+            <div class="gast-card reveal">
+              <div class="im ph-2"><span class="num">2</span></div>
+              <div class="b">
+                <div class="cat">Agneau</div>
+                <h3>Kjöt<em>súpa</em></h3>
+                <p>Soupe d&rsquo;agneau aux racines et à l&rsquo;angélique. Servie brûlante après une journée dehors.</p>
+              </div>
+            </div>
+            <div class="gast-card reveal">
+              <div class="im ph-4"><span class="num">3</span></div>
+              <div class="b">
+                <div class="cat">Fermenté</div>
+                <h3>Skyr</h3>
+                <p>Produit laitier millénaire, entre yaourt et fromage frais. Nature ou aux baies sauvages.</p>
+              </div>
+            </div>
+            <div class="gast-card reveal">
+              <div class="im ph-7"><span class="num">4</span></div>
+              <div class="b">
+                <div class="cat">Rue</div>
+                <h3>Pylsur</h3>
+                <p>Le hot-dog islandais, agneau et bœuf, avec deux moutardes et oignons crispy. Culte.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ————— PRATIQUE (Météo + Sécurité + Infos) ————— -->
+        <section id="pratique" class="section">
+          <div class="section-head">
+            <div>
+              <span class="kicker"><span class="dot"></span>Pratique</span>
+              <h2>Ce qu&rsquo;il faut <em>savoir avant</em> de partir.</h2>
+            </div>
+            <div class="side">
+              Formalités, transport, climat mois par mois, sécurité et budget. Mises à jour hebdomadaires par nos guides sur place.
+            </div>
+          </div>
+
+          <div class="prat-grid">
+            <!-- Left: infos pratiques -->
+            <div class="prat-main">
+              <div class="prat-card reveal">
+                <div class="h">
+                  <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="9"/></svg></div>
+                  <div class="t">Formalités</div>
+                </div>
+                <div class="row"><span class="k">Espace Schengen</span><span class="v">Oui</span></div>
+                <div class="row"><span class="k">Visa UE</span><span class="v">Non requis</span></div>
+                <div class="row"><span class="k">Passeport valide</span><span class="v">3 mois après retour</span></div>
+                <div class="row"><span class="k">Séjour max</span><span class="v mono">90 j / 180 j</span></div>
+              </div>
+
+              <div class="prat-card reveal">
+                <div class="h">
+                  <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 17a2 2 0 1 0 4 0 2 2 0 1 0-4 0zM15 17a2 2 0 1 0 4 0 2 2 0 1 0-4 0z"/><path d="M3 17V7a2 2 0 0 1 2-2h10l4 5v7"/></svg></div>
+                  <div class="t">Transport</div>
+                </div>
+                <div class="row"><span class="k">Vol Paris → KEF</span><span class="v mono">3 h 30</span></div>
+                <div class="row"><span class="k">Location 4x4</span><span class="v">Recommandée</span></div>
+                <div class="row"><span class="k">Ring Road</span><span class="v mono">1 332 km</span></div>
+                <div class="row"><span class="k">Bus interurbains</span><span class="v">Straeto — été</span></div>
+              </div>
+
+              <div class="prat-card reveal">
+                <div class="h">
+                  <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2v20M18 6l-6-4-6 4v12l6 4 6-4V6z"/></svg></div>
+                  <div class="t">Budget</div>
+                </div>
+                <div class="row"><span class="k">Café espresso</span><span class="v mono">≈ 4,50 €</span></div>
+                <div class="row"><span class="k">Repas moyen</span><span class="v mono">28 – 40 €</span></div>
+                <div class="row"><span class="k">Hôtel 3★ / nuit</span><span class="v mono">180 – 260 €</span></div>
+                <div class="row"><span class="k">Journée / pers.</span><span class="v mono">≈ 220 €</span></div>
+              </div>
+
+              <div class="prat-card reveal">
+                <div class="h">
+                  <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2 4 7v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7l-8-5z"/></svg></div>
+                  <div class="t">Santé</div>
+                </div>
+                <div class="row"><span class="k">Carte européenne</span><span class="v">CEAM valide</span></div>
+                <div class="row"><span class="k">Vaccins requis</span><span class="v">Aucun</span></div>
+                <div class="row"><span class="k">Eau du robinet</span><span class="v">Excellente</span></div>
+                <div class="row"><span class="k">Urgences</span><span class="v mono">112</span></div>
+              </div>
+            </div>
+
+            <!-- Right: Météo + Sécurité -->
+            <div>
+              <div class="weather-card reveal">
+                <div class="h">
+                  <div class="k">Météo · Reykjavík</div>
+                  <div class="live"><span class="dot"></span>En direct · 11 août</div>
+                </div>
+                <div class="now">
+                  <div class="t">11<em>°C</em></div>
+                  <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.5 19a4.5 4.5 0 1 0 0-9c-.05 0-.1 0-.14.01A6 6 0 0 0 6 12"/>
+                    <path d="M6 12a4 4 0 1 0 0 8h11.5"/>
+                    <path d="M12 5v-2M18 6l1.5-1.5M6 6l-1.5-1.5"/>
+                  </svg>
+                </div>
+                <div class="cond"><span>Nuageux, vent d&rsquo;ouest 22 km/h</span> — précipitations 40&nbsp;% · UV 3</div>
+                <div class="weather-year">
+                  <div class="m"><span class="bar" style="height:22px"></span>J</div>
+                  <div class="m"><span class="bar" style="height:20px"></span>F</div>
+                  <div class="m"><span class="bar" style="height:24px"></span>M</div>
+                  <div class="m"><span class="bar" style="height:28px"></span>A</div>
+                  <div class="m"><span class="bar" style="height:32px"></span>M</div>
+                  <div class="m"><span class="bar" style="height:36px"></span>J</div>
+                  <div class="m"><span class="bar" style="height:38px"></span>J</div>
+                  <div class="m now-m"><span class="bar" style="height:36px"></span>A</div>
+                  <div class="m"><span class="bar" style="height:30px"></span>S</div>
+                  <div class="m"><span class="bar" style="height:26px"></span>O</div>
+                  <div class="m"><span class="bar" style="height:22px"></span>N</div>
+                  <div class="m"><span class="bar" style="height:20px"></span>D</div>
+                </div>
+              </div>
+
+              <div class="safe-card reveal">
+                <div class="h">
+                  <div class="t">Sécurité · conseils</div>
+                  <span class="level"><span class="dot"></span>Très sûr</span>
+                </div>
+                <div class="scale" aria-label="Niveau de sécurité 5/5">
+                  <div class="b on"></div><div class="b on"></div><div class="b on"></div><div class="b on"></div><div class="b on"></div>
+                </div>
+                <ul>
+                  <li>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2 4 7v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7l-8-5z"/></svg>
+                    <div><strong>Vents extrêmes.</strong> Vérifier <em class="serif-em">vedur.is</em> avant chaque déplacement, ne jamais forcer une portière en tempête.</div>
+                  </li>
+                  <li>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>
+                    <div><strong>Routes F (hautes terres).</strong> 4x4 obligatoire, ouvertes de fin juin à mi-septembre seulement.</div>
+                  </li>
+                  <li>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>
+                    <div><strong>Activité sismique.</strong> App <em class="serif-em">Safetravel</em> installée, itinéraire déposé à l&rsquo;auberge de départ.</div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ————— CHOISIR UN AUTRE PAYS ————— -->
+        <section id="globe-select">
+          <div class="section-head">
+            <div>
+              <span class="kicker"><span class="dot"></span>Explorer</span>
+              <h2>Continuer <em>ailleurs</em>.</h2>
+            </div>
+          </div>
+
+          <div class="globe-wrap">
+            <div class="globe-ill reveal" aria-hidden="true">
+              <div class="halo"></div>
+              <svg viewBox="0 0 400 400" fill="none">
+                <defs>
+                  <radialGradient id="gg" cx="35%" cy="35%">
+                    <stop offset="0%" stop-color="#2C6650"/>
+                    <stop offset="60%" stop-color="#1F4A3A"/>
+                    <stop offset="100%" stop-color="#0B1F17"/>
+                  </radialGradient>
+                </defs>
+                <circle cx="200" cy="200" r="160" fill="url(#gg)"/>
+                <!-- meridian lines -->
+                <ellipse cx="200" cy="200" rx="160" ry="60" fill="none" stroke="rgba(159,191,165,0.28)" stroke-width="0.8"/>
+                <ellipse cx="200" cy="200" rx="120" ry="160" fill="none" stroke="rgba(159,191,165,0.22)" stroke-width="0.8"/>
+                <ellipse cx="200" cy="200" rx="60" ry="160" fill="none" stroke="rgba(159,191,165,0.22)" stroke-width="0.8"/>
+                <ellipse cx="200" cy="200" rx="160" ry="120" fill="none" stroke="rgba(159,191,165,0.22)" stroke-width="0.8"/>
+                <ellipse cx="200" cy="200" rx="160" ry="20" fill="none" stroke="rgba(159,191,165,0.18)" stroke-width="0.6"/>
+                <!-- continents dotted -->
+                <g fill="rgba(159,191,165,0.55)">
+                  <circle cx="150" cy="120" r="1.8"/><circle cx="160" cy="128" r="1.8"/><circle cx="170" cy="122" r="1.8"/><circle cx="180" cy="130" r="1.8"/>
+                  <circle cx="145" cy="140" r="1.8"/><circle cx="155" cy="148" r="1.8"/><circle cx="165" cy="142" r="1.8"/>
+                  <circle cx="130" cy="160" r="1.8"/><circle cx="140" cy="168" r="1.8"/><circle cx="150" cy="176" r="1.8"/><circle cx="160" cy="184" r="1.8"/>
+                  <circle cx="210" cy="130" r="1.8"/><circle cx="220" cy="135" r="1.8"/><circle cx="230" cy="140" r="1.8"/><circle cx="240" cy="150" r="1.8"/>
+                  <circle cx="215" cy="145" r="1.8"/><circle cx="225" cy="155" r="1.8"/><circle cx="235" cy="165" r="1.8"/>
+                  <circle cx="225" cy="180" r="1.8"/><circle cx="235" cy="195" r="1.8"/><circle cx="240" cy="210" r="1.8"/>
+                  <circle cx="255" cy="220" r="1.8"/><circle cx="248" cy="235" r="1.8"/>
+                  <circle cx="120" cy="215" r="1.8"/><circle cx="115" cy="225" r="1.8"/><circle cx="125" cy="235" r="1.8"/>
+                  <circle cx="105" cy="245" r="1.8"/><circle cx="115" cy="255" r="1.8"/><circle cx="125" cy="270" r="1.8"/><circle cx="130" cy="285" r="1.8"/>
+                  <circle cx="280" cy="180" r="1.8"/><circle cx="290" cy="190" r="1.8"/><circle cx="285" cy="200" r="1.8"/>
+                  <circle cx="270" cy="255" r="1.8"/><circle cx="280" cy="265" r="1.8"/>
+                </g>
+                <!-- Islande active -->
+                <g transform="translate(178, 108)">
+                  <circle r="8" fill="var(--lkv-warm-500)"/>
+                  <circle r="14" fill="none" stroke="var(--lkv-warm-500)" stroke-width="1" opacity="0.6"/>
+                  <circle r="22" fill="none" stroke="var(--lkv-warm-500)" stroke-width="1" opacity="0.3"/>
+                </g>
+              </svg>
+            </div>
+
+            <div class="globe-list">
+              <h3>Le globe est <em>votre carnet</em>.</h3>
+              <p>47 pays, 328 destinations et plus de 1 200 activités déjà cartographiées par nos guides et notre communauté. Cliquez, filtrez, ou tapez pour trouver.</p>
+              <div class="globe-search">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+                <input type="text" placeholder="Chercher un pays, une région, une aventure…"/>
+                <span class="k">⌘K</span>
+              </div>
+              <div class="globe-chips">
+                <button class="globe-chip on"><span class="flag">🇮🇸</span>Islande<span class="k">EN</span></button>
+                <button class="globe-chip"><span class="flag">🇯🇵</span>Japon<span class="k">JP</span></button>
+                <button class="globe-chip"><span class="flag">🇳🇴</span>Norvège<span class="k">NO</span></button>
+                <button class="globe-chip"><span class="flag">🇵🇪</span>Pérou<span class="k">PE</span></button>
+                <button class="globe-chip"><span class="flag">🇳🇿</span>Nouvelle-Zélande<span class="k">NZ</span></button>
+                <button class="globe-chip"><span class="flag">🇲🇦</span>Maroc<span class="k">MA</span></button>
+                <button class="globe-chip"><span class="flag">🇨🇦</span>Canada<span class="k">CA</span></button>
+                <button class="globe-chip"><span class="flag">🇬🇷</span>Grèce<span class="k">GR</span></button>
+                <button class="globe-chip"><span class="flag">🇰🇷</span>Corée du Sud<span class="k">KR</span></button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ————— FOOTER ————— -->
+        <footer class="footer">
+          <div class="footer-top">
+            <div>
+              <div class="brand">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 2 4 7v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7l-8-5z"/><path d="M9 12l2 2 4-4"/></svg>
+                Le Kit du Voyageur
+              </div>
+              <p class="tag">Kits, aventures, carnets et clubs pour voyager avec ce qu&rsquo;il faut — et rien de plus.</p>
+            </div>
+            <div>
+              <h5>Aventures</h5>
+              <ul>
+                <li><a href="#">Explorer par pays</a></li>
+                <li><a href="#">Explorer par saison</a></li>
+                <li><a href="#">Aventures signature</a></li>
+                <li><a href="#">Nos guides</a></li>
+              </ul>
+            </div>
+            <div>
+              <h5>Le Kit</h5>
+              <ul>
+                <li><a href="#">Boutique</a></li>
+                <li><a href="#">Configurateur</a></li>
+                <li><a href="#">Carnet</a></li>
+                <li><a href="#">Clubs</a></li>
+              </ul>
+            </div>
+            <div>
+              <h5>Compte</h5>
+              <ul>
+                <li><a href="#">Se connecter</a></li>
+                <li><a href="#">Créer un compte</a></li>
+                <li><a href="#">Aide &amp; support</a></li>
+                <li><a href="#">Contact</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="footer-bot">
+            <span>© 2026 Le Kit du Voyageur — Fabriqué avec soin à Lyon.</span>
+            <span>Mentions légales · CGU · Confidentialité</span>
+          </div>
+        </footer>
+
+      </div>
+      <div class="board-caption">Desktop · 1280 × auto — Fiche pays Islande</div>
+    </div>
+
+    <!-- ==================== MOBILE ARTBOARD ==================== -->
+    <div>
+      <div class="artboard-mobile" data-screen-label="02 Pays · Mobile">
+        <div class="screen lkv-scroll">
+          <div class="m-wrap">
+
+            <!-- Hero -->
+            <div class="m-hero">
+              <div class="m-topbar">
+                <div class="back">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </div>
+                <div class="acts">
+                  <div class="b">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                  </div>
+                  <div class="b">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5 15.4 6.5M8.6 13.5 15.4 17.5"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="m-hero-body">
+                <div class="eye"><span class="dot"></span>🇮🇸 Europe du Nord</div>
+                <h1>Islande<br/>— feu &amp; <em>glace</em></h1>
+                <p>Île volcanique du cercle polaire. Aurores, glaciers, sources chaudes.</p>
+              </div>
+            </div>
+
+            <div class="m-stats">
+              <div class="s"><div class="l">Superficie</div><div class="n">103<em>k km²</em></div></div>
+              <div class="s"><div class="l">Capitale</div><div class="n">Reykjavík</div></div>
+              <div class="s"><div class="l">Fuseau</div><div class="n">UTC<em>±0</em></div></div>
+            </div>
+
+            <div class="m-anchors">
+              <button class="on">Présentation</button>
+              <button>Destinations</button>
+              <button>Activités</button>
+              <button>Culture</button>
+              <button>Gastronomie</button>
+              <button>Pratique</button>
+            </div>
+
+            <div class="m-sec">
+              <div class="kicker"><span style="width:5px;height:5px;background:var(--lkv-sage-500);border-radius:50%;"></span>Présentation</div>
+              <h2>Une île où la <em>terre respire</em>.</h2>
+              <p>103 000 km², 30 systèmes volcaniques, 11 % de glaciers. L&rsquo;Islande est la plus jeune terre d&rsquo;Europe — un pays qui se refait chaque année.</p>
+              <p>Trois heures de Paris, une <em class="serif-em">Ring Road</em> de 1&nbsp;332 km, et l&rsquo;impression tenace d&rsquo;habiter provisoirement une planète en formation.</p>
+            </div>
+
+            <div class="m-sec" style="padding-bottom:8px;">
+              <div class="kicker" style="background:rgba(31,74,58,0.08);color:var(--lkv-forest-800);"><span style="width:5px;height:5px;background:var(--lkv-sage-500);border-radius:50%;"></span>Destinations · 47</div>
+              <h2>À ne pas <em>manquer</em>.</h2>
+            </div>
+            <div class="m-dest-scroll">
+              <div class="m-dest-card">
+                <div class="im ph-1"></div>
+                <div class="b"><div class="cat">Lagon glaciaire</div><h4>Jökulsárlón</h4></div>
+              </div>
+              <div class="m-dest-card">
+                <div class="im ph-3"></div>
+                <div class="b"><div class="cat">UNESCO</div><h4><em>Þingvellir</em></h4></div>
+              </div>
+              <div class="m-dest-card">
+                <div class="im ph-4"></div>
+                <div class="b"><div class="cat">Bain thermal</div><h4>Blue <em>Lagoon</em></h4></div>
+              </div>
+              <div class="m-dest-card">
+                <div class="im ph-5"></div>
+                <div class="b"><div class="cat">Fjords</div><h4>Westfjords</h4></div>
+              </div>
+            </div>
+
+            <div class="m-sec">
+              <div class="kicker"><span style="width:5px;height:5px;background:var(--lkv-sage-500);border-radius:50%;"></span>Pratique</div>
+              <h2>À savoir avant <em>de partir</em>.</h2>
+            </div>
+            <div class="m-prat-grid">
+              <div class="m-prat-card"><div class="k">Météo · août</div><div class="v">11<em>°C</em></div></div>
+              <div class="m-prat-card"><div class="k">Vol Paris</div><div class="v">3<em> h 30</em></div></div>
+              <div class="m-prat-card"><div class="k">Visa</div><div class="v">Non<em> requis</em></div></div>
+              <div class="m-prat-card"><div class="k">Monnaie</div><div class="v">ISK<em> · 148/€</em></div></div>
+              <div class="m-prat-card"><div class="k">Sécurité</div><div class="v">Très<em> sûre</em></div></div>
+              <div class="m-prat-card"><div class="k">Urgences</div><div class="v" style="font-family:var(--lkv-font-mono);font-weight:400;font-size:14px;">112</div></div>
+            </div>
+
+            <div class="m-cta">
+              <h4>Composer votre <em>aventure Islande</em></h4>
+              <p>Kit, itinéraire, guides et carnet — en 4 étapes.</p>
+              <button>Commencer <span style="margin-left:6px;">→</span></button>
+            </div>
+
+            <div style="height: 40px;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="board-caption">Mobile · 380 × 780 (scroll)</div>
+    </div>
+
+  </div>
+
+<script>
+  // ————— Reveal on scroll (robuste: check initial + observer + safety net)
+  (function(){
+    const els = document.querySelectorAll('.reveal');
+    const inViewport = (el) => {
+      const r = el.getBoundingClientRect();
+      const h = window.innerHeight || document.documentElement.clientHeight;
+      return r.top < h + 80 && r.bottom > -80;
+    };
+    // Immediate check for elements already visible
+    requestAnimationFrame(() => {
+      els.forEach(el => { if (inViewport(el)) el.classList.add('in'); });
+    });
+    // Observer for elements that come in later
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
+    els.forEach(el => io.observe(el));
+    // Safety net — reveal everything after 900 ms whatever happens
+    setTimeout(() => { els.forEach(el => el.classList.add('in')); }, 900);
+  })();
+
+  // ————— Anchor nav — smooth scroll inside the artboard + active state on scroll
+  (function(){
+    const artboard = document.getElementById('desktop-art');
+    if (!artboard) return;
+    const links = document.querySelectorAll('.anchor-nav a');
+    const sections = Array.from(document.querySelectorAll('.section[id]'));
+
+    links.forEach(a => {
+      a.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        const id = a.getAttribute('href').slice(1);
+        const target = document.getElementById(id);
+        if (!target) return;
+        const y = target.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      });
+    });
+
+    // Update active state
+    const setActive = () => {
+      const scrollY = window.scrollY + 200;
+      let current = sections[0]?.id;
+      for (const s of sections) {
+        if (s.offsetTop <= scrollY) current = s.id;
+      }
+      links.forEach(a => {
+        a.classList.toggle('on', a.getAttribute('href') === '#' + current);
+      });
+    };
+    window.addEventListener('scroll', setActive, { passive: true });
+    setActive();
+  })();
+
+  // ————— Activity filter
+  (function(){
+    const btns = document.querySelectorAll('.act-cats button');
+    const cards = document.querySelectorAll('.act-card');
+    btns.forEach(b => {
+      b.addEventListener('click', () => {
+        btns.forEach(x => x.classList.remove('on'));
+        b.classList.add('on');
+        const cat = b.dataset.cat;
+        cards.forEach(c => {
+          const show = (cat === 'all') || c.dataset.cat === cat;
+          c.style.display = show ? '' : 'none';
+        });
+      });
+    });
+  })();
+
+  // ————— Country chips — swap flag in header (visual demo)
+  (function(){
+    const chips = document.querySelectorAll('.globe-chip');
+    const flagCircle = document.querySelector('.hero-eye-row .flag-circle');
+    const heroFlag2 = document.querySelector('.hero-right .flag2');
+    chips.forEach(c => {
+      c.addEventListener('click', () => {
+        chips.forEach(x => x.classList.remove('on'));
+        c.classList.add('on');
+        const flag = c.querySelector('.flag')?.textContent || '🇮🇸';
+        if (flagCircle) flagCircle.textContent = flag;
+        if (heroFlag2) heroFlag2.textContent = flag;
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

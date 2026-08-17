@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Sac 45 L · Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="shop.css"/>
+<style>
+  /* ————— DESKTOP ————— */
+  .prod-body {
+    padding: 40px 60px 96px;
+    background: var(--lkv-stone-50);
+  }
+  .prod-grid-main {
+    display: grid;
+    grid-template-columns: 1fr 480px;
+    gap: 60px;
+    align-items: start;
+  }
+
+  /* GALLERY */
+  .gallery {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 16px;
+    position: sticky; top: 100px;
+  }
+  .thumbs { display: flex; flex-direction: column; gap: 8px; }
+  .thumbs .th {
+    width: 100px; height: 100px;
+    border-radius: 14px;
+    background-size: cover; background-position: center;
+    background-color: var(--lkv-stone-100);
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .thumbs .th:hover { transform: scale(1.02); }
+  .thumbs .th.on { border-color: var(--lkv-forest-800); }
+  .main-img {
+    aspect-ratio: 4/5;
+    background-image: url('assets/product-backpack-2.jpg');
+    background-size: cover; background-position: center;
+    background-color: var(--lkv-stone-100);
+    border-radius: 24px;
+    position: relative;
+  }
+  .main-img .zoom {
+    position: absolute; bottom: 16px; right: 16px;
+    width: 44px; height: 44px; border-radius: 999px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-900);
+    box-shadow: var(--lkv-shadow-sm);
+    transition: transform var(--lkv-dur) var(--lkv-ease-out);
+  }
+  .main-img .zoom:hover { transform: scale(1.05); }
+  .main-img .tag {
+    position: absolute; top: 20px; left: 20px;
+  }
+
+  /* SIDE / BUY */
+  .buy .kind {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 12px;
+    background: var(--lkv-sage-100);
+    color: var(--lkv-forest-800);
+    border-radius: 999px;
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500;
+    margin-bottom: 16px;
+  }
+  .buy .kind .dot { width: 5px; height: 5px; background: var(--lkv-forest-800); border-radius: 50%; }
+  .buy h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 56px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 1;
+    margin: 0 0 12px;
+    color: var(--lkv-ink-900);
+  }
+  .buy h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .buy .rating-line {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--lkv-ink-500);
+    margin-bottom: 20px;
+  }
+  .buy .rating-line svg { fill: var(--lkv-warm-500); width: 14px; height: 14px; }
+  .buy .rating-line strong { color: var(--lkv-ink-900); font-weight: 500; }
+  .buy .desc {
+    font-size: 16px; line-height: 1.55;
+    color: var(--lkv-ink-700);
+    margin: 0 0 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(11,31,23,0.08);
+  }
+
+  /* Options */
+  .opt-block { margin-bottom: 24px; }
+  .opt-block .lbl {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 13px; font-weight: 500; color: var(--lkv-ink-900);
+    margin-bottom: 10px;
+  }
+  .opt-block .lbl .v { font-size: 13px; font-weight: 400; color: var(--lkv-ink-500); }
+  .opt-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .opt-btn {
+    padding: 10px 16px;
+    background: #fff;
+    border-radius: 999px;
+    border: 1px solid rgba(11,31,23,0.1);
+    font-size: 13px; font-weight: 500; color: var(--lkv-ink-900);
+    cursor: pointer;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .opt-btn:hover { border-color: var(--lkv-forest-800); }
+  .opt-btn.on {
+    background: var(--lkv-forest-800); color: #fff; border-color: var(--lkv-forest-800);
+  }
+  .opt-btn.disabled {
+    color: var(--lkv-ink-400);
+    text-decoration: line-through;
+    cursor: not-allowed;
+  }
+  .swatch-row { display: flex; gap: 10px; }
+  .swatch-row .sw {
+    width: 44px; height: 44px; border-radius: 999px;
+    border: 2px solid transparent;
+    padding: 3px;
+    cursor: pointer;
+    transition: transform var(--lkv-dur) var(--lkv-ease);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .swatch-row .sw .fill { width: 100%; height: 100%; border-radius: 999px; }
+  .swatch-row .sw:hover { transform: scale(1.05); }
+  .swatch-row .sw.on { border-color: var(--lkv-forest-800); }
+
+  /* Price + CTA */
+  .price-block {
+    padding: 20px 0;
+    border-top: 1px solid rgba(11,31,23,0.08);
+    border-bottom: 1px solid rgba(11,31,23,0.08);
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .price-block .p { font-size: 40px; font-weight: 500; letter-spacing: -0.025em; line-height: 1; }
+  .price-block .p .u { font-size: 14px; color: var(--lkv-ink-400); font-weight: 400; margin-left: 4px; }
+  .price-block .stock {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--lkv-ink-500);
+  }
+  .price-block .stock .dot { width: 6px; height: 6px; background: var(--lkv-sage-500); border-radius: 999px; box-shadow: 0 0 0 4px rgba(109,170,125,0.2); }
+  .cta-row { display: flex; gap: 12px; }
+  .cta-row .lkv-btn { flex: 1; }
+
+  /* Promises */
+  .promises {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    margin-top: 24px;
+  }
+  .promise {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 12px 14px;
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid rgba(11,31,23,0.05);
+  }
+  .promise .i {
+    width: 32px; height: 32px; border-radius: 10px;
+    background: var(--lkv-sage-100); color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .promise .i svg { width: 16px; height: 16px; }
+  .promise .t { font-size: 12px; font-weight: 500; }
+  .promise .t small { display: block; color: var(--lkv-ink-400); font-weight: 400; font-size: 10px; margin-top: 1px; }
+
+  /* Editorial narrative below */
+  .narr {
+    padding: 96px 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+    background: var(--lkv-paper);
+  }
+  .narr .visual {
+    aspect-ratio: 4/5;
+    background-image: url('assets/workshop.jpg');
+    background-size: cover;
+    background-position: center;
+    border-radius: 28px;
+  }
+  .narr h2 {
+    font-family: var(--lkv-font-sans);
+    font-size: 56px; font-weight: 500;
+    letter-spacing: -0.028em; line-height: 1.02;
+    margin: 0 0 20px;
+  }
+  .narr h2 em {
+    font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .narr p {
+    font-size: 17px; line-height: 1.55;
+    color: var(--lkv-ink-500); max-width: 460px;
+    margin: 0 0 32px;
+  }
+  .narr .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; padding-top: 32px; border-top: 1px solid rgba(11,31,23,0.08); }
+  .narr .stat .n { font-size: 32px; font-weight: 500; letter-spacing: -0.02em; color: var(--lkv-ink-900); line-height: 1; }
+  .narr .stat .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .narr .stat .l { font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--lkv-ink-400); margin-top: 8px; }
+
+  /* Specs table */
+  .specs {
+    padding: 0 60px 96px;
+    background: var(--lkv-paper);
+  }
+  .specs-inner {
+    background: #fff;
+    border-radius: 28px;
+    padding: 48px;
+  }
+  .specs-inner h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 32px; font-weight: 500;
+    letter-spacing: -0.02em; margin: 0 0 32px;
+  }
+  .specs-inner h3 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .specs-cols {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0 60px;
+  }
+  .specs-cols .row {
+    display: flex; justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    font-size: 15px;
+  }
+  .specs-cols .row .k { color: var(--lkv-ink-500); }
+  .specs-cols .row .v { color: var(--lkv-ink-900); font-weight: 500; }
+
+  /* Related */
+  .related {
+    padding: 0 60px 96px;
+  }
+  .related h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 32px; font-weight: 500;
+    letter-spacing: -0.02em; margin: 0 0 28px;
+  }
+  .related h3 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .rel-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .rel-item {
+    background: #fff;
+    border-radius: 22px;
+    padding: 12px;
+    display: flex; align-items: center; gap: 16px;
+    transition: box-shadow var(--lkv-dur) var(--lkv-ease-out);
+  }
+  .rel-item:hover { box-shadow: var(--lkv-shadow-md); }
+  .rel-item .im {
+    width: 96px; height: 96px; border-radius: 16px;
+    background-size: cover; background-position: center;
+    background-color: var(--lkv-stone-100); flex-shrink: 0;
+  }
+  .rel-item .b { flex: 1; }
+  .rel-item .c { font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--lkv-ink-400); margin-bottom: 4px; }
+  .rel-item .n { font-size: 15px; font-weight: 500; letter-spacing: -0.005em; }
+  .rel-item .p { font-size: 15px; font-weight: 500; margin-top: 4px; }
+
+  /* ————— MOBILE ————— */
+  .m-gal {
+    position: relative;
+    aspect-ratio: 4/5;
+    background-image: url('assets/product-backpack-2.jpg');
+    background-size: cover; background-position: center;
+    background-color: var(--lkv-stone-100);
+  }
+  .m-gal .tag { position: absolute; top: 16px; left: 16px; }
+  .m-gal .heart {
+    position: absolute; top: 16px; right: 16px;
+    width: 36px; height: 36px; border-radius: 999px;
+    background: rgba(255,255,255,0.9); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-700);
+  }
+  .m-gal .dots {
+    position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 4px;
+  }
+  .m-gal .dots span { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.5); }
+  .m-gal .dots span.on { background: #fff; width: 16px; border-radius: 4px; }
+
+  .m-buy {
+    padding: 16px 14px 100px;
+    flex: 1;
+    overflow-y: auto;
+  }
+  .m-buy .m-kind { display: inline-flex; padding: 4px 10px; background: var(--lkv-sage-100); color: var(--lkv-forest-800); border-radius: 999px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500; margin-bottom: 8px; }
+  .m-buy h1 { font-size: 30px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.02; margin: 0 0 6px; }
+  .m-buy h1 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .m-buy .rate { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--lkv-ink-500); margin-bottom: 14px; }
+  .m-buy .rate svg { fill: var(--lkv-warm-500); }
+  .m-buy .desc { font-size: 13px; line-height: 1.55; color: var(--lkv-ink-700); margin: 0 0 20px; padding-bottom: 18px; border-bottom: 1px solid rgba(11,31,23,0.06); }
+  .m-opt .lbl { font-size: 12px; font-weight: 500; margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .m-opt .lbl .v { color: var(--lkv-ink-500); font-weight: 400; }
+  .m-opt-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+  .m-opt-btn { padding: 8px 12px; background: #fff; border-radius: 999px; border: 1px solid rgba(11,31,23,0.1); font-size: 12px; font-weight: 500; }
+  .m-opt-btn.on { background: var(--lkv-forest-800); color: #fff; border-color: var(--lkv-forest-800); }
+  .m-promises { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 16px; }
+  .m-promises .pr { padding: 10px; background: #fff; border-radius: 12px; border: 1px solid rgba(11,31,23,0.05); font-size: 11px; font-weight: 500; }
+  .m-promises .pr small { display: block; color: var(--lkv-ink-400); font-weight: 400; font-size: 9px; margin-top: 2px; }
+
+  .m-cta-bar {
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    background: #fff;
+    border-radius: 999px;
+    box-shadow: 0 8px 24px rgba(11,31,23,0.14);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 8px 8px 20px;
+    z-index: 20;
+    border: 1px solid rgba(11,31,23,0.04);
+  }
+  .m-cta-bar .p { font-size: 20px; font-weight: 500; letter-spacing: -0.015em; }
+  .m-cta-bar .p small { color: var(--lkv-ink-400); font-size: 12px; font-weight: 400; }
+  .m-cta-bar .btn { padding: 12px 20px; background: var(--lkv-forest-800); color: #fff; border-radius: 999px; font-size: 13px; font-weight: 500; }
+</style>
+</head>
+<body class="shop-page">
+
+<div class="stage-title">
+  <div>
+    <div class="h">Fiche produit · Sac 45 L</div>
+    <div class="sub">Étape 2/5 · Desktop 1280 + Mobile 375</div>
+  </div>
+  <div class="crumbs">
+    <a href="Index.html">← Hub</a>
+    <a href="Boutique.html">← Boutique</a>
+    <a href="Configurateur.html">Configurateur →</a>
+    <a href="Panier.html">Panier</a>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ————— DESKTOP ————— -->
+  <div class="artboard-desktop">
+
+    <!-- NAV -->
+    <nav class="shop-nav">
+      <a href="Home.html" class="lkv-logo">
+        <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
+          <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+        </svg>
+        <span>Le Kit du Voyageur</span>
+      </a>
+      <div class="links">
+        <a href="Recherche Carte.html">Aventures</a>
+        <a href="#">Refuges</a>
+        <a href="Boutique.html" class="active">Boutique</a>
+        <a href="#">Journal</a>
+        <a href="#">Communauté</a>
+      </div>
+      <div class="right">
+        <button class="icon-btn">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        </button>
+        <button class="icon-btn">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+        </button>
+        <a href="Panier.html" class="icon-btn">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+          <span class="badge-num">3</span>
+        </a>
+        <div class="avatar">MB</div>
+      </div>
+    </nav>
+
+    <!-- BREADCRUMB -->
+    <div class="crumb">
+      <a href="Home.html">Accueil</a>
+      <span class="sep">/</span>
+      <a href="Boutique.html">Boutique</a>
+      <span class="sep">/</span>
+      <a href="#">Portage</a>
+      <span class="sep">/</span>
+      <span class="active">Sac 45 L toile cirée</span>
+    </div>
+
+    <!-- PRODUCT MAIN -->
+    <section class="prod-body">
+      <div class="prod-grid-main">
+
+        <!-- GALLERY -->
+        <div class="gallery">
+          <div class="thumbs">
+            <div class="th on" style="background-image: url('assets/product-backpack-2.jpg')"></div>
+            <div class="th" style="background-image: url('assets/product-backpack.jpg')"></div>
+            <div class="th" style="background-image: url('assets/product-tent.jpg')"></div>
+            <div class="th" style="background-image: url('assets/adventure-hiking.jpg')"></div>
+            <div class="th" style="background-image: url('assets/workshop.jpg')"></div>
+          </div>
+          <div class="main-img">
+            <div class="tag"><div class="lkv-chip"><span class="dot"></span>Édition automne</div></div>
+            <button class="zoom">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- BUY -->
+        <div class="buy">
+          <div class="kind"><span class="dot"></span>Le sac essentiel</div>
+          <h1>Sac 45 L <em>toile cirée.</em></h1>
+          <div class="rating-line">
+            <svg viewBox="0 0 24 24"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+            <strong>4,9</strong>
+            <span>· 128 avis · 47 testeurs terrain</span>
+          </div>
+          <p class="desc">Trois compartiments, une bandoulière ventrale, un point d'accroche pour tapis de sol. Coton huilé 12 oz, fabriqué dans les Alpes-de-Haute-Provence, réparable à vie.</p>
+
+          <div class="opt-block">
+            <div class="lbl"><span>Coloris</span><span class="v">Vert forêt</span></div>
+            <div class="swatch-row">
+              <div class="sw on"><div class="fill" style="background: #405E48"></div></div>
+              <div class="sw"><div class="fill" style="background: #C99B5A"></div></div>
+              <div class="sw"><div class="fill" style="background: #2A322E"></div></div>
+              <div class="sw"><div class="fill" style="background: #DDEEE5"></div></div>
+            </div>
+          </div>
+
+          <div class="opt-block">
+            <div class="lbl"><span>Volume</span><span class="v">45 L · idéal 3-5 jours</span></div>
+            <div class="opt-row">
+              <button class="opt-btn">30 L</button>
+              <button class="opt-btn on">45 L</button>
+              <button class="opt-btn">60 L</button>
+              <button class="opt-btn disabled">75 L</button>
+            </div>
+          </div>
+
+          <div class="opt-block">
+            <div class="lbl"><span>Sangles</span><span class="v">Ventrale + poitrine</span></div>
+            <div class="opt-row">
+              <button class="opt-btn">Basique</button>
+              <button class="opt-btn on">Ventrale + poitrine</button>
+              <button class="opt-btn">Ventrale + poitrine + porte-piolet</button>
+            </div>
+          </div>
+
+          <div class="price-block">
+            <div class="p">340 €<span class="u"> · TVA incluse</span></div>
+            <div class="stock"><span class="dot"></span>En stock · expédié sous 48 h</div>
+          </div>
+
+          <div class="cta-row">
+            <button class="lkv-btn lkv-btn-primary lkv-btn-lg">
+              Ajouter au panier
+              <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+            </button>
+            <button class="lkv-btn lkv-btn-ghost lkv-btn-lg" style="border: 1px solid rgba(11,31,23,0.1);">
+              <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+            </button>
+          </div>
+
+          <div class="promises">
+            <div class="promise">
+              <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l3 6 6 1-4.5 4.5 1 6L12 17l-5.5 2.5 1-6L3 9l6-1z"/></svg></div>
+              <div class="t">Garantie à vie<small>Réparable à Grenoble</small></div>
+            </div>
+            <div class="promise">
+              <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 10v-3l4-4h12v18a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-4H4z"/></svg></div>
+              <div class="t">Livraison offerte<small>Dès 200 €</small></div>
+            </div>
+            <div class="promise">
+              <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4v6h6"/><path d="M20 20v-6h-6"/><path d="M4 10a8 8 0 0 1 14-3M20 14a8 8 0 0 1-14 3"/></svg></div>
+              <div class="t">Retour 30 jours<small>Frais offerts</small></div>
+            </div>
+            <div class="promise">
+              <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 4c0 8-6 14-14 14L4 20"/></svg></div>
+              <div class="t">100 % Europe<small>Alpes-de-Haute-Provence</small></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- NARRATIVE -->
+    <section class="narr">
+      <div class="visual"></div>
+      <div>
+        <div class="lkv-eyebrow" style="margin-bottom: 20px;">Fabrication</div>
+        <h2>Cousu à <em>Manosque,</em><br/>par cinq mains.</h2>
+        <p>Cinq artisan·es travaillent la toile chaque semaine dans un atelier des Alpes-de-Haute-Provence. Un sac demande six heures de couture, une heure d'huilage, une nuit de séchage.</p>
+        <div class="stats">
+          <div class="stat"><div class="n">6<em> h</em></div><div class="l">Couture</div></div>
+          <div class="stat"><div class="n">1 200<em> g</em></div><div class="l">Poids à sec</div></div>
+          <div class="stat"><div class="n">45<em> L</em></div><div class="l">Volume utile</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SPECS -->
+    <section class="specs">
+      <div class="specs-inner">
+        <h3>Spécifications <em>techniques.</em></h3>
+        <div class="specs-cols">
+          <div class="row"><span class="k">Volume utile</span><span class="v">45 litres</span></div>
+          <div class="row"><span class="k">Poids à sec</span><span class="v">1,4 kg</span></div>
+          <div class="row"><span class="k">Toile principale</span><span class="v">Coton huilé 12 oz</span></div>
+          <div class="row"><span class="k">Doublure</span><span class="v">Lin biologique 400 g/m²</span></div>
+          <div class="row"><span class="k">Boucles</span><span class="v">Laiton brossé, France</span></div>
+          <div class="row"><span class="k">Couture</span><span class="v">Point sellier, fil ciré</span></div>
+          <div class="row"><span class="k">Dos</span><span class="v">Ergonomique 3 zones</span></div>
+          <div class="row"><span class="k">Ceinture ventrale</span><span class="v">Réglable, amovible</span></div>
+          <div class="row"><span class="k">Compartiments</span><span class="v">3 · dont 1 rabat + 1 poche sécurisée</span></div>
+          <div class="row"><span class="k">Accroches</span><span class="v">Tapis, piolet, gourde</span></div>
+          <div class="row"><span class="k">Imperméabilité</span><span class="v">IP54 · pluie fine</span></div>
+          <div class="row"><span class="k">Garantie</span><span class="v">À vie · réparable</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RELATED -->
+    <section class="related">
+      <h3>Ils vont <em>avec.</em></h3>
+      <div class="rel-grid">
+        <a class="rel-item" href="Fiche Produit.html">
+          <div class="im" style="background-image: url('assets/product-sleeping.jpg')"></div>
+          <div class="b">
+            <div class="c">Couchage</div>
+            <div class="n">Duvet 3 saisons</div>
+            <div class="p">248 €</div>
+          </div>
+        </a>
+        <a class="rel-item" href="Fiche Produit.html">
+          <div class="im" style="background-image: url('assets/product-bottle.jpg')"></div>
+          <div class="b">
+            <div class="c">Hydratation</div>
+            <div class="n">Gourde titane 1 L</div>
+            <div class="p">68 €</div>
+          </div>
+        </a>
+        <a class="rel-item" href="Fiche Produit.html">
+          <div class="im" style="background-image: url('assets/product-jacket.jpg')"></div>
+          <div class="b">
+            <div class="c">Vêtements</div>
+            <div class="n">Veste 3 couches</div>
+            <div class="p">312 €</div>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="shop-foot">
+      <div>
+        <h4 class="brand">Ce que vous emportez, <em>c'est votre voyage.</em></h4>
+        <p>Grenoble, France · Fabriqué en Europe · Réparable à vie</p>
+      </div>
+      <div><h5>Boutique</h5><ul><li><a href="Boutique.html">Catalogue</a></li><li><a href="Configurateur.html">Configurateur</a></li></ul></div>
+      <div><h5>Maison</h5><ul><li><a href="#">Méthode</a></li><li><a href="#">Ateliers</a></li></ul></div>
+      <div><h5>Service</h5><ul><li><a href="#">Livraison</a></li><li><a href="#">Retours</a></li></ul></div>
+    </footer>
+
+  </div>
+
+  <!-- ————— MOBILE ————— -->
+  <div>
+    <div class="artboard-mobile">
+      <div class="screen">
+
+        <div class="m-topbar">
+          <button class="m-btn">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div class="center" style="font-size: 12px; color: var(--lkv-ink-500);">Sac 45 L</div>
+          <a href="Panier.html" class="m-btn">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+            <span class="badge-num">3</span>
+          </a>
+        </div>
+
+        <div class="m-gal">
+          <div class="tag"><div class="lkv-chip" style="height: 26px; font-size: 11px; padding: 0 10px;"><span class="dot"></span>Édition automne</div></div>
+          <button class="heart">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+          </button>
+          <div class="dots">
+            <span class="on"></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <div class="m-buy">
+          <div class="m-kind">Le sac essentiel</div>
+          <h1>Sac 45 L<br/><em>toile cirée.</em></h1>
+          <div class="rate">
+            <svg viewBox="0 0 24 24" width="12" height="12"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+            <strong>4,9</strong> · 128 avis
+          </div>
+          <p class="desc">Trois compartiments, bandoulière ventrale, coton huilé 12 oz. Fabriqué à Manosque. Réparable à vie.</p>
+
+          <div class="m-opt">
+            <div class="lbl"><span>Coloris</span><span class="v">Vert forêt</span></div>
+            <div class="swatch-row" style="margin-bottom: 16px;">
+              <div class="sw on"><div class="fill" style="background: #405E48"></div></div>
+              <div class="sw"><div class="fill" style="background: #C99B5A"></div></div>
+              <div class="sw"><div class="fill" style="background: #2A322E"></div></div>
+            </div>
+
+            <div class="lbl"><span>Volume</span><span class="v">45 L</span></div>
+            <div class="m-opt-row">
+              <button class="m-opt-btn">30 L</button>
+              <button class="m-opt-btn on">45 L</button>
+              <button class="m-opt-btn">60 L</button>
+            </div>
+          </div>
+
+          <div class="m-promises">
+            <div class="pr">Garantie à vie<small>Réparable à Grenoble</small></div>
+            <div class="pr">Livraison offerte<small>Dès 200 €</small></div>
+            <div class="pr">Retour 30 jours<small>Frais offerts</small></div>
+            <div class="pr">100 % Europe<small>Alpes-Hte-Provence</small></div>
+          </div>
+        </div>
+
+        <div class="m-cta-bar">
+          <div class="p">340 € <small>TTC</small></div>
+          <a href="Panier.html" class="btn">Ajouter au panier</a>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">Mobile · 375 × 812</div>
+  </div>
+</div>
+
+</body>
+</html>

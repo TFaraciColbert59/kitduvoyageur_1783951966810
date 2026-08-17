@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Configurateur · Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="shop.css"/>
+<style>
+  /* ————— DESKTOP ————— */
+  .config-body {
+    display: grid;
+    grid-template-columns: 1fr 480px;
+    min-height: 800px;
+  }
+  .config-left {
+    padding: 60px 60px 60px;
+    background: var(--lkv-paper);
+  }
+  .config-right {
+    background: var(--lkv-forest-900);
+    color: #fff;
+    padding: 60px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .config-right::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image: url('assets/workshop.jpg');
+    background-size: cover; background-position: center;
+    opacity: 0.15;
+    filter: grayscale(1);
+  }
+  .config-right > * { position: relative; z-index: 1; }
+
+  /* Stepper */
+  .stepper { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; }
+  .stepper .st {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 6px 6px 6px;
+    background: transparent;
+    color: var(--lkv-ink-400);
+    font-size: 13px;
+    transition: color var(--lkv-dur) var(--lkv-ease);
+  }
+  .stepper .st .n {
+    width: 28px; height: 28px; border-radius: 999px;
+    background: var(--lkv-stone-100);
+    color: var(--lkv-ink-500);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 13px; font-weight: 400;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .stepper .st.done .n { background: var(--lkv-sage-100); color: var(--lkv-forest-800); }
+  .stepper .st.on { color: var(--lkv-ink-900); font-weight: 500; }
+  .stepper .st.on .n { background: var(--lkv-forest-800); color: #fff; }
+  .stepper .sep { flex: 1; height: 1px; background: rgba(11,31,23,0.1); }
+
+  /* Step content */
+  .step-eyebrow {
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 20px;
+  }
+  .step-eyebrow .k {
+    font-family: var(--lkv-font-serif); font-style: italic; font-weight: 400;
+    font-size: 44px; color: var(--lkv-forest-800); line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .step-eyebrow .l {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-ink-500);
+  }
+
+  .step-q {
+    font-family: var(--lkv-font-sans);
+    font-size: 56px; font-weight: 500;
+    letter-spacing: -0.028em; line-height: 1.02;
+    margin: 0 0 12px;
+    color: var(--lkv-ink-900);
+    text-wrap: balance;
+  }
+  .step-q em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .step-desc {
+    font-size: 16px; line-height: 1.55;
+    color: var(--lkv-ink-500);
+    max-width: 480px; margin: 0 0 40px;
+  }
+
+  /* Option cards */
+  .opt-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+  .opt-card {
+    padding: 24px;
+    background: #fff;
+    border-radius: 20px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all var(--lkv-dur) var(--lkv-ease-out);
+    display: flex; flex-direction: column; gap: 10px;
+    text-align: left;
+    font-family: inherit;
+    color: inherit;
+  }
+  .opt-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--lkv-shadow-md);
+  }
+  .opt-card.on {
+    border-color: var(--lkv-forest-800);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(31,74,58,0.08);
+  }
+  .opt-card .oi {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: var(--lkv-sage-100); color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .opt-card .oi svg { width: 20px; height: 20px; }
+  .opt-card.on .oi { background: var(--lkv-forest-800); color: #fff; }
+  .opt-card .oh { font-size: 20px; font-weight: 500; letter-spacing: -0.015em; margin: 0; }
+  .opt-card .oh em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .opt-card .op { font-size: 13px; color: var(--lkv-ink-500); line-height: 1.4; margin: 0; }
+
+  /* Actions row */
+  .config-actions {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 32px;
+    border-top: 1px solid rgba(11,31,23,0.08);
+  }
+  .config-actions .back {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; color: var(--lkv-ink-700);
+    padding: 12px 20px; border-radius: 999px;
+    transition: background var(--lkv-dur) var(--lkv-ease);
+  }
+  .config-actions .back:hover { background: rgba(11,31,23,0.06); }
+
+  /* ————— RESULT PANEL (right side) ————— */
+  .result-inner { max-width: 400px; }
+  .result-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 12px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 999px;
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-sage-300);
+    margin-bottom: 24px;
+  }
+  .result-eyebrow .dot { width: 5px; height: 5px; background: var(--lkv-sage-500); border-radius: 50%; animation: pulse 2s var(--lkv-ease) infinite; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.4); }
+  }
+  .result-title {
+    font-family: var(--lkv-font-sans);
+    font-size: 44px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1.02;
+    margin: 0 0 16px;
+    color: #fff;
+  }
+  .result-title em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .result-lead {
+    font-size: 15px; line-height: 1.55;
+    color: rgba(255,255,255,0.7);
+    margin: 0 0 32px;
+  }
+
+  /* Selected list */
+  .kit-list {
+    padding: 20px 24px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    margin-bottom: 24px;
+  }
+  .kit-list .k-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 14px;
+    font-size: 12px; color: rgba(255,255,255,0.5);
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .kit-list .k-head strong { color: #fff; font-weight: 500; }
+  .kit-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0;
+    font-size: 14px;
+    color: rgba(255,255,255,0.85);
+  }
+  .kit-item .n { display: inline-flex; align-items: center; gap: 10px; }
+  .kit-item .n .k-check {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--lkv-sage-500);
+    color: var(--lkv-forest-950);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .kit-item .n .k-check svg { width: 10px; height: 10px; }
+  .kit-item.pending .k-check { background: transparent; border: 1px dashed rgba(255,255,255,0.3); }
+  .kit-item.pending .n { color: rgba(255,255,255,0.4); }
+  .kit-item .p { font-weight: 500; color: #fff; font-family: var(--lkv-font-mono); font-size: 12px; }
+  .kit-item.pending .p { color: rgba(255,255,255,0.3); }
+
+  .kit-total {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 16px 0 8px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin-top: 8px;
+  }
+  .kit-total .l { font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255,255,255,0.6); }
+  .kit-total .n {
+    font-size: 28px; font-weight: 500; letter-spacing: -0.02em;
+  }
+  .kit-total .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; font-size: 20px; }
+
+  .result-meta {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 24px;
+  }
+  .result-meta .m-cell .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255,255,255,0.5); margin-bottom: 4px; }
+  .result-meta .m-cell .v { font-size: 16px; font-weight: 500; }
+  .result-meta .m-cell .v em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+
+  /* ————— MOBILE ————— */
+  .m-config {
+    padding: 16px 14px 100px;
+    flex: 1;
+    overflow-y: auto;
+  }
+  .m-stepper {
+    display: flex; align-items: center; gap: 4px; margin-bottom: 20px;
+  }
+  .m-stepper .st {
+    flex: 1; height: 4px; border-radius: 4px;
+    background: var(--lkv-stone-100);
+  }
+  .m-stepper .st.done { background: var(--lkv-sage-500); }
+  .m-stepper .st.on { background: var(--lkv-forest-800); }
+
+  .m-step-info {
+    display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;
+    font-size: 12px;
+  }
+  .m-step-info .l { color: var(--lkv-ink-500); text-transform: uppercase; letter-spacing: 0.12em; font-size: 10px; }
+  .m-step-info .k { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-size: 22px; line-height: 1; letter-spacing: -0.015em; }
+
+  .m-q {
+    font-size: 28px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.02;
+    margin: 0 0 8px;
+  }
+  .m-q em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .m-desc { font-size: 13px; color: var(--lkv-ink-500); margin: 0 0 20px; line-height: 1.5; }
+
+  .m-opts { display: grid; gap: 8px; margin-bottom: 24px; }
+  .m-opt-c {
+    padding: 14px 16px;
+    background: #fff;
+    border-radius: 16px;
+    border: 2px solid transparent;
+    display: flex; gap: 12px; align-items: center;
+    font-family: inherit; color: inherit; text-align: left; width: 100%;
+  }
+  .m-opt-c.on { border-color: var(--lkv-forest-800); }
+  .m-opt-c .i { width: 32px; height: 32px; border-radius: 10px; background: var(--lkv-sage-100); color: var(--lkv-forest-800); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .m-opt-c.on .i { background: var(--lkv-forest-800); color: #fff; }
+  .m-opt-c .t { flex: 1; }
+  .m-opt-c .oh { font-size: 15px; font-weight: 500; letter-spacing: -0.005em; margin: 0; }
+  .m-opt-c .oh em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .m-opt-c .op { font-size: 11px; color: var(--lkv-ink-500); margin: 2px 0 0; }
+
+  .m-summary {
+    background: var(--lkv-forest-900);
+    color: #fff;
+    padding: 16px;
+    border-radius: 18px;
+    margin-bottom: 20px;
+  }
+  .m-summary .k-head {
+    display: flex; justify-content: space-between;
+    padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 12px;
+    font-size: 11px; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.14em;
+  }
+  .m-summary .k-head strong { color: #fff; }
+  .m-summary .m-kit-item { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
+  .m-summary .m-kit-item.pending { opacity: 0.35; }
+  .m-summary .m-tot { display: flex; justify-content: space-between; align-items: baseline; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 8px; }
+  .m-summary .m-tot .n { font-size: 22px; font-weight: 500; letter-spacing: -0.015em; }
+  .m-summary .m-tot .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; font-size: 15px; }
+
+  .m-cta-bar-cfg {
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    display: flex; gap: 8px;
+    z-index: 20;
+  }
+  .m-cta-bar-cfg .back {
+    width: 46px; height: 46px; border-radius: 999px;
+    background: #fff; box-shadow: var(--lkv-shadow-sm);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-900);
+  }
+  .m-cta-bar-cfg .next {
+    flex: 1;
+    padding: 14px 20px;
+    background: var(--lkv-forest-800); color: #fff;
+    border-radius: 999px; text-align: center;
+    font-size: 14px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 8px 24px rgba(31,74,58,0.28);
+  }
+</style>
+</head>
+<body class="shop-page">
+
+<div class="stage-title">
+  <div>
+    <div class="h">Configurateur · Composer un sac</div>
+    <div class="sub">Étape 3/5 · Assistant multi-étapes</div>
+  </div>
+  <div class="crumbs">
+    <a href="Index.html">← Hub</a>
+    <a href="Boutique.html">Boutique</a>
+    <a href="Fiche Produit.html">← Fiche</a>
+    <a href="Panier.html">Panier →</a>
+    <a href="Paiement.html">Paiement</a>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ————— DESKTOP ————— -->
+  <div class="artboard-desktop">
+
+    <nav class="shop-nav">
+      <a href="Home.html" class="lkv-logo">
+        <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
+          <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+        </svg>
+        <span>Le Kit du Voyageur</span>
+      </a>
+      <div class="links">
+        <a href="Recherche Carte.html">Aventures</a>
+        <a href="#">Refuges</a>
+        <a href="Boutique.html">Boutique</a>
+        <a href="#">Journal</a>
+      </div>
+      <div class="right">
+        <a href="Boutique.html" class="lkv-btn lkv-btn-ghost lkv-btn-sm">Quitter le configurateur</a>
+      </div>
+    </nav>
+
+    <!-- CONFIG -->
+    <section class="config-body">
+
+      <!-- LEFT (steps) -->
+      <div class="config-left">
+
+        <div class="stepper">
+          <div class="st done"><span class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M4 12l5 5 11-11"/></svg></span>Usage</div>
+          <div class="sep"></div>
+          <div class="st done"><span class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M4 12l5 5 11-11"/></svg></span>Durée</div>
+          <div class="sep"></div>
+          <div class="st on"><span class="n">3</span>Météo</div>
+          <div class="sep"></div>
+          <div class="st"><span class="n">4</span>Confort</div>
+          <div class="sep"></div>
+          <div class="st"><span class="n">5</span>Récap</div>
+        </div>
+
+        <div class="step-eyebrow">
+          <span class="k">03</span>
+          <span class="l">Météo attendue · sélectionnez une réponse</span>
+        </div>
+
+        <h2 class="step-q">Quelle météo<br/>vous <em>attend ?</em></h2>
+        <p class="step-desc">On adapte l'épaisseur du duvet, la respirabilité de la veste et la sensibilité de vos couches. Une seule réponse : la plus fréquente.</p>
+
+        <div class="opt-cards">
+          <button class="opt-card">
+            <div class="oi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M6 6l1.5 1.5M16.5 16.5L18 18M6 18l1.5-1.5M16.5 7.5L18 6"/></svg></div>
+            <h4 class="oh">Sec et <em>chaud.</em></h4>
+            <p class="op">15 à 25 °C, faible humidité. On priorise la respirabilité.</p>
+          </button>
+
+          <button class="opt-card on">
+            <div class="oi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M4 20a5 5 0 0 1 5-5"/><path d="M3 12h1"/></svg></div>
+            <h4 class="oh">Frais et <em>brumeux.</em></h4>
+            <p class="op">5 à 15 °C avec humidité. Notre configuration par défaut.</p>
+          </button>
+
+          <button class="opt-card">
+            <div class="oi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 19v2M12 19v2M16 19v2M6 14a5 5 0 1 1 4-8 6 6 0 0 1 11 3 4 4 0 0 1-2 7.5"/></svg></div>
+            <h4 class="oh">Pluvieux et <em>venté.</em></h4>
+            <p class="op">0 à 10 °C, précipitations fréquentes. Coques imper renforcées.</p>
+          </button>
+
+          <button class="opt-card">
+            <div class="oi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M12 22v-4M4 12H2M22 12h-4M6 6l-2-2M18 18l2 2M18 6l2-2M6 18l-2 2"/><circle cx="12" cy="12" r="4"/></svg></div>
+            <h4 class="oh">Froid <em>sec.</em></h4>
+            <p class="op">−5 à 5 °C. Duvet gonflant, base couche lourde.</p>
+          </button>
+        </div>
+
+        <div class="config-actions">
+          <a href="#" class="back">
+            <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+            Précédent
+          </a>
+          <button class="lkv-btn lkv-btn-primary lkv-btn-lg">
+            Continuer vers Confort
+            <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- RIGHT (result) -->
+      <div class="config-right">
+        <div class="result-inner">
+          <div class="result-eyebrow"><span class="dot"></span>Votre sac en construction</div>
+          <h3 class="result-title">Un kit <em>en cours</em><br/>de composition.</h3>
+          <p class="result-lead">On assemble en temps réel. Vous pourrez tout modifier à l'étape finale — ou tout jeter et recommencer.</p>
+
+          <div class="kit-list">
+            <div class="k-head">
+              <span>Contenu · 4 pièces</span>
+              <strong>1,4 kg</strong>
+            </div>
+            <div class="kit-item">
+              <span class="n">
+                <span class="k-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5 11-11"/></svg></span>
+                Sac 45 L toile cirée
+              </span>
+              <span class="p">340 €</span>
+            </div>
+            <div class="kit-item">
+              <span class="n">
+                <span class="k-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5 11-11"/></svg></span>
+                Duvet 3 saisons
+              </span>
+              <span class="p">248 €</span>
+            </div>
+            <div class="kit-item">
+              <span class="n">
+                <span class="k-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5 11-11"/></svg></span>
+                Gourde titane 1 L
+              </span>
+              <span class="p">68 €</span>
+            </div>
+            <div class="kit-item pending">
+              <span class="n">
+                <span class="k-check"></span>
+                Veste 3 couches
+              </span>
+              <span class="p">—</span>
+            </div>
+            <div class="kit-item pending">
+              <span class="n">
+                <span class="k-check"></span>
+                Confort à choisir
+              </span>
+              <span class="p">—</span>
+            </div>
+            <div class="kit-total">
+              <div class="l">Sous-total</div>
+              <div class="n">656 <em>€</em></div>
+            </div>
+          </div>
+
+          <div class="result-meta">
+            <div class="m-cell">
+              <div class="k">Adapté pour</div>
+              <div class="v">3 <em>jours</em></div>
+            </div>
+            <div class="m-cell">
+              <div class="k">Météo</div>
+              <div class="v">Frais, brumeux</div>
+            </div>
+            <div class="m-cell">
+              <div class="k">Poids total</div>
+              <div class="v">1,4 <em>kg</em></div>
+            </div>
+            <div class="m-cell">
+              <div class="k">Livraison</div>
+              <div class="v">Sous 48 <em>h</em></div>
+            </div>
+          </div>
+
+          <div style="font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.5;">
+            Le sac se met à jour à chaque étape.<br/>
+            Vous pourrez tout retirer avant paiement.
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <!-- ————— MOBILE ————— -->
+  <div>
+    <div class="artboard-mobile">
+      <div class="screen">
+
+        <div class="m-topbar">
+          <button class="m-btn">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div class="center" style="font-size: 12px;">Composer un sac</div>
+          <button class="m-btn" style="background: transparent;">
+            <span style="font-size: 12px; color: var(--lkv-ink-500);">Quitter</span>
+          </button>
+        </div>
+
+        <div class="m-config">
+          <div class="m-stepper">
+            <span class="st done"></span>
+            <span class="st done"></span>
+            <span class="st on"></span>
+            <span class="st"></span>
+            <span class="st"></span>
+          </div>
+
+          <div class="m-step-info">
+            <span class="l">Étape 3 sur 5 · Météo</span>
+            <span class="k">03</span>
+          </div>
+
+          <h2 class="m-q">Quelle météo<br/>vous <em>attend ?</em></h2>
+          <p class="m-desc">On adapte le duvet, la veste, les couches. Une seule réponse : la plus fréquente.</p>
+
+          <div class="m-opts">
+            <button class="m-opt-c">
+              <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="16" height="16"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg></div>
+              <div class="t">
+                <h5 class="oh">Sec et <em>chaud</em></h5>
+                <p class="op">15 à 25 °C</p>
+              </div>
+            </button>
+            <button class="m-opt-c on">
+              <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="16" height="16"><circle cx="12" cy="12" r="4"/><path d="M4 20a5 5 0 0 1 5-5"/></svg></div>
+              <div class="t">
+                <h5 class="oh">Frais et <em>brumeux</em></h5>
+                <p class="op">5 à 15 °C · humidité</p>
+              </div>
+            </button>
+            <button class="m-opt-c">
+              <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="16" height="16"><path d="M8 19v2M12 19v2M16 19v2M6 14a5 5 0 1 1 4-8 6 6 0 0 1 11 3 4 4 0 0 1-2 7.5"/></svg></div>
+              <div class="t">
+                <h5 class="oh">Pluvieux et <em>venté</em></h5>
+                <p class="op">0 à 10 °C</p>
+              </div>
+            </button>
+            <button class="m-opt-c">
+              <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="16" height="16"><circle cx="12" cy="12" r="4"/><path d="M12 2v6M12 22v-4"/></svg></div>
+              <div class="t">
+                <h5 class="oh">Froid <em>sec</em></h5>
+                <p class="op">−5 à 5 °C</p>
+              </div>
+            </button>
+          </div>
+
+          <div class="m-summary">
+            <div class="k-head">
+              <span>Votre sac · 4 pièces</span>
+              <strong>1,4 kg · 656 €</strong>
+            </div>
+            <div class="m-kit-item"><span>Sac 45 L</span><span>340 €</span></div>
+            <div class="m-kit-item"><span>Duvet 3 saisons</span><span>248 €</span></div>
+            <div class="m-kit-item"><span>Gourde titane</span><span>68 €</span></div>
+            <div class="m-kit-item pending"><span>Veste</span><span>—</span></div>
+            <div class="m-tot">
+              <div style="font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.14em;">Sous-total</div>
+              <div class="n">656 <em>€</em></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="m-cta-bar-cfg">
+          <button class="back">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <button class="next">
+            Continuer
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">Mobile · 375 × 812</div>
+  </div>
+</div>
+
+</body>
+</html>

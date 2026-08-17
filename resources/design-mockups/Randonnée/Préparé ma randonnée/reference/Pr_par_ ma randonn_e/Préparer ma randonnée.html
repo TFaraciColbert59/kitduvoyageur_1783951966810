@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Préparer ma randonnée · Cockpit · Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="prep.css"/>
+<style>
+/* fixed-height secondary boards get their own render targets */
+.snapshot-frame { pointer-events: none; }
+.snapshot-frame .dock .cta { pointer-events: none; }
+/* snapshot content shouldn't scroll — bigger bottom pad so dock never overlaps */
+.snapshot-frame .content { padding-bottom: 260px !important; overflow: hidden !important; }
+.snapshot-frame .content::-webkit-scrollbar { display: none; }
+/* compact snapshot gear items so 3–4 fit above the dock */
+.snapshot-frame .gear-list { padding: 0 16px !important; }
+.snapshot-frame .gear-item { padding: 10px 12px; }
+.snapshot-frame .gear-item .body .why { font-size: 10px; margin-top: 2px; line-height: 1.3; }
+.snapshot-frame .gear-item .qty { margin-top: 4px; font-size: 9px; }
+.snapshot-frame .gear-item .gear-actions { margin-top: 6px; }
+.snapshot-frame .gear-item .gear-actions button { padding: 4px 9px; font-size: 10px; }
+.snapshot-frame .gear-item .icon { width: 32px; height: 32px; }
+.snapshot-frame .gear-item .icon svg { width: 16px; height: 16px; }
+.snapshot-frame .conditions-strip { margin-bottom: 12px; padding: 10px 12px; }
+.snapshot-frame .conditions-strip .cell .v { font-size: 13px; }
+.snapshot-frame .tabs { margin-bottom: 10px; }
+.snapshot-frame .ok-list { gap: 6px; }
+.snapshot-frame .ok-item { padding: 8px 10px 8px 10px; }
+.snapshot-frame .ok-item .n { font-size: 10.5px; }
+.snapshot-frame .ok-item .q { font-size: 9px; }
+.snapshot-frame .ok-item .ic { width: 22px; height: 22px; }
+.snapshot-frame .ok-item .ic svg { width: 11px; height: 11px; }
+.snapshot-frame .safety-row { padding: 9px 12px; }
+.snapshot-frame .safety-row .n { font-size: 12px; }
+.snapshot-frame .safety-row .v { font-size: 10px; }
+</style>
+</head>
+<body>
+
+  <div class="stage-title">
+    <div>
+      <div class="h">Préparer ma <em>randonnée</em> · Cockpit</div>
+      <div class="sub">Étape avant le démarrage : l'inventaire réel est comparé aux besoins de la rando + météo. Score dynamique, ajouts persistés, CTA débloqué lorsque les essentiels sont couverts.</div>
+    </div>
+    <div class="crumbs">
+      Rando sélectionnée &nbsp;·&nbsp; <em>Préparation</em> &nbsp;·&nbsp; Démarrer
+    </div>
+  </div>
+
+  <div class="stage">
+
+    <!-- ══════════════════════════════════════════════
+         BOARD PRINCIPAL — INTERACTIF
+         ══════════════════════════════════════════════ -->
+    <div class="board primary">
+      <div class="artboard-mobile">
+        <div class="screen" id="prep-screen">
+          <!-- rendu dynamique par prep.js -->
+        </div>
+      </div>
+      <div class="board-caption">
+        01 · <em>Interactif</em>
+        <div class="st">STATE : LIVE · INVENTAIRE PERSISTÉ · SCORE DYNAMIQUE</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         BOARD 02 — État initial (essentiels manquants)
+         ══════════════════════════════════════════════ -->
+    <div class="board secondary">
+      <div class="artboard-mobile">
+        <div class="screen snapshot-frame" id="snap-missing"></div>
+      </div>
+      <div class="board-caption">
+        02 · Il te <em>manque</em>
+        <div class="st">STATE : ESSENTIALS_INCOMPLETE · CTA_LOCKED</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         BOARD 03 — État final (prêt à partir)
+         ══════════════════════════════════════════════ -->
+    <div class="board secondary">
+      <div class="artboard-mobile">
+        <div class="screen snapshot-frame" id="snap-ready"></div>
+      </div>
+      <div class="board-caption">
+        03 · <em>Prêt</em> à partir
+        <div class="st">STATE : READY · GEAR 100% · CTA_UNLOCKED</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         BOARD 04 — Sécurité + départ GPS
+         ══════════════════════════════════════════════ -->
+    <div class="board secondary">
+      <div class="artboard-mobile">
+        <div class="screen snapshot-frame" id="snap-safety"></div>
+      </div>
+      <div class="board-caption">
+        04 · Résumé <em>sécurité</em>
+        <div class="st">STATE : GPS OK · CARTE HORS LIGNE · BATTERIE OK</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="prep.js"></script>
+  <script>
+    /* ────────────────────────────────────────────────
+       Render the SECONDARY snapshots — each in its own
+       DOM subtree, using synthesized states.
+       These are visual references, not live app copies.
+       ──────────────────────────────────────────────── */
+    document.addEventListener("DOMContentLoaded", () => {
+      const { NEEDS, HIKE, WEATHER, ICON, evaluateAll, computeScore } = window.LKV_Prep;
+
+      /* ─── SNAPSHOT 02 · Missing (fresh state) ─────── */
+      function renderMissingSnap() {
+        // Simulate: partial water, missing rainjacket, partial food, substitution on poles
+        const results = [
+          { need: NEEDS.find(n => n.key === "water"),
+            status: "partial", coverage: 0.375, gap: 1250, gapUnit: "ml",
+            item: { name: "Gourde Klean Kanteen", capacity_ml: 750, qty: 1 } },
+          { need: NEEDS.find(n => n.key === "rainjacket"),
+            status: "missing", coverage: 0, gap: 1, gapUnit: "u", item: null },
+          { need: NEEDS.find(n => n.key === "food"),
+            status: "partial", coverage: 0.66, gap: 2, gapUnit: "u",
+            item: { name: "Barres énergétiques", qty: 4 } },
+          { need: NEEDS.find(n => n.key === "poles"),
+            status: "substitution", coverage: 1, gap: 0, gapUnit: "",
+            item: { name: "Bâtons pliables Black Diamond", qty: 1 },
+            isSubstitution: true },
+        ];
+        const score = 74;
+        renderSnapshot("snap-missing", { results, score, tab: "missing", subtitle: "2 manquants · 2 insuffisants" });
+      }
+
+      /* ─── SNAPSHOT 03 · Ready to go ────────────────── */
+      function renderReadySnap() {
+        // Show a compact top-6 for readability
+        const featured = ["footwear","backpack","water","midlayer","rainjacket","poles","food","map"];
+        const results = featured
+          .map(k => NEEDS.find(n => n.key === k))
+          .filter(Boolean)
+          .map(need => ({
+            need, status: "ok", coverage: 1, gap: 0, gapUnit: "",
+            item: { name: need.name, qty: 1,
+                    ...(need.minCapacityMl ? { capacity_ml: need.minCapacityMl } : {}),
+                    ...(need.minCapacityL ? { capacity_l: need.minCapacityL } : {}) }
+          }));
+        renderSnapshot("snap-ready", { results, score: 100, tab: "ok", subtitle: "10/10 · tout est prêt" });
+      }
+
+      /* ─── SNAPSHOT 04 · Safety summary ─────────────── */
+      function renderSafetySnap() {
+        renderSnapshot("snap-safety", { results: [], score: 96, tab: "safety", subtitle: "Résumé sécurité" });
+      }
+
+      function renderSnapshot(id, opts) {
+        const root = document.getElementById(id);
+        if (!root) return;
+        const { results, score, tab, subtitle } = opts;
+        root.innerHTML = buildSnapshotHTML({ results, score, tab, subtitle });
+      }
+
+      function scoreRing(score) {
+        const R = 26, C = 2 * Math.PI * R;
+        const off = C * (1 - score / 100);
+        return `<div class="score-ring">
+          <svg viewBox="0 0 62 62">
+            <circle class="track" cx="31" cy="31" r="${R}" fill="none" stroke-width="5"/>
+            <circle class="fill" cx="31" cy="31" r="${R}" fill="none" stroke-width="5"
+              stroke-dasharray="${C}" stroke-dashoffset="${off}"/>
+          </svg>
+          <div class="num">${score}<span class="pct">%</span></div>
+        </div>`;
+      }
+
+      function heroBlock() {
+        return `
+          <div class="status-bar on-dark">
+            <div>10:04</div>
+            <div class="right">
+              <svg viewBox="0 0 16 10" fill="currentColor"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
+              <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="1" y="1" width="19" height="10" rx="2"/><rect x="3" y="3" width="12" height="6" rx="1" fill="currentColor"/><rect x="21" y="4" width="2" height="4" rx="0.5" fill="currentColor"/></svg>
+            </div>
+          </div>
+          <div class="hero">
+            <div class="contour"></div>
+            <div class="specks"></div>
+            <svg class="route-svg" viewBox="0 0 380 240" preserveAspectRatio="none">
+              <path d="M20,220 Q80,180 130,160 T220,110 T360,40" fill="none" stroke="#17402C" stroke-width="4" stroke-linecap="round" stroke-dasharray="3 6" opacity="0.32"/>
+              <circle cx="20" cy="220" r="5" fill="#17402C"/>
+              <circle cx="360" cy="40" r="5" fill="#17402C"/>
+            </svg>
+            <button class="back">${ICON("back")}</button>
+            <button class="save">${ICON("bookmark")}</button>
+            <div class="hero-body">
+              <div class="eyebrow">Préparation · ${HIKE.location}</div>
+              <h1 class="name">${HIKE.name.pre} <em>${HIKE.name.em}</em></h1>
+              <div class="facts">
+                <span class="fact">${ICON("route")}<span class="num">${HIKE.distance.toString().replace(".", ",")} km</span></span>
+                <span class="fact">${ICON("clock")}<span class="num">${Math.floor(HIKE.duration)}h${Math.round((HIKE.duration % 1) * 60)}</span></span>
+                <span class="fact">${ICON("mountain")}<span class="num">D+${HIKE.ascent}m</span></span>
+                <span class="fact diff">${ICON("spark")}<span class="num">${HIKE.difficulty}</span></span>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      function condStrip() {
+        return `<div class="conditions-strip">
+          <div class="cell"><div class="l">${ICON("route")} DIST</div><div class="v">${HIKE.distance.toString().replace(".", ",")}<em> km</em></div><div class="s">D+${HIKE.ascent}</div></div>
+          <div class="cell"><div class="l">${ICON("clock")} DURÉE</div><div class="v">${Math.floor(HIKE.duration)}<em>h</em>${Math.round((HIKE.duration % 1) * 60)}</div><div class="s">${HIKE.difficulty}</div></div>
+          <div class="cell"><div class="l">${ICON("temp")} TEMP</div><div class="v">${WEATHER.tempMin}<em>°</em></div><div class="s">crête</div></div>
+          <div class="cell"><div class="l">${ICON("cloud-rain")} PLUIE</div><div class="v">${WEATHER.rainProb}<em>%</em></div><div class="s">${WEATHER.windSpeed} km/h</div></div>
+        </div>`;
+      }
+
+      function buildSnapshotHTML({ results, score, tab, subtitle }) {
+        const anyEssentialMissing = results.some(r => r.status === "missing" && r.need.priority === "essential");
+        let body = "";
+
+        if (tab === "missing") {
+          body = `
+            <div class="tabs">
+              <button class="on miss">Il te manque <span class="cnt">${results.length}</span></button>
+              <button>Suffisant <span class="cnt">7</span></button>
+              <button>Selon conditions <span class="cnt">3</span></button>
+            </div>
+            <div class="pane on">
+              ${results.map(r => gearItemSnap(r)).join("")}
+            </div>`;
+        } else if (tab === "ok") {
+          body = `
+            <div class="tabs">
+              <button>Il te manque <span class="cnt">0</span></button>
+              <button class="on ok">Suffisant <span class="cnt">${results.length}</span></button>
+              <button>Selon conditions <span class="cnt">3</span></button>
+            </div>
+            <div class="pane on">
+              <div class="section-head" style="padding-top:0;">
+                <div class="h">Ton <em>équipement</em> est suffisant<span class="badge ok">${results.length}</span></div>
+              </div>
+              <div class="ok-list">${results.map(r => okItemSnap(r)).join("")}</div>
+            </div>`;
+        } else if (tab === "safety") {
+          body = `
+            <div class="section-head" style="padding-top:8px;">
+              <div class="h">Sécurité <em>randonnée</em></div>
+              <div class="count">6 vérifications</div>
+            </div>
+            ${safetyGridSnap(score)}`;
+        }
+
+        return `
+          ${heroBlock()}
+          <div class="score-panel">
+            ${scoreRing(score)}
+            <div class="txt">
+              <div class="k">Score de préparation</div>
+              <div class="h">${score >= 95 ? `Tu es <em>prêt</em> à partir.` : score >= 85 ? `Presque <em>prêt</em>.` : `Encore <em>quelques items</em>.`}</div>
+              <div class="s">${subtitle}</div>
+            </div>
+          </div>
+          <div class="content">
+            ${condStrip()}
+            ${body}
+          </div>
+          <div class="dock">
+            <div class="mini-status">
+              <div class="l">
+                <span class="dot ${anyEssentialMissing ? "miss" : ""}"></span>
+                ${anyEssentialMissing ? "Essentiels manquants" : score >= 95 ? "Tout est prêt" : `${results.length} recommandation${results.length>1?"s":""}`}
+              </div>
+              <div>${score}%</div>
+            </div>
+            <button class="cta" ${anyEssentialMissing ? "disabled" : ""}>
+              ${ICON("gps")} Démarrer la <em>randonnée</em>
+              <span class="arrow">${ICON("arrow")}</span>
+            </button>
+            ${anyEssentialMissing ? `<div class="sec">Complète les essentiels pour <em>partir</em></div>` : ``}
+          </div>`;
+      }
+
+      function gearItemSnap(r) {
+        const { need, status, item, coverage, gap, isSubstitution } = r;
+        const cls = { ok: "state-ok", substitution: "state-sub", partial: "state-partial", missing: "state-missing" }[status] || "";
+        const pill = {
+          ok: `<span class="pill ok">${ICON("check")} Dispo</span>`,
+          substitution: `<span class="pill sub">${ICON("swap")} Équivalent</span>`,
+          partial: `<span class="pill partial">${ICON("info")} Insuffisant</span>`,
+          missing: `<span class="pill missing">${ICON("x")} Manquant</span>`
+        }[status];
+        const prio = need.priority === "essential" ? `<span class="prio">Essentiel</span>` : "";
+
+        let qHave = "0", qNeed = "1", qGap = "", showBar = false;
+        if (need.minCapacityMl) {
+          qHave = item?.capacity_ml ? `${(item.capacity_ml/1000).toFixed(2).replace(".", ",")} L` : "0 L";
+          qNeed = `${(need.minCapacityMl/1000).toFixed(1).replace(".", ",")} L`;
+          qGap = gap ? `−${(gap/1000).toFixed(2).replace(".", ",")} L` : "";
+          showBar = true;
+        } else if (need.qty) {
+          qHave = String(item?.qty || 0);
+          qNeed = String(need.qty);
+          qGap = gap ? `−${gap}` : "";
+          showBar = need.qty > 1;
+        }
+        const barPct = Math.round(coverage * 100);
+
+        const actions = status === "missing" ? `
+          <div class="gear-actions">
+            <button class="primary">${ICON("plus")} Ajouter</button>
+            <button>${ICON("check")} Je l'ai déjà</button>
+            <button class="ghost">Ignorer</button>
+          </div>` : status === "partial" ? `
+          <div class="gear-actions">
+            <button class="primary">${ICON("plus")} Compléter</button>
+            <button>${ICON("check")} Ça suffira</button>
+          </div>` : "";
+
+        const subNote = isSubstitution && item ? `
+          <div class="gear-sub-note">
+            ${ICON("swap")}
+            <div>Tu n'as pas de ${need.name.toLowerCase()}, mais <em>${item.name}</em> conviennent.</div>
+          </div>` : "";
+
+        const showQtyRow = status === "partial" || status === "missing" || (need.qty > 1);
+
+        return `<div class="gear-list" style="padding-bottom:8px;">
+          <div class="gear-item ${cls}">
+            <div class="icon">${ICON(need.icon || "bookmark")}</div>
+            <div class="body">
+              <div class="n">${need.name}${prio}</div>
+              <div class="why">${need.why}</div>
+              ${showQtyRow ? `
+                <div class="qty">
+                  <span class="have">Possédé <span style="font-weight:600;color:inherit">${qHave}</span></span>
+                  <span class="need">/ ${qNeed}</span>
+                  ${qGap ? `<span class="gap">${qGap}</span>` : ""}
+                  ${showBar ? `<span class="qty-bar"><span class="fill" style="width:${barPct}%"></span></span>` : ""}
+                </div>` : ""}
+              ${subNote}
+              ${actions}
+            </div>
+            <div class="status">${pill}</div>
+          </div>
+        </div>`;
+      }
+
+      function okItemSnap(r) {
+        const { need, item } = r;
+        const qty = item?.capacity_ml
+          ? `${(item.capacity_ml/1000).toFixed(2).replace(".", ",")} L`
+          : item?.capacity_l ? `${item.capacity_l} L`
+          : item?.qty ? `× ${item.qty}` : "OK";
+        return `<div class="ok-item">
+          <div class="ic">${ICON(need.icon || "check")}</div>
+          <div class="txt"><div class="n">${item?.name || need.name}</div><div class="q">${qty}</div></div>
+          <div class="check">${ICON("check")}</div>
+        </div>`;
+      }
+
+      function safetyGridSnap(score) {
+        return `<div class="safety-grid" style="margin-top:0;">
+          <div class="safety-row">
+            <div class="ic">${ICON("shield")}</div>
+            <div class="body"><div class="n">Équipement</div><div class="v">${score}% · prêt</div></div>
+            <div class="status-ic ok">${ICON("check")}</div>
+          </div>
+          <div class="safety-row">
+            <div class="ic">${ICON("cloud")}</div>
+            <div class="body"><div class="n">Météo vérifiée</div><div class="v">${WEATHER.tempMin}–${WEATHER.tempMax}°C · pluie ${WEATHER.rainProb}%</div></div>
+            <div class="status-ic ok">${ICON("check")}</div>
+          </div>
+          <div class="safety-row">
+            <div class="ic">${ICON("gps")}</div>
+            <div class="body"><div class="n">GPS · localisation</div><div class="v">Précision 3 m · ready</div></div>
+            <div class="status-ic ok">${ICON("check")}</div>
+          </div>
+          <div class="safety-row">
+            <div class="ic">${ICON("map")}</div>
+            <div class="body"><div class="n">Carte hors ligne</div><div class="v">IGN 3334OT · 42 Mo</div></div>
+            <div class="status-ic ok">${ICON("check")}</div>
+          </div>
+          <div class="safety-row">
+            <div class="ic">${ICON("battery")}</div>
+            <div class="body"><div class="n">Batterie</div><div class="v">87 % · ≈ 9 h</div></div>
+            <div class="status-ic ok">${ICON("check")}</div>
+          </div>
+          <div class="safety-row warn">
+            <div class="ic">${ICON("info")}</div>
+            <div class="body"><div class="n">Alerte à surveiller</div><div class="v">Averse possible dès 14 h</div></div>
+            <div class="status-ic warn">${ICON("info")}</div>
+          </div>
+        </div>`;
+      }
+
+      renderMissingSnap();
+      renderReadySnap();
+      renderSafetySnap();
+    });
+  </script>
+</body>
+</html>

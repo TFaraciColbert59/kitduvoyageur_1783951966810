@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Modifier mon profil — Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="forms.css"/>
+<style>
+  /* Cover strip on profile edit */
+  .profile-cover {
+    height: 220px;
+    border-radius: var(--lkv-r-lg);
+    background: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1600&q=80') center/cover;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .profile-cover::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 30%, rgba(11,31,23,0.35));
+  }
+  .profile-cover .actions {
+    position: absolute; top: 14px; right: 14px;
+    display: flex; gap: 6px; z-index: 1;
+  }
+  .profile-cover .actions button {
+    padding: 8px 14px; border-radius: 999px;
+    background: rgba(11,31,23,0.55); backdrop-filter: blur(20px);
+    color: #fff; font-size: 12px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid rgba(255,255,255,0.14);
+  }
+  .avatar-block {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 20px; align-items: center;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+    margin-bottom: 24px;
+  }
+  .avatar-block .av-wrap {
+    position: relative; width: 96px; height: 96px;
+  }
+  .avatar-block .av {
+    width: 96px; height: 96px; border-radius: 50%;
+    background: url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80') center/cover;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 16px rgba(11,31,23,0.15);
+  }
+  .avatar-block .av-wrap .edit {
+    position: absolute; bottom: 0; right: 0;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--lkv-forest-800); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid #fff;
+    cursor: pointer;
+  }
+  .avatar-block .info .n {
+    font-family: var(--lkv-font-sans);
+    font-size: 20px; font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--lkv-ink-900);
+  }
+  .avatar-block .info .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .avatar-block .info .m {
+    font-size: 12px; color: var(--lkv-ink-500);
+    margin-top: 4px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .avatar-block .info .m .dot { color: var(--lkv-ink-300); }
+  .avatar-block .btns { display: flex; gap: 8px; }
+
+  /* Discipline picker with icons */
+  .discipline-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .discipline-tile {
+    padding: 16px;
+    background: var(--lkv-stone-50);
+    border: 2px solid transparent;
+    border-radius: var(--lkv-r-md);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: all var(--lkv-dur-fast) var(--lkv-ease);
+  }
+  .discipline-tile:hover { background: #fff; border-color: rgba(11,31,23,0.06); }
+  .discipline-tile.on {
+    background: var(--lkv-sage-100);
+    border-color: var(--lkv-forest-800);
+  }
+  .discipline-tile .ic { color: var(--lkv-forest-800); }
+  .discipline-tile .n { font-size: 12px; font-weight: 500; color: var(--lkv-ink-900); }
+  .discipline-tile input { display: none; }
+
+  /* Connected accounts */
+  .linked-list { display: flex; flex-direction: column; gap: 8px; }
+  .linked-row {
+    display: grid;
+    grid-template-columns: 40px 1fr auto auto;
+    gap: 14px; align-items: center;
+    padding: 12px 14px;
+    background: var(--lkv-stone-50);
+    border-radius: var(--lkv-r-md);
+  }
+  .linked-row .ic {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+    box-shadow: var(--lkv-shadow-xs);
+    font-weight: 600; font-size: 15px;
+  }
+  .linked-row .txt .n {
+    font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);
+    line-height: 1.2;
+  }
+  .linked-row .txt .m {
+    font-size: 11px; color: var(--lkv-ink-500);
+    margin-top: 3px;
+    font-family: var(--lkv-font-mono);
+  }
+  .linked-row .st {
+    padding: 4px 10px; border-radius: 999px;
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .linked-row .st.on { background: var(--lkv-sage-100); color: var(--lkv-forest-800); }
+  .linked-row .st.off { background: rgba(11,31,23,0.05); color: var(--lkv-ink-500); }
+
+  /* Levels chip */
+  .level-picker {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  }
+  .level-picker label {
+    padding: 14px 12px;
+    background: var(--lkv-stone-50);
+    border: 2px solid transparent;
+    border-radius: var(--lkv-r-md);
+    cursor: pointer;
+    text-align: center;
+    transition: all var(--lkv-dur-fast) var(--lkv-ease);
+  }
+  .level-picker label:hover { background: #fff; border-color: rgba(11,31,23,0.06); }
+  .level-picker label.on { background: var(--lkv-forest-800); color: #fff; border-color: var(--lkv-forest-800); }
+  .level-picker label.on .l { color: var(--lkv-sage-300); }
+  .level-picker input { display: none; }
+  .level-picker .n {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 22px; line-height: 1;
+    margin-bottom: 4px;
+  }
+  .level-picker .t { font-size: 12px; font-weight: 500; }
+  .level-picker .l { font-size: 10px; color: var(--lkv-ink-500); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 3px; }
+
+  /* Aside: profile preview */
+  .p-preview {
+    background: linear-gradient(180deg, var(--lkv-forest-900), var(--lkv-forest-800));
+    border-radius: var(--lkv-r-lg);
+    padding: 26px 22px 22px;
+    color: #fff;
+    position: relative; overflow: hidden;
+    text-align: center;
+  }
+  .p-preview::before {
+    content: ""; position: absolute; top: -40px; left: -40px;
+    width: 180px; height: 180px; border-radius: 50%;
+    background: radial-gradient(circle, var(--lkv-warm-500) 0%, transparent 65%);
+    opacity: 0.24;
+  }
+  .p-preview > * { position: relative; z-index: 1; }
+  .p-preview .eye {
+    font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--lkv-sage-300);
+    margin-bottom: 14px;
+  }
+  .p-preview .av {
+    width: 84px; height: 84px; border-radius: 50%;
+    background: url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80') center/cover;
+    border: 3px solid rgba(255,255,255,0.94);
+    margin: 0 auto 12px;
+  }
+  .p-preview .n {
+    font-family: var(--lkv-font-sans);
+    font-size: 20px; font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  .p-preview .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .p-preview .loc { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 3px; }
+  .p-preview .bio {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 13px; line-height: 1.5;
+    color: rgba(255,255,255,0.85);
+    margin: 14px 0 16px;
+  }
+  .p-preview .badges {
+    display: flex; justify-content: center; gap: 8px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  .p-preview .badges .b {
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(255,255,255,0.1);
+    font-size: 10px; color: rgba(255,255,255,0.85);
+    letter-spacing: 0.02em;
+  }
+  .p-preview .badges .b.warm { background: var(--lkv-warm-100); color: #8A6127; }
+</style>
+</head>
+<body>
+<div class="form-page">
+
+  <!-- TOPBAR -->
+  <header class="form-topbar">
+    <div class="form-topbar-inner">
+      <div class="left">
+        <a href="Index.html" class="lkv-logo">
+          <span class="lkv-logo-mark">
+            <svg viewBox="0 0 32 32" width="24" height="24" fill="none">
+              <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+            </svg>
+          </span>
+          <span>Le Kit du Voyageur</span>
+        </a>
+        <nav class="breadcrumb">
+          <a href="Index.html">Accueil</a>
+          <span class="sep">›</span>
+          <a href="Compte - Dashboard.html">Mon compte</a>
+          <span class="sep">›</span>
+          <span class="cur">Modifier mon profil</span>
+        </nav>
+      </div>
+      <div class="actions">
+        <div class="status-dot"><span class="d"></span>Modifications non enregistrées</div>
+        <button class="lkv-btn lkv-btn-ghost lkv-btn-sm">Aperçu public</button>
+        <button class="lkv-btn lkv-btn-primary lkv-btn-sm">Enregistrer</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="form-hero">
+    <div class="eye">Édition profil · Marceline Chevrier</div>
+    <h1>Racontez qui vous êtes,<br/><em>et où vous allez.</em></h1>
+    <p class="lead">Votre profil apparaît sur vos carnets, dans les clubs et à côté de vos aventures. Prenez le temps — les randonneurs lisent aussi les bios.</p>
+  </section>
+
+  <!-- MAIN -->
+  <div class="form-shell">
+
+    <!-- MAIN COLUMN -->
+    <main class="form-column">
+
+      <!-- IDENTITÉ -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>Identité <em>publique</em></h2>
+          <span class="n">01 · Vitrine</span>
+        </div>
+        <p class="sec-sub">Nom, avatar, couverture. Ce que la communauté verra en premier. Un joli portrait vaut mille abonnements.</p>
+
+        <div class="profile-cover">
+          <div class="actions">
+            <button><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/></svg>Changer</button>
+            <button><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M15 5H9L3 12l6 7h6l6-7z"/><path d="M9 12h12"/></svg>Supprimer</button>
+          </div>
+        </div>
+
+        <div class="avatar-block">
+          <div class="av-wrap">
+            <div class="av"></div>
+            <div class="edit">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
+          </div>
+          <div class="info">
+            <div class="n">Marceline <em>Chevrier</em></div>
+            <div class="m">
+              <span>marceline.c</span>
+              <span class="dot">·</span>
+              <span>Membre depuis mars 2023</span>
+              <span class="dot">·</span>
+              <span>42 aventures partagées</span>
+            </div>
+          </div>
+          <div class="btns">
+            <button class="lkv-btn lkv-btn-outline lkv-btn-sm">Nouvelle photo</button>
+            <button class="lkv-btn lkv-btn-ghost lkv-btn-sm">Recentrer</button>
+          </div>
+        </div>
+
+        <div class="f-grid">
+          <div class="field">
+            <label>Prénom <span class="req">*</span></label>
+            <input type="text" value="Marceline"/>
+          </div>
+          <div class="field">
+            <label>Nom <span class="req">*</span></label>
+            <input type="text" value="Chevrier"/>
+          </div>
+          <div class="field">
+            <label>Nom d'usage public <span class="hint">Affiché sur vos publications</span></label>
+            <input type="text" value="Marceline Chevrier"/>
+          </div>
+          <div class="field">
+            <label>Nom d'utilisateur <span class="req">*</span></label>
+            <div class="f-input-group">
+              <span class="prefix">lekit.co/</span>
+              <input type="text" value="marceline.c"/>
+              <span class="suffix" style="color: var(--lkv-sage-500);">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14" style="stroke-width: 2.2"><path d="M5 12l4 4L19 6"/></svg>
+                Disponible
+              </span>
+            </div>
+          </div>
+          <div class="field full">
+            <label>Bio courte <span class="hint">Une ligne. Serif, comme une signature.</span></label>
+            <textarea class="serif" placeholder="Une phrase pour vous présenter…" maxlength="180">Randonneuse d'altitude basée à Grenoble. Je marche pour retrouver le silence, j'écris pour ne pas l'oublier.</textarea>
+            <div class="helper"><span>Visible sur votre profil et vos carnets</span><span class="count">158 / 180</span></div>
+          </div>
+          <div class="field full">
+            <label>À propos <span class="hint">Long — apparaît sur votre page profil</span></label>
+            <textarea rows="5" placeholder="Vos massifs de cœur, votre style, ce que vous cherchez en montagne…">Trois massifs préférés : Chartreuse, Belledonne, Écrins. Je pars souvent en solo, parfois avec le club alpin de Grenoble. Sac léger, café dans les mains, silence dans les oreilles. Je publie mes traces GPX pour celles et ceux qui aiment marcher sans compter.</textarea>
+            <div class="helper"><span>Style : simple et personnel. Évitez les listes.</span><span class="count">341 / 800</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LOCALISATION + LANGUES -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>Ancrage <em>géographique</em></h2>
+          <span class="n">02 · Où vous êtes</span>
+        </div>
+        <p class="sec-sub">Pour proposer les bons refuges, les clubs proches, et suggérer votre profil aux voyageurs du même massif.</p>
+
+        <div class="f-grid">
+          <div class="field">
+            <label>Ville de résidence</label>
+            <div class="f-input-group">
+              <span class="prefix"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 22s-7-8-7-13a7 7 0 0114 0c0 5-7 13-7 13z"/><circle cx="12" cy="9" r="2.5"/></svg></span>
+              <input type="text" value="Grenoble, Isère"/>
+            </div>
+          </div>
+          <div class="field">
+            <label>Pays</label>
+            <select class="f-select">
+              <option>France</option><option>Suisse</option><option>Italie</option><option>Belgique</option><option>Espagne</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label>Massifs et régions favorites <span class="hint">Sélectionnez vos terrains de jeu</span></label>
+            <div class="f-chip-choice">
+              <label class="on"><input type="checkbox" checked/>Chartreuse</label>
+              <label class="on"><input type="checkbox" checked/>Belledonne</label>
+              <label class="on"><input type="checkbox" checked/>Écrins</label>
+              <label class="on"><input type="checkbox" checked/>Vercors</label>
+              <label><input type="checkbox"/>Mont-Blanc</label>
+              <label><input type="checkbox"/>Aravis</label>
+              <label><input type="checkbox"/>Queyras</label>
+              <label><input type="checkbox"/>Mercantour</label>
+              <label><input type="checkbox"/>Pyrénées</label>
+              <label><input type="checkbox"/>Corse</label>
+              <label><input type="checkbox"/>Cévennes</label>
+              <label><input type="checkbox"/>Vosges</label>
+              <label><input type="checkbox"/>Jura</label>
+            </select>
+          </div>
+          <div class="field">
+            <label>Fuseau horaire</label>
+            <select class="f-select">
+              <option>Europe / Paris (UTC+01:00)</option>
+              <option>Europe / Zurich</option>
+              <option>Europe / Madrid</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Langues parlées</label>
+            <div class="f-chip-picker">
+              <span class="chip sage">🇫🇷 Français<span class="x">×</span></span>
+              <span class="chip sage">🇬🇧 Anglais<span class="x">×</span></span>
+              <span class="chip sage">🇮🇹 Italien<span class="x">×</span></span>
+              <input type="text" placeholder="Ajouter une langue…"/>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DISCIPLINES / NIVEAU -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>Pratiques <em>& niveau</em></h2>
+          <span class="n">03 · Comment vous marchez</span>
+        </div>
+        <p class="sec-sub">Ces informations aident à filtrer les propositions d'aventures et à trouver des partenaires de sortie compatibles.</p>
+
+        <div class="field" style="margin-bottom: 24px;">
+          <label>Disciplines pratiquées</label>
+          <div class="discipline-grid">
+            <label class="discipline-tile on">
+              <input type="checkbox" checked/>
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="24" height="24"><path d="M12 3v18M8 7l4-4 4 4M6 21l6-10 6 10"/></svg>
+              <span class="n">Randonnée</span>
+            </label>
+            <label class="discipline-tile on">
+              <input type="checkbox" checked/>
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="24" height="24"><path d="M3 20L12 4l9 16"/><path d="M12 4v16"/><path d="M3 20h18"/></svg>
+              <span class="n">Bivouac</span>
+            </label>
+            <label class="discipline-tile on">
+              <input type="checkbox" checked/>
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="24" height="24"><path d="M4 20l6-10 4 6 3-4 3 8"/><path d="M2 20h20"/></svg>
+              <span class="n">Alpinisme</span>
+            </label>
+            <label class="discipline-tile">
+              <input type="checkbox"/>
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="24" height="24"><path d="M4 12h16M12 4v16M6 6l12 12M18 6L6 18"/></svg>
+              <span class="n">Ski de rando</span>
+            </label>
+            <label class="discipline-tile on">
+              <input type="checkbox" checked/>
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="24" height="24"><path d="M6 20h12M8 20L6 8h12l-2 12M9 8V5a3 3 0 016 0v3"/></svg>
+              <span class="n">Trail</span>
+            </label>
+            <label class="discipline-tile">
+              <input type="checkbox"/>
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="24" height="24"><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><path d="M6 18l6-10 6 10M12 8V4"/></svg>
+              <span class="n">VTT</span>
+            </label>
+            <label class="discipline-tile">
+              <input type="checkbox"/>
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="24" height="24"><path d="M3 12l9-9 9 9M6 12h12M8 12v7h8v-7"/></svg>
+              <span class="n">Escalade</span>
+            </label>
+            <label class="discipline-tile">
+              <input type="checkbox"/>
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="24" height="24"><path d="M2 16l6-6 4 3 4-5 6 8"/><path d="M2 20h20"/></svg>
+              <span class="n">Photo montagne</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="field" style="margin-bottom: 24px;">
+          <label>Niveau global d'expérience</label>
+          <div class="level-picker">
+            <label>
+              <input type="radio" name="level"/>
+              <div class="n">I</div>
+              <div class="t">Curieuse</div>
+              <div class="l">1 an</div>
+            </label>
+            <label>
+              <input type="radio" name="level"/>
+              <div class="n">II</div>
+              <div class="t">Régulière</div>
+              <div class="l">1–3 ans</div>
+            </label>
+            <label class="on">
+              <input type="radio" name="level" checked/>
+              <div class="n">III</div>
+              <div class="t">Explorateur</div>
+              <div class="l">3–7 ans</div>
+            </label>
+            <label>
+              <input type="radio" name="level"/>
+              <div class="n">IV</div>
+              <div class="t">Guide</div>
+              <div class="l">7 ans +</div>
+            </label>
+          </div>
+        </div>
+
+        <div class="f-grid thirds">
+          <div class="field">
+            <label>Distance moyenne / sortie</label>
+            <div class="f-input-group">
+              <input type="number" value="18"/>
+              <span class="suffix">km</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Dénivelé confortable</label>
+            <div class="f-input-group">
+              <input type="number" value="1200"/>
+              <span class="suffix">m D+</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Rythme préféré</label>
+            <select class="f-select">
+              <option>Contemplatif · 3 km/h</option>
+              <option selected>Marcheuse · 4 km/h</option>
+              <option>Sportif · 5 km/h</option>
+              <option>Trail · 7+ km/h</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- COMPTES LIÉS -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>Comptes <em>liés</em></h2>
+          <span class="n">04 · Import & partage</span>
+        </div>
+        <p class="sec-sub">Importez automatiquement vos traces depuis les plateformes que vous utilisez déjà.</p>
+
+        <div class="linked-list">
+          <div class="linked-row">
+            <div class="ic" style="color: #FC5200;">S</div>
+            <div class="txt">
+              <div class="n">Strava</div>
+              <div class="m">marceline.c · 128 activités importées</div>
+            </div>
+            <div class="st on">Connecté</div>
+            <button class="lkv-btn lkv-btn-ghost lkv-btn-sm">Déconnecter</button>
+          </div>
+          <div class="linked-row">
+            <div class="ic" style="color: #0074D9;">G</div>
+            <div class="txt">
+              <div class="n">Garmin Connect</div>
+              <div class="m">marceline_c · sync auto activée</div>
+            </div>
+            <div class="st on">Connecté</div>
+            <button class="lkv-btn lkv-btn-ghost lkv-btn-sm">Déconnecter</button>
+          </div>
+          <div class="linked-row">
+            <div class="ic" style="color: #E60023;">P</div>
+            <div class="txt">
+              <div class="n">Polar Flow</div>
+              <div class="m">Non connecté</div>
+            </div>
+            <div class="st off">Inactif</div>
+            <button class="lkv-btn lkv-btn-outline lkv-btn-sm">Connecter</button>
+          </div>
+          <div class="linked-row">
+            <div class="ic" style="color: #34A853;">V</div>
+            <div class="txt">
+              <div class="n">Visorando</div>
+              <div class="m">Non connecté</div>
+            </div>
+            <div class="st off">Inactif</div>
+            <button class="lkv-btn lkv-btn-outline lkv-btn-sm">Connecter</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONFIDENTIALITÉ -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>Qui peut <em>voir quoi</em></h2>
+          <span class="n">05 · Confidentialité</span>
+        </div>
+        <p class="sec-sub">Chaque type de contenu a sa portée. Vos aventures peuvent être publiques, votre profil visible uniquement des clubs.</p>
+
+        <div>
+          <div class="f-toggle-row">
+            <div>
+              <div class="n">Profil visible dans l'annuaire</div>
+              <div class="m">Les autres voyageurs pourront vous trouver via la recherche communauté.</div>
+            </div>
+            <div class="f-switch on"></div>
+          </div>
+          <div class="f-toggle-row">
+            <div>
+              <div class="n">Afficher ma localisation</div>
+              <div class="m">Grenoble apparaîtra à côté de votre nom sur vos publications.</div>
+            </div>
+            <div class="f-switch on"></div>
+          </div>
+          <div class="f-toggle-row">
+            <div>
+              <div class="n">Autoriser les demandes de sortie</div>
+              <div class="m">D'autres membres peuvent vous inviter à rejoindre leurs aventures planifiées.</div>
+            </div>
+            <div class="f-switch on"></div>
+          </div>
+          <div class="f-toggle-row">
+            <div>
+              <div class="n">Statistiques publiques</div>
+              <div class="m">Vos KPIs (km, dénivelé, sorties) sont visibles sur votre profil.</div>
+            </div>
+            <div class="f-switch"></div>
+          </div>
+          <div class="f-toggle-row">
+            <div>
+              <div class="n">Recevoir des messages privés</div>
+              <div class="m">Seuls les membres de vos clubs peuvent vous écrire par défaut.</div>
+            </div>
+            <div class="f-switch on"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ASIDE -->
+    <aside class="form-aside">
+
+      <!-- PROFILE PREVIEW -->
+      <div class="p-preview">
+        <div class="eye">Aperçu · profil public</div>
+        <div class="av"></div>
+        <div class="n">Marceline <em>Chevrier</em></div>
+        <div class="loc">Grenoble · niveau III</div>
+        <div class="bio">"Je marche pour retrouver le silence, j'écris pour ne pas l'oublier."</div>
+        <div class="badges">
+          <span class="b warm">Sommet 3000</span>
+          <span class="b">Auteure</span>
+          <span class="b">Guide Chartreuse</span>
+        </div>
+      </div>
+
+      <!-- COMPLETION CHECKLIST -->
+      <div class="aside-card">
+        <h3>Profil <em>complet</em> à 82 %</h3>
+        <p class="sub">Un profil terminé augmente de 3× les demandes de partenaires et de 2× les vues sur vos carnets.</p>
+
+        <div class="check-list">
+          <div class="check-item done">
+            <div class="box"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg></div>
+            <div class="t">Photo de profil</div>
+            <div class="r">Fait</div>
+          </div>
+          <div class="check-item done">
+            <div class="box"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg></div>
+            <div class="t">Bio courte</div>
+            <div class="r">Fait</div>
+          </div>
+          <div class="check-item done">
+            <div class="box"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg></div>
+            <div class="t">Localisation</div>
+            <div class="r">Fait</div>
+          </div>
+          <div class="check-item done">
+            <div class="box"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg></div>
+            <div class="t">Disciplines (5)</div>
+            <div class="r">Fait</div>
+          </div>
+          <div class="check-item now">
+            <div class="box"></div>
+            <div class="t">Photo de couverture</div>
+            <div class="r">Recommandé</div>
+          </div>
+          <div class="check-item">
+            <div class="box"></div>
+            <div class="t">Vérifier l'email</div>
+            <div class="r">À faire</div>
+          </div>
+        </div>
+
+        <div class="check-progress">
+          <div class="lbl"><span><strong>4</strong> sur 6 étapes</span><span>82 %</span></div>
+          <div class="bar"><div class="f" style="width: 82%;"></div></div>
+        </div>
+      </div>
+
+      <!-- TIP CARD -->
+      <div class="tips-card">
+        <div class="eye">Conseil <em style="font-family: var(--lkv-font-serif); color: var(--lkv-sage-300);">rédaction</em></div>
+        <h4>Une bio qui <em>respire</em>.</h4>
+        <p>Évitez les listes de sommets et de kilomètres — vos statistiques les racontent. Dites plutôt pourquoi vous marchez.</p>
+        <a href="#" class="lk">Voir 3 exemples de bios inspirantes →</a>
+      </div>
+
+    </aside>
+  </div>
+
+  <!-- SAVE BAR -->
+  <div class="save-bar">
+    <div class="status">
+      <span class="dot"></span>
+      <span><strong>Brouillon</strong> · dernière modification il y a quelques secondes · sauvegarde auto activée</span>
+    </div>
+    <div class="actions">
+      <button class="lkv-btn lkv-btn-ghost">Annuler</button>
+      <button class="lkv-btn lkv-btn-outline">Aperçu</button>
+      <button class="lkv-btn lkv-btn-primary">Enregistrer les changements</button>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

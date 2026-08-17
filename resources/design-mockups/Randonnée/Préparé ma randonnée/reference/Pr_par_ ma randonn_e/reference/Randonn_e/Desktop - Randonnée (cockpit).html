@@ -1,0 +1,1604 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Randonnée · Cockpit desktop · Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<style>
+  :root {
+    --shell-bg: #EAE6DF;
+    --panel: rgba(251,250,246,0.92);
+    --panel-solid: #FBFAF6;
+    --panel-border: rgba(11,31,23,0.07);
+    --panel-shadow: 0 12px 32px rgba(11,31,23,0.10), 0 2px 8px rgba(11,31,23,0.04);
+  }
+
+  body {
+    background: var(--shell-bg);
+    min-height: 100vh;
+    padding: 24px;
+    font-family: var(--lkv-font-sans);
+  }
+
+  /* ────────────────────────────────
+     PAGE HEADER (au-dessus du cockpit)
+     ──────────────────────────────── */
+  .page-title {
+    max-width: 1720px;
+    margin: 0 auto 20px;
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 24px;
+    color: var(--lkv-ink-700);
+  }
+  .page-title .h {
+    font-size: 22px; font-weight: 500; letter-spacing: -0.015em;
+    color: var(--lkv-ink-900);
+  }
+  .page-title .h em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .page-title .sub {
+    font-size: 13px; color: var(--lkv-ink-500);
+    margin-top: 4px; max-width: 640px;
+  }
+  .page-title .crumbs a {
+    color: var(--lkv-forest-800); font-weight: 500;
+    margin-left: 20px; font-size: 13px;
+  }
+
+  /* ────────────────────────────────
+     COCKPIT SHELL — l'artboard desktop
+     ──────────────────────────────── */
+  .cockpit {
+    max-width: 1720px;
+    margin: 0 auto;
+    height: calc(100vh - 120px);
+    min-height: 820px;
+    border-radius: 28px;
+    background: var(--lkv-forest-950);
+    padding: 8px;
+    box-shadow: 0 30px 80px rgba(11,31,23,0.22);
+    position: relative;
+    overflow: hidden;
+  }
+  .cockpit .frame {
+    position: relative;
+    width: 100%; height: 100%;
+    border-radius: 22px;
+    overflow: hidden;
+    background: var(--lkv-paper);
+  }
+
+  /* ═══════════════════════════════════════════════
+     MAP — le héros, plein écran
+     ═══════════════════════════════════════════════ */
+  .map {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 25% 20%, #DDE9D6 0%, transparent 55%),
+      radial-gradient(ellipse at 78% 65%, #C6DCBE 0%, transparent 50%),
+      radial-gradient(ellipse at 12% 82%, #EAF1E5 0%, transparent 40%),
+      radial-gradient(ellipse at 88% 88%, #DDD6C6 0%, transparent 45%),
+      linear-gradient(160deg, #E9E4D9 0%, #DDD6C6 100%);
+    overflow: hidden;
+  }
+  .map.night {
+    background:
+      radial-gradient(ellipse at 30% 25%, #1A2F24 0%, transparent 55%),
+      radial-gradient(ellipse at 75% 70%, #0e1f16 0%, transparent 50%),
+      linear-gradient(160deg, #06120C 0%, #0B1F17 100%);
+  }
+
+  /* topo lines — large field */
+  .map .contour {
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 900'><g fill='none' stroke='%2317402C' stroke-width='0.7' opacity='0.16'><path d='M-40,140 Q220,90 480,130 T960,110 T1440,140 T1680,120'/><path d='M-40,210 Q220,175 480,200 T960,185 T1440,215 T1680,195'/><path d='M-40,280 Q260,240 520,265 T1000,255 T1480,285 T1680,265'/><path d='M-40,350 Q260,320 520,335 T1000,325 T1480,355 T1680,335'/><ellipse cx='800' cy='450' rx='420' ry='180'/><ellipse cx='800' cy='450' rx='330' ry='140'/><ellipse cx='800' cy='450' rx='240' ry='100'/><ellipse cx='800' cy='450' rx='160' ry='68'/><ellipse cx='800' cy='450' rx='90' ry='38'/><path d='M-40,650 Q220,620 480,635 T960,625 T1440,655 T1680,635'/><path d='M-40,720 Q220,700 480,715 T960,705 T1440,730 T1680,715'/><path d='M-40,790 Q220,775 480,785 T960,780 T1440,800 T1680,785'/></g><g fill='none' stroke='%2317402C' stroke-width='0.5' opacity='0.09'><path d='M-40,175 Q220,130 480,165 T960,145 T1440,180 T1680,160'/><path d='M-40,245 Q220,210 480,235 T960,220 T1440,250 T1680,230'/><path d='M-40,315 Q260,280 520,300 T1000,290 T1480,320 T1680,300'/><path d='M-40,685 Q220,660 480,675 T960,665 T1440,695 T1680,675'/><path d='M-40,755 Q220,735 480,750 T960,745 T1440,765 T1680,750'/></g></svg>");
+    background-size: cover;
+  }
+
+  /* forest specks */
+  .map .specks {
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 8% 18%, #2D6B4A 2px, transparent 3px),
+      radial-gradient(circle at 15% 28%, #17402C 1.8px, transparent 3px),
+      radial-gradient(circle at 22% 12%, #2D6B4A 1.5px, transparent 2.5px),
+      radial-gradient(circle at 32% 25%, #17402C 1.8px, transparent 3px),
+      radial-gradient(circle at 62% 15%, #2D6B4A 1.8px, transparent 3px),
+      radial-gradient(circle at 84% 32%, #17402C 2px, transparent 3px),
+      radial-gradient(circle at 91% 55%, #2D6B4A 1.6px, transparent 2.5px),
+      radial-gradient(circle at 6% 68%, #17402C 1.6px, transparent 2.5px),
+      radial-gradient(circle at 42% 76%, #2D6B4A 1.8px, transparent 3px),
+      radial-gradient(circle at 72% 82%, #17402C 1.6px, transparent 2.5px),
+      radial-gradient(circle at 28% 88%, #2D6B4A 1.6px, transparent 2.5px),
+      radial-gradient(circle at 58% 92%, #17402C 1.4px, transparent 2.5px);
+    opacity: 0.55;
+  }
+
+  /* rivers / lake */
+  .map .water {
+    position: absolute;
+    width: 180px; height: 82px;
+    top: 62%; left: 38%;
+    background: linear-gradient(135deg, #A8C8A0, #77B0E0);
+    border-radius: 50% 60% 40% 55%;
+    opacity: 0.5;
+    filter: blur(1px);
+  }
+  .map .river {
+    position: absolute; inset: 0;
+    pointer-events: none;
+  }
+  .map .river svg { width: 100%; height: 100%; }
+
+  /* ═══════════════════════════════════════════════
+     TRACKS
+     ═══════════════════════════════════════════════ */
+  .track-svg {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+
+  /* ═══════════════════════════════════════════════
+     POI — Points d'intérêt (échelle desktop)
+     ═══════════════════════════════════════════════ */
+  .poi {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    z-index: 3;
+  }
+  .poi .pin {
+    width: 40px; height: 40px; border-radius: 999px;
+    background: rgba(251,250,246,0.96);
+    backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+    box-shadow: 0 6px 16px rgba(11,31,23,0.20), 0 0 0 1px rgba(11,31,23,0.06) inset;
+  }
+  .poi .pin svg { width: 20px; height: 20px; }
+  .poi.summit .pin { background: var(--lkv-forest-800); color: var(--lkv-sage-300); }
+  .poi.refuge .pin { background: var(--lkv-forest-950); color: var(--lkv-sage-300); }
+  .poi.water .pin { color: #2A6FDB; }
+  .poi.danger .pin { background: #E8B87A; color: #7A4A15; box-shadow: 0 6px 16px rgba(232,184,122,0.5), 0 0 0 1px rgba(11,31,23,0.08) inset; }
+  .poi.pano .pin { background: var(--lkv-sage-500); color: var(--lkv-forest-950); }
+  .poi .lbl {
+    padding: 4px 10px;
+    background: rgba(11,31,23,0.72);
+    backdrop-filter: blur(8px);
+    border-radius: 8px;
+    font-size: 10px; color: #fff;
+    font-family: var(--lkv-font-mono);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+  .poi .alt {
+    font-size: 9px;
+    color: var(--lkv-sage-300);
+    font-family: var(--lkv-font-mono);
+    letter-spacing: 0.06em;
+    margin-top: 1px;
+  }
+
+  /* ═══════════════════════════════════════════════
+     USER LOCATION (centre)
+     ═══════════════════════════════════════════════ */
+  .me-marker {
+    position: absolute;
+    top: 52%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    width: 100px; height: 100px;
+  }
+  .me-marker .halo {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    background: rgba(23,64,44,0.14);
+    animation: halo 2.4s ease-out infinite;
+  }
+  @keyframes halo {
+    0% { transform: scale(0.4); opacity: 0.9; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+  .me-marker .accuracy {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(23,64,44,0.18);
+    background: rgba(198,220,190,0.06);
+  }
+  .me-marker .dot {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--lkv-forest-800);
+    border: 4px solid #fff;
+    box-shadow: 0 6px 16px rgba(11,31,23,0.4), 0 0 0 1px rgba(11,31,23,0.2);
+  }
+  .me-marker .cone {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -100%) rotate(-12deg);
+    width: 0; height: 0;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-bottom: 28px solid rgba(23,64,44,0.4);
+    filter: blur(0.5px);
+  }
+  .me-marker .name {
+    position: absolute;
+    top: -34px; left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 10px;
+    background: var(--lkv-forest-800);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 10px;
+    font-family: var(--lkv-font-mono);
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    box-shadow: 0 4px 10px rgba(11,31,23,0.25);
+  }
+
+  /* ═══════════════════════════════════════════════
+     TOP BAR — logo, breadcrumb, alerts, profil
+     ═══════════════════════════════════════════════ */
+  .topbar {
+    position: absolute;
+    top: 20px; left: 20px; right: 20px;
+    height: 56px;
+    display: flex; align-items: center;
+    gap: 16px;
+    z-index: 40;
+  }
+
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 18px 10px 14px;
+    background: var(--panel);
+    backdrop-filter: blur(24px) saturate(1.6);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    box-shadow: var(--panel-shadow);
+    color: var(--lkv-ink-900);
+    font-size: 13px; font-weight: 500;
+    letter-spacing: -0.005em;
+    height: 44px;
+  }
+  .brand .mark {
+    width: 26px; height: 26px; border-radius: 999px;
+    background: linear-gradient(135deg, var(--lkv-forest-800), var(--lkv-forest-950));
+    color: var(--lkv-sage-300);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .brand .mark svg { width: 14px; height: 14px; }
+  .brand em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+
+  .crumb {
+    display: flex; align-items: center; gap: 12px;
+    padding: 0 20px;
+    height: 44px;
+    background: var(--panel);
+    backdrop-filter: blur(24px) saturate(1.6);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    box-shadow: var(--panel-shadow);
+  }
+  .crumb .day {
+    font-family: var(--lkv-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--lkv-forest-800);
+    font-weight: 600;
+    padding: 3px 8px;
+    background: var(--lkv-sage-200);
+    border-radius: 6px;
+  }
+  .crumb .route {
+    font-size: 13px; font-weight: 500;
+    color: var(--lkv-ink-900);
+    letter-spacing: -0.005em;
+  }
+  .crumb .route em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .crumb .arrow {
+    color: var(--lkv-ink-400);
+    display: flex; align-items: center;
+  }
+  .crumb .arrow svg { width: 12px; height: 12px; }
+  .crumb .from {
+    font-family: var(--lkv-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--lkv-ink-500);
+    text-transform: uppercase;
+  }
+
+  .spacer { flex: 1; }
+
+  .top-hud {
+    display: flex; gap: 8px;
+    height: 44px;
+    align-items: center;
+  }
+  .top-hud .cell {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 16px;
+    height: 44px;
+    background: var(--panel);
+    backdrop-filter: blur(24px) saturate(1.6);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    box-shadow: var(--panel-shadow);
+  }
+  .top-hud .cell .ic {
+    color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .top-hud .cell .ic svg { width: 18px; height: 18px; }
+  .top-hud .cell .txt { display: flex; flex-direction: column; line-height: 1; }
+  .top-hud .cell .l {
+    font-family: var(--lkv-font-mono);
+    font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-ink-500);
+  }
+  .top-hud .cell .v {
+    font-size: 13px; font-weight: 500; letter-spacing: -0.005em;
+    margin-top: 3px;
+  }
+  .top-hud .cell.gps .ic {
+    width: 24px; height: 24px; border-radius: 999px;
+    background: var(--lkv-sage-500); color: var(--lkv-forest-950);
+  }
+  .top-hud .cell.gps .ic svg { width: 12px; height: 12px; }
+  .top-hud .cell.compass .ic { position: relative; }
+  .top-hud .cell.compass .ic .n {
+    position: absolute; top: -8px; left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--lkv-font-mono);
+    font-size: 7px; font-weight: 700;
+    color: #B85838;
+  }
+
+  .avatar {
+    width: 44px; height: 44px;
+    border-radius: 999px;
+    background: linear-gradient(160deg, #E8B87A, #C89755);
+    display: flex; align-items: center; justify-content: center;
+    color: #4A2E0E;
+    font-size: 13px; font-weight: 600;
+    box-shadow: var(--panel-shadow);
+    border: 1px solid rgba(11,31,23,0.08);
+    font-family: var(--lkv-font-serif);
+    font-style: italic;
+  }
+
+  /* ═══════════════════════════════════════════════
+     LEFT PANEL — Itinéraire (waypoints)
+     ═══════════════════════════════════════════════ */
+  .left-panel {
+    position: absolute;
+    top: 96px; left: 20px;
+    width: 320px;
+    max-height: calc(100% - 200px);
+    display: flex; flex-direction: column; gap: 14px;
+    z-index: 30;
+  }
+
+  .panel {
+    background: var(--panel);
+    backdrop-filter: blur(24px) saturate(1.6);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    border: 1px solid var(--panel-border);
+    border-radius: 20px;
+    box-shadow: var(--panel-shadow);
+    overflow: hidden;
+  }
+
+  .panel-head {
+    padding: 14px 18px 10px;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .panel-head .t {
+    font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.16em; color: var(--lkv-ink-500);
+    font-weight: 500;
+  }
+  .panel-head .m {
+    font-family: var(--lkv-font-mono);
+    font-size: 10px; color: var(--lkv-ink-400);
+    letter-spacing: 0.06em;
+  }
+  .panel-head .m em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+    font-size: 12px;
+  }
+
+  /* progress ring at top of route panel */
+  .progress-block {
+    padding: 4px 18px 18px;
+  }
+  .progress-block .head-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .progress-block .val {
+    font-size: 26px; font-weight: 500; letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--lkv-ink-900);
+  }
+  .progress-block .val em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+    font-size: 15px;
+  }
+  .progress-block .pct {
+    font-family: var(--lkv-font-mono);
+    font-size: 11px; font-weight: 600;
+    color: var(--lkv-forest-800);
+    letter-spacing: 0.06em;
+    padding: 3px 8px;
+    background: var(--lkv-sage-200);
+    border-radius: 6px;
+  }
+  .progress-block .bar {
+    height: 4px; background: rgba(11,31,23,0.08);
+    border-radius: 999px; overflow: hidden;
+  }
+  .progress-block .bar .fill {
+    height: 100%; background: var(--lkv-forest-800);
+    border-radius: 999px;
+    position: relative;
+  }
+  .progress-block .bar .fill::after {
+    content: "";
+    position: absolute; right: -3px; top: -2px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--lkv-forest-800);
+    box-shadow: 0 0 0 3px rgba(23,64,44,0.15);
+  }
+  .progress-block .meta {
+    margin-top: 10px;
+    display: flex; justify-content: space-between;
+    font-family: var(--lkv-font-mono);
+    font-size: 10px;
+    color: var(--lkv-ink-500);
+    letter-spacing: 0.06em;
+  }
+
+  /* waypoint list */
+  .waypoints {
+    padding: 0 8px 12px;
+    position: relative;
+  }
+  .waypoints::before {
+    content: "";
+    position: absolute;
+    left: 32px; top: 12px; bottom: 28px;
+    width: 2px;
+    background: linear-gradient(180deg, var(--lkv-forest-800) 0%, var(--lkv-forest-800) 45%, rgba(11,31,23,0.15) 45%);
+  }
+  .wp {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 8px 10px;
+    position: relative;
+    border-radius: 12px;
+    margin-bottom: 2px;
+  }
+  .wp .dot {
+    width: 22px; height: 22px; border-radius: 999px;
+    background: var(--lkv-paper);
+    border: 2px solid var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    z-index: 2;
+    color: var(--lkv-forest-800);
+  }
+  .wp .dot svg { width: 11px; height: 11px; }
+  .wp.done .dot {
+    background: var(--lkv-forest-800);
+    color: var(--lkv-sage-300);
+  }
+  .wp.current .dot {
+    background: var(--lkv-sage-500);
+    border-color: var(--lkv-forest-800);
+    color: var(--lkv-forest-950);
+    box-shadow: 0 0 0 4px rgba(168,200,160,0.35);
+  }
+  .wp.future .dot {
+    background: var(--lkv-paper);
+    border-color: rgba(11,31,23,0.2);
+    color: var(--lkv-ink-400);
+  }
+  .wp .body { flex: 1; min-width: 0; padding-top: 1px; }
+  .wp .name {
+    font-size: 13px; font-weight: 500;
+    letter-spacing: -0.005em;
+    color: var(--lkv-ink-900);
+    line-height: 1.15;
+  }
+  .wp .name em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .wp.future .name { color: var(--lkv-ink-500); }
+  .wp .meta {
+    font-family: var(--lkv-font-mono);
+    font-size: 10px;
+    color: var(--lkv-ink-500);
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+  .wp.current {
+    background: rgba(168,200,160,0.14);
+  }
+  .wp.current .meta { color: var(--lkv-forest-800); }
+
+  /* elevation mini graph inside left panel */
+  .elev-mini {
+    padding: 0 18px 18px;
+  }
+  .elev-mini .head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .elev-mini .head .t {
+    font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.16em; color: var(--lkv-ink-500);
+    font-weight: 500;
+  }
+  .elev-mini .head .m {
+    font-family: var(--lkv-font-mono);
+    font-size: 10px; color: var(--lkv-forest-800);
+    letter-spacing: 0.06em;
+    font-weight: 600;
+  }
+  .elev-mini .graph {
+    background: var(--lkv-forest-950);
+    border-radius: 14px;
+    padding: 12px;
+    color: #fff;
+    position: relative;
+  }
+  .elev-mini .graph svg { width: 100%; height: 92px; display: block; }
+  .elev-mini .graph .scale {
+    display: flex; justify-content: space-between;
+    font-family: var(--lkv-font-mono);
+    font-size: 8px; color: rgba(255,255,255,0.5);
+    letter-spacing: 0.1em;
+    margin-top: 6px;
+  }
+
+  /* ═══════════════════════════════════════════════
+     RIGHT PANEL — Stats + Copilot
+     ═══════════════════════════════════════════════ */
+  .right-panel {
+    position: absolute;
+    top: 96px; right: 20px;
+    width: 340px;
+    max-height: calc(100% - 200px);
+    display: flex; flex-direction: column; gap: 14px;
+    z-index: 30;
+  }
+
+  /* Live stats grid */
+  .stat-grid {
+    padding: 4px 12px 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .stat-cell {
+    padding: 12px 14px;
+    background: rgba(11,31,23,0.04);
+    border-radius: 14px;
+    border: 1px solid rgba(11,31,23,0.05);
+  }
+  .stat-cell.hero {
+    grid-column: span 2;
+    background: var(--lkv-forest-950);
+    color: #fff;
+    border: none;
+    padding: 14px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-cell.hero::before {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 100% 0%, rgba(168,200,160,0.2) 0%, transparent 60%),
+      radial-gradient(ellipse at 0% 100%, rgba(198,220,190,0.1) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .stat-cell .l {
+    font-family: var(--lkv-font-mono);
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-ink-500);
+    line-height: 1;
+  }
+  .stat-cell.hero .l { color: var(--lkv-sage-300); }
+  .stat-cell .v {
+    font-size: 22px; font-weight: 500; letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--lkv-ink-900);
+    margin-top: 6px;
+  }
+  .stat-cell.hero .v { color: #fff; font-size: 26px; }
+  .stat-cell .v em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+    font-size: 14px;
+  }
+  .stat-cell.hero .v em { color: var(--lkv-sage-300); font-size: 16px; }
+  .stat-cell .d {
+    font-family: var(--lkv-font-mono);
+    font-size: 9px;
+    color: var(--lkv-ink-500);
+    letter-spacing: 0.06em;
+    margin-top: 6px;
+  }
+  .stat-cell.hero .d { color: rgba(198,220,190,0.7); }
+
+  /* Copilot panel */
+  .copilot-block {
+    padding: 4px 16px 16px;
+  }
+  .copilot-block .orb-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 4px 0 12px;
+  }
+  .copilot-block .orb {
+    width: 44px; height: 44px; border-radius: 50%;
+    background:
+      radial-gradient(circle at 30% 30%, #EAF1E5 0%, transparent 40%),
+      radial-gradient(circle at 70% 70%, #A8C8A0 0%, transparent 40%),
+      linear-gradient(135deg, var(--lkv-forest-800), var(--lkv-sage-500));
+    box-shadow: 0 0 24px rgba(168,200,160,0.5), inset 0 0 12px rgba(11,31,23,0.15);
+    animation: orb 4s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes orb {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+  }
+  .copilot-block .orb-row .txt { flex: 1; min-width: 0; }
+  .copilot-block .orb-row .t {
+    font-size: 15px; font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .copilot-block .orb-row .t em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .copilot-block .orb-row .s {
+    font-family: var(--lkv-font-mono);
+    font-size: 9px; color: var(--lkv-ink-500);
+    letter-spacing: 0.1em;
+    margin-top: 2px;
+  }
+  .copilot-block .msg {
+    padding: 10px 12px;
+    background: rgba(11,31,23,0.04);
+    border-radius: 12px;
+    font-size: 12px; line-height: 1.45;
+    color: var(--lkv-ink-900);
+    margin-bottom: 8px;
+  }
+  .copilot-block .msg em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .copilot-block .facts {
+    display: flex; flex-wrap: wrap; gap: 4px;
+    margin-top: 8px;
+  }
+  .copilot-block .facts span {
+    padding: 3px 8px;
+    background: var(--lkv-paper);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 999px;
+    font-family: var(--lkv-font-mono);
+    font-size: 9px;
+    letter-spacing: 0.04em;
+    color: var(--lkv-forest-800);
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .copilot-block .facts svg { width: 9px; height: 9px; }
+  .copilot-block .suggest {
+    display: flex; flex-wrap: wrap; gap: 5px;
+    margin-top: 10px;
+  }
+  .copilot-block .suggest button {
+    padding: 6px 10px;
+    background: var(--lkv-paper);
+    border: 1px solid rgba(11,31,23,0.08);
+    border-radius: 999px;
+    font-size: 11px; color: var(--lkv-ink-700);
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .copilot-block .suggest button em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800);
+  }
+  .copilot-block .suggest button svg { width: 10px; height: 10px; color: var(--lkv-forest-800); }
+  .copilot-block .input {
+    margin-top: 12px;
+    padding: 6px 6px 6px 14px;
+    background: var(--lkv-stone-50);
+    border-radius: 999px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .copilot-block .input .plc {
+    flex: 1;
+    font-size: 12px; color: var(--lkv-ink-500);
+  }
+  .copilot-block .input .mic {
+    width: 32px; height: 32px; border-radius: 999px;
+    background: var(--lkv-forest-800); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .copilot-block .input .mic svg { width: 12px; height: 12px; }
+
+  /* ═══════════════════════════════════════════════
+     GLANCE / Alert strip — flottant sur la carte
+     ═══════════════════════════════════════════════ */
+  .glance {
+    position: absolute;
+    top: 96px; left: 50%;
+    transform: translateX(-50%);
+    padding: 14px 18px;
+    background: rgba(251,250,246,0.96);
+    backdrop-filter: blur(24px) saturate(1.6);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    border: 1px solid var(--panel-border);
+    border-radius: 20px;
+    box-shadow: var(--panel-shadow);
+    display: flex; align-items: center; gap: 14px;
+    z-index: 25;
+    min-width: 520px;
+    max-width: 620px;
+  }
+  .glance.warn {
+    background: rgba(232,184,122,0.96);
+    border-color: rgba(122,74,21,0.14);
+    color: #4A2E0E;
+  }
+  .glance .ic {
+    width: 44px; height: 44px; border-radius: 14px;
+    background: rgba(11,31,23,0.06);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--lkv-forest-800);
+  }
+  .glance.warn .ic { background: rgba(122,74,21,0.14); color: #7A4A15; }
+  .glance .ic svg { width: 22px; height: 22px; }
+  .glance .body { flex: 1; min-width: 0; }
+  .glance .body .t {
+    font-size: 16px; font-weight: 500; letter-spacing: -0.01em;
+    line-height: 1.15;
+  }
+  .glance .body .t em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .glance.warn .body .t em { color: #7A4A15; }
+  .glance .body .s {
+    font-size: 11px; opacity: 0.7;
+    margin-top: 3px;
+    font-family: var(--lkv-font-mono);
+    letter-spacing: 0.06em;
+  }
+  .glance .actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .glance .actions button {
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.02em;
+    background: rgba(11,31,23,0.08);
+    color: inherit;
+  }
+  .glance.warn .actions button.primary {
+    background: #7A4A15; color: #fff;
+  }
+
+  /* ═══════════════════════════════════════════════
+     NAV CARD — prochaine instruction (haut, centre)
+     ═══════════════════════════════════════════════ */
+  .nav-card {
+    position: absolute;
+    top: 96px; left: 50%;
+    transform: translateX(-50%);
+    padding: 14px 20px 14px 14px;
+    background: rgba(251,250,246,0.96);
+    backdrop-filter: blur(24px) saturate(1.6);
+    border: 1px solid var(--panel-border);
+    border-radius: 20px;
+    box-shadow: var(--panel-shadow);
+    display: flex; align-items: center; gap: 14px;
+    z-index: 20;
+    min-width: 380px;
+  }
+  .nav-card .turn {
+    width: 56px; height: 56px; border-radius: 16px;
+    background: var(--lkv-forest-800);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .nav-card .turn svg { width: 28px; height: 28px; }
+  .nav-card .turn .pulse {
+    position: absolute; inset: -5px;
+    border-radius: 20px;
+    border: 2px solid var(--lkv-forest-800);
+    opacity: 0.25;
+    animation: pulse 2s ease-out infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(0.95); opacity: 0.4; }
+    100% { transform: scale(1.15); opacity: 0; }
+  }
+  .nav-card .body { min-width: 0; }
+  .nav-card .body .dist {
+    font-family: var(--lkv-font-mono);
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-forest-800); font-weight: 600;
+  }
+  .nav-card .body .instr {
+    font-size: 22px; font-weight: 500; letter-spacing: -0.015em;
+    line-height: 1.05;
+    margin-top: 2px;
+  }
+  .nav-card .body .instr em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .nav-card .body .path {
+    font-size: 11px; color: var(--lkv-ink-500);
+    font-family: var(--lkv-font-mono);
+    margin-top: 3px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ═══════════════════════════════════════════════
+     DOCK BAR — contrôles centraux (bas)
+     ═══════════════════════════════════════════════ */
+  .dock {
+    position: absolute;
+    bottom: 22px; left: 50%;
+    transform: translateX(-50%);
+    height: 78px;
+    padding: 8px 12px;
+    background: rgba(251,250,246,0.94);
+    backdrop-filter: blur(30px) saturate(1.6);
+    -webkit-backdrop-filter: blur(30px) saturate(1.6);
+    border: 1px solid var(--panel-border);
+    border-radius: 26px;
+    box-shadow: 0 20px 48px rgba(11,31,23,0.16);
+    display: flex; align-items: center;
+    gap: 6px;
+    z-index: 40;
+  }
+  .dock .grp {
+    display: flex; align-items: center; gap: 4px;
+    padding: 0 4px;
+  }
+  .dock .divider {
+    width: 1px; height: 34px;
+    background: rgba(11,31,23,0.08);
+    margin: 0 6px;
+  }
+  .ctrl {
+    height: 60px; min-width: 68px;
+    padding: 6px 10px;
+    border-radius: 18px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px;
+    color: var(--lkv-ink-500);
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: transparent;
+    transition: background var(--lkv-dur) var(--lkv-ease);
+  }
+  .ctrl:hover { background: rgba(11,31,23,0.04); }
+  .ctrl svg { width: 22px; height: 22px; }
+  .ctrl.on {
+    color: var(--lkv-forest-800);
+    background: rgba(168,200,160,0.2);
+  }
+  .ctrl-main {
+    width: 88px; height: 60px; border-radius: 20px;
+    background: #E8B87A;
+    color: #4A2E0E;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px;
+    box-shadow: 0 6px 16px rgba(232,184,122,0.5);
+    padding: 6px 10px;
+  }
+  .ctrl-main svg { width: 22px; height: 22px; }
+  .ctrl-main .l {
+    font-family: var(--lkv-font-mono);
+    font-size: 9px; font-weight: 600;
+    letter-spacing: 0.1em;
+  }
+  .ctrl-main.start {
+    background: var(--lkv-forest-800);
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(23,64,44,0.4);
+  }
+  .ctrl-main.stop {
+    background: #B85838;
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(184,88,56,0.4);
+  }
+
+  .dock .live {
+    display: flex; flex-direction: column;
+    padding: 0 14px 0 8px;
+    line-height: 1;
+  }
+  .dock .live .st {
+    font-family: var(--lkv-font-mono);
+    font-size: 9px; letter-spacing: 0.14em;
+    color: var(--lkv-forest-800);
+    font-weight: 600;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .dock .live .st .rec {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #B85838;
+    animation: rec 1.4s ease-in-out infinite;
+  }
+  @keyframes rec {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.25; }
+  }
+  .dock .live .t {
+    font-size: 22px; font-weight: 500;
+    letter-spacing: -0.02em;
+    margin-top: 5px;
+    color: var(--lkv-ink-900);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ═══════════════════════════════════════════════
+     RECENTRE / floating map controls (right, above dock)
+     ═══════════════════════════════════════════════ */
+  .map-tools {
+    position: absolute;
+    right: 380px; bottom: 40px;
+    display: flex; flex-direction: column; gap: 6px;
+    z-index: 30;
+  }
+  .map-tools button {
+    width: 44px; height: 44px; border-radius: 14px;
+    background: var(--panel);
+    backdrop-filter: blur(24px) saturate(1.6);
+    border: 1px solid var(--panel-border);
+    box-shadow: var(--panel-shadow);
+    color: var(--lkv-ink-900);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .map-tools button svg { width: 18px; height: 18px; }
+  .map-tools .layers {
+    background: var(--lkv-forest-800);
+    color: #fff;
+    border-color: rgba(198,220,190,0.14);
+  }
+
+  /* Recentre pill on map */
+  .recentre {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    margin-top: 90px;
+    padding: 8px 16px 8px 12px;
+    background: rgba(23,64,44,0.95);
+    color: #fff;
+    border-radius: 999px;
+    display: none;
+    align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 500;
+    z-index: 20;
+    box-shadow: 0 8px 20px rgba(11,31,23,0.25);
+  }
+  .recentre em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300);
+  }
+
+  /* ═══════════════════════════════════════════════
+     LEGEND on map (bottom left)
+     ═══════════════════════════════════════════════ */
+  .legend {
+    position: absolute;
+    left: 360px; bottom: 40px;
+    padding: 10px 14px;
+    background: var(--panel);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    box-shadow: var(--panel-shadow);
+    display: flex; gap: 16px;
+    align-items: center;
+    z-index: 30;
+    font-family: var(--lkv-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--lkv-ink-500);
+    text-transform: uppercase;
+  }
+  .legend .swatch {
+    width: 20px; height: 3px; border-radius: 2px;
+    display: inline-block;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .legend .planned { background: rgba(23,64,44,0.4); }
+  .legend .done {
+    background: linear-gradient(90deg, var(--lkv-forest-800), var(--lkv-sage-500));
+  }
+  .legend .divider {
+    width: 1px; height: 14px;
+    background: rgba(11,31,23,0.1);
+  }
+
+  /* ═══════════════════════════════════════════════
+     STATE SWITCHER — bottom right of the shell
+     ═══════════════════════════════════════════════ */
+  .state-switch {
+    position: absolute;
+    bottom: 26px; right: 20px;
+    display: flex; gap: 4px;
+    background: var(--panel);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 4px;
+    box-shadow: var(--panel-shadow);
+    z-index: 40;
+  }
+  .state-switch button {
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 11px; font-weight: 500;
+    color: var(--lkv-ink-500);
+    letter-spacing: -0.005em;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .state-switch button em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .state-switch button.on {
+    background: var(--lkv-forest-800);
+    color: #fff;
+  }
+  .state-switch button.on em { color: var(--lkv-sage-200); }
+  .state-switch button .k {
+    font-family: var(--lkv-font-mono);
+    font-size: 9px;
+    color: var(--lkv-ink-400);
+    letter-spacing: 0.1em;
+    padding: 2px 5px;
+    background: rgba(11,31,23,0.06);
+    border-radius: 4px;
+  }
+  .state-switch button.on .k {
+    color: var(--lkv-sage-300);
+    background: rgba(198,220,190,0.14);
+  }
+
+  /* ═══════════════════════════════════════════════
+     PAGE FOOTER — spec notes
+     ═══════════════════════════════════════════════ */
+  .foot {
+    max-width: 1720px;
+    margin: 20px auto 0;
+    display: flex; justify-content: space-between;
+    font-family: var(--lkv-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--lkv-ink-400);
+    text-transform: uppercase;
+  }
+  .foot em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800);
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-title">
+  <div>
+    <div class="h">Cockpit <em>randonnée</em> · desktop · Le Kit du Voyageur</div>
+    <div class="sub">La carte reste le héros — panneaux latéraux glacés, dock central sobre. Même DNA que la version mobile, respire à l'échelle 1600.</div>
+  </div>
+  <div class="crumbs">
+    <a href="Mobile - Randonnée (cockpit).html">Version mobile</a>
+    <a href="#">Compte</a>
+  </div>
+</div>
+
+<div class="cockpit">
+  <div class="frame">
+
+    <!-- ═══════════════ MAP LAYER ═══════════════ -->
+    <div class="map">
+      <div class="contour"></div>
+      <div class="specks"></div>
+      <div class="water"></div>
+
+      <!-- Tracks -->
+      <svg class="track-svg" viewBox="0 0 1600 900" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="track-done" x1="0" x2="1" y1="1" y2="0">
+            <stop offset="0%" stop-color="#17402C"/>
+            <stop offset="100%" stop-color="#2D6B4A"/>
+          </linearGradient>
+        </defs>
+        <!-- Planned (dashed) -->
+        <path d="M120,820 Q260,720 380,640 T580,520 T760,470 L800,468 Q900,460 1040,380 T1240,240 T1440,120"
+              fill="none" stroke="#17402C" stroke-width="5"
+              stroke-linecap="round" stroke-dasharray="3 9" opacity="0.4"/>
+        <!-- Completed (solid, with sage overlay) -->
+        <path d="M120,820 Q260,720 380,640 T580,520 T760,470 L800,468"
+              fill="none" stroke="url(#track-done)" stroke-width="6"
+              stroke-linecap="round"/>
+        <path d="M120,820 Q260,720 380,640 T580,520 T760,470 L800,468"
+              fill="none" stroke="#A8C8A0" stroke-width="2.6"
+              stroke-linecap="round" opacity="0.9"/>
+
+        <!-- alternate variant (dotted) -->
+        <path d="M580,520 Q640,470 720,420 T880,340"
+              fill="none" stroke="#8B978F" stroke-width="2.5"
+              stroke-linecap="round" stroke-dasharray="1 6" opacity="0.4"/>
+      </svg>
+
+      <!-- POIs -->
+      <div class="poi refuge" style="top: 62%; left: 22%;">
+        <div class="pin">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V8l6-4 6 4v12"/></svg>
+        </div>
+        <div class="lbl">HABERT · REFUGE</div>
+        <div class="alt">1 640 M</div>
+      </div>
+
+      <div class="poi water" style="top: 68%; left: 44%;">
+        <div class="pin">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9M12 12c-3 3-5 5-5 8a5 5 0 0 0 10 0c0-3-2-5-5-8z"/></svg>
+        </div>
+        <div class="lbl">SOURCE · POINT D'EAU</div>
+      </div>
+
+      <div class="poi pano" style="top: 42%; left: 58%;">
+        <div class="pin">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <div class="lbl">PANORAMA · GRÉSIVAUDAN</div>
+        <div class="alt">1 842 M</div>
+      </div>
+
+      <div class="poi danger" style="top: 32%; left: 76%;">
+        <div class="pin">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5M12 17h.01"/><path d="M10.3 3.7l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.3l-8-14a2 2 0 0 0-3.4 0z"/></svg>
+        </div>
+        <div class="lbl">PASSAGE ÉTROIT · CHAÎNES</div>
+      </div>
+
+      <div class="poi summit" style="top: 14%; left: 90%;">
+        <div class="pin">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l3-9h12l3 9"/><path d="M6 12l6-8 6 8"/></svg>
+        </div>
+        <div class="lbl">CHAMECHAUDE · SOMMET</div>
+        <div class="alt">2 082 M</div>
+      </div>
+
+      <!-- USER position -->
+      <div class="me-marker">
+        <div class="halo"></div>
+        <div class="accuracy"></div>
+        <div class="cone"></div>
+        <div class="dot"></div>
+        <div class="name">C · JOUR 2</div>
+      </div>
+
+    </div>
+
+    <!-- ═══════════════ TOP BAR ═══════════════ -->
+    <div class="topbar">
+      <div class="brand">
+        <div class="mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l3-9h12l3 9"/><path d="M6 12l6-8 6 8"/></svg>
+        </div>
+        <span>Le Kit du <em>Voyageur</em></span>
+      </div>
+
+      <div class="crumb">
+        <span class="day">J2 / 3</span>
+        <span class="from">Chartreuse</span>
+        <span class="arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+        </span>
+        <span class="route">Habert → <em>Chamechaude</em></span>
+        <span class="arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+        </span>
+        <span class="from">14,2 km · +1 200 m</span>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="top-hud">
+        <div class="cell gps">
+          <div class="ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+          </div>
+          <div class="txt">
+            <div class="l">GPS</div>
+            <div class="v">Précis · 4 m</div>
+          </div>
+        </div>
+        <div class="cell compass">
+          <div class="ic">
+            <span class="n">N</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 8L21 12l-6.5 1L12 21l-2.5-8L3 12l6.5-1z"/></svg>
+          </div>
+          <div class="txt">
+            <div class="l">Cap</div>
+            <div class="v">NNE · 24°</div>
+          </div>
+        </div>
+        <div class="cell">
+          <div class="ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M6 6l1.4 1.4M16.6 16.6L18 18M6 18l1.4-1.4M16.6 7.4L18 6"/></svg>
+          </div>
+          <div class="txt">
+            <div class="l">Météo</div>
+            <div class="v">21° · Dégagé</div>
+          </div>
+        </div>
+        <div class="cell">
+          <div class="ic">
+            <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="2" width="19" height="8" rx="2"/><rect x="3" y="4" width="12" height="4" fill="currentColor"/><rect x="21" y="4" width="2" height="4" rx="0.5" fill="currentColor"/></svg>
+          </div>
+          <div class="txt">
+            <div class="l">Batterie</div>
+            <div class="v">74 % · 6 h</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="avatar">C</div>
+    </div>
+
+    <!-- ═══════════════ LEFT PANEL — Itinéraire ═══════════════ -->
+    <div class="left-panel">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="t">Progression</div>
+          <div class="m"><em>2h18</em> écoulées</div>
+        </div>
+        <div class="progress-block">
+          <div class="head-row">
+            <div class="val">6,8<em> / 14,2 km</em></div>
+            <div class="pct">48 %</div>
+          </div>
+          <div class="bar"><div class="fill" style="width: 48%;"></div></div>
+          <div class="meta">
+            <span>DÉPART · 05:47</span>
+            <span>ETA · 15:42</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="t">Itinéraire · 6 étapes</div>
+          <div class="m">GR9</div>
+        </div>
+        <div class="waypoints">
+          <div class="wp done">
+            <div class="dot">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+            </div>
+            <div class="body">
+              <div class="name">Col de Porte · <em>départ</em></div>
+              <div class="meta">05:47 · 1 326 M · 0 KM</div>
+            </div>
+          </div>
+          <div class="wp done">
+            <div class="dot">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+            </div>
+            <div class="body">
+              <div class="name">Col du <em>Coq</em></div>
+              <div class="meta">07:32 · 1 434 M · 3,2 KM</div>
+            </div>
+          </div>
+          <div class="wp done">
+            <div class="dot">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+            </div>
+            <div class="body">
+              <div class="name">Habert · <em>refuge</em></div>
+              <div class="meta">08:58 · 1 640 M · 5,4 KM · PAUSE 16 MIN</div>
+            </div>
+          </div>
+          <div class="wp current">
+            <div class="dot">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>
+            </div>
+            <div class="body">
+              <div class="name">Crête de <em>Bovinant</em></div>
+              <div class="meta">EN COURS · 1 780 M · 6,8 KM</div>
+            </div>
+          </div>
+          <div class="wp future">
+            <div class="dot">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
+            </div>
+            <div class="body">
+              <div class="name">Panorama · <em>Grésivaudan</em></div>
+              <div class="meta">ETA 11:42 · 1 842 M · 8,1 KM</div>
+            </div>
+          </div>
+          <div class="wp future">
+            <div class="dot">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l3-9h12l3 9"/><path d="M6 12l6-8 6 8"/></svg>
+            </div>
+            <div class="body">
+              <div class="name">Sommet · <em>Chamechaude</em></div>
+              <div class="meta">ETA 15:42 · 2 082 M · 14,2 KM</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="elev-mini">
+          <div class="head">
+            <div class="t">Profil altimétrique</div>
+            <div class="m">MAX · 2 082 M</div>
+          </div>
+          <div class="graph">
+            <svg viewBox="0 0 300 92" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="alt-fill-l" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#A8C8A0" stop-opacity="0.5"/>
+                  <stop offset="100%" stop-color="#A8C8A0" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M0,72 L20,68 L40,60 L60,52 L80,42 L100,38 L120,28 L140,22 L160,14 L180,18 L200,28 L220,40 L240,52 L260,66 L280,74 L300,78 L300,92 L0,92 Z"
+                    fill="url(#alt-fill-l)"/>
+              <path d="M0,72 L20,68 L40,60 L60,52 L80,42 L100,38 L120,28 L140,22 L160,14 L180,18 L200,28 L220,40 L240,52 L260,66 L280,74 L300,78"
+                    fill="none" stroke="#A8C8A0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="115" cy="32" r="4" fill="#A8C8A0" stroke="#06120C" stroke-width="1.5"/>
+              <line x1="115" y1="0" x2="115" y2="92" stroke="#C6DCBE" stroke-width="0.5" stroke-dasharray="2 3" opacity="0.5"/>
+              <text x="115" y="9" fill="#C6DCBE" font-size="7" font-family="ui-monospace" text-anchor="middle" letter-spacing="1">VOUS</text>
+            </svg>
+            <div class="scale">
+              <span>0</span>
+              <span>3,5</span>
+              <span>7</span>
+              <span>10,5</span>
+              <span>14,2 KM</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ RIGHT PANEL — Stats + Copilote ═══════════════ -->
+    <div class="right-panel">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="t">Stats en direct</div>
+          <div class="m">Mise à jour · 09:41</div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-cell hero">
+            <div class="l">Allure moyenne</div>
+            <div class="v">3,0<em> km/h</em></div>
+            <div class="d">▲ RYTHME RÉGULIER · +0,2 KM/H DEPUIS L'HABERT</div>
+          </div>
+          <div class="stat-cell">
+            <div class="l">Durée</div>
+            <div class="v">2h18</div>
+            <div class="d">PAUSES · 16 MIN</div>
+          </div>
+          <div class="stat-cell">
+            <div class="l">Vitesse actuelle</div>
+            <div class="v">3,4<em> km/h</em></div>
+            <div class="d">MONTÉE MODÉRÉE</div>
+          </div>
+          <div class="stat-cell">
+            <div class="l">D+ · dénivelé</div>
+            <div class="v">+420<em> m</em></div>
+            <div class="d">OBJ. · +1 200 M</div>
+          </div>
+          <div class="stat-cell">
+            <div class="l">D− · dénivelé</div>
+            <div class="v">−45<em> m</em></div>
+            <div class="d">PEU DESCENDU</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="t">Copilote <em style="font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); text-transform: none; letter-spacing: 0; font-weight: 400;">Chartreuse</em></div>
+          <div class="m">247 voyageurs</div>
+        </div>
+        <div class="copilot-block">
+          <div class="orb-row">
+            <div class="orb"></div>
+            <div class="txt">
+              <div class="t">Prêt à <em>répondre</em></div>
+              <div class="s">CONTEXTE · JOUR 2 · 6,8 KM · CIEL DÉGAGÉ</div>
+            </div>
+          </div>
+
+          <div class="msg">
+            Il reste <em>7,4 km et +780 m</em> jusqu'à Chamechaude. À votre rythme actuel, arrivée vers <em>15h42</em>. Météo stable jusqu'à 16h.
+            <div class="facts">
+              <span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21l16-8L4 5v6l10 2-10 2z"/></svg>
+                7,4 km
+              </span>
+              <span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20l6-12 4 6 4-2 2 8"/></svg>
+                +780 m
+              </span>
+              <span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                ETA 15:42
+              </span>
+            </div>
+          </div>
+
+          <div class="suggest">
+            <button>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v9M12 12c-3 3-5 5-5 8"/></svg>
+              Prochain <em>point d'eau</em> ?
+            </button>
+            <button>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l3-9h12l3 9"/><path d="M6 12l6-8 6 8"/></svg>
+              Variante <em>plus courte</em> ?
+            </button>
+            <button>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              Dans les <em>temps</em> ?
+            </button>
+          </div>
+
+          <div class="input">
+            <span class="plc">Posez votre question…</span>
+            <button class="mic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M18 10c0 4-2 6-6 6s-6-2-6-6M12 16v4"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ NAV CARD (turn) — floats center-top under topbar ═══════════════ -->
+    <div class="nav-card">
+      <div class="turn">
+        <div class="pulse"></div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V8M12 8l-4 4M12 8l4 4"/><path d="M8 20h8"/></svg>
+      </div>
+      <div class="body">
+        <div class="dist">Dans 180 m</div>
+        <div class="instr">Tout <em>droit</em> · sommet</div>
+        <div class="path">CHEMIN DES CRÊTES · GR9 · +140 M</div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ MAP TOOLS (right, above dock) ═══════════════ -->
+    <div class="map-tools">
+      <button title="Zoom in">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <button title="Zoom out">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 12h14"/></svg>
+      </button>
+      <button class="layers" title="Couches">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5M3 18l9 5 9-5"/></svg>
+      </button>
+      <button title="Recentrer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+      </button>
+    </div>
+
+    <!-- ═══════════════ LEGEND ═══════════════ -->
+    <div class="legend">
+      <div><span class="swatch done"></span>PARCOURU</div>
+      <div><span class="swatch planned" style="border-top: 3px dashed rgba(23,64,44,0.5); background: transparent;"></span>À VENIR</div>
+      <div class="divider"></div>
+      <div>ÉCHELLE · 1 : 25 000</div>
+    </div>
+
+    <!-- ═══════════════ DOCK ═══════════════ -->
+    <div class="dock">
+      <div class="live">
+        <div class="st"><span class="rec"></span>ENREGISTREMENT</div>
+        <div class="t">02:18:47</div>
+      </div>
+      <div class="divider"></div>
+      <div class="grp">
+        <button class="ctrl on">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20l6-12 4 6 4-2 2 8"/></svg>
+          <span>Stats</span>
+        </button>
+        <button class="ctrl">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h5M8 13h8M8 17h6"/></svg>
+          <span>Carnet</span>
+        </button>
+      </div>
+      <div class="divider"></div>
+      <button class="ctrl-main">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M8 5v14M16 5v14"/></svg>
+        <span class="l">PAUSE</span>
+      </button>
+      <button class="ctrl-main stop">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>
+        <span class="l">TERMINER</span>
+      </button>
+      <div class="divider"></div>
+      <div class="grp">
+        <button class="ctrl">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="4"/><path d="M8 2v3M16 2v3"/></svg>
+          <span>Capture</span>
+        </button>
+        <button class="ctrl">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M18 10c0 4-2 6-6 6s-6-2-6-6M12 16v4M9 20h6"/></svg>
+          <span>Voix</span>
+        </button>
+        <button class="ctrl">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2l3 7h7l-6 4 2 8-6-4-6 4 2-8-6-4h7z"/></svg>
+          <span>Moment</span>
+        </button>
+      </div>
+      <div class="divider"></div>
+      <div class="grp">
+        <button class="ctrl">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 12h16M4 6h16M4 18h10"/></svg>
+          <span>Plus</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ═══════════════ STATE SWITCH (démo interne) ═══════════════ -->
+    <!-- (retiré volontairement — état unique par cohérence de démo) -->
+
+  </div>
+</div>
+
+<div class="foot">
+  <div>DESKTOP · <em>1600 × 900+</em> · COCKPIT ACTIF · TRACKING</div>
+  <div>LE KIT DU VOYAGEUR — RANDONNÉE MODULE — 2026.09</div>
+</div>
+
+</body>
+</html>

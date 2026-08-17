@@ -1,0 +1,1469 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Clubs · Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="shop.css"/>
+<style>
+  body { background: #EAE6DF; padding: 40px 0; }
+
+  .stage-title {
+    max-width: 1720px; margin: 0 auto 32px; padding: 0 40px;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 24px;
+    color: var(--lkv-ink-700);
+  }
+  .stage-title .h { font-family: var(--lkv-font-sans); font-size: 24px; font-weight: 500; letter-spacing: -0.015em; color: var(--lkv-ink-900); }
+  .stage-title .sub { font-size: 14px; color: var(--lkv-ink-500); }
+  .stage-title a { color: var(--lkv-forest-800); font-weight: 500; margin-left: 24px; }
+
+  .stage {
+    display: flex; gap: 40px;
+    max-width: 1720px; margin: 0 auto; padding: 0 40px;
+    align-items: flex-start;
+  }
+  .artboard-desktop {
+    width: 1280px; flex-shrink: 0;
+    border-radius: 32px; overflow: hidden;
+    background: var(--lkv-paper);
+    box-shadow: 0 30px 80px rgba(11,31,23,0.14);
+  }
+  .artboard-mobile {
+    width: 380px; flex-shrink: 0;
+    border-radius: 44px; overflow: hidden;
+    background: #000; padding: 12px;
+    box-shadow: 0 30px 80px rgba(11,31,23,0.18);
+    align-self: flex-start;
+  }
+  .artboard-mobile .screen {
+    width: 100%; height: 780px;
+    border-radius: 34px; overflow: hidden;
+    background: var(--lkv-paper); position: relative;
+  }
+  .board-caption {
+    margin-top: 14px; font-size: 12px; color: var(--lkv-ink-500);
+    text-align: center; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+
+  /* ————— NAV / HEADER ————— */
+  .clubs-header {
+    padding: 20px 20px 0;
+    background: var(--lkv-paper);
+  }
+  .top-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 10px 10px 24px;
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(24px) saturate(1.4);
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.6);
+    box-shadow: 0 8px 24px rgba(11,31,23,0.06);
+    color: var(--lkv-ink-900);
+  }
+  .top-nav .lkv-logo { color: var(--lkv-forest-800); font-weight: 600; }
+  .top-nav .links { display: flex; gap: 28px; }
+  .top-nav .links a {
+    font-size: 14px; color: var(--lkv-ink-700);
+    position: relative; padding: 6px 0;
+  }
+  .top-nav .links a.active { color: var(--lkv-forest-800); }
+  .top-nav .links a.active::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -2px;
+    height: 2px; background: var(--lkv-sage-500); border-radius: 2px;
+  }
+  .top-nav .right { display: flex; align-items: center; gap: 12px; }
+
+  /* ————— PAGE HEAD ————— */
+  .page-head {
+    padding: 80px 60px 40px;
+    background: var(--lkv-paper);
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 60px;
+    align-items: end;
+  }
+  .page-head .eye {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 4px 12px; border-radius: 999px;
+    background: rgba(31,74,58,0.08);
+    color: var(--lkv-forest-800);
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 24px;
+  }
+  .page-head .eye .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-sage-500); }
+  .page-head h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 108px; font-weight: 500;
+    letter-spacing: -0.038em; line-height: 0.94;
+    margin: 0;
+    color: var(--lkv-ink-900);
+    text-wrap: balance;
+  }
+  .page-head h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .page-head .side p {
+    font-family: var(--lkv-font-serif);
+    font-size: 20px; line-height: 1.45;
+    color: var(--lkv-ink-700);
+    margin: 0 0 24px;
+  }
+  .page-head .side .fig {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(11,31,23,0.1);
+  }
+  .page-head .side .fig .n {
+    font-family: var(--lkv-font-sans);
+    font-size: 32px; font-weight: 500; letter-spacing: -0.025em;
+    line-height: 1;
+    color: var(--lkv-ink-900);
+  }
+  .page-head .side .fig .n em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .page-head .side .fig .l {
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-ink-500);
+    margin-top: 6px;
+  }
+
+  /* ————— FILTER BAR ————— */
+  .filter-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 60px;
+    background: var(--lkv-paper);
+    border-top: 1px solid rgba(11,31,23,0.08);
+    border-bottom: 1px solid rgba(11,31,23,0.08);
+    position: sticky; top: 0;
+    z-index: 5;
+    background: rgba(248,250,248,0.92);
+    backdrop-filter: blur(20px);
+  }
+  .filter-bar .search {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 18px;
+    background: #fff;
+    border: 1px solid rgba(11,31,23,0.1);
+    border-radius: 999px;
+    width: 340px;
+    color: var(--lkv-ink-500);
+    font-size: 14px;
+  }
+  .filter-bar .search svg { color: var(--lkv-ink-400); }
+  .filter-bar .pills { display: flex; gap: 8px; }
+  .fpill {
+    height: 40px; padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(11,31,23,0.1);
+    background: #fff;
+    color: var(--lkv-ink-700);
+    font-size: 13px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .fpill:hover { border-color: var(--lkv-forest-800); }
+  .fpill.on {
+    background: var(--lkv-forest-800); border-color: var(--lkv-forest-800); color: #fff;
+  }
+  .fpill svg { color: currentColor; opacity: 0.6; }
+  .filter-bar .sort-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 16px;
+    background: #fff;
+    border: 1px solid rgba(11,31,23,0.1);
+    border-radius: 999px;
+    font-size: 13px; color: var(--lkv-ink-700);
+  }
+
+  /* ————— FEATURED CLUB ————— */
+  .featured {
+    padding: 60px;
+    background: var(--lkv-paper);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: stretch;
+  }
+  .featured .card {
+    position: relative;
+    border-radius: 28px;
+    overflow: hidden;
+    color: #fff;
+    background-size: cover; background-position: center;
+    padding: 40px;
+    min-height: 480px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    cursor: pointer;
+    transition: transform var(--lkv-dur) var(--lkv-ease-out);
+  }
+  .featured .card:hover { transform: translateY(-4px); }
+  .featured .card::before {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0.15) 0%, rgba(11,31,23,0) 45%, rgba(11,31,23,0.85) 100%);
+  }
+  .featured .card > * { position: relative; z-index: 1; }
+  .featured .card .head-row {
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  .featured .card .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px;
+    background: rgba(255,255,255,0.16);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.24);
+    border-radius: 999px;
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .featured .card .badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-sage-300); }
+  .featured .card .join-btn {
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.9);
+    color: var(--lkv-ink-900);
+    border-radius: 999px;
+    font-size: 12px; font-weight: 500;
+  }
+  .featured .card h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 44px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1;
+    margin: 0 0 12px;
+  }
+  .featured .card h3 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .featured .card p {
+    font-family: var(--lkv-font-serif);
+    font-size: 16px; line-height: 1.45;
+    max-width: 380px;
+    color: rgba(255,255,255,0.88);
+    margin: 0 0 20px;
+  }
+  .featured .card .meta {
+    display: flex; gap: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    color: rgba(255,255,255,0.75);
+  }
+  .featured .card .meta .k { display: block; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 4px; }
+  .featured .card .meta .v { font-family: var(--lkv-font-sans); font-size: 16px; color: #fff; font-weight: 500; }
+  .featured .card .members-row {
+    display: flex; margin-top: 16px;
+  }
+  .featured .card .members-row .m {
+    width: 32px; height: 32px; border-radius: 999px;
+    background-size: cover; background-position: center;
+    border: 2px solid #fff;
+    margin-left: -8px;
+  }
+  .featured .card .members-row .m:first-child { margin-left: 0; }
+
+  /* ————— INDEX SECTION ————— */
+  .index-section {
+    padding: 80px 60px;
+    background: var(--lkv-stone-50);
+    border-top: 1px solid rgba(11,31,23,0.08);
+  }
+  .index-section .head {
+    display: flex; justify-content: space-between; align-items: end;
+    margin-bottom: 40px;
+  }
+  .index-section h2 {
+    font-family: var(--lkv-font-sans);
+    font-size: 52px; font-weight: 500;
+    letter-spacing: -0.028em; line-height: 1;
+    margin: 0;
+    color: var(--lkv-ink-900);
+  }
+  .index-section h2 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .index-section .head .count {
+    font-family: var(--lkv-font-serif);
+    font-style: italic;
+    font-size: 20px;
+    color: var(--lkv-ink-500);
+  }
+  .index-section .head .count strong {
+    font-family: var(--lkv-font-sans);
+    font-style: normal;
+    color: var(--lkv-forest-800);
+    font-weight: 500;
+    margin-right: 6px;
+  }
+
+  /* Grid of clubs */
+  .clubs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .club-card {
+    background: #fff;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: var(--lkv-shadow-sm);
+    transition: transform var(--lkv-dur) var(--lkv-ease-out),
+                box-shadow var(--lkv-dur) var(--lkv-ease-out);
+    cursor: pointer;
+    display: flex; flex-direction: column;
+  }
+  .club-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--lkv-shadow-lg);
+  }
+  .club-card .cover {
+    position: relative;
+    height: 180px;
+    background-size: cover; background-position: center;
+  }
+  .club-card .cover::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(11,31,23,0.6));
+  }
+  .club-card .cover .cat {
+    position: absolute; top: 14px; left: 14px;
+    padding: 5px 12px;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(12px);
+    border-radius: 999px;
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-forest-800); font-weight: 500;
+  }
+  .club-card .cover .status {
+    position: absolute; top: 14px; right: 14px;
+    padding: 5px 12px;
+    background: rgba(11,31,23,0.7);
+    backdrop-filter: blur(12px);
+    border-radius: 999px;
+    font-size: 10px; letter-spacing: 0.08em;
+    color: #fff;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .club-card .cover .status .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--lkv-sage-300);
+    animation: pulse 2s var(--lkv-ease) infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+  }
+  .club-card .cover .num-badge {
+    position: absolute; bottom: 14px; right: 14px;
+    padding: 5px 12px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.28);
+    border-radius: 999px;
+    font-family: var(--lkv-font-serif);
+    font-style: italic;
+    font-size: 14px;
+    color: #fff;
+  }
+  .club-card .body {
+    padding: 22px 22px 20px;
+    flex: 1;
+    display: flex; flex-direction: column;
+  }
+  .club-card .body h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 22px; font-weight: 500;
+    letter-spacing: -0.015em; line-height: 1.15;
+    margin: 0 0 8px;
+    color: var(--lkv-ink-900);
+    text-wrap: balance;
+  }
+  .club-card .body h4 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .club-card .body p {
+    font-size: 13px; line-height: 1.5;
+    color: var(--lkv-ink-500);
+    margin: 0 0 18px;
+    flex: 1;
+  }
+  .club-card .body .meta {
+    display: flex; align-items: center;
+    padding-top: 14px;
+    border-top: 1px solid rgba(11,31,23,0.06);
+    font-size: 12px;
+    color: var(--lkv-ink-500);
+  }
+  .club-card .body .meta .members {
+    display: flex;
+  }
+  .club-card .body .meta .members .m {
+    width: 24px; height: 24px; border-radius: 999px;
+    background-size: cover; background-position: center;
+    border: 2px solid #fff;
+    margin-left: -6px;
+  }
+  .club-card .body .meta .members .m:first-child { margin-left: 0; }
+  .club-card .body .meta .members-info {
+    margin-left: 10px;
+    display: flex; flex-direction: column;
+    line-height: 1.2;
+  }
+  .club-card .body .meta .members-info .n {
+    font-size: 13px; font-weight: 500; color: var(--lkv-ink-900);
+    font-family: var(--lkv-font-sans);
+  }
+  .club-card .body .meta .members-info .l {
+    font-size: 10px; letter-spacing: 0.08em;
+    color: var(--lkv-ink-500);
+  }
+  .club-card .body .meta .arrow {
+    margin-left: auto;
+    width: 32px; height: 32px; border-radius: 999px;
+    background: var(--lkv-stone-50);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+    transition: transform var(--lkv-dur) var(--lkv-ease-out), background var(--lkv-dur) var(--lkv-ease);
+  }
+  .club-card:hover .arrow {
+    background: var(--lkv-forest-800); color: #fff;
+    transform: translate(4px, -2px);
+  }
+
+  /* ————— CATEGORIES BAND ————— */
+  .cat-band {
+    padding: 80px 60px;
+    background: var(--lkv-forest-950);
+    color: #fff;
+  }
+  .cat-band .head {
+    display: flex; justify-content: space-between; align-items: end;
+    margin-bottom: 40px;
+  }
+  .cat-band h2 {
+    font-family: var(--lkv-font-sans);
+    font-size: 52px; font-weight: 500;
+    letter-spacing: -0.028em; line-height: 1;
+    margin: 0;
+  }
+  .cat-band h2 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .cat-band .head p {
+    max-width: 320px;
+    font-size: 14px; color: rgba(255,255,255,0.6);
+    margin: 0;
+  }
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .cat-tile {
+    padding: 24px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .cat-tile:hover {
+    background: rgba(255,255,255,0.08);
+    transform: translateY(-4px);
+  }
+  .cat-tile .icon {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    background: rgba(174,203,180,0.1);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-sage-300);
+    margin-bottom: 16px;
+  }
+  .cat-tile h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 20px; font-weight: 500;
+    letter-spacing: -0.015em;
+    margin: 0 0 6px;
+  }
+  .cat-tile h4 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .cat-tile p {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    margin: 0 0 20px;
+    line-height: 1.4;
+  }
+  .cat-tile .foot {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .cat-tile .foot .c {
+    font-family: var(--lkv-font-serif);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--lkv-sage-300);
+  }
+  .cat-tile .foot .c strong {
+    font-family: var(--lkv-font-sans);
+    font-style: normal;
+    font-weight: 500;
+    color: #fff;
+    margin-right: 4px;
+  }
+  .cat-tile .foot .arrow {
+    color: rgba(255,255,255,0.4);
+  }
+
+  /* ————— CTA CREATE ————— */
+  .create-band {
+    padding: 100px 60px;
+    background: var(--lkv-paper);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+  }
+  .create-band h2 {
+    font-family: var(--lkv-font-sans);
+    font-size: 68px; font-weight: 500;
+    letter-spacing: -0.032em; line-height: 0.98;
+    margin: 0 0 20px;
+  }
+  .create-band h2 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .create-band p {
+    font-size: 17px; line-height: 1.55;
+    color: var(--lkv-ink-500);
+    margin: 0 0 32px;
+    max-width: 460px;
+  }
+  .create-band .side {
+    position: relative;
+    border-radius: 28px;
+    overflow: hidden;
+    background-image: url('assets/workshop.jpg');
+    background-size: cover; background-position: center;
+    min-height: 420px;
+  }
+  .create-band .side::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(11,31,23,0.55));
+  }
+  .create-band .side .cap {
+    position: absolute; left: 24px; bottom: 24px;
+    color: #fff;
+    font-family: var(--lkv-font-serif);
+    font-style: italic;
+    font-size: 15px;
+  }
+
+  /* ————— FOOTER ————— */
+  .footer {
+    background: var(--lkv-forest-950); color: #fff;
+    padding: 80px 60px 40px;
+  }
+  .footer .brand {
+    font-family: var(--lkv-font-sans);
+    font-size: 48px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1;
+    margin-bottom: 60px;
+    max-width: 720px;
+  }
+  .footer .brand em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .footer .grid {
+    display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    gap: 40px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .footer h5 {
+    font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.55); font-weight: 500;
+    margin: 0 0 16px;
+  }
+  .footer ul { list-style: none; padding: 0; margin: 0; }
+  .footer ul li { margin-bottom: 10px; }
+  .footer ul li a { color: rgba(255,255,255,0.75); font-size: 14px; }
+  .footer .bottom {
+    display: flex; justify-content: space-between;
+    padding-top: 24px;
+    font-size: 12px; color: rgba(255,255,255,0.4);
+  }
+
+  /* ================= MOBILE ================ */
+  .m-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 18px;
+    background: #fff;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .m-header .lkv-logo { color: var(--lkv-forest-800); font-size: 13px; }
+  .m-header .b {
+    width: 34px; height: 34px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-700);
+  }
+
+  .m-head {
+    padding: 24px 20px 16px;
+    background: #fff;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .m-head .eye {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: 999px;
+    background: rgba(31,74,58,0.08);
+    color: var(--lkv-forest-800);
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+  .m-head .eye .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--lkv-sage-500); }
+  .m-head h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 40px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 0.95;
+    margin: 0 0 12px;
+    color: var(--lkv-ink-900);
+  }
+  .m-head h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .m-head p {
+    font-family: var(--lkv-font-serif);
+    font-size: 14px; line-height: 1.4;
+    color: var(--lkv-ink-700);
+    margin: 0;
+  }
+
+  .m-search {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px;
+    margin: 14px 20px 6px;
+    background: var(--lkv-stone-50);
+    border: 1px solid rgba(11,31,23,0.08);
+    border-radius: 999px;
+    color: var(--lkv-ink-500);
+    font-size: 13px;
+  }
+
+  .m-pills {
+    display: flex; gap: 6px;
+    padding: 10px 20px 14px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    background: var(--lkv-paper);
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .m-pills::-webkit-scrollbar { display: none; }
+  .m-pills .p {
+    flex-shrink: 0;
+    height: 30px; padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(11,31,23,0.1);
+    font-size: 12px; font-weight: 500;
+    color: var(--lkv-ink-700);
+    background: #fff;
+    display: inline-flex; align-items: center;
+  }
+  .m-pills .p.on {
+    background: var(--lkv-forest-800); border-color: var(--lkv-forest-800); color: #fff;
+  }
+
+  .m-list { padding: 12px 20px 90px; }
+  .m-club {
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--lkv-shadow-xs);
+    margin-bottom: 14px;
+  }
+  .m-club .cover {
+    height: 120px;
+    background-size: cover; background-position: center;
+    position: relative;
+  }
+  .m-club .cover .cat {
+    position: absolute; top: 10px; left: 10px;
+    padding: 3px 10px;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 999px;
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-forest-800); font-weight: 500;
+  }
+  .m-club .body { padding: 14px 16px; }
+  .m-club .body h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 17px; font-weight: 500; letter-spacing: -0.015em;
+    line-height: 1.15;
+    margin: 0 0 4px;
+    color: var(--lkv-ink-900);
+  }
+  .m-club .body h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .m-club .body p {
+    font-size: 12px; color: var(--lkv-ink-500);
+    line-height: 1.4;
+    margin: 0 0 12px;
+  }
+  .m-club .body .foot {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid rgba(11,31,23,0.06);
+  }
+  .m-club .body .foot .members { display: flex; }
+  .m-club .body .foot .m {
+    width: 20px; height: 20px; border-radius: 999px;
+    background-size: cover; background-position: center;
+    border: 2px solid #fff;
+    margin-left: -5px;
+  }
+  .m-club .body .foot .m:first-child { margin-left: 0; }
+  .m-club .body .foot .count { font-size: 11px; color: var(--lkv-ink-500); margin-left: 8px; }
+  .m-club .body .foot .join {
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: var(--lkv-forest-800);
+    color: #fff;
+    font-size: 11px; font-weight: 500;
+  }
+
+  .m-tabbar {
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 10px 8px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 24px;
+    box-shadow: 0 8px 24px rgba(11,31,23,0.08);
+  }
+  .m-tabbar .tabi {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-500);
+  }
+  .m-tabbar .tabi.on { background: var(--lkv-forest-800); color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="stage-title">
+  <div>
+    <div class="h">Clubs — Annuaire thématique</div>
+    <div class="sub">62 clubs actifs, indexés comme un carnet de bord</div>
+  </div>
+  <div>
+    <a href="Home.html">← Home</a>
+    <a href="Communauté.html">Communauté</a>
+    <a href="Groupes.html">Groupes</a>
+    <a href="Carnet.html">Carnet</a>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ========== DESKTOP ========== -->
+  <div>
+  <div class="artboard-desktop">
+
+    <div class="clubs-header">
+      <nav class="top-nav">
+        <div class="lkv-logo">
+          <svg viewBox="0 0 32 32" width="24" height="24" fill="none">
+            <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+          </svg>
+          <span>Le Kit du Voyageur</span>
+        </div>
+        <div class="links">
+          <a href="Recherche Carte.html">Aventures</a>
+          <a href="#">Refuges</a>
+          <a href="Boutique.html">Boutique</a>
+          <a href="Carnet.html">Carnet</a>
+          <a href="Communauté.html" class="active">Communauté</a>
+        </div>
+        <div class="right">
+          <button class="lkv-btn lkv-btn-icon lkv-btn-ghost">
+            <svg class="lkv-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          </button>
+          <button class="lkv-btn lkv-btn-primary lkv-btn-sm">Créer un club</button>
+        </div>
+      </nav>
+    </div>
+
+    <!-- PAGE HEAD -->
+    <section class="page-head">
+      <div>
+        <div class="eye"><span class="dot"></span>Communauté / Clubs</div>
+        <h1>Trouvez<br/>ceux qui<br/><em>marchent</em><br/>comme vous.</h1>
+      </div>
+      <div class="side">
+        <p>Un club, c'est une porte entrouverte : une thématique, quelques dizaines de voyageurs, des sorties régulières. On y entre pour écouter, on y reste pour partager.</p>
+        <div class="fig">
+          <div>
+            <div class="n">62</div>
+            <div class="l">Clubs actifs</div>
+          </div>
+          <div>
+            <div class="n">8<em>,4k</em></div>
+            <div class="l">Membres</div>
+          </div>
+          <div>
+            <div class="n">27<em> /sem.</em></div>
+            <div class="l">Sorties prévues</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+      <div style="display: flex; gap: 16px; align-items: center;">
+        <div class="search">
+          <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <span>Rechercher un club, une thématique…</span>
+        </div>
+        <div class="pills">
+          <button class="fpill on">Tous</button>
+          <button class="fpill">Rando</button>
+          <button class="fpill">Bivouac</button>
+          <button class="fpill">Eau vive</button>
+          <button class="fpill">Vélo</button>
+          <button class="fpill">Ateliers</button>
+        </div>
+      </div>
+      <button class="sort-btn">
+        Trier · Actifs
+        <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+    </div>
+
+    <!-- FEATURED CLUBS (2 big) -->
+    <section class="featured">
+      <div class="card" style="background-image: url('assets/adventure-hiking.jpg')">
+        <div class="head-row">
+          <div class="badge"><span class="dot"></span>Club en vue · septembre</div>
+          <button class="join-btn">Rejoindre</button>
+        </div>
+        <div>
+          <h3>Sentiers <em>longs</em></h3>
+          <p>Traversées de 3 à 12 jours, sac léger et carnet à la main. Nous partons deux week-ends par mois, quelle que soit la météo.</p>
+          <div class="members-row">
+            <div class="m" style="background-image: url('assets/portrait-1.jpg')"></div>
+            <div class="m" style="background-image: url('assets/portrait-2.jpg')"></div>
+            <div class="m" style="background-image: url('assets/portrait-3.jpg')"></div>
+            <div class="m" style="background-image: url('assets/portrait-1.jpg'); filter: hue-rotate(30deg)"></div>
+            <div class="m" style="background-image: url('assets/portrait-2.jpg'); filter: hue-rotate(-15deg)"></div>
+          </div>
+          <div class="meta">
+            <div><span class="k">Membres</span><span class="v">1 240</span></div>
+            <div><span class="k">Prochaine sortie</span><span class="v">Chartreuse · 12 oct.</span></div>
+            <div><span class="k">Fondé</span><span class="v">2020</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="background-image: url('assets/adventure-bivouac.jpg')">
+        <div class="head-row">
+          <div class="badge"><span class="dot" style="background: var(--lkv-warm-300)"></span>Nouveau</div>
+          <button class="join-btn">Rejoindre</button>
+        </div>
+        <div>
+          <h3>Nuits <em>Hautes</em></h3>
+          <p>Le club des bivouacs étoilés. Un ciel, un tapis, un thermos — on marche jusqu'à la nuit, on rentre le lendemain.</p>
+          <div class="members-row">
+            <div class="m" style="background-image: url('assets/portrait-3.jpg')"></div>
+            <div class="m" style="background-image: url('assets/portrait-1.jpg')"></div>
+            <div class="m" style="background-image: url('assets/portrait-2.jpg')"></div>
+            <div class="m" style="background-image: url('assets/portrait-3.jpg'); filter: hue-rotate(40deg)"></div>
+          </div>
+          <div class="meta">
+            <div><span class="k">Membres</span><span class="v">862</span></div>
+            <div><span class="k">Prochaine sortie</span><span class="v">Vercors · 28 sept.</span></div>
+            <div><span class="k">Fondé</span><span class="v">2024</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INDEX SECTION -->
+    <section class="index-section">
+      <div class="head">
+        <h2>L'annuaire <em>complet</em></h2>
+        <div class="count"><strong>62</strong>clubs indexés · triés par activité récente</div>
+      </div>
+
+      <div class="clubs-grid">
+
+        <div class="club-card">
+          <div class="cover" style="background-image: url('assets/adventure-kayak.jpg')">
+            <div class="cat">Eau vive</div>
+            <div class="status"><span class="dot"></span>Actif</div>
+            <div class="num-badge">n° 03</div>
+          </div>
+          <div class="body">
+            <h4>Lacs & <em>rivières</em></h4>
+            <p>Kayak, canoë, descente de rivière en douceur. Le lac de Serre-Ponçon est notre base d'été.</p>
+            <div class="meta">
+              <div class="members">
+                <div class="m" style="background-image: url('assets/portrait-1.jpg')"></div>
+                <div class="m" style="background-image: url('assets/portrait-2.jpg')"></div>
+                <div class="m" style="background-image: url('assets/portrait-3.jpg')"></div>
+              </div>
+              <div class="members-info">
+                <span class="n">514 membres</span>
+                <span class="l">6 sorties/an</span>
+              </div>
+              <div class="arrow">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="club-card">
+          <div class="cover" style="background-image: url('assets/workshop.jpg')">
+            <div class="cat">Atelier</div>
+            <div class="status"><span class="dot"></span>Actif</div>
+            <div class="num-badge">n° 04</div>
+          </div>
+          <div class="body">
+            <h4>Atelier & <em>réparation</em></h4>
+            <p>Cousu-main, cordonnerie, rebouchage de sacs. On se retrouve un samedi par mois à Grenoble.</p>
+            <div class="meta">
+              <div class="members">
+                <div class="m" style="background-image: url('assets/portrait-2.jpg')"></div>
+                <div class="m" style="background-image: url('assets/portrait-3.jpg')"></div>
+                <div class="m" style="background-image: url('assets/portrait-1.jpg')"></div>
+              </div>
+              <div class="members-info">
+                <span class="n">380 membres</span>
+                <span class="l">12 ateliers/an</span>
+              </div>
+              <div class="arrow">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="club-card">
+          <div class="cover" style="background-image: url('assets/journal-refuge.jpg')">
+            <div class="cat">Refuges</div>
+            <div class="status"><span class="dot"></span>Actif</div>
+            <div class="num-badge">n° 05</div>
+          </div>
+          <div class="body">
+            <h4>Gardiens & <em>refuges</em></h4>
+            <p>Amateurs de refuges et de leurs gardiens. Nous documentons chaque cabane que nous visitons.</p>
+            <div class="meta">
+              <div class="members">
+                <div class="m" style="background-image: url('assets/portrait-1.jpg')"></div>
+                <div class="m" style="background-image: url('assets/portrait-2.jpg')"></div>
+              </div>
+              <div class="members-info">
+                <span class="n">294 membres</span>
+                <span class="l">Fondé en 2019</span>
+              </div>
+              <div class="arrow">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="club-card">
+          <div class="cover" style="background-image: url('assets/adventure-hiking.jpg'); filter: hue-rotate(-15deg)">
+            <div class="cat">Cartographie</div>
+            <div class="status"><span class="dot"></span>Actif</div>
+            <div class="num-badge">n° 06</div>
+          </div>
+          <div class="body">
+            <h4>Cartes & <em>topos</em></h4>
+            <p>Lecture de carte, orientation à la boussole, échange de traces GPX. Rendez-vous en salle et sur le terrain.</p>
+            <div class="meta">
+              <div class="members">
+                <div class="m" style="background-image: url('assets/portrait-3.jpg')"></div>
+                <div class="m" style="background-image: url('assets/portrait-2.jpg')"></div>
+                <div class="m" style="background-image: url('assets/portrait-1.jpg')"></div>
+              </div>
+              <div class="members-info">
+                <span class="n">218 membres</span>
+                <span class="l">Ateliers mensuels</span>
+              </div>
+              <div class="arrow">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="club-card">
+          <div class="cover" style="background-image: url('assets/hero-editorial.jpg')">
+            <div class="cat">Photo</div>
+            <div class="status"><span class="dot"></span>Actif</div>
+            <div class="num-badge">n° 07</div>
+          </div>
+          <div class="body">
+            <h4>Argentique <em>de terrain</em></h4>
+            <p>Nous marchons avec des boîtiers 24×36 et une pellicule dans la poche. Développement collectif chaque saison.</p>
+            <div class="meta">
+              <div class="members">
+                <div class="m" style="background-image: url('assets/portrait-2.jpg')"></div>
+                <div class="m" style="background-image: url('assets/portrait-1.jpg')"></div>
+              </div>
+              <div class="members-info">
+                <span class="n">142 membres</span>
+                <span class="l">4 tirages/an</span>
+              </div>
+              <div class="arrow">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="club-card">
+          <div class="cover" style="background-image: url('assets/hero-solar.jpg')">
+            <div class="cat">Ski de rando</div>
+            <div class="status"><span class="dot"></span>Saison</div>
+            <div class="num-badge">n° 08</div>
+          </div>
+          <div class="body">
+            <h4>Peaux de <em>phoque</em></h4>
+            <p>Le club des skis de randonnée. Sorties toute la saison entre Belledonne, Vanoise et Écrins.</p>
+            <div class="meta">
+              <div class="members">
+                <div class="m" style="background-image: url('assets/portrait-3.jpg')"></div>
+                <div class="m" style="background-image: url('assets/portrait-1.jpg')"></div>
+                <div class="m" style="background-image: url('assets/portrait-2.jpg')"></div>
+              </div>
+              <div class="members-info">
+                <span class="n">386 membres</span>
+                <span class="l">Nov. → mai</span>
+              </div>
+              <div class="arrow">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="club-card">
+          <div class="cover" style="background-image: url('assets/community-morning.jpg')">
+            <div class="cat">Aube & silence</div>
+            <div class="status"><span class="dot"></span>Actif</div>
+            <div class="num-badge">n° 09</div>
+          </div>
+          <div class="body">
+            <h4>Aubes <em>lentes</em></h4>
+            <p>On part avant le jour, sans musique, sans téléphone. Marches courtes et thé au sommet.</p>
+            <div class="meta">
+              <div class="members">
+                <div class="m" style="background-image: url('assets/portrait-1.jpg')"></div>
+                <div class="m" style="background-image: url('assets/portrait-3.jpg')"></div>
+              </div>
+              <div class="members-info">
+                <span class="n">96 membres</span>
+                <span class="l">Un samedi/mois</span>
+              </div>
+              <div class="arrow">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="club-card">
+          <div class="cover" style="background-image: url('assets/community-hikers.jpg')">
+            <div class="cat">Débuter</div>
+            <div class="status"><span class="dot"></span>Actif</div>
+            <div class="num-badge">n° 10</div>
+          </div>
+          <div class="body">
+            <h4>Premiers <em>pas</em></h4>
+            <p>Randonnées faciles pour découvrir le matériel, l'itinéraire, la lecture de carte. Aucun niveau requis.</p>
+            <div class="meta">
+              <div class="members">
+                <div class="m" style="background-image: url('assets/portrait-2.jpg')"></div>
+                <div class="m" style="background-image: url('assets/portrait-3.jpg')"></div>
+                <div class="m" style="background-image: url('assets/portrait-1.jpg')"></div>
+              </div>
+              <div class="members-info">
+                <span class="n">628 membres</span>
+                <span class="l">2 sorties/mois</span>
+              </div>
+              <div class="arrow">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="club-card">
+          <div class="cover" style="background-image: url('assets/adventure-bivouac.jpg'); filter: hue-rotate(20deg)">
+            <div class="cat">Bikepacking</div>
+            <div class="status"><span class="dot"></span>Actif</div>
+            <div class="num-badge">n° 11</div>
+          </div>
+          <div class="body">
+            <h4>Roues & <em>sacoches</em></h4>
+            <p>Vélo chargé, gravel, VTT. Nous préparons chaque année une grande traversée d'été.</p>
+            <div class="meta">
+              <div class="members">
+                <div class="m" style="background-image: url('assets/portrait-3.jpg')"></div>
+                <div class="m" style="background-image: url('assets/portrait-1.jpg')"></div>
+              </div>
+              <div class="members-info">
+                <span class="n">238 membres</span>
+                <span class="l">Traversée annuelle</span>
+              </div>
+              <div class="arrow">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- CATEGORIES BAND -->
+    <section class="cat-band">
+      <div class="head">
+        <h2>Parcourir <em>par catégorie</em></h2>
+        <p>Sept familles de pratiques. Chaque catégorie regroupe entre 4 et 12 clubs actifs.</p>
+      </div>
+
+      <div class="cat-grid">
+        <div class="cat-tile">
+          <div class="icon">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="20" height="20"><path d="M3 20l6-14 4 8 3-6 5 12H3z"/></svg>
+          </div>
+          <h4>Randonnée <em>& sentiers</em></h4>
+          <p>De la balade familiale au trek engagé, sur les GR de France et d'ailleurs.</p>
+          <div class="foot">
+            <div class="c"><strong>18</strong>clubs</div>
+            <div class="arrow"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6"/></svg></div>
+          </div>
+        </div>
+
+        <div class="cat-tile">
+          <div class="icon">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="20" height="20"><path d="M3 20l9-14 9 14zM12 6v14M6 20l6-4 6 4"/></svg>
+          </div>
+          <h4>Bivouac <em>& refuges</em></h4>
+          <p>Nuits sous tente, refuges gardés, cabanes non gardées. On dort où on peut, on écrit ce qu'on voit.</p>
+          <div class="foot">
+            <div class="c"><strong>9</strong>clubs</div>
+            <div class="arrow"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6"/></svg></div>
+          </div>
+        </div>
+
+        <div class="cat-tile">
+          <div class="icon">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="20" height="20"><path d="M3 15c2 1 3-1 5-1s3 2 5 1 3-2 5-1 3 1 3 1M3 20c2 1 3-1 5-1s3 2 5 1 3-2 5-1 3 1 3 1M3 10c2 1 3-1 5-1s3 2 5 1 3-2 5-1 3 1 3 1"/></svg>
+          </div>
+          <h4>Eau <em>vive</em></h4>
+          <p>Kayak, canoë, packraft, nage sauvage. Les rivières et lacs des Alpes.</p>
+          <div class="foot">
+            <div class="c"><strong>6</strong>clubs</div>
+            <div class="arrow"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6"/></svg></div>
+          </div>
+        </div>
+
+        <div class="cat-tile">
+          <div class="icon">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="20" height="20"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M6 17l4-9h5l3 9M10 8l-2-3h4"/></svg>
+          </div>
+          <h4>Vélo <em>& bikepacking</em></h4>
+          <p>Gravel, VTT, cyclotourisme avec sacoches. Traversées, boucles, itinérances lentes.</p>
+          <div class="foot">
+            <div class="c"><strong>7</strong>clubs</div>
+            <div class="arrow"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6"/></svg></div>
+          </div>
+        </div>
+
+        <div class="cat-tile">
+          <div class="icon">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="20" height="20"><path d="M12 3v3M4.22 5.64l2.12 2.12M3 12h3M4.22 18.36l2.12-2.12M12 21v-3M19.78 18.36l-2.12-2.12M21 12h-3M19.78 5.64l-2.12 2.12"/><circle cx="12" cy="12" r="4"/></svg>
+          </div>
+          <h4>Aube <em>& silence</em></h4>
+          <p>Marches lentes, méditation, observation naturaliste. On part tôt, on parle peu.</p>
+          <div class="foot">
+            <div class="c"><strong>4</strong>clubs</div>
+            <div class="arrow"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6"/></svg></div>
+          </div>
+        </div>
+
+        <div class="cat-tile">
+          <div class="icon">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="20" height="20"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M8 6l2-3h4l2 3"/></svg>
+          </div>
+          <h4>Photo <em>& carnet</em></h4>
+          <p>Argentique, aquarelle, journal de bord. On documente ce qu'on voit, on partage nos planches.</p>
+          <div class="foot">
+            <div class="c"><strong>5</strong>clubs</div>
+            <div class="arrow"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6"/></svg></div>
+          </div>
+        </div>
+
+        <div class="cat-tile">
+          <div class="icon">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="20" height="20"><path d="M12 2l3 6 6 1-4.5 4.5L18 20l-6-3-6 3 1.5-6.5L3 9l6-1z"/></svg>
+          </div>
+          <h4>Alpinisme <em>& neige</em></h4>
+          <p>Cordées, ski de randonnée, escalade en montagne. Encadrement par guides.</p>
+          <div class="foot">
+            <div class="c"><strong>8</strong>clubs</div>
+            <div class="arrow"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6"/></svg></div>
+          </div>
+        </div>
+
+        <div class="cat-tile">
+          <div class="icon">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="20" height="20"><path d="M4 20V8l4-4h8l4 4v12zM8 4v4H4M12 12h4M12 16h4M8 12h.01M8 16h.01"/></svg>
+          </div>
+          <h4>Ateliers <em>& méthode</em></h4>
+          <p>Réparation de matériel, transmission, formation. Toutes générations bienvenues.</p>
+          <div class="foot">
+            <div class="c"><strong>5</strong>clubs</div>
+            <div class="arrow"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6"/></svg></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CREATE BAND -->
+    <section class="create-band">
+      <div>
+        <div class="eye" style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 999px; background: rgba(31,74,58,0.08); color: var(--lkv-forest-800); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 500; margin-bottom: 24px;">
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-sage-500);"></span>
+          Créer un club
+        </div>
+        <h2>Vous ne trouvez pas <em>le vôtre ?</em></h2>
+        <p>Ouvrez un club en dix minutes : un nom, une thématique, un premier rendez-vous. Nous vous accompagnons pour la charte, la modération et la première sortie. Aucun frais, aucun algorithme.</p>
+        <div style="display: flex; gap: 12px;">
+          <button class="lkv-btn lkv-btn-primary lkv-btn-lg">
+            Créer mon club
+            <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+          <button class="lkv-btn lkv-btn-ghost lkv-btn-lg">Lire la charte</button>
+        </div>
+      </div>
+      <div class="side">
+        <div class="cap">L'atelier de Grenoble,<br/>samedi matin.</div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="brand">On se retrouve <em>là où l'on écoute mieux.</em></div>
+      <div class="grid">
+        <div>
+          <h5>Les clubs</h5>
+          <p style="font-size: 14px; margin: 0; color: rgba(255,255,255,0.6); line-height: 1.5;">62 clubs actifs, modérés par des voyageurs. Rejoindre, créer, participer — sans frais et sans algorithme.</p>
+        </div>
+        <div>
+          <h5>Catégories</h5>
+          <ul>
+            <li><a href="#">Randonnée</a></li>
+            <li><a href="#">Bivouac</a></li>
+            <li><a href="#">Eau vive</a></li>
+            <li><a href="#">Vélo</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Communauté</h5>
+          <ul>
+            <li><a href="Communauté.html">Le fil</a></li>
+            <li><a href="Groupes.html">Groupes</a></li>
+            <li><a href="#">Événements</a></li>
+            <li><a href="#">Guides</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Maison</h5>
+          <ul>
+            <li><a href="#">Charte</a></li>
+            <li><a href="#">Modération</a></li>
+            <li><a href="#">Aide</a></li>
+            <li><a href="#">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="bottom">
+        <div>© 2026 Le Kit du Voyageur — Grenoble, France</div>
+        <div>Mentions · Confidentialité · Cookies</div>
+      </div>
+    </footer>
+
+  </div>
+  <div class="board-caption">Desktop · 1280 × 3400+</div>
+  </div>
+
+  <!-- ========== MOBILE ========== -->
+  <div>
+    <div class="artboard-mobile">
+      <div class="screen">
+
+        <div class="m-header">
+          <div class="lkv-logo">
+            <svg viewBox="0 0 32 32" width="16" height="16" fill="none">
+              <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+            </svg>
+            <span>Clubs</span>
+          </div>
+          <div style="display: flex; gap: 4px;">
+            <div class="b">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+            </div>
+            <div class="b">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="m-head">
+          <div class="eye"><span class="dot"></span>62 clubs actifs</div>
+          <h1>Trouvez ceux qui <em>marchent</em> comme vous.</h1>
+          <p>Un club, une thématique, quelques dizaines de voyageurs.</p>
+        </div>
+
+        <div class="m-search">
+          <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <span>Rechercher un club…</span>
+        </div>
+
+        <div class="m-pills">
+          <div class="p on">Tous</div>
+          <div class="p">Rando</div>
+          <div class="p">Bivouac</div>
+          <div class="p">Eau vive</div>
+          <div class="p">Ateliers</div>
+          <div class="p">Vélo</div>
+        </div>
+
+        <div class="m-list">
+          <div class="m-club">
+            <div class="cover" style="background-image: url('assets/adventure-hiking.jpg')">
+              <div class="cat">Randonnée</div>
+            </div>
+            <div class="body">
+              <h4>Sentiers <em>longs</em></h4>
+              <p>Traversées de 3 à 12 jours, sac léger et carnet à la main.</p>
+              <div class="foot">
+                <div style="display: flex; align-items: center;">
+                  <div class="members">
+                    <div class="m" style="background-image: url('assets/portrait-1.jpg')"></div>
+                    <div class="m" style="background-image: url('assets/portrait-2.jpg')"></div>
+                    <div class="m" style="background-image: url('assets/portrait-3.jpg')"></div>
+                  </div>
+                  <div class="count">1 240 membres</div>
+                </div>
+                <div class="join">Rejoindre</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="m-club">
+            <div class="cover" style="background-image: url('assets/adventure-bivouac.jpg')">
+              <div class="cat">Bivouac</div>
+            </div>
+            <div class="body">
+              <h4>Nuits <em>Hautes</em></h4>
+              <p>Le club des bivouacs étoilés. Un ciel, un tapis, un thermos.</p>
+              <div class="foot">
+                <div style="display: flex; align-items: center;">
+                  <div class="members">
+                    <div class="m" style="background-image: url('assets/portrait-3.jpg')"></div>
+                    <div class="m" style="background-image: url('assets/portrait-1.jpg')"></div>
+                  </div>
+                  <div class="count">862 membres</div>
+                </div>
+                <div class="join">Rejoindre</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="m-club">
+            <div class="cover" style="background-image: url('assets/adventure-kayak.jpg')">
+              <div class="cat">Eau vive</div>
+            </div>
+            <div class="body">
+              <h4>Lacs & <em>rivières</em></h4>
+              <p>Kayak, canoë, descente. Le lac de Serre-Ponçon est notre base d'été.</p>
+              <div class="foot">
+                <div style="display: flex; align-items: center;">
+                  <div class="members">
+                    <div class="m" style="background-image: url('assets/portrait-2.jpg')"></div>
+                    <div class="m" style="background-image: url('assets/portrait-1.jpg')"></div>
+                  </div>
+                  <div class="count">514 membres</div>
+                </div>
+                <div class="join">Rejoindre</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="m-club">
+            <div class="cover" style="background-image: url('assets/workshop.jpg')">
+              <div class="cat">Atelier</div>
+            </div>
+            <div class="body">
+              <h4>Atelier & <em>réparation</em></h4>
+              <p>Cousu-main, cordonnerie. On se retrouve un samedi par mois à Grenoble.</p>
+              <div class="foot">
+                <div style="display: flex; align-items: center;">
+                  <div class="members">
+                    <div class="m" style="background-image: url('assets/portrait-3.jpg')"></div>
+                    <div class="m" style="background-image: url('assets/portrait-2.jpg')"></div>
+                  </div>
+                  <div class="count">380 membres</div>
+                </div>
+                <div class="join">Rejoindre</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="m-tabbar">
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div>
+          <div class="tabi on"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M14 20c0-2 2-3 4-3s4 1 4 3"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">Mobile · 375 × 812</div>
+  </div>
+
+</div>
+
+</body>
+</html>

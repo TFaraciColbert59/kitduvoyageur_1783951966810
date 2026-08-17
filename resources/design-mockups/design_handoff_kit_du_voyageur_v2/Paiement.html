@@ -1,0 +1,797 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Paiement · Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="shop.css"/>
+<style>
+  /* ————— DESKTOP ————— */
+  .pay-progress {
+    padding: 24px 60px;
+    background: var(--lkv-paper);
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .pay-steps { display: flex; align-items: center; gap: 20px; }
+  .pay-step {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--lkv-ink-400);
+  }
+  .pay-step.done, .pay-step.on { color: var(--lkv-ink-900); }
+  .pay-step .n {
+    width: 26px; height: 26px; border-radius: 999px;
+    background: var(--lkv-stone-100); color: var(--lkv-ink-500);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 12px; font-weight: 400;
+  }
+  .pay-step.done .n { background: var(--lkv-sage-100); color: var(--lkv-forest-800); }
+  .pay-step.on .n { background: var(--lkv-forest-800); color: #fff; }
+  .pay-steps .arrow-sep {
+    color: var(--lkv-ink-300);
+  }
+  .pay-secure {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px;
+    background: var(--lkv-sage-100);
+    color: var(--lkv-forest-800);
+    border-radius: 999px;
+    font-size: 12px; font-weight: 500;
+  }
+
+  .pay-body {
+    padding: 48px 60px 96px;
+    background: var(--lkv-paper);
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .pay-title {
+    font-family: var(--lkv-font-sans);
+    font-size: 44px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1;
+    margin: 0 0 40px;
+  }
+  .pay-title em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+
+  /* Sections */
+  .pay-section {
+    background: #fff;
+    border-radius: 24px;
+    padding: 32px;
+    margin-bottom: 16px;
+    box-shadow: var(--lkv-shadow-xs);
+  }
+  .pay-section-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .pay-section-head h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 20px; font-weight: 500;
+    letter-spacing: -0.01em; margin: 0;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .pay-section-head h3 .n {
+    font-family: var(--lkv-font-serif); font-style: italic; font-weight: 400;
+    color: var(--lkv-forest-800); font-size: 26px; line-height: 1;
+  }
+  .pay-section-head .edit {
+    font-size: 13px; color: var(--lkv-forest-800); font-weight: 500;
+    transition: color var(--lkv-dur) var(--lkv-ease);
+  }
+  .pay-section-head .edit:hover { color: var(--lkv-forest-700); text-decoration: underline; }
+
+  /* Form fields */
+  .field-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .field {
+    display: flex; flex-direction: column;
+  }
+  .field.full { grid-column: 1 / -1; }
+  .field label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-ink-500); margin-bottom: 6px; font-weight: 500;
+  }
+  .field input, .field select {
+    padding: 14px 16px;
+    background: var(--lkv-stone-50);
+    border: 1px solid transparent;
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--lkv-ink-900);
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .field input:focus, .field select:focus {
+    outline: none;
+    background: #fff;
+    border-color: var(--lkv-forest-800);
+    box-shadow: 0 0 0 4px rgba(31,74,58,0.08);
+  }
+  .field input::placeholder { color: var(--lkv-ink-400); }
+  .field .filled input { background: #fff; border-color: rgba(11,31,23,0.08); }
+
+  /* Shipping options */
+  .ship-opt {
+    display: flex; align-items: center; gap: 16px;
+    padding: 20px;
+    background: var(--lkv-stone-50);
+    border-radius: 16px;
+    border: 2px solid transparent;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .ship-opt:hover { background: #fff; }
+  .ship-opt.on {
+    background: #fff;
+    border-color: var(--lkv-forest-800);
+    box-shadow: 0 0 0 4px rgba(31,74,58,0.06);
+  }
+  .ship-opt .radio {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 2px solid rgba(11,31,23,0.15);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .ship-opt.on .radio {
+    border-color: var(--lkv-forest-800);
+  }
+  .ship-opt.on .radio::after {
+    content: ""; width: 8px; height: 8px; background: var(--lkv-forest-800); border-radius: 50%;
+  }
+  .ship-opt .txt { flex: 1; }
+  .ship-opt .txt .h { font-size: 15px; font-weight: 500; letter-spacing: -0.005em; }
+  .ship-opt .txt .h em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .ship-opt .txt .d { font-size: 12px; color: var(--lkv-ink-500); margin-top: 3px; }
+  .ship-opt .p { font-size: 15px; font-weight: 500; }
+  .ship-opt .p.free { color: var(--lkv-forest-700); }
+
+  /* Payment tabs */
+  .pay-methods {
+    display: flex; gap: 8px; margin-bottom: 20px;
+  }
+  .pay-method {
+    flex: 1;
+    padding: 16px;
+    background: var(--lkv-stone-50);
+    border-radius: 14px;
+    border: 2px solid transparent;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    cursor: pointer;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+    font-family: inherit;
+  }
+  .pay-method:hover { background: #fff; }
+  .pay-method.on {
+    background: #fff;
+    border-color: var(--lkv-forest-800);
+  }
+  .pay-method .m-i {
+    height: 24px; display: flex; align-items: center;
+    font-weight: 600; letter-spacing: 0.05em; font-size: 13px;
+    color: var(--lkv-ink-900);
+  }
+  .pay-method .m-l { font-size: 11px; color: var(--lkv-ink-500); text-transform: uppercase; letter-spacing: 0.1em; }
+  .pay-method.on .m-l { color: var(--lkv-ink-700); }
+
+  /* Card visual */
+  .card-visual {
+    aspect-ratio: 1.586/1;
+    max-width: 340px;
+    margin: 0 0 24px auto;
+    padding: 24px;
+    background: linear-gradient(135deg, var(--lkv-forest-900), var(--lkv-forest-800));
+    color: #fff;
+    border-radius: 18px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--lkv-shadow-lg);
+  }
+  .card-visual::before {
+    content: "";
+    position: absolute;
+    top: -80px; right: -60px;
+    width: 220px; height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(109,170,125,0.3), transparent 70%);
+  }
+  .card-visual > * { position: relative; z-index: 1; }
+  .card-visual .chip {
+    width: 40px; height: 30px; border-radius: 6px;
+    background: linear-gradient(135deg, var(--lkv-warm-500), var(--lkv-warm-300));
+    opacity: 0.9;
+  }
+  .card-visual .num { font-family: var(--lkv-font-mono); font-size: 20px; letter-spacing: 0.1em; }
+  .card-visual .foot { display: flex; justify-content: space-between; align-items: end; }
+  .card-visual .foot .l { font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; opacity: 0.5; }
+  .card-visual .foot .n { font-size: 14px; letter-spacing: 0.02em; margin-top: 2px; }
+  .card-visual .brand-visa {
+    font-family: var(--lkv-font-sans); font-size: 20px; font-weight: 700; font-style: italic;
+    letter-spacing: -0.02em;
+  }
+
+  /* Order review card (right) */
+  .order-review {
+    background: #fff;
+    padding: 32px;
+    border-radius: 28px;
+    box-shadow: var(--lkv-shadow-sm);
+    position: sticky; top: 100px;
+  }
+  .order-review h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 20px; font-weight: 500; letter-spacing: -0.01em;
+    margin: 0 0 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .review-item {
+    display: flex; gap: 12px; padding: 10px 0;
+    font-size: 13px;
+  }
+  .review-item .im {
+    width: 56px; height: 56px; border-radius: 12px;
+    background-size: cover; background-position: center;
+    background-color: var(--lkv-stone-100); flex-shrink: 0;
+    position: relative;
+  }
+  .review-item .im .q {
+    position: absolute; top: -5px; right: -5px;
+    min-width: 20px; height: 20px; padding: 0 5px;
+    border-radius: 999px; background: var(--lkv-forest-800); color: #fff;
+    font-size: 10px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .review-item .info { flex: 1; }
+  .review-item .info .n { font-weight: 500; line-height: 1.2; letter-spacing: -0.005em; }
+  .review-item .info .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .review-item .info .opts { font-size: 11px; color: var(--lkv-ink-400); margin-top: 3px; }
+  .review-item .p { font-weight: 500; font-size: 13px; }
+
+  .review-totals {
+    padding-top: 16px;
+    border-top: 1px solid rgba(11,31,23,0.06);
+    margin-top: 16px;
+  }
+  .review-totals .r {
+    display: flex; justify-content: space-between;
+    padding: 5px 0; font-size: 13px; color: var(--lkv-ink-700);
+  }
+  .review-totals .r.free { color: var(--lkv-forest-700); font-weight: 500; }
+  .review-totals .tot {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 16px 0 4px; margin-top: 12px;
+    border-top: 1px solid rgba(11,31,23,0.08);
+  }
+  .review-totals .tot .l { font-size: 15px; font-weight: 500; }
+  .review-totals .tot .n { font-size: 28px; font-weight: 500; letter-spacing: -0.02em; }
+
+  .pay-cta {
+    display: block; width: 100%;
+    padding: 18px; text-align: center;
+    background: var(--lkv-forest-800); color: #fff;
+    border-radius: 999px;
+    font-size: 15px; font-weight: 500;
+    margin-top: 20px;
+    transition: all var(--lkv-dur) var(--lkv-ease-out);
+  }
+  .pay-cta:hover {
+    background: var(--lkv-forest-700);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(31,74,58,0.28);
+  }
+  .pay-cta .amt { font-size: 13px; opacity: 0.75; margin-left: 6px; }
+  .pay-fine {
+    font-size: 11px; color: var(--lkv-ink-400);
+    text-align: center; margin-top: 14px; line-height: 1.5;
+  }
+  .pay-fine a { color: var(--lkv-forest-800); text-decoration: underline; }
+
+  /* Checkboxes */
+  .check-row {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 12px 0;
+    font-size: 13px; color: var(--lkv-ink-700);
+    line-height: 1.5;
+    cursor: pointer;
+  }
+  .check-row .cb {
+    width: 20px; height: 20px; border-radius: 6px;
+    border: 2px solid rgba(11,31,23,0.15);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .check-row.on .cb {
+    background: var(--lkv-forest-800);
+    border-color: var(--lkv-forest-800);
+    color: #fff;
+  }
+  .check-row .cb svg { width: 12px; height: 12px; }
+  .check-row:not(.on) .cb svg { display: none; }
+
+  /* ————— MOBILE ————— */
+  .m-pay {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 14px 200px;
+    background: var(--lkv-paper);
+  }
+  .m-pay-progress {
+    display: flex; align-items: center; gap: 4px; margin-bottom: 16px;
+  }
+  .m-pay-progress .st {
+    flex: 1; height: 4px; border-radius: 4px;
+    background: var(--lkv-stone-100);
+  }
+  .m-pay-progress .st.done { background: var(--lkv-sage-500); }
+  .m-pay-progress .st.on { background: var(--lkv-forest-800); }
+
+  .m-pay h1 { font-size: 30px; font-weight: 500; letter-spacing: -0.02em; margin: 4px 0 20px; }
+  .m-pay h1 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+
+  .m-pay-section {
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 10px;
+  }
+  .m-pay-section .h { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; font-size: 13px; font-weight: 500; }
+  .m-pay-section .h .n {
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .m-pay-section .h .n .num { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-size: 18px; line-height: 1; }
+  .m-pay-section .h a { font-size: 12px; color: var(--lkv-forest-800); }
+
+  .m-field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .m-field-grid .full { grid-column: 1 / -1; }
+  .m-input {
+    padding: 12px 14px;
+    background: var(--lkv-stone-50);
+    border: 1px solid transparent;
+    border-radius: 12px;
+    font-size: 13px;
+    color: var(--lkv-ink-900);
+    width: 100%;
+    font-family: inherit;
+  }
+  .m-input:focus { outline: none; background: #fff; border-color: var(--lkv-forest-800); }
+
+  .m-ship {
+    padding: 12px;
+    background: var(--lkv-stone-50);
+    border-radius: 12px;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 6px;
+    border: 2px solid transparent;
+  }
+  .m-ship.on { background: #fff; border-color: var(--lkv-forest-800); }
+  .m-ship .radio { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(11,31,23,0.15); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .m-ship.on .radio { border-color: var(--lkv-forest-800); }
+  .m-ship.on .radio::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-forest-800); }
+  .m-ship .txt { flex: 1; font-size: 12px; font-weight: 500; }
+  .m-ship .txt small { color: var(--lkv-ink-500); font-weight: 400; }
+  .m-ship .p { font-size: 12px; font-weight: 500; }
+  .m-ship .p.free { color: var(--lkv-forest-700); }
+
+  .m-pay-bottom {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 12px 14px 14px;
+    background: #fff;
+    border-top: 1px solid rgba(11,31,23,0.06);
+    z-index: 15;
+    box-shadow: 0 -8px 24px rgba(11,31,23,0.06);
+  }
+  .m-pay-bottom .r { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 0; font-size: 12px; color: var(--lkv-ink-700); }
+  .m-pay-bottom .r .n { font-weight: 500; }
+  .m-pay-bottom .tot { display: flex; justify-content: space-between; align-items: baseline; padding-top: 8px; margin-top: 6px; border-top: 1px solid rgba(11,31,23,0.08); }
+  .m-pay-bottom .tot .n { font-size: 20px; font-weight: 500; letter-spacing: -0.015em; }
+  .m-pay-bottom .cta {
+    display: block; padding: 14px; text-align: center;
+    background: var(--lkv-forest-800); color: #fff;
+    border-radius: 999px;
+    font-size: 14px; font-weight: 500;
+    margin-top: 10px;
+    box-shadow: 0 8px 24px rgba(31,74,58,0.28);
+  }
+</style>
+</head>
+<body class="shop-page">
+
+<div class="stage-title">
+  <div>
+    <div class="h">Paiement · Checkout</div>
+    <div class="sub">Étape 5/5 · Desktop + Mobile</div>
+  </div>
+  <div class="crumbs">
+    <a href="Index.html">← Hub</a>
+    <a href="Boutique.html">Boutique</a>
+    <a href="Fiche Produit.html">Fiche</a>
+    <a href="Configurateur.html">Configurateur</a>
+    <a href="Panier.html">← Panier</a>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ————— DESKTOP ————— -->
+  <div class="artboard-desktop">
+
+    <nav class="shop-nav">
+      <a href="Home.html" class="lkv-logo">
+        <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
+          <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+        </svg>
+        <span>Le Kit du Voyageur</span>
+      </a>
+      <div style="display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--lkv-ink-500);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        Paiement sécurisé · Stripe
+      </div>
+      <a href="Panier.html" class="lkv-btn lkv-btn-ghost lkv-btn-sm">← Retour au panier</a>
+    </nav>
+
+    <!-- Progress -->
+    <div class="pay-progress">
+      <div class="pay-steps">
+        <div class="pay-step done"><span class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M4 12l5 5 11-11"/></svg></span>Panier</div>
+        <span class="arrow-sep">›</span>
+        <div class="pay-step on"><span class="n">2</span>Livraison & paiement</div>
+        <span class="arrow-sep">›</span>
+        <div class="pay-step"><span class="n">3</span>Confirmation</div>
+      </div>
+      <div class="pay-secure">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        Paiement 100 % sécurisé
+      </div>
+    </div>
+
+    <!-- BODY -->
+    <section class="pay-body">
+      <div>
+        <h1 class="pay-title">Presque <em>parti.</em></h1>
+
+        <!-- 1. Contact -->
+        <div class="pay-section">
+          <div class="pay-section-head">
+            <h3><span class="n">01</span>Vos coordonnées</h3>
+            <a href="#" class="edit">Se connecter</a>
+          </div>
+          <div class="field-grid">
+            <div class="field full">
+              <label>Email</label>
+              <input type="email" placeholder="prenom@exemple.fr" value="marceline@lechevrier.fr"/>
+            </div>
+          </div>
+          <label class="check-row on">
+            <span class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12l5 5 11-11"/></svg></span>
+            Recevoir le journal du Kit — un envoi par saison, refuges et sentiers uniquement.
+          </label>
+        </div>
+
+        <!-- 2. Shipping -->
+        <div class="pay-section">
+          <div class="pay-section-head">
+            <h3><span class="n">02</span>Livraison</h3>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <label>Prénom</label>
+              <input placeholder="Marceline" value="Marceline"/>
+            </div>
+            <div class="field">
+              <label>Nom</label>
+              <input placeholder="Chevrier" value="Chevrier"/>
+            </div>
+            <div class="field full">
+              <label>Adresse</label>
+              <input placeholder="14 rue du Grand Som"/>
+            </div>
+            <div class="field full">
+              <label>Complément (optionnel)</label>
+              <input placeholder="Bâtiment · étage · digicode"/>
+            </div>
+            <div class="field">
+              <label>Code postal</label>
+              <input placeholder="38380"/>
+            </div>
+            <div class="field">
+              <label>Ville</label>
+              <input placeholder="Saint-Pierre-de-Chartreuse"/>
+            </div>
+            <div class="field">
+              <label>Pays</label>
+              <select>
+                <option>France</option>
+                <option>Belgique</option>
+                <option>Suisse</option>
+                <option>Luxembourg</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Téléphone</label>
+              <input placeholder="+33 6 12 34 56 78"/>
+            </div>
+          </div>
+
+          <div style="margin-top: 24px;">
+            <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--lkv-ink-500); margin-bottom: 12px; font-weight: 500;">Mode d'expédition</div>
+
+            <div class="ship-opt on">
+              <div class="radio"></div>
+              <div class="txt">
+                <div class="h">Livraison <em>suivie</em></div>
+                <div class="d">Colis-relais ou domicile · 3 à 5 jours ouvrés · CO₂ compensé</div>
+              </div>
+              <div class="p free">Offerte</div>
+            </div>
+
+            <div class="ship-opt">
+              <div class="radio"></div>
+              <div class="txt">
+                <div class="h">Express <em>48h</em></div>
+                <div class="d">Livré à domicile en 48 h · sur créneau choisi</div>
+              </div>
+              <div class="p">14 €</div>
+            </div>
+
+            <div class="ship-opt">
+              <div class="radio"></div>
+              <div class="txt">
+                <div class="h">Retrait <em>en atelier</em></div>
+                <div class="d">Manosque, Alpes-de-Haute-Provence · disponible dès demain</div>
+              </div>
+              <div class="p free">Offerte</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Payment -->
+        <div class="pay-section">
+          <div class="pay-section-head">
+            <h3><span class="n">03</span>Paiement</h3>
+          </div>
+
+          <div class="pay-methods">
+            <button class="pay-method on">
+              <div class="m-i">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="18" height="18"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/></svg>
+              </div>
+              <div class="m-l">Carte</div>
+            </button>
+            <button class="pay-method">
+              <div class="m-i" style="font-weight: 700; letter-spacing: -0.02em; font-size: 15px;">Pay</div>
+              <div class="m-l">Apple Pay</div>
+            </button>
+            <button class="pay-method">
+              <div class="m-i" style="color: #003087; font-weight: 800; letter-spacing: -0.02em; font-size: 14px;">PayPal</div>
+              <div class="m-l">Compte</div>
+            </button>
+            <button class="pay-method">
+              <div class="m-i" style="color: var(--lkv-warm-500); font-weight: 700; font-style: italic; font-size: 14px;">3× sans frais</div>
+              <div class="m-l">Alma</div>
+            </button>
+          </div>
+
+          <div class="card-visual">
+            <div>
+              <div class="chip"></div>
+            </div>
+            <div class="num">•••• •••• •••• 4242</div>
+            <div class="foot">
+              <div>
+                <div class="l">Titulaire</div>
+                <div class="n">M. Chevrier</div>
+              </div>
+              <div>
+                <div class="l">Expire</div>
+                <div class="n">09/28</div>
+              </div>
+              <div class="brand-visa">VISA</div>
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <div class="field full">
+              <label>Numéro de carte</label>
+              <input placeholder="1234 1234 1234 1234"/>
+            </div>
+            <div class="field">
+              <label>Expiration</label>
+              <input placeholder="MM / AA"/>
+            </div>
+            <div class="field">
+              <label>Cryptogramme</label>
+              <input placeholder="CVC"/>
+            </div>
+            <div class="field full">
+              <label>Nom du titulaire</label>
+              <input placeholder="Comme écrit sur la carte"/>
+            </div>
+          </div>
+
+          <label class="check-row on" style="margin-top: 16px;">
+            <span class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12l5 5 11-11"/></svg></span>
+            Enregistrer cette carte pour un futur achat (chiffrée par Stripe).
+          </label>
+        </div>
+      </div>
+
+      <!-- REVIEW -->
+      <div class="order-review">
+        <h3>Votre commande</h3>
+
+        <div class="review-item">
+          <div class="im" style="background-image: url('assets/product-backpack-2.jpg')">
+            <span class="q">1</span>
+          </div>
+          <div class="info">
+            <div class="n">Sac 45 L <em>toile cirée</em></div>
+            <div class="opts">Vert forêt · 45 L · Ventrale + poitrine</div>
+          </div>
+          <div class="p">340 €</div>
+        </div>
+
+        <div class="review-item">
+          <div class="im" style="background-image: url('assets/product-sleeping.jpg')">
+            <span class="q">1</span>
+          </div>
+          <div class="info">
+            <div class="n">Duvet <em>3 saisons</em></div>
+            <div class="opts">Regular · −10 °C</div>
+          </div>
+          <div class="p">248 €</div>
+        </div>
+
+        <div class="review-item">
+          <div class="im" style="background-image: url('assets/product-bottle.jpg')">
+            <span class="q">1</span>
+          </div>
+          <div class="info">
+            <div class="n">Gourde <em>titane</em> 1 L</div>
+            <div class="opts">Sauge · 1 L</div>
+          </div>
+          <div class="p">68 €</div>
+        </div>
+
+        <div class="review-totals">
+          <div class="r"><span>Sous-total</span><span>656 €</span></div>
+          <div class="r free"><span>Livraison suivie</span><span>Offerte</span></div>
+          <div class="r"><span>TVA (20 %, incluse)</span><span>109,33 €</span></div>
+          <div class="tot">
+            <div class="l">Total</div>
+            <div class="n">656 €</div>
+          </div>
+        </div>
+
+        <button class="pay-cta">
+          Payer 656 € par carte
+        </button>
+
+        <div class="pay-fine">
+          En passant commande, vous acceptez les <a href="#">CGV</a> et notre <a href="#">politique de retour</a>.<br/>
+          Vous ne serez débité qu'à l'expédition.
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ————— MOBILE ————— -->
+  <div>
+    <div class="artboard-mobile">
+      <div class="screen">
+
+        <div class="m-topbar">
+          <a href="Panier.html" class="m-btn">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M15 18l-6-6 6-6"/></svg>
+          </a>
+          <div class="center">Paiement</div>
+          <div class="m-btn" style="background: var(--lkv-sage-100); color: var(--lkv-forest-800); width: auto; padding: 0 10px; font-size: 10px; font-weight: 500;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="12" height="12" style="margin-right: 3px;"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+            Sécurisé
+          </div>
+        </div>
+
+        <div class="m-pay">
+          <div class="m-pay-progress">
+            <span class="st done"></span>
+            <span class="st on"></span>
+            <span class="st"></span>
+          </div>
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--lkv-ink-500); margin-bottom: 4px;">Étape 2 sur 3 · Livraison & paiement</div>
+          <h1>Presque <em>parti.</em></h1>
+
+          <div class="m-pay-section">
+            <div class="h">
+              <div class="n"><span class="num">01</span>Vos coordonnées</div>
+              <a href="#">Modifier</a>
+            </div>
+            <div class="m-field-grid">
+              <input class="m-input full" style="grid-column: 1 / -1;" value="marceline@lechevrier.fr" placeholder="Email"/>
+            </div>
+          </div>
+
+          <div class="m-pay-section">
+            <div class="h">
+              <div class="n"><span class="num">02</span>Livraison</div>
+              <a href="#">Modifier</a>
+            </div>
+            <div class="m-field-grid">
+              <input class="m-input" value="Marceline" placeholder="Prénom"/>
+              <input class="m-input" value="Chevrier" placeholder="Nom"/>
+              <input class="m-input full" placeholder="Adresse"/>
+              <input class="m-input" placeholder="38380"/>
+              <input class="m-input" placeholder="Ville"/>
+            </div>
+
+            <div style="margin-top: 12px;">
+              <div class="m-ship on">
+                <div class="radio"></div>
+                <div class="txt">Livraison <em style="font-family: var(--lkv-font-serif); font-style: italic;">suivie</em><br/><small>3 à 5 jours ouvrés</small></div>
+                <div class="p free">Offerte</div>
+              </div>
+              <div class="m-ship">
+                <div class="radio"></div>
+                <div class="txt">Express <em style="font-family: var(--lkv-font-serif); font-style: italic;">48 h</em><br/><small>Sur créneau</small></div>
+                <div class="p">14 €</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="m-pay-section">
+            <div class="h">
+              <div class="n"><span class="num">03</span>Paiement</div>
+            </div>
+            <div class="pay-methods" style="margin-bottom: 12px;">
+              <button class="pay-method on" style="padding: 10px 6px;">
+                <div class="m-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg></div>
+                <div class="m-l">Carte</div>
+              </button>
+              <button class="pay-method" style="padding: 10px 6px;">
+                <div class="m-i" style="font-weight: 700; font-size: 12px;">Pay</div>
+                <div class="m-l">Apple</div>
+              </button>
+              <button class="pay-method" style="padding: 10px 6px;">
+                <div class="m-i" style="color: var(--lkv-warm-500); font-weight: 700; font-size: 11px; font-style: italic;">3×</div>
+                <div class="m-l">Alma</div>
+              </button>
+            </div>
+            <div class="m-field-grid">
+              <input class="m-input full" placeholder="1234 1234 1234 1234"/>
+              <input class="m-input" placeholder="MM / AA"/>
+              <input class="m-input" placeholder="CVC"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="m-pay-bottom">
+          <div class="r"><span>Sous-total</span><span class="n">656 €</span></div>
+          <div class="r"><span>Livraison</span><span class="n" style="color: var(--lkv-forest-700);">Offerte</span></div>
+          <div class="tot">
+            <div style="font-size: 13px; font-weight: 500;">Total</div>
+            <div class="n">656 €</div>
+          </div>
+          <button class="cta">Payer 656 € par carte</button>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">Mobile · 375 × 812</div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Le Kit du Voyageur — Design System</title>
+<link rel="stylesheet" href="tokens.css"/>
+<style>
+  body {
+    background: var(--lkv-paper);
+    min-height: 100vh;
+  }
+
+  .hub {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 80px 60px 100px;
+  }
+
+  /* Hero header */
+  .hub-head {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 60px;
+    padding-bottom: 60px;
+    border-bottom: 1px solid rgba(11,31,23,0.08);
+    margin-bottom: 60px;
+    align-items: end;
+  }
+  .lkv-eyebrow-hub {
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(31,74,58,0.08);
+    color: var(--lkv-forest-800);
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .lkv-eyebrow-hub .dot { width: 6px; height: 6px; background: var(--lkv-sage-500); border-radius: 50%; }
+
+  .hub-title {
+    font-family: var(--lkv-font-sans);
+    font-size: 96px;
+    font-weight: 500;
+    letter-spacing: -0.036em;
+    line-height: 0.95;
+    margin: 0;
+    color: var(--lkv-ink-900);
+    text-wrap: balance;
+  }
+  .hub-title em {
+    font-family: var(--lkv-font-serif);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--lkv-forest-800);
+  }
+  .hub-lead {
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--lkv-ink-500);
+    max-width: 460px;
+    margin: 0 0 32px;
+  }
+  .hub-meta-list {
+    display: grid; gap: 16px;
+  }
+  .hub-meta-list .row {
+    display: flex; justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    font-size: 14px;
+  }
+  .hub-meta-list .row .k { color: var(--lkv-ink-500); }
+  .hub-meta-list .row .v { color: var(--lkv-ink-900); font-weight: 500; }
+
+  /* Logo header */
+  .hub-logo-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 40px;
+    margin-bottom: 40px;
+  }
+  .hub-logo-bar .lkv-logo { color: var(--lkv-forest-800); font-size: 18px; }
+  .hub-logo-bar .lkv-logo .lkv-logo-mark { width: 32px; height: 32px; }
+  .hub-logo-bar .quick {
+    display: flex; gap: 8px; font-size: 13px; color: var(--lkv-ink-500);
+    align-items: center;
+  }
+  .hub-logo-bar .quick .lkv-mono {
+    font-family: var(--lkv-font-mono);
+    padding: 4px 10px;
+    background: var(--lkv-stone-100);
+    border-radius: 6px;
+    color: var(--lkv-ink-700);
+  }
+
+  /* Grid of livrable cards */
+  .hub-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    grid-template-rows: 380px 380px 380px;
+    gap: 20px;
+  }
+
+  .hub-card {
+    position: relative;
+    border-radius: 32px;
+    overflow: hidden;
+    color: #fff;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-decoration: none;
+    cursor: pointer;
+    isolation: isolate;
+    transition: transform var(--lkv-dur) var(--lkv-ease-out), box-shadow var(--lkv-dur) var(--lkv-ease-out);
+    background-size: cover;
+    background-position: center;
+  }
+  .hub-card::before {
+    content: "";
+    position: absolute; inset: 0; z-index: -1;
+    background: linear-gradient(180deg, rgba(11,31,23,0.15) 0%, rgba(11,31,23,0.75) 100%);
+    transition: opacity var(--lkv-dur) var(--lkv-ease);
+  }
+  .hub-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 30px 60px rgba(11,31,23,0.25);
+  }
+  .hub-card:hover .arrow { transform: translate(6px, -6px); background: rgba(255,255,255,0.35); }
+
+  .hub-card.wide { grid-column: 1 / 2; }
+  .hub-card.hero { grid-column: 1 / -1; grid-row: 1 / 2; height: 380px; }
+
+  .hub-card .top {
+    display: flex; justify-content: space-between;
+    align-items: flex-start;
+  }
+  .hub-card .kind {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.18);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.24);
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+  .hub-card .kind .dot { width: 5px; height: 5px; background: var(--lkv-sage-300); border-radius: 50%; }
+  .arrow {
+    width: 52px; height: 52px; border-radius: 999px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.28);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    transition: all var(--lkv-dur) var(--lkv-ease-out);
+    flex-shrink: 0;
+  }
+  .arrow svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+  .hub-card .bottom h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 44px;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+    margin: 0 0 8px;
+    text-wrap: balance;
+  }
+  .hub-card .bottom h3 em {
+    font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-200); font-weight: 400;
+  }
+  .hub-card .bottom .num {
+    font-family: var(--lkv-font-mono);
+    font-size: 12px;
+    opacity: 0.7;
+    margin-bottom: 20px;
+    letter-spacing: 0.05em;
+  }
+  .hub-card .bottom .desc {
+    font-size: 14px;
+    color: rgba(255,255,255,0.8);
+    max-width: 480px;
+    line-height: 1.5;
+  }
+
+  /* Special: design system card (light background) */
+  .hub-card.light {
+    background: #fff;
+    color: var(--lkv-ink-900);
+    border: 1px solid rgba(11,31,23,0.06);
+  }
+  .hub-card.light::before { display: none; }
+  .hub-card.light .kind {
+    background: var(--lkv-sage-100);
+    color: var(--lkv-forest-800);
+    border: none;
+  }
+  .hub-card.light .kind .dot { background: var(--lkv-forest-800); }
+  .hub-card.light .arrow {
+    background: var(--lkv-forest-800);
+    border-color: transparent;
+  }
+  .hub-card.light .bottom h3 em { color: var(--lkv-forest-800); }
+  .hub-card.light .bottom .desc { color: var(--lkv-ink-500); }
+  .hub-card.light .bottom .num { color: var(--lkv-ink-400); }
+
+  .swatches-strip {
+    display: flex; gap: 4px;
+    margin-top: 20px;
+  }
+  .swatches-strip > div {
+    flex: 1; height: 24px; border-radius: 8px;
+  }
+
+  /* Hero card content pushed */
+  .hub-card.hero .bottom h3 {
+    font-size: 68px;
+    letter-spacing: -0.035em;
+    line-height: 0.98;
+  }
+
+  /* Special embed for design system tile (mini swatches) */
+  .ds-mini {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-top: 20px;
+    max-width: 320px;
+  }
+  .ds-mini > div {
+    height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-family: var(--lkv-font-mono);
+    color: rgba(255,255,255,0.7);
+  }
+
+  /* Footer */
+  .hub-foot {
+    margin-top: 80px;
+    display: flex; justify-content: space-between;
+    padding-top: 32px;
+    border-top: 1px solid rgba(11,31,23,0.08);
+    color: var(--lkv-ink-500);
+    font-size: 13px;
+  }
+  .hub-foot a { color: var(--lkv-forest-800); font-weight: 500; }
+
+  @media (max-width: 900px) {
+    .hub { padding: 40px 20px; }
+    .hub-head { grid-template-columns: 1fr; gap: 24px; }
+    .hub-title { font-size: 56px; }
+    .hub-grid {
+      grid-template-columns: 1fr;
+      grid-template-rows: repeat(4, 320px);
+    }
+    .hub-card.hero, .hub-card.wide { grid-column: 1 / -1; }
+    .hub-card .bottom h3 { font-size: 32px; }
+    .hub-card.hero .bottom h3 { font-size: 44px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hub">
+
+  <div class="hub-logo-bar">
+    <div class="lkv-logo">
+      <span class="lkv-logo-mark">
+        <svg viewBox="0 0 32 32" width="32" height="32" fill="none">
+          <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+        </svg>
+      </span>
+      <span>Le Kit du Voyageur</span>
+    </div>
+    <div class="quick">
+      Naviguez avec
+      <span class="lkv-mono">↑ ↓</span>
+      <span class="lkv-mono">enter</span>
+    </div>
+  </div>
+
+  <header class="hub-head">
+    <div>
+      <div class="lkv-eyebrow-hub"><span class="dot"></span>Design System · v1.0 · 2026</div>
+      <h1 class="hub-title">Ce que vous emportez,<br/><em>c'est votre voyage.</em></h1>
+    </div>
+    <div>
+      <p class="hub-lead">Le langage visuel du Kit du Voyageur. Palette forêt, photographie XL, glass léger, typographie ample. Six livrables — cliquez pour explorer.</p>
+      <div class="hub-meta-list">
+        <div class="row"><span class="k">Palette</span><span class="v">Forêt · Sauge · Sable</span></div>
+        <div class="row"><span class="k">Typographie</span><span class="v">General Sans + Fraunces</span></div>
+        <div class="row"><span class="k">Grille</span><span class="v">4 pt · 12 col</span></div>
+        <div class="row"><span class="k">Livrables</span><span class="v">4 pages · Desktop + Mobile</span></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="hub-grid">
+
+    <!-- HERO card: Design System -->
+    <a class="hub-card hero light" href="Design System.html">
+      <div class="top">
+        <div class="kind"><span class="dot"></span>01 · Design System</div>
+        <div class="arrow"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></div>
+      </div>
+      <div class="bottom">
+        <div class="num">Fondations · tokens · composants</div>
+        <h3>Le <em>système</em> avant tout —<br/>couleurs, type, cartes, ombres.</h3>
+        <div class="ds-mini">
+          <div style="background: var(--lkv-forest-950); color: rgba(255,255,255,0.65)">950</div>
+          <div style="background: var(--lkv-forest-800); color: rgba(255,255,255,0.65)">800</div>
+          <div style="background: var(--lkv-forest-600); color: rgba(255,255,255,0.65)">600</div>
+          <div style="background: var(--lkv-sage-500); color: rgba(255,255,255,0.65)">Sage</div>
+          <div style="background: var(--lkv-sage-300); color: var(--lkv-ink-500)">300</div>
+          <div style="background: var(--lkv-sage-100); color: var(--lkv-ink-500)">100</div>
+          <div style="background: var(--lkv-stone-100); color: var(--lkv-ink-500)">Stone</div>
+          <div style="background: var(--lkv-warm-500); color: rgba(255,255,255,0.7)">Warm</div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Home -->
+    <a class="hub-card wide" href="Home.html" style="background-image: url('assets/hero-misty.jpg')">
+      <div class="top">
+        <div class="kind"><span class="dot"></span>02 · Accueil</div>
+        <div class="arrow"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></div>
+      </div>
+      <div class="bottom">
+        <div class="num">Hero + recherche + sections clés · 3 variantes</div>
+        <h3>Là où la carte<br/><em>se termine.</em></h3>
+      </div>
+    </a>
+
+    <!-- Recherche/Carte -->
+    <a class="hub-card" href="Recherche Carte.html" style="background-image: url('assets/hero-solar.jpg')">
+      <div class="top">
+        <div class="kind"><span class="dot"></span>03 · Recherche</div>
+        <div class="arrow"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></div>
+      </div>
+      <div class="bottom">
+        <div class="num">Liste + carte Leaflet</div>
+        <h3>28 refuges<br/><em>près de vous.</em></h3>
+      </div>
+    </a>
+
+    <!-- Detail -->
+    <a class="hub-card wide" href="Detail Aventure.html" style="background-image: url('assets/detail-hero.jpg')">
+      <div class="top">
+        <div class="kind"><span class="dot"></span>04 · Détail aventure</div>
+        <div class="arrow"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></div>
+      </div>
+      <div class="bottom">
+        <div class="num">Fiche immersive · itinéraire · réservation</div>
+        <h3>Cabane du<br/><em>Grand Vaneau.</em></h3>
+      </div>
+    </a>
+
+    <!-- À venir -->
+    <a class="hub-card" href="#" style="background-image: url('assets/adventure-bivouac.jpg'); pointer-events: none; opacity: 0.7;">
+      <div class="top">
+        <div class="kind" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.14)">À venir</div>
+      </div>
+      <div class="bottom">
+        <div class="num">Configurateur · Journal · Boutique · Communauté</div>
+        <h3>La suite<br/><em>arrive.</em></h3>
+      </div>
+    </a>
+
+  </div>
+
+  <footer class="hub-foot">
+    <div>Le Kit du Voyageur · Design System v1.0 — Grenoble, 2026</div>
+    <div><a href="Design System.html">Explorer le système →</a></div>
+  </footer>
+
+</div>
+
+</body>
+</html>

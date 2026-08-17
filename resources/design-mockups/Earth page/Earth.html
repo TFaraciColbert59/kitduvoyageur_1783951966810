@@ -1,0 +1,1720 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Earth · Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="shop.css"/>
+<script src="https://unpkg.com/globe.gl@2.32.6/dist/globe.gl.min.js"></script>
+<style>
+  /* ═══════════════════════════════════════════
+     EARTH PAGE — Desktop
+     ═══════════════════════════════════════════ */
+
+  /* ————— HERO (globe centre-stage) ————— */
+  .earth-hero {
+    position: relative;
+    background: radial-gradient(ellipse at 50% 40%, #0F3A2A 0%, #0A1E17 55%, #050D0A 100%);
+    color: #fff;
+    overflow: hidden;
+    padding: 40px 0 0;
+  }
+
+  /* faint grid pattern */
+  .earth-hero::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(168,196,162,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(168,196,162,0.04) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse at center, #000 30%, transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* ambient orbits */
+  .earth-hero .orbit {
+    position: absolute;
+    left: 50%; top: 58%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 1px solid rgba(168,196,162,0.10);
+    pointer-events: none;
+  }
+  .earth-hero .orbit.o1 { width: 720px; height: 720px; }
+  .earth-hero .orbit.o2 { width: 900px; height: 900px; border-color: rgba(168,196,162,0.06); }
+  .earth-hero .orbit.o3 { width: 1120px; height: 1120px; border-color: rgba(168,196,162,0.04); }
+
+  /* Nav overlay */
+  .earth-hero .shop-nav {
+    background: rgba(10,30,23,0.55);
+    backdrop-filter: blur(20px) saturate(1.4);
+    border-bottom: 1px solid rgba(168,196,162,0.10);
+    color: #fff;
+    margin: 0 40px;
+    border-radius: 999px;
+    padding: 10px 10px 10px 22px;
+    height: 64px;
+    z-index: 20;
+  }
+  .earth-hero .shop-nav .lkv-logo { color: #fff; }
+  .earth-hero .shop-nav .lkv-logo svg { color: var(--lkv-sage-300); }
+  .earth-hero .shop-nav .links a { color: rgba(255,255,255,0.75); font-size: 13px; }
+  .earth-hero .shop-nav .links a:hover { color: #fff; }
+  .earth-hero .shop-nav .links a.active { color: #fff; }
+  .earth-hero .shop-nav .links a.active::after { background: var(--lkv-sage-300); }
+  .earth-hero .shop-nav .icon-btn { color: rgba(255,255,255,0.75); }
+  .earth-hero .shop-nav .icon-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .earth-hero .shop-nav .avatar {
+    background: var(--lkv-sage-500); color: var(--lkv-forest-950);
+  }
+
+  /* Hero heading */
+  .hero-head {
+    position: relative; z-index: 2;
+    text-align: center;
+    padding: 56px 60px 24px;
+  }
+  .hero-head .eye {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 6px 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(168,196,162,0.20);
+    border-radius: 999px;
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--lkv-sage-300);
+    margin-bottom: 22px;
+    backdrop-filter: blur(12px);
+  }
+  .hero-head .eye .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--lkv-sage-500);
+    box-shadow: 0 0 12px var(--lkv-sage-500);
+    animation: pulse-dot 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.6; }
+  }
+  .hero-head h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 96px; font-weight: 500;
+    letter-spacing: -0.035em; line-height: 0.94;
+    margin: 0 0 20px;
+    color: #fff;
+    text-wrap: balance;
+  }
+  .hero-head h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .hero-head p {
+    font-size: 18px; line-height: 1.5;
+    color: rgba(255,255,255,0.72);
+    max-width: 560px; margin: 0 auto;
+    text-wrap: pretty;
+  }
+
+  /* Globe stage */
+  .globe-stage {
+    position: relative;
+    height: 640px;
+    margin-top: -40px;
+    z-index: 1;
+  }
+  #globeViz {
+    position: absolute; inset: 0;
+  }
+  #globeViz canvas { display: block; margin: 0 auto; }
+
+  /* Search bar floats above globe */
+  .globe-search {
+    position: absolute;
+    left: 50%; top: 32px;
+    transform: translateX(-50%);
+    z-index: 5;
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 8px 8px 20px;
+    background: rgba(10,30,23,0.55);
+    backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid rgba(168,196,162,0.20);
+    border-radius: 999px;
+    width: 460px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+  .globe-search svg { color: rgba(255,255,255,0.5); flex-shrink: 0; }
+  .globe-search input {
+    flex: 1; background: transparent;
+    color: #fff; font-size: 14px;
+    outline: none; border: none;
+    padding: 8px 0;
+  }
+  .globe-search input::placeholder { color: rgba(255,255,255,0.4); }
+  .globe-search .kbd {
+    display: inline-flex; gap: 3px;
+    font-family: var(--lkv-font-mono);
+    font-size: 11px; color: rgba(255,255,255,0.5);
+  }
+  .globe-search .kbd span {
+    padding: 3px 6px; border-radius: 6px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+  .globe-search .go-btn {
+    padding: 9px 16px;
+    background: var(--lkv-sage-500);
+    color: var(--lkv-forest-950);
+    border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .globe-search .go-btn:hover { background: var(--lkv-sage-300); }
+
+  /* Legend / control cluster (bottom of globe) */
+  .globe-controls {
+    position: absolute;
+    left: 50%; bottom: 20px;
+    transform: translateX(-50%);
+    z-index: 5;
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px;
+    background: rgba(10,30,23,0.55);
+    backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid rgba(168,196,162,0.20);
+    border-radius: 999px;
+  }
+  .globe-controls .gc-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    color: rgba(255,255,255,0.75);
+    font-size: 12px; font-weight: 500;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .globe-controls .gc-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
+  .globe-controls .gc-btn.on {
+    color: var(--lkv-forest-950);
+    background: var(--lkv-sage-300);
+  }
+  .globe-controls .sep {
+    width: 1px; height: 20px;
+    background: rgba(255,255,255,0.15);
+  }
+
+  /* Floating info card (right side of globe) */
+  .globe-info-card {
+    position: absolute;
+    right: 60px; top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    width: 280px;
+    padding: 22px;
+    background: rgba(10,30,23,0.65);
+    backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid rgba(168,196,162,0.20);
+    border-radius: 22px;
+    color: #fff;
+  }
+  .globe-info-card .flag {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 12px;
+    background: rgba(168,196,162,0.14);
+    border-radius: 999px;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--lkv-sage-300);
+    margin-bottom: 14px;
+  }
+  .globe-info-card h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 28px; font-weight: 500;
+    letter-spacing: -0.02em; line-height: 1;
+    margin: 0 0 4px;
+  }
+  .globe-info-card h3 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .globe-info-card .region {
+    font-size: 12px; color: rgba(255,255,255,0.5);
+    margin-bottom: 18px;
+  }
+  .globe-info-card .stats-row {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 14px; padding: 14px 0;
+    border-top: 1px solid rgba(255,255,255,0.10);
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+    margin-bottom: 16px;
+  }
+  .globe-info-card .stats-row .n {
+    font-family: var(--lkv-font-sans);
+    font-size: 22px; font-weight: 500;
+    letter-spacing: -0.015em;
+    color: #fff;
+  }
+  .globe-info-card .stats-row .l {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-top: 2px;
+  }
+  .globe-info-card .cta {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 16px;
+    background: var(--lkv-sage-500);
+    color: var(--lkv-forest-950);
+    border-radius: 999px;
+    font-size: 12px; font-weight: 500;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .globe-info-card .cta:hover { background: var(--lkv-sage-300); gap: 10px; }
+
+  /* Left-side quick continent list */
+  .globe-side {
+    position: absolute;
+    left: 60px; top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    width: 240px;
+    padding: 22px;
+    background: rgba(10,30,23,0.60);
+    backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid rgba(168,196,162,0.20);
+    border-radius: 22px;
+  }
+  .globe-side .lbl {
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--lkv-sage-300); margin-bottom: 14px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .globe-side .lbl span { color: rgba(255,255,255,0.45); font-family: var(--lkv-font-mono); letter-spacing: 0.06em; }
+  .cont-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 6px;
+    border-radius: 10px;
+    font-size: 13px; color: #fff;
+    cursor: pointer;
+    transition: background var(--lkv-dur) var(--lkv-ease);
+  }
+  .cont-row:hover { background: rgba(168,196,162,0.10); }
+  .cont-row.on { background: rgba(168,196,162,0.14); }
+  .cont-row .l { display: flex; align-items: center; gap: 10px; }
+  .cont-row .l .k { color: rgba(255,255,255,0.4); font-family: var(--lkv-font-mono); font-size: 11px; }
+  .cont-row .r { font-family: var(--lkv-font-mono); font-size: 11px; color: rgba(255,255,255,0.55); }
+
+  /* Bottom band (below hero) */
+  .earth-bottom {
+    position: relative; z-index: 2;
+    padding: 24px 60px 60px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 40px;
+    color: rgba(255,255,255,0.55);
+    font-size: 12px;
+  }
+  .earth-bottom .hints { display: flex; gap: 20px; }
+  .earth-bottom .hint {
+    display: inline-flex; align-items: center; gap: 8px;
+    letter-spacing: 0.06em;
+  }
+  .earth-bottom .hint .k {
+    display: inline-flex; padding: 3px 6px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    font-family: var(--lkv-font-mono);
+    font-size: 10px; color: rgba(255,255,255,0.7);
+  }
+  .earth-bottom .marker { display: flex; align-items: center; gap: 8px; }
+  .earth-bottom .marker .d { width: 6px; height: 6px; background: var(--lkv-sage-500); border-radius: 50%; box-shadow: 0 0 10px var(--lkv-sage-500); }
+
+  /* ═══════════════════════════════════════════
+     SECTION: Trending destinations
+     ═══════════════════════════════════════════ */
+  .dest-section {
+    padding: 100px 60px 40px;
+    background: var(--lkv-paper);
+  }
+  .dest-head {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    margin-bottom: 40px;
+  }
+  .dest-head .l { max-width: 560px; }
+  .dest-head .lkv-eyebrow { margin-bottom: 20px; }
+  .dest-head h2 {
+    font-family: var(--lkv-font-sans);
+    font-size: 56px; font-weight: 500;
+    letter-spacing: -0.028em; line-height: 1;
+    margin: 0 0 12px;
+    color: var(--lkv-ink-900);
+  }
+  .dest-head h2 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .dest-head .l p {
+    font-size: 16px; line-height: 1.5;
+    color: var(--lkv-ink-500);
+    margin: 0;
+  }
+  .dest-head .filters {
+    display: flex; gap: 4px;
+    padding: 4px;
+    background: var(--lkv-stone-100);
+    border-radius: 999px;
+  }
+  .dest-head .filters button {
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+    color: var(--lkv-ink-500);
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .dest-head .filters button.on { background: var(--lkv-forest-800); color: #fff; }
+  .dest-head .filters button:not(.on):hover { color: var(--lkv-ink-900); }
+
+  .dest-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .dest-grid.row-2 {
+    grid-template-columns: 1fr 1fr 1.4fr;
+  }
+
+  .dest-card {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    aspect-ratio: 4/5;
+    background: var(--lkv-stone-100);
+    cursor: pointer;
+    transition: transform var(--lkv-dur) var(--lkv-ease-out);
+  }
+  .dest-card.wide { aspect-ratio: 16/12; }
+  .dest-card:hover { transform: translateY(-4px); }
+  .dest-card .bg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    transition: transform 600ms var(--lkv-ease-out);
+  }
+  .dest-card:hover .bg { transform: scale(1.06); }
+  .dest-card::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 45%, rgba(11,31,23,0.75) 100%);
+  }
+  .dest-card .top {
+    position: absolute; top: 16px; left: 16px; right: 16px;
+    z-index: 2;
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  .dest-card .flag-code {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 11px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(10px);
+    border-radius: 999px;
+    font-size: 11px; font-weight: 600;
+    color: var(--lkv-ink-900);
+    letter-spacing: 0.08em;
+  }
+  .dest-card .flag-code .fc {
+    padding: 2px 6px; background: var(--lkv-forest-800); color: #fff;
+    border-radius: 4px; font-family: var(--lkv-font-mono); font-size: 9px;
+  }
+  .dest-card .fav {
+    width: 34px; height: 34px; border-radius: 999px;
+    background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.24);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+  }
+  .dest-card .fav:hover { background: rgba(255,255,255,0.28); }
+  .dest-card .info {
+    position: absolute; bottom: 20px; left: 20px; right: 20px;
+    z-index: 2; color: #fff;
+  }
+  .dest-card .info h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 26px; font-weight: 500;
+    letter-spacing: -0.02em; line-height: 1;
+    margin: 0 0 6px;
+  }
+  .dest-card .info h3 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-200); font-weight: 400;
+  }
+  .dest-card.wide .info h3 { font-size: 40px; }
+  .dest-card .info .sub {
+    font-size: 12px; color: rgba(255,255,255,0.7);
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 12px;
+  }
+  .dest-card .info .sub .sep { opacity: 0.5; }
+  .dest-card .info .meta {
+    display: flex; gap: 6px;
+  }
+  .dest-card .info .m-chip {
+    padding: 4px 10px;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.20);
+    border-radius: 999px;
+    font-size: 10px; font-weight: 500;
+    color: #fff;
+    letter-spacing: 0.04em;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .dest-card .info .m-chip .k { opacity: 0.6; font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em; }
+
+  /* ═══════════════════════════════════════════
+     SECTION: Live activity + stats
+     ═══════════════════════════════════════════ */
+  .live-section {
+    padding: 60px 60px 100px;
+    background: var(--lkv-paper);
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .live-panel {
+    background: var(--lkv-forest-950);
+    border-radius: 28px;
+    padding: 32px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  .live-panel::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 90% 10%, rgba(127,169,122,0.14), transparent 40%),
+      radial-gradient(circle at 10% 100%, rgba(127,169,122,0.06), transparent 50%);
+  }
+  .live-panel > * { position: relative; z-index: 1; }
+  .live-panel .head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .live-panel .head .l { display: flex; align-items: center; gap: 10px; }
+  .live-panel .head .l .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--lkv-sage-500);
+    box-shadow: 0 0 12px var(--lkv-sage-500);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+  .live-panel .head .l span {
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--lkv-sage-300);
+    font-weight: 500;
+  }
+  .live-panel .head .cnt {
+    font-family: var(--lkv-font-mono); font-size: 11px;
+    color: rgba(255,255,255,0.45);
+  }
+  .live-panel h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 32px; font-weight: 500;
+    letter-spacing: -0.02em; line-height: 1.05;
+    margin: 0 0 20px;
+  }
+  .live-panel h3 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+
+  .live-feed {
+    display: flex; flex-direction: column; gap: 2px;
+    margin: 0 -8px;
+  }
+  .live-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 8px;
+    border-radius: 12px;
+    transition: background var(--lkv-dur) var(--lkv-ease);
+  }
+  .live-item:hover { background: rgba(255,255,255,0.04); }
+  .live-item .av {
+    width: 36px; height: 36px; border-radius: 999px;
+    background-size: cover; background-position: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .live-item .txt { flex: 1; min-width: 0; }
+  .live-item .txt .n {
+    font-size: 13px; color: #fff; font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .live-item .txt .n b { font-weight: 500; }
+  .live-item .txt .n em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .live-item .txt .m {
+    font-size: 11px; color: rgba(255,255,255,0.45);
+    font-family: var(--lkv-font-mono);
+  }
+  .live-item .code {
+    font-family: var(--lkv-font-mono); font-size: 11px;
+    padding: 3px 8px;
+    background: rgba(168,196,162,0.10);
+    color: var(--lkv-sage-300);
+    border-radius: 6px;
+    letter-spacing: 0.05em;
+  }
+
+  /* Stats panel (right) */
+  .stats-panel {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .stat-card {
+    background: #fff;
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 24px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow var(--lkv-dur) var(--lkv-ease-out);
+  }
+  .stat-card:hover { box-shadow: var(--lkv-shadow-md); }
+  .stat-card.dark {
+    background: var(--lkv-forest-800); color: #fff;
+    border-color: transparent;
+  }
+  .stat-card.dark h4, .stat-card.dark .n { color: #fff; }
+  .stat-card.dark .l { color: var(--lkv-sage-300); }
+  .stat-card.dark .delta { color: var(--lkv-sage-200); }
+
+  .stat-card .lbl {
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--lkv-ink-500);
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .stat-card .lbl .ico {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--lkv-sage-100);
+    color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stat-card.dark .lbl .ico { background: rgba(255,255,255,0.10); color: var(--lkv-sage-300); }
+
+  .stat-card .n {
+    font-family: var(--lkv-font-sans);
+    font-size: 52px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 1;
+    color: var(--lkv-ink-900);
+    margin: 8px 0 6px;
+  }
+  .stat-card .n em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+    font-size: 32px;
+  }
+  .stat-card.dark .n em { color: var(--lkv-sage-300); }
+  .stat-card .desc {
+    font-size: 13px; color: var(--lkv-ink-500);
+    line-height: 1.4;
+    margin-top: 8px;
+  }
+  .stat-card.dark .desc { color: rgba(255,255,255,0.65); }
+  .stat-card .delta {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 999px;
+    background: var(--lkv-sage-100);
+    color: var(--lkv-forest-800);
+    font-size: 11px; font-weight: 500;
+    font-family: var(--lkv-font-mono);
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .stat-card .spark {
+    position: absolute; right: 24px; bottom: 24px;
+    opacity: 0.4;
+  }
+
+  /* Featured region card (spans 2) */
+  .stat-card.feat {
+    grid-column: span 2;
+    background: var(--lkv-stone-50);
+    padding: 32px;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 32px;
+    align-items: center;
+  }
+  .stat-card.feat h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 28px; font-weight: 500;
+    letter-spacing: -0.02em; line-height: 1.1;
+    margin: 12px 0 8px;
+  }
+  .stat-card.feat h4 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .stat-card.feat .desc { font-size: 14px; }
+  .stat-card.feat .cta {
+    margin-top: 16px;
+  }
+  .stat-card.feat .mini-map {
+    aspect-ratio: 4/3;
+    background: linear-gradient(135deg, var(--lkv-forest-800), var(--lkv-forest-700));
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card.feat .mini-map::before {
+    content: ""; position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 30% 40%, rgba(168,196,162,0.30) 0%, transparent 25%),
+      radial-gradient(circle at 65% 55%, rgba(168,196,162,0.20) 0%, transparent 30%),
+      radial-gradient(circle at 45% 70%, rgba(168,196,162,0.15) 0%, transparent 20%);
+  }
+  .stat-card.feat .mini-map .pin {
+    position: absolute;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--lkv-sage-500);
+    box-shadow: 0 0 0 4px rgba(127,169,122,0.3), 0 0 20px var(--lkv-sage-500);
+  }
+  .stat-card.feat .mini-map .pin.p1 { top: 30%; left: 32%; }
+  .stat-card.feat .mini-map .pin.p2 { top: 55%; left: 48%; }
+  .stat-card.feat .mini-map .pin.p3 { top: 68%; left: 40%; }
+
+  /* ═══════════════════════════════════════════
+     SECTION: Method (editorial)
+     ═══════════════════════════════════════════ */
+  .method-section {
+    padding: 100px 60px;
+    background: var(--lkv-stone-50);
+  }
+  .method-head {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto 60px;
+  }
+  .method-head .lkv-eyebrow { margin-bottom: 20px; justify-content: center; }
+  .method-head h2 {
+    font-family: var(--lkv-font-sans);
+    font-size: 56px; font-weight: 500;
+    letter-spacing: -0.028em; line-height: 1;
+    margin: 0 0 16px;
+  }
+  .method-head h2 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .method-head p {
+    font-size: 17px; line-height: 1.5;
+    color: var(--lkv-ink-500);
+    margin: 0;
+  }
+  .method-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .method-card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 32px;
+    border: 1px solid rgba(11,31,23,0.05);
+  }
+  .method-card .num {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--lkv-font-mono);
+    font-size: 11px;
+    color: var(--lkv-forest-800);
+    margin-bottom: 32px;
+  }
+  .method-card .num::before {
+    content: ""; width: 24px; height: 1px;
+    background: var(--lkv-forest-800); opacity: 0.5;
+  }
+  .method-card h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 26px; font-weight: 500;
+    letter-spacing: -0.018em; line-height: 1.1;
+    margin: 0 0 12px;
+  }
+  .method-card h4 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .method-card p {
+    font-size: 14px; line-height: 1.55;
+    color: var(--lkv-ink-500);
+    margin: 0;
+  }
+
+  /* ═══════════════════════════════════════════
+     Mobile styles
+     ═══════════════════════════════════════════ */
+  .m-earth {
+    display: flex; flex-direction: column;
+    height: 100%;
+  }
+  .m-earth-body {
+    flex: 1; overflow-y: auto;
+    background: var(--lkv-forest-950);
+    color: #fff;
+    position: relative;
+  }
+  .m-earth-hero {
+    position: relative;
+    padding: 22px 18px 20px;
+    background: radial-gradient(ellipse at 50% 30%, #0F3A2A 0%, #0A1E17 60%, #050D0A 100%);
+    color: #fff;
+    text-align: center;
+    overflow: hidden;
+  }
+  .m-earth-hero .m-eye {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    background: rgba(168,196,162,0.10);
+    border: 1px solid rgba(168,196,162,0.20);
+    border-radius: 999px;
+    font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--lkv-sage-300);
+    margin-bottom: 12px;
+  }
+  .m-earth-hero .m-eye .d {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--lkv-sage-500);
+    box-shadow: 0 0 8px var(--lkv-sage-500);
+  }
+  .m-earth-hero h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 40px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 0.96;
+    margin: 0 0 8px;
+  }
+  .m-earth-hero h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .m-earth-hero p {
+    font-size: 12px; line-height: 1.4;
+    color: rgba(255,255,255,0.65);
+    margin: 0 auto; max-width: 280px;
+  }
+  .m-earth-hero .m-search {
+    margin-top: 16px;
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 6px 6px 14px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(168,196,162,0.20);
+    border-radius: 999px;
+  }
+  .m-earth-hero .m-search input {
+    flex: 1; background: transparent; border: 0; outline: 0;
+    color: #fff; font-size: 12px;
+  }
+  .m-earth-hero .m-search input::placeholder { color: rgba(255,255,255,0.4); }
+  .m-earth-hero .m-search .b {
+    padding: 6px 12px; background: var(--lkv-sage-500);
+    color: var(--lkv-forest-950);
+    border-radius: 999px;
+    font-size: 11px; font-weight: 500;
+  }
+
+  .m-globe-stage {
+    position: relative;
+    height: 320px;
+    background: radial-gradient(ellipse at center, #0F3A2A 0%, #0A1E17 60%, #050D0A 100%);
+  }
+  #mGlobeViz {
+    position: absolute; inset: 0;
+  }
+  #mGlobeViz canvas { display: block; margin: 0 auto; }
+
+  .m-globe-stage .m-orbit {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 1px solid rgba(168,196,162,0.10);
+    pointer-events: none;
+  }
+  .m-globe-stage .m-orbit.o1 { width: 260px; height: 260px; }
+  .m-globe-stage .m-orbit.o2 { width: 340px; height: 340px; opacity: 0.5; }
+
+  .m-controls {
+    position: absolute; left: 50%; bottom: 12px;
+    transform: translateX(-50%);
+    display: flex; gap: 4px;
+    padding: 5px;
+    background: rgba(10,30,23,0.65);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(168,196,162,0.20);
+    border-radius: 999px;
+  }
+  .m-controls .b {
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 10px; font-weight: 500;
+    color: rgba(255,255,255,0.7);
+  }
+  .m-controls .b.on { background: var(--lkv-sage-300); color: var(--lkv-forest-950); }
+
+  .m-cont-strip {
+    display: flex; gap: 8px;
+    overflow-x: auto;
+    padding: 16px 18px 8px;
+    scrollbar-width: none;
+  }
+  .m-cont-strip::-webkit-scrollbar { display: none; }
+  .m-cont-strip .p {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 999px;
+    font-size: 12px; color: rgba(255,255,255,0.75);
+    white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .m-cont-strip .p.on {
+    background: var(--lkv-sage-300);
+    color: var(--lkv-forest-950);
+    border-color: var(--lkv-sage-300);
+  }
+  .m-cont-strip .p .k {
+    font-family: var(--lkv-font-mono);
+    font-size: 10px; opacity: 0.6;
+  }
+
+  .m-body {
+    padding: 20px 18px 20px;
+  }
+  .m-sec-title {
+    font-family: var(--lkv-font-sans);
+    font-size: 20px; font-weight: 500;
+    letter-spacing: -0.015em;
+    margin: 4px 0 14px;
+  }
+  .m-sec-title em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+
+  .m-dest-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .m-dest {
+    position: relative;
+    aspect-ratio: 3/4;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #14382B;
+  }
+  .m-dest .bg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+  }
+  .m-dest::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.7));
+  }
+  .m-dest .fc {
+    position: absolute; top: 10px; left: 10px;
+    padding: 3px 8px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 999px;
+    font-family: var(--lkv-font-mono);
+    font-size: 9px; font-weight: 600;
+    color: var(--lkv-ink-900);
+    letter-spacing: 0.06em;
+    z-index: 2;
+  }
+  .m-dest .info {
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    z-index: 2; color: #fff;
+  }
+  .m-dest .info h5 {
+    font-size: 15px; font-weight: 500;
+    letter-spacing: -0.01em; line-height: 1;
+    margin: 0 0 4px;
+  }
+  .m-dest .info h5 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-200); font-weight: 400;
+  }
+  .m-dest .info .sub {
+    font-size: 10px; color: rgba(255,255,255,0.65);
+  }
+
+  .m-live-box {
+    margin-top: 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 18px;
+    padding: 16px;
+  }
+  .m-live-box .h {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 12px;
+  }
+  .m-live-box .h .d {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-sage-500);
+    box-shadow: 0 0 8px var(--lkv-sage-500);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+  .m-live-box .h span {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-sage-300);
+  }
+  .m-live-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .m-live-item:first-of-type { border-top: 0; }
+  .m-live-item .av {
+    width: 28px; height: 28px; border-radius: 50%;
+    background-size: cover; background-position: center;
+  }
+  .m-live-item .n {
+    flex: 1;
+    font-size: 12px; color: rgba(255,255,255,0.85);
+  }
+  .m-live-item .n em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300);
+  }
+  .m-live-item .t {
+    font-family: var(--lkv-font-mono);
+    font-size: 10px; color: rgba(255,255,255,0.4);
+  }
+</style>
+</head>
+<body class="earth-page">
+
+<div class="stage-title">
+  <div>
+    <div class="h">Earth · Exploration mondiale</div>
+    <div class="sub">Refonte · Desktop 1280 + Mobile 375</div>
+  </div>
+  <div class="crumbs">
+    <a href="Boutique.html">Boutique</a>
+    <a href="Communauté.html">Communauté</a>
+    <a href="Clubs.html">Clubs</a>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ═════════════ DESKTOP ═════════════ -->
+  <div class="artboard-desktop">
+
+    <!-- HERO -->
+    <section class="earth-hero">
+
+      <!-- Orbits -->
+      <div class="orbit o1"></div>
+      <div class="orbit o2"></div>
+      <div class="orbit o3"></div>
+
+      <!-- NAV -->
+      <nav class="shop-nav">
+        <a href="#" class="lkv-logo">
+          <svg viewBox="0 0 32 32" width="24" height="24" fill="none">
+            <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+          </svg>
+          <span>Le Kit du Voyageur</span>
+        </a>
+        <div class="links">
+          <a href="#">Aventures</a>
+          <a href="#" class="active">Earth</a>
+          <a href="Boutique.html">Boutique</a>
+          <a href="#">Refuges</a>
+          <a href="Communauté.html">Communauté</a>
+          <a href="#">Journal</a>
+        </div>
+        <div class="right">
+          <button class="icon-btn"><svg class="lkv-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
+          <button class="icon-btn"><svg class="lkv-icon" viewBox="0 0 24 24"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg></button>
+          <div class="avatar">MC</div>
+        </div>
+      </nav>
+
+      <!-- HEADING -->
+      <div class="hero-head">
+        <div class="eye"><span class="dot"></span>Earth · Cartographie vivante · 137 pays</div>
+        <h1>Le monde,<br/><em>à hauteur de sentier.</em></h1>
+        <p>Faites tourner la planète, choisissez un pays, découvrez les itinéraires testés par la communauté. Chaque point est une histoire de terrain.</p>
+      </div>
+
+      <!-- GLOBE -->
+      <div class="globe-stage">
+
+        <!-- Search bar -->
+        <div class="globe-search">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input type="text" placeholder="Chercher un pays, une région, un massif…" value="Chartreuse"/>
+          <span class="kbd"><span>⌘</span><span>K</span></span>
+          <button class="go-btn">Lancer</button>
+        </div>
+
+        <!-- Left: continents -->
+        <aside class="globe-side">
+          <div class="lbl">Continents <span>7 / 7</span></div>
+          <div class="cont-row on">
+            <div class="l"><span class="k">01</span> Europe</div>
+            <div class="r">44 pays</div>
+          </div>
+          <div class="cont-row">
+            <div class="l"><span class="k">02</span> Asie</div>
+            <div class="r">48 pays</div>
+          </div>
+          <div class="cont-row">
+            <div class="l"><span class="k">03</span> Afrique</div>
+            <div class="r">54 pays</div>
+          </div>
+          <div class="cont-row">
+            <div class="l"><span class="k">04</span> Amérique N.</div>
+            <div class="r">23 pays</div>
+          </div>
+          <div class="cont-row">
+            <div class="l"><span class="k">05</span> Amérique S.</div>
+            <div class="r">12 pays</div>
+          </div>
+          <div class="cont-row">
+            <div class="l"><span class="k">06</span> Océanie</div>
+            <div class="r">14 pays</div>
+          </div>
+          <div class="cont-row">
+            <div class="l"><span class="k">07</span> Antarctique</div>
+            <div class="r">— · zones</div>
+          </div>
+        </aside>
+
+        <!-- Globe canvas -->
+        <div id="globeViz"></div>
+
+        <!-- Right: destination info -->
+        <aside class="globe-info-card">
+          <div class="flag">🇫🇷 · France · Rhône-Alpes</div>
+          <h3>Chartreuse<em>, massif</em></h3>
+          <div class="region">45.35°N · 5.86°E · 2 082 m max</div>
+          <div class="stats-row">
+            <div>
+              <div class="n">312</div>
+              <div class="l">Itinéraires</div>
+            </div>
+            <div>
+              <div class="n">4 850</div>
+              <div class="l">Voyageurs</div>
+            </div>
+            <div>
+              <div class="n">47</div>
+              <div class="l">Refuges</div>
+            </div>
+            <div>
+              <div class="n">6</div>
+              <div class="l">Testeurs LKV</div>
+            </div>
+          </div>
+          <a href="#" class="cta">
+            Explorer la Chartreuse
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </aside>
+
+        <!-- Bottom: controls -->
+        <div class="globe-controls">
+          <button class="gc-btn on">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg>
+            Vue mondiale
+          </button>
+          <button class="gc-btn">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M2 12h20M12 2v20"/></svg>
+            Grille
+          </button>
+          <button class="gc-btn">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zM12 8v4l3 2"/></svg>
+            Nuit
+          </button>
+          <div class="sep"></div>
+          <button class="gc-btn">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>
+          </button>
+          <button class="gc-btn">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M4 12h16M14 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Bottom hints -->
+      <div class="earth-bottom">
+        <div class="hints">
+          <div class="hint"><span class="k">Cliquer</span>un pays pour zoomer</div>
+          <div class="hint"><span class="k">Glisser</span>pour tourner</div>
+          <div class="hint"><span class="k">Scroll</span>pour zoomer</div>
+        </div>
+        <div class="marker"><span class="d"></span>Données mises à jour il y a 3 minutes · 8 428 points actifs</div>
+      </div>
+
+    </section>
+
+    <!-- ═════════════ DESTINATIONS ═════════════ -->
+    <section class="dest-section">
+      <div class="dest-head">
+        <div class="l">
+          <div class="lkv-eyebrow">Découvertes · saison automne 2026</div>
+          <h2>Six pays<br/><em>qui montent.</em></h2>
+          <p>Les destinations où la communauté trace de nouveaux itinéraires ce trimestre. Sélection humaine, pas d'algorithme.</p>
+        </div>
+        <div class="filters">
+          <button class="on">Tendance</button>
+          <button>Populaires</button>
+          <button>Sauvage</button>
+          <button>Proche</button>
+        </div>
+      </div>
+
+      <div class="dest-grid">
+        <a href="#" class="dest-card wide">
+          <div class="bg" style="background-image: url('https://images.pexels.com/photos/2166559/pexels-photo-2166559.jpeg?auto=compress&cs=tinysrgb&w=1200')"></div>
+          <div class="top">
+            <div class="flag-code"><span class="fc">FR</span> France</div>
+            <button class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg></button>
+          </div>
+          <div class="info">
+            <h3>Massif de la<br/><em>Chartreuse.</em></h3>
+            <div class="sub">Alpes du Nord <span class="sep">·</span> 312 itinéraires <span class="sep">·</span> refuges gardés</div>
+            <div class="meta">
+              <span class="m-chip"><span class="k">Alt</span>2 082 m</span>
+              <span class="m-chip"><span class="k">Saison</span>Mai–Oct</span>
+              <span class="m-chip"><span class="k">Diff</span>Modérée</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" class="dest-card">
+          <div class="bg" style="background-image: url('https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg?auto=compress&cs=tinysrgb&w=800')"></div>
+          <div class="top">
+            <div class="flag-code"><span class="fc">IS</span> Islande</div>
+            <button class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg></button>
+          </div>
+          <div class="info">
+            <h3>Landmannalaugar<em>.</em></h3>
+            <div class="sub">Hautes terres <span class="sep">·</span> 4 j</div>
+            <div class="meta">
+              <span class="m-chip"><span class="k">Type</span>Trek</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" class="dest-card">
+          <div class="bg" style="background-image: url('https://images.pexels.com/photos/691637/pexels-photo-691637.jpeg?auto=compress&cs=tinysrgb&w=800')"></div>
+          <div class="top">
+            <div class="flag-code"><span class="fc">JP</span> Japon</div>
+            <button class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg></button>
+          </div>
+          <div class="info">
+            <h3>Kumano<br/><em>Kodō.</em></h3>
+            <div class="sub">Kii · 7 jours</div>
+            <div class="meta">
+              <span class="m-chip"><span class="k">Type</span>Pèlerinage</span>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <div class="dest-grid row-2">
+        <a href="#" class="dest-card">
+          <div class="bg" style="background-image: url('https://images.pexels.com/photos/572897/pexels-photo-572897.jpeg?auto=compress&cs=tinysrgb&w=800')"></div>
+          <div class="top">
+            <div class="flag-code"><span class="fc">NO</span> Norvège</div>
+            <button class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg></button>
+          </div>
+          <div class="info">
+            <h3>Lofoten<em>.</em></h3>
+            <div class="sub">Archipel · 5 j</div>
+            <div class="meta">
+              <span class="m-chip"><span class="k">Type</span>Côtier</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" class="dest-card">
+          <div class="bg" style="background-image: url('https://images.pexels.com/photos/814499/pexels-photo-814499.jpeg?auto=compress&cs=tinysrgb&w=800')"></div>
+          <div class="top">
+            <div class="flag-code"><span class="fc">NP</span> Népal</div>
+            <button class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg></button>
+          </div>
+          <div class="info">
+            <h3>Vallée du<br/><em>Langtang.</em></h3>
+            <div class="sub">Himalaya · 10 j</div>
+            <div class="meta">
+              <span class="m-chip"><span class="k">Alt</span>4 984 m</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" class="dest-card wide">
+          <div class="bg" style="background-image: url('https://images.pexels.com/photos/2437291/pexels-photo-2437291.jpeg?auto=compress&cs=tinysrgb&w=1200')"></div>
+          <div class="top">
+            <div class="flag-code"><span class="fc">CL</span> Chili</div>
+            <button class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg></button>
+          </div>
+          <div class="info">
+            <h3>Torres del<br/><em>Paine.</em></h3>
+            <div class="sub">Patagonie <span class="sep">·</span> 8 jours <span class="sep">·</span> circuit W</div>
+            <div class="meta">
+              <span class="m-chip"><span class="k">Alt</span>1 200 m</span>
+              <span class="m-chip"><span class="k">Saison</span>Déc–Fév</span>
+              <span class="m-chip"><span class="k">Diff</span>Soutenue</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- ═════════════ LIVE + STATS ═════════════ -->
+    <section class="live-section">
+
+      <!-- LIVE feed -->
+      <div class="live-panel">
+        <div class="head">
+          <div class="l"><span class="dot"></span><span>Activité live</span></div>
+          <div class="cnt">14:32 · 8 428 en ligne</div>
+        </div>
+        <h3>Ce qui se passe<br/><em>en ce moment.</em></h3>
+        <div class="live-feed">
+          <div class="live-item">
+            <div class="av" style="background-image: url('https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=80')"></div>
+            <div class="txt">
+              <div class="n">Léna a bivouaqué au <em>Grand Som</em></div>
+              <div class="m">FR · Chartreuse · il y a 4 min</div>
+            </div>
+            <div class="code">FR · 45.3N</div>
+          </div>
+          <div class="live-item">
+            <div class="av" style="background-image: url('https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=80')"></div>
+            <div class="txt">
+              <div class="n">Antoine a publié un carnet <em>Kumano</em></div>
+              <div class="m">JP · Kii · il y a 12 min</div>
+            </div>
+            <div class="code">JP · 33.8N</div>
+          </div>
+          <div class="live-item">
+            <div class="av" style="background-image: url('https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=80')"></div>
+            <div class="txt">
+              <div class="n">Hélène cherche un binôme pour <em>Landmannalaugar</em></div>
+              <div class="m">IS · Août 2026 · il y a 28 min</div>
+            </div>
+            <div class="code">IS · 63.9N</div>
+          </div>
+          <div class="live-item">
+            <div class="av" style="background-image: url('https://images.pexels.com/photos/1043473/pexels-photo-1043473.jpeg?auto=compress&cs=tinysrgb&w=80')"></div>
+            <div class="txt">
+              <div class="n">Bertrand a rejoint le club <em>Patagonie 2026</em></div>
+              <div class="m">CL · Torres del Paine · il y a 41 min</div>
+            </div>
+            <div class="code">CL · 50.9S</div>
+          </div>
+          <div class="live-item">
+            <div class="av" style="background-image: url('https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=80')"></div>
+            <div class="txt">
+              <div class="n">Marie a validé le refuge <em>Bellefond</em></div>
+              <div class="m">FR · Vercors · il y a 1 h</div>
+            </div>
+            <div class="code">FR · 45.0N</div>
+          </div>
+          <div class="live-item">
+            <div class="av" style="background-image: url('https://images.pexels.com/photos/1181391/pexels-photo-1181391.jpeg?auto=compress&cs=tinysrgb&w=80')"></div>
+            <div class="txt">
+              <div class="n">Rémi cherche un guide pour le <em>Langtang</em></div>
+              <div class="m">NP · Octobre · il y a 2 h</div>
+            </div>
+            <div class="code">NP · 28.2N</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-panel">
+        <div class="stat-card">
+          <div class="lbl">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="12" height="12"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg></div>
+            Pays cartographiés
+          </div>
+          <div class="n">137<em> / 195</em></div>
+          <div class="desc">70 % du globe. On avance département par département, jamais par claim marketing.<span class="delta">+8 ce mois</span></div>
+        </div>
+
+        <div class="stat-card dark">
+          <div class="lbl">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="12" height="12"><path d="M9 20l-5-5 5-5M4 15h11a5 5 0 000-10H9"/></svg></div>
+            Itinéraires vérifiés
+          </div>
+          <div class="n">2 481</div>
+          <div class="desc">Chaque itinéraire passe par un testeur avant publication. Aucun accord commercial.<span class="delta">+12 % T3</span></div>
+        </div>
+
+        <div class="stat-card feat">
+          <div>
+            <div class="lbl">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="12" height="12"><path d="M12 22s-8-9-8-14a8 8 0 1116 0c0 5-8 14-8 14z"/><circle cx="12" cy="8" r="3"/></svg></div>
+              Focus région · Été 2026
+            </div>
+            <h4>La Chartreuse<br/>en <em>six semaines.</em></h4>
+            <p class="desc">Trois testeurs, 42 nuits en bivouac, 312 itinéraires notés. Le journal complet arrive en septembre.</p>
+            <a href="#" class="lkv-btn lkv-btn-primary lkv-btn-sm cta">
+              Lire les carnets
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+          </div>
+          <div class="mini-map">
+            <div class="pin p1"></div>
+            <div class="pin p2"></div>
+            <div class="pin p3"></div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ═════════════ METHODE ═════════════ -->
+    <section class="method-section">
+      <div class="method-head">
+        <div class="lkv-eyebrow">Notre méthode · terrain d'abord</div>
+        <h2>On cartographie<br/><em>ce qu'on a marché.</em></h2>
+        <p>Pas de scraping. Pas d'IA générative pour peupler la carte. Chaque point vient d'un carnet signé, relu, situé.</p>
+      </div>
+      <div class="method-grid">
+        <div class="method-card">
+          <div class="num">01 · Terrain</div>
+          <h4>Six semaines<br/>de <em>marche.</em></h4>
+          <p>Chaque région est visitée par trois testeurs partenaires. Ils partent avec un carnet vierge et rentrent avec des points GPS, des relevés météo, des noms d'aubergistes.</p>
+        </div>
+        <div class="method-card">
+          <div class="num">02 · Relecture</div>
+          <h4>Une carte<br/><em>relue</em> à deux voix.</h4>
+          <p>Chaque itinéraire est confié à un second testeur, indépendant du premier. Ce qu'ils voient différemment, on le note. Ce qui casse, on le retire.</p>
+        </div>
+        <div class="method-card">
+          <div class="num">03 · Publication</div>
+          <h4>Publié quand<br/>on est <em>sûrs.</em></h4>
+          <p>Un pays ne monte sur l'atlas qu'après avoir traversé nos deux filtres. On préfère 137 pays vérifiés à 195 pays approximatifs.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════════════ FOOTER ═════════════ -->
+    <footer class="shop-foot">
+      <div>
+        <h4 class="brand">Le monde <em>a des sentiers,</em><br/>pas des slogans.</h4>
+        <p>Grenoble, France · Cartographie humaine · Refuges vérifiés à pied</p>
+      </div>
+      <div>
+        <h5>Explorer</h5>
+        <ul>
+          <li><a href="#">Earth</a></li>
+          <li><a href="#">Aventures</a></li>
+          <li><a href="#">Refuges</a></li>
+          <li><a href="#">Massifs</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Kit du voyageur</h5>
+        <ul>
+          <li><a href="Boutique.html">Boutique</a></li>
+          <li><a href="#">Configurateur</a></li>
+          <li><a href="#">Carnet de bord</a></li>
+          <li><a href="#">Journal</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Maison</h5>
+        <ul>
+          <li><a href="#">Méthode</a></li>
+          <li><a href="#">Testeurs</a></li>
+          <li><a href="#">Contact</a></li>
+          <li><a href="#">Presse</a></li>
+        </ul>
+      </div>
+    </footer>
+
+  </div>
+  <div class="board-caption">Desktop · 1280 × 3500+</div>
+
+  <!-- ═════════════ MOBILE ═════════════ -->
+  <div>
+    <div class="artboard-mobile">
+      <div class="screen">
+        <div class="m-earth">
+          <div class="m-topbar" style="background: rgba(10,30,23,0.85); color: #fff; border-bottom: 1px solid rgba(168,196,162,0.14);">
+            <button class="m-btn" style="color: rgba(255,255,255,0.75);">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            </button>
+            <div class="center" style="color: #fff; font-weight: 500;">Earth</div>
+            <button class="m-btn" style="color: rgba(255,255,255,0.75);">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+            </button>
+          </div>
+
+          <div class="m-earth-body">
+
+            <div class="m-earth-hero">
+              <div class="m-eye"><span class="d"></span>137 pays cartographiés</div>
+              <h1>Le monde,<br/><em>à hauteur de sentier.</em></h1>
+              <p>Faites tourner la planète, plongez dans les régions.</p>
+              <div class="m-search">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14" style="color: rgba(255,255,255,0.5);"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+                <input placeholder="France, Népal, Chartreuse…" value="Chartreuse"/>
+                <button class="b">Go</button>
+              </div>
+            </div>
+
+            <div class="m-globe-stage">
+              <div class="m-orbit o1"></div>
+              <div class="m-orbit o2"></div>
+              <div id="mGlobeViz"></div>
+              <div class="m-controls">
+                <button class="b on">Globe</button>
+                <button class="b">Grille</button>
+                <button class="b">Nuit</button>
+              </div>
+            </div>
+
+            <div class="m-cont-strip">
+              <div class="p on"><span class="k">01</span>Europe</div>
+              <div class="p"><span class="k">02</span>Asie</div>
+              <div class="p"><span class="k">03</span>Afrique</div>
+              <div class="p"><span class="k">04</span>Am. N.</div>
+              <div class="p"><span class="k">05</span>Am. S.</div>
+              <div class="p"><span class="k">06</span>Océanie</div>
+            </div>
+
+            <div class="m-body">
+              <h3 class="m-sec-title">Six pays qui <em>montent</em></h3>
+
+              <div class="m-dest-grid">
+                <a class="m-dest">
+                  <div class="bg" style="background-image: url('https://images.pexels.com/photos/2166559/pexels-photo-2166559.jpeg?auto=compress&cs=tinysrgb&w=400')"></div>
+                  <div class="fc">FR</div>
+                  <div class="info">
+                    <h5>Chartreuse<em>.</em></h5>
+                    <div class="sub">312 itinéraires</div>
+                  </div>
+                </a>
+                <a class="m-dest">
+                  <div class="bg" style="background-image: url('https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg?auto=compress&cs=tinysrgb&w=400')"></div>
+                  <div class="fc">IS</div>
+                  <div class="info">
+                    <h5>Landmanna<em>laugar.</em></h5>
+                    <div class="sub">Hautes terres</div>
+                  </div>
+                </a>
+                <a class="m-dest">
+                  <div class="bg" style="background-image: url('https://images.pexels.com/photos/691637/pexels-photo-691637.jpeg?auto=compress&cs=tinysrgb&w=400')"></div>
+                  <div class="fc">JP</div>
+                  <div class="info">
+                    <h5>Kumano <em>Kodō.</em></h5>
+                    <div class="sub">7 jours</div>
+                  </div>
+                </a>
+                <a class="m-dest">
+                  <div class="bg" style="background-image: url('https://images.pexels.com/photos/2437291/pexels-photo-2437291.jpeg?auto=compress&cs=tinysrgb&w=400')"></div>
+                  <div class="fc">CL</div>
+                  <div class="info">
+                    <h5>Torres del <em>Paine.</em></h5>
+                    <div class="sub">Patagonie</div>
+                  </div>
+                </a>
+              </div>
+
+              <div class="m-live-box">
+                <div class="h"><span class="d"></span><span>Activité live · 8 428 en ligne</span></div>
+                <div class="m-live-item">
+                  <div class="av" style="background-image: url('https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=80')"></div>
+                  <div class="n">Léna · bivouac au <em>Grand Som</em></div>
+                  <div class="t">4 m</div>
+                </div>
+                <div class="m-live-item">
+                  <div class="av" style="background-image: url('https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=80')"></div>
+                  <div class="n">Antoine · carnet <em>Kumano</em></div>
+                  <div class="t">12 m</div>
+                </div>
+                <div class="m-live-item">
+                  <div class="av" style="background-image: url('https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=80')"></div>
+                  <div class="n">Hélène · binôme <em>Islande</em></div>
+                  <div class="t">28 m</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="m-tabbar" style="background: rgba(10,30,23,0.95); border-top: 1px solid rgba(168,196,162,0.14);">
+            <div class="tabi" style="color: rgba(255,255,255,0.5);">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg>
+            </div>
+            <div class="tabi on" style="background: rgba(168,196,162,0.18); color: var(--lkv-sage-300);">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg>
+            </div>
+            <div class="tabi" style="color: rgba(255,255,255,0.5);">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+            </div>
+            <div class="tabi" style="color: rgba(255,255,255,0.5);">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+            </div>
+            <div class="tabi" style="color: rgba(255,255,255,0.5);">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="board-caption">Mobile · 375 × 812</div>
+  </div>
+
+</div>
+
+<!-- ═════════════ GLOBE INIT ═════════════ -->
+<script>
+(function() {
+  // Curated destinations (lat, lng, size, label, code)
+  const DESTINATIONS = [
+    { lat: 45.35, lng: 5.86,  size: 0.9, color: '#7FA97A', label: 'Chartreuse',       code: 'FR', primary: true },
+    { lat: 44.60, lng: 5.42,  size: 0.6, color: '#A8C4A2', label: 'Vercors',          code: 'FR' },
+    { lat: 45.83, lng: 6.86,  size: 0.6, color: '#A8C4A2', label: 'Mont-Blanc',       code: 'FR' },
+    { lat: 64.63, lng: -19.02,size: 0.7, color: '#A8C4A2', label: 'Landmannalaugar',  code: 'IS' },
+    { lat: 68.10, lng: 13.60, size: 0.6, color: '#A8C4A2', label: 'Lofoten',          code: 'NO' },
+    { lat: 33.84, lng: 135.77,size: 0.7, color: '#A8C4A2', label: 'Kumano Kodō',      code: 'JP' },
+    { lat: 28.21, lng: 85.55, size: 0.7, color: '#E4A88A', label: 'Langtang',         code: 'NP' },
+    { lat: -50.94,lng: -73.4, size: 0.8, color: '#E4A88A', label: 'Torres del Paine', code: 'CL' },
+    { lat: 46.55, lng: 8.65,  size: 0.5, color: '#A8C4A2', label: 'Grimsel',          code: 'CH' },
+    { lat: 42.65, lng: 0.65,  size: 0.5, color: '#A8C4A2', label: 'Pyrénées',         code: 'FR' },
+    { lat: -33.87,lng: 151.21,size: 0.4, color: '#A8C4A2', label: 'Blue Mountains',   code: 'AU' },
+    { lat: 60.17, lng: 24.94, size: 0.4, color: '#A8C4A2', label: 'Nuuksio',          code: 'FI' },
+    { lat: 27.99, lng: 86.92, size: 0.6, color: '#E4A88A', label: 'Everest region',   code: 'NP' },
+    { lat: -3.07, lng: 37.35, size: 0.6, color: '#E4A88A', label: 'Kilimandjaro',     code: 'TZ' },
+    { lat: 36.55, lng: -118.29,size:0.5, color: '#A8C4A2', label: 'Sierra Nevada',    code: 'US' },
+    { lat: 46.79, lng: 11.30, size: 0.5, color: '#A8C4A2', label: 'Dolomites',        code: 'IT' },
+    { lat: 37.98, lng: 23.72, size: 0.4, color: '#A8C4A2', label: 'Péloponnèse',      code: 'GR' },
+    { lat: 63.11, lng: -21.15,size: 0.4, color: '#A8C4A2', label: 'Reykjanes',        code: 'IS' },
+    { lat: 50.05, lng: 14.42, size: 0.3, color: '#A8C4A2', label: 'Bohême',           code: 'CZ' },
+    { lat: 41.15, lng: -8.61, size: 0.4, color: '#A8C4A2', label: 'Peneda-Gerês',     code: 'PT' },
+  ];
+
+  // Great-circle arcs (Chartreuse hub)
+  const ARCS = [
+    { startLat: 45.35, startLng: 5.86, endLat: 64.63, endLng: -19.02, color: ['rgba(127,169,122,0.4)','rgba(168,196,162,0.7)'] },
+    { startLat: 45.35, startLng: 5.86, endLat: 33.84, endLng: 135.77, color: ['rgba(127,169,122,0.4)','rgba(168,196,162,0.7)'] },
+    { startLat: 45.35, startLng: 5.86, endLat: -50.94,endLng: -73.4,  color: ['rgba(127,169,122,0.4)','rgba(228,168,138,0.7)'] },
+    { startLat: 45.35, startLng: 5.86, endLat: 28.21, endLng: 85.55,  color: ['rgba(127,169,122,0.4)','rgba(228,168,138,0.7)'] },
+    { startLat: 45.35, startLng: 5.86, endLat: 68.10, endLng: 13.60,  color: ['rgba(127,169,122,0.4)','rgba(168,196,162,0.7)'] },
+    { startLat: 64.63, startLng: -19.02,endLat: 46.79,endLng: 11.30,  color: ['rgba(168,196,162,0.3)','rgba(168,196,162,0.3)'] },
+    { startLat: 28.21, startLng: 85.55, endLat: -3.07,endLng: 37.35,  color: ['rgba(228,168,138,0.3)','rgba(228,168,138,0.3)'] },
+  ];
+
+  const RINGS = [
+    { lat: 45.35, lng: 5.86, maxR: 6, propagationSpeed: 3, repeatPeriod: 1500, color: 'rgba(127,169,122,0.7)' },
+    { lat: 64.63, lng: -19.02, maxR: 4, propagationSpeed: 2, repeatPeriod: 2400, color: 'rgba(168,196,162,0.5)' },
+    { lat: 33.84, lng: 135.77, maxR: 4, propagationSpeed: 2, repeatPeriod: 2800, color: 'rgba(168,196,162,0.5)' },
+    { lat: -50.94, lng: -73.4, maxR: 4, propagationSpeed: 2, repeatPeriod: 3200, color: 'rgba(228,168,138,0.5)' },
+    { lat: 28.21, lng: 85.55, maxR: 4, propagationSpeed: 2, repeatPeriod: 3600, color: 'rgba(228,168,138,0.5)' },
+  ];
+
+  function makeGlobe(el, size, opts) {
+    const g = Globe()
+      (el)
+      .width(size.w)
+      .height(size.h)
+      .backgroundColor('rgba(0,0,0,0)')
+      .globeImageUrl('https://unpkg.com/three-globe@2.31.1/example/img/earth-night.jpg')
+      .bumpImageUrl('https://unpkg.com/three-globe@2.31.1/example/img/earth-topology.png')
+      .showAtmosphere(true)
+      .atmosphereColor('#7FA97A')
+      .atmosphereAltitude(0.22)
+      .pointsData(DESTINATIONS)
+      .pointLat('lat').pointLng('lng')
+      .pointColor('color')
+      .pointAltitude(d => d.size * 0.04)
+      .pointRadius(d => d.size * 0.5)
+      .pointsMerge(false)
+      .arcsData(ARCS)
+      .arcColor('color')
+      .arcDashLength(0.35)
+      .arcDashGap(0.6)
+      .arcDashAnimateTime(3500)
+      .arcStroke(0.35)
+      .arcAltitudeAutoScale(0.45)
+      .ringsData(RINGS)
+      .ringColor(d => t => d.color.replace(/[\d.]+\)$/, (1-t).toFixed(2) + ')'))
+      .ringMaxRadius('maxR')
+      .ringPropagationSpeed('propagationSpeed')
+      .ringRepeatPeriod('repeatPeriod')
+      .labelsData(DESTINATIONS.filter(d => d.primary))
+      .labelLat('lat').labelLng('lng')
+      .labelText('label')
+      .labelSize(0.9)
+      .labelDotRadius(0.3)
+      .labelColor(() => 'rgba(255,255,255,0.95)')
+      .labelResolution(3)
+      .labelAltitude(0.02);
+
+    // Configure controls & initial camera
+    setTimeout(() => {
+      const controls = g.controls();
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = opts.rotateSpeed || 0.35;
+      controls.enableZoom = opts.enableZoom !== false;
+      controls.enablePan = false;
+      controls.minDistance = 200;
+      controls.maxDistance = 500;
+      g.pointOfView({ lat: 30, lng: 10, altitude: opts.altitude || 2.2 }, 0);
+    }, 100);
+
+    // Style renderer for softer look
+    const renderer = g.renderer();
+    if (renderer) {
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    }
+    // Tint globe material slightly greener (safely; THREE is bundled inside globe.gl)
+    setTimeout(() => {
+      try {
+        const globeMat = g.globeMaterial();
+        if (globeMat && globeMat.color) {
+          globeMat.color.set('#0f2e22');
+          if (globeMat.emissive) {
+            globeMat.emissive.set('#08201b');
+            globeMat.emissiveIntensity = 0.08;
+          }
+          globeMat.shininess = 0.6;
+          globeMat.needsUpdate = true;
+        }
+      } catch (e) { /* silent */ }
+    }, 200);
+
+    return g;
+  }
+
+  // ————— DESKTOP GLOBE —————
+  const desktopEl = document.getElementById('globeViz');
+  if (desktopEl) {
+    // Give the globe canvas explicit centering size
+    const g1 = makeGlobe(desktopEl, { w: 1280, h: 640 }, { rotateSpeed: 0.4, altitude: 2.0 });
+    // Slight tilt
+    setTimeout(() => g1.pointOfView({ lat: 25, lng: 15, altitude: 2.05 }, 800), 300);
+  }
+
+  // ————— MOBILE GLOBE —————
+  const mobileEl = document.getElementById('mGlobeViz');
+  if (mobileEl) {
+    const g2 = makeGlobe(mobileEl, { w: 356, h: 320 }, { rotateSpeed: 0.5, altitude: 2.4, enableZoom: false });
+  }
+})();
+</script>
+</body>
+</html>

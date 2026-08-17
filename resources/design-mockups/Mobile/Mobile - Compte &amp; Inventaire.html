@@ -1,0 +1,2043 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Mobile · Compte & inventaire — Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<style>
+  body {
+    background: #EAE6DF;
+    padding: 40px 0 80px;
+    min-height: 100vh;
+  }
+
+  .stage-title {
+    max-width: 1720px; margin: 0 auto 32px; padding: 0 40px;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 24px;
+    color: var(--lkv-ink-700);
+  }
+  .stage-title .h {
+    font-family: var(--lkv-font-sans);
+    font-size: 24px; font-weight: 500; letter-spacing: -0.015em;
+    color: var(--lkv-ink-900);
+  }
+  .stage-title .h em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .stage-title .sub { font-size: 14px; color: var(--lkv-ink-500); margin-top: 4px; }
+  .stage-title .crumbs a { color: var(--lkv-forest-800); font-weight: 500; margin-left: 20px; font-size: 13px; }
+
+  .stage {
+    display: flex; gap: 32px; overflow-x: auto;
+    max-width: 100%;
+    padding: 0 40px 32px;
+    align-items: flex-start;
+    scroll-snap-type: x proximity;
+  }
+  .stage::-webkit-scrollbar { height: 8px; }
+  .stage::-webkit-scrollbar-thumb { background: rgba(11,31,23,0.15); border-radius: 4px; }
+  .board { flex-shrink: 0; scroll-snap-align: start; }
+
+  .artboard-mobile {
+    width: 380px;
+    border-radius: 44px; overflow: hidden;
+    background: #0B1F17; padding: 12px;
+    box-shadow: 0 30px 80px rgba(11,31,23,0.20);
+  }
+  .artboard-mobile .screen {
+    width: 100%; height: 780px;
+    border-radius: 34px; overflow: hidden;
+    background: var(--lkv-paper);
+    position: relative;
+    display: flex; flex-direction: column;
+  }
+  .board-caption {
+    margin-top: 16px; font-size: 11px; color: var(--lkv-ink-500);
+    text-align: center; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 500;
+  }
+  .board-caption em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); text-transform: none; letter-spacing: 0;
+    font-weight: 400; font-size: 13px;
+  }
+
+  /* Status bar */
+  .status-bar {
+    height: 40px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px 0 28px;
+    font-size: 14px; font-weight: 600;
+    color: var(--lkv-ink-900);
+    flex-shrink: 0;
+  }
+  .status-bar.on-dark { color: #fff; }
+  .status-bar .right { display: flex; gap: 6px; align-items: center; }
+  .status-bar svg { width: 16px; height: 10px; }
+
+  /* Top bar */
+  .m-topbar {
+    height: 52px;
+    padding: 0 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--lkv-paper);
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 5;
+  }
+  .m-topbar.on-image {
+    background: transparent;
+    border-bottom: none;
+    position: absolute; top: 40px; left: 0; right: 0;
+    z-index: 2;
+  }
+  .m-topbar .m-btn {
+    width: 38px; height: 38px; border-radius: 999px;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid rgba(11,31,23,0.06);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-900);
+    position: relative;
+  }
+  .m-topbar.on-image .m-btn {
+    background: rgba(255,255,255,0.16);
+    backdrop-filter: blur(20px);
+    border-color: rgba(255,255,255,0.28);
+    color: #fff;
+  }
+  .m-topbar .center {
+    font-size: 14px; font-weight: 500; letter-spacing: -0.01em;
+    color: var(--lkv-ink-900);
+  }
+  .m-topbar .center em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .m-topbar.on-image .center { color: #fff; }
+  .m-topbar.on-image .center em { color: var(--lkv-sage-200); }
+
+  /* Bottom tab bar */
+  .m-tabbar {
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    height: 62px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(24px) saturate(1.5);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    border-radius: 22px;
+    border: 1px solid rgba(11,31,23,0.06);
+    display: flex; align-items: center; justify-content: space-around;
+    padding: 0 8px;
+    z-index: 3;
+    box-shadow: 0 10px 30px rgba(11,31,23,0.1);
+  }
+  .m-tabbar .tabi {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    color: var(--lkv-ink-500);
+    padding: 6px 10px;
+    font-size: 10px; font-weight: 500;
+    flex: 1;
+    min-width: 0;
+  }
+  .m-tabbar .tabi.on { color: var(--lkv-forest-800); }
+  .m-tabbar .tabi svg { width: 20px; height: 20px; }
+
+  .m-body {
+    flex: 1; overflow-y: auto;
+    padding-bottom: 90px;
+  }
+  .m-body::-webkit-scrollbar { display: none; }
+
+  /* Common section heading in dashboards */
+  .sec-h {
+    padding: 22px 16px 10px;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .sec-h h2 {
+    font-size: 17px; letter-spacing: -0.015em; margin: 0;
+  }
+  .sec-h h2 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .sec-h a {
+    font-size: 11px; color: var(--lkv-forest-800); font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.1em;
+  }
+
+  /* ═══════════════════════════════════════════════
+     1. COMPTE / DASHBOARD
+     ═══════════════════════════════════════════════ */
+  .ac-hero {
+    position: relative;
+    height: 260px;
+    padding: 90px 20px 16px;
+    color: #fff;
+    overflow: hidden;
+  }
+  .ac-hero .bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(160deg, #17402C 0%, #0B1F17 60%, #06120C 100%);
+  }
+  .ac-hero .bg::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 80% 30%, rgba(168,200,160,0.28) 0%, transparent 55%),
+      radial-gradient(ellipse at 20% 100%, rgba(45,107,74,0.4) 0%, transparent 50%);
+  }
+  .ac-hero > .content {
+    position: relative; z-index: 2;
+    height: 100%;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .ac-hero .greet {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .ac-hero .greet .av {
+    width: 52px; height: 52px; border-radius: 999px;
+    background: var(--lkv-sage-500);
+    color: var(--lkv-forest-950);
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 22px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid rgba(255,255,255,0.2);
+    flex-shrink: 0;
+  }
+  .ac-hero .greet .info .kind {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-sage-300); font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .ac-hero .greet .info h1 {
+    font-size: 22px; letter-spacing: -0.02em;
+    margin: 0; line-height: 1.05;
+  }
+  .ac-hero .greet .info h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-200); font-weight: 400;
+  }
+
+  .ac-stats {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.14);
+  }
+  .ac-stats .cell {
+    background: rgba(11,31,23,0.35);
+    backdrop-filter: blur(10px);
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .ac-stats .cell .n {
+    font-size: 20px; font-weight: 500; letter-spacing: -0.02em;
+    line-height: 1;
+    color: #fff;
+  }
+  .ac-stats .cell .n em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+    font-size: 13px;
+  }
+  .ac-stats .cell .l {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.7);
+    margin-top: 3px;
+  }
+
+  .ac-shortcuts {
+    padding: 16px 16px 0;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .ac-shortcut {
+    background: var(--lkv-paper);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 16px;
+    padding: 12px 6px 10px;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    position: relative;
+  }
+  .ac-shortcut .ic {
+    width: 32px; height: 32px; border-radius: 10px;
+    background: var(--lkv-sage-100);
+    color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ac-shortcut .ic svg { width: 16px; height: 16px; }
+  .ac-shortcut .lbl {
+    font-size: 10px; font-weight: 500;
+    color: var(--lkv-ink-900);
+    letter-spacing: -0.005em;
+    text-align: center;
+    line-height: 1.15;
+  }
+  .ac-shortcut .lbl em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .ac-shortcut .badge {
+    position: absolute; top: 6px; right: 6px;
+    min-width: 14px; height: 14px; padding: 0 4px;
+    border-radius: 999px;
+    background: var(--lkv-forest-800); color: #fff;
+    font-size: 9px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--lkv-font-mono);
+  }
+
+  .ac-card {
+    margin: 12px 16px 0;
+    padding: 14px;
+    background: var(--lkv-paper);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 18px;
+    display: flex; gap: 12px;
+    align-items: center;
+  }
+  .ac-card .thumb {
+    width: 60px; height: 60px; border-radius: 14px;
+    flex-shrink: 0;
+    background: linear-gradient(160deg, #C6DCBE 0%, #A8C8A0 100%);
+    color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ac-card .thumb.dark {
+    background: linear-gradient(160deg, #17402C 0%, #06120C 100%);
+    color: var(--lkv-sage-300);
+  }
+  .ac-card .thumb svg { width: 26px; height: 26px; }
+  .ac-card .info { flex: 1; min-width: 0; }
+  .ac-card .info .kind {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--lkv-forest-800); font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .ac-card .info h4 {
+    font-size: 14px; font-weight: 500; letter-spacing: -0.005em;
+    margin: 0; line-height: 1.2;
+  }
+  .ac-card .info h4 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .ac-card .info .m {
+    font-size: 10px; color: var(--lkv-ink-500);
+    font-family: var(--lkv-font-mono);
+    margin-top: 4px; letter-spacing: 0.04em;
+  }
+  .ac-card .go {
+    width: 32px; height: 32px; border-radius: 999px;
+    background: var(--lkv-stone-50);
+    color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .ac-card .go svg { width: 14px; height: 14px; }
+
+  .ac-recent {
+    padding: 0 16px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .ac-recent .line {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    background: var(--lkv-paper);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 14px;
+  }
+  .ac-recent .line .k {
+    width: 4px; height: 30px; border-radius: 999px;
+    background: var(--lkv-sage-500);
+    flex-shrink: 0;
+  }
+  .ac-recent .line.orange .k { background: #D97757; }
+  .ac-recent .line.mono .k { background: var(--lkv-ink-500); }
+  .ac-recent .line .txt { flex: 1; min-width: 0; font-size: 12px; }
+  .ac-recent .line .txt .t {
+    font-weight: 500; letter-spacing: -0.005em;
+    line-height: 1.2; color: var(--lkv-ink-900);
+  }
+  .ac-recent .line .txt .t em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .ac-recent .line .txt .s {
+    font-size: 10px; color: var(--lkv-ink-500);
+    font-family: var(--lkv-font-mono);
+    margin-top: 1px;
+  }
+  .ac-recent .line .m {
+    font-size: 10px; color: var(--lkv-ink-500);
+    font-family: var(--lkv-font-mono);
+    letter-spacing: 0.04em;
+  }
+
+  /* ═══════════════════════════════════════════════
+     2. MES AVENTURES
+     ═══════════════════════════════════════════════ */
+  .inv-h {
+    padding: 12px 20px 12px;
+    background: var(--lkv-paper);
+  }
+  .inv-h .eye {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-ink-500); font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .inv-h h1 {
+    font-size: 28px; font-weight: 500;
+    letter-spacing: -0.028em; line-height: 0.98;
+    margin: 0 0 4px;
+  }
+  .inv-h h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .inv-h .lead {
+    font-size: 12px; color: var(--lkv-ink-500);
+    margin: 0;
+  }
+
+  .inv-tabs {
+    display: flex; gap: 6px; overflow-x: auto;
+    padding: 12px 16px 4px;
+    background: var(--lkv-paper);
+  }
+  .inv-tabs::-webkit-scrollbar { display: none; }
+  .inv-tabs button {
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: var(--lkv-stone-50);
+    border: 1px solid rgba(11,31,23,0.06);
+    font-size: 11px; font-weight: 500; color: var(--lkv-ink-700);
+    white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .inv-tabs button.on {
+    background: var(--lkv-forest-800); color: #fff;
+    border-color: var(--lkv-forest-800);
+  }
+  .inv-tabs button .k {
+    font-family: var(--lkv-font-mono);
+    font-size: 9px; opacity: 0.55;
+  }
+
+  .adv-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .adv-card {
+    background: var(--lkv-paper);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 18px;
+    overflow: hidden;
+  }
+  .adv-card .cover {
+    height: 110px;
+    background: linear-gradient(160deg, #384A42 0%, #17402C 100%);
+    position: relative;
+    padding: 12px;
+    color: #fff;
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  .adv-card .cover.c1 {
+    background: linear-gradient(160deg, #2D6B4A 0%, #17402C 60%, #06120C 100%);
+  }
+  .adv-card .cover.c2 {
+    background: linear-gradient(160deg, #DDD6C6 0%, #8B978F 100%);
+    color: var(--lkv-forest-950);
+  }
+  .adv-card .cover.c3 {
+    background: linear-gradient(160deg, #C6DCBE 0%, #384A42 100%);
+    color: #fff;
+  }
+  .adv-card .cover::before {
+    content: ""; position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 120'><g fill='none' stroke='%23FFFFFF' stroke-width='0.6' opacity='0.14'><path d='M0,100 Q80,60 160,80 T340,50'/><path d='M0,80 Q100,40 180,60 T400,30'/></g></svg>");
+    background-size: cover;
+  }
+  .adv-card .cover > * { position: relative; z-index: 1; }
+  .adv-card .cover .st-pill {
+    padding: 4px 10px;
+    background: rgba(255,255,255,0.16);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.28);
+    border-radius: 999px;
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 500;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .adv-card .cover .st-pill.on .d { background: var(--lkv-sage-500); }
+  .adv-card .cover .st-pill.done { background: rgba(255,255,255,0.22); }
+  .adv-card .cover .st-pill.draft { background: rgba(11,31,23,0.35); border-color: rgba(255,255,255,0.15); }
+  .adv-card .cover .st-pill .d { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .adv-card .cover.c2 .st-pill { background: rgba(11,31,23,0.14); color: var(--lkv-forest-800); border-color: rgba(11,31,23,0.14); }
+  .adv-card .cover .idx {
+    font-family: var(--lkv-font-mono);
+    font-size: 10px; opacity: 0.75;
+    letter-spacing: 0.06em;
+  }
+  .adv-card .body {
+    padding: 12px 14px 14px;
+  }
+  .adv-card .body .loc {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--lkv-ink-500);
+    display: flex; align-items: center; gap: 4px;
+    margin-bottom: 4px;
+  }
+  .adv-card .body .loc svg { width: 10px; height: 10px; color: var(--lkv-forest-800); }
+  .adv-card .body h4 {
+    font-size: 16px; font-weight: 500; letter-spacing: -0.01em;
+    margin: 0; line-height: 1.1;
+  }
+  .adv-card .body h4 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .adv-card .body .prog {
+    margin-top: 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .adv-card .body .prog .bar {
+    flex: 1; height: 4px;
+    background: rgba(11,31,23,0.06);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .adv-card .body .prog .bar .fill {
+    height: 100%; background: var(--lkv-forest-800); border-radius: 999px;
+  }
+  .adv-card .body .prog .p {
+    font-family: var(--lkv-font-mono);
+    font-size: 10px; color: var(--lkv-forest-800); font-weight: 500;
+  }
+  .adv-card .body .stats {
+    display: flex; gap: 12px; margin-top: 10px;
+    font-family: var(--lkv-font-mono);
+    font-size: 10px; color: var(--lkv-ink-700);
+  }
+  .adv-card .body .stats span { display: inline-flex; align-items: center; gap: 3px; }
+  .adv-card .body .stats svg { width: 10px; height: 10px; color: var(--lkv-forest-800); }
+
+  /* ═══════════════════════════════════════════════
+     3. MES CARNETS
+     ═══════════════════════════════════════════════ */
+  .cn-list {
+    padding: 12px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .cn-book {
+    display: flex; gap: 12px;
+    padding: 12px;
+    background: var(--lkv-paper);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 18px;
+  }
+  .cn-book .spine {
+    width: 76px; height: 96px;
+    border-radius: 3px 12px 12px 3px;
+    position: relative;
+    flex-shrink: 0;
+    box-shadow: -2px 3px 6px rgba(11,31,23,0.15), inset -2px 0 0 rgba(255,255,255,0.15);
+    overflow: hidden;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 10px 8px 8px 12px;
+    color: #fff;
+    background: linear-gradient(90deg, rgba(0,0,0,0.15) 0%, transparent 12%),
+      linear-gradient(160deg, #17402C 0%, #0B1F17 100%);
+  }
+  .cn-book .spine.s2 {
+    background: linear-gradient(90deg, rgba(0,0,0,0.15) 0%, transparent 12%),
+      linear-gradient(160deg, #DDD6C6 0%, #8B978F 100%);
+    color: var(--lkv-forest-950);
+  }
+  .cn-book .spine.s3 {
+    background: linear-gradient(90deg, rgba(0,0,0,0.15) 0%, transparent 12%),
+      linear-gradient(160deg, #C6DCBE 0%, #A8C8A0 100%);
+    color: var(--lkv-forest-800);
+  }
+  .cn-book .spine.s4 {
+    background: linear-gradient(90deg, rgba(0,0,0,0.15) 0%, transparent 12%),
+      linear-gradient(160deg, #384A42 0%, #06120C 100%);
+  }
+  .cn-book .spine .num {
+    font-family: var(--lkv-font-mono);
+    font-size: 9px; letter-spacing: 0.06em;
+    opacity: 0.75;
+  }
+  .cn-book .spine .t {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 14px;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+  }
+  .cn-book .body {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; justify-content: space-between;
+    gap: 6px;
+  }
+  .cn-book .body .kind {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--lkv-forest-800); font-weight: 500;
+  }
+  .cn-book .body h4 {
+    font-size: 15px; font-weight: 500; letter-spacing: -0.005em;
+    margin: 2px 0 0; line-height: 1.15;
+  }
+  .cn-book .body h4 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .cn-book .body .p {
+    font-family: var(--lkv-font-serif);
+    font-style: italic;
+    font-size: 11px; color: var(--lkv-ink-500);
+    line-height: 1.4;
+  }
+  .cn-book .body .row {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .cn-book .body .row .m {
+    font-family: var(--lkv-font-mono);
+    font-size: 10px; color: var(--lkv-ink-500);
+    letter-spacing: 0.04em;
+  }
+  .cn-book .body .row .m strong { color: var(--lkv-forest-800); font-weight: 500; }
+  .cn-book .body .row .pill {
+    padding: 3px 8px;
+    background: var(--lkv-sage-100);
+    color: var(--lkv-forest-800);
+    border-radius: 999px;
+    font-size: 9px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .cn-book .body .row .pill.draft {
+    background: var(--lkv-stone-50); color: var(--lkv-ink-500);
+  }
+  .cn-book .body .row .pill.done {
+    background: rgba(198,220,190,0.4); color: var(--lkv-forest-800);
+  }
+
+  .cn-new {
+    margin: 4px 16px 0;
+    padding: 14px;
+    background: repeating-linear-gradient(45deg, var(--lkv-stone-50), var(--lkv-stone-50) 8px, rgba(11,31,23,0.02) 8px, rgba(11,31,23,0.02) 16px);
+    border: 1.5px dashed rgba(11,31,23,0.14);
+    border-radius: 18px;
+    display: flex; gap: 12px; align-items: center;
+    text-decoration: none;
+  }
+  .cn-new .ic {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--lkv-forest-800); color: var(--lkv-sage-300);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .cn-new .ic svg { width: 20px; height: 20px; }
+  .cn-new .txt { flex: 1; }
+  .cn-new .txt .t {
+    font-size: 14px; font-weight: 500;
+    color: var(--lkv-ink-900);
+    letter-spacing: -0.005em;
+  }
+  .cn-new .txt .t em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .cn-new .txt .s {
+    font-size: 10px; color: var(--lkv-ink-500);
+    font-family: var(--lkv-font-mono);
+    margin-top: 2px;
+  }
+  .cn-new .go {
+    color: var(--lkv-forest-800);
+  }
+  .cn-new .go svg { width: 16px; height: 16px; }
+
+  /* ═══════════════════════════════════════════════
+     4. MES COMMANDES
+     ═══════════════════════════════════════════════ */
+  .or-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .or-card {
+    background: var(--lkv-paper);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 18px;
+    overflow: hidden;
+  }
+  .or-card .top {
+    padding: 12px 14px;
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--lkv-stone-50);
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+  }
+  .or-card .top .id {
+    font-family: var(--lkv-font-mono);
+    font-size: 11px; color: var(--lkv-ink-700);
+    letter-spacing: 0.06em;
+  }
+  .or-card .top .id strong {
+    color: var(--lkv-ink-900); font-weight: 600;
+    margin-right: 4px;
+  }
+  .or-card .top .st {
+    padding: 4px 10px 4px 8px;
+    border-radius: 999px;
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .or-card .top .st .d {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor;
+  }
+  .or-card .top .st.ship { background: var(--lkv-sage-100); color: var(--lkv-forest-800); }
+  .or-card .top .st.wait { background: rgba(217,119,87,0.14); color: #a4552e; }
+  .or-card .top .st.done { background: rgba(11,31,23,0.08); color: var(--lkv-ink-700); }
+
+  .or-card .body {
+    padding: 12px 14px;
+  }
+  .or-card .body .items {
+    display: flex; gap: 8px;
+    margin-bottom: 12px;
+  }
+  .or-card .body .item {
+    width: 44px; height: 52px; border-radius: 10px;
+    background: linear-gradient(160deg, #17402C, #06120C);
+    color: var(--lkv-sage-300);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .or-card .body .item.a2 { background: linear-gradient(160deg, #DDD6C6, #8B978F); color: var(--lkv-forest-800); }
+  .or-card .body .item.a3 { background: linear-gradient(160deg, #C6DCBE, #A8C8A0); color: var(--lkv-forest-800); }
+  .or-card .body .item.a4 { background: linear-gradient(160deg, #384A42, #06120C); color: var(--lkv-sage-300); }
+  .or-card .body .item svg { width: 20px; height: 20px; }
+  .or-card .body .item.more {
+    background: transparent;
+    border: 1px dashed rgba(11,31,23,0.14);
+    color: var(--lkv-ink-500);
+    font-family: var(--lkv-font-mono);
+    font-size: 11px;
+  }
+
+  .or-card .body .row {
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .or-card .body .row .lbl {
+    font-size: 11px; color: var(--lkv-ink-500);
+    font-family: var(--lkv-font-mono);
+    letter-spacing: 0.04em;
+  }
+  .or-card .body .row .lbl strong {
+    color: var(--lkv-ink-900); font-weight: 500;
+    font-family: var(--lkv-font-sans);
+    font-size: 13px;
+    margin-right: 4px;
+    letter-spacing: -0.005em;
+  }
+  .or-card .body .row .lbl strong em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .or-card .body .row .p {
+    font-size: 15px; font-weight: 500; letter-spacing: -0.005em;
+  }
+
+  .or-card .actions {
+    display: flex; gap: 6px;
+    padding: 8px 14px 14px;
+  }
+  .or-card .actions button {
+    flex: 1;
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-size: 11px; font-weight: 500;
+    text-align: center;
+    background: var(--lkv-stone-50);
+    color: var(--lkv-ink-900);
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  .or-card .actions button.primary {
+    background: var(--lkv-forest-800); color: #fff;
+  }
+  .or-card .actions button svg { width: 12px; height: 12px; }
+
+  /* ═══════════════════════════════════════════════
+     5. MES CLUBS
+     ═══════════════════════════════════════════════ */
+  .mc-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .mc-card {
+    background: var(--lkv-paper);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 18px;
+    padding: 12px;
+    display: flex; gap: 12px;
+  }
+  .mc-card .thumb {
+    width: 52px; height: 52px; border-radius: 14px;
+    flex-shrink: 0;
+    color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .mc-card .thumb.t1 { background: linear-gradient(135deg, #C6DCBE, #A8C8A0); }
+  .mc-card .thumb.t2 { background: linear-gradient(135deg, #17402C, #06120C); color: var(--lkv-sage-300); }
+  .mc-card .thumb.t3 { background: linear-gradient(135deg, #DDD6C6, #8B978F); }
+  .mc-card .thumb svg { width: 22px; height: 22px; }
+  .mc-card .thumb .role {
+    position: absolute; bottom: -3px; right: -3px;
+    padding: 2px 6px;
+    background: var(--lkv-forest-800); color: var(--lkv-sage-300);
+    border-radius: 999px;
+    font-size: 8px; font-weight: 700;
+    letter-spacing: 0.06em;
+    border: 1.5px solid var(--lkv-paper);
+    text-transform: uppercase;
+  }
+  .mc-card .body {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; justify-content: space-between;
+    gap: 6px;
+  }
+  .mc-card .body .kind {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--lkv-forest-800); font-weight: 500;
+  }
+  .mc-card .body h4 {
+    font-size: 14px; font-weight: 500; letter-spacing: -0.005em;
+    margin: 0; line-height: 1.15;
+  }
+  .mc-card .body h4 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .mc-card .body .row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 10px;
+    color: var(--lkv-ink-500);
+    font-family: var(--lkv-font-mono);
+    letter-spacing: 0.04em;
+  }
+  .mc-card .body .row .next {
+    color: var(--lkv-forest-800); font-weight: 500;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .mc-card .body .row .next svg { width: 10px; height: 10px; }
+
+  /* ═══════════════════════════════════════════════
+     6. PARAMÈTRES
+     ═══════════════════════════════════════════════ */
+  .st-user {
+    padding: 20px 20px 16px;
+    background: var(--lkv-paper);
+    display: flex; gap: 14px; align-items: center;
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+  }
+  .st-user .av {
+    width: 58px; height: 58px; border-radius: 999px;
+    background: linear-gradient(135deg, var(--lkv-forest-800), var(--lkv-sage-500));
+    color: #fff;
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 24px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .st-user .av .cam {
+    position: absolute; bottom: -2px; right: -2px;
+    width: 22px; height: 22px; border-radius: 999px;
+    background: var(--lkv-forest-800); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--lkv-paper);
+  }
+  .st-user .av .cam svg { width: 10px; height: 10px; }
+  .st-user .info { flex: 1; min-width: 0; }
+  .st-user .info h2 {
+    font-size: 18px; letter-spacing: -0.015em; margin: 0;
+    line-height: 1.1;
+  }
+  .st-user .info h2 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .st-user .info .m {
+    font-size: 11px; color: var(--lkv-ink-500);
+    margin-top: 2px;
+  }
+  .st-user .info .tag {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 3px 8px;
+    background: var(--lkv-sage-100);
+    color: var(--lkv-forest-800);
+    border-radius: 999px;
+    font-size: 9px; font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .st-group {
+    padding: 18px 16px 4px;
+  }
+  .st-group .lbl {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-ink-400);
+    font-weight: 500;
+    margin-bottom: 8px;
+    padding: 0 8px;
+  }
+  .st-list {
+    background: var(--lkv-paper);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .st-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px;
+    text-decoration: none;
+    color: var(--lkv-ink-900);
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+    cursor: pointer;
+  }
+  .st-item:last-child { border-bottom: none; }
+  .st-item .ic {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: var(--lkv-stone-50);
+    color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .st-item .ic svg { width: 16px; height: 16px; }
+  .st-item .info { flex: 1; min-width: 0; }
+  .st-item .info .t {
+    font-size: 13px; font-weight: 500; letter-spacing: -0.005em;
+    line-height: 1.15;
+  }
+  .st-item .info .t em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .st-item .info .s {
+    font-size: 10px; color: var(--lkv-ink-500);
+    font-family: var(--lkv-font-mono);
+    margin-top: 2px;
+    letter-spacing: 0.04em;
+  }
+  .st-item .val {
+    font-size: 12px; color: var(--lkv-ink-500);
+    font-family: var(--lkv-font-mono);
+    letter-spacing: 0.02em;
+  }
+  .st-item .val em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800);
+    letter-spacing: 0;
+  }
+  .st-item .chev {
+    color: var(--lkv-ink-300);
+  }
+  .st-item .chev svg { width: 14px; height: 14px; }
+
+  /* iOS-style toggle */
+  .st-toggle {
+    width: 40px; height: 24px; border-radius: 999px;
+    background: rgba(11,31,23,0.15);
+    position: relative;
+    flex-shrink: 0;
+    transition: background var(--lkv-dur) var(--lkv-ease);
+  }
+  .st-toggle::after {
+    content: "";
+    position: absolute; top: 2px; left: 2px;
+    width: 20px; height: 20px; border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(11,31,23,0.2);
+    transition: left var(--lkv-dur) var(--lkv-ease);
+  }
+  .st-toggle.on { background: var(--lkv-forest-800); }
+  .st-toggle.on::after { left: 18px; }
+
+  .st-logout {
+    margin: 20px 16px 100px;
+    padding: 12px;
+    background: var(--lkv-paper);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    color: #a4552e;
+    font-size: 13px; font-weight: 500;
+  }
+  .st-logout svg { width: 14px; height: 14px; }
+  .st-logout em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: #a4552e;
+  }
+
+  .st-version {
+    text-align: center;
+    padding: 4px 0;
+    font-size: 10px;
+    color: var(--lkv-ink-400);
+    font-family: var(--lkv-font-mono);
+    letter-spacing: 0.1em;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="stage-title">
+  <div>
+    <div class="h">Mobile · Compte, <em>inventaire</em> & paramètres</div>
+    <div class="sub">6 écrans · Dashboard, aventures, carnets, commandes, clubs, paramètres</div>
+  </div>
+  <div class="crumbs">
+    <a href="Mobile - Pages principales.html">Pages principales</a>
+    <a href="Mobile - Communauté &amp; Clubs.html">Communauté</a>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ══════════════════════════════════════════════
+       1. DASHBOARD / COMPTE
+       ══════════════════════════════════════════════ -->
+  <div class="board">
+    <div class="artboard-mobile">
+      <div class="screen">
+
+        <div class="status-bar on-dark">
+          <div>9:41</div>
+          <div class="right">
+            <svg viewBox="0 0 16 10" fill="currentColor"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
+            <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="1" y="1" width="19" height="10" rx="2"/><rect x="3" y="3" width="14" height="6" rx="1" fill="currentColor"/><rect x="21" y="4" width="2" height="4" rx="0.5" fill="currentColor"/></svg>
+          </div>
+        </div>
+
+        <div class="m-topbar on-image">
+          <button class="m-btn">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="15" height="15"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          </button>
+          <div class="center">Mon <em>compte</em></div>
+          <button class="m-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M21 12h-3M6 12H3M18 6l-2 2M8 16l-2 2M18 18l-2-2M8 8L6 6"/></svg>
+          </button>
+        </div>
+
+        <div class="m-body" style="padding-top: 0;">
+          <div class="ac-hero">
+            <div class="bg"></div>
+            <div class="content">
+              <div class="greet">
+                <div class="av">M</div>
+                <div class="info">
+                  <div class="kind">Bonjour · membre depuis 2024</div>
+                  <h1>Margaux <em>Balestrieri.</em></h1>
+                </div>
+              </div>
+              <div class="ac-stats">
+                <div class="cell">
+                  <div class="n">03<em> aven.</em></div>
+                  <div class="l">Actives</div>
+                </div>
+                <div class="cell">
+                  <div class="n">14<em> pièces</em></div>
+                  <div class="l">Testées</div>
+                </div>
+                <div class="cell">
+                  <div class="n">247<em> km</em></div>
+                  <div class="l">Cumulés</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ac-shortcuts">
+            <a href="#" class="ac-shortcut">
+              <div class="ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 20l4-14 5 8 3-4 6 10z"/></svg>
+              </div>
+              <div class="lbl">Aventures</div>
+              <span class="badge">3</span>
+            </a>
+            <a href="#" class="ac-shortcut">
+              <div class="ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h5M8 13h8"/></svg>
+              </div>
+              <div class="lbl">Carnets</div>
+            </a>
+            <a href="#" class="ac-shortcut">
+              <div class="ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+              </div>
+              <div class="lbl">Commandes</div>
+              <span class="badge" style="background: #a4552e;">1</span>
+            </a>
+            <a href="#" class="ac-shortcut">
+              <div class="ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>
+              </div>
+              <div class="lbl">Clubs</div>
+              <span class="badge" style="background: var(--lkv-sage-500); color: var(--lkv-forest-950);">2</span>
+            </a>
+          </div>
+
+          <div class="sec-h">
+            <h2>Aventure <em>en cours</em></h2>
+            <a href="#">Voir</a>
+          </div>
+
+          <div class="ac-card">
+            <div class="thumb dark">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 21l3-9h12l3 9"/><path d="M6 12l6-8 6 8"/><circle cx="12" cy="15" r="1.5"/></svg>
+            </div>
+            <div class="info">
+              <div class="kind">Jour 2 · sur 4</div>
+              <h4>Traversée de <em>Chartreuse.</em></h4>
+              <div class="m">HABERT → COL DU COQ · +820 M</div>
+            </div>
+            <a href="#" class="go">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+          </div>
+
+          <div class="sec-h">
+            <h2>Activité <em>récente</em></h2>
+            <a href="#">Historique</a>
+          </div>
+
+          <div class="ac-recent">
+            <div class="line">
+              <div class="k"></div>
+              <div class="txt">
+                <div class="t">Duvet <em>trois saisons</em> · noté 4/5</div>
+                <div class="s">02.09.26 · TEST TERRAIN</div>
+              </div>
+              <div class="m">+2 PTS</div>
+            </div>
+            <div class="line orange">
+              <div class="k"></div>
+              <div class="txt">
+                <div class="t">Commande <em>MSA-CH-2026-047</em> en préparation</div>
+                <div class="s">04.09.26 · SAC 45 L</div>
+              </div>
+              <div class="m">544 €</div>
+            </div>
+            <div class="line mono">
+              <div class="k"></div>
+              <div class="txt">
+                <div class="t">Rejoint le club <em>Traversée lente</em></div>
+                <div class="s">28.08.26 · CHARTREUSE</div>
+              </div>
+              <div class="m">3E</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="m-tabbar">
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Accueil</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 20l4-14 5 8 3-4 6 10z"/></svg>
+            <span>Aventures</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+            <span>Boutique</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h5M8 13h8"/></svg>
+            <span>Carnet</span>
+          </div>
+          <div class="tabi on">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+            <span>Compte</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">01 · Compte · <em>Dashboard</em></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       2. MES AVENTURES
+       ══════════════════════════════════════════════ -->
+  <div class="board">
+    <div class="artboard-mobile">
+      <div class="screen">
+        <div class="status-bar">
+          <div>9:41</div>
+          <div class="right">
+            <svg viewBox="0 0 16 10" fill="currentColor"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
+            <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="1" y="1" width="19" height="10" rx="2"/><rect x="3" y="3" width="14" height="6" rx="1" fill="currentColor"/><rect x="21" y="4" width="2" height="4" rx="0.5" fill="currentColor"/></svg>
+          </div>
+        </div>
+
+        <div class="m-topbar">
+          <button class="m-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <div class="center">Mes <em>aventures</em></div>
+          <button class="m-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+
+        <div class="m-body">
+          <div class="inv-h">
+            <div class="eye">18 sorties · 247 km parcourus</div>
+            <h1>Ce que j'ai <em>fait,</em><br/>ce qui m'attend.</h1>
+          </div>
+
+          <div class="inv-tabs">
+            <button class="on">Tout <span class="k">18</span></button>
+            <button>En cours <span class="k">3</span></button>
+            <button>Terminées <span class="k">14</span></button>
+            <button>Brouillons <span class="k">1</span></button>
+          </div>
+
+          <div class="adv-list">
+            <a href="#" class="adv-card">
+              <div class="cover c1">
+                <div class="st-pill on"><span class="d"></span>En cours</div>
+                <div class="idx">N°18 · 2026</div>
+              </div>
+              <div class="body">
+                <div class="loc">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 8-8z"/></svg>
+                  CHARTREUSE · 4 JOURS
+                </div>
+                <h4>Traversée <em>lente.</em></h4>
+                <div class="prog">
+                  <div class="bar"><div class="fill" style="width: 60%;"></div></div>
+                  <span class="p">60 %</span>
+                </div>
+                <div class="stats">
+                  <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21l16-8L4 5v6l10 2-10 2z"/></svg>
+                    18 / 34 km
+                  </span>
+                  <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20l6-12 4 6 4-2 2 8"/></svg>
+                    +1 460 m
+                  </span>
+                  <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                    J2/4
+                  </span>
+                </div>
+              </div>
+            </a>
+
+            <a href="#" class="adv-card">
+              <div class="cover c2">
+                <div class="st-pill done"><span class="d"></span>Terminée</div>
+                <div class="idx">N°17 · AOÛT 26</div>
+              </div>
+              <div class="body">
+                <div class="loc">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 8-8z"/></svg>
+                  VERCORS · GRAND VEYMONT
+                </div>
+                <h4>Bivouac au <em>Pas de l'Aiguille.</em></h4>
+                <div class="stats">
+                  <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21l16-8L4 5v6l10 2-10 2z"/></svg>
+                    22 km
+                  </span>
+                  <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20l6-12 4 6 4-2 2 8"/></svg>
+                    +1 120 m
+                  </span>
+                  <span>26.08 → 28.08</span>
+                </div>
+              </div>
+            </a>
+
+            <a href="#" class="adv-card">
+              <div class="cover c3">
+                <div class="st-pill done"><span class="d"></span>Terminée</div>
+                <div class="idx">N°16 · JUIL. 26</div>
+              </div>
+              <div class="body">
+                <div class="loc">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 8-8z"/></svg>
+                  ÉCRINS · LAC DU LAURON
+                </div>
+                <h4>Lac du <em>Lauron.</em></h4>
+                <div class="stats">
+                  <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21l16-8L4 5v6l10 2-10 2z"/></svg>
+                    18 km
+                  </span>
+                  <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20l6-12 4 6 4-2 2 8"/></svg>
+                    +1 460 m
+                  </span>
+                  <span>2 jours</span>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <div class="m-tabbar">
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Accueil</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 20l4-14 5 8 3-4 6 10z"/></svg>
+            <span>Aventures</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+            <span>Boutique</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h5M8 13h8"/></svg>
+            <span>Carnet</span>
+          </div>
+          <div class="tabi on">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+            <span>Compte</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">02 · Mes <em>aventures</em></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       3. MES CARNETS
+       ══════════════════════════════════════════════ -->
+  <div class="board">
+    <div class="artboard-mobile">
+      <div class="screen">
+        <div class="status-bar">
+          <div>9:41</div>
+          <div class="right">
+            <svg viewBox="0 0 16 10" fill="currentColor"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
+            <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="1" y="1" width="19" height="10" rx="2"/><rect x="3" y="3" width="14" height="6" rx="1" fill="currentColor"/><rect x="21" y="4" width="2" height="4" rx="0.5" fill="currentColor"/></svg>
+          </div>
+        </div>
+
+        <div class="m-topbar">
+          <button class="m-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <div class="center">Mes <em>carnets</em></div>
+          <button class="m-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          </button>
+        </div>
+
+        <div class="m-body">
+          <div class="inv-h">
+            <div class="eye">04 carnets · 12 pages écrites</div>
+            <h1>Une <em>bibliothèque</em><br/>en construction.</h1>
+          </div>
+
+          <div class="inv-tabs">
+            <button class="on">Tout <span class="k">4</span></button>
+            <button>En cours <span class="k">1</span></button>
+            <button>Terminés <span class="k">2</span></button>
+            <button>Brouillons <span class="k">1</span></button>
+          </div>
+
+          <div class="cn-list">
+            <a href="#" class="cn-book">
+              <div class="spine">
+                <div class="num">N°04</div>
+                <div class="t">Chartreuse<br/>lente</div>
+              </div>
+              <div class="body">
+                <div>
+                  <div class="kind">En cours · sept. 26</div>
+                  <h4>Traversée <em>de Chartreuse.</em></h4>
+                  <div class="p">« Nuit sèche, ciel étoilé. Bilan matériel à écrire ce soir. »</div>
+                </div>
+                <div class="row">
+                  <span class="m"><strong>6 / 10</strong> · PAGES</span>
+                  <span class="pill">Écriture</span>
+                </div>
+              </div>
+            </a>
+
+            <a href="#" class="cn-book">
+              <div class="spine s2">
+                <div class="num">N°03</div>
+                <div class="t">Vercors<br/>plein sud</div>
+              </div>
+              <div class="body">
+                <div>
+                  <div class="kind">Terminé · août 26</div>
+                  <h4>Bivouac au <em>Grand Veymont.</em></h4>
+                  <div class="p">« Trois jours et deux nuits. La toile a séché avant l'aube. »</div>
+                </div>
+                <div class="row">
+                  <span class="m"><strong>14 / 14</strong> · PAGES</span>
+                  <span class="pill done">Publié</span>
+                </div>
+              </div>
+            </a>
+
+            <a href="#" class="cn-book">
+              <div class="spine s3">
+                <div class="num">N°02</div>
+                <div class="t">Écrins<br/>lac du Lauron</div>
+              </div>
+              <div class="body">
+                <div>
+                  <div class="kind">Terminé · juil. 26</div>
+                  <h4>Lac du <em>Lauron.</em></h4>
+                  <div class="p">« Le pas d'avant, le pas d'après. Rien entre les deux. »</div>
+                </div>
+                <div class="row">
+                  <span class="m"><strong>18 / 18</strong> · PAGES</span>
+                  <span class="pill done">Publié</span>
+                </div>
+              </div>
+            </a>
+
+            <a href="#" class="cn-book">
+              <div class="spine s4">
+                <div class="num">N°01</div>
+                <div class="t">Notes<br/>d'avant-hier</div>
+              </div>
+              <div class="body">
+                <div>
+                  <div class="kind">Brouillon · mai 26</div>
+                  <h4>Notes <em>d'avant-hier.</em></h4>
+                  <div class="p">« Fragments. Choses vues au bord des chemins, sans ordre. »</div>
+                </div>
+                <div class="row">
+                  <span class="m"><strong>2 / ?</strong> · PAGES</span>
+                  <span class="pill draft">Brouillon</span>
+                </div>
+              </div>
+            </a>
+          </div>
+
+          <a href="#" class="cn-new">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            </div>
+            <div class="txt">
+              <div class="t">Ouvrir un <em>nouveau carnet</em></div>
+              <div class="s">4 gabarits · vierge, guidé, itinéraire, journal</div>
+            </div>
+            <div class="go">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+            </div>
+          </a>
+        </div>
+
+        <div class="m-tabbar">
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Accueil</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 20l4-14 5 8 3-4 6 10z"/></svg>
+            <span>Aventures</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+            <span>Boutique</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h5M8 13h8"/></svg>
+            <span>Carnet</span>
+          </div>
+          <div class="tabi on">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+            <span>Compte</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">03 · Mes <em>carnets</em></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       4. MES COMMANDES
+       ══════════════════════════════════════════════ -->
+  <div class="board">
+    <div class="artboard-mobile">
+      <div class="screen">
+        <div class="status-bar">
+          <div>9:41</div>
+          <div class="right">
+            <svg viewBox="0 0 16 10" fill="currentColor"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
+            <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="1" y="1" width="19" height="10" rx="2"/><rect x="3" y="3" width="14" height="6" rx="1" fill="currentColor"/><rect x="21" y="4" width="2" height="4" rx="0.5" fill="currentColor"/></svg>
+          </div>
+        </div>
+
+        <div class="m-topbar">
+          <button class="m-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <div class="center">Mes <em>commandes</em></div>
+          <button class="m-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          </button>
+        </div>
+
+        <div class="m-body">
+          <div class="inv-h">
+            <div class="eye">18 commandes · garantie à vie</div>
+            <h1>Ce que vous avez <em>reçu,</em><br/>ce qui arrive.</h1>
+          </div>
+
+          <div class="inv-tabs">
+            <button class="on">Tout <span class="k">18</span></button>
+            <button>En cours <span class="k">1</span></button>
+            <button>Livrées <span class="k">16</span></button>
+            <button>Retours <span class="k">1</span></button>
+          </div>
+
+          <div class="or-list">
+            <div class="or-card">
+              <div class="top">
+                <div class="id"><strong>MSA-CH-2026-047</strong></div>
+                <div class="st wait"><span class="d"></span>Préparation</div>
+              </div>
+              <div class="body">
+                <div class="items">
+                  <div class="item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 6 Q6 3 12 3 Q18 3 18 6 L18 8"/><path d="M4 9 Q4 7 6 6 L18 6 Q20 7 20 9 L20 20 Q20 21 18 21 L6 21 Q4 21 4 20 Z"/></svg>
+                  </div>
+                  <div class="item a2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 4h8v12l-4 4-4-4z"/></svg>
+                  </div>
+                  <div class="item a3">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="9" r="4"/><path d="M12 13v6"/></svg>
+                  </div>
+                  <div class="item more">+1</div>
+                </div>
+                <div class="row">
+                  <div class="lbl"><strong>4 articles</strong>· 04.09.26 · GRENOBLE</div>
+                  <div class="p">544 €</div>
+                </div>
+              </div>
+              <div class="actions">
+                <button>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                  Détails
+                </button>
+                <button class="primary">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20l16-8L4 4l0 6 10 2-10 2z"/></svg>
+                  Suivre
+                </button>
+              </div>
+            </div>
+
+            <div class="or-card">
+              <div class="top">
+                <div class="id"><strong>MSA-CH-2026-032</strong></div>
+                <div class="st ship"><span class="d"></span>Expédiée</div>
+              </div>
+              <div class="body">
+                <div class="items">
+                  <div class="item a4">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 8L12 4L20 8L20 20L4 20Z"/><path d="M8 20V14h8v6"/></svg>
+                  </div>
+                  <div class="item a3">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="7"/></svg>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="lbl"><strong>2 articles</strong>· 22.08.26 · <em>arrivée sous 2 j.</em></div>
+                  <div class="p">218 €</div>
+                </div>
+              </div>
+              <div class="actions">
+                <button>Détails</button>
+                <button class="primary">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20l16-8L4 4l0 6 10 2-10 2z"/></svg>
+                  Suivre
+                </button>
+              </div>
+            </div>
+
+            <div class="or-card">
+              <div class="top">
+                <div class="id"><strong>MSA-CH-2026-021</strong></div>
+                <div class="st done"><span class="d"></span>Livrée</div>
+              </div>
+              <div class="body">
+                <div class="items">
+                  <div class="item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="6" y="6" width="12" height="14" rx="2"/><path d="M6 10h12"/></svg>
+                  </div>
+                  <div class="item a3">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 3v18M6 8l6-5 6 5"/></svg>
+                  </div>
+                  <div class="item a2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="8"/></svg>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="lbl"><strong>3 articles</strong>· 12.07.26 · <em>livrée</em></div>
+                  <div class="p">312 €</div>
+                </div>
+              </div>
+              <div class="actions">
+                <button>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>
+                  Facture
+                </button>
+                <button>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 12H4M20 12l-6-6M20 12l-6 6"/></svg>
+                  Racheter
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="m-tabbar">
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Accueil</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 20l4-14 5 8 3-4 6 10z"/></svg>
+            <span>Aventures</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+            <span>Boutique</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h5M8 13h8"/></svg>
+            <span>Carnet</span>
+          </div>
+          <div class="tabi on">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+            <span>Compte</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">04 · Mes <em>commandes</em></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       5. MES CLUBS
+       ══════════════════════════════════════════════ -->
+  <div class="board">
+    <div class="artboard-mobile">
+      <div class="screen">
+        <div class="status-bar">
+          <div>9:41</div>
+          <div class="right">
+            <svg viewBox="0 0 16 10" fill="currentColor"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
+            <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="1" y="1" width="19" height="10" rx="2"/><rect x="3" y="3" width="14" height="6" rx="1" fill="currentColor"/><rect x="21" y="4" width="2" height="4" rx="0.5" fill="currentColor"/></svg>
+          </div>
+        </div>
+
+        <div class="m-topbar">
+          <button class="m-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <div class="center">Mes <em>clubs</em></div>
+          <button class="m-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          </button>
+        </div>
+
+        <div class="m-body">
+          <div class="inv-h">
+            <div class="eye">3 clubs · 6 événements à venir</div>
+            <h1>Les <em>tribus</em> que<br/>j'ai rejointes.</h1>
+          </div>
+
+          <div class="inv-tabs">
+            <button class="on">Membre <span class="k">3</span></button>
+            <button>Modérée <span class="k">1</span></button>
+            <button>Invitations <span class="k">2</span></button>
+          </div>
+
+          <div class="mc-list">
+            <a href="#" class="mc-card">
+              <div class="thumb t2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 21l3-9h12l3 9"/><path d="M6 12l6-8 6 8"/></svg>
+                <span class="role">Modo</span>
+              </div>
+              <div class="body">
+                <div>
+                  <div class="kind">Traversée · Chartreuse · 247 M.</div>
+                  <h4>Traversée <em>lente.</em></h4>
+                </div>
+                <div class="row">
+                  <span>REJOINT 28.08.26</span>
+                  <span class="next">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                    14 sept. · bivouac
+                  </span>
+                </div>
+              </div>
+            </a>
+
+            <a href="#" class="mc-card">
+              <div class="thumb t1">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M3 17l5-4 5 4 5-3 3 3"/></svg>
+              </div>
+              <div class="body">
+                <div>
+                  <div class="kind">Photo & carnet · 92 M.</div>
+                  <h4>Argentique <em>en refuge.</em></h4>
+                </div>
+                <div class="row">
+                  <span>REJOINT 12.05.26</span>
+                  <span class="next">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                    21 sept. · atelier
+                  </span>
+                </div>
+              </div>
+            </a>
+
+            <a href="#" class="mc-card">
+              <div class="thumb t3">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h5M8 13h8M8 17h6"/></svg>
+              </div>
+              <div class="body">
+                <div>
+                  <div class="kind">Carnets · Tout massif · 56 M.</div>
+                  <h4>Écrire <em>en marchant.</em></h4>
+                </div>
+                <div class="row">
+                  <span>REJOINT 03.03.26</span>
+                  <span>Rien de prévu</span>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <div class="m-tabbar">
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Accueil</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 20l4-14 5 8 3-4 6 10z"/></svg>
+            <span>Aventures</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>
+            <span>Clubs</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h5M8 13h8"/></svg>
+            <span>Carnet</span>
+          </div>
+          <div class="tabi on">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+            <span>Compte</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">05 · Mes <em>clubs</em></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       6. PARAMÈTRES
+       ══════════════════════════════════════════════ -->
+  <div class="board">
+    <div class="artboard-mobile">
+      <div class="screen">
+        <div class="status-bar">
+          <div>9:41</div>
+          <div class="right">
+            <svg viewBox="0 0 16 10" fill="currentColor"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
+            <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="1" y="1" width="19" height="10" rx="2"/><rect x="3" y="3" width="14" height="6" rx="1" fill="currentColor"/><rect x="21" y="4" width="2" height="4" rx="0.5" fill="currentColor"/></svg>
+          </div>
+        </div>
+
+        <div class="m-topbar">
+          <button class="m-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <div class="center">Paramètres</div>
+          <button class="m-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          </button>
+        </div>
+
+        <div class="m-body">
+          <div class="st-user">
+            <div class="av">
+              M
+              <div class="cam">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="14" rx="2"/><circle cx="12" cy="14" r="4"/><path d="M8 7l2-3h4l2 3"/></svg>
+              </div>
+            </div>
+            <div class="info">
+              <h2>Margaux <em>Balestrieri</em></h2>
+              <div class="m">margaux@voyageur.fr</div>
+              <span class="tag">Membre · Chartreuse 47</span>
+            </div>
+          </div>
+
+          <div class="st-group">
+            <div class="lbl">Compte</div>
+            <div class="st-list">
+              <a class="st-item">
+                <div class="ic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+                </div>
+                <div class="info">
+                  <div class="t">Profil <em>public</em></div>
+                  <div class="s">NOM · BIO · AVATAR</div>
+                </div>
+                <div class="chev">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg>
+                </div>
+              </a>
+              <a class="st-item">
+                <div class="ic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M3 11l9 5 9-5"/></svg>
+                </div>
+                <div class="info">
+                  <div class="t">Email & téléphone</div>
+                  <div class="s">Vérifiés · 12.03.26</div>
+                </div>
+                <div class="val">margaux@…</div>
+              </a>
+              <a class="st-item">
+                <div class="ic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+                </div>
+                <div class="info">
+                  <div class="t">Mot de passe · 2FA</div>
+                  <div class="s">MODIFIÉ IL Y A 42 J.</div>
+                </div>
+                <div class="chev">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg>
+                </div>
+              </a>
+              <a class="st-item">
+                <div class="ic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>
+                </div>
+                <div class="info">
+                  <div class="t">Paiement <em>& adresses</em></div>
+                  <div class="s">CB · 12/28 · GRENOBLE</div>
+                </div>
+                <div class="chev">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <div class="st-group">
+            <div class="lbl">Notifications</div>
+            <div class="st-list">
+              <div class="st-item">
+                <div class="ic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+                </div>
+                <div class="info">
+                  <div class="t">Sortie d'un club</div>
+                  <div class="s">14 SEPT. · BIVOUAC PROCHAIN</div>
+                </div>
+                <div class="st-toggle on"></div>
+              </div>
+              <div class="st-item">
+                <div class="ic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+                </div>
+                <div class="info">
+                  <div class="t">Commande · statut</div>
+                  <div class="s">EXPÉDITION · LIVRAISON</div>
+                </div>
+                <div class="st-toggle on"></div>
+              </div>
+              <div class="st-item">
+                <div class="ic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h5"/></svg>
+                </div>
+                <div class="info">
+                  <div class="t">Journal <em>hebdo.</em></div>
+                  <div class="s">CHAQUE VENDREDI · 08:00</div>
+                </div>
+                <div class="st-toggle"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="st-group">
+            <div class="lbl">Confidentialité</div>
+            <div class="st-list">
+              <div class="st-item">
+                <div class="ic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                </div>
+                <div class="info">
+                  <div class="t">Carnets visibles publiquement</div>
+                  <div class="s">2 PUBLIÉS · 2 PRIVÉS</div>
+                </div>
+                <div class="st-toggle on"></div>
+              </div>
+              <div class="st-item">
+                <div class="ic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 8-8z"/></svg>
+                </div>
+                <div class="info">
+                  <div class="t">Localisation en direct</div>
+                  <div class="s">CLUBS UNIQUEMENT</div>
+                </div>
+                <div class="st-toggle on"></div>
+              </div>
+              <a class="st-item">
+                <div class="ic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 20l16-8L4 4l0 6 10 2-10 2z"/></svg>
+                </div>
+                <div class="info">
+                  <div class="t">Télécharger mes données</div>
+                  <div class="s">RGPD · SOUS 30 JOURS</div>
+                </div>
+                <div class="chev">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <div class="st-group">
+            <div class="lbl">Affichage</div>
+            <div class="st-list">
+              <a class="st-item">
+                <div class="ic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M6 6l1.4 1.4M16.6 16.6L18 18M6 18l1.4-1.4M16.6 7.4L18 6"/></svg>
+                </div>
+                <div class="info">
+                  <div class="t">Thème</div>
+                  <div class="s">SUIT LE SYSTÈME</div>
+                </div>
+                <div class="val"><em>Clair</em></div>
+              </a>
+              <a class="st-item">
+                <div class="ic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>
+                </div>
+                <div class="info">
+                  <div class="t">Langue</div>
+                  <div class="s">FRANÇAIS · FR</div>
+                </div>
+                <div class="val">FR</div>
+              </a>
+              <a class="st-item">
+                <div class="ic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 20l6-12 4 6 4-2 2 8"/></svg>
+                </div>
+                <div class="info">
+                  <div class="t">Unités</div>
+                  <div class="s">DISTANCE · TEMPÉRATURE</div>
+                </div>
+                <div class="val">KM · °C</div>
+              </a>
+            </div>
+          </div>
+
+          <div class="st-group">
+            <div class="lbl">Aide & maison</div>
+            <div class="st-list">
+              <a class="st-item">
+                <div class="ic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M21 12c0 5-4 8-9 8a10 10 0 0 1-4-.8L3 20l1-4a8 8 0 0 1-1-4c0-5 4-8 9-8s9 3 9 8z"/></svg>
+                </div>
+                <div class="info">
+                  <div class="t">Écrire à <em>Grenoble</em></div>
+                  <div class="s">RÉPONSE SOUS 48H</div>
+                </div>
+                <div class="chev">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg>
+                </div>
+              </a>
+              <a class="st-item">
+                <div class="ic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+                </div>
+                <div class="info">
+                  <div class="t">Notre <em>méthode</em></div>
+                  <div class="s">SIX SEMAINES EN CHARTREUSE</div>
+                </div>
+                <div class="chev">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg>
+                </div>
+              </a>
+              <a class="st-item">
+                <div class="ic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>
+                </div>
+                <div class="info">
+                  <div class="t">Mentions & CGV</div>
+                  <div class="s">LKV · SAS · GRENOBLE</div>
+                </div>
+                <div class="chev">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <a class="st-logout">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l-5-5 5-5M4 12h11"/></svg>
+            Se <em>déconnecter</em>
+          </a>
+          <div class="st-version">V.2026.4 · CHARTREUSE · FR</div>
+        </div>
+
+        <div class="m-tabbar">
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Accueil</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 20l4-14 5 8 3-4 6 10z"/></svg>
+            <span>Aventures</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+            <span>Boutique</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h5M8 13h8"/></svg>
+            <span>Carnet</span>
+          </div>
+          <div class="tabi on">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+            <span>Compte</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">06 · <em>Paramètres</em></div>
+  </div>
+
+</div>
+
+</body>
+</html>

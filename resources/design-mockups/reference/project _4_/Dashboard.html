@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Dashboard · Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="shop.css"/>
+<style>
+  /* ————— DESKTOP ————— */
+  .dash-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: 900px;
+  }
+
+  /* Sidebar */
+  .dash-side {
+    background: var(--lkv-forest-950);
+    color: rgba(255,255,255,0.72);
+    padding: 32px 20px;
+    position: sticky; top: 0;
+    height: 100vh;
+    display: flex; flex-direction: column;
+  }
+  .dash-side .lkv-logo {
+    color: #fff;
+    font-weight: 600;
+    margin-bottom: 32px;
+    padding: 0 8px;
+  }
+  .dash-side .lkv-logo svg { color: var(--lkv-sage-300); }
+  .dash-side .user {
+    display: flex; gap: 12px; align-items: center;
+    padding: 12px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 14px;
+    margin-bottom: 24px;
+  }
+  .dash-side .user .av {
+    width: 36px; height: 36px; border-radius: 999px;
+    background-image: url('assets/portrait-1.jpg');
+    background-size: cover;
+    flex-shrink: 0;
+  }
+  .dash-side .user .info .n { font-size: 13px; color: #fff; font-weight: 500; }
+  .dash-side .user .info .r { font-size: 11px; color: rgba(255,255,255,0.5); }
+
+  .dash-side .section-h {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.35); font-weight: 500;
+    padding: 20px 12px 8px;
+  }
+  .dash-side .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.72);
+    transition: all var(--lkv-dur) var(--lkv-ease);
+    position: relative;
+  }
+  .dash-side .nav-item:hover { background: rgba(255,255,255,0.04); color: #fff; }
+  .dash-side .nav-item.on {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    font-weight: 500;
+  }
+  .dash-side .nav-item.on::before {
+    content: ""; position: absolute; left: 0; top: 8px; bottom: 8px;
+    width: 3px; background: var(--lkv-sage-500);
+    border-radius: 0 3px 3px 0;
+  }
+  .dash-side .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .dash-side .nav-item .badge {
+    margin-left: auto;
+    min-width: 20px; height: 18px; padding: 0 6px;
+    border-radius: 999px;
+    background: var(--lkv-sage-500);
+    color: var(--lkv-forest-950);
+    font-size: 10px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dash-side .foot {
+    margin-top: auto;
+    padding: 16px 12px 0;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    display: flex; justify-content: space-between;
+  }
+
+  /* Main */
+  .dash-main {
+    padding: 32px 40px 80px;
+    background: var(--lkv-paper);
+    overflow-y: auto;
+  }
+  .dash-topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 32px;
+  }
+  .dash-topbar h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 40px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1;
+    margin: 0 0 6px;
+  }
+  .dash-topbar h1 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .dash-topbar .sub { font-size: 13px; color: var(--lkv-ink-500); }
+  .dash-topbar .actions { display: flex; gap: 10px; }
+  .dash-search {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 18px;
+    background: #fff; border-radius: 999px;
+    border: 1px solid rgba(11,31,23,0.08);
+    font-size: 13px; color: var(--lkv-ink-500);
+    min-width: 280px;
+  }
+
+  /* Grid */
+  .dash-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: min-content;
+    gap: 16px;
+  }
+  .widget {
+    background: #fff;
+    border-radius: 24px;
+    padding: 24px;
+    transition: box-shadow var(--lkv-dur) var(--lkv-ease-out);
+  }
+  .widget:hover { box-shadow: var(--lkv-shadow-sm); }
+  .widget-h {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 16px;
+  }
+  .widget-h h3 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-ink-500); font-weight: 500;
+    margin: 0;
+  }
+  .widget-h a { font-size: 12px; color: var(--lkv-forest-800); font-weight: 500; }
+
+  /* Big next trip widget */
+  .w-next {
+    grid-column: span 2; grid-row: span 2;
+    background: var(--lkv-forest-900);
+    color: #fff;
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 5/4;
+  }
+  .w-next-bg {
+    position: absolute; inset: 0;
+    background-image: url('assets/hero-misty.jpg');
+    background-size: cover; background-position: center;
+    opacity: 0.4;
+  }
+  .w-next::before {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0.4) 0%, rgba(11,31,23,0.85) 100%);
+  }
+  .w-next-content {
+    position: relative;
+    padding: 32px;
+    height: 100%;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .w-next .top {
+    display: flex; justify-content: space-between;
+  }
+  .w-next .top .kind {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 14px;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.24);
+    border-radius: 999px;
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-sage-300);
+  }
+  .w-next .top .kind .dot { width: 5px; height: 5px; background: var(--lkv-sage-500); border-radius: 50%; }
+  .w-next .top .countdown {
+    text-align: right;
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 14px;
+    color: #fff;
+  }
+  .w-next .top .countdown .d {
+    font-family: var(--lkv-font-sans);
+    font-size: 24px; font-weight: 500; letter-spacing: -0.015em; line-height: 1;
+  }
+  .w-next .top .countdown .l {
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.6); margin-top: 2px;
+  }
+  .w-next .middle {
+    margin-top: auto;
+  }
+  .w-next h2 {
+    font-family: var(--lkv-font-sans);
+    font-size: 52px; font-weight: 500;
+    letter-spacing: -0.028em; line-height: 0.98;
+    margin: 0 0 12px;
+  }
+  .w-next h2 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-200); font-weight: 400; }
+  .w-next .place {
+    font-size: 14px; color: rgba(255,255,255,0.75); margin-bottom: 20px;
+  }
+  .w-next .details {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+    padding: 20px 0 0;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    margin-bottom: 20px;
+  }
+  .w-next .details .cell .k { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.5); }
+  .w-next .details .cell .v { font-size: 16px; font-weight: 500; margin-top: 4px; }
+  .w-next .details .cell .v em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .w-next .cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 20px;
+    background: #fff; color: var(--lkv-ink-900);
+    border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+    align-self: flex-start;
+    transition: transform var(--lkv-dur) var(--lkv-ease);
+  }
+  .w-next .cta:hover { transform: translateY(-1px); }
+
+  /* Weather widget */
+  .w-weather { grid-column: span 2; }
+  .w-weather-body {
+    display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 20px;
+    margin-top: 12px;
+  }
+  .w-weather-body .now { display: flex; gap: 20px; align-items: center; }
+  .w-weather-body .now .icon-lg {
+    width: 68px; height: 68px;
+    color: var(--lkv-warm-500);
+  }
+  .w-weather-body .now .icon-lg svg { width: 100%; height: 100%; stroke-width: 1.4; }
+  .w-weather-body .now .temp {
+    font-family: var(--lkv-font-sans);
+    font-size: 56px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 1;
+    color: var(--lkv-ink-900);
+  }
+  .w-weather-body .now .temp em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; font-size: 32px; }
+  .w-weather-body .now .caption {
+    font-size: 13px; color: var(--lkv-ink-500); margin-top: 6px;
+  }
+  .w-weather-body .now .caption strong { color: var(--lkv-ink-900); font-weight: 500; display: block; margin-bottom: 2px; }
+  .w-weather-body .forecast {
+    display: flex; gap: 12px;
+    padding-left: 20px;
+    border-left: 1px solid rgba(11,31,23,0.06);
+  }
+  .w-weather-body .fc-day { text-align: center; }
+  .w-weather-body .fc-day .d { font-size: 10px; color: var(--lkv-ink-500); text-transform: uppercase; letter-spacing: 0.14em; }
+  .w-weather-body .fc-day .i {
+    width: 28px; height: 28px; margin: 8px auto;
+    color: var(--lkv-ink-700);
+  }
+  .w-weather-body .fc-day .i svg { width: 100%; height: 100%; }
+  .w-weather-body .fc-day .t { font-size: 13px; font-weight: 500; }
+
+  /* Kit widget */
+  .w-kit-body { display: flex; flex-direction: column; gap: 8px; }
+  .w-kit-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px;
+    background: var(--lkv-stone-50);
+    border-radius: 12px;
+  }
+  .w-kit-item .th { width: 32px; height: 32px; border-radius: 8px; background-size: cover; background-position: center; flex-shrink: 0; }
+  .w-kit-item .n { flex: 1; font-size: 12px; font-weight: 500; }
+  .w-kit-item .p { font-size: 11px; color: var(--lkv-ink-500); font-family: var(--lkv-font-mono); }
+  .w-kit-total {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding-top: 12px; margin-top: 8px;
+    border-top: 1px solid rgba(11,31,23,0.06);
+  }
+  .w-kit-total .l { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lkv-ink-500); }
+  .w-kit-total .v { font-size: 18px; font-weight: 500; letter-spacing: -0.015em; }
+  .w-kit-total .v em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; font-size: 12px; }
+
+  /* Checklist */
+  .w-check li {
+    list-style: none;
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 0;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(11,31,23,0.04);
+  }
+  .w-check li:last-child { border-bottom: none; }
+  .w-check .cb {
+    width: 18px; height: 18px; border-radius: 6px;
+    border: 1.5px solid rgba(11,31,23,0.2);
+    flex-shrink: 0;
+    margin-top: 1px;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .w-check li.done .cb { background: var(--lkv-forest-800); border-color: var(--lkv-forest-800); color: #fff; }
+  .w-check li.done .cb svg { display: block; width: 12px; height: 12px; }
+  .w-check .cb svg { display: none; }
+  .w-check li.done .n { color: var(--lkv-ink-400); text-decoration: line-through; }
+  .w-check .n { flex: 1; color: var(--lkv-ink-900); }
+  .w-check .k { font-size: 10px; color: var(--lkv-ink-400); text-transform: uppercase; letter-spacing: 0.1em; }
+
+  .w-progress {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(11,31,23,0.06);
+    font-size: 12px;
+    color: var(--lkv-ink-500);
+  }
+  .w-progress-bar {
+    height: 6px; background: var(--lkv-stone-100); border-radius: 999px;
+    margin-top: 8px; overflow: hidden;
+  }
+  .w-progress-bar > div { height: 100%; background: var(--lkv-forest-800); border-radius: 999px; }
+
+  /* Community widget */
+  .w-comm { grid-column: span 2; }
+  .w-comm-item {
+    display: flex; gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.04);
+  }
+  .w-comm-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .w-comm-item:first-child { padding-top: 4px; }
+  .w-comm-item .av {
+    width: 40px; height: 40px; border-radius: 999px;
+    background-size: cover; background-position: center;
+    background-color: var(--lkv-stone-100);
+    flex-shrink: 0;
+  }
+  .w-comm-item .txt { flex: 1; }
+  .w-comm-item .txt .n {
+    font-size: 13px;
+    color: var(--lkv-ink-900);
+    line-height: 1.4;
+  }
+  .w-comm-item .txt .n strong { font-weight: 500; }
+  .w-comm-item .txt .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .w-comm-item .txt .t { font-size: 11px; color: var(--lkv-ink-400); margin-top: 3px; }
+  .w-comm-item .thumb {
+    width: 44px; height: 44px; border-radius: 10px;
+    background-size: cover; background-position: center; flex-shrink: 0;
+  }
+
+  /* Small metric widgets */
+  .w-metric .n {
+    font-family: var(--lkv-font-sans);
+    font-size: 44px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1;
+    color: var(--lkv-ink-900);
+    display: flex; align-items: baseline; gap: 4px;
+  }
+  .w-metric .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; font-size: 24px; }
+  .w-metric .change {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 999px;
+    margin-top: 8px;
+  }
+  .w-metric .change.up { background: rgba(46,111,87,0.12); color: var(--lkv-forest-700); }
+  .w-metric .caption { font-size: 11px; color: var(--lkv-ink-500); margin-top: 8px; }
+
+  /* Sparkline */
+  .spark {
+    height: 60px;
+    margin-top: 12px;
+  }
+  .spark svg { width: 100%; height: 100%; }
+  .spark svg path.line { fill: none; stroke: var(--lkv-forest-800); stroke-width: 2; }
+  .spark svg path.fill { fill: rgba(31,74,58,0.08); stroke: none; }
+  .spark svg circle { fill: var(--lkv-forest-800); }
+
+  /* ————— MOBILE ————— */
+  .m-dash-top {
+    padding: 12px 14px;
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--lkv-forest-950); color: #fff;
+  }
+  .m-dash-top .u { display: flex; gap: 10px; align-items: center; }
+  .m-dash-top .u .av {
+    width: 36px; height: 36px; border-radius: 999px;
+    background-image: url('assets/portrait-1.jpg');
+    background-size: cover;
+  }
+  .m-dash-top .u .info .n { font-size: 12px; font-weight: 500; }
+  .m-dash-top .u .info .g { font-size: 10px; color: rgba(255,255,255,0.6); }
+  .m-dash-top .r { display: flex; gap: 8px; }
+  .m-dash-top .r button {
+    width: 34px; height: 34px; border-radius: 999px;
+    background: rgba(255,255,255,0.1); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .m-dash-body {
+    flex: 1; overflow-y: auto;
+    padding: 16px 14px 90px;
+    background: var(--lkv-paper);
+  }
+  .m-dash-h {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 20px;
+  }
+  .m-dash-h h1 { font-size: 26px; font-weight: 500; letter-spacing: -0.015em; margin: 0; }
+  .m-dash-h h1 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .m-dash-h .d { font-size: 11px; color: var(--lkv-ink-500); }
+
+  .m-w-next {
+    position: relative;
+    aspect-ratio: 4/5;
+    border-radius: 20px;
+    background-image: url('assets/hero-misty.jpg');
+    background-size: cover; background-position: center;
+    color: #fff;
+    padding: 16px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .m-w-next::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,31,23,0.4), rgba(11,31,23,0.85)); }
+  .m-w-next > * { position: relative; z-index: 1; }
+  .m-w-next .kind {
+    display: inline-flex; padding: 4px 10px;
+    background: rgba(255,255,255,0.15); backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 999px;
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lkv-sage-300);
+    width: fit-content;
+  }
+  .m-w-next h3 { font-size: 32px; font-weight: 500; letter-spacing: -0.02em; margin: 0 0 4px; line-height: 1; }
+  .m-w-next h3 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-200); font-weight: 400; }
+  .m-w-next .place { font-size: 12px; opacity: 0.8; margin-bottom: 14px; }
+  .m-w-next .d-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.15); }
+  .m-w-next .d-row .cell .k { font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,255,255,0.5); }
+  .m-w-next .d-row .cell .v { font-size: 13px; font-weight: 500; margin-top: 2px; }
+
+  .m-widgets-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .m-w {
+    background: #fff; border-radius: 16px; padding: 14px;
+  }
+  .m-w .h { font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--lkv-ink-500); margin-bottom: 10px; }
+  .m-w .n { font-size: 26px; font-weight: 500; letter-spacing: -0.02em; line-height: 1; }
+  .m-w .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; font-size: 16px; }
+  .m-w .caption { font-size: 10px; color: var(--lkv-ink-500); margin-top: 6px; }
+</style>
+</head>
+<body class="shop-page">
+
+<div class="stage-title">
+  <div>
+    <div class="h">Dashboard perso</div>
+    <div class="sub">Lot 3 · Écran 2/5 · Desktop + Mobile</div>
+  </div>
+  <div class="crumbs">
+    <a href="Index.html">← Hub</a>
+    <a href="Profil.html">← Profil</a>
+    <a href="Communaute.html">Communauté →</a>
+    <a href="Journal.html">Journal</a>
+    <a href="IA Chat.html">IA Chat</a>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ————— DESKTOP ————— -->
+  <div class="artboard-desktop">
+    <div class="dash-layout">
+
+      <!-- SIDEBAR -->
+      <aside class="dash-side">
+        <a href="Home.html" class="lkv-logo">
+          <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
+            <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="24" cy="9" r="1.6"/>
+          </svg>
+          <span style="font-size: 13px;">Le Kit</span>
+        </a>
+
+        <div class="user">
+          <div class="av"></div>
+          <div class="info">
+            <div class="n">Marceline C.</div>
+            <div class="r">Voyageuse Or</div>
+          </div>
+        </div>
+
+        <div class="section-h">Menu</div>
+        <a class="nav-item on">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg>
+          Accueil
+        </a>
+        <a class="nav-item" href="Recherche Carte.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          Aventures
+        </a>
+        <a class="nav-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>
+          Réservations
+          <span class="badge">2</span>
+        </a>
+        <a class="nav-item" href="Journal.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h12l4 4v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M14 4v6h6"/></svg>
+          Journal
+        </a>
+        <a class="nav-item" href="Communaute.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="4"/><circle cx="17" cy="10" r="3"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M14 21c0-2.5 1.5-4 4-4s4 1.5 4 4"/></svg>
+          Communauté
+        </a>
+        <a class="nav-item" href="IA Chat.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16v10H8l-4 4z"/><circle cx="9" cy="11" r="1" fill="currentColor"/><circle cx="12" cy="11" r="1" fill="currentColor"/><circle cx="15" cy="11" r="1" fill="currentColor"/></svg>
+          Assistant IA
+        </a>
+
+        <div class="section-h">Boutique</div>
+        <a class="nav-item" href="Boutique.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h12v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/><path d="M9 8V5a3 3 0 0 1 6 0v3"/></svg>
+          Mon kit
+        </a>
+        <a class="nav-item" href="Panier.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+          Panier
+          <span class="badge">3</span>
+        </a>
+        <a class="nav-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+          Favoris
+        </a>
+
+        <div class="section-h">Compte</div>
+        <a class="nav-item" href="Profil.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+          Mon profil
+        </a>
+        <a class="nav-item" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19 12c0 .5-.1 1-.2 1.5l2 1.5-2 3.5-2.4-1a7 7 0 0 1-2.4 1.4l-.5 2.6h-4l-.5-2.6a7 7 0 0 1-2.4-1.4l-2.4 1-2-3.5 2-1.5c-.1-.5-.2-1-.2-1.5s.1-1 .2-1.5l-2-1.5 2-3.5 2.4 1a7 7 0 0 1 2.4-1.4L10 2h4l.5 2.6a7 7 0 0 1 2.4 1.4l2.4-1 2 3.5-2 1.5c.1.5.2 1 .2 1.5z"/></svg>
+          Paramètres
+        </a>
+
+        <div class="foot">
+          <span>v1.0 · 2026</span>
+          <a href="Home.html" style="color: var(--lkv-sage-300);">Déconnexion</a>
+        </div>
+      </aside>
+
+      <!-- MAIN -->
+      <main class="dash-main">
+
+        <div class="dash-topbar">
+          <div>
+            <h1>Bonjour, <em>Marceline.</em></h1>
+            <div class="sub">Mardi 15 septembre · Chartreuse, ciel dégagé</div>
+          </div>
+          <div class="actions">
+            <div class="dash-search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+              Rechercher un refuge, une aventure…
+            </div>
+            <button class="lkv-btn lkv-btn-primary">
+              <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg>
+              Nouveau voyage
+            </button>
+          </div>
+        </div>
+
+        <div class="dash-grid">
+
+          <!-- NEXT TRIP -->
+          <div class="widget w-next">
+            <div class="w-next-bg"></div>
+            <div class="w-next-content">
+              <div class="top">
+                <div class="kind"><span class="dot"></span>Prochain voyage</div>
+                <div class="countdown">
+                  <div class="d">J-<em style="font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400;">4</em></div>
+                  <div class="l">Départ</div>
+                </div>
+              </div>
+              <div class="middle">
+                <h2>Cabane du<br/><em>Grand Vaneau.</em></h2>
+                <div class="place">Saint-Pierre-d'Entremont, Chartreuse · 3 nuits</div>
+                <div class="details">
+                  <div class="cell"><div class="k">Arrivée</div><div class="v">Ven. 14 sept.</div></div>
+                  <div class="cell"><div class="k">Distance</div><div class="v">27,4 <em>km</em></div></div>
+                  <div class="cell"><div class="k">Dénivelé</div><div class="v">+1 620 <em>m</em></div></div>
+                </div>
+                <a href="Detail Aventure.html" class="cta">
+                  Voir l'itinéraire
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- WEATHER -->
+          <div class="widget w-weather">
+            <div class="widget-h">
+              <h3>Météo · Chartreuse, à 1620 m</h3>
+              <a href="#">Détails →</a>
+            </div>
+            <div class="w-weather-body">
+              <div class="now">
+                <div class="icon-lg">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M6 6l1.5 1.5M16.5 16.5L18 18M6 18l1.5-1.5M16.5 7.5L18 6"/></svg>
+                </div>
+                <div>
+                  <div class="temp">14<em>°C</em></div>
+                  <div class="caption"><strong>Frais et ensoleillé</strong>Vent 12 km/h · humidité 65 %</div>
+                </div>
+              </div>
+              <div class="forecast">
+                <div class="fc-day">
+                  <div class="d">Mer</div>
+                  <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M4 20a5 5 0 0 1 5-5"/></svg></div>
+                  <div class="t">12°</div>
+                </div>
+                <div class="fc-day">
+                  <div class="d">Jeu</div>
+                  <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/></svg></div>
+                  <div class="t">16°</div>
+                </div>
+                <div class="fc-day">
+                  <div class="d">Ven</div>
+                  <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/></svg></div>
+                  <div class="t">18°</div>
+                </div>
+                <div class="fc-day">
+                  <div class="d">Sam</div>
+                  <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 19v2M12 19v2M16 19v2M6 14a5 5 0 1 1 4-8 6 6 0 0 1 11 3 4 4 0 0 1-2 7.5"/></svg></div>
+                  <div class="t">11°</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- KIT -->
+          <div class="widget w-kit">
+            <div class="widget-h">
+              <h3>Sac préparé · 4/8</h3>
+              <a href="Configurateur.html">Éditer →</a>
+            </div>
+            <div class="w-kit-body">
+              <div class="w-kit-item">
+                <div class="th" style="background-image: url('assets/product-backpack-2.jpg')"></div>
+                <div class="n">Sac 45 L</div>
+                <div class="p">1,4 kg</div>
+              </div>
+              <div class="w-kit-item">
+                <div class="th" style="background-image: url('assets/product-sleeping.jpg')"></div>
+                <div class="n">Duvet</div>
+                <div class="p">920 g</div>
+              </div>
+              <div class="w-kit-item">
+                <div class="th" style="background-image: url('assets/product-jacket.jpg')"></div>
+                <div class="n">Veste 3c.</div>
+                <div class="p">480 g</div>
+              </div>
+              <div class="w-kit-item">
+                <div class="th" style="background-image: url('assets/product-bottle.jpg')"></div>
+                <div class="n">Gourde 1L</div>
+                <div class="p">180 g</div>
+              </div>
+            </div>
+            <div class="w-kit-total">
+              <div class="l">Total sac</div>
+              <div class="v">2,98 <em>kg</em></div>
+            </div>
+          </div>
+
+          <!-- METRIC 1 -->
+          <div class="widget w-metric">
+            <div class="widget-h"><h3>Km ce mois</h3></div>
+            <div class="n">146<em>km</em></div>
+            <div class="change up">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="12" height="12"><path d="M7 17L17 7M17 7v10M17 7H7"/></svg>
+              +32 % vs août
+            </div>
+            <div class="spark">
+              <svg viewBox="0 0 200 60" preserveAspectRatio="none">
+                <path class="fill" d="M0 45 L20 40 L40 42 L60 35 L80 30 L100 32 L120 24 L140 18 L160 22 L180 12 L200 8 L200 60 L0 60 Z"/>
+                <path class="line" d="M0 45 L20 40 L40 42 L60 35 L80 30 L100 32 L120 24 L140 18 L160 22 L180 12 L200 8"/>
+                <circle cx="200" cy="8" r="3"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- METRIC 2 -->
+          <div class="widget w-metric">
+            <div class="widget-h"><h3>Nuits en refuge</h3></div>
+            <div class="n">12<em>nuits</em></div>
+            <div class="change up">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="12" height="12"><path d="M7 17L17 7M17 7v10M17 7H7"/></svg>
+              Objectif 20/an
+            </div>
+            <div class="w-progress">
+              <div>Progression annuelle</div>
+              <div class="w-progress-bar"><div style="width: 60%"></div></div>
+            </div>
+          </div>
+
+          <!-- CHECKLIST -->
+          <div class="widget w-check" style="grid-column: span 2;">
+            <div class="widget-h">
+              <h3>Check-list · Grand Vaneau (J-4)</h3>
+              <a href="#">Compléter →</a>
+            </div>
+            <ul>
+              <li class="done">
+                <span class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12l5 5 11-11"/></svg></span>
+                <span class="n">Réserver la cabane</span>
+                <span class="k">15 août</span>
+              </li>
+              <li class="done">
+                <span class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12l5 5 11-11"/></svg></span>
+                <span class="n">Préparer le sac (kit terminé à 50 %)</span>
+                <span class="k">8 sept.</span>
+              </li>
+              <li>
+                <span class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12l5 5 11-11"/></svg></span>
+                <span class="n">Prévenir la gardienne (arrivée 16 h)</span>
+                <span class="k">J-2</span>
+              </li>
+              <li>
+                <span class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12l5 5 11-11"/></svg></span>
+                <span class="n">Télécharger la carte IGN hors-ligne</span>
+                <span class="k">J-1</span>
+              </li>
+              <li>
+                <span class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12l5 5 11-11"/></svg></span>
+                <span class="n">Charger la lampe frontale</span>
+                <span class="k">J-1</span>
+              </li>
+            </ul>
+            <div class="w-progress">
+              <div>2 tâches faites sur 5</div>
+              <div class="w-progress-bar"><div style="width: 40%"></div></div>
+            </div>
+          </div>
+
+          <!-- COMMUNITY -->
+          <div class="widget w-comm">
+            <div class="widget-h">
+              <h3>Vos amis · fil récent</h3>
+              <a href="Communaute.html">Voir tout →</a>
+            </div>
+            <div class="w-comm-item">
+              <div class="av" style="background-image: url('assets/portrait-2.jpg')"></div>
+              <div class="txt">
+                <div class="n"><strong>Thibault M.</strong> vient de terminer <em>3 jours à Belledonne</em></div>
+                <div class="t">Il y a 2 h · 84 km · +2 400 m</div>
+              </div>
+              <div class="thumb" style="background-image: url('assets/journal-refuge.jpg')"></div>
+            </div>
+            <div class="w-comm-item">
+              <div class="av" style="background-image: url('assets/portrait-3.jpg')"></div>
+              <div class="txt">
+                <div class="n"><strong>Léa V.</strong> recommande <em>le refuge de Bellefont</em></div>
+                <div class="t">Il y a 5 h · Note 5/5</div>
+              </div>
+              <div class="thumb" style="background-image: url('assets/community-morning.jpg')"></div>
+            </div>
+            <div class="w-comm-item">
+              <div class="av" style="background-image: url('assets/portrait-1.jpg')"></div>
+              <div class="txt">
+                <div class="n"><strong>Sami K.</strong> a débloqué le badge <em>Sommet 3000</em></div>
+                <div class="t">Hier</div>
+              </div>
+              <div class="thumb" style="background-image: url('assets/adventure-hiking.jpg')"></div>
+            </div>
+          </div>
+
+          <!-- METRIC 3 -->
+          <div class="widget w-metric">
+            <div class="widget-h"><h3>Sacs de moins d'1,5 kg</h3></div>
+            <div class="n">4<em>/6</em></div>
+            <div class="change up" style="background: rgba(201,155,90,0.12); color: var(--lkv-warm-500);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="12" height="12"><path d="M12 2l3 6 6 1-4.5 4.5 1 6L12 17l-5.5 2.5 1-6L3 9l6-1z"/></svg>
+              Or à débloquer
+            </div>
+            <div class="caption">67 % de vos sacs préparés respectent la règle du kit léger</div>
+          </div>
+
+          <!-- NOTIFICATIONS -->
+          <div class="widget">
+            <div class="widget-h"><h3>À faire · 3</h3><a href="#">Tout voir →</a></div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <a href="#" style="display: flex; gap: 10px; align-items: center; padding: 10px; background: var(--lkv-sage-100); border-radius: 12px;">
+                <div style="width: 30px; height: 30px; border-radius: 8px; background: var(--lkv-forest-800); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><rect x="3" y="5" width="18" height="16" rx="2"/></svg>
+                </div>
+                <div style="flex: 1; font-size: 12px;">
+                  <div style="font-weight: 500; color: var(--lkv-ink-900);">Confirmer votre arrivée</div>
+                  <div style="color: var(--lkv-ink-500); font-size: 10px;">Grand Vaneau · J-4</div>
+                </div>
+              </a>
+              <a href="#" style="display: flex; gap: 10px; align-items: center; padding: 10px; background: var(--lkv-stone-50); border-radius: 12px;">
+                <div style="width: 30px; height: 30px; border-radius: 8px; background: var(--lkv-ink-900); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><path d="M4 6h16v10H8l-4 4z"/></svg>
+                </div>
+                <div style="flex: 1; font-size: 12px;">
+                  <div style="font-weight: 500;">Répondre à Thibault M.</div>
+                  <div style="color: var(--lkv-ink-500); font-size: 10px;">Question sur votre kit</div>
+                </div>
+              </a>
+              <a href="#" style="display: flex; gap: 10px; align-items: center; padding: 10px; background: var(--lkv-stone-50); border-radius: 12px;">
+                <div style="width: 30px; height: 30px; border-radius: 8px; background: var(--lkv-warm-500); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><path d="M12 2l3 6 6 1-4.5 4.5 1 6L12 17l-5.5 2.5 1-6L3 9l6-1z"/></svg>
+                </div>
+                <div style="flex: 1; font-size: 12px;">
+                  <div style="font-weight: 500;">Nouveau badge disponible</div>
+                  <div style="color: var(--lkv-ink-500); font-size: 10px;">Kit léger · 4/6</div>
+                </div>
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+      </main>
+
+    </div>
+  </div>
+
+  <!-- ————— MOBILE ————— -->
+  <div>
+    <div class="artboard-mobile">
+      <div class="screen">
+
+        <div class="m-dash-top">
+          <div class="u">
+            <div class="av"></div>
+            <div class="info">
+              <div class="n">Marceline C.</div>
+              <div class="g">Bonjour ✦</div>
+            </div>
+          </div>
+          <div class="r">
+            <button>
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            </button>
+            <button style="position: relative;">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M6 8a6 6 0 0 1 12 0v5l2 3H4l2-3z"/><path d="M10 21h4"/></svg>
+              <span style="position: absolute; top: 6px; right: 6px; width: 6px; height: 6px; background: var(--lkv-sage-500); border-radius: 50%;"></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="m-dash-body">
+          <div class="m-dash-h">
+            <h1>Prochain <em>voyage</em></h1>
+            <div class="d">J-4 · 4 tâches</div>
+          </div>
+
+          <div class="m-w-next">
+            <div class="kind">Grand Vaneau · Chartreuse</div>
+            <div>
+              <h3>Cabane du<br/><em>Grand Vaneau.</em></h3>
+              <div class="place">3 nuits · départ vendredi 14 h</div>
+              <div class="d-row">
+                <div class="cell"><div class="k">Km</div><div class="v">27,4</div></div>
+                <div class="cell"><div class="k">D+</div><div class="v">1 620 m</div></div>
+                <div class="cell"><div class="k">Niveau</div><div class="v">3/5</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--lkv-ink-500); margin: 20px 0 10px;">Aperçu rapide</div>
+          <div class="m-widgets-grid">
+            <div class="m-w">
+              <div class="h">Km ce mois</div>
+              <div class="n">146<em>km</em></div>
+              <div class="caption" style="color: var(--lkv-forest-700);">+32 % vs août</div>
+            </div>
+            <div class="m-w">
+              <div class="h">Sac</div>
+              <div class="n">4<em>/8</em></div>
+              <div class="caption">2,98 kg · à compléter</div>
+            </div>
+            <div class="m-w">
+              <div class="h">Nuits refuge</div>
+              <div class="n">12<em>/20</em></div>
+              <div class="caption">Objectif annuel</div>
+            </div>
+            <div class="m-w">
+              <div class="h">Météo · +14 °C</div>
+              <div style="display: flex; align-items: center; gap: 8px; color: var(--lkv-warm-500);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" width="26" height="26"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>
+                <span style="font-size: 22px; font-weight: 500; letter-spacing: -0.015em; color: var(--lkv-ink-900);">Ciel dégagé</span>
+              </div>
+              <div class="caption">Ven → nuages · sam → pluie</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="m-tabbar">
+          <div class="tabi on"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M4 4h12l4 4v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="9" cy="8" r="4"/><circle cx="17" cy="10" r="3"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">Mobile · 375 × 812</div>
+  </div>
+</div>
+
+</body>
+</html>

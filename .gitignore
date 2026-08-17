@@ -55,3 +55,5 @@ public/assets/images/products/
 # Tooling
 .kilo/
 MOBILE_OPTIMIZATION_PROGRESS.md
+**/ms-playwright/
+ms-playwright/

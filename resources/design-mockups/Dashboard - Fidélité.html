@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Fidélité — Mon compte · Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="dashboard.css"/>
+<style>
+  .fid-layout { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
+  .fid-main { display: flex; flex-direction: column; gap: 20px; }
+  .fid-aside { display: flex; flex-direction: column; gap: 20px; position: sticky; top: 80px; }
+
+  /* XP HERO — big circular gauge + info */
+  .xp-hero {
+    background: linear-gradient(135deg, var(--lkv-forest-900) 0%, var(--lkv-forest-800) 100%);
+    color: #fff;
+    padding: 36px 40px;
+    border-radius: var(--lkv-r-xl);
+    display: grid;
+    grid-template-columns: 220px 1fr auto;
+    gap: 32px;
+    align-items: center;
+    position: relative; overflow: hidden;
+    box-shadow: var(--lkv-shadow-md);
+  }
+  .xp-hero::after {
+    content: ""; position: absolute; right: -80px; top: -80px;
+    width: 300px; height: 300px; border-radius: 50%;
+    background: radial-gradient(circle, var(--lkv-warm-500), transparent 65%);
+    opacity: 0.24;
+  }
+  .xp-hero > * { position: relative; z-index: 1; }
+  .xp-gauge {
+    width: 220px; height: 220px;
+    position: relative;
+  }
+  .xp-gauge svg { transform: rotate(-90deg); }
+  .xp-gauge .g-track { stroke: rgba(255,255,255,0.1); }
+  .xp-gauge .g-fill { stroke: url(#xp-grad); stroke-linecap: round; }
+  .xp-gauge .center {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .xp-gauge .center .l {
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--lkv-sage-300); margin-bottom: 8px;
+  }
+  .xp-gauge .center .rn {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 36px; color: var(--lkv-sage-300); font-weight: 400;
+    line-height: 1;
+  }
+  .xp-gauge .center .num {
+    font-family: var(--lkv-font-sans);
+    font-size: 46px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 1;
+    margin: 4px 0 2px;
+  }
+  .xp-gauge .center .of {
+    font-family: var(--lkv-font-mono);
+    font-size: 11px; color: rgba(255,255,255,0.6);
+  }
+  .xp-hero .info .eye {
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--lkv-sage-300); margin-bottom: 14px;
+  }
+  .xp-hero .info h2 {
+    font-family: var(--lkv-font-sans);
+    font-size: 36px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1;
+    margin: 0 0 10px;
+    color: #fff;
+  }
+  .xp-hero .info h2 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .xp-hero .info .desc {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 15px; color: rgba(255,255,255,0.8);
+    max-width: 460px; margin: 0 0 18px;
+  }
+  .xp-hero .info .to-next {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 8px 14px; border-radius: 999px;
+    background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.14);
+    font-size: 12px;
+  }
+  .xp-hero .info .to-next strong { color: var(--lkv-sage-300); font-weight: 500; }
+  .xp-hero .stack {
+    display: flex; flex-direction: column; gap: 10px;
+    text-align: right;
+  }
+  .xp-hero .stack .cell {
+    padding: 14px 18px; border-radius: 14px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    min-width: 160px;
+  }
+  .xp-hero .stack .cell .k {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-sage-300); margin-bottom: 4px;
+  }
+  .xp-hero .stack .cell .v {
+    font-family: var(--lkv-font-sans);
+    font-size: 22px; font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  .xp-hero .stack .cell .v em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; font-size: 13px; margin-left: 2px; }
+
+  /* Badges grid */
+  .badges-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+  }
+  .badge-tile {
+    aspect-ratio: 1;
+    background: var(--lkv-stone-50);
+    border-radius: var(--lkv-r-md);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 8px;
+    padding: 12px 8px;
+    position: relative;
+    transition: all var(--lkv-dur-fast) var(--lkv-ease-out);
+    cursor: pointer;
+  }
+  .badge-tile:hover { transform: translateY(-3px); box-shadow: var(--lkv-shadow-sm); }
+  .badge-tile.earned {
+    background: linear-gradient(135deg, var(--lkv-warm-100), rgba(228,198,149,0.5));
+    border: 1px solid rgba(228,198,149,0.6);
+  }
+  .badge-tile.earned .ic { color: var(--lkv-warm-500); }
+  .badge-tile.locked .ic { color: var(--lkv-ink-300); }
+  .badge-tile .l {
+    font-size: 10px; font-weight: 500;
+    color: var(--lkv-ink-700);
+    text-align: center; line-height: 1.2;
+  }
+  .badge-tile.earned .l { color: var(--lkv-forest-900); }
+  .badge-tile.locked .l { color: var(--lkv-ink-400); }
+  .badge-tile.new::before {
+    content: ""; position: absolute; top: 8px; right: 8px;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--lkv-sage-500);
+    box-shadow: 0 0 0 3px rgba(109,170,125,0.24);
+  }
+  .badge-tile .rare {
+    font-family: var(--lkv-font-mono);
+    font-size: 8px; color: var(--lkv-ink-500);
+    letter-spacing: 0.06em;
+  }
+  .badge-tile.earned .rare { color: #8A6127; }
+
+  /* Timeline */
+  .xp-timeline { display: flex; flex-direction: column; }
+  .xp-row {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    gap: 14px; align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+  }
+  .xp-row:last-child { border-bottom: none; }
+  .xp-row .ic {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: var(--lkv-sage-100); color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .xp-row .ic.warm { background: var(--lkv-warm-100); color: var(--lkv-warm-500); }
+  .xp-row .ic.forest { background: var(--lkv-forest-800); color: #fff; }
+  .xp-row .ic.spend { background: rgba(193,90,90,0.1); color: var(--lkv-danger); }
+  .xp-row .body .n {
+    font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);
+    line-height: 1.2;
+  }
+  .xp-row .body .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .xp-row .body .m {
+    font-size: 11px; color: var(--lkv-ink-500);
+    margin-top: 3px;
+    font-family: var(--lkv-font-mono);
+  }
+  .xp-row .pts {
+    font-family: var(--lkv-font-sans);
+    font-size: 16px; font-weight: 500;
+    color: var(--lkv-forest-800);
+    letter-spacing: -0.01em;
+    text-align: right;
+  }
+  .xp-row .pts.spend { color: var(--lkv-danger); }
+  .xp-row .pts .l {
+    font-size: 10px; color: var(--lkv-ink-500);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    font-weight: 400;
+  }
+
+  /* Milestone (next reward) */
+  .milestone-card {
+    padding: 18px;
+    background: var(--lkv-stone-50);
+    border-radius: 14px;
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    gap: 14px; align-items: center;
+    transition: all var(--lkv-dur-fast) var(--lkv-ease);
+  }
+  .milestone-card:hover { background: #fff; box-shadow: var(--lkv-shadow-xs); }
+  .milestone-card.next {
+    background: var(--lkv-sage-100);
+    border: 1px solid rgba(31,74,58,0.14);
+  }
+  .milestone-card .ic {
+    width: 48px; height: 48px; border-radius: 14px;
+    background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+    box-shadow: var(--lkv-shadow-xs);
+  }
+  .milestone-card .body .n {
+    font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);
+    line-height: 1.2;
+  }
+  .milestone-card .body .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .milestone-card .body .m {
+    font-size: 11px; color: var(--lkv-ink-500);
+    margin-top: 3px;
+  }
+  .milestone-card .cost {
+    font-family: var(--lkv-font-sans);
+    font-size: 14px; font-weight: 500;
+    color: var(--lkv-forest-800);
+    text-align: right;
+    padding: 4px 12px; border-radius: 999px;
+    background: #fff;
+  }
+  .milestone-card.locked .cost { color: var(--lkv-ink-500); background: rgba(11,31,23,0.04); }
+
+  /* Rewards catalog */
+  .reward-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .reward-card {
+    padding: 18px;
+    background: #fff;
+    border-radius: var(--lkv-r-lg);
+    box-shadow: var(--lkv-shadow-xs);
+    border: 1px solid rgba(11,31,23,0.03);
+    transition: all var(--lkv-dur) var(--lkv-ease-out);
+    cursor: pointer;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .reward-card:hover { transform: translateY(-3px); box-shadow: var(--lkv-shadow-md); }
+  .reward-card .ic {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--lkv-sage-100); color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .reward-card h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 15px; font-weight: 500;
+    letter-spacing: -0.01em; line-height: 1.2;
+    margin: 0;
+    color: var(--lkv-ink-900);
+  }
+  .reward-card h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .reward-card .m {
+    font-size: 12px; color: var(--lkv-ink-500);
+    line-height: 1.5;
+  }
+  .reward-card .foot {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 10px;
+    border-top: 1px solid rgba(11,31,23,0.05);
+    margin-top: auto;
+  }
+  .reward-card .foot .pts {
+    font-family: var(--lkv-font-sans);
+    font-size: 15px; font-weight: 500;
+    color: var(--lkv-forest-800);
+    letter-spacing: -0.01em;
+  }
+  .reward-card .foot .cta {
+    padding: 5px 12px; border-radius: 999px;
+    background: var(--lkv-forest-800); color: #fff;
+    font-size: 11px; font-weight: 500;
+  }
+  .reward-card.locked .foot .cta {
+    background: rgba(11,31,23,0.06); color: var(--lkv-ink-500);
+  }
+  .reward-card.locked { opacity: 0.7; }
+
+  /* Level ladder */
+  .ladder { display: flex; flex-direction: column; gap: 4px; }
+  .ladder-row {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    gap: 12px; align-items: center;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--lkv-stone-50);
+  }
+  .ladder-row.on {
+    background: linear-gradient(90deg, var(--lkv-forest-800), var(--lkv-forest-700));
+    color: #fff;
+  }
+  .ladder-row.on .body .n { color: #fff; }
+  .ladder-row.on .body .m { color: rgba(255,255,255,0.7); }
+  .ladder-row.done { background: var(--lkv-sage-100); }
+  .ladder-row .num {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: rgba(11,31,23,0.06);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 20px;
+    color: var(--lkv-ink-500);
+  }
+  .ladder-row.on .num { background: linear-gradient(135deg, var(--lkv-warm-500), var(--lkv-warm-300)); color: var(--lkv-forest-900); }
+  .ladder-row.done .num { background: var(--lkv-forest-800); color: #fff; }
+  .ladder-row .body .n { font-size: 14px; font-weight: 500; color: var(--lkv-ink-900); }
+  .ladder-row .body .m { font-size: 11px; color: var(--lkv-ink-500); margin-top: 2px; font-family: var(--lkv-font-mono); }
+  .ladder-row .thresh {
+    font-family: var(--lkv-font-mono);
+    font-size: 11px; color: var(--lkv-ink-500);
+  }
+  .ladder-row.on .thresh { color: var(--lkv-sage-300); font-weight: 500; }
+  .ladder-row.done .thresh { color: var(--lkv-forest-800); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="d-page">
+
+  <section class="d-hero">
+    <div class="bg" style="background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1800&q=80');"></div>
+    <nav class="d-topnav">
+      <a href="Index.html" class="lkv-logo" style="color: #fff;">
+        <svg viewBox="0 0 32 32" width="22" height="22" fill="none">
+          <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+        </svg>
+        <span>Le Kit du Voyageur</span>
+      </a>
+      <div class="links">
+        <a href="#">Aventures</a><a href="#">Refuges</a><a href="#">Boutique</a>
+        <a href="#">Carnet</a><a href="#">Clubs</a><a href="#" class="on">Mon compte</a>
+      </div>
+      <div class="right">
+        <button><svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
+        <button><svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></button>
+      </div>
+    </nav>
+    <div class="d-crumb">
+      <a href="Index.html">Accueil</a><span class="sep">›</span>
+      <a href="Compte - Dashboard.html">Mon compte</a><span class="sep">›</span>
+      <span>Fidélité</span>
+    </div>
+    <div class="d-hero-body">
+      <div class="av"></div>
+      <div class="info">
+        <div class="eye"><span class="dot"></span>Niveau III · Explorateur · 18 badges</div>
+        <h1>Marceline <em>Chevrier.</em></h1>
+        <div class="m">"Le voyage se mesure aussi en jalons franchis."</div>
+      </div>
+      <div class="quick">
+        <button class="primary">
+          <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+          Échanger mes points
+        </button>
+        <button>Voir les règles</button>
+      </div>
+    </div>
+    <div class="d-level">
+      <div class="lv">
+        <div class="badge">III</div>
+        <div>
+          <div class="n">Niveau <strong>Explorateur</strong> <span class="points">1 240 / 1 800 pts</span></div>
+          <div class="bar"><div class="f" style="width: 68%;"></div></div>
+          <div class="to">Encore 560 pts avant « Guide »</div>
+        </div>
+      </div>
+      <div class="st"><div class="v">42<em> sorties</em></div><div class="l">Aventures</div></div>
+      <div class="st"><div class="v">12<em> carnets</em></div><div class="l">Publiés</div></div>
+      <div class="st"><div class="v">4<em> clubs</em></div><div class="l">Communautés</div></div>
+      <div class="st"><div class="v">786<em>km</em></div><div class="l">2026</div></div>
+    </div>
+  </section>
+
+  <nav class="d-tabs">
+    <a href="Compte - Dashboard.html" class="d-tab">Vue d'ensemble</a>
+    <a href="Dashboard - Aventures.html" class="d-tab">Aventures <span class="n">42</span></a>
+    <a href="Dashboard - Carnets.html" class="d-tab">Carnets <span class="n">12</span></a>
+    <a href="Dashboard - Clubs.html" class="d-tab">Clubs <span class="n">4</span></a>
+    <a href="Dashboard - Commandes.html" class="d-tab">Commandes <span class="n">18</span></a>
+    <a href="Dashboard - Fidélité.html" class="d-tab on">Fidélité <span class="n">1240</span></a>
+    <a href="#" class="d-tab">Paramètres</a>
+  </nav>
+
+  <main class="d-main">
+
+    <div class="d-section-head">
+      <div>
+        <h2>Fidélité <em>& jalons</em></h2>
+        <div class="sub">1 240 points cumulés · 18 badges gagnés sur 42 · niveau III depuis février 2026.</div>
+      </div>
+      <div class="actions">
+        <button class="lkv-btn lkv-btn-outline lkv-btn-sm">Historique complet</button>
+        <button class="lkv-btn lkv-btn-primary lkv-btn-sm">
+          <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+          Échanger
+        </button>
+      </div>
+    </div>
+
+    <!-- XP HERO -->
+    <div class="xp-hero">
+      <div class="xp-gauge">
+        <svg viewBox="0 0 220 220" width="220" height="220">
+          <defs>
+            <linearGradient id="xp-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#AECBB4"/>
+              <stop offset="100%" stop-color="#6DAA7D"/>
+            </linearGradient>
+          </defs>
+          <circle class="g-track" cx="110" cy="110" r="94" fill="none" stroke-width="14"/>
+          <circle class="g-fill" cx="110" cy="110" r="94" fill="none" stroke-width="14"
+                  stroke-dasharray="590.6" stroke-dashoffset="189"/>
+        </svg>
+        <div class="center">
+          <div class="l">Niveau</div>
+          <div class="rn">III</div>
+          <div class="num">1 240</div>
+          <div class="of">/ 1 800 pts</div>
+        </div>
+      </div>
+
+      <div class="info">
+        <div class="eye">Voyageuse · Explorateur</div>
+        <h2>68 % vers <em>Guide</em>.</h2>
+        <p class="desc">Encore 560 points à gagner pour débloquer le niveau IV et l'accès aux avantages Guide : réservation prioritaire des refuges, invitations aux sorties fermées, mentorat.</p>
+        <div class="to-next">
+          <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14" style="color: var(--lkv-sage-300);"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          Prochain : <strong>Guide</strong> · ~4 sorties à publier
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="cell">
+          <div class="k">Points ce mois</div>
+          <div class="v">+184<em>pts</em></div>
+        </div>
+        <div class="cell">
+          <div class="k">Badges débloqués</div>
+          <div class="v">18<em> / 42</em></div>
+        </div>
+        <div class="cell">
+          <div class="k">Streak actif</div>
+          <div class="v">🔥 6<em> sem.</em></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fid-layout">
+      <div class="fid-main">
+
+        <!-- BADGES -->
+        <div class="d-card">
+          <div class="head">
+            <h3>Vos <em>badges</em></h3>
+            <div style="display: flex; gap: 6px; padding: 4px; background: var(--lkv-stone-50); border-radius: 999px;">
+              <button style="padding: 6px 12px; border-radius: 999px; background: #fff; box-shadow: var(--lkv-shadow-xs); font-size: 12px; font-weight: 500; color: var(--lkv-forest-800);">Tous · 42</button>
+              <button style="padding: 6px 12px; border-radius: 999px; font-size: 12px; color: var(--lkv-ink-500);">Gagnés · 18</button>
+              <button style="padding: 6px 12px; border-radius: 999px; font-size: 12px; color: var(--lkv-ink-500);">À débloquer</button>
+            </div>
+          </div>
+          <p class="sub">18 badges gagnés sur 42 · 2 nouveaux ce mois. Chaque badge raconte une étape franchie.</p>
+
+          <div class="badges-grid">
+            <div class="badge-tile earned new">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="26" height="26"><path d="M3 20L12 4l9 16"/><path d="M12 4v16"/></svg>
+              <div class="l">Sommet 3000</div>
+              <div class="rare">Rare · 8 %</div>
+            </div>
+            <div class="badge-tile earned new">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="26" height="26"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 5-5 2 2-5z"/></svg>
+              <div class="l">100 km</div>
+              <div class="rare">Commun</div>
+            </div>
+            <div class="badge-tile earned">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="26" height="26"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+              <div class="l">Auteure</div>
+              <div class="rare">Rare · 12 %</div>
+            </div>
+            <div class="badge-tile earned">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="26" height="26"><path d="M6 8h12v12a2 2 0 01-2 2H8a2 2 0 01-2-2z"/><path d="M9 8V5a3 3 0 016 0v3"/></svg>
+              <div class="l">Sac léger</div>
+              <div class="rare">Commun</div>
+            </div>
+            <div class="badge-tile earned">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="26" height="26"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg>
+              <div class="l">Solidaire</div>
+              <div class="rare">Rare</div>
+            </div>
+            <div class="badge-tile earned">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="26" height="26"><path d="M3 20L12 4l9 16"/></svg>
+              <div class="l">Chartreuse Pro</div>
+              <div class="rare">Épique · 4 %</div>
+            </div>
+
+            <div class="badge-tile earned">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="26" height="26"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>
+              <div class="l">Nocturne</div>
+              <div class="rare">Rare</div>
+            </div>
+            <div class="badge-tile earned">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="26" height="26"><rect x="4" y="6" width="16" height="14" rx="2"/><path d="M8 2v4M16 2v4"/></svg>
+              <div class="l">Année complète</div>
+              <div class="rare">Commun</div>
+            </div>
+            <div class="badge-tile earned">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="26" height="26"><path d="M4 20l6-10 4 6 3-4 3 8"/></svg>
+              <div class="l">Massif Trio</div>
+              <div class="rare">Commun</div>
+            </div>
+            <div class="badge-tile earned">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="26" height="26"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+              <div class="l">Mentor</div>
+              <div class="rare">Rare</div>
+            </div>
+            <div class="badge-tile earned">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="26" height="26"><path d="M2 20l4-16 6 10 6-10 4 16"/></svg>
+              <div class="l">Constance</div>
+              <div class="rare">Commun</div>
+            </div>
+            <div class="badge-tile earned">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="26" height="26"><path d="M20 4c0 8-6 14-14 14L4 20"/></svg>
+              <div class="l">Éclaireuse</div>
+              <div class="rare">Rare · 15 %</div>
+            </div>
+
+            <div class="badge-tile locked">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="26" height="26"><path d="M4 20l6-10 4 6 3-4 3 8"/></svg>
+              <div class="l">Massif +5</div>
+              <div class="rare">Épique</div>
+            </div>
+            <div class="badge-tile locked">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="26" height="26"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+              <div class="l">Guide</div>
+              <div class="rare">Légendaire</div>
+            </div>
+            <div class="badge-tile locked">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="26" height="26"><path d="M2 20l4-16 6 10 6-10 4 16"/></svg>
+              <div class="l">GR complet</div>
+              <div class="rare">Épique</div>
+            </div>
+            <div class="badge-tile locked">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="26" height="26"><path d="M3 20L12 4l9 16"/><path d="M12 4v16"/></svg>
+              <div class="l">Sommet 4000</div>
+              <div class="rare">Légendaire</div>
+            </div>
+            <div class="badge-tile locked">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="26" height="26"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>
+              <div class="l">Traversée hivernale</div>
+              <div class="rare">Épique</div>
+            </div>
+            <div class="badge-tile locked">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="26" height="26"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+              <div class="l">1 000 lectures</div>
+              <div class="rare">Rare</div>
+            </div>
+          </div>
+
+          <div style="text-align: center; padding: 20px 0 0; border-top: 1px solid rgba(11,31,23,0.05); margin-top: 20px;">
+            <button class="lkv-btn lkv-btn-outline lkv-btn-sm">Voir les 24 badges à débloquer</button>
+          </div>
+        </div>
+
+        <!-- TIMELINE -->
+        <div class="d-card">
+          <div class="head">
+            <h3>Historique <em>des points</em></h3>
+            <span style="font-size: 12px; color: var(--lkv-ink-500);">30 derniers jours · +184 pts nets</span>
+          </div>
+          <p class="sub">Chaque publication, badge et échange laisse une trace.</p>
+
+          <div class="xp-timeline">
+            <div class="xp-row">
+              <div class="ic warm"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg></div>
+              <div class="body">
+                <div class="n">Badge <em>Sommet 3000</em> débloqué</div>
+                <div class="m">Après le col du Grand Som · il y a 3 j</div>
+              </div>
+              <div class="pts">+120<div class="l">pts</div></div>
+            </div>
+
+            <div class="xp-row">
+              <div class="ic"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M3 20L12 4l9 16"/></svg></div>
+              <div class="body">
+                <div class="n">Aventure publiée · <em>Arêtes du Charmant Som</em></div>
+                <div class="m">28 sept. · 14,2 km · T2</div>
+              </div>
+              <div class="pts">+40<div class="l">pts</div></div>
+            </div>
+
+            <div class="xp-row">
+              <div class="ic warm"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg></div>
+              <div class="body">
+                <div class="n">Badge <em>100 km</em> débloqué</div>
+                <div class="m">Cumul annuel dépassé le 21 sept.</div>
+              </div>
+              <div class="pts">+80<div class="l">pts</div></div>
+            </div>
+
+            <div class="xp-row">
+              <div class="ic"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8M8 12h6M8 16h4"/></svg></div>
+              <div class="body">
+                <div class="n">Carnet publié · <em>Trois jours sur les crêtes</em></div>
+                <div class="m">Lu 842 fois · 124 likes · 18 sept.</div>
+              </div>
+              <div class="pts">+60<div class="l">pts</div></div>
+            </div>
+
+            <div class="xp-row">
+              <div class="ic spend"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+              <div class="body">
+                <div class="n">Échange · nuit offerte au <em>refuge de la Scia</em></div>
+                <div class="m">Bon utilisé le 12 sept. · à partir de vos points</div>
+              </div>
+              <div class="pts spend">–200<div class="l">pts</div></div>
+            </div>
+
+            <div class="xp-row">
+              <div class="ic forest"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M20 4c0 8-6 14-14 14L4 20"/></svg></div>
+              <div class="body">
+                <div class="n">Streak <em>6 semaines</em> · récompense</div>
+                <div class="m">Constance hebdo · 8 sept.</div>
+              </div>
+              <div class="pts">+50<div class="l">pts</div></div>
+            </div>
+
+            <div class="xp-row">
+              <div class="ic"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M3 20L12 4l9 16"/></svg></div>
+              <div class="body">
+                <div class="n">Aventure publiée · <em>Bivouac au lac Achard</em></div>
+                <div class="m">15 sept. · 18,6 km · avec Antoine</div>
+              </div>
+              <div class="pts">+40<div class="l">pts</div></div>
+            </div>
+
+            <div class="xp-row">
+              <div class="ic"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+              <div class="body">
+                <div class="n">Nouveau membre parrainé · <em>Élise M.</em></div>
+                <div class="m">Rejoint via votre lien · 5 sept.</div>
+              </div>
+              <div class="pts">+30<div class="l">pts</div></div>
+            </div>
+          </div>
+
+          <div style="text-align: center; padding: 20px 0 0; border-top: 1px solid rgba(11,31,23,0.05); margin-top: 16px;">
+            <button class="lkv-btn lkv-btn-outline lkv-btn-sm">Voir tout l'historique</button>
+          </div>
+        </div>
+
+        <!-- REWARDS SHOP -->
+        <div class="d-card">
+          <div class="head">
+            <h3>Échanger <em>vos points</em></h3>
+            <span style="font-size: 12px; color: var(--lkv-ink-500);">6 récompenses disponibles</span>
+          </div>
+          <p class="sub">Vos 1 240 points peuvent être échangés contre des avantages concrets.</p>
+
+          <div class="reward-grid">
+            <div class="reward-card">
+              <div class="ic"><svg class="lkv-icon" viewBox="0 0 24 24" width="20" height="20"><rect x="4" y="6" width="16" height="14" rx="2"/><path d="M4 10h16M8 2v4M16 2v4"/></svg></div>
+              <h4>Une <em>nuit offerte</em> en refuge partenaire</h4>
+              <div class="m">Valable dans les 22 refuges du réseau Le Kit · 12 mois.</div>
+              <div class="foot"><div class="pts">200 pts</div><button class="cta">Échanger</button></div>
+            </div>
+
+            <div class="reward-card">
+              <div class="ic"><svg class="lkv-icon" viewBox="0 0 24 24" width="20" height="20"><path d="M5 7h14l-1.5 11a2 2 0 01-2 1.7H8.5a2 2 0 01-2-1.7z"/><path d="M9 7V5a3 3 0 016 0v2"/></svg></div>
+              <h4>Bon de <em>50 €</em> sur la boutique</h4>
+              <div class="m">Cumulable avec l'abonnement Guide (–15 %). Sans minimum.</div>
+              <div class="foot"><div class="pts">500 pts</div><button class="cta">Échanger</button></div>
+            </div>
+
+            <div class="reward-card">
+              <div class="ic"><svg class="lkv-icon" viewBox="0 0 24 24" width="20" height="20"><path d="M9 4l-6 3v13l6-3 6 3 6-3V4l-6 3z"/><path d="M9 4v16M15 7v16"/></svg></div>
+              <h4>Carte IGN <em>papier</em> · un massif</h4>
+              <div class="m">Livrée sous 5 jours · au choix parmi 12 massifs.</div>
+              <div class="foot"><div class="pts">300 pts</div><button class="cta">Échanger</button></div>
+            </div>
+
+            <div class="reward-card locked">
+              <div class="ic"><svg class="lkv-icon" viewBox="0 0 24 24" width="20" height="20"><path d="M6 8h12v12a2 2 0 01-2 2H8a2 2 0 01-2-2z"/><path d="M9 8V5a3 3 0 016 0v3"/></svg></div>
+              <h4>Sac à dos <em>Osprey 30L</em></h4>
+              <div class="m">Édition limitée Le Kit du Voyageur · disponible en 2 coloris.</div>
+              <div class="foot"><div class="pts">1 500 pts</div><button class="cta">Verrouillé</button></div>
+            </div>
+
+            <div class="reward-card locked">
+              <div class="ic"><svg class="lkv-icon" viewBox="0 0 24 24" width="20" height="20"><path d="M12 22s-7-8-7-13a7 7 0 0114 0c0 5-7 13-7 13z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
+              <h4>Week-end guide <em>en Chartreuse</em></h4>
+              <div class="m">Deux jours avec un accompagnateur diplômé, tout compris.</div>
+              <div class="foot"><div class="pts">2 000 pts</div><button class="cta">Verrouillé</button></div>
+            </div>
+
+            <div class="reward-card">
+              <div class="ic"><svg class="lkv-icon" viewBox="0 0 24 24" width="20" height="20"><path d="M20 4c0 8-6 14-14 14L4 20"/></svg></div>
+              <h4>Plantation d'un <em>arbre</em> à votre nom</h4>
+              <div class="m">Reforestation dans les Vosges avec notre partenaire Écosia.</div>
+              <div class="foot"><div class="pts">100 pts</div><button class="cta">Échanger</button></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <aside class="fid-aside">
+
+        <!-- LEVEL LADDER -->
+        <div class="d-card">
+          <div class="head"><h3>Échelle des <em>niveaux</em></h3></div>
+          <p class="sub">Le chemin depuis Curieuse jusqu'à Guide.</p>
+
+          <div class="ladder">
+            <div class="ladder-row done">
+              <div class="num">I</div>
+              <div class="body">
+                <div class="n">Curieuse</div>
+                <div class="m">Premier pas · 0–200 pts</div>
+              </div>
+              <div class="thresh">✓ atteint</div>
+            </div>
+            <div class="ladder-row done">
+              <div class="num">II</div>
+              <div class="body">
+                <div class="n">Régulière</div>
+                <div class="m">Sorties habituelles · 200–600 pts</div>
+              </div>
+              <div class="thresh">✓ atteint</div>
+            </div>
+            <div class="ladder-row on">
+              <div class="num">III</div>
+              <div class="body">
+                <div class="n">Explorateur</div>
+                <div class="m">600–1 800 pts · vous êtes ici</div>
+              </div>
+              <div class="thresh">1 240</div>
+            </div>
+            <div class="ladder-row">
+              <div class="num">IV</div>
+              <div class="body">
+                <div class="n">Guide</div>
+                <div class="m">1 800–4 000 pts</div>
+              </div>
+              <div class="thresh">–560</div>
+            </div>
+            <div class="ladder-row">
+              <div class="num">V</div>
+              <div class="body">
+                <div class="n">Ambassadrice</div>
+                <div class="m">4 000+ pts · sur invitation</div>
+              </div>
+              <div class="thresh">Verrouillé</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- NEXT MILESTONES -->
+        <div class="d-card">
+          <div class="head"><h3>Prochains <em>jalons</em></h3></div>
+          <p class="sub">Les 4 récompenses les plus proches.</p>
+
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="milestone-card next">
+              <div class="ic"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M3 20L12 4l9 16"/><path d="M12 4v16"/></svg></div>
+              <div class="body">
+                <div class="n">Badge <em>Bivouac étoilé</em></div>
+                <div class="m">2 nuits restantes en bivouac</div>
+              </div>
+              <div class="cost">+80 pts</div>
+            </div>
+            <div class="milestone-card">
+              <div class="ic"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M4 20l6-10 4 6 3-4 3 8"/></svg></div>
+              <div class="body">
+                <div class="n">Badge <em>Massif +5</em></div>
+                <div class="m">Explorer 1 massif supplémentaire</div>
+              </div>
+              <div class="cost">+150 pts</div>
+            </div>
+            <div class="milestone-card">
+              <div class="ic"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8M8 12h6"/></svg></div>
+              <div class="body">
+                <div class="n">Badge <em>1 000 lectures</em></div>
+                <div class="m">Un carnet à 158 lectures près</div>
+              </div>
+              <div class="cost">+100 pts</div>
+            </div>
+            <div class="milestone-card locked">
+              <div class="ic"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+              <div class="body">
+                <div class="n">Niveau <em>Guide</em></div>
+                <div class="m">560 points à cumuler</div>
+              </div>
+              <div class="cost">560 pts</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HOW POINTS WORK -->
+        <div class="d-card" style="background: linear-gradient(135deg, var(--lkv-warm-100), #F5E6C4); border: none;">
+          <h3>Comment gagne-t-on <em>des points ?</em></h3>
+          <p class="sub" style="color: var(--lkv-ink-700);">Cinq gestes principaux valorisés par la communauté.</p>
+
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(138,97,39,0.14); font-size: 12px;">
+              <span style="color: var(--lkv-ink-700);">Publier une aventure</span>
+              <strong style="color: var(--lkv-forest-800);">+40 pts</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(138,97,39,0.14); font-size: 12px;">
+              <span style="color: var(--lkv-ink-700);">Publier un carnet</span>
+              <strong style="color: var(--lkv-forest-800);">+60 pts</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(138,97,39,0.14); font-size: 12px;">
+              <span style="color: var(--lkv-ink-700);">Débloquer un badge</span>
+              <strong style="color: var(--lkv-forest-800);">+80 à +120 pts</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(138,97,39,0.14); font-size: 12px;">
+              <span style="color: var(--lkv-ink-700);">Parrainer un membre</span>
+              <strong style="color: var(--lkv-forest-800);">+30 pts</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 12px;">
+              <span style="color: var(--lkv-ink-700);">Streak hebdo maintenu</span>
+              <strong style="color: var(--lkv-forest-800);">+10 pts / sem.</strong>
+            </div>
+          </div>
+
+          <a href="#" style="display: block; text-align: center; margin-top: 12px; font-size: 12px; color: var(--lkv-forest-800); font-weight: 500;">Voir toutes les règles →</a>
+        </div>
+
+      </aside>
+    </div>
+  </main>
+</div>
+</body>
+</html>

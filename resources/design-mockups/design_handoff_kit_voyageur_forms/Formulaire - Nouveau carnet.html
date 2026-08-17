@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Nouveau carnet — Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="forms.css"/>
+<style>
+  /* Type style picker */
+  .type-picker {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .type-picker label {
+    padding: 20px 16px;
+    background: var(--lkv-stone-50);
+    border: 2px solid transparent;
+    border-radius: var(--lkv-r-md);
+    cursor: pointer;
+    text-align: center;
+    transition: all var(--lkv-dur-fast) var(--lkv-ease);
+  }
+  .type-picker label:hover { background: #fff; border-color: rgba(11,31,23,0.06); }
+  .type-picker label.on {
+    background: #fff; border-color: var(--lkv-forest-800);
+    box-shadow: var(--lkv-shadow-sm);
+  }
+  .type-picker input { display: none; }
+  .type-picker .sample {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 34px; line-height: 1;
+    color: var(--lkv-forest-800);
+    margin-bottom: 10px;
+  }
+  .type-picker .sample.sans {
+    font-family: var(--lkv-font-sans); font-style: normal;
+    font-weight: 500; letter-spacing: -0.03em;
+  }
+  .type-picker .sample.mixed {
+    font-family: var(--lkv-font-sans); font-style: normal;
+    font-weight: 500; letter-spacing: -0.03em;
+    color: var(--lkv-ink-900);
+  }
+  .type-picker .sample.mixed em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .type-picker .n { font-size: 13px; font-weight: 500; color: var(--lkv-ink-900); }
+  .type-picker .m { font-size: 11px; color: var(--lkv-ink-500); margin-top: 3px; }
+
+  /* Chapter list */
+  .chapter-list { display: flex; flex-direction: column; gap: 8px; }
+  .chapter {
+    display: grid;
+    grid-template-columns: 24px 44px 1fr auto;
+    gap: 12px; align-items: center;
+    padding: 14px 16px 14px 10px;
+    background: var(--lkv-stone-50);
+    border-radius: var(--lkv-r-md);
+    border: 1px solid transparent;
+    transition: all var(--lkv-dur-fast) var(--lkv-ease);
+  }
+  .chapter:hover { background: #fff; border-color: rgba(11,31,23,0.06); box-shadow: var(--lkv-shadow-xs); }
+  .chapter .grip {
+    color: var(--lkv-ink-400); cursor: grab;
+    font-size: 12px;
+  }
+  .chapter .num {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800);
+    font-size: 22px; line-height: 1;
+    text-align: center;
+  }
+  .chapter .body .t {
+    font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);
+    line-height: 1.2;
+  }
+  .chapter .body .t em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .chapter .body .m {
+    font-size: 11px; color: var(--lkv-ink-500);
+    margin-top: 3px;
+    display: flex; gap: 10px;
+  }
+  .chapter .body .m .stat { font-family: var(--lkv-font-mono); }
+  .chapter .body .m .st.done { color: var(--lkv-forest-800); font-weight: 500; }
+  .chapter .body .m .st.draft { color: var(--lkv-warm-500); font-weight: 500; }
+  .chapter .actions {
+    display: flex; gap: 4px;
+  }
+  .chapter .actions button {
+    width: 28px; height: 28px; border-radius: 50%;
+    color: var(--lkv-ink-500);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .chapter .actions button:hover { background: var(--lkv-sage-100); color: var(--lkv-forest-800); }
+
+  /* Cover uploader with preview */
+  .cover-uploader {
+    height: 300px;
+    border-radius: var(--lkv-r-lg);
+    background: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1400&q=80') center/cover;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .cover-uploader::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 30%, rgba(11,31,23,0.65));
+  }
+  .cover-uploader .overlay {
+    position: absolute; inset: 0; z-index: 1;
+    padding: 24px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    color: #fff;
+  }
+  .cover-uploader .overlay .top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  .cover-uploader .overlay .top .eye {
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(255,255,255,0.94);
+    color: var(--lkv-forest-800);
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 500;
+  }
+  .cover-uploader .overlay .top .actions {
+    display: flex; gap: 6px;
+  }
+  .cover-uploader .overlay .top .actions button {
+    padding: 6px 12px; border-radius: 999px;
+    background: rgba(11,31,23,0.5); backdrop-filter: blur(16px);
+    color: #fff; font-size: 11px; font-weight: 500;
+    border: 1px solid rgba(255,255,255,0.14);
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .cover-uploader .overlay .bottom h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 32px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 1;
+    margin: 0 0 6px;
+  }
+  .cover-uploader .overlay .bottom h4 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .cover-uploader .overlay .bottom .sub {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 14px; color: rgba(255,255,255,0.85);
+  }
+
+  /* Aventure link picker */
+  .adv-picker {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .adv-link-row {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: 14px; align-items: center;
+    padding: 10px;
+    background: var(--lkv-stone-50);
+    border-radius: var(--lkv-r-md);
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all var(--lkv-dur-fast) var(--lkv-ease);
+  }
+  .adv-link-row:hover { background: #fff; border-color: rgba(11,31,23,0.06); }
+  .adv-link-row.on {
+    background: var(--lkv-sage-100); border-color: var(--lkv-forest-800);
+  }
+  .adv-link-row .th {
+    width: 80px; height: 56px; border-radius: 10px;
+    background-size: cover; background-position: center;
+  }
+  .adv-link-row .body .n {
+    font-size: 14px; font-weight: 500; color: var(--lkv-ink-900); line-height: 1.2;
+  }
+  .adv-link-row .body .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .adv-link-row .body .m {
+    font-size: 11px; color: var(--lkv-ink-500);
+    margin-top: 3px;
+    font-family: var(--lkv-font-mono);
+  }
+  .adv-link-row .r {
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(11,31,23,0.04);
+    font-size: 10px; color: var(--lkv-ink-500);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    font-weight: 500;
+  }
+  .adv-link-row.on .r { background: var(--lkv-forest-800); color: #fff; }
+</style>
+</head>
+<body>
+<div class="form-page">
+
+  <header class="form-topbar">
+    <div class="form-topbar-inner">
+      <div class="left">
+        <a href="Index.html" class="lkv-logo">
+          <span class="lkv-logo-mark">
+            <svg viewBox="0 0 32 32" width="24" height="24" fill="none">
+              <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+            </svg>
+          </span>
+          <span>Le Kit du Voyageur</span>
+        </a>
+        <nav class="breadcrumb">
+          <a href="Index.html">Accueil</a>
+          <span class="sep">›</span>
+          <a href="Compte - Dashboard.html">Mon compte</a>
+          <span class="sep">›</span>
+          <a href="Dashboard - Carnets.html">Mes carnets</a>
+          <span class="sep">›</span>
+          <span class="cur">Nouveau carnet</span>
+        </nav>
+      </div>
+      <div class="actions">
+        <div class="status-dot"><span class="d"></span>Brouillon</div>
+        <button class="lkv-btn lkv-btn-ghost lkv-btn-sm">Sauvegarder</button>
+        <button class="lkv-btn lkv-btn-primary lkv-btn-sm">Publier</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="form-hero">
+    <div class="eye">Nouveau carnet</div>
+    <h1>Un récit,<br/><em>pas un rapport.</em></h1>
+    <p class="lead">Un carnet, c'est du temps rendu lisible : les images, les phrases qui restent, et ce que la trace n'a pas su enregistrer.</p>
+  </section>
+
+  <div class="form-shell">
+    <main class="form-column">
+
+      <!-- COUVERTURE + TITRE -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>Couverture <em>& titre</em></h2>
+          <span class="n">01 · Vitrine</span>
+        </div>
+        <p class="sec-sub">Une image forte, un titre en trois mots. C'est ce que la communauté verra sur son fil de lecture.</p>
+
+        <div class="cover-uploader">
+          <div class="overlay">
+            <div class="top">
+              <span class="eye">Aperçu · couverture</span>
+              <div class="actions">
+                <button><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/></svg>Changer</button>
+                <button>Recadrer</button>
+                <button>Filtres</button>
+              </div>
+            </div>
+            <div class="bottom">
+              <h4>Trois jours sur les <em>crêtes</em></h4>
+              <div class="sub">Chartreuse · octobre 2026 · 27 km à deux</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="f-grid">
+          <div class="field full">
+            <label>Titre <span class="req">*</span></label>
+            <input type="text" value="Trois jours sur les crêtes" placeholder="Un titre court, presque une image…"/>
+          </div>
+          <div class="field full">
+            <label>Sous-titre <span class="hint">Contexte discret sous le titre</span></label>
+            <input type="text" value="Chartreuse · octobre 2026 · 27 km à deux"/>
+          </div>
+          <div class="field full">
+            <label>Chapô <span class="hint">Deux ou trois phrases qui donnent envie de lire la suite</span></label>
+            <textarea class="serif" rows="4" placeholder="Le paragraphe d'ouverture, en italique, comme une invitation…">On était deux, un carnet à moitié rempli, et l'idée qu'on ne trouverait pas exactement ce qu'on cherchait. La brume s'est levée au col — c'est là que le voyage a commencé, vraiment.</textarea>
+            <div class="helper"><span>Style : sensoriel, personnel. Pas de résumé technique.</span><span class="count">218 / 300</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AVENTURE LIÉE -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>Aventure <em>racontée</em></h2>
+          <span class="n">02 · Source</span>
+        </div>
+        <p class="sec-sub">Un carnet peut être adossé à une aventure enregistrée : la trace GPX, les dates et les participants s'affichent alors sous le récit.</p>
+
+        <div class="adv-picker">
+          <div class="adv-link-row on">
+            <div class="th" style="background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&q=80');"></div>
+            <div class="body">
+              <div class="n">Traversée de la <em>Chartreuse</em></div>
+              <div class="m">12–14 oct. 2026 · 27,4 km · 3 refuges · avec Léna, Antoine +4</div>
+            </div>
+            <span class="r">Sélectionnée</span>
+          </div>
+          <div class="adv-link-row">
+            <div class="th" style="background-image: url('https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=400&q=80');"></div>
+            <div class="body">
+              <div class="n">Arêtes du <em>Charmant Som</em></div>
+              <div class="m">28 sept. 2026 · 14,2 km · en journée</div>
+            </div>
+            <span class="r">Choisir</span>
+          </div>
+          <div class="adv-link-row">
+            <div class="th" style="background-image: url('https://images.unsplash.com/photo-1470114716159-e389f8712fda?w=400&q=80');"></div>
+            <div class="body">
+              <div class="n">Bivouac au <em>lac Achard</em></div>
+              <div class="m">15 sept. 2026 · 18,6 km · 2 jours</div>
+            </div>
+            <span class="r">Choisir</span>
+          </div>
+
+          <button class="f-add-step" style="margin-top: 6px;">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 4v16M4 12h16"/></svg>
+            Créer un carnet sans aventure liée
+          </button>
+        </div>
+      </section>
+
+      <!-- STYLE TYPOGRAPHIQUE -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>Style de <em>lecture</em></h2>
+          <span class="n">03 · Typographie</span>
+        </div>
+        <p class="sec-sub">Le style habille votre texte. "Journal" pour un carnet intime, "Reportage" pour un récit plus documentaire.</p>
+
+        <div class="type-picker">
+          <label class="on">
+            <input type="radio" name="style" checked/>
+            <div class="sample mixed">Aa <em>Aa</em></div>
+            <div class="n">Journal</div>
+            <div class="m">Sans + Serif italique</div>
+          </label>
+          <label>
+            <input type="radio" name="style"/>
+            <div class="sample sans">Aa</div>
+            <div class="n">Reportage</div>
+            <div class="m">Sans clair, dense</div>
+          </label>
+          <label>
+            <input type="radio" name="style"/>
+            <div class="sample">Aa</div>
+            <div class="n">Récit</div>
+            <div class="m">Serif italique</div>
+          </label>
+        </div>
+      </section>
+
+      <!-- CHAPITRES -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>Les <em>chapitres</em></h2>
+          <span class="n">04 · Structure</span>
+        </div>
+        <p class="sec-sub">Découpez votre récit en 3 à 8 chapitres. Chacun aura sa propre image et pourra être publié en aperçu.</p>
+
+        <div class="chapter-list">
+          <div class="chapter">
+            <div class="grip">⋮⋮</div>
+            <div class="num">I</div>
+            <div class="body">
+              <div class="t">La montée <em>au silence</em></div>
+              <div class="m">
+                <span class="stat">840 mots</span>
+                <span>·</span>
+                <span>4 photos</span>
+                <span>·</span>
+                <span class="st done">Rédigé</span>
+              </div>
+            </div>
+            <div class="actions">
+              <button title="Éditer"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/></svg></button>
+              <button title="Dupliquer"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg></button>
+              <button title="Supprimer"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M6 6l1 14a2 2 0 002 2h6a2 2 0 002-2l1-14"/></svg></button>
+            </div>
+          </div>
+
+          <div class="chapter">
+            <div class="grip">⋮⋮</div>
+            <div class="num">II</div>
+            <div class="body">
+              <div class="t">Le refuge et <em>ceux qu'on y croise</em></div>
+              <div class="m">
+                <span class="stat">1 240 mots</span>
+                <span>·</span>
+                <span>6 photos</span>
+                <span>·</span>
+                <span class="st done">Rédigé</span>
+              </div>
+            </div>
+            <div class="actions">
+              <button><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/></svg></button>
+              <button><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg></button>
+              <button><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M6 6l1 14a2 2 0 002 2h6a2 2 0 002-2l1-14"/></svg></button>
+            </div>
+          </div>
+
+          <div class="chapter">
+            <div class="grip">⋮⋮</div>
+            <div class="num">III</div>
+            <div class="body">
+              <div class="t">Le col, à l'heure <em>où tout se tait</em></div>
+              <div class="m">
+                <span class="stat">620 mots</span>
+                <span>·</span>
+                <span>3 photos</span>
+                <span>·</span>
+                <span class="st draft">Brouillon</span>
+              </div>
+            </div>
+            <div class="actions">
+              <button><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/></svg></button>
+              <button><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg></button>
+              <button><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M6 6l1 14a2 2 0 002 2h6a2 2 0 002-2l1-14"/></svg></button>
+            </div>
+          </div>
+
+          <div class="chapter">
+            <div class="grip">⋮⋮</div>
+            <div class="num">IV</div>
+            <div class="body">
+              <div class="t">Ce qu'on <em>rapporte</em></div>
+              <div class="m">
+                <span class="stat">0 mot</span>
+                <span>·</span>
+                <span>0 photo</span>
+                <span>·</span>
+                <span class="st draft">À écrire</span>
+              </div>
+            </div>
+            <div class="actions">
+              <button><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/></svg></button>
+              <button><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg></button>
+              <button><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M6 6l1 14a2 2 0 002 2h6a2 2 0 002-2l1-14"/></svg></button>
+            </div>
+          </div>
+
+          <button class="f-add-step">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 4v16M4 12h16"/></svg>
+            Ajouter un chapitre
+          </button>
+        </div>
+      </section>
+
+      <!-- MOTS-CLÉS -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>Mots-clés <em>& classement</em></h2>
+          <span class="n">05 · Découvrabilité</span>
+        </div>
+        <p class="sec-sub">Les tags aident les lecteurs à retrouver votre carnet dans le journal de la communauté.</p>
+
+        <div class="f-grid">
+          <div class="field full">
+            <label>Thématiques</label>
+            <div class="f-chip-choice">
+              <label class="on"><input type="checkbox" checked/>Bivouac</label>
+              <label class="on"><input type="checkbox" checked/>Chartreuse</label>
+              <label class="on"><input type="checkbox" checked/>Solo</label>
+              <label class="on"><input type="checkbox" checked/>Refuge gardé</label>
+              <label class="on"><input type="checkbox" checked/>Automne</label>
+              <label><input type="checkbox"/>Été</label>
+              <label><input type="checkbox"/>Hiver</label>
+              <label><input type="checkbox"/>Traversée</label>
+              <label><input type="checkbox"/>Sommet</label>
+              <label><input type="checkbox"/>Voyage lent</label>
+              <label><input type="checkbox"/>Faune</label>
+              <label><input type="checkbox"/>Rencontre</label>
+            </div>
+          </div>
+          <div class="field full">
+            <label>Tags libres <span class="hint">Pressez Entrée pour ajouter</span></label>
+            <div class="f-chip-picker">
+              <span class="chip">brume<span class="x">×</span></span>
+              <span class="chip">crêtes<span class="x">×</span></span>
+              <span class="chip">automne 2026<span class="x">×</span></span>
+              <input type="text" placeholder="Ajouter un tag…"/>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PUBLICATION -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>Diffusion <em>& audience</em></h2>
+          <span class="n">06 · Publication</span>
+        </div>
+        <p class="sec-sub">Vous pouvez publier maintenant, planifier une date, ou garder le carnet en brouillon.</p>
+
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; font-size: 12px; font-weight: 500; color: var(--lkv-ink-700); margin-bottom: 6px;">Quand publier ?</label>
+          <div class="f-segment full">
+            <label><input type="radio" name="when"/>Enregistrer en brouillon</label>
+            <label class="on"><input type="radio" name="when" checked/>Publier maintenant</label>
+            <label><input type="radio" name="when"/>Planifier</label>
+          </div>
+        </div>
+
+        <div class="f-visibility">
+          <label class="on">
+            <input type="radio" name="vis" checked/>
+            <div class="ic">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18"/></svg>
+            </div>
+            <div>
+              <div class="t">Journal public</div>
+              <div class="m">Visible sur la page communauté.</div>
+            </div>
+          </label>
+          <label>
+            <input type="radio" name="vis"/>
+            <div class="ic">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/></svg>
+            </div>
+            <div>
+              <div class="t">Abonnés uniquement</div>
+              <div class="m">Vos 124 abonnés recevront une notif.</div>
+            </div>
+          </label>
+          <label>
+            <input type="radio" name="vis"/>
+            <div class="ic">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M12 22s-7-8-7-13a7 7 0 0114 0c0 5-7 13-7 13z"/></svg>
+            </div>
+            <div>
+              <div class="t">Privé (moi seule)</div>
+              <div class="m">Comme un journal personnel.</div>
+            </div>
+          </label>
+        </div>
+
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(11,31,23,0.05);">
+          <div class="f-toggle-row">
+            <div>
+              <div class="n">Autoriser les commentaires</div>
+              <div class="m">Les lecteurs peuvent laisser des messages sur chaque chapitre.</div>
+            </div>
+            <div class="f-switch on"></div>
+          </div>
+          <div class="f-toggle-row">
+            <div>
+              <div class="n">Recommander aux nouveaux lecteurs</div>
+              <div class="m">Ce carnet peut apparaître dans "À lire cette semaine".</div>
+            </div>
+            <div class="f-switch on"></div>
+          </div>
+          <div class="f-toggle-row">
+            <div>
+              <div class="n">Autoriser le téléchargement PDF</div>
+              <div class="m">Les lecteurs peuvent enregistrer le carnet complet.</div>
+            </div>
+            <div class="f-switch"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <aside class="form-aside">
+
+      <div class="preview-card">
+        <div class="cov" style="background-image: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&q=80');">
+          <div class="over-eye">Brouillon</div>
+        </div>
+        <div class="body">
+          <h4>Trois jours sur les <em>crêtes</em></h4>
+          <p>Chartreuse · octobre 2026 — Un carnet de deux voyageurs qui n'ont pas cherché à performer.</p>
+          <div class="meta">
+            <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8M8 12h6M8 16h4"/></svg>4 chapitres</span>
+            <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M4 4h16v16H4z"/></svg>13 photos</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="aside-card">
+        <h3>Rédaction <em>65 %</em></h3>
+        <p class="sub">2 chapitres terminés, 2 en cours. Les lecteurs préfèrent les carnets aboutis — mieux vaut publier moins souvent mais mieux.</p>
+        <div class="check-list">
+          <div class="check-item done">
+            <div class="box"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg></div>
+            <div class="t">Couverture ajoutée</div>
+            <div class="r">Fait</div>
+          </div>
+          <div class="check-item done">
+            <div class="box"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg></div>
+            <div class="t">Titre + chapô</div>
+            <div class="r">Fait</div>
+          </div>
+          <div class="check-item done">
+            <div class="box"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg></div>
+            <div class="t">Aventure liée</div>
+            <div class="r">Fait</div>
+          </div>
+          <div class="check-item now">
+            <div class="box"></div>
+            <div class="t">Terminer chapitre III</div>
+            <div class="r">En cours</div>
+          </div>
+          <div class="check-item">
+            <div class="box"></div>
+            <div class="t">Rédiger chapitre IV</div>
+            <div class="r">À faire</div>
+          </div>
+          <div class="check-item">
+            <div class="box"></div>
+            <div class="t">Choisir 3 photos par chapitre</div>
+            <div class="r">Optionnel</div>
+          </div>
+        </div>
+        <div class="check-progress">
+          <div class="lbl"><span><strong>3</strong> sur 6</span><span>65 %</span></div>
+          <div class="bar"><div class="f" style="width: 65%;"></div></div>
+        </div>
+      </div>
+
+      <div class="tips-card">
+        <div class="eye">Conseil <em>rédaction</em></div>
+        <h4>Une image tous les <em>350 mots</em>.</h4>
+        <p>Les carnets qui gardent l'attention alternent texte serré et respiration visuelle. Évitez les galeries en fin.</p>
+        <a href="#" class="lk">Voir la maquette de référence →</a>
+      </div>
+
+    </aside>
+  </div>
+
+  <div class="save-bar">
+    <div class="status">
+      <span class="dot"></span>
+      <span><strong>Brouillon</strong> · 4 chapitres · 2 700 mots · sauvegardé automatiquement</span>
+    </div>
+    <div class="actions">
+      <button class="lkv-btn lkv-btn-ghost">Aperçu lecteur</button>
+      <button class="lkv-btn lkv-btn-outline">Enregistrer</button>
+      <button class="lkv-btn lkv-btn-primary">Publier le carnet</button>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

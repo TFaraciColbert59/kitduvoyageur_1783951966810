@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Nouveau groupe — Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="forms.css"/>
+<style>
+  /* Group hero card */
+  .group-hero {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 20px; align-items: center;
+    padding: 20px;
+    background: linear-gradient(135deg, var(--lkv-forest-900), var(--lkv-forest-800));
+    border-radius: var(--lkv-r-xl);
+    color: #fff;
+    margin-bottom: 20px;
+    position: relative; overflow: hidden;
+  }
+  .group-hero::after {
+    content: ""; position: absolute; right: -60px; bottom: -60px;
+    width: 220px; height: 220px; border-radius: 50%;
+    background: radial-gradient(circle, var(--lkv-sage-500) 0%, transparent 65%);
+    opacity: 0.3;
+  }
+  .group-hero > * { position: relative; z-index: 1; }
+  .group-hero .emo {
+    width: 96px; height: 96px; border-radius: 26px;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.16);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 46px; color: var(--lkv-sage-300);
+  }
+  .group-hero .txt .eye {
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--lkv-sage-300); margin-bottom: 8px;
+  }
+  .group-hero .txt h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 28px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1;
+    margin: 0 0 8px;
+  }
+  .group-hero .txt h4 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .group-hero .txt .m {
+    font-size: 12px; color: rgba(255,255,255,0.7);
+    display: flex; gap: 12px;
+  }
+
+  /* Emoji picker mini */
+  .emo-picker {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+  }
+  .emo-picker label {
+    aspect-ratio: 1;
+    background: var(--lkv-stone-50);
+    border: 2px solid transparent;
+    border-radius: var(--lkv-r-md);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    cursor: pointer;
+    transition: all var(--lkv-dur-fast) var(--lkv-ease);
+  }
+  .emo-picker label:hover { background: #fff; border-color: rgba(11,31,23,0.08); }
+  .emo-picker label.on {
+    background: var(--lkv-sage-100);
+    border-color: var(--lkv-forest-800);
+  }
+  .emo-picker input { display: none; }
+
+  /* Invite methods */
+  .invite-tabs {
+    display: flex; gap: 4px;
+    padding: 4px;
+    background: var(--lkv-stone-50);
+    border-radius: var(--lkv-r-full);
+    margin-bottom: 20px;
+  }
+  .invite-tabs button {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: var(--lkv-r-full);
+    font-size: 13px; font-weight: 500;
+    color: var(--lkv-ink-500);
+    transition: all var(--lkv-dur-fast) var(--lkv-ease);
+    display: inline-flex; align-items: center; gap: 8px;
+    justify-content: center;
+  }
+  .invite-tabs button:hover { color: var(--lkv-ink-900); }
+  .invite-tabs button.on {
+    background: #fff; color: var(--lkv-forest-800);
+    box-shadow: var(--lkv-shadow-xs);
+  }
+
+  /* Invite link card */
+  .invite-link {
+    padding: 20px;
+    background: linear-gradient(135deg, var(--lkv-sage-100), var(--lkv-stone-50));
+    border-radius: var(--lkv-r-lg);
+    text-align: center;
+  }
+  .invite-link .l {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-forest-800); margin-bottom: 8px;
+  }
+  .invite-link .url {
+    font-family: var(--lkv-font-mono);
+    font-size: 16px; font-weight: 500;
+    color: var(--lkv-ink-900);
+    padding: 12px 20px;
+    background: #fff;
+    border-radius: var(--lkv-r-full);
+    display: inline-flex; align-items: center; gap: 10px;
+    box-shadow: var(--lkv-shadow-xs);
+    margin-bottom: 12px;
+  }
+  .invite-link .url .cp {
+    padding: 4px 10px; border-radius: 999px;
+    background: var(--lkv-forest-800); color: #fff;
+    font-size: 11px; font-weight: 500;
+    font-family: var(--lkv-font-sans);
+  }
+  .invite-link .exp {
+    font-size: 11px; color: var(--lkv-ink-500);
+  }
+  .invite-link .exp .r {
+    color: var(--lkv-warm-500); font-weight: 500;
+  }
+
+  /* Contact suggestions */
+  .contact-suggest {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .contact-row {
+    display: grid;
+    grid-template-columns: 40px 1fr auto;
+    gap: 12px; align-items: center;
+    padding: 10px 12px;
+    background: var(--lkv-stone-50);
+    border-radius: var(--lkv-r-md);
+    transition: all var(--lkv-dur-fast) var(--lkv-ease);
+  }
+  .contact-row:hover { background: #fff; box-shadow: var(--lkv-shadow-xs); }
+  .contact-row .av {
+    width: 40px; height: 40px; border-radius: 50%;
+    background-size: cover; background-position: center;
+  }
+  .contact-row .body .n {
+    font-size: 13px; font-weight: 500; color: var(--lkv-ink-900);
+  }
+  .contact-row .body .m {
+    font-size: 11px; color: var(--lkv-ink-500);
+    margin-top: 2px;
+  }
+  .contact-row .add {
+    padding: 6px 14px; border-radius: 999px;
+    background: var(--lkv-forest-800); color: #fff;
+    font-size: 11px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .contact-row.added .add {
+    background: var(--lkv-sage-100); color: var(--lkv-forest-800);
+  }
+</style>
+</head>
+<body>
+<div class="form-page">
+
+  <header class="form-topbar">
+    <div class="form-topbar-inner">
+      <div class="left">
+        <a href="Index.html" class="lkv-logo">
+          <span class="lkv-logo-mark">
+            <svg viewBox="0 0 32 32" width="24" height="24" fill="none">
+              <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+            </svg>
+          </span>
+          <span>Le Kit du Voyageur</span>
+        </a>
+        <nav class="breadcrumb">
+          <a href="Index.html">Accueil</a>
+          <span class="sep">›</span>
+          <a href="Compte - Dashboard.html">Mon compte</a>
+          <span class="sep">›</span>
+          <span class="cur">Nouveau groupe</span>
+        </nav>
+      </div>
+      <div class="actions">
+        <div class="status-dot"><span class="d"></span>Non créé</div>
+        <button class="lkv-btn lkv-btn-ghost lkv-btn-sm">Annuler</button>
+        <button class="lkv-btn lkv-btn-primary lkv-btn-sm">Créer le groupe</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="form-hero">
+    <div class="eye">Nouveau groupe</div>
+    <h1>Rassembler <em>pour un voyage.</em></h1>
+    <p class="lead">Un groupe, c'est plus léger qu'un club : il naît pour une sortie et vit le temps de l'organiser. Idéal pour partager la logistique entre amis.</p>
+  </section>
+
+  <div class="form-shell">
+    <main class="form-column">
+
+      <!-- IDENTITÉ -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>Le <em>groupe</em></h2>
+          <span class="n">01 · Identité</span>
+        </div>
+        <p class="sec-sub">Un nom, un pictogramme, une couleur. Le nécessaire pour que les invités s'y retrouvent immédiatement.</p>
+
+        <div class="group-hero">
+          <div class="emo">C</div>
+          <div class="txt">
+            <div class="eye">Aperçu · en-tête groupe</div>
+            <h4>Chartreuse <em>en octobre</em></h4>
+            <div class="m">
+              <span>12–14 oct. 2026</span>
+              <span>·</span>
+              <span>4 personnes</span>
+              <span>·</span>
+              <span>3 refuges</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="f-grid">
+          <div class="field full">
+            <label>Nom du groupe <span class="req">*</span></label>
+            <input type="text" value="Chartreuse en octobre" placeholder="Ex. Chartreuse en octobre, Vercors août 2027…"/>
+          </div>
+          <div class="field">
+            <label>Description courte</label>
+            <input type="text" value="Traversée de la Chartreuse à 4, octobre 2026" placeholder="Une phrase pour le fil de discussion"/>
+          </div>
+          <div class="field">
+            <label>Couleur d'accent</label>
+            <div style="display: flex; gap: 6px; padding: 8px 12px; background: var(--lkv-stone-50); border-radius: 12px;">
+              <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--lkv-forest-800); border: 3px solid #fff; box-shadow: 0 0 0 2px var(--lkv-forest-800); cursor: pointer;"></div>
+              <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--lkv-sage-500); cursor: pointer;"></div>
+              <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--lkv-warm-500); cursor: pointer;"></div>
+              <div style="width: 32px; height: 32px; border-radius: 50%; background: #4A6FA5; cursor: pointer;"></div>
+              <div style="width: 32px; height: 32px; border-radius: 50%; background: #A54545; cursor: pointer;"></div>
+              <div style="width: 32px; height: 32px; border-radius: 50%; background: #7B5FBF; cursor: pointer;"></div>
+            </div>
+          </div>
+          <div class="field full">
+            <label>Pictogramme</label>
+            <div class="emo-picker">
+              <label class="on"><input type="radio" name="emo" checked/>🏔</label>
+              <label><input type="radio" name="emo"/>🥾</label>
+              <label><input type="radio" name="emo"/>⛺</label>
+              <label><input type="radio" name="emo"/>🏕</label>
+              <label><input type="radio" name="emo"/>🌲</label>
+              <label><input type="radio" name="emo"/>🌄</label>
+              <label><input type="radio" name="emo"/>🧗</label>
+              <label><input type="radio" name="emo"/>🚵</label>
+              <label><input type="radio" name="emo"/>🎒</label>
+              <label><input type="radio" name="emo"/>🌊</label>
+              <label><input type="radio" name="emo"/>🌌</label>
+              <label><input type="radio" name="emo"/>🏞</label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SORTIE LIÉE -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>Sortie <em>concernée</em></h2>
+          <span class="n">02 · Contexte</span>
+        </div>
+        <p class="sec-sub">Rattachez une aventure existante ou renseignez les dates. Les participants sauront de quoi il s'agit.</p>
+
+        <div class="f-grid">
+          <div class="field full">
+            <label>Aventure liée <span class="hint">Ou laissez vide pour un groupe ouvert</span></label>
+            <div style="display: grid; grid-template-columns: 80px 1fr auto; gap: 14px; align-items: center; padding: 12px; background: var(--lkv-sage-100); border-radius: 12px; border: 2px solid var(--lkv-forest-800);">
+              <div style="width: 80px; height: 56px; background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&q=80'); background-size: cover; border-radius: 10px;"></div>
+              <div>
+                <div style="font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);">Traversée de la <em style="font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800);">Chartreuse</em></div>
+                <div style="font-size: 11px; color: var(--lkv-ink-500); margin-top: 3px; font-family: var(--lkv-font-mono);">12–14 oct. 2026 · 27,4 km · 3 refuges</div>
+              </div>
+              <button style="padding: 6px 12px; border-radius: 999px; background: #fff; color: var(--lkv-forest-800); font-size: 11px; font-weight: 500;">Changer</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Date de début</label>
+            <input type="date" value="2026-10-12"/>
+          </div>
+          <div class="field">
+            <label>Date de fin</label>
+            <input type="date" value="2026-10-14"/>
+          </div>
+          <div class="field">
+            <label>Type de groupe</label>
+            <div class="f-segment full">
+              <label class="on"><input type="radio" name="tg"/>Ponctuel</label>
+              <label><input type="radio" name="tg"/>Récurrent</label>
+              <label><input type="radio" name="tg"/>Ouvert</label>
+            </div>
+          </div>
+          <div class="field">
+            <label>Effectif maximum</label>
+            <div class="f-input-group">
+              <input type="number" value="8"/>
+              <span class="suffix">personnes</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- INVITER -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>Inviter les <em>participants</em></h2>
+          <span class="n">03 · Constituer le groupe</span>
+        </div>
+        <p class="sec-sub">Trois façons d'inviter : par pseudo interne, par email, ou en partageant un lien d'invitation.</p>
+
+        <div class="invite-tabs">
+          <button class="on">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+            Pseudo interne
+          </button>
+          <button>
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 6l9 8 9-8"/></svg>
+            Email
+          </button>
+          <button>
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M10 14l4-4M8 12l-3 3a3 3 0 004 4l3-3M16 12l3-3a3 3 0 00-4-4l-3 3"/></svg>
+            Lien d'invitation
+          </button>
+        </div>
+
+        <div class="field" style="margin-bottom: 20px;">
+          <div class="f-chip-picker">
+            <span class="chip">
+              <div style="width: 20px; height: 20px; border-radius: 50%; background: url('https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80') center/cover; margin-right: 2px;"></div>
+              Léna Bertrand<span class="x">×</span>
+            </span>
+            <span class="chip">
+              <div style="width: 20px; height: 20px; border-radius: 50%; background: url('https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80') center/cover; margin-right: 2px;"></div>
+              Antoine Rey<span class="x">×</span>
+            </span>
+            <span class="chip">
+              <div style="width: 20px; height: 20px; border-radius: 50%; background: url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80') center/cover; margin-right: 2px;"></div>
+              Sophie Marnier<span class="x">×</span>
+            </span>
+            <input type="text" placeholder="Rechercher un membre ou coller un email…"/>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <div style="font-size: 12px; font-weight: 500; color: var(--lkv-ink-700); margin-bottom: 10px;">Suggestions · vos derniers partenaires</div>
+          <div class="contact-suggest">
+            <div class="contact-row added">
+              <div class="av" style="background-image: url('https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80');"></div>
+              <div class="body">
+                <div class="n">Léna Bertrand</div>
+                <div class="m">lena.b · 12 sorties ensemble</div>
+              </div>
+              <button class="add">✓ Ajoutée</button>
+            </div>
+            <div class="contact-row added">
+              <div class="av" style="background-image: url('https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80');"></div>
+              <div class="body">
+                <div class="n">Antoine Rey</div>
+                <div class="m">antoine.r · 8 sorties ensemble</div>
+              </div>
+              <button class="add">✓ Ajouté</button>
+            </div>
+            <div class="contact-row">
+              <div class="av" style="background-image: url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80');"></div>
+              <div class="body">
+                <div class="n">Julien Mazet</div>
+                <div class="m">julien.m · 5 sorties ensemble</div>
+              </div>
+              <button class="add">+ Inviter</button>
+            </div>
+            <div class="contact-row">
+              <div class="av" style="background-image: url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80');"></div>
+              <div class="body">
+                <div class="n">Camille Verger</div>
+                <div class="m">camille.v · 3 sorties ensemble</div>
+              </div>
+              <button class="add">+ Inviter</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="invite-link">
+          <div class="l">Lien d'invitation · groupe privé</div>
+          <div class="url">
+            <span>lekit.co/g/chartreuse-oct-h9k2</span>
+            <button class="cp">Copier</button>
+          </div>
+          <div class="exp">Expire dans <span class="r">7 jours</span> · 0 acceptation sur 8 places</div>
+        </div>
+      </section>
+
+      <!-- PERMISSIONS -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>Permissions <em>du groupe</em></h2>
+          <span class="n">04 · Fonctionnement</span>
+        </div>
+        <p class="sec-sub">Réglages simples pour éviter les malentendus : qui peut inviter, éditer, ou proposer des changements.</p>
+
+        <div>
+          <div class="f-toggle-row">
+            <div>
+              <div class="n">Les participants peuvent inviter d'autres personnes</div>
+              <div class="m">Sans cette option, seule vous pouvez ajouter des membres.</div>
+            </div>
+            <div class="f-switch"></div>
+          </div>
+          <div class="f-toggle-row">
+            <div>
+              <div class="n">Chat de groupe activé</div>
+              <div class="m">Un fil de messages partagé pour l'organisation avant et pendant le voyage.</div>
+            </div>
+            <div class="f-switch on"></div>
+          </div>
+          <div class="f-toggle-row">
+            <div>
+              <div class="n">Partage de position en temps réel</div>
+              <div class="m">Optionnel · s'active pendant la sortie uniquement, entre membres du groupe.</div>
+            </div>
+            <div class="f-switch on"></div>
+          </div>
+          <div class="f-toggle-row">
+            <div>
+              <div class="n">Liste de courses & logistique partagée</div>
+              <div class="m">Un template collaboratif s'ouvre : matériel, courses, covoiturage.</div>
+            </div>
+            <div class="f-switch on"></div>
+          </div>
+          <div class="f-toggle-row">
+            <div>
+              <div class="n">Archiver automatiquement après la sortie</div>
+              <div class="m">Le groupe passe en lecture seule 7 jours après la date de fin.</div>
+            </div>
+            <div class="f-switch on"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <aside class="form-aside">
+
+      <!-- STATUS PREVIEW -->
+      <div class="aside-card" style="background: linear-gradient(180deg, var(--lkv-sage-100), #fff);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+          <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--lkv-forest-800); color: #fff; display: flex; align-items: center; justify-content: center; font-family: var(--lkv-font-serif); font-style: italic; font-size: 22px;">C</div>
+          <div>
+            <div style="font-size: 15px; font-weight: 500; color: var(--lkv-ink-900);">Chartreuse en <em style="font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800);">octobre</em></div>
+            <div style="font-size: 11px; color: var(--lkv-ink-500); margin-top: 2px;">Groupe · privé · 3 invitations</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; margin-top: 14px;">
+          <div style="display: flex;">
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: url('https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80') center/cover; border: 2px solid #fff;"></div>
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: url('https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80') center/cover; border: 2px solid #fff; margin-left: -6px;"></div>
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: url('https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80') center/cover; border: 2px solid #fff; margin-left: -6px;"></div>
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80') center/cover; border: 2px solid #fff; margin-left: -6px;"></div>
+          </div>
+          <span style="font-size: 12px; color: var(--lkv-ink-700); margin-left: 4px;">Vous + 3 invités · 4 places restantes</span>
+        </div>
+      </div>
+
+      <!-- DIFFÉRENCE club / groupe -->
+      <div class="aside-card">
+        <h3>Groupe <em>ou club ?</em></h3>
+        <p class="sub">Deux formats pour deux besoins.</p>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="padding: 12px 14px; background: var(--lkv-sage-100); border-radius: 12px; border-left: 3px solid var(--lkv-forest-800);">
+            <div style="font-size: 12px; font-weight: 500; color: var(--lkv-forest-800); margin-bottom: 4px;">Groupe · éphémère</div>
+            <div style="font-size: 12px; color: var(--lkv-ink-700); line-height: 1.5;">Une sortie précise, quelques amis, une organisation partagée. S'archive après le voyage.</div>
+          </div>
+          <div style="padding: 12px 14px; background: var(--lkv-stone-50); border-radius: 12px;">
+            <div style="font-size: 12px; font-weight: 500; color: var(--lkv-ink-900); margin-bottom: 4px;">Club · durable</div>
+            <div style="font-size: 12px; color: var(--lkv-ink-500); line-height: 1.5;">Une communauté qui se retrouve mois après mois, avec des règles et plusieurs admins.</div>
+          </div>
+          <a href="Formulaire - Nouveau club.html" style="font-size: 12px; color: var(--lkv-forest-800); font-weight: 500; text-align: center; padding: 8px;">Créer un club plutôt →</a>
+        </div>
+      </div>
+
+      <div class="tips-card">
+        <div class="eye">Conseil <em>organisation</em></div>
+        <h4>Créez le groupe <em>avant</em> d'inviter.</h4>
+        <p>Un chat actif, une liste de matériel, et l'énergie pour l'itinéraire se met en place naturellement.</p>
+      </div>
+
+    </aside>
+  </div>
+
+  <div class="save-bar">
+    <div class="status">
+      <span class="dot"></span>
+      <span><strong>Prêt à créer</strong> · 3 invitations partiront à la création</span>
+    </div>
+    <div class="actions">
+      <button class="lkv-btn lkv-btn-ghost">Annuler</button>
+      <button class="lkv-btn lkv-btn-outline">Créer sans inviter</button>
+      <button class="lkv-btn lkv-btn-primary">Créer & envoyer les invitations</button>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

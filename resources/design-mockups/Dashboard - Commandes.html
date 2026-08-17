@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Commandes — Mon compte · Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="dashboard.css"/>
+<style>
+  .cmd-layout { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
+  .cmd-main { display: flex; flex-direction: column; gap: 20px; }
+  .cmd-aside { display: flex; flex-direction: column; gap: 20px; position: sticky; top: 80px; }
+
+  /* Order card (large, expanded) */
+  .order-card {
+    background: #fff;
+    border-radius: var(--lkv-r-xl);
+    padding: 24px 26px;
+    box-shadow: var(--lkv-shadow-sm);
+    border: 1px solid rgba(11,31,23,0.03);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+  }
+  .order-card .col-left { min-width: 0; }
+  .order-card .col-right {
+    display: flex; flex-direction: column;
+    align-items: flex-end; gap: 10px;
+    text-align: right;
+  }
+  .order-card .head {
+    display: flex; align-items: center; gap: 12px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+    margin-bottom: 14px;
+  }
+  .order-card .head .id {
+    font-family: var(--lkv-font-mono);
+    font-size: 12px; color: var(--lkv-ink-500);
+  }
+  .order-card .head .date {
+    font-size: 12px; color: var(--lkv-ink-500);
+  }
+  .order-card .head .sep { color: var(--lkv-ink-300); }
+  .order-card .head .status {
+    padding: 4px 12px; border-radius: 999px;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.02em;
+    margin-left: auto;
+  }
+  .order-card .head .status.ship { background: var(--lkv-forest-800); color: #fff; }
+  .order-card .head .status.wait { background: var(--lkv-warm-100); color: #8A6127; }
+  .order-card .head .status.done { background: var(--lkv-sage-100); color: var(--lkv-forest-800); }
+  .order-card .head .status.return { background: rgba(11,31,23,0.06); color: var(--lkv-ink-500); }
+
+  .order-items { display: flex; flex-direction: column; gap: 12px; }
+  .order-item {
+    display: grid;
+    grid-template-columns: 64px 1fr auto;
+    gap: 14px; align-items: center;
+  }
+  .order-item .th {
+    width: 64px; height: 64px; border-radius: 12px;
+    background-size: cover; background-position: center;
+    background-color: var(--lkv-stone-50);
+  }
+  .order-item .body .n {
+    font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);
+    line-height: 1.3;
+  }
+  .order-item .body .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .order-item .body .m {
+    font-size: 11px; color: var(--lkv-ink-500);
+    margin-top: 4px; font-family: var(--lkv-font-mono);
+    display: flex; gap: 10px;
+  }
+  .order-item .price {
+    font-family: var(--lkv-font-sans);
+    font-size: 14px; font-weight: 500;
+    color: var(--lkv-ink-900);
+    letter-spacing: -0.01em;
+  }
+
+  /* Tracking timeline */
+  .tracking {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(11,31,23,0.05);
+  }
+  .tracking .step {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    position: relative;
+  }
+  .tracking .step::before {
+    content: ""; position: absolute; top: 11px; left: 50%; right: -50%;
+    height: 2px; background: var(--lkv-stone-100); z-index: 0;
+  }
+  .tracking .step:last-child::before { display: none; }
+  .tracking .step.done::before { background: var(--lkv-forest-800); }
+  .tracking .step .dot {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--lkv-stone-100); color: var(--lkv-ink-400);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 500;
+    z-index: 1;
+  }
+  .tracking .step.done .dot { background: var(--lkv-forest-800); color: #fff; }
+  .tracking .step.now .dot { background: var(--lkv-warm-500); color: #fff; box-shadow: 0 0 0 4px rgba(201,155,90,0.2); }
+  .tracking .step .l {
+    font-size: 10px; letter-spacing: 0.02em;
+    color: var(--lkv-ink-500);
+    text-align: center;
+  }
+  .tracking .step.done .l, .tracking .step.now .l { color: var(--lkv-ink-900); font-weight: 500; }
+
+  .order-card .totals {
+    display: flex; flex-direction: column; gap: 6px;
+    font-size: 12px; color: var(--lkv-ink-500);
+    text-align: right;
+  }
+  .order-card .totals .row {
+    display: flex; justify-content: space-between; gap: 32px;
+    min-width: 220px;
+  }
+  .order-card .totals .row.total {
+    padding-top: 10px;
+    margin-top: 6px;
+    border-top: 1px solid rgba(11,31,23,0.05);
+    color: var(--lkv-ink-900); font-weight: 500;
+    font-family: var(--lkv-font-sans);
+    font-size: 18px; letter-spacing: -0.01em;
+  }
+  .order-card .actions {
+    display: flex; flex-direction: column; gap: 6px;
+    margin-top: auto;
+  }
+
+  /* Subscription highlight */
+  .sub-card {
+    background: linear-gradient(135deg, var(--lkv-forest-900) 0%, var(--lkv-forest-800) 100%);
+    color: #fff;
+    padding: 26px 28px;
+    border-radius: var(--lkv-r-xl);
+    position: relative; overflow: hidden;
+  }
+  .sub-card::after {
+    content: ""; position: absolute; right: -60px; top: -60px;
+    width: 220px; height: 220px; border-radius: 50%;
+    background: radial-gradient(circle, var(--lkv-warm-500), transparent 65%);
+    opacity: 0.28;
+  }
+  .sub-card > * { position: relative; z-index: 1; }
+  .sub-card .head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .sub-card h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 24px; font-weight: 500;
+    letter-spacing: -0.02em; line-height: 1;
+    margin: 0;
+  }
+  .sub-card h3 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .sub-card .st {
+    padding: 4px 10px; border-radius: 999px;
+    background: var(--lkv-sage-500); color: var(--lkv-forest-900);
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 500;
+  }
+  .sub-card .price {
+    display: flex; align-items: baseline; gap: 6px;
+    margin: 20px 0 20px;
+  }
+  .sub-card .price .n {
+    font-family: var(--lkv-font-sans);
+    font-size: 48px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 1;
+  }
+  .sub-card .price em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+    font-size: 16px;
+  }
+  .sub-card .perks {
+    display: flex; flex-direction: column; gap: 8px;
+    padding: 14px 0;
+    border-top: 1px solid rgba(255,255,255,0.14);
+    border-bottom: 1px solid rgba(255,255,255,0.14);
+    margin-bottom: 16px;
+  }
+  .sub-card .perks .p {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: rgba(255,255,255,0.85);
+  }
+  .sub-card .perks .p svg { color: var(--lkv-sage-300); flex-shrink: 0; }
+  .sub-card .renew {
+    font-size: 11px; color: rgba(255,255,255,0.6);
+    margin-bottom: 14px;
+  }
+  .sub-card .actions {
+    display: flex; gap: 8px;
+  }
+  .sub-card .actions button {
+    padding: 8px 16px; border-radius: 999px;
+    font-size: 12px; font-weight: 500;
+  }
+  .sub-card .actions .manage {
+    background: #fff; color: var(--lkv-ink-900);
+    flex: 1;
+  }
+  .sub-card .actions .ghost {
+    background: rgba(255,255,255,0.1); color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+
+  /* Address card */
+  .addr-card {
+    padding: 16px;
+    background: var(--lkv-stone-50);
+    border-radius: 14px;
+    border: 2px solid transparent;
+    transition: all var(--lkv-dur-fast) var(--lkv-ease);
+  }
+  .addr-card:hover { background: #fff; box-shadow: var(--lkv-shadow-xs); }
+  .addr-card.default {
+    background: var(--lkv-sage-100);
+    border-color: var(--lkv-forest-800);
+  }
+  .addr-card .head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+  }
+  .addr-card .head .n {
+    font-size: 13px; font-weight: 500; color: var(--lkv-ink-900);
+  }
+  .addr-card .head .badge {
+    padding: 3px 8px; border-radius: 999px;
+    background: var(--lkv-forest-800); color: #fff;
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 500;
+  }
+  .addr-card .body {
+    font-size: 12px; color: var(--lkv-ink-700);
+    line-height: 1.55;
+    font-family: var(--lkv-font-serif);
+    font-style: italic;
+  }
+  .addr-card .actions {
+    display: flex; gap: 4px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(11,31,23,0.05);
+  }
+  .addr-card .actions a {
+    font-size: 11px; color: var(--lkv-forest-800); font-weight: 500;
+  }
+  .addr-card .actions .sep { color: var(--lkv-ink-300); }
+</style>
+</head>
+<body>
+<div class="d-page">
+
+  <section class="d-hero">
+    <div class="bg" style="background-image: url('https://images.unsplash.com/photo-1441829266145-6d4bfb7a3ec2?w=1800&q=80');"></div>
+    <nav class="d-topnav">
+      <a href="Index.html" class="lkv-logo" style="color: #fff;">
+        <svg viewBox="0 0 32 32" width="22" height="22" fill="none">
+          <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+        </svg>
+        <span>Le Kit du Voyageur</span>
+      </a>
+      <div class="links">
+        <a href="#">Aventures</a><a href="#">Refuges</a><a href="#">Boutique</a>
+        <a href="#">Carnet</a><a href="#">Clubs</a><a href="#" class="on">Mon compte</a>
+      </div>
+      <div class="right">
+        <button><svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
+        <button><svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></button>
+      </div>
+    </nav>
+    <div class="d-crumb">
+      <a href="Index.html">Accueil</a><span class="sep">›</span>
+      <a href="Compte - Dashboard.html">Mon compte</a><span class="sep">›</span>
+      <span>Commandes</span>
+    </div>
+    <div class="d-hero-body">
+      <div class="av"></div>
+      <div class="info">
+        <div class="eye"><span class="dot"></span>18 commandes · abonnement Guide actif</div>
+        <h1>Marceline <em>Chevrier.</em></h1>
+        <div class="m">"Le bon matériel, ce n'est pas ce qui pèse — c'est ce qui dure."</div>
+      </div>
+      <div class="quick">
+        <button class="primary">
+          <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M5 7h14l-1.5 11a2 2 0 01-2 1.7H8.5a2 2 0 01-2-1.7z"/><path d="M9 7V5a3 3 0 016 0v2"/></svg>
+          Voir la boutique
+        </button>
+        <button>Télécharger factures</button>
+      </div>
+    </div>
+    <div class="d-level">
+      <div class="lv">
+        <div class="badge">III</div>
+        <div>
+          <div class="n">Niveau <strong>Explorateur</strong> <span class="points">1 240 / 1 800 pts</span></div>
+          <div class="bar"><div class="f" style="width: 68%;"></div></div>
+          <div class="to">Encore 560 pts avant « Guide »</div>
+        </div>
+      </div>
+      <div class="st"><div class="v">42<em> sorties</em></div><div class="l">Aventures</div></div>
+      <div class="st"><div class="v">12<em> carnets</em></div><div class="l">Publiés</div></div>
+      <div class="st"><div class="v">4<em> clubs</em></div><div class="l">Communautés</div></div>
+      <div class="st"><div class="v">786<em>km</em></div><div class="l">2026</div></div>
+    </div>
+  </section>
+
+  <nav class="d-tabs">
+    <a href="Compte - Dashboard.html" class="d-tab">Vue d'ensemble</a>
+    <a href="Dashboard - Aventures.html" class="d-tab">Aventures <span class="n">42</span></a>
+    <a href="Dashboard - Carnets.html" class="d-tab">Carnets <span class="n">12</span></a>
+    <a href="Dashboard - Clubs.html" class="d-tab">Clubs <span class="n">4</span></a>
+    <a href="Dashboard - Commandes.html" class="d-tab on">Commandes <span class="n">18</span></a>
+    <a href="Dashboard - Fidélité.html" class="d-tab">Fidélité <span class="n">1240</span></a>
+    <a href="#" class="d-tab">Paramètres</a>
+  </nav>
+
+  <main class="d-main">
+
+    <div class="d-section-head">
+      <div>
+        <h2>Commandes <em>& abonnements</em></h2>
+        <div class="sub">18 commandes depuis 2023 · 3 en cours · 1 abonnement premium actif · 2 380 € cumulés.</div>
+      </div>
+      <div class="actions">
+        <button class="lkv-btn lkv-btn-outline lkv-btn-sm">
+          <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+          Factures 2026
+        </button>
+        <button class="lkv-btn lkv-btn-primary lkv-btn-sm">Contacter le SAV</button>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="d-kpi-grid">
+      <div class="d-kpi">
+        <div class="k">Commandes 2026</div>
+        <div class="v">11</div>
+        <div class="sub"><span class="warm">3 en cours</span> · 8 livrées</div>
+      </div>
+      <div class="d-kpi">
+        <div class="k">Total cumulé</div>
+        <div class="v">2 380<em>€</em></div>
+        <div class="sub">Sur 3 ans · <span class="up">357 €</span> économisés (fidélité)</div>
+      </div>
+      <div class="d-kpi">
+        <div class="k">Panier moyen</div>
+        <div class="v">132<em>€</em></div>
+        <div class="sub"><span class="up">↑ 18 €</span> vs 2025</div>
+      </div>
+      <div class="d-kpi">
+        <div class="k">Prochaine facture</div>
+        <div class="v">89<em>€</em></div>
+        <div class="sub">Abonnement Guide · 4 fév. 2027</div>
+      </div>
+    </div>
+
+    <div class="cmd-layout">
+      <div class="cmd-main">
+
+        <!-- IN PROGRESS ORDER (large) -->
+        <div class="order-card">
+          <div class="col-left">
+            <div class="head">
+              <span class="id">CMD-2026-1104</span>
+              <span class="sep">·</span>
+              <span class="date">Passée le 4 oct. 2026</span>
+              <span class="status ship">Expédiée</span>
+            </div>
+
+            <div class="order-items">
+              <div class="order-item">
+                <div class="th" style="background-image: url('https://images.unsplash.com/photo-1551269901-5c5e14c25df7?w=200&q=80');"></div>
+                <div class="body">
+                  <div class="n">Veste Gore-Tex Arc'teryx <em>Beta AR</em></div>
+                  <div class="m"><span>Taille M</span><span>Noir</span><span>SKU · ARX-BAR-M-BK</span></div>
+                </div>
+                <div class="price">389 €</div>
+              </div>
+            </div>
+
+            <div class="tracking">
+              <div class="step done">
+                <div class="dot"><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg></div>
+                <div class="l">Commandée<br/><span style="font-family: var(--lkv-font-mono); font-size: 9px;">4 oct.</span></div>
+              </div>
+              <div class="step done">
+                <div class="dot"><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg></div>
+                <div class="l">Préparée<br/><span style="font-family: var(--lkv-font-mono); font-size: 9px;">5 oct.</span></div>
+              </div>
+              <div class="step now">
+                <div class="dot"><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><rect x="4" y="8" width="16" height="10" rx="2"/><path d="M4 12h16"/></svg></div>
+                <div class="l">Expédiée<br/><span style="font-family: var(--lkv-font-mono); font-size: 9px;">6 oct.</span></div>
+              </div>
+              <div class="step">
+                <div class="dot">—</div>
+                <div class="l">Livrée<br/><span style="font-family: var(--lkv-font-mono); font-size: 9px;">Prévue 8 oct.</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-right">
+            <div class="totals">
+              <div class="row"><span>Sous-total</span><span>389,00 €</span></div>
+              <div class="row"><span>Livraison DHL Express</span><span>Offerte</span></div>
+              <div class="row"><span>Fidélité Guide (-15 %)</span><span style="color: var(--lkv-forest-800);">–58,35 €</span></div>
+              <div class="row total"><span>Total</span><span>330,65 €</span></div>
+            </div>
+            <div class="actions">
+              <button class="lkv-btn lkv-btn-primary lkv-btn-sm">Suivre le colis</button>
+              <button class="lkv-btn lkv-btn-outline lkv-btn-sm">Facture PDF</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- IN PREP -->
+        <div class="order-card">
+          <div class="col-left">
+            <div class="head">
+              <span class="id">CMD-2026-1098</span>
+              <span class="sep">·</span>
+              <span class="date">Passée le 28 sept. 2026</span>
+              <span class="status wait">En préparation</span>
+            </div>
+            <div class="order-items">
+              <div class="order-item">
+                <div class="th" style="background-image: url('https://images.unsplash.com/photo-1519834064860-27ffbec6b1d5?w=200&q=80');"></div>
+                <div class="body">
+                  <div class="n">Frontale Petzl <em>NAO RL</em> 1500 lm</div>
+                  <div class="m"><span>Unique</span><span>SKU · PTZ-NAO-RL</span></div>
+                </div>
+                <div class="price">189 €</div>
+              </div>
+              <div class="order-item">
+                <div class="th" style="background-image: url('https://images.unsplash.com/photo-1560393895-2fe5adf59aa2?w=200&q=80');"></div>
+                <div class="body">
+                  <div class="n">Batterie externe <em>Nitecore NB10000</em></div>
+                  <div class="m"><span>USB-C · 10 000 mAh</span><span>SKU · NC-NB10K</span></div>
+                </div>
+                <div class="price">62 €</div>
+              </div>
+            </div>
+            <div class="tracking">
+              <div class="step done"><div class="dot"><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg></div><div class="l">Commandée<br/><span style="font-family: var(--lkv-font-mono); font-size: 9px;">28 sept.</span></div></div>
+              <div class="step now"><div class="dot"><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><path d="M6 8h12v12a2 2 0 01-2 2H8a2 2 0 01-2-2z"/><path d="M9 8V5a3 3 0 016 0v3"/></svg></div><div class="l">Préparée<br/><span style="font-family: var(--lkv-font-mono); font-size: 9px;">En cours</span></div></div>
+              <div class="step"><div class="dot">—</div><div class="l">Expédiée</div></div>
+              <div class="step"><div class="dot">—</div><div class="l">Livrée</div></div>
+            </div>
+          </div>
+          <div class="col-right">
+            <div class="totals">
+              <div class="row"><span>Sous-total</span><span>251,00 €</span></div>
+              <div class="row"><span>Livraison</span><span>4,90 €</span></div>
+              <div class="row"><span>Fidélité (-15 %)</span><span style="color: var(--lkv-forest-800);">–37,65 €</span></div>
+              <div class="row total"><span>Total</span><span>218,25 €</span></div>
+            </div>
+            <div class="actions">
+              <button class="lkv-btn lkv-btn-outline lkv-btn-sm">Facture PDF</button>
+              <button class="lkv-btn lkv-btn-ghost lkv-btn-sm" style="color: var(--lkv-danger);">Annuler</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- HISTORY -->
+        <div class="d-card">
+          <div class="head">
+            <h3>Historique <em>2026</em></h3>
+            <div style="display: flex; gap: 6px; padding: 4px; background: var(--lkv-stone-50); border-radius: 999px;">
+              <button style="padding: 6px 12px; border-radius: 999px; background: #fff; box-shadow: var(--lkv-shadow-xs); font-size: 12px; font-weight: 500; color: var(--lkv-forest-800);">2026</button>
+              <button style="padding: 6px 12px; border-radius: 999px; font-size: 12px; color: var(--lkv-ink-500);">2025</button>
+              <button style="padding: 6px 12px; border-radius: 999px; font-size: 12px; color: var(--lkv-ink-500);">2024</button>
+              <button style="padding: 6px 12px; border-radius: 999px; font-size: 12px; color: var(--lkv-ink-500);">Toutes</button>
+            </div>
+          </div>
+          <p class="sub">Vos commandes livrées cette année.</p>
+
+          <div style="display: flex; flex-direction: column;">
+            <div style="display: grid; grid-template-columns: 56px 1fr auto auto auto; gap: 16px; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(11,31,23,0.05);">
+              <div style="width: 56px; height: 56px; border-radius: 12px; background: url('https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=200&q=80') center/cover;"></div>
+              <div>
+                <div style="font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);">Chaussures Salomon <em style="font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800);">Quest 4 GTX</em></div>
+                <div style="font-size: 11px; color: var(--lkv-ink-500); margin-top: 3px; font-family: var(--lkv-font-mono);">CMD-2026-1076 · passée le 12 sept. · livrée le 15 sept.</div>
+              </div>
+              <div style="font-family: var(--lkv-font-sans); font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);">219 €</div>
+              <div style="padding: 4px 10px; border-radius: 999px; background: var(--lkv-sage-100); color: var(--lkv-forest-800); font-size: 11px; font-weight: 500;">Livrée</div>
+              <div style="display: flex; gap: 4px;">
+                <button style="width: 32px; height: 32px; border-radius: 50%; background: var(--lkv-stone-50); color: var(--lkv-ink-500); display: flex; align-items: center; justify-content: center;"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg></button>
+                <button style="width: 32px; height: 32px; border-radius: 50%; background: var(--lkv-stone-50); color: var(--lkv-ink-500); display: flex; align-items: center; justify-content: center;"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M20 12c-2 4-6 6-8 6M20 12c-2-4-6-6-8-6M4 12c2-4 6-6 8-6"/><circle cx="12" cy="12" r="3"/></svg></button>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 56px 1fr auto auto auto; gap: 16px; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(11,31,23,0.05);">
+              <div style="width: 56px; height: 56px; border-radius: 12px; background: url('https://images.unsplash.com/photo-1571498664957-fde285d79857?w=200&q=80') center/cover;"></div>
+              <div>
+                <div style="font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);">Sac à dos <em style="font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800);">Osprey Aura AG 50</em></div>
+                <div style="font-size: 11px; color: var(--lkv-ink-500); margin-top: 3px; font-family: var(--lkv-font-mono);">CMD-2026-0894 · passée le 3 août · livrée le 6 août</div>
+              </div>
+              <div style="font-family: var(--lkv-font-sans); font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);">280 €</div>
+              <div style="padding: 4px 10px; border-radius: 999px; background: var(--lkv-sage-100); color: var(--lkv-forest-800); font-size: 11px; font-weight: 500;">Livrée</div>
+              <div style="display: flex; gap: 4px;">
+                <button style="width: 32px; height: 32px; border-radius: 50%; background: var(--lkv-stone-50); color: var(--lkv-ink-500); display: flex; align-items: center; justify-content: center;"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg></button>
+                <button style="width: 32px; height: 32px; border-radius: 50%; background: var(--lkv-stone-50); color: var(--lkv-ink-500); display: flex; align-items: center; justify-content: center;"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M20 12c-2 4-6 6-8 6M20 12c-2-4-6-6-8-6M4 12c2-4 6-6 8-6"/><circle cx="12" cy="12" r="3"/></svg></button>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 56px 1fr auto auto auto; gap: 16px; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(11,31,23,0.05);">
+              <div style="width: 56px; height: 56px; border-radius: 12px; background: url('https://images.unsplash.com/photo-1516763296043-f676c1105999?w=200&q=80') center/cover;"></div>
+              <div>
+                <div style="font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);">Duvet Cumulus <em style="font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800);">Panyam 450</em></div>
+                <div style="font-size: 11px; color: var(--lkv-ink-500); margin-top: 3px; font-family: var(--lkv-font-mono);">CMD-2026-0782 · passée le 22 juin · retour le 30 juin</div>
+              </div>
+              <div style="font-family: var(--lkv-font-sans); font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);">390 €</div>
+              <div style="padding: 4px 10px; border-radius: 999px; background: rgba(11,31,23,0.06); color: var(--lkv-ink-500); font-size: 11px; font-weight: 500;">Remboursée</div>
+              <div style="display: flex; gap: 4px;">
+                <button style="width: 32px; height: 32px; border-radius: 50%; background: var(--lkv-stone-50); color: var(--lkv-ink-500); display: flex; align-items: center; justify-content: center;"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg></button>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 56px 1fr auto auto auto; gap: 16px; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(11,31,23,0.05);">
+              <div style="width: 56px; height: 56px; border-radius: 12px; background: url('https://images.unsplash.com/photo-1517483000871-1dbf64a6e1c6?w=200&q=80') center/cover;"></div>
+              <div>
+                <div style="font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);">Pantalon <em style="font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800);">Fjällräven Vidda Pro</em></div>
+                <div style="font-size: 11px; color: var(--lkv-ink-500); margin-top: 3px; font-family: var(--lkv-font-mono);">CMD-2026-0641 · passée le 4 mai · livrée le 8 mai</div>
+              </div>
+              <div style="font-family: var(--lkv-font-sans); font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);">175 €</div>
+              <div style="padding: 4px 10px; border-radius: 999px; background: var(--lkv-sage-100); color: var(--lkv-forest-800); font-size: 11px; font-weight: 500;">Livrée</div>
+              <div style="display: flex; gap: 4px;">
+                <button style="width: 32px; height: 32px; border-radius: 50%; background: var(--lkv-stone-50); color: var(--lkv-ink-500); display: flex; align-items: center; justify-content: center;"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg></button>
+                <button style="width: 32px; height: 32px; border-radius: 50%; background: var(--lkv-stone-50); color: var(--lkv-ink-500); display: flex; align-items: center; justify-content: center;"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M20 12c-2 4-6 6-8 6M20 12c-2-4-6-6-8-6M4 12c2-4 6-6 8-6"/><circle cx="12" cy="12" r="3"/></svg></button>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 56px 1fr auto auto auto; gap: 16px; align-items: center; padding: 14px 0;">
+              <div style="width: 56px; height: 56px; border-radius: 12px; background: url('https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=200&q=80') center/cover;"></div>
+              <div>
+                <div style="font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);">Réchaud <em style="font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800);">MSR PocketRocket 2</em></div>
+                <div style="font-size: 11px; color: var(--lkv-ink-500); margin-top: 3px; font-family: var(--lkv-font-mono);">CMD-2026-0518 · passée le 12 avr. · livrée le 15 avr.</div>
+              </div>
+              <div style="font-family: var(--lkv-font-sans); font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);">54 €</div>
+              <div style="padding: 4px 10px; border-radius: 999px; background: var(--lkv-sage-100); color: var(--lkv-forest-800); font-size: 11px; font-weight: 500;">Livrée</div>
+              <div style="display: flex; gap: 4px;">
+                <button style="width: 32px; height: 32px; border-radius: 50%; background: var(--lkv-stone-50); color: var(--lkv-ink-500); display: flex; align-items: center; justify-content: center;"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg></button>
+              </div>
+            </div>
+          </div>
+
+          <div style="text-align: center; padding: 20px 0 0; border-top: 1px solid rgba(11,31,23,0.05); margin-top: 12px;">
+            <button class="lkv-btn lkv-btn-outline lkv-btn-sm">Voir les 13 commandes plus anciennes</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ASIDE -->
+      <aside class="cmd-aside">
+
+        <!-- SUBSCRIPTION -->
+        <div class="sub-card">
+          <div class="head">
+            <h3>Guide <em>annuel</em></h3>
+            <span class="st">Actif</span>
+          </div>
+          <div class="price">
+            <span class="n">89</span><em>€</em><span style="font-size: 12px; color: rgba(255,255,255,0.6); margin-left: 4px;">/ an</span>
+          </div>
+          <div class="perks">
+            <div class="p"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg>Cartes hors-ligne illimitées</div>
+            <div class="p"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg>Refuges partenaires réservables</div>
+            <div class="p"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg>–15 % sur la boutique</div>
+            <div class="p"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg>Livraison DHL Express offerte</div>
+            <div class="p"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg>Accès aux carnets premium</div>
+          </div>
+          <div class="renew">Renouvellement automatique le <strong style="color: rgba(255,255,255,0.9);">4 février 2027</strong> · CB Visa ••4291</div>
+          <div class="actions">
+            <button class="manage">Gérer l'abonnement</button>
+            <button class="ghost">Factures</button>
+          </div>
+        </div>
+
+        <!-- ADDRESSES -->
+        <div class="d-card">
+          <div class="head"><h3>Adresses <em>de livraison</em></h3></div>
+          <p class="sub">2 adresses enregistrées.</p>
+
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div class="addr-card default">
+              <div class="head">
+                <div class="n">Domicile</div>
+                <span class="badge">Défaut</span>
+              </div>
+              <div class="body">Marceline Chevrier<br/>12 rue Bayard<br/>38000 Grenoble · France</div>
+              <div class="actions">
+                <a href="#">Modifier</a>
+                <span class="sep">·</span>
+                <a href="#">Supprimer</a>
+              </div>
+            </div>
+
+            <div class="addr-card">
+              <div class="head">
+                <div class="n">Refuge de la Scia</div>
+                <span></span>
+              </div>
+              <div class="body">Point relais partenaire<br/>Chartreuse · Isère</div>
+              <div class="actions">
+                <a href="#">Modifier</a>
+                <span class="sep">·</span>
+                <a href="#">Définir par défaut</a>
+              </div>
+            </div>
+
+            <button class="lkv-btn lkv-btn-outline lkv-btn-sm" style="width: 100%;">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 4v16M4 12h16"/></svg>
+              Ajouter une adresse
+            </button>
+          </div>
+        </div>
+
+        <!-- PAYMENT -->
+        <div class="d-card">
+          <div class="head"><h3>Moyens de <em>paiement</em></h3></div>
+          <p class="sub">1 carte enregistrée.</p>
+
+          <div style="padding: 14px; background: linear-gradient(135deg, var(--lkv-ink-900), var(--lkv-ink-700)); color: #fff; border-radius: 12px; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <div style="font-family: var(--lkv-font-mono); font-size: 12px; color: rgba(255,255,255,0.6);">VISA</div>
+              <div style="width: 30px; height: 24px; border-radius: 4px; background: linear-gradient(135deg, #E4C695, #C99B5A);"></div>
+            </div>
+            <div style="font-family: var(--lkv-font-mono); font-size: 15px; letter-spacing: 0.2em; margin-bottom: 8px;">•••• 4291</div>
+            <div style="display: flex; justify-content: space-between; font-size: 10px; color: rgba(255,255,255,0.6);">
+              <span>M. CHEVRIER</span><span>Exp. 08/28</span>
+            </div>
+          </div>
+
+          <button class="lkv-btn lkv-btn-outline lkv-btn-sm" style="width: 100%;">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 4v16M4 12h16"/></svg>
+            Ajouter une carte
+          </button>
+        </div>
+
+      </aside>
+    </div>
+  </main>
+</div>
+</body>
+</html>

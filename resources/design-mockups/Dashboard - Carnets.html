@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Carnets — Mon compte · Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="dashboard.css"/>
+<style>
+  .c-layout { display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start; }
+  .c-main { display: flex; flex-direction: column; gap: 20px; }
+  .c-aside { display: flex; flex-direction: column; gap: 20px; position: sticky; top: 80px; }
+
+  /* Carnet card grid */
+  .carnet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .carnet-card {
+    background: #fff;
+    border-radius: var(--lkv-r-lg);
+    overflow: hidden;
+    box-shadow: var(--lkv-shadow-xs);
+    border: 1px solid rgba(11,31,23,0.03);
+    transition: all var(--lkv-dur) var(--lkv-ease-out);
+    cursor: pointer;
+  }
+  .carnet-card:hover { transform: translateY(-4px); box-shadow: var(--lkv-shadow-md); }
+  .carnet-card .cov {
+    aspect-ratio: 4/3;
+    background-size: cover; background-position: center;
+    position: relative;
+  }
+  .carnet-card .cov::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(11,31,23,0.72));
+  }
+  .carnet-card .cov .pub {
+    position: absolute; top: 12px; left: 12px;
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(255,255,255,0.94); backdrop-filter: blur(10px);
+    font-size: 10px; font-weight: 500;
+    color: var(--lkv-forest-800);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    z-index: 1;
+  }
+  .carnet-card .cov .pub.draft { color: var(--lkv-warm-500); }
+  .carnet-card .cov .pub.new { background: var(--lkv-forest-800); color: #fff; }
+  .carnet-card .cov .fav {
+    position: absolute; top: 12px; right: 12px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.94); backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+    z-index: 1;
+  }
+  .carnet-card .cov .titles {
+    position: absolute; left: 16px; right: 16px; bottom: 14px;
+    z-index: 1; color: #fff;
+  }
+  .carnet-card .cov .titles h4 {
+    font-family: var(--lkv-font-serif);
+    font-style: italic; font-weight: 400;
+    font-size: 20px; line-height: 1.15;
+    margin: 0 0 4px;
+  }
+  .carnet-card .cov .titles .m {
+    font-size: 11px; color: rgba(255,255,255,0.8);
+    letter-spacing: 0.02em;
+  }
+  .carnet-card .body { padding: 14px 16px 16px; }
+  .carnet-card .body .stats {
+    display: flex; gap: 14px;
+    font-size: 12px; color: var(--lkv-ink-500);
+  }
+  .carnet-card .body .stats span {
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .carnet-card .body .stats strong { color: var(--lkv-ink-900); font-weight: 500; }
+  .carnet-card .body .prog {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(11,31,23,0.05);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px;
+    color: var(--lkv-ink-500);
+  }
+  .carnet-card .body .prog .bar {
+    flex: 1; height: 4px; margin: 0 10px;
+    background: var(--lkv-stone-100); border-radius: 999px; overflow: hidden;
+  }
+  .carnet-card .body .prog .bar .f {
+    height: 100%; background: linear-gradient(90deg, var(--lkv-sage-500), var(--lkv-warm-500));
+  }
+
+  /* Draft chapters list */
+  .draft-list { display: flex; flex-direction: column; gap: 4px; }
+  .draft-row {
+    display: grid; grid-template-columns: 40px 1fr auto auto;
+    gap: 12px; align-items: center;
+    padding: 12px;
+    background: var(--lkv-stone-50);
+    border-radius: 12px;
+    transition: all var(--lkv-dur-fast) var(--lkv-ease);
+  }
+  .draft-row:hover { background: #fff; box-shadow: var(--lkv-shadow-xs); }
+  .draft-row .n {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-size: 18px;
+    text-align: center;
+  }
+  .draft-row .body .t {
+    font-size: 13px; font-weight: 500;
+    color: var(--lkv-ink-900); line-height: 1.2;
+  }
+  .draft-row .body .t em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .draft-row .body .m {
+    font-size: 11px; color: var(--lkv-ink-500);
+    margin-top: 3px; font-family: var(--lkv-font-mono);
+  }
+  .draft-row .prog-mini {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--lkv-warm-500); font-weight: 500;
+  }
+  .draft-row .prog-mini .bar {
+    width: 60px; height: 4px;
+    background: var(--lkv-stone-100); border-radius: 999px; overflow: hidden;
+  }
+  .draft-row .prog-mini .bar .f {
+    height: 100%; background: var(--lkv-warm-500);
+  }
+  .draft-row .cta {
+    padding: 6px 12px; border-radius: 999px;
+    background: var(--lkv-forest-800); color: #fff;
+    font-size: 11px; font-weight: 500;
+  }
+
+  /* Reader list */
+  .reader-row {
+    display: grid; grid-template-columns: 40px 1fr auto;
+    gap: 12px; align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+  }
+  .reader-row:last-child { border-bottom: none; }
+  .reader-row .av {
+    width: 40px; height: 40px; border-radius: 50%;
+    background-size: cover; background-position: center;
+  }
+  .reader-row .body .n {
+    font-size: 13px; font-weight: 500; color: var(--lkv-ink-900);
+  }
+  .reader-row .body .m {
+    font-size: 11px; color: var(--lkv-ink-500);
+    margin-top: 3px;
+  }
+  .reader-row .kpi {
+    text-align: right;
+    font-family: var(--lkv-font-sans);
+    font-size: 14px; font-weight: 500;
+    color: var(--lkv-forest-800);
+    letter-spacing: -0.01em;
+  }
+  .reader-row .kpi .l {
+    font-size: 10px; color: var(--lkv-ink-500);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    font-weight: 400;
+  }
+
+  /* Publication calendar mini */
+  .pub-cal {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 4px;
+    margin: 8px 0;
+  }
+  .pub-cal .m {
+    aspect-ratio: 1;
+    background: var(--lkv-stone-50);
+    border-radius: 6px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-size: 9px; color: var(--lkv-ink-400);
+    font-family: var(--lkv-font-mono);
+  }
+  .pub-cal .m.on { background: var(--lkv-sage-100); color: var(--lkv-forest-800); font-weight: 500; }
+  .pub-cal .m.top { background: var(--lkv-forest-800); color: #fff; }
+  .pub-cal .m .n { font-size: 11px; font-weight: 500; font-family: var(--lkv-font-sans); line-height: 1; }
+
+  /* Suggested topic */
+  .topic-card {
+    background: linear-gradient(135deg, var(--lkv-warm-100), #F5E6C4);
+    border-radius: var(--lkv-r-lg);
+    padding: 22px;
+    color: var(--lkv-forest-900);
+    position: relative; overflow: hidden;
+  }
+  .topic-card::after {
+    content: ""; position: absolute; right: -30px; bottom: -30px;
+    width: 130px; height: 130px; border-radius: 50%;
+    background: rgba(255,255,255,0.4);
+  }
+  .topic-card > * { position: relative; z-index: 1; }
+  .topic-card .eye {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #8A6127; margin-bottom: 10px;
+  }
+  .topic-card h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 18px; font-weight: 500;
+    letter-spacing: -0.015em; line-height: 1.2;
+    margin: 0 0 6px;
+  }
+  .topic-card h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .topic-card p {
+    font-size: 12px; color: var(--lkv-ink-700);
+    line-height: 1.5; margin: 0 0 14px;
+  }
+</style>
+</head>
+<body>
+<div class="d-page">
+
+  <section class="d-hero">
+    <div class="bg" style="background-image: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1800&q=80');"></div>
+    <nav class="d-topnav">
+      <a href="Index.html" class="lkv-logo" style="color: #fff;">
+        <svg viewBox="0 0 32 32" width="22" height="22" fill="none">
+          <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+        </svg>
+        <span>Le Kit du Voyageur</span>
+      </a>
+      <div class="links">
+        <a href="#">Aventures</a><a href="#">Refuges</a><a href="#">Boutique</a>
+        <a href="#">Carnet</a><a href="#">Clubs</a><a href="#" class="on">Mon compte</a>
+      </div>
+      <div class="right">
+        <button><svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
+        <button><svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></button>
+      </div>
+    </nav>
+    <div class="d-crumb">
+      <a href="Index.html">Accueil</a><span class="sep">›</span>
+      <a href="Compte - Dashboard.html">Mon compte</a><span class="sep">›</span>
+      <span>Carnets</span>
+    </div>
+    <div class="d-hero-body">
+      <div class="av"></div>
+      <div class="info">
+        <div class="eye"><span class="dot"></span>Auteure · 12 carnets publiés</div>
+        <h1>Marceline <em>Chevrier.</em></h1>
+        <div class="m">"Écrire ce que la trace n'a pas su enregistrer."</div>
+      </div>
+      <div class="quick">
+        <a href="Formulaire - Nouveau carnet.html" style="text-decoration: none;">
+          <button class="primary">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 4v16M4 12h16"/></svg>
+            Nouveau carnet
+          </button>
+        </a>
+        <button>Aperçu public</button>
+      </div>
+    </div>
+    <div class="d-level">
+      <div class="lv">
+        <div class="badge">III</div>
+        <div>
+          <div class="n">Niveau <strong>Explorateur</strong> <span class="points">1 240 / 1 800 pts</span></div>
+          <div class="bar"><div class="f" style="width: 68%;"></div></div>
+          <div class="to">Encore 560 pts avant « Guide »</div>
+        </div>
+      </div>
+      <div class="st"><div class="v">42<em> sorties</em></div><div class="l">Aventures</div></div>
+      <div class="st"><div class="v">12<em> carnets</em></div><div class="l">Publiés</div></div>
+      <div class="st"><div class="v">4<em> clubs</em></div><div class="l">Communautés</div></div>
+      <div class="st"><div class="v">786<em>km</em></div><div class="l">2026</div></div>
+    </div>
+  </section>
+
+  <nav class="d-tabs">
+    <a href="Compte - Dashboard.html" class="d-tab">Vue d'ensemble</a>
+    <a href="Dashboard - Aventures.html" class="d-tab">Aventures <span class="n">42</span></a>
+    <a href="Dashboard - Carnets.html" class="d-tab on">Carnets <span class="n">12</span><span class="badge-dot"></span></a>
+    <a href="Dashboard - Clubs.html" class="d-tab">Clubs <span class="n">4</span></a>
+    <a href="Dashboard - Commandes.html" class="d-tab">Commandes <span class="n">18</span></a>
+    <a href="Dashboard - Fidélité.html" class="d-tab">Fidélité <span class="n">1240</span></a>
+    <a href="#" class="d-tab">Paramètres</a>
+  </nav>
+
+  <main class="d-main">
+
+    <div class="d-section-head">
+      <div>
+        <h2>Vos <em>carnets</em></h2>
+        <div class="sub">12 récits publiés, 3 en cours. 3 428 lectures ce trimestre — la communauté vous suit.</div>
+      </div>
+      <div class="actions">
+        <button class="lkv-btn lkv-btn-outline lkv-btn-sm">Exporter en PDF</button>
+        <a href="Formulaire - Nouveau carnet.html" style="text-decoration: none;">
+          <button class="lkv-btn lkv-btn-primary lkv-btn-sm">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 4v16M4 12h16"/></svg>
+            Nouveau carnet
+          </button>
+        </a>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="d-kpi-grid">
+      <div class="d-kpi">
+        <div class="k">Carnets publiés</div>
+        <div class="v">12<em> récits</em></div>
+        <div class="sub"><span class="up">↑ 3</span> ce trimestre · 3 brouillons en cours</div>
+      </div>
+      <div class="d-kpi">
+        <div class="k">Lectures totales</div>
+        <div class="v">3 428</div>
+        <div class="sub"><span class="up">↑ 42 %</span> vs trimestre précédent</div>
+      </div>
+      <div class="d-kpi">
+        <div class="k">Likes reçus</div>
+        <div class="v">214<em> ❤</em></div>
+        <div class="sub">Moyenne <span class="up">17,8</span> likes par carnet</div>
+      </div>
+      <div class="d-kpi">
+        <div class="k">Commentaires</div>
+        <div class="v">87</div>
+        <div class="sub">Vous avez répondu à <span class="up">92 %</span></div>
+      </div>
+    </div>
+
+    <div class="c-layout">
+      <div class="c-main">
+
+        <!-- CARNETS PUBLIÉS -->
+        <div class="d-card">
+          <div class="head">
+            <h3>Carnets <em>publiés</em></h3>
+            <div style="display: flex; gap: 6px; padding: 4px; background: var(--lkv-stone-50); border-radius: 999px;">
+              <button style="padding: 6px 12px; border-radius: 999px; background: #fff; box-shadow: var(--lkv-shadow-xs); font-size: 12px; font-weight: 500; color: var(--lkv-forest-800);">Récents</button>
+              <button style="padding: 6px 12px; border-radius: 999px; font-size: 12px; color: var(--lkv-ink-500);">Plus lus</button>
+              <button style="padding: 6px 12px; border-radius: 999px; font-size: 12px; color: var(--lkv-ink-500);">Plus aimés</button>
+            </div>
+          </div>
+          <p class="sub">Vos derniers récits publics. Cliquez pour ouvrir en mode lecture.</p>
+
+          <div class="carnet-grid">
+
+            <div class="carnet-card">
+              <div class="cov" style="background-image: url('https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=600&q=80');">
+                <span class="pub new">Nouveau</span>
+                <span class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></span>
+                <div class="titles">
+                  <h4>Trois jours sur les crêtes du Vercors</h4>
+                  <div class="m">Publié le 2 oct. · 4 chapitres</div>
+                </div>
+              </div>
+              <div class="body">
+                <div class="stats">
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg><strong>124</strong></span>
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg><strong>842</strong></span>
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><strong>18</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="carnet-card">
+              <div class="cov" style="background-image: url('https://images.unsplash.com/photo-1470114716159-e389f8712fda?w=600&q=80');">
+                <span class="pub">Publié</span>
+                <span class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></span>
+                <div class="titles">
+                  <h4>Bivouac au lac Achard · nuit d'août</h4>
+                  <div class="m">Publié le 20 août · 3 chapitres</div>
+                </div>
+              </div>
+              <div class="body">
+                <div class="stats">
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg><strong>87</strong></span>
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg><strong>412</strong></span>
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><strong>9</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="carnet-card">
+              <div class="cov" style="background-image: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&q=80');">
+                <span class="pub">Publié</span>
+                <span class="fav" style="color: var(--lkv-warm-500);"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></span>
+                <div class="titles">
+                  <h4>La saison des cols · été alpin</h4>
+                  <div class="m">Publié le 3 juil. · 6 chapitres</div>
+                </div>
+              </div>
+              <div class="body">
+                <div class="stats">
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg><strong>203</strong></span>
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg><strong>1 284</strong></span>
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><strong>34</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="carnet-card">
+              <div class="cov" style="background-image: url('https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=600&q=80');">
+                <span class="pub">Publié</span>
+                <span class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></span>
+                <div class="titles">
+                  <h4>Une nuit au Charmant Som</h4>
+                  <div class="m">Publié le 12 juin · 2 chapitres</div>
+                </div>
+              </div>
+              <div class="body">
+                <div class="stats">
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg><strong>62</strong></span>
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg><strong>318</strong></span>
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><strong>7</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="carnet-card">
+              <div class="cov" style="background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80');">
+                <span class="pub">Publié</span>
+                <span class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></span>
+                <div class="titles">
+                  <h4>Sept refuges, sept silences</h4>
+                  <div class="m">Publié le 24 mai · 7 chapitres · sélection</div>
+                </div>
+              </div>
+              <div class="body">
+                <div class="stats">
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg><strong>318</strong></span>
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg><strong>1 862</strong></span>
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><strong>52</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="carnet-card">
+              <div class="cov" style="background-image: url('https://images.unsplash.com/photo-1533228876829-65c94e7b5025?w=600&q=80');">
+                <span class="pub">Publié</span>
+                <span class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></span>
+                <div class="titles">
+                  <h4>Retour de saison · notes d'avril</h4>
+                  <div class="m">Publié le 6 avr. · 2 chapitres</div>
+                </div>
+              </div>
+              <div class="body">
+                <div class="stats">
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg><strong>48</strong></span>
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg><strong>246</strong></span>
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><strong>4</strong></span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div style="text-align: center; padding: 24px 0 4px; border-top: 1px solid rgba(11,31,23,0.05); margin-top: 20px;">
+            <button class="lkv-btn lkv-btn-outline lkv-btn-sm">Voir les 6 carnets plus anciens</button>
+          </div>
+        </div>
+
+        <!-- BROUILLONS -->
+        <div class="d-card">
+          <div class="head">
+            <h3>Brouillons <em>en cours</em></h3>
+            <span style="font-size: 12px; color: var(--lkv-ink-500);">3 en rédaction</span>
+          </div>
+          <p class="sub">Reprenez là où vous en étiez. Les brouillons sont sauvegardés automatiquement.</p>
+
+          <div class="draft-list">
+            <div class="draft-row">
+              <div class="n">I</div>
+              <div class="body">
+                <div class="t">Trois jours dans la <em>Chartreuse</em></div>
+                <div class="m">Aventure liée · 12–14 oct. · 4 chapitres · 2 700 mots</div>
+              </div>
+              <div class="prog-mini">
+                <div class="bar"><div class="f" style="width: 65%;"></div></div>
+                <span>65 %</span>
+              </div>
+              <a href="Formulaire - Nouveau carnet.html"><button class="cta">Reprendre</button></a>
+            </div>
+
+            <div class="draft-row">
+              <div class="n">II</div>
+              <div class="body">
+                <div class="t">Notes du <em>Belledonne</em> · itinérance solo</div>
+                <div class="m">Aventure liée · 8–11 août · 6 chapitres · 4 120 mots</div>
+              </div>
+              <div class="prog-mini">
+                <div class="bar"><div class="f" style="width: 82%;"></div></div>
+                <span>82 %</span>
+              </div>
+              <a href="#"><button class="cta">Reprendre</button></a>
+            </div>
+
+            <div class="draft-row">
+              <div class="n">III</div>
+              <div class="body">
+                <div class="t">Journal du <em>lac Achard</em> · fragments</div>
+                <div class="m">Non lié · commencé il y a 2 semaines · 1 chapitre · 620 mots</div>
+              </div>
+              <div class="prog-mini">
+                <div class="bar"><div class="f" style="width: 25%;"></div></div>
+                <span>25 %</span>
+              </div>
+              <a href="#"><button class="cta">Reprendre</button></a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ASIDE -->
+      <aside class="c-aside">
+
+        <!-- Top readers -->
+        <div class="d-card">
+          <div class="head"><h3>Lecteurs <em>fidèles</em></h3></div>
+          <p class="sub">Les 5 personnes qui vous lisent le plus.</p>
+
+          <div>
+            <div class="reader-row">
+              <div class="av" style="background-image: url('https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80');"></div>
+              <div class="body">
+                <div class="n">Élise Marnier</div>
+                <div class="m">Chartreuse · abonnée</div>
+              </div>
+              <div class="kpi">18<div class="l">carnets lus</div></div>
+            </div>
+            <div class="reader-row">
+              <div class="av" style="background-image: url('https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80');"></div>
+              <div class="body">
+                <div class="n">Antoine Rey</div>
+                <div class="m">Grenoble · abonné</div>
+              </div>
+              <div class="kpi">15<div class="l">carnets lus</div></div>
+            </div>
+            <div class="reader-row">
+              <div class="av" style="background-image: url('https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80');"></div>
+              <div class="body">
+                <div class="n">Léna Bertrand</div>
+                <div class="m">Vercors · abonnée</div>
+              </div>
+              <div class="kpi">12<div class="l">carnets lus</div></div>
+            </div>
+            <div class="reader-row">
+              <div class="av" style="background-image: url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80');"></div>
+              <div class="body">
+                <div class="n">Sophie Marnier</div>
+                <div class="m">Écrins · abonnée</div>
+              </div>
+              <div class="kpi">10<div class="l">carnets lus</div></div>
+            </div>
+            <div class="reader-row">
+              <div class="av" style="background-image: url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80');"></div>
+              <div class="body">
+                <div class="n">Camille Verger</div>
+                <div class="m">Belledonne · abonnée</div>
+              </div>
+              <div class="kpi">8<div class="l">carnets lus</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Publication calendar -->
+        <div class="d-card">
+          <div class="head"><h3>Rythme <em>2026</em></h3></div>
+          <p class="sub">Vos publications mois par mois.</p>
+
+          <div class="pub-cal">
+            <div class="m">Jan<span class="n">0</span></div>
+            <div class="m on">Fév<span class="n">1</span></div>
+            <div class="m on">Mar<span class="n">1</span></div>
+            <div class="m on">Avr<span class="n">1</span></div>
+            <div class="m on">Mai<span class="n">1</span></div>
+            <div class="m on">Jun<span class="n">1</span></div>
+            <div class="m on">Jul<span class="n">1</span></div>
+            <div class="m on">Aoû<span class="n">1</span></div>
+            <div class="m on">Sep<span class="n">1</span></div>
+            <div class="m top">Oct<span class="n">3</span></div>
+            <div class="m">Nov<span class="n">0</span></div>
+            <div class="m">Déc<span class="n">0</span></div>
+          </div>
+          <div style="padding-top: 12px; border-top: 1px solid rgba(11,31,23,0.05); font-size: 12px; color: var(--lkv-ink-500);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span>Moyenne mensuelle</span><strong style="color: var(--lkv-ink-900);">1,1 carnet</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>Meilleur mois</span><strong style="color: var(--lkv-forest-800);">Octobre · 3 récits</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Topic suggestion -->
+        <div class="topic-card">
+          <div class="eye">Suggestion · <em style="font-family: var(--lkv-font-serif); color: #8A6127;">écriture</em></div>
+          <h4>Un carnet sur <em>vos 4 clubs ?</em></h4>
+          <p>Nombre de vos abonnés vous suivent aussi dans les clubs. Un récit "communauté" pourrait toucher un nouveau public.</p>
+          <a href="Formulaire - Nouveau carnet.html" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: rgba(255,255,255,0.7); color: var(--lkv-forest-800); border-radius: 999px; font-size: 12px; font-weight: 500;">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 4v16M4 12h16"/></svg>
+            Commencer ce carnet
+          </a>
+        </div>
+
+      </aside>
+    </div>
+  </main>
+</div>
+</body>
+</html>

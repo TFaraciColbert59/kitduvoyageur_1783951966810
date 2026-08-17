@@ -1,0 +1,2359 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Le Carnet — Mes voyages · Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="shop.css"/>
+<style>
+  body { background: #EAE6DF; padding: 40px 0; }
+
+  .stage-title {
+    max-width: 1720px; margin: 0 auto 32px; padding: 0 40px;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 24px;
+    color: var(--lkv-ink-700);
+  }
+  .stage-title .h { font-family: var(--lkv-font-sans); font-size: 24px; font-weight: 500; letter-spacing: -0.015em; color: var(--lkv-ink-900); }
+  .stage-title .sub { font-size: 14px; color: var(--lkv-ink-500); }
+  .stage-title a { color: var(--lkv-forest-800); font-weight: 500; margin-left: 24px; }
+
+  .stage {
+    display: flex; gap: 40px;
+    max-width: 1720px; margin: 0 auto; padding: 0 40px;
+    align-items: flex-start;
+  }
+  .artboard-desktop {
+    width: 1280px; flex-shrink: 0;
+    border-radius: 32px; overflow: hidden;
+    background: var(--lkv-paper);
+    box-shadow: 0 30px 80px rgba(11,31,23,0.14);
+  }
+  .artboard-mobile {
+    width: 380px; flex-shrink: 0;
+    border-radius: 44px; overflow: hidden;
+    background: #000; padding: 12px;
+    box-shadow: 0 30px 80px rgba(11,31,23,0.18);
+    align-self: flex-start;
+  }
+  .artboard-mobile .screen {
+    width: 100%; height: 780px;
+    border-radius: 34px; overflow: hidden;
+    background: var(--lkv-paper); position: relative;
+  }
+  .board-caption {
+    margin-top: 14px; font-size: 12px; color: var(--lkv-ink-500);
+    text-align: center; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+
+  /* ————— NAV pill glass ————— */
+  .carnet-header {
+    position: relative;
+    padding: 20px 20px 0;
+  }
+  .top-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 10px 10px 24px;
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.6);
+    box-shadow: 0 8px 24px rgba(11,31,23,0.06);
+    color: var(--lkv-ink-900);
+  }
+  .top-nav .lkv-logo { color: var(--lkv-forest-800); font-weight: 600; }
+  .top-nav .links { display: flex; gap: 28px; }
+  .top-nav .links a {
+    font-size: 14px; color: var(--lkv-ink-700);
+    transition: color var(--lkv-dur) var(--lkv-ease);
+    position: relative; padding: 6px 0;
+  }
+  .top-nav .links a:hover { color: var(--lkv-forest-800); }
+  .top-nav .links a.active { color: var(--lkv-forest-800); }
+  .top-nav .links a.active::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -2px;
+    height: 2px; background: var(--lkv-sage-500); border-radius: 2px;
+  }
+  .top-nav .right { display: flex; align-items: center; gap: 12px; }
+
+  /* ————— MASTHEAD ————— */
+  .masthead {
+    padding: 56px 60px 40px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 40px;
+    align-items: end;
+    border-bottom: 1px solid rgba(11,31,23,0.08);
+  }
+  .masthead .eyebrow-row {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 22px;
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--lkv-ink-500);
+  }
+  .masthead .eyebrow-row .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-sage-500);
+  }
+  .masthead h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 108px; font-weight: 500;
+    letter-spacing: -0.04em; line-height: 0.92;
+    margin: 0;
+    color: var(--lkv-ink-900);
+  }
+  .masthead h1 em {
+    font-family: var(--lkv-font-serif);
+    font-style: italic;
+    color: var(--lkv-forest-800);
+    font-weight: 400;
+  }
+  .masthead .side {
+    display: flex; flex-direction: column; align-items: flex-end;
+    gap: 10px;
+    padding-bottom: 16px;
+    text-align: right;
+  }
+  .masthead .side .issue {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 20px; color: var(--lkv-ink-700);
+  }
+  .masthead .side .num {
+    font-family: var(--lkv-font-serif);
+    font-size: 88px; line-height: 1;
+    color: var(--lkv-forest-800);
+    letter-spacing: -0.02em;
+  }
+  .masthead .side .date {
+    font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-ink-500);
+  }
+  .masthead .lead {
+    font-family: var(--lkv-font-serif);
+    font-size: 20px; line-height: 1.45;
+    color: var(--lkv-ink-700);
+    max-width: 520px;
+    margin: 20px 0 0;
+  }
+
+  /* ————— FILTER BAR ————— */
+  .filter-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 60px;
+    border-bottom: 1px solid rgba(11,31,23,0.08);
+  }
+  .filter-bar .pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .filter-pill {
+    height: 36px; padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(11,31,23,0.12);
+    background: transparent;
+    color: var(--lkv-ink-700);
+    font-size: 13px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .filter-pill:hover { border-color: var(--lkv-forest-800); color: var(--lkv-forest-800); }
+  .filter-pill.on {
+    background: var(--lkv-forest-800); border-color: var(--lkv-forest-800); color: #fff;
+  }
+  .filter-pill .n {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 12px; opacity: 0.6;
+  }
+  .filter-pill.on .n { opacity: 0.7; color: var(--lkv-sage-200); }
+  .filter-bar .view-switch {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px;
+    background: var(--lkv-stone-50);
+    border-radius: 999px;
+  }
+  .filter-bar .view-switch button {
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--lkv-ink-500);
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .filter-bar .view-switch button.on {
+    background: #fff;
+    color: var(--lkv-forest-800);
+    box-shadow: var(--lkv-shadow-xs);
+  }
+
+  /* ————— FEATURED VOYAGE ————— */
+  .featured {
+    padding: 40px 60px 60px;
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 40px;
+    align-items: stretch;
+  }
+  .featured-cover {
+    position: relative;
+    border-radius: 28px;
+    overflow: hidden;
+    background-image: url('assets/journal-refuge.jpg');
+    background-size: cover; background-position: center;
+    min-height: 560px;
+  }
+  .featured-cover::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 50%, rgba(11,31,23,0.75));
+  }
+  .featured-cover .badge {
+    position: absolute; top: 24px; left: 24px; z-index: 1;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.28);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .featured-cover .badge .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-sage-300);
+  }
+  .featured-cover .poly {
+    position: absolute; top: 24px; right: 24px; z-index: 1;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(20px);
+    border-radius: 999px;
+    color: var(--lkv-forest-800);
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .featured-cover .poly svg { color: var(--lkv-forest-800); }
+  .featured-cover .cap {
+    position: absolute; left: 24px; right: 24px; bottom: 24px; z-index: 1;
+    color: #fff;
+  }
+  .featured-cover .cap .k {
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    opacity: 0.75; margin-bottom: 4px;
+  }
+  .featured-cover .cap .place {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 22px; line-height: 1.1;
+    color: rgba(255,255,255,0.95);
+  }
+
+  .featured-text {
+    padding: 8px 0;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .featured-text .eye {
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--lkv-forest-800);
+    font-weight: 500;
+    margin-bottom: 20px;
+  }
+  .featured-text .eye .sep { color: var(--lkv-ink-300); margin: 0 10px; }
+  .featured-text h2 {
+    font-family: var(--lkv-font-sans);
+    font-size: 60px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 1;
+    margin: 0 0 20px;
+    color: var(--lkv-ink-900);
+    text-wrap: balance;
+  }
+  .featured-text h2 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .featured-text .lead {
+    font-family: var(--lkv-font-serif);
+    font-size: 18px; line-height: 1.45;
+    color: var(--lkv-ink-700);
+    margin: 0 0 28px;
+    max-width: 460px;
+  }
+  .featured-text .quick-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding: 20px 0;
+    border-top: 1px solid rgba(11,31,23,0.08);
+    border-bottom: 1px solid rgba(11,31,23,0.08);
+    margin-bottom: 24px;
+  }
+  .featured-text .quick-stats .qs .k {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-ink-500);
+    margin-bottom: 4px;
+  }
+  .featured-text .quick-stats .qs .v {
+    font-family: var(--lkv-font-sans);
+    font-size: 22px; font-weight: 500; letter-spacing: -0.015em;
+    color: var(--lkv-ink-900); line-height: 1;
+  }
+  .featured-text .quick-stats .qs .v em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+    font-size: 14px; margin-left: 2px;
+  }
+  .featured-text .with {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 24px;
+    font-size: 13px; color: var(--lkv-ink-500);
+  }
+  .featured-text .with .avs { display: flex; }
+  .featured-text .with .avs .a {
+    width: 26px; height: 26px; border-radius: 999px;
+    background-size: cover; background-position: center;
+    border: 2px solid var(--lkv-paper);
+    margin-left: -6px;
+  }
+  .featured-text .with .avs .a:first-child { margin-left: 0; }
+  .featured-text .with strong { color: var(--lkv-ink-900); font-weight: 500; }
+  .featured-text .cta-row {
+    display: flex; gap: 12px;
+  }
+
+  /* ————— COLLECTION GRID ————— */
+  .collection {
+    padding: 60px;
+    background: var(--lkv-stone-50);
+    border-top: 1px solid rgba(11,31,23,0.08);
+  }
+  .collection .head {
+    display: flex; justify-content: space-between; align-items: end;
+    margin-bottom: 32px;
+  }
+  .collection .head h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 44px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1;
+    margin: 0;
+    color: var(--lkv-ink-900);
+  }
+  .collection .head h3 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .collection .head p {
+    max-width: 360px;
+    font-size: 14px; color: var(--lkv-ink-500);
+    margin: 0;
+  }
+
+  .voyage-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .voy-card {
+    background: #fff;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: var(--lkv-shadow-sm);
+    transition: transform var(--lkv-dur) var(--lkv-ease-out),
+                box-shadow var(--lkv-dur) var(--lkv-ease-out);
+    display: flex; flex-direction: column;
+    cursor: pointer;
+  }
+  .voy-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--lkv-shadow-lg);
+  }
+  .voy-card .cover {
+    position: relative;
+    aspect-ratio: 4/3;
+    background-size: cover; background-position: center;
+  }
+  .voy-card .cover::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 55%, rgba(11,31,23,0.35));
+    pointer-events: none;
+  }
+  .voy-card .year {
+    position: absolute; top: 14px; left: 14px; z-index: 1;
+    padding: 5px 10px;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(12px);
+    border-radius: 999px;
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-forest-800);
+    font-weight: 500;
+  }
+  .voy-card .status {
+    position: absolute; top: 14px; right: 14px; z-index: 1;
+    padding: 5px 10px;
+    background: rgba(11,31,23,0.6);
+    backdrop-filter: blur(12px);
+    border-radius: 999px;
+    font-size: 10px; letter-spacing: 0.06em;
+    color: #fff;
+    font-weight: 500;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .voy-card .status.done { background: rgba(31,74,58,0.85); }
+  .voy-card .status.live { background: rgba(217,155,90,0.9); }
+  .voy-card .status .dot {
+    width: 5px; height: 5px; border-radius: 50%; background: currentColor;
+  }
+  .voy-card .cover .place {
+    position: absolute; left: 16px; bottom: 14px; z-index: 1;
+    color: #fff;
+    font-size: 11px; letter-spacing: 0.06em;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-weight: 500;
+    opacity: 0.9;
+  }
+  .voy-card .body { padding: 20px 20px 18px; flex: 1; display: flex; flex-direction: column; }
+  .voy-card .body h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 22px; font-weight: 500;
+    letter-spacing: -0.015em; line-height: 1.15;
+    margin: 0 0 8px;
+    color: var(--lkv-ink-900);
+    text-wrap: balance;
+  }
+  .voy-card .body h4 em {
+    font-family: var(--lkv-font-serif); font-style: italic; font-weight: 400;
+    color: var(--lkv-forest-800);
+  }
+  .voy-card .body .dates {
+    font-size: 13px; color: var(--lkv-ink-500);
+    margin-bottom: 14px;
+  }
+  .voy-card .body .stats {
+    display: flex; gap: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(11,31,23,0.06);
+    margin-top: auto;
+  }
+  .voy-card .body .stats .st {
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .voy-card .body .stats .st .v {
+    font-family: var(--lkv-font-sans);
+    font-size: 15px; font-weight: 500; color: var(--lkv-ink-900);
+    letter-spacing: -0.01em; line-height: 1;
+  }
+  .voy-card .body .stats .st .v em {
+    font-family: var(--lkv-font-serif); font-style: italic; font-weight: 400;
+    color: var(--lkv-forest-800);
+    font-size: 11px;
+    margin-left: 1px;
+  }
+  .voy-card .body .stats .st .k {
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--lkv-ink-500);
+  }
+  .voy-card .body .stats .who {
+    margin-left: auto; display: flex; align-items: flex-end;
+  }
+  .voy-card .body .stats .who .avs { display: flex; }
+  .voy-card .body .stats .who .avs .a {
+    width: 22px; height: 22px; border-radius: 999px;
+    background-size: cover;
+    border: 2px solid #fff;
+    margin-left: -6px;
+  }
+  .voy-card .body .stats .who .avs .a:first-child { margin-left: 0; }
+
+  /* draft & upcoming cards */
+  .voy-card.draft .cover {
+    background: repeating-linear-gradient(45deg, var(--lkv-stone-50), var(--lkv-stone-50) 8px, var(--lkv-stone-100) 8px, var(--lkv-stone-100) 16px);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-500);
+  }
+  .voy-card.draft .cover::after { display: none; }
+  .voy-card.draft .cover .draft-mark {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 22px;
+    color: var(--lkv-ink-400);
+    text-align: center;
+    padding: 0 20px;
+  }
+
+  /* ————— COMING SOON row ————— */
+  .coming-row {
+    padding: 60px;
+    background: var(--lkv-paper);
+    border-top: 1px solid rgba(11,31,23,0.08);
+  }
+  .coming-row .head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 24px;
+  }
+  .coming-row .head h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 32px; font-weight: 500;
+    letter-spacing: -0.02em; line-height: 1;
+    margin: 0;
+  }
+  .coming-row .head h3 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .coming-row .head p { font-size: 13px; color: var(--lkv-ink-500); margin: 0; }
+  .coming-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .coming-card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 28px;
+    border: 1px dashed rgba(11,31,23,0.14);
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 20px;
+    align-items: center;
+  }
+  .coming-card .visual {
+    width: 96px; height: 96px; border-radius: 20px;
+    background: linear-gradient(135deg, var(--lkv-sage-100), var(--lkv-sage-200));
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+    flex-shrink: 0;
+  }
+  .coming-card .visual.warm {
+    background: linear-gradient(135deg, #F5E6C4, var(--lkv-warm-300));
+    color: var(--lkv-forest-900);
+  }
+  .coming-card h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 22px; font-weight: 500;
+    letter-spacing: -0.015em; line-height: 1.15;
+    margin: 0 0 6px;
+    color: var(--lkv-ink-900);
+  }
+  .coming-card h4 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .coming-card p {
+    font-size: 13px; color: var(--lkv-ink-500);
+    line-height: 1.45; margin: 0 0 12px;
+  }
+  .coming-card .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    background: var(--lkv-stone-50);
+    border-radius: 999px;
+    font-size: 11px; letter-spacing: 0.06em;
+    color: var(--lkv-forest-800);
+    font-weight: 500;
+  }
+  .coming-card .chip .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--lkv-warm-500);
+  }
+
+  /* ————— VOYAGE DETAIL (opened notebook) ————— */
+  .detail {
+    background: #fff;
+    border-top: 1px solid rgba(11,31,23,0.08);
+  }
+  .detail .anchor-bar {
+    padding: 20px 60px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    background: rgba(248,250,248,0.9);
+    backdrop-filter: blur(16px);
+    position: sticky; top: 0; z-index: 4;
+  }
+  .detail .anchor-bar .breadcrumb {
+    font-size: 12px; color: var(--lkv-ink-500);
+    letter-spacing: 0.04em;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .detail .anchor-bar .breadcrumb .sep { color: var(--lkv-ink-300); }
+  .detail .anchor-bar .breadcrumb strong { color: var(--lkv-ink-900); font-weight: 500; }
+  .detail .anchor-bar .anchors {
+    display: flex; gap: 4px;
+  }
+  .detail .anchor-bar .anchors a {
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    color: var(--lkv-ink-500);
+    font-weight: 500;
+  }
+  .detail .anchor-bar .anchors a:hover { color: var(--lkv-forest-800); background: rgba(11,31,23,0.04); }
+  .detail .anchor-bar .anchors a.on {
+    background: var(--lkv-forest-800); color: #fff;
+  }
+
+  .detail-hero {
+    position: relative;
+    height: 480px;
+    background-image: url('assets/journal-refuge.jpg');
+    background-size: cover; background-position: center;
+    overflow: hidden;
+  }
+  .detail-hero::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0.25) 0%, rgba(11,31,23,0.05) 30%, rgba(11,31,23,0.85) 100%);
+  }
+  .detail-hero .content {
+    position: relative; z-index: 1;
+    height: 100%;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 40px 60px;
+    color: #fff;
+  }
+  .detail-hero .content .eye {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 14px; border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.24);
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    margin-bottom: 14px;
+    align-self: flex-start;
+  }
+  .detail-hero .content .eye .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-sage-300); }
+  .detail-hero .content h2 {
+    font-family: var(--lkv-font-sans);
+    font-size: 76px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 0.95;
+    margin: 0 0 14px;
+    max-width: 720px;
+    text-wrap: balance;
+  }
+  .detail-hero .content h2 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-200); font-weight: 400;
+  }
+  .detail-hero .content .meta {
+    display: flex; gap: 20px; align-items: center;
+    font-size: 14px; color: rgba(255,255,255,0.85);
+  }
+  .detail-hero .content .meta .sep { color: rgba(255,255,255,0.35); }
+  .detail-hero .content .meta .avs { display: flex; }
+  .detail-hero .content .meta .avs .a {
+    width: 24px; height: 24px; border-radius: 999px;
+    background-size: cover;
+    border: 2px solid rgba(11,31,23,0.5);
+    margin-left: -6px;
+  }
+  .detail-hero .content .meta .avs .a:first-child { margin-left: 0; }
+  .detail-hero .content .actions {
+    position: absolute; top: 40px; right: 60px;
+    display: flex; gap: 8px;
+  }
+  .detail-hero .content .actions .btn {
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.24);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 12px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .detail-hero .content .actions .btn.light {
+    background: #fff;
+    color: var(--lkv-forest-800);
+    border-color: #fff;
+  }
+
+  /* Stats strip */
+  .stats-strip {
+    padding: 32px 60px;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 24px;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    background: var(--lkv-paper);
+  }
+  .stats-strip .st {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .stats-strip .st .v {
+    font-family: var(--lkv-font-sans);
+    font-size: 32px; font-weight: 500;
+    letter-spacing: -0.02em; line-height: 1;
+    color: var(--lkv-ink-900);
+  }
+  .stats-strip .st .v em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+    font-size: 16px; margin-left: 2px;
+  }
+  .stats-strip .st .k {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-ink-500);
+  }
+
+  /* Section headers */
+  .sec { padding: 60px; }
+  .sec.alt { background: var(--lkv-stone-50); }
+  .sec .sec-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 28px;
+  }
+  .sec .sec-head h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 36px; font-weight: 500;
+    letter-spacing: -0.025em;
+    margin: 0;
+    color: var(--lkv-ink-900);
+  }
+  .sec .sec-head h3 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .sec .sec-head .sub {
+    font-size: 13px; color: var(--lkv-ink-500);
+    max-width: 320px;
+    text-align: right;
+  }
+  .sec .sec-head a {
+    color: var(--lkv-forest-800); font-size: 13px; font-weight: 500;
+  }
+
+  /* Parcours (map + timeline) */
+  .parcours-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 32px;
+    align-items: start;
+  }
+  .parcours-map {
+    background: linear-gradient(135deg, #E8EEE5 0%, #F1EEE4 100%);
+    border-radius: 24px;
+    padding: 24px;
+    position: sticky; top: 80px;
+    box-shadow: var(--lkv-shadow-sm);
+    aspect-ratio: 1/1.05;
+  }
+  .parcours-map svg { width: 100%; height: 100%; display: block; }
+  .parcours-map .legend {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 16px;
+    font-size: 11px; letter-spacing: 0.06em; color: var(--lkv-ink-500);
+  }
+  .parcours-map .legend strong { color: var(--lkv-forest-800); font-weight: 500; }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 40px; }
+  .timeline::before {
+    content: ""; position: absolute; top: 20px; bottom: 20px; left: 15px;
+    width: 2px; background: rgba(31,74,58,0.15);
+  }
+  .tl-entry { position: relative; padding-bottom: 40px; }
+  .tl-entry:last-child { padding-bottom: 0; }
+  .tl-entry .marker {
+    position: absolute; left: -33px; top: 4px;
+    width: 32px; height: 32px; border-radius: 999px;
+    background: var(--lkv-paper);
+    border: 2px solid var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 13px;
+    color: var(--lkv-forest-800);
+    font-weight: 500;
+  }
+  .tl-entry .day {
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-ink-500);
+    margin-bottom: 4px;
+  }
+  .tl-entry h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 24px; font-weight: 500;
+    letter-spacing: -0.015em; line-height: 1.2;
+    margin: 0 0 12px;
+    color: var(--lkv-ink-900);
+  }
+  .tl-entry h4 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .tl-entry p {
+    font-family: var(--lkv-font-serif);
+    font-size: 16px; line-height: 1.5;
+    color: var(--lkv-ink-700);
+    margin: 0 0 16px;
+    text-wrap: pretty;
+  }
+  .tl-entry .day-meta {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .tl-entry .day-meta .m-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px;
+    background: var(--lkv-stone-50);
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--lkv-ink-700);
+  }
+  .tl-entry .day-meta .m-chip svg { color: var(--lkv-forest-800); }
+  .tl-entry .day-meta .m-chip strong { color: var(--lkv-ink-900); font-weight: 500; }
+  .tl-entry .photos {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 8px;
+    aspect-ratio: 3/2;
+    margin-bottom: 16px;
+  }
+  .tl-entry .photos .ph {
+    background-size: cover; background-position: center;
+    border-radius: 14px;
+  }
+  .tl-entry .photos .ph.small { display: grid; grid-template-rows: 1fr 1fr; gap: 8px; background: none; border-radius: 0; }
+  .tl-entry .photos .ph.small > div {
+    background-size: cover; background-position: center;
+    border-radius: 14px;
+  }
+  .tl-entry .stay {
+    display: flex; gap: 14px;
+    padding: 14px;
+    background: rgba(109,170,125,0.08);
+    border: 1px solid rgba(109,170,125,0.16);
+    border-radius: 16px;
+    align-items: center;
+  }
+  .tl-entry .stay .th {
+    width: 60px; height: 60px; border-radius: 12px;
+    background-size: cover; background-position: center;
+    flex-shrink: 0;
+  }
+  .tl-entry .stay .k {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-forest-700);
+    margin-bottom: 2px;
+  }
+  .tl-entry .stay .n {
+    font-family: var(--lkv-font-sans);
+    font-size: 15px; font-weight: 500;
+    color: var(--lkv-ink-900);
+    line-height: 1.2;
+  }
+  .tl-entry .stay .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .tl-entry .stay .meta {
+    font-size: 12px; color: var(--lkv-ink-500);
+    margin-top: 3px;
+  }
+  .tl-entry .stay .price {
+    margin-left: auto;
+    font-family: var(--lkv-font-sans);
+    font-size: 15px; font-weight: 500;
+    color: var(--lkv-ink-900);
+    text-align: right;
+  }
+  .tl-entry .stay .price em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+    font-size: 11px; display: block; margin-top: 2px;
+  }
+
+  /* Moments */
+  .moments-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr;
+    gap: 20px;
+  }
+  .moment {
+    background: #fff;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: var(--lkv-shadow-sm);
+    display: flex; flex-direction: column;
+    cursor: pointer;
+    transition: transform var(--lkv-dur) var(--lkv-ease-out), box-shadow var(--lkv-dur) var(--lkv-ease-out);
+  }
+  .moment:hover { transform: translateY(-4px); box-shadow: var(--lkv-shadow-lg); }
+  .moment .img {
+    aspect-ratio: 4/3;
+    background-size: cover; background-position: center;
+    position: relative;
+  }
+  .moment .img .day-chip {
+    position: absolute; top: 12px; left: 12px;
+    padding: 4px 10px;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(12px);
+    border-radius: 999px;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--lkv-forest-800);
+    font-weight: 500;
+  }
+  .moment .body {
+    padding: 20px 22px 20px;
+    flex: 1;
+    display: flex; flex-direction: column;
+  }
+  .moment blockquote {
+    margin: 0 0 12px;
+    font-family: var(--lkv-font-serif);
+    font-style: italic;
+    font-size: 17px;
+    line-height: 1.35;
+    color: var(--lkv-ink-900);
+    letter-spacing: -0.005em;
+    flex: 1;
+    text-wrap: pretty;
+  }
+  .moment blockquote::before {
+    content: "«";
+    color: var(--lkv-sage-500);
+    font-size: 28px; line-height: 0;
+    vertical-align: -0.1em; margin-right: 4px;
+  }
+  .moment .meta {
+    display: flex; align-items: center; gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(11,31,23,0.06);
+    font-size: 12px; color: var(--lkv-ink-500);
+  }
+  .moment .meta .av {
+    width: 26px; height: 26px; border-radius: 999px;
+    background-size: cover;
+  }
+  .moment .meta .n { color: var(--lkv-ink-900); font-weight: 500; }
+
+  /* Kit + traces panels row */
+  .side-two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .panel-block {
+    background: #fff;
+    border-radius: 24px;
+    padding: 28px;
+    box-shadow: var(--lkv-shadow-sm);
+  }
+  .panel-block h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 22px; font-weight: 500;
+    letter-spacing: -0.015em;
+    margin: 0 0 4px;
+    color: var(--lkv-ink-900);
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .panel-block h3 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .panel-block h3 a { font-size: 12px; color: var(--lkv-forest-800); font-weight: 500; }
+  .panel-block .sub { font-size: 13px; color: var(--lkv-ink-500); margin-bottom: 20px; }
+
+  .kit-list { display: flex; flex-direction: column; gap: 10px; }
+  .kit-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    background: var(--lkv-stone-50);
+    border-radius: 14px;
+  }
+  .kit-row .th {
+    width: 40px; height: 40px; border-radius: 10px;
+    background-size: cover; background-position: center;
+    flex-shrink: 0;
+  }
+  .kit-row .n { font-size: 14px; font-weight: 500; color: var(--lkv-ink-900); flex: 1; }
+  .kit-row .n .sub { font-size: 11px; color: var(--lkv-ink-500); font-weight: 400; margin-top: 1px; }
+  .kit-row .p {
+    font-family: var(--lkv-font-mono);
+    font-size: 12px;
+    color: var(--lkv-ink-500);
+  }
+
+  .trace-list { display: flex; flex-direction: column; gap: 10px; }
+  .trace-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px;
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 14px;
+  }
+  .trace-row .glyph {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--lkv-sage-100);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+    flex-shrink: 0;
+  }
+  .trace-row .n { font-size: 14px; font-weight: 500; color: var(--lkv-ink-900); flex: 1; }
+  .trace-row .n .m {
+    font-size: 11px; color: var(--lkv-ink-500);
+    font-weight: 400;
+    display: flex; gap: 6px; align-items: center;
+    margin-top: 2px;
+  }
+  .trace-row .n .m .sep { color: var(--lkv-ink-300); }
+  .trace-row .dl {
+    padding: 6px 10px;
+    background: var(--lkv-forest-800);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 11px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+
+  /* Bridge Group ↔ Carnet */
+  .bridge {
+    padding: 60px;
+    background: linear-gradient(135deg, var(--lkv-forest-800) 0%, var(--lkv-forest-700) 100%);
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  .bridge::after {
+    content: ""; position: absolute;
+    right: -80px; bottom: -80px;
+    width: 320px; height: 320px; border-radius: 50%;
+    background: radial-gradient(circle, var(--lkv-sage-500) 0%, transparent 65%);
+    opacity: 0.35;
+  }
+  .bridge > * { position: relative; z-index: 1; }
+  .bridge .grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 40px; align-items: center; }
+  .bridge .eye {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 14px; border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.24);
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .bridge .eye .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-sage-300); }
+  .bridge h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 44px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1.05;
+    margin: 0 0 16px;
+  }
+  .bridge h3 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .bridge p {
+    font-family: var(--lkv-font-serif);
+    font-size: 17px; line-height: 1.5;
+    color: rgba(255,255,255,0.85);
+    margin: 0 0 24px;
+    max-width: 480px;
+  }
+  .bridge .cta-row { display: flex; gap: 12px; }
+  .bridge .cta-row a {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px;
+    border-radius: 999px;
+    font-size: 14px; font-weight: 500;
+  }
+  .bridge .cta-row .primary { background: #fff; color: var(--lkv-forest-800); }
+  .bridge .cta-row .secondary {
+    background: transparent;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+  }
+  .bridge .flow-visual {
+    background: rgba(255,255,255,0.06);
+    border-radius: 24px;
+    padding: 28px;
+    border: 1px solid rgba(255,255,255,0.14);
+  }
+  .bridge .flow-step {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+  }
+  .bridge .flow-step + .flow-step { border-top: 1px solid rgba(255,255,255,0.1); }
+  .bridge .flow-step .icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-sage-300);
+  }
+  .bridge .flow-step .txt .k {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-sage-300);
+    margin-bottom: 2px;
+  }
+  .bridge .flow-step .txt .l { font-size: 14px; color: #fff; }
+  .bridge .flow-step .status {
+    font-size: 11px; color: rgba(255,255,255,0.6);
+  }
+  .bridge .flow-step .status.on { color: var(--lkv-sage-300); }
+
+  /* ————— FOOTER ————— */
+  .footer {
+    background: var(--lkv-forest-950); color: #fff;
+    padding: 80px 60px 40px;
+  }
+  .footer .brand {
+    font-family: var(--lkv-font-sans);
+    font-size: 44px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1;
+    margin-bottom: 60px;
+    max-width: 720px;
+  }
+  .footer .brand em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .footer .grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    gap: 40px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .footer h5 {
+    font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.55); font-weight: 500;
+    margin: 0 0 16px;
+  }
+  .footer ul { list-style: none; padding: 0; margin: 0; }
+  .footer ul li { margin-bottom: 10px; }
+  .footer ul li a { color: rgba(255,255,255,0.75); font-size: 14px; }
+  .footer ul li a:hover { color: var(--lkv-sage-300); }
+  .footer .bottom {
+    display: flex; justify-content: space-between;
+    padding-top: 24px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+  }
+
+  /* ================= MOBILE ================ */
+  .m-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 18px;
+    background: #fff;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .m-header .lkv-logo { color: var(--lkv-forest-800); font-size: 13px; }
+  .m-header .btns { display: flex; gap: 6px; }
+  .m-header .icon-b {
+    width: 34px; height: 34px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-700);
+  }
+
+  .m-masthead {
+    padding: 22px 20px 16px;
+    background: #fff;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .m-masthead .eye {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--lkv-ink-500);
+    margin-bottom: 10px;
+  }
+  .m-masthead .eye .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--lkv-sage-500); }
+  .m-masthead h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 40px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 0.95;
+    margin: 0 0 10px;
+    color: var(--lkv-ink-900);
+  }
+  .m-masthead h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .m-masthead .issue-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; letter-spacing: 0.06em;
+    color: var(--lkv-ink-500);
+    padding-top: 12px;
+    border-top: 1px solid rgba(11,31,23,0.06);
+  }
+  .m-masthead .issue-row .n {
+    font-family: var(--lkv-font-serif); font-size: 20px;
+    color: var(--lkv-forest-800);
+    font-style: italic;
+  }
+
+  .m-pills {
+    display: flex; gap: 6px;
+    padding: 12px 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    background: #fff;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .m-pills::-webkit-scrollbar { display: none; }
+  .m-pills .p {
+    flex-shrink: 0;
+    height: 30px; padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(11,31,23,0.1);
+    font-size: 12px; font-weight: 500;
+    color: var(--lkv-ink-700);
+    display: inline-flex; align-items: center;
+  }
+  .m-pills .p.on {
+    background: var(--lkv-forest-800); border-color: var(--lkv-forest-800); color: #fff;
+  }
+
+  .m-featured {
+    padding: 20px 20px 8px;
+    background: var(--lkv-paper);
+  }
+  .m-featured .card {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    aspect-ratio: 4/5;
+    background-image: url('assets/journal-refuge.jpg');
+    background-size: cover; background-position: center;
+    color: #fff;
+    padding: 16px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .m-featured .card::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0.15) 0%, transparent 30%, rgba(11,31,23,0.85) 100%);
+    z-index: 0;
+  }
+  .m-featured .card > * { position: relative; z-index: 1; }
+  .m-featured .card .badge {
+    align-self: flex-start;
+    padding: 5px 10px;
+    background: rgba(255,255,255,0.16);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.24);
+    border-radius: 999px;
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .m-featured .card .bottom {}
+  .m-featured .card h2 {
+    font-family: var(--lkv-font-sans);
+    font-size: 28px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1;
+    margin: 0 0 6px;
+  }
+  .m-featured .card h2 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-200); font-weight: 400;
+  }
+  .m-featured .card .place {
+    font-size: 12px; color: rgba(255,255,255,0.8);
+    margin-bottom: 12px;
+  }
+  .m-featured .card .stats-strip {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 14px;
+  }
+  .m-featured .card .stats-strip .st .v {
+    font-family: var(--lkv-font-sans);
+    font-size: 14px; font-weight: 500; letter-spacing: -0.01em;
+    line-height: 1;
+  }
+  .m-featured .card .stats-strip .st .v em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+    font-size: 10px; margin-left: 1px;
+  }
+  .m-featured .card .stats-strip .st .k {
+    font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    margin-top: 3px;
+  }
+  .m-featured .card .open {
+    margin-top: 12px;
+    padding: 10px 16px;
+    background: #fff;
+    color: var(--lkv-forest-800);
+    border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    align-self: flex-start;
+  }
+
+  .m-list {
+    padding: 8px 20px 12px;
+    background: var(--lkv-paper);
+  }
+  .m-list .h {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin: 20px 0 12px;
+  }
+  .m-list .h .t {
+    font-family: var(--lkv-font-sans);
+    font-size: 20px; font-weight: 500; letter-spacing: -0.015em;
+  }
+  .m-list .h .t em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); }
+  .m-list .h a { font-size: 12px; color: var(--lkv-forest-800); font-weight: 500; }
+
+  .m-voy {
+    display: flex; gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .m-voy:last-child { border-bottom: none; }
+  .m-voy .thumb {
+    width: 96px; height: 96px; border-radius: 14px;
+    background-size: cover; background-position: center;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .m-voy .thumb .yr {
+    position: absolute; top: 6px; left: 6px;
+    padding: 2px 6px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 999px;
+    font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-forest-800);
+    font-weight: 500;
+  }
+  .m-voy .txt { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+  .m-voy .txt .stat-line {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-forest-800); font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .m-voy .txt h5 {
+    font-family: var(--lkv-font-sans);
+    font-size: 15px; font-weight: 500; letter-spacing: -0.01em;
+    line-height: 1.2;
+    margin: 0 0 6px;
+    color: var(--lkv-ink-900);
+    text-wrap: balance;
+  }
+  .m-voy .txt h5 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .m-voy .txt .stats {
+    display: flex; gap: 10px;
+    font-size: 11px; color: var(--lkv-ink-500);
+    align-items: center;
+  }
+  .m-voy .txt .stats .sep { color: var(--lkv-ink-300); }
+
+  .m-coming {
+    margin: 8px 20px 12px;
+    padding: 14px;
+    background: #fff;
+    border: 1px dashed rgba(11,31,23,0.14);
+    border-radius: 18px;
+    display: flex; gap: 12px; align-items: center;
+  }
+  .m-coming .icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--lkv-sage-100), var(--lkv-sage-200));
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+    flex-shrink: 0;
+  }
+  .m-coming .txt { flex: 1; min-width: 0; }
+  .m-coming h5 {
+    font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);
+    margin: 0 0 3px;
+  }
+  .m-coming h5 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .m-coming p {
+    font-size: 11px; color: var(--lkv-ink-500);
+    margin: 0;
+  }
+  .m-coming .chip {
+    padding: 3px 8px;
+    background: var(--lkv-stone-50);
+    border-radius: 999px;
+    font-size: 9px; letter-spacing: 0.06em;
+    color: var(--lkv-forest-800);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .m-bridge {
+    margin: 8px 20px 90px;
+    padding: 20px;
+    background: linear-gradient(135deg, var(--lkv-forest-800) 0%, var(--lkv-forest-700) 100%);
+    color: #fff;
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .m-bridge::after {
+    content: "";
+    position: absolute; right: -40px; bottom: -40px;
+    width: 160px; height: 160px; border-radius: 50%;
+    background: radial-gradient(circle, var(--lkv-sage-500) 0%, transparent 65%);
+    opacity: 0.3;
+  }
+  .m-bridge > * { position: relative; z-index: 1; }
+  .m-bridge .eye {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-sage-300); margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .m-bridge .eye .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--lkv-sage-300); }
+  .m-bridge h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 20px; font-weight: 500;
+    letter-spacing: -0.015em; line-height: 1.1;
+    margin: 0 0 8px;
+  }
+  .m-bridge h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .m-bridge p {
+    font-family: var(--lkv-font-serif);
+    font-size: 13px; line-height: 1.4;
+    color: rgba(255,255,255,0.8);
+    margin: 0 0 14px;
+  }
+  .m-bridge .go {
+    padding: 8px 14px;
+    background: #fff;
+    color: var(--lkv-forest-800);
+    border-radius: 999px;
+    font-size: 12px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+
+  .m-tabbar {
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 10px 8px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 24px;
+    box-shadow: 0 8px 24px rgba(11,31,23,0.08);
+  }
+  .m-tabbar .tabi {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-500);
+  }
+  .m-tabbar .tabi.on {
+    background: var(--lkv-forest-800);
+    color: #fff;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage-title">
+  <div>
+    <div class="h">Le Carnet — Journal de voyage</div>
+    <div class="sub">Vos voyages, préservés — hero, timeline, moments, souvenirs</div>
+  </div>
+  <div>
+    <a href="Home.html">← Home</a>
+    <a href="Recherche Carte.html">Aventures</a>
+    <a href="Groupes.html">Groupes</a>
+    <a href="Communauté.html">Communauté</a>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ========== DESKTOP ========== -->
+  <div>
+  <div class="artboard-desktop">
+
+    <div class="carnet-header">
+      <nav class="top-nav">
+        <div class="lkv-logo">
+          <svg viewBox="0 0 32 32" width="24" height="24" fill="none">
+            <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+          </svg>
+          <span>Le Kit du Voyageur</span>
+        </div>
+        <div class="links">
+          <a href="Recherche Carte.html">Aventures</a>
+          <a href="#">Refuges</a>
+          <a href="Boutique.html">Boutique</a>
+          <a href="Carnet.html" class="active">Carnet</a>
+          <a href="Communauté.html">Communauté</a>
+        </div>
+        <div class="right">
+          <button class="lkv-btn lkv-btn-icon lkv-btn-ghost">
+            <svg class="lkv-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          </button>
+          <button class="lkv-btn lkv-btn-primary lkv-btn-sm">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 4v16M4 12h16"/></svg>
+            Nouveau voyage
+          </button>
+        </div>
+      </nav>
+    </div>
+
+    <!-- MASTHEAD -->
+    <div class="masthead">
+      <div>
+        <div class="eyebrow-row">
+          <span class="dot"></span>
+          <span>Mon Carnet</span>
+          <span>·</span>
+          <span>Marceline Chevrier</span>
+          <span>·</span>
+          <span>Depuis 2022</span>
+        </div>
+        <h1>Mes voyages,<br/><em>préservés.</em></h1>
+        <p class="lead">Douze traversées, sept refuges, quatre saisons. Chaque voyage terminé devient un carnet — photos, étapes, moments, hébergements. Écrit à la main, à froid, en revenant.</p>
+      </div>
+      <div class="side">
+        <div class="issue">Volume</div>
+        <div class="num">12</div>
+        <div class="date">Voyages archivés</div>
+      </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+      <div class="pills">
+        <button class="filter-pill on">Tous <span class="n">12</span></button>
+        <button class="filter-pill">Terminés <span class="n">9</span></button>
+        <button class="filter-pill">En cours <span class="n">1</span></button>
+        <button class="filter-pill">À venir <span class="n">2</span></button>
+        <button class="filter-pill">Alpes <span class="n">7</span></button>
+        <button class="filter-pill">Pyrénées <span class="n">3</span></button>
+        <button class="filter-pill">2026 <span class="n">4</span></button>
+      </div>
+      <div class="view-switch">
+        <button class="on">
+          <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          Grille
+        </button>
+        <button>
+          <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          Liste
+        </button>
+        <button>
+          <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>
+          Carte
+        </button>
+      </div>
+    </div>
+
+    <!-- FEATURED VOYAGE -->
+    <section class="featured">
+      <div class="featured-cover">
+        <div class="badge"><span class="dot"></span>Dernier voyage · terminé</div>
+        <div class="poly">
+          <svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><path d="M12 22s-7-8-7-13a7 7 0 0114 0c0 5-7 13-7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          Chartreuse · Isère
+        </div>
+        <div class="cap">
+          <div class="k">Automne 2026</div>
+          <div class="place">Saint-Pierre → Charmant Som,<br/>trois jours au ralenti.</div>
+        </div>
+      </div>
+      <div class="featured-text">
+        <div>
+          <div class="eye">Carnet ouvert <span class="sep">·</span> 3 jours <span class="sep">·</span> 6 personnes</div>
+          <h2>Traversée de la <em>Chartreuse.</em></h2>
+          <p class="lead">Le voyage qu'on avait préparé pendant trois mois dans le groupe, replié en douze pages de carnet. On a marché vingt-huit kilomètres, dormi dans deux refuges, et écrit chaque soir à la lampe frontale.</p>
+        </div>
+        <div>
+          <div class="quick-stats">
+            <div class="qs"><div class="k">Distance</div><div class="v">27,4<em>km</em></div></div>
+            <div class="qs"><div class="k">Dénivelé</div><div class="v">1 620<em>m</em></div></div>
+            <div class="qs"><div class="k">Nuits</div><div class="v">2</div></div>
+            <div class="qs"><div class="k">Moments</div><div class="v">14</div></div>
+          </div>
+          <div class="with">
+            <div class="avs">
+              <div class="a" style="background-image: url('assets/portrait-1.jpg')"></div>
+              <div class="a" style="background-image: url('assets/portrait-2.jpg')"></div>
+              <div class="a" style="background-image: url('assets/portrait-3.jpg')"></div>
+              <div class="a" style="background-image: url('assets/portrait-1.jpg'); filter: hue-rotate(30deg)"></div>
+              <div class="a" style="background-image: url('assets/portrait-2.jpg'); filter: hue-rotate(-40deg)"></div>
+            </div>
+            <div>Avec <strong>Léna</strong>, <strong>Antoine</strong> et 3 autres — <a href="Groupes.html" style="color: var(--lkv-forest-800); font-weight: 500;">voir le groupe</a></div>
+          </div>
+          <div class="cta-row">
+            <a href="#detail" class="lkv-btn lkv-btn-primary">
+              Ouvrir le carnet
+              <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+            <button class="lkv-btn lkv-btn-ghost">
+              <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+              Partager
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COLLECTION -->
+    <section class="collection">
+      <div class="head">
+        <h3>La <em>collection</em></h3>
+        <p>Douze voyages depuis mars 2022, du bivouac d'un soir aux traversées de six jours. Le carnet garde tout ce que la mémoire perd.</p>
+      </div>
+      <div class="voyage-grid">
+
+        <div class="voy-card">
+          <div class="cover" style="background-image: url('assets/adventure-hiking.jpg')">
+            <div class="year">2026 · Été</div>
+            <div class="status done"><span class="dot"></span>Terminé</div>
+            <div class="place">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><path d="M12 22s-7-8-7-13a7 7 0 0114 0c0 5-7 13-7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              Écrins · Hautes-Alpes
+            </div>
+          </div>
+          <div class="body">
+            <h4>Grand Tour <em>des Écrins</em></h4>
+            <div class="dates">14 – 20 juillet 2026 · 7 jours</div>
+            <div class="stats">
+              <div class="st"><div class="v">184<em>km</em></div><div class="k">Distance</div></div>
+              <div class="st"><div class="v">8 240<em>m</em></div><div class="k">Dénivelé</div></div>
+              <div class="st"><div class="v">62</div><div class="k">Moments</div></div>
+              <div class="who">
+                <div class="avs">
+                  <div class="a" style="background-image: url('assets/portrait-1.jpg')"></div>
+                  <div class="a" style="background-image: url('assets/portrait-2.jpg')"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="voy-card">
+          <div class="cover" style="background-image: url('assets/adventure-bivouac.jpg')">
+            <div class="year">2026 · Print.</div>
+            <div class="status done"><span class="dot"></span>Terminé</div>
+            <div class="place">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><path d="M12 22s-7-8-7-13a7 7 0 0114 0c0 5-7 13-7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              Vercors
+            </div>
+          </div>
+          <div class="body">
+            <h4>Hauts <em>Plateaux</em></h4>
+            <div class="dates">3 – 6 mai 2026 · 4 jours</div>
+            <div class="stats">
+              <div class="st"><div class="v">72<em>km</em></div><div class="k">Distance</div></div>
+              <div class="st"><div class="v">2 250<em>m</em></div><div class="k">Dénivelé</div></div>
+              <div class="st"><div class="v">28</div><div class="k">Moments</div></div>
+              <div class="who">
+                <div class="avs">
+                  <div class="a" style="background-image: url('assets/portrait-3.jpg')"></div>
+                  <div class="a" style="background-image: url('assets/portrait-1.jpg')"></div>
+                  <div class="a" style="background-image: url('assets/portrait-2.jpg')"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="voy-card">
+          <div class="cover" style="background-image: url('assets/adventure-kayak.jpg')">
+            <div class="year">2025 · Été</div>
+            <div class="status done"><span class="dot"></span>Terminé</div>
+            <div class="place">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><path d="M12 22s-7-8-7-13a7 7 0 0114 0c0 5-7 13-7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              Serre-Ponçon
+            </div>
+          </div>
+          <div class="body">
+            <h4>Serre-Ponçon, <em>ligne bleue</em></h4>
+            <div class="dates">21 – 23 août 2025 · 3 jours</div>
+            <div class="stats">
+              <div class="st"><div class="v">42<em>km</em></div><div class="k">Kayak</div></div>
+              <div class="st"><div class="v">2</div><div class="k">Bivouacs</div></div>
+              <div class="st"><div class="v">36</div><div class="k">Moments</div></div>
+              <div class="who">
+                <div class="avs">
+                  <div class="a" style="background-image: url('assets/portrait-1.jpg')"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="voy-card">
+          <div class="cover" style="background-image: url('assets/journal-trail.jpg')">
+            <div class="year">2025 · Hiv.</div>
+            <div class="status done"><span class="dot"></span>Terminé</div>
+            <div class="place">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><path d="M12 22s-7-8-7-13a7 7 0 0114 0c0 5-7 13-7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              Belledonne
+            </div>
+          </div>
+          <div class="body">
+            <h4>Belledonne <em>en raquettes</em></h4>
+            <div class="dates">7 – 9 février 2025 · 3 jours</div>
+            <div class="stats">
+              <div class="st"><div class="v">28<em>km</em></div><div class="k">Distance</div></div>
+              <div class="st"><div class="v">1 480<em>m</em></div><div class="k">Dénivelé</div></div>
+              <div class="st"><div class="v">18</div><div class="k">Moments</div></div>
+              <div class="who">
+                <div class="avs">
+                  <div class="a" style="background-image: url('assets/portrait-2.jpg')"></div>
+                  <div class="a" style="background-image: url('assets/portrait-3.jpg')"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="voy-card">
+          <div class="cover" style="background-image: url('assets/community-morning.jpg')">
+            <div class="year">2024 · Aut.</div>
+            <div class="status done"><span class="dot"></span>Terminé</div>
+            <div class="place">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><path d="M12 22s-7-8-7-13a7 7 0 0114 0c0 5-7 13-7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              Cévennes
+            </div>
+          </div>
+          <div class="body">
+            <h4>Traversée <em>des Cévennes</em></h4>
+            <div class="dates">12 – 18 octobre 2024 · 7 jours</div>
+            <div class="stats">
+              <div class="st"><div class="v">210<em>km</em></div><div class="k">Distance</div></div>
+              <div class="st"><div class="v">5 800<em>m</em></div><div class="k">Dénivelé</div></div>
+              <div class="st"><div class="v">48</div><div class="k">Moments</div></div>
+              <div class="who">
+                <div class="avs">
+                  <div class="a" style="background-image: url('assets/portrait-1.jpg')"></div>
+                  <div class="a" style="background-image: url('assets/portrait-3.jpg')"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="voy-card draft">
+          <div class="cover">
+            <div class="draft-mark">Voyage<br/>en préparation<br/><span style="color: var(--lkv-forest-800); font-family: var(--lkv-font-sans); font-style: normal; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;">Décembre 2026</span></div>
+            <div class="year" style="position: absolute; z-index: 1;">Prochain</div>
+            <div class="status live" style="position: absolute; z-index: 1;"><span class="dot"></span>À venir</div>
+          </div>
+          <div class="body">
+            <h4>Queyras <em>hivernal</em></h4>
+            <div class="dates">28 – 30 décembre 2026 · 3 jours</div>
+            <div class="stats">
+              <div class="st"><div class="v">—</div><div class="k">Réservé</div></div>
+              <div class="st"><div class="v">4</div><div class="k">Personnes</div></div>
+              <div class="st"><div class="v">62<em>%</em></div><div class="k">Préparation</div></div>
+              <div class="who">
+                <div class="avs">
+                  <div class="a" style="background-image: url('assets/portrait-2.jpg')"></div>
+                  <div class="a" style="background-image: url('assets/portrait-1.jpg')"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- COMING SOON -->
+    <section class="coming-row">
+      <div class="head">
+        <h3>Bientôt <em>dans le Carnet</em></h3>
+        <p>Deux fonctions en préparation pour donner une seconde vie à vos voyages.</p>
+      </div>
+      <div class="coming-grid">
+        <div class="coming-card">
+          <div class="visual warm">
+            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2l1.5 3.5L17 7l-3.5 1.5L12 12l-1.5-3.5L7 7l3.5-1.5z"/>
+              <path d="M5 15l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/>
+              <path d="M18 14l0.8 1.6 1.6 0.8-1.6 0.8-0.8 1.6-0.8-1.6-1.6-0.8 1.6-0.8z"/>
+            </svg>
+          </div>
+          <div>
+            <h4>✨ Créer <em>mon récit</em></h4>
+            <p>Vos étapes, photos et notes assemblées en un texte long — narré à la première personne, dans votre voix. À relire près du feu.</p>
+            <span class="chip"><span class="dot"></span>Bientôt disponible</span>
+          </div>
+        </div>
+        <div class="coming-card">
+          <div class="visual">
+            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="16" rx="2"/>
+              <path d="M3 8h18M8 4v4"/>
+              <circle cx="10" cy="14" r="2"/>
+              <path d="M14 18l-3-3-2 2"/>
+            </svg>
+          </div>
+          <div>
+            <h4>Créer <em>un album</em></h4>
+            <p>Vos 62 meilleures photos, mises en pages, prêtes à commander en livre relié. Toile épaisse, dorure, un exemplaire par voyage.</p>
+            <span class="chip"><span class="dot"></span>Bientôt disponible</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VOYAGE DETAIL (opened notebook) ============ -->
+    <div class="detail" id="detail">
+      <div class="anchor-bar">
+        <div class="breadcrumb">
+          <span>Carnet</span>
+          <span class="sep">›</span>
+          <span>Automne 2026</span>
+          <span class="sep">›</span>
+          <strong>Traversée de la Chartreuse</strong>
+        </div>
+        <div class="anchors">
+          <a class="on" href="#">Vue d'ensemble</a>
+          <a href="#">Parcours</a>
+          <a href="#">Moments</a>
+          <a href="#">Souvenirs</a>
+          <a href="#">Photos</a>
+        </div>
+      </div>
+
+      <div class="detail-hero">
+        <div class="content">
+          <div class="eye"><span class="dot"></span>Carnet ouvert · Traversée · Automne 2026</div>
+          <h2>Trois jours dans la Chartreuse,<br/><em>et le silence qu'on a rapporté.</em></h2>
+          <div class="meta">
+            <div class="avs">
+              <div class="a" style="background-image: url('assets/portrait-1.jpg')"></div>
+              <div class="a" style="background-image: url('assets/portrait-2.jpg')"></div>
+              <div class="a" style="background-image: url('assets/portrait-3.jpg')"></div>
+              <div class="a" style="background-image: url('assets/portrait-1.jpg'); filter: hue-rotate(30deg)"></div>
+            </div>
+            <span>6 voyageurs</span>
+            <span class="sep">·</span>
+            <span>12 – 14 octobre 2026</span>
+            <span class="sep">·</span>
+            <span>Saint-Pierre-de-Chartreuse → Col de la Charmette</span>
+          </div>
+          <div class="actions">
+            <button class="btn">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+              Partager
+            </button>
+            <button class="btn">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+              Enregistrer
+            </button>
+            <button class="btn light">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+              Exporter
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-strip">
+        <div class="st"><div class="v">27,4<em>km</em></div><div class="k">Distance</div></div>
+        <div class="st"><div class="v">1 620<em>m</em></div><div class="k">Dénivelé +</div></div>
+        <div class="st"><div class="v">2</div><div class="k">Nuits</div></div>
+        <div class="st"><div class="v">14</div><div class="k">Moments</div></div>
+        <div class="st"><div class="v">62</div><div class="k">Photos</div></div>
+        <div class="st"><div class="v">3<em>refuges</em></div><div class="k">Hébergements</div></div>
+      </div>
+
+      <!-- Parcours + Timeline -->
+      <section class="sec">
+        <div class="sec-head">
+          <h3>Le <em>parcours</em></h3>
+          <div class="sub">Trois jours de marche lente entre Saint-Pierre et le col de la Charmette. Trace GPX et hébergements enregistrés à chaque étape.</div>
+        </div>
+        <div class="parcours-wrap">
+          <div class="parcours-map">
+            <svg viewBox="0 0 400 420" xmlns="http://www.w3.org/2000/svg">
+              <!-- ridges suggested by muted shapes -->
+              <path d="M20 340 Q80 300 130 320 T240 300 T380 330 L380 400 L20 400 Z" fill="#D8E1D0" opacity="0.7"/>
+              <path d="M20 300 Q90 240 170 270 T290 240 T380 280" stroke="#B7C6B0" stroke-width="1.5" fill="none" stroke-dasharray="2 4" opacity="0.6"/>
+              <path d="M40 200 Q100 160 180 190 T280 160 T370 180" stroke="#B7C6B0" stroke-width="1" fill="none" stroke-dasharray="2 4" opacity="0.5"/>
+              
+              <!-- trail path -->
+              <path d="M60 340 Q120 280 180 260 Q220 245 260 200 Q290 165 340 130" 
+                stroke="#1F4A3A" stroke-width="3" fill="none" stroke-linecap="round" stroke-dasharray="0"/>
+              <path d="M60 340 Q120 280 180 260 Q220 245 260 200 Q290 165 340 130"
+                stroke="#6DAA7D" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-dasharray="4 5"/>
+              
+              <!-- start / etapes / end markers -->
+              <g>
+                <circle cx="60" cy="340" r="10" fill="#fff" stroke="#1F4A3A" stroke-width="2.5"/>
+                <text x="60" y="344" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="11" fill="#1F4A3A">1</text>
+                <text x="60" y="365" text-anchor="middle" font-family="General Sans" font-size="10" fill="#2A322E" font-weight="500">Saint-Pierre</text>
+              </g>
+              <g>
+                <circle cx="180" cy="260" r="10" fill="#fff" stroke="#1F4A3A" stroke-width="2.5"/>
+                <text x="180" y="264" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="11" fill="#1F4A3A">2</text>
+                <text x="180" y="245" text-anchor="middle" font-family="General Sans" font-size="10" fill="#2A322E" font-weight="500">Charmant Som</text>
+              </g>
+              <g>
+                <circle cx="260" cy="200" r="10" fill="#fff" stroke="#1F4A3A" stroke-width="2.5"/>
+                <text x="260" y="204" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="11" fill="#1F4A3A">3</text>
+                <text x="260" y="185" text-anchor="middle" font-family="General Sans" font-size="10" fill="#2A322E" font-weight="500">Grand Vaneau</text>
+              </g>
+              <g>
+                <circle cx="340" cy="130" r="10" fill="#1F4A3A" stroke="#1F4A3A" stroke-width="2.5"/>
+                <path d="M336 130 L339 133 L344 127" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                <text x="340" y="115" text-anchor="middle" font-family="General Sans" font-size="10" fill="#2A322E" font-weight="500">Col Charmette</text>
+              </g>
+              
+              <!-- N compass -->
+              <g transform="translate(360 60)">
+                <circle r="14" fill="#fff" stroke="#E4DED2" stroke-width="1"/>
+                <path d="M0 -8 L4 6 L0 3 L-4 6 Z" fill="#1F4A3A"/>
+                <text y="-16" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="9" fill="#566159">N</text>
+              </g>
+            </svg>
+            <div class="legend">
+              <span>27,4 km · <strong>1 620 m D+</strong></span>
+              <span><strong>Télécharger GPX ↓</strong></span>
+            </div>
+          </div>
+
+          <!-- Timeline -->
+          <div class="timeline">
+
+            <div class="tl-entry">
+              <div class="marker">1</div>
+              <div class="day">Jour 1 · Ven. 12 octobre</div>
+              <h4>Saint-Pierre <em>→ Charmant Som</em></h4>
+              <p>On a rangé la voiture derrière l'église de Saint-Pierre à 9 h 40. Ciel bas, feuillage roux, un vent net qui vient du sud. Léna a mené sur les cinq premiers kilomètres, on n'a presque pas parlé — juste écouté nos semelles. À midi, casse-croûte contre un mur de pierre sèche.</p>
+              <div class="day-meta">
+                <div class="m-chip"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>10,4 <strong>km</strong></div>
+                <div class="m-chip"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M4 20l6-10 4 6 3-4 3 8"/></svg>620 <strong>m D+</strong></div>
+                <div class="m-chip"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 3"/></svg>4h 20</div>
+                <div class="m-chip"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M6 6l1.5 1.5M16.5 16.5L18 18M6 18l1.5-1.5M16.5 7.5L18 6"/></svg>Ciel bas · 12°C</div>
+              </div>
+              <div class="photos">
+                <div class="ph" style="background-image: url('assets/journal-trail.jpg')"></div>
+                <div class="ph small">
+                  <div style="background-image: url('assets/journal-refuge.jpg')"></div>
+                  <div style="background-image: url('assets/adventure-hiking.jpg')"></div>
+                </div>
+              </div>
+              <div class="stay">
+                <div class="th" style="background-image: url('assets/journal-refuge.jpg')"></div>
+                <div>
+                  <div class="k">Nuit 1 · Hébergement</div>
+                  <div class="n">Refuge du <em>Charmant Som</em></div>
+                  <div class="meta">2 100 m · dortoir 8 places · Marie & Bertrand</div>
+                </div>
+                <div class="price">48 €<em>par personne, demi-pension</em></div>
+              </div>
+            </div>
+
+            <div class="tl-entry">
+              <div class="marker">2</div>
+              <div class="day">Jour 2 · Sam. 13 octobre</div>
+              <h4>La longue journée du <em>Grand Vaneau</em></h4>
+              <p>Départ à 7 h 20, thé chaud dans le thermos. Antoine a proposé la variante haute par le Balcon Est — nous avons suivi. Le passage du col Vert au petit matin restera. Rien ne bougeait sauf le brouillard qui remontait la vallée. Douze kilomètres, sept heures de marche, un déjeuner sec sur une pierre plate.</p>
+              <div class="day-meta">
+                <div class="m-chip"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/></svg>12,8 <strong>km</strong></div>
+                <div class="m-chip"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M4 20l6-10 4 6 3-4 3 8"/></svg>720 <strong>m D+</strong></div>
+                <div class="m-chip"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 3"/></svg>7h 05</div>
+                <div class="m-chip"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M6 14a5 5 0 1 1 4-8 6 6 0 0 1 11 3 4 4 0 0 1-2 7.5"/></svg>Brouillard · 6°C</div>
+              </div>
+              <div class="photos">
+                <div class="ph" style="background-image: url('assets/adventure-bivouac.jpg')"></div>
+                <div class="ph small">
+                  <div style="background-image: url('assets/community-morning.jpg')"></div>
+                  <div style="background-image: url('assets/adventure-hiking.jpg')"></div>
+                </div>
+              </div>
+              <div class="stay">
+                <div class="th" style="background-image: url('assets/adventure-bivouac.jpg')"></div>
+                <div>
+                  <div class="k">Nuit 2 · Hébergement</div>
+                  <div class="n">Cabane du <em>Grand Vaneau</em></div>
+                  <div class="meta">2 100 m · gardienne Hélène · soupe corail</div>
+                </div>
+                <div class="price">52 €<em>demi-pension</em></div>
+              </div>
+            </div>
+
+            <div class="tl-entry">
+              <div class="marker">3</div>
+              <div class="day">Jour 3 · Dim. 14 octobre</div>
+              <h4>Descente sur le <em>col de la Charmette</em></h4>
+              <p>Réveil tôt, ciel dégagé. On a longé la crête pendant deux heures, presque sans vent. Descente technique jusqu'à la voiture — arrivés à 15 h, sales, contents, un peu tristes. Marceline a acheté du gruyère à la ferme du bas.</p>
+              <div class="day-meta">
+                <div class="m-chip"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/></svg>4,2 <strong>km</strong></div>
+                <div class="m-chip"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M4 20l6-10 4 6 3-4 3 8"/></svg>280 <strong>m D+</strong></div>
+                <div class="m-chip"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 3"/></svg>2h 40</div>
+                <div class="m-chip"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>Ensoleillé · 14°C</div>
+              </div>
+              <div class="photos">
+                <div class="ph" style="background-image: url('assets/adventure-kayak.jpg')"></div>
+                <div class="ph small">
+                  <div style="background-image: url('assets/journal-trail.jpg')"></div>
+                  <div style="background-image: url('assets/hero-editorial.jpg')"></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- Moments -->
+      <section class="sec alt">
+        <div class="sec-head">
+          <h3>Les <em>moments</em></h3>
+          <div class="sub">Quatorze micro-souvenirs écrits pendant le voyage — quelques mots suffisent souvent.</div>
+        </div>
+        <div class="moments-grid">
+          <div class="moment">
+            <div class="img" style="background-image: url('assets/journal-refuge.jpg')">
+              <div class="day-chip">Jour 1 · 18h30</div>
+            </div>
+            <div class="body">
+              <blockquote>Marie a servi la soupe sans dire un mot. On l'a bue debout, appuyés contre la porte du refuge, en regardant la nuit tomber sur le vallon.</blockquote>
+              <div class="meta">
+                <div class="av" style="background-image: url('assets/portrait-1.jpg')"></div>
+                <span class="n">Marceline</span>
+                <span style="margin-left: auto;">Charmant Som</span>
+              </div>
+            </div>
+          </div>
+          <div class="moment">
+            <div class="img" style="background-image: url('assets/adventure-hiking.jpg')">
+              <div class="day-chip">Jour 2 · 7h50</div>
+            </div>
+            <div class="body">
+              <blockquote>Le brouillard remontait la vallée par vagues. Antoine s'est arrêté et a juste dit : « c'est pour ça qu'on marche ».</blockquote>
+              <div class="meta">
+                <div class="av" style="background-image: url('assets/portrait-3.jpg')"></div>
+                <span class="n">Antoine</span>
+                <span style="margin-left: auto;">Col Vert</span>
+              </div>
+            </div>
+          </div>
+          <div class="moment">
+            <div class="img" style="background-image: url('assets/community-morning.jpg')">
+              <div class="day-chip">Jour 3 · 15h20</div>
+            </div>
+            <div class="body">
+              <blockquote>À la ferme, la femme nous a donné un morceau de gruyère « pour la route ». On l'a mangé dans la voiture, sans pain.</blockquote>
+              <div class="meta">
+                <div class="av" style="background-image: url('assets/portrait-2.jpg')"></div>
+                <span class="n">Léna</span>
+                <span style="margin-left: auto;">Charmette</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Souvenirs : kit + traces -->
+      <section class="sec">
+        <div class="sec-head">
+          <h3>Les <em>souvenirs</em></h3>
+          <div class="sub">Ce qu'on avait dans le sac, ce qu'on a marché — tout est archivé avec le voyage.</div>
+        </div>
+        <div class="side-two">
+          <div class="panel-block">
+            <h3>Ce que j'avais <em>dans le sac</em> <a href="Configurateur.html">Voir le kit →</a></h3>
+            <div class="sub">Sac 45L configuré pour la Chartreuse — 2,98 kg total, un chargement inhabituellement léger.</div>
+            <div class="kit-list">
+              <div class="kit-row">
+                <div class="th" style="background-image: url('assets/product-backpack.jpg')"></div>
+                <div class="n">Sac 45 L toile huilée<div class="sub">Assemblé à Digne-les-Bains</div></div>
+                <div class="p">1,4 kg</div>
+              </div>
+              <div class="kit-row">
+                <div class="th" style="background: linear-gradient(135deg, var(--lkv-sage-200), var(--lkv-sage-300));"></div>
+                <div class="n">Duvet plumes 800<div class="sub">Confort -5°C</div></div>
+                <div class="p">920 g</div>
+              </div>
+              <div class="kit-row">
+                <div class="th" style="background: linear-gradient(135deg, var(--lkv-warm-300), var(--lkv-warm-500));"></div>
+                <div class="n">Veste 3 couches<div class="sub">Portée les 3 jours</div></div>
+                <div class="p">480 g</div>
+              </div>
+              <div class="kit-row">
+                <div class="th" style="background: linear-gradient(135deg, var(--lkv-forest-700), var(--lkv-forest-800));"></div>
+                <div class="n">Gourde inox 1L<div class="sub">Remplie à la source</div></div>
+                <div class="p">180 g</div>
+              </div>
+            </div>
+          </div>
+          <div class="panel-block">
+            <h3>Randonnées <em>parcourues</em> <a href="#">Tout →</a></h3>
+            <div class="sub">Trois traces enregistrées, trois exportables au format GPX pour la fois prochaine.</div>
+            <div class="trace-list">
+              <div class="trace-row">
+                <div class="glyph">
+                  <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>
+                </div>
+                <div class="n">St-Pierre → Charmant Som<div class="m"><span>10,4 km</span><span class="sep">·</span><span>+620 m</span><span class="sep">·</span><span>4h 20</span></div></div>
+                <div class="dl">GPX ↓</div>
+              </div>
+              <div class="trace-row">
+                <div class="glyph">
+                  <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/></svg>
+                </div>
+                <div class="n">Balcon Est · Col Vert<div class="m"><span>12,8 km</span><span class="sep">·</span><span>+720 m</span><span class="sep">·</span><span>Difficile</span></div></div>
+                <div class="dl">GPX ↓</div>
+              </div>
+              <div class="trace-row">
+                <div class="glyph">
+                  <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/></svg>
+                </div>
+                <div class="n">Grand Vaneau → Charmette<div class="m"><span>4,2 km</span><span class="sep">·</span><span>+280 m</span><span class="sep">·</span><span>Facile</span></div></div>
+                <div class="dl">GPX ↓</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- BRIDGE GROUPE ↔ CARNET -->
+    <section class="bridge">
+      <div class="grid">
+        <div>
+          <div class="eye"><span class="dot"></span>Du groupe au carnet</div>
+          <h3>Ce que vous <em>préparez</em><br/>devient ce que vous <em>gardez.</em></h3>
+          <p>Chaque voyage lancé dans Groupes atterrit ici à son retour — étapes, photos, hébergements, dépenses. Vous n'avez rien à remplir : le carnet se compose seul, à partir de ce que le groupe a vécu.</p>
+          <div class="cta-row">
+            <a href="Groupes.html" class="primary">
+              Voir mes groupes
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+            <a href="#" class="secondary">Comment ça marche</a>
+          </div>
+        </div>
+        <div class="flow-visual">
+          <div class="flow-step">
+            <div class="icon">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M14 20c0-2 2-3 4-3s4 1 4 3"/></svg>
+            </div>
+            <div class="txt">
+              <div class="k">Étape 1 · Groupes</div>
+              <div class="l">Le voyage se prépare à plusieurs</div>
+            </div>
+            <div class="status on">En cours ·<br/>3 groupes</div>
+          </div>
+          <div class="flow-step">
+            <div class="icon">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M12 22s-7-8-7-13a7 7 0 0114 0c0 5-7 13-7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+            </div>
+            <div class="txt">
+              <div class="k">Étape 2 · Voyage</div>
+              <div class="l">Vous partez et vous vivez le voyage</div>
+            </div>
+            <div class="status">Automatique</div>
+          </div>
+          <div class="flow-step">
+            <div class="icon">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M4 4h12l4 4v12a2 2 0 0 1-2 2H4z M8 8h8M8 12h8M8 16h5"/></svg>
+            </div>
+            <div class="txt">
+              <div class="k">Étape 3 · Carnet</div>
+              <div class="l">Tout est archivé, prêt à relire</div>
+            </div>
+            <div class="status on">12 archivés</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="brand">Ce que vous emportez, <em>c'est votre voyage.</em></div>
+      <div class="grid">
+        <div>
+          <h5>Le Carnet</h5>
+          <p style="font-size: 14px; margin: 0; color: rgba(255,255,255,0.6); line-height: 1.5;">Le journal privé de vos voyages. Un carnet par traversée, alimenté par ce que vous avez préparé dans les groupes.</p>
+        </div>
+        <div>
+          <h5>Explorer</h5>
+          <ul>
+            <li><a href="#">Vue chronologique</a></li>
+            <li><a href="#">Par massif</a></li>
+            <li><a href="#">Par saison</a></li>
+            <li><a href="#">Statistiques</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Découvrir</h5>
+          <ul>
+            <li><a href="Recherche Carte.html">Aventures</a></li>
+            <li><a href="Boutique.html">Boutique</a></li>
+            <li><a href="Groupes.html">Groupes</a></li>
+            <li><a href="Communauté.html">Communauté</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Maison</h5>
+          <ul>
+            <li><a href="#">Notre méthode</a></li>
+            <li><a href="#">Export & sauvegarde</a></li>
+            <li><a href="#">Archives</a></li>
+            <li><a href="#">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="bottom">
+        <div>© 2026 Le Kit du Voyageur — Grenoble, France</div>
+        <div>Mentions · Confidentialité · Cookies</div>
+      </div>
+    </footer>
+
+  </div>
+  <div class="board-caption">Desktop · 1280 × 4200+</div>
+  </div>
+
+  <!-- ========== MOBILE ========== -->
+  <div>
+    <div class="artboard-mobile">
+      <div class="screen" style="overflow-y: auto;">
+
+        <div class="m-header">
+          <div class="lkv-logo">
+            <svg viewBox="0 0 32 32" width="16" height="16" fill="none">
+              <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+            </svg>
+            <span>Mon Carnet</span>
+          </div>
+          <div class="btns">
+            <div class="icon-b">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            </div>
+            <div class="icon-b">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M12 4v16M4 12h16"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="m-masthead">
+          <div class="eye"><span class="dot"></span>Mon Carnet · 12 voyages</div>
+          <h1>Mes voyages,<br/><em>préservés.</em></h1>
+          <div class="issue-row">
+            <span>Depuis mars 2022</span>
+            <span class="n">12</span>
+          </div>
+        </div>
+
+        <div class="m-pills">
+          <div class="p on">Tous</div>
+          <div class="p">Terminés</div>
+          <div class="p">À venir</div>
+          <div class="p">Alpes</div>
+          <div class="p">Pyrénées</div>
+          <div class="p">2026</div>
+        </div>
+
+        <div class="m-featured">
+          <div class="card">
+            <div class="badge">Dernier voyage · Terminé</div>
+            <div class="bottom">
+              <h2>Traversée <em>de la Chartreuse.</em></h2>
+              <div class="place">12–14 octobre 2026 · 3 jours · 6 personnes</div>
+              <div class="stats-strip">
+                <div class="st"><div class="v">27,4<em>km</em></div><div class="k">Distance</div></div>
+                <div class="st"><div class="v">1 620<em>m</em></div><div class="k">D+</div></div>
+                <div class="st"><div class="v">2</div><div class="k">Nuits</div></div>
+                <div class="st"><div class="v">14</div><div class="k">Moments</div></div>
+              </div>
+              <div class="open">
+                Ouvrir le carnet
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="m-list">
+          <div class="h">
+            <div class="t">La <em>collection</em></div>
+            <a href="#">Tout →</a>
+          </div>
+
+          <div class="m-voy">
+            <div class="thumb" style="background-image: url('assets/adventure-hiking.jpg')">
+              <div class="yr">2026 · Été</div>
+            </div>
+            <div class="txt">
+              <div class="stat-line">Écrins · 7 jours</div>
+              <h5>Grand Tour <em>des Écrins</em></h5>
+              <div class="stats">
+                <span>184 km</span><span class="sep">·</span>
+                <span>8 240 m D+</span><span class="sep">·</span>
+                <span>62 moments</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="m-voy">
+            <div class="thumb" style="background-image: url('assets/adventure-bivouac.jpg')">
+              <div class="yr">2026 · Print.</div>
+            </div>
+            <div class="txt">
+              <div class="stat-line">Vercors · 4 jours</div>
+              <h5>Hauts <em>Plateaux</em></h5>
+              <div class="stats">
+                <span>72 km</span><span class="sep">·</span>
+                <span>2 250 m D+</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="m-voy">
+            <div class="thumb" style="background-image: url('assets/adventure-kayak.jpg')">
+              <div class="yr">2025 · Été</div>
+            </div>
+            <div class="txt">
+              <div class="stat-line">Serre-Ponçon · 3 jours</div>
+              <h5>Ligne <em>bleue</em></h5>
+              <div class="stats">
+                <span>42 km kayak</span><span class="sep">·</span>
+                <span>2 bivouacs</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="m-voy">
+            <div class="thumb" style="background-image: url('assets/journal-trail.jpg')">
+              <div class="yr">2025 · Hiv.</div>
+            </div>
+            <div class="txt">
+              <div class="stat-line">Belledonne · 3 jours</div>
+              <h5>Belledonne <em>en raquettes</em></h5>
+              <div class="stats">
+                <span>28 km</span><span class="sep">·</span>
+                <span>1 480 m D+</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="m-coming">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l1.5 3.5L17 7l-3.5 1.5L12 12l-1.5-3.5L7 7l3.5-1.5z"/><path d="M5 15l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></svg>
+          </div>
+          <div class="txt">
+            <h5>✨ Créer <em>mon récit</em></h5>
+            <p>Un texte long à partir de vos étapes</p>
+          </div>
+          <span class="chip">Bientôt</span>
+        </div>
+
+        <div class="m-coming">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="10" cy="12" r="2"/><path d="M14 18l-3-3-2 2"/></svg>
+          </div>
+          <div class="txt">
+            <h5>Créer <em>un album</em></h5>
+            <p>Livre relié, une édition par voyage</p>
+          </div>
+          <span class="chip">Bientôt</span>
+        </div>
+
+        <div class="m-bridge">
+          <div class="eye"><span class="dot"></span>Du groupe au carnet</div>
+          <h4>Ce que vous <em>préparez</em>, vous le <em>garderez.</em></h4>
+          <p>Chaque voyage lancé dans Groupes atterrit ici à son retour, tout seul.</p>
+          <a href="Groupes.html" class="go">
+            Voir mes groupes
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
+
+        <div class="m-tabbar">
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div>
+          <div class="tabi on"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M4 4h12l4 4v12a2 2 0 0 1-2 2H4z M8 8h8M8 12h8M8 16h5"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M14 20c0-2 2-3 4-3s4 1 4 3"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">Mobile · 375 × 812 (scroll)</div>
+  </div>
+
+</div>
+
+</body>
+</html>

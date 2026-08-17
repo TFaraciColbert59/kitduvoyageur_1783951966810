@@ -1,0 +1,2366 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Traversée Chartreuse · Groupe — Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="shop.css"/>
+<style>
+  body { background: #EAE6DF; padding: 40px 0; }
+
+  .stage-title {
+    max-width: 1720px; margin: 0 auto 32px; padding: 0 40px;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 24px;
+    color: var(--lkv-ink-700);
+  }
+  .stage-title .h { font-family: var(--lkv-font-sans); font-size: 24px; font-weight: 500; letter-spacing: -0.015em; color: var(--lkv-ink-900); }
+  .stage-title .sub { font-size: 14px; color: var(--lkv-ink-500); }
+  .stage-title a { color: var(--lkv-forest-800); font-weight: 500; margin-left: 24px; }
+
+  .stage {
+    display: flex; gap: 40px;
+    max-width: 1720px; margin: 0 auto; padding: 0 40px;
+    align-items: flex-start;
+  }
+  .artboard-desktop {
+    width: 1280px; flex-shrink: 0;
+    border-radius: 32px; overflow: hidden;
+    background: var(--lkv-paper);
+    box-shadow: 0 30px 80px rgba(11,31,23,0.14);
+  }
+  .artboard-mobile {
+    width: 380px; flex-shrink: 0;
+    border-radius: 44px; overflow: hidden;
+    background: #000; padding: 12px;
+    box-shadow: 0 30px 80px rgba(11,31,23,0.18);
+    align-self: flex-start;
+  }
+  .artboard-mobile .screen {
+    width: 100%; height: 780px;
+    border-radius: 34px; overflow: hidden;
+    background: var(--lkv-paper); position: relative;
+  }
+  .board-caption {
+    margin-top: 14px; font-size: 12px; color: var(--lkv-ink-500);
+    text-align: center; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+
+  /* ————— HERO ————— */
+  .g-hero {
+    position: relative;
+    padding: 20px;
+    min-height: 500px;
+    color: #fff;
+    overflow: hidden;
+  }
+  .g-hero .bg {
+    position: absolute; inset: 0; z-index: 0;
+    background-image: url('assets/adventure-hiking.jpg');
+    background-size: cover; background-position: center;
+  }
+  .g-hero .bg::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0.35) 0%, rgba(11,31,23,0.15) 30%, rgba(11,31,23,0.85) 100%);
+  }
+  .g-hero > * { position: relative; z-index: 1; }
+
+  .top-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 10px 10px 24px;
+    background: rgba(255,255,255,0.65);
+    backdrop-filter: blur(24px) saturate(1.4);
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.5);
+    box-shadow: 0 8px 24px rgba(11,31,23,0.08);
+    color: var(--lkv-ink-900);
+  }
+  .top-nav .lkv-logo { color: var(--lkv-forest-800); font-weight: 600; }
+  .top-nav .links { display: flex; gap: 28px; }
+  .top-nav .links a {
+    font-size: 14px; color: var(--lkv-ink-700);
+    position: relative; padding: 6px 0;
+  }
+  .top-nav .links a.active { color: var(--lkv-forest-800); }
+  .top-nav .links a.active::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -2px;
+    height: 2px; background: var(--lkv-sage-500); border-radius: 2px;
+  }
+  .top-nav .right { display: flex; align-items: center; gap: 12px; }
+
+  .breadcrumb {
+    padding: 24px 60px 0;
+    font-size: 12px;
+    color: rgba(255,255,255,0.65);
+    letter-spacing: 0.06em;
+  }
+  .breadcrumb a { color: rgba(255,255,255,0.85); }
+  .breadcrumb .sep { margin: 0 8px; color: rgba(255,255,255,0.35); }
+
+  .g-hero-body {
+    padding: 36px 60px 40px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 60px;
+    align-items: end;
+  }
+  .g-hero-body .left {
+    max-width: 720px;
+  }
+  .g-hero-body .eye {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 14px; border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.24);
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .g-hero-body .eye .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-sage-300); }
+  .g-hero-body h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 76px; font-weight: 500;
+    letter-spacing: -0.035em; line-height: 0.96;
+    margin: 0 0 16px;
+  }
+  .g-hero-body h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-200); font-weight: 400;
+  }
+  .g-hero-body .lead {
+    font-family: var(--lkv-font-serif);
+    font-size: 18px; line-height: 1.4;
+    color: rgba(255,255,255,0.88);
+    max-width: 560px;
+    margin: 0 0 22px;
+  }
+  .g-hero-body .stats-row {
+    display: flex; gap: 24px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+  }
+  .g-hero-body .stats-row .s .n {
+    font-family: var(--lkv-font-sans);
+    font-size: 24px; font-weight: 500; letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .g-hero-body .stats-row .s .n em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+    font-size: 16px;
+  }
+  .g-hero-body .stats-row .s .l {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    margin-top: 6px;
+  }
+
+  .g-hero-body .right {
+    display: flex; flex-direction: column; align-items: flex-end;
+    gap: 12px;
+    text-align: right;
+  }
+  .g-hero-body .countdown {
+    padding: 14px 22px;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.24);
+    border-radius: 20px;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .g-hero-body .countdown .num {
+    font-family: var(--lkv-font-sans);
+    font-size: 44px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 1;
+  }
+  .g-hero-body .countdown .num em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .g-hero-body .countdown .lbl {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    margin-top: 6px;
+  }
+
+  .g-hero-body .action-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 44px; padding: 0 20px;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--lkv-ink-900);
+    font-size: 14px; font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  }
+  .g-hero-body .action-icon-row {
+    display: flex; gap: 8px;
+    margin-top: 4px;
+  }
+  .g-hero-body .action-icon {
+    width: 40px; height: 40px; border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.24);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ————— TABS ————— */
+  .g-tabs {
+    display: flex; gap: 4px;
+    padding: 0 60px;
+    border-bottom: 1px solid rgba(11,31,23,0.08);
+    background: rgba(248,250,248,0.94);
+    backdrop-filter: blur(20px);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .g-tabs::-webkit-scrollbar { display: none; }
+  .g-tab {
+    flex-shrink: 0;
+    padding: 20px 18px;
+    font-size: 14px; font-weight: 500;
+    color: var(--lkv-ink-500);
+    position: relative;
+    display: inline-flex; align-items: center; gap: 6px;
+    white-space: nowrap;
+  }
+  .g-tab .n {
+    font-family: var(--lkv-font-serif);
+    font-style: italic;
+    font-size: 12px;
+    color: var(--lkv-ink-400);
+  }
+  .g-tab .badge-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--lkv-warm-500);
+    margin-left: 4px;
+  }
+  .g-tab:hover { color: var(--lkv-ink-900); }
+  .g-tab.on { color: var(--lkv-forest-800); }
+  .g-tab.on::after {
+    content: ""; position: absolute; left: 18px; right: 18px; bottom: 0;
+    height: 2px; background: var(--lkv-forest-800);
+    border-radius: 2px 2px 0 0;
+  }
+  .g-tab.on .n { color: var(--lkv-sage-500); }
+
+  /* ————— MAIN LAYOUT ————— */
+  .g-main {
+    padding: 32px 60px 40px;
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 32px;
+  }
+
+  /* Sections */
+  .block {
+    background: #fff;
+    border-radius: 24px;
+    padding: 24px 24px 22px;
+    margin-bottom: 20px;
+    box-shadow: var(--lkv-shadow-sm);
+  }
+  .block > .head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 4px;
+    gap: 12px;
+  }
+  .block > .head .title {
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  .block > .head h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 22px; font-weight: 500;
+    letter-spacing: -0.015em;
+    margin: 0;
+    color: var(--lkv-ink-900);
+  }
+  .block > .head h3 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .block > .head .badge-count {
+    padding: 3px 10px;
+    background: var(--lkv-stone-50);
+    border-radius: 999px;
+    font-size: 11px;
+    color: var(--lkv-ink-500);
+    font-weight: 500;
+  }
+  .block > .head .badge-count strong { color: var(--lkv-forest-800); }
+  .block > .head a.link {
+    font-size: 13px; color: var(--lkv-forest-800); font-weight: 500;
+  }
+  .block > .head .actions { display: flex; gap: 6px; }
+  .block > .head .actions .b {
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--lkv-ink-500);
+    display: inline-flex; align-items: center; gap: 4px;
+    border: 1px solid rgba(11,31,23,0.08);
+  }
+  .block > .head .actions .b.primary {
+    background: var(--lkv-forest-800); color: #fff; border-color: var(--lkv-forest-800);
+  }
+  .block .sub {
+    font-size: 13px; color: var(--lkv-ink-500);
+    margin: 4px 0 20px;
+    max-width: 560px;
+  }
+
+  /* Progression */
+  .progress-block {
+    background: linear-gradient(135deg, var(--lkv-forest-800) 0%, var(--lkv-forest-700) 100%);
+    color: #fff;
+    padding: 28px;
+    border-radius: 24px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .progress-block::after {
+    content: ""; position: absolute;
+    right: -60px; bottom: -60px;
+    width: 240px; height: 240px; border-radius: 50%;
+    background: radial-gradient(circle, var(--lkv-sage-500) 0%, transparent 65%);
+    opacity: 0.32;
+  }
+  .progress-block > * { position: relative; z-index: 1; }
+  .progress-block .head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 4px;
+  }
+  .progress-block .head h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 22px; font-weight: 500;
+    letter-spacing: -0.015em;
+    margin: 0;
+  }
+  .progress-block .head h3 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .progress-block .head .pct {
+    font-family: var(--lkv-font-sans);
+    font-size: 28px; font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .progress-block .head .pct em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+    font-size: 16px; margin-left: 2px;
+  }
+  .progress-block .sub {
+    color: rgba(255,255,255,0.7);
+    font-size: 13px;
+    margin: 4px 0 22px;
+  }
+  .progress-bar {
+    height: 8px; border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    overflow: hidden;
+    margin-bottom: 22px;
+  }
+  .progress-bar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--lkv-sage-300), var(--lkv-sage-500));
+    border-radius: 999px;
+    width: 68%;
+  }
+  .steps-row {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    position: relative;
+  }
+  .step {
+    text-align: left;
+    padding-top: 24px;
+    position: relative;
+  }
+  .step::before {
+    content: "";
+    position: absolute; top: 8px; left: 0;
+    width: 100%; height: 2px;
+    background: rgba(255,255,255,0.14);
+  }
+  .step.done::before, .step.now::before { background: var(--lkv-sage-500); }
+  .step:first-child::before { left: 50%; width: 50%; }
+  .step:last-child::before { right: 50%; width: 50%; }
+  .step::after {
+    content: ""; position: absolute; top: 3px; left: 50%;
+    transform: translateX(-50%);
+    width: 12px; height: 12px; border-radius: 999px;
+    background: rgba(255,255,255,0.2);
+    border: 2px solid var(--lkv-forest-800);
+  }
+  .step.done::after {
+    background: var(--lkv-sage-500);
+    border-color: var(--lkv-sage-500);
+  }
+  .step.now::after {
+    background: #fff;
+    border-color: var(--lkv-sage-500);
+    box-shadow: 0 0 0 4px rgba(174,203,180,0.3);
+  }
+  .step .k {
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 3px;
+    text-align: center;
+  }
+  .step.done .k { color: var(--lkv-sage-300); }
+  .step.now .k { color: var(--lkv-sage-300); }
+  .step .l {
+    font-size: 11px; text-align: center;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.3;
+  }
+  .step.now .l { color: #fff; font-weight: 500; }
+
+  /* Map block */
+  .map-block .map-wrap {
+    aspect-ratio: 2/1;
+    background: linear-gradient(135deg, #E8EEE5 0%, #F1EEE4 100%);
+    border-radius: 20px;
+    padding: 20px;
+    overflow: hidden;
+    position: relative;
+  }
+  .map-block .map-wrap svg { width: 100%; height: 100%; display: block; }
+  .map-block .legend {
+    display: flex; gap: 20px; justify-content: space-between; align-items: center;
+    padding-top: 16px;
+    font-size: 12px; color: var(--lkv-ink-500);
+  }
+  .map-block .legend .item {
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .map-block .legend .item strong { color: var(--lkv-ink-900); font-weight: 500; }
+  .map-block .legend .item .swatch {
+    width: 12px; height: 3px; background: var(--lkv-forest-800); border-radius: 999px;
+  }
+  .map-block .legend .item .swatch.alt { background: var(--lkv-sage-500); }
+
+  /* Tasks */
+  .task-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto auto;
+    gap: 14px;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .task-row:last-child { border-bottom: none; }
+  .task-row .cb {
+    width: 20px; height: 20px; border-radius: 6px;
+    border: 1.5px solid rgba(11,31,23,0.2);
+    background: transparent;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .task-row.done .cb {
+    background: var(--lkv-forest-800);
+    border-color: var(--lkv-forest-800);
+    color: #fff;
+  }
+  .task-row .label {
+    font-size: 14px; color: var(--lkv-ink-900);
+    font-weight: 500;
+  }
+  .task-row .label .m {
+    font-size: 12px; color: var(--lkv-ink-500);
+    font-weight: 400; margin-top: 2px;
+  }
+  .task-row.done .label { color: var(--lkv-ink-500); text-decoration: line-through; }
+  .task-row .assignee {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--lkv-ink-500);
+  }
+  .task-row .assignee .av {
+    width: 22px; height: 22px; border-radius: 999px;
+    background-size: cover;
+  }
+  .task-row .due {
+    font-size: 12px; color: var(--lkv-ink-500);
+    padding: 4px 10px;
+    background: var(--lkv-stone-50);
+    border-radius: 999px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .task-row .due.urgent {
+    background: rgba(228,198,149,0.3);
+    color: var(--lkv-warm-500);
+  }
+  .task-row .due.done-tag {
+    background: var(--lkv-sage-100);
+    color: var(--lkv-forest-800);
+  }
+  .task-row .cat {
+    font-size: 11px;
+    padding: 3px 10px;
+    background: var(--lkv-sage-100);
+    color: var(--lkv-forest-800);
+    border-radius: 999px;
+    font-weight: 500;
+  }
+
+  .task-add {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px;
+    border: 1px dashed rgba(11,31,23,0.14);
+    border-radius: 14px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--lkv-ink-500);
+  }
+  .task-add svg { color: var(--lkv-forest-800); }
+
+  /* Equipment */
+  .eq-table {
+    display: grid;
+    gap: 4px;
+  }
+  .eq-head, .eq-row {
+    display: grid;
+    grid-template-columns: 2fr 1.3fr auto auto auto;
+    gap: 14px;
+    align-items: center;
+    padding: 12px 4px;
+  }
+  .eq-head {
+    padding: 8px 4px;
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-ink-500);
+    border-bottom: 1px solid rgba(11,31,23,0.08);
+  }
+  .eq-row {
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+  }
+  .eq-row:last-child { border-bottom: none; }
+  .eq-row .item {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 14px; color: var(--lkv-ink-900); font-weight: 500;
+  }
+  .eq-row .item .glyph {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--lkv-stone-50);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+    flex-shrink: 0;
+  }
+  .eq-row .item .sub {
+    font-size: 12px; color: var(--lkv-ink-500);
+    font-weight: 400;
+    margin-top: 1px;
+  }
+  .eq-row .who {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--lkv-ink-700);
+  }
+  .eq-row .who .av { width: 22px; height: 22px; border-radius: 999px; background-size: cover; }
+  .eq-row .who.unassigned {
+    padding: 3px 10px;
+    border: 1px dashed rgba(11,31,23,0.14);
+    border-radius: 999px;
+    font-size: 11px;
+    color: var(--lkv-ink-500);
+  }
+  .eq-row .weight {
+    font-family: var(--lkv-font-mono);
+    font-size: 12px;
+    color: var(--lkv-ink-500);
+  }
+  .eq-row .status-pill {
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .eq-row .status-pill.ok { background: var(--lkv-sage-100); color: var(--lkv-forest-800); }
+  .eq-row .status-pill.pending { background: rgba(228,198,149,0.3); color: var(--lkv-warm-500); }
+  .eq-row .status-pill.missing { background: rgba(11,31,23,0.06); color: var(--lkv-ink-500); }
+  .eq-row .action-b {
+    width: 28px; height: 28px; border-radius: 999px;
+    color: var(--lkv-ink-500);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .eq-row .action-b:hover { background: rgba(11,31,23,0.05); color: var(--lkv-forest-800); }
+
+  .eq-total {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 4px 4px;
+    margin-top: 6px;
+    border-top: 1px solid rgba(11,31,23,0.08);
+    font-size: 13px;
+  }
+  .eq-total .k { color: var(--lkv-ink-500); }
+  .eq-total .v {
+    font-family: var(--lkv-font-sans);
+    font-size: 18px; font-weight: 500;
+    letter-spacing: -0.015em;
+    color: var(--lkv-ink-900);
+  }
+  .eq-total .v em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+    font-size: 13px; margin-left: 2px;
+  }
+
+  /* Expenses */
+  .exp-top {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .exp-cell {
+    padding: 14px 16px;
+    background: var(--lkv-stone-50);
+    border-radius: 14px;
+  }
+  .exp-cell .k {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-ink-500);
+    margin-bottom: 6px;
+  }
+  .exp-cell .v {
+    font-family: var(--lkv-font-sans);
+    font-size: 26px; font-weight: 500;
+    letter-spacing: -0.02em; line-height: 1;
+    color: var(--lkv-ink-900);
+  }
+  .exp-cell .v em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+    font-size: 14px; margin-left: 2px;
+  }
+  .exp-cell .v.warm em { color: var(--lkv-warm-500); }
+
+  .exp-list { display: flex; flex-direction: column; gap: 4px; }
+  .exp-row {
+    display: grid; grid-template-columns: auto 1fr auto auto; gap: 14px;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+  }
+  .exp-row:last-child { border-bottom: none; }
+  .exp-row .av {
+    width: 32px; height: 32px; border-radius: 999px;
+    background-size: cover;
+  }
+  .exp-row .lbl {
+    font-size: 14px; color: var(--lkv-ink-900);
+    font-weight: 500;
+  }
+  .exp-row .lbl .m {
+    font-size: 12px; color: var(--lkv-ink-500);
+    font-weight: 400;
+    margin-top: 1px;
+  }
+  .exp-row .split {
+    font-size: 11px; color: var(--lkv-ink-500);
+    padding: 3px 10px;
+    background: var(--lkv-stone-50);
+    border-radius: 999px;
+  }
+  .exp-row .amt {
+    font-family: var(--lkv-font-sans);
+    font-size: 15px; font-weight: 500;
+    color: var(--lkv-ink-900);
+    letter-spacing: -0.01em;
+  }
+  .exp-row .amt em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+    font-size: 11px; margin-left: 2px;
+  }
+
+  .exp-balance {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px;
+    margin-top: 16px;
+    background: rgba(109,170,125,0.08);
+    border: 1px solid rgba(109,170,125,0.16);
+    border-radius: 14px;
+    font-size: 13px;
+    color: var(--lkv-forest-800);
+  }
+  .exp-balance .cta-eq {
+    padding: 6px 14px;
+    background: var(--lkv-forest-800);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 12px; font-weight: 500;
+  }
+
+  /* Decision / poll */
+  .poll-block .head-row {
+    display: flex; align-items: flex-start; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .poll-block .head-row .av {
+    width: 40px; height: 40px; border-radius: 999px;
+    background-size: cover;
+    flex-shrink: 0;
+  }
+  .poll-block .head-row .n { font-size: 14px; font-weight: 500; color: var(--lkv-ink-900); }
+  .poll-block .head-row .n .pill {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 8px;
+    background: var(--lkv-warm-300);
+    color: var(--lkv-forest-900);
+    border-radius: 999px;
+    font-size: 10px; letter-spacing: 0.04em;
+  }
+  .poll-block .head-row .m {
+    font-size: 12px; color: var(--lkv-ink-500);
+    margin-top: 2px;
+  }
+  .poll-block .q {
+    font-family: var(--lkv-font-serif);
+    font-size: 17px; line-height: 1.4;
+    color: var(--lkv-ink-900);
+    margin: 0 0 16px;
+  }
+  .poll-opt {
+    padding: 14px;
+    background: var(--lkv-stone-50);
+    border-radius: 14px;
+    margin-bottom: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+  .poll-opt.chosen {
+    background: rgba(109,170,125,0.1);
+    border: 1px solid rgba(109,170,125,0.3);
+  }
+  .poll-opt .top-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+    position: relative; z-index: 1;
+  }
+  .poll-opt .top-row .lbl {
+    font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .poll-opt .top-row .lbl .check {
+    width: 18px; height: 18px; border-radius: 999px;
+    background: var(--lkv-forest-800); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .poll-opt .top-row .pct {
+    font-family: var(--lkv-font-mono);
+    font-size: 12px;
+    color: var(--lkv-ink-500);
+  }
+  .poll-opt .bar {
+    height: 6px; background: rgba(11,31,23,0.06);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative; z-index: 1;
+  }
+  .poll-opt .bar .fill {
+    height: 100%; border-radius: 999px;
+    background: var(--lkv-forest-800);
+  }
+  .poll-opt .bar .fill.alt { background: var(--lkv-sage-500); }
+  .poll-opt .meta {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 8px;
+    font-size: 11px; color: var(--lkv-ink-500);
+  }
+  .poll-opt .meta .avs { display: flex; }
+  .poll-opt .meta .avs .a { width: 18px; height: 18px; border-radius: 999px; background-size: cover; border: 2px solid #fff; margin-left: -6px; }
+  .poll-opt .meta .avs .a:first-child { margin-left: 0; }
+  .poll-block .foot {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(11,31,23,0.06);
+    font-size: 12px; color: var(--lkv-ink-500);
+  }
+  .poll-block .foot strong { color: var(--lkv-forest-800); font-weight: 500; }
+
+  /* Composer */
+  .composer {
+    background: #fff;
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: var(--lkv-shadow-sm);
+    margin-bottom: 16px;
+    display: flex; gap: 14px; align-items: center;
+  }
+  .composer .av {
+    width: 40px; height: 40px; border-radius: 999px;
+    background-image: url('assets/portrait-1.jpg');
+    background-size: cover;
+    flex-shrink: 0;
+  }
+  .composer input {
+    flex: 1;
+    border: none; outline: none;
+    padding: 6px 0;
+    font-family: inherit; font-size: 14px;
+    color: var(--lkv-ink-500);
+    background: transparent;
+  }
+  .composer .tools { display: flex; gap: 2px; }
+  .composer .tools .b {
+    width: 32px; height: 32px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-500);
+  }
+  .composer .tools .b:hover { background: rgba(11,31,23,0.05); color: var(--lkv-forest-800); }
+
+  /* Post */
+  .post {
+    background: #fff;
+    border-radius: 20px;
+    padding: 18px 20px 14px;
+    margin-bottom: 12px;
+    box-shadow: var(--lkv-shadow-sm);
+  }
+  .post-head {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px;
+  }
+  .post-head .av { width: 36px; height: 36px; border-radius: 999px; background-size: cover; flex-shrink: 0; }
+  .post-head .n { font-size: 14px; font-weight: 500; color: var(--lkv-ink-900); }
+  .post-head .n .pill {
+    display: inline-block; margin-left: 6px;
+    padding: 2px 8px; border-radius: 999px;
+    background: var(--lkv-sage-100); color: var(--lkv-forest-800);
+    font-size: 10px; letter-spacing: 0.04em;
+  }
+  .post-head .m { font-size: 12px; color: var(--lkv-ink-500); }
+  .post-body {
+    font-family: var(--lkv-font-serif);
+    font-size: 15px; line-height: 1.4;
+    color: var(--lkv-ink-900);
+    margin: 0 0 12px;
+  }
+  .post-body .tag {
+    color: var(--lkv-forest-700);
+    font-family: var(--lkv-font-sans);
+    font-style: normal;
+    font-weight: 500;
+    font-size: 13px;
+  }
+  .post-img {
+    aspect-ratio: 16/9;
+    border-radius: 14px;
+    background-size: cover; background-position: center;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .post-img .geo {
+    position: absolute; top: 12px; left: 12px;
+    padding: 4px 10px;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(12px);
+    border-radius: 999px;
+    font-size: 11px;
+    color: var(--lkv-ink-900);
+    font-weight: 500;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .post-actions {
+    display: flex; gap: 4px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(11,31,23,0.06);
+  }
+  .post-actions .a {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 12px; color: var(--lkv-ink-500);
+  }
+  .post-actions .a.on { color: var(--lkv-forest-800); }
+  .post-actions .a .cnt { font-family: var(--lkv-font-mono); font-size: 11px; }
+  .post-actions .save { margin-left: auto; }
+
+  /* ——— RIGHT SIDEBAR ——— */
+  .sidebar {
+    display: flex; flex-direction: column; gap: 16px;
+    align-self: start;
+  }
+
+  /* Next departure countdown */
+  .depart-card {
+    background: linear-gradient(135deg, var(--lkv-forest-900) 0%, var(--lkv-forest-800) 100%);
+    color: #fff;
+    padding: 24px;
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .depart-card::after {
+    content: ""; position: absolute; right: -80px; top: -80px;
+    width: 200px; height: 200px; border-radius: 50%;
+    background: var(--lkv-sage-500);
+    opacity: 0.15;
+  }
+  .depart-card > * { position: relative; z-index: 1; }
+  .depart-card .row {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-sage-300);
+    margin-bottom: 10px;
+  }
+  .depart-card .row .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--lkv-sage-300);
+    animation: pulse 2s var(--lkv-ease) infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.4); }
+  }
+  .depart-card h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 26px; font-weight: 500;
+    letter-spacing: -0.02em; line-height: 1.05;
+    margin: 0 0 4px;
+  }
+  .depart-card h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .depart-card .place { font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 16px; }
+  .depart-card .date-strip {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 12px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    margin-bottom: 14px;
+  }
+  .depart-card .date-strip .k {
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 4px;
+  }
+  .depart-card .date-strip .v { font-size: 14px; font-weight: 500; }
+  .depart-card .attendees {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .depart-card .attendees .avs { display: flex; }
+  .depart-card .attendees .avs .a {
+    width: 24px; height: 24px; border-radius: 999px;
+    background-size: cover;
+    border: 2px solid var(--lkv-forest-800);
+    margin-left: -6px;
+  }
+  .depart-card .attendees .avs .a:first-child { margin-left: 0; }
+  .depart-card .attendees .cnt {
+    font-size: 12px; color: rgba(255,255,255,0.75);
+  }
+
+  /* Members panel */
+  .members-panel .member {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .members-panel .member:last-child { border-bottom: none; }
+  .members-panel .member .av {
+    width: 36px; height: 36px; border-radius: 999px;
+    background-size: cover;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .members-panel .member .av .st {
+    position: absolute; bottom: -1px; right: -1px;
+    width: 11px; height: 11px; border-radius: 999px;
+    border: 2px solid #fff;
+  }
+  .members-panel .member .av .st.ready { background: var(--lkv-sage-500); }
+  .members-panel .member .av .st.progress { background: var(--lkv-warm-500); }
+  .members-panel .member .av .st.away { background: var(--lkv-ink-300); }
+  .members-panel .member .txt .n {
+    font-size: 13px; font-weight: 500; color: var(--lkv-ink-900);
+    line-height: 1.2;
+  }
+  .members-panel .member .txt .r {
+    font-size: 11px; color: var(--lkv-ink-500);
+    margin-top: 2px;
+  }
+  .members-panel .member .prep-pill {
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .members-panel .member .prep-pill.ready { background: var(--lkv-sage-100); color: var(--lkv-forest-800); }
+  .members-panel .member .prep-pill.progress { background: rgba(228,198,149,0.3); color: var(--lkv-warm-500); }
+  .members-panel .member .prep-pill.away { background: rgba(11,31,23,0.06); color: var(--lkv-ink-500); }
+  .members-panel .invite-row {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border: 1px dashed rgba(11,31,23,0.14);
+    border-radius: 12px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px;
+    color: var(--lkv-ink-500);
+    cursor: pointer;
+  }
+  .members-panel .invite-row .plus {
+    width: 28px; height: 28px; border-radius: 999px;
+    background: var(--lkv-forest-800); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* Activity feed */
+  .activity-panel .act {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    align-items: start;
+  }
+  .activity-panel .act:last-child { border-bottom: none; }
+  .activity-panel .act .glyph {
+    width: 30px; height: 30px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+    background: var(--lkv-sage-100);
+    flex-shrink: 0;
+  }
+  .activity-panel .act .glyph.warm { background: rgba(228,198,149,0.35); color: var(--lkv-warm-500); }
+  .activity-panel .act .glyph.done { background: var(--lkv-forest-800); color: #fff; }
+  .activity-panel .act .txt {
+    font-size: 13px; line-height: 1.4;
+    color: var(--lkv-ink-700);
+  }
+  .activity-panel .act .txt strong {
+    color: var(--lkv-ink-900); font-weight: 500;
+  }
+  .activity-panel .act .when {
+    font-size: 11px; color: var(--lkv-ink-500);
+    white-space: nowrap;
+  }
+
+  /* About */
+  .about-info { padding: 4px 0 0; }
+  .about-info .row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0;
+    font-size: 13px;
+    color: var(--lkv-ink-700);
+  }
+  .about-info .row svg { color: var(--lkv-ink-500); flex-shrink: 0; }
+  .about-info .row .k { color: var(--lkv-ink-500); font-size: 12px; margin-right: auto; }
+  .about-info .row .v { font-weight: 500; color: var(--lkv-ink-900); }
+
+  /* Turn to carnet card */
+  .to-carnet {
+    background: linear-gradient(135deg, #F5E6C4 0%, var(--lkv-warm-300) 100%);
+    color: var(--lkv-forest-900);
+    padding: 20px;
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .to-carnet::after {
+    content: "";
+    position: absolute; right: -30px; bottom: -30px;
+    width: 130px; height: 130px; border-radius: 50%;
+    background: rgba(255,255,255,0.35);
+  }
+  .to-carnet > * { position: relative; z-index: 1; }
+  .to-carnet .eye {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: 999px;
+    background: rgba(11,31,23,0.08);
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--lkv-forest-900);
+    margin-bottom: 12px;
+  }
+  .to-carnet .eye .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--lkv-warm-500); }
+  .to-carnet h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 18px; font-weight: 500;
+    letter-spacing: -0.015em; line-height: 1.15;
+    margin: 0 0 6px;
+  }
+  .to-carnet h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .to-carnet p {
+    font-size: 12px; color: var(--lkv-forest-900);
+    opacity: 0.8;
+    line-height: 1.4;
+    margin: 0 0 12px;
+  }
+  .to-carnet .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 11px;
+    background: rgba(255,255,255,0.55);
+    color: var(--lkv-forest-800);
+    border-radius: 999px;
+    font-size: 11px; font-weight: 500;
+  }
+
+  /* ————— FOOTER ————— */
+  .footer {
+    background: var(--lkv-forest-950); color: #fff;
+    padding: 60px 60px 40px;
+  }
+  .footer .brand {
+    font-family: var(--lkv-font-sans);
+    font-size: 38px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1;
+    margin-bottom: 40px;
+    max-width: 720px;
+  }
+  .footer .brand em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .footer .bottom {
+    display: flex; justify-content: space-between;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 12px; color: rgba(255,255,255,0.4);
+  }
+
+  /* ================= MOBILE ================ */
+  .m-cover {
+    position: relative;
+    height: 220px;
+    background-image: url('assets/adventure-hiking.jpg');
+    background-size: cover; background-position: center;
+  }
+  .m-cover::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0.4) 0%, transparent 30%, rgba(11,31,23,0.85));
+  }
+  .m-cover .top {
+    position: relative; z-index: 1;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 16px;
+    color: #fff;
+  }
+  .m-cover .top .back, .m-cover .top .dot-b {
+    width: 36px; height: 36px; border-radius: 999px;
+    background: rgba(255,255,255,0.16);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.24);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+  }
+  .m-cover .top .dots { display: flex; gap: 6px; }
+  .m-cover .head {
+    position: absolute; left: 20px; right: 20px; bottom: 14px; z-index: 1;
+    color: #fff;
+  }
+  .m-cover .head .eye {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(255,255,255,0.16);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.24);
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .m-cover .head .eye .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--lkv-sage-300); }
+  .m-cover .head h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 26px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1;
+    margin: 0 0 4px;
+  }
+  .m-cover .head h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-200); font-weight: 400;
+  }
+  .m-cover .head .meta {
+    font-size: 11px; color: rgba(255,255,255,0.75);
+  }
+
+  .m-countdown {
+    margin: 14px 16px 4px;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--lkv-forest-900), var(--lkv-forest-800));
+    color: #fff;
+    border-radius: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .m-countdown::after {
+    content: ""; position: absolute; right: -30px; bottom: -30px;
+    width: 120px; height: 120px; border-radius: 50%;
+    background: radial-gradient(circle, var(--lkv-sage-500) 0%, transparent 65%);
+    opacity: 0.28;
+  }
+  .m-countdown > * { position: relative; z-index: 1; }
+  .m-countdown .row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .m-countdown .row .k {
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-sage-300);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .m-countdown .row .k .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--lkv-sage-300); }
+  .m-countdown .row .cd {
+    font-family: var(--lkv-font-sans);
+    font-size: 26px; font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .m-countdown .row .cd em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .m-countdown .prep {
+    height: 5px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .m-countdown .prep .f {
+    height: 100%; width: 68%;
+    background: var(--lkv-sage-500);
+    border-radius: 999px;
+  }
+  .m-countdown .prep-info {
+    display: flex; justify-content: space-between;
+    font-size: 10px; color: rgba(255,255,255,0.65);
+  }
+
+  .m-tabs {
+    display: flex;
+    padding: 0 14px;
+    background: #fff;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .m-tabs::-webkit-scrollbar { display: none; }
+  .m-tabs .t {
+    flex-shrink: 0;
+    padding: 12px 10px;
+    font-size: 13px; font-weight: 500;
+    color: var(--lkv-ink-500);
+    position: relative;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .m-tabs .t.on { color: var(--lkv-forest-800); }
+  .m-tabs .t.on::after {
+    content: ""; position: absolute; left: 10px; right: 10px; bottom: 0;
+    height: 2px; background: var(--lkv-forest-800);
+    border-radius: 2px 2px 0 0;
+  }
+  .m-tabs .t .n {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 11px;
+    color: var(--lkv-ink-400);
+  }
+
+  .m-body {
+    padding: 12px 16px 90px;
+  }
+  .m-block {
+    background: #fff;
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 10px;
+    box-shadow: var(--lkv-shadow-xs);
+  }
+  .m-block h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 15px; font-weight: 500;
+    letter-spacing: -0.01em;
+    margin: 0 0 10px;
+    color: var(--lkv-ink-900);
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .m-block h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .m-block h4 .n { font-size: 11px; color: var(--lkv-ink-500); font-weight: 400; }
+  .m-block h4 .n .warn { color: var(--lkv-warm-500); font-weight: 500; }
+
+  /* mobile task */
+  .m-task {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+    font-size: 13px;
+  }
+  .m-task:last-child { border-bottom: none; }
+  .m-task .cb {
+    width: 18px; height: 18px; border-radius: 5px;
+    border: 1.5px solid rgba(11,31,23,0.2);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .m-task.done .cb { background: var(--lkv-forest-800); border-color: var(--lkv-forest-800); color: #fff; }
+  .m-task.done .lbl { color: var(--lkv-ink-500); text-decoration: line-through; }
+  .m-task .lbl { flex: 1; color: var(--lkv-ink-900); font-weight: 500; }
+  .m-task .av { width: 20px; height: 20px; border-radius: 999px; background-size: cover; }
+
+  /* mobile equipment */
+  .m-eq {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+    font-size: 13px;
+  }
+  .m-eq:last-child { border-bottom: none; }
+  .m-eq .g {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: var(--lkv-stone-50);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+    flex-shrink: 0;
+  }
+  .m-eq .n { flex: 1; color: var(--lkv-ink-900); font-weight: 500; }
+  .m-eq .n .m { font-size: 11px; color: var(--lkv-ink-500); font-weight: 400; margin-top: 1px; }
+  .m-eq .st {
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .m-eq .st.ok { background: var(--lkv-sage-100); color: var(--lkv-forest-800); }
+  .m-eq .st.pending { background: rgba(228,198,149,0.3); color: var(--lkv-warm-500); }
+
+  /* mobile expense summary */
+  .m-exp-summary {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .m-exp-summary .cell {
+    padding: 10px 12px;
+    background: var(--lkv-stone-50);
+    border-radius: 12px;
+  }
+  .m-exp-summary .cell .k {
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-ink-500);
+    margin-bottom: 3px;
+  }
+  .m-exp-summary .cell .v {
+    font-family: var(--lkv-font-sans);
+    font-size: 18px; font-weight: 500;
+    letter-spacing: -0.015em;
+    color: var(--lkv-ink-900);
+    line-height: 1;
+  }
+  .m-exp-summary .cell .v em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+    font-size: 11px; margin-left: 1px;
+  }
+
+  /* mobile members */
+  .m-member {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+  }
+  .m-member:last-child { border-bottom: none; }
+  .m-member .av {
+    width: 32px; height: 32px; border-radius: 999px;
+    background-size: cover;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .m-member .av .st {
+    position: absolute; bottom: -1px; right: -1px;
+    width: 10px; height: 10px; border-radius: 999px;
+    border: 2px solid #fff;
+  }
+  .m-member .av .st.ready { background: var(--lkv-sage-500); }
+  .m-member .av .st.progress { background: var(--lkv-warm-500); }
+  .m-member .av .st.away { background: var(--lkv-ink-300); }
+  .m-member .txt { flex: 1; }
+  .m-member .n { font-size: 13px; font-weight: 500; color: var(--lkv-ink-900); line-height: 1.2; }
+  .m-member .r { font-size: 10px; color: var(--lkv-ink-500); margin-top: 1px; }
+  .m-member .prep {
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 9px; font-weight: 500;
+  }
+  .m-member .prep.ready { background: var(--lkv-sage-100); color: var(--lkv-forest-800); }
+  .m-member .prep.progress { background: rgba(228,198,149,0.3); color: var(--lkv-warm-500); }
+
+  /* mobile activity */
+  .m-act {
+    display: flex; gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+    align-items: start;
+  }
+  .m-act:last-child { border-bottom: none; }
+  .m-act .g {
+    width: 26px; height: 26px; border-radius: 999px;
+    background: var(--lkv-sage-100);
+    color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .m-act .g.warm { background: rgba(228,198,149,0.35); color: var(--lkv-warm-500); }
+  .m-act .txt {
+    font-size: 12px; color: var(--lkv-ink-700);
+    line-height: 1.35;
+  }
+  .m-act .txt strong { color: var(--lkv-ink-900); font-weight: 500; }
+  .m-act .txt .when { font-size: 10px; color: var(--lkv-ink-500); margin-top: 2px; }
+
+  /* mobile carnet CTA */
+  .m-to-carnet {
+    margin: 4px 0 10px;
+    padding: 14px;
+    background: linear-gradient(135deg, #F5E6C4 0%, var(--lkv-warm-300) 100%);
+    color: var(--lkv-forest-900);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .m-to-carnet::after {
+    content: "";
+    position: absolute; right: -20px; bottom: -20px;
+    width: 90px; height: 90px; border-radius: 50%;
+    background: rgba(255,255,255,0.35);
+  }
+  .m-to-carnet > * { position: relative; z-index: 1; }
+  .m-to-carnet .eye {
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-forest-900);
+    margin-bottom: 6px;
+  }
+  .m-to-carnet h5 {
+    font-family: var(--lkv-font-sans);
+    font-size: 15px; font-weight: 500;
+    letter-spacing: -0.01em; line-height: 1.15;
+    margin: 0 0 4px;
+  }
+  .m-to-carnet h5 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .m-to-carnet p { font-size: 11px; opacity: 0.7; margin: 0 0 8px; line-height: 1.35; }
+  .m-to-carnet .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px;
+    background: rgba(255,255,255,0.55);
+    color: var(--lkv-forest-800);
+    border-radius: 999px;
+    font-size: 10px; font-weight: 500;
+  }
+
+  .m-tabbar {
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 10px 8px;
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 24px;
+    box-shadow: 0 8px 24px rgba(11,31,23,0.08);
+  }
+  .m-tabbar .tabi {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-500);
+  }
+  .m-tabbar .tabi.on { background: var(--lkv-forest-800); color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="stage-title">
+  <div>
+    <div class="h">Groupes — Cockpit du voyage</div>
+    <div class="sub">Un voyage préparé à plusieurs — tâches, équipement, dépenses, décisions</div>
+  </div>
+  <div>
+    <a href="Home.html">← Home</a>
+    <a href="Clubs.html">Clubs</a>
+    <a href="Carnet.html">Carnet</a>
+    <a href="Communauté.html">Communauté</a>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ========== DESKTOP ========== -->
+  <div>
+  <div class="artboard-desktop">
+
+    <!-- HERO -->
+    <section class="g-hero">
+      <div class="bg"></div>
+
+      <nav class="top-nav">
+        <div class="lkv-logo">
+          <svg viewBox="0 0 32 32" width="24" height="24" fill="none">
+            <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+          </svg>
+          <span>Le Kit du Voyageur</span>
+        </div>
+        <div class="links">
+          <a href="Recherche Carte.html">Aventures</a>
+          <a href="#">Refuges</a>
+          <a href="Boutique.html">Boutique</a>
+          <a href="Carnet.html">Carnet</a>
+          <a href="Communauté.html" class="active">Groupes</a>
+        </div>
+        <div class="right">
+          <button class="lkv-btn lkv-btn-icon lkv-btn-ghost">
+            <svg class="lkv-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          </button>
+          <button class="lkv-btn lkv-btn-primary lkv-btn-sm">Inviter</button>
+        </div>
+      </nav>
+
+      <div class="breadcrumb">
+        <a href="Communauté.html">Communauté</a>
+        <span class="sep">›</span>
+        <a href="#">Mes groupes</a>
+        <span class="sep">›</span>
+        <span>Traversée de la Chartreuse</span>
+      </div>
+
+      <div class="g-hero-body">
+        <div class="left">
+          <div class="eye"><span class="dot"></span>Voyage collaboratif · 6 personnes · Automne 2026</div>
+          <h1>Traversée de la<br/><em>Chartreuse.</em></h1>
+          <p class="lead">Trois jours en refuge gardé, du 12 au 14 octobre. On prépare le sac à plusieurs, on se partage les repas, on tranche les décisions par vote. Au retour, le voyage devient un carnet.</p>
+          <div class="stats-row">
+            <div class="s"><div class="n">3<em> jours</em></div><div class="l">Durée</div></div>
+            <div class="s"><div class="n">27,4<em>km</em></div><div class="l">Distance</div></div>
+            <div class="s"><div class="n">1 620<em>m</em></div><div class="l">Dénivelé +</div></div>
+            <div class="s"><div class="n">6<em>/ 8</em></div><div class="l">Voyageurs</div></div>
+          </div>
+        </div>
+        <div class="right">
+          <div class="countdown">
+            <div class="num">J-<em>16</em></div>
+            <div class="lbl">avant le départ</div>
+          </div>
+          <button class="action-btn">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14" style="color: var(--lkv-forest-800)"><path d="M12 4v16M4 12h16"/></svg>
+            Inviter un ami
+          </button>
+          <div class="action-icon-row">
+            <button class="action-icon" title="Discussion">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </button>
+            <button class="action-icon" title="Partager">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+            </button>
+            <button class="action-icon" title="Options">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TABS -->
+    <nav class="g-tabs">
+      <button class="g-tab on">Vue d'ensemble</button>
+      <button class="g-tab">Tâches <span class="n">8</span><span class="badge-dot"></span></button>
+      <button class="g-tab">Équipement <span class="n">14</span></button>
+      <button class="g-tab">Dépenses <span class="n">468&nbsp;€</span></button>
+      <button class="g-tab">Décisions <span class="n">2</span><span class="badge-dot"></span></button>
+      <button class="g-tab">Discussion <span class="n">124</span></button>
+      <button class="g-tab">Membres <span class="n">6</span></button>
+    </nav>
+
+    <!-- MAIN -->
+    <section class="g-main">
+
+      <!-- LEFT COLUMN -->
+      <div>
+
+        <!-- PROGRESSION -->
+        <div class="progress-block">
+          <div class="head">
+            <h3>Progression <em>du voyage</em></h3>
+            <div class="pct">68<em>%</em></div>
+          </div>
+          <div class="sub">Étape en cours : équipement partagé — il reste 3 tâches à valider avant réservation des refuges.</div>
+          <div class="progress-bar"><div class="fill"></div></div>
+          <div class="steps-row">
+            <div class="step done"><div class="k">Étape 1</div><div class="l">Idée</div></div>
+            <div class="step done"><div class="k">Étape 2</div><div class="l">Dates fixées</div></div>
+            <div class="step done"><div class="k">Étape 3</div><div class="l">Itinéraire</div></div>
+            <div class="step now"><div class="k">Étape 4</div><div class="l">Équipement</div></div>
+            <div class="step"><div class="k">Étape 5</div><div class="l">Réservations</div></div>
+            <div class="step"><div class="k">Étape 6</div><div class="l">Prêt à partir</div></div>
+          </div>
+        </div>
+
+        <!-- MAP -->
+        <div class="block map-block">
+          <div class="head">
+            <div class="title">
+              <h3>Le <em>parcours</em></h3>
+              <span class="badge-count">3 étapes · <strong>27,4 km</strong></span>
+            </div>
+            <div class="actions">
+              <button class="b"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 5v14M5 12l7 7 7-7"/></svg>GPX</button>
+              <button class="b primary">Modifier</button>
+            </div>
+          </div>
+          <div class="sub">Saint-Pierre-de-Chartreuse → Charmant Som → Grand Vaneau → Col de la Charmette. Deux nuits en refuge gardé.</div>
+          <div class="map-wrap">
+            <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+              <path d="M0 240 Q120 200 200 220 T400 210 T600 220 T720 230 L720 300 L0 300 Z" fill="#D8E1D0" opacity="0.65"/>
+              <path d="M0 190 Q120 150 240 170 T460 150 T680 180" stroke="#B7C6B0" stroke-width="1.2" fill="none" stroke-dasharray="3 5" opacity="0.6"/>
+              <path d="M0 140 Q140 100 260 130 T500 100 T700 130" stroke="#B7C6B0" stroke-width="1" fill="none" stroke-dasharray="3 5" opacity="0.4"/>
+              
+              <!-- trail path -->
+              <path d="M60 240 Q180 200 260 190 Q320 180 380 150 Q450 120 540 100 Q620 80 680 70" 
+                stroke="#1F4A3A" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <path d="M60 240 Q180 200 260 190 Q320 180 380 150 Q450 120 540 100 Q620 80 680 70"
+                stroke="#6DAA7D" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-dasharray="4 5"/>
+              
+              <!-- markers -->
+              <g>
+                <circle cx="60" cy="240" r="12" fill="#fff" stroke="#1F4A3A" stroke-width="2.5"/>
+                <text x="60" y="245" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="12" fill="#1F4A3A">1</text>
+                <text x="60" y="270" text-anchor="middle" font-family="General Sans" font-size="11" fill="#2A322E" font-weight="500">Saint-Pierre</text>
+                <text x="60" y="285" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="10" fill="#566159">Départ</text>
+              </g>
+              <g>
+                <circle cx="260" cy="190" r="12" fill="#fff" stroke="#1F4A3A" stroke-width="2.5"/>
+                <text x="260" y="195" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="12" fill="#1F4A3A">2</text>
+                <text x="260" y="170" text-anchor="middle" font-family="General Sans" font-size="11" fill="#2A322E" font-weight="500">Charmant Som</text>
+                <text x="260" y="155" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="10" fill="#566159">Nuit 1</text>
+              </g>
+              <g>
+                <circle cx="440" cy="130" r="12" fill="#fff" stroke="#1F4A3A" stroke-width="2.5"/>
+                <text x="440" y="135" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="12" fill="#1F4A3A">3</text>
+                <text x="440" y="110" text-anchor="middle" font-family="General Sans" font-size="11" fill="#2A322E" font-weight="500">Grand Vaneau</text>
+                <text x="440" y="95" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="10" fill="#566159">Nuit 2</text>
+              </g>
+              <g>
+                <circle cx="680" cy="70" r="12" fill="#1F4A3A" stroke="#1F4A3A" stroke-width="2.5"/>
+                <path d="M674 70 L678 74 L686 66" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                <text x="680" y="50" text-anchor="middle" font-family="General Sans" font-size="11" fill="#2A322E" font-weight="500">Col Charmette</text>
+                <text x="680" y="35" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="10" fill="#566159">Arrivée</text>
+              </g>
+              
+              <!-- N compass -->
+              <g transform="translate(680 260)">
+                <circle r="14" fill="#fff" stroke="#E4DED2" stroke-width="1"/>
+                <path d="M0 -8 L4 6 L0 3 L-4 6 Z" fill="#1F4A3A"/>
+                <text y="-16" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="9" fill="#566159">N</text>
+              </g>
+            </svg>
+          </div>
+          <div class="legend">
+            <div class="item"><span class="swatch"></span><strong>Tracé principal</strong></div>
+            <div class="item"><span class="swatch alt"></span>Variantes possibles</div>
+            <div class="item">1 620 m D+ · <strong>3 refuges</strong></div>
+          </div>
+        </div>
+
+        <!-- TASKS -->
+        <div class="block">
+          <div class="head">
+            <div class="title">
+              <h3>Tâches <em>à faire</em></h3>
+              <span class="badge-count"><strong>3</strong> restantes · 5 terminées</span>
+            </div>
+            <div class="actions">
+              <button class="b">Filtrer</button>
+              <button class="b primary"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 4v16M4 12h16"/></svg>Ajouter</button>
+            </div>
+          </div>
+          <div class="sub">Chacun s'attribue une tâche. Les rappels partent 48 h avant l'échéance.</div>
+
+          <div class="task-row done">
+            <div class="cb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><path d="M5 12l4 4L19 6"/></svg></div>
+            <div class="label">Fixer les dates du week-end<div class="m">2 sondages · résolu</div></div>
+            <div class="assignee"><div class="av" style="background-image: url('assets/portrait-2.jpg')"></div>Léna</div>
+            <div class="due done-tag">Fait</div>
+            <div class="cat">Dates</div>
+          </div>
+
+          <div class="task-row done">
+            <div class="cb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><path d="M5 12l4 4L19 6"/></svg></div>
+            <div class="label">Réserver le refuge du Charmant Som<div class="m">Nuit 1 · 6 places confirmées</div></div>
+            <div class="assignee"><div class="av" style="background-image: url('assets/portrait-3.jpg')"></div>Antoine</div>
+            <div class="due done-tag">Fait</div>
+            <div class="cat">Refuge</div>
+          </div>
+
+          <div class="task-row">
+            <div class="cb"></div>
+            <div class="label">Confirmer le Grand Vaneau (nuit 2)<div class="m">Attente réponse d'Hélène — relancer par téléphone</div></div>
+            <div class="assignee"><div class="av" style="background-image: url('assets/portrait-1.jpg')"></div>Marceline</div>
+            <div class="due urgent">Dans 3 j</div>
+            <div class="cat">Refuge</div>
+          </div>
+
+          <div class="task-row">
+            <div class="cb"></div>
+            <div class="label">Acheter le gaz pour le réchaud<div class="m">2 cartouches 230 g suffisent pour le groupe</div></div>
+            <div class="assignee"><div class="av" style="background-image: url('assets/portrait-3.jpg')"></div>Antoine</div>
+            <div class="due">Dans 6 j</div>
+            <div class="cat">Matériel</div>
+          </div>
+
+          <div class="task-row">
+            <div class="cb"></div>
+            <div class="label">Préparer les repas du samedi midi<div class="m">Menu proposé : polenta + charcuterie du plateau</div></div>
+            <div class="assignee"><div class="av" style="background-image: url('assets/portrait-2.jpg')"></div>Léna</div>
+            <div class="due">Dans 9 j</div>
+            <div class="cat">Repas</div>
+          </div>
+
+          <div class="task-add">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 4v16M4 12h16"/></svg>
+            Ajouter une tâche pour ce voyage…
+          </div>
+        </div>
+
+        <!-- EQUIPMENT -->
+        <div class="block">
+          <div class="head">
+            <div class="title">
+              <h3>Équipement <em>partagé</em></h3>
+              <span class="badge-count">14 items · <strong>3 non-attribués</strong></span>
+            </div>
+            <div class="actions">
+              <button class="b">Import kit</button>
+              <button class="b primary"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 4v16M4 12h16"/></svg>Ajouter</button>
+            </div>
+          </div>
+          <div class="sub">Chaque objet est apporté par une personne. Les poids se totalisent automatiquement.</div>
+
+          <div class="eq-table">
+            <div class="eq-head">
+              <div>Objet</div>
+              <div>Apporté par</div>
+              <div>Poids</div>
+              <div>Statut</div>
+              <div></div>
+            </div>
+
+            <div class="eq-row">
+              <div class="item">
+                <div class="glyph"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M8 4h8v3l3 2v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9l3-2z"/></svg></div>
+                <div>Tente 3-places MSR<div class="sub">Prêt Léna, testé cet été</div></div>
+              </div>
+              <div class="who"><div class="av" style="background-image: url('assets/portrait-2.jpg')"></div>Léna</div>
+              <div class="weight">2,1 kg</div>
+              <div><span class="status-pill ok">Confirmé</span></div>
+              <button class="action-b"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg></button>
+            </div>
+
+            <div class="eq-row">
+              <div class="item">
+                <div class="glyph"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M4 10c0-3 4-4 8-4s8 1 8 4v6c0 3-4 4-8 4s-8-1-8-4z"/><path d="M8 10v10M16 10v10"/></svg></div>
+                <div>Réchaud MSR PocketRocket<div class="sub">+ 2 cartouches 230 g</div></div>
+              </div>
+              <div class="who"><div class="av" style="background-image: url('assets/portrait-3.jpg')"></div>Antoine</div>
+              <div class="weight">340 g</div>
+              <div><span class="status-pill ok">Confirmé</span></div>
+              <button class="action-b"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg></button>
+            </div>
+
+            <div class="eq-row">
+              <div class="item">
+                <div class="glyph"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 6V4M16 6V4"/></svg></div>
+                <div>Trousse pharmacie collective<div class="sub">À compléter avec antihistaminique</div></div>
+              </div>
+              <div class="who"><div class="av" style="background-image: url('assets/portrait-1.jpg')"></div>Marceline</div>
+              <div class="weight">280 g</div>
+              <div><span class="status-pill pending">À vérifier</span></div>
+              <button class="action-b"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg></button>
+            </div>
+
+            <div class="eq-row">
+              <div class="item">
+                <div class="glyph"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/></svg></div>
+                <div>Cartes IGN 25 000 · secteur Chartreuse<div class="sub">3324OT + 3333OT</div></div>
+              </div>
+              <div class="who unassigned">Non attribué</div>
+              <div class="weight">200 g</div>
+              <div><span class="status-pill missing">À affecter</span></div>
+              <button class="action-b"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg></button>
+            </div>
+
+            <div class="eq-row">
+              <div class="item">
+                <div class="glyph"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></div>
+                <div>Corde 30 m + cordelette<div class="sub">Précaution passage col Vert</div></div>
+              </div>
+              <div class="who"><div class="av" style="background-image: url('assets/portrait-3.jpg')"></div>Antoine</div>
+              <div class="weight">1,8 kg</div>
+              <div><span class="status-pill ok">Confirmé</span></div>
+              <button class="action-b"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg></button>
+            </div>
+          </div>
+
+          <div class="eq-total">
+            <div class="k">Poids total du matériel partagé</div>
+            <div class="v">4,72 <em>kg</em> · réparti sur 6 sacs</div>
+          </div>
+        </div>
+
+        <!-- EXPENSES -->
+        <div class="block">
+          <div class="head">
+            <div class="title">
+              <h3>Dépenses <em>du voyage</em></h3>
+              <span class="badge-count">468 € · <strong>6 personnes</strong></span>
+            </div>
+            <div class="actions">
+              <button class="b">Historique</button>
+              <button class="b primary"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 4v16M4 12h16"/></svg>Ajouter</button>
+            </div>
+          </div>
+          <div class="sub">Les dépenses se partagent automatiquement. Un coup d'œil suffit à voir qui doit combien à la fin.</div>
+
+          <div class="exp-top">
+            <div class="exp-cell"><div class="k">Total engagé</div><div class="v">468<em>€</em></div></div>
+            <div class="exp-cell"><div class="k">Par personne</div><div class="v">78<em>€</em></div></div>
+            <div class="exp-cell"><div class="k">Vous devez</div><div class="v warm">−26<em>€</em></div></div>
+          </div>
+
+          <div class="exp-list">
+            <div class="exp-row">
+              <div class="av" style="background-image: url('assets/portrait-3.jpg')"></div>
+              <div class="lbl">Réservation Charmant Som<div class="m">Antoine · versé le 2 oct.</div></div>
+              <div class="split">6 parts</div>
+              <div class="amt">288<em>€</em></div>
+            </div>
+            <div class="exp-row">
+              <div class="av" style="background-image: url('assets/portrait-2.jpg')"></div>
+              <div class="lbl">Cartes IGN + gaz<div class="m">Léna · versé le 8 oct.</div></div>
+              <div class="split">6 parts</div>
+              <div class="amt">54<em>€</em></div>
+            </div>
+            <div class="exp-row">
+              <div class="av" style="background-image: url('assets/portrait-1.jpg')"></div>
+              <div class="lbl">Courses samedi midi<div class="m">Marceline · à venir</div></div>
+              <div class="split">6 parts</div>
+              <div class="amt">72<em>€</em></div>
+            </div>
+            <div class="exp-row">
+              <div class="av" style="background-image: url('assets/portrait-3.jpg')"></div>
+              <div class="lbl">Essence trajet aller<div class="m">Antoine · covoiturage 3 places</div></div>
+              <div class="split">3 parts</div>
+              <div class="amt">54<em>€</em></div>
+            </div>
+          </div>
+
+          <div class="exp-balance">
+            <span>Antoine vous doit <strong>12 €</strong> · Vous devez <strong>38 €</strong> à Léna. Solde net : <strong>−26 €</strong></span>
+            <button class="cta-eq">Équilibrer les comptes</button>
+          </div>
+        </div>
+
+        <!-- DECISIONS / POLL -->
+        <div class="block poll-block">
+          <div class="head">
+            <div class="title">
+              <h3>Décisions <em>en cours</em></h3>
+              <span class="badge-count"><strong>1</strong> vote actif · 1 archivée</span>
+            </div>
+            <div class="actions">
+              <button class="b">Historique</button>
+              <button class="b primary"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 4v16M4 12h16"/></svg>Lancer un vote</button>
+            </div>
+          </div>
+          <div class="sub">Les décisions structurantes passent par un vote. On tranche vendredi à 20 h.</div>
+
+          <div class="head-row">
+            <div class="av" style="background-image: url('assets/portrait-2.jpg')"></div>
+            <div style="flex: 1;">
+              <div class="n">Léna Vaudois <span class="pill">Admin</span></div>
+              <div class="m">Vote lancé il y a 5 jours · clôt vendredi 20 h</div>
+            </div>
+          </div>
+
+          <p class="q">Variante haute par le col Vert, ou tracé bleu par le refuge ? Antoine a signalé le sentier délavé après la source du Guiers — on doit trancher avant vendredi.</p>
+
+          <div class="poll-opt chosen">
+            <div class="top-row">
+              <div class="lbl">
+                <div class="check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l4 4L19 6"/></svg></div>
+                Variante haute · col Vert (12,8 km)
+              </div>
+              <div class="pct">67 %</div>
+            </div>
+            <div class="bar"><div class="fill" style="width: 67%;"></div></div>
+            <div class="meta">
+              <div class="avs">
+                <div class="a" style="background-image: url('assets/portrait-1.jpg')"></div>
+                <div class="a" style="background-image: url('assets/portrait-2.jpg')"></div>
+                <div class="a" style="background-image: url('assets/portrait-3.jpg')"></div>
+                <div class="a" style="background-image: url('assets/portrait-1.jpg'); filter: hue-rotate(30deg)"></div>
+              </div>
+              <span>4 votes · vous avez voté pour</span>
+            </div>
+          </div>
+
+          <div class="poll-opt">
+            <div class="top-row">
+              <div class="lbl">Tracé bleu · descente refuge (11,2 km)</div>
+              <div class="pct">33 %</div>
+            </div>
+            <div class="bar"><div class="fill alt" style="width: 33%;"></div></div>
+            <div class="meta">
+              <div class="avs">
+                <div class="a" style="background-image: url('assets/portrait-2.jpg'); filter: hue-rotate(-40deg)"></div>
+                <div class="a" style="background-image: url('assets/portrait-3.jpg'); filter: hue-rotate(60deg)"></div>
+              </div>
+              <span>2 votes</span>
+            </div>
+          </div>
+
+          <div class="foot">
+            <span>6 votes exprimés · <strong>67 % pour variante haute</strong></span>
+            <span>Clôture vendredi 18 oct. · 20 h</span>
+          </div>
+        </div>
+
+        <!-- DISCUSSION -->
+        <div class="block">
+          <div class="head">
+            <div class="title">
+              <h3>Discussion <em>du voyage</em></h3>
+              <span class="badge-count">124 messages · <strong>3 non lus</strong></span>
+            </div>
+            <a class="link" href="#">Voir tout →</a>
+          </div>
+
+          <div class="composer">
+            <div class="av"></div>
+            <input placeholder="Ajouter un message pour Léna, Antoine et 4 autres…"/>
+            <div class="tools">
+              <button class="b"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="4"/></svg></button>
+              <button class="b"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/></svg></button>
+              <button class="b"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 3v14M6 9l6-6 6 6"/></svg></button>
+            </div>
+          </div>
+
+          <article class="post">
+            <div class="post-head">
+              <div class="av" style="background-image: url('assets/portrait-3.jpg')"></div>
+              <div style="flex: 1;">
+                <div class="n">Antoine Béraud <span class="pill">Guide</span></div>
+                <div class="m">hier · 21 h 40 · Retour de repérage</div>
+              </div>
+            </div>
+            <p class="post-body">Retour du repérage de la variante haute. Passage du col Vert confortable, mais sentier délavé après la source du Guiers. Trace GPX corrigée en pièce jointe. <span class="tag">#chartreuse</span> <span class="tag">#reperage</span></p>
+            <div class="post-img" style="background-image: url('assets/journal-trail.jpg')">
+              <div class="geo">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><path d="M12 22s-7-8-7-13a7 7 0 0114 0c0 5-7 13-7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                Col Vert · Chartreuse
+              </div>
+            </div>
+            <div class="post-actions">
+              <button class="a on"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg><span class="cnt">5</span></button>
+              <button class="a"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="cnt">3</span></button>
+              <button class="a"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3v14M6 9l6-6 6 6M20 21H4"/></svg>GPX</button>
+              <button class="a save"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
+            </div>
+          </article>
+
+          <article class="post">
+            <div class="post-head">
+              <div class="av" style="background-image: url('assets/portrait-1.jpg')"></div>
+              <div style="flex: 1;">
+                <div class="n">Marceline Chevrier</div>
+                <div class="m">il y a 3 jours · Refuge du Grand Vaneau</div>
+              </div>
+            </div>
+            <p class="post-body">Hélène est enfin joignable. Refuge confirmé pour la nuit 2, dortoir 8 places, demi-pension 52 €. Elle prépare la soupe corail — j'ai promis le pain. <span class="tag">#refuge</span></p>
+            <div class="post-actions">
+              <button class="a"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg><span class="cnt">6</span></button>
+              <button class="a"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="cnt">2</span></button>
+              <button class="a save on"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <!-- RIGHT: SIDEBAR -->
+      <aside class="sidebar">
+
+        <!-- DEPART -->
+        <div class="depart-card">
+          <div class="row"><span class="dot"></span>Départ · dans 16 jours</div>
+          <h4>Vendredi 12 <em>octobre</em></h4>
+          <div class="place">Saint-Pierre-de-Chartreuse · rendez-vous à 9 h à l'église</div>
+          <div class="date-strip">
+            <div><div class="k">Départ</div><div class="v">12 oct.</div></div>
+            <div><div class="k">Retour</div><div class="v">14 oct.</div></div>
+            <div><div class="k">Durée</div><div class="v">3 jours</div></div>
+          </div>
+          <div class="attendees">
+            <div class="avs">
+              <div class="a" style="background-image: url('assets/portrait-1.jpg')"></div>
+              <div class="a" style="background-image: url('assets/portrait-2.jpg')"></div>
+              <div class="a" style="background-image: url('assets/portrait-3.jpg')"></div>
+              <div class="a" style="background-image: url('assets/portrait-1.jpg'); filter: hue-rotate(30deg)"></div>
+              <div class="a" style="background-image: url('assets/portrait-2.jpg'); filter: hue-rotate(-40deg)"></div>
+              <div class="a" style="background-image: url('assets/portrait-3.jpg'); filter: hue-rotate(60deg)"></div>
+            </div>
+            <div class="cnt">6 confirmés · 2 places restantes</div>
+          </div>
+        </div>
+
+        <!-- MEMBERS -->
+        <div class="block members-panel" style="margin-bottom: 0; padding: 22px;">
+          <div class="head" style="margin-bottom: 8px;">
+            <h3 style="font-size: 18px;">Voyageurs <em>du groupe</em></h3>
+            <a class="link" href="#">Gérer →</a>
+          </div>
+          <div class="sub" style="margin: 4px 0 12px; font-size: 12px;">6 personnes, statut de préparation en un coup d'œil.</div>
+
+          <div class="member">
+            <div class="av" style="background-image: url('assets/portrait-2.jpg')"><div class="st ready"></div></div>
+            <div class="txt">
+              <div class="n">Léna Vaudois</div>
+              <div class="r">Admin · Organisatrice · sac prêt</div>
+            </div>
+            <div class="prep-pill ready">Prêt</div>
+          </div>
+
+          <div class="member">
+            <div class="av" style="background-image: url('assets/portrait-3.jpg')"><div class="st ready"></div></div>
+            <div class="txt">
+              <div class="n">Antoine Béraud</div>
+              <div class="r">Guide · fait le repérage</div>
+            </div>
+            <div class="prep-pill ready">Prêt</div>
+          </div>
+
+          <div class="member">
+            <div class="av" style="background-image: url('assets/portrait-1.jpg')"><div class="st progress"></div></div>
+            <div class="txt">
+              <div class="n">Marceline Chevrier <em style="font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-size: 11px; margin-left: 4px;">(vous)</em></div>
+              <div class="r">2 tâches en cours · sac partiel</div>
+            </div>
+            <div class="prep-pill progress">62 %</div>
+          </div>
+
+          <div class="member">
+            <div class="av" style="background-image: url('assets/portrait-2.jpg'); filter: hue-rotate(-40deg)"><div class="st ready"></div></div>
+            <div class="txt">
+              <div class="n">Camille Rey</div>
+              <div class="r">Photographe · sac prêt</div>
+            </div>
+            <div class="prep-pill ready">Prêt</div>
+          </div>
+
+          <div class="member">
+            <div class="av" style="background-image: url('assets/portrait-3.jpg'); filter: hue-rotate(60deg)"><div class="st progress"></div></div>
+            <div class="txt">
+              <div class="n">Julien Marchal</div>
+              <div class="r">1 tâche restante · pharmacie</div>
+            </div>
+            <div class="prep-pill progress">75 %</div>
+          </div>
+
+          <div class="member">
+            <div class="av" style="background-image: url('assets/portrait-1.jpg'); filter: hue-rotate(30deg)"><div class="st away"></div></div>
+            <div class="txt">
+              <div class="n">Sophie Astier</div>
+              <div class="r">Retour vendredi · pas encore vu</div>
+            </div>
+            <div class="prep-pill away">Hors ligne</div>
+          </div>
+
+          <div class="invite-row">
+            <div class="plus"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 4v16M4 12h16"/></svg></div>
+            <span>Inviter Jean, Élise… <strong style="color: var(--lkv-forest-800);">2 places restantes</strong></span>
+          </div>
+        </div>
+
+        <!-- ACTIVITY -->
+        <div class="block activity-panel" style="margin-bottom: 0; padding: 22px;">
+          <div class="head" style="margin-bottom: 8px;">
+            <h3 style="font-size: 18px;">Activité <em>récente</em></h3>
+            <a class="link" href="#">Tout →</a>
+          </div>
+          <div class="sub" style="margin: 4px 0 12px; font-size: 12px;">Ce qui s'est passé dans le groupe cette semaine.</div>
+
+          <div class="act">
+            <div class="glyph done"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l4 4L19 6"/></svg></div>
+            <div class="txt"><strong>Antoine</strong> a validé sa tâche <strong>Réserver le Charmant Som</strong> — 6 places confirmées.</div>
+            <div class="when">il y a 2 h</div>
+          </div>
+
+          <div class="act">
+            <div class="glyph"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/></svg></div>
+            <div class="txt"><strong>Antoine</strong> a ajouté une <strong>trace GPX corrigée</strong> après le repérage du col Vert.</div>
+            <div class="when">hier</div>
+          </div>
+
+          <div class="act">
+            <div class="glyph warm"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 22s-7-8-7-13a7 7 0 0114 0c0 5-7 13-7 13z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
+            <div class="txt"><strong>Léna</strong> a lancé un <strong>vote</strong> sur la variante haute vs tracé bleu.</div>
+            <div class="when">il y a 5 j</div>
+          </div>
+
+          <div class="act">
+            <div class="glyph"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="4"/></svg></div>
+            <div class="txt"><strong>Marceline</strong> a partagé <strong>3 photos</strong> du repérage précédent.</div>
+            <div class="when">il y a 6 j</div>
+          </div>
+
+          <div class="act">
+            <div class="glyph done"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l4 4L19 6"/></svg></div>
+            <div class="txt"><strong>Léna</strong> a créé le groupe <strong>Traversée de la Chartreuse</strong>.</div>
+            <div class="when">il y a 3 sem.</div>
+          </div>
+        </div>
+
+        <!-- ABOUT -->
+        <div class="block" style="margin-bottom: 0; padding: 22px;">
+          <div class="head" style="margin-bottom: 8px;">
+            <h3 style="font-size: 18px;">À propos <em>du voyage</em></h3>
+          </div>
+          <div class="sub" style="margin: 4px 0 4px; font-size: 12px;">Les paramètres essentiels du groupe.</div>
+          <div class="about-info">
+            <div class="row">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 22s-7-8-7-13a7 7 0 0114 0c0 5-7 13-7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              <span class="k">Massif</span><span class="v">Chartreuse · Isère</span>
+            </div>
+            <div class="row">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M4 20l6-10 4 6 3-4 3 8"/></svg>
+              <span class="k">Difficulté</span><span class="v">Moyenne · dénivelé</span>
+            </div>
+            <div class="row">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>
+              <span class="k">Budget prévu</span><span class="v">≈ 85 €/pers</span>
+            </div>
+            <div class="row">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="9"/><path d="M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+              <span class="k">Confidentialité</span><span class="v">Groupe privé</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TURN INTO CARNET (bientôt / auto) -->
+        <div class="to-carnet">
+          <div class="eye"><span class="dot"></span>Après le retour</div>
+          <h4>Ce voyage deviendra<br/>un <em>carnet.</em></h4>
+          <p>Étapes, photos, hébergements et dépenses seront automatiquement archivés dans votre Carnet le 15 octobre.</p>
+          <a href="Carnet.html" style="text-decoration: none;"><span class="chip">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10" style="color: var(--lkv-forest-800)"><path d="M4 4h12l4 4v12a2 2 0 0 1-2 2H4z M8 8h8M8 12h8M8 16h5"/></svg>
+            Voir le Carnet
+          </span></a>
+        </div>
+
+      </aside>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="brand">Les grandes traversées <em>se préparent à plusieurs.</em></div>
+      <div class="bottom">
+        <div>© 2026 Le Kit du Voyageur — Traversée Chartreuse · lancé par Léna Vaudois · <a href="Communauté.html" style="color: var(--lkv-sage-300);">Communauté</a></div>
+        <div>Charte · Modération · Signaler</div>
+      </div>
+    </footer>
+
+  </div>
+  <div class="board-caption">Desktop · 1280 × 3800+</div>
+  </div>
+
+  <!-- ========== MOBILE ========== -->
+  <div>
+    <div class="artboard-mobile">
+      <div class="screen" style="overflow-y: auto;">
+
+        <div class="m-cover">
+          <div class="top">
+            <div class="back">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+            </div>
+            <div class="dots">
+              <div class="dot-b">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+              </div>
+              <div class="dot-b">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="head">
+            <div class="eye"><span class="dot"></span>Voyage · 6 personnes</div>
+            <h1>Traversée <em>Chartreuse</em></h1>
+            <div class="meta">12–14 oct. · 3 jours · Léna, Antoine, +4</div>
+          </div>
+        </div>
+
+        <div class="m-countdown">
+          <div class="row">
+            <div class="k"><span class="dot"></span>Départ · dans 16 j</div>
+            <div class="cd">J-<em>16</em></div>
+          </div>
+          <div class="prep"><div class="f"></div></div>
+          <div class="prep-info">
+            <span>Préparation 68 % · étape équipement</span>
+            <span>3 tâches restantes</span>
+          </div>
+        </div>
+
+        <div class="m-tabs">
+          <div class="t on">Vue</div>
+          <div class="t">Tâches <span class="n">3</span></div>
+          <div class="t">Kit <span class="n">14</span></div>
+          <div class="t">€ <span class="n">468</span></div>
+          <div class="t">Votes</div>
+          <div class="t">Fil <span class="n">124</span></div>
+        </div>
+
+        <div class="m-body">
+
+          <!-- TASKS -->
+          <div class="m-block">
+            <h4>Tâches <em>restantes</em> <span class="n"><span class="warn">3</span> à faire</span></h4>
+            <div class="m-task done">
+              <div class="cb"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><path d="M5 12l4 4L19 6"/></svg></div>
+              <div class="lbl">Réserver Charmant Som</div>
+              <div class="av" style="background-image: url('assets/portrait-3.jpg')"></div>
+            </div>
+            <div class="m-task">
+              <div class="cb"></div>
+              <div class="lbl">Confirmer Grand Vaneau</div>
+              <div class="av" style="background-image: url('assets/portrait-1.jpg')"></div>
+            </div>
+            <div class="m-task">
+              <div class="cb"></div>
+              <div class="lbl">Acheter le gaz</div>
+              <div class="av" style="background-image: url('assets/portrait-3.jpg')"></div>
+            </div>
+            <div class="m-task">
+              <div class="cb"></div>
+              <div class="lbl">Préparer repas samedi</div>
+              <div class="av" style="background-image: url('assets/portrait-2.jpg')"></div>
+            </div>
+          </div>
+
+          <!-- EQUIPMENT -->
+          <div class="m-block">
+            <h4>Équipement <em>partagé</em> <span class="n">4,72 kg · <span class="warn">3 non-attribués</span></span></h4>
+            <div class="m-eq">
+              <div class="g"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M8 4h8v3l3 2v11H5V9l3-2z"/></svg></div>
+              <div class="n">Tente 3-places<div class="m">Léna · 2,1 kg</div></div>
+              <div class="st ok">OK</div>
+            </div>
+            <div class="m-eq">
+              <div class="g"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M4 10c0-3 4-4 8-4s8 1 8 4v6c0 3-4 4-8 4s-8-1-8-4z"/></svg></div>
+              <div class="n">Réchaud + gaz<div class="m">Antoine · 340 g</div></div>
+              <div class="st ok">OK</div>
+            </div>
+            <div class="m-eq">
+              <div class="g"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><rect x="4" y="6" width="16" height="12" rx="2"/></svg></div>
+              <div class="n">Pharmacie<div class="m">Marceline · 280 g</div></div>
+              <div class="st pending">À vérifier</div>
+            </div>
+            <div class="m-eq">
+              <div class="g"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/></svg></div>
+              <div class="n">Cartes IGN<div class="m">Non attribué · 200 g</div></div>
+              <div class="st pending">À faire</div>
+            </div>
+          </div>
+
+          <!-- EXPENSES -->
+          <div class="m-block">
+            <h4>Dépenses <em>du groupe</em> <span class="n">468 €</span></h4>
+            <div class="m-exp-summary">
+              <div class="cell"><div class="k">Par pers.</div><div class="v">78<em>€</em></div></div>
+              <div class="cell"><div class="k">Votre solde</div><div class="v" style="color: var(--lkv-warm-500);">−26<em>€</em></div></div>
+            </div>
+            <div class="m-eq">
+              <div class="g" style="background: url('assets/portrait-3.jpg') center/cover; color: transparent;"></div>
+              <div class="n">Charmant Som<div class="m">Antoine · 6 parts</div></div>
+              <div class="st ok" style="background: var(--lkv-stone-50); color: var(--lkv-ink-900);">288 €</div>
+            </div>
+            <div class="m-eq">
+              <div class="g" style="background: url('assets/portrait-2.jpg') center/cover; color: transparent;"></div>
+              <div class="n">Cartes + gaz<div class="m">Léna · 6 parts</div></div>
+              <div class="st ok" style="background: var(--lkv-stone-50); color: var(--lkv-ink-900);">54 €</div>
+            </div>
+            <div class="m-eq">
+              <div class="g" style="background: url('assets/portrait-1.jpg') center/cover; color: transparent;"></div>
+              <div class="n">Courses samedi<div class="m">Marceline · à venir</div></div>
+              <div class="st ok" style="background: var(--lkv-stone-50); color: var(--lkv-ink-900);">72 €</div>
+            </div>
+          </div>
+
+          <!-- MEMBERS -->
+          <div class="m-block">
+            <h4>Voyageurs <span class="n">6 / 8</span></h4>
+            <div class="m-member">
+              <div class="av" style="background-image: url('assets/portrait-2.jpg')"><div class="st ready"></div></div>
+              <div class="txt"><div class="n">Léna Vaudois</div><div class="r">Admin · sac prêt</div></div>
+              <div class="prep ready">Prêt</div>
+            </div>
+            <div class="m-member">
+              <div class="av" style="background-image: url('assets/portrait-3.jpg')"><div class="st ready"></div></div>
+              <div class="txt"><div class="n">Antoine Béraud</div><div class="r">Guide</div></div>
+              <div class="prep ready">Prêt</div>
+            </div>
+            <div class="m-member">
+              <div class="av" style="background-image: url('assets/portrait-1.jpg')"><div class="st progress"></div></div>
+              <div class="txt"><div class="n">Marceline (vous)</div><div class="r">Sac partiel · 2 tâches</div></div>
+              <div class="prep progress">62 %</div>
+            </div>
+            <div class="m-member">
+              <div class="av" style="background-image: url('assets/portrait-2.jpg'); filter: hue-rotate(-40deg)"><div class="st ready"></div></div>
+              <div class="txt"><div class="n">Camille Rey</div><div class="r">Photographe · prêt</div></div>
+              <div class="prep ready">Prêt</div>
+            </div>
+          </div>
+
+          <!-- ACTIVITY -->
+          <div class="m-block">
+            <h4>Activité <em>récente</em></h4>
+            <div class="m-act">
+              <div class="g" style="background: var(--lkv-forest-800); color: #fff;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l4 4L19 6"/></svg></div>
+              <div class="txt"><strong>Antoine</strong> a réservé le Charmant Som<div class="when">il y a 2 h</div></div>
+            </div>
+            <div class="m-act">
+              <div class="g"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/></svg></div>
+              <div class="txt"><strong>Antoine</strong> a ajouté une trace GPX<div class="when">hier</div></div>
+            </div>
+            <div class="m-act">
+              <div class="g warm"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M3 12h4v9H3zM10 3h4v18h-4zM17 8h4v13h-4z"/></svg></div>
+              <div class="txt"><strong>Léna</strong> a lancé un vote sur la variante haute<div class="when">il y a 5 j</div></div>
+            </div>
+          </div>
+
+          <!-- TO CARNET -->
+          <div class="m-to-carnet">
+            <div class="eye">Après le retour</div>
+            <h5>Ce voyage deviendra un <em>carnet.</em></h5>
+            <p>Étapes, photos, dépenses archivées automatiquement le 15 octobre.</p>
+            <a href="Carnet.html" style="text-decoration: none;"><span class="chip">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10" style="color: var(--lkv-forest-800)"><path d="M4 4h12l4 4v12a2 2 0 0 1-2 2H4z"/></svg>
+              Voir le Carnet
+            </span></a>
+          </div>
+
+        </div>
+
+        <div class="m-tabbar">
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div>
+          <div class="tabi on"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M14 20c0-2 2-3 4-3s4 1 4 3"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M4 4h12l4 4v12a2 2 0 0 1-2 2H4z"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">Mobile · 375 × 812 (scroll)</div>
+  </div>
+
+</div>
+
+</body>
+</html>

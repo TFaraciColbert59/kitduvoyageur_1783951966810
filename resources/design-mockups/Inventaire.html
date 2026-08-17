@@ -1,0 +1,1599 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Mon inventaire · Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="shop.css"/>
+<link rel="stylesheet" href="stage.css"/>
+<style>
+  /* ————— HERO ————— */
+  .i-hero {
+    position: relative;
+    padding: 20px;
+    min-height: 480px;
+    color: #fff;
+    overflow: hidden;
+  }
+  .i-hero .bg {
+    position: absolute; inset: 0; z-index: 0;
+    background-image: url('assets/backpack.jpg');
+    background-size: cover; background-position: center;
+  }
+  .i-hero .bg::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0.55) 0%, rgba(11,31,23,0.2) 30%, rgba(11,31,23,0.9) 100%);
+  }
+  .i-hero > * { position: relative; z-index: 1; }
+
+  .breadcrumb {
+    padding: 24px 60px 0;
+    font-size: 12px; color: rgba(255,255,255,0.65); letter-spacing: 0.06em;
+  }
+  .breadcrumb a { color: rgba(255,255,255,0.85); }
+  .breadcrumb .sep { margin: 0 8px; color: rgba(255,255,255,0.35); }
+
+  .i-hero-body {
+    padding: 40px 60px 32px;
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 60px; align-items: end;
+  }
+  .i-hero-body .left { max-width: 720px; }
+  .i-hero-body .eye {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 14px; border-radius: 999px;
+    background: rgba(255,255,255,0.14); backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.24);
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .i-hero-body .eye .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-sage-300); }
+  .i-hero-body h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 84px; font-weight: 500;
+    letter-spacing: -0.035em; line-height: 0.94;
+    margin: 0 0 16px;
+  }
+  .i-hero-body h1 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-200); font-weight: 400; }
+  .i-hero-body .lead {
+    font-family: var(--lkv-font-serif);
+    font-size: 18px; line-height: 1.45;
+    color: rgba(255,255,255,0.88);
+    max-width: 540px; margin: 0 0 22px;
+  }
+  .i-hero-body .stats-row {
+    display: flex; gap: 28px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+  }
+  .i-hero-body .stats-row .s .n {
+    font-family: var(--lkv-font-sans);
+    font-size: 26px; font-weight: 500; letter-spacing: -0.02em; line-height: 1;
+  }
+  .i-hero-body .stats-row .s .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; font-size: 15px; }
+  .i-hero-body .stats-row .s .l {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.6); margin-top: 6px;
+  }
+
+  .i-hero-body .right {
+    display: flex; flex-direction: column; align-items: flex-end;
+    gap: 10px;
+  }
+  .i-hero-body .weight-card {
+    padding: 16px 20px;
+    background: rgba(255,255,255,0.14); backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.24);
+    border-radius: 20px;
+    text-align: center;
+    min-width: 200px;
+  }
+  .i-hero-body .weight-card .n {
+    font-family: var(--lkv-font-sans);
+    font-size: 42px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 1;
+  }
+  .i-hero-body .weight-card .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; font-size: 18px; margin-left: 2px; }
+  .i-hero-body .weight-card .l {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.7); margin-top: 6px;
+  }
+  .i-hero-body .add-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 20px;
+    background: #fff; color: var(--lkv-ink-900);
+    border-radius: 999px;
+    font-size: 14px; font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  }
+  .i-hero-body .action-icon-row { display: flex; gap: 8px; }
+  .i-hero-body .action-icon {
+    width: 40px; height: 40px; border-radius: 999px;
+    background: rgba(255,255,255,0.14); backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.24);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* FILTER BAR */
+  .filter-bar {
+    display: flex; align-items: center; gap: 14px;
+    padding: 20px 60px;
+    background: rgba(248,250,248,0.94);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(11,31,23,0.08);
+    position: sticky; top: 0; z-index: 5;
+  }
+  .filter-bar .search {
+    flex: 1; max-width: 380px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px;
+    background: #fff;
+    border-radius: 999px;
+    border: 1px solid rgba(11,31,23,0.08);
+    font-size: 14px; color: var(--lkv-ink-500);
+  }
+  .filter-bar .search svg { color: var(--lkv-ink-500); }
+  .filter-bar .chips { display: flex; gap: 6px; flex: 1; }
+  .filter-bar .chip {
+    padding: 7px 14px; border-radius: 999px;
+    background: transparent;
+    border: 1px solid rgba(11,31,23,0.1);
+    font-size: 12px; font-weight: 500;
+    color: var(--lkv-ink-700);
+    white-space: nowrap;
+  }
+  .filter-bar .chip:hover { background: var(--lkv-stone-50); }
+  .filter-bar .chip.on {
+    background: var(--lkv-forest-800); color: #fff; border-color: var(--lkv-forest-800);
+  }
+  .filter-bar .chip .n {
+    font-family: var(--lkv-font-mono); font-size: 10px;
+    margin-left: 4px; opacity: 0.7;
+  }
+  .filter-bar .sort {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: 999px;
+    background: #fff; border: 1px solid rgba(11,31,23,0.08);
+    font-size: 12px; color: var(--lkv-ink-700);
+  }
+  .filter-bar .view-toggle {
+    display: flex; padding: 3px;
+    background: var(--lkv-stone-50); border-radius: 999px;
+  }
+  .filter-bar .view-toggle .v {
+    padding: 6px 10px; border-radius: 999px;
+    color: var(--lkv-ink-500);
+    display: flex; align-items: center; gap: 4px;
+    font-size: 12px;
+  }
+  .filter-bar .view-toggle .v.on { background: #fff; color: var(--lkv-forest-800); font-weight: 500; box-shadow: var(--lkv-shadow-xs); }
+
+  /* MAIN */
+  .i-main {
+    padding: 32px 60px 40px;
+    display: grid;
+    grid-template-columns: 1.7fr 1fr;
+    gap: 32px;
+  }
+
+  .block {
+    background: #fff; border-radius: 24px;
+    padding: 24px 24px 22px; margin-bottom: 20px;
+    box-shadow: var(--lkv-shadow-sm);
+  }
+  .block > .head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 4px; gap: 12px;
+  }
+  .block > .head .title { display: flex; align-items: baseline; gap: 10px; }
+  .block > .head h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 22px; font-weight: 500; letter-spacing: -0.015em;
+    margin: 0; color: var(--lkv-ink-900);
+  }
+  .block > .head h3 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .block > .head .badge-count {
+    padding: 3px 10px; background: var(--lkv-stone-50);
+    border-radius: 999px; font-size: 11px; color: var(--lkv-ink-500); font-weight: 500;
+  }
+  .block > .head .badge-count strong { color: var(--lkv-forest-800); }
+  .block > .head a.link { font-size: 13px; color: var(--lkv-forest-800); font-weight: 500; }
+  .block > .head .actions { display: flex; gap: 6px; }
+  .block > .head .actions .b {
+    padding: 6px 12px; border-radius: 999px; font-size: 12px;
+    color: var(--lkv-ink-500);
+    display: inline-flex; align-items: center; gap: 4px;
+    border: 1px solid rgba(11,31,23,0.08);
+  }
+  .block > .head .actions .b.primary { background: var(--lkv-forest-800); color: #fff; border-color: var(--lkv-forest-800); }
+  .block .sub {
+    font-size: 13px; color: var(--lkv-ink-500);
+    margin: 4px 0 20px; max-width: 560px;
+  }
+
+  /* ITEM CARD GRID */
+  .item-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .item-card {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(11,31,23,0.06);
+    transition: transform var(--lkv-dur) var(--lkv-ease-out), box-shadow var(--lkv-dur) var(--lkv-ease-out);
+    position: relative;
+  }
+  .item-card:hover { transform: translateY(-3px); box-shadow: var(--lkv-shadow-md); }
+  .item-card .cov {
+    aspect-ratio: 4/3;
+    background-size: cover; background-position: center;
+    background-color: var(--lkv-stone-50);
+    position: relative;
+  }
+  .item-card .cov .status-pill {
+    position: absolute; top: 8px; left: 8px;
+    padding: 3px 9px;
+    background: rgba(255,255,255,0.94); backdrop-filter: blur(10px);
+    border-radius: 999px;
+    font-size: 10px; font-weight: 500;
+    color: var(--lkv-forest-800);
+  }
+  .item-card .cov .status-pill.warn { color: var(--lkv-warm-500); }
+  .item-card .cov .status-pill.bad { color: #C15A5A; }
+  .item-card .cov .weight-tag {
+    position: absolute; bottom: 8px; right: 8px;
+    padding: 3px 9px;
+    background: rgba(11,31,23,0.7); backdrop-filter: blur(10px);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 10px; font-family: var(--lkv-font-mono);
+  }
+  .item-card .cov .fav {
+    position: absolute; top: 8px; right: 8px;
+    width: 28px; height: 28px; border-radius: 999px;
+    background: rgba(255,255,255,0.94); backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-500);
+  }
+  .item-card .cov .fav.on { color: var(--lkv-warm-500); }
+  .item-card .body { padding: 12px 14px 14px; }
+  .item-card .body .name {
+    font-size: 14px; font-weight: 500;
+    color: var(--lkv-ink-900);
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .item-card .body .brand {
+    font-size: 11px; color: var(--lkv-ink-500);
+    margin-top: 3px;
+  }
+  .item-card .body .kits {
+    display: flex; align-items: center; gap: 4px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(11,31,23,0.06);
+    font-size: 11px; color: var(--lkv-ink-500);
+  }
+  .item-card .body .kits .kit-dot {
+    width: 14px; height: 14px; border-radius: 4px;
+    background: var(--lkv-sage-100);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 9px; font-weight: 500;
+  }
+  .item-card .body .kits .kit-dot:nth-child(2) { background: rgba(228,198,149,0.35); color: var(--lkv-warm-500); }
+  .item-card .body .kits .kit-dot:nth-child(3) { background: rgba(31,74,58,0.14); color: var(--lkv-forest-800); }
+
+  /* ADD CARD */
+  .add-card {
+    background: transparent;
+    border: 1.5px dashed rgba(11,31,23,0.14);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; text-align: center;
+    aspect-ratio: 4/5.2;
+    color: var(--lkv-ink-500);
+    cursor: pointer;
+    transition: border var(--lkv-dur) var(--lkv-ease), background var(--lkv-dur) var(--lkv-ease);
+  }
+  .add-card:hover { border-color: var(--lkv-forest-800); background: rgba(31,74,58,0.03); color: var(--lkv-forest-800); }
+  .add-card .plus {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--lkv-forest-800); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 4px;
+  }
+  .add-card .l {
+    font-size: 13px; font-weight: 500;
+    color: var(--lkv-ink-900);
+  }
+  .add-card .s { font-size: 11px; color: var(--lkv-ink-500); max-width: 160px; line-height: 1.4; }
+
+  /* CATEGORY GROUP HEADER */
+  .cat-group-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 6px 4px 16px;
+    margin-top: 8px;
+  }
+  .cat-group-head:first-child { margin-top: 0; }
+  .cat-group-head .lhs {
+    display: flex; align-items: baseline; gap: 12px;
+  }
+  .cat-group-head h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 17px; font-weight: 500; letter-spacing: -0.01em;
+    margin: 0;
+    color: var(--lkv-ink-900);
+  }
+  .cat-group-head h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .cat-group-head .cnt {
+    font-family: var(--lkv-font-mono);
+    font-size: 11px; color: var(--lkv-ink-500);
+  }
+  .cat-group-head .rhs {
+    font-size: 11px; color: var(--lkv-ink-500);
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .cat-group-head .rhs strong { color: var(--lkv-forest-800); font-weight: 500; }
+
+  /* SIDEBAR */
+  .sidebar { display: flex; flex-direction: column; gap: 16px; align-self: start; }
+
+  /* Weight distribution */
+  .weight-block {
+    background: linear-gradient(135deg, var(--lkv-forest-800) 0%, var(--lkv-forest-700) 100%);
+    color: #fff;
+    padding: 26px;
+    border-radius: 24px;
+    position: relative; overflow: hidden;
+  }
+  .weight-block::after {
+    content: ""; position: absolute; right: -60px; bottom: -60px;
+    width: 240px; height: 240px; border-radius: 50%;
+    background: radial-gradient(circle, var(--lkv-sage-500) 0%, transparent 65%);
+    opacity: 0.32;
+  }
+  .weight-block > * { position: relative; z-index: 1; }
+  .weight-block h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 20px; font-weight: 500; letter-spacing: -0.015em;
+    margin: 0 0 4px;
+  }
+  .weight-block h3 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .weight-block .sub { font-size: 12px; color: rgba(255,255,255,0.65); margin-bottom: 18px; }
+  .weight-block .stacked-bar {
+    display: flex; height: 10px; border-radius: 999px; overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .weight-block .stacked-bar .seg {
+    height: 100%;
+    background: var(--lkv-sage-500);
+  }
+  .weight-block .stacked-bar .seg.a { background: var(--lkv-sage-500); }
+  .weight-block .stacked-bar .seg.b { background: var(--lkv-sage-300); }
+  .weight-block .stacked-bar .seg.c { background: var(--lkv-warm-500); }
+  .weight-block .stacked-bar .seg.d { background: var(--lkv-warm-300); }
+  .weight-block .stacked-bar .seg.e { background: rgba(255,255,255,0.35); }
+  .weight-block .stacked-bar .seg.f { background: rgba(255,255,255,0.15); }
+  .weight-block .cat-list {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .weight-block .cat-list .cat-row {
+    display: grid; grid-template-columns: auto 1fr auto;
+    gap: 8px; align-items: center;
+    font-size: 12px;
+  }
+  .weight-block .cat-list .cat-row .sw {
+    width: 10px; height: 10px; border-radius: 3px;
+    background: var(--lkv-sage-500);
+  }
+  .weight-block .cat-list .cat-row .name { color: rgba(255,255,255,0.85); }
+  .weight-block .cat-list .cat-row .val {
+    font-family: var(--lkv-font-mono);
+    font-size: 11px; color: rgba(255,255,255,0.65);
+  }
+  .weight-block .cat-list .cat-row .val strong { color: #fff; font-weight: 500; font-family: var(--lkv-font-sans); }
+
+  /* Kits panel */
+  .kit-card {
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
+    gap: 12px; align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .kit-card:last-child { border-bottom: none; }
+  .kit-card .kit-thumb {
+    width: 60px; height: 60px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--lkv-sage-100), var(--lkv-sage-200));
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 22px; font-weight: 500;
+    position: relative;
+  }
+  .kit-card .kit-thumb.b { background: linear-gradient(135deg, #F5E6C4, var(--lkv-warm-300)); color: var(--lkv-forest-800); }
+  .kit-card .kit-thumb.c { background: linear-gradient(135deg, rgba(31,74,58,0.14), rgba(31,74,58,0.24)); color: var(--lkv-forest-800); }
+  .kit-card .kit-thumb.d { background: linear-gradient(135deg, rgba(174,203,180,0.5), var(--lkv-sage-100)); color: var(--lkv-forest-800); }
+  .kit-card .info .n {
+    font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);
+    line-height: 1.2;
+  }
+  .kit-card .info .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .kit-card .info .m {
+    font-size: 11px; color: var(--lkv-ink-500);
+    margin-top: 3px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .kit-card .info .m .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--lkv-ink-300); }
+  .kit-card .weight {
+    font-family: var(--lkv-font-sans);
+    font-size: 15px; font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--lkv-forest-800);
+    text-align: right;
+  }
+  .kit-card .weight em { font-family: var(--lkv-font-serif); font-style: italic; font-size: 11px; color: var(--lkv-ink-500); font-weight: 400; margin-left: 2px; }
+
+  /* Repair alert */
+  .repair-item {
+    display: grid; grid-template-columns: 40px 1fr auto;
+    gap: 12px; align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .repair-item:last-child { border-bottom: none; }
+  .repair-item .th {
+    width: 40px; height: 40px;
+    background-size: cover; background-position: center;
+    border-radius: 10px;
+  }
+  .repair-item .info .n { font-size: 13px; font-weight: 500; color: var(--lkv-ink-900); line-height: 1.2; }
+  .repair-item .info .m {
+    font-size: 11px; color: var(--lkv-warm-500);
+    margin-top: 3px;
+  }
+  .repair-item .info .m.critical { color: #C15A5A; }
+  .repair-item .cta {
+    padding: 5px 10px; border-radius: 999px;
+    background: rgba(228,198,149,0.3); color: var(--lkv-warm-500);
+    font-size: 11px; font-weight: 500;
+  }
+
+  /* Loan */
+  .loan-row {
+    display: grid; grid-template-columns: auto auto 1fr auto;
+    gap: 10px; align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .loan-row:last-child { border-bottom: none; }
+  .loan-row .th {
+    width: 32px; height: 32px;
+    background-size: cover; background-position: center;
+    border-radius: 8px;
+  }
+  .loan-row .av {
+    width: 26px; height: 26px; border-radius: 999px;
+    background-size: cover; background-position: center;
+  }
+  .loan-row .info { font-size: 12px; color: var(--lkv-ink-700); line-height: 1.35; }
+  .loan-row .info strong { color: var(--lkv-ink-900); font-weight: 500; }
+  .loan-row .until {
+    padding: 3px 9px; border-radius: 999px;
+    background: var(--lkv-sage-100); color: var(--lkv-forest-800);
+    font-size: 10px; font-weight: 500;
+    white-space: nowrap;
+  }
+  .loan-row .until.late { background: rgba(228,198,149,0.3); color: var(--lkv-warm-500); }
+
+  /* Recos */
+  .reco-item {
+    display: grid; grid-template-columns: 48px 1fr;
+    gap: 10px; padding: 10px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    align-items: center;
+  }
+  .reco-item:last-child { border-bottom: none; }
+  .reco-item .th {
+    width: 48px; height: 48px;
+    background-size: cover; background-position: center;
+    border-radius: 10px;
+  }
+  .reco-item .info .n {
+    font-size: 13px; font-weight: 500; color: var(--lkv-ink-900); line-height: 1.2;
+  }
+  .reco-item .info .m {
+    font-size: 11px; color: var(--lkv-ink-500);
+    margin-top: 3px;
+  }
+  .reco-item .info .m .price {
+    font-family: var(--lkv-font-mono);
+    color: var(--lkv-forest-800); font-weight: 500;
+    margin-left: 4px;
+  }
+
+  /* FOOTER */
+  .footer {
+    background: var(--lkv-forest-950); color: #fff;
+    padding: 60px 60px 40px;
+  }
+  .footer .brand {
+    font-family: var(--lkv-font-sans);
+    font-size: 38px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1;
+    margin-bottom: 40px;
+    max-width: 720px;
+  }
+  .footer .brand em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .footer .bottom {
+    display: flex; justify-content: space-between;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 12px; color: rgba(255,255,255,0.4);
+  }
+
+  /* ============== MOBILE ============== */
+  .m-cover {
+    position: relative; height: 220px;
+    background-image: url('assets/backpack.jpg');
+    background-size: cover; background-position: center;
+  }
+  .m-cover::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0.5), transparent 30%, rgba(11,31,23,0.9));
+  }
+  .m-cover .top {
+    position: relative; z-index: 1;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 16px; color: #fff;
+  }
+  .m-cover .top .back, .m-cover .top .dot-b {
+    width: 36px; height: 36px; border-radius: 999px;
+    background: rgba(255,255,255,0.16); backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.24);
+    display: flex; align-items: center; justify-content: center; color: #fff;
+  }
+  .m-cover .top .dots { display: flex; gap: 6px; }
+  .m-cover .head {
+    position: absolute; left: 20px; right: 20px; bottom: 16px; z-index: 1;
+    color: #fff;
+  }
+  .m-cover .head .eye {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(255,255,255,0.16); backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.24);
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .m-cover .head .eye .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--lkv-sage-300); }
+  .m-cover .head h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 26px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1;
+    margin: 0 0 6px;
+  }
+  .m-cover .head h1 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-200); font-weight: 400; }
+  .m-cover .head .meta { font-size: 11px; color: rgba(255,255,255,0.8); }
+
+  .m-weight {
+    margin: 14px 16px 0;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--lkv-forest-900), var(--lkv-forest-800));
+    color: #fff; border-radius: 16px;
+    position: relative; overflow: hidden;
+  }
+  .m-weight::after {
+    content: ""; position: absolute; right: -30px; bottom: -30px;
+    width: 120px; height: 120px; border-radius: 50%;
+    background: radial-gradient(circle, var(--lkv-sage-500) 0%, transparent 65%);
+    opacity: 0.28;
+  }
+  .m-weight > * { position: relative; z-index: 1; }
+  .m-weight .row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .m-weight .l { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lkv-sage-300); }
+  .m-weight .v { font-family: var(--lkv-font-sans); font-size: 24px; font-weight: 500; letter-spacing: -0.02em; line-height: 1; }
+  .m-weight .v em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; font-size: 13px; margin-left: 2px; }
+  .m-weight .stacked { display: flex; height: 6px; border-radius: 999px; overflow: hidden; }
+  .m-weight .stacked .s { height: 100%; }
+  .m-weight .stacked .s.a { background: var(--lkv-sage-500); }
+  .m-weight .stacked .s.b { background: var(--lkv-sage-300); }
+  .m-weight .stacked .s.c { background: var(--lkv-warm-500); }
+  .m-weight .stacked .s.d { background: var(--lkv-warm-300); }
+  .m-weight .stacked .s.e { background: rgba(255,255,255,0.35); }
+  .m-weight .stacked .s.f { background: rgba(255,255,255,0.15); }
+  .m-weight .info-p { font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 6px; text-align: center; }
+
+  .m-tabs {
+    display: flex; padding: 4px 14px 0;
+    background: #fff;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    overflow-x: auto; scrollbar-width: none;
+    margin-top: 12px;
+  }
+  .m-tabs::-webkit-scrollbar { display: none; }
+  .m-tabs .t {
+    flex-shrink: 0; padding: 12px 10px;
+    font-size: 13px; font-weight: 500; color: var(--lkv-ink-500);
+    position: relative;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .m-tabs .t.on { color: var(--lkv-forest-800); }
+  .m-tabs .t.on::after {
+    content: ""; position: absolute; left: 10px; right: 10px; bottom: 0;
+    height: 2px; background: var(--lkv-forest-800); border-radius: 2px 2px 0 0;
+  }
+  .m-tabs .t .n { font-family: var(--lkv-font-serif); font-style: italic; font-size: 11px; color: var(--lkv-ink-400); }
+
+  .m-search {
+    margin: 12px 16px 0;
+    padding: 10px 14px;
+    background: #fff;
+    border-radius: 999px;
+    border: 1px solid rgba(11,31,23,0.08);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--lkv-ink-500);
+    box-shadow: var(--lkv-shadow-xs);
+  }
+
+  .m-body { padding: 12px 16px 90px; }
+  .m-block {
+    background: #fff; border-radius: 16px;
+    padding: 14px; margin-bottom: 10px;
+    box-shadow: var(--lkv-shadow-xs);
+  }
+  .m-block h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 15px; font-weight: 500; letter-spacing: -0.01em;
+    margin: 0 0 10px; color: var(--lkv-ink-900);
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .m-block h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .m-block h4 .n { font-size: 11px; color: var(--lkv-ink-500); font-weight: 400; }
+
+  .m-item-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .m-item {
+    background: var(--lkv-stone-50);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .m-item .cov {
+    aspect-ratio: 1;
+    background-size: cover; background-position: center;
+    background-color: #E5E1D9;
+    position: relative;
+  }
+  .m-item .cov .st {
+    position: absolute; top: 6px; left: 6px;
+    padding: 2px 7px; border-radius: 999px;
+    background: rgba(255,255,255,0.92);
+    font-size: 9px; font-weight: 500;
+    color: var(--lkv-forest-800);
+  }
+  .m-item .cov .st.warn { color: var(--lkv-warm-500); }
+  .m-item .cov .wt {
+    position: absolute; bottom: 6px; right: 6px;
+    padding: 2px 7px; border-radius: 999px;
+    background: rgba(11,31,23,0.7); color: #fff;
+    font-family: var(--lkv-font-mono); font-size: 9px;
+  }
+  .m-item .body { padding: 8px 10px 10px; }
+  .m-item .body .n {
+    font-size: 12px; font-weight: 500; color: var(--lkv-ink-900); line-height: 1.2;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    min-height: 28px;
+  }
+  .m-item .body .b { font-size: 10px; color: var(--lkv-ink-500); margin-top: 2px; }
+
+  .m-kit {
+    display: grid; grid-template-columns: 40px 1fr auto;
+    gap: 10px; align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+  }
+  .m-kit:last-child { border-bottom: none; }
+  .m-kit .th {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--lkv-sage-100), var(--lkv-sage-200));
+    color: var(--lkv-forest-800);
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 16px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .m-kit .th.b { background: linear-gradient(135deg, #F5E6C4, var(--lkv-warm-300)); }
+  .m-kit .n { font-size: 12px; font-weight: 500; color: var(--lkv-ink-900); }
+  .m-kit .n .m { font-size: 10px; color: var(--lkv-ink-500); margin-top: 2px; font-weight: 400; }
+  .m-kit .w { font-family: var(--lkv-font-sans); font-size: 13px; font-weight: 500; color: var(--lkv-forest-800); letter-spacing: -0.01em; }
+  .m-kit .w em { font-family: var(--lkv-font-serif); font-style: italic; font-size: 10px; color: var(--lkv-ink-500); font-weight: 400; }
+
+  .m-tabbar {
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 10px 8px;
+    background: rgba(255,255,255,0.94); backdrop-filter: blur(24px);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 24px;
+    box-shadow: 0 8px 24px rgba(11,31,23,0.08);
+  }
+  .m-tabbar .tabi {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-500);
+  }
+  .m-tabbar .tabi.on { background: var(--lkv-forest-800); color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="stage-title">
+  <div>
+    <div class="h">Inventaire — Vue générale</div>
+    <div class="sub">47 articles pesés, catégorisés, associés à des kits · système de gestion complet</div>
+  </div>
+  <div class="links">
+    <a href="Index.html">← Index</a>
+    <a href="Inventaire - Détail Item.html">Détail item</a>
+    <a href="Compte - Dashboard.html">Mon compte</a>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ========== DESKTOP ========== -->
+  <div>
+  <div class="artboard-desktop">
+
+    <!-- HERO -->
+    <section class="i-hero">
+      <div class="bg"></div>
+
+      <nav class="top-nav top-nav-dark" style="margin: 0 20px;">
+        <div class="lkv-logo">
+          <svg viewBox="0 0 32 32" width="24" height="24" fill="none">
+            <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+          </svg>
+          <span>Le Kit du Voyageur</span>
+        </div>
+        <div class="links">
+          <a href="#">Aventures</a>
+          <a href="#">Refuges</a>
+          <a href="#">Boutique</a>
+          <a href="#">Carnet</a>
+          <a href="Clubs v2.html">Clubs</a>
+          <a href="Compte - Dashboard.html" class="active">Mon compte</a>
+        </div>
+        <div class="right">
+          <button class="lkv-btn lkv-btn-icon lkv-btn-ghost-light">
+            <svg class="lkv-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          </button>
+          <a href="Compte - Dashboard.html" style="width: 36px; height: 36px; border-radius: 999px; background: url('assets/portrait-1.jpg') center/cover; border: 2px solid rgba(255,255,255,0.7);"></a>
+        </div>
+      </nav>
+
+      <div class="breadcrumb">
+        <a href="#">Accueil</a>
+        <span class="sep">›</span>
+        <a href="Compte - Dashboard.html">Mon compte</a>
+        <span class="sep">›</span>
+        <span>Mon inventaire</span>
+      </div>
+
+      <div class="i-hero-body">
+        <div class="left">
+          <div class="eye"><span class="dot"></span>Matériel personnel · dernière pesée le 8 oct.</div>
+          <h1>Mon<br/><em>inventaire.</em></h1>
+          <p class="lead">Tout votre équipement pesé, catégorisé, associé aux voyages. Un kit se prépare en 2 minutes : on choisit le type de sortie, l'app compose le sac.</p>
+          <div class="stats-row">
+            <div class="s"><div class="n">47<em> articles</em></div><div class="l">Total</div></div>
+            <div class="s"><div class="n">12,4<em>kg</em></div><div class="l">Poids cumulé</div></div>
+            <div class="s"><div class="n">4<em> kits</em></div><div class="l">Assemblés</div></div>
+            <div class="s"><div class="n">3<em> à réparer</em></div><div class="l">État d'usure</div></div>
+            <div class="s"><div class="n">2<em> prêtés</em></div><div class="l">En circulation</div></div>
+          </div>
+        </div>
+        <div class="right">
+          <div class="weight-card">
+            <div class="n">12,4<em>kg</em></div>
+            <div class="l">Poids total</div>
+          </div>
+          <button class="add-btn">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14" style="color: var(--lkv-forest-800)"><path d="M12 4v16M4 12h16"/></svg>
+            Ajouter un article
+          </button>
+          <div class="action-icon-row">
+            <button class="action-icon" title="Importer">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M12 3v14M6 9l6-6 6 6M20 21H4"/></svg>
+            </button>
+            <button class="action-icon" title="Exporter">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M12 21V7M6 15l6 6 6-6M20 3H4"/></svg>
+            </button>
+            <button class="action-icon" title="Options">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+      <div class="search">
+        <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <span>Rechercher un article, une marque…</span>
+      </div>
+      <div class="chips">
+        <button class="chip on">Tous <span class="n">47</span></button>
+        <button class="chip">Couchage <span class="n">6</span></button>
+        <button class="chip">Portage <span class="n">4</span></button>
+        <button class="chip">Cuisine <span class="n">9</span></button>
+        <button class="chip">Vêtements <span class="n">14</span></button>
+        <button class="chip">Sécurité <span class="n">7</span></button>
+        <button class="chip">Nav / élec. <span class="n">7</span></button>
+      </div>
+      <button class="sort">
+        <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
+        Trier par poids ↓
+      </button>
+      <div class="view-toggle">
+        <button class="v on">
+          <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Grille
+        </button>
+        <button class="v">
+          <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          Liste
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <section class="i-main">
+
+      <!-- LEFT COLUMN -->
+      <div>
+
+        <!-- CATÉGORIE COUCHAGE -->
+        <div class="block">
+          <div class="cat-group-head">
+            <div class="lhs">
+              <h4>Couchage <em>& abri</em></h4>
+              <span class="cnt">6 articles · 3,8 kg</span>
+            </div>
+            <div class="rhs">Poids moyen · <strong>630 g</strong></div>
+          </div>
+
+          <div class="item-grid">
+            <div class="item-card">
+              <div class="cov" style="background-image: url('assets/gear-tent-small.jpg')">
+                <span class="status-pill">Excellent état</span>
+                <button class="fav on"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></button>
+                <span class="weight-tag">2,1 kg</span>
+              </div>
+              <div class="body">
+                <div class="name">Tente MSR Hubba Hubba NX 2p</div>
+                <div class="brand">MSR · achetée 2024 · 389 €</div>
+                <div class="kits">
+                  Dans
+                  <span class="kit-dot">C</span>
+                  <span class="kit-dot">B</span>
+                  <span style="margin-left: 4px;">2 kits</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="item-card">
+              <div class="cov" style="background-image: url('assets/gear-sleepingbag.jpg')">
+                <span class="status-pill">Excellent état</span>
+                <button class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></button>
+                <span class="weight-tag">960 g</span>
+              </div>
+              <div class="body">
+                <div class="name">Sac de couchage Cumulus Panyam 450</div>
+                <div class="brand">Cumulus · duvet · confort −5 °C</div>
+                <div class="kits">
+                  Dans
+                  <span class="kit-dot">C</span>
+                  <span class="kit-dot">B</span>
+                  <span class="kit-dot">A</span>
+                  <span style="margin-left: 4px;">3 kits</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="item-card">
+              <div class="cov" style="background-image: url('assets/gear-sleepingbag.jpg')">
+                <span class="status-pill warn">Usure moyenne</span>
+                <button class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></button>
+                <span class="weight-tag">420 g</span>
+              </div>
+              <div class="body">
+                <div class="name">Matelas Therm-a-Rest NeoAir XLite</div>
+                <div class="brand">Therm-a-Rest · R-value 4,5</div>
+                <div class="kits">
+                  Dans
+                  <span class="kit-dot">C</span>
+                  <span class="kit-dot">B</span>
+                  <span style="margin-left: 4px;">2 kits</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CATÉGORIE PORTAGE -->
+        <div class="block">
+          <div class="cat-group-head">
+            <div class="lhs">
+              <h4>Portage <em>& sacs</em></h4>
+              <span class="cnt">4 articles · 2,4 kg</span>
+            </div>
+            <div class="rhs">Recommandation · <strong>sac trail à changer</strong></div>
+          </div>
+
+          <div class="item-grid">
+            <div class="item-card">
+              <div class="cov" style="background-image: url('assets/backpack.jpg')">
+                <span class="status-pill">Excellent état</span>
+                <button class="fav on"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></button>
+                <span class="weight-tag">1,4 kg</span>
+              </div>
+              <div class="body">
+                <div class="name">Sac Osprey Aura AG 65 femme</div>
+                <div class="brand">Osprey · dorsale AntiGravity</div>
+                <div class="kits">
+                  Dans
+                  <span class="kit-dot">C</span>
+                  <span class="kit-dot">B</span>
+                  <span style="margin-left: 4px;">2 kits</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="item-card">
+              <div class="cov" style="background-image: url('assets/backpack.jpg'); filter: hue-rotate(20deg)">
+                <span class="status-pill warn">Sangle usée</span>
+                <button class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></button>
+                <span class="weight-tag">640 g</span>
+              </div>
+              <div class="body">
+                <div class="name">Sac trail Salomon Adv Skin 12</div>
+                <div class="brand">Salomon · 4 saisons · 2022</div>
+                <div class="kits">
+                  Dans
+                  <span class="kit-dot">D</span>
+                  <span style="margin-left: 4px;">1 kit</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="item-card">
+              <div class="cov" style="background: linear-gradient(135deg, #E5E1D9, #C8DDCC); display: flex; align-items: center; justify-content: center;">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--lkv-forest-800)" stroke-width="1.4"><path d="M6 8h12v12a2 2 0 01-2 2H8a2 2 0 01-2-2z"/><path d="M9 8V5a3 3 0 016 0v3"/></svg>
+                <span class="status-pill">Neuf</span>
+                <button class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></button>
+                <span class="weight-tag">180 g</span>
+              </div>
+              <div class="body">
+                <div class="name">Sac étanche Sea to Summit Ultra-Sil 20L</div>
+                <div class="brand">Sea to Summit · imperméable</div>
+                <div class="kits">
+                  Dans
+                  <span class="kit-dot">C</span>
+                  <span class="kit-dot">B</span>
+                  <span style="margin-left: 4px;">2 kits</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CATÉGORIE CUISINE -->
+        <div class="block">
+          <div class="cat-group-head">
+            <div class="lhs">
+              <h4>Cuisine <em>& hydratation</em></h4>
+              <span class="cnt">9 articles · 1,6 kg</span>
+            </div>
+            <div class="rhs">Kit le plus lourd · <strong>C · Bivouac 3 saisons</strong></div>
+          </div>
+
+          <div class="item-grid">
+            <div class="item-card">
+              <div class="cov" style="background-image: url('assets/gear-stove.jpg')">
+                <span class="status-pill">Excellent état</span>
+                <button class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></button>
+                <span class="weight-tag">86 g</span>
+              </div>
+              <div class="body">
+                <div class="name">Réchaud MSR PocketRocket 2</div>
+                <div class="brand">MSR · gaz · piezo intégré</div>
+                <div class="kits">
+                  Dans
+                  <span class="kit-dot">C</span>
+                  <span class="kit-dot">B</span>
+                  <span class="kit-dot">A</span>
+                  <span style="margin-left: 4px;">3 kits</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="item-card">
+              <div class="cov" style="background: linear-gradient(135deg, #E5E1D9, #DDEEE5); display: flex; align-items: center; justify-content: center;">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--lkv-forest-800)" stroke-width="1.4"><path d="M6 8h12l-1 12H7z"/><path d="M8 8V5a4 4 0 018 0v3"/></svg>
+                <span class="status-pill">Excellent état</span>
+                <button class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></button>
+                <span class="weight-tag">120 g</span>
+              </div>
+              <div class="body">
+                <div class="name">Popote titane TOAKS 750 ml</div>
+                <div class="brand">TOAKS · titane · anses pliantes</div>
+                <div class="kits">
+                  Dans
+                  <span class="kit-dot">C</span>
+                  <span class="kit-dot">B</span>
+                  <span style="margin-left: 4px;">2 kits</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="item-card">
+              <div class="cov" style="background: linear-gradient(135deg, #E5E1D9, #DDEEE5); display: flex; align-items: center; justify-content: center;">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--lkv-forest-800)" stroke-width="1.4"><rect x="8" y="4" width="8" height="16" rx="2"/><path d="M10 4v-2h4v2"/></svg>
+                <span class="status-pill">Bon état</span>
+                <button class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></button>
+                <span class="weight-tag">180 g</span>
+              </div>
+              <div class="body">
+                <div class="name">Filtre à eau Katadyn BeFree 1L</div>
+                <div class="brand">Katadyn · membrane creuse</div>
+                <div class="kits">
+                  Dans
+                  <span class="kit-dot">C</span>
+                  <span class="kit-dot">B</span>
+                  <span class="kit-dot">A</span>
+                  <span style="margin-left: 4px;">3 kits</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CATÉGORIE VÊTEMENTS -->
+        <div class="block">
+          <div class="cat-group-head">
+            <div class="lhs">
+              <h4>Vêtements <em>techniques</em></h4>
+              <span class="cnt">14 articles · 3,2 kg</span>
+            </div>
+            <div class="rhs">Dernière commande · <strong>Veste Gore-Tex — 3 j</strong></div>
+          </div>
+
+          <div class="item-grid">
+            <div class="item-card">
+              <div class="cov" style="background-image: url('assets/gear-jacket.jpg')">
+                <span class="status-pill">Neuve</span>
+                <button class="fav on"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></button>
+                <span class="weight-tag">450 g</span>
+              </div>
+              <div class="body">
+                <div class="name">Veste Arc'teryx Beta AR Gore-Tex</div>
+                <div class="brand">Arc'teryx · achetée cette semaine</div>
+                <div class="kits">
+                  Dans
+                  <span class="kit-dot">C</span>
+                  <span class="kit-dot">B</span>
+                  <span class="kit-dot">A</span>
+                  <span style="margin-left: 4px;">3 kits</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="item-card">
+              <div class="cov" style="background-image: url('assets/gear-boots.jpg')">
+                <span class="status-pill">Bon état</span>
+                <button class="fav on"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></button>
+                <span class="weight-tag">1,3 kg</span>
+              </div>
+              <div class="body">
+                <div class="name"><a href="Inventaire - Détail Item.html" style="color: inherit;">Chaussures Salomon Quest 4 GTX</a></div>
+                <div class="brand">Salomon · 380 km parcourus</div>
+                <div class="kits">
+                  Dans
+                  <span class="kit-dot">C</span>
+                  <span class="kit-dot">B</span>
+                  <span style="margin-left: 4px;">2 kits</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="add-card">
+              <div class="plus">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M12 4v16M4 12h16"/></svg>
+              </div>
+              <div class="l">Ajouter un vêtement</div>
+              <div class="s">Scan code-barre, saisie manuelle ou photo</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CATÉGORIE NAV / ÉLEC -->
+        <div class="block">
+          <div class="cat-group-head">
+            <div class="lhs">
+              <h4>Navigation <em>& électronique</em></h4>
+              <span class="cnt">7 articles · 1,4 kg</span>
+            </div>
+            <div class="rhs">Batterie totale · <strong>34 200 mAh</strong></div>
+          </div>
+
+          <div class="item-grid">
+            <div class="item-card">
+              <div class="cov" style="background-image: url('assets/gear-headlamp.jpg')">
+                <span class="status-pill warn">En préparation cmd</span>
+                <button class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></button>
+                <span class="weight-tag">185 g</span>
+              </div>
+              <div class="body">
+                <div class="name">Frontale Petzl NAO RL 1500 lm</div>
+                <div class="brand">Petzl · rechargeable · reactive</div>
+                <div class="kits">
+                  Dans
+                  <span class="kit-dot">C</span>
+                  <span class="kit-dot">A</span>
+                  <span style="margin-left: 4px;">2 kits</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="item-card">
+              <div class="cov" style="background: linear-gradient(135deg, #E5E1D9, #C8DDCC); display: flex; align-items: center; justify-content: center;">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--lkv-forest-800)" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 5-5 2 2-5z"/></svg>
+                <span class="status-pill">Bon état</span>
+                <button class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></button>
+                <span class="weight-tag">88 g</span>
+              </div>
+              <div class="body">
+                <div class="name">Boussole Silva Ranger S</div>
+                <div class="brand">Silva · miroir · déclinaison réglable</div>
+                <div class="kits">
+                  Dans
+                  <span class="kit-dot">C</span>
+                  <span class="kit-dot">B</span>
+                  <span style="margin-left: 4px;">2 kits</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="item-card">
+              <div class="cov" style="background: linear-gradient(135deg, #E5E1D9, #DDEEE5); display: flex; align-items: center; justify-content: center;">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--lkv-forest-800)" stroke-width="1.4"><rect x="4" y="7" width="16" height="10" rx="1"/><path d="M20 10v4h2v-4zM7 10h5M7 13h3"/></svg>
+                <span class="status-pill">Excellent état</span>
+                <button class="fav"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></button>
+                <span class="weight-tag">210 g</span>
+              </div>
+              <div class="body">
+                <div class="name">Batterie Nitecore NB20000 20 000 mAh</div>
+                <div class="brand">Nitecore · USB-C PD · 100 W</div>
+                <div class="kits">
+                  Dans
+                  <span class="kit-dot">C</span>
+                  <span class="kit-dot">B</span>
+                  <span class="kit-dot">D</span>
+                  <span style="margin-left: 4px;">3 kits</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LOAD MORE -->
+        <div style="text-align: center; padding: 20px; font-size: 13px; color: var(--lkv-ink-500);">
+          31 articles supplémentaires · <a href="#" style="color: var(--lkv-forest-800); font-weight: 500;">Charger la suite →</a>
+        </div>
+
+      </div>
+
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+
+        <!-- WEIGHT DISTRIBUTION -->
+        <div class="weight-block">
+          <h3>Répartition <em>du poids</em></h3>
+          <div class="sub">12,4 kg cumulés · par catégorie</div>
+          <div class="stacked-bar">
+            <div class="seg a" style="width: 31%"></div>
+            <div class="seg b" style="width: 26%"></div>
+            <div class="seg c" style="width: 19%"></div>
+            <div class="seg d" style="width: 13%"></div>
+            <div class="seg e" style="width: 8%"></div>
+            <div class="seg f" style="width: 3%"></div>
+          </div>
+          <div class="cat-list">
+            <div class="cat-row"><span class="sw" style="background: var(--lkv-sage-500)"></span><span class="name">Couchage & abri</span><span class="val"><strong>3,8</strong> kg · 31 %</span></div>
+            <div class="cat-row"><span class="sw" style="background: var(--lkv-sage-300)"></span><span class="name">Vêtements</span><span class="val"><strong>3,2</strong> kg · 26 %</span></div>
+            <div class="cat-row"><span class="sw" style="background: var(--lkv-warm-500)"></span><span class="name">Portage & sacs</span><span class="val"><strong>2,4</strong> kg · 19 %</span></div>
+            <div class="cat-row"><span class="sw" style="background: var(--lkv-warm-300)"></span><span class="name">Cuisine & eau</span><span class="val"><strong>1,6</strong> kg · 13 %</span></div>
+            <div class="cat-row"><span class="sw" style="background: rgba(255,255,255,0.35)"></span><span class="name">Navigation & élec.</span><span class="val"><strong>1,0</strong> kg · 8 %</span></div>
+            <div class="cat-row"><span class="sw" style="background: rgba(255,255,255,0.15)"></span><span class="name">Sécurité</span><span class="val"><strong>0,4</strong> kg · 3 %</span></div>
+          </div>
+        </div>
+
+        <!-- KITS -->
+        <div class="block" style="margin-bottom: 0; padding: 22px;">
+          <div class="head" style="margin-bottom: 8px;">
+            <h3 style="font-size: 18px;">Mes <em>kits</em> assemblés</h3>
+            <a class="link" href="#">Composer →</a>
+          </div>
+          <div class="sub" style="margin: 4px 0 4px; font-size: 12px;">4 kits selon le type de sortie. Un kit = liste d'items + poids automatique.</div>
+
+          <div class="kit-card">
+            <div class="kit-thumb">C</div>
+            <div class="info">
+              <div class="n">Bivouac <em>3 saisons</em></div>
+              <div class="m">28 items <span class="dot"></span> utilisé 12 fois</div>
+            </div>
+            <div class="weight">9,8<em>kg</em></div>
+          </div>
+          <div class="kit-card">
+            <div class="kit-thumb b">B</div>
+            <div class="info">
+              <div class="n">Bivouac <em>hivernal</em></div>
+              <div class="m">32 items <span class="dot"></span> utilisé 4 fois</div>
+            </div>
+            <div class="weight">12,2<em>kg</em></div>
+          </div>
+          <div class="kit-card">
+            <div class="kit-thumb c">A</div>
+            <div class="info">
+              <div class="n">Randonnée <em>journée</em></div>
+              <div class="m">14 items <span class="dot"></span> utilisé 28 fois</div>
+            </div>
+            <div class="weight">4,6<em>kg</em></div>
+          </div>
+          <div class="kit-card">
+            <div class="kit-thumb d">D</div>
+            <div class="info">
+              <div class="n">Trail <em>compétition</em></div>
+              <div class="m">9 items <span class="dot"></span> utilisé 6 fois</div>
+            </div>
+            <div class="weight">2,1<em>kg</em></div>
+          </div>
+        </div>
+
+        <!-- REPAIRS -->
+        <div class="block" style="margin-bottom: 0; padding: 22px;">
+          <div class="head" style="margin-bottom: 8px;">
+            <h3 style="font-size: 18px;">À réparer <em>ou remplacer</em></h3>
+            <span class="badge-count"><strong>3</strong> alertes</span>
+          </div>
+          <div class="sub" style="margin: 4px 0 4px; font-size: 12px;">Ce qui montre des signes d'usure ou approche sa fin de vie.</div>
+
+          <div class="repair-item">
+            <div class="th" style="background-image: url('assets/backpack.jpg'); filter: hue-rotate(20deg);"></div>
+            <div class="info">
+              <div class="n">Sangle sac Salomon Adv Skin 12</div>
+              <div class="m">Élastique distendu · à remplacer avant janvier</div>
+            </div>
+            <button class="cta">Réparer</button>
+          </div>
+          <div class="repair-item">
+            <div class="th" style="background-image: url('assets/gear-sleepingbag.jpg')"></div>
+            <div class="info">
+              <div class="n">Matelas NeoAir XLite</div>
+              <div class="m">Micro-fuite valve · gonflage à contrôler</div>
+            </div>
+            <button class="cta">Réparer</button>
+          </div>
+          <div class="repair-item">
+            <div class="th" style="background-image: url('assets/gear-boots.jpg')"></div>
+            <div class="info">
+              <div class="n">Chaussures Salomon Quest 4 GTX</div>
+              <div class="m critical">Semelle usée à 68 % · remplacement conseillé</div>
+            </div>
+            <button class="cta" style="background: rgba(193,90,90,0.15); color: #C15A5A;">Voir</button>
+          </div>
+        </div>
+
+        <!-- LOANS -->
+        <div class="block" style="margin-bottom: 0; padding: 22px;">
+          <div class="head" style="margin-bottom: 8px;">
+            <h3 style="font-size: 18px;">Prêts <em>en cours</em></h3>
+            <span class="badge-count"><strong>2</strong> prêtés · 1 emprunté</span>
+          </div>
+          <div class="sub" style="margin: 4px 0 4px; font-size: 12px;">Matériel qui circule entre membres du club Bivouacs Étoilés.</div>
+
+          <div class="loan-row">
+            <div class="th" style="background-image: url('assets/gear-tent-small.jpg')"></div>
+            <div class="av" style="background-image: url('assets/portrait-3.jpg')"></div>
+            <div class="info"><strong>Antoine Béraud</strong> · Tente Hubba Hubba</div>
+            <div class="until">jusqu'au 22</div>
+          </div>
+          <div class="loan-row">
+            <div class="th" style="background-image: url('assets/gear-headlamp.jpg')"></div>
+            <div class="av" style="background-image: url('assets/portrait-4.jpg')"></div>
+            <div class="info"><strong>Camille Rey</strong> · Frontale Petzl</div>
+            <div class="until late">retard 3 j</div>
+          </div>
+          <div class="loan-row">
+            <div class="th" style="background-image: url('assets/gear-stove.jpg'); filter: hue-rotate(60deg);"></div>
+            <div class="av" style="background-image: url('assets/portrait-6.jpg')"></div>
+            <div class="info">Emprunté à <strong>Sophie</strong> · Popote Primus</div>
+            <div class="until">jusqu'au 18</div>
+          </div>
+        </div>
+
+        <!-- RECOS -->
+        <div class="block" style="margin-bottom: 0; padding: 22px;">
+          <div class="head" style="margin-bottom: 8px;">
+            <h3 style="font-size: 18px;">Recommandations <em>pour vous</em></h3>
+            <a class="link" href="#">Boutique →</a>
+          </div>
+          <div class="sub" style="margin: 4px 0 4px; font-size: 12px;">Suggestions basées sur votre inventaire et vos derniers voyages.</div>
+
+          <div class="reco-item">
+            <div class="th" style="background-image: url('assets/gear-boots.jpg')"></div>
+            <div class="info">
+              <div class="n">Chaussures Scarpa Rush TRK GTX</div>
+              <div class="m">Remplace vos Quest 4 <span class="price">239 €</span></div>
+            </div>
+          </div>
+          <div class="reco-item">
+            <div class="th" style="background-image: url('assets/gear-sleepingbag.jpg')"></div>
+            <div class="info">
+              <div class="n">Matelas Therm-a-Rest NeoAir XTherm</div>
+              <div class="m">Hiver · R-value 7,3 <span class="price">259 €</span></div>
+            </div>
+          </div>
+          <div class="reco-item">
+            <div class="th" style="background: linear-gradient(135deg, var(--lkv-stone-50), var(--lkv-sage-100));"></div>
+            <div class="info">
+              <div class="n">Piolet Petzl Summit Evo 66 cm</div>
+              <div class="m">Pour votre kit hiver <span class="price">89 €</span></div>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="brand">Un sac bien fait, <em>c'est déjà un voyage réussi.</em></div>
+      <div class="bottom">
+        <div>© 2026 Le Kit du Voyageur — Inventaire de Marceline Chevrier · 47 articles pesés · dernière synchro 8 oct.</div>
+        <div>Aide · Export CSV · Support</div>
+      </div>
+    </footer>
+
+  </div>
+  <div class="board-caption">Desktop · 1280 × 4200+</div>
+  </div>
+
+  <!-- ========== MOBILE ========== -->
+  <div>
+    <div class="artboard-mobile">
+      <div class="screen" style="overflow-y: auto;">
+
+        <div class="m-cover">
+          <div class="top">
+            <div class="back">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+            </div>
+            <div class="dots">
+              <div class="dot-b"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 3v14M6 9l6-6 6 6"/></svg></div>
+              <div class="dot-b"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg></div>
+            </div>
+          </div>
+          <div class="head">
+            <div class="eye"><span class="dot"></span>Inventaire · 47 articles</div>
+            <h1>Mon <em>inventaire</em></h1>
+            <div class="meta">12,4 kg · 4 kits · pesé le 8 oct.</div>
+          </div>
+        </div>
+
+        <div class="m-weight">
+          <div class="row">
+            <div>
+              <div class="l">Poids total</div>
+              <div class="v">12,4<em>kg</em></div>
+            </div>
+            <div style="text-align: right;">
+              <div class="l">Kits</div>
+              <div class="v">4<em> assemblés</em></div>
+            </div>
+          </div>
+          <div class="stacked">
+            <div class="s a" style="width: 31%"></div>
+            <div class="s b" style="width: 26%"></div>
+            <div class="s c" style="width: 19%"></div>
+            <div class="s d" style="width: 13%"></div>
+            <div class="s e" style="width: 8%"></div>
+            <div class="s f" style="width: 3%"></div>
+          </div>
+          <div class="info-p">Couchage 31 % · Vêtements 26 % · Portage 19 % · Cuisine 13 %</div>
+        </div>
+
+        <div class="m-search">
+          <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          Rechercher un article…
+        </div>
+
+        <div class="m-tabs">
+          <div class="t on">Tous <span class="n">47</span></div>
+          <div class="t">Couchage <span class="n">6</span></div>
+          <div class="t">Portage <span class="n">4</span></div>
+          <div class="t">Cuisine <span class="n">9</span></div>
+          <div class="t">Vêtements <span class="n">14</span></div>
+        </div>
+
+        <div class="m-body">
+
+          <!-- COUCHAGE -->
+          <div class="m-block">
+            <h4>Couchage <em>& abri</em> <span class="n">6 · 3,8 kg</span></h4>
+            <div class="m-item-grid">
+              <div class="m-item">
+                <div class="cov" style="background-image: url('assets/gear-tent-small.jpg')">
+                  <span class="st">OK</span>
+                  <span class="wt">2,1 kg</span>
+                </div>
+                <div class="body">
+                  <div class="n">Tente MSR Hubba Hubba 2p</div>
+                  <div class="b">MSR · 3 kits</div>
+                </div>
+              </div>
+              <div class="m-item">
+                <div class="cov" style="background-image: url('assets/gear-sleepingbag.jpg')">
+                  <span class="st">OK</span>
+                  <span class="wt">960 g</span>
+                </div>
+                <div class="body">
+                  <div class="n">Sac Cumulus Panyam 450</div>
+                  <div class="b">−5 °C · 3 kits</div>
+                </div>
+              </div>
+              <div class="m-item">
+                <div class="cov" style="background-image: url('assets/gear-sleepingbag.jpg'); filter: hue-rotate(-30deg)">
+                  <span class="st warn">Usure</span>
+                  <span class="wt">420 g</span>
+                </div>
+                <div class="body">
+                  <div class="n">Matelas NeoAir XLite</div>
+                  <div class="b">Therm-a-Rest</div>
+                </div>
+              </div>
+              <div class="m-item">
+                <div class="cov" style="background: linear-gradient(135deg, #E5E1D9, #C8DDCC); display: flex; align-items: center; justify-content: center;">
+                  <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="var(--lkv-forest-800)" stroke-width="1.5"><path d="M4 20L12 4l8 16"/><path d="M12 4v16"/></svg>
+                  <span class="st">OK</span>
+                  <span class="wt">280 g</span>
+                </div>
+                <div class="body">
+                  <div class="n">Bâche tarp 3x3 DCF</div>
+                  <div class="b">Sans marque</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PORTAGE -->
+          <div class="m-block">
+            <h4>Portage <em>& sacs</em> <span class="n">4 · 2,4 kg</span></h4>
+            <div class="m-item-grid">
+              <div class="m-item">
+                <div class="cov" style="background-image: url('assets/backpack.jpg')">
+                  <span class="st">OK</span>
+                  <span class="wt">1,4 kg</span>
+                </div>
+                <div class="body">
+                  <div class="n">Osprey Aura AG 65</div>
+                  <div class="b">2 kits</div>
+                </div>
+              </div>
+              <div class="m-item">
+                <div class="cov" style="background-image: url('assets/backpack.jpg'); filter: hue-rotate(20deg)">
+                  <span class="st warn">Sangle</span>
+                  <span class="wt">640 g</span>
+                </div>
+                <div class="body">
+                  <div class="n">Salomon Adv Skin 12</div>
+                  <div class="b">Kit trail</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- KITS -->
+          <div class="m-block">
+            <h4>Mes <em>kits</em> <span class="n">4 assemblés</span></h4>
+            <div class="m-kit">
+              <div class="th">C</div>
+              <div class="n">Bivouac <em>3 saisons</em><div class="m">28 items · 12 utilisations</div></div>
+              <div class="w">9,8<em>kg</em></div>
+            </div>
+            <div class="m-kit">
+              <div class="th b">B</div>
+              <div class="n">Bivouac <em>hivernal</em><div class="m">32 items · 4 utilisations</div></div>
+              <div class="w">12,2<em>kg</em></div>
+            </div>
+            <div class="m-kit">
+              <div class="th">A</div>
+              <div class="n">Randonnée <em>journée</em><div class="m">14 items · 28 utilisations</div></div>
+              <div class="w">4,6<em>kg</em></div>
+            </div>
+            <div class="m-kit">
+              <div class="th b">D</div>
+              <div class="n">Trail <em>compét'</em><div class="m">9 items · 6 utilisations</div></div>
+              <div class="w">2,1<em>kg</em></div>
+            </div>
+          </div>
+
+          <!-- REPAIRS -->
+          <div class="m-block">
+            <h4>À <em>réparer</em> <span class="n" style="color: var(--lkv-warm-500);">3 alertes</span></h4>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(11,31,23,0.05);">
+                <div style="width: 32px; height: 32px; background: url('assets/backpack.jpg') center/cover; border-radius: 8px; filter: hue-rotate(20deg);"></div>
+                <div style="flex: 1; font-size: 12px;">
+                  <div style="font-weight: 500; color: var(--lkv-ink-900);">Sangle Salomon</div>
+                  <div style="color: var(--lkv-warm-500); font-size: 10px; margin-top: 2px;">Élastique distendu</div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(11,31,23,0.05);">
+                <div style="width: 32px; height: 32px; background: url('assets/gear-sleepingbag.jpg') center/cover; border-radius: 8px;"></div>
+                <div style="flex: 1; font-size: 12px;">
+                  <div style="font-weight: 500; color: var(--lkv-ink-900);">Matelas NeoAir</div>
+                  <div style="color: var(--lkv-warm-500); font-size: 10px; margin-top: 2px;">Micro-fuite valve</div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
+                <div style="width: 32px; height: 32px; background: url('assets/gear-boots.jpg') center/cover; border-radius: 8px;"></div>
+                <div style="flex: 1; font-size: 12px;">
+                  <div style="font-weight: 500; color: var(--lkv-ink-900);">Chaussures Salomon</div>
+                  <div style="color: #C15A5A; font-size: 10px; margin-top: 2px;">Semelle usée 68 %</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ADD FAB style block -->
+          <div style="margin-top: 12px; padding: 14px; background: linear-gradient(135deg, #F5E6C4 0%, var(--lkv-warm-300) 100%); color: var(--lkv-forest-900); border-radius: 16px; text-align: center;">
+            <div style="font-size: 15px; font-weight: 500; letter-spacing: -0.01em; margin-bottom: 4px;">Ajouter un <em style="font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800);">article</em></div>
+            <div style="font-size: 11px; opacity: 0.75; margin-bottom: 10px;">Scan code-barre ou saisie manuelle</div>
+            <a href="Inventaire - Détail Item.html" style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; background: var(--lkv-forest-800); color: #fff; border-radius: 999px; font-size: 12px; font-weight: 500; text-decoration: none;">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 4v16M4 12h16"/></svg>
+              Nouveau
+            </a>
+          </div>
+
+        </div>
+
+        <div class="m-tabbar">
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M3 11l9-7 9 7v9a2 2 0 01-2 2h-4v-6h-6v6H5a2 2 0 01-2-2z"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div>
+          <div class="tabi on"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M6 8h12v12a2 2 0 01-2 2H8a2 2 0 01-2-2z"/><path d="M9 8V5a3 3 0 016 0v3"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M4 4h12l4 4v12a2 2 0 01-2 2H4z"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">Mobile · 375 × 812 (scroll)</div>
+  </div>
+
+</div>
+
+</body>
+</html>

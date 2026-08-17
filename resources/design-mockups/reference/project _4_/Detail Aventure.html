@@ -1,0 +1,785 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Cabane du Grand Vaneau · Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<style>
+  body { background: #EAE6DF; padding: 40px 0; }
+
+  .stage-title {
+    max-width: 1720px; margin: 0 auto 32px; padding: 0 40px;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 24px;
+    color: var(--lkv-ink-700);
+  }
+  .stage-title .h { font-family: var(--lkv-font-sans); font-size: 24px; font-weight: 500; letter-spacing: -0.015em; color: var(--lkv-ink-900); }
+  .stage-title .sub { font-size: 14px; color: var(--lkv-ink-500); }
+  .stage-title a { color: var(--lkv-forest-800); font-weight: 500; margin-left: 24px; }
+
+  .stage {
+    display: flex; gap: 40px;
+    max-width: 1720px; margin: 0 auto; padding: 0 40px;
+    align-items: flex-start;
+  }
+
+  .artboard-desktop {
+    width: 1280px; flex-shrink: 0;
+    border-radius: 32px;
+    overflow: hidden;
+    background: var(--lkv-paper);
+    box-shadow: 0 30px 80px rgba(11,31,23,0.14);
+  }
+  .artboard-mobile {
+    width: 380px; flex-shrink: 0;
+    border-radius: 44px;
+    overflow: hidden;
+    background: #000;
+    padding: 12px;
+    box-shadow: 0 30px 80px rgba(11,31,23,0.18);
+  }
+  .artboard-mobile .screen {
+    width: 100%;
+    height: 780px;
+    border-radius: 34px;
+    overflow: hidden;
+    background: var(--lkv-paper);
+    position: relative;
+  }
+
+  /* ————— DESKTOP ————— */
+  /* Hero cinematic band */
+  .hero-band {
+    position: relative;
+    height: 620px;
+    background: var(--lkv-forest-900);
+    color: #fff;
+    overflow: hidden;
+  }
+  .hero-band .bg {
+    position: absolute; inset: 0;
+    background-image: url('assets/detail-hero.jpg');
+    background-size: cover;
+    background-position: center;
+    filter: saturate(1.05);
+  }
+  .hero-band .bg::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0.35), rgba(11,31,23,0.1) 40%, rgba(11,31,23,0.75) 100%);
+  }
+  .hero-band > * { position: relative; z-index: 1; }
+
+  .breadcrumb {
+    display: flex; gap: 8px; align-items: center;
+    padding: 24px 40px;
+    font-size: 13px; color: rgba(255,255,255,0.75);
+  }
+  .breadcrumb a { color: inherit; transition: color var(--lkv-dur) var(--lkv-ease); }
+  .breadcrumb a:hover { color: #fff; }
+  .breadcrumb span { opacity: 0.4; }
+
+  .detail-back-wrap {
+    position: absolute;
+    top: 24px; right: 40px;
+    z-index: 5;
+    display: flex; gap: 10px;
+  }
+  .icon-btn-glass {
+    width: 42px; height: 42px; border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.24);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .icon-btn-glass:hover { background: rgba(255,255,255,0.24); }
+
+  .hero-headline {
+    padding: 60px 60px 40px;
+    max-width: 900px;
+  }
+  .hero-cats {
+    display: flex; gap: 8px; margin-bottom: 20px;
+  }
+  .hero-cats .lkv-chip {
+    background: rgba(255,255,255,0.16);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.24);
+  }
+  .hero-title {
+    font-family: var(--lkv-font-sans);
+    font-size: 88px; font-weight: 500;
+    letter-spacing: -0.032em; line-height: 0.98;
+    margin: 0 0 20px;
+    text-wrap: balance;
+  }
+  .hero-title em {
+    font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-200); font-weight: 400;
+  }
+  .hero-meta {
+    display: flex; gap: 24px; align-items: center;
+    font-size: 14px; color: rgba(255,255,255,0.85);
+  }
+  .hero-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,0.35); }
+  .hero-meta svg { width: 14px; height: 14px; vertical-align: -2px; margin-right: 4px; }
+
+  /* Floating stat panel */
+  .stat-panel {
+    position: absolute;
+    right: 60px; bottom: 40px;
+    display: flex; gap: 12px;
+    z-index: 2;
+  }
+  .stat-tile {
+    padding: 20px 24px;
+    border-radius: 20px;
+    color: #fff;
+    min-width: 140px;
+  }
+  .stat-tile .l { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.7; margin-bottom: 6px; }
+  .stat-tile .v { font-size: 32px; font-weight: 500; letter-spacing: -0.02em; line-height: 1; }
+  .stat-tile .v em { font-family: var(--lkv-font-serif); font-style: italic; font-weight: 400; color: var(--lkv-sage-200); }
+
+  /* Body: two-column layout */
+  .body-band {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 60px;
+    padding: 80px 60px;
+  }
+  .col-main .lkv-eyebrow { margin-bottom: 16px; }
+  .col-main h2 {
+    font-size: 44px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1.05;
+    margin: 0 0 24px;
+  }
+  .col-main h2 em {
+    font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .col-main .lead {
+    font-size: 19px; line-height: 1.55;
+    color: var(--lkv-ink-700);
+    max-width: 620px;
+    margin-bottom: 40px;
+  }
+
+  /* Features list */
+  .feat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 32px 0;
+    border-top: 1px solid rgba(11,31,23,0.08);
+    border-bottom: 1px solid rgba(11,31,23,0.08);
+  }
+  .feat {
+    display: flex; gap: 16px;
+  }
+  .feat .icon {
+    width: 44px; height: 44px;
+    border-radius: 14px;
+    background: var(--lkv-sage-100);
+    color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .feat .icon svg { width: 20px; height: 20px; }
+  .feat .txt .k { font-size: 15px; font-weight: 500; letter-spacing: -0.005em; }
+  .feat .txt .v { font-size: 13px; color: var(--lkv-ink-500); margin-top: 2px; line-height: 1.4; }
+
+  /* Timeline / itinerary */
+  .itinerary {
+    padding: 40px 0 0;
+  }
+  .itinerary h3 {
+    font-size: 24px; font-weight: 500; letter-spacing: -0.01em;
+    margin: 0 0 24px;
+  }
+  .day-row {
+    display: grid;
+    grid-template-columns: 100px 1fr auto;
+    gap: 24px;
+    padding: 20px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    align-items: baseline;
+  }
+  .day-row:last-child { border-bottom: none; }
+  .day-row .num {
+    font-family: var(--lkv-font-serif);
+    font-style: italic;
+    font-size: 44px; color: var(--lkv-forest-800); font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .day-row .txt .h { font-size: 18px; font-weight: 500; margin-bottom: 4px; letter-spacing: -0.005em; }
+  .day-row .txt .b { font-size: 14px; color: var(--lkv-ink-500); line-height: 1.5; max-width: 460px; }
+  .day-row .dist {
+    font-family: var(--lkv-font-mono);
+    font-size: 12px;
+    color: var(--lkv-ink-400);
+    letter-spacing: 0.02em;
+    text-align: right;
+    line-height: 1.5;
+  }
+  .day-row .dist span { display: block; font-size: 15px; color: var(--lkv-ink-900); font-family: var(--lkv-font-sans); }
+
+  /* SIDE: sticky booking card */
+  .side-card {
+    position: sticky;
+    top: 40px;
+    padding: 28px;
+    background: #fff;
+    border-radius: 28px;
+    box-shadow: var(--lkv-shadow-lg);
+    border: 1px solid rgba(11,31,23,0.04);
+  }
+  .side-card .head-row {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    margin-bottom: 20px;
+  }
+  .side-card .price { font-size: 40px; font-weight: 500; letter-spacing: -0.025em; line-height: 1; }
+  .side-card .price .u { font-size: 14px; color: var(--lkv-ink-400); font-weight: 400; }
+  .side-card .rate {
+    display: flex; flex-direction: column; align-items: flex-end;
+    font-size: 12px; color: var(--lkv-ink-500);
+  }
+  .side-card .rate strong {
+    font-size: 15px; font-weight: 500; color: var(--lkv-ink-900);
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .side-card .rate strong svg { fill: var(--lkv-warm-500); width: 12px; height: 12px; }
+
+  .side-form {
+    background: var(--lkv-stone-50);
+    border-radius: 16px;
+    padding: 4px;
+    margin-bottom: 16px;
+  }
+  .side-form .row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+  }
+  .side-form .cell {
+    padding: 14px 16px;
+    background: #fff;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: box-shadow var(--lkv-dur) var(--lkv-ease);
+  }
+  .side-form .cell:hover { box-shadow: 0 0 0 1px var(--lkv-forest-800); }
+  .side-form .k { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lkv-ink-400); margin-bottom: 4px; }
+  .side-form .v { font-size: 14px; font-weight: 500; color: var(--lkv-ink-900); }
+
+  .side-details {
+    padding: 20px 0 8px;
+    border-top: 1px solid rgba(11,31,23,0.06);
+    margin-top: 8px;
+  }
+  .side-line {
+    display: flex; justify-content: space-between;
+    padding: 6px 0; font-size: 14px;
+    color: var(--lkv-ink-700);
+  }
+  .side-line.total {
+    padding-top: 16px;
+    margin-top: 8px;
+    border-top: 1px solid rgba(11,31,23,0.06);
+    font-weight: 500; font-size: 16px;
+    color: var(--lkv-ink-900);
+  }
+  .side-card .book-cta {
+    display: block; width: 100%;
+    padding: 16px; text-align: center;
+    background: var(--lkv-forest-800); color: #fff;
+    border-radius: 999px;
+    font-size: 15px; font-weight: 500;
+    margin-top: 16px;
+    transition: all var(--lkv-dur) var(--lkv-ease-out);
+  }
+  .side-card .book-cta:hover {
+    background: var(--lkv-forest-700);
+    box-shadow: 0 8px 24px rgba(31,74,58,0.25);
+    transform: translateY(-1px);
+  }
+  .side-card .book-note {
+    text-align: center; font-size: 12px; color: var(--lkv-ink-400);
+    margin-top: 12px;
+  }
+
+  /* Host block */
+  .host-block {
+    margin-top: 24px;
+    padding: 20px;
+    background: var(--lkv-forest-900);
+    color: #fff;
+    border-radius: 22px;
+    display: flex; gap: 16px; align-items: center;
+  }
+  .host-block .av {
+    width: 52px; height: 52px; border-radius: 999px;
+    background: linear-gradient(135deg, var(--lkv-warm-500), var(--lkv-sage-500));
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 600;
+  }
+  .host-block .txt { flex: 1; }
+  .host-block .txt .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; opacity: 0.6; }
+  .host-block .txt .h { font-size: 15px; font-weight: 500; margin-top: 2px; }
+  .host-block .txt .s { font-size: 12px; opacity: 0.7; }
+  .host-block .msg {
+    width: 40px; height: 40px; border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Gallery band */
+  .gallery-band {
+    padding: 0 60px 96px;
+  }
+  .gallery-band h3 {
+    font-size: 32px; font-weight: 500; letter-spacing: -0.02em; margin: 0 0 28px;
+  }
+  .gallery-band h3 em {
+    font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-rows: 260px 260px;
+    gap: 12px;
+  }
+  .gallery-grid > div {
+    border-radius: 20px;
+    background-size: cover; background-position: center;
+    transition: transform var(--lkv-dur) var(--lkv-ease-out);
+    cursor: pointer;
+  }
+  .gallery-grid > div:hover { transform: scale(1.01); }
+  .gallery-grid > .g-big { grid-row: 1 / 3; }
+
+  /* ————— MOBILE ————— */
+  .m-hero {
+    position: relative;
+    height: 380px;
+    background-image: url('assets/detail-hero.jpg');
+    background-size: cover;
+    background-position: center;
+    padding: 14px;
+  }
+  .m-hero::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0.35), transparent 30%, rgba(11,31,23,0.65));
+  }
+  .m-hero > * { position: relative; z-index: 1; }
+  .m-hero-nav {
+    display: flex; justify-content: space-between;
+  }
+  .m-hero-btn {
+    width: 36px; height: 36px; border-radius: 999px;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .m-hero-btm {
+    position: absolute; bottom: 16px; left: 16px; right: 16px;
+    color: #fff; z-index: 1;
+  }
+  .m-hero-cats { display: flex; gap: 6px; margin-bottom: 8px; }
+  .m-hero-cats .lkv-chip {
+    background: rgba(255,255,255,0.16); color: #fff; border: 1px solid rgba(255,255,255,0.2);
+    height: 26px; font-size: 11px; padding: 0 10px;
+  }
+  .m-hero-title {
+    font-size: 30px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.02;
+    margin: 0;
+  }
+  .m-hero-title em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-200); font-weight: 400; }
+  .m-hero-meta { font-size: 12px; opacity: 0.85; margin-top: 6px; }
+
+  .m-body {
+    padding: 18px 14px 90px;
+    background: var(--lkv-paper);
+    height: calc(100% - 380px);
+    overflow-y: auto;
+  }
+  .m-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+    padding: 12px;
+    background: var(--lkv-stone-50);
+    border-radius: 16px;
+    margin-bottom: 20px;
+  }
+  .m-stat { text-align: center; padding: 6px; }
+  .m-stat .l { font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--lkv-ink-400); }
+  .m-stat .v { font-size: 18px; font-weight: 500; letter-spacing: -0.01em; margin-top: 2px; }
+
+  .m-section-t {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-ink-500); margin: 4px 0 12px;
+  }
+  .m-desc { font-size: 14px; line-height: 1.55; color: var(--lkv-ink-700); margin-bottom: 24px; }
+
+  .m-feats {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin-bottom: 24px;
+  }
+  .m-feat {
+    padding: 12px;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: var(--lkv-shadow-xs);
+    display: flex; gap: 10px; align-items: center;
+  }
+  .m-feat .i {
+    width: 32px; height: 32px; border-radius: 10px;
+    background: var(--lkv-sage-100); color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .m-feat .i svg { width: 16px; height: 16px; }
+  .m-feat .t { font-size: 12px; font-weight: 500; }
+  .m-feat .t small { display: block; font-weight: 400; color: var(--lkv-ink-400); font-size: 10px; }
+
+  .m-cta-bar {
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    background: #fff;
+    border-radius: 999px;
+    box-shadow: 0 8px 24px rgba(11,31,23,0.14);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 8px 8px 20px;
+    z-index: 5;
+    border: 1px solid rgba(11,31,23,0.04);
+  }
+  .m-cta-bar .p { font-size: 20px; font-weight: 500; letter-spacing: -0.015em; }
+  .m-cta-bar .p small { color: var(--lkv-ink-400); font-size: 12px; font-weight: 400; }
+  .m-cta-bar .btn {
+    padding: 12px 20px;
+    background: var(--lkv-forest-800); color: #fff;
+    border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+  }
+
+  .board-caption { font-size: 12px; text-align: center; color: var(--lkv-ink-500); margin-top: 12px; letter-spacing: 0.05em; }
+</style>
+</head>
+<body>
+
+<div class="stage-title">
+  <div>
+    <div class="h">Détail aventure · Cabane du Grand Vaneau</div>
+    <div class="sub">Fiche immersive · desktop 1280 px + mobile 375 px</div>
+  </div>
+  <div>
+    <a href="Index.html">← Hub</a>
+    <a href="Design System.html">Design System</a>
+    <a href="Home.html">Home</a>
+    <a href="Recherche Carte.html">Recherche</a>
+  </div>
+</div>
+
+<div class="stage">
+  <!-- ————— DESKTOP ————— -->
+  <div class="artboard-desktop">
+
+    <!-- HERO -->
+    <section class="hero-band">
+      <div class="bg"></div>
+      <div class="breadcrumb">
+        <a href="Home.html">Accueil</a>
+        <span>/</span>
+        <a href="Recherche Carte.html">Aventures</a>
+        <span>/</span>
+        <a href="#">Massif de la Chartreuse</a>
+        <span>/</span>
+        <span style="opacity: 1; color: #fff">Cabane du Grand Vaneau</span>
+      </div>
+
+      <div class="detail-back-wrap">
+        <button class="icon-btn-glass">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M4 12v7a1 1 0 0 0 1 1h4v-6h6v6h4a1 1 0 0 0 1-1v-7"/><path d="M3 10l9-7 9 7"/></svg>
+        </button>
+        <button class="icon-btn-glass">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v14"/></svg>
+        </button>
+        <button class="icon-btn-glass">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+        </button>
+      </div>
+
+      <div class="hero-headline">
+        <div class="hero-cats">
+          <div class="lkv-chip">Refuge non-gardé</div>
+          <div class="lkv-chip">4 personnes</div>
+          <div class="lkv-chip"><span class="dot"></span>Coup de cœur</div>
+        </div>
+        <h1 class="hero-title">Cabane du <em>Grand Vaneau</em></h1>
+        <div class="hero-meta">
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="10" r="3"/><path d="M12 21c-4-5-7-8-7-11a7 7 0 0 1 14 0c0 3-3 6-7 11z"/></svg>Saint-Pierre-d'Entremont · Chartreuse</span>
+          <span class="dot"></span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20l4-16 4 8 4-4 4 12"/></svg>1 620 m d'altitude</span>
+          <span class="dot"></span>
+          <span><svg viewBox="0 0 24 24" fill="var(--lkv-warm-500)"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>4,9 · 214 séjours</span>
+        </div>
+      </div>
+
+      <div class="stat-panel">
+        <div class="stat-tile lkv-glass-dark">
+          <div class="l">Distance</div>
+          <div class="v">27,4 <em>km</em></div>
+        </div>
+        <div class="stat-tile lkv-glass-dark">
+          <div class="l">Dénivelé</div>
+          <div class="v">+1 620 <em>m</em></div>
+        </div>
+        <div class="stat-tile lkv-glass-dark">
+          <div class="l">Difficulté</div>
+          <div class="v">3<em>/5</em></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BODY -->
+    <section class="body-band">
+      <div class="col-main">
+        <div class="lkv-eyebrow">L'aventure</div>
+        <h2>Un refuge de <em>pierre sèche</em><br/>où le silence commence.</h2>
+        <p class="lead">Perchée à l'extrémité du plateau du Grand Som, la cabane veille sur la vallée d'Entremont. Aucun accès en voiture — quatre heures de marche depuis le col du Cucheron. À l'arrivée, un poêle en fonte, quatre matelas, une réserve de bois. Le silence, ensuite, s'occupe du reste.</p>
+
+        <div class="feat-grid">
+          <div class="feat">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20L12 4l9 16"/><path d="M12 4v16"/><path d="M3 20h18"/></svg>
+            </div>
+            <div class="txt">
+              <div class="k">Refuge non-gardé</div>
+              <div class="v">Autonomie totale · réservation obligatoire</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M3 10l9-7 9 7"/></svg>
+            </div>
+            <div class="txt">
+              <div class="k">4 matelas · poêle</div>
+              <div class="v">Duvets non fournis · bois en réserve</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 6l-2 2M6 18l2-2M16 18l-2-2"/><circle cx="12" cy="12" r="4"/></svg>
+            </div>
+            <div class="txt">
+              <div class="k">Sans électricité</div>
+              <div class="v">Lampe frontale recommandée</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4M3 7v10l9 4 9-4V7M3 7l9 4M21 7l-9 4M12 11v10"/></svg>
+            </div>
+            <div class="txt">
+              <div class="k">Kit fourni</div>
+              <div class="v">Cartes · trousse de secours · guide</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 16 0 8 8 0 1 0-16 0"/><path d="M12 8v4l3 2"/></svg>
+            </div>
+            <div class="txt">
+              <div class="k">4 h de marche</div>
+              <div class="v">Sentier balisé depuis le col du Cucheron</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c0 8-6 14-14 14L4 20"/><path d="M4 20c0-6 4-12 12-14"/></svg>
+            </div>
+            <div class="txt">
+              <div class="k">Faune protégée</div>
+              <div class="v">Bouquetins, tétras-lyres, gypaètes</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="itinerary">
+          <h3>L'itinéraire · 3 jours</h3>
+
+          <div class="day-row">
+            <div class="num">j.1</div>
+            <div class="txt">
+              <div class="h">Cucheron → Grand Vaneau</div>
+              <div class="b">Départ 14 h. Montée en forêt jusqu'au replat des Alpettes, puis crête aérienne jusqu'à la cabane. Arrivée avant la nuit.</div>
+            </div>
+            <div class="dist">Distance<span>8,4 km</span></div>
+          </div>
+
+          <div class="day-row">
+            <div class="num">j.2</div>
+            <div class="txt">
+              <div class="h">Boucle du Grand Som</div>
+              <div class="b">Sommet à l'aube. Descente par la Voie du Château. Retour cabane en fin d'après-midi. Le point d'orgue.</div>
+            </div>
+            <div class="dist">Distance<span>14,6 km</span></div>
+          </div>
+
+          <div class="day-row">
+            <div class="num">j.3</div>
+            <div class="txt">
+              <div class="h">Descente au bourg</div>
+              <div class="b">Départ 9 h. Descente par le sentier ancien des charbonniers. Fin à Saint-Pierre-d'Entremont, retour transfert inclus.</div>
+            </div>
+            <div class="dist">Distance<span>4,4 km</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIDE -->
+      <div>
+        <div class="side-card">
+          <div class="head-row">
+            <div class="price">248 €<span class="u"> / nuit</span></div>
+            <div class="rate">
+              <strong>
+                <svg viewBox="0 0 24 24"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+                4,9
+              </strong>
+              <span>214 séjours</span>
+            </div>
+          </div>
+
+          <div class="side-form">
+            <div class="row">
+              <div class="cell"><div class="k">Arrivée</div><div class="v">Ven. 14 sept.</div></div>
+              <div class="cell"><div class="k">Départ</div><div class="v">Lun. 17 sept.</div></div>
+            </div>
+            <div class="row" style="margin-top: 4px;">
+              <div class="cell" style="grid-column: 1 / -1;"><div class="k">Voyageurs</div><div class="v">2 adultes · pas d'enfant</div></div>
+            </div>
+          </div>
+
+          <div class="side-details">
+            <div class="side-line"><span>248 € × 3 nuits</span><span>744 €</span></div>
+            <div class="side-line"><span>Transfert retour</span><span>Inclus</span></div>
+            <div class="side-line"><span>Kit prêté</span><span>Inclus</span></div>
+            <div class="side-line"><span>Frais de service</span><span>28 €</span></div>
+            <div class="side-line total"><span>Total</span><span>772 €</span></div>
+          </div>
+
+          <button class="book-cta">Réserver ces dates</button>
+          <div class="book-note">Vous ne paierez que 24 h avant l'arrivée</div>
+        </div>
+
+        <div class="host-block">
+          <div class="av">MC</div>
+          <div class="txt">
+            <div class="k">Gardienne des lieux</div>
+            <div class="h">Marceline Chevrier</div>
+            <div class="s">Répond en moins d'une heure · Grenoble</div>
+          </div>
+          <button class="msg">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M4 6h16v10H8l-4 4z"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- GALLERY -->
+    <section class="gallery-band">
+      <h3>Les <em>lieux,</em> en images</h3>
+      <div class="gallery-grid">
+        <div class="g-big" style="background-image: url('assets/hero-misty.jpg')"></div>
+        <div style="background-image: url('assets/adventure-bivouac.jpg')"></div>
+        <div style="background-image: url('assets/adventure-hiking.jpg')"></div>
+        <div style="background-image: url('assets/hero-editorial.jpg')"></div>
+        <div style="background-image: url('assets/adventure-kayak.jpg'); display: flex; align-items: flex-end; padding: 20px; color: #fff; font-size: 13px; font-weight: 500; background-blend-mode: multiply; background-color: rgba(11,31,23,0.4);">+ 24 photos</div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ————— MOBILE ————— -->
+  <div>
+    <div class="artboard-mobile">
+      <div class="screen">
+        <div class="m-hero">
+          <div class="m-hero-nav">
+            <button class="m-hero-btn">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div style="display: flex; gap: 6px;">
+              <button class="m-hero-btn">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v14"/></svg>
+              </button>
+              <button class="m-hero-btn">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="m-hero-btm">
+            <div class="m-hero-cats">
+              <div class="lkv-chip">Refuge</div>
+              <div class="lkv-chip">4 pers.</div>
+            </div>
+            <h1 class="m-hero-title">Cabane du<br/><em>Grand Vaneau</em></h1>
+            <div class="m-hero-meta">▲ 1 620 m · Chartreuse, France</div>
+          </div>
+        </div>
+
+        <div class="m-body">
+          <div class="m-stats">
+            <div class="m-stat"><div class="l">Distance</div><div class="v">27,4 km</div></div>
+            <div class="m-stat"><div class="l">Dénivelé</div><div class="v">+1 620 m</div></div>
+            <div class="m-stat"><div class="l">Note</div><div class="v" style="color: var(--lkv-warm-500)">4,9 ★</div></div>
+          </div>
+
+          <div class="m-section-t">L'aventure</div>
+          <p class="m-desc">Perchée à l'extrémité du plateau du Grand Som, la cabane veille sur la vallée. Quatre heures de marche depuis le col.</p>
+
+          <div class="m-section-t">Ce qui vous attend</div>
+          <div class="m-feats">
+            <div class="m-feat">
+              <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 20L12 4l9 16"/></svg></div>
+              <div class="t">Non-gardé<small>Autonomie</small></div>
+            </div>
+            <div class="m-feat">
+              <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M3 10l9-7 9 7"/></svg></div>
+              <div class="t">4 matelas<small>+ poêle</small></div>
+            </div>
+            <div class="m-feat">
+              <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/></svg></div>
+              <div class="t">Kit fourni<small>Cartes · secours</small></div>
+            </div>
+            <div class="m-feat">
+              <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 12a8 8 0 1 0 16 0 8 8 0 1 0-16 0"/><path d="M12 8v4l3 2"/></svg></div>
+              <div class="t">4 h marche<small>Depuis Cucheron</small></div>
+            </div>
+          </div>
+
+          <div class="m-section-t">Itinéraire</div>
+          <div style="display: flex; gap: 12px; padding: 12px; background: #fff; border-radius: 14px; box-shadow: var(--lkv-shadow-xs); margin-bottom: 10px;">
+            <div style="font-family: var(--lkv-font-serif); font-style: italic; font-size: 24px; color: var(--lkv-forest-800); line-height: 1;">j.1</div>
+            <div style="flex: 1;">
+              <div style="font-size: 13px; font-weight: 500;">Cucheron → Grand Vaneau</div>
+              <div style="font-size: 11px; color: var(--lkv-ink-500); margin-top: 2px;">8,4 km · 4 h</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="m-cta-bar">
+          <div class="p">248 € <small>/ nuit</small></div>
+          <button class="btn">Réserver</button>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">Mobile · 375 × 812</div>
+  </div>
+</div>
+
+</body>
+</html>

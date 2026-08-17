@@ -1,0 +1,843 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Recherche · Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<style>
+  body { background: #EAE6DF; padding: 40px 0; }
+
+  .stage-title {
+    max-width: 1720px; margin: 0 auto 32px; padding: 0 40px;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 24px;
+    color: var(--lkv-ink-700);
+  }
+  .stage-title .h { font-family: var(--lkv-font-sans); font-size: 24px; font-weight: 500; letter-spacing: -0.015em; color: var(--lkv-ink-900); }
+  .stage-title .sub { font-size: 14px; color: var(--lkv-ink-500); }
+  .stage-title a { color: var(--lkv-forest-800); font-weight: 500; margin-left: 24px; }
+
+  .stage {
+    display: flex; gap: 40px;
+    max-width: 1720px; margin: 0 auto; padding: 0 40px;
+    align-items: flex-start;
+  }
+
+  .artboard-desktop {
+    width: 1280px; flex-shrink: 0;
+    border-radius: 32px;
+    overflow: hidden;
+    background: var(--lkv-paper);
+    box-shadow: 0 30px 80px rgba(11,31,23,0.14);
+    height: 900px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .artboard-mobile {
+    width: 380px; flex-shrink: 0;
+    border-radius: 44px;
+    overflow: hidden;
+    background: #000;
+    padding: 12px;
+    box-shadow: 0 30px 80px rgba(11,31,23,0.18);
+  }
+  .artboard-mobile .screen {
+    width: 100%;
+    height: 780px;
+    border-radius: 34px;
+    overflow: hidden;
+    background: var(--lkv-paper);
+    position: relative;
+    display: flex; flex-direction: column;
+  }
+
+  /* ————— DESKTOP ————— */
+  .top-bar {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    display: flex; align-items: center; gap: 16px;
+    background: #fff;
+    flex-shrink: 0;
+  }
+  .top-bar .lkv-logo { color: var(--lkv-forest-800); font-weight: 600; margin-right: 12px; }
+
+  .search-pill {
+    display: flex; align-items: center;
+    flex: 1;
+    padding: 4px;
+    background: var(--lkv-stone-50);
+    border-radius: 999px;
+    border: 1px solid rgba(11,31,23,0.05);
+  }
+  .search-pill .field {
+    padding: 6px 20px;
+    flex: 1;
+    border-right: 1px solid rgba(11,31,23,0.08);
+    cursor: pointer;
+    transition: background var(--lkv-dur) var(--lkv-ease);
+    border-radius: 999px;
+  }
+  .search-pill .field:hover { background: rgba(255,255,255,0.7); }
+  .search-pill .field:last-of-type { border-right: none; }
+  .search-pill .field .k {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-ink-400); margin-bottom: 2px;
+  }
+  .search-pill .field .v { font-size: 13px; font-weight: 500; color: var(--lkv-ink-900); }
+  .search-pill .field .v.placeholder { color: var(--lkv-ink-400); font-weight: 400; }
+  .search-pill .go {
+    width: 40px; height: 40px; border-radius: 999px;
+    background: var(--lkv-forest-800); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    transition: background var(--lkv-dur) var(--lkv-ease);
+  }
+  .search-pill .go:hover { background: var(--lkv-forest-700); }
+
+  .top-bar .right { display: flex; gap: 8px; align-items: center; }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 999px;
+    background: linear-gradient(135deg, var(--lkv-forest-700), var(--lkv-sage-500));
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+  }
+
+  /* filters row */
+  .filters {
+    padding: 12px 20px;
+    display: flex; align-items: center; gap: 10px;
+    background: #fff;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    overflow-x: auto;
+    flex-shrink: 0;
+  }
+  .filter-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 34px; padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(11,31,23,0.1);
+    background: #fff;
+    font-size: 13px; font-weight: 500; color: var(--lkv-ink-700);
+    white-space: nowrap;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+    cursor: pointer;
+  }
+  .filter-chip:hover { border-color: var(--lkv-forest-800); color: var(--lkv-forest-800); }
+  .filter-chip.on {
+    background: var(--lkv-forest-800);
+    color: #fff; border-color: var(--lkv-forest-800);
+  }
+  .filter-chip svg { width: 14px; height: 14px; }
+  .filters .divider {
+    width: 1px; height: 24px; background: rgba(11,31,23,0.08); margin: 0 6px;
+  }
+
+  /* main split */
+  .split {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 480px 1fr;
+    min-height: 0;
+  }
+
+  .list {
+    background: var(--lkv-paper);
+    overflow-y: auto;
+    padding: 20px;
+    border-right: 1px solid rgba(11,31,23,0.06);
+  }
+  .list-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 4px 4px 16px;
+  }
+  .list-head h3 { margin: 0; font-size: 20px; font-weight: 500; letter-spacing: -0.01em; }
+  .list-head .count { font-size: 13px; color: var(--lkv-ink-500); }
+  .sort {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--lkv-ink-700); cursor: pointer;
+  }
+
+  .place {
+    display: flex; gap: 14px;
+    padding: 12px;
+    background: #fff;
+    border-radius: 20px;
+    margin-bottom: 12px;
+    transition: box-shadow var(--lkv-dur) var(--lkv-ease-out), transform var(--lkv-dur) var(--lkv-ease-out);
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .place:hover { transform: translateY(-2px); box-shadow: var(--lkv-shadow-md); }
+  .place.active {
+    border-color: var(--lkv-forest-800);
+    box-shadow: 0 0 0 3px rgba(31,74,58,0.1);
+  }
+  .place .thumb {
+    width: 120px; height: 120px; border-radius: 14px;
+    background-size: cover; background-position: center;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .place .heart {
+    position: absolute; top: 8px; right: 8px;
+    width: 26px; height: 26px; border-radius: 999px;
+    background: rgba(255,255,255,0.9);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-700);
+  }
+  .place .content { flex: 1; min-width: 0; padding: 4px 0; display: flex; flex-direction: column; }
+  .place .h {
+    font-size: 16px; font-weight: 500; letter-spacing: -0.01em;
+    margin-bottom: 2px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .place .sub { font-size: 12px; color: var(--lkv-ink-400); margin-bottom: 8px; }
+  .place .facts {
+    display: flex; gap: 12px; font-size: 11px; color: var(--lkv-ink-500);
+    margin-bottom: auto;
+  }
+  .place .facts span { display: inline-flex; align-items: center; gap: 4px; }
+  .place .foot {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-top: 10px;
+  }
+  .place .price { font-size: 16px; font-weight: 500; }
+  .place .price .u { font-size: 12px; color: var(--lkv-ink-400); font-weight: 400; }
+  .place .rate {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 12px; color: var(--lkv-ink-700);
+  }
+  .place .rate svg { fill: var(--lkv-warm-500); }
+
+  .map-wrap {
+    position: relative;
+    background: var(--lkv-sage-100);
+  }
+  #map { position: absolute; inset: 0; }
+  .map-overlay-top {
+    position: absolute; top: 20px; left: 20px; right: 20px;
+    display: flex; justify-content: space-between; align-items: center;
+    pointer-events: none;
+    z-index: 500;
+  }
+  .map-overlay-top > * { pointer-events: auto; }
+  .zone-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.6);
+    border-radius: 999px;
+    box-shadow: var(--lkv-shadow-sm);
+    font-size: 13px; font-weight: 500; color: var(--lkv-ink-900);
+  }
+  .map-controls {
+    display: flex; flex-direction: column; gap: 8px;
+    position: absolute; top: 20px; right: 20px;
+    z-index: 500;
+  }
+  .map-btn {
+    width: 40px; height: 40px; border-radius: 999px;
+    background: #fff;
+    box-shadow: var(--lkv-shadow-sm);
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid rgba(11,31,23,0.04);
+    transition: transform var(--lkv-dur-fast) var(--lkv-ease-out);
+  }
+  .map-btn:hover { transform: scale(1.05); }
+
+  .map-legend {
+    position: absolute; bottom: 20px; left: 20px;
+    display: flex; gap: 8px;
+    z-index: 500;
+  }
+
+  /* Selected place card overlay on map */
+  .map-active-card {
+    position: absolute; bottom: 20px; right: 20px;
+    z-index: 500;
+    width: 340px;
+    padding: 14px;
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-radius: 22px;
+    box-shadow: var(--lkv-shadow-lg);
+    border: 1px solid rgba(255,255,255,0.7);
+    display: flex; gap: 12px;
+    transform: translateY(4px);
+    transition: transform var(--lkv-dur) var(--lkv-ease-out);
+  }
+  .map-active-card .t {
+    width: 90px; height: 90px; border-radius: 14px;
+    background-size: cover; background-position: center; flex-shrink: 0;
+  }
+  .map-active-card .b { flex: 1; display: flex; flex-direction: column; }
+  .map-active-card .b .h { font-size: 15px; font-weight: 500; letter-spacing: -0.01em; }
+  .map-active-card .b .sub { font-size: 11px; color: var(--lkv-ink-400); }
+  .map-active-card .b .foot {
+    margin-top: auto;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .map-active-card .price { font-size: 15px; font-weight: 500; }
+  .map-active-card .cta {
+    background: var(--lkv-forest-800); color: #fff;
+    padding: 8px 14px; border-radius: 999px;
+    font-size: 12px; font-weight: 500;
+  }
+
+  /* Custom map pin */
+  .pin {
+    width: 42px; height: 42px;
+    border-radius: 999px;
+    background: #fff;
+    border: 1.5px solid var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+    color: var(--lkv-forest-800);
+    box-shadow: var(--lkv-shadow-md);
+    transform: translate(-21px, -21px);
+    transition: all var(--lkv-dur) var(--lkv-ease-out);
+    cursor: pointer;
+  }
+  .pin.active {
+    background: var(--lkv-forest-800);
+    color: #fff;
+    transform: translate(-25px, -25px) scale(1.15);
+    box-shadow: 0 8px 24px rgba(31,74,58,0.4);
+    z-index: 1000 !important;
+  }
+
+  /* Leaflet fine-tuning: hide default overlay elements */
+  .leaflet-control-attribution { font-size: 9px; opacity: 0.7; }
+
+  /* ————— MOBILE ————— */
+  .m-top {
+    padding: 12px 14px;
+    display: flex; align-items: center; gap: 10px;
+    background: #fff;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .m-search {
+    flex: 1;
+    height: 42px;
+    background: var(--lkv-stone-50);
+    border-radius: 999px;
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 16px;
+    color: var(--lkv-ink-500);
+    font-size: 13px;
+  }
+  .m-search .l { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lkv-ink-400); }
+
+  .m-tabs {
+    display: flex; padding: 8px 14px; gap: 8px;
+    background: #fff;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    overflow-x: auto;
+  }
+  .m-tab-chip {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--lkv-stone-100);
+    font-size: 12px; font-weight: 500;
+    color: var(--lkv-ink-700);
+    white-space: nowrap;
+  }
+  .m-tab-chip.on { background: var(--lkv-forest-800); color: #fff; }
+
+  .m-map-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+  #m-map { position: absolute; inset: 0; }
+
+  .m-bottom-sheet {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: var(--lkv-paper);
+    border-radius: 24px 24px 0 0;
+    padding: 12px 14px 16px;
+    box-shadow: 0 -8px 24px rgba(11,31,23,0.1);
+    height: 240px;
+    z-index: 600;
+  }
+  .m-bottom-sheet .handle {
+    width: 44px; height: 4px; border-radius: 4px;
+    background: rgba(11,31,23,0.15);
+    margin: 0 auto 12px;
+  }
+  .m-place {
+    display: flex; gap: 12px;
+    padding: 8px;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: var(--lkv-shadow-xs);
+  }
+  .m-place .t {
+    width: 80px; height: 80px; border-radius: 12px;
+    background-size: cover; background-position: center;
+    flex-shrink: 0;
+  }
+  .m-place .b { flex: 1; padding: 4px 0; }
+  .m-place .h { font-size: 14px; font-weight: 500; letter-spacing: -0.005em; }
+  .m-place .sub { font-size: 11px; color: var(--lkv-ink-400); margin-top: 2px; }
+  .m-place .foot { display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px; }
+  .m-place .price { font-size: 15px; font-weight: 500; }
+  .m-place .rate { font-size: 11px; color: var(--lkv-ink-700); display: inline-flex; align-items: center; gap: 3px; }
+  .m-place .rate svg { fill: var(--lkv-warm-500); }
+
+  .m-swipe-dots {
+    display: flex; justify-content: center; gap: 4px; margin-top: 10px;
+  }
+  .m-swipe-dots span { width: 4px; height: 4px; border-radius: 50%; background: rgba(11,31,23,0.2); }
+  .m-swipe-dots span.on { background: var(--lkv-forest-800); width: 14px; border-radius: 4px; }
+
+  .board-caption { font-size: 12px; text-align: center; color: var(--lkv-ink-500); margin-top: 12px; letter-spacing: 0.05em; }
+</style>
+</head>
+<body>
+
+<div class="stage-title">
+  <div>
+    <div class="h">Recherche · Carte interactive</div>
+    <div class="sub">Liste + carte synchronisées · desktop 1280 px + mobile 375 px</div>
+  </div>
+  <div>
+    <a href="Index.html">← Hub</a>
+    <a href="Design System.html">Design System</a>
+    <a href="Home.html">Home</a>
+    <a href="Detail Aventure.html">Détail</a>
+  </div>
+</div>
+
+<div class="stage">
+  <!-- ————— DESKTOP ————— -->
+  <div class="artboard-desktop">
+
+    <!-- Top bar -->
+    <div class="top-bar">
+      <div class="lkv-logo">
+        <svg viewBox="0 0 32 32" width="22" height="22" fill="none">
+          <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+        </svg>
+        <span>Le Kit</span>
+      </div>
+      <div class="search-pill">
+        <div class="field"><div class="k">Où</div><div class="v">Massif de la Chartreuse</div></div>
+        <div class="field"><div class="k">Quand</div><div class="v">14 – 17 sept.</div></div>
+        <div class="field"><div class="k">Activité</div><div class="v placeholder">Rando · Bivouac</div></div>
+        <div class="field"><div class="k">Voyageurs</div><div class="v">2 adultes</div></div>
+        <button class="go">
+          <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        </button>
+      </div>
+      <div class="right">
+        <button class="lkv-btn lkv-btn-ghost lkv-btn-sm">Journal</button>
+        <div class="avatar">MB</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <button class="filter-chip on">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+        Tous les filtres
+      </button>
+      <div class="divider"></div>
+      <button class="filter-chip on">Refuges</button>
+      <button class="filter-chip">Bivouac</button>
+      <button class="filter-chip">Cabanes perchées</button>
+      <button class="filter-chip">Vans</button>
+      <button class="filter-chip">Gîtes</button>
+      <div class="divider"></div>
+      <button class="filter-chip">1 nuit</button>
+      <button class="filter-chip">2–3 nuits</button>
+      <button class="filter-chip">Semaine</button>
+      <div class="divider"></div>
+      <button class="filter-chip">
+        Chien accepté
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <button class="filter-chip">
+        Prix
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <button class="filter-chip">
+        Altitude
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+    </div>
+
+    <!-- Split -->
+    <div class="split">
+      <!-- LIST -->
+      <div class="list" id="list">
+        <div class="list-head">
+          <div>
+            <h3>28 refuges près de Chartreuse</h3>
+            <div class="count">Massif préalpin · 47 km²</div>
+          </div>
+          <div class="sort">
+            Trier · Coup de cœur
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+        </div>
+
+        <!-- places (id doit correspondre au marker) -->
+        <div class="place active" data-id="1">
+          <div class="thumb" style="background-image:url('assets/hero-misty.jpg')">
+            <div class="heart">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+            </div>
+          </div>
+          <div class="content">
+            <div class="h">Cabane du Grand Vaneau</div>
+            <div class="sub">Refuge non-gardé · Saint-Pierre-d'Entremont</div>
+            <div class="facts">
+              <span>▲ 1 620 m</span>
+              <span>◐ 4 pers.</span>
+              <span>⌂ Bois</span>
+            </div>
+            <div class="foot">
+              <div class="price">248 €<span class="u"> / nuit</span></div>
+              <div class="rate">
+                <svg viewBox="0 0 24 24" width="12" height="12"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+                4,9 · 214
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="place" data-id="2">
+          <div class="thumb" style="background-image:url('assets/adventure-bivouac.jpg')">
+            <div class="heart">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+            </div>
+          </div>
+          <div class="content">
+            <div class="h">Bivouac étoilé du Charmant Som</div>
+            <div class="sub">Aire de bivouac · Sarcenas</div>
+            <div class="facts">
+              <span>▲ 1 867 m</span>
+              <span>◐ 2 pers.</span>
+              <span>⌂ Tente</span>
+            </div>
+            <div class="foot">
+              <div class="price">89 €<span class="u"> / nuit</span></div>
+              <div class="rate">
+                <svg viewBox="0 0 24 24" width="12" height="12"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+                4,8 · 96
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="place" data-id="3">
+          <div class="thumb" style="background-image:url('assets/hero-solar.jpg')">
+            <div class="heart">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+            </div>
+          </div>
+          <div class="content">
+            <div class="h">Chalet de la Dent de Crolles</div>
+            <div class="sub">Gîte · Saint-Pancrasse</div>
+            <div class="facts">
+              <span>▲ 2 062 m</span>
+              <span>◐ 6 pers.</span>
+              <span>⌂ Pierre</span>
+            </div>
+            <div class="foot">
+              <div class="price">312 €<span class="u"> / nuit</span></div>
+              <div class="rate">
+                <svg viewBox="0 0 24 24" width="12" height="12"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+                4,9 · 158
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="place" data-id="4">
+          <div class="thumb" style="background-image:url('assets/hero-editorial.jpg')">
+            <div class="heart">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+            </div>
+          </div>
+          <div class="content">
+            <div class="h">Van des sources d'Isère</div>
+            <div class="sub">Van aménagé · Le Sappey-en-Chartreuse</div>
+            <div class="facts">
+              <span>▲ 1 000 m</span>
+              <span>◐ 3 pers.</span>
+              <span>⌂ Van T4</span>
+            </div>
+            <div class="foot">
+              <div class="price">128 €<span class="u"> / nuit</span></div>
+              <div class="rate">
+                <svg viewBox="0 0 24 24" width="12" height="12"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+                4,7 · 42
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="place" data-id="5">
+          <div class="thumb" style="background-image:url('assets/adventure-kayak.jpg')">
+            <div class="heart">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+            </div>
+          </div>
+          <div class="content">
+            <div class="h">Cabane du lac d'Aiguebelette</div>
+            <div class="sub">Cabane sur pilotis · Aiguebelette-le-Lac</div>
+            <div class="facts">
+              <span>▲ 375 m</span>
+              <span>◐ 2 pers.</span>
+              <span>⌂ Bois</span>
+            </div>
+            <div class="foot">
+              <div class="price">195 €<span class="u"> / nuit</span></div>
+              <div class="rate">
+                <svg viewBox="0 0 24 24" width="12" height="12"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+                4,8 · 178
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="place" data-id="6">
+          <div class="thumb" style="background-image:url('assets/adventure-hiking.jpg')">
+            <div class="heart">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+            </div>
+          </div>
+          <div class="content">
+            <div class="h">Refuge de Bellefont</div>
+            <div class="sub">Refuge gardé · Chapareillan</div>
+            <div class="facts">
+              <span>▲ 1 892 m</span>
+              <span>◐ 12 pers.</span>
+              <span>⌂ Alpin</span>
+            </div>
+            <div class="foot">
+              <div class="price">62 €<span class="u"> / nuit</span></div>
+              <div class="rate">
+                <svg viewBox="0 0 24 24" width="12" height="12"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+                4,6 · 320
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAP -->
+      <div class="map-wrap">
+        <div id="map"></div>
+
+        <div class="map-overlay-top">
+          <div class="zone-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="16" height="16"><circle cx="12" cy="10" r="3"/><path d="M12 21c-4-5-7-8-7-11a7 7 0 0 1 14 0c0 3-3 6-7 11z"/></svg>
+            Massif de la Chartreuse
+          </div>
+        </div>
+
+        <div class="map-controls">
+          <button class="map-btn"><svg class="lkv-icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+          <button class="map-btn"><svg class="lkv-icon" viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+          <button class="map-btn"><svg class="lkv-icon" viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></button>
+        </div>
+
+        <div class="map-legend">
+          <div class="zone-chip">28 lieux</div>
+          <div class="zone-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><path d="M4 20l4-16 4 8 4-4 4 12"/></svg>
+            Relief
+          </div>
+        </div>
+
+        <!-- Active place card -->
+        <div class="map-active-card" id="active-card">
+          <div class="t" style="background-image:url('assets/hero-misty.jpg')"></div>
+          <div class="b">
+            <div class="h">Cabane du Grand Vaneau</div>
+            <div class="sub">▲ 1 620 m · Saint-Pierre-d'Entremont</div>
+            <div class="foot">
+              <div class="price">248 € <span style="font-size:11px;color:var(--lkv-ink-400)">/ nuit</span></div>
+              <button class="cta">Voir</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ————— MOBILE ————— -->
+  <div>
+    <div class="artboard-mobile">
+      <div class="screen">
+        <div class="m-top">
+          <button style="width: 36px; height: 36px; border-radius: 999px; background: var(--lkv-stone-50); display: flex; align-items: center; justify-content: center;">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div class="m-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            <div>
+              <div class="l">Chartreuse</div>
+              <div>14 – 17 sept. · 2 pers.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="m-tabs">
+          <div class="m-tab-chip on">Refuges</div>
+          <div class="m-tab-chip">Bivouac</div>
+          <div class="m-tab-chip">Cabanes</div>
+          <div class="m-tab-chip">Vans</div>
+          <div class="m-tab-chip">Gîtes</div>
+        </div>
+
+        <div class="m-map-wrap">
+          <div id="m-map"></div>
+
+          <div class="m-bottom-sheet">
+            <div class="handle"></div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; padding: 0 4px;">
+              <div style="font-size: 14px; font-weight: 500;">28 lieux</div>
+              <div style="font-size: 12px; color: var(--lkv-ink-500);">Coup de cœur ▾</div>
+            </div>
+            <div class="m-place">
+              <div class="t" style="background-image:url('assets/hero-misty.jpg')"></div>
+              <div class="b">
+                <div class="h">Cabane du Grand Vaneau</div>
+                <div class="sub">▲ 1 620 m · Saint-Pierre-d'Entremont</div>
+                <div style="font-size: 11px; color: var(--lkv-ink-500); margin-top: 4px;">◐ 4 pers · ⌂ Bois</div>
+                <div class="foot">
+                  <div class="price">248 €<span style="font-size:11px;color:var(--lkv-ink-400);font-weight:400"> /nuit</span></div>
+                  <div class="rate">
+                    <svg viewBox="0 0 24 24" width="10" height="10"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+                    4,9
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="m-swipe-dots">
+              <span class="on"></span>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">Mobile · 375 × 812</div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+  // Places (data)
+  const PLACES = [
+    { id: 1, title: 'Cabane du Grand Vaneau',           sub: '▲ 1 620 m · Saint-Pierre-d\'Entremont', price: '248 €', thumb: 'assets/hero-misty.jpg',        lat: 45.4245, lng: 5.8010, price_num: '248' },
+    { id: 2, title: 'Bivouac étoilé du Charmant Som',   sub: '▲ 1 867 m · Sarcenas',                  price: '89 €',  thumb: 'assets/adventure-bivouac.jpg', lat: 45.2735, lng: 5.7710, price_num: '89' },
+    { id: 3, title: 'Chalet de la Dent de Crolles',     sub: '▲ 2 062 m · Saint-Pancrasse',           price: '312 €', thumb: 'assets/hero-solar.jpg',        lat: 45.3025, lng: 5.8560, price_num: '312' },
+    { id: 4, title: 'Van des sources d\'Isère',         sub: '▲ 1 000 m · Le Sappey-en-Chartreuse',   price: '128 €', thumb: 'assets/hero-editorial.jpg',    lat: 45.2400, lng: 5.7900, price_num: '128' },
+    { id: 5, title: 'Cabane du lac d\'Aiguebelette',    sub: '▲ 375 m · Aiguebelette-le-Lac',         price: '195 €', thumb: 'assets/adventure-kayak.jpg',   lat: 45.5490, lng: 5.7900, price_num: '195' },
+    { id: 6, title: 'Refuge de Bellefont',              sub: '▲ 1 892 m · Chapareillan',              price: '62 €',  thumb: 'assets/adventure-hiking.jpg',  lat: 45.4740, lng: 5.9260, price_num: '62' }
+  ];
+
+  // Custom Stamen Toner-like tile: use CARTO positron with green tint (via CSS filter)
+  function initMap(elId, opts = {}) {
+    const map = L.map(elId, {
+      center: [45.36, 5.85],
+      zoom: opts.zoom || 10,
+      zoomControl: false,
+      attributionControl: true,
+      scrollWheelZoom: false,
+      dragging: !opts.mobile ? true : true
+    });
+
+    // Softer basemap - CARTO Voyager
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CARTO',
+      subdomains: 'abcd',
+      maxZoom: 19
+    }).addTo(map);
+
+    // Add pins
+    const markers = {};
+    PLACES.forEach(p => {
+      const html = `<div class="pin" data-id="${p.id}">${p.price_num}€</div>`;
+      const icon = L.divIcon({
+        html,
+        className: '',
+        iconSize: [42, 42],
+        iconAnchor: [21, 21]
+      });
+      const m = L.marker([p.lat, p.lng], { icon, riseOnHover: true }).addTo(map);
+      m.on('click', () => selectPlace(p.id));
+      markers[p.id] = m;
+    });
+
+    return { map, markers };
+  }
+
+  const desktop = initMap('map');
+  const mobile  = initMap('m-map', { mobile: true, zoom: 10 });
+
+  function selectPlace(id) {
+    // Update list active state
+    document.querySelectorAll('.place').forEach(el => {
+      el.classList.toggle('active', +el.dataset.id === id);
+    });
+
+    // Update markers active state (on both maps)
+    [desktop, mobile].forEach(({ markers }) => {
+      Object.entries(markers).forEach(([mid, marker]) => {
+        const pinEl = marker.getElement()?.querySelector('.pin');
+        if (pinEl) pinEl.classList.toggle('active', +mid === id);
+      });
+    });
+
+    // Update active card overlay
+    const p = PLACES.find(x => x.id === id);
+    if (!p) return;
+    const card = document.getElementById('active-card');
+    card.querySelector('.t').style.backgroundImage = `url('${p.thumb}')`;
+    card.querySelector('.h').textContent = p.title;
+    card.querySelector('.sub').textContent = p.sub;
+    card.querySelector('.price').innerHTML = p.price + ' <span style="font-size:11px;color:var(--lkv-ink-400)">/ nuit</span>';
+
+    // Pan the desktop map softly to the marker
+    desktop.map.panTo([p.lat, p.lng], { animate: true, duration: 0.6 });
+    mobile.map.panTo([p.lat, p.lng], { animate: true, duration: 0.6 });
+
+    // Scroll list to that item
+    const item = document.querySelector(`.place[data-id="${id}"]`);
+    if (item) {
+      const list = document.getElementById('list');
+      list.scrollTo({ top: item.offsetTop - 20, behavior: 'smooth' });
+    }
+  }
+
+  // Wire up list clicks
+  document.querySelectorAll('.place').forEach(el => {
+    el.addEventListener('click', () => selectPlace(+el.dataset.id));
+  });
+
+  // Force initial active + refresh markers after tile load
+  setTimeout(() => {
+    selectPlace(1);
+    desktop.map.invalidateSize();
+    mobile.map.invalidateSize();
+  }, 300);
+</script>
+
+</body>
+</html>

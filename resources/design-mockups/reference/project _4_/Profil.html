@@ -1,0 +1,910 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Marceline Chevrier · Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="shop.css"/>
+<style>
+  /* ————— DESKTOP ————— */
+  .profil-hero {
+    position: relative;
+    height: 380px;
+    background-image: url('assets/hero-solar.jpg');
+    background-size: cover; background-position: center;
+    overflow: hidden;
+  }
+  .profil-hero::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0.25) 0%, rgba(11,31,23,0.05) 40%, rgba(11,31,23,0.65) 100%);
+  }
+  .profil-actions {
+    position: absolute; top: 24px; right: 40px; z-index: 5;
+    display: flex; gap: 10px;
+  }
+  .icon-btn-glass {
+    width: 42px; height: 42px; border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.24);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .icon-btn-glass:hover { background: rgba(255,255,255,0.24); }
+
+  .profil-identity {
+    position: relative;
+    padding: 0 60px;
+    margin-top: -100px;
+    z-index: 2;
+    display: flex; align-items: flex-end; gap: 32px;
+  }
+  .profil-avatar {
+    width: 180px; height: 180px; border-radius: 999px;
+    background-image: url('assets/portrait-1.jpg');
+    background-size: cover; background-position: center;
+    border: 6px solid var(--lkv-paper);
+    box-shadow: var(--lkv-shadow-lg);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .profil-avatar .verified {
+    position: absolute; bottom: 6px; right: 6px;
+    width: 42px; height: 42px; border-radius: 999px;
+    background: var(--lkv-forest-800);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    border: 3px solid var(--lkv-paper);
+  }
+  .profil-name-block {
+    flex: 1;
+    padding-bottom: 12px;
+    color: #fff;
+  }
+  .profil-name-block .lkv-eyebrow-h {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 4px 12px; margin-bottom: 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.16);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.24);
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .profil-name-block .lkv-eyebrow-h .dot { width: 5px; height: 5px; background: var(--lkv-sage-300); border-radius: 50%; }
+  .profil-name-block h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 68px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 1;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+  .profil-name-block h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-200); font-weight: 400;
+  }
+  .profil-name-block .meta {
+    font-size: 14px; color: rgba(255,255,255,0.85);
+    display: flex; align-items: center; gap: 20px;
+  }
+  .profil-name-block .meta svg { width: 14px; height: 14px; margin-right: 4px; vertical-align: -2px; }
+  .profil-name-block .meta .dot { width: 3px; height: 3px; background: rgba(255,255,255,0.4); border-radius: 50%; }
+
+  .profil-cta-col {
+    display: flex; flex-direction: column; gap: 10px;
+    padding-bottom: 12px;
+    color: #fff;
+  }
+  .profil-cta-col .lkv-btn { min-width: 160px; }
+
+  /* Stats bar */
+  .profil-stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    background: var(--lkv-paper);
+    padding: 32px 60px;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    margin-top: 32px;
+  }
+  .profil-stat {
+    padding: 0 20px;
+    border-right: 1px solid rgba(11,31,23,0.06);
+  }
+  .profil-stat:last-child { border-right: none; }
+  .profil-stat .n {
+    font-family: var(--lkv-font-sans);
+    font-size: 40px; font-weight: 500; letter-spacing: -0.025em; line-height: 1;
+    color: var(--lkv-ink-900);
+    display: flex; align-items: baseline; gap: 4px;
+  }
+  .profil-stat .n em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+    font-size: 24px;
+  }
+  .profil-stat .l {
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-ink-500);
+    margin-top: 8px;
+  }
+
+  /* Main body */
+  .profil-body {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 40px;
+    padding: 48px 60px 96px;
+    background: var(--lkv-paper);
+  }
+
+  /* Section tabs */
+  .profil-tabs {
+    display: flex; gap: 4px;
+    margin-bottom: 32px;
+    padding: 4px;
+    background: var(--lkv-stone-50);
+    border-radius: 999px;
+    width: fit-content;
+  }
+  .profil-tabs button {
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+    color: var(--lkv-ink-500);
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .profil-tabs button.on { background: #fff; color: var(--lkv-ink-900); box-shadow: var(--lkv-shadow-xs); }
+  .profil-tabs button:not(.on):hover { color: var(--lkv-ink-900); }
+
+  /* World map card */
+  .world-card {
+    background: var(--lkv-forest-900);
+    color: #fff;
+    border-radius: 28px;
+    padding: 32px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .world-card .head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 24px;
+  }
+  .world-card .head h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 24px; font-weight: 500;
+    letter-spacing: -0.015em;
+    margin: 0;
+  }
+  .world-card .head h3 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .world-card .head .n {
+    font-size: 12px; color: rgba(255,255,255,0.6);
+  }
+  .world-svg {
+    width: 100%; height: 320px;
+    position: relative;
+  }
+  .world-svg svg {
+    width: 100%; height: 100%;
+    stroke: rgba(255,255,255,0.14);
+    fill: rgba(255,255,255,0.06);
+    stroke-width: 0.5;
+  }
+  .world-svg svg .visited { fill: var(--lkv-sage-500); stroke: var(--lkv-sage-500); }
+  .world-svg .marker {
+    position: absolute;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--lkv-warm-500);
+    border: 2px solid #fff;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 0 6px rgba(201,155,90,0.2);
+  }
+  .world-card .foot {
+    display: flex; gap: 24px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin-top: 16px;
+  }
+  .world-card .foot .cell .k { font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255,255,255,0.5); }
+  .world-card .foot .cell .v { font-size: 18px; font-weight: 500; margin-top: 4px; }
+  .world-card .foot .cell .v em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+
+  /* Adventures grid */
+  .adv-h {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 20px;
+  }
+  .adv-h h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 28px; font-weight: 500;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+  .adv-h h3 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .adv-h .see { font-size: 13px; color: var(--lkv-forest-800); font-weight: 500; }
+
+  .p-adv-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  .p-adv-card {
+    position: relative;
+    aspect-ratio: 4/3;
+    border-radius: 22px;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+    color: #fff;
+    padding: 20px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    transition: transform var(--lkv-dur) var(--lkv-ease-out);
+    cursor: pointer;
+  }
+  .p-adv-card::before {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(11,31,23,0.75));
+  }
+  .p-adv-card > * { position: relative; z-index: 1; }
+  .p-adv-card:hover { transform: translateY(-3px); }
+  .p-adv-card .top { display: flex; justify-content: space-between; }
+  .p-adv-card .date {
+    font-size: 12px;
+    padding: 4px 10px;
+    background: rgba(255,255,255,0.16);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 999px;
+    color: rgba(255,255,255,0.9);
+    font-weight: 500;
+  }
+  .p-adv-card .bottom h4 {
+    font-size: 20px; font-weight: 500;
+    letter-spacing: -0.015em; line-height: 1.1;
+    margin: 0 0 4px;
+  }
+  .p-adv-card .bottom h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-200); font-weight: 400; }
+  .p-adv-card .bottom .meta { font-size: 11px; opacity: 0.85; }
+
+  /* Gallery band */
+  .p-gal-h {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 20px;
+  }
+  .p-gal-h h3 { font-family: var(--lkv-font-sans); font-size: 28px; font-weight: 500; letter-spacing: -0.02em; margin: 0; }
+  .p-gal-h h3 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .p-gal-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-rows: 180px 180px;
+    gap: 10px;
+  }
+  .p-gal-grid > div {
+    border-radius: 16px;
+    background-size: cover;
+    background-position: center;
+    transition: transform var(--lkv-dur) var(--lkv-ease-out);
+    cursor: pointer;
+  }
+  .p-gal-grid > div:hover { transform: scale(1.01); }
+  .p-gal-grid .big { grid-row: 1 / 3; }
+  .p-gal-grid .last {
+    display: flex; align-items: flex-end; padding: 12px;
+    color: #fff; font-size: 12px; font-weight: 500;
+    background-blend-mode: multiply;
+    background-color: rgba(11,31,23,0.35);
+  }
+
+  /* SIDE (right) */
+  .side-col { display: flex; flex-direction: column; gap: 24px; }
+
+  .side-card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 28px;
+    box-shadow: var(--lkv-shadow-xs);
+  }
+  .side-card h4 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-ink-500); font-weight: 500;
+    margin: 0 0 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+
+  /* Bio */
+  .bio-quote {
+    font-family: var(--lkv-font-serif);
+    font-style: italic;
+    font-size: 22px; font-weight: 400;
+    letter-spacing: -0.01em; line-height: 1.3;
+    color: var(--lkv-ink-900);
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+  .bio-quote::before { content: "«  "; color: var(--lkv-forest-800); }
+  .bio-quote::after { content: "  »"; color: var(--lkv-forest-800); }
+  .bio-details {
+    display: grid; gap: 12px;
+  }
+  .bio-details .row {
+    display: flex; justify-content: space-between;
+    padding: 8px 0;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+  }
+  .bio-details .row:last-child { border-bottom: none; }
+  .bio-details .row .k { color: var(--lkv-ink-500); }
+  .bio-details .row .v { color: var(--lkv-ink-900); font-weight: 500; }
+
+  /* Badges */
+  .badges-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+  }
+  .badge {
+    aspect-ratio: 1;
+    background: var(--lkv-stone-50);
+    border-radius: 16px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 12px 6px;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+    cursor: pointer;
+  }
+  .badge:hover { background: var(--lkv-sage-100); transform: translateY(-2px); }
+  .badge .b-i {
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+    margin-bottom: 6px;
+  }
+  .badge .b-i svg { width: 26px; height: 26px; }
+  .badge.gold .b-i { color: var(--lkv-warm-500); }
+  .badge.locked { opacity: 0.35; }
+  .badge .b-n { font-size: 11px; font-weight: 500; line-height: 1.1; color: var(--lkv-ink-900); }
+  .badge .b-p { font-size: 9px; color: var(--lkv-ink-400); margin-top: 3px; }
+
+  /* Kit */
+  .kit-list-p .kit-p-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+  }
+  .kit-list-p .kit-p-item:last-child { border-bottom: none; }
+  .kit-p-thumb {
+    width: 42px; height: 42px; border-radius: 10px;
+    background-size: cover; background-position: center;
+    background-color: var(--lkv-stone-100); flex-shrink: 0;
+  }
+  .kit-p-item .n { flex: 1; font-size: 13px; font-weight: 500; }
+  .kit-p-item .n small { display: block; color: var(--lkv-ink-400); font-weight: 400; font-size: 11px; margin-top: 2px; }
+  .kit-p-item .p { font-size: 12px; color: var(--lkv-ink-500); font-family: var(--lkv-font-mono); }
+
+  /* ————— MOBILE ————— */
+  .m-p-hero {
+    position: relative;
+    height: 220px;
+    background-image: url('assets/hero-solar.jpg');
+    background-size: cover; background-position: center;
+  }
+  .m-p-hero::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0.35), rgba(11,31,23,0.5));
+  }
+  .m-p-hero-top {
+    position: absolute; top: 14px; left: 14px; right: 14px;
+    display: flex; justify-content: space-between; z-index: 3;
+  }
+  .m-p-hero-top button {
+    width: 36px; height: 36px; border-radius: 999px;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .m-p-avatar {
+    position: absolute; bottom: -50px; left: 50%; transform: translateX(-50%);
+    width: 110px; height: 110px; border-radius: 999px;
+    background-image: url('assets/portrait-1.jpg');
+    background-size: cover; background-position: center;
+    border: 4px solid var(--lkv-paper);
+    z-index: 4;
+  }
+  .m-p-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 60px 14px 90px;
+    text-align: center;
+  }
+  .m-p-body h1 { font-size: 26px; font-weight: 500; letter-spacing: -0.015em; margin: 0 0 4px; }
+  .m-p-body h1 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .m-p-body .m-meta { font-size: 12px; color: var(--lkv-ink-500); margin-bottom: 16px; }
+
+  .m-p-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    background: #fff; border-radius: 16px;
+    padding: 14px 8px;
+    margin-bottom: 20px;
+    box-shadow: var(--lkv-shadow-xs);
+  }
+  .m-p-stat .n { font-size: 20px; font-weight: 500; letter-spacing: -0.015em; }
+  .m-p-stat .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; font-size: 14px; }
+  .m-p-stat .l { font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--lkv-ink-500); margin-top: 2px; }
+
+  .m-p-cta { display: flex; gap: 8px; margin-bottom: 24px; }
+  .m-p-cta .lkv-btn { flex: 1; height: 40px; font-size: 13px; }
+
+  .m-p-tabs {
+    display: flex; gap: 6px; overflow-x: auto;
+    margin: 0 -14px 16px; padding: 0 14px;
+  }
+  .m-p-tabs button {
+    padding: 7px 14px; border-radius: 999px;
+    background: var(--lkv-stone-50); font-size: 12px; font-weight: 500;
+    color: var(--lkv-ink-500); white-space: nowrap;
+  }
+  .m-p-tabs button.on { background: var(--lkv-forest-800); color: #fff; }
+
+  .m-p-adv {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    text-align: left;
+    margin-bottom: 20px;
+  }
+  .m-p-adv-card {
+    aspect-ratio: 4/5;
+    border-radius: 16px;
+    background-size: cover; background-position: center;
+    position: relative;
+    color: #fff;
+    padding: 12px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .m-p-adv-card::before {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(11,31,23,0.7));
+    border-radius: 16px;
+  }
+  .m-p-adv-card > * { position: relative; z-index: 1; }
+  .m-p-adv-card .date {
+    font-size: 10px; padding: 3px 8px;
+    background: rgba(255,255,255,0.16); border-radius: 999px;
+    display: inline-block; width: fit-content;
+  }
+  .m-p-adv-card h5 { font-size: 14px; font-weight: 500; letter-spacing: -0.01em; margin: 0; line-height: 1.1; }
+  .m-p-adv-card h5 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-200); font-weight: 400; }
+
+  .m-p-badges { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; }
+  .m-p-badge {
+    aspect-ratio: 1; background: var(--lkv-stone-50); border-radius: 12px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px;
+  }
+  .m-p-badge svg { width: 22px; height: 22px; color: var(--lkv-forest-800); }
+  .m-p-badge .n { font-size: 9px; margin-top: 4px; font-weight: 500; }
+</style>
+</head>
+<body class="shop-page">
+
+<div class="stage-title">
+  <div>
+    <div class="h">Profil public · Marceline Chevrier</div>
+    <div class="sub">Lot 3 · Écran 1/5 · Desktop + Mobile</div>
+  </div>
+  <div class="crumbs">
+    <a href="Index.html">← Hub</a>
+    <a href="Dashboard.html">Dashboard →</a>
+    <a href="Communaute.html">Communauté</a>
+    <a href="Journal.html">Journal</a>
+    <a href="IA Chat.html">IA Chat</a>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ————— DESKTOP ————— -->
+  <div class="artboard-desktop">
+
+    <nav class="shop-nav">
+      <a href="Home.html" class="lkv-logo">
+        <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
+          <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+        </svg>
+        <span>Le Kit du Voyageur</span>
+      </a>
+      <div class="links">
+        <a href="Recherche Carte.html">Aventures</a>
+        <a href="#">Refuges</a>
+        <a href="Boutique.html">Boutique</a>
+        <a href="Journal.html">Journal</a>
+        <a href="Communaute.html" class="active">Communauté</a>
+      </div>
+      <div class="right">
+        <a href="Dashboard.html" class="icon-btn">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg>
+        </a>
+        <a href="Panier.html" class="icon-btn">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+        </a>
+        <div class="avatar">MB</div>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="profil-hero">
+      <div class="profil-actions">
+        <button class="icon-btn-glass">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v14"/></svg>
+        </button>
+        <button class="icon-btn-glass">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- IDENTITY -->
+    <section class="profil-identity">
+      <div class="profil-avatar">
+        <div class="verified">
+          <svg class="lkv-icon" viewBox="0 0 24 24" width="20" height="20"><path d="M4 12l5 5 11-11"/></svg>
+        </div>
+      </div>
+      <div class="profil-name-block">
+        <div class="lkv-eyebrow-h"><span class="dot"></span>Gardienne des lieux · Chartreuse</div>
+        <h1>Marceline <em>Chevrier</em></h1>
+        <div class="meta">
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="10" r="3"/><path d="M12 21c-4-5-7-8-7-11a7 7 0 0 1 14 0c0 3-3 6-7 11z"/></svg>Grenoble, France</span>
+          <span class="dot"></span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>Membre depuis 2019</span>
+          <span class="dot"></span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20l4-16 4 8 4-4 4 12"/></svg>32 sommets · 1 240 km</span>
+        </div>
+      </div>
+      <div class="profil-cta-col">
+        <button class="lkv-btn lkv-btn-primary">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg>
+          Suivre
+        </button>
+        <button class="lkv-btn lkv-btn-light" style="border: 1px solid rgba(255,255,255,0.3);">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M4 6h16v10H8l-4 4z"/></svg>
+          Message
+        </button>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <div class="profil-stats">
+      <div class="profil-stat">
+        <div class="n">32<em>sommets</em></div>
+        <div class="l">Explorés</div>
+      </div>
+      <div class="profil-stat">
+        <div class="n">1 240<em>km</em></div>
+        <div class="l">Parcourus</div>
+      </div>
+      <div class="profil-stat">
+        <div class="n">18<em>refuges</em></div>
+        <div class="l">Recommandés</div>
+      </div>
+      <div class="profil-stat">
+        <div class="n">214<em>voyageurs</em></div>
+        <div class="l">Reçus</div>
+      </div>
+      <div class="profil-stat">
+        <div class="n">4,9<em>★</em></div>
+        <div class="l">Note moyenne</div>
+      </div>
+    </div>
+
+    <!-- BODY -->
+    <section class="profil-body">
+      <div>
+        <div class="profil-tabs">
+          <button class="on">Aventures · 32</button>
+          <button>Refuges gardés · 3</button>
+          <button>Photos · 214</button>
+          <button>Recommandations · 46</button>
+        </div>
+
+        <!-- WORLD -->
+        <div class="world-card">
+          <div class="head">
+            <h3>Là où Marceline <em>est passée.</em></h3>
+            <div class="n">12 pays · 4 continents</div>
+          </div>
+          <div class="world-svg">
+            <!-- SVG World map simplifié -->
+            <svg viewBox="0 0 800 400" preserveAspectRatio="xMidYMid meet">
+              <!-- Fond continental très abstrait -->
+              <!-- Europe -->
+              <path d="M380 130 L420 120 L440 135 L450 155 L440 175 L420 185 L400 180 L380 165 Z" class="visited"/>
+              <!-- Amérique du Nord -->
+              <path d="M120 130 L200 110 L240 130 L250 170 L220 200 L180 210 L140 200 L110 170 Z"/>
+              <!-- Amérique du Sud -->
+              <path d="M200 240 L240 230 L260 260 L250 320 L230 340 L210 330 L200 290 Z" class="visited"/>
+              <!-- Afrique -->
+              <path d="M400 190 L440 190 L460 220 L470 270 L450 310 L420 320 L400 300 L390 260 Z"/>
+              <!-- Asie -->
+              <path d="M470 130 L580 110 L640 130 L680 160 L660 190 L600 200 L520 190 L470 170 Z" class="visited"/>
+              <!-- Océanie -->
+              <path d="M620 290 L680 280 L700 305 L680 325 L640 320 L620 305 Z"/>
+              <!-- Antarctique -->
+              <path d="M200 370 L600 370 L600 390 L200 390 Z" opacity="0.4"/>
+            </svg>
+
+            <!-- Marqueurs sur emplacements précis -->
+            <div class="marker" style="left: 51%; top: 40%;"></div>
+            <div class="marker" style="left: 54%; top: 42%;"></div>
+            <div class="marker" style="left: 49%; top: 38%;"></div>
+            <div class="marker" style="left: 31%; top: 72%;"></div>
+            <div class="marker" style="left: 72%; top: 43%;"></div>
+            <div class="marker" style="left: 68%; top: 46%;"></div>
+          </div>
+          <div class="foot">
+            <div class="cell"><div class="k">Pays visités</div><div class="v">12 <em>pays</em></div></div>
+            <div class="cell"><div class="k">Ce trimestre</div><div class="v">Chartreuse · Vercors</div></div>
+            <div class="cell"><div class="k">Prochain</div><div class="v">Écrins <em>· Sept.</em></div></div>
+          </div>
+        </div>
+
+        <!-- ADVENTURES -->
+        <div class="adv-h">
+          <h3>Aventures <em>récentes.</em></h3>
+          <a href="#" class="see">Voir tout · 32 →</a>
+        </div>
+
+        <div class="p-adv-grid">
+          <a class="p-adv-card" href="Detail Aventure.html" style="background-image: url('assets/hero-misty.jpg')">
+            <div class="top"><span class="date">14–17 sept.</span></div>
+            <div class="bottom">
+              <h4>Cabane du <em>Grand Vaneau</em></h4>
+              <div class="meta">3 nuits · Chartreuse · 27,4 km</div>
+            </div>
+          </a>
+          <a class="p-adv-card" href="Detail Aventure.html" style="background-image: url('assets/adventure-bivouac.jpg')">
+            <div class="top"><span class="date">2–4 août</span></div>
+            <div class="bottom">
+              <h4>Bivouac <em>étoilé</em> · Vercors</h4>
+              <div class="meta">2 nuits · Plateau haut · 18,6 km</div>
+            </div>
+          </a>
+          <a class="p-adv-card" href="Detail Aventure.html" style="background-image: url('assets/adventure-hiking.jpg')">
+            <div class="top"><span class="date">Juillet</span></div>
+            <div class="bottom">
+              <h4>Traversée des <em>Écrins</em></h4>
+              <div class="meta">6 jours · Alpes · 82 km</div>
+            </div>
+          </a>
+          <a class="p-adv-card" href="Detail Aventure.html" style="background-image: url('assets/adventure-kayak.jpg')">
+            <div class="top"><span class="date">Juin</span></div>
+            <div class="bottom">
+              <h4>Kayak · <em>Serre-Ponçon</em></h4>
+              <div class="meta">1 jour · Hautes-Alpes · 14 km</div>
+            </div>
+          </a>
+        </div>
+
+        <!-- GALLERY -->
+        <div class="p-gal-h">
+          <h3>Journal <em>photo.</em></h3>
+          <a href="Journal.html" class="see" style="font-size: 13px; color: var(--lkv-forest-800); font-weight: 500;">Voir le journal complet →</a>
+        </div>
+        <div class="p-gal-grid">
+          <div class="big" style="background-image: url('assets/community-hikers.jpg')"></div>
+          <div style="background-image: url('assets/community-morning.jpg')"></div>
+          <div style="background-image: url('assets/journal-refuge.jpg')"></div>
+          <div style="background-image: url('assets/journal-trail.jpg')"></div>
+          <div class="last" style="background-image: url('assets/adventure-hiking.jpg');">+ 214 photos</div>
+        </div>
+      </div>
+
+      <!-- SIDE -->
+      <div class="side-col">
+        <!-- Bio -->
+        <div class="side-card">
+          <h4>À propos</h4>
+          <p class="bio-quote">Je garde deux refuges dans la Chartreuse depuis douze ans. Le silence est mon métier.</p>
+          <div class="bio-details">
+            <div class="row"><span class="k">Rôle</span><span class="v">Gardienne partenaire</span></div>
+            <div class="row"><span class="k">Refuges</span><span class="v">Grand Vaneau, Bellefont</span></div>
+            <div class="row"><span class="k">Discipline</span><span class="v">Rando, ski de rando</span></div>
+            <div class="row"><span class="k">Langues</span><span class="v">Français, anglais, italien</span></div>
+            <div class="row"><span class="k">Répond en</span><span class="v" style="color: var(--lkv-forest-700);">&lt; 1 h</span></div>
+          </div>
+        </div>
+
+        <!-- Badges -->
+        <div class="side-card">
+          <h4>Badges · 8 débloqués</h4>
+          <div class="badges-grid">
+            <div class="badge gold">
+              <div class="b-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l3 6 6 1-4.5 4.5 1 6L12 17l-5.5 2.5 1-6L3 9l6-1z"/></svg></div>
+              <div class="b-n">Sommet 3000</div>
+              <div class="b-p">Or</div>
+            </div>
+            <div class="badge">
+              <div class="b-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 20L12 4l9 16M12 4v16M3 20h18"/></svg></div>
+              <div class="b-n">10 bivouacs</div>
+              <div class="b-p">Argent</div>
+            </div>
+            <div class="badge">
+              <div class="b-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 4c0 8-6 14-14 14L4 20"/></svg></div>
+              <div class="b-n">Écolo</div>
+              <div class="b-p">2 ans</div>
+            </div>
+            <div class="badge">
+              <div class="b-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+              <div class="b-n">Guide</div>
+              <div class="b-p">Actif</div>
+            </div>
+            <div class="badge">
+              <div class="b-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 5-5 2 2-5z"/></svg></div>
+              <div class="b-n">Boussole</div>
+              <div class="b-p">Orienteur</div>
+            </div>
+            <div class="badge">
+              <div class="b-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 12a8 8 0 1 0 16 0 8 8 0 1 0-16 0"/><path d="M12 8v4l3 2"/></svg></div>
+              <div class="b-n">6 h/jour</div>
+              <div class="b-p">Marcheuse</div>
+            </div>
+            <div class="badge locked">
+              <div class="b-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+              <div class="b-n">Verrouillé</div>
+              <div class="b-p">3/5</div>
+            </div>
+            <div class="badge locked">
+              <div class="b-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+              <div class="b-n">Verrouillé</div>
+              <div class="b-p">0/10</div>
+            </div>
+            <div class="badge locked">
+              <div class="b-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+              <div class="b-n">Verrouillé</div>
+              <div class="b-p">1/12</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kit -->
+        <div class="side-card">
+          <h4>Son kit · 6 pièces</h4>
+          <div class="kit-list-p">
+            <div class="kit-p-item">
+              <div class="kit-p-thumb" style="background-image: url('assets/product-backpack-2.jpg')"></div>
+              <div class="n">Sac 45 L <small>Vert forêt · 3 ans d'usage</small></div>
+              <div class="p">1,4 kg</div>
+            </div>
+            <div class="kit-p-item">
+              <div class="kit-p-thumb" style="background-image: url('assets/product-sleeping.jpg')"></div>
+              <div class="n">Duvet 3 saisons <small>−10 °C</small></div>
+              <div class="p">920 g</div>
+            </div>
+            <div class="kit-p-item">
+              <div class="kit-p-thumb" style="background-image: url('assets/product-jacket.jpg')"></div>
+              <div class="n">Veste 3 couches <small>Forêt · 2 ans</small></div>
+              <div class="p">480 g</div>
+            </div>
+            <div class="kit-p-item">
+              <div class="kit-p-thumb" style="background-image: url('assets/product-bottle.jpg')"></div>
+              <div class="n">Gourde titane <small>1 L · sauge</small></div>
+              <div class="p">180 g</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="shop-foot">
+      <div><h4 class="brand">Ce que vous emportez, <em>c'est votre voyage.</em></h4><p>Grenoble, France</p></div>
+      <div><h5>Communauté</h5><ul><li><a href="Communaute.html">Feed</a></li><li><a href="#">Profils</a></li></ul></div>
+      <div><h5>Journal</h5><ul><li><a href="Journal.html">Timeline</a></li></ul></div>
+      <div><h5>Compte</h5><ul><li><a href="Dashboard.html">Dashboard</a></li></ul></div>
+    </footer>
+  </div>
+
+  <!-- ————— MOBILE ————— -->
+  <div>
+    <div class="artboard-mobile">
+      <div class="screen">
+
+        <div class="m-p-hero">
+          <div class="m-p-hero-top">
+            <button>
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <button>
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            </button>
+          </div>
+          <div class="m-p-avatar"></div>
+        </div>
+
+        <div class="m-p-body">
+          <h1>Marceline <em>Chevrier</em></h1>
+          <div class="m-meta">▲ Chartreuse · Membre depuis 2019</div>
+
+          <div class="m-p-stats">
+            <div class="m-p-stat"><div class="n">32<em>som.</em></div><div class="l">Sommets</div></div>
+            <div class="m-p-stat"><div class="n">1,2<em>k km</em></div><div class="l">Parcourus</div></div>
+            <div class="m-p-stat"><div class="n">4,9<em>★</em></div><div class="l">Note</div></div>
+          </div>
+
+          <div class="m-p-cta">
+            <button class="lkv-btn lkv-btn-primary">Suivre</button>
+            <button class="lkv-btn lkv-btn-ghost" style="border: 1px solid rgba(11,31,23,0.1); flex: 0 0 40px;">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M4 6h16v10H8l-4 4z"/></svg>
+            </button>
+          </div>
+
+          <div class="m-p-tabs">
+            <button class="on">Aventures</button>
+            <button>Refuges</button>
+            <button>Photos</button>
+            <button>Kit</button>
+          </div>
+
+          <div class="m-p-adv">
+            <a class="m-p-adv-card" href="Detail Aventure.html" style="background-image: url('assets/hero-misty.jpg')">
+              <div><span class="date">14 sept.</span></div>
+              <h5>Grand <em>Vaneau</em></h5>
+            </a>
+            <a class="m-p-adv-card" href="Detail Aventure.html" style="background-image: url('assets/adventure-bivouac.jpg')">
+              <div><span class="date">Août</span></div>
+              <h5>Bivouac <em>Vercors</em></h5>
+            </a>
+            <a class="m-p-adv-card" href="Detail Aventure.html" style="background-image: url('assets/adventure-hiking.jpg')">
+              <div><span class="date">Juillet</span></div>
+              <h5>Traversée <em>Écrins</em></h5>
+            </a>
+            <a class="m-p-adv-card" href="Detail Aventure.html" style="background-image: url('assets/adventure-kayak.jpg')">
+              <div><span class="date">Juin</span></div>
+              <h5>Kayak <em>Serre</em></h5>
+            </a>
+          </div>
+
+          <div style="text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--lkv-ink-500); margin: 20px 0 10px;">Badges · 8</div>
+          <div class="m-p-badges">
+            <div class="m-p-badge" style="color: var(--lkv-warm-500)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l3 6 6 1-4.5 4.5 1 6L12 17l-5.5 2.5 1-6L3 9l6-1z"/></svg>
+              <div class="n" style="color: var(--lkv-ink-900)">Sommet</div>
+            </div>
+            <div class="m-p-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 20L12 4l9 16"/></svg>
+              <div class="n">Bivouac</div>
+            </div>
+            <div class="m-p-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 4c0 8-6 14-14 14L4 20"/></svg>
+              <div class="n">Écolo</div>
+            </div>
+            <div class="m-p-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/></svg>
+              <div class="n">Guide</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="m-tabbar">
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg></div>
+          <div class="tabi on"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">Mobile · 375 × 812</div>
+  </div>
+</div>
+
+</body>
+</html>

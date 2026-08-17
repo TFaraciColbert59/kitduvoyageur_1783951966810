@@ -1,0 +1,1182 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Groupes · Le Kit du Voyageur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;1,400;1,500&display=swap"/>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="shop.css"/>
+<style>
+  body { background: #EAE6DF; padding: 40px 0; }
+
+  /* ============== STAGE (page frame — desktop preview shell) ============== */
+  .stage-title {
+    max-width: 1200px; margin: 0 auto 32px; padding: 0 40px;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 24px;
+    color: var(--lkv-ink-700);
+  }
+  .stage-title .h { font-family: var(--lkv-font-sans); font-size: 24px; font-weight: 500; letter-spacing: -0.015em; color: var(--lkv-ink-900); }
+  .stage-title .sub { font-size: 14px; color: var(--lkv-ink-500); }
+  .stage-title a { color: var(--lkv-forest-800); font-weight: 500; margin-left: 24px; }
+
+  .stage {
+    display: flex; gap: 40px; flex-wrap: wrap; justify-content: center;
+    max-width: 1200px; margin: 0 auto; padding: 0 40px;
+    align-items: flex-start;
+  }
+  .artboard-mobile {
+    width: 380px; flex-shrink: 0;
+    border-radius: 44px; overflow: hidden;
+    background: #0B1F17; padding: 12px;
+    box-shadow: 0 30px 80px rgba(11,31,23,0.18);
+  }
+  .artboard-mobile .screen {
+    width: 100%; height: 812px;
+    border-radius: 34px; overflow: hidden;
+    background: var(--lkv-paper); position: relative;
+    display: flex; flex-direction: column;
+  }
+  .artboard-mobile .screen .scroll {
+    flex: 1 1 auto; overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .artboard-mobile .screen .scroll::-webkit-scrollbar { display: none; }
+  .board-caption {
+    margin-top: 14px; font-size: 12px; color: var(--lkv-ink-500);
+    text-align: center; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+
+  /* ============== HEADER (mobile top bar) ============== */
+  .m-header {
+    flex: 0 0 auto;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 18px;
+    background: #fff;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .m-header .lkv-logo {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: var(--lkv-forest-800); font-size: 13px; font-weight: 600;
+  }
+  .m-header .lkv-logo em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-ink-700); font-weight: 400; margin-left: 2px;
+  }
+  .m-header .btns { display: flex; gap: 4px; }
+  .m-header .b {
+    width: 34px; height: 34px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-700);
+    transition: background 0.15s ease;
+  }
+  .m-header .b:active { background: var(--lkv-stone-50); }
+  .m-header .b.b-primary {
+    background: var(--lkv-forest-800); color: #fff;
+    box-shadow: 0 2px 6px rgba(11,31,23,0.14);
+  }
+  .m-header .b.b-primary:active { background: var(--lkv-forest-700); }
+
+  /* ============== MASTHEAD ============== */
+  .m-head {
+    padding: 18px 20px 14px;
+    background: #fff;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .m-head .eye {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: 999px;
+    background: rgba(31,74,58,0.08);
+    color: var(--lkv-forest-800);
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+  .m-head .eye .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--lkv-sage-500); }
+  .m-head h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 32px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 0.98;
+    margin: 0 0 8px;
+    color: var(--lkv-ink-900);
+    text-wrap: balance;
+  }
+  .m-head h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .m-head p {
+    font-family: var(--lkv-font-serif);
+    font-size: 15px; line-height: 1.4;
+    color: var(--lkv-ink-700);
+    margin: 0;
+  }
+
+  /* KPIs strip */
+  .m-kpis {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    padding: 14px 20px 16px;
+    background: #fff;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .m-kpis .k {
+    padding: 4px 0;
+    border-right: 1px solid rgba(11,31,23,0.08);
+  }
+  .m-kpis .k:last-child { border-right: none; }
+  .m-kpis .v {
+    font-family: var(--lkv-font-sans);
+    font-size: 22px; font-weight: 500; letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--lkv-ink-900);
+  }
+  .m-kpis .v em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+    font-size: 12px; margin-left: 2px;
+  }
+  .m-kpis .l {
+    margin-top: 6px;
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--lkv-ink-500);
+  }
+
+  /* ============== SEGMENTED TABS ============== */
+  .m-tabs {
+    display: flex; gap: 6px;
+    padding: 14px 20px 6px;
+    background: var(--lkv-paper);
+    position: sticky; top: 0; z-index: 5;
+    background: rgba(248,250,248,0.94);
+    backdrop-filter: blur(12px);
+  }
+  .m-tabs .t {
+    flex: 1;
+    height: 36px; padding: 0 12px;
+    border-radius: 12px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    font-size: 13px; font-weight: 500;
+    color: var(--lkv-ink-700);
+    background: #fff;
+    border: 1px solid rgba(11,31,23,0.06);
+    box-shadow: var(--lkv-shadow-xs);
+    position: relative;
+  }
+  .m-tabs .t.on {
+    background: var(--lkv-forest-800);
+    border-color: var(--lkv-forest-800);
+    color: #fff;
+  }
+  .m-tabs .t .n {
+    padding: 1px 6px;
+    background: rgba(255,255,255,0.14);
+    border-radius: 8px;
+    font-size: 10px;
+    color: inherit;
+  }
+  .m-tabs .t:not(.on) .n {
+    background: var(--lkv-stone-50);
+    color: var(--lkv-ink-500);
+  }
+
+  /* ============== FILTER PILLS ============== */
+  .m-pills {
+    display: flex; gap: 6px;
+    padding: 12px 20px 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .m-pills::-webkit-scrollbar { display: none; }
+  .m-pills .p {
+    flex-shrink: 0;
+    height: 28px; padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(11,31,23,0.1);
+    font-size: 11px; font-weight: 500; letter-spacing: 0.01em;
+    color: var(--lkv-ink-700);
+    background: #fff;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .m-pills .p.on {
+    background: rgba(31,74,58,0.06);
+    border-color: rgba(31,74,58,0.3);
+    color: var(--lkv-forest-800);
+  }
+
+  /* ============== INVITATION BANNER ============== */
+  .m-invite {
+    margin: 12px 20px 4px;
+    padding: 14px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #1F4A3A 0%, #142F24 100%);
+    color: #fff;
+    display: flex; align-items: center; gap: 12px;
+    position: relative; overflow: hidden;
+  }
+  .m-invite::before {
+    content: ""; position: absolute; inset: -20px -20px auto auto;
+    width: 120px; height: 120px; border-radius: 50%;
+    background: rgba(185,208,188,0.14);
+    filter: blur(20px);
+  }
+  .m-invite .av {
+    width: 40px; height: 40px; border-radius: 999px;
+    background-size: cover; background-position: center;
+    border: 2px solid rgba(255,255,255,0.2);
+    flex-shrink: 0;
+    background-color: var(--lkv-sage-500);
+  }
+  .m-invite .txt { flex: 1; min-width: 0; z-index: 1; }
+  .m-invite .lbl {
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-sage-300);
+    margin-bottom: 3px;
+  }
+  .m-invite .msg {
+    font-size: 13px; line-height: 1.35;
+    color: #fff;
+  }
+  .m-invite .msg strong { font-weight: 500; }
+  .m-invite .msg em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .m-invite .acts { display: flex; gap: 6px; z-index: 1; flex-shrink: 0; }
+  .m-invite .acts .ok {
+    width: 32px; height: 32px; border-radius: 999px;
+    background: var(--lkv-sage-500); color: var(--lkv-forest-900);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .m-invite .acts .no {
+    width: 32px; height: 32px; border-radius: 999px;
+    background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+
+  /* ============== FEATURED (active group cockpit) ============== */
+  .m-list { padding: 8px 20px 100px; }
+
+  .m-featured {
+    position: relative;
+    border-radius: 24px; overflow: hidden;
+    background: #0B1F17;
+    color: #fff;
+    margin: 8px 0 18px;
+    min-height: 260px;
+    box-shadow: var(--lkv-shadow-md);
+  }
+  .m-featured .cov {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    opacity: 0.55;
+  }
+  .m-featured::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0.2) 0%, rgba(11,31,23,0.9) 75%);
+  }
+  .m-featured .inner {
+    position: relative; z-index: 1;
+    padding: 16px 18px 18px;
+    display: flex; flex-direction: column; gap: 12px;
+    min-height: 260px;
+  }
+  .m-featured .badge {
+    align-self: flex-start;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(10px);
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 500;
+  }
+  .m-featured .badge .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--lkv-sage-300);
+    box-shadow: 0 0 0 3px rgba(185,208,188,0.25);
+  }
+  .m-featured .bottom { margin-top: auto; }
+  .m-featured h2 {
+    font-family: var(--lkv-font-sans);
+    font-size: 26px; font-weight: 500; letter-spacing: -0.025em;
+    line-height: 1;
+    margin: 0 0 6px;
+    color: #fff;
+    text-wrap: balance;
+  }
+  .m-featured h2 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .m-featured .place {
+    font-size: 12px; color: rgba(255,255,255,0.7);
+    margin-bottom: 12px;
+  }
+  .m-featured .prog {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 14px;
+  }
+  .m-featured .prog .bar {
+    flex: 1; height: 4px; border-radius: 4px;
+    background: rgba(255,255,255,0.12);
+    overflow: hidden; position: relative;
+  }
+  .m-featured .prog .bar span {
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, var(--lkv-sage-500), var(--lkv-sage-300));
+    border-radius: 4px;
+  }
+  .m-featured .prog .pct {
+    font-size: 10px; color: var(--lkv-sage-300); font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+  .m-featured .foot {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  .m-featured .foot .members { display: flex; align-items: center; }
+  .m-featured .foot .m {
+    width: 22px; height: 22px; border-radius: 999px;
+    background-size: cover; background-position: center;
+    border: 2px solid #0B1F17;
+    margin-left: -6px;
+  }
+  .m-featured .foot .m:first-child { margin-left: 0; }
+  .m-featured .foot .count { font-size: 11px; color: rgba(255,255,255,0.7); margin-left: 8px; }
+  .m-featured .foot .open {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 12px 6px 14px;
+    background: #fff; color: var(--lkv-forest-900);
+    border-radius: 999px;
+    font-size: 11px; font-weight: 500;
+  }
+
+  /* ============== GROUP CARD (list item) ============== */
+  .m-section-h {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin: 8px 4px 12px;
+  }
+  .m-section-h .t {
+    font-family: var(--lkv-font-sans);
+    font-size: 13px; font-weight: 500; color: var(--lkv-ink-900);
+  }
+  .m-section-h .t em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .m-section-h .n { font-size: 11px; color: var(--lkv-ink-500); }
+
+  .m-group {
+    display: flex; gap: 12px;
+    padding: 14px;
+    background: #fff;
+    border-radius: 18px;
+    border: 1px solid rgba(11,31,23,0.05);
+    box-shadow: var(--lkv-shadow-xs);
+    margin-bottom: 10px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .m-group:active {
+    transform: scale(0.985);
+    box-shadow: var(--lkv-shadow-sm);
+  }
+  .m-group .thumb {
+    width: 68px; height: 82px; flex-shrink: 0;
+    border-radius: 12px; overflow: hidden;
+    background-size: cover; background-position: center;
+    background-color: var(--lkv-stone-100);
+    position: relative;
+  }
+  .m-group .thumb .cnt {
+    position: absolute; left: 6px; bottom: 6px;
+    padding: 2px 6px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(8px);
+    border-radius: 6px;
+    font-size: 9px; font-weight: 500;
+    color: var(--lkv-forest-800);
+    letter-spacing: 0.04em;
+  }
+  .m-group .body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .m-group .row1 {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .m-group h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 15px; font-weight: 500; letter-spacing: -0.015em;
+    line-height: 1.15;
+    margin: 0;
+    color: var(--lkv-ink-900);
+    text-wrap: balance;
+    /* clamp to 2 lines */
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .m-group h4 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .m-group .status {
+    flex-shrink: 0;
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 9px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+    line-height: 1.6;
+  }
+  .m-group .status.on {
+    background: rgba(31,74,58,0.08); color: var(--lkv-forest-800);
+  }
+  .m-group .status.soon {
+    background: rgba(201,124,79,0.12); color: var(--lkv-warm-500);
+  }
+  .m-group .status.past {
+    background: var(--lkv-stone-50); color: var(--lkv-ink-500);
+  }
+  .m-group .stat-line {
+    font-size: 11px; color: var(--lkv-ink-500);
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 4px;
+    line-height: 1.3;
+  }
+  .m-group .stat-line .sep { color: var(--lkv-ink-300); }
+  .m-group .foot {
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid rgba(11,31,23,0.06);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px;
+  }
+  .m-group .foot .members { display: flex; align-items: center; }
+  .m-group .foot .mm {
+    width: 18px; height: 18px; border-radius: 999px;
+    background-size: cover; background-position: center;
+    background-color: var(--lkv-stone-100);
+    border: 1.5px solid #fff;
+    margin-left: -5px;
+  }
+  .m-group .foot .mm:first-child { margin-left: 0; }
+  .m-group .foot .count {
+    font-size: 10px; color: var(--lkv-ink-500);
+    margin-left: 6px;
+  }
+  .m-group .foot .badge-inline {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; color: var(--lkv-forest-800); font-weight: 500;
+  }
+  .m-group .foot .badge-inline .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--lkv-warm-500);
+  }
+
+  /* ============== EMPTY / DISCOVER BLOCK ============== */
+  .m-discover {
+    margin: 24px 0 12px;
+    padding: 22px 18px;
+    border-radius: 20px;
+    background: var(--lkv-stone-50);
+    border: 1px dashed rgba(11,31,23,0.12);
+    text-align: center;
+  }
+  .m-discover .ic {
+    width: 44px; height: 44px; border-radius: 14px;
+    background: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+    margin-bottom: 10px;
+    box-shadow: var(--lkv-shadow-xs);
+  }
+  .m-discover h5 {
+    font-family: var(--lkv-font-sans);
+    font-size: 16px; font-weight: 500; letter-spacing: -0.015em;
+    margin: 0 0 6px;
+    color: var(--lkv-ink-900);
+  }
+  .m-discover h5 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .m-discover p {
+    font-family: var(--lkv-font-serif);
+    font-size: 13px; line-height: 1.4;
+    color: var(--lkv-ink-700);
+    margin: 0 0 14px;
+  }
+  .m-discover .cta {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px;
+    background: var(--lkv-forest-800); color: #fff;
+    border-radius: 999px;
+    font-size: 12px; font-weight: 500;
+  }
+
+  /* ============== FLOATING CTA (new group) ============== */
+  .m-fab {
+    position: absolute; right: 16px; bottom: 84px;
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 10px 15px 10px 12px;
+    background: var(--lkv-forest-800); color: #fff;
+    border-radius: 999px;
+    font-size: 12px; font-weight: 500;
+    box-shadow: 0 10px 24px rgba(11,31,23,0.28), 0 2px 4px rgba(11,31,23,0.14);
+    z-index: 4;
+  }
+  .m-fab .plus {
+    width: 22px; height: 22px; border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+
+  /* ============== BOTTOM TABBAR ============== */
+  .m-tabbar {
+    flex: 0 0 auto;
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 10px 8px;
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 24px;
+    box-shadow: 0 8px 24px rgba(11,31,23,0.08);
+    z-index: 3;
+  }
+  .m-tabbar .tabi {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-500);
+  }
+  .m-tabbar .tabi.on {
+    background: var(--lkv-forest-800); color: #fff;
+  }
+
+  /* ============== VARIATION BOARDS (states) ============== */
+  .m-search {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px;
+    margin: 12px 20px 0;
+    background: var(--lkv-stone-50);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 999px;
+    color: var(--lkv-ink-500);
+    font-size: 13px;
+  }
+  .m-search input {
+    border: none; background: transparent; outline: none;
+    flex: 1; font-size: 13px; color: var(--lkv-ink-900);
+    font-family: inherit;
+  }
+  .m-search input::placeholder { color: var(--lkv-ink-500); }
+  .m-search .clr {
+    width: 20px; height: 20px; border-radius: 999px;
+    background: rgba(11,31,23,0.08);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-500);
+    font-size: 10px;
+  }
+
+  /* Empty state (no groups) */
+  .m-empty {
+    padding: 60px 24px 40px;
+    text-align: center;
+  }
+  .m-empty .illo {
+    width: 88px; height: 88px; border-radius: 24px;
+    background: var(--lkv-stone-50);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .m-empty .illo::after {
+    content: ""; position: absolute; inset: -6px;
+    border-radius: 28px;
+    border: 1px dashed rgba(31,74,58,0.15);
+  }
+  .m-empty h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 22px; font-weight: 500; letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin: 0 0 10px;
+    color: var(--lkv-ink-900);
+    text-wrap: balance;
+  }
+  .m-empty h3 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .m-empty p {
+    font-family: var(--lkv-font-serif);
+    font-size: 14px; line-height: 1.45;
+    color: var(--lkv-ink-700);
+    margin: 0 auto 20px;
+    max-width: 260px;
+  }
+  .m-empty .cta-stack {
+    display: flex; flex-direction: column; gap: 8px;
+    align-items: center;
+  }
+  .m-empty .cta-p {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 18px;
+    background: var(--lkv-forest-800); color: #fff;
+    border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+  }
+  .m-empty .cta-g {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px;
+    color: var(--lkv-forest-800);
+    font-size: 12px; font-weight: 500;
+  }
+
+  /* Skeleton (loading) */
+  .m-skel { padding: 8px 20px; }
+  @keyframes shimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: calc(200px + 100%) 0; }
+  }
+  .sk {
+    background: linear-gradient(90deg,
+      var(--lkv-stone-50) 0%,
+      #F5F3EE 40%,
+      var(--lkv-stone-50) 80%);
+    background-size: 200px 100%;
+    background-repeat: no-repeat;
+    animation: shimmer 1.4s ease-in-out infinite;
+    border-radius: 8px;
+  }
+  .sk-card {
+    display: flex; gap: 12px;
+    padding: 14px;
+    background: #fff;
+    border-radius: 18px;
+    border: 1px solid rgba(11,31,23,0.05);
+    margin-bottom: 10px;
+  }
+  .sk-thumb { width: 68px; height: 82px; border-radius: 12px; }
+  .sk-body { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .sk-line { height: 12px; border-radius: 4px; }
+  .sk-line.w1 { width: 70%; }
+  .sk-line.w2 { width: 40%; }
+  .sk-line.w3 { width: 55%; }
+  .sk-line.tall { height: 14px; }
+
+  /* Responsive: single artboard wraps nicely */
+  @media (max-width: 900px) {
+    .stage-title { flex-direction: column; padding: 0 20px; }
+    .stage-title a { margin-left: 0; margin-right: 16px; }
+    .stage { padding: 0 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage-title">
+  <div>
+    <div class="h">Groupes — <em style="font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400;">le cockpit du voyage</em></div>
+    <div class="sub">Version mobile · 3 états · liste, découverte, vide, chargement</div>
+  </div>
+  <div>
+    <span style="opacity: 0.5;">← Home</span>
+    <span style="opacity: 0.5;">Communauté</span>
+    <span style="opacity: 0.5;">Clubs</span>
+    <span style="opacity: 0.5;">Carnet</span>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ═══════════════════════ BOARD 1 · MAIN LIST ═══════════════════════ -->
+  <div>
+    <div class="artboard-mobile">
+      <div class="screen">
+
+        <!-- HEADER -->
+        <div class="m-header">
+          <div class="lkv-logo">
+            <svg viewBox="0 0 32 32" width="16" height="16" fill="none">
+              <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+            </svg>
+            <span>Groupes</span>
+          </div>
+          <div class="btns">
+            <div class="b">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            </div>
+            <div class="b b-primary" title="Nouveau groupe">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- SCROLL AREA -->
+        <div class="scroll">
+
+          <!-- MASTHEAD -->
+          <div class="m-head">
+            <div class="eye"><span class="dot"></span>4 groupes · 2 en préparation</div>
+            <h1>Vos voyages,<br/><em>en préparation.</em></h1>
+            <p>Un groupe par traversée. On prépare à plusieurs, on part, puis tout atterrit dans le Carnet.</p>
+          </div>
+
+          <!-- KPIs -->
+          <div class="m-kpis">
+            <div class="k">
+              <div class="v">4</div>
+              <div class="l">Groupes</div>
+            </div>
+            <div class="k">
+              <div class="v">18<em>&nbsp;pers.</em></div>
+              <div class="l">Compagnons</div>
+            </div>
+            <div class="k">
+              <div class="v">2<em>&nbsp;actifs</em></div>
+              <div class="l">À préparer</div>
+            </div>
+          </div>
+
+          <!-- SEGMENTED TABS -->
+          <div class="m-tabs">
+            <div class="t on">Mes groupes <span class="n">4</span></div>
+            <div class="t">Invitations <span class="n">1</span></div>
+            <div class="t">Passés <span class="n">12</span></div>
+          </div>
+
+          <!-- FILTER PILLS -->
+          <div class="m-pills">
+            <div class="p on">Tous</div>
+            <div class="p">En cours</div>
+            <div class="p">À venir</div>
+            <div class="p">Admin</div>
+            <div class="p">Alpes</div>
+            <div class="p">Été 2026</div>
+          </div>
+
+          <!-- INVITATION BANNER -->
+          <div class="m-invite">
+            <div class="av" style="background-image: url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&auto=format&fit=crop&q=80')"></div>
+            <div class="txt">
+              <div class="lbl">Nouvelle invitation</div>
+              <div class="msg"><strong>Léna</strong> vous invite à rejoindre <em>Traversée du Queyras</em></div>
+            </div>
+            <div class="acts">
+              <div class="no">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </div>
+              <div class="ok">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- LIST -->
+          <div class="m-list">
+
+            <!-- FEATURED (cockpit actif) -->
+            <div class="m-featured">
+              <div class="cov" style="background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1000&auto=format&fit=crop&q=80')"></div>
+              <div class="inner">
+                <div class="badge">
+                  <span class="dot"></span>
+                  Cockpit actif · Départ dans 9 jours
+                </div>
+                <div class="bottom">
+                  <h2>Grand Tour <em>des Écrins</em></h2>
+                  <div class="place">24 août – 1 sept. · 8 jours · Refuges + bivouacs</div>
+                  <div class="prog">
+                    <div class="pct">Préparation · 78%</div>
+                    <div class="bar"><span style="width: 78%;"></span></div>
+                  </div>
+                  <div class="foot">
+                    <div style="display: flex; align-items: center;">
+                      <div class="members">
+                        <div class="m" style="background-image: url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80')"></div>
+                        <div class="m" style="background-image: url('https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80')"></div>
+                        <div class="m" style="background-image: url('https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=100&auto=format&fit=crop&q=80')"></div>
+                        <div class="m" style="background-image: url('https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=100&auto=format&fit=crop&q=80')"></div>
+                      </div>
+                      <div class="count">6 voyageurs</div>
+                    </div>
+                    <div class="open">
+                      Ouvrir
+                      <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section header -->
+            <div class="m-section-h">
+              <div class="t">Vos <em>autres groupes</em></div>
+              <div class="n">3 groupes</div>
+            </div>
+
+            <!-- GROUP CARD 1 -->
+            <div class="m-group">
+              <div class="thumb" style="background-image: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&auto=format&fit=crop&q=80')">
+                <div class="cnt">Chartreuse</div>
+              </div>
+              <div class="body">
+                <div class="row1">
+                  <h4>Traversée <em>d'automne</em></h4>
+                  <span class="status on">Actif</span>
+                </div>
+                <div class="stat-line">
+                  <span>12–14 oct.</span><span class="sep">·</span>
+                  <span>3 jours</span><span class="sep">·</span>
+                  <span>4 étapes</span>
+                </div>
+                <div class="foot">
+                  <div style="display: flex; align-items: center;">
+                    <div class="members">
+                      <div class="mm" style="background-image: url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&auto=format&fit=crop&q=80')"></div>
+                      <div class="mm" style="background-image: url('https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop&q=80')"></div>
+                      <div class="mm" style="background-image: url('https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=80&auto=format&fit=crop&q=80')"></div>
+                    </div>
+                    <div class="count">4</div>
+                  </div>
+                  <div class="badge-inline">
+                    <span class="dot"></span>3 messages
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- GROUP CARD 2 -->
+            <div class="m-group">
+              <div class="thumb" style="background-image: url('https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?w=400&auto=format&fit=crop&q=80')">
+                <div class="cnt">Vercors</div>
+              </div>
+              <div class="body">
+                <div class="row1">
+                  <h4>Hauts <em>Plateaux</em> — bivouac</h4>
+                  <span class="status soon">Bientôt</span>
+                </div>
+                <div class="stat-line">
+                  <span>2–3 nov.</span><span class="sep">·</span>
+                  <span>Week-end</span><span class="sep">·</span>
+                  <span>Bivouac</span>
+                </div>
+                <div class="foot">
+                  <div style="display: flex; align-items: center;">
+                    <div class="members">
+                      <div class="mm" style="background-image: url('https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=80&auto=format&fit=crop&q=80')"></div>
+                      <div class="mm" style="background-image: url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&auto=format&fit=crop&q=80')"></div>
+                    </div>
+                    <div class="count">2</div>
+                  </div>
+                  <div class="badge-inline" style="color: var(--lkv-ink-500);">
+                    Vous êtes admin
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- GROUP CARD 3 -->
+            <div class="m-group">
+              <div class="thumb" style="background-image: url('https://images.unsplash.com/photo-1533130061792-64b345e4a833?w=400&auto=format&fit=crop&q=80')">
+                <div class="cnt">Belledonne</div>
+              </div>
+              <div class="body">
+                <div class="row1">
+                  <h4>Ski de rando — <em>hiver</em></h4>
+                  <span class="status past">En brouillon</span>
+                </div>
+                <div class="stat-line">
+                  <span>Janv. 2027</span><span class="sep">·</span>
+                  <span>Non planifié</span>
+                </div>
+                <div class="foot">
+                  <div style="display: flex; align-items: center;">
+                    <div class="members">
+                      <div class="mm" style="background-image: url('https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop&q=80')"></div>
+                    </div>
+                    <div class="count">1 (vous)</div>
+                  </div>
+                  <div class="badge-inline" style="color: var(--lkv-ink-500);">
+                    Inviter →
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- DISCOVER (join / create) -->
+            <div class="m-discover">
+              <div class="ic">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="20" height="20"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M14 20c0-2 2-3 4-3s4 1 4 3"/></svg>
+              </div>
+              <h5>Envie de partir avec <em>quelqu'un</em> ?</h5>
+              <p>Rejoignez un groupe existant depuis un club, ou lancez le vôtre en trois minutes.</p>
+              <a href="#" class="cta">
+                Explorer les clubs
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </a>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- BOTTOM TABBAR -->
+        <div class="m-tabbar">
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div>
+          <div class="tabi on"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M14 20c0-2 2-3 4-3s4 1 4 3"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M4 4h12l4 4v12a2 2 0 0 1-2 2H4z M8 8h8M8 12h8M8 16h5"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">Mobile · liste (état par défaut) · 375 × 812</div>
+  </div>
+
+  <!-- ═══════════════════════ BOARD 2 · EMPTY STATE ═══════════════════════ -->
+  <div>
+    <div class="artboard-mobile">
+      <div class="screen">
+
+        <div class="m-header">
+          <div class="lkv-logo">
+            <svg viewBox="0 0 32 32" width="16" height="16" fill="none">
+              <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+            </svg>
+            <span>Groupes</span>
+          </div>
+          <div class="btns">
+            <div class="b">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="scroll">
+
+          <div class="m-head">
+            <div class="eye"><span class="dot" style="background: var(--lkv-ink-300);"></span>Aucun groupe pour l'instant</div>
+            <h1>Le voyage se prépare<br/><em>à plusieurs.</em></h1>
+            <p>Créez votre premier groupe pour rassembler vos compagnons, planifier les étapes, partager la logistique.</p>
+          </div>
+
+          <div class="m-empty">
+            <div class="illo">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="34" height="34"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M14 20c0-2 2-3 4-3s4 1 4 3"/></svg>
+            </div>
+            <h3>Rien à préparer <em>pour l'instant.</em></h3>
+            <p>Créez un groupe autour d'une traversée, invitez vos compagnons, et le carnet se composera tout seul au retour.</p>
+            <div class="cta-stack">
+              <a href="#" class="cta-p">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                Créer mon premier groupe
+              </a>
+              <a href="#" class="cta-g">
+                Ou explorer les clubs
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- HOW-IT-WORKS mini -->
+          <div style="padding: 8px 20px 100px;">
+            <div class="m-section-h">
+              <div class="t">Comment <em>ça marche</em></div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+
+              <div style="display: flex; gap: 12px; padding: 14px; background: #fff; border-radius: 16px; border: 1px solid rgba(11,31,23,0.05); align-items: flex-start;">
+                <div style="width: 28px; height: 28px; border-radius: 999px; background: var(--lkv-stone-50); color: var(--lkv-forest-800); display: inline-flex; align-items: center; justify-content: center; font-family: var(--lkv-font-serif); font-style: italic; font-size: 14px; flex-shrink: 0;">1</div>
+                <div>
+                  <div style="font-size: 13px; font-weight: 500; color: var(--lkv-ink-900); margin-bottom: 2px;">Créer un groupe</div>
+                  <div style="font-size: 12px; color: var(--lkv-ink-500); line-height: 1.4;">Un nom, une date, un massif. Le reste peut attendre.</div>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 12px; padding: 14px; background: #fff; border-radius: 16px; border: 1px solid rgba(11,31,23,0.05); align-items: flex-start;">
+                <div style="width: 28px; height: 28px; border-radius: 999px; background: var(--lkv-stone-50); color: var(--lkv-forest-800); display: inline-flex; align-items: center; justify-content: center; font-family: var(--lkv-font-serif); font-style: italic; font-size: 14px; flex-shrink: 0;">2</div>
+                <div>
+                  <div style="font-size: 13px; font-weight: 500; color: var(--lkv-ink-900); margin-bottom: 2px;">Inviter vos compagnons</div>
+                  <div style="font-size: 12px; color: var(--lkv-ink-500); line-height: 1.4;">Par lien, email, ou depuis un club. Chacun rejoint avec un rôle.</div>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 12px; padding: 14px; background: #fff; border-radius: 16px; border: 1px solid rgba(11,31,23,0.05); align-items: flex-start;">
+                <div style="width: 28px; height: 28px; border-radius: 999px; background: var(--lkv-stone-50); color: var(--lkv-forest-800); display: inline-flex; align-items: center; justify-content: center; font-family: var(--lkv-font-serif); font-style: italic; font-size: 14px; flex-shrink: 0;">3</div>
+                <div>
+                  <div style="font-size: 13px; font-weight: 500; color: var(--lkv-ink-900); margin-bottom: 2px;">Préparer ensemble</div>
+                  <div style="font-size: 12px; color: var(--lkv-ink-500); line-height: 1.4;">Étapes, hébergements, matériel, dépenses — tout au même endroit.</div>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 12px; padding: 14px; background: var(--lkv-forest-800); color: #fff; border-radius: 16px; align-items: flex-start;">
+                <div style="width: 28px; height: 28px; border-radius: 999px; background: rgba(255,255,255,0.14); color: var(--lkv-sage-300); display: inline-flex; align-items: center; justify-content: center; font-family: var(--lkv-font-serif); font-style: italic; font-size: 14px; flex-shrink: 0;">4</div>
+                <div>
+                  <div style="font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 2px;">Au retour, tout devient carnet</div>
+                  <div style="font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.4;">Photos, étapes, dépenses — le carnet se compose seul.</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <div class="m-tabbar">
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div>
+          <div class="tabi on"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M14 20c0-2 2-3 4-3s4 1 4 3"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M4 4h12l4 4v12a2 2 0 0 1-2 2H4z M8 8h8M8 12h8M8 16h5"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">Mobile · état vide (premier lancement)</div>
+  </div>
+
+  <!-- ═══════════════════════ BOARD 3 · SEARCH + LOADING ═══════════════════════ -->
+  <div>
+    <div class="artboard-mobile">
+      <div class="screen">
+
+        <div class="m-header">
+          <div class="lkv-logo">
+            <svg viewBox="0 0 32 32" width="16" height="16" fill="none">
+              <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+            </svg>
+            <span>Groupes</span>
+          </div>
+          <div class="btns">
+            <div class="b" style="color: var(--lkv-forest-800);">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="scroll">
+
+          <!-- Search active -->
+          <div class="m-search" style="margin-top: 16px;">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            <input type="text" value="écrins" readonly/>
+            <div class="clr">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </div>
+          </div>
+
+          <div style="padding: 6px 20px 0; font-size: 11px; color: var(--lkv-ink-500); letter-spacing: 0.04em;">
+            Recherche dans vos groupes…
+          </div>
+
+          <!-- LOADING SKELETON -->
+          <div class="m-skel" style="padding-top: 12px;">
+
+            <div class="sk-card">
+              <div class="sk sk-thumb"></div>
+              <div class="sk-body">
+                <div class="sk sk-line tall w1"></div>
+                <div class="sk sk-line w2"></div>
+                <div style="flex: 1;"></div>
+                <div class="sk sk-line w3"></div>
+              </div>
+            </div>
+
+            <div class="sk-card">
+              <div class="sk sk-thumb"></div>
+              <div class="sk-body">
+                <div class="sk sk-line tall" style="width: 60%;"></div>
+                <div class="sk sk-line" style="width: 45%;"></div>
+                <div style="flex: 1;"></div>
+                <div class="sk sk-line" style="width: 50%;"></div>
+              </div>
+            </div>
+
+            <div class="sk-card">
+              <div class="sk sk-thumb"></div>
+              <div class="sk-body">
+                <div class="sk sk-line tall" style="width: 75%;"></div>
+                <div class="sk sk-line" style="width: 35%;"></div>
+                <div style="flex: 1;"></div>
+                <div class="sk sk-line" style="width: 48%;"></div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- After a moment, results appear (single) -->
+          <div style="padding: 20px 20px 6px;">
+            <div class="m-section-h" style="margin: 0 4px 10px;">
+              <div class="t">1 résultat</div>
+              <div class="n">dans « écrins »</div>
+            </div>
+
+            <div class="m-group">
+              <div class="thumb" style="background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&auto=format&fit=crop&q=80')">
+                <div class="cnt">Écrins</div>
+              </div>
+              <div class="body">
+                <div class="row1">
+                  <h4>Grand Tour <em>des Écrins</em></h4>
+                  <span class="status on">Actif</span>
+                </div>
+                <div class="stat-line">
+                  <span>24 août – 1 sept.</span><span class="sep">·</span>
+                  <span>8 jours</span>
+                </div>
+                <div class="foot">
+                  <div style="display: flex; align-items: center;">
+                    <div class="members">
+                      <div class="mm" style="background-image: url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&auto=format&fit=crop&q=80')"></div>
+                      <div class="mm" style="background-image: url('https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop&q=80')"></div>
+                      <div class="mm" style="background-image: url('https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=80&auto=format&fit=crop&q=80')"></div>
+                      <div class="mm" style="background-image: url('https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=80&auto=format&fit=crop&q=80')"></div>
+                    </div>
+                    <div class="count">6</div>
+                  </div>
+                  <div class="badge-inline">
+                    <span class="dot"></span>Cockpit
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="padding: 40px 20px 100px; text-align: center;">
+            <div style="font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-ink-500); font-size: 13px; line-height: 1.5;">
+              Vous cherchez un groupe qui n'existe pas encore ?
+            </div>
+            <a href="#" style="display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 8px 14px; border-radius: 999px; background: transparent; color: var(--lkv-forest-800); font-size: 12px; font-weight: 500; box-shadow: inset 0 0 0 1px rgba(31,74,58,0.2);">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              Créer « écrins »
+            </a>
+          </div>
+
+        </div>
+
+        <div class="m-tabbar">
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div>
+          <div class="tabi on"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M14 20c0-2 2-3 4-3s4 1 4 3"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M4 4h12l4 4v12a2 2 0 0 1-2 2H4z M8 8h8M8 12h8M8 16h5"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">Mobile · recherche + chargement</div>
+  </div>
+
+</div>
+
+</body>
+</html>

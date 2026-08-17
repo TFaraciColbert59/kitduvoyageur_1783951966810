@@ -1,0 +1,1359 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Paramètres · Marceline Chevrier — Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="shop.css"/>
+<link rel="stylesheet" href="stage.css"/>
+<style>
+  /* HEADER */
+  .p-header {
+    padding: 20px 20px 0;
+    background: var(--lkv-paper);
+  }
+  .breadcrumb {
+    padding: 20px 60px 0;
+    font-size: 12px; color: var(--lkv-ink-500); letter-spacing: 0.06em;
+  }
+  .breadcrumb a { color: var(--lkv-forest-800); }
+  .breadcrumb .sep { margin: 0 8px; color: var(--lkv-ink-300); }
+
+  /* PAGE HEAD */
+  .p-page-head {
+    padding: 32px 60px 40px;
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 40px; align-items: end;
+  }
+  .p-page-head .eye {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 4px 12px; border-radius: 999px;
+    background: var(--lkv-sage-100);
+    color: var(--lkv-forest-800);
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 16px;
+  }
+  .p-page-head .eye .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-forest-800); }
+  .p-page-head h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 68px; font-weight: 500;
+    letter-spacing: -0.035em; line-height: 0.95;
+    margin: 0 0 12px;
+    color: var(--lkv-ink-900);
+  }
+  .p-page-head h1 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .p-page-head p {
+    font-family: var(--lkv-font-serif);
+    font-size: 17px; line-height: 1.5;
+    color: var(--lkv-ink-700);
+    max-width: 620px; margin: 0;
+  }
+  .p-page-head .save-strip {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+  }
+  .p-page-head .save-strip .last {
+    font-size: 12px; color: var(--lkv-ink-500);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .p-page-head .save-strip .last .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-sage-500);
+  }
+
+  /* MAIN LAYOUT — side nav + panneau */
+  .p-main {
+    padding: 0 60px 40px;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+
+  /* SIDE NAV */
+  .side-nav {
+    position: sticky; top: 20px;
+    background: #fff;
+    border-radius: 22px;
+    padding: 22px 14px;
+    box-shadow: var(--lkv-shadow-sm);
+  }
+  .side-nav .user-mini {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 8px 16px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .side-nav .user-mini .av {
+    width: 40px; height: 40px; border-radius: 999px;
+    background: url('assets/portrait-1.jpg') center/cover;
+    flex-shrink: 0;
+  }
+  .side-nav .user-mini .info .n { font-size: 13px; font-weight: 500; color: var(--lkv-ink-900); }
+  .side-nav .user-mini .info .r { font-size: 11px; color: var(--lkv-ink-500); margin-top: 2px; }
+
+  .side-nav .section-h {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-ink-500); font-weight: 500;
+    padding: 12px 12px 6px;
+  }
+  .side-nav .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    color: var(--lkv-ink-700);
+    position: relative;
+    transition: background var(--lkv-dur) var(--lkv-ease);
+    margin-bottom: 2px;
+  }
+  .side-nav .nav-item:hover { background: var(--lkv-stone-50); color: var(--lkv-forest-800); }
+  .side-nav .nav-item.on {
+    background: var(--lkv-sage-100);
+    color: var(--lkv-forest-800);
+    font-weight: 500;
+  }
+  .side-nav .nav-item.on::before {
+    content: ""; position: absolute; left: 0; top: 10px; bottom: 10px;
+    width: 3px; background: var(--lkv-forest-800);
+    border-radius: 0 3px 3px 0;
+  }
+  .side-nav .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .side-nav .nav-item .badge {
+    margin-left: auto;
+    min-width: 18px; padding: 0 6px; height: 16px;
+    border-radius: 999px;
+    background: var(--lkv-warm-500); color: #fff;
+    font-size: 10px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .side-nav .nav-item .badge.info { background: var(--lkv-forest-800); }
+
+  /* PANEL */
+  .panel { display: flex; flex-direction: column; gap: 16px; }
+
+  .section {
+    background: #fff;
+    border-radius: 24px;
+    padding: 28px 32px;
+    box-shadow: var(--lkv-shadow-sm);
+  }
+  .section .sec-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .section .sec-head h2 {
+    font-family: var(--lkv-font-sans);
+    font-size: 24px; font-weight: 500;
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: var(--lkv-ink-900);
+  }
+  .section .sec-head h2 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .section .sec-head .num {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 13px; color: var(--lkv-ink-500);
+  }
+  .section .sec-sub {
+    font-size: 13px; color: var(--lkv-ink-500);
+    margin: 4px 0 24px; max-width: 640px;
+  }
+
+  /* PROFILE section */
+  .avatar-block {
+    display: flex; align-items: center; gap: 20px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    margin-bottom: 24px;
+  }
+  .avatar-block .av {
+    width: 88px; height: 88px; border-radius: 50%;
+    background: url('assets/portrait-1.jpg') center/cover;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 12px rgba(11,31,23,0.12);
+  }
+  .avatar-block .info .n {
+    font-family: var(--lkv-font-sans);
+    font-size: 18px; font-weight: 500;
+    letter-spacing: -0.015em;
+    color: var(--lkv-ink-900);
+  }
+  .avatar-block .info .m {
+    font-size: 12px; color: var(--lkv-ink-500);
+    margin-top: 4px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .avatar-block .info .m strong { color: var(--lkv-forest-800); font-weight: 500; }
+  .avatar-block .btns { margin-left: auto; display: flex; gap: 8px; }
+
+  /* FORM fields */
+  .form-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px 20px;
+  }
+  .form-grid .full { grid-column: 1 / -1; }
+  .field label {
+    display: block;
+    font-size: 12px; font-weight: 500;
+    color: var(--lkv-ink-700);
+    margin-bottom: 6px;
+    letter-spacing: 0.02em;
+  }
+  .field label .req { color: var(--lkv-warm-500); margin-left: 2px; }
+  .field label .hint { color: var(--lkv-ink-400); font-weight: 400; margin-left: 6px; }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--lkv-stone-50);
+    border: 1px solid transparent;
+    border-radius: 12px;
+    font-family: inherit; font-size: 14px;
+    color: var(--lkv-ink-900);
+    outline: none;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .field input:hover, .field select:hover, .field textarea:hover { border-color: rgba(11,31,23,0.1); }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    background: #fff;
+    border-color: var(--lkv-forest-800);
+    box-shadow: 0 0 0 3px rgba(31,74,58,0.1);
+  }
+  .field textarea { min-height: 90px; resize: vertical; font-family: var(--lkv-font-serif); font-size: 14px; line-height: 1.5; }
+  .field .helper {
+    font-size: 11px; color: var(--lkv-ink-500);
+    margin-top: 6px;
+    display: flex; justify-content: space-between;
+  }
+  .field .helper .count { font-family: var(--lkv-font-mono); }
+
+  /* Toggle row (notifications, privacy) */
+  .toggle-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    align-items: center;
+  }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-row .info .n {
+    font-size: 14px; font-weight: 500;
+    color: var(--lkv-ink-900);
+  }
+  .toggle-row .info .n .badge {
+    display: inline-block; margin-left: 8px;
+    padding: 1px 8px; border-radius: 999px;
+    background: var(--lkv-sage-100); color: var(--lkv-forest-800);
+    font-size: 10px; letter-spacing: 0.02em;
+  }
+  .toggle-row .info .n .badge.warn { background: rgba(228,198,149,0.35); color: var(--lkv-warm-500); }
+  .toggle-row .info .m {
+    font-size: 12px; color: var(--lkv-ink-500);
+    margin-top: 4px; max-width: 480px;
+    line-height: 1.5;
+  }
+  .toggle-row .info .channels {
+    display: flex; gap: 6px;
+    margin-top: 8px;
+  }
+  .toggle-row .info .channels .ch {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--lkv-stone-50);
+    color: var(--lkv-ink-500);
+    font-size: 11px;
+  }
+  .toggle-row .info .channels .ch.on {
+    background: var(--lkv-forest-800); color: #fff;
+  }
+
+  .switch {
+    width: 44px; height: 24px; border-radius: 999px;
+    background: rgba(11,31,23,0.14);
+    position: relative;
+    cursor: pointer;
+    transition: background var(--lkv-dur) var(--lkv-ease);
+    flex-shrink: 0;
+  }
+  .switch::after {
+    content: ""; position: absolute; top: 2px; left: 2px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .switch.on { background: var(--lkv-forest-800); }
+  .switch.on::after { left: 22px; }
+
+  /* Privacy visibility select */
+  .visibility-select {
+    display: flex; gap: 6px;
+    padding: 3px;
+    background: var(--lkv-stone-50);
+    border-radius: 999px;
+  }
+  .visibility-select .v {
+    padding: 6px 12px; border-radius: 999px;
+    font-size: 11px; color: var(--lkv-ink-500);
+    display: flex; align-items: center; gap: 4px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .visibility-select .v.on {
+    background: #fff; color: var(--lkv-forest-800);
+    box-shadow: var(--lkv-shadow-xs);
+  }
+
+  /* Language selector cards */
+  .lang-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  }
+  .lang-tile {
+    padding: 14px;
+    background: var(--lkv-stone-50);
+    border: 2px solid transparent;
+    border-radius: 14px;
+    display: flex; align-items: center; gap: 12px;
+    cursor: pointer;
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .lang-tile:hover { background: #fff; border-color: rgba(11,31,23,0.06); }
+  .lang-tile.on {
+    background: var(--lkv-sage-100);
+    border-color: var(--lkv-forest-800);
+  }
+  .lang-tile .flag {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 500;
+    color: var(--lkv-ink-500);
+    box-shadow: var(--lkv-shadow-xs);
+    flex-shrink: 0;
+    letter-spacing: 0.02em;
+  }
+  .lang-tile.on .flag { color: var(--lkv-forest-800); }
+  .lang-tile .info .n { font-size: 13px; font-weight: 500; color: var(--lkv-ink-900); }
+  .lang-tile .info .m { font-size: 11px; color: var(--lkv-ink-500); margin-top: 2px; }
+
+  /* Sessions */
+  .session-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    align-items: center;
+  }
+  .session-row:last-child { border-bottom: none; }
+  .session-row .icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--lkv-stone-50);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+    flex-shrink: 0;
+  }
+  .session-row .info .n {
+    font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .session-row .info .n .curr {
+    padding: 1px 8px; border-radius: 999px;
+    background: var(--lkv-sage-100); color: var(--lkv-forest-800);
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .session-row .info .m {
+    font-size: 12px; color: var(--lkv-ink-500);
+    margin-top: 3px;
+  }
+  .session-row .last {
+    font-family: var(--lkv-font-mono);
+    font-size: 11px; color: var(--lkv-ink-500);
+    text-align: right;
+  }
+  .session-row .revoke {
+    padding: 6px 12px; border-radius: 999px;
+    color: #C15A5A;
+    background: transparent;
+    border: 1px solid rgba(193,90,90,0.24);
+    font-size: 11px; font-weight: 500;
+  }
+
+  /* Danger zone */
+  .danger-zone {
+    background: linear-gradient(135deg, rgba(193,90,90,0.06), rgba(193,90,90,0.02));
+    border: 1px solid rgba(193,90,90,0.16);
+    border-radius: 20px;
+    padding: 24px 28px;
+  }
+  .danger-zone .h {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .danger-zone .h h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 18px; font-weight: 500;
+    letter-spacing: -0.015em;
+    color: #A54545;
+    margin: 0;
+  }
+  .danger-zone .h h3 em { font-family: var(--lkv-font-serif); font-style: italic; color: #C15A5A; font-weight: 400; }
+  .danger-zone .sub {
+    font-size: 12px; color: var(--lkv-ink-500);
+    margin-bottom: 20px;
+  }
+  .danger-zone .danger-row {
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 24px; align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(193,90,90,0.14);
+  }
+  .danger-zone .danger-row:last-child { border-bottom: none; }
+  .danger-zone .danger-row .info .n {
+    font-size: 14px; font-weight: 500; color: #A54545;
+  }
+  .danger-zone .danger-row .info .m {
+    font-size: 12px; color: var(--lkv-ink-500);
+    margin-top: 3px; max-width: 480px; line-height: 1.5;
+  }
+  .danger-zone .danger-row .btn {
+    padding: 8px 16px; border-radius: 999px;
+    background: transparent;
+    border: 1px solid rgba(193,90,90,0.32);
+    color: #C15A5A;
+    font-size: 12px; font-weight: 500;
+    flex-shrink: 0;
+  }
+  .danger-zone .danger-row .btn:hover { background: rgba(193,90,90,0.08); }
+
+  /* Save bar (sticky footer) */
+  .save-bar {
+    position: sticky; bottom: 20px;
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 999px;
+    padding: 10px 12px 10px 22px;
+    box-shadow: var(--lkv-shadow-md);
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 16px;
+    margin-top: 8px;
+  }
+  .save-bar .status {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--lkv-ink-500);
+  }
+  .save-bar .status .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-warm-500);
+    animation: pulse 2s var(--lkv-ease) infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .save-bar .actions { display: flex; gap: 8px; }
+
+  /* FOOTER */
+  .footer {
+    background: var(--lkv-forest-950); color: #fff;
+    padding: 60px 60px 40px;
+  }
+  .footer .brand {
+    font-family: var(--lkv-font-sans);
+    font-size: 32px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1.1;
+    margin-bottom: 40px;
+    max-width: 720px;
+  }
+  .footer .brand em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .footer .bottom {
+    display: flex; justify-content: space-between;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 12px; color: rgba(255,255,255,0.4);
+  }
+
+  /* ============ MOBILE ============ */
+  .m-header {
+    padding: 14px 16px;
+    background: #fff;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .m-header .back {
+    width: 36px; height: 36px; border-radius: 999px;
+    background: var(--lkv-stone-50);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-700);
+  }
+  .m-header h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 18px; font-weight: 500;
+    letter-spacing: -0.015em;
+    margin: 0;
+  }
+  .m-header h1 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+
+  .m-body { padding: 12px 16px 90px; }
+
+  .m-nav-list {
+    background: #fff;
+    border-radius: 16px;
+    padding: 6px;
+    box-shadow: var(--lkv-shadow-xs);
+    margin-bottom: 12px;
+  }
+  .m-nav-list .item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 14px; color: var(--lkv-ink-900);
+    border-bottom: 1px solid rgba(11,31,23,0.04);
+  }
+  .m-nav-list .item:last-child { border-bottom: none; }
+  .m-nav-list .item.on { background: var(--lkv-sage-100); color: var(--lkv-forest-800); font-weight: 500; }
+  .m-nav-list .item svg { color: var(--lkv-forest-800); flex-shrink: 0; }
+  .m-nav-list .item .lbl { flex: 1; }
+  .m-nav-list .item .lbl .sub { font-size: 11px; color: var(--lkv-ink-500); font-weight: 400; margin-top: 2px; }
+  .m-nav-list .item .arr { color: var(--lkv-ink-400); }
+  .m-nav-list .item .badge {
+    min-width: 18px; padding: 0 6px; height: 16px;
+    border-radius: 999px;
+    background: var(--lkv-warm-500); color: #fff;
+    font-size: 10px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+    margin-right: 4px;
+  }
+
+  .m-avatar-card {
+    background: #fff;
+    border-radius: 16px; padding: 14px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px;
+    box-shadow: var(--lkv-shadow-xs);
+  }
+  .m-avatar-card .av {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: url('assets/portrait-1.jpg') center/cover;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+  }
+  .m-avatar-card .info .n { font-size: 14px; font-weight: 500; color: var(--lkv-ink-900); }
+  .m-avatar-card .info .m { font-size: 11px; color: var(--lkv-ink-500); margin-top: 2px; }
+  .m-avatar-card .edit-b {
+    margin-left: auto;
+    padding: 8px 12px; border-radius: 999px;
+    background: var(--lkv-forest-800); color: #fff;
+    font-size: 11px; font-weight: 500;
+  }
+
+  .m-section {
+    background: #fff;
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 10px;
+    box-shadow: var(--lkv-shadow-xs);
+  }
+  .m-section h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 14px; font-weight: 500;
+    letter-spacing: -0.01em;
+    margin: 0 0 10px;
+    color: var(--lkv-ink-900);
+  }
+  .m-section h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+
+  .m-toggle {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+  }
+  .m-toggle:last-child { border-bottom: none; }
+  .m-toggle .info { flex: 1; }
+  .m-toggle .info .n { font-size: 13px; font-weight: 500; color: var(--lkv-ink-900); }
+  .m-toggle .info .m { font-size: 11px; color: var(--lkv-ink-500); margin-top: 2px; line-height: 1.4; }
+  .m-toggle .sw {
+    width: 38px; height: 22px; border-radius: 999px;
+    background: rgba(11,31,23,0.14);
+    position: relative; flex-shrink: 0;
+  }
+  .m-toggle .sw::after {
+    content: ""; position: absolute; top: 2px; left: 2px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .m-toggle .sw.on { background: var(--lkv-forest-800); }
+  .m-toggle .sw.on::after { left: 18px; }
+
+  .m-tabbar {
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 10px 8px;
+    background: rgba(255,255,255,0.94); backdrop-filter: blur(24px);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 24px;
+    box-shadow: 0 8px 24px rgba(11,31,23,0.08);
+  }
+  .m-tabbar .tabi {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-500);
+  }
+  .m-tabbar .tabi.on { background: var(--lkv-forest-800); color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="stage-title">
+  <div>
+    <div class="h">Compte — Paramètres & édition profil</div>
+    <div class="sub">Side-nav gauche · panneau droit avec formulaires (profil, notifs, confidentialité, langue, sécurité)</div>
+  </div>
+  <div class="links">
+    <a href="Index.html">← Index</a>
+    <a href="Compte - Dashboard.html">Dashboard</a>
+    <a href="Inventaire.html">Inventaire</a>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ========== DESKTOP ========== -->
+  <div>
+  <div class="artboard-desktop">
+
+    <div class="p-header">
+      <nav class="top-nav">
+        <div class="lkv-logo">
+          <svg viewBox="0 0 32 32" width="24" height="24" fill="none">
+            <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+          </svg>
+          <span>Le Kit du Voyageur</span>
+        </div>
+        <div class="links">
+          <a href="#">Aventures</a>
+          <a href="#">Refuges</a>
+          <a href="#">Boutique</a>
+          <a href="#">Carnet</a>
+          <a href="Clubs v2.html">Clubs</a>
+          <a href="Compte - Dashboard.html" class="active">Mon compte</a>
+        </div>
+        <div class="right">
+          <button class="lkv-btn lkv-btn-icon lkv-btn-ghost">
+            <svg class="lkv-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          </button>
+          <a href="Compte - Dashboard.html" style="width: 36px; height: 36px; border-radius: 999px; background: url('assets/portrait-1.jpg') center/cover;"></a>
+        </div>
+      </nav>
+    </div>
+
+    <div class="breadcrumb">
+      <a href="Compte - Dashboard.html">Mon compte</a>
+      <span class="sep">›</span>
+      <span>Paramètres</span>
+    </div>
+
+    <div class="p-page-head">
+      <div>
+        <div class="eye"><span class="dot"></span>Paramètres</div>
+        <h1>Réglages <em>du compte.</em></h1>
+        <p>Tout ce qui touche à votre identité, vos préférences, la sécurité et la façon dont on communique avec vous. Les changements se sauvegardent automatiquement.</p>
+      </div>
+      <div class="save-strip">
+        <div class="last"><span class="dot"></span>Enregistré · il y a 3 min</div>
+        <button class="lkv-btn lkv-btn-outline">
+          <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 21V7M6 15l6 6 6-6M20 3H4"/></svg>
+          Exporter mes données
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <section class="p-main">
+
+      <!-- SIDE NAV -->
+      <aside class="side-nav">
+        <div class="user-mini">
+          <div class="av"></div>
+          <div class="info">
+            <div class="n">Marceline Chevrier</div>
+            <div class="r">marceline@example.fr</div>
+          </div>
+        </div>
+
+        <div class="section-h">Compte</div>
+        <a class="nav-item on">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+          Profil & identité
+        </a>
+        <a class="nav-item">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+          Notifications
+          <span class="badge">4</span>
+        </a>
+        <a class="nav-item">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+          Confidentialité
+        </a>
+        <a class="nav-item">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg>
+          Langue & région
+        </a>
+
+        <div class="section-h">Sécurité</div>
+        <a class="nav-item">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+          Mot de passe
+        </a>
+        <a class="nav-item">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="14" rx="2"/><path d="M12 12l4 4M12 12l-4 4"/></svg>
+          Sessions actives
+          <span class="badge info">3</span>
+        </a>
+
+        <div class="section-h">Facturation</div>
+        <a class="nav-item">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>
+          Moyens de paiement
+        </a>
+        <a class="nav-item">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+          Abonnement Guide
+        </a>
+
+        <div class="section-h">Avancé</div>
+        <a class="nav-item">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M12 3v14M6 9l6-6 6 6M20 21H4"/></svg>
+          Export de données
+        </a>
+      </aside>
+
+      <!-- PANEL -->
+      <div class="panel">
+
+        <!-- PROFILE -->
+        <div class="section">
+          <div class="sec-head">
+            <h2>Profil <em>& identité</em></h2>
+            <span class="num">01 · Public sur votre profil</span>
+          </div>
+          <div class="sec-sub">Ces informations apparaissent sur votre profil public et dans vos publications de carnets et de groupes.</div>
+
+          <div class="avatar-block">
+            <div class="av"></div>
+            <div class="info">
+              <div class="n">Marceline Chevrier</div>
+              <div class="m">Membre depuis mars 2023 · niveau <strong>Explorateur</strong> · 4 clubs</div>
+            </div>
+            <div class="btns">
+              <button class="lkv-btn lkv-btn-outline lkv-btn-sm">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/></svg>
+                Changer la photo
+              </button>
+              <button class="lkv-btn lkv-btn-ghost lkv-btn-sm">Supprimer</button>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label>Prénom <span class="req">*</span></label>
+              <input type="text" value="Marceline"/>
+            </div>
+            <div class="field">
+              <label>Nom <span class="req">*</span></label>
+              <input type="text" value="Chevrier"/>
+            </div>
+            <div class="field">
+              <label>Nom d'utilisateur public <span class="hint">visible dans l'URL de votre profil</span></label>
+              <input type="text" value="marceline-chevrier"/>
+            </div>
+            <div class="field">
+              <label>Pronoms</label>
+              <select>
+                <option>Elle / iel</option>
+                <option>Elle</option>
+                <option>Il</option>
+                <option>Iel</option>
+                <option>Non précisé</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label>Bio courte <span class="hint">apparaît sous votre nom sur les carnets</span></label>
+              <textarea>Randonneuse d'altitude basée à Grenoble. Je marche pour retrouver le silence, j'écris pour ne pas l'oublier. Trois massifs préférés : Chartreuse, Belledonne, Écrins.</textarea>
+              <div class="helper">
+                <span>Markdown supporté pour les liens et l'italique</span>
+                <span class="count">184 / 240</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>Ville</label>
+              <input type="text" value="Grenoble, Isère"/>
+            </div>
+            <div class="field">
+              <label>Pratiques principales</label>
+              <select>
+                <option>Randonnée · Bivouac · Trail</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- NOTIFICATIONS -->
+        <div class="section">
+          <div class="sec-head">
+            <h2>Notifications <em>& rappels</em></h2>
+            <span class="num">02 · Comment on vous prévient</span>
+          </div>
+          <div class="sec-sub">Chaque canal peut être activé indépendamment. Les rappels importants (voyage imminent, sortie club) restent toujours actifs par mail.</div>
+
+          <div class="toggle-row">
+            <div class="info">
+              <div class="n">Nouveau message dans un groupe <span class="badge">Voyage</span></div>
+              <div class="m">Un membre publie dans l'un de vos groupes de voyage — cockpits actifs uniquement.</div>
+              <div class="channels">
+                <span class="ch on"><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg> Push</span>
+                <span class="ch on"><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><path d="M4 4h16v16H4z"/><path d="M4 4l8 8 8-8"/></svg> Mail</span>
+                <span class="ch"><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><rect x="6" y="3" width="12" height="18" rx="2"/></svg> SMS</span>
+              </div>
+            </div>
+            <div class="switch on"></div>
+          </div>
+          <div class="toggle-row">
+            <div class="info">
+              <div class="n">Nouvelle sortie proposée dans un club</div>
+              <div class="m">Un référent publie une nouvelle sortie dans l'un des 4 clubs auxquels vous appartenez.</div>
+              <div class="channels">
+                <span class="ch on">Push</span>
+                <span class="ch">Mail</span>
+              </div>
+            </div>
+            <div class="switch on"></div>
+          </div>
+          <div class="toggle-row">
+            <div class="info">
+              <div class="n">Interactions sur mes carnets</div>
+              <div class="m">Likes, commentaires et reposts. Regroupés en un digest hebdomadaire.</div>
+              <div class="channels">
+                <span class="ch on">Digest hebdo</span>
+              </div>
+            </div>
+            <div class="switch on"></div>
+          </div>
+          <div class="toggle-row">
+            <div class="info">
+              <div class="n">Rappel de préparation de voyage <span class="badge warn">Auto</span></div>
+              <div class="m">72 h avant le départ : tâches non validées, matériel non attribué, météo prévue.</div>
+              <div class="channels">
+                <span class="ch on">Push</span>
+                <span class="ch on">Mail</span>
+              </div>
+            </div>
+            <div class="switch on"></div>
+          </div>
+          <div class="toggle-row">
+            <div class="info">
+              <div class="n">Suivi de commande & livraison</div>
+              <div class="m">Expédition, en cours de livraison, livré. Notifications automatiques du transporteur.</div>
+              <div class="channels">
+                <span class="ch on">Push</span>
+                <span class="ch">Mail</span>
+              </div>
+            </div>
+            <div class="switch on"></div>
+          </div>
+          <div class="toggle-row">
+            <div class="info">
+              <div class="n">Newsletter mensuelle</div>
+              <div class="m">Carnet du mois, refuges d'exception, nouveaux clubs. Envoyé le 1er de chaque mois.</div>
+              <div class="channels">
+                <span class="ch">Mail</span>
+              </div>
+            </div>
+            <div class="switch"></div>
+          </div>
+          <div class="toggle-row">
+            <div class="info">
+              <div class="n">Offres partenaires (marques équipement)</div>
+              <div class="m">Recommandations basées sur votre inventaire, jamais plus de 2 par mois.</div>
+            </div>
+            <div class="switch"></div>
+          </div>
+        </div>
+
+        <!-- CONFIDENTIALITÉ -->
+        <div class="section">
+          <div class="sec-head">
+            <h2>Confidentialité <em>& visibilité</em></h2>
+            <span class="num">03 · Qui voit quoi</span>
+          </div>
+          <div class="sec-sub">Chaque type de contenu a une visibilité par défaut. Vous pouvez la surcharger à la publication.</div>
+
+          <div class="toggle-row">
+            <div class="info">
+              <div class="n">Visibilité de votre profil</div>
+              <div class="m">Qui peut voir votre bio, vos badges et vos statistiques publiques.</div>
+            </div>
+            <div class="visibility-select">
+              <span class="v on"><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><circle cx="12" cy="12" r="9"/></svg> Public</span>
+              <span class="v"><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> Membres</span>
+              <span class="v"><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><rect x="4" y="10" width="16" height="11" rx="2"/></svg> Privé</span>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <div class="info">
+              <div class="n">Visibilité de vos carnets par défaut</div>
+              <div class="m">Nouveau carnet créé — visibilité initiale. Chaque carnet peut être changé individuellement.</div>
+            </div>
+            <div class="visibility-select">
+              <span class="v"><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><circle cx="12" cy="12" r="9"/></svg> Public</span>
+              <span class="v on"><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> Membres</span>
+              <span class="v"><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><rect x="4" y="10" width="16" height="11" rx="2"/></svg> Privé</span>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <div class="info">
+              <div class="n">Visibilité de votre inventaire</div>
+              <div class="m">Votre matériel et les kits associés. Utile pour les échanges et prêts entre voyageurs.</div>
+            </div>
+            <div class="visibility-select">
+              <span class="v"><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><circle cx="12" cy="12" r="9"/></svg> Public</span>
+              <span class="v"><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> Membres</span>
+              <span class="v on"><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><rect x="4" y="10" width="16" height="11" rx="2"/></svg> Privé</span>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <div class="info">
+              <div class="n">Autoriser l'indexation par les moteurs de recherche</div>
+              <div class="m">Votre profil et vos carnets publics apparaissent dans les résultats Google, Qwant, DuckDuckGo.</div>
+            </div>
+            <div class="switch on"></div>
+          </div>
+          <div class="toggle-row">
+            <div class="info">
+              <div class="n">Partage de position pendant un voyage actif</div>
+              <div class="m">Membres du groupe de voyage seulement · désactivé après le retour.</div>
+            </div>
+            <div class="switch on"></div>
+          </div>
+          <div class="toggle-row">
+            <div class="info">
+              <div class="n">Recevoir des demandes de suivi</div>
+              <div class="m">Autres voyageurs peuvent demander à vous suivre. Vous validez chaque demande.</div>
+            </div>
+            <div class="switch on"></div>
+          </div>
+        </div>
+
+        <!-- LANGUE -->
+        <div class="section">
+          <div class="sec-head">
+            <h2>Langue <em>& région</em></h2>
+            <span class="num">04 · Format & interface</span>
+          </div>
+          <div class="sec-sub">La langue de l'interface, le système de mesure (km / miles), la devise et le fuseau horaire.</div>
+
+          <div style="margin-bottom: 20px;">
+            <label style="display: block; font-size: 12px; font-weight: 500; color: var(--lkv-ink-700); margin-bottom: 10px;">Langue de l'interface</label>
+            <div class="lang-grid">
+              <div class="lang-tile on">
+                <div class="flag">FR</div>
+                <div class="info">
+                  <div class="n">Français</div>
+                  <div class="m">France · défaut</div>
+                </div>
+              </div>
+              <div class="lang-tile">
+                <div class="flag">EN</div>
+                <div class="info">
+                  <div class="n">English</div>
+                  <div class="m">United Kingdom</div>
+                </div>
+              </div>
+              <div class="lang-tile">
+                <div class="flag">DE</div>
+                <div class="info">
+                  <div class="n">Deutsch</div>
+                  <div class="m">Deutschland</div>
+                </div>
+              </div>
+              <div class="lang-tile">
+                <div class="flag">IT</div>
+                <div class="info">
+                  <div class="n">Italiano</div>
+                  <div class="m">Italia</div>
+                </div>
+              </div>
+              <div class="lang-tile">
+                <div class="flag">ES</div>
+                <div class="info">
+                  <div class="n">Español</div>
+                  <div class="m">España</div>
+                </div>
+              </div>
+              <div class="lang-tile">
+                <div class="flag" style="font-size: 12px;">CA</div>
+                <div class="info">
+                  <div class="n">Català</div>
+                  <div class="m">Beta · communauté</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label>Système de mesure</label>
+              <select>
+                <option>Métrique · km, m, kg, °C</option>
+                <option>Impérial · mi, ft, lb, °F</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Devise</label>
+              <select>
+                <option>Euro (€) · EUR</option>
+                <option>Franc suisse · CHF</option>
+                <option>Dollar US · USD</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Fuseau horaire</label>
+              <select>
+                <option>Europe/Paris · UTC+1</option>
+                <option>Europe/London · UTC+0</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Premier jour de la semaine</label>
+              <select>
+                <option>Lundi</option>
+                <option>Dimanche</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- SÉCURITÉ -->
+        <div class="section">
+          <div class="sec-head">
+            <h2>Sécurité <em>& sessions</em></h2>
+            <span class="num">05 · Mot de passe · 2FA · appareils</span>
+          </div>
+          <div class="sec-sub">Modifier votre mot de passe, activer l'authentification à deux facteurs et surveiller les appareils connectés à votre compte.</div>
+
+          <div class="form-grid">
+            <div class="field full">
+              <label>Adresse mail principale <span class="hint">votre identifiant de connexion</span></label>
+              <input type="email" value="marceline.chevrier@example.fr"/>
+            </div>
+            <div class="field">
+              <label>Nouveau mot de passe</label>
+              <input type="password" value="••••••••••••" placeholder="Au moins 12 caractères"/>
+            </div>
+            <div class="field">
+              <label>Confirmer le mot de passe</label>
+              <input type="password" value="" placeholder="Retapez le mot de passe"/>
+            </div>
+          </div>
+
+          <div class="toggle-row" style="margin-top: 20px;">
+            <div class="info">
+              <div class="n">Authentification à deux facteurs (2FA) <span class="badge">Recommandé</span></div>
+              <div class="m">Application d'authentification (Aegis, Authy, Google Authenticator). Ajoute une couche de sécurité au moment de la connexion.</div>
+            </div>
+            <div class="switch on"></div>
+          </div>
+          <div class="toggle-row">
+            <div class="info">
+              <div class="n">Clés de sécurité (WebAuthn / passkeys)</div>
+              <div class="m">2 passkeys enregistrées · MacBook Marceline (Touch ID) et iPhone 15 (Face ID).</div>
+            </div>
+            <div class="switch on"></div>
+          </div>
+          <div class="toggle-row">
+            <div class="info">
+              <div class="n">Recevoir un mail en cas de connexion depuis un nouvel appareil</div>
+              <div class="m">Un mail à marceline.chevrier@example.fr avec la ville et le navigateur détectés.</div>
+            </div>
+            <div class="switch on"></div>
+          </div>
+
+          <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(11,31,23,0.06);">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+              <div style="font-family: var(--lkv-font-sans); font-size: 16px; font-weight: 500; color: var(--lkv-ink-900);">Sessions <em style="font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400;">actives</em></div>
+              <button class="lkv-btn lkv-btn-ghost lkv-btn-sm" style="color: #C15A5A;">Déconnecter les autres appareils</button>
+            </div>
+            <div style="font-size: 12px; color: var(--lkv-ink-500); margin-bottom: 14px;">3 appareils connectés à votre compte en ce moment.</div>
+
+            <div class="session-row">
+              <div class="icon">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><rect x="2" y="5" width="20" height="14" rx="1"/><path d="M8 21h8M12 19v2"/></svg>
+              </div>
+              <div class="info">
+                <div class="n">MacBook Pro 14" · Safari 18 <span class="curr">Session actuelle</span></div>
+                <div class="m">Grenoble, France · 90.44.128.12 · macOS 15.1</div>
+              </div>
+              <div class="last">Actif maintenant</div>
+              <button class="revoke" disabled style="opacity: 0.4;">Actuelle</button>
+            </div>
+            <div class="session-row">
+              <div class="icon">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M12 18h.01"/></svg>
+              </div>
+              <div class="info">
+                <div class="n">iPhone 15 · App LKV</div>
+                <div class="m">Grenoble, France · v3.4.2 · iOS 18</div>
+              </div>
+              <div class="last">Il y a 12 min</div>
+              <button class="revoke">Déconnecter</button>
+            </div>
+            <div class="session-row">
+              <div class="icon">
+                <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><rect x="2" y="5" width="20" height="14" rx="1"/><path d="M8 21h8M12 19v2"/></svg>
+              </div>
+              <div class="info">
+                <div class="n">iPad · Firefox 131</div>
+                <div class="m">Chamrousse, France · connecté au refuge Wi-Fi</div>
+              </div>
+              <div class="last">Il y a 3 jours</div>
+              <button class="revoke">Déconnecter</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- DANGER ZONE -->
+        <div class="danger-zone">
+          <div class="h">
+            <h3>Zone <em>de danger</em></h3>
+          </div>
+          <div class="sub">Actions irréversibles. On vous demandera de retaper votre mot de passe avant de valider.</div>
+
+          <div class="danger-row">
+            <div class="info">
+              <div class="n">Mettre le compte en pause</div>
+              <div class="m">Votre profil et vos publications sont masqués. Vous pouvez réactiver le compte à tout moment en vous reconnectant.</div>
+            </div>
+            <button class="btn">Mettre en pause</button>
+          </div>
+          <div class="danger-row">
+            <div class="info">
+              <div class="n">Supprimer définitivement mon compte</div>
+              <div class="m">Toutes vos données (carnets, inventaire, historique) sont supprimées sous 30 jours. Vos publications restent visibles mais anonymisées.</div>
+            </div>
+            <button class="btn">Supprimer le compte</button>
+          </div>
+        </div>
+
+        <!-- SAVE BAR -->
+        <div class="save-bar">
+          <div class="status">
+            <span class="dot"></span>
+            2 modifications non enregistrées · sauvegarde automatique dans 8 s
+          </div>
+          <div class="actions">
+            <button class="lkv-btn lkv-btn-ghost lkv-btn-sm">Annuler</button>
+            <button class="lkv-btn lkv-btn-primary lkv-btn-sm">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M7 3v6h9V3"/></svg>
+              Enregistrer maintenant
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="brand">Vos réglages, votre <em>silence.</em></div>
+      <div class="bottom">
+        <div>© 2026 Le Kit du Voyageur — Paramètres de Marceline Chevrier · dernière modification 8 oct.</div>
+        <div>Charte · Confidentialité · Support</div>
+      </div>
+    </footer>
+
+  </div>
+  <div class="board-caption">Desktop · 1280 × 3600+</div>
+  </div>
+
+  <!-- ========== MOBILE ========== -->
+  <div>
+    <div class="artboard-mobile">
+      <div class="screen" style="overflow-y: auto;">
+
+        <div class="m-header">
+          <div class="back">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+          </div>
+          <h1>Paramètres <em>du compte</em></h1>
+        </div>
+
+        <div class="m-body">
+
+          <!-- Avatar quick -->
+          <div class="m-avatar-card">
+            <div class="av"></div>
+            <div class="info">
+              <div class="n">Marceline Chevrier</div>
+              <div class="m">marceline@example.fr</div>
+            </div>
+            <div class="edit-b">Modifier</div>
+          </div>
+
+          <!-- Nav list -->
+          <div class="m-nav-list">
+            <div class="item on">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+              <div class="lbl">Profil & identité<div class="sub">Nom, bio, photo, pratiques</div></div>
+              <svg class="arr" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg>
+            </div>
+            <div class="item">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+              <div class="lbl">Notifications<div class="sub">Push, mail, SMS</div></div>
+              <div class="badge">4</div>
+              <svg class="arr" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg>
+            </div>
+            <div class="item">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="9"/><path d="M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+              <div class="lbl">Confidentialité<div class="sub">Visibilité de vos contenus</div></div>
+              <svg class="arr" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg>
+            </div>
+            <div class="item">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg>
+              <div class="lbl">Langue & région<div class="sub">Français · métrique · €</div></div>
+              <svg class="arr" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg>
+            </div>
+            <div class="item">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+              <div class="lbl">Sécurité<div class="sub">Mot de passe · 2FA · sessions</div></div>
+              <svg class="arr" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg>
+            </div>
+            <div class="item">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+              <div class="lbl">Abonnement Guide<div class="sub">Actif · 89 €/an · 4 fév.</div></div>
+              <svg class="arr" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg>
+            </div>
+          </div>
+
+          <!-- Aperçu section Profil -->
+          <div class="m-section">
+            <h4>Identité <em>publique</em></h4>
+            <div class="m-toggle" style="align-items: flex-start;">
+              <div class="info">
+                <div class="n">Prénom</div>
+                <div class="m">Marceline</div>
+              </div>
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14" style="color: var(--lkv-ink-400); margin-top: 6px;"><path d="M9 6l6 6-6 6"/></svg>
+            </div>
+            <div class="m-toggle" style="align-items: flex-start;">
+              <div class="info">
+                <div class="n">Nom</div>
+                <div class="m">Chevrier</div>
+              </div>
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14" style="color: var(--lkv-ink-400); margin-top: 6px;"><path d="M9 6l6 6-6 6"/></svg>
+            </div>
+            <div class="m-toggle" style="align-items: flex-start;">
+              <div class="info">
+                <div class="n">Bio</div>
+                <div class="m" style="font-family: var(--lkv-font-serif); font-size: 12px;">Randonneuse d'altitude basée à Grenoble. Je marche pour retrouver le silence…</div>
+              </div>
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14" style="color: var(--lkv-ink-400); margin-top: 6px;"><path d="M9 6l6 6-6 6"/></svg>
+            </div>
+          </div>
+
+          <!-- Notifications rapides -->
+          <div class="m-section">
+            <h4>Notifications <em>essentielles</em></h4>
+            <div class="m-toggle">
+              <div class="info">
+                <div class="n">Messages voyage</div>
+                <div class="m">Push + Mail</div>
+              </div>
+              <div class="sw on"></div>
+            </div>
+            <div class="m-toggle">
+              <div class="info">
+                <div class="n">Sorties club</div>
+                <div class="m">Push uniquement</div>
+              </div>
+              <div class="sw on"></div>
+            </div>
+            <div class="m-toggle">
+              <div class="info">
+                <div class="n">Rappel prépa voyage (J-3)</div>
+                <div class="m">Push + Mail · Auto</div>
+              </div>
+              <div class="sw on"></div>
+            </div>
+            <div class="m-toggle">
+              <div class="info">
+                <div class="n">Newsletter mensuelle</div>
+                <div class="m">1er de chaque mois</div>
+              </div>
+              <div class="sw"></div>
+            </div>
+          </div>
+
+          <!-- Confidentialité -->
+          <div class="m-section">
+            <h4>Confidentialité <em>par défaut</em></h4>
+            <div class="m-toggle">
+              <div class="info">
+                <div class="n">Profil</div>
+                <div class="m" style="color: var(--lkv-forest-800); font-weight: 500;">Public</div>
+              </div>
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14" style="color: var(--lkv-ink-400);"><path d="M9 6l6 6-6 6"/></svg>
+            </div>
+            <div class="m-toggle">
+              <div class="info">
+                <div class="n">Carnets</div>
+                <div class="m" style="color: var(--lkv-forest-800); font-weight: 500;">Membres seulement</div>
+              </div>
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14" style="color: var(--lkv-ink-400);"><path d="M9 6l6 6-6 6"/></svg>
+            </div>
+            <div class="m-toggle">
+              <div class="info">
+                <div class="n">Inventaire</div>
+                <div class="m" style="color: var(--lkv-warm-500); font-weight: 500;">Privé</div>
+              </div>
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14" style="color: var(--lkv-ink-400);"><path d="M9 6l6 6-6 6"/></svg>
+            </div>
+            <div class="m-toggle">
+              <div class="info">
+                <div class="n">Partage de position en voyage</div>
+                <div class="m">Groupe seulement · auto-off au retour</div>
+              </div>
+              <div class="sw on"></div>
+            </div>
+          </div>
+
+          <!-- Danger zone mobile -->
+          <div style="background: linear-gradient(135deg, rgba(193,90,90,0.06), rgba(193,90,90,0.02)); border: 1px solid rgba(193,90,90,0.16); border-radius: 14px; padding: 14px; margin-top: 12px;">
+            <div style="font-family: var(--lkv-font-sans); font-size: 14px; font-weight: 500; color: #A54545; margin-bottom: 8px;">Zone <em style="font-family: var(--lkv-font-serif); font-style: italic; color: #C15A5A; font-weight: 400;">de danger</em></div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <button style="padding: 10px 14px; background: transparent; border: 1px solid rgba(193,90,90,0.32); color: #C15A5A; border-radius: 10px; font-size: 12px; font-weight: 500; text-align: center;">Mettre le compte en pause</button>
+              <button style="padding: 10px 14px; background: transparent; border: 1px solid rgba(193,90,90,0.32); color: #C15A5A; border-radius: 10px; font-size: 12px; font-weight: 500; text-align: center;">Supprimer le compte</button>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="m-tabbar">
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M3 11l9-7 9 7v9a2 2 0 01-2 2h-4v-6h-6v6H5a2 2 0 01-2-2z"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M14 20c0-2 2-3 4-3s4 1 4 3"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M4 4h12l4 4v12a2 2 0 01-2 2H4z"/></svg></div>
+          <div class="tabi on"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">Mobile · 375 × 812 (scroll)</div>
+  </div>
+
+</div>
+
+</body>
+</html>

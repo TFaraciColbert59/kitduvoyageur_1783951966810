@@ -1,0 +1,63 @@
+/* ============================================================
+   Le Kit du Voyageur — design tokens (extracted from ref site)
+   ============================================================ */
+:root {
+  /* ——— Forest (primary dark green) ——— */
+  --lkv-forest-950: #061810;
+  --lkv-forest-900: #0B1F17;
+  --lkv-forest-800: #12352A;
+  --lkv-forest-700: #1E4A3B;
+
+  /* ——— Sage (soft green accent) ——— */
+  --lkv-sage-500:  #6E9C7F;
+  --lkv-sage-300:  #A9C6B0;
+  --lkv-sage-200:  #C7DBC9;
+  --lkv-sage-100:  #E1EBDD;
+
+  /* ——— Warm (amber accent) ——— */
+  --lkv-warm-500:  #C9924A;
+  --lkv-warm-300:  #E4C695;
+
+  /* ——— Ink (neutral text) ——— */
+  --lkv-ink-900:   #17211D;
+  --lkv-ink-700:   #3A463F;
+  --lkv-ink-500:   #6B7671;
+  --lkv-ink-400:   #97A19C;
+  --lkv-ink-300:   #B9C0BB;
+
+  /* ——— Stone (backgrounds) ——— */
+  --lkv-stone-50:  #F4F1EB;
+  --lkv-paper:     #FAF7F1;
+
+  /* ——— Type ——— */
+  --lkv-font-sans:  "Söhne", "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  --lkv-font-serif: "Ogg", "GT Alpina", "Cormorant Garamond", "Times New Roman", Georgia, serif;
+  --lkv-font-mono:  "JetBrains Mono", "SF Mono", ui-monospace, Menlo, monospace;
+
+  /* ——— Radius ——— */
+  --lkv-r-sm: 8px;
+  --lkv-r-md: 14px;
+  --lkv-r-lg: 20px;
+  --lkv-r-xl: 24px;
+
+  /* ——— Shadow ——— */
+  --lkv-shadow-xs: 0 1px 2px rgba(11,31,23,0.05), 0 1px 3px rgba(11,31,23,0.04);
+  --lkv-shadow-sm: 0 2px 6px rgba(11,31,23,0.06), 0 4px 12px rgba(11,31,23,0.05);
+  --lkv-shadow-md: 0 8px 24px rgba(11,31,23,0.08);
+  --lkv-shadow-lg: 0 20px 48px rgba(11,31,23,0.14);
+
+  /* ——— Motion ——— */
+  --lkv-dur-fast: 140ms;
+  --lkv-dur:      220ms;
+  --lkv-dur-slow: 380ms;
+  --lkv-ease:      cubic-bezier(0.22, 0.61, 0.36, 1);
+  --lkv-ease-out:  cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ——— Reset baseline ——— */
+* { box-sizing: border-box; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+html, body { margin: 0; padding: 0; }
+body { font-family: var(--lkv-font-sans); color: var(--lkv-ink-900); }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }

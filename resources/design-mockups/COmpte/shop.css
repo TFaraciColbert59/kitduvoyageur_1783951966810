@@ -1,0 +1,101 @@
+/* ————— Le Kit du Voyageur — Utilitaires partagés ————— */
+
+/* Boutons */
+.lkv-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 20px;
+  border-radius: var(--lkv-r-pill);
+  font-family: var(--lkv-font-sans);
+  font-size: 14px; font-weight: 500;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  transition: transform var(--lkv-dur) var(--lkv-ease),
+              background var(--lkv-dur) var(--lkv-ease),
+              color var(--lkv-dur) var(--lkv-ease),
+              border-color var(--lkv-dur) var(--lkv-ease),
+              box-shadow var(--lkv-dur) var(--lkv-ease);
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.lkv-btn:active { transform: translateY(1px); }
+
+.lkv-btn-primary {
+  background: var(--lkv-forest-800);
+  color: #fff;
+}
+.lkv-btn-primary:hover { background: var(--lkv-forest-900); }
+
+.lkv-btn-ghost {
+  background: transparent;
+  color: var(--lkv-ink-900);
+  border-color: rgba(11,31,23,0.12);
+}
+.lkv-btn-ghost:hover { border-color: var(--lkv-forest-800); color: var(--lkv-forest-800); }
+
+.lkv-btn-light {
+  background: #fff;
+  color: var(--lkv-forest-800);
+}
+.lkv-btn-light:hover { transform: translateY(-1px); box-shadow: var(--lkv-shadow-md); }
+
+.lkv-btn-ghost-light {
+  background: rgba(255,255,255,0.10);
+  color: #fff;
+  border-color: rgba(255,255,255,0.28);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.lkv-btn-ghost-light:hover { background: rgba(255,255,255,0.18); }
+
+.lkv-btn-sm { padding: 8px 14px; font-size: 13px; }
+.lkv-btn-lg { padding: 14px 26px; font-size: 15px; }
+.lkv-btn-icon { padding: 10px; width: 40px; height: 40px; }
+.lkv-btn-icon.lkv-btn-sm { width: 36px; height: 36px; padding: 8px; }
+
+/* Utility: italic emphasis */
+.serif-em { font-family: var(--lkv-font-serif); font-style: italic; font-weight: 400; }
+
+/* Eyebrow */
+.lkv-eye {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 5px 12px;
+  border-radius: var(--lkv-r-pill);
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  font-weight: 500;
+}
+.lkv-eye.on-light {
+  background: rgba(31,74,58,0.08);
+  color: var(--lkv-forest-800);
+}
+.lkv-eye.on-dark {
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.20);
+  color: #fff;
+}
+.lkv-eye .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-sage-500); }
+.lkv-eye.on-dark .dot { background: var(--lkv-sage-300); }
+
+/* Focus */
+:focus-visible {
+  outline: 2px solid var(--lkv-sage-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Scrollbar inside artboards */
+.lkv-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.lkv-scroll::-webkit-scrollbar-track { background: transparent; }
+.lkv-scroll::-webkit-scrollbar-thumb { background: rgba(11,31,23,0.14); border-radius: 999px; }
+.lkv-scroll::-webkit-scrollbar-thumb:hover { background: rgba(11,31,23,0.22); }
+
+/* Motion primitives */
+@keyframes lkv-fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes lkv-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.35; }
+}

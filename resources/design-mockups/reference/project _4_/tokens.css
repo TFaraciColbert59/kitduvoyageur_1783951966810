@@ -1,0 +1,320 @@
+/* ============================================
+   LE KIT DU VOYAGEUR — Design Tokens
+   Système partagé entre toutes les pages
+   ============================================ */
+
+@font-face {
+  font-family: 'General Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: url('https://fonts.cdnfonts.com/s/95723/GeneralSans-Regular.woff2') format('woff2');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'General Sans';
+  font-style: normal;
+  font-weight: 500;
+  src: url('https://fonts.cdnfonts.com/s/95723/GeneralSans-Medium.woff2') format('woff2');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'General Sans';
+  font-style: normal;
+  font-weight: 600;
+  src: url('https://fonts.cdnfonts.com/s/95723/GeneralSans-Semibold.woff2') format('woff2');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'General Sans';
+  font-style: normal;
+  font-weight: 700;
+  src: url('https://fonts.cdnfonts.com/s/95723/GeneralSans-Bold.woff2') format('woff2');
+  font-display: swap;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&display=swap');
+
+:root {
+  /* ——— Couleurs ——— */
+  --lkv-forest-950: #0B1F17;
+  --lkv-forest-900: #12281E;
+  --lkv-forest-800: #1F4A3A;   /* Primary */
+  --lkv-forest-700: #2E6F57;
+  --lkv-forest-600: #405E48;   /* Mousse */
+  --lkv-sage-500:   #6DAA7D;   /* Sauge */
+  --lkv-sage-300:   #AECBB4;
+  --lkv-sage-200:   #C8DDCC;
+  --lkv-sage-100:   #DDEEE5;
+
+  --lkv-ink-950:    #0B0F0D;
+  --lkv-ink-900:    #111614;
+  --lkv-ink-700:    #2A322E;
+  --lkv-ink-500:    #566159;
+  --lkv-ink-400:    #7A857C;
+  --lkv-ink-300:    #A8B0A9;
+
+  --lkv-stone-100:  #EFEEE9;
+  --lkv-stone-50:   #F4F3EE;
+  --lkv-paper:      #F8FAF8;
+  --lkv-white:      #FFFFFF;
+
+  --lkv-warm-300:   #E4C695;   /* Accent doré (couchers de soleil) */
+  --lkv-warm-500:   #C99B5A;
+
+  /* ——— Radius ——— */
+  --lkv-r-xs: 6px;
+  --lkv-r-sm: 10px;
+  --lkv-r-md: 16px;
+  --lkv-r-lg: 24px;
+  --lkv-r-xl: 28px;
+  --lkv-r-2xl: 36px;
+  --lkv-r-full: 999px;
+
+  /* ——— Ombres très douces ——— */
+  --lkv-shadow-xs: 0 1px 2px rgba(11,31,23,0.04);
+  --lkv-shadow-sm: 0 2px 8px rgba(11,31,23,0.06);
+  --lkv-shadow-md: 0 8px 24px rgba(11,31,23,0.08);
+  --lkv-shadow-lg: 0 20px 48px rgba(11,31,23,0.14);
+  --lkv-shadow-xl: 0 30px 80px rgba(11,31,23,0.22);
+  --lkv-shadow-glass: 0 8px 32px rgba(11,31,23,0.12), inset 0 1px 0 rgba(255,255,255,0.4);
+
+  /* ——— Espacements (grille 4px) ——— */
+  --lkv-s-1: 4px;
+  --lkv-s-2: 8px;
+  --lkv-s-3: 12px;
+  --lkv-s-4: 16px;
+  --lkv-s-5: 20px;
+  --lkv-s-6: 24px;
+  --lkv-s-8: 32px;
+  --lkv-s-10: 40px;
+  --lkv-s-12: 48px;
+  --lkv-s-16: 64px;
+  --lkv-s-20: 80px;
+  --lkv-s-24: 96px;
+  --lkv-s-32: 128px;
+
+  /* ——— Typographie ——— */
+  --lkv-font-sans: 'General Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --lkv-font-serif: 'Fraunces', 'Times New Roman', serif;
+  --lkv-font-mono: ui-monospace, 'SF Mono', monospace;
+
+  /* échelle typo (approche modular scale 1.25) */
+  --lkv-t-xs: 12px;
+  --lkv-t-sm: 14px;
+  --lkv-t-base: 16px;
+  --lkv-t-md: 18px;
+  --lkv-t-lg: 20px;
+  --lkv-t-xl: 24px;
+  --lkv-t-2xl: 32px;
+  --lkv-t-3xl: 44px;
+  --lkv-t-4xl: 60px;
+  --lkv-t-5xl: 80px;
+  --lkv-t-6xl: 104px;
+
+  /* ——— Transitions ——— */
+  --lkv-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --lkv-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --lkv-dur-fast: 180ms;
+  --lkv-dur: 320ms;
+  --lkv-dur-slow: 560ms;
+}
+
+/* ——— Reset doux ——— */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--lkv-font-sans);
+  color: var(--lkv-ink-900);
+  background: var(--lkv-paper);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv01";
+}
+img { display: block; max-width: 100%; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+a { color: inherit; text-decoration: none; }
+
+/* ——— Typographie utility ——— */
+.lkv-display {
+  font-family: var(--lkv-font-sans);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 0.98;
+}
+.lkv-serif {
+  font-family: var(--lkv-font-serif);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.04;
+}
+.lkv-eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--lkv-ink-500);
+}
+.lkv-body {
+  font-size: var(--lkv-t-base);
+  line-height: 1.55;
+  color: var(--lkv-ink-700);
+  text-wrap: pretty;
+}
+.lkv-lead {
+  font-size: var(--lkv-t-md);
+  line-height: 1.5;
+  color: var(--lkv-ink-700);
+}
+.lkv-mono {
+  font-family: var(--lkv-font-mono);
+  font-size: var(--lkv-t-xs);
+  letter-spacing: 0.02em;
+}
+
+/* ——— Glass ——— */
+.lkv-glass {
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+.lkv-glass-dark {
+  background: rgba(11, 22, 18, 0.42);
+  backdrop-filter: blur(28px) saturate(1.15);
+  -webkit-backdrop-filter: blur(28px) saturate(1.15);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+.lkv-glass-warm {
+  background: rgba(248, 250, 248, 0.7);
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+/* ——— Boutons ——— */
+.lkv-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 22px;
+  border-radius: var(--lkv-r-full);
+  font-family: var(--lkv-font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  transition: transform var(--lkv-dur-fast) var(--lkv-ease-out),
+              box-shadow var(--lkv-dur) var(--lkv-ease-out),
+              background var(--lkv-dur) var(--lkv-ease-out),
+              color var(--lkv-dur) var(--lkv-ease-out);
+  will-change: transform;
+}
+.lkv-btn:hover { transform: translateY(-1px); }
+.lkv-btn:active { transform: translateY(0); }
+
+.lkv-btn-primary {
+  background: var(--lkv-forest-800);
+  color: #fff;
+}
+.lkv-btn-primary:hover {
+  background: var(--lkv-forest-700);
+  box-shadow: 0 8px 24px rgba(31, 74, 58, 0.28);
+}
+
+.lkv-btn-light {
+  background: #fff;
+  color: var(--lkv-ink-900);
+}
+.lkv-btn-light:hover {
+  box-shadow: var(--lkv-shadow-md);
+}
+
+.lkv-btn-ghost {
+  background: transparent;
+  color: var(--lkv-ink-900);
+}
+.lkv-btn-ghost:hover {
+  background: rgba(11,22,18,0.06);
+}
+
+.lkv-btn-ghost-light {
+  background: transparent;
+  color: rgba(255,255,255,0.9);
+  border: 1px solid rgba(255,255,255,0.28);
+}
+.lkv-btn-ghost-light:hover {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.5);
+}
+
+.lkv-btn-sm { height: 36px; padding: 0 14px; font-size: 13px; }
+.lkv-btn-lg { height: 56px; padding: 0 28px; font-size: 16px; }
+
+.lkv-btn-icon {
+  width: 44px; height: 44px; padding: 0;
+  border-radius: var(--lkv-r-full);
+}
+
+/* ——— Chip / pill ——— */
+.lkv-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--lkv-r-full);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--lkv-ink-900);
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.4);
+  box-shadow: var(--lkv-shadow-sm);
+  transition: transform var(--lkv-dur-fast) var(--lkv-ease-out), box-shadow var(--lkv-dur) var(--lkv-ease-out);
+}
+.lkv-chip:hover { transform: translateY(-1px); box-shadow: var(--lkv-shadow-md); }
+.lkv-chip .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--lkv-sage-500);
+}
+
+/* ——— Card ——— */
+.lkv-card {
+  background: #fff;
+  border-radius: var(--lkv-r-xl);
+  box-shadow: var(--lkv-shadow-sm);
+  overflow: hidden;
+  transition: transform var(--lkv-dur) var(--lkv-ease-out),
+              box-shadow var(--lkv-dur) var(--lkv-ease-out);
+}
+.lkv-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--lkv-shadow-lg);
+}
+
+/* ——— Icônes trait fin ——— */
+.lkv-icon {
+  width: 20px; height: 20px;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ——— Logo mark ——— */
+.lkv-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: inherit;
+}
+.lkv-logo-mark {
+  width: 28px; height: 28px;
+  display: inline-block;
+}

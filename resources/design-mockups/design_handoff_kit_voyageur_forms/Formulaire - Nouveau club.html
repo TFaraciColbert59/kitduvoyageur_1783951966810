@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Nouveau club — Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="forms.css"/>
+<style>
+  .club-cover {
+    height: 260px;
+    border-radius: var(--lkv-r-lg);
+    background: url('https://images.unsplash.com/photo-1533105079780-92b9be482077?w=1400&q=80') center/cover;
+    position: relative; overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .club-cover::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0.15) 0%, rgba(11,31,23,0.75) 100%);
+  }
+  .club-cover .overlay {
+    position: absolute; inset: 0; z-index: 1;
+    padding: 24px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    color: #fff;
+  }
+  .club-cover .top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  .club-cover .top .eye {
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(255,255,255,0.94);
+    color: var(--lkv-forest-800);
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 500;
+  }
+  .club-cover .top .actions {
+    display: flex; gap: 6px;
+  }
+  .club-cover .top .actions button {
+    padding: 6px 12px; border-radius: 999px;
+    background: rgba(11,31,23,0.5); backdrop-filter: blur(16px);
+    color: #fff; font-size: 11px; font-weight: 500;
+    border: 1px solid rgba(255,255,255,0.14);
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .club-cover .bottom {
+    display: flex; align-items: end; justify-content: space-between; gap: 20px;
+  }
+  .club-cover .bottom .id { display: flex; align-items: end; gap: 16px; }
+  .club-cover .bottom .logo {
+    width: 88px; height: 88px; border-radius: 24px;
+    background: rgba(255,255,255,0.94);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 24px rgba(11,31,23,0.24);
+    color: var(--lkv-forest-800);
+  }
+  .club-cover .bottom .txt h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 32px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 1;
+    margin: 0 0 6px;
+  }
+  .club-cover .bottom .txt h4 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .club-cover .bottom .txt .m {
+    font-size: 12px; color: rgba(255,255,255,0.8);
+    display: flex; gap: 12px;
+  }
+  .club-cover .bottom .stats {
+    display: flex; gap: 8px;
+  }
+  .club-cover .bottom .stats .s {
+    padding: 8px 14px; border-radius: 14px;
+    background: rgba(255,255,255,0.14); backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.2);
+    text-align: center;
+  }
+  .club-cover .bottom .stats .s .v {
+    font-family: var(--lkv-font-sans);
+    font-size: 18px; font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .club-cover .bottom .stats .s .l {
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    margin-top: 2px;
+  }
+
+  /* Rules editor */
+  .rules-list { display: flex; flex-direction: column; gap: 8px; }
+  .rule-row {
+    display: grid;
+    grid-template-columns: 40px 1fr auto;
+    gap: 12px; align-items: center;
+    padding: 14px 16px;
+    background: var(--lkv-stone-50);
+    border-radius: var(--lkv-r-md);
+    border: 1px solid transparent;
+    transition: all var(--lkv-dur-fast) var(--lkv-ease);
+  }
+  .rule-row:hover { background: #fff; border-color: rgba(11,31,23,0.06); }
+  .rule-row .ic {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+    box-shadow: var(--lkv-shadow-xs);
+  }
+  .rule-row .body input {
+    width: 100%; border: none; background: transparent; outline: none;
+    font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);
+    padding: 2px 0;
+  }
+  .rule-row .body input.desc {
+    font-size: 12px; color: var(--lkv-ink-500);
+    font-weight: 400; margin-top: 2px;
+  }
+  .rule-row .rm {
+    width: 28px; height: 28px; border-radius: 50%;
+    color: var(--lkv-ink-500);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .rule-row .rm:hover { color: var(--lkv-danger); background: var(--lkv-danger-soft); }
+
+  /* Admin picker */
+  .admin-row {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    gap: 14px; align-items: center;
+    padding: 12px 14px;
+    background: var(--lkv-stone-50);
+    border-radius: var(--lkv-r-md);
+  }
+  .admin-row .av {
+    width: 48px; height: 48px; border-radius: 50%;
+    background-size: cover; background-position: center;
+  }
+  .admin-row .body .n {
+    font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);
+    line-height: 1.2;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .admin-row .body .n .you {
+    font-size: 9px; padding: 2px 8px; border-radius: 999px;
+    background: var(--lkv-forest-800); color: #fff;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    font-weight: 500;
+  }
+  .admin-row .body .m {
+    font-size: 11px; color: var(--lkv-ink-500);
+    margin-top: 3px;
+    font-family: var(--lkv-font-mono);
+  }
+  .admin-row select {
+    padding: 6px 32px 6px 12px; border-radius: 999px;
+    background: #fff; border: 1px solid rgba(11,31,23,0.08);
+    font-size: 12px; font-weight: 500;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12' fill='none' stroke='%23566159' stroke-width='1.6' stroke-linecap='round'><path d='M3 5l3 3 3-3'/></svg>");
+    background-repeat: no-repeat; background-position: right 10px center;
+  }
+</style>
+</head>
+<body>
+<div class="form-page">
+
+  <header class="form-topbar">
+    <div class="form-topbar-inner">
+      <div class="left">
+        <a href="Index.html" class="lkv-logo">
+          <span class="lkv-logo-mark">
+            <svg viewBox="0 0 32 32" width="24" height="24" fill="none">
+              <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+            </svg>
+          </span>
+          <span>Le Kit du Voyageur</span>
+        </a>
+        <nav class="breadcrumb">
+          <a href="Index.html">Accueil</a>
+          <span class="sep">›</span>
+          <a href="#">Clubs</a>
+          <span class="sep">›</span>
+          <span class="cur">Créer un club</span>
+        </nav>
+      </div>
+      <div class="actions">
+        <div class="status-dot"><span class="d"></span>Non publié</div>
+        <button class="lkv-btn lkv-btn-ghost lkv-btn-sm">Aperçu</button>
+        <button class="lkv-btn lkv-btn-primary lkv-btn-sm">Créer le club</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="form-hero">
+    <div class="eye">Nouveau club</div>
+    <h1>Une communauté <br/><em>qui marche ensemble.</em></h1>
+    <p class="lead">Un club rassemble des voyageurs autour d'un massif, d'une pratique ou d'un esprit. Il vit dans le temps, contrairement aux groupes d'une sortie.</p>
+  </section>
+
+  <div class="form-shell">
+    <main class="form-column">
+
+      <!-- IDENTITÉ -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>L'identité du <em>club</em></h2>
+          <span class="n">01 · Vitrine</span>
+        </div>
+        <p class="sec-sub">Le nom, la couverture, le logo. C'est ce que verront les voyageurs qui parcourent l'annuaire.</p>
+
+        <div class="club-cover">
+          <div class="overlay">
+            <div class="top">
+              <span class="eye">Aperçu · en-tête club</span>
+              <div class="actions">
+                <button><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/></svg>Couverture</button>
+                <button>Logo</button>
+                <button>Filtres</button>
+              </div>
+            </div>
+            <div class="bottom">
+              <div class="id">
+                <div class="logo">
+                  <svg viewBox="0 0 32 32" width="42" height="42" fill="none">
+                    <path d="M4 24 L11 10 L15 15 L20 6 L28 24 Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    <circle cx="22" cy="9" r="1.8" fill="currentColor"/>
+                  </svg>
+                </div>
+                <div class="txt">
+                  <h4>Cimes <em>partagées</em></h4>
+                  <div class="m">
+                    <span>Chartreuse · Isère</span>
+                    <span>·</span>
+                    <span>Randonnée · Bivouac</span>
+                  </div>
+                </div>
+              </div>
+              <div class="stats">
+                <div class="s"><div class="v">0</div><div class="l">Membres</div></div>
+                <div class="s"><div class="v">1</div><div class="l">Admin</div></div>
+                <div class="s"><div class="v">—</div><div class="l">Sorties</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="f-grid">
+          <div class="field full">
+            <label>Nom du club <span class="req">*</span></label>
+            <input type="text" value="Cimes partagées" placeholder="Un nom court, facile à retenir…"/>
+            <div class="helper"><span>Astuce : un mot + un adjectif fonctionne bien</span><span class="count">15 / 40</span></div>
+          </div>
+          <div class="field full">
+            <label>Baseline <span class="hint">Une phrase qui dit l'esprit du club</span></label>
+            <textarea class="serif" rows="2" placeholder="Trois mots qui vous représentent…" maxlength="120">Marcher ensemble en Chartreuse, sans compétition, avec le temps.</textarea>
+            <div class="helper"><span>Visible sous le nom du club sur son en-tête</span><span class="count">64 / 120</span></div>
+          </div>
+          <div class="field full">
+            <label>Description longue</label>
+            <textarea rows="4" placeholder="Qui êtes-vous, quel type de sorties, quelle ambiance ?">Un club ouvert aux marcheurs réguliers et curieux, autour du massif de la Chartreuse. Nos sorties sont mensuelles, en petit comité (max 12), avec toujours un temps de contemplation. Nous privilégions les jeunes membres qui débutent, sans négliger les journées d'itinérance pour les plus expérimentés.</textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- THÉMATIQUE + ZONE -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>Thématique <em>& terrain</em></h2>
+          <span class="n">02 · Cadre</span>
+        </div>
+        <p class="sec-sub">Ces choix aident les voyageurs à trouver votre club dans l'annuaire, filtré par région et discipline.</p>
+
+        <div class="f-grid">
+          <div class="field">
+            <label>Catégorie principale <span class="req">*</span></label>
+            <select class="f-select">
+              <option>Randonnée & bivouac</option>
+              <option>Alpinisme</option>
+              <option>Trail & ultra</option>
+              <option>Ski de randonnée</option>
+              <option>Photo de montagne</option>
+              <option>Écologie & sciences participatives</option>
+              <option>Voyage à vélo</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Rythme des sorties</label>
+            <select class="f-select">
+              <option>Hebdomadaire</option>
+              <option selected>Mensuel · 1 à 2 sorties</option>
+              <option>Trimestriel</option>
+              <option>Occasionnel</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label>Zones géographiques couvertes <span class="req">*</span></label>
+            <div class="f-chip-choice">
+              <label class="on"><input type="checkbox" checked/>Chartreuse</label>
+              <label class="on"><input type="checkbox" checked/>Vercors</label>
+              <label class="on"><input type="checkbox" checked/>Belledonne</label>
+              <label><input type="checkbox"/>Écrins</label>
+              <label><input type="checkbox"/>Mont-Blanc</label>
+              <label><input type="checkbox"/>Aravis</label>
+              <label><input type="checkbox"/>Beaufortain</label>
+              <label><input type="checkbox"/>Queyras</label>
+              <label><input type="checkbox"/>Bauges</label>
+            </div>
+          </div>
+          <div class="field">
+            <label>Ville d'ancrage</label>
+            <div class="f-input-group">
+              <span class="prefix"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 22s-7-8-7-13a7 7 0 0114 0c0 5-7 13-7 13z"/><circle cx="12" cy="9" r="2.5"/></svg></span>
+              <input type="text" value="Grenoble, Isère"/>
+            </div>
+          </div>
+          <div class="field">
+            <label>Nombre max de membres</label>
+            <div class="f-input-group">
+              <input type="number" value="60"/>
+              <span class="suffix">membres · 0 aujourd'hui</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RÈGLES -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>Les <em>règles du club</em></h2>
+          <span class="n">03 · Cadre commun</span>
+        </div>
+        <p class="sec-sub">Chaque membre s'y engage à l'inscription. 3 à 6 règles suffisent — courtes, positives, sans détail juridique.</p>
+
+        <div class="rules-list">
+          <div class="rule-row">
+            <div class="ic">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg>
+            </div>
+            <div class="body">
+              <input type="text" value="Respecter l'esprit du groupe"/>
+              <input type="text" class="desc" value="Bienveillance, écoute, entraide. Pas de compétition."/>
+            </div>
+            <button class="rm">×</button>
+          </div>
+          <div class="rule-row">
+            <div class="ic">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>
+            </div>
+            <div class="body">
+              <input type="text" value="Prévenir 48h avant en cas d'annulation"/>
+              <input type="text" class="desc" value="Pour ne pas laisser tomber le groupe ou les refuges réservés."/>
+            </div>
+            <button class="rm">×</button>
+          </div>
+          <div class="rule-row">
+            <div class="ic">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M20 4c0 8-6 14-14 14L4 20"/><path d="M4 20c0-6 4-12 12-14"/></svg>
+            </div>
+            <div class="body">
+              <input type="text" value="Laisser le lieu propre"/>
+              <input type="text" class="desc" value="Aucun déchet, feux uniquement en foyer autorisé."/>
+            </div>
+            <button class="rm">×</button>
+          </div>
+          <div class="rule-row">
+            <div class="ic">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+            </div>
+            <div class="body">
+              <input type="text" value="Accueillir les nouveaux"/>
+              <input type="text" class="desc" value="Un accompagnement systématique pour la première sortie."/>
+            </div>
+            <button class="rm">×</button>
+          </div>
+          <button class="f-add-step">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 4v16M4 12h16"/></svg>
+            Ajouter une règle
+          </button>
+        </div>
+      </section>
+
+      <!-- ADMINS + PERMISSIONS -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>Admins <em>& permissions</em></h2>
+          <span class="n">04 · Gouvernance</span>
+        </div>
+        <p class="sec-sub">Les admins organisent les sorties, valident les nouveaux membres et modèrent les échanges.</p>
+
+        <div class="f-people" style="margin-bottom: 20px;">
+          <div class="admin-row">
+            <div class="av" style="background-image: url('https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80');"></div>
+            <div class="body">
+              <div class="n">Marceline Chevrier <span class="you">Vous</span></div>
+              <div class="m">marceline.c · fondatrice</div>
+            </div>
+            <select>
+              <option>Fondatrice</option>
+              <option>Admin</option>
+            </select>
+          </div>
+          <div class="admin-row">
+            <div class="av" style="background-image: url('https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80');"></div>
+            <div class="body">
+              <div class="n">Léna Bertrand</div>
+              <div class="m">lena.b · membre depuis 2 ans</div>
+            </div>
+            <select>
+              <option selected>Co-admin</option>
+              <option>Modérateur</option>
+              <option>Membre</option>
+            </select>
+          </div>
+          <div class="f-input-group" style="margin-top: 4px;">
+            <span class="prefix"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 4v16M4 12h16"/></svg></span>
+            <input type="text" placeholder="Ajouter un co-admin par pseudo…"/>
+          </div>
+        </div>
+
+        <div class="f-divider"></div>
+
+        <div>
+          <div class="f-toggle-row">
+            <div>
+              <div class="n">Validation manuelle des nouveaux membres</div>
+              <div class="m">Un admin valide chaque demande d'adhésion.</div>
+            </div>
+            <div class="f-switch on"></div>
+          </div>
+          <div class="f-toggle-row">
+            <div>
+              <div class="n">Les membres peuvent créer des sorties</div>
+              <div class="m">Sans cette option, seuls les admins organisent des sorties.</div>
+            </div>
+            <div class="f-switch on"></div>
+          </div>
+          <div class="f-toggle-row">
+            <div>
+              <div class="n">Fil de discussion ouvert</div>
+              <div class="m">Les membres peuvent publier des messages libres dans le club.</div>
+            </div>
+            <div class="f-switch on"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VISIBILITÉ -->
+      <section class="form-section">
+        <div class="sec-head">
+          <h2>Visibilité <em>& adhésion</em></h2>
+          <span class="n">05 · Ouverture</span>
+        </div>
+        <p class="sec-sub">Choisissez si votre club est ouvert à tous, sur invitation, ou entièrement caché de l'annuaire public.</p>
+
+        <div class="f-visibility">
+          <label class="on">
+            <input type="radio" name="vis" checked/>
+            <div class="ic">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18"/></svg>
+            </div>
+            <div>
+              <div class="t">Public</div>
+              <div class="m">Visible dans l'annuaire, ouvert aux demandes.</div>
+            </div>
+          </label>
+          <label>
+            <input type="radio" name="vis"/>
+            <div class="ic">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M12 22s-7-8-7-13a7 7 0 0114 0c0 5-7 13-7 13z"/></svg>
+            </div>
+            <div>
+              <div class="t">Sur invitation</div>
+              <div class="m">Visible mais uniquement rejoignable via un lien.</div>
+            </div>
+          </label>
+          <label>
+            <input type="radio" name="vis"/>
+            <div class="ic">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><rect x="6" y="10" width="12" height="10" rx="2"/><path d="M9 10V7a3 3 0 016 0v3"/></svg>
+            </div>
+            <div>
+              <div class="t">Privé</div>
+              <div class="m">Invisible ; accessible uniquement par lien secret.</div>
+            </div>
+          </label>
+        </div>
+
+        <div style="margin-top: 20px;">
+          <div class="field">
+            <label>Lien d'invitation</label>
+            <div class="f-input-group">
+              <span class="prefix">lekit.co/clubs/</span>
+              <input type="text" value="cimes-partagees-x8k"/>
+              <button style="padding: 6px 12px; margin-right: 4px; border-radius: 999px; background: var(--lkv-forest-800); color: #fff; font-size: 11px; font-weight: 500;">Copier</button>
+            </div>
+            <div class="helper"><span>À partager en privé</span><span>Régénérer le lien</span></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <aside class="form-aside">
+
+      <div class="aside-card">
+        <h3>Créer un <em>club</em></h3>
+        <p class="sub" style="margin-bottom: 0;">Un club rassemble des voyageurs autour d'une pratique et d'un massif, dans la durée. Après création, vous pourrez inviter les premiers membres et planifier une première sortie.</p>
+      </div>
+
+      <div class="aside-card">
+        <h3>À vérifier <em>avant publication</em></h3>
+        <p class="sub">4 éléments essentiels avant de rendre le club public. Un club sans description ou sans règles est refusé par la modération.</p>
+        <div class="check-list">
+          <div class="check-item done">
+            <div class="box"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg></div>
+            <div class="t">Nom du club</div>
+            <div class="r">Fait</div>
+          </div>
+          <div class="check-item done">
+            <div class="box"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg></div>
+            <div class="t">Couverture visuelle</div>
+            <div class="r">Fait</div>
+          </div>
+          <div class="check-item done">
+            <div class="box"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg></div>
+            <div class="t">Description longue</div>
+            <div class="r">Fait</div>
+          </div>
+          <div class="check-item done">
+            <div class="box"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg></div>
+            <div class="t">Au moins 3 règles</div>
+            <div class="r">Fait</div>
+          </div>
+          <div class="check-item now">
+            <div class="box"></div>
+            <div class="t">Inviter un premier membre</div>
+            <div class="r">Recommandé</div>
+          </div>
+          <div class="check-item">
+            <div class="box"></div>
+            <div class="t">Créer une première sortie</div>
+            <div class="r">Après création</div>
+          </div>
+        </div>
+        <div class="check-progress">
+          <div class="lbl"><span><strong>4</strong> sur 6</span><span>Prêt à publier</span></div>
+          <div class="bar"><div class="f" style="width: 76%;"></div></div>
+        </div>
+      </div>
+
+      <div class="tips-card">
+        <div class="eye">Bon à <em>savoir</em></div>
+        <h4>Un club vit dans <em>la durée</em>.</h4>
+        <p>Pour une sortie ponctuelle avec 5 amis, mieux vaut créer un groupe. Un club est fait pour des mois d'aventures partagées.</p>
+        <a href="Formulaire - Nouveau groupe.html" class="lk">Créer un groupe plutôt →</a>
+      </div>
+
+    </aside>
+  </div>
+
+  <div class="save-bar">
+    <div class="status">
+      <span class="dot"></span>
+      <span><strong>Prêt à publier</strong> · les infos essentielles sont remplies</span>
+    </div>
+    <div class="actions">
+      <button class="lkv-btn lkv-btn-ghost">Enregistrer en brouillon</button>
+      <button class="lkv-btn lkv-btn-outline">Aperçu public</button>
+      <button class="lkv-btn lkv-btn-primary">Créer le club</button>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

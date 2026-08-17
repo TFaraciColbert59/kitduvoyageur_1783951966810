@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Panier · Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="shop.css"/>
+<style>
+  /* ————— DESKTOP ————— */
+  .cart-body {
+    padding: 40px 60px 96px;
+    background: var(--lkv-paper);
+  }
+
+  .cart-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding-bottom: 32px;
+    border-bottom: 1px solid rgba(11,31,23,0.08);
+    margin-bottom: 40px;
+  }
+  .cart-head h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 60px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 1;
+    margin: 0;
+  }
+  .cart-head h1 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .cart-head .count {
+    font-size: 15px; color: var(--lkv-ink-500);
+  }
+
+  .cart-grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 40px;
+    align-items: start;
+  }
+
+  /* ITEM */
+  .cart-item {
+    display: grid;
+    grid-template-columns: 140px 1fr auto;
+    gap: 24px;
+    padding: 24px;
+    background: #fff;
+    border-radius: 24px;
+    margin-bottom: 12px;
+    transition: box-shadow var(--lkv-dur) var(--lkv-ease);
+  }
+  .cart-item:hover { box-shadow: var(--lkv-shadow-sm); }
+  .cart-item .im {
+    width: 140px; height: 140px; border-radius: 16px;
+    background-size: cover; background-position: center;
+    background-color: var(--lkv-stone-100);
+  }
+  .cart-item .info { padding: 4px 0; }
+  .cart-item .cat { font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--lkv-ink-400); margin-bottom: 6px; }
+  .cart-item .n { font-size: 22px; font-weight: 500; letter-spacing: -0.015em; margin: 0 0 6px; line-height: 1.15; }
+  .cart-item .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .cart-item .opts { display: flex; gap: 12px; font-size: 13px; color: var(--lkv-ink-500); }
+  .cart-item .opts .o { display: inline-flex; align-items: center; gap: 6px; }
+  .cart-item .opts .sw { width: 14px; height: 14px; border-radius: 50%; }
+  .cart-item .actions {
+    display: flex; gap: 16px; margin-top: 12px;
+    font-size: 12px; color: var(--lkv-ink-500);
+  }
+  .cart-item .actions button {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 6px 0; color: var(--lkv-ink-500); font-family: inherit;
+    transition: color var(--lkv-dur) var(--lkv-ease);
+  }
+  .cart-item .actions button:hover { color: var(--lkv-forest-800); }
+  .cart-item .price-col {
+    display: flex; flex-direction: column; align-items: flex-end;
+    justify-content: space-between;
+    padding: 4px 0;
+  }
+  .cart-item .price-col .qty {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 12px;
+    background: var(--lkv-stone-50);
+    border-radius: 999px;
+  }
+  .cart-item .price-col .qty button {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #fff; box-shadow: var(--lkv-shadow-xs);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-900);
+  }
+  .cart-item .price-col .qty span { font-size: 14px; font-weight: 500; min-width: 14px; text-align: center; }
+  .cart-item .price-col .p { font-size: 22px; font-weight: 500; letter-spacing: -0.015em; }
+  .cart-item .price-col .p .unit { display: block; font-size: 11px; color: var(--lkv-ink-400); font-weight: 400; text-align: right; margin-top: 2px; }
+
+  /* Cross-sell */
+  .cross {
+    padding: 24px;
+    background: linear-gradient(135deg, var(--lkv-sage-100), var(--lkv-paper));
+    border-radius: 24px;
+    margin-top: 24px;
+    display: flex; align-items: center; gap: 20px;
+  }
+  .cross .cr-im {
+    width: 100px; height: 100px; border-radius: 16px;
+    background-size: cover; background-position: center; flex-shrink: 0;
+  }
+  .cross .cr-body { flex: 1; }
+  .cross .cr-body .eye { font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--lkv-forest-800); margin-bottom: 6px; font-weight: 500; }
+  .cross .cr-body h4 { font-size: 18px; font-weight: 500; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .cross .cr-body h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .cross .cr-body p { font-size: 13px; color: var(--lkv-ink-500); margin: 0; }
+  .cross .cr-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 18px;
+    background: #fff;
+    color: var(--lkv-ink-900);
+    border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+    box-shadow: var(--lkv-shadow-xs);
+    transition: box-shadow var(--lkv-dur) var(--lkv-ease);
+  }
+  .cross .cr-cta:hover { box-shadow: var(--lkv-shadow-md); }
+
+  /* SUMMARY */
+  .summary {
+    background: #fff;
+    padding: 32px;
+    border-radius: 28px;
+    box-shadow: var(--lkv-shadow-sm);
+    position: sticky; top: 100px;
+  }
+  .summary h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 24px; font-weight: 500; letter-spacing: -0.015em;
+    margin: 0 0 24px;
+  }
+  .summary .row {
+    display: flex; justify-content: space-between;
+    padding: 10px 0;
+    font-size: 14px;
+    color: var(--lkv-ink-700);
+  }
+  .summary .row.dim { color: var(--lkv-ink-500); }
+  .summary .row .free { color: var(--lkv-forest-700); font-weight: 500; }
+  .summary .sep { height: 1px; background: rgba(11,31,23,0.06); margin: 12px 0; }
+  .summary .total {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 16px 0 8px;
+    border-top: 1px solid rgba(11,31,23,0.08);
+    margin-top: 8px;
+  }
+  .summary .total .l { font-size: 16px; font-weight: 500; }
+  .summary .total .n { font-size: 32px; font-weight: 500; letter-spacing: -0.02em; }
+
+  .summary .promo {
+    display: flex; gap: 8px; margin: 20px 0;
+  }
+  .summary .promo input {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(11,31,23,0.1);
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--lkv-ink-900);
+    background: var(--lkv-stone-50);
+  }
+  .summary .promo input::placeholder { color: var(--lkv-ink-400); }
+  .summary .promo button {
+    padding: 12px 20px;
+    border-radius: 999px;
+    background: var(--lkv-ink-900);
+    color: #fff;
+    font-size: 13px; font-weight: 500;
+  }
+
+  .summary .checkout {
+    display: block; width: 100%;
+    padding: 16px; text-align: center;
+    background: var(--lkv-forest-800); color: #fff;
+    border-radius: 999px;
+    font-size: 15px; font-weight: 500;
+    margin-top: 16px;
+    transition: all var(--lkv-dur) var(--lkv-ease-out);
+  }
+  .summary .checkout:hover {
+    background: var(--lkv-forest-700);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(31,74,58,0.28);
+  }
+  .summary .safe {
+    font-size: 12px; color: var(--lkv-ink-400);
+    text-align: center; margin-top: 12px;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .summary .paylogos {
+    display: flex; gap: 8px; justify-content: center; margin-top: 20px;
+    padding-top: 20px; border-top: 1px solid rgba(11,31,23,0.06);
+  }
+  .summary .paylogo {
+    padding: 6px 10px;
+    background: var(--lkv-stone-50);
+    border-radius: 6px;
+    font-size: 10px; font-weight: 600;
+    color: var(--lkv-ink-500);
+    letter-spacing: 0.05em;
+  }
+
+  .promises-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--lkv-stone-50);
+    border-radius: 16px;
+  }
+  .promises-strip .pr {
+    display: flex; flex-direction: column; gap: 4px;
+    text-align: center;
+  }
+  .promises-strip .pr .i {
+    width: 32px; height: 32px; border-radius: 10px;
+    background: #fff; color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto;
+  }
+  .promises-strip .pr .t { font-size: 10px; font-weight: 500; color: var(--lkv-ink-700); line-height: 1.3; }
+
+  /* Empty state */
+  .cart-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 80px 40px;
+  }
+
+  /* ————— MOBILE ————— */
+  .m-cart {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 14px 200px;
+  }
+  .m-cart-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 16px;
+  }
+  .m-cart-head h1 {
+    font-size: 32px; font-weight: 500; letter-spacing: -0.02em; line-height: 1;
+    margin: 0;
+  }
+  .m-cart-head h1 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .m-cart-head .c { font-size: 12px; color: var(--lkv-ink-500); }
+
+  .m-item {
+    display: flex; gap: 12px;
+    padding: 12px;
+    background: #fff;
+    border-radius: 16px;
+    margin-bottom: 10px;
+  }
+  .m-item .im { width: 76px; height: 76px; border-radius: 12px; background-size: cover; background-position: center; flex-shrink: 0; background-color: var(--lkv-stone-100); }
+  .m-item .info { flex: 1; min-width: 0; }
+  .m-item .cat { font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--lkv-ink-400); }
+  .m-item .n { font-size: 13px; font-weight: 500; letter-spacing: -0.005em; margin: 2px 0 4px; line-height: 1.15; }
+  .m-item .n em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .m-item .opts { font-size: 10px; color: var(--lkv-ink-500); }
+  .m-item .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+  .m-item .qty { display: inline-flex; align-items: center; gap: 8px; padding: 4px 8px; background: var(--lkv-stone-50); border-radius: 999px; }
+  .m-item .qty button { width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: var(--lkv-shadow-xs); display: flex; align-items: center; justify-content: center; }
+  .m-item .qty span { font-size: 12px; font-weight: 500; }
+  .m-item .p { font-size: 14px; font-weight: 500; }
+
+  .m-cart-bottom-sheet {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: #fff;
+    border-radius: 24px 24px 0 0;
+    padding: 16px 14px 14px;
+    box-shadow: 0 -8px 24px rgba(11,31,23,0.08);
+    z-index: 15;
+    border-top: 1px solid rgba(11,31,23,0.05);
+  }
+  .m-cart-bottom-sheet .row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; color: var(--lkv-ink-700); }
+  .m-cart-bottom-sheet .total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 10px; margin-top: 6px; border-top: 1px solid rgba(11,31,23,0.06); }
+  .m-cart-bottom-sheet .total .n { font-size: 22px; font-weight: 500; letter-spacing: -0.015em; }
+  .m-cart-bottom-sheet .cta {
+    display: block; width: 100%;
+    padding: 14px; text-align: center;
+    background: var(--lkv-forest-800); color: #fff;
+    border-radius: 999px;
+    font-size: 14px; font-weight: 500;
+    margin-top: 12px;
+    box-shadow: 0 8px 24px rgba(31,74,58,0.25);
+  }
+</style>
+</head>
+<body class="shop-page">
+
+<div class="stage-title">
+  <div>
+    <div class="h">Panier</div>
+    <div class="sub">Étape 4/5 · Desktop + Mobile</div>
+  </div>
+  <div class="crumbs">
+    <a href="Index.html">← Hub</a>
+    <a href="Boutique.html">Boutique</a>
+    <a href="Fiche Produit.html">Fiche</a>
+    <a href="Configurateur.html">← Configurateur</a>
+    <a href="Paiement.html">Paiement →</a>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ————— DESKTOP ————— -->
+  <div class="artboard-desktop">
+
+    <nav class="shop-nav">
+      <a href="Home.html" class="lkv-logo">
+        <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
+          <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+        </svg>
+        <span>Le Kit du Voyageur</span>
+      </a>
+      <div class="links">
+        <a href="Recherche Carte.html">Aventures</a>
+        <a href="#">Refuges</a>
+        <a href="Boutique.html">Boutique</a>
+        <a href="#">Journal</a>
+      </div>
+      <div class="right">
+        <a href="Panier.html" class="icon-btn">
+          <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+          <span class="badge-num">3</span>
+        </a>
+        <div class="avatar">MB</div>
+      </div>
+    </nav>
+
+    <div class="crumb">
+      <a href="Home.html">Accueil</a>
+      <span class="sep">/</span>
+      <a href="Boutique.html">Boutique</a>
+      <span class="sep">/</span>
+      <span class="active">Panier</span>
+    </div>
+
+    <section class="cart-body">
+
+      <div class="cart-head">
+        <h1>Votre <em>panier.</em></h1>
+        <div class="count">3 articles · 1,4 kg · sous-total 656 €</div>
+      </div>
+
+      <div class="cart-grid">
+
+        <!-- ITEMS -->
+        <div class="items">
+
+          <div class="cart-item">
+            <div class="im" style="background-image: url('assets/product-backpack-2.jpg')"></div>
+            <div class="info">
+              <div class="cat">Portage · le sac essentiel</div>
+              <h4 class="n">Sac 45 L <em>toile cirée.</em></h4>
+              <div class="opts">
+                <span class="o"><span class="sw" style="background: #405E48"></span>Vert forêt</span>
+                <span class="o">45 L</span>
+                <span class="o">Ventrale + poitrine</span>
+              </div>
+              <div class="actions">
+                <button>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="12" height="12"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+                  Enregistrer
+                </button>
+                <button>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="12" height="12"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                  Retirer
+                </button>
+              </div>
+            </div>
+            <div class="price-col">
+              <div class="qty">
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M5 12h14"/></svg></button>
+                <span>1</span>
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M12 5v14M5 12h14"/></svg></button>
+              </div>
+              <div class="p">340 €<span class="unit">TVA incluse</span></div>
+            </div>
+          </div>
+
+          <div class="cart-item">
+            <div class="im" style="background-image: url('assets/product-sleeping.jpg')"></div>
+            <div class="info">
+              <div class="cat">Couchage</div>
+              <h4 class="n">Duvet <em>3 saisons</em>.</h4>
+              <div class="opts">
+                <span class="o"><span class="sw" style="background: #1F4A3A"></span>Vert profond</span>
+                <span class="o">Regular · 180 cm</span>
+                <span class="o">−10 °C</span>
+              </div>
+              <div class="actions">
+                <button>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="12" height="12"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+                  Enregistrer
+                </button>
+                <button>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="12" height="12"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                  Retirer
+                </button>
+              </div>
+            </div>
+            <div class="price-col">
+              <div class="qty">
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M5 12h14"/></svg></button>
+                <span>1</span>
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M12 5v14M5 12h14"/></svg></button>
+              </div>
+              <div class="p">248 €<span class="unit">TVA incluse</span></div>
+            </div>
+          </div>
+
+          <div class="cart-item">
+            <div class="im" style="background-image: url('assets/product-bottle.jpg')"></div>
+            <div class="info">
+              <div class="cat">Hydratation · nouveau</div>
+              <h4 class="n">Gourde <em>titane</em> 1 L.</h4>
+              <div class="opts">
+                <span class="o"><span class="sw" style="background: #6DAA7D"></span>Sauge</span>
+                <span class="o">1 litre</span>
+                <span class="o">Isotherme 12 h</span>
+              </div>
+              <div class="actions">
+                <button>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="12" height="12"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+                  Enregistrer
+                </button>
+                <button>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="12" height="12"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                  Retirer
+                </button>
+              </div>
+            </div>
+            <div class="price-col">
+              <div class="qty">
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M5 12h14"/></svg></button>
+                <span>1</span>
+                <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M12 5v14M5 12h14"/></svg></button>
+              </div>
+              <div class="p">68 €<span class="unit">TVA incluse</span></div>
+            </div>
+          </div>
+
+          <!-- Cross-sell -->
+          <div class="cross">
+            <div class="cr-im" style="background-image: url('assets/product-headlamp.jpg')"></div>
+            <div class="cr-body">
+              <div class="eye">On a pensé pour vous</div>
+              <h4>Lampe frontale <em>350 lumens.</em></h4>
+              <p>Autonomie 45 h, batterie rechargeable. Souvent oubliée, jamais regrettée.</p>
+            </div>
+            <a href="Fiche Produit.html" class="cr-cta">
+              84 €
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><path d="M12 5v14M5 12h14"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- SUMMARY -->
+        <div>
+          <div class="summary">
+            <h3>Récapitulatif</h3>
+
+            <div class="row"><span>Sous-total (3 articles)</span><span>656 €</span></div>
+            <div class="row dim"><span>Poids total</span><span>1,4 kg</span></div>
+            <div class="row"><span>Livraison suivie</span><span class="free">Offerte</span></div>
+            <div class="row dim"><span>Estimation TVA</span><span>Incluse</span></div>
+
+            <div class="promo">
+              <input placeholder="Code promo"/>
+              <button>Appliquer</button>
+            </div>
+
+            <div class="total">
+              <div class="l">Total à payer</div>
+              <div class="n">656 €</div>
+            </div>
+
+            <a href="Paiement.html" class="checkout">
+              Passer au paiement
+            </a>
+
+            <div class="safe">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="12" height="12"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+              Paiement sécurisé Stripe
+            </div>
+
+            <div class="paylogos">
+              <span class="paylogo">VISA</span>
+              <span class="paylogo">MC</span>
+              <span class="paylogo">AMEX</span>
+              <span class="paylogo">Apple Pay</span>
+              <span class="paylogo">PayPal</span>
+            </div>
+
+            <div class="promises-strip">
+              <div class="pr">
+                <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="16" height="16"><path d="M12 2l3 6 6 1-4.5 4.5 1 6L12 17l-5.5 2.5 1-6L3 9l6-1z"/></svg></div>
+                <div class="t">Garantie à vie</div>
+              </div>
+              <div class="pr">
+                <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="16" height="16"><path d="M4 4v6h6"/><path d="M4 10a8 8 0 0 1 14-3"/></svg></div>
+                <div class="t">Retour 30 j.</div>
+              </div>
+              <div class="pr">
+                <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="16" height="16"><path d="M20 4c0 8-6 14-14 14L4 20"/></svg></div>
+                <div class="t">100 % Europe</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <footer class="shop-foot">
+      <div><h4 class="brand">Ce que vous emportez, <em>c'est votre voyage.</em></h4><p>Grenoble, France</p></div>
+      <div><h5>Boutique</h5><ul><li><a href="Boutique.html">Catalogue</a></li><li><a href="Configurateur.html">Configurateur</a></li></ul></div>
+      <div><h5>Maison</h5><ul><li><a href="#">Méthode</a></li></ul></div>
+      <div><h5>Service</h5><ul><li><a href="#">Livraison</a></li></ul></div>
+    </footer>
+
+  </div>
+
+  <!-- ————— MOBILE ————— -->
+  <div>
+    <div class="artboard-mobile">
+      <div class="screen">
+
+        <div class="m-topbar">
+          <button class="m-btn">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div class="center">Panier</div>
+          <button class="m-btn" style="background: transparent;">
+            <span style="font-size: 11px; color: var(--lkv-ink-500);">3 art.</span>
+          </button>
+        </div>
+
+        <div class="m-cart">
+          <div class="m-cart-head">
+            <h1>Votre <em>panier</em></h1>
+            <div class="c">3 · 1,4 kg</div>
+          </div>
+
+          <div class="m-item">
+            <div class="im" style="background-image: url('assets/product-backpack-2.jpg')"></div>
+            <div class="info">
+              <div class="cat">Portage</div>
+              <div class="n">Sac 45 L <em>toile cirée</em></div>
+              <div class="opts">Vert forêt · 45 L</div>
+              <div class="foot">
+                <div class="qty">
+                  <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="8" height="8"><path d="M5 12h14"/></svg></button>
+                  <span>1</span>
+                  <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="8" height="8"><path d="M12 5v14M5 12h14"/></svg></button>
+                </div>
+                <div class="p">340 €</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="m-item">
+            <div class="im" style="background-image: url('assets/product-sleeping.jpg')"></div>
+            <div class="info">
+              <div class="cat">Couchage</div>
+              <div class="n">Duvet <em>3 saisons</em></div>
+              <div class="opts">180 cm · −10 °C</div>
+              <div class="foot">
+                <div class="qty">
+                  <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="8" height="8"><path d="M5 12h14"/></svg></button>
+                  <span>1</span>
+                  <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="8" height="8"><path d="M12 5v14M5 12h14"/></svg></button>
+                </div>
+                <div class="p">248 €</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="m-item">
+            <div class="im" style="background-image: url('assets/product-bottle.jpg')"></div>
+            <div class="info">
+              <div class="cat">Hydratation</div>
+              <div class="n">Gourde <em>titane</em> 1 L</div>
+              <div class="opts">Sauge · isotherme</div>
+              <div class="foot">
+                <div class="qty">
+                  <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="8" height="8"><path d="M5 12h14"/></svg></button>
+                  <span>1</span>
+                  <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="8" height="8"><path d="M12 5v14M5 12h14"/></svg></button>
+                </div>
+                <div class="p">68 €</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cross" style="margin-top: 12px; padding: 12px; gap: 12px;">
+            <div class="cr-im" style="width: 60px; height: 60px; border-radius: 12px; background-size: cover; background-image: url('assets/product-headlamp.jpg')"></div>
+            <div class="cr-body">
+              <div class="eye" style="font-size: 9px;">On a pensé pour vous</div>
+              <h4 style="font-size: 14px;">Frontale <em>350 lm</em></h4>
+              <p style="font-size: 11px;">Souvent oubliée.</p>
+            </div>
+            <a href="Fiche Produit.html" class="cr-cta" style="padding: 6px 12px; font-size: 11px;">84 €</a>
+          </div>
+        </div>
+
+        <div class="m-cart-bottom-sheet">
+          <div class="row"><span>Sous-total</span><span>656 €</span></div>
+          <div class="row"><span>Livraison</span><span style="color: var(--lkv-forest-700); font-weight: 500;">Offerte</span></div>
+          <div class="total">
+            <div style="font-size: 13px; font-weight: 500;">Total</div>
+            <div class="n">656 €</div>
+          </div>
+          <a href="Paiement.html" class="cta">
+            Passer au paiement
+          </a>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">Mobile · 375 × 812</div>
+  </div>
+</div>
+
+</body>
+</html>

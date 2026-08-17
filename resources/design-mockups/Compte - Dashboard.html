@@ -1,0 +1,1722 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Marceline Chevrier · Mon compte — Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<link rel="stylesheet" href="shop.css"/>
+<link rel="stylesheet" href="stage.css"/>
+<style>
+  /* ================= HERO ================ */
+  .c-hero {
+    position: relative;
+    padding: 20px;
+    min-height: 460px;
+    color: #fff;
+    overflow: hidden;
+  }
+  .c-hero .bg {
+    position: absolute; inset: 0; z-index: 0;
+    background-image: url('assets/mountain-1.jpg');
+    background-size: cover; background-position: center;
+  }
+  .c-hero .bg::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0.4) 0%, rgba(11,31,23,0.15) 30%, rgba(11,31,23,0.85) 100%);
+  }
+  .c-hero > * { position: relative; z-index: 1; }
+
+  .breadcrumb {
+    padding: 24px 60px 0;
+    font-size: 12px; color: rgba(255,255,255,0.65); letter-spacing: 0.06em;
+  }
+  .breadcrumb a { color: rgba(255,255,255,0.85); }
+  .breadcrumb .sep { margin: 0 8px; color: rgba(255,255,255,0.35); }
+
+  .c-hero-body {
+    padding: 36px 60px 40px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 32px;
+    align-items: end;
+  }
+  .c-hero-body .avatar {
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background-image: url('assets/portrait-1.jpg');
+    background-size: cover; background-position: center;
+    border: 4px solid rgba(255,255,255,0.9);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    position: relative;
+  }
+  .c-hero-body .avatar .edit {
+    position: absolute; bottom: 4px; right: 4px;
+    width: 36px; height: 36px; border-radius: 999px;
+    background: #fff; color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border: 2px solid rgba(255,255,255,0.8);
+  }
+
+  .c-hero-body .info .eye {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 14px; border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.24);
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .c-hero-body .info .eye .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-sage-300); }
+  .c-hero-body .info h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 60px; font-weight: 500;
+    letter-spacing: -0.032em; line-height: 0.98;
+    margin: 0 0 12px;
+  }
+  .c-hero-body .info h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-200); font-weight: 400;
+  }
+  .c-hero-body .info .bio {
+    font-family: var(--lkv-font-serif);
+    font-size: 17px; line-height: 1.45;
+    color: rgba(255,255,255,0.85);
+    max-width: 520px;
+    margin: 0 0 14px;
+  }
+  .c-hero-body .info .meta-row {
+    display: flex; gap: 20px; align-items: center;
+    font-size: 12px; color: rgba(255,255,255,0.75);
+  }
+  .c-hero-body .info .meta-row span { display: inline-flex; align-items: center; gap: 6px; }
+
+  .c-hero-body .quick {
+    display: flex; flex-direction: column; gap: 10px;
+    align-items: flex-end;
+  }
+  .c-hero-body .quick .action-b {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 18px;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.24);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 13px; font-weight: 500;
+  }
+  .c-hero-body .quick .action-b.primary {
+    background: #fff; color: var(--lkv-ink-900);
+    border: none;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  }
+
+  /* ——— Level strip below hero body ——— */
+  .level-strip {
+    background: rgba(11,31,23,0.55);
+    backdrop-filter: blur(24px);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 16px 60px;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    gap: 24px;
+    align-items: center;
+  }
+  .level-strip .lv {
+    display: flex; align-items: center; gap: 14px;
+    color: #fff;
+  }
+  .level-strip .lv .badge {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--lkv-warm-500), var(--lkv-warm-300));
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-900); font-size: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    flex-shrink: 0;
+  }
+  .level-strip .lv .txt .n {
+    font-size: 14px; font-weight: 500;
+    display: flex; align-items: baseline; gap: 8px;
+  }
+  .level-strip .lv .txt .n .points {
+    font-family: var(--lkv-font-mono);
+    font-size: 11px; color: var(--lkv-sage-300);
+  }
+  .level-strip .lv .txt .bar {
+    height: 4px; width: 220px;
+    background: rgba(255,255,255,0.14);
+    border-radius: 999px; overflow: hidden;
+    margin-top: 6px;
+  }
+  .level-strip .lv .txt .bar .f {
+    height: 100%; width: 68%;
+    background: linear-gradient(90deg, var(--lkv-sage-300), var(--lkv-sage-500));
+  }
+  .level-strip .lv .txt .to {
+    font-size: 10px; color: rgba(255,255,255,0.55);
+    letter-spacing: 0.12em; text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .level-strip .st {
+    color: #fff;
+    text-align: left;
+  }
+  .level-strip .st .n {
+    font-family: var(--lkv-font-sans);
+    font-size: 24px; font-weight: 500;
+    letter-spacing: -0.02em; line-height: 1;
+  }
+  .level-strip .st .n em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+    font-size: 15px; margin-left: 2px;
+  }
+  .level-strip .st .l {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+    margin-top: 6px;
+  }
+
+  /* ——— TABS ——— */
+  .c-tabs {
+    display: flex; gap: 4px;
+    padding: 0 60px;
+    border-bottom: 1px solid rgba(11,31,23,0.08);
+    background: rgba(248,250,248,0.94);
+    backdrop-filter: blur(20px);
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .c-tabs::-webkit-scrollbar { display: none; }
+  .c-tab {
+    flex-shrink: 0;
+    padding: 20px 18px;
+    font-size: 14px; font-weight: 500;
+    color: var(--lkv-ink-500);
+    position: relative;
+    display: inline-flex; align-items: center; gap: 6px;
+    white-space: nowrap;
+  }
+  .c-tab .n {
+    font-family: var(--lkv-font-serif);
+    font-style: italic;
+    font-size: 12px;
+    color: var(--lkv-ink-400);
+  }
+  .c-tab .badge-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--lkv-warm-500);
+    margin-left: 4px;
+  }
+  .c-tab:hover { color: var(--lkv-ink-900); }
+  .c-tab.on { color: var(--lkv-forest-800); }
+  .c-tab.on::after {
+    content: ""; position: absolute; left: 18px; right: 18px; bottom: 0;
+    height: 2px; background: var(--lkv-forest-800);
+    border-radius: 2px 2px 0 0;
+  }
+  .c-tab.on .n { color: var(--lkv-sage-500); }
+
+  /* ——— MAIN ——— */
+  .c-main {
+    padding: 32px 60px 40px;
+    display: grid; grid-template-columns: 1.6fr 1fr;
+    gap: 32px;
+  }
+
+  .block {
+    background: #fff;
+    border-radius: 24px;
+    padding: 24px 24px 22px;
+    margin-bottom: 20px;
+    box-shadow: var(--lkv-shadow-sm);
+  }
+  .block > .head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 4px; gap: 12px;
+  }
+  .block > .head .title { display: flex; align-items: baseline; gap: 10px; }
+  .block > .head h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 22px; font-weight: 500;
+    letter-spacing: -0.015em;
+    margin: 0; color: var(--lkv-ink-900);
+  }
+  .block > .head h3 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .block > .head .badge-count {
+    padding: 3px 10px;
+    background: var(--lkv-stone-50);
+    border-radius: 999px;
+    font-size: 11px; color: var(--lkv-ink-500);
+    font-weight: 500;
+  }
+  .block > .head .badge-count strong { color: var(--lkv-forest-800); }
+  .block > .head a.link { font-size: 13px; color: var(--lkv-forest-800); font-weight: 500; }
+  .block > .head .actions { display: flex; gap: 6px; }
+  .block > .head .actions .b {
+    padding: 6px 12px; border-radius: 999px; font-size: 12px;
+    color: var(--lkv-ink-500);
+    display: inline-flex; align-items: center; gap: 4px;
+    border: 1px solid rgba(11,31,23,0.08);
+  }
+  .block > .head .actions .b.primary {
+    background: var(--lkv-forest-800); color: #fff; border-color: var(--lkv-forest-800);
+  }
+  .block .sub {
+    font-size: 13px; color: var(--lkv-ink-500);
+    margin: 4px 0 20px; max-width: 560px;
+  }
+
+  /* NEXT VOYAGE — gradient forest card */
+  .next-voyage {
+    background: linear-gradient(135deg, var(--lkv-forest-800) 0%, var(--lkv-forest-700) 100%);
+    color: #fff;
+    padding: 26px;
+    border-radius: 24px;
+    margin-bottom: 20px;
+    position: relative; overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: end;
+  }
+  .next-voyage::after {
+    content: ""; position: absolute; right: -60px; bottom: -60px;
+    width: 240px; height: 240px; border-radius: 50%;
+    background: radial-gradient(circle, var(--lkv-sage-500) 0%, transparent 65%);
+    opacity: 0.32;
+  }
+  .next-voyage > * { position: relative; z-index: 1; }
+  .next-voyage .left .eye {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-sage-300);
+    margin-bottom: 10px;
+  }
+  .next-voyage .left .eye .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-sage-300);
+    animation: pulse 2s var(--lkv-ease) infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.4); } }
+  .next-voyage .left h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 28px; font-weight: 500;
+    letter-spacing: -0.02em; line-height: 1.05;
+    margin: 0 0 4px;
+  }
+  .next-voyage .left h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .next-voyage .left .place { font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 16px; }
+  .next-voyage .left .prep-bar {
+    height: 6px; background: rgba(255,255,255,0.14);
+    border-radius: 999px; overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .next-voyage .left .prep-bar .f {
+    height: 100%; width: 62%;
+    background: linear-gradient(90deg, var(--lkv-sage-300), var(--lkv-sage-500));
+    border-radius: 999px;
+  }
+  .next-voyage .left .prep-info {
+    font-size: 11px; color: rgba(255,255,255,0.6);
+    display: flex; justify-content: space-between;
+  }
+  .next-voyage .right {
+    display: flex; flex-direction: column; align-items: flex-end;
+    gap: 12px;
+  }
+  .next-voyage .right .cd {
+    font-family: var(--lkv-font-sans);
+    font-size: 56px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 1;
+  }
+  .next-voyage .right .cd em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .next-voyage .right .lbl {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.65);
+  }
+  .next-voyage .right .cta {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px;
+    background: #fff; color: var(--lkv-ink-900);
+    border-radius: 999px;
+    font-size: 12px; font-weight: 500;
+  }
+
+  /* Stats grid */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-cell {
+    background: #fff;
+    padding: 18px 20px;
+    border-radius: 20px;
+    box-shadow: var(--lkv-shadow-xs);
+  }
+  .stat-cell .k {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-ink-500); margin-bottom: 8px;
+  }
+  .stat-cell .v {
+    font-family: var(--lkv-font-sans);
+    font-size: 32px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1;
+    color: var(--lkv-ink-900);
+  }
+  .stat-cell .v em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+    font-size: 16px; margin-left: 2px;
+  }
+  .stat-cell .trend {
+    margin-top: 8px;
+    font-size: 11px; color: var(--lkv-forest-700);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .stat-cell .trend.warm { color: var(--lkv-warm-500); }
+  .stat-cell .trend.neutral { color: var(--lkv-ink-500); }
+
+  /* Aventures list */
+  .adv-row {
+    display: grid;
+    grid-template-columns: 100px 1fr auto auto;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .adv-row:last-child { border-bottom: none; }
+  .adv-row .thumb {
+    width: 100px; height: 68px;
+    border-radius: 12px;
+    background-size: cover; background-position: center;
+    flex-shrink: 0;
+  }
+  .adv-row .info .name {
+    font-family: var(--lkv-font-sans);
+    font-size: 16px; font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--lkv-ink-900);
+    line-height: 1.2;
+  }
+  .adv-row .info .name em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .adv-row .info .meta {
+    font-size: 12px; color: var(--lkv-ink-500);
+    margin-top: 4px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .adv-row .info .meta .sep { color: var(--lkv-ink-300); }
+  .adv-row .info .meta .with { display: inline-flex; align-items: center; gap: 4px; }
+  .adv-row .info .meta .with .avs { display: flex; margin-right: 4px; }
+  .adv-row .info .meta .with .avs .a {
+    width: 16px; height: 16px; border-radius: 999px;
+    background-size: cover;
+    border: 1.5px solid #fff;
+    margin-left: -4px;
+  }
+  .adv-row .info .meta .with .avs .a:first-child { margin-left: 0; }
+  .adv-row .kpi {
+    font-family: var(--lkv-font-mono);
+    font-size: 12px;
+    color: var(--lkv-ink-500);
+    text-align: right;
+  }
+  .adv-row .kpi strong {
+    display: block;
+    font-family: var(--lkv-font-sans);
+    font-size: 14px; font-weight: 500;
+    color: var(--lkv-ink-900);
+    margin-bottom: 2px;
+  }
+  .adv-row .status-pill {
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 11px; font-weight: 500;
+    white-space: nowrap;
+  }
+  .adv-row .status-pill.done { background: var(--lkv-sage-100); color: var(--lkv-forest-800); }
+  .adv-row .status-pill.now { background: rgba(228,198,149,0.3); color: var(--lkv-warm-500); }
+  .adv-row .status-pill.draft { background: rgba(11,31,23,0.06); color: var(--lkv-ink-500); }
+
+  /* Carnet cards grid */
+  .carnet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .carnet-card {
+    border-radius: 18px;
+    overflow: hidden;
+    background: var(--lkv-stone-50);
+    position: relative;
+    transition: transform var(--lkv-dur) var(--lkv-ease-out);
+  }
+  .carnet-card:hover { transform: translateY(-3px); }
+  .carnet-card .cov {
+    aspect-ratio: 4/3;
+    background-size: cover; background-position: center;
+    position: relative;
+  }
+  .carnet-card .cov::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 50%, rgba(11,31,23,0.7));
+  }
+  .carnet-card .cov .pub-pill {
+    position: absolute; top: 10px; left: 10px;
+    padding: 3px 10px;
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(10px);
+    border-radius: 999px;
+    font-size: 10px; font-weight: 500;
+    color: var(--lkv-forest-800);
+    letter-spacing: 0.05em;
+    z-index: 1;
+  }
+  .carnet-card .cov .pub-pill.draft { color: var(--lkv-ink-500); }
+  .carnet-card .cov .cov-title {
+    position: absolute; left: 12px; right: 12px; bottom: 10px;
+    z-index: 1; color: #fff;
+    font-family: var(--lkv-font-serif);
+    font-style: italic;
+    font-size: 15px; line-height: 1.2;
+  }
+  .carnet-card .body {
+    padding: 12px;
+  }
+  .carnet-card .body .stats {
+    display: flex; gap: 12px;
+    font-size: 11px; color: var(--lkv-ink-500);
+  }
+  .carnet-card .body .stats span { display: inline-flex; align-items: center; gap: 4px; }
+  .carnet-card .body .stats strong { color: var(--lkv-ink-900); font-weight: 500; }
+
+  /* Clubs list */
+  .club-mini {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    gap: 12px; align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .club-mini:last-child { border-bottom: none; }
+  .club-mini .cov {
+    width: 48px; height: 48px; border-radius: 12px;
+    background-size: cover; background-position: center;
+  }
+  .club-mini .txt .n {
+    font-size: 14px; font-weight: 500; color: var(--lkv-ink-900); line-height: 1.2;
+  }
+  .club-mini .txt .m {
+    font-size: 11px; color: var(--lkv-ink-500); margin-top: 3px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .club-mini .txt .m .role {
+    padding: 2px 8px; background: var(--lkv-sage-100);
+    color: var(--lkv-forest-800);
+    border-radius: 999px; font-size: 10px; font-weight: 500;
+  }
+  .club-mini .txt .m .role.admin { background: rgba(228,198,149,0.35); color: var(--lkv-warm-500); }
+  .club-mini .cta {
+    padding: 6px 12px; border-radius: 999px;
+    font-size: 11px; font-weight: 500;
+    background: var(--lkv-stone-50);
+    color: var(--lkv-forest-800);
+  }
+  .club-mini .cta.unread { background: var(--lkv-forest-800); color: #fff; }
+
+  /* ——— SIDEBAR ——— */
+  .sidebar { display: flex; flex-direction: column; gap: 16px; align-self: start; }
+
+  /* Badges panel */
+  .badges-panel {
+    background: linear-gradient(135deg, var(--lkv-forest-900) 0%, var(--lkv-forest-800) 100%);
+    color: #fff;
+    padding: 24px;
+    border-radius: 20px;
+    position: relative; overflow: hidden;
+  }
+  .badges-panel::after {
+    content: ""; position: absolute; right: -60px; top: -60px;
+    width: 200px; height: 200px; border-radius: 50%;
+    background: radial-gradient(circle, var(--lkv-warm-500) 0%, transparent 65%);
+    opacity: 0.28;
+  }
+  .badges-panel > * { position: relative; z-index: 1; }
+  .badges-panel h3 {
+    font-family: var(--lkv-font-sans);
+    font-size: 18px; font-weight: 500;
+    letter-spacing: -0.015em; margin: 0 0 4px;
+  }
+  .badges-panel h3 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .badges-panel .sub { font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 16px; }
+  .badges-panel .b-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .badges-panel .badge-tile {
+    aspect-ratio: 1;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px;
+    text-align: center;
+    padding: 8px 6px;
+    position: relative;
+  }
+  .badges-panel .badge-tile.earned {
+    background: linear-gradient(135deg, rgba(228,198,149,0.24), rgba(228,198,149,0.06));
+    border-color: rgba(228,198,149,0.35);
+  }
+  .badges-panel .badge-tile.new::before {
+    content: ""; position: absolute; top: 6px; right: 6px;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--lkv-sage-500);
+  }
+  .badges-panel .badge-tile .ic {
+    color: var(--lkv-sage-300);
+  }
+  .badges-panel .badge-tile.earned .ic { color: var(--lkv-warm-300); }
+  .badges-panel .badge-tile.locked .ic { color: rgba(255,255,255,0.25); }
+  .badges-panel .badge-tile .l {
+    font-size: 9px; color: rgba(255,255,255,0.65);
+    letter-spacing: 0.05em; line-height: 1.1;
+  }
+  .badges-panel .badge-tile.earned .l { color: rgba(255,255,255,0.9); }
+  .badges-panel .foot {
+    margin-top: 14px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; color: rgba(255,255,255,0.6);
+  }
+  .badges-panel .foot strong { color: var(--lkv-sage-300); font-weight: 500; }
+
+  /* Streak card */
+  .streak-card {
+    background: #fff;
+    padding: 22px;
+    border-radius: 20px;
+    box-shadow: var(--lkv-shadow-sm);
+  }
+  .streak-card .row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 4px;
+  }
+  .streak-card .row h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 18px; font-weight: 500;
+    letter-spacing: -0.015em;
+    margin: 0;
+  }
+  .streak-card .row h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .streak-card .row .cnt {
+    font-family: var(--lkv-font-sans);
+    font-size: 26px; font-weight: 500;
+    color: var(--lkv-warm-500);
+    letter-spacing: -0.02em;
+  }
+  .streak-card .sub {
+    font-size: 12px; color: var(--lkv-ink-500); margin-bottom: 14px;
+  }
+  .streak-card .dots-week {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+    margin-bottom: 14px;
+  }
+  .streak-card .dots-week .d {
+    aspect-ratio: 1; border-radius: 8px;
+    background: var(--lkv-stone-50);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--lkv-font-mono);
+    font-size: 9px; color: var(--lkv-ink-400);
+  }
+  .streak-card .dots-week .d.on {
+    background: var(--lkv-sage-500); color: #fff; font-weight: 500;
+  }
+  .streak-card .dots-week .d.now {
+    background: var(--lkv-forest-800); color: #fff;
+    box-shadow: 0 0 0 3px rgba(31,74,58,0.15);
+  }
+  .streak-card .weekly {
+    font-size: 11px; color: var(--lkv-ink-500);
+    padding-top: 12px; border-top: 1px solid rgba(11,31,23,0.06);
+    display: flex; justify-content: space-between;
+  }
+  .streak-card .weekly strong { color: var(--lkv-ink-900); font-weight: 500; }
+
+  /* Activity feed */
+  .activity-panel .act {
+    display: grid; grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    align-items: start;
+  }
+  .activity-panel .act:last-child { border-bottom: none; }
+  .activity-panel .act .glyph {
+    width: 30px; height: 30px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+    background: var(--lkv-sage-100);
+    flex-shrink: 0;
+  }
+  .activity-panel .act .glyph.warm { background: rgba(228,198,149,0.35); color: var(--lkv-warm-500); }
+  .activity-panel .act .glyph.done { background: var(--lkv-forest-800); color: #fff; }
+  .activity-panel .act .txt {
+    font-size: 13px; line-height: 1.4;
+    color: var(--lkv-ink-700);
+  }
+  .activity-panel .act .txt strong { color: var(--lkv-ink-900); font-weight: 500; }
+  .activity-panel .act .when {
+    font-size: 11px; color: var(--lkv-ink-500); white-space: nowrap;
+  }
+
+  /* Orders */
+  .order-row {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    gap: 12px; align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .order-row:last-child { border-bottom: none; }
+  .order-row .thumb {
+    width: 48px; height: 48px;
+    background-size: cover; background-position: center;
+    border-radius: 10px;
+    background-color: var(--lkv-stone-50);
+  }
+  .order-row .info .n {
+    font-size: 13px; font-weight: 500; color: var(--lkv-ink-900); line-height: 1.2;
+  }
+  .order-row .info .m {
+    font-size: 11px; color: var(--lkv-ink-500); margin-top: 3px;
+    font-family: var(--lkv-font-mono);
+  }
+  .order-row .status {
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .order-row .status.ship { background: var(--lkv-sage-100); color: var(--lkv-forest-800); }
+  .order-row .status.wait { background: rgba(228,198,149,0.3); color: var(--lkv-warm-500); }
+  .order-row .status.done { background: rgba(11,31,23,0.06); color: var(--lkv-ink-500); }
+
+  /* CTA blocks */
+  .cta-inventaire {
+    background: linear-gradient(135deg, #F5E6C4 0%, var(--lkv-warm-300) 100%);
+    color: var(--lkv-forest-900);
+    padding: 22px;
+    border-radius: 20px;
+    position: relative; overflow: hidden;
+  }
+  .cta-inventaire::after {
+    content: ""; position: absolute; right: -30px; bottom: -30px;
+    width: 130px; height: 130px; border-radius: 50%;
+    background: rgba(255,255,255,0.35);
+  }
+  .cta-inventaire > * { position: relative; z-index: 1; }
+  .cta-inventaire .eye {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: 999px;
+    background: rgba(11,31,23,0.08);
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--lkv-forest-900); margin-bottom: 12px;
+  }
+  .cta-inventaire h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 20px; font-weight: 500;
+    letter-spacing: -0.015em; line-height: 1.15;
+    margin: 0 0 6px;
+  }
+  .cta-inventaire h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .cta-inventaire p {
+    font-size: 12px; opacity: 0.8;
+    line-height: 1.4; margin: 0 0 12px;
+  }
+  .cta-inventaire .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.7);
+    color: var(--lkv-forest-800);
+    border-radius: 999px;
+    font-size: 12px; font-weight: 500;
+  }
+
+  /* ————— FOOTER ————— */
+  .footer {
+    background: var(--lkv-forest-950); color: #fff;
+    padding: 60px 60px 40px;
+  }
+  .footer .brand {
+    font-family: var(--lkv-font-sans);
+    font-size: 38px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1;
+    margin-bottom: 40px;
+    max-width: 720px;
+  }
+  .footer .brand em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .footer .bottom {
+    display: flex; justify-content: space-between;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 12px; color: rgba(255,255,255,0.4);
+  }
+
+  /* ================= MOBILE ================ */
+  .m-cover {
+    position: relative; height: 260px;
+    background-image: url('assets/mountain-1.jpg');
+    background-size: cover; background-position: center;
+  }
+  .m-cover::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0.4), transparent 30%, rgba(11,31,23,0.85));
+  }
+  .m-cover .top {
+    position: relative; z-index: 1;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 16px;
+  }
+  .m-cover .top .back, .m-cover .top .dot-b {
+    width: 34px; height: 34px; border-radius: 999px;
+    background: rgba(255,255,255,0.16); backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.24);
+    display: flex; align-items: center; justify-content: center; color: #fff;
+  }
+  .m-cover .top .dots { display: flex; gap: 6px; }
+
+  .m-hero-user {
+    position: absolute; left: 20px; right: 20px; bottom: 14px; z-index: 1;
+    color: #fff;
+    display: flex; gap: 14px; align-items: end;
+  }
+  .m-hero-user .av {
+    width: 74px; height: 74px; border-radius: 50%;
+    background-image: url('assets/portrait-1.jpg'); background-size: cover;
+    border: 3px solid rgba(255,255,255,0.9);
+    flex-shrink: 0;
+  }
+  .m-hero-user .txt h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 22px; font-weight: 500;
+    letter-spacing: -0.02em; line-height: 1.05;
+    margin: 0 0 4px;
+  }
+  .m-hero-user .txt h1 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-200); font-weight: 400; }
+  .m-hero-user .txt .m { font-size: 11px; color: rgba(255,255,255,0.75); }
+
+  .m-level {
+    margin: 14px 16px 0;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--lkv-forest-900), var(--lkv-forest-800));
+    color: #fff; border-radius: 16px;
+    position: relative; overflow: hidden;
+  }
+  .m-level::after {
+    content: ""; position: absolute; right: -30px; bottom: -30px;
+    width: 120px; height: 120px; border-radius: 50%;
+    background: radial-gradient(circle, var(--lkv-warm-500) 0%, transparent 65%);
+    opacity: 0.28;
+  }
+  .m-level > * { position: relative; z-index: 1; }
+  .m-level .row {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+  }
+  .m-level .row .badge {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--lkv-warm-500), var(--lkv-warm-300));
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-900); font-size: 16px;
+    flex-shrink: 0;
+  }
+  .m-level .row .txt { flex: 1; }
+  .m-level .row .txt .n {
+    font-size: 13px; font-weight: 500;
+    display: flex; align-items: baseline; gap: 6px;
+  }
+  .m-level .row .txt .n .p { font-family: var(--lkv-font-mono); font-size: 10px; color: var(--lkv-sage-300); }
+  .m-level .row .txt .to {
+    font-size: 9px; color: rgba(255,255,255,0.55);
+    letter-spacing: 0.12em; text-transform: uppercase; margin-top: 2px;
+  }
+  .m-level .bar {
+    height: 4px; background: rgba(255,255,255,0.14);
+    border-radius: 999px; overflow: hidden;
+  }
+  .m-level .bar .f {
+    height: 100%; width: 68%;
+    background: linear-gradient(90deg, var(--lkv-sage-300), var(--lkv-sage-500));
+  }
+
+  .m-tabs {
+    display: flex; padding: 12px 14px 0;
+    background: #fff; border-bottom: 1px solid rgba(11,31,23,0.06);
+    overflow-x: auto; scrollbar-width: none;
+    margin-top: 12px;
+  }
+  .m-tabs::-webkit-scrollbar { display: none; }
+  .m-tabs .t {
+    flex-shrink: 0;
+    padding: 8px 10px 12px;
+    font-size: 13px; font-weight: 500;
+    color: var(--lkv-ink-500);
+    position: relative;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .m-tabs .t.on { color: var(--lkv-forest-800); }
+  .m-tabs .t.on::after {
+    content: ""; position: absolute; left: 10px; right: 10px; bottom: 0;
+    height: 2px; background: var(--lkv-forest-800);
+    border-radius: 2px 2px 0 0;
+  }
+  .m-tabs .t .n {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 11px; color: var(--lkv-ink-400);
+  }
+
+  .m-body { padding: 12px 16px 90px; }
+  .m-block {
+    background: #fff; border-radius: 16px;
+    padding: 14px; margin-bottom: 10px;
+    box-shadow: var(--lkv-shadow-xs);
+  }
+  .m-block h4 {
+    font-family: var(--lkv-font-sans);
+    font-size: 15px; font-weight: 500; letter-spacing: -0.01em;
+    margin: 0 0 10px; color: var(--lkv-ink-900);
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .m-block h4 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .m-block h4 .n { font-size: 11px; color: var(--lkv-ink-500); font-weight: 400; }
+
+  .m-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .m-stat {
+    padding: 10px 12px; background: var(--lkv-stone-50); border-radius: 12px;
+  }
+  .m-stat .k { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lkv-ink-500); margin-bottom: 3px; }
+  .m-stat .v {
+    font-family: var(--lkv-font-sans);
+    font-size: 20px; font-weight: 500; letter-spacing: -0.02em;
+    color: var(--lkv-ink-900); line-height: 1;
+  }
+  .m-stat .v em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; font-size: 12px; margin-left: 2px; }
+
+  .m-next {
+    background: linear-gradient(135deg, var(--lkv-forest-900), var(--lkv-forest-800));
+    color: #fff; padding: 14px; border-radius: 14px;
+    margin-bottom: 10px;
+    position: relative; overflow: hidden;
+  }
+  .m-next::after {
+    content: ""; position: absolute; right: -30px; bottom: -30px;
+    width: 120px; height: 120px; border-radius: 50%;
+    background: radial-gradient(circle, var(--lkv-sage-500) 0%, transparent 65%);
+    opacity: 0.28;
+  }
+  .m-next > * { position: relative; z-index: 1; }
+  .m-next .row { display: flex; justify-content: space-between; align-items: baseline; }
+  .m-next .l {
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lkv-sage-300);
+    display: flex; align-items: center; gap: 5px;
+  }
+  .m-next .l .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--lkv-sage-300); }
+  .m-next .cd {
+    font-family: var(--lkv-font-sans); font-size: 26px; font-weight: 500;
+    letter-spacing: -0.02em; line-height: 1;
+  }
+  .m-next .cd em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .m-next h5 {
+    font-family: var(--lkv-font-sans); font-size: 16px; font-weight: 500;
+    letter-spacing: -0.01em; margin: 6px 0 2px;
+  }
+  .m-next h5 em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .m-next .p { font-size: 11px; color: rgba(255,255,255,0.7); margin-bottom: 10px; }
+  .m-next .bar { height: 4px; background: rgba(255,255,255,0.14); border-radius: 999px; overflow: hidden; margin-bottom: 6px; }
+  .m-next .bar .f { height: 100%; width: 62%; background: var(--lkv-sage-500); border-radius: 999px; }
+  .m-next .info-p { font-size: 10px; color: rgba(255,255,255,0.55); }
+
+  .m-adv {
+    display: grid; grid-template-columns: 56px 1fr auto;
+    gap: 10px; align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+  }
+  .m-adv:last-child { border-bottom: none; }
+  .m-adv .th { width: 56px; height: 40px; border-radius: 8px; background-size: cover; }
+  .m-adv .t { font-size: 13px; font-weight: 500; color: var(--lkv-ink-900); line-height: 1.2; }
+  .m-adv .t em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400; }
+  .m-adv .t .m { font-size: 10px; color: var(--lkv-ink-500); margin-top: 2px; font-weight: 400; }
+  .m-adv .st { padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 500; }
+  .m-adv .st.done { background: var(--lkv-sage-100); color: var(--lkv-forest-800); }
+  .m-adv .st.now { background: rgba(228,198,149,0.3); color: var(--lkv-warm-500); }
+
+  .m-club-row {
+    display: grid; grid-template-columns: 36px 1fr auto;
+    gap: 10px; align-items: center; padding: 8px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+  }
+  .m-club-row:last-child { border-bottom: none; }
+  .m-club-row .cov { width: 36px; height: 36px; border-radius: 10px; background-size: cover; }
+  .m-club-row .n { font-size: 12px; font-weight: 500; color: var(--lkv-ink-900); }
+  .m-club-row .n .m { font-size: 10px; color: var(--lkv-ink-500); margin-top: 2px; font-weight: 400; }
+  .m-club-row .cta { font-size: 10px; padding: 3px 8px; background: var(--lkv-stone-50); color: var(--lkv-forest-800); border-radius: 999px; font-weight: 500; }
+  .m-club-row .cta.unread { background: var(--lkv-forest-800); color: #fff; }
+
+  .m-badges { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .m-badges .bt {
+    aspect-ratio: 1;
+    background: var(--lkv-stone-50);
+    border-radius: 10px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; padding: 4px;
+  }
+  .m-badges .bt.earned {
+    background: linear-gradient(135deg, rgba(228,198,149,0.35), rgba(228,198,149,0.14));
+  }
+  .m-badges .bt .ic { color: var(--lkv-ink-400); }
+  .m-badges .bt.earned .ic { color: var(--lkv-warm-500); }
+  .m-badges .bt .l { font-size: 8px; color: var(--lkv-ink-500); letter-spacing: 0.02em; }
+  .m-badges .bt.earned .l { color: var(--lkv-ink-900); font-weight: 500; }
+
+  .m-tabbar {
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 10px 8px;
+    background: rgba(255,255,255,0.94); backdrop-filter: blur(24px);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 24px;
+    box-shadow: 0 8px 24px rgba(11,31,23,0.08);
+  }
+  .m-tabbar .tabi {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-500);
+  }
+  .m-tabbar .tabi.on { background: var(--lkv-forest-800); color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="stage-title">
+  <div>
+    <div class="h">Compte — Dashboard voyageur</div>
+    <div class="sub">Vue d'ensemble d'un utilisateur riche · aventures, carnets, clubs, fidélité</div>
+  </div>
+  <div class="links">
+    <a href="Index.html">← Index</a>
+    <a href="Compte - Paramètres.html">Paramètres</a>
+    <a href="Inventaire.html">Mon inventaire</a>
+    <a href="Clubs v2.html">Clubs</a>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ========== DESKTOP ========== -->
+  <div>
+  <div class="artboard-desktop">
+
+    <!-- HERO -->
+    <section class="c-hero">
+      <div class="bg"></div>
+
+      <nav class="top-nav top-nav-dark" style="margin: 0 20px;">
+        <div class="lkv-logo">
+          <svg viewBox="0 0 32 32" width="24" height="24" fill="none">
+            <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+          </svg>
+          <span>Le Kit du Voyageur</span>
+        </div>
+        <div class="links">
+          <a href="#">Aventures</a>
+          <a href="#">Refuges</a>
+          <a href="#">Boutique</a>
+          <a href="#">Carnet</a>
+          <a href="Clubs v2.html">Clubs</a>
+          <a href="#" class="active">Mon compte</a>
+        </div>
+        <div class="right">
+          <button class="lkv-btn lkv-btn-icon lkv-btn-ghost-light">
+            <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+          </button>
+          <button class="lkv-btn lkv-btn-icon lkv-btn-ghost-light">
+            <svg class="lkv-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          </button>
+        </div>
+      </nav>
+
+      <div class="breadcrumb">
+        <a href="#">Accueil</a>
+        <span class="sep">›</span>
+        <a href="#">Mon compte</a>
+        <span class="sep">›</span>
+        <span>Vue d'ensemble</span>
+      </div>
+
+      <div class="c-hero-body">
+        <div class="avatar">
+          <div class="edit" title="Changer la photo">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/></svg>
+          </div>
+        </div>
+        <div class="info">
+          <div class="eye"><span class="dot"></span>Voyageuse · Membre depuis mars 2023</div>
+          <h1>Marceline<br/><em>Chevrier.</em></h1>
+          <p class="bio">Randonneuse d'altitude basée à Grenoble. Je marche pour retrouver le silence, j'écris pour ne pas l'oublier. Trois massifs préférés : Chartreuse, Belledonne, Écrins.</p>
+          <div class="meta-row">
+            <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 22s-7-8-7-13a7 7 0 0114 0c0 5-7 13-7 13z"/><circle cx="12" cy="9" r="2.5"/></svg> Grenoble, Isère</span>
+            <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg> 3 ans · 42 sorties</span>
+            <span><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg> Actif il y a 2 h</span>
+          </div>
+        </div>
+        <div class="quick">
+          <button class="action-b primary">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/></svg>
+            Modifier profil
+          </button>
+          <button class="action-b">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+            Partager mon profil
+          </button>
+        </div>
+      </div>
+
+      <div class="level-strip">
+        <div class="lv">
+          <div class="badge">III</div>
+          <div class="txt">
+            <div class="n">Niveau <strong>Explorateur</strong> <span class="points">1 240 / 1 800 pts</span></div>
+            <div class="bar"><div class="f"></div></div>
+            <div class="to">Encore 560 pts avant « Guide »</div>
+          </div>
+        </div>
+        <div class="st"><div class="n">42<em> sorties</em></div><div class="l">Aventures faites</div></div>
+        <div class="st"><div class="n">12<em> carnets</em></div><div class="l">Récits publiés</div></div>
+        <div class="st"><div class="n">4<em> clubs</em></div><div class="l">Communautés</div></div>
+        <div class="st"><div class="n">786<em>km</em></div><div class="l">Cette année</div></div>
+      </div>
+    </section>
+
+    <!-- TABS -->
+    <nav class="c-tabs">
+      <button class="c-tab on">Vue d'ensemble</button>
+      <button class="c-tab">Aventures <span class="n">42</span></button>
+      <button class="c-tab">Carnets <span class="n">12</span><span class="badge-dot"></span></button>
+      <button class="c-tab">Clubs <span class="n">4</span></button>
+      <button class="c-tab">Commandes <span class="n">18</span></button>
+      <button class="c-tab">Fidélité <span class="n">1240</span></button>
+      <button class="c-tab">Paramètres</button>
+    </nav>
+
+    <!-- MAIN -->
+    <section class="c-main">
+
+      <!-- LEFT COLUMN -->
+      <div>
+
+        <!-- NEXT VOYAGE -->
+        <div class="next-voyage">
+          <div class="left">
+            <div class="eye"><span class="dot"></span>Prochain voyage · dans 16 jours</div>
+            <h4>Traversée de la<br/><em>Chartreuse.</em></h4>
+            <div class="place">12–14 oct. · avec Léna, Antoine et 4 autres · 3 refuges</div>
+            <div class="prep-bar"><div class="f"></div></div>
+            <div class="prep-info">
+              <span>Préparation 62 % · sac partiel</span>
+              <span>2 tâches restantes</span>
+            </div>
+          </div>
+          <div class="right">
+            <div class="cd">J-<em>16</em></div>
+            <div class="lbl">avant le départ</div>
+            <a href="#" class="cta">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12" style="color: var(--lkv-forest-800)"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              Ouvrir le cockpit
+            </a>
+          </div>
+        </div>
+
+        <!-- STATS QUICK -->
+        <div class="stats-grid">
+          <div class="stat-cell">
+            <div class="k">Distance 2026</div>
+            <div class="v">786<em>km</em></div>
+            <div class="trend"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 18l6-6 4 4 8-8"/></svg> +18 % vs 2025</div>
+          </div>
+          <div class="stat-cell">
+            <div class="k">Dénivelé cumulé</div>
+            <div class="v">32,4<em>km D+</em></div>
+            <div class="trend"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 18l6-6 4 4 8-8"/></svg> +2 400 m ce mois</div>
+          </div>
+          <div class="stat-cell">
+            <div class="k">Nuits en refuge</div>
+            <div class="v">28<em> nuits</em></div>
+            <div class="trend neutral">12 refuges différents</div>
+          </div>
+          <div class="stat-cell">
+            <div class="k">CO₂ économisé</div>
+            <div class="v">142<em>kg</em></div>
+            <div class="trend">vs équivalent avion</div>
+          </div>
+        </div>
+
+        <!-- AVENTURES -->
+        <div class="block">
+          <div class="head">
+            <div class="title">
+              <h3>Mes <em>aventures</em></h3>
+              <span class="badge-count"><strong>42</strong> terminées · 1 en cours · 2 planifiées</span>
+            </div>
+            <div class="actions">
+              <button class="b">Filtrer</button>
+              <button class="b">Année</button>
+              <a class="link" href="#">Tout voir →</a>
+            </div>
+          </div>
+          <div class="sub">Vos derniers voyages, du plus récent au plus ancien. Cliquez pour retrouver la trace GPX et les photos.</div>
+
+          <div class="adv-row">
+            <div class="thumb" style="background-image: url('assets/adventure-hiking.jpg')"></div>
+            <div class="info">
+              <div class="name">Traversée de la <em>Chartreuse</em></div>
+              <div class="meta">
+                <span>12–14 oct. 2026 · 3 jours</span>
+                <span class="sep">·</span>
+                <span class="with">
+                  <span class="avs">
+                    <span class="a" style="background-image: url('assets/portrait-2.jpg')"></span>
+                    <span class="a" style="background-image: url('assets/portrait-3.jpg')"></span>
+                    <span class="a" style="background-image: url('assets/portrait-4.jpg')"></span>
+                  </span>
+                  avec 5 autres
+                </span>
+              </div>
+            </div>
+            <div class="kpi"><strong>27,4 km</strong>1 620 m D+</div>
+            <div class="status-pill now">En cours</div>
+          </div>
+
+          <div class="adv-row">
+            <div class="thumb" style="background-image: url('assets/mountain-2.jpg')"></div>
+            <div class="info">
+              <div class="name">Arêtes du <em>Charmant Som</em></div>
+              <div class="meta">
+                <span>28 sept. 2026 · 1 jour</span>
+                <span class="sep">·</span>
+                <span class="with">
+                  <span class="avs">
+                    <span class="a" style="background-image: url('assets/portrait-2.jpg')"></span>
+                    <span class="a" style="background-image: url('assets/portrait-5.jpg')"></span>
+                  </span>
+                  Léna, Camille
+                </span>
+              </div>
+            </div>
+            <div class="kpi"><strong>14,2 km</strong>860 m D+</div>
+            <div class="status-pill done">Terminée</div>
+          </div>
+
+          <div class="adv-row">
+            <div class="thumb" style="background-image: url('assets/forest-1.jpg')"></div>
+            <div class="info">
+              <div class="name">Bivouac au <em>lac Achard</em></div>
+              <div class="meta">
+                <span>15 sept. 2026 · 2 jours</span>
+                <span class="sep">·</span>
+                <span class="with">
+                  <span class="avs">
+                    <span class="a" style="background-image: url('assets/portrait-3.jpg')"></span>
+                  </span>
+                  Antoine
+                </span>
+              </div>
+            </div>
+            <div class="kpi"><strong>18,6 km</strong>1 240 m D+</div>
+            <div class="status-pill done">Terminée</div>
+          </div>
+
+          <div class="adv-row">
+            <div class="thumb" style="background-image: url('assets/lake-1.jpg')"></div>
+            <div class="info">
+              <div class="name">Tour du <em>Belledonne</em> en 4 étapes</div>
+              <div class="meta">
+                <span>8–11 août 2026 · 4 jours</span>
+                <span class="sep">·</span>
+                <span>en solo</span>
+              </div>
+            </div>
+            <div class="kpi"><strong>68,4 km</strong>4 850 m D+</div>
+            <div class="status-pill done">Terminée</div>
+          </div>
+
+          <div class="adv-row">
+            <div class="thumb" style="background-image: url('assets/mountain-1.jpg')"></div>
+            <div class="info">
+              <div class="name">GR20 <em>partiel</em> · Étape Nord</div>
+              <div class="meta">
+                <span>Prévu 20 mai 2027 · 5 jours</span>
+                <span class="sep">·</span>
+                <span class="with">
+                  <span class="avs">
+                    <span class="a" style="background-image: url('assets/portrait-4.jpg')"></span>
+                    <span class="a" style="background-image: url('assets/portrait-6.jpg')"></span>
+                  </span>
+                  Julien, Sophie
+                </span>
+              </div>
+            </div>
+            <div class="kpi"><strong>85 km</strong>6 200 m D+</div>
+            <div class="status-pill draft">Brouillon</div>
+          </div>
+        </div>
+
+        <!-- CARNETS -->
+        <div class="block">
+          <div class="head">
+            <div class="title">
+              <h3>Mes <em>carnets</em> publiés</h3>
+              <span class="badge-count">12 récits · <strong>3 428 lectures</strong></span>
+            </div>
+            <div class="actions">
+              <button class="b">Brouillons</button>
+              <button class="b primary"><svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M12 4v16M4 12h16"/></svg>Nouveau</button>
+            </div>
+          </div>
+          <div class="sub">Vos publications visibles par la communauté. Un carnet peut aussi rester privé, en cours d'édition.</div>
+
+          <div class="carnet-grid">
+            <div class="carnet-card">
+              <div class="cov" style="background-image: url('assets/mountain-2.jpg')">
+                <span class="pub-pill">Publié</span>
+                <div class="cov-title">Trois jours sur les crêtes du Vercors</div>
+              </div>
+              <div class="body">
+                <div class="stats">
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg><strong>124</strong></span>
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg><strong>842</strong></span>
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><strong>18</strong></span>
+                </div>
+              </div>
+            </div>
+            <div class="carnet-card">
+              <div class="cov" style="background-image: url('assets/forest-1.jpg')">
+                <span class="pub-pill">Publié</span>
+                <div class="cov-title">Bivouac au lac Achard · nuit d'août</div>
+              </div>
+              <div class="body">
+                <div class="stats">
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg><strong>87</strong></span>
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg><strong>412</strong></span>
+                  <span><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><strong>9</strong></span>
+                </div>
+              </div>
+            </div>
+            <div class="carnet-card">
+              <div class="cov" style="background-image: url('assets/lake-1.jpg')">
+                <span class="pub-pill draft">Brouillon</span>
+                <div class="cov-title">Tour du Belledonne · 4 jours en solo</div>
+              </div>
+              <div class="body">
+                <div class="stats">
+                  <span style="color: var(--lkv-warm-500);"><svg class="lkv-icon" viewBox="0 0 24 24" width="10" height="10"><path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/></svg><strong>Édition</strong></span>
+                  <span>12 étapes rédigées</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CLUBS -->
+        <div class="block">
+          <div class="head">
+            <div class="title">
+              <h3>Mes <em>clubs</em></h3>
+              <span class="badge-count"><strong>4</strong> clubs · 1 en tant qu'admin</span>
+            </div>
+            <a class="link" href="Clubs v2.html">Explorer l'annuaire →</a>
+          </div>
+          <div class="sub">Vos communautés régulières. Ouvrez un club pour voir les prochaines sorties et le fil du groupe.</div>
+
+          <div class="club-mini">
+            <div class="cov" style="background-image: url('assets/club-alpin.jpg')"></div>
+            <div class="txt">
+              <div class="n">Club Alpin Grenoble</div>
+              <div class="m"><span class="role admin">Admin</span> · 248 membres · 3 sorties ce mois</div>
+            </div>
+            <a class="cta unread" href="Club - Détail.html">3 nouveaux</a>
+          </div>
+
+          <div class="club-mini">
+            <div class="cov" style="background-image: url('assets/club-bivouac.jpg')"></div>
+            <div class="txt">
+              <div class="n">Bivouacs Étoilés</div>
+              <div class="m"><span class="role">Membre</span> · 89 membres · prochaine sortie sam. 19</div>
+            </div>
+            <a class="cta" href="#">Ouvrir</a>
+          </div>
+
+          <div class="club-mini">
+            <div class="cov" style="background-image: url('assets/club-photo.jpg')"></div>
+            <div class="txt">
+              <div class="n">Photo de montagne</div>
+              <div class="m"><span class="role">Membre</span> · 156 membres · atelier vendredi</div>
+            </div>
+            <a class="cta" href="#">Ouvrir</a>
+          </div>
+
+          <div class="club-mini">
+            <div class="cov" style="background-image: url('assets/club-trail.jpg')"></div>
+            <div class="txt">
+              <div class="n">Trail Chartreuse</div>
+              <div class="m"><span class="role">Membre</span> · 122 membres</div>
+            </div>
+            <a class="cta" href="#">Ouvrir</a>
+          </div>
+        </div>
+
+        <!-- COMMANDES -->
+        <div class="block">
+          <div class="head">
+            <div class="title">
+              <h3>Commandes <em>& abonnements</em></h3>
+              <span class="badge-count"><strong>3</strong> en cours · abonnement Guide</span>
+            </div>
+            <a class="link" href="#">Historique complet →</a>
+          </div>
+          <div class="sub">Les dernières commandes passées sur la boutique, plus l'état de votre abonnement premium.</div>
+
+          <div class="order-row">
+            <div class="thumb" style="background-image: url('assets/gear-jacket.jpg')"></div>
+            <div class="info">
+              <div class="n">Veste Gore-Tex Arc'teryx Beta AR</div>
+              <div class="m">CMD-2026-1104 · 389 €</div>
+            </div>
+            <div class="status ship">Expédiée</div>
+          </div>
+          <div class="order-row">
+            <div class="thumb" style="background-image: url('assets/gear-headlamp.jpg')"></div>
+            <div class="info">
+              <div class="n">Frontale Petzl NAO RL 1500 lm</div>
+              <div class="m">CMD-2026-1098 · 189 €</div>
+            </div>
+            <div class="status wait">Préparation</div>
+          </div>
+          <div class="order-row">
+            <div class="thumb" style="background-image: url('assets/gear-boots.jpg')"></div>
+            <div class="info">
+              <div class="n">Chaussures Salomon Quest 4 GTX</div>
+              <div class="m">CMD-2026-1076 · 219 €</div>
+            </div>
+            <div class="status done">Livrée</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: SIDEBAR -->
+      <aside class="sidebar">
+
+        <!-- BADGES / GAMIFICATION -->
+        <div class="badges-panel">
+          <h3>Badges <em>& jalons</em></h3>
+          <div class="sub">18 badges gagnés sur 42 · 2 nouveaux ce mois</div>
+          <div class="b-grid">
+            <div class="badge-tile earned new">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="22" height="22"><path d="M3 20L12 4l9 16"/><path d="M12 4v16"/></svg>
+              <div class="l">Sommet 3000</div>
+            </div>
+            <div class="badge-tile earned new">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 5-5 2 2-5z"/></svg>
+              <div class="l">100 km</div>
+            </div>
+            <div class="badge-tile earned">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="22" height="22"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+              <div class="l">Auteur</div>
+            </div>
+            <div class="badge-tile earned">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="22" height="22"><path d="M6 8h12v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/><path d="M9 8V5a3 3 0 0 1 6 0v3"/></svg>
+              <div class="l">Sac léger</div>
+            </div>
+            <div class="badge-tile earned">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="22" height="22"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg>
+              <div class="l">Solidaire</div>
+            </div>
+            <div class="badge-tile locked">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="22" height="22"><path d="M4 20l6-10 4 6 3-4 3 8"/></svg>
+              <div class="l">Massif +5</div>
+            </div>
+            <div class="badge-tile locked">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+              <div class="l">Guide</div>
+            </div>
+            <div class="badge-tile locked">
+              <svg class="lkv-icon ic" viewBox="0 0 24 24" width="22" height="22"><path d="M2 20l4-16 6 10 6-10 4 16"/></svg>
+              <div class="l">GR complet</div>
+            </div>
+          </div>
+          <div class="foot">
+            <span>Prochain : <strong>Bivouac étoilé</strong> · 2 nuits restantes</span>
+            <a href="#" style="color: var(--lkv-sage-300);">Voir tout →</a>
+          </div>
+        </div>
+
+        <!-- STREAK / weekly -->
+        <div class="streak-card">
+          <div class="row">
+            <h4>Constance <em>hebdo</em></h4>
+            <div class="cnt">🔥 6</div>
+          </div>
+          <div class="sub">6 semaines consécutives avec au moins une sortie enregistrée.</div>
+          <div class="dots-week">
+            <div class="d on">L</div>
+            <div class="d">M</div>
+            <div class="d on">M</div>
+            <div class="d">J</div>
+            <div class="d on">V</div>
+            <div class="d">S</div>
+            <div class="d now">D</div>
+          </div>
+          <div class="weekly">
+            <span>Cette semaine · <strong>3 sorties</strong></span>
+            <span>Objectif : 2 · <strong>atteint</strong></span>
+          </div>
+        </div>
+
+        <!-- ACTIVITY -->
+        <div class="block activity-panel" style="margin-bottom: 0; padding: 22px;">
+          <div class="head" style="margin-bottom: 8px;">
+            <h3 style="font-size: 18px;">Activité <em>récente</em></h3>
+            <a class="link" href="#">Tout →</a>
+          </div>
+          <div class="sub" style="margin: 4px 0 12px; font-size: 12px;">Ce que la communauté a fait sur vos contenus.</div>
+
+          <div class="act">
+            <div class="glyph"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></div>
+            <div class="txt"><strong>Élise M.</strong> a aimé votre carnet <strong>Trois jours sur les crêtes</strong>.</div>
+            <div class="when">2 h</div>
+          </div>
+          <div class="act">
+            <div class="glyph warm"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg></div>
+            <div class="txt">Nouveau badge <strong>Sommet 3000</strong> débloqué après le lac Achard.</div>
+            <div class="when">hier</div>
+          </div>
+          <div class="act">
+            <div class="glyph done"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg></div>
+            <div class="txt">Commande <strong>CMD-2026-1076</strong> livrée · Chaussures Salomon.</div>
+            <div class="when">3 j</div>
+          </div>
+          <div class="act">
+            <div class="glyph"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+            <div class="txt"><strong>Antoine B.</strong> a commenté <strong>Bivouac au lac Achard</strong>.</div>
+            <div class="when">5 j</div>
+          </div>
+          <div class="act">
+            <div class="glyph"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+            <div class="txt"><strong>Julien M.</strong> vous suit désormais.</div>
+            <div class="when">1 sem.</div>
+          </div>
+        </div>
+
+        <!-- SUBSCRIPTION -->
+        <div class="block" style="margin-bottom: 0; padding: 22px;">
+          <div class="head" style="margin-bottom: 8px;">
+            <h3 style="font-size: 18px;">Abonnement <em>Guide</em></h3>
+          </div>
+          <div class="sub" style="margin: 4px 0 14px; font-size: 12px;">Renouvelé automatiquement le 4 février 2027.</div>
+          <div style="display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 14px; background: var(--lkv-sage-100); border-radius: 14px;">
+            <div>
+              <div style="font-size: 14px; font-weight: 500; color: var(--lkv-forest-800);">Guide · annuel</div>
+              <div style="font-size: 11px; color: var(--lkv-ink-500); margin-top: 3px;">Cartes hors-ligne, refuges réservables, -15 % boutique</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-family: var(--lkv-font-sans); font-size: 20px; font-weight: 500; color: var(--lkv-forest-800); letter-spacing: -0.02em;">89 €<em style="font-family: var(--lkv-font-serif); font-style: italic; font-size: 12px; color: var(--lkv-ink-500);">/an</em></div>
+              <div style="font-size: 10px; color: var(--lkv-forest-800); font-weight: 500; margin-top: 3px;">Actif</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 12px;">
+            <button class="lkv-btn lkv-btn-outline lkv-btn-sm" style="flex: 1;">Gérer</button>
+            <button class="lkv-btn lkv-btn-ghost lkv-btn-sm" style="flex: 1;">Facturation</button>
+          </div>
+        </div>
+
+        <!-- CTA INVENTAIRE -->
+        <div class="cta-inventaire">
+          <div class="eye"><span></span>Votre matériel</div>
+          <h4>47 articles pesés,<br/>4 <em>kits</em> assemblés.</h4>
+          <p>Un aperçu de tout votre équipement, avec les kits associés à chaque type de voyage.</p>
+          <a href="Inventaire.html" style="text-decoration: none;"><span class="chip">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="12" height="12"><path d="M6 8h12v12a2 2 0 01-2 2H8a2 2 0 01-2-2z"/><path d="M9 8V5a3 3 0 016 0v3"/></svg>
+            Ouvrir mon inventaire
+          </span></a>
+        </div>
+
+      </aside>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="brand">Chaque voyage laisse<br/>une <em>trace de vous.</em></div>
+      <div class="bottom">
+        <div>© 2026 Le Kit du Voyageur — Compte de Marceline Chevrier · membre depuis mars 2023</div>
+        <div>Charte · Confidentialité · Support</div>
+      </div>
+    </footer>
+
+  </div>
+  <div class="board-caption">Desktop · 1280 × 3800+</div>
+  </div>
+
+  <!-- ========== MOBILE ========== -->
+  <div>
+    <div class="artboard-mobile">
+      <div class="screen" style="overflow-y: auto;">
+
+        <div class="m-cover">
+          <div class="top">
+            <div class="back">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+            </div>
+            <div class="dots">
+              <div class="dot-b"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div>
+              <div class="dot-b"><svg class="lkv-icon" viewBox="0 0 24 24" width="14" height="14"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg></div>
+            </div>
+          </div>
+          <div class="m-hero-user">
+            <div class="av"></div>
+            <div class="txt">
+              <h1>Marceline <em>Chevrier</em></h1>
+              <div class="m">Grenoble · 42 sorties · niveau III</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="m-level">
+          <div class="row">
+            <div class="badge">III</div>
+            <div class="txt">
+              <div class="n">Explorateur <span class="p">1240 / 1800</span></div>
+              <div class="to">560 pts avant Guide</div>
+            </div>
+          </div>
+          <div class="bar"><div class="f"></div></div>
+        </div>
+
+        <div class="m-tabs">
+          <div class="t on">Vue</div>
+          <div class="t">Aventures <span class="n">42</span></div>
+          <div class="t">Carnets <span class="n">12</span></div>
+          <div class="t">Clubs <span class="n">4</span></div>
+          <div class="t">Cmd <span class="n">3</span></div>
+        </div>
+
+        <div class="m-body">
+
+          <div class="m-next">
+            <div class="row">
+              <div class="l"><span class="dot"></span>Prochain</div>
+              <div class="cd">J-<em>16</em></div>
+            </div>
+            <h5>Traversée <em>Chartreuse</em></h5>
+            <div class="p">12–14 oct. · Léna, Antoine +4</div>
+            <div class="bar"><div class="f"></div></div>
+            <div class="info-p">Prépa 62 % · 2 tâches restantes</div>
+          </div>
+
+          <div class="m-stats">
+            <div class="m-stat"><div class="k">Distance 2026</div><div class="v">786<em>km</em></div></div>
+            <div class="m-stat"><div class="k">Dénivelé</div><div class="v">32<em>km D+</em></div></div>
+            <div class="m-stat"><div class="k">Nuits refuge</div><div class="v">28</div></div>
+            <div class="m-stat"><div class="k">Constance</div><div class="v">🔥 6<em> sem.</em></div></div>
+          </div>
+
+          <div class="m-block">
+            <h4>Aventures <em>récentes</em> <span class="n">42 total</span></h4>
+            <div class="m-adv">
+              <div class="th" style="background-image: url('assets/adventure-hiking.jpg')"></div>
+              <div class="t">Traversée <em>Chartreuse</em><div class="m">12–14 oct. · 27,4 km</div></div>
+              <div class="st now">En cours</div>
+            </div>
+            <div class="m-adv">
+              <div class="th" style="background-image: url('assets/mountain-2.jpg')"></div>
+              <div class="t">Charmant <em>Som</em><div class="m">28 sept. · 14,2 km</div></div>
+              <div class="st done">Fait</div>
+            </div>
+            <div class="m-adv">
+              <div class="th" style="background-image: url('assets/forest-1.jpg')"></div>
+              <div class="t">Lac <em>Achard</em><div class="m">15 sept. · 18,6 km</div></div>
+              <div class="st done">Fait</div>
+            </div>
+            <div class="m-adv">
+              <div class="th" style="background-image: url('assets/lake-1.jpg')"></div>
+              <div class="t">Tour <em>Belledonne</em><div class="m">8–11 août · 68 km</div></div>
+              <div class="st done">Fait</div>
+            </div>
+          </div>
+
+          <div class="m-block">
+            <h4>Mes <em>clubs</em> <span class="n">4 clubs · 3 nouveaux</span></h4>
+            <div class="m-club-row">
+              <div class="cov" style="background-image: url('assets/club-alpin.jpg')"></div>
+              <div class="n">Club Alpin Grenoble<div class="m">Admin · 248 membres</div></div>
+              <div class="cta unread">3</div>
+            </div>
+            <div class="m-club-row">
+              <div class="cov" style="background-image: url('assets/club-bivouac.jpg')"></div>
+              <div class="n">Bivouacs Étoilés<div class="m">Membre · sortie sam. 19</div></div>
+              <div class="cta">Ouvrir</div>
+            </div>
+            <div class="m-club-row">
+              <div class="cov" style="background-image: url('assets/club-photo.jpg')"></div>
+              <div class="n">Photo montagne<div class="m">Membre · 156 membres</div></div>
+              <div class="cta">Ouvrir</div>
+            </div>
+          </div>
+
+          <div class="m-block">
+            <h4>Badges <em>gagnés</em> <span class="n">18 / 42</span></h4>
+            <div class="m-badges">
+              <div class="bt earned"><svg class="lkv-icon ic" viewBox="0 0 24 24" width="18" height="18"><path d="M3 20L12 4l9 16"/><path d="M12 4v16"/></svg><div class="l">Sommet 3000</div></div>
+              <div class="bt earned"><svg class="lkv-icon ic" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 5-5 2 2-5z"/></svg><div class="l">100 km</div></div>
+              <div class="bt earned"><svg class="lkv-icon ic" viewBox="0 0 24 24" width="18" height="18"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg><div class="l">Auteur</div></div>
+              <div class="bt earned"><svg class="lkv-icon ic" viewBox="0 0 24 24" width="18" height="18"><path d="M6 8h12v12H6z"/><path d="M9 8V5a3 3 0 016 0v3"/></svg><div class="l">Sac léger</div></div>
+              <div class="bt"><svg class="lkv-icon ic" viewBox="0 0 24 24" width="18" height="18"><path d="M4 20l6-10 4 6 3-4 3 8"/></svg><div class="l">Massif+5</div></div>
+              <div class="bt"><svg class="lkv-icon ic" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><div class="l">Guide</div></div>
+              <div class="bt"><svg class="lkv-icon ic" viewBox="0 0 24 24" width="18" height="18"><path d="M2 20l4-16 6 10 6-10 4 16"/></svg><div class="l">GR complet</div></div>
+              <div class="bt"><svg class="lkv-icon ic" viewBox="0 0 24 24" width="18" height="18"><rect x="4" y="6" width="16" height="14" rx="2"/></svg><div class="l">Cabane</div></div>
+            </div>
+          </div>
+
+          <div class="m-block">
+            <h4>Activité <em>récente</em></h4>
+            <div style="display: flex; flex-direction: column; gap: 6px; font-size: 12px;">
+              <div style="display: flex; gap: 8px; padding: 6px 0;">
+                <span style="width: 22px; height: 22px; border-radius: 50%; background: var(--lkv-sage-100); color: var(--lkv-forest-800); display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg class="lkv-icon" viewBox="0 0 24 24" width="11" height="11"><path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z"/></svg></span>
+                <span style="color: var(--lkv-ink-700);"><strong style="color: var(--lkv-ink-900);">Élise</strong> a aimé <strong>Trois jours sur les crêtes</strong> · 2 h</span>
+              </div>
+              <div style="display: flex; gap: 8px; padding: 6px 0;">
+                <span style="width: 22px; height: 22px; border-radius: 50%; background: rgba(228,198,149,0.35); color: var(--lkv-warm-500); display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg class="lkv-icon" viewBox="0 0 24 24" width="11" height="11"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg></span>
+                <span style="color: var(--lkv-ink-700);">Badge <strong style="color: var(--lkv-ink-900);">Sommet 3000</strong> débloqué · hier</span>
+              </div>
+              <div style="display: flex; gap: 8px; padding: 6px 0;">
+                <span style="width: 22px; height: 22px; border-radius: 50%; background: var(--lkv-forest-800); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg class="lkv-icon" viewBox="0 0 24 24" width="11" height="11" style="stroke-width: 2.4"><path d="M5 12l4 4L19 6"/></svg></span>
+                <span style="color: var(--lkv-ink-700);">Commande <strong style="color: var(--lkv-ink-900);">CMD-2026-1076</strong> livrée · 3 j</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="m-tabbar">
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M3 11l9-7 9 7v9a2 2 0 01-2 2h-4v-6h-6v6H5a2 2 0 01-2-2z"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M14 20c0-2 2-3 4-3s4 1 4 3"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M4 4h12l4 4v12a2 2 0 01-2 2H4z"/></svg></div>
+          <div class="tabi on"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">Mobile · 375 × 812 (scroll)</div>
+  </div>
+
+</div>
+
+</body>
+</html>

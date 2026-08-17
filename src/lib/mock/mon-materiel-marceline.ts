@@ -60,6 +60,8 @@ export interface LoanItemData {
   lender_id: string;
   borrower_id: string;
   borrower_name: string;
+  borrower_avatar?: string;
+  image?: string;
   loan_date: string;
   expected_return_date?: string;
   return_date?: string;
@@ -80,6 +82,7 @@ export interface RepairItemData {
   parts_replaced?: string[];
   status?: 'à faire' | 'en cours' | 'terminé';
   notes?: string;
+  image?: string;
 }
 
 export const INITIAL_GEAR_DATA: GearItemData[] = [];

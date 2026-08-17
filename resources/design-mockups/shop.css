@@ -1,0 +1,99 @@
+/* ============================================
+   LE KIT DU VOYAGEUR — Shared Components
+   Buttons, icons, cards, form fields
+   ============================================ */
+
+/* ——— Icon ——— */
+.lkv-icon {
+  width: 20px; height: 20px;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+/* ——— Logo ——— */
+.lkv-logo {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--lkv-font-sans);
+  font-size: 15px; font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* ——— Buttons ——— */
+.lkv-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px;
+  height: 40px; padding: 0 18px;
+  border-radius: 999px;
+  font-family: var(--lkv-font-sans);
+  font-size: 14px; font-weight: 500;
+  letter-spacing: -0.005em;
+  transition: background var(--lkv-dur) var(--lkv-ease),
+              color var(--lkv-dur) var(--lkv-ease),
+              transform var(--lkv-dur) var(--lkv-ease-out),
+              box-shadow var(--lkv-dur) var(--lkv-ease-out);
+  white-space: nowrap;
+}
+.lkv-btn:hover { transform: translateY(-1px); }
+.lkv-btn:active { transform: translateY(0); }
+
+.lkv-btn-primary {
+  background: var(--lkv-forest-800);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(31,74,58,0.24);
+}
+.lkv-btn-primary:hover { background: var(--lkv-forest-900); box-shadow: 0 8px 20px rgba(31,74,58,0.32); }
+
+.lkv-btn-light {
+  background: #fff;
+  color: var(--lkv-ink-900);
+  box-shadow: var(--lkv-shadow-sm);
+}
+.lkv-btn-light:hover { background: var(--lkv-stone-50); }
+
+.lkv-btn-ghost {
+  background: transparent;
+  color: var(--lkv-ink-700);
+}
+.lkv-btn-ghost:hover { background: rgba(11,31,23,0.05); color: var(--lkv-forest-800); }
+
+.lkv-btn-ghost-light {
+  background: rgba(255,255,255,0.14);
+  backdrop-filter: blur(16px);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.24);
+}
+.lkv-btn-ghost-light:hover { background: rgba(255,255,255,0.22); }
+
+.lkv-btn-outline {
+  background: transparent;
+  color: var(--lkv-forest-800);
+  border: 1px solid rgba(31,74,58,0.24);
+}
+.lkv-btn-outline:hover { background: rgba(31,74,58,0.06); border-color: var(--lkv-forest-800); }
+
+.lkv-btn-sm { height: 34px; padding: 0 14px; font-size: 13px; }
+.lkv-btn-lg { height: 48px; padding: 0 22px; font-size: 15px; }
+.lkv-btn-icon { padding: 0; width: 40px; }
+.lkv-btn-icon.lkv-btn-sm { width: 34px; }
+.lkv-btn-icon.lkv-btn-lg { width: 48px; }
+
+/* ——— Input ——— */
+.lkv-input {
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid rgba(11,31,23,0.10);
+  font-size: 14px;
+  color: var(--lkv-ink-900);
+  outline: none;
+  transition: border var(--lkv-dur) var(--lkv-ease), box-shadow var(--lkv-dur) var(--lkv-ease);
+}
+.lkv-input:focus {
+  border-color: var(--lkv-forest-800);
+  box-shadow: 0 0 0 3px rgba(31,74,58,0.10);
+}
+.lkv-input::placeholder { color: var(--lkv-ink-400); }

@@ -1,0 +1,950 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Home — Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<style>
+  body { background: #EAE6DF; padding: 40px 0; }
+
+  .stage-title {
+    max-width: 1720px; margin: 0 auto 32px; padding: 0 40px;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 24px;
+    color: var(--lkv-ink-700);
+  }
+  .stage-title .h { font-family: var(--lkv-font-sans); font-size: 24px; font-weight: 500; letter-spacing: -0.015em; color: var(--lkv-ink-900); }
+  .stage-title .sub { font-size: 14px; color: var(--lkv-ink-500); }
+  .stage-title a { color: var(--lkv-forest-800); font-weight: 500; margin-left: 24px; }
+
+  .stage {
+    display: flex; gap: 40px;
+    max-width: 1720px; margin: 0 auto; padding: 0 40px;
+    align-items: flex-start;
+  }
+
+  /* Desktop artboard: 1440 wide */
+  .artboard-desktop {
+    width: 1280px;
+    flex-shrink: 0;
+    border-radius: 32px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 30px 80px rgba(11,31,23,0.14);
+  }
+
+  /* Mobile artboard: 375 wide */
+  .artboard-mobile {
+    width: 380px;
+    flex-shrink: 0;
+    border-radius: 44px;
+    overflow: hidden;
+    background: #000;
+    padding: 12px;
+    box-shadow: 0 30px 80px rgba(11,31,23,0.18);
+    align-self: flex-start;
+  }
+  .artboard-mobile .screen {
+    width: 100%;
+    height: 780px;
+    border-radius: 34px;
+    overflow: hidden;
+    background: #fff;
+    position: relative;
+  }
+
+  /* ————————— HERO SHARED ————————— */
+  .hero {
+    position: relative;
+    padding: 20px;
+    min-height: 900px;
+    color: #fff;
+    overflow: hidden;
+  }
+  .hero .bg {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center;
+    z-index: 0;
+    transition: transform 800ms var(--lkv-ease-out), filter 800ms var(--lkv-ease-out);
+  }
+  .hero .bg::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0.25) 0%, rgba(11,31,23,0.05) 30%, rgba(11,31,23,0.55) 100%);
+  }
+  .hero > * { position: relative; z-index: 1; }
+
+  /* NAV */
+  .top-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 10px 10px 24px;
+    background: rgba(255,255,255,0.65);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.5);
+    box-shadow: 0 8px 24px rgba(11,31,23,0.08);
+    color: var(--lkv-ink-900);
+  }
+  .top-nav .lkv-logo { color: var(--lkv-forest-800); font-weight: 600; }
+  .top-nav .links { display: flex; gap: 28px; }
+  .top-nav .links a {
+    font-size: 14px; color: var(--lkv-ink-700);
+    transition: color var(--lkv-dur) var(--lkv-ease);
+    position: relative; padding: 6px 0;
+  }
+  .top-nav .links a:hover { color: var(--lkv-forest-800); }
+  .top-nav .links a.active {
+    color: var(--lkv-forest-800);
+  }
+  .top-nav .links a.active::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -2px;
+    height: 2px; background: var(--lkv-sage-500); border-radius: 2px;
+  }
+  .top-nav .right { display: flex; align-items: center; gap: 12px; }
+
+  /* HERO TITLE */
+  .hero-content {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 40px;
+    align-items: end;
+    padding: 100px 60px 60px;
+    min-height: 720px;
+  }
+  .hero-title {
+    font-family: var(--lkv-font-sans);
+    font-weight: 500;
+    font-size: 108px;
+    letter-spacing: -0.038em;
+    line-height: 0.94;
+    margin: 0 0 32px;
+    color: #fff;
+    text-wrap: balance;
+  }
+  .hero-title em {
+    font-family: var(--lkv-font-serif);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--lkv-sage-200);
+  }
+  .hero-lead {
+    max-width: 480px;
+    font-size: 18px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.86);
+    margin: 0 0 32px;
+  }
+  .hero-cta {
+    display: flex; gap: 12px; flex-wrap: wrap;
+  }
+
+  /* Booking card — right side */
+  .book-card {
+    padding: 26px;
+    border-radius: 28px;
+    color: #fff;
+    max-width: 380px;
+    margin-left: auto;
+  }
+  .book-card .eye {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.6); margin-bottom: 8px;
+  }
+  .book-card h4 {
+    font-size: 26px; font-weight: 500; letter-spacing: -0.02em;
+    line-height: 1.1; margin: 0 0 20px;
+  }
+  .book-card .row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;
+  }
+  .book-card .field {
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 14px;
+    transition: background var(--lkv-dur) var(--lkv-ease);
+  }
+  .book-card .field:hover { background: rgba(255,255,255,0.14); }
+  .book-card .field .k {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.55); margin-bottom: 4px;
+  }
+  .book-card .field .v { font-size: 14px; font-weight: 500; }
+  .book-card .price-row {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin: 18px 0 14px;
+  }
+  .book-card .price-row .price {
+    font-size: 32px; font-weight: 500; letter-spacing: -0.02em;
+  }
+  .book-card .price-row .price .u { font-size: 14px; opacity: 0.6; margin-left: 4px; }
+  .book-card .price-row .guests { font-size: 13px; color: rgba(255,255,255,0.7); }
+  .book-card .cta {
+    display: block; width: 100%; text-align: center;
+    padding: 15px; background: #fff; color: var(--lkv-ink-900);
+    border-radius: 999px; font-weight: 500; font-size: 15px;
+    transition: transform var(--lkv-dur-fast) var(--lkv-ease-out), box-shadow var(--lkv-dur) var(--lkv-ease-out);
+  }
+  .book-card .cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  }
+
+  /* Floating chips over hero */
+  .float-chips {
+    position: absolute;
+    display: flex; flex-direction: column; gap: 12px;
+    right: 60px; top: 130px;
+    z-index: 2;
+  }
+  .float-chips .lkv-chip { animation: floatY 6s var(--lkv-ease) infinite; }
+  .float-chips .lkv-chip:nth-child(2) { animation-delay: -2s; }
+  .float-chips .lkv-chip:nth-child(3) { animation-delay: -4s; }
+  @keyframes floatY {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+  }
+
+  /* Rating group */
+  .rating-block {
+    display: flex; align-items: center; gap: 28px;
+    margin-top: 40px;
+  }
+  .rating-block .r-star {
+    font-size: 60px; font-weight: 500; letter-spacing: -0.03em; line-height: 1;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .rating-block .r-star svg { fill: var(--lkv-warm-500); }
+  .rating-block .r-copy { color: rgba(255,255,255,0.75); font-size: 14px; line-height: 1.4; max-width: 200px; }
+
+  /* ————————— BELOW-HERO SECTIONS ————————— */
+  .hero-sub {
+    background: var(--lkv-paper);
+    padding: 96px 60px;
+  }
+  .sub-head {
+    display: flex; align-items: end; justify-content: space-between; margin-bottom: 40px;
+  }
+  .sub-head h2 {
+    font-family: var(--lkv-font-sans);
+    font-size: 52px; font-weight: 500;
+    letter-spacing: -0.028em; line-height: 1; margin: 0;
+  }
+  .sub-head h2 em {
+    font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .sub-head p {
+    max-width: 380px;
+    color: var(--lkv-ink-500); font-size: 15px; margin: 0;
+  }
+
+  .adv-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 20px;
+    height: 480px;
+  }
+  .adv-card {
+    position: relative;
+    border-radius: 28px;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+    color: #fff;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 24px;
+    transition: transform var(--lkv-dur) var(--lkv-ease-out);
+    cursor: pointer;
+  }
+  .adv-card::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(11,31,23,0.7));
+  }
+  .adv-card > * { position: relative; z-index: 1; }
+  .adv-card:hover { transform: translateY(-4px); }
+  .adv-card:hover .adv-arrow { transform: translate(4px, -4px); }
+  .adv-card .adv-top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  .adv-arrow {
+    width: 44px; height: 44px; border-radius: 999px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform var(--lkv-dur) var(--lkv-ease-out), background var(--lkv-dur) var(--lkv-ease);
+  }
+  .adv-card:hover .adv-arrow { background: rgba(255,255,255,0.28); }
+  .adv-card .adv-title {
+    font-size: 26px; font-weight: 500; letter-spacing: -0.015em; line-height: 1.1;
+    margin-bottom: 6px;
+  }
+  .adv-card .adv-meta {
+    display: flex; gap: 14px; font-size: 12px; opacity: 0.85;
+    letter-spacing: 0.02em;
+  }
+  .adv-card.small .adv-title { font-size: 22px; }
+
+  /* Editorial band */
+  .editorial-band {
+    padding: 96px 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    background: var(--lkv-forest-900);
+    color: #fff;
+  }
+  .editorial-band h2 {
+    font-family: var(--lkv-font-sans);
+    font-size: 68px; font-weight: 500;
+    letter-spacing: -0.032em; line-height: 0.98;
+    margin: 0 0 24px;
+  }
+  .editorial-band h2 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .editorial-band p {
+    font-size: 17px; line-height: 1.55;
+    color: rgba(255,255,255,0.75); margin: 0 0 32px;
+    max-width: 460px;
+  }
+  .editorial-num-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 40px;
+  }
+  .editorial-num .n {
+    font-size: 48px; font-weight: 500; letter-spacing: -0.03em; line-height: 1;
+    display: flex; align-items: baseline; gap: 6px;
+  }
+  .editorial-num .n em {
+    font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .editorial-num .l {
+    font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.55); margin-top: 8px;
+  }
+  .editorial-band .side {
+    position: relative;
+    border-radius: 28px;
+    overflow: hidden;
+    background-image: url('assets/adventure-hiking.jpg');
+    background-size: cover;
+    background-position: center;
+    min-height: 480px;
+  }
+  .editorial-band .side::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(11,31,23,0.55));
+  }
+  .side-cap {
+    position: absolute; left: 24px; bottom: 24px; z-index: 1;
+    color: #fff;
+  }
+  .side-cap .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255,255,255,0.7); }
+  .side-cap .v { font-size: 22px; font-weight: 500; letter-spacing: -0.015em; margin-top: 4px; }
+
+  /* Product band */
+  .product-band {
+    padding: 96px 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    background: var(--lkv-stone-50);
+  }
+  .product-visual {
+    background: var(--lkv-stone-100);
+    border-radius: 28px;
+    aspect-ratio: 1;
+    background-image: url('assets/product-backpack.jpg');
+    background-size: cover;
+    background-position: center;
+    position: relative;
+  }
+  .product-visual .badge {
+    position: absolute; top: 24px; left: 24px;
+  }
+  .product-copy h2 {
+    font-family: var(--lkv-font-sans);
+    font-size: 60px; font-weight: 500;
+    letter-spacing: -0.03em; line-height: 1;
+    margin: 0 0 20px;
+  }
+  .product-copy h2 em {
+    font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .product-copy p {
+    font-size: 17px; line-height: 1.55;
+    color: var(--lkv-ink-500); margin: 0 0 32px; max-width: 440px;
+  }
+  .spec-list { display: grid; grid-template-columns: 1fr 1fr; gap: 24px 40px; margin-bottom: 40px; }
+  .spec-list .spec .k {
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-ink-400); margin-bottom: 6px;
+  }
+  .spec-list .spec .v {
+    font-size: 20px; font-weight: 500; letter-spacing: -0.01em;
+    color: var(--lkv-ink-900);
+  }
+  .product-copy .price-lg {
+    font-size: 40px; font-weight: 500; letter-spacing: -0.02em;
+    color: var(--lkv-ink-900); margin-bottom: 20px;
+  }
+
+  /* Footer */
+  .footer {
+    padding: 80px 60px 40px;
+    background: var(--lkv-forest-950);
+    color: rgba(255,255,255,0.75);
+  }
+  .footer .brand {
+    font-family: var(--lkv-font-sans);
+    font-size: 44px; font-weight: 500; letter-spacing: -0.025em;
+    color: #fff; margin-bottom: 32px;
+    max-width: 640px;
+  }
+  .footer .brand em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; }
+  .footer .grid {
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 40px; padding: 40px 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .footer h5 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255,255,255,0.5); margin: 0 0 16px; font-weight: 500;}
+  .footer ul { list-style: none; padding: 0; margin: 0; }
+  .footer li { padding: 4px 0; font-size: 14px; }
+  .footer li a { transition: color var(--lkv-dur) var(--lkv-ease); }
+  .footer li a:hover { color: #fff; }
+  .footer .newsletter { display: flex; gap: 8px; margin-top: 8px; max-width: 400px; }
+  .footer .newsletter input {
+    flex: 1; padding: 12px 18px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 999px;
+    color: #fff; font-family: inherit; font-size: 14px;
+  }
+  .footer .newsletter input::placeholder { color: rgba(255,255,255,0.4); }
+  .footer .newsletter button {
+    padding: 12px 20px;
+    background: var(--lkv-sage-500);
+    color: var(--lkv-forest-950);
+    border-radius: 999px; font-weight: 500;
+    transition: background var(--lkv-dur) var(--lkv-ease);
+  }
+  .footer .newsletter button:hover { background: var(--lkv-sage-300); }
+  .footer .bottom {
+    display: flex; justify-content: space-between; padding-top: 24px;
+    font-size: 12px; color: rgba(255,255,255,0.4);
+  }
+
+  /* ————————— MOBILE ————————— */
+  .m-hero {
+    position: relative;
+    padding: 16px;
+    height: 100%;
+    color: #fff;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .m-hero .m-bg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    z-index: 0;
+  }
+  .m-hero .m-bg::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(11,31,23,0.3) 0%, rgba(11,31,23,0.1) 30%, rgba(11,31,23,0.75) 100%);
+  }
+  .m-hero > * { position: relative; z-index: 1; }
+
+  .m-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 10px 10px 16px;
+    background: rgba(255,255,255,0.65);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-radius: 999px;
+    color: var(--lkv-ink-900);
+    border: 1px solid rgba(255,255,255,0.5);
+  }
+  .m-nav .lkv-logo { color: var(--lkv-forest-800); font-size: 14px; }
+  .m-nav-btn {
+    width: 36px; height: 36px; border-radius: 999px;
+    background: var(--lkv-forest-800); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .m-title {
+    font-size: 44px; font-weight: 500; letter-spacing: -0.03em; line-height: 0.98;
+    margin: 24px 0 12px;
+    text-wrap: balance;
+  }
+  .m-title em { font-family: var(--lkv-font-serif); font-style: italic; color: var(--lkv-sage-200); font-weight: 400; }
+  .m-lead { font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.85); margin: 0 0 16px; }
+  .m-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+  .m-tags .lkv-chip { height: 30px; font-size: 12px; padding: 0 12px; }
+
+  .m-book {
+    margin-top: auto;
+    padding: 16px;
+    border-radius: 22px;
+  }
+  .m-book .row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;
+  }
+  .m-book .field {
+    background: rgba(255,255,255,0.08); padding: 8px 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.14);
+  }
+  .m-book .field .k { font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,255,255,0.55); }
+  .m-book .field .v { font-size: 13px; font-weight: 500; margin-top: 2px; }
+  .m-book .price-row {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin: 10px 0 10px;
+  }
+  .m-book .price { font-size: 24px; font-weight: 500; letter-spacing: -0.015em; }
+  .m-book .cta {
+    display: block; width: 100%; padding: 12px; text-align: center;
+    background: #fff; color: var(--lkv-ink-900);
+    border-radius: 999px; font-weight: 500; font-size: 14px;
+  }
+
+  /* Mobile tab bar */
+  .m-tab {
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-radius: 999px;
+    display: flex; justify-content: space-between; align-items: center;
+    border: 1px solid rgba(255,255,255,0.5);
+    box-shadow: 0 8px 24px rgba(11,31,23,0.15);
+    color: var(--lkv-ink-500);
+    z-index: 5;
+  }
+  .m-tab .tabi {
+    width: 34px; height: 34px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center;
+    transition: color var(--lkv-dur) var(--lkv-ease), background var(--lkv-dur) var(--lkv-ease);
+  }
+  .m-tab .tabi.on { background: var(--lkv-forest-800); color: #fff; }
+
+  /* Legend under artboard */
+  .board-caption {
+    font-size: 12px; text-align: center;
+    color: var(--lkv-ink-500); margin-top: 12px;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage-title">
+  <div>
+    <div class="h">Accueil · Le Kit du Voyageur</div>
+    <div class="sub">Desktop 1280 px + mobile 375 px · variante actuelle : <b id="v-label">Brumeux</b></div>
+  </div>
+  <div>
+    <a href="Index.html">← Hub</a>
+    <a href="Design System.html">Design System</a>
+    <a href="Recherche Carte.html">Recherche</a>
+    <a href="Detail Aventure.html">Détail</a>
+  </div>
+</div>
+
+<div class="stage">
+  <!-- ————————— DESKTOP ————————— -->
+  <div class="artboard-desktop" id="desktop">
+
+    <section class="hero">
+      <div class="bg" id="hero-bg"></div>
+
+      <nav class="top-nav">
+        <div class="lkv-logo">
+          <svg viewBox="0 0 32 32" width="24" height="24" fill="none">
+            <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+          </svg>
+          <span>Le Kit du Voyageur</span>
+        </div>
+        <div class="links">
+          <a href="Recherche Carte.html" class="active">Aventures</a>
+          <a href="#">Refuges</a>
+          <a href="#">Boutique</a>
+          <a href="#">Journal</a>
+          <a href="#">Communauté</a>
+        </div>
+        <div class="right">
+          <button class="lkv-btn lkv-btn-icon lkv-btn-ghost">
+            <svg class="lkv-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          </button>
+          <button class="lkv-btn lkv-btn-primary lkv-btn-sm">Se connecter</button>
+        </div>
+      </nav>
+
+      <div class="float-chips">
+        <div class="lkv-chip"><span class="dot"></span>Wi-Fi 100 Mbps</div>
+        <div class="lkv-chip"><span class="dot" style="background:var(--lkv-warm-500)"></span>Bivouac autorisé</div>
+        <div class="lkv-chip">Chien accepté</div>
+      </div>
+
+      <div class="hero-content">
+        <div>
+          <div style="display: inline-flex; align-items: center; gap: 12px; padding: 6px 14px; border-radius: 999px; background: rgba(255,255,255,0.14); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.25); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 32px;">
+            <span style="width: 6px; height: 6px; background: var(--lkv-sage-300); border-radius: 50%"></span>
+            Édition automne · 47 refuges partenaires
+          </div>
+          <h1 class="hero-title" id="hero-title">Là où la carte<br/><em>se termine.</em></h1>
+          <p class="hero-lead">Refuges bruts, sentiers oubliés, matériel choisi à la main. Le Kit du Voyageur assemble ce qu'il faut, exactement, pour partir léger — sans rien laisser au hasard.</p>
+          <div class="hero-cta">
+            <button class="lkv-btn lkv-btn-light lkv-btn-lg">
+              Composer mon sac
+              <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+            <button class="lkv-btn lkv-btn-ghost-light lkv-btn-lg">Voir les aventures</button>
+          </div>
+
+          <div class="rating-block">
+            <div class="r-star">
+              <svg viewBox="0 0 24 24" width="28" height="28"><path d="M12 2l2.6 5.5 6 .8-4.3 4.1 1 5.9L12 16.6 6.6 19.3l1-5.9L3.4 9.3l6-.8z"/></svg>
+              4,9
+            </div>
+            <div class="r-copy">1&nbsp;800+ voyageurs racontent leur séjour</div>
+          </div>
+        </div>
+
+        <div class="book-card lkv-glass-dark">
+          <div class="eye">Refuge en vedette</div>
+          <h4>Cabane du Grand Vaneau</h4>
+          <div class="row">
+            <div class="field"><div class="k">Arrivée</div><div class="v">Ven. 14 sept.</div></div>
+            <div class="field"><div class="k">Départ</div><div class="v">Lun. 17 sept.</div></div>
+          </div>
+          <div class="row">
+            <div class="field"><div class="k">Check-in</div><div class="v">après 16h00</div></div>
+            <div class="field"><div class="k">Check-out</div><div class="v">avant 11h00</div></div>
+          </div>
+          <div class="price-row">
+            <div class="price">248 €<span class="u">/ nuit</span></div>
+            <div class="guests">2–4 voyageurs</div>
+          </div>
+          <button class="cta">Réserver ces dates</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADVENTURES BAND -->
+    <section class="hero-sub">
+      <div class="sub-head">
+        <h2>Trois façons<br/>de se <em>perdre.</em></h2>
+        <p>Trois cartes qui suivent la même règle : moins d'équipement, plus de silence. Choisissez celle qui vous ressemble aujourd'hui.</p>
+      </div>
+
+      <div class="adv-grid">
+        <div class="adv-card" style="background-image: url('assets/adventure-hiking.jpg')">
+          <div class="adv-top">
+            <div class="lkv-chip"><span class="dot"></span>4 jours · 68 km</div>
+            <div class="adv-arrow">
+              <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>
+            </div>
+          </div>
+          <div>
+            <div class="adv-title">Chartreuse<br/>sentier des balcons</div>
+            <div class="adv-meta">
+              <span>+1&nbsp;620 m</span>
+              <span>Massif préalpin</span>
+              <span>Guide fourni</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="adv-card small" style="background-image: url('assets/adventure-bivouac.jpg')">
+          <div class="adv-top">
+            <div class="lkv-chip"><span class="dot" style="background:var(--lkv-warm-500)"></span>2 nuits</div>
+            <div class="adv-arrow">
+              <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>
+            </div>
+          </div>
+          <div>
+            <div class="adv-title">Bivouac étoilé<br/>Vercors</div>
+            <div class="adv-meta"><span>Plateau haut</span><span>Tente incluse</span></div>
+          </div>
+        </div>
+
+        <div class="adv-card small" style="background-image: url('assets/adventure-kayak.jpg')">
+          <div class="adv-top">
+            <div class="lkv-chip">1 jour</div>
+            <div class="adv-arrow">
+              <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>
+            </div>
+          </div>
+          <div>
+            <div class="adv-title">Kayak<br/>Serre-Ponçon</div>
+            <div class="adv-meta"><span>Lac glaciaire</span><span>Débutants OK</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EDITORIAL / STATS -->
+    <section class="editorial-band">
+      <div>
+        <div class="lkv-eyebrow" style="color: var(--lkv-sage-300); margin-bottom: 24px;">Notre promesse</div>
+        <h2>Un sac. Une carte.<br/>Le <em>reste</em> vient de vous.</h2>
+        <p>Nous testons chaque objet en conditions réelles pendant six semaines minimum. Ceux qui restent trouvent leur place dans le kit. Les autres retournent d'où ils viennent.</p>
+        <button class="lkv-btn lkv-btn-light">
+          Lire notre méthode
+          <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+        <div class="editorial-num-row">
+          <div class="editorial-num">
+            <div class="n">47<em>+</em></div>
+            <div class="l">Refuges partenaires</div>
+          </div>
+          <div class="editorial-num">
+            <div class="n">1<em>,4</em> kg</div>
+            <div class="l">Sac de base à sec</div>
+          </div>
+          <div class="editorial-num">
+            <div class="n">6<em> sem.</em></div>
+            <div class="l">Test terrain minimum</div>
+          </div>
+          <div class="editorial-num">
+            <div class="n">100<em>%</em></div>
+            <div class="l">Fabriqué en Europe</div>
+          </div>
+        </div>
+      </div>
+      <div class="side">
+        <div class="side-cap">
+          <div class="k">Reportage</div>
+          <div class="v">Trois jours dans la Chartreuse</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRODUCT -->
+    <section class="product-band">
+      <div class="product-visual">
+        <div class="badge">
+          <div class="lkv-chip"><span class="dot"></span>Édition automne</div>
+        </div>
+      </div>
+      <div class="product-copy">
+        <div class="lkv-eyebrow" style="margin-bottom: 24px;">Le sac essentiel</div>
+        <h2>45 L, <em>toile cirée,</em><br/>rien de superflu.</h2>
+        <p>Trois compartiments, une bandoulière ventrale, un point d'accroche pour tapis de sol. Fabriqué dans les Alpes-de-Haute-Provence, réparable à vie.</p>
+        <div class="spec-list">
+          <div class="spec"><div class="k">Volume</div><div class="v">45 litres</div></div>
+          <div class="spec"><div class="k">Poids à sec</div><div class="v">1,4 kg</div></div>
+          <div class="spec"><div class="k">Toile</div><div class="v">Coton huilé 12 oz</div></div>
+          <div class="spec"><div class="k">Garantie</div><div class="v">À vie</div></div>
+        </div>
+        <div class="price-lg">340 €</div>
+        <div style="display: flex; gap: 12px;">
+          <button class="lkv-btn lkv-btn-primary lkv-btn-lg">Ajouter au sac</button>
+          <button class="lkv-btn lkv-btn-ghost lkv-btn-lg">Voir la fiche</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="brand">Ce que vous emportez, <em>c'est votre voyage.</em></div>
+      <div class="grid">
+        <div>
+          <h5>Recevez le journal</h5>
+          <p style="font-size: 14px; margin: 0 0 12px; color: rgba(255,255,255,0.6);">Un envoi par saison. Refuges, sentiers, matériel. Rien d'autre.</p>
+          <div class="newsletter">
+            <input placeholder="votre@email.fr"/>
+            <button>S'abonner</button>
+          </div>
+        </div>
+        <div>
+          <h5>Découvrir</h5>
+          <ul>
+            <li><a href="#">Aventures</a></li>
+            <li><a href="#">Refuges</a></li>
+            <li><a href="#">Guides</a></li>
+            <li><a href="#">Communauté</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Boutique</h5>
+          <ul>
+            <li><a href="#">Le sac</a></li>
+            <li><a href="#">Bivouac</a></li>
+            <li><a href="#">Vêtements</a></li>
+            <li><a href="#">Livres & cartes</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Maison</h5>
+          <ul>
+            <li><a href="#">Notre méthode</a></li>
+            <li><a href="#">Ateliers</a></li>
+            <li><a href="#">Emploi</a></li>
+            <li><a href="#">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="bottom">
+        <div>© 2026 Le Kit du Voyageur — Grenoble, France</div>
+        <div>Mentions · Confidentialité · Cookies</div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ————————— MOBILE ————————— -->
+  <div>
+    <div class="artboard-mobile">
+      <div class="screen">
+        <div class="m-hero">
+          <div class="m-bg" id="m-bg"></div>
+
+          <nav class="m-nav">
+            <div class="lkv-logo">
+              <svg viewBox="0 0 32 32" width="20" height="20" fill="none">
+                <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+              </svg>
+              <span>Le Kit</span>
+            </div>
+            <button class="m-nav-btn">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            </button>
+          </nav>
+
+          <h1 class="m-title" id="m-title">Là où la carte <em>se termine.</em></h1>
+          <p class="m-lead">Refuges bruts, sentiers oubliés, matériel choisi à la main.</p>
+          <div class="m-tags">
+            <div class="lkv-chip"><span class="dot"></span>Wi-Fi</div>
+            <div class="lkv-chip">Bivouac</div>
+            <div class="lkv-chip">Chien OK</div>
+          </div>
+
+          <div class="m-book lkv-glass-dark">
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; opacity: 0.7; margin-bottom: 6px;">Refuge en vedette</div>
+            <div style="font-size: 20px; font-weight: 500; letter-spacing: -0.015em; margin-bottom: 12px;">Cabane du Grand Vaneau</div>
+            <div class="row">
+              <div class="field"><div class="k">Arrivée</div><div class="v">14 sept.</div></div>
+              <div class="field"><div class="k">Départ</div><div class="v">17 sept.</div></div>
+            </div>
+            <div class="price-row">
+              <div class="price">248 €<span style="font-size: 12px; opacity: 0.6"> /nuit</span></div>
+              <div style="font-size: 11px; opacity: 0.7">2–4 pers.</div>
+            </div>
+            <button class="cta">Réserver</button>
+          </div>
+
+        </div>
+
+        <div class="m-tab">
+          <div class="tabi on"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M9 4l-6 3v13l6-3 6 3 6-3V4l-6 3z"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg></div>
+          <div class="tabi"><svg class="lkv-icon" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">Mobile · 375 × 812</div>
+  </div>
+</div>
+
+<!-- ————————— TWEAKS ————————— -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="tweaks_panel.jsx"></script>
+
+<div id="tweaks-root"></div>
+
+<script type="text/babel">
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "variant": "misty",
+    "titleVariant": "poetic"
+  }/*EDITMODE-END*/;
+
+  const VARIANTS = {
+    misty:     { img: 'assets/hero-misty.jpg',     label: 'Brumeux', accent: 'var(--lkv-sage-200)' },
+    solar:     { img: 'assets/hero-solar.jpg',     label: 'Solaire', accent: 'var(--lkv-warm-300)' },
+    editorial: { img: 'assets/hero-editorial.jpg', label: 'Éditorial', accent: 'var(--lkv-sage-300)' }
+  };
+
+  const TITLES = {
+    poetic:  { d: 'Là où la carte<br/><em>se termine.</em>',    m: 'Là où la carte <em>se termine.</em>' },
+    action:  { d: 'Partir léger,<br/><em>revenir plein.</em>',   m: 'Partir léger, <em>revenir plein.</em>' },
+    place:   { d: 'Refuges, sentiers,<br/><em>silences.</em>',   m: 'Refuges, sentiers, <em>silences.</em>' }
+  };
+
+  function App() {
+    const { t, setTweak } = useTweaks(TWEAK_DEFAULTS);
+
+    React.useEffect(() => {
+      const v = VARIANTS[t.variant] || VARIANTS.misty;
+      document.getElementById('hero-bg').style.backgroundImage = `url('${v.img}')`;
+      document.getElementById('m-bg').style.backgroundImage = `url('${v.img}')`;
+      document.getElementById('v-label').textContent = v.label;
+
+      // recolour serif <em>
+      document.documentElement.style.setProperty('--hero-em', v.accent);
+      document.querySelectorAll('.hero-title em, .m-title em').forEach(el => {
+        el.style.color = v.accent;
+      });
+
+      const title = TITLES[t.titleVariant] || TITLES.poetic;
+      document.getElementById('hero-title').innerHTML = title.d;
+      document.getElementById('m-title').innerHTML = title.m;
+      // Re-apply color after innerHTML change
+      document.querySelectorAll('.hero-title em, .m-title em').forEach(el => { el.style.color = v.accent; });
+    }, [t.variant, t.titleVariant]);
+
+    return (
+      <TweaksPanel title="Tweaks · Home">
+        <TweakSection label="Variante visuelle du Hero">
+          <TweakRadio
+            value={t.variant}
+            options={[
+              { value: 'misty', label: 'Brumeux' },
+              { value: 'solar', label: 'Solaire' },
+              { value: 'editorial', label: 'Éditorial' }
+            ]}
+            onChange={v => setTweak('variant', v)}
+          />
+        </TweakSection>
+
+        <TweakSection label="Voix du titre">
+          <TweakRadio
+            value={t.titleVariant}
+            options={[
+              { value: 'poetic', label: 'Poétique' },
+              { value: 'action', label: 'Action' },
+              { value: 'place',  label: 'Lieux' }
+            ]}
+            onChange={v => setTweak('titleVariant', v)}
+          />
+        </TweakSection>
+
+        <TweakSuggestionBar suggestions={[
+          "Ajoute une variante nocturne (bivouac)",
+          "Rends le titre encore plus grand",
+          "Passe la nav en mode sombre"
+        ]} />
+      </TweaksPanel>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('tweaks-root')).render(<App />);
+</script>
+
+</body>
+</html>

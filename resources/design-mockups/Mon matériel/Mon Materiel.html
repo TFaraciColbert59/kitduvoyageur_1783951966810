@@ -1,0 +1,2308 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Mon Matériel · Cockpit — Le Kit du Voyageur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400;1,9..144,500&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ============= TOKENS LKDV — Liquid Glass Edition ============= */
+  :root {
+    /* Base palette (LKDV brand) */
+    --lkv-forest-950: #071a12;
+    --lkv-forest-900: #0b1f17;
+    --lkv-forest-800: #17402C;
+    --lkv-forest-700: #1f4a3a;
+    --lkv-forest-600: #2a6448;
+    --lkv-sage-500: #6f9e7f;
+    --lkv-sage-400: #8fb99f;
+    --lkv-sage-300: #b7d3bf;
+    --lkv-sage-200: #d5e4d8;
+    --lkv-sage-100: #e8f0eb;
+    --lkv-paper:    #FBFAF6;
+    --lkv-stone-100:#f0ede4;
+    --lkv-stone-50: #f6f4ec;
+    --lkv-warm-500: #c98a3d;
+    --lkv-warm-400: #d9a765;
+    --lkv-warm-300: #e4c695;
+    --lkv-ink-900:  #0b1f17;
+    --lkv-ink-700:  #29453a;
+    --lkv-ink-500:  #5b6e64;
+    --lkv-ink-400:  #7e8b83;
+    --lkv-ink-300:  #a0aaa4;
+
+    /* Glass system (bento sombre) */
+    --glass-bg:      rgba(11, 25, 20, 0.55);
+    --glass-bg-hi:   rgba(20, 40, 32, 0.62);
+    --glass-bg-lo:   rgba(8, 20, 15, 0.72);
+    --glass-brd:     rgba(255, 255, 255, 0.10);
+    --glass-brd-hi:  rgba(255, 255, 255, 0.16);
+    --glass-inner:   linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0) 40%);
+    --glass-shadow:  0 20px 60px -20px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.25);
+    --glass-blur:    28px;
+
+    --radius-xl: 28px;
+    --radius-l:  22px;
+    --radius-m:  16px;
+    --radius-s:  12px;
+    --radius-pill: 999px;
+
+    --font-sans:  "Inter", -apple-system, "SF Pro Display", "Helvetica Neue", Arial, system-ui, sans-serif;
+    --font-serif: "Fraunces", "Instrument Serif", "New York", ui-serif, Georgia, serif;
+    --font-mono:  "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+    --dur: 240ms;
+    --ease: cubic-bezier(.4,.14,.3,1);
+    --ease-out: cubic-bezier(.16,.84,.44,1);
+  }
+
+  * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    color: #f2f5f0;
+    background: #05100b;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  a { color: inherit; text-decoration: none; }
+  input, textarea { font-family: inherit; }
+
+  /* ============= FOND CINÉMATIQUE ============= */
+  .cine-bg {
+    position: fixed; inset: 0; z-index: -2;
+    background:
+      radial-gradient(ellipse at 20% 15%, rgba(23, 64, 44, 0.55), transparent 55%),
+      radial-gradient(ellipse at 85% 30%, rgba(38, 84, 62, 0.35), transparent 60%),
+      radial-gradient(ellipse at 60% 90%, rgba(8, 20, 15, 1), transparent 60%),
+      linear-gradient(180deg, #0a1a12 0%, #050d09 55%, #030807 100%);
+  }
+  .cine-bg::before {
+    content: ""; position: absolute; inset: 0;
+    /* Silhouettes de montagnes stylisées en SVG data-uri, doux flou */
+    background-image:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 900' preserveAspectRatio='xMidYMax slice'><defs><linearGradient id='g1' x1='0' x2='0' y1='0' y2='1'><stop offset='0' stop-color='%23122c1f' stop-opacity='0.9'/><stop offset='1' stop-color='%23050d09' stop-opacity='1'/></linearGradient><linearGradient id='g2' x1='0' x2='0' y1='0' y2='1'><stop offset='0' stop-color='%230d2018' stop-opacity='0.95'/><stop offset='1' stop-color='%23040a07' stop-opacity='1'/></linearGradient></defs><path d='M0 700 L120 560 L220 620 L360 480 L460 570 L580 430 L720 550 L860 470 L980 580 L1100 500 L1240 620 L1380 540 L1500 610 L1600 560 L1600 900 L0 900 Z' fill='url(%23g1)'/><path d='M0 780 L100 700 L240 740 L400 670 L520 720 L680 660 L820 730 L960 690 L1100 750 L1260 700 L1400 760 L1600 720 L1600 900 L0 900 Z' fill='url(%23g2)'/></svg>");
+    background-size: cover;
+    background-position: center bottom;
+    opacity: 0.7;
+    filter: blur(1.5px);
+  }
+  .cine-bg::after {
+    /* Halo lumineux vert + grain */
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 50% 5%, rgba(143, 185, 159, 0.14), transparent 45%),
+      radial-gradient(circle at 90% 80%, rgba(201, 138, 61, 0.10), transparent 40%);
+    pointer-events: none;
+  }
+  .grain {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    opacity: 0.06; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  /* ============= UTILS ============= */
+  .container { max-width: 1360px; margin: 0 auto; padding: 0 28px; }
+
+  /* Verre principal */
+  .glass {
+    position: relative;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-brd);
+    border-radius: var(--radius-xl);
+    backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+    box-shadow: var(--glass-shadow);
+    overflow: hidden;
+  }
+  .glass::before {
+    content: ""; position: absolute; inset: 0;
+    background: var(--glass-inner);
+    pointer-events: none;
+    border-radius: inherit;
+  }
+  .glass::after {
+    /* Fine ligne de highlight en haut */
+    content: ""; position: absolute; left: 12%; right: 12%; top: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+    pointer-events: none;
+  }
+  .glass > * { position: relative; z-index: 1; }
+
+  .glass-inner {
+    /* Petit conteneur intérieur */
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: var(--radius-m);
+  }
+
+  /* Boutons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 16px;
+    border-radius: var(--radius-pill);
+    font-size: 13px; font-weight: 500;
+    color: #f2f5f0;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--glass-brd);
+    transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
+    white-space: nowrap;
+  }
+  .btn:hover { background: rgba(255,255,255,0.12); }
+  .btn:active { transform: scale(0.98); }
+  .btn.solid {
+    background: #f2f5f0; color: var(--lkv-forest-900);
+    border-color: transparent;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+  }
+  .btn.solid:hover { background: #fff; }
+  .btn.forest {
+    background: var(--lkv-forest-800); color: #fff;
+    border-color: rgba(255,255,255,0.12);
+  }
+  .btn.forest:hover { background: var(--lkv-forest-700); }
+  .btn.sage {
+    background: var(--lkv-sage-500); color: #071a12;
+    border-color: transparent; font-weight: 600;
+  }
+  .btn.sage:hover { background: var(--lkv-sage-400); }
+  .btn.ghost { background: transparent; }
+  .btn.sm { padding: 6px 12px; font-size: 12px; gap: 5px; }
+  .btn.xs { padding: 4px 10px; font-size: 11px; gap: 4px; }
+  .btn .ic { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .btn.icon-only { padding: 10px; }
+  .btn.icon-only .ic { width: 16px; height: 16px; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: var(--radius-pill);
+    font-size: 11px; color: rgba(242, 245, 240, 0.75);
+    letter-spacing: 0.02em;
+  }
+  .chip.sage   { background: rgba(111,158,127,0.18); color: #d5e4d8; border-color: rgba(111,158,127,0.35); }
+  .chip.warm   { background: rgba(201,138,61,0.18);  color: #e4c695; border-color: rgba(201,138,61,0.32); }
+  .chip.forest { background: rgba(23,64,44,0.7);     color: #d5e4d8; border-color: rgba(143,185,159,0.35); }
+  .chip .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .chip .dot.pulse { animation: pulse 2s var(--ease) infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.5); } }
+
+  .eyebrow {
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: rgba(242, 245, 240, 0.55);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-sage-400); }
+
+  h1, h2, h3, h4 { margin: 0; font-weight: 500; letter-spacing: -0.018em; }
+  h1 em, h2 em, h3 em, h4 em, .em {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--lkv-sage-300);
+  }
+
+  /* Icônes stroke génériques */
+  .ic { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ============= NAV ============= */
+  .nav-wrap { position: sticky; top: 16px; z-index: 80; padding: 16px 28px 0; }
+  .nav {
+    max-width: 1360px; margin: 0 auto;
+    display: grid; grid-template-columns: auto 1fr auto; align-items: center;
+    gap: 18px;
+    padding: 10px 14px 10px 20px;
+    background: rgba(8, 18, 14, 0.6);
+    border: 1px solid var(--glass-brd);
+    border-radius: var(--radius-pill);
+    backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    box-shadow: var(--glass-shadow);
+  }
+  .nav .brand {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    color: #f2f5f0;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    padding-right: 14px;
+    border-right: 1px solid rgba(255,255,255,0.08);
+    margin-right: 4px;
+  }
+  .nav .brand svg { color: var(--lkv-sage-300); }
+  .nav .brand em { font-family: var(--font-serif); font-style: italic; color: var(--lkv-sage-300); font-weight: 400; margin-left: 2px; }
+
+  .nav .links {
+    display: flex; align-items: center; gap: 4px;
+    justify-self: center;
+  }
+  .nav .links a {
+    padding: 8px 14px; font-size: 13px; font-weight: 500;
+    color: rgba(242, 245, 240, 0.7);
+    border-radius: var(--radius-pill);
+    transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+  }
+  .nav .links a:hover { color: #fff; background: rgba(255,255,255,0.06); }
+  .nav .links a.active {
+    color: #071a12;
+    background: var(--lkv-sage-300);
+  }
+
+  .nav .right { display: inline-flex; align-items: center; gap: 6px; }
+  .nav .search-mini {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--glass-brd);
+    border-radius: var(--radius-pill);
+    color: rgba(242, 245, 240, 0.7);
+    font-size: 12px;
+    min-width: 200px;
+  }
+  .nav .search-mini kbd {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 2px 6px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 6px;
+    color: rgba(242, 245, 240, 0.6);
+  }
+  .nav .icon-btn {
+    width: 38px; height: 38px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--glass-brd);
+    color: #f2f5f0;
+    position: relative;
+  }
+  .nav .icon-btn .ic { width: 16px; height: 16px; }
+  .nav .icon-btn .cart-badge {
+    position: absolute; top: -4px; right: -4px;
+    min-width: 18px; height: 18px; padding: 0 5px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--lkv-warm-400); color: var(--lkv-forest-900);
+    border: 2px solid #0b1912;
+    border-radius: 999px;
+    font-size: 10px; font-weight: 600;
+    font-family: var(--font-mono);
+  }
+  .nav .avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--lkv-warm-400), var(--lkv-warm-500));
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #071a12; font-weight: 600; font-size: 13px;
+    border: 1px solid rgba(255,255,255,0.16);
+  }
+
+  /* ============= PAGE HEADER ============= */
+  .page-head {
+    padding: 40px 0 24px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 24px;
+  }
+  .page-head .title-block h1 {
+    font-family: var(--font-sans);
+    font-size: 56px;
+    line-height: 1.02;
+    letter-spacing: -0.028em;
+    color: #f6f8f4;
+  }
+  .page-head .title-block h1 em {
+    color: var(--lkv-sage-300);
+  }
+  .page-head .title-block p {
+    margin: 12px 0 0;
+    font-size: 15px; color: rgba(242, 245, 240, 0.6);
+    max-width: 640px;
+    line-height: 1.5;
+  }
+  .page-head .meta {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+    color: rgba(242, 245, 240, 0.7); font-size: 12px;
+  }
+  .page-head .meta .live { display: inline-flex; align-items: center; gap: 6px; }
+  .page-head .meta .live .dot { width: 8px; height: 8px; border-radius: 50%; background: #7dd58c; box-shadow: 0 0 12px #7dd58c; animation: pulse 2s var(--ease) infinite; }
+
+  /* ============= BENTO SECTIONS ============= */
+  section { margin-bottom: 24px; }
+
+  /* ============= SECTION 1 · CONFIGURATEUR IA ============= */
+  .ai-hero {
+    padding: 28px 32px 32px;
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 32px;
+    align-items: stretch;
+  }
+  .ai-hero .left {
+    display: flex; flex-direction: column;
+    gap: 18px;
+  }
+  .ai-hero .brand-row {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .ai-hero .ai-badge {
+    width: 44px; height: 44px; border-radius: 14px;
+    background: linear-gradient(140deg, var(--lkv-sage-400), var(--lkv-forest-700));
+    display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 24px rgba(111,158,127,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+    position: relative;
+  }
+  .ai-hero .ai-badge svg { color: #f2f5f0; }
+  .ai-hero .ai-badge::after {
+    content: ""; position: absolute; inset: -6px; border-radius: 18px;
+    border: 1px solid rgba(143,185,159,0.35);
+    opacity: 0.7;
+  }
+  .ai-hero h2 {
+    font-size: 34px; line-height: 1.05; color: #f6f8f4;
+    letter-spacing: -0.024em;
+  }
+  .ai-hero h2 em { color: var(--lkv-sage-300); }
+  .ai-hero .sub {
+    color: rgba(242, 245, 240, 0.62);
+    font-size: 14px; line-height: 1.5;
+    max-width: 480px;
+  }
+  .ai-input {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 6px 6px 18px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: var(--radius-pill);
+    transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+  }
+  .ai-input:focus-within { border-color: rgba(143,185,159,0.55); background: rgba(255,255,255,0.09); }
+  .ai-input .ic { color: rgba(242, 245, 240, 0.55); width: 16px; height: 16px; }
+  .ai-input input {
+    flex: 1;
+    background: none; border: none; outline: none;
+    color: #f2f5f0;
+    font-size: 14px; padding: 12px 0;
+  }
+  .ai-input input::placeholder { color: rgba(242, 245, 240, 0.45); font-style: italic; font-family: var(--font-serif); font-size: 15px; }
+  .ai-hero .hint {
+    font-size: 11px; color: rgba(242, 245, 240, 0.42);
+    padding-left: 4px;
+  }
+
+  .ai-hero .right {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .preset {
+    padding: 16px;
+    border-radius: var(--radius-m);
+    background: rgba(255,255,255,0.045);
+    border: 1px solid rgba(255,255,255,0.08);
+    text-align: left;
+    color: #f2f5f0;
+    display: flex; flex-direction: column; gap: 8px;
+    transition: transform var(--dur) var(--ease), background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    position: relative;
+    overflow: hidden;
+  }
+  .preset:hover {
+    transform: translateY(-2px);
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(143,185,159,0.35);
+  }
+  .preset .p-ic {
+    width: 32px; height: 32px; border-radius: 10px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(143,185,159,0.14);
+    color: var(--lkv-sage-300);
+  }
+  .preset .p-ic.warm { background: rgba(201,138,61,0.16); color: var(--lkv-warm-300); }
+  .preset .p-ic.forest { background: rgba(23,64,44,0.5); color: var(--lkv-sage-200); }
+  .preset .p-ic.sage { background: rgba(111,158,127,0.22); color: var(--lkv-sage-200); }
+  .preset .p-name {
+    font-size: 13px; font-weight: 500; line-height: 1.25; color: #f6f8f4;
+  }
+  .preset .p-name em { color: var(--lkv-sage-300); }
+  .preset .p-meta {
+    font-size: 11px; color: rgba(242, 245, 240, 0.55);
+    display: flex; align-items: center; gap: 6px;
+    font-family: var(--font-mono);
+  }
+  .preset .p-meta .sep { opacity: 0.4; }
+
+  /* ============= SECTION 2 · HERO POIDS ============= */
+  .weight-hero {
+    padding: 26px 30px;
+    display: grid;
+    grid-template-columns: 1.15fr 1.5fr auto;
+    gap: 28px;
+    align-items: center;
+  }
+  .weight-hero .headline .eyebrow { margin-bottom: 10px; }
+  .weight-hero .headline h3 {
+    font-family: var(--font-sans);
+    font-size: 22px;
+    color: #f6f8f4;
+    line-height: 1.15;
+    letter-spacing: -0.018em;
+  }
+  .weight-hero .headline h3 em { color: var(--lkv-sage-300); }
+  .weight-hero .metric {
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .weight-hero .metric .big {
+    font-family: var(--font-sans);
+    font-size: 68px; font-weight: 500;
+    letter-spacing: -0.038em;
+    line-height: 1;
+    color: #f6f8f4;
+    display: flex; align-items: baseline; gap: 8px;
+  }
+  .weight-hero .metric .big .u {
+    font-family: var(--font-serif); font-style: italic;
+    font-size: 22px; color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .weight-hero .metric .big .sub-u {
+    margin-left: 10px;
+    font-size: 12px; color: rgba(242, 245, 240, 0.5);
+    align-self: center;
+    font-family: var(--font-mono);
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-brd);
+  }
+  .weight-hero .repartition {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .weight-hero .bar-seg {
+    display: flex;
+    height: 12px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .weight-hero .bar-seg .seg { transition: filter 0.2s var(--ease); }
+  .weight-hero .bar-seg .seg:hover { filter: brightness(1.2); }
+  .weight-hero .legend {
+    display: flex; flex-wrap: wrap; gap: 14px 20px;
+    font-size: 11px; color: rgba(242, 245, 240, 0.68);
+  }
+  .weight-hero .legend .lg-i { display: inline-flex; align-items: center; gap: 6px; }
+  .weight-hero .legend .lg-i .sw { width: 8px; height: 8px; border-radius: 3px; }
+  .weight-hero .legend strong { color: #f2f5f0; font-weight: 500; }
+
+  .weight-hero .side-stats {
+    display: grid; grid-template-columns: 1fr; gap: 8px;
+    padding-left: 24px;
+    border-left: 1px solid rgba(255,255,255,0.08);
+  }
+  .weight-hero .side-stats .st .k { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(242, 245, 240, 0.5); }
+  .weight-hero .side-stats .st .v {
+    font-family: var(--font-sans); font-size: 18px; font-weight: 500;
+    letter-spacing: -0.02em; color: #f6f8f4; margin-top: 3px;
+  }
+  .weight-hero .side-stats .st .v em { font-family: var(--font-serif); font-style: italic; font-size: 12px; color: var(--lkv-sage-300); font-weight: 400; margin-left: 2px; }
+
+  /* Couleurs des familles */
+  :root {
+    --fam-couchage:  #8FB99F;
+    --fam-portage:   #E4C695;
+    --fam-vetements: #B7D3BF;
+    --fam-cuisine:   #D9A765;
+    --fam-securite:  #7DA6C6;
+    --fam-nav:       #C9A6D9;
+    --fam-hydra:     #9ABDD6;
+  }
+
+  /* ============= SECTION 3 · DÉPART ============= */
+  .departure {
+    padding: 0;
+  }
+  .departure .dep-top {
+    padding: 22px 28px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .departure .dep-title {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .departure .dep-title .dep-eye {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px;
+    background: rgba(201,138,61,0.16);
+    border: 1px solid rgba(201,138,61,0.35);
+    border-radius: 999px;
+    font-size: 11px; color: var(--lkv-warm-300);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    font-weight: 500;
+  }
+  .departure .dep-title .dep-eye svg { width: 12px; height: 12px; }
+  .departure h3 {
+    font-size: 24px; color: #f6f8f4;
+  }
+  .departure h3 em { color: var(--lkv-sage-300); }
+  .departure .dep-title .date {
+    font-family: var(--font-mono);
+    font-size: 12px; color: rgba(242, 245, 240, 0.6);
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(255,255,255,0.04); border: 1px solid var(--glass-brd);
+  }
+
+  .hike-tabs {
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+  .hike-tab {
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-brd);
+    border-radius: 999px;
+    font-size: 11px;
+    color: rgba(242, 245, 240, 0.6);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .hike-tab.on { background: var(--lkv-sage-300); color: #071a12; border-color: transparent; font-weight: 500; }
+  .hike-tab .d { font-family: var(--font-mono); font-size: 10px; opacity: 0.75; }
+
+  /* Grid 3 cartes clés + alert delivery + checklist */
+  .dep-body {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 20px 24px;
+  }
+  .dep-card {
+    padding: 18px 20px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-l);
+    position: relative;
+    overflow: hidden;
+  }
+  .dep-card h4 {
+    font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: rgba(242, 245, 240, 0.5);
+    margin-bottom: 14px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .dep-card h4 .ico {
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(143,185,159,0.14); color: var(--lkv-sage-300);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .dep-card .big-val {
+    font-family: var(--font-sans);
+    font-size: 30px; font-weight: 500;
+    letter-spacing: -0.02em;
+    color: #f6f8f4; line-height: 1;
+    display: flex; align-items: baseline; gap: 6px;
+  }
+  .dep-card .big-val .u {
+    font-family: var(--font-serif); font-style: italic;
+    font-size: 15px; color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .dep-card .sub-val {
+    font-size: 12px; color: rgba(242, 245, 240, 0.55); margin-top: 6px;
+  }
+  .dep-card .row-mini {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 12px;
+    font-size: 11px; color: rgba(242, 245, 240, 0.6);
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .dep-card .row-mini strong { color: #f2f5f0; font-weight: 500; }
+
+  .prep-ring {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .prep-ring .ring {
+    width: 56px; height: 56px; position: relative; flex-shrink: 0;
+  }
+  .prep-ring .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .prep-ring .ring .track { stroke: rgba(255,255,255,0.08); }
+  .prep-ring .ring .fill { stroke: var(--lkv-sage-400); transition: stroke-dashoffset 1s var(--ease); }
+  .prep-ring .ring .val {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-sans); font-size: 14px; font-weight: 500;
+    color: #f6f8f4;
+  }
+
+  .weather-strip {
+    display: flex; gap: 6px; margin-top: 14px;
+  }
+  .weather-strip .wt {
+    flex: 1;
+    padding: 8px 6px;
+    text-align: center;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .weather-strip .wt .h { font-size: 9px; color: rgba(242, 245, 240, 0.5); font-family: var(--font-mono); letter-spacing: 0.06em; margin-bottom: 4px; }
+  .weather-strip .wt .t { font-size: 13px; color: #f2f5f0; font-weight: 500; }
+  .weather-strip .wt .t .u { font-family: var(--font-serif); font-style: italic; font-size: 10px; color: var(--lkv-sage-300); }
+  .weather-strip .wt .em { font-size: 14px; margin-bottom: 2px; }
+
+  /* Delivery alert */
+  .delivery-alert {
+    margin: 0 24px 20px;
+    padding: 14px 18px;
+    background: rgba(201,138,61,0.12);
+    border: 1px solid rgba(201,138,61,0.35);
+    border-radius: var(--radius-m);
+    display: flex; align-items: center; gap: 14px;
+    color: #e4c695;
+    font-size: 13px;
+  }
+  .delivery-alert .ic-box {
+    width: 32px; height: 32px; border-radius: 10px;
+    background: rgba(201,138,61,0.2); color: var(--lkv-warm-300);
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .delivery-alert strong { color: #f6d999; font-weight: 500; }
+
+  /* Checklist 4 zones */
+  .checklist-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 0 24px 22px;
+  }
+  .cl-col {
+    padding: 16px 16px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-l);
+  }
+  .cl-col .cl-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .cl-col .cl-head .t {
+    font-size: 12px; font-weight: 500; color: #f6f8f4;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .cl-col .cl-head .t .em { font-size: 14px; }
+  .cl-col .cl-head .count {
+    font-family: var(--font-mono);
+    font-size: 10px; color: rgba(242, 245, 240, 0.55);
+    padding: 2px 8px; border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+  }
+  .cl-col .cl-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 0;
+    font-size: 12px; color: rgba(242, 245, 240, 0.85);
+    cursor: pointer;
+    user-select: none;
+    transition: color var(--dur) var(--ease);
+  }
+  .cl-col .cl-item .cbox {
+    width: 18px; height: 18px; border-radius: 6px;
+    background: rgba(255,255,255,0.06);
+    border: 1.5px solid rgba(255,255,255,0.18);
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all var(--dur) var(--ease);
+  }
+  .cl-col .cl-item .cbox svg {
+    width: 12px; height: 12px; stroke: #071a12; stroke-width: 3;
+    fill: none; stroke-linecap: round; stroke-linejoin: round;
+    opacity: 0;
+  }
+  .cl-col .cl-item.done { color: rgba(242, 245, 240, 0.42); text-decoration: line-through; text-decoration-color: rgba(242, 245, 240, 0.25); }
+  .cl-col .cl-item.done .cbox { background: var(--lkv-sage-400); border-color: var(--lkv-sage-400); }
+  .cl-col .cl-item.done .cbox svg { opacity: 1; }
+  .cl-col .cl-item .meta { margin-left: auto; font-family: var(--font-mono); font-size: 10px; color: rgba(242, 245, 240, 0.5); }
+
+  .cl-col.warm .cl-head .t { color: #e4c695; }
+  .cl-col.alert .cl-head .t { color: #f2a4a0; }
+  .cl-col.suggest .cl-head .t { color: var(--lkv-sage-300); }
+
+  /* Final CTA */
+  .dep-cta {
+    padding: 16px 24px 24px;
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .dep-cta .ready {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 13px; color: rgba(242, 245, 240, 0.7);
+  }
+  .dep-cta .ready .prog-mini {
+    width: 220px; height: 8px; border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.06);
+    overflow: hidden;
+  }
+  .dep-cta .ready .prog-mini .f {
+    height: 100%; background: linear-gradient(90deg, var(--lkv-sage-500), var(--lkv-sage-300));
+    border-radius: 999px;
+    transition: width 0.4s var(--ease);
+  }
+  .dep-cta .ready strong { color: #f6f8f4; font-family: var(--font-mono); font-weight: 500; }
+  .dep-cta .launch {
+    padding: 14px 24px;
+    background: linear-gradient(140deg, var(--lkv-sage-400), var(--lkv-forest-600));
+    color: #fff;
+    border-radius: 999px;
+    font-size: 14px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 10px;
+    border: 1px solid rgba(255,255,255,0.16);
+    box-shadow: 0 10px 30px rgba(111,158,127,0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+    letter-spacing: -0.005em;
+    transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  }
+  .dep-cta .launch:hover { transform: translateY(-2px); box-shadow: 0 14px 40px rgba(111,158,127,0.5), inset 0 1px 0 rgba(255,255,255,0.25); }
+  .dep-cta .launch .ic { width: 16px; height: 16px; }
+
+  /* ============= SECTION 4 · MES KITS ============= */
+  .kits {
+    padding: 24px 28px;
+  }
+  .sec-head {
+    display: flex; justify-content: space-between; align-items: end;
+    margin-bottom: 20px; gap: 20px; flex-wrap: wrap;
+  }
+  .sec-head .title { display: flex; align-items: end; gap: 14px; }
+  .sec-head h3 {
+    font-size: 26px; color: #f6f8f4; letter-spacing: -0.02em;
+  }
+  .sec-head h3 em { color: var(--lkv-sage-300); }
+  .sec-head .sub {
+    color: rgba(242, 245, 240, 0.55); font-size: 13px; margin-top: 4px;
+  }
+  .sec-head .count {
+    font-family: var(--font-mono); font-size: 11px;
+    color: rgba(242, 245, 240, 0.55);
+    padding: 4px 10px; background: rgba(255,255,255,0.05);
+    border-radius: 999px;
+    border: 1px solid var(--glass-brd);
+  }
+  .sec-head .count strong { color: var(--lkv-sage-300); font-weight: 500; }
+  .sec-head .actions { display: flex; gap: 8px; }
+
+  .kits-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .kit-card {
+    padding: 20px;
+    border-radius: var(--radius-l);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    display: flex; flex-direction: column; gap: 12px;
+    transition: transform var(--dur) var(--ease), background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    position: relative;
+    overflow: hidden;
+  }
+  .kit-card:hover { transform: translateY(-3px); background: rgba(255,255,255,0.08); border-color: rgba(143,185,159,0.28); }
+  .kit-card.hero {
+    background: linear-gradient(150deg, rgba(23,64,44,0.55), rgba(11,25,20,0.6));
+    border: 1px solid rgba(143,185,159,0.35);
+  }
+  .kit-card.hero::before {
+    content: ""; position: absolute; right: -60px; top: -60px;
+    width: 180px; height: 180px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(143,185,159,0.28), transparent 70%);
+    pointer-events: none;
+  }
+  .kit-card > * { position: relative; z-index: 1; }
+  .kit-card .top-row {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .kit-card .src-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: 999px;
+    font-size: 10px; font-weight: 500;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: rgba(242, 245, 240, 0.75);
+    letter-spacing: 0.02em;
+  }
+  .kit-card .src-badge.ai { background: rgba(143,185,159,0.16); color: var(--lkv-sage-300); border-color: rgba(143,185,159,0.28); }
+  .kit-card .src-badge.manual { background: rgba(255,255,255,0.06); color: rgba(242,245,240,0.7); }
+  .kit-card .src-badge.auto   { background: rgba(201,138,61,0.16); color: var(--lkv-warm-300); border-color: rgba(201,138,61,0.28); }
+  .kit-card .fav {
+    width: 24px; height: 24px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: rgba(242, 245, 240, 0.4);
+    cursor: pointer;
+  }
+  .kit-card .fav.on { color: var(--lkv-warm-400); }
+  .kit-card h4 {
+    font-family: var(--font-sans);
+    font-size: 19px; font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    color: #f6f8f4;
+  }
+  .kit-card h4 em { color: var(--lkv-sage-300); }
+  .kit-card .k-meta {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 11px; color: rgba(242, 245, 240, 0.55);
+  }
+  .kit-card .k-meta strong { color: #f6f8f4; font-family: var(--font-mono); font-weight: 500; }
+  .kit-card .k-preview {
+    display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap;
+  }
+  .kit-card .k-preview .p-ic {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.06);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: rgba(242, 245, 240, 0.75);
+    font-size: 14px;
+  }
+  .kit-card .k-preview .p-ic.more {
+    font-family: var(--font-mono); font-size: 10px;
+    color: rgba(242, 245, 240, 0.55);
+    background: rgba(255,255,255,0.03);
+  }
+  .kit-card .k-bar {
+    height: 4px; border-radius: 999px;
+    background: rgba(255,255,255,0.05);
+    overflow: hidden; margin-top: 4px;
+    display: flex;
+  }
+  .kit-card .k-bar .s { height: 100%; }
+  .kit-card .k-actions {
+    display: flex; gap: 6px; margin-top: 6px;
+  }
+  .kit-card .k-actions .btn { padding: 8px 12px; font-size: 12px; flex: 1; justify-content: center; }
+  .kit-card .k-actions .btn.primary {
+    background: var(--lkv-sage-300); color: #071a12; border-color: transparent; font-weight: 500;
+  }
+  .kit-card .k-actions .btn.icon-only { flex: 0 0 auto; padding: 8px; }
+
+  .kit-add {
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 10px;
+    padding: 30px;
+    border-radius: var(--radius-l);
+    background: repeating-linear-gradient(45deg, transparent, transparent 12px, rgba(255,255,255,0.02) 12px, rgba(255,255,255,0.02) 14px);
+    border: 1.5px dashed rgba(255,255,255,0.12);
+    color: rgba(242, 245, 240, 0.55);
+    text-align: center;
+    transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    cursor: pointer;
+  }
+  .kit-add:hover { color: #f2f5f0; border-color: rgba(143,185,159,0.35); }
+  .kit-add .plus {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .kit-add .plus svg { width: 18px; height: 18px; }
+  .kit-add .lb { font-size: 13px; font-weight: 500; }
+  .kit-add .sh { font-size: 11px; color: rgba(242, 245, 240, 0.4); font-family: var(--font-mono); }
+
+  /* ============= SECTION 5 · INVENTAIRE ============= */
+  .inventory {
+    padding: 24px 28px 28px;
+  }
+  .inv-tools {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 22px;
+  }
+  .search-box {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--glass-brd);
+    border-radius: 999px;
+    transition: border-color var(--dur) var(--ease);
+  }
+  .search-box:focus-within { border-color: rgba(143,185,159,0.4); }
+  .search-box svg { color: rgba(242, 245, 240, 0.5); flex-shrink: 0; }
+  .search-box input {
+    flex: 1; background: none; border: none; outline: none;
+    color: #f2f5f0; font-size: 13px;
+  }
+  .search-box input::placeholder { color: rgba(242, 245, 240, 0.4); }
+  .search-box kbd {
+    font-family: var(--font-mono); font-size: 10px;
+    padding: 3px 6px; background: rgba(255,255,255,0.08);
+    border-radius: 6px; color: rgba(242, 245, 240, 0.55);
+  }
+
+  .toggle-mode {
+    display: inline-flex; padding: 4px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-brd);
+    border-radius: 999px;
+    position: relative;
+  }
+  .toggle-mode button {
+    padding: 7px 16px; font-size: 12px; font-weight: 500;
+    color: rgba(242, 245, 240, 0.6);
+    border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 6px;
+    position: relative;
+    z-index: 1;
+    transition: color var(--dur) var(--ease);
+  }
+  .toggle-mode button.on { color: #071a12; }
+  .toggle-mode .slider {
+    position: absolute;
+    top: 4px;
+    height: calc(100% - 8px);
+    background: var(--lkv-sage-300);
+    border-radius: 999px;
+    transition: left var(--dur) var(--ease), width var(--dur) var(--ease);
+    z-index: 0;
+  }
+  .toggle-mode button .n {
+    font-family: var(--font-mono); font-size: 10px;
+    padding: 1px 6px; border-radius: 999px;
+    background: rgba(0,0,0,0.15);
+  }
+  .toggle-mode button:not(.on) .n { background: rgba(255,255,255,0.06); color: rgba(242,245,240,0.55); }
+
+  .filter-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 14px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-brd);
+    border-radius: 999px;
+    font-size: 12px; color: rgba(242, 245, 240, 0.75);
+  }
+
+  /* Categories */
+  .cat-block { margin-bottom: 14px; }
+  .cat-block .cat-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 4px 10px;
+    cursor: pointer;
+  }
+  .cat-block .cat-head .cat-name {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 15px; font-weight: 500; color: #f6f8f4;
+    letter-spacing: -0.01em;
+  }
+  .cat-block .cat-head .cat-name .ci {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.06);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .cat-block .cat-head .cat-name em { color: var(--lkv-sage-300); margin-left: 4px; }
+  .cat-block .cat-head .stats {
+    display: flex; align-items: center; gap: 14px;
+    font-family: var(--font-mono);
+    font-size: 11px; color: rgba(242, 245, 240, 0.55);
+  }
+  .cat-block .cat-head .stats strong { color: #f2f5f0; font-weight: 500; }
+
+  .gear-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .gear {
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 14px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-m);
+    transition: transform var(--dur) var(--ease), background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    position: relative;
+  }
+  .gear:hover { transform: translateY(-2px); background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.14); }
+  .gear.owned { border-left: 2px solid var(--lkv-sage-400); }
+  .gear.missing { border-left: 2px solid rgba(201,138,61,0.55); }
+  .gear .top {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px;
+  }
+  .gear .status-pill {
+    font-size: 9px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 999px;
+    background: rgba(255,255,255,0.06); color: rgba(242,245,240,0.6);
+  }
+  .gear.owned .status-pill { background: rgba(111,158,127,0.22); color: var(--lkv-sage-200); }
+  .gear.missing .status-pill { background: rgba(201,138,61,0.18); color: var(--lkv-warm-300); }
+  .gear .fav-mini {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: rgba(242,245,240,0.35);
+    cursor: pointer;
+  }
+  .gear .fav-mini:hover { color: var(--lkv-warm-400); }
+  .gear .g-ico {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: rgba(255,255,255,0.05);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: rgba(242,245,240,0.85);
+    font-size: 20px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .gear .n {
+    font-size: 13px; font-weight: 500; color: #f6f8f4;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  .gear .n .brand { display: block; font-size: 10px; color: rgba(242,245,240,0.5); font-weight: 400; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 3px; }
+  .gear .g-meta {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: rgba(242,245,240,0.55);
+    font-family: var(--font-mono);
+  }
+  .gear .g-meta .sep { opacity: 0.4; }
+  .gear .g-meta strong { color: #f2f5f0; font-weight: 500; }
+  .gear .row-actions {
+    display: flex; gap: 4px; margin-top: 4px;
+  }
+  .gear .row-actions .btn { flex: 1; justify-content: center; padding: 6px 8px; font-size: 11px; }
+  .gear .price-tag {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--lkv-sage-300); font-weight: 500;
+  }
+
+  /* Add card */
+  .gear.add {
+    background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.02) 10px, rgba(255,255,255,0.02) 12px);
+    border: 1.5px dashed rgba(255,255,255,0.12);
+    align-items: center; justify-content: center; text-align: center;
+    color: rgba(242,245,240,0.5);
+    cursor: pointer;
+    min-height: 165px;
+  }
+  .gear.add:hover { color: #f2f5f0; border-color: rgba(143,185,159,0.35); }
+
+  /* ============= CART FLOATING ============= */
+  .cart-fab {
+    position: fixed; right: 28px; bottom: 24px; z-index: 100;
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 12px 18px 12px 14px;
+    background: rgba(11, 25, 20, 0.75);
+    backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 999px;
+    color: #f2f5f0;
+    font-size: 13px; font-weight: 500;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+    transition: transform 0.3s var(--ease);
+  }
+  .cart-fab:hover { transform: translateY(-3px); }
+  .cart-fab .ic { width: 18px; height: 18px; }
+  .cart-fab .cart-count {
+    min-width: 22px; height: 22px; padding: 0 6px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--lkv-warm-400); color: var(--lkv-forest-900);
+    border-radius: 999px;
+    font-size: 11px; font-weight: 600; font-family: var(--font-mono);
+  }
+  .cart-fab .cart-total {
+    font-family: var(--font-mono); font-size: 12px; color: rgba(242,245,240,0.7);
+    padding-left: 12px; border-left: 1px solid rgba(255,255,255,0.14);
+    margin-left: 4px;
+  }
+
+  /* Footer minimal */
+  footer {
+    padding: 40px 0 60px;
+    text-align: center;
+    font-size: 11px;
+    color: rgba(242,245,240,0.35);
+    letter-spacing: 0.02em;
+  }
+  footer em { color: var(--lkv-sage-400); font-family: var(--font-serif); font-style: italic; }
+
+  /* Focus vibe */
+  [tabindex]:focus-visible, button:focus-visible, input:focus-visible, a:focus-visible {
+    outline: 2px solid var(--lkv-sage-300); outline-offset: 2px;
+  }
+
+  /* Command palette overlay (recherche /) */
+  .cmdk {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(4, 10, 8, 0.72);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: flex-start; justify-content: center;
+    padding-top: 120px;
+  }
+  .cmdk.on { display: flex; }
+  .cmdk .box {
+    width: min(600px, 90vw);
+    background: rgba(11, 25, 20, 0.9);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 20px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.55);
+    overflow: hidden;
+  }
+  .cmdk .top-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .cmdk .top-row input {
+    flex: 1;
+    background: none; border: none; outline: none;
+    color: #f2f5f0; font-size: 15px;
+  }
+  .cmdk .list {
+    max-height: 380px; overflow: auto;
+    padding: 8px;
+  }
+  .cmdk .list .it {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 13px; color: rgba(242,245,240,0.8);
+    cursor: pointer;
+  }
+  .cmdk .list .it:hover, .cmdk .list .it.active { background: rgba(255,255,255,0.06); }
+  .cmdk .list .it .g-ico { width: 30px; height: 30px; font-size: 14px; }
+  .cmdk .list .it .m { margin-left: auto; font-family: var(--font-mono); font-size: 10px; color: rgba(242,245,240,0.45); }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+    padding: 12px 18px;
+    background: rgba(11, 25, 20, 0.9);
+    border: 1px solid rgba(143,185,159,0.35);
+    color: #f2f5f0;
+    border-radius: 999px;
+    font-size: 13px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+    opacity: 0;
+    transition: opacity 0.3s var(--ease), transform 0.3s var(--ease);
+    pointer-events: none;
+    z-index: 150;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast svg { color: var(--lkv-sage-300); }
+
+</style>
+</head>
+<body>
+
+<div class="cine-bg"></div>
+<div class="grain"></div>
+
+<!-- ============= NAV ============= -->
+<div class="nav-wrap">
+  <nav class="nav">
+    <a href="#" class="brand">
+      <svg viewBox="0 0 32 32" width="22" height="22" fill="none">
+        <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+      </svg>
+      Le Kit du <em>Voyageur</em>
+    </a>
+    <div class="links">
+      <a href="#">Aventures</a>
+      <a href="#">Refuges</a>
+      <a href="#">Carnet</a>
+      <a href="#">Clubs</a>
+      <a href="#" class="active">Mon matériel</a>
+      <a href="#">Compte</a>
+    </div>
+    <div class="right">
+      <button class="search-mini" onclick="openCmdK()">
+        <svg class="ic" viewBox="0 0 24 24" width="14" height="14"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        Rechercher …
+        <kbd>/</kbd>
+      </button>
+      <button class="icon-btn" title="Notifications">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+      </button>
+      <button class="icon-btn" title="Panier" onclick="toggleCart()">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M3 5h3l2.5 12h11L22 8H7"/><circle cx="10" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>
+        <span class="cart-badge" id="cart-badge">2</span>
+      </button>
+      <div class="avatar" title="Marceline Chevrier">MC</div>
+    </div>
+  </nav>
+</div>
+
+<div class="container">
+
+  <!-- ============= PAGE HEADER ============= -->
+  <header class="page-head">
+    <div class="title-block">
+      <div class="eyebrow"><span class="dot"></span>Cockpit unifié · une page, tout votre matériel</div>
+      <h1 style="margin-top:14px;">Mon <em>matériel.</em></h1>
+      <p>Un cockpit continu et vertical : configurateur IA, poids du sac, prochain départ, kits intelligents et inventaire par catégories. Je n'ai presque rien à faire — LKDV a déjà pensé à tout.</p>
+    </div>
+    <div class="meta">
+      <span class="live"><span class="dot"></span>Synchronisé à l'instant</span>
+      <span>Marceline Chevrier · Grenoble</span>
+    </div>
+  </header>
+
+  <!-- ============= SECTION 1 · CONFIGURATEUR IA ============= -->
+  <section class="glass ai-hero">
+    <div class="left">
+      <div class="brand-row">
+        <div class="ai-badge">
+          <svg width="20" height="20" viewBox="0 0 24 24" class="ic"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg>
+        </div>
+        <div>
+          <div class="eyebrow" style="margin-bottom:4px;"><span class="dot"></span>Outil N°1 · Zéro effort</div>
+          <div style="font-size:11px;color:rgba(242,245,240,0.45);font-family:var(--font-mono);">CONFIGURATEUR · IA 1-TAP</div>
+        </div>
+      </div>
+      <h2>Composez votre sac<br/>en <em>une phrase.</em></h2>
+      <p class="sub">L'IA lit votre demande, sélectionne ce que vous possédez déjà, complète intelligemment, calcule le poids net et injecte le kit dans votre inventaire. Prêt à partir.</p>
+
+      <div class="ai-input">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg>
+        <input type="text" placeholder="Tour du Beaufortain en 4 jours en autonomie fin août…" id="ai-input"/>
+        <button class="btn sage" onclick="runAI()">
+          Composer
+          <svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+      <div class="hint">Astuce : essayez un preset ci-contre ou décrivez librement votre projet.</div>
+    </div>
+
+    <div class="right">
+      <button class="preset" onclick="applyPreset('trek3j')">
+        <div class="p-ic sage">
+          <svg width="16" height="16" class="ic" viewBox="0 0 24 24"><path d="M3 20l6-11 4 7 3-5 5 9z"/><path d="M8 14l1.5-2.5"/></svg>
+        </div>
+        <div class="p-name">Trek Montagne <em>3 jours</em></div>
+        <div class="p-meta"><span>Bivouac</span><span class="sep">·</span><span>&gt;1500m D+</span></div>
+      </button>
+      <button class="preset" onclick="applyPreset('journee')">
+        <div class="p-ic warm">
+          <svg width="16" height="16" class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>
+        </div>
+        <div class="p-name">Journée <em>estivale</em></div>
+        <div class="p-meta"><span>Léger</span><span class="sep">·</span><span>15–25 km</span></div>
+      </button>
+      <button class="preset" onclick="applyPreset('bivouac')">
+        <div class="p-ic forest">
+          <svg width="16" height="16" class="ic" viewBox="0 0 24 24"><path d="M12 3l9 18H3z"/><path d="M12 3v18"/></svg>
+        </div>
+        <div class="p-name">Bivouac <em>Forêt 2j</em></div>
+        <div class="p-meta"><span>Tarp</span><span class="sep">·</span><span>Bushcraft</span></div>
+      </button>
+      <button class="preset" onclick="applyPreset('ultra')">
+        <div class="p-ic sage">
+          <svg width="16" height="16" class="ic" viewBox="0 0 24 24"><path d="M13 3L5 14h6l-2 7 8-11h-6z"/></svg>
+        </div>
+        <div class="p-name">Ultra-Light <em>48h</em></div>
+        <div class="p-meta"><span>Fastpack</span><span class="sep">·</span><span>&lt; 4 kg</span></div>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============= SECTION 2 · POIDS DU SAC ============= -->
+  <section class="glass weight-hero">
+    <div class="headline">
+      <div class="eyebrow"><span class="dot"></span>Poids du sac · mesuré en direct</div>
+      <h3 style="margin-top:10px;">Votre sac<br/><em>total possédé.</em></h3>
+    </div>
+
+    <div class="metric">
+      <div class="repartition">
+        <div class="big">
+          <span id="total-weight">8,4</span><span class="u">kg</span>
+          <span class="sub-u">≈ 8 420 g · 47 articles</span>
+        </div>
+        <div class="bar-seg" role="img" aria-label="Répartition par famille">
+          <div class="seg" style="background:var(--fam-couchage); width:26%" title="Couchage · 2,2 kg"></div>
+          <div class="seg" style="background:var(--fam-portage); width:19%" title="Portage · 1,6 kg"></div>
+          <div class="seg" style="background:var(--fam-vetements); width:22%" title="Vêtements · 1,8 kg"></div>
+          <div class="seg" style="background:var(--fam-cuisine); width:14%" title="Cuisine · 1,2 kg"></div>
+          <div class="seg" style="background:var(--fam-hydra); width:9%" title="Eau/Hydratation · 0,7 kg"></div>
+          <div class="seg" style="background:var(--fam-securite); width:6%" title="Sécurité · 0,5 kg"></div>
+          <div class="seg" style="background:var(--fam-nav); width:4%" title="Navigation · 0,4 kg"></div>
+        </div>
+        <div class="legend">
+          <span class="lg-i"><span class="sw" style="background:var(--fam-couchage)"></span>Couchage <strong>2,2 kg</strong></span>
+          <span class="lg-i"><span class="sw" style="background:var(--fam-portage)"></span>Portage <strong>1,6 kg</strong></span>
+          <span class="lg-i"><span class="sw" style="background:var(--fam-vetements)"></span>Vêtements <strong>1,8 kg</strong></span>
+          <span class="lg-i"><span class="sw" style="background:var(--fam-cuisine)"></span>Cuisine <strong>1,2 kg</strong></span>
+          <span class="lg-i"><span class="sw" style="background:var(--fam-hydra)"></span>Eau <strong>0,7 kg</strong></span>
+          <span class="lg-i"><span class="sw" style="background:var(--fam-securite)"></span>Sécurité <strong>0,5 kg</strong></span>
+          <span class="lg-i"><span class="sw" style="background:var(--fam-nav)"></span>Nav. <strong>0,4 kg</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-stats">
+      <div class="st"><div class="k">Articles possédés</div><div class="v">47<em> pièces</em></div></div>
+      <div class="st"><div class="k">Base pack weight</div><div class="v">6,2<em> kg</em></div></div>
+      <div class="st"><div class="k">Ratio ultra-light</div><div class="v">74<em>%</em></div></div>
+    </div>
+  </section>
+
+  <!-- ============= SECTION 3 · DÉPART ACTIF ============= -->
+  <section class="glass departure">
+
+    <div class="dep-top">
+      <div class="dep-title">
+        <span class="dep-eye">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M13 2l-2 12h5l-2 8 9-14h-6l2-6z"/></svg>
+          Prochain départ planifié
+        </span>
+        <h3>Traversée de la<br/><em>Chartreuse.</em></h3>
+        <div class="date">📅 20 août 2026 · J-3</div>
+      </div>
+
+      <div class="hike-tabs">
+        <button class="hike-tab on">Chartreuse <span class="d">20 août</span></button>
+        <button class="hike-tab">GR54 Écrins <span class="d">14 sept</span></button>
+        <button class="hike-tab">Belledonne <span class="d">05 oct</span></button>
+      </div>
+    </div>
+
+    <div class="dep-body">
+      <!-- Card 1 : Kit & préparation -->
+      <div class="dep-card">
+        <h4>Kit &amp; préparation <span class="ico"><svg width="14" height="14" class="ic" viewBox="0 0 24 24"><path d="M4 7h16v13H4z"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></span></h4>
+        <div class="prep-ring">
+          <div class="ring">
+            <svg viewBox="0 0 60 60">
+              <circle cx="30" cy="30" r="26" class="track" fill="none" stroke-width="6"/>
+              <circle cx="30" cy="30" r="26" class="fill" fill="none" stroke-width="6" stroke-linecap="round"
+                stroke-dasharray="163.36" stroke-dashoffset="6.5"/>
+            </svg>
+            <div class="val">96%</div>
+          </div>
+          <div>
+            <div style="font-size:14px;font-weight:500;color:#f6f8f4;">Kit Trek <em class="em">Chartreuse</em></div>
+            <div style="font-size:11px;color:rgba(242,245,240,0.55);margin-top:3px;font-family:var(--font-mono);">🤖 Généré par l'IA · 8,4 kg</div>
+          </div>
+        </div>
+        <div class="row-mini">
+          <span>32 articles</span><span><strong>2</strong> tâches restantes</span>
+        </div>
+      </div>
+
+      <!-- Card 2 : Poids total -->
+      <div class="dep-card">
+        <h4>Poids total estimé <span class="ico"><svg width="14" height="14" class="ic" viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M6 20l3-11h6l3 11"/><circle cx="12" cy="6" r="2"/></svg></span></h4>
+        <div class="big-val">11,8<span class="u">kg</span></div>
+        <div class="sub-val">Sac chargé · départ à Saint-Pierre-d'Entremont</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:12px;font-size:11px;">
+          <div style="background:rgba(255,255,255,0.04);padding:8px 10px;border-radius:10px;">
+            <div style="color:rgba(242,245,240,0.5);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;">Matériel</div>
+            <div style="color:#f2f5f0;font-family:var(--font-mono);margin-top:3px;">8,4 kg</div>
+          </div>
+          <div style="background:rgba(154,189,214,0.14);padding:8px 10px;border-radius:10px;">
+            <div style="color:rgba(154,189,214,0.75);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;">Eau</div>
+            <div style="color:#f2f5f0;font-family:var(--font-mono);margin-top:3px;">2,4 L</div>
+          </div>
+          <div style="background:rgba(217,167,101,0.14);padding:8px 10px;border-radius:10px;">
+            <div style="color:rgba(217,167,101,0.85);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;">Vivres+gaz</div>
+            <div style="color:#f2f5f0;font-family:var(--font-mono);margin-top:3px;">1,0 kg</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 : Météo -->
+      <div class="dep-card">
+        <h4>Météo du parcours <span class="ico"><svg width="14" height="14" class="ic" viewBox="0 0 24 24"><path d="M17 18a4 4 0 000-8 6 6 0 00-11.8 1.5A4 4 0 006 18z"/></svg></span></h4>
+        <div style="display:flex;align-items:baseline;gap:10px;">
+          <div class="big-val" style="font-size:26px;">14°<span class="u" style="font-size:14px;">–22°C</span></div>
+          <div style="font-size:11px;color:rgba(242,245,240,0.6);font-family:var(--font-mono);">Ciel voilé</div>
+        </div>
+        <div class="sub-val">Vent 12 km/h NO · Pluie 20%<br/>Conseil : polaire + coupe-vent recommandés.</div>
+        <div class="weather-strip">
+          <div class="wt"><div class="h">J-3</div><div class="em">☀️</div><div class="t">22<span class="u">°</span></div></div>
+          <div class="wt"><div class="h">J-2</div><div class="em">⛅</div><div class="t">20<span class="u">°</span></div></div>
+          <div class="wt"><div class="h">J-1</div><div class="em">🌦️</div><div class="t">17<span class="u">°</span></div></div>
+          <div class="wt"><div class="h">J</div><div class="em">☁️</div><div class="t">14<span class="u">°</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delivery Alert -->
+    <div class="delivery-alert">
+      <div class="ic-box"><svg width="16" height="16" class="ic" viewBox="0 0 24 24"><path d="M12 9v4M12 17v.01M4.9 19h14.2a2 2 0 001.8-2.9L13.8 4.7a2 2 0 00-3.6 0L3.1 16.1A2 2 0 004.9 19z"/></svg></div>
+      <div>Départ dans <strong>3 jours</strong>. Les commandes passées aujourd'hui risquent d'arriver après votre départ (délai standard 48h). Choisissez « <strong>+ J'ai déjà</strong> » pour les articles manquants si possible.</div>
+    </div>
+
+    <!-- Checklist 4 zones -->
+    <div class="checklist-4">
+      <div class="cl-col">
+        <div class="cl-head"><div class="t"><span class="em">🎒</span>Dans le sac &amp; prêt</div><span class="count">14</span></div>
+        <label class="cl-item done"><span class="cbox"><svg viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg></span>Sac 45L Osprey <span class="meta">1,4 kg</span></label>
+        <label class="cl-item done"><span class="cbox"><svg viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg></span>Tente MSR Hubba 2 <span class="meta">1,2 kg</span></label>
+        <label class="cl-item done"><span class="cbox"><svg viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg></span>Duvet -5° NeoAir <span class="meta">890 g</span></label>
+        <label class="cl-item done"><span class="cbox"><svg viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg></span>Matelas gonflable <span class="meta">450 g</span></label>
+        <label class="cl-item done"><span class="cbox"><svg viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg></span>Réchaud MSR PocketRocket <span class="meta">73 g</span></label>
+        <label class="cl-item"><span class="cbox"><svg viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg></span>Polaire Patagonia R1 <span class="meta">380 g</span></label>
+      </div>
+      <div class="cl-col warm">
+        <div class="cl-head"><div class="t"><span class="em">🥪</span>Consommables à charger</div><span class="count">6</span></div>
+        <label class="cl-item"><span class="cbox"><svg viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg></span>Eau <span class="meta">2,4 L</span></label>
+        <label class="cl-item"><span class="cbox"><svg viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg></span>Repas lyophilisés <span class="meta">×9</span></label>
+        <label class="cl-item done"><span class="cbox"><svg viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg></span>Collations barres <span class="meta">×12</span></label>
+        <label class="cl-item"><span class="cbox"><svg viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg></span>Cartouche gaz 230g <span class="meta">×1</span></label>
+        <label class="cl-item done"><span class="cbox"><svg viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg></span>Sachets thé/café <span class="meta">×6</span></label>
+        <label class="cl-item"><span class="cbox"><svg viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg></span>Pastilles Micropur <span class="meta">×20</span></label>
+      </div>
+      <div class="cl-col alert">
+        <div class="cl-head"><div class="t"><span class="em">⚠️</span>Sécurité &amp; entretien</div><span class="count">4</span></div>
+        <label class="cl-item"><span class="cbox"><svg viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg></span>Lampe frontale <span class="meta">à charger</span></label>
+        <label class="cl-item done"><span class="cbox"><svg viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg></span>Trousse premiers secours <span class="meta">OK</span></label>
+        <label class="cl-item"><span class="cbox"><svg viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg></span>Couverture survie <span class="meta">à ajouter</span></label>
+        <label class="cl-item"><span class="cbox"><svg viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg></span>Bâtons Léna <span class="meta">prêté</span></label>
+      </div>
+      <div class="cl-col suggest">
+        <div class="cl-head"><div class="t"><span class="em">✨</span>Suggestions IA</div><span class="count">3</span></div>
+        <label class="cl-item"><span class="cbox"><svg viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg></span>Guêtres légères <span class="meta">+65 g</span></label>
+        <label class="cl-item"><span class="cbox"><svg viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg></span>Anti-moustiques <span class="meta">+35 g</span></label>
+        <label class="cl-item"><span class="cbox"><svg viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg></span>Batterie externe 10k <span class="meta">+180 g</span></label>
+      </div>
+    </div>
+
+    <div class="dep-cta">
+      <div class="ready">
+        <span>Préparation</span>
+        <div class="prog-mini"><div class="f" id="prep-fill" style="width:96%"></div></div>
+        <strong id="prep-val">96%</strong>
+      </div>
+      <button class="launch" onclick="validerDepart()">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M13 2l-2 12h5l-2 8 9-14h-6l2-6z"/></svg>
+        Valider mon sac &amp; Partir
+      </button>
+    </div>
+
+  </section>
+
+  <!-- ============= SECTION 4 · MES KITS ============= -->
+  <section class="glass kits">
+    <div class="sec-head">
+      <div class="title">
+        <div>
+          <h3>Mes <em>kits intelligents</em></h3>
+          <div class="sub">Les kits IA en premier · corbeille conservée 10 jours · substitution automatique.</div>
+        </div>
+        <span class="count"><strong>6</strong> kits actifs · 1 en corbeille</span>
+      </div>
+      <div class="actions">
+        <button class="btn sm">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+          Trier
+        </button>
+        <button class="btn sm">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18l-2 12H5z"/><path d="M9 10v6M15 10v6"/></svg>
+          Corbeille
+        </button>
+        <button class="btn sm forest">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Nouveau kit
+        </button>
+      </div>
+    </div>
+
+    <div class="kits-grid">
+      <!-- Kit IA hero -->
+      <div class="kit-card hero">
+        <div class="top-row">
+          <span class="src-badge ai">🤖 IA Configurator</span>
+          <span class="fav on"><svg class="ic" viewBox="0 0 24 24" width="14" height="14"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z" fill="currentColor"/></svg></span>
+        </div>
+        <h4>Trek <em>Chartreuse</em><br/>3 jours autonomie</h4>
+        <div class="k-meta">
+          <span><strong>8,4</strong> kg</span>
+          <span>·</span>
+          <span><strong>32</strong> articles</span>
+          <span>·</span>
+          <span>Créé hier</span>
+        </div>
+        <div class="k-preview">
+          <div class="p-ic">🎒</div><div class="p-ic">🛏️</div><div class="p-ic">🏕️</div><div class="p-ic">🧥</div><div class="p-ic">🥾</div><div class="p-ic">🍳</div><div class="p-ic">💧</div>
+          <div class="p-ic more">+25</div>
+        </div>
+        <div class="k-bar">
+          <div class="s" style="background:var(--fam-couchage); width:26%"></div>
+          <div class="s" style="background:var(--fam-portage); width:19%"></div>
+          <div class="s" style="background:var(--fam-vetements); width:22%"></div>
+          <div class="s" style="background:var(--fam-cuisine); width:14%"></div>
+          <div class="s" style="background:var(--fam-hydra); width:9%"></div>
+          <div class="s" style="background:var(--fam-securite); width:10%"></div>
+        </div>
+        <div class="k-actions">
+          <button class="btn primary">⚡ Préparer une sortie</button>
+          <button class="btn icon-only" title="Éditer"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20h4L20 8l-4-4L4 16z"/></svg></button>
+          <button class="btn icon-only" title="Dupliquer"><svg class="ic" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 4H6a2 2 0 00-2 2v10"/></svg></button>
+        </div>
+      </div>
+
+      <!-- Kit auto -->
+      <div class="kit-card">
+        <div class="top-row">
+          <span class="src-badge auto">⚡ Auto-préparé</span>
+          <span class="fav"><svg class="ic" viewBox="0 0 24 24" width="14" height="14"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span>
+        </div>
+        <h4>GR54 <em>Écrins</em><br/>7 jours refuges</h4>
+        <div class="k-meta">
+          <span><strong>7,2</strong> kg</span><span>·</span>
+          <span><strong>26</strong> articles</span><span>·</span>
+          <span>14 sept.</span>
+        </div>
+        <div class="k-preview">
+          <div class="p-ic">🎒</div><div class="p-ic">🛏️</div><div class="p-ic">🧥</div><div class="p-ic">🥾</div><div class="p-ic">🍳</div>
+          <div class="p-ic more">+21</div>
+        </div>
+        <div class="k-bar">
+          <div class="s" style="background:var(--fam-couchage); width:20%"></div>
+          <div class="s" style="background:var(--fam-portage); width:22%"></div>
+          <div class="s" style="background:var(--fam-vetements); width:26%"></div>
+          <div class="s" style="background:var(--fam-cuisine); width:12%"></div>
+          <div class="s" style="background:var(--fam-securite); width:20%"></div>
+        </div>
+        <div class="k-actions">
+          <button class="btn primary">⚡ Préparer une sortie</button>
+          <button class="btn icon-only"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20h4L20 8l-4-4L4 16z"/></svg></button>
+          <button class="btn icon-only"><svg class="ic" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 4H6a2 2 0 00-2 2v10"/></svg></button>
+        </div>
+      </div>
+
+      <!-- Kit manuel -->
+      <div class="kit-card">
+        <div class="top-row">
+          <span class="src-badge manual">👤 Manuel</span>
+          <span class="fav"><svg class="ic" viewBox="0 0 24 24" width="14" height="14"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span>
+        </div>
+        <h4>Belledonne <em>hiver</em><br/>Raquettes 2j</h4>
+        <div class="k-meta">
+          <span><strong>10,2</strong> kg</span><span>·</span>
+          <span><strong>38</strong> articles</span><span>·</span>
+          <span>05 oct.</span>
+        </div>
+        <div class="k-preview">
+          <div class="p-ic">🎒</div><div class="p-ic">🧥</div><div class="p-ic">🥾</div><div class="p-ic">🌡️</div><div class="p-ic">🔦</div>
+          <div class="p-ic more">+33</div>
+        </div>
+        <div class="k-bar">
+          <div class="s" style="background:var(--fam-couchage); width:18%"></div>
+          <div class="s" style="background:var(--fam-portage); width:20%"></div>
+          <div class="s" style="background:var(--fam-vetements); width:38%"></div>
+          <div class="s" style="background:var(--fam-cuisine); width:8%"></div>
+          <div class="s" style="background:var(--fam-securite); width:16%"></div>
+        </div>
+        <div class="k-actions">
+          <button class="btn primary">⚡ Préparer une sortie</button>
+          <button class="btn icon-only"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20h4L20 8l-4-4L4 16z"/></svg></button>
+          <button class="btn icon-only"><svg class="ic" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 4H6a2 2 0 00-2 2v10"/></svg></button>
+        </div>
+      </div>
+
+      <!-- Kit IA journée -->
+      <div class="kit-card">
+        <div class="top-row">
+          <span class="src-badge ai">🤖 IA Configurator</span>
+          <span class="fav"><svg class="ic" viewBox="0 0 24 24" width="14" height="14"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span>
+        </div>
+        <h4>Journée <em>Vercors</em><br/>Léger &amp; rapide</h4>
+        <div class="k-meta">
+          <span><strong>3,8</strong> kg</span><span>·</span>
+          <span><strong>14</strong> articles</span><span>·</span>
+          <span>08 août</span>
+        </div>
+        <div class="k-preview">
+          <div class="p-ic">🎒</div><div class="p-ic">🥾</div><div class="p-ic">💧</div><div class="p-ic">🍫</div>
+          <div class="p-ic more">+10</div>
+        </div>
+        <div class="k-bar">
+          <div class="s" style="background:var(--fam-portage); width:32%"></div>
+          <div class="s" style="background:var(--fam-vetements); width:28%"></div>
+          <div class="s" style="background:var(--fam-hydra); width:22%"></div>
+          <div class="s" style="background:var(--fam-securite); width:18%"></div>
+        </div>
+        <div class="k-actions">
+          <button class="btn primary">⚡ Préparer une sortie</button>
+          <button class="btn icon-only"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20h4L20 8l-4-4L4 16z"/></svg></button>
+          <button class="btn icon-only"><svg class="ic" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 4H6a2 2 0 00-2 2v10"/></svg></button>
+        </div>
+      </div>
+
+      <!-- Kit manuel week-end -->
+      <div class="kit-card">
+        <div class="top-row">
+          <span class="src-badge manual">👤 Manuel</span>
+          <span class="fav"><svg class="ic" viewBox="0 0 24 24" width="14" height="14"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span>
+        </div>
+        <h4>Week-end <em>refuge</em><br/>Sans bivouac</h4>
+        <div class="k-meta">
+          <span><strong>6,1</strong> kg</span><span>·</span>
+          <span><strong>22</strong> articles</span><span>·</span>
+          <span>28 mai</span>
+        </div>
+        <div class="k-preview">
+          <div class="p-ic">🎒</div><div class="p-ic">🧥</div><div class="p-ic">🥾</div><div class="p-ic">🍫</div><div class="p-ic">🔦</div>
+          <div class="p-ic more">+17</div>
+        </div>
+        <div class="k-bar">
+          <div class="s" style="background:var(--fam-couchage); width:14%"></div>
+          <div class="s" style="background:var(--fam-portage); width:24%"></div>
+          <div class="s" style="background:var(--fam-vetements); width:32%"></div>
+          <div class="s" style="background:var(--fam-cuisine); width:12%"></div>
+          <div class="s" style="background:var(--fam-securite); width:18%"></div>
+        </div>
+        <div class="k-actions">
+          <button class="btn primary">⚡ Préparer une sortie</button>
+          <button class="btn icon-only"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20h4L20 8l-4-4L4 16z"/></svg></button>
+          <button class="btn icon-only"><svg class="ic" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 4H6a2 2 0 00-2 2v10"/></svg></button>
+        </div>
+      </div>
+
+      <!-- Add kit card -->
+      <div class="kit-add">
+        <div class="plus">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        </div>
+        <div class="lb">Nouveau kit</div>
+        <div class="sh">⌘ + N</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============= SECTION 5 · INVENTAIRE ============= -->
+  <section class="glass inventory">
+    <div class="sec-head">
+      <div class="title">
+        <div>
+          <h3>Inventaire &amp; <em>matériel</em></h3>
+          <div class="sub">Rangé par catégories · sous-totaux de poids en direct · toggle Tout / Possédé.</div>
+        </div>
+        <span class="count"><strong>47</strong> possédés · 18 suggestions</span>
+      </div>
+    </div>
+
+    <div class="inv-tools">
+      <div class="search-box">
+        <svg class="ic" viewBox="0 0 24 24" width="16" height="16"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input type="text" placeholder="Rechercher un article, une marque…" id="inv-search"/>
+        <kbd>/</kbd>
+      </div>
+
+      <div class="toggle-mode" id="inv-toggle">
+        <div class="slider" style="left:4px;width:60px;"></div>
+        <button class="on" data-mode="all">Tout <span class="n">65</span></button>
+        <button data-mode="owned">Possédé <span class="n">47</span></button>
+      </div>
+
+      <button class="filter-btn">
+        <svg class="ic" viewBox="0 0 24 24" width="14" height="14"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+        Filtrer
+      </button>
+    </div>
+
+    <!-- Catégorie · Sacs & portage -->
+    <div class="cat-block" data-cat="portage">
+      <div class="cat-head" onclick="toggleCat(this)">
+        <div class="cat-name"><span class="ci">🎒</span>Sacs &amp; <em>portage</em></div>
+        <div class="stats"><span><strong>4</strong>/5 possédés</span><span>·</span><span><strong>1,6</strong> kg</span></div>
+      </div>
+      <div class="gear-grid">
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🎒</div>
+          <div class="n"><span class="brand">Osprey</span>Aether Plus 60L</div>
+          <div class="g-meta"><span><strong>1 400</strong> g</span><span class="sep">·</span><span>60 L</span></div>
+        </div>
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🎽</div>
+          <div class="n"><span class="brand">Salomon</span>Sense Pro 15L</div>
+          <div class="g-meta"><span><strong>420</strong> g</span><span class="sep">·</span><span>15 L</span></div>
+        </div>
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">👝</div>
+          <div class="n"><span class="brand">Sea to Summit</span>Compression Sack</div>
+          <div class="g-meta"><span><strong>85</strong> g</span><span class="sep">·</span><span>10 L</span></div>
+        </div>
+        <div class="gear missing" data-owned="false">
+          <div class="top"><span class="status-pill">Suggéré · IA</span><span class="price-tag">299 €</span></div>
+          <div class="g-ico">🎒</div>
+          <div class="n"><span class="brand">Hyperlite</span>Southwest 3400</div>
+          <div class="g-meta"><span><strong>870</strong> g</span><span class="sep">·</span><span>55 L · ultra-light</span></div>
+          <div class="row-actions">
+            <button class="btn xs" onclick="markOwned(this)"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg>J'ai déjà</button>
+            <button class="btn xs sage" onclick="addCart('Hyperlite Southwest 3400', 299)"><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h3l2.5 12h11L22 8H7"/></svg>Acheter · 48h</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Catégorie · Couchage & tentes -->
+    <div class="cat-block" data-cat="couchage">
+      <div class="cat-head" onclick="toggleCat(this)">
+        <div class="cat-name"><span class="ci">🛏️</span>Couchage &amp; <em>tentes</em></div>
+        <div class="stats"><span><strong>3</strong>/4 possédés</span><span>·</span><span><strong>2,2</strong> kg</span></div>
+      </div>
+      <div class="gear-grid">
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🏕️</div>
+          <div class="n"><span class="brand">MSR</span>Hubba Hubba NX 2</div>
+          <div class="g-meta"><span><strong>1 260</strong> g</span><span class="sep">·</span><span>2 pers.</span></div>
+        </div>
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🛏️</div>
+          <div class="n"><span class="brand">Rab</span>Neutrino Pro 400</div>
+          <div class="g-meta"><span><strong>890</strong> g</span><span class="sep">·</span><span>-5°C confort</span></div>
+        </div>
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">💤</div>
+          <div class="n"><span class="brand">Therm-a-Rest</span>NeoAir XLite</div>
+          <div class="g-meta"><span><strong>340</strong> g</span><span class="sep">·</span><span>R 4.2</span></div>
+        </div>
+        <div class="gear missing" data-owned="false">
+          <div class="top"><span class="status-pill">Suggéré · IA</span><span class="price-tag">89 €</span></div>
+          <div class="g-ico">🪟</div>
+          <div class="n"><span class="brand">Sea to Summit</span>Aeros Premium</div>
+          <div class="g-meta"><span><strong>78</strong> g</span><span class="sep">·</span><span>Oreiller</span></div>
+          <div class="row-actions">
+            <button class="btn xs" onclick="markOwned(this)"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg>J'ai déjà</button>
+            <button class="btn xs sage" onclick="addCart('Aeros Premium Pillow', 89)"><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h3l2.5 12h11L22 8H7"/></svg>Acheter · 48h</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Catégorie · Vêtements & vestes -->
+    <div class="cat-block" data-cat="vetements">
+      <div class="cat-head" onclick="toggleCat(this)">
+        <div class="cat-name"><span class="ci">🧥</span>Vêtements &amp; <em>vestes</em></div>
+        <div class="stats"><span><strong>8</strong>/12 possédés</span><span>·</span><span><strong>1,8</strong> kg</span></div>
+      </div>
+      <div class="gear-grid">
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🧥</div>
+          <div class="n"><span class="brand">Patagonia</span>Houdini Air</div>
+          <div class="g-meta"><span><strong>110</strong> g</span><span class="sep">·</span><span>Coupe-vent</span></div>
+        </div>
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🧢</div>
+          <div class="n"><span class="brand">Patagonia</span>R1 Air Fleece</div>
+          <div class="g-meta"><span><strong>380</strong> g</span><span class="sep">·</span><span>Polaire</span></div>
+        </div>
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🩳</div>
+          <div class="n"><span class="brand">Salomon</span>Sense Aero</div>
+          <div class="g-meta"><span><strong>120</strong> g</span><span class="sep">·</span><span>Short</span></div>
+        </div>
+        <div class="gear missing" data-owned="false">
+          <div class="top"><span class="status-pill">Suggéré · IA</span><span class="price-tag">449 €</span></div>
+          <div class="g-ico">🌧️</div>
+          <div class="n"><span class="brand">Arc'teryx</span>Beta LT Jacket</div>
+          <div class="g-meta"><span><strong>310</strong> g</span><span class="sep">·</span><span>Gore-Tex Pro</span></div>
+          <div class="row-actions">
+            <button class="btn xs" onclick="markOwned(this)"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg>J'ai déjà</button>
+            <button class="btn xs sage" onclick="addCart('Arc\\'teryx Beta LT', 449)"><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h3l2.5 12h11L22 8H7"/></svg>Acheter · 48h</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Catégorie · Chaussures -->
+    <div class="cat-block" data-cat="chaussures">
+      <div class="cat-head" onclick="toggleCat(this)">
+        <div class="cat-name"><span class="ci">🥾</span>Chaussures</div>
+        <div class="stats"><span><strong>2</strong>/3 possédés</span><span>·</span><span><strong>820</strong> g</span></div>
+      </div>
+      <div class="gear-grid">
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🥾</div>
+          <div class="n"><span class="brand">Salomon</span>X Ultra 4 Mid GTX</div>
+          <div class="g-meta"><span><strong>820</strong> g</span><span class="sep">·</span><span>Randonnée</span></div>
+        </div>
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">👟</div>
+          <div class="n"><span class="brand">Hoka</span>Speedgoat 5</div>
+          <div class="g-meta"><span><strong>580</strong> g</span><span class="sep">·</span><span>Trail</span></div>
+        </div>
+        <div class="gear missing" data-owned="false">
+          <div class="top"><span class="status-pill">Suggéré · IA</span><span class="price-tag">45 €</span></div>
+          <div class="g-ico">🧦</div>
+          <div class="n"><span class="brand">Injinji</span>Trail Midweight</div>
+          <div class="g-meta"><span><strong>62</strong> g</span><span class="sep">·</span><span>Chaussettes ×2</span></div>
+          <div class="row-actions">
+            <button class="btn xs" onclick="markOwned(this)"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg>J'ai déjà</button>
+            <button class="btn xs sage" onclick="addCart('Injinji Trail Socks', 45)"><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h3l2.5 12h11L22 8H7"/></svg>Acheter · 48h</button>
+          </div>
+        </div>
+        <div class="gear add" onclick="toast('Ajout manuel bientôt disponible')">
+          <div style="font-size:24px;">＋</div>
+          <div>Ajouter une paire</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Catégorie · Cuisine & réchauds -->
+    <div class="cat-block" data-cat="cuisine">
+      <div class="cat-head" onclick="toggleCat(this)">
+        <div class="cat-name"><span class="ci">🍳</span>Cuisine &amp; <em>réchauds</em></div>
+        <div class="stats"><span><strong>4</strong>/5 possédés</span><span>·</span><span><strong>1,2</strong> kg</span></div>
+      </div>
+      <div class="gear-grid">
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🔥</div>
+          <div class="n"><span class="brand">MSR</span>PocketRocket 2</div>
+          <div class="g-meta"><span><strong>73</strong> g</span><span class="sep">·</span><span>Gaz</span></div>
+        </div>
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🍲</div>
+          <div class="n"><span class="brand">Toaks</span>Titanium 750ml</div>
+          <div class="g-meta"><span><strong>103</strong> g</span><span class="sep">·</span><span>Popote</span></div>
+        </div>
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🥄</div>
+          <div class="n"><span class="brand">Sea to Summit</span>Alpha Light Spork</div>
+          <div class="g-meta"><span><strong>11</strong> g</span><span class="sep">·</span><span>Couvert</span></div>
+        </div>
+        <div class="gear missing" data-owned="false">
+          <div class="top"><span class="status-pill">Suggéré · IA</span><span class="price-tag">39 €</span></div>
+          <div class="g-ico">☕</div>
+          <div class="n"><span class="brand">GSI</span>Java Drip filtre</div>
+          <div class="g-meta"><span><strong>18</strong> g</span><span class="sep">·</span><span>Café bivouac</span></div>
+          <div class="row-actions">
+            <button class="btn xs" onclick="markOwned(this)"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg>J'ai déjà</button>
+            <button class="btn xs sage" onclick="addCart('GSI Java Drip', 39)"><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h3l2.5 12h11L22 8H7"/></svg>Acheter · 48h</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Catégorie · Eau & filtres -->
+    <div class="cat-block" data-cat="hydra">
+      <div class="cat-head" onclick="toggleCat(this)">
+        <div class="cat-name"><span class="ci">💧</span>Eau &amp; <em>filtres</em></div>
+        <div class="stats"><span><strong>3</strong>/4 possédés</span><span>·</span><span><strong>460</strong> g</span></div>
+      </div>
+      <div class="gear-grid">
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">💧</div>
+          <div class="n"><span class="brand">Sawyer</span>Squeeze Mini</div>
+          <div class="g-meta"><span><strong>60</strong> g</span><span class="sep">·</span><span>Filtre</span></div>
+        </div>
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🥤</div>
+          <div class="n"><span class="brand">HydraPak</span>Seeker 2L</div>
+          <div class="g-meta"><span><strong>85</strong> g</span><span class="sep">·</span><span>Poche</span></div>
+        </div>
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🍶</div>
+          <div class="n"><span class="brand">Nalgene</span>Tritan 1L</div>
+          <div class="g-meta"><span><strong>178</strong> g</span><span class="sep">·</span><span>Gourde</span></div>
+        </div>
+        <div class="gear missing" data-owned="false">
+          <div class="top"><span class="status-pill">Suggéré · IA</span><span class="price-tag">29 €</span></div>
+          <div class="g-ico">🧪</div>
+          <div class="n"><span class="brand">Katadyn</span>Micropur Forte × 100</div>
+          <div class="g-meta"><span><strong>28</strong> g</span><span class="sep">·</span><span>Pastilles</span></div>
+          <div class="row-actions">
+            <button class="btn xs" onclick="markOwned(this)"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg>J'ai déjà</button>
+            <button class="btn xs sage" onclick="addCart('Micropur Forte', 29)"><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h3l2.5 12h11L22 8H7"/></svg>Acheter · 48h</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Catégorie · Navigation -->
+    <div class="cat-block" data-cat="nav">
+      <div class="cat-head" onclick="toggleCat(this)">
+        <div class="cat-name"><span class="ci">🧭</span>Navigation</div>
+        <div class="stats"><span><strong>2</strong>/3 possédés</span><span>·</span><span><strong>380</strong> g</span></div>
+      </div>
+      <div class="gear-grid">
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🧭</div>
+          <div class="n"><span class="brand">Suunto</span>M-3 NH</div>
+          <div class="g-meta"><span><strong>52</strong> g</span><span class="sep">·</span><span>Boussole</span></div>
+        </div>
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">⌚</div>
+          <div class="n"><span class="brand">Garmin</span>Fenix 7 Sapphire</div>
+          <div class="g-meta"><span><strong>73</strong> g</span><span class="sep">·</span><span>GPS</span></div>
+        </div>
+        <div class="gear missing" data-owned="false">
+          <div class="top"><span class="status-pill">Suggéré · IA</span><span class="price-tag">449 €</span></div>
+          <div class="g-ico">📡</div>
+          <div class="n"><span class="brand">Garmin</span>InReach Mini 2</div>
+          <div class="g-meta"><span><strong>100</strong> g</span><span class="sep">·</span><span>Satellite SOS</span></div>
+          <div class="row-actions">
+            <button class="btn xs" onclick="markOwned(this)"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg>J'ai déjà</button>
+            <button class="btn xs sage" onclick="addCart('InReach Mini 2', 449)"><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h3l2.5 12h11L22 8H7"/></svg>Acheter · 48h</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Catégorie · Sécurité & soins -->
+    <div class="cat-block" data-cat="securite">
+      <div class="cat-head" onclick="toggleCat(this)">
+        <div class="cat-name"><span class="ci">🩹</span>Sécurité &amp; <em>soins</em></div>
+        <div class="stats"><span><strong>3</strong>/4 possédés</span><span>·</span><span><strong>520</strong> g</span></div>
+      </div>
+      <div class="gear-grid">
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🩹</div>
+          <div class="n"><span class="brand">Adventure Medical</span>Ultralight .3</div>
+          <div class="g-meta"><span><strong>190</strong> g</span><span class="sep">·</span><span>Trousse</span></div>
+        </div>
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🔥</div>
+          <div class="n"><span class="brand">Light My Fire</span>Firesteel 2.0</div>
+          <div class="g-meta"><span><strong>28</strong> g</span><span class="sep">·</span><span>Allume-feu</span></div>
+        </div>
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🔪</div>
+          <div class="n"><span class="brand">Opinel</span>N°8 Inox</div>
+          <div class="g-meta"><span><strong>45</strong> g</span><span class="sep">·</span><span>Couteau</span></div>
+        </div>
+        <div class="gear missing" data-owned="false">
+          <div class="top"><span class="status-pill">Suggéré · IA</span><span class="price-tag">12 €</span></div>
+          <div class="g-ico">🪟</div>
+          <div class="n"><span class="brand">SOL</span>Emergency Bivvy</div>
+          <div class="g-meta"><span><strong>108</strong> g</span><span class="sep">·</span><span>Couverture survie</span></div>
+          <div class="row-actions">
+            <button class="btn xs" onclick="markOwned(this)"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg>J'ai déjà</button>
+            <button class="btn xs sage" onclick="addCart('SOL Emergency Bivvy', 12)"><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h3l2.5 12h11L22 8H7"/></svg>Acheter · 48h</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Catégorie · Éclairage -->
+    <div class="cat-block" data-cat="eclairage">
+      <div class="cat-head" onclick="toggleCat(this)">
+        <div class="cat-name"><span class="ci">🔦</span>Éclairage</div>
+        <div class="stats"><span><strong>2</strong>/2 possédés</span><span>·</span><span><strong>140</strong> g</span></div>
+      </div>
+      <div class="gear-grid">
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🔦</div>
+          <div class="n"><span class="brand">Petzl</span>Actik Core</div>
+          <div class="g-meta"><span><strong>75</strong> g</span><span class="sep">·</span><span>450 lm</span></div>
+        </div>
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🔋</div>
+          <div class="n"><span class="brand">Nitecore</span>NB10000</div>
+          <div class="g-meta"><span><strong>65</strong> g</span><span class="sep">·</span><span>Batterie 10 000mAh</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Catégorie · Accessoires -->
+    <div class="cat-block" data-cat="accessoires">
+      <div class="cat-head" onclick="toggleCat(this)">
+        <div class="cat-name"><span class="ci">🔧</span>Accessoires</div>
+        <div class="stats"><span><strong>6</strong>/8 possédés</span><span>·</span><span><strong>320</strong> g</span></div>
+      </div>
+      <div class="gear-grid">
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🕶️</div>
+          <div class="n"><span class="brand">Julbo</span>Shield Cameleon</div>
+          <div class="g-meta"><span><strong>28</strong> g</span><span class="sep">·</span><span>Cat 2-4</span></div>
+        </div>
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🧢</div>
+          <div class="n"><span class="brand">Buff</span>CoolNet UV+</div>
+          <div class="g-meta"><span><strong>42</strong> g</span><span class="sep">·</span><span>Tour de cou</span></div>
+        </div>
+        <div class="gear owned">
+          <div class="top"><span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span></div>
+          <div class="g-ico">🪢</div>
+          <div class="n"><span class="brand">Black Diamond</span>Trail Pro Poles</div>
+          <div class="g-meta"><span><strong>510</strong> g</span><span class="sep">·</span><span>Bâtons paire</span></div>
+        </div>
+        <div class="gear missing" data-owned="false">
+          <div class="top"><span class="status-pill">Suggéré · IA</span><span class="price-tag">18 €</span></div>
+          <div class="g-ico">🧴</div>
+          <div class="n"><span class="brand">Sea to Summit</span>Wilderness Wash 89 ml</div>
+          <div class="g-meta"><span><strong>110</strong> g</span><span class="sep">·</span><span>Savon écolo</span></div>
+          <div class="row-actions">
+            <button class="btn xs" onclick="markOwned(this)"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg>J'ai déjà</button>
+            <button class="btn xs sage" onclick="addCart('Wilderness Wash', 18)"><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h3l2.5 12h11L22 8H7"/></svg>Acheter · 48h</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <footer>
+    Le Kit du Voyageur · <em>Cockpit unique</em> · v2026.08 — Vert forêt <span style="opacity:.6">#17402C</span> · Papier chaud <span style="opacity:.6">#FBFAF6</span> · Zéro orange.
+  </footer>
+
+</div>
+
+<!-- Cart FAB -->
+<a href="#" class="cart-fab" onclick="toggleCart(); return false;">
+  <svg class="ic" viewBox="0 0 24 24"><path d="M3 5h3l2.5 12h11L22 8H7"/><circle cx="10" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>
+  Panier
+  <span class="cart-count" id="cart-count">2</span>
+  <span class="cart-total" id="cart-total">237 €</span>
+</a>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <svg width="16" height="16" class="ic" viewBox="0 0 24 24"><path d="M4 12l6 6 10-14"/></svg>
+  <span id="toast-msg">Ajouté à votre inventaire</span>
+</div>
+
+<!-- Command palette -->
+<div class="cmdk" id="cmdk" onclick="if(event.target===this) closeCmdK()">
+  <div class="box">
+    <div class="top-row">
+      <svg class="ic" width="16" height="16" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="text" placeholder="Rechercher un article, un kit, une catégorie…" id="cmdk-input" autocomplete="off"/>
+      <kbd style="font-family:var(--font-mono);font-size:10px;padding:2px 6px;background:rgba(255,255,255,0.08);border-radius:6px;color:rgba(242,245,240,0.6);">esc</kbd>
+    </div>
+    <div class="list" id="cmdk-list"></div>
+  </div>
+</div>
+
+<script>
+  // ---------- State
+  const cart = JSON.parse(localStorage.getItem('lkv-cart') || '[]');
+  let owned = new Set(JSON.parse(localStorage.getItem('lkv-owned') || '[]'));
+  updateCartUI();
+
+  // ---------- Toggle Tout / Possédé
+  const toggle = document.getElementById('inv-toggle');
+  toggle.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    const buttons = toggle.querySelectorAll('button');
+    buttons.forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    const slider = toggle.querySelector('.slider');
+    slider.style.left = (b.offsetLeft) + 'px';
+    slider.style.width = b.offsetWidth + 'px';
+    const mode = b.dataset.mode;
+    document.querySelectorAll('.gear.missing').forEach(el => {
+      el.style.display = (mode === 'owned') ? 'none' : '';
+    });
+    // Recompute per category counts
+    document.querySelectorAll('.cat-block').forEach(cat => {
+      const total = cat.querySelectorAll('.gear:not(.add)').length;
+      const visible = Array.from(cat.querySelectorAll('.gear:not(.add)')).filter(g => g.style.display !== 'none').length;
+    });
+  });
+  // Init slider position after DOM
+  requestAnimationFrame(() => {
+    const active = toggle.querySelector('button.on');
+    if (active) {
+      const slider = toggle.querySelector('.slider');
+      slider.style.left = active.offsetLeft + 'px';
+      slider.style.width = active.offsetWidth + 'px';
+    }
+  });
+
+  // ---------- Checklist
+  document.querySelectorAll('.cl-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      item.classList.toggle('done');
+      updatePrep();
+    });
+  });
+  function updatePrep() {
+    const total = document.querySelectorAll('.cl-item').length;
+    const done = document.querySelectorAll('.cl-item.done').length;
+    const pct = Math.round(done/total*100);
+    document.getElementById('prep-fill').style.width = pct + '%';
+    document.getElementById('prep-val').textContent = pct + '%';
+  }
+
+  // ---------- Category collapse
+  function toggleCat(head) {
+    const block = head.closest('.cat-block');
+    const grid = block.querySelector('.gear-grid');
+    grid.style.display = (grid.style.display === 'none') ? '' : 'none';
+    head.style.opacity = (grid.style.display === 'none') ? 0.55 : 1;
+  }
+
+  // ---------- Mark owned
+  function markOwned(btn) {
+    const gear = btn.closest('.gear');
+    const name = gear.querySelector('.n')?.textContent.trim() || '';
+    gear.classList.remove('missing');
+    gear.classList.add('owned');
+    gear.querySelector('.status-pill').textContent = 'Possédé';
+    // Replace actions & price
+    const price = gear.querySelector('.price-tag');
+    if (price) price.remove();
+    const actions = gear.querySelector('.row-actions');
+    if (actions) actions.remove();
+    // Add fav
+    const top = gear.querySelector('.top');
+    top.innerHTML = '<span class="status-pill">Possédé</span><span class="fav-mini"><svg class="ic" viewBox="0 0 24 24" width="12" height="12"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.7 7.1 18.2l.9-5.5-4-3.9L9.5 8z"/></svg></span>';
+    toast('✓ ' + name.split('\n')[1] || name + ' — ajouté à votre inventaire');
+  }
+
+  // ---------- Cart
+  function addCart(name, price) {
+    cart.push({ name, price });
+    localStorage.setItem('lkv-cart', JSON.stringify(cart));
+    updateCartUI();
+    toast('🛒 ' + name + ' ajouté au panier · Livraison 48h');
+  }
+  function updateCartUI() {
+    document.getElementById('cart-count').textContent = cart.length;
+    document.getElementById('cart-badge').textContent = cart.length;
+    const total = cart.reduce((s,i) => s + i.price, 0);
+    document.getElementById('cart-total').textContent = total + ' €';
+  }
+  function toggleCart() {
+    if (cart.length === 0) { toast('Panier vide'); return; }
+    toast('Panier ouvert · ' + cart.length + ' articles · ' + cart.reduce((s,i)=>s+i.price,0) + ' €');
+  }
+
+  // ---------- Toast
+  let toastT;
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.classList.add('on');
+    clearTimeout(toastT);
+    toastT = setTimeout(() => t.classList.remove('on'), 2400);
+  }
+
+  // ---------- AI Configurator
+  function runAI() {
+    const val = document.getElementById('ai-input').value.trim();
+    if (!val) { toast('Décrivez votre randonnée en une phrase.'); return; }
+    toast('🤖 IA en route… kit généré et injecté dans votre inventaire.');
+  }
+  function applyPreset(k) {
+    const map = {
+      trek3j:  'Preset "Trek Montagne 3j" appliqué · 8,4 kg',
+      journee: 'Preset "Journée estivale" appliqué · 3,8 kg',
+      bivouac: 'Preset "Bivouac Forêt 2j" appliqué · 6,7 kg',
+      ultra:   'Preset "Ultra-Light 48h" appliqué · 3,9 kg'
+    };
+    toast('⚡ ' + map[k]);
+  }
+
+  // ---------- Validation du départ
+  function validerDepart() {
+    toast('🚀 Sac verrouillé · Usure du matériel incrémentée · Bon voyage.');
+  }
+
+  // ---------- Hike tabs
+  document.querySelectorAll('.hike-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.hike-tab').forEach(x => x.classList.remove('on'));
+      t.classList.add('on');
+      toast('Randonnée sélectionnée · ' + t.textContent.trim().split(' ')[0]);
+    });
+  });
+
+  // ---------- Command palette
+  const cmdkData = [
+    { icon: '🎒', label: 'Osprey Aether Plus 60L', cat: 'Portage' },
+    { icon: '🏕️', label: 'MSR Hubba Hubba NX 2', cat: 'Couchage' },
+    { icon: '🛏️', label: 'Rab Neutrino Pro 400', cat: 'Couchage' },
+    { icon: '🥾', label: 'Salomon X Ultra 4 Mid GTX', cat: 'Chaussures' },
+    { icon: '🧥', label: 'Patagonia R1 Air Fleece', cat: 'Vêtements' },
+    { icon: '🔥', label: 'MSR PocketRocket 2', cat: 'Cuisine' },
+    { icon: '💧', label: 'Sawyer Squeeze Mini', cat: 'Eau' },
+    { icon: '🔦', label: 'Petzl Actik Core', cat: 'Éclairage' },
+    { icon: '📦', label: 'Kit · Trek Chartreuse 3 jours', cat: 'Kits' },
+    { icon: '📦', label: 'Kit · GR54 Écrins 7j', cat: 'Kits' },
+    { icon: '🤖', label: 'Configurateur IA · nouveau kit', cat: 'Action' },
+    { icon: '🚀', label: 'Valider mon sac & partir', cat: 'Action' },
+  ];
+  function openCmdK() {
+    document.getElementById('cmdk').classList.add('on');
+    setTimeout(() => document.getElementById('cmdk-input').focus(), 10);
+    renderCmdK('');
+  }
+  function closeCmdK() {
+    document.getElementById('cmdk').classList.remove('on');
+    document.getElementById('cmdk-input').value = '';
+  }
+  function renderCmdK(q) {
+    const list = document.getElementById('cmdk-list');
+    const filtered = cmdkData.filter(i => !q || i.label.toLowerCase().includes(q.toLowerCase()) || i.cat.toLowerCase().includes(q.toLowerCase()));
+    list.innerHTML = filtered.map((i, idx) => `
+      <div class="it ${idx===0?'active':''}">
+        <div class="g-ico">${i.icon}</div>
+        <div>
+          <div style="color:#f6f8f4;">${i.label}</div>
+          <div style="font-size:10px;color:rgba(242,245,240,0.5);letter-spacing:0.06em;text-transform:uppercase;margin-top:2px;">${i.cat}</div>
+        </div>
+        <div class="m">↵</div>
+      </div>
+    `).join('') || '<div style="padding:20px;text-align:center;color:rgba(242,245,240,0.4);font-size:13px;">Aucun résultat</div>';
+  }
+  document.getElementById('cmdk-input').addEventListener('input', e => renderCmdK(e.target.value));
+
+  // ---------- Keyboard shortcuts
+  window.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+      if (e.key === 'Escape') { closeCmdK(); e.target.blur(); }
+      return;
+    }
+    if (e.key === '/') {
+      e.preventDefault();
+      openCmdK();
+    } else if (e.key === 'n' || e.key === '+') {
+      e.preventDefault();
+      toast('+ Nouveau kit · ajout rapide (mock)');
+    } else if (e.key === 'Escape') {
+      closeCmdK();
+    }
+  });
+
+  // ---------- Initial toast
+  setTimeout(() => toast('👋 Bienvenue Marceline · votre cockpit est à jour.'), 800);
+</script>
+
+</body>
+</html>

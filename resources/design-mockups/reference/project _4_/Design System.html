@@ -1,0 +1,1059 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Design System — Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css" />
+<style>
+  body { background: var(--lkv-paper); }
+
+  /* Layout global */
+  .ds-shell {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  .ds-nav {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    padding: 40px 28px;
+    border-right: 1px solid rgba(11,31,23,0.06);
+    background: var(--lkv-paper);
+    overflow-y: auto;
+  }
+  .ds-nav .lkv-logo { margin-bottom: 32px; color: var(--lkv-forest-800); }
+  .ds-nav h4 {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--lkv-ink-400);
+    margin: 24px 0 10px;
+  }
+  .ds-nav ul { list-style: none; padding: 0; margin: 0; }
+  .ds-nav a {
+    display: block;
+    padding: 7px 12px;
+    margin: 0 -12px;
+    border-radius: 8px;
+    color: var(--lkv-ink-700);
+    font-size: 14px;
+    transition: background var(--lkv-dur-fast) var(--lkv-ease);
+  }
+  .ds-nav a:hover { background: rgba(31,74,58,0.06); color: var(--lkv-forest-800); }
+
+  /* Main */
+  .ds-main { padding: 64px 80px 160px; max-width: 1240px; }
+
+  .ds-hero {
+    padding-bottom: 64px;
+    border-bottom: 1px solid rgba(11,31,23,0.08);
+    margin-bottom: 64px;
+  }
+  .ds-hero .lkv-eyebrow { margin-bottom: 18px; }
+  .ds-hero h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 88px;
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    line-height: 0.94;
+    margin: 0 0 24px;
+    color: var(--lkv-ink-900);
+  }
+  .ds-hero h1 em {
+    font-family: var(--lkv-font-serif);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--lkv-forest-800);
+  }
+  .ds-hero p {
+    font-size: 20px;
+    line-height: 1.5;
+    color: var(--lkv-ink-500);
+    max-width: 640px;
+    margin: 0;
+  }
+  .ds-hero .meta {
+    display: flex;
+    gap: 40px;
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(11,31,23,0.06);
+  }
+  .ds-hero .meta > div .k {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--lkv-ink-400);
+    margin-bottom: 8px;
+  }
+  .ds-hero .meta > div .v {
+    font-size: 15px;
+    color: var(--lkv-ink-900);
+    font-weight: 500;
+  }
+
+  /* Sections */
+  .ds-section { margin-bottom: 96px; scroll-margin-top: 40px; }
+  .ds-section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+  }
+  .ds-section-head h2 {
+    font-family: var(--lkv-font-sans);
+    font-size: 40px;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    margin: 0;
+    color: var(--lkv-ink-900);
+  }
+  .ds-section-head .num {
+    font-family: var(--lkv-font-mono);
+    font-size: 12px;
+    color: var(--lkv-ink-400);
+    letter-spacing: 0.04em;
+  }
+
+  /* ————————— COLORS ————————— */
+  .ds-color-scale {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .ds-swatch {
+    border-radius: 20px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: var(--lkv-shadow-xs);
+    transition: transform var(--lkv-dur) var(--lkv-ease-out), box-shadow var(--lkv-dur) var(--lkv-ease-out);
+  }
+  .ds-swatch:hover { transform: translateY(-3px); box-shadow: var(--lkv-shadow-md); }
+  .ds-swatch .fill { height: 128px; }
+  .ds-swatch .info { padding: 14px 16px 16px; }
+  .ds-swatch .name {
+    font-size: 14px; font-weight: 500;
+    color: var(--lkv-ink-900);
+    margin-bottom: 4px;
+  }
+  .ds-swatch .hex {
+    font-family: var(--lkv-font-mono);
+    font-size: 12px;
+    color: var(--lkv-ink-400);
+  }
+
+  /* Hero color composition */
+  .ds-color-hero {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 12px;
+    height: 240px;
+    margin-bottom: 40px;
+    border-radius: 24px;
+    overflow: hidden;
+  }
+  .ds-color-hero > div {
+    display: flex;
+    align-items: flex-end;
+    padding: 24px;
+    color: #fff;
+  }
+  .ds-color-hero .l {
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.85;
+  }
+
+  .ds-scale-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--lkv-ink-500);
+    margin-bottom: 12px;
+    margin-top: 32px;
+  }
+
+  /* ————————— TYPO ————————— */
+  .ds-type-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 32px;
+    padding: 28px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    align-items: baseline;
+  }
+  .ds-type-row .meta { color: var(--lkv-ink-400); font-size: 13px; font-family: var(--lkv-font-mono); }
+  .ds-type-row .meta strong {
+    display: block;
+    color: var(--lkv-ink-900);
+    font-family: var(--lkv-font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .ds-type-sample.d1 { font-size: 96px; font-weight: 500; letter-spacing: -0.035em; line-height: 0.95; }
+  .ds-type-sample.d2 { font-size: 64px; font-weight: 500; letter-spacing: -0.03em; line-height: 1; }
+  .ds-type-sample.h1 { font-size: 44px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.08; }
+  .ds-type-sample.h2 { font-size: 32px; font-weight: 500; letter-spacing: -0.015em; line-height: 1.15; }
+  .ds-type-sample.h3 { font-size: 24px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.25; }
+  .ds-type-sample.body { font-size: 16px; line-height: 1.55; color: var(--lkv-ink-700); max-width: 560px; }
+  .ds-type-sample.serif {
+    font-family: var(--lkv-font-serif);
+    font-size: 56px;
+    font-weight: 400;
+    font-style: italic;
+    line-height: 1.02;
+    color: var(--lkv-forest-800);
+    letter-spacing: -0.02em;
+  }
+  .ds-type-sample.eyebrow {
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--lkv-ink-500);
+  }
+
+  /* ————————— SPACING ————————— */
+  .ds-spacing {
+    display: grid;
+    gap: 8px;
+  }
+  .ds-space-row {
+    display: grid;
+    grid-template-columns: 80px 60px 1fr;
+    align-items: center;
+    gap: 24px;
+    padding: 10px 0;
+  }
+  .ds-space-row .name {
+    font-family: var(--lkv-font-mono);
+    font-size: 12px;
+    color: var(--lkv-ink-500);
+  }
+  .ds-space-row .val {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--lkv-ink-900);
+  }
+  .ds-space-row .bar {
+    height: 22px;
+    background: var(--lkv-forest-800);
+    border-radius: 4px;
+  }
+
+  /* ————————— RADIUS ————————— */
+  .ds-radius-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+  }
+  .ds-radius-tile {
+    aspect-ratio: 1;
+    background: var(--lkv-sage-100);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 16px;
+    transition: background var(--lkv-dur) var(--lkv-ease);
+  }
+  .ds-radius-tile:hover { background: var(--lkv-sage-200); }
+  .ds-radius-tile .n {
+    font-size: 15px; font-weight: 500;
+    color: var(--lkv-forest-800);
+    margin-bottom: 4px;
+  }
+  .ds-radius-tile .v {
+    font-family: var(--lkv-font-mono);
+    font-size: 11px;
+    color: var(--lkv-ink-500);
+  }
+
+  /* ————————— SHADOWS ————————— */
+  .ds-shadow-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 24px;
+    padding: 40px;
+    background: var(--lkv-paper);
+    border-radius: 24px;
+  }
+  .ds-shadow-tile {
+    aspect-ratio: 1;
+    background: #fff;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    transition: transform var(--lkv-dur) var(--lkv-ease-out);
+  }
+  .ds-shadow-tile:hover { transform: translateY(-4px); }
+  .ds-shadow-tile .n {
+    font-size: 14px; font-weight: 500; color: var(--lkv-ink-900);
+    margin-bottom: 6px;
+  }
+  .ds-shadow-tile .v {
+    font-family: var(--lkv-font-mono); font-size: 11px; color: var(--lkv-ink-400);
+  }
+
+  /* ————————— COMPONENTS ————————— */
+  .ds-comp-grid {
+    display: grid;
+    gap: 24px;
+  }
+  .ds-comp-block {
+    padding: 40px;
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: var(--lkv-shadow-xs);
+  }
+  .ds-comp-block .title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--lkv-ink-900);
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .ds-comp-block .title span {
+    font-family: var(--lkv-font-mono);
+    font-size: 11px;
+    color: var(--lkv-ink-400);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .ds-comp-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+  }
+
+  /* Inputs */
+  .ds-input {
+    height: 52px;
+    padding: 0 20px;
+    border-radius: 999px;
+    border: 1px solid rgba(11,31,23,0.1);
+    background: #fff;
+    font-family: var(--lkv-font-sans);
+    font-size: 15px;
+    color: var(--lkv-ink-900);
+    min-width: 240px;
+    transition: border var(--lkv-dur) var(--lkv-ease), box-shadow var(--lkv-dur) var(--lkv-ease);
+  }
+  .ds-input:focus {
+    outline: none;
+    border-color: var(--lkv-forest-800);
+    box-shadow: 0 0 0 4px rgba(31,74,58,0.08);
+  }
+  .ds-input::placeholder { color: var(--lkv-ink-400); }
+
+  /* Badges */
+  .ds-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+  .ds-badge-forest { background: rgba(31,74,58,0.1); color: var(--lkv-forest-800); }
+  .ds-badge-sage { background: var(--lkv-sage-100); color: var(--lkv-forest-700); }
+  .ds-badge-warm { background: #FBF0DE; color: #8A6127; }
+  .ds-badge-neutral { background: var(--lkv-stone-100); color: var(--lkv-ink-700); }
+
+  /* Card examples */
+  .ds-preview-card {
+    width: 320px;
+    border-radius: 28px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: var(--lkv-shadow-sm);
+    transition: transform var(--lkv-dur) var(--lkv-ease-out), box-shadow var(--lkv-dur) var(--lkv-ease-out);
+  }
+  .ds-preview-card:hover { transform: translateY(-4px); box-shadow: var(--lkv-shadow-lg); }
+  .ds-preview-card .img {
+    height: 200px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+  }
+  .ds-preview-card .img .chip-abs {
+    position: absolute; top: 14px; left: 14px;
+  }
+  .ds-preview-card .body { padding: 20px; }
+  .ds-preview-card .body h4 {
+    font-size: 18px; font-weight: 500;
+    margin: 0 0 4px; letter-spacing: -0.01em;
+  }
+  .ds-preview-card .body p {
+    font-size: 13px; color: var(--lkv-ink-500); margin: 0;
+  }
+  .ds-preview-card .body .meta {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 16px; padding-top: 16px;
+    border-top: 1px solid rgba(11,31,23,0.06);
+  }
+  .ds-preview-card .body .price {
+    font-size: 20px; font-weight: 500; letter-spacing: -0.01em;
+  }
+  .ds-preview-card .body .rating {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--lkv-ink-700);
+  }
+
+  /* Glass card demo */
+  .ds-glass-demo {
+    height: 340px;
+    background-image: url('assets/hero-misty.jpg');
+    background-size: cover;
+    background-position: center;
+    border-radius: 28px;
+    padding: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+  }
+  .ds-glass-card {
+    padding: 24px;
+    border-radius: 22px;
+    min-width: 200px;
+  }
+  .ds-glass-card .k {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
+    opacity: 0.7; margin-bottom: 8px;
+  }
+  .ds-glass-card .v {
+    font-size: 32px; font-weight: 500; letter-spacing: -0.02em;
+  }
+
+  /* Search bar demo */
+  .ds-search-bar {
+    display: flex;
+    align-items: center;
+    height: 76px;
+    padding: 8px;
+    background: #fff;
+    border-radius: 999px;
+    box-shadow: var(--lkv-shadow-md);
+    max-width: 780px;
+  }
+  .ds-search-bar .field {
+    flex: 1;
+    padding: 8px 24px;
+    border-right: 1px solid rgba(11,31,23,0.08);
+  }
+  .ds-search-bar .field:last-of-type { border-right: none; }
+  .ds-search-bar .field .k {
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--lkv-ink-400); margin-bottom: 2px;
+  }
+  .ds-search-bar .field .v {
+    font-size: 14px; color: var(--lkv-ink-900); font-weight: 500;
+  }
+  .ds-search-bar .field .v.placeholder { color: var(--lkv-ink-400); font-weight: 400; }
+  .ds-search-bar .go {
+    width: 60px; height: 60px;
+    border-radius: 999px;
+    background: var(--lkv-forest-800);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    transition: background var(--lkv-dur) var(--lkv-ease);
+  }
+  .ds-search-bar .go:hover { background: var(--lkv-forest-700); }
+
+  /* Nav sample */
+  .ds-nav-sample {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 12px 12px 28px;
+    background: #fff;
+    border-radius: 999px;
+    box-shadow: var(--lkv-shadow-sm);
+    border: 1px solid rgba(11,31,23,0.04);
+  }
+  .ds-nav-sample .links { display: flex; gap: 32px; }
+  .ds-nav-sample .links a {
+    font-size: 14px; color: var(--lkv-ink-700);
+    transition: color var(--lkv-dur) var(--lkv-ease);
+  }
+  .ds-nav-sample .links a:hover { color: var(--lkv-forest-800); }
+  .ds-nav-sample .links a.active { color: var(--lkv-forest-800); font-weight: 500; }
+
+  /* Toggle segment */
+  .ds-segment {
+    display: inline-flex;
+    padding: 4px;
+    background: var(--lkv-stone-100);
+    border-radius: 999px;
+  }
+  .ds-segment button {
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+    color: var(--lkv-ink-500);
+    transition: all var(--lkv-dur) var(--lkv-ease);
+  }
+  .ds-segment button.on {
+    background: #fff; color: var(--lkv-ink-900);
+    box-shadow: var(--lkv-shadow-xs);
+  }
+
+  /* Icons row */
+  .ds-icons {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+    gap: 12px;
+  }
+  .ds-icon-tile {
+    aspect-ratio: 1;
+    background: #fff;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-900);
+    border: 1px solid rgba(11,31,23,0.04);
+    transition: transform var(--lkv-dur) var(--lkv-ease-out), border var(--lkv-dur) var(--lkv-ease);
+  }
+  .ds-icon-tile:hover { border-color: var(--lkv-forest-800); transform: translateY(-2px); }
+
+  /* Footer of the design system doc */
+  .ds-foot {
+    margin-top: 96px;
+    padding-top: 40px;
+    border-top: 1px solid rgba(11,31,23,0.08);
+    display: flex; justify-content: space-between; align-items: baseline;
+    color: var(--lkv-ink-400); font-size: 13px;
+  }
+  .ds-foot a { color: var(--lkv-forest-800); font-weight: 500; }
+
+  @media (max-width: 900px) {
+    .ds-shell { grid-template-columns: 1fr; }
+    .ds-nav { position: static; height: auto; }
+    .ds-main { padding: 32px 24px 80px; }
+    .ds-hero h1 { font-size: 56px; }
+    .ds-type-sample.d1 { font-size: 56px; }
+    .ds-type-sample.d2 { font-size: 40px; }
+    .ds-type-row { grid-template-columns: 1fr; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="ds-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="ds-nav">
+    <a href="Index.html" class="lkv-logo">
+      <span class="lkv-logo-mark">
+        <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
+          <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+        </svg>
+      </span>
+      <span>Le Kit</span>
+    </a>
+
+    <h4>Design System</h4>
+    <ul>
+      <li><a href="#intro">Introduction</a></li>
+      <li><a href="#colors">Couleurs</a></li>
+      <li><a href="#typography">Typographie</a></li>
+      <li><a href="#spacing">Espacements</a></li>
+      <li><a href="#radius">Rayons</a></li>
+      <li><a href="#shadows">Ombres</a></li>
+    </ul>
+
+    <h4>Composants</h4>
+    <ul>
+      <li><a href="#buttons">Boutons</a></li>
+      <li><a href="#inputs">Champs & Recherche</a></li>
+      <li><a href="#chips">Chips & Badges</a></li>
+      <li><a href="#cards">Cartes</a></li>
+      <li><a href="#glass">Glass & Overlays</a></li>
+      <li><a href="#navigation">Navigation</a></li>
+      <li><a href="#icons">Icônes</a></li>
+    </ul>
+
+    <h4>Pages</h4>
+    <ul>
+      <li><a href="Home.html">Accueil</a></li>
+      <li><a href="Recherche Carte.html">Recherche / Carte</a></li>
+      <li><a href="Detail Aventure.html">Détail aventure</a></li>
+    </ul>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="ds-main">
+
+    <!-- HERO -->
+    <section id="intro" class="ds-hero">
+      <div class="lkv-eyebrow">Design System · v1.0</div>
+      <h1>Ce que vous emportez,<br/><em>c'est votre voyage.</em></h1>
+      <p>Le langage visuel du Kit du Voyageur — pensé pour donner envie de partir. Photographie XL, glass léger, typographie ample, animations lentes. Rien de superflu.</p>
+      <div class="meta">
+        <div><div class="k">Palette</div><div class="v">Forêt · Sauge · Sable</div></div>
+        <div><div class="k">Type</div><div class="v">General Sans + Fraunces</div></div>
+        <div><div class="k">Grille</div><div class="v">4 pt · 12 col</div></div>
+        <div><div class="k">Motion</div><div class="v">320 ms · ease-out doux</div></div>
+      </div>
+    </section>
+
+    <!-- COLORS -->
+    <section id="colors" class="ds-section">
+      <div class="ds-section-head">
+        <h2>Couleurs</h2>
+        <span class="num">01 · Tokens</span>
+      </div>
+
+      <div class="ds-color-hero">
+        <div style="background: var(--lkv-forest-800)"><span class="l">Forêt · Primary</span></div>
+        <div style="background: var(--lkv-forest-600)"><span class="l">Mousse</span></div>
+        <div style="background: var(--lkv-sage-500)"><span class="l">Sauge</span></div>
+        <div style="background: var(--lkv-sage-100); color: var(--lkv-forest-800)"><span class="l">Brume</span></div>
+      </div>
+
+      <div class="ds-scale-label">Forêt — la voix principale de la marque</div>
+      <div class="ds-color-scale">
+        <div class="ds-swatch"><div class="fill" style="background:var(--lkv-forest-950)"></div><div class="info"><div class="name">Forest / 950</div><div class="hex">#0B1F17</div></div></div>
+        <div class="ds-swatch"><div class="fill" style="background:var(--lkv-forest-900)"></div><div class="info"><div class="name">Forest / 900</div><div class="hex">#12281E</div></div></div>
+        <div class="ds-swatch"><div class="fill" style="background:var(--lkv-forest-800)"></div><div class="info"><div class="name">Forest / 800 · Primary</div><div class="hex">#1F4A3A</div></div></div>
+        <div class="ds-swatch"><div class="fill" style="background:var(--lkv-forest-700)"></div><div class="info"><div class="name">Forest / 700</div><div class="hex">#2E6F57</div></div></div>
+        <div class="ds-swatch"><div class="fill" style="background:var(--lkv-forest-600)"></div><div class="info"><div class="name">Moss / 600</div><div class="hex">#405E48</div></div></div>
+      </div>
+
+      <div class="ds-scale-label">Sauge — l'accent, la lumière filtrée</div>
+      <div class="ds-color-scale">
+        <div class="ds-swatch"><div class="fill" style="background:var(--lkv-sage-500)"></div><div class="info"><div class="name">Sage / 500</div><div class="hex">#6DAA7D</div></div></div>
+        <div class="ds-swatch"><div class="fill" style="background:var(--lkv-sage-300)"></div><div class="info"><div class="name">Sage / 300</div><div class="hex">#AECBB4</div></div></div>
+        <div class="ds-swatch"><div class="fill" style="background:var(--lkv-sage-200)"></div><div class="info"><div class="name">Sage / 200</div><div class="hex">#C8DDCC</div></div></div>
+        <div class="ds-swatch"><div class="fill" style="background:var(--lkv-sage-100)"></div><div class="info"><div class="name">Sage / 100 · Brume</div><div class="hex">#DDEEE5</div></div></div>
+      </div>
+
+      <div class="ds-scale-label">Neutres — encre, pierre, papier</div>
+      <div class="ds-color-scale">
+        <div class="ds-swatch"><div class="fill" style="background:var(--lkv-ink-900)"></div><div class="info"><div class="name">Ink / 900</div><div class="hex">#111614</div></div></div>
+        <div class="ds-swatch"><div class="fill" style="background:var(--lkv-ink-700)"></div><div class="info"><div class="name">Ink / 700</div><div class="hex">#2A322E</div></div></div>
+        <div class="ds-swatch"><div class="fill" style="background:var(--lkv-ink-500)"></div><div class="info"><div class="name">Ink / 500</div><div class="hex">#566159</div></div></div>
+        <div class="ds-swatch"><div class="fill" style="background:var(--lkv-ink-400)"></div><div class="info"><div class="name">Ink / 400</div><div class="hex">#7A857C</div></div></div>
+        <div class="ds-swatch"><div class="fill" style="background:var(--lkv-stone-100)"></div><div class="info"><div class="name">Stone / 100</div><div class="hex">#EFEEE9</div></div></div>
+        <div class="ds-swatch"><div class="fill" style="background:var(--lkv-paper); box-shadow: inset 0 0 0 1px rgba(11,31,23,0.06)"></div><div class="info"><div class="name">Paper</div><div class="hex">#F8FAF8</div></div></div>
+      </div>
+
+      <div class="ds-scale-label">Chaud — coucher de soleil, données ponctuelles</div>
+      <div class="ds-color-scale">
+        <div class="ds-swatch"><div class="fill" style="background:var(--lkv-warm-500)"></div><div class="info"><div class="name">Warm / 500</div><div class="hex">#C99B5A</div></div></div>
+        <div class="ds-swatch"><div class="fill" style="background:var(--lkv-warm-300)"></div><div class="info"><div class="name">Warm / 300</div><div class="hex">#E4C695</div></div></div>
+      </div>
+    </section>
+
+    <!-- TYPOGRAPHY -->
+    <section id="typography" class="ds-section">
+      <div class="ds-section-head">
+        <h2>Typographie</h2>
+        <span class="num">02 · General Sans + Fraunces</span>
+      </div>
+
+      <div class="ds-type-row">
+        <div class="meta"><strong>Display / 1</strong>96 / 500 / -3.5%</div>
+        <div class="ds-type-sample d1">Là où la carte se termine.</div>
+      </div>
+      <div class="ds-type-row">
+        <div class="meta"><strong>Display / 2</strong>64 / 500 / -3%</div>
+        <div class="ds-type-sample d2">Refuges, sentiers, silences.</div>
+      </div>
+      <div class="ds-type-row">
+        <div class="meta"><strong>Serif accent</strong>Fraunces italic 56</div>
+        <div class="ds-type-sample serif">l'appel de la forêt</div>
+      </div>
+      <div class="ds-type-row">
+        <div class="meta"><strong>Heading / 1</strong>44 / 500 / -2%</div>
+        <div class="ds-type-sample h1">Trois jours dans le massif de la Chartreuse</div>
+      </div>
+      <div class="ds-type-row">
+        <div class="meta"><strong>Heading / 2</strong>32 / 500 / -1.5%</div>
+        <div class="ds-type-sample h2">Ce que vous emporterez</div>
+      </div>
+      <div class="ds-type-row">
+        <div class="meta"><strong>Heading / 3</strong>24 / 500 / -1%</div>
+        <div class="ds-type-sample h3">Sac 45L · 1,4 kg · Toile cirée</div>
+      </div>
+      <div class="ds-type-row">
+        <div class="meta"><strong>Body</strong>16 / 400 / 155%</div>
+        <div class="ds-type-sample body">Chaque voyage commence par une liste. La nôtre est plus courte que la vôtre : trois pulls, un carnet, une gourde. Le reste est dans l'application — cartes hors-ligne, refuges partenaires, retours de voyageurs.</div>
+      </div>
+      <div class="ds-type-row">
+        <div class="meta"><strong>Eyebrow</strong>12 / 500 / 18%</div>
+        <div class="ds-type-sample eyebrow">Édition · Automne 2026</div>
+      </div>
+    </section>
+
+    <!-- SPACING -->
+    <section id="spacing" class="ds-section">
+      <div class="ds-section-head">
+        <h2>Espacements</h2>
+        <span class="num">03 · Grille 4 pt</span>
+      </div>
+
+      <div class="ds-spacing">
+        <div class="ds-space-row"><span class="name">--s-1</span><span class="val">4 px</span><div class="bar" style="width:4px"></div></div>
+        <div class="ds-space-row"><span class="name">--s-2</span><span class="val">8 px</span><div class="bar" style="width:8px"></div></div>
+        <div class="ds-space-row"><span class="name">--s-3</span><span class="val">12 px</span><div class="bar" style="width:12px"></div></div>
+        <div class="ds-space-row"><span class="name">--s-4</span><span class="val">16 px</span><div class="bar" style="width:16px"></div></div>
+        <div class="ds-space-row"><span class="name">--s-6</span><span class="val">24 px</span><div class="bar" style="width:24px"></div></div>
+        <div class="ds-space-row"><span class="name">--s-8</span><span class="val">32 px</span><div class="bar" style="width:32px"></div></div>
+        <div class="ds-space-row"><span class="name">--s-12</span><span class="val">48 px</span><div class="bar" style="width:48px"></div></div>
+        <div class="ds-space-row"><span class="name">--s-16</span><span class="val">64 px</span><div class="bar" style="width:64px"></div></div>
+        <div class="ds-space-row"><span class="name">--s-24</span><span class="val">96 px</span><div class="bar" style="width:96px"></div></div>
+        <div class="ds-space-row"><span class="name">--s-32</span><span class="val">128 px</span><div class="bar" style="width:128px"></div></div>
+      </div>
+    </section>
+
+    <!-- RADIUS -->
+    <section id="radius" class="ds-section">
+      <div class="ds-section-head">
+        <h2>Rayons</h2>
+        <span class="num">04 · Radius</span>
+      </div>
+      <div class="ds-radius-grid">
+        <div class="ds-radius-tile" style="border-radius:6px"><div class="n">XS</div><div class="v">6 px</div></div>
+        <div class="ds-radius-tile" style="border-radius:10px"><div class="n">SM</div><div class="v">10 px</div></div>
+        <div class="ds-radius-tile" style="border-radius:16px"><div class="n">MD</div><div class="v">16 px</div></div>
+        <div class="ds-radius-tile" style="border-radius:24px"><div class="n">LG</div><div class="v">24 px</div></div>
+        <div class="ds-radius-tile" style="border-radius:28px"><div class="n">XL · cartes</div><div class="v">28 px</div></div>
+        <div class="ds-radius-tile" style="border-radius:36px"><div class="n">2XL</div><div class="v">36 px</div></div>
+        <div class="ds-radius-tile" style="border-radius:999px"><div class="n">Full · pills</div><div class="v">∞</div></div>
+      </div>
+    </section>
+
+    <!-- SHADOWS -->
+    <section id="shadows" class="ds-section">
+      <div class="ds-section-head">
+        <h2>Ombres</h2>
+        <span class="num">05 · Douces, jamais dures</span>
+      </div>
+      <div class="ds-shadow-grid">
+        <div class="ds-shadow-tile" style="box-shadow: var(--lkv-shadow-xs)"><div class="n">XS</div><div class="v">1 · 2</div></div>
+        <div class="ds-shadow-tile" style="box-shadow: var(--lkv-shadow-sm)"><div class="n">SM</div><div class="v">2 · 8</div></div>
+        <div class="ds-shadow-tile" style="box-shadow: var(--lkv-shadow-md)"><div class="n">MD</div><div class="v">8 · 24</div></div>
+        <div class="ds-shadow-tile" style="box-shadow: var(--lkv-shadow-lg)"><div class="n">LG</div><div class="v">20 · 48</div></div>
+        <div class="ds-shadow-tile" style="box-shadow: var(--lkv-shadow-xl)"><div class="n">XL</div><div class="v">30 · 80</div></div>
+      </div>
+    </section>
+
+    <!-- BUTTONS -->
+    <section id="buttons" class="ds-section">
+      <div class="ds-section-head">
+        <h2>Boutons</h2>
+        <span class="num">06 · Pills, 48 px par défaut</span>
+      </div>
+      <div class="ds-comp-grid">
+
+        <div class="ds-comp-block">
+          <div class="title">Primary <span>lkv-btn-primary</span></div>
+          <div class="ds-comp-row">
+            <button class="lkv-btn lkv-btn-primary lkv-btn-sm">Réserver</button>
+            <button class="lkv-btn lkv-btn-primary">Composer mon sac</button>
+            <button class="lkv-btn lkv-btn-primary lkv-btn-lg">
+              Commencer l'aventure
+              <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="ds-comp-block">
+          <div class="title">Secondary — light <span>lkv-btn-light</span></div>
+          <div class="ds-comp-row">
+            <button class="lkv-btn lkv-btn-light">Voir les refuges</button>
+            <button class="lkv-btn lkv-btn-light lkv-btn-lg">
+              <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 16 0 8 8 0 1 0-16 0"/><path d="M12 8v4l3 2"/></svg>
+              Sauvegarder
+            </button>
+          </div>
+        </div>
+
+        <div class="ds-comp-block">
+          <div class="title">Ghost <span>lkv-btn-ghost</span></div>
+          <div class="ds-comp-row">
+            <button class="lkv-btn lkv-btn-ghost">Découvrir</button>
+            <button class="lkv-btn lkv-btn-ghost">
+              En savoir plus
+              <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+            <button class="lkv-btn lkv-btn-icon lkv-btn-ghost">
+              <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M20 12l-8 8-8-8"/><path d="M12 4v16"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="ds-comp-block" style="background: linear-gradient(135deg, #12281E, #1F4A3A); color: #fff;">
+          <div class="title" style="color:#fff; border-color: rgba(255,255,255,0.14)">Sur fond sombre <span style="color:rgba(255,255,255,0.6)">lkv-btn-ghost-light</span></div>
+          <div class="ds-comp-row">
+            <button class="lkv-btn lkv-btn-light">Réserver</button>
+            <button class="lkv-btn lkv-btn-ghost-light">Voir la carte</button>
+            <button class="lkv-btn lkv-btn-ghost-light lkv-btn-icon">
+              <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INPUTS -->
+    <section id="inputs" class="ds-section">
+      <div class="ds-section-head">
+        <h2>Champs & Recherche</h2>
+        <span class="num">07 · Pills, 52 px</span>
+      </div>
+
+      <div class="ds-comp-block" style="margin-bottom:24px">
+        <div class="title">Champs <span>ds-input</span></div>
+        <div class="ds-comp-row">
+          <input class="ds-input" placeholder="Rechercher une destination"/>
+          <input class="ds-input" value="Chartreuse, France" style="min-width:200px"/>
+          <input class="ds-input" placeholder="Email" style="min-width:200px" type="email"/>
+        </div>
+      </div>
+
+      <div class="ds-comp-block">
+        <div class="title">Barre de recherche · destination + dates + voyageurs <span>ds-search-bar</span></div>
+        <div class="ds-search-bar">
+          <div class="field">
+            <div class="k">Destination</div>
+            <div class="v">Chartreuse, France</div>
+          </div>
+          <div class="field">
+            <div class="k">Dates</div>
+            <div class="v">14 – 17 sept.</div>
+          </div>
+          <div class="field">
+            <div class="k">Activité</div>
+            <div class="v placeholder">Rando · Bivouac</div>
+          </div>
+          <div class="field">
+            <div class="k">Voyageurs</div>
+            <div class="v">2 adultes</div>
+          </div>
+          <button class="go" aria-label="Rechercher">
+            <svg class="lkv-icon" viewBox="0 0 24 24" style="width:22px;height:22px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHIPS & BADGES -->
+    <section id="chips" class="ds-section">
+      <div class="ds-section-head">
+        <h2>Chips & Badges</h2>
+        <span class="num">08 · Signaux discrets</span>
+      </div>
+      <div class="ds-comp-grid">
+        <div class="ds-comp-block">
+          <div class="title">Chips flottantes · glass <span>lkv-chip</span></div>
+          <div class="ds-comp-row">
+            <div class="lkv-chip"><span class="dot"></span>Wi-Fi 100 Mbps</div>
+            <div class="lkv-chip"><span class="dot" style="background:var(--lkv-warm-500)"></span>15 min du bourg</div>
+            <div class="lkv-chip">
+              <svg class="lkv-icon" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+              Coup de cœur
+            </div>
+            <div class="lkv-chip">Chien accepté</div>
+            <div class="lkv-chip">Bivouac autorisé</div>
+          </div>
+        </div>
+
+        <div class="ds-comp-block">
+          <div class="title">Badges — informationnels <span>ds-badge</span></div>
+          <div class="ds-comp-row">
+            <span class="ds-badge ds-badge-forest">Nouveau</span>
+            <span class="ds-badge ds-badge-sage">Disponible</span>
+            <span class="ds-badge ds-badge-warm">Édition limitée</span>
+            <span class="ds-badge ds-badge-neutral">Épuisé</span>
+          </div>
+        </div>
+
+        <div class="ds-comp-block">
+          <div class="title">Segments <span>ds-segment</span></div>
+          <div class="ds-comp-row">
+            <div class="ds-segment">
+              <button class="on">Aventure</button>
+              <button>Boutique</button>
+              <button>Communauté</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CARDS -->
+    <section id="cards" class="ds-section">
+      <div class="ds-section-head">
+        <h2>Cartes</h2>
+        <span class="num">09 · La photo raconte, le texte confirme</span>
+      </div>
+
+      <div class="ds-comp-block">
+        <div class="title">Carte d'aventure <span>ds-preview-card</span></div>
+        <div class="ds-comp-row" style="align-items:flex-start; gap:24px">
+
+          <div class="ds-preview-card">
+            <div class="img" style="background-image:url('assets/adventure-hiking.jpg')">
+              <div class="chip-abs"><div class="lkv-chip">4 jours</div></div>
+            </div>
+            <div class="body">
+              <h4>Chartreuse · sentier des balcons</h4>
+              <p>Massif préalpin · France</p>
+              <div class="meta">
+                <div class="price">348 €<span style="font-size:13px; color:var(--lkv-ink-400); font-weight:400"> / pers.</span></div>
+                <div class="rating">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="var(--lkv-warm-500)"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+                  4,9 · 214 avis
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ds-preview-card">
+            <div class="img" style="background-image:url('assets/adventure-bivouac.jpg')">
+              <div class="chip-abs"><div class="lkv-chip">2 nuits</div></div>
+            </div>
+            <div class="body">
+              <h4>Bivouac étoilé · Vercors</h4>
+              <p>Plateau du Vercors · France</p>
+              <div class="meta">
+                <div class="price">189 €</div>
+                <div class="rating">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="var(--lkv-warm-500)"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+                  4,8 · 96 avis
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ds-preview-card">
+            <div class="img" style="background-image:url('assets/adventure-kayak.jpg')">
+              <div class="chip-abs"><div class="lkv-chip">1 jour</div></div>
+            </div>
+            <div class="body">
+              <h4>Kayak · lac de Serre-Ponçon</h4>
+              <p>Hautes-Alpes · France</p>
+              <div class="meta">
+                <div class="price">72 €</div>
+                <div class="rating">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="var(--lkv-warm-500)"><path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/></svg>
+                  4,7 · 63 avis
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- GLASS -->
+    <section id="glass" class="ds-section">
+      <div class="ds-section-head">
+        <h2>Glass & Overlays</h2>
+        <span class="num">10 · Flottant, jamais lourd</span>
+      </div>
+
+      <div class="ds-glass-demo">
+        <div class="ds-glass-card lkv-glass">
+          <div class="k">Altitude</div>
+          <div class="v">1 620 m</div>
+        </div>
+        <div class="ds-glass-card lkv-glass">
+          <div class="k">Température</div>
+          <div class="v">14 °C</div>
+        </div>
+        <div class="ds-glass-card lkv-glass-dark">
+          <div class="k">Distance</div>
+          <div class="v">27,4 km</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NAVIGATION -->
+    <section id="navigation" class="ds-section">
+      <div class="ds-section-head">
+        <h2>Navigation</h2>
+        <span class="num">11 · Flottante, ~68 px</span>
+      </div>
+
+      <div class="ds-comp-block">
+        <div class="title">Barre supérieure · état par défaut</div>
+        <div class="ds-nav-sample">
+          <div class="lkv-logo" style="color: var(--lkv-forest-800)">
+            <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
+              <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <path d="M2 24 L30 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <circle cx="24" cy="9" r="1.6" fill="currentColor"/>
+            </svg>
+            <span>Le Kit du Voyageur</span>
+          </div>
+          <div class="links">
+            <a href="#" class="active">Aventures</a>
+            <a href="#">Refuges</a>
+            <a href="#">Boutique</a>
+            <a href="#">Journal</a>
+            <a href="#">Communauté</a>
+          </div>
+          <button class="lkv-btn lkv-btn-primary lkv-btn-sm">Se connecter</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ICONS -->
+    <section id="icons" class="ds-section">
+      <div class="ds-section-head">
+        <h2>Icônes</h2>
+        <span class="num">12 · Trait fin 1,6 px</span>
+      </div>
+      <div class="ds-comp-block">
+        <div class="title">Iconographie <span>lkv-icon · 20 px</span></div>
+        <div class="ds-icons">
+          <div class="ds-icon-tile" title="Sac"><svg class="lkv-icon" viewBox="0 0 24 24" width="22" height="22"><path d="M6 8h12v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/><path d="M9 8V5a3 3 0 0 1 6 0v3"/><path d="M10 12h4"/></svg></div>
+          <div class="ds-icon-tile" title="Carte"><svg class="lkv-icon" viewBox="0 0 24 24" width="22" height="22"><path d="M9 4l-6 3v13l6-3 6 3 6-3V4l-6 3z"/><path d="M9 4v16M15 7v16"/></svg></div>
+          <div class="ds-icon-tile" title="Boussole"><svg class="lkv-icon" viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 5-5 2 2-5z"/></svg></div>
+          <div class="ds-icon-tile" title="Tente"><svg class="lkv-icon" viewBox="0 0 24 24" width="22" height="22"><path d="M3 20L12 4l9 16"/><path d="M12 4v16"/><path d="M3 20h18"/></svg></div>
+          <div class="ds-icon-tile" title="Feuille"><svg class="lkv-icon" viewBox="0 0 24 24" width="22" height="22"><path d="M20 4c0 8-6 14-14 14L4 20"/><path d="M4 20c0-6 4-12 12-14"/></svg></div>
+          <div class="ds-icon-tile" title="Cœur"><svg class="lkv-icon" viewBox="0 0 24 24" width="22" height="22"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg></div>
+          <div class="ds-icon-tile" title="Calendrier"><svg class="lkv-icon" viewBox="0 0 24 24" width="22" height="22"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div>
+          <div class="ds-icon-tile" title="Étoile"><svg class="lkv-icon" viewBox="0 0 24 24" width="22" height="22"><path d="M12 3l2.6 5.5 6 .8-4.3 4.1 1 5.9L12 16.6 6.6 19.3l1-5.9L3.4 9.3l6-.8z"/></svg></div>
+          <div class="ds-icon-tile" title="Recherche"><svg class="lkv-icon" viewBox="0 0 24 24" width="22" height="22"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div>
+          <div class="ds-icon-tile" title="Utilisateur"><svg class="lkv-icon" viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+          <div class="ds-icon-tile" title="Panier"><svg class="lkv-icon" viewBox="0 0 24 24" width="22" height="22"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg></div>
+          <div class="ds-icon-tile" title="Filtres"><svg class="lkv-icon" viewBox="0 0 24 24" width="22" height="22"><path d="M4 6h16M7 12h10M10 18h4"/></svg></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="ds-foot">
+      <div>Le Kit du Voyageur · Design System — v1.0 · 2026</div>
+      <div><a href="Index.html">← Retour au hub</a></div>
+    </div>
+
+  </main>
+</div>
+</body>
+</html>

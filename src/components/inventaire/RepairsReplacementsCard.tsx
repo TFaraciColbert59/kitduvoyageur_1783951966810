@@ -1,58 +1,85 @@
 'use client';
 
 import React from 'react';
-import Link from "next/link";
+import Image from 'next/image';
 import { RepairItemData } from '@/lib/mock/mon-materiel-marceline';
 
 interface RepairsReplacementsCardProps {
   repairs: RepairItemData[];
   onAction?: (item: RepairItemData) => void;
+  className?: string;
 }
 
-export default function RepairsReplacementsCard({ repairs, onAction }: RepairsReplacementsCardProps) {
+export default function RepairsReplacementsCard({
+  repairs,
+  onAction,
+  className = '',
+}: RepairsReplacementsCardProps) {
   return (
-    <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8] shadow-sm space-y-4 font-sans active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-      <div className="flex items-center justify-between border-b border-[#1C2620]/5 pb-3">
-        <div>
-          <h4 className="font-display font-800 text-lg text-[#132219]">À réparer <span className="font-serif italic font-normal text-amber-700">ou remplacer</span></h4>
-          <span className="text-[10px] font-mono text-[#132219]/50 uppercase tracking-widest block mt-0.5">{repairs.length} ARTICLES AVEC ALERTE DE SANTÉ</span>
-        </div>
-        <span className="text-[10px] font-mono font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
-          SURVEILLANCE
+    <div
+      className={`bg-white rounded-[24px] p-5 md:p-6 border border-[#0B1F17]/[0.08] shadow-[0_2px_8px_rgba(11,31,23,0.04)] ${className}`}
+    >
+      <div className="flex items-baseline justify-between gap-2 mb-1">
+        <h3 className="text-[17.5px] font-medium tracking-tight text-[#111614] font-sans">
+          À réparer <em className="font-serif italic font-normal text-[#1F4A3A]">ou remplacer</em>
+        </h3>
+        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#F3F2ED] text-[#566159]">
+          <strong className="text-[#1F4A3A] font-semibold">{repairs.length}</strong> alertes
         </span>
       </div>
+      <p className="text-[11.5px] text-[#566159] font-sans mb-3.5">
+        Ce qui montre des signes d'usure ou approche sa fin de vie.
+      </p>
 
-      <div className="space-y-3">
-        {repairs.map((r) => (
-          <div
-            key={r.id}
-            className="p-3.5 rounded-2xl bg-[#F5F3ED] border border-[#E8E4D8] flex items-center justify-between gap-3"
-          >
-            <div className="min-w-0">
-              <h5 className="font-extrabold text-xs text-[#132219] truncate">{r.item_name}</h5>
-              <span className="text-[10px] text-[#132219]/60 font-medium block mt-0.5 truncate">{r.issue}</span>
-            </div>
+      <div className="divide-y divide-[#0B1F17]/[0.06]">
+        {repairs.map((r) => {
+          const isCritical =
+            r.repair_type === 'remplacement' ||
+            r.issue?.toLowerCase().includes('68%') ||
+            r.issue?.toLowerCase().includes('usé') ||
+            r.issue?.toLowerCase().includes('critique');
+          return (
+            <div key={r.id} className="py-2.5 first:pt-0 last:pb-0 grid grid-cols-[36px_1fr_auto] gap-2.5 items-center">
+              <div className="relative w-9 h-9 rounded-lg overflow-hidden bg-[#F3F2ED] border border-[#0B1F17]/[0.06] shrink-0">
+                <Image
+                  src={r.image || '/assets/images/no_image.png'}
+                  alt={r.item_name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
 
-            <div className="shrink-0">
-              {r.status === 'terminé' ? (
-                <Link
-                  href="/boutique"
-                  className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-full text-[10px] font-mono font-bold transition-colors inline-block"
+              <div className="min-w-0 pr-1">
+                <h5 className="text-[12.5px] font-medium text-[#111614] leading-snug truncate">
+                  {r.item_name}
+                </h5>
+                <span
+                  className={`text-[10.5px] block truncate mt-0.5 ${
+                    isCritical ? 'text-[#C15A5A]' : 'text-[#C99B5A]'
+                  }`}
                 >
-                  Remplacer
-                </Link>
-              ) : (
+                  {r.issue}
+                </span>
+              </div>
+
+              <div className="shrink-0">
                 <button
-                  onClick={() => onAction && onAction(r)}
-                  className="px-3 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-full text-[10px] font-mono font-bold transition-colors"
+                  type="button"
+                  onClick={() => onAction?.(r)}
+                  className={`px-2.5 py-1 rounded-full text-[10.5px] font-medium transition-transform active:scale-95 ${
+                    isCritical
+                      ? 'bg-[#C15A5A]/12 text-[#C15A5A] hover:bg-[#C15A5A]/20'
+                      : 'bg-[#FBF0DE] text-[#C99B5A] hover:bg-[#E4C695]/30'
+                  }`}
                 >
-                  Réparer
+                  {r.status === 'terminé' ? 'Voir' : 'Réparer'}
                 </button>
-              )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 }
+

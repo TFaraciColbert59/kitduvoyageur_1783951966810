@@ -1,0 +1,2769 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Mobile · Pages principales — Le Kit du Voyageur</title>
+<link rel="stylesheet" href="tokens.css"/>
+<style>
+  body {
+    background: #EAE6DF;
+    padding: 40px 0 80px;
+    min-height: 100vh;
+  }
+
+  /* ————— Stage title ————— */
+  .stage-title {
+    max-width: 1720px; margin: 0 auto 32px; padding: 0 40px;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 24px;
+    color: var(--lkv-ink-700);
+  }
+  .stage-title .h {
+    font-family: var(--lkv-font-sans);
+    font-size: 24px; font-weight: 500; letter-spacing: -0.015em;
+    color: var(--lkv-ink-900);
+  }
+  .stage-title .h em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .stage-title .sub { font-size: 14px; color: var(--lkv-ink-500); margin-top: 4px; }
+  .stage-title .crumbs a { color: var(--lkv-forest-800); font-weight: 500; margin-left: 20px; font-size: 13px; }
+
+  /* ————— Stage ————— */
+  .stage {
+    display: flex; gap: 32px; overflow-x: auto;
+    max-width: 100%;
+    padding: 0 40px 32px;
+    align-items: flex-start;
+    scroll-snap-type: x proximity;
+  }
+  .stage::-webkit-scrollbar { height: 8px; }
+  .stage::-webkit-scrollbar-thumb { background: rgba(11,31,23,0.15); border-radius: 4px; }
+
+  .board { flex-shrink: 0; scroll-snap-align: start; }
+
+  .artboard-mobile {
+    width: 380px;
+    border-radius: 44px; overflow: hidden;
+    background: #0B1F17; padding: 12px;
+    box-shadow: 0 30px 80px rgba(11,31,23,0.20);
+  }
+  .artboard-mobile .screen {
+    width: 100%; height: 780px;
+    border-radius: 34px; overflow: hidden;
+    background: var(--lkv-paper);
+    position: relative;
+    display: flex; flex-direction: column;
+  }
+  .board-caption {
+    margin-top: 16px; font-size: 11px; color: var(--lkv-ink-500);
+    text-align: center; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 500;
+  }
+  .board-caption em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); text-transform: none; letter-spacing: 0;
+    font-weight: 400; font-size: 13px;
+  }
+
+  /* ————— iOS-ish status bar ————— */
+  .status-bar {
+    height: 40px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px 0 28px;
+    font-size: 14px; font-weight: 600;
+    color: var(--lkv-ink-900);
+    flex-shrink: 0;
+  }
+  .status-bar.on-dark { color: #fff; }
+  .status-bar .right { display: flex; gap: 6px; align-items: center; }
+  .status-bar svg { width: 16px; height: 10px; }
+
+  /* ————— Top bar (mobile nav) ————— */
+  .m-topbar {
+    height: 52px;
+    padding: 0 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--lkv-paper);
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 5;
+  }
+  .m-topbar.on-image {
+    background: transparent;
+    border-bottom: none;
+    position: absolute; top: 40px; left: 0; right: 0;
+    z-index: 2;
+  }
+  .m-topbar .m-btn {
+    width: 38px; height: 38px; border-radius: 999px;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid rgba(11,31,23,0.06);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-900);
+    position: relative;
+  }
+  .m-topbar .m-btn.ghost { background: transparent; border: none; }
+  .m-topbar.on-image .m-btn {
+    background: rgba(255,255,255,0.16);
+    backdrop-filter: blur(20px);
+    border-color: rgba(255,255,255,0.28);
+    color: #fff;
+  }
+  .m-topbar .center {
+    font-size: 14px; font-weight: 500; letter-spacing: -0.01em;
+    color: var(--lkv-ink-900);
+  }
+  .m-topbar .center em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .m-topbar.on-image .center { color: #fff; }
+
+  /* ————— Bottom tab bar (mobile) ————— */
+  .m-tabbar {
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    height: 62px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(24px) saturate(1.5);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    border-radius: 22px;
+    border: 1px solid rgba(11,31,23,0.06);
+    display: flex; align-items: center; justify-content: space-around;
+    padding: 0 8px;
+    z-index: 3;
+    box-shadow: 0 10px 30px rgba(11,31,23,0.1);
+  }
+  .m-tabbar .tabi {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    color: var(--lkv-ink-500);
+    padding: 6px 10px;
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.02em;
+    border-radius: 12px;
+    transition: color var(--lkv-dur) var(--lkv-ease);
+    flex: 1;
+    min-width: 0;
+  }
+  .m-tabbar .tabi.on { color: var(--lkv-forest-800); }
+  .m-tabbar .tabi.on .tabi-dot {
+    position: absolute; bottom: 8px;
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--lkv-forest-800);
+  }
+  .m-tabbar .tabi svg { width: 20px; height: 20px; }
+
+  /* ————— Body scroll region ————— */
+  .m-body {
+    flex: 1; overflow-y: auto;
+    padding-bottom: 90px;
+  }
+  .m-body::-webkit-scrollbar { display: none; }
+
+  /* ═══════════════════════════════════════════════
+     1. HOME — landing
+     ═══════════════════════════════════════════════ */
+  .home-hero {
+    position: relative;
+    height: 460px;
+    padding: 90px 20px 24px;
+    color: #fff;
+    overflow: hidden;
+  }
+  .home-hero .bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, #1a2f24 0%, #0B1F17 100%);
+  }
+  .home-hero .bg::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(ellipse at 20% 30%, rgba(168,200,160,0.25) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 70%, rgba(45,107,74,0.4) 0%, transparent 50%);
+  }
+  .home-hero .mountains {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 240px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 240' preserveAspectRatio='none'><path d='M0,240 L0,160 L60,90 L100,120 L140,60 L180,110 L220,40 L270,100 L320,70 L360,130 L400,90 L400,240 Z' fill='%23071a10' opacity='0.55'/><path d='M0,240 L0,200 L40,150 L90,180 L130,130 L180,170 L230,120 L280,160 L340,140 L400,175 L400,240 Z' fill='%23050f09' opacity='0.85'/></svg>") center bottom / cover no-repeat;
+  }
+  .home-hero > .content {
+    position: relative; z-index: 2;
+    height: 100%;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .home-hero .eye {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 12px;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 999px;
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 500;
+    align-self: flex-start;
+  }
+  .home-hero .eye .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--lkv-sage-300); }
+  .home-hero h1 {
+    font-family: var(--lkv-font-sans);
+    font-size: 46px; font-weight: 500;
+    letter-spacing: -0.035em; line-height: 0.96;
+    margin: 16px 0 12px;
+    text-wrap: balance;
+  }
+  .home-hero h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-200); font-weight: 400;
+  }
+  .home-hero .sub {
+    font-size: 14px; line-height: 1.5;
+    color: rgba(255,255,255,0.75); max-width: 300px; margin: 0;
+  }
+  .home-hero .cta-row {
+    display: flex; gap: 8px; margin-top: 20px;
+  }
+  .home-hero .cta-row .lkv-btn { font-size: 13px; padding: 10px 18px; }
+  .home-hero .cta-row .lkv-btn-light .lkv-icon { width: 14px; height: 14px; }
+
+  .home-quick {
+    padding: 20px 16px 8px;
+  }
+  .quick-h {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 12px;
+  }
+  .quick-h h2 {
+    font-size: 20px; letter-spacing: -0.015em; margin: 0;
+  }
+  .quick-h h2 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .quick-h a { font-size: 12px; color: var(--lkv-forest-800); font-weight: 500; }
+
+  .quick-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .quick-card {
+    aspect-ratio: 1/1;
+    border-radius: 20px;
+    padding: 14px;
+    position: relative;
+    overflow: hidden;
+    display: flex; flex-direction: column; justify-content: space-between;
+    color: #fff;
+  }
+  .quick-card.qc-1 {
+    background: linear-gradient(160deg, #2D6B4A 0%, #17402C 100%);
+  }
+  .quick-card.qc-2 {
+    background: var(--lkv-stone-50);
+    color: var(--lkv-ink-900);
+    border: 1px solid rgba(11,31,23,0.05);
+  }
+  .quick-card.qc-3 {
+    background: linear-gradient(160deg, #C6DCBE 0%, #A8C8A0 100%);
+    color: var(--lkv-forest-950);
+  }
+  .quick-card.qc-4 {
+    background: #0B1F17;
+    color: #fff;
+  }
+  .quick-card .qc-icon {
+    width: 34px; height: 34px; border-radius: 12px;
+    background: rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .quick-card.qc-2 .qc-icon { background: var(--lkv-sage-100); color: var(--lkv-forest-800); }
+  .quick-card.qc-3 .qc-icon { background: rgba(11,31,23,0.1); color: var(--lkv-forest-800); }
+  .quick-card .qc-icon svg { width: 18px; height: 18px; }
+  .quick-card .qc-num {
+    font-family: var(--lkv-font-mono);
+    font-size: 11px; opacity: 0.7;
+    letter-spacing: 0.06em;
+  }
+  .quick-card h3 {
+    font-size: 17px; letter-spacing: -0.015em; margin: 0;
+    line-height: 1.05;
+  }
+  .quick-card h3 em {
+    font-family: var(--lkv-font-serif); font-style: italic; font-weight: 400;
+  }
+  .quick-card.qc-1 h3 em { color: var(--lkv-sage-300); }
+  .quick-card.qc-2 h3 em { color: var(--lkv-forest-800); }
+  .quick-card.qc-3 h3 em { color: var(--lkv-forest-800); }
+  .quick-card.qc-4 h3 em { color: var(--lkv-sage-300); }
+  .quick-card .qc-sub {
+    font-size: 11px; opacity: 0.65; margin-top: 3px;
+  }
+
+  .home-editorial {
+    padding: 24px 16px 8px;
+  }
+  .ed-card {
+    position: relative;
+    border-radius: 22px;
+    overflow: hidden;
+    background: #384A42;
+    height: 200px;
+    color: #fff;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 16px;
+  }
+  .ed-card .ed-bg {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(160deg, #3d5548 0%, #1e2f27 100%);
+  }
+  .ed-card .ed-bg::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(11,31,23,0.85));
+  }
+  .ed-card .ed-topo {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 30% 40%, rgba(198,220,190,0.18) 0%, transparent 60%),
+      repeating-radial-gradient(circle at 70% 60%, rgba(198,220,190,0.06) 0, rgba(198,220,190,0.06) 1px, transparent 1px, transparent 12px);
+  }
+  .ed-card > * { position: relative; z-index: 1; }
+  .ed-card .kind {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-sage-300); margin-bottom: 6px;
+  }
+  .ed-card h3 {
+    font-size: 22px; letter-spacing: -0.015em;
+    margin: 0 0 4px; line-height: 1.05;
+  }
+  .ed-card h3 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-200); font-weight: 400;
+  }
+  .ed-card .meta {
+    font-size: 11px; opacity: 0.7;
+    font-family: var(--lkv-font-mono);
+  }
+
+  .home-stats {
+    padding: 20px 16px 8px;
+  }
+  .home-stats .row {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: rgba(11,31,23,0.06);
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid rgba(11,31,23,0.06);
+  }
+  .home-stats .cell {
+    background: var(--lkv-paper);
+    padding: 14px 10px;
+    text-align: center;
+  }
+  .home-stats .cell .n {
+    font-size: 22px; font-weight: 500; letter-spacing: -0.02em;
+    color: var(--lkv-ink-900);
+  }
+  .home-stats .cell .n em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .home-stats .cell .lbl {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--lkv-ink-500); margin-top: 2px;
+  }
+
+  .home-strip {
+    padding: 24px 16px 16px;
+  }
+  .strip-card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px;
+    background: var(--lkv-forest-950);
+    color: #fff;
+    border-radius: 20px;
+    text-decoration: none;
+  }
+  .strip-card .sc-icon {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: rgba(198,220,190,0.14);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-sage-300);
+    flex-shrink: 0;
+  }
+  .strip-card .sc-icon svg { width: 20px; height: 20px; }
+  .strip-card .sc-txt { flex: 1; min-width: 0; }
+  .strip-card .sc-txt .t {
+    font-size: 14px; font-weight: 500; letter-spacing: -0.01em;
+    line-height: 1.15;
+  }
+  .strip-card .sc-txt .t em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-weight: 400;
+  }
+  .strip-card .sc-txt .s {
+    font-size: 11px; opacity: 0.65; margin-top: 2px;
+    font-family: var(--lkv-font-mono);
+  }
+  .strip-card .sc-arrow {
+    width: 32px; height: 32px; border-radius: 999px;
+    background: var(--lkv-sage-500);
+    color: var(--lkv-forest-950);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .strip-card .sc-arrow svg { width: 14px; height: 14px; }
+
+  /* ═══════════════════════════════════════════════
+     MENU DRAWER (côté du Home)
+     ═══════════════════════════════════════════════ */
+  .drawer-scrim {
+    position: absolute; inset: 0;
+    background: rgba(11,31,23,0.55);
+    backdrop-filter: blur(2px);
+    z-index: 10;
+  }
+  .drawer {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 88%;
+    background: var(--lkv-paper);
+    z-index: 11;
+    box-shadow: 20px 0 60px rgba(11,31,23,0.25);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .drawer-head {
+    background: var(--lkv-forest-900);
+    color: #fff;
+    padding: 40px 20px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .drawer-head::after {
+    content: "";
+    position: absolute; bottom: -50px; right: -30px;
+    width: 180px; height: 180px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(168,200,160,0.4) 0%, transparent 65%);
+  }
+  .drawer-head .close {
+    position: absolute; top: 12px; right: 12px;
+    width: 34px; height: 34px; border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2;
+  }
+  .drawer-head .close svg { width: 14px; height: 14px; }
+  .drawer-head .logo-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 22px;
+    position: relative; z-index: 2;
+  }
+  .drawer-head .logo-row .mark {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: var(--lkv-sage-500);
+    color: var(--lkv-forest-950);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .drawer-head .logo-row .mark svg { width: 20px; height: 20px; stroke: currentColor; }
+  .drawer-head .logo-row .brand {
+    font-size: 14px; font-weight: 500;
+    letter-spacing: -0.005em;
+    line-height: 1.15;
+  }
+  .drawer-head .logo-row .brand em {
+    display: block;
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-size: 12px; font-weight: 400;
+  }
+  .drawer-head .user {
+    display: flex; align-items: center; gap: 12px;
+    position: relative; z-index: 2;
+  }
+  .drawer-head .user .av {
+    width: 44px; height: 44px; border-radius: 999px;
+    background: var(--lkv-sage-500);
+    color: var(--lkv-forest-950);
+    font-family: var(--lkv-font-serif);
+    font-style: italic;
+    font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid rgba(255,255,255,0.2);
+  }
+  .drawer-head .user .info { flex: 1; min-width: 0; }
+  .drawer-head .user .info .n {
+    font-size: 15px; font-weight: 500; letter-spacing: -0.01em;
+    line-height: 1.15;
+  }
+  .drawer-head .user .info .s {
+    font-size: 11px; color: rgba(255,255,255,0.6);
+    font-family: var(--lkv-font-mono);
+    margin-top: 2px;
+  }
+  .drawer-head .user .chev { color: rgba(255,255,255,0.4); }
+
+  .drawer-body {
+    flex: 1; overflow-y: auto;
+    padding: 16px 12px;
+  }
+  .drawer-section {
+    margin-bottom: 18px;
+  }
+  .drawer-section .lbl {
+    padding: 0 12px 8px;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-ink-400); font-weight: 500;
+  }
+  .drawer-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px;
+    border-radius: 14px;
+    color: var(--lkv-ink-900);
+    text-decoration: none;
+    transition: background var(--lkv-dur) var(--lkv-ease);
+    position: relative;
+  }
+  .drawer-item:hover, .drawer-item.on {
+    background: var(--lkv-stone-50);
+  }
+  .drawer-item.on {
+    background: var(--lkv-sage-100);
+  }
+  .drawer-item .ic {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--lkv-stone-50);
+    color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .drawer-item.on .ic {
+    background: var(--lkv-forest-800);
+    color: var(--lkv-sage-300);
+  }
+  .drawer-item .ic svg { width: 16px; height: 16px; }
+  .drawer-item .info { flex: 1; min-width: 0; }
+  .drawer-item .info .t {
+    font-size: 14px; font-weight: 500; letter-spacing: -0.005em;
+    line-height: 1.15;
+  }
+  .drawer-item .info .t em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .drawer-item .info .s {
+    font-size: 11px; color: var(--lkv-ink-500);
+    margin-top: 2px;
+  }
+  .drawer-item .badge {
+    background: var(--lkv-forest-800);
+    color: #fff;
+    font-size: 10px; font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-family: var(--lkv-font-mono);
+  }
+  .drawer-item .chev {
+    color: var(--lkv-ink-300);
+  }
+  .drawer-item .chev svg { width: 14px; height: 14px; }
+
+  .drawer-foot {
+    padding: 14px 16px 20px;
+    border-top: 1px solid rgba(11,31,23,0.06);
+    background: var(--lkv-stone-50);
+  }
+  .drawer-foot .promo {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px;
+    background: var(--lkv-paper);
+    border-radius: 14px;
+    border: 1px solid rgba(11,31,23,0.05);
+  }
+  .drawer-foot .promo .pic {
+    width: 46px; height: 46px; border-radius: 10px;
+    background: linear-gradient(135deg, #C6DCBE 0%, #A8C8A0 100%);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--lkv-forest-800);
+  }
+  .drawer-foot .promo .pic svg { width: 22px; height: 22px; }
+  .drawer-foot .promo .txt { flex: 1; min-width: 0; }
+  .drawer-foot .promo .txt .t {
+    font-size: 12px; font-weight: 500; line-height: 1.2;
+  }
+  .drawer-foot .promo .txt .t em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .drawer-foot .promo .txt .s {
+    font-size: 10px; color: var(--lkv-ink-500);
+    font-family: var(--lkv-font-mono);
+    margin-top: 2px;
+  }
+  .drawer-foot .promo .go {
+    width: 28px; height: 28px; border-radius: 999px;
+    background: var(--lkv-forest-800); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .drawer-foot .promo .go svg { width: 12px; height: 12px; }
+  .drawer-foot .meta {
+    font-size: 10px; color: var(--lkv-ink-400);
+    font-family: var(--lkv-font-mono);
+    text-align: center;
+    margin-top: 14px;
+    letter-spacing: 0.06em;
+  }
+
+  /* ═══════════════════════════════════════════════
+     2. AVENTURES / RECHERCHE
+     ═══════════════════════════════════════════════ */
+  .av-hero {
+    position: relative;
+    padding: 12px 16px 16px;
+    background: var(--lkv-paper);
+  }
+  .av-hero h1 {
+    font-size: 30px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1;
+    margin: 4px 0 4px;
+  }
+  .av-hero h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .av-hero .lead {
+    font-size: 12px; color: var(--lkv-ink-500);
+    margin: 0 0 14px;
+  }
+  .av-search {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px;
+    background: var(--lkv-stone-50);
+    border: 1px solid rgba(11,31,23,0.05);
+    border-radius: 999px;
+    color: var(--lkv-ink-500);
+    font-size: 13px;
+  }
+  .av-search svg { flex-shrink: 0; }
+  .av-search .filt {
+    margin-left: auto;
+    width: 28px; height: 28px; border-radius: 999px;
+    background: var(--lkv-forest-800); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .av-search .filt svg { width: 14px; height: 14px; }
+  .av-search .filt::after {
+    content: "3";
+    position: absolute; top: -3px; right: -3px;
+    background: var(--lkv-sage-500); color: var(--lkv-forest-950);
+    font-family: var(--lkv-font-mono);
+    font-size: 9px; font-weight: 700;
+    width: 14px; height: 14px;
+    border-radius: 999px;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--lkv-stone-50);
+  }
+
+  .av-cats {
+    display: flex; gap: 6px; overflow-x: auto;
+    padding: 12px 16px 4px;
+    margin: 0 -16px;
+    padding-left: 16px; padding-right: 16px;
+  }
+  .av-cats::-webkit-scrollbar { display: none; }
+  .av-cats button {
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--lkv-paper);
+    border: 1px solid rgba(11,31,23,0.06);
+    font-size: 12px; font-weight: 500; color: var(--lkv-ink-700);
+    white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .av-cats button.on {
+    background: var(--lkv-forest-800); color: #fff;
+    border-color: var(--lkv-forest-800);
+  }
+  .av-cats button svg { width: 12px; height: 12px; }
+
+  .av-map {
+    margin: 16px 16px 0;
+    height: 180px;
+    border-radius: 20px;
+    background:
+      radial-gradient(ellipse at 30% 40%, #DDE9D6 0%, transparent 60%),
+      radial-gradient(ellipse at 75% 65%, #C6DCBE 0%, transparent 55%),
+      linear-gradient(135deg, #E9E4D9 0%, #DDD6C6 100%);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(11,31,23,0.06);
+  }
+  .av-map .grid {
+    position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(0deg, transparent 0, transparent 22px, rgba(11,31,23,0.04) 22px, rgba(11,31,23,0.04) 23px),
+      repeating-linear-gradient(90deg, transparent 0, transparent 22px, rgba(11,31,23,0.04) 22px, rgba(11,31,23,0.04) 23px);
+  }
+  .av-map .contour {
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><g fill='none' stroke='%2317402C' stroke-width='0.7' opacity='0.22'><path d='M50,180 Q120,140 180,150 T340,120'/><path d='M30,160 Q100,120 160,135 T340,100'/><path d='M60,190 Q140,155 200,160 T350,140'/><ellipse cx='200' cy='90' rx='80' ry='40'/><ellipse cx='200' cy='90' rx='55' ry='28'/><ellipse cx='200' cy='90' rx='30' ry='15'/><path d='M0,140 Q80,110 140,120 T300,80 T400,60'/></g></svg>");
+    background-size: cover;
+  }
+  .av-map .pin {
+    position: absolute;
+    width: 30px; height: 30px; border-radius: 999px;
+    background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(11,31,23,0.25);
+    color: var(--lkv-forest-800);
+    font-family: var(--lkv-font-mono);
+    font-size: 11px; font-weight: 700;
+    transform: translate(-50%, -50%);
+  }
+  .av-map .pin.on {
+    background: var(--lkv-forest-800); color: #fff;
+    width: 38px; height: 38px;
+    box-shadow: 0 6px 20px rgba(11,31,23,0.35), 0 0 0 8px rgba(23,64,44,0.12);
+  }
+  .av-map .pin.on::after {
+    content: "";
+    position: absolute; top: 100%; left: 50%;
+    transform: translate(-50%, -3px) rotate(45deg);
+    width: 10px; height: 10px;
+    background: var(--lkv-forest-800);
+  }
+  .av-map .map-ctrl {
+    position: absolute; top: 12px; right: 12px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .av-map .map-ctrl button {
+    width: 32px; height: 32px; border-radius: 10px;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(8px);
+    color: var(--lkv-ink-900);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(11,31,23,0.1);
+  }
+  .av-map .map-ctrl button svg { width: 14px; height: 14px; }
+  .av-map .map-legend {
+    position: absolute; bottom: 10px; left: 10px;
+    padding: 6px 10px;
+    background: rgba(251,250,246,0.95);
+    backdrop-filter: blur(8px);
+    border-radius: 999px;
+    font-size: 10px; font-weight: 500;
+    color: var(--lkv-ink-700);
+    letter-spacing: 0.04em;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .av-map .map-legend .d { width: 5px; height: 5px; border-radius: 50%; background: var(--lkv-forest-800); }
+
+  .av-results-h {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 20px 16px 12px;
+  }
+  .av-results-h h2 {
+    font-size: 18px; letter-spacing: -0.015em; margin: 0;
+  }
+  .av-results-h h2 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .av-results-h .sort {
+    font-size: 12px; color: var(--lkv-forest-800); font-weight: 500;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .av-results-h .sort svg { width: 12px; height: 12px; }
+
+  .av-list {
+    padding: 0 16px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .av-card {
+    background: var(--lkv-paper);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    text-decoration: none;
+  }
+  .av-card .im {
+    width: 110px; flex-shrink: 0;
+    background-size: cover; background-position: center;
+    background-color: var(--lkv-stone-100);
+    position: relative;
+  }
+  .av-card .im.a1 {
+    background: linear-gradient(160deg, #2D6B4A 0%, #17402C 60%, #0B1F17 100%);
+  }
+  .av-card .im.a2 {
+    background: linear-gradient(160deg, #DDD6C6 0%, #8B978F 100%);
+  }
+  .av-card .im.a3 {
+    background: linear-gradient(160deg, #C6DCBE 0%, #384A42 100%);
+  }
+  .av-card .im .diff {
+    position: absolute; top: 8px; left: 8px;
+    padding: 3px 8px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 999px;
+    font-size: 9px; font-weight: 600;
+    color: var(--lkv-forest-800);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .av-card .body {
+    flex: 1; min-width: 0;
+    padding: 12px 14px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    gap: 8px;
+  }
+  .av-card .body .loc {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--lkv-ink-400);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .av-card .body .loc svg { width: 10px; height: 10px; }
+  .av-card .body h3 {
+    font-size: 15px; font-weight: 500; letter-spacing: -0.01em;
+    line-height: 1.15;
+    margin: 2px 0 0;
+  }
+  .av-card .body h3 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .av-card .body .stats {
+    display: flex; gap: 10px;
+    font-size: 11px; color: var(--lkv-ink-500);
+    font-family: var(--lkv-font-mono);
+  }
+  .av-card .body .stats span {
+    display: inline-flex; align-items: center; gap: 3px;
+  }
+  .av-card .body .stats svg { width: 11px; height: 11px; }
+
+  /* ═══════════════════════════════════════════════
+     3. FICHE PRODUIT
+     ═══════════════════════════════════════════════ */
+  .prod-gallery {
+    height: 380px;
+    position: relative;
+    background: linear-gradient(160deg, #384A42 0%, #17402C 100%);
+    overflow: hidden;
+  }
+  .prod-gallery::after {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 50% 60%, rgba(198,220,190,0.15) 0%, transparent 55%);
+  }
+  .prod-gallery .prod-viz {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .prod-gallery .prod-viz svg { width: 200px; height: 240px; }
+  .prod-gallery .chip-row {
+    position: absolute; top: 100px; left: 16px;
+    display: flex; gap: 6px;
+  }
+  .prod-gallery .prog {
+    position: absolute; bottom: 16px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 6px;
+  }
+  .prod-gallery .prog .d {
+    width: 24px; height: 3px; border-radius: 999px;
+    background: rgba(255,255,255,0.3);
+  }
+  .prod-gallery .prog .d.on { background: #fff; }
+
+  .prod-info {
+    padding: 20px 20px 12px;
+  }
+  .prod-info .brand-line {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-ink-400); margin-bottom: 6px;
+  }
+  .prod-info h1 {
+    font-size: 30px; letter-spacing: -0.025em; line-height: 1;
+    margin: 0 0 10px;
+  }
+  .prod-info h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .prod-info .price-row {
+    display: flex; align-items: baseline; gap: 10px; margin-bottom: 16px;
+  }
+  .prod-info .price-row .p {
+    font-size: 26px; font-weight: 500; letter-spacing: -0.02em;
+  }
+  .prod-info .price-row .strike {
+    font-size: 14px; color: var(--lkv-ink-400); text-decoration: line-through;
+  }
+  .prod-info .price-row .save {
+    padding: 3px 8px; border-radius: 999px;
+    background: var(--lkv-sage-500); color: var(--lkv-forest-950);
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .prod-info .stars {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--lkv-ink-500);
+  }
+  .prod-info .stars .stars-svg { color: var(--lkv-forest-800); display: inline-flex; }
+
+  .prod-attrs {
+    padding: 12px 20px;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .prod-attr {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    background: var(--lkv-stone-50);
+    border-radius: 14px;
+  }
+  .prod-attr .ic {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: var(--lkv-sage-100);
+    color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .prod-attr .ic svg { width: 14px; height: 14px; }
+  .prod-attr .txt { min-width: 0; }
+  .prod-attr .txt .lbl {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--lkv-ink-500);
+  }
+  .prod-attr .txt .val {
+    font-size: 12px; font-weight: 500; letter-spacing: -0.005em;
+    line-height: 1.15;
+  }
+  .prod-attr .txt .val em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+
+  .prod-desc {
+    padding: 16px 20px;
+  }
+  .prod-desc h4 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-ink-500); font-weight: 500;
+    margin: 0 0 8px;
+  }
+  .prod-desc p {
+    font-size: 13px; line-height: 1.55; color: var(--lkv-ink-700);
+    margin: 0;
+  }
+  .prod-desc p em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800);
+  }
+
+  .prod-color {
+    padding: 8px 20px 16px;
+  }
+  .prod-color h4 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-ink-500); font-weight: 500;
+    margin: 0 0 10px;
+    display: flex; justify-content: space-between;
+  }
+  .prod-color h4 .cur {
+    text-transform: none; letter-spacing: 0;
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .prod-color .row { display: flex; gap: 10px; }
+  .prod-color .row .sw {
+    width: 44px; height: 44px; border-radius: 14px;
+    border: 2px solid transparent;
+    padding: 3px;
+    cursor: pointer;
+  }
+  .prod-color .row .sw.on { border-color: var(--lkv-forest-800); }
+  .prod-color .row .sw .in {
+    width: 100%; height: 100%; border-radius: 10px;
+    border: 1px solid rgba(11,31,23,0.08);
+  }
+
+  .prod-buy {
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(24px) saturate(1.5);
+    border-radius: 22px;
+    border: 1px solid rgba(11,31,23,0.06);
+    display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 12px 30px rgba(11,31,23,0.12);
+    z-index: 3;
+  }
+  .prod-buy .qty {
+    display: flex; align-items: center; gap: 4px;
+    padding: 6px;
+    background: var(--lkv-stone-50);
+    border-radius: 999px;
+  }
+  .prod-buy .qty button {
+    width: 26px; height: 26px; border-radius: 999px;
+    background: var(--lkv-paper);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-700);
+  }
+  .prod-buy .qty .n {
+    min-width: 20px; text-align: center;
+    font-size: 14px; font-weight: 500;
+    font-family: var(--lkv-font-mono);
+  }
+  .prod-buy .add-btn {
+    flex: 1;
+    background: var(--lkv-forest-800); color: #fff;
+    padding: 12px 16px;
+    border-radius: 999px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; font-weight: 500;
+  }
+  .prod-buy .add-btn .p { font-family: var(--lkv-font-mono); font-size: 12px; opacity: 0.85; }
+
+  /* ═══════════════════════════════════════════════
+     4. PANIER
+     ═══════════════════════════════════════════════ */
+  .cart-h {
+    padding: 12px 16px 16px;
+    background: var(--lkv-paper);
+    border-bottom: 1px solid rgba(11,31,23,0.05);
+  }
+  .cart-h h1 {
+    font-size: 28px; letter-spacing: -0.025em; margin: 0;
+  }
+  .cart-h h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .cart-h .n {
+    font-size: 12px; color: var(--lkv-ink-500);
+    font-family: var(--lkv-font-mono);
+    margin-top: 2px;
+  }
+
+  .cart-list {
+    padding: 12px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .cart-item {
+    display: flex; gap: 12px;
+    padding: 12px;
+    background: var(--lkv-paper);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 18px;
+  }
+  .cart-item .im {
+    width: 76px; height: 92px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    background-color: var(--lkv-stone-100);
+    background-size: cover; background-position: center;
+  }
+  .cart-item .im.i1 {
+    background: linear-gradient(160deg, #2D6B4A, #17402C);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-sage-300);
+  }
+  .cart-item .im.i2 {
+    background: linear-gradient(160deg, #DDD6C6, #8B978F);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-forest-800);
+  }
+  .cart-item .im.i3 {
+    background: linear-gradient(160deg, #C6DCBE, #384A42);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+  }
+  .cart-item .im svg { width: 32px; height: 32px; }
+
+  .cart-item .body {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; justify-content: space-between;
+    gap: 6px;
+  }
+  .cart-item .body .top {
+    display: flex; justify-content: space-between; gap: 8px;
+  }
+  .cart-item .body .cat {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--lkv-ink-400);
+  }
+  .cart-item .body h4 {
+    font-size: 13px; font-weight: 500; letter-spacing: -0.005em;
+    line-height: 1.2;
+    margin: 2px 0 0;
+  }
+  .cart-item .body h4 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .cart-item .body .opt {
+    font-size: 10px; color: var(--lkv-ink-500);
+    font-family: var(--lkv-font-mono);
+  }
+  .cart-item .body .row {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .cart-item .body .qty {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 4px 4px;
+    background: var(--lkv-stone-50);
+    border-radius: 999px;
+  }
+  .cart-item .body .qty button {
+    width: 22px; height: 22px; border-radius: 999px;
+    background: var(--lkv-paper);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lkv-ink-700);
+  }
+  .cart-item .body .qty svg { width: 10px; height: 10px; }
+  .cart-item .body .qty .n {
+    font-family: var(--lkv-font-mono);
+    font-size: 11px; font-weight: 500;
+    min-width: 14px; text-align: center;
+  }
+  .cart-item .body .p {
+    font-size: 14px; font-weight: 500; letter-spacing: -0.01em;
+  }
+  .cart-item .del {
+    align-self: flex-start;
+    color: var(--lkv-ink-400);
+  }
+  .cart-item .del svg { width: 14px; height: 14px; }
+
+  .cart-promo {
+    margin: 4px 16px;
+    padding: 12px 14px;
+    background: var(--lkv-sage-100);
+    border: 1px dashed var(--lkv-sage-500);
+    border-radius: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .cart-promo .ic {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: var(--lkv-forest-800); color: var(--lkv-sage-300);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .cart-promo .ic svg { width: 14px; height: 14px; }
+  .cart-promo .txt { flex: 1; min-width: 0; font-size: 12px; }
+  .cart-promo .txt .t { font-weight: 500; color: var(--lkv-forest-900); }
+  .cart-promo .txt .t em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+  }
+  .cart-promo .txt .s { color: var(--lkv-ink-500); font-size: 10px; font-family: var(--lkv-font-mono); margin-top: 1px; }
+  .cart-promo .go {
+    font-size: 11px; font-weight: 600;
+    color: var(--lkv-forest-800);
+    text-transform: uppercase; letter-spacing: 0.1em;
+  }
+
+  .cart-summary {
+    margin: 12px 16px;
+    padding: 16px;
+    background: var(--lkv-paper);
+    border: 1px solid rgba(11,31,23,0.06);
+    border-radius: 18px;
+  }
+  .cart-summary .r {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 13px;
+    padding: 5px 0;
+    color: var(--lkv-ink-700);
+  }
+  .cart-summary .r .p { font-family: var(--lkv-font-mono); font-size: 12px; }
+  .cart-summary .r.dis .p { color: var(--lkv-forest-800); font-weight: 500; }
+  .cart-summary .r.tot {
+    border-top: 1px solid rgba(11,31,23,0.08);
+    padding-top: 12px; margin-top: 6px;
+    font-size: 16px; color: var(--lkv-ink-900);
+  }
+  .cart-summary .r.tot .lbl { font-weight: 500; }
+  .cart-summary .r.tot .p {
+    font-size: 22px; font-weight: 500; letter-spacing: -0.015em;
+    font-family: var(--lkv-font-sans);
+  }
+
+  .cart-buy {
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    padding: 14px 18px;
+    background: var(--lkv-forest-800);
+    color: #fff;
+    border-radius: 22px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 12px 30px rgba(11,31,23,0.2);
+    z-index: 3;
+  }
+  .cart-buy .lbl {
+    font-size: 14px; font-weight: 500;
+    display: flex; flex-direction: column;
+  }
+  .cart-buy .lbl .p {
+    font-size: 11px; opacity: 0.65;
+    font-family: var(--lkv-font-mono);
+    margin-top: 1px;
+  }
+  .cart-buy .go {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 18px;
+    background: var(--lkv-sage-500);
+    color: var(--lkv-forest-950);
+    border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+  }
+  .cart-buy .go svg { width: 14px; height: 14px; }
+
+  /* ═══════════════════════════════════════════════
+     5. PAIEMENT
+     ═══════════════════════════════════════════════ */
+  .pay-h {
+    padding: 12px 16px 20px;
+    background: var(--lkv-paper);
+  }
+  .pay-h .steps {
+    display: flex; gap: 6px; margin-bottom: 16px;
+  }
+  .pay-h .steps .s {
+    flex: 1; height: 3px; border-radius: 999px;
+    background: rgba(11,31,23,0.08);
+  }
+  .pay-h .steps .s.on { background: var(--lkv-forest-800); }
+  .pay-h .steps .s.done { background: var(--lkv-sage-500); }
+  .pay-h .step-lbl {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--lkv-ink-500); margin-bottom: 4px;
+  }
+  .pay-h h1 {
+    font-size: 26px; letter-spacing: -0.025em; margin: 0;
+  }
+  .pay-h h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+
+  .pay-sec {
+    padding: 16px;
+    border-top: 1px solid rgba(11,31,23,0.05);
+  }
+  .pay-sec .sh {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 12px;
+  }
+  .pay-sec .sh h3 {
+    font-size: 14px; font-weight: 500; letter-spacing: -0.005em;
+    margin: 0;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .pay-sec .sh h3 .num {
+    width: 20px; height: 20px; border-radius: 999px;
+    background: var(--lkv-forest-800); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600;
+    font-family: var(--lkv-font-mono);
+  }
+  .pay-sec .sh a {
+    font-size: 12px; color: var(--lkv-forest-800); font-weight: 500;
+  }
+
+  .addr-card {
+    padding: 14px;
+    background: var(--lkv-stone-50);
+    border: 1px solid rgba(11,31,23,0.05);
+    border-radius: 16px;
+    display: flex; gap: 12px;
+  }
+  .addr-card .ic {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: var(--lkv-sage-100);
+    color: var(--lkv-forest-800);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .addr-card .ic svg { width: 16px; height: 16px; }
+  .addr-card .txt {
+    font-size: 12px; line-height: 1.4;
+    color: var(--lkv-ink-700);
+    flex: 1; min-width: 0;
+  }
+  .addr-card .txt strong {
+    display: block;
+    font-size: 13px; font-weight: 500;
+    color: var(--lkv-ink-900);
+    margin-bottom: 2px;
+    letter-spacing: -0.005em;
+  }
+  .addr-card .txt .tag {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--lkv-forest-800);
+    padding: 2px 8px; border-radius: 999px;
+    background: var(--lkv-sage-100);
+    border: 1px solid rgba(23,64,44,0.15);
+  }
+
+  .ship-opts {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .ship-opt {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px;
+    background: var(--lkv-paper);
+    border: 1.5px solid rgba(11,31,23,0.08);
+    border-radius: 14px;
+    cursor: pointer;
+  }
+  .ship-opt.on {
+    border-color: var(--lkv-forest-800);
+    background: var(--lkv-sage-100);
+  }
+  .ship-opt .rad {
+    width: 18px; height: 18px; border-radius: 999px;
+    border: 1.5px solid rgba(11,31,23,0.2);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ship-opt.on .rad {
+    border-color: var(--lkv-forest-800);
+  }
+  .ship-opt.on .rad::after {
+    content: "";
+    width: 8px; height: 8px; border-radius: 999px;
+    background: var(--lkv-forest-800);
+  }
+  .ship-opt .txt {
+    flex: 1; min-width: 0;
+    font-size: 13px;
+  }
+  .ship-opt .txt .t { font-weight: 500; color: var(--lkv-ink-900); }
+  .ship-opt .txt .t em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .ship-opt .txt .s {
+    font-size: 11px; color: var(--lkv-ink-500);
+    font-family: var(--lkv-font-mono);
+    margin-top: 2px;
+  }
+  .ship-opt .p {
+    font-size: 13px; font-weight: 500;
+    letter-spacing: -0.005em;
+  }
+  .ship-opt.on .p { color: var(--lkv-forest-800); }
+
+  .pay-cards {
+    display: flex; gap: 8px;
+  }
+  .pay-cards .pc {
+    flex: 1;
+    padding: 12px 8px;
+    background: var(--lkv-paper);
+    border: 1.5px solid rgba(11,31,23,0.08);
+    border-radius: 12px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    cursor: pointer;
+    font-size: 10px; font-weight: 500;
+    color: var(--lkv-ink-700);
+  }
+  .pay-cards .pc.on {
+    border-color: var(--lkv-forest-800);
+    background: var(--lkv-sage-100);
+    color: var(--lkv-forest-800);
+  }
+  .pay-cards .pc .pill {
+    padding: 5px 8px;
+    background: var(--lkv-stone-50);
+    border-radius: 6px;
+    font-family: var(--lkv-font-mono);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--lkv-ink-900);
+  }
+  .pay-cards .pc.on .pill {
+    background: var(--lkv-forest-800); color: #fff;
+  }
+
+  .card-input {
+    padding: 12px 14px;
+    background: var(--lkv-stone-50);
+    border-radius: 12px;
+    margin-top: 10px;
+    font-family: var(--lkv-font-mono);
+    font-size: 13px; letter-spacing: 0.1em;
+    color: var(--lkv-ink-900);
+    display: flex; align-items: center; gap: 10px;
+    border: 1.5px solid transparent;
+  }
+  .card-input svg { color: var(--lkv-forest-800); flex-shrink: 0; }
+  .card-input .val { flex: 1; min-width: 0; }
+
+  .pay-total {
+    margin: 4px 16px 100px;
+    padding: 16px;
+    background: var(--lkv-forest-950);
+    color: #fff;
+    border-radius: 18px;
+  }
+  .pay-total .r {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 4px 0;
+    font-size: 12px;
+    opacity: 0.75;
+  }
+  .pay-total .r .p { font-family: var(--lkv-font-mono); }
+  .pay-total .r.tot {
+    border-top: 1px solid rgba(255,255,255,0.14);
+    padding-top: 10px; margin-top: 6px;
+    font-size: 15px; opacity: 1;
+  }
+  .pay-total .r.tot .lbl {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-300); font-size: 16px;
+  }
+  .pay-total .r.tot .p {
+    font-family: var(--lkv-font-sans);
+    font-size: 22px; font-weight: 500;
+    letter-spacing: -0.015em;
+  }
+
+  .pay-cta {
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    padding: 14px 18px;
+    background: var(--lkv-forest-800); color: #fff;
+    border-radius: 22px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    font-size: 14px; font-weight: 500;
+    box-shadow: 0 12px 30px rgba(11,31,23,0.2);
+    z-index: 3;
+  }
+  .pay-cta .lock svg { width: 14px; height: 14px; }
+  .pay-cta .p { font-family: var(--lkv-font-mono); font-size: 12px; opacity: 0.75; margin-left: 4px; }
+
+  /* ═══════════════════════════════════════════════
+     6. JOURNAL
+     ═══════════════════════════════════════════════ */
+  .jr-hero {
+    padding: 12px 16px 20px;
+    background: var(--lkv-paper);
+  }
+  .jr-hero .eye {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--lkv-sage-100);
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-forest-800); font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .jr-hero .eye .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--lkv-sage-500); }
+  .jr-hero h1 {
+    font-size: 30px; letter-spacing: -0.025em; line-height: 1;
+    margin: 0 0 6px;
+  }
+  .jr-hero h1 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .jr-hero .sub {
+    font-size: 12px; color: var(--lkv-ink-500);
+    margin: 0;
+  }
+
+  .jr-feat {
+    margin: 4px 16px 8px;
+    border-radius: 22px;
+    overflow: hidden;
+    position: relative;
+    height: 220px;
+    background: linear-gradient(160deg, #384A42 0%, #17402C 60%, #06120C 100%);
+    color: #fff;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 16px;
+  }
+  .jr-feat::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 30% 70%, rgba(198,220,190,0.18) 0%, transparent 60%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 240'><path d='M0,240 L0,180 L60,120 L120,150 L170,90 L220,140 L280,80 L340,130 L400,100 L400,240 Z' fill='%23050f09' opacity='0.6'/></svg>");
+    background-size: cover;
+  }
+  .jr-feat > * { position: relative; z-index: 1; }
+  .jr-feat .kind {
+    font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--lkv-sage-300); font-weight: 500;
+  }
+  .jr-feat h3 {
+    font-size: 24px; letter-spacing: -0.02em;
+    margin: 0; line-height: 1.02;
+  }
+  .jr-feat h3 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-sage-200); font-weight: 400;
+  }
+  .jr-feat .meta {
+    display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  .jr-feat .meta .who {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .jr-feat .meta .who .av {
+    width: 28px; height: 28px; border-radius: 999px;
+    background: var(--lkv-sage-500);
+    color: var(--lkv-forest-950);
+    font-family: var(--lkv-font-serif); font-style: italic;
+    font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid rgba(255,255,255,0.3);
+  }
+  .jr-feat .meta .who .info {
+    font-size: 11px; line-height: 1.2;
+  }
+  .jr-feat .meta .who .info .n { font-weight: 500; }
+  .jr-feat .meta .who .info .s { opacity: 0.65; font-size: 10px; font-family: var(--lkv-font-mono); }
+  .jr-feat .meta .read {
+    font-size: 10px; opacity: 0.7;
+    font-family: var(--lkv-font-mono);
+  }
+
+  .jr-tabs {
+    display: flex; gap: 6px; padding: 16px 16px 8px;
+    overflow-x: auto;
+  }
+  .jr-tabs::-webkit-scrollbar { display: none; }
+  .jr-tabs button {
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: var(--lkv-paper);
+    border: 1px solid rgba(11,31,23,0.06);
+    font-size: 12px; font-weight: 500; color: var(--lkv-ink-700);
+    white-space: nowrap;
+  }
+  .jr-tabs button.on {
+    background: var(--lkv-forest-800); color: #fff;
+    border-color: var(--lkv-forest-800);
+  }
+
+  .jr-list {
+    padding: 4px 16px 0;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .jr-post {
+    display: flex; gap: 12px;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(11,31,23,0.06);
+    padding-bottom: 14px;
+    text-decoration: none;
+  }
+  .jr-post:last-child { border-bottom: none; }
+  .jr-post .im {
+    width: 80px; height: 90px;
+    border-radius: 14px;
+    flex-shrink: 0;
+    background: var(--lkv-stone-100);
+    position: relative;
+    overflow: hidden;
+  }
+  .jr-post .im.j1 {
+    background: linear-gradient(160deg, #DDD6C6 0%, #8B978F 100%);
+  }
+  .jr-post .im.j2 {
+    background: linear-gradient(160deg, #2D6B4A 0%, #17402C 100%);
+  }
+  .jr-post .im.j3 {
+    background: linear-gradient(160deg, #C6DCBE 0%, #A8C8A0 100%);
+  }
+  .jr-post .body {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .jr-post .body .kind {
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--lkv-forest-800); font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .jr-post .body h4 {
+    font-size: 14px; letter-spacing: -0.005em; font-weight: 500;
+    line-height: 1.2;
+    margin: 0;
+  }
+  .jr-post .body h4 em {
+    font-family: var(--lkv-font-serif); font-style: italic;
+    color: var(--lkv-forest-800); font-weight: 400;
+  }
+  .jr-post .body .meta {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 10px; color: var(--lkv-ink-500);
+    font-family: var(--lkv-font-mono);
+    margin-top: 6px;
+  }
+  .jr-post .body .meta .sep { color: var(--lkv-ink-300); }
+
+</style>
+</head>
+<body>
+
+<div class="stage-title">
+  <div>
+    <div class="h">Mobile · Pages <em>principales</em></div>
+    <div class="sub">6 écrans + menu drawer · iPhone 380 × 780 · Palette LKV</div>
+  </div>
+  <div class="crumbs">
+    <a href="reference/Front end/Boutique.html">Boutique</a>
+    <a href="reference/Front end/Communauté.html">Communauté</a>
+    <a href="reference/Front end/Carnet.html">Carnet</a>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ══════════════════════════════════════════════
+       1. HOME (avec drawer ouvert à côté)
+       ══════════════════════════════════════════════ -->
+  <div class="board">
+    <div class="artboard-mobile">
+      <div class="screen">
+
+        <div class="status-bar on-dark">
+          <div>9:41</div>
+          <div class="right">
+            <svg viewBox="0 0 16 10" fill="currentColor"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
+            <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="1" y="1" width="19" height="10" rx="2"/><rect x="3" y="3" width="14" height="6" rx="1" fill="currentColor"/><rect x="21" y="4" width="2" height="4" rx="0.5" fill="currentColor"/></svg>
+          </div>
+        </div>
+
+        <div class="m-topbar on-image">
+          <button class="m-btn">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="15" height="15"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          </button>
+          <div class="center">Le Kit du <em>Voyageur</em></div>
+          <button class="m-btn">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="15" height="15"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+            <span class="badge-num" style="top:-2px;right:-2px;">2</span>
+          </button>
+        </div>
+
+        <div class="m-body" style="padding-top: 0;">
+          <div class="home-hero">
+            <div class="bg"></div>
+            <div class="mountains"></div>
+            <div class="content">
+              <div class="eye"><span class="dot"></span>Édition automne · 2026</div>
+              <div>
+                <h1>Ce que vous emportez,<br/><em>c'est votre voyage.</em></h1>
+                <p class="sub">Six objets testés en Chartreuse. Des refuges choisis à la main. Un carnet à remplir.</p>
+                <div class="cta-row">
+                  <a href="#" class="lkv-btn lkv-btn-light">
+                    Commencer
+                    <svg class="lkv-icon" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                  </a>
+                  <a href="#" class="lkv-btn lkv-btn-ghost-light">Notre méthode</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="home-quick">
+            <div class="quick-h">
+              <h2>Par où <em>commencer.</em></h2>
+              <a href="#">Tout voir →</a>
+            </div>
+            <div class="quick-grid">
+              <a href="#" class="quick-card qc-1">
+                <div>
+                  <div class="qc-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20l4-14 5 8 3-4 6 10z"/><circle cx="17" cy="6" r="1.5"/></svg>
+                  </div>
+                  <div class="qc-num">01 · aventures</div>
+                </div>
+                <div>
+                  <h3>Explorer<br/><em>les massifs.</em></h3>
+                  <div class="qc-sub">48 itinéraires actifs</div>
+                </div>
+              </a>
+              <a href="#" class="quick-card qc-2">
+                <div>
+                  <div class="qc-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 21l3-9h12l3 9"/><path d="M6 12l6-8 6 8"/></svg>
+                  </div>
+                  <div class="qc-num" style="color: var(--lkv-ink-500);">02 · refuges</div>
+                </div>
+                <div>
+                  <h3>Nuits en<br/><em>refuge.</em></h3>
+                  <div class="qc-sub" style="color: var(--lkv-ink-500);">14 partenaires</div>
+                </div>
+              </a>
+              <a href="#" class="quick-card qc-3">
+                <div>
+                  <div class="qc-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+                  </div>
+                  <div class="qc-num" style="color: var(--lkv-forest-800);">03 · boutique</div>
+                </div>
+                <div>
+                  <h3>Six objets,<br/><em>rien de plus.</em></h3>
+                  <div class="qc-sub" style="color: rgba(11,31,23,0.55);">à partir de 68 €</div>
+                </div>
+              </a>
+              <a href="#" class="quick-card qc-4">
+                <div>
+                  <div class="qc-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h5M8 13h8M8 17h6"/></svg>
+                  </div>
+                  <div class="qc-num">04 · carnet</div>
+                </div>
+                <div>
+                  <h3>Le carnet<br/><em>d'avant-hier.</em></h3>
+                  <div class="qc-sub">3 pages à compléter</div>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <div class="home-editorial">
+            <a href="#" class="ed-card">
+              <div class="ed-bg"></div>
+              <div class="ed-topo"></div>
+              <div>
+                <div class="kind">Journal · Chartreuse</div>
+                <h3>Six semaines,<br/><em>quatre saisons.</em></h3>
+                <div class="meta" style="margin-top: 6px;">14 min · texte + photos</div>
+              </div>
+            </a>
+          </div>
+
+          <div class="home-stats">
+            <div class="row">
+              <div class="cell">
+                <div class="n">47<em> testeurs</em></div>
+                <div class="lbl">Sur le terrain</div>
+              </div>
+              <div class="cell">
+                <div class="n">14<em> refuges</em></div>
+                <div class="lbl">Partenaires</div>
+              </div>
+              <div class="cell">
+                <div class="n">6<em> pièces</em></div>
+                <div class="lbl">Éditées</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="home-strip">
+            <a href="#" class="strip-card">
+              <div class="sc-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M20 30h40v40a4 4 0 0 1-4 4H24a4 4 0 0 1-4-4z" transform="scale(0.5)"/><path d="M10 15h20v20a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2z"/><path d="M14 15v-4a6 6 0 0 1 12 0v4"/></svg>
+              </div>
+              <div class="sc-txt">
+                <div class="t">Composer <em>votre sac</em></div>
+                <div class="s">4 questions · sur mesure</div>
+              </div>
+              <div class="sc-arrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <div class="m-tabbar">
+          <div class="tabi on">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Accueil</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 20l4-14 5 8 3-4 6 10z"/></svg>
+            <span>Aventures</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+            <span>Boutique</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h5M8 13h8"/></svg>
+            <span>Carnet</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+            <span>Compte</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">01 · <em>Accueil</em></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       DRAWER (menu ouvert)
+       ══════════════════════════════════════════════ -->
+  <div class="board">
+    <div class="artboard-mobile">
+      <div class="screen">
+
+        <!-- Home en arrière-plan, occulté -->
+        <div class="status-bar on-dark">
+          <div>9:41</div>
+          <div class="right">
+            <svg viewBox="0 0 16 10" fill="currentColor"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
+            <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="1" y="1" width="19" height="10" rx="2"/><rect x="3" y="3" width="14" height="6" rx="1" fill="currentColor"/><rect x="21" y="4" width="2" height="4" rx="0.5" fill="currentColor"/></svg>
+          </div>
+        </div>
+
+        <div style="flex: 1; background: linear-gradient(180deg, #1a2f24 0%, #0B1F17 100%); position: relative;">
+          <div class="drawer-scrim"></div>
+
+          <div class="drawer">
+            <div class="drawer-head">
+              <button class="close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+              </button>
+              <div class="logo-row">
+                <div class="mark">
+                  <svg viewBox="0 0 32 32" fill="none" stroke-width="1.8"><path d="M4 24 L11 12 L15 17 L21 8 L28 24 Z"/><path d="M4 24 L28 24" stroke-linecap="round"/><circle cx="23" cy="10" r="1.4" fill="currentColor" stroke="none"/></svg>
+                </div>
+                <div class="brand">
+                  Le Kit du Voyageur
+                  <em>édition automne · 2026</em>
+                </div>
+              </div>
+              <div class="user">
+                <div class="av">M</div>
+                <div class="info">
+                  <div class="n">Margaux Balestrieri</div>
+                  <div class="s">MEMBRE · CHARTREUSE 47</div>
+                </div>
+                <div class="chev">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><path d="M9 6l6 6-6 6"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <div class="drawer-body">
+              <div class="drawer-section">
+                <div class="lbl">Naviguer</div>
+                <a href="#" class="drawer-item on">
+                  <div class="ic">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg>
+                  </div>
+                  <div class="info">
+                    <div class="t">Accueil</div>
+                    <div class="s">Le hub du voyageur</div>
+                  </div>
+                  <div class="chev">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 6l6 6-6 6"/></svg>
+                  </div>
+                </a>
+                <a href="#" class="drawer-item">
+                  <div class="ic">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 20l4-14 5 8 3-4 6 10z"/><circle cx="17" cy="6" r="1.5"/></svg>
+                  </div>
+                  <div class="info">
+                    <div class="t">Aventures <em>& refuges</em></div>
+                    <div class="s">48 itinéraires · 14 refuges</div>
+                  </div>
+                  <div class="chev">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 6l6 6-6 6"/></svg>
+                  </div>
+                </a>
+                <a href="#" class="drawer-item">
+                  <div class="ic">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+                  </div>
+                  <div class="info">
+                    <div class="t">Boutique</div>
+                    <div class="s">Six pièces éditées · automne</div>
+                  </div>
+                  <span class="badge">6</span>
+                </a>
+                <a href="#" class="drawer-item">
+                  <div class="ic">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h5M8 13h8M8 17h6"/></svg>
+                  </div>
+                  <div class="info">
+                    <div class="t">Journal</div>
+                    <div class="s">Récits, tests, méthode</div>
+                  </div>
+                  <div class="chev">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 6l6 6-6 6"/></svg>
+                  </div>
+                </a>
+                <a href="#" class="drawer-item">
+                  <div class="ic">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>
+                  </div>
+                  <div class="info">
+                    <div class="t">Communauté</div>
+                    <div class="s">Clubs, événements, testeurs</div>
+                  </div>
+                  <span class="badge" style="background: var(--lkv-sage-500); color: var(--lkv-forest-950);">3</span>
+                </a>
+              </div>
+
+              <div class="drawer-section">
+                <div class="lbl">Mon compte</div>
+                <a href="#" class="drawer-item">
+                  <div class="ic">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 12h8M8 16h5"/></svg>
+                  </div>
+                  <div class="info">
+                    <div class="t">Mon <em>carnet</em></div>
+                    <div class="s">3 aventures en cours</div>
+                  </div>
+                  <div class="chev">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 6l6 6-6 6"/></svg>
+                  </div>
+                </a>
+                <a href="#" class="drawer-item">
+                  <div class="ic">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 7h16v13H4z"/><path d="M4 10h16"/><path d="M9 4v3M15 4v3"/></svg>
+                  </div>
+                  <div class="info">
+                    <div class="t">Commandes</div>
+                    <div class="s">Suivi & retours à vie</div>
+                  </div>
+                  <div class="chev">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 6l6 6-6 6"/></svg>
+                  </div>
+                </a>
+                <a href="#" class="drawer-item">
+                  <div class="ic">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M20 12a8 8 0 0 0-.6-3l1.5-1.2-2-3.4-1.8.7A8 8 0 0 0 13 3l-.3-2h-4L8.5 3a8 8 0 0 0-4.1 2.1L2.5 4.4l-2 3.4L2 9a8 8 0 0 0 0 6l-1.5 1.2 2 3.4 1.8-.7A8 8 0 0 0 8.5 21l.2 2h4l.3-2a8 8 0 0 0 4.1-2.1l1.8.7 2-3.4L20 15c.4-1 .6-2 .6-3z"/></svg>
+                  </div>
+                  <div class="info">
+                    <div class="t">Paramètres</div>
+                    <div class="s">Alertes · confidentialité</div>
+                  </div>
+                  <div class="chev">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 6l6 6-6 6"/></svg>
+                  </div>
+                </a>
+              </div>
+
+              <div class="drawer-section">
+                <div class="lbl">Maison</div>
+                <a href="#" class="drawer-item">
+                  <div class="ic">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>
+                  </div>
+                  <div class="info">
+                    <div class="t">Notre <em>méthode</em></div>
+                    <div class="s">Six semaines en Chartreuse</div>
+                  </div>
+                  <div class="chev">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 6l6 6-6 6"/></svg>
+                  </div>
+                </a>
+                <a href="#" class="drawer-item">
+                  <div class="ic">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 20h16M6 20V8l6-4 6 4v12"/><path d="M10 20v-6h4v6"/></svg>
+                  </div>
+                  <div class="info">
+                    <div class="t">Atelier · Grenoble</div>
+                    <div class="s">Réparations à vie</div>
+                  </div>
+                  <div class="chev">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 6l6 6-6 6"/></svg>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            <div class="drawer-foot">
+              <a href="#" class="promo">
+                <div class="pic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15h20v20a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2z" transform="scale(0.5)"/><path d="M8 12h8M8 16h5"/><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                </div>
+                <div class="txt">
+                  <div class="t">Composer <em>votre sac</em></div>
+                  <div class="s">4 questions · sur mesure</div>
+                </div>
+                <div class="go">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </div>
+              </a>
+              <div class="meta">v.2026.4 · GRENOBLE · FR</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">02 · <em>Menu ouvert</em></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       3. AVENTURES / RECHERCHE
+       ══════════════════════════════════════════════ -->
+  <div class="board">
+    <div class="artboard-mobile">
+      <div class="screen">
+        <div class="status-bar">
+          <div>9:41</div>
+          <div class="right">
+            <svg viewBox="0 0 16 10" fill="currentColor"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
+            <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="1" y="1" width="19" height="10" rx="2"/><rect x="3" y="3" width="14" height="6" rx="1" fill="currentColor"/><rect x="21" y="4" width="2" height="4" rx="0.5" fill="currentColor"/></svg>
+          </div>
+        </div>
+
+        <div class="m-topbar">
+          <button class="m-btn">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="15" height="15"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          </button>
+          <div class="center">Aventures</div>
+          <button class="m-btn">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="15" height="15"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          </button>
+        </div>
+
+        <div class="m-body">
+          <div class="av-hero">
+            <div class="lkv-eyebrow" style="font-size: 10px;">48 itinéraires · Chartreuse & Vercors</div>
+            <h1>Où voulez-vous<br/><em>dormir ce soir ?</em></h1>
+            <p class="lead">Refuges et itinéraires testés par nos partenaires.</p>
+            <div class="av-search">
+              <svg class="lkv-icon" viewBox="0 0 24 24" width="16" height="16"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+              <span>Massif, refuge, distance…</span>
+              <button class="filt">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+              </button>
+            </div>
+            <div class="av-cats">
+              <button class="on">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 20l4-14 5 8 3-4 6 10z"/></svg>
+                Tout
+              </button>
+              <button>Refuge</button>
+              <button>Itinéraire</button>
+              <button>Bivouac</button>
+              <button>Escalade</button>
+              <button>Multi-jours</button>
+            </div>
+          </div>
+
+          <div class="av-map">
+            <div class="grid"></div>
+            <div class="contour"></div>
+            <div class="pin" style="top: 35%; left: 25%;">2</div>
+            <div class="pin on" style="top: 55%; left: 50%;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><path d="M3 21l3-9h12l3 9"/><path d="M6 12l6-8 6 8"/></svg>
+            </div>
+            <div class="pin" style="top: 30%; left: 70%;">3</div>
+            <div class="pin" style="top: 70%; left: 78%;">1</div>
+            <div class="map-ctrl">
+              <button>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
+              </button>
+              <button>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v16M4 12h16"/></svg>
+              </button>
+            </div>
+            <div class="map-legend"><span class="d"></span>Chartreuse · 6 refuges</div>
+          </div>
+
+          <div class="av-results-h">
+            <h2>À moins de <em>90 min</em></h2>
+            <button class="sort">
+              Plus proches
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+
+          <div class="av-list">
+            <a href="#" class="av-card">
+              <div class="im a1">
+                <span class="diff">Facile</span>
+              </div>
+              <div class="body">
+                <div class="loc">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 8-8z"/></svg>
+                  CHARTREUSE · CHAMECHAUDE
+                </div>
+                <h3>Refuge du <em>Habert.</em></h3>
+                <div class="stats">
+                  <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21l16-8L4 5v6l10 2-10 2z"/></svg>
+                    8.4 km
+                  </span>
+                  <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20l6-12 4 6 4-2 2 8"/></svg>
+                    +640 m
+                  </span>
+                  <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                    3h30
+                  </span>
+                </div>
+              </div>
+            </a>
+            <a href="#" class="av-card">
+              <div class="im a2">
+                <span class="diff">Modéré</span>
+              </div>
+              <div class="body">
+                <div class="loc">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 8-8z"/></svg>
+                  VERCORS · PAS DE L'AIGUILLE
+                </div>
+                <h3>La Grande <em>Cabane.</em></h3>
+                <div class="stats">
+                  <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21l16-8L4 5v6l10 2-10 2z"/></svg>
+                    14.2 km
+                  </span>
+                  <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20l6-12 4 6 4-2 2 8"/></svg>
+                    +1 120 m
+                  </span>
+                  <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                    6h
+                  </span>
+                </div>
+              </div>
+            </a>
+            <a href="#" class="av-card">
+              <div class="im a3">
+                <span class="diff">Bivouac</span>
+              </div>
+              <div class="body">
+                <div class="loc">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 8-8z"/></svg>
+                  ÉCRINS · LAC DU LAURON
+                </div>
+                <h3>Lac du <em>Lauron.</em></h3>
+                <div class="stats">
+                  <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21l16-8L4 5v6l10 2-10 2z"/></svg>
+                    18 km · 2 jours
+                  </span>
+                  <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20l6-12 4 6 4-2 2 8"/></svg>
+                    +1 460 m
+                  </span>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <div class="m-tabbar">
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Accueil</span>
+          </div>
+          <div class="tabi on">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 20l4-14 5 8 3-4 6 10z"/></svg>
+            <span>Aventures</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+            <span>Boutique</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h5M8 13h8"/></svg>
+            <span>Carnet</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+            <span>Compte</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">03 · <em>Aventures</em> & recherche</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       4. FICHE PRODUIT
+       ══════════════════════════════════════════════ -->
+  <div class="board">
+    <div class="artboard-mobile">
+      <div class="screen">
+        <div class="status-bar on-dark">
+          <div>9:41</div>
+          <div class="right">
+            <svg viewBox="0 0 16 10" fill="currentColor"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
+            <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="1" y="1" width="19" height="10" rx="2"/><rect x="3" y="3" width="14" height="6" rx="1" fill="currentColor"/><rect x="21" y="4" width="2" height="4" rx="0.5" fill="currentColor"/></svg>
+          </div>
+        </div>
+
+        <div class="m-topbar on-image">
+          <button class="m-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <div class="center">&nbsp;</div>
+          <button class="m-btn">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="15" height="15"><path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z"/></svg>
+          </button>
+        </div>
+
+        <div class="m-body" style="padding-bottom: 100px; padding-top: 0;">
+          <div class="prod-gallery">
+            <div class="chip-row">
+              <div class="lkv-chip"><span class="dot"></span>Nouveauté</div>
+              <div class="lkv-chip" style="background: rgba(11,31,23,0.5); color: #fff; border-color: rgba(255,255,255,0.2);">-14 %</div>
+            </div>
+            <div class="prod-viz">
+              <svg viewBox="0 0 200 240" fill="none" stroke="#C6DCBE" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                <!-- backpack silhouette -->
+                <path d="M60 60 Q60 30 100 30 Q140 30 140 60 L140 80" opacity="0.7"/>
+                <path d="M45 80 Q45 60 60 55 L140 55 Q155 60 155 80 L155 210 Q155 225 140 225 L60 225 Q45 225 45 210 Z" fill="rgba(198,220,190,0.08)"/>
+                <path d="M55 100 L145 100" opacity="0.5"/>
+                <rect x="70" y="130" width="60" height="45" rx="6" opacity="0.5"/>
+                <path d="M100 145 L100 165 M90 155 L110 155" opacity="0.6"/>
+                <circle cx="100" cy="90" r="4" fill="#C6DCBE" stroke="none"/>
+                <path d="M40 120 L30 130 L30 200 L40 210" opacity="0.5"/>
+                <path d="M160 120 L170 130 L170 200 L160 210" opacity="0.5"/>
+              </svg>
+            </div>
+            <div class="prog">
+              <div class="d on"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+            </div>
+          </div>
+
+          <div class="prod-info">
+            <div class="brand-line">LE KIT · N°01 · PORTAGE</div>
+            <h1>Le sac 45 L,<br/><em>toile cirée.</em></h1>
+            <div class="price-row">
+              <div class="p">340 €</div>
+              <div class="strike">395 €</div>
+              <div class="save">-14 %</div>
+            </div>
+            <div class="stars">
+              <span class="stars-svg">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><path d="M12 2l3 7h7l-6 4 2 8-6-4-6 4 2-8-6-4h7z"/></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><path d="M12 2l3 7h7l-6 4 2 8-6-4-6 4 2-8-6-4h7z"/></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><path d="M12 2l3 7h7l-6 4 2 8-6-4-6 4 2-8-6-4h7z"/></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><path d="M12 2l3 7h7l-6 4 2 8-6-4-6 4 2-8-6-4h7z"/></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><path d="M12 2l3 7h7l-6 4 2 8-6-4-6 4 2-8-6-4h7z"/></svg>
+              </span>
+              4,9 · 47 testeurs · 12 avis
+            </div>
+          </div>
+
+          <div class="prod-attrs">
+            <div class="prod-attr">
+              <div class="ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 20V8l6-4 6 4v12"/><path d="M4 20h16"/></svg>
+              </div>
+              <div class="txt">
+                <div class="lbl">Capacité</div>
+                <div class="val">45 <em>litres</em></div>
+              </div>
+            </div>
+            <div class="prod-attr">
+              <div class="ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12h18M12 3v18"/><circle cx="12" cy="12" r="9"/></svg>
+              </div>
+              <div class="txt">
+                <div class="lbl">Poids</div>
+                <div class="val">1,2 <em>kg</em></div>
+              </div>
+            </div>
+            <div class="prod-attr">
+              <div class="ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18"/></svg>
+              </div>
+              <div class="txt">
+                <div class="lbl">Étanchéité</div>
+                <div class="val">IPX4 <em>toile cirée</em></div>
+              </div>
+            </div>
+            <div class="prod-attr">
+              <div class="ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20h16M6 20V8l6-4 6 4v12"/><circle cx="12" cy="14" r="1" fill="currentColor"/></svg>
+              </div>
+              <div class="txt">
+                <div class="lbl">Fabriqué</div>
+                <div class="val">Alpes-<em>H. Provence</em></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="prod-desc">
+            <h4>Six semaines en Chartreuse</h4>
+            <p>Trois compartiments, une bandoulière ventrale, un point d'accroche pour tapis de sol. La toile cirée <em>vieillit</em> — elle ne s'use pas. Réparable à vie dans notre atelier de Grenoble.</p>
+          </div>
+
+          <div class="prod-color">
+            <h4>
+              Coloris
+              <span class="cur">Vert forêt</span>
+            </h4>
+            <div class="row">
+              <div class="sw on"><div class="in" style="background: #17402C;"></div></div>
+              <div class="sw"><div class="in" style="background: #384A42;"></div></div>
+              <div class="sw"><div class="in" style="background: #6B7A72;"></div></div>
+              <div class="sw"><div class="in" style="background: #DDD6C6;"></div></div>
+              <div class="sw"><div class="in" style="background: #0B1F17;"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="prod-buy">
+          <div class="qty">
+            <button>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M5 12h14"/></svg>
+            </button>
+            <span class="n">1</span>
+            <button>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+          </div>
+          <button class="add-btn">
+            <span>Ajouter au panier</span>
+            <span class="p">340 €</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">04 · <em>Fiche</em> produit</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       5. PANIER
+       ══════════════════════════════════════════════ -->
+  <div class="board">
+    <div class="artboard-mobile">
+      <div class="screen">
+        <div class="status-bar">
+          <div>9:41</div>
+          <div class="right">
+            <svg viewBox="0 0 16 10" fill="currentColor"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
+            <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="1" y="1" width="19" height="10" rx="2"/><rect x="3" y="3" width="14" height="6" rx="1" fill="currentColor"/><rect x="21" y="4" width="2" height="4" rx="0.5" fill="currentColor"/></svg>
+          </div>
+        </div>
+
+        <div class="m-topbar">
+          <button class="m-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <div class="center">Votre <em>panier</em></div>
+          <button class="m-btn ghost">
+            <span style="font-size: 12px; color: var(--lkv-forest-800); font-weight: 500;">Vider</span>
+          </button>
+        </div>
+
+        <div class="m-body" style="padding-bottom: 110px; padding-top: 0;">
+          <div class="cart-h">
+            <h1>3 pièces<br/><em>prêtes à partir.</em></h1>
+            <div class="n">MSA-CH-2026-047 · panier ouvert</div>
+          </div>
+
+          <div class="cart-list">
+            <div class="cart-item">
+              <div class="im i1">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 6 Q6 3 12 3 Q18 3 18 6 L18 8"/><path d="M4 9 Q4 7 6 6 L18 6 Q20 7 20 9 L20 20 Q20 21 18 21 L6 21 Q4 21 4 20 Z"/><path d="M5 11 L19 11"/><rect x="9" y="14" width="6" height="5" rx="1"/></svg>
+              </div>
+              <div class="body">
+                <div>
+                  <div class="cat">PORTAGE · N°01</div>
+                  <h4>Le sac 45 L, <em>toile cirée.</em></h4>
+                  <div class="opt">Vert forêt · 45 L</div>
+                </div>
+                <div class="row">
+                  <div class="qty">
+                    <button>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14"/></svg>
+                    </button>
+                    <span class="n">1</span>
+                    <button>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+                    </button>
+                  </div>
+                  <div class="p">340 €</div>
+                </div>
+              </div>
+              <button class="del">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+              </button>
+            </div>
+
+            <div class="cart-item">
+              <div class="im i2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 4h8v12l-4 4-4-4z"/><path d="M8 8h8M8 12h8"/></svg>
+              </div>
+              <div class="body">
+                <div>
+                  <div class="cat">HYDRATATION · N°04</div>
+                  <h4>Gourde titane <em>1 L.</em></h4>
+                  <div class="opt">Titane naturel · 1 L</div>
+                </div>
+                <div class="row">
+                  <div class="qty">
+                    <button>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14"/></svg>
+                    </button>
+                    <span class="n">2</span>
+                    <button>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+                    </button>
+                  </div>
+                  <div class="p">136 €</div>
+                </div>
+              </div>
+              <button class="del">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+              </button>
+            </div>
+
+            <div class="cart-item">
+              <div class="im i3">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="9" r="4"/><path d="M12 13v6M10 21h4"/><path d="M7 6L4 9M17 6l3 3"/></svg>
+              </div>
+              <div class="body">
+                <div>
+                  <div class="cat">ÉCLAIRAGE · N°05</div>
+                  <h4>Frontale <em>350 lumens.</em></h4>
+                  <div class="opt">Bandeau élastique · rechargeable</div>
+                </div>
+                <div class="row">
+                  <div class="qty">
+                    <button>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14"/></svg>
+                    </button>
+                    <span class="n">1</span>
+                    <button>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+                    </button>
+                  </div>
+                  <div class="p">84 €</div>
+                </div>
+              </div>
+              <button class="del">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="cart-promo">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 12H4M20 12l-6-6M20 12l-6 6"/></svg>
+            </div>
+            <div class="txt">
+              <div class="t">Encore 40 € pour la <em>livraison offerte.</em></div>
+              <div class="s">Seuil · 600 € · atelier Grenoble</div>
+            </div>
+            <span class="go">+</span>
+          </div>
+
+          <div class="cart-summary">
+            <div class="r">
+              <span class="lbl">Sous-total (4 articles)</span>
+              <span class="p">560 €</span>
+            </div>
+            <div class="r dis">
+              <span class="lbl">Remise · membre Chartreuse</span>
+              <span class="p">−28 €</span>
+            </div>
+            <div class="r">
+              <span class="lbl">Livraison</span>
+              <span class="p">12 €</span>
+            </div>
+            <div class="r tot">
+              <span class="lbl">À régler</span>
+              <span class="p">544 €</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cart-buy">
+          <div class="lbl">
+            <span>Passer commande</span>
+            <span class="p">4 articles · 544 €</span>
+          </div>
+          <div class="go">
+            Suivant
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">05 · <em>Panier</em></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       6. PAIEMENT
+       ══════════════════════════════════════════════ -->
+  <div class="board">
+    <div class="artboard-mobile">
+      <div class="screen">
+        <div class="status-bar">
+          <div>9:41</div>
+          <div class="right">
+            <svg viewBox="0 0 16 10" fill="currentColor"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
+            <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="1" y="1" width="19" height="10" rx="2"/><rect x="3" y="3" width="14" height="6" rx="1" fill="currentColor"/><rect x="21" y="4" width="2" height="4" rx="0.5" fill="currentColor"/></svg>
+          </div>
+        </div>
+
+        <div class="m-topbar">
+          <button class="m-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <div class="center">Paiement <em>sécurisé</em></div>
+          <button class="m-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          </button>
+        </div>
+
+        <div class="m-body" style="padding-bottom: 110px; padding-top: 0;">
+          <div class="pay-h">
+            <div class="steps">
+              <div class="s done"></div>
+              <div class="s done"></div>
+              <div class="s on"></div>
+              <div class="s"></div>
+            </div>
+            <div class="step-lbl">Étape 3 · 4 · Paiement</div>
+            <h1>Un dernier <em>geste.</em></h1>
+          </div>
+
+          <div class="pay-sec">
+            <div class="sh">
+              <h3><span class="num">1</span>Adresse de livraison</h3>
+              <a href="#">Modifier</a>
+            </div>
+            <div class="addr-card">
+              <div class="ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 20h16M6 20V8l6-4 6 4v12"/><path d="M10 20v-6h4v6"/></svg>
+              </div>
+              <div class="txt">
+                <strong>Margaux Balestrieri</strong>
+                14 rue de la Trinité<br/>
+                38000 Grenoble · France<br/>
+                +33 6 78 45 21 90
+                <span class="tag">MAISON</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pay-sec">
+            <div class="sh">
+              <h3><span class="num">2</span>Livraison</h3>
+            </div>
+            <div class="ship-opts">
+              <div class="ship-opt on">
+                <div class="rad"></div>
+                <div class="txt">
+                  <div class="t">Standard <em>Colissimo</em></div>
+                  <div class="s">3-4 jours ouvrés · suivi</div>
+                </div>
+                <div class="p">12 €</div>
+              </div>
+              <div class="ship-opt">
+                <div class="rad"></div>
+                <div class="txt">
+                  <div class="t">Retrait à l'atelier <em>Grenoble</em></div>
+                  <div class="s">Sous 48h · 12 rue Very</div>
+                </div>
+                <div class="p">Offert</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pay-sec">
+            <div class="sh">
+              <h3><span class="num">3</span>Moyen de paiement</h3>
+            </div>
+            <div class="pay-cards">
+              <div class="pc on">
+                <span class="pill">CB</span>
+                Carte
+              </div>
+              <div class="pc">
+                <span class="pill">Pay</span>
+                Apple Pay
+              </div>
+              <div class="pc">
+                <span class="pill">G</span>
+                Google Pay
+              </div>
+              <div class="pc">
+                <span class="pill">3x</span>
+                3× sans frais
+              </div>
+            </div>
+            <div class="card-input">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="16" height="16"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>
+              <span class="val">•••• •••• •••• 4128</span>
+              <span style="font-size: 11px; color: var(--lkv-ink-500); font-family: var(--lkv-font-sans); letter-spacing: 0;">12/28</span>
+            </div>
+          </div>
+
+          <div class="pay-total">
+            <div class="r"><span>Sous-total</span><span class="p">560 €</span></div>
+            <div class="r"><span>Remise membre</span><span class="p" style="color: var(--lkv-sage-300);">−28 €</span></div>
+            <div class="r"><span>Livraison</span><span class="p">12 €</span></div>
+            <div class="r tot"><span class="lbl">Total</span><span class="p">544 €</span></div>
+          </div>
+        </div>
+
+        <div class="pay-cta">
+          <span class="lock">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          </span>
+          <span>Confirmer & payer</span>
+          <span class="p">544 €</span>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">06 · <em>Paiement</em></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       7. JOURNAL
+       ══════════════════════════════════════════════ -->
+  <div class="board">
+    <div class="artboard-mobile">
+      <div class="screen">
+        <div class="status-bar">
+          <div>9:41</div>
+          <div class="right">
+            <svg viewBox="0 0 16 10" fill="currentColor"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
+            <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="1" y="1" width="19" height="10" rx="2"/><rect x="3" y="3" width="14" height="6" rx="1" fill="currentColor"/><rect x="21" y="4" width="2" height="4" rx="0.5" fill="currentColor"/></svg>
+          </div>
+        </div>
+
+        <div class="m-topbar">
+          <button class="m-btn">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="15" height="15"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          </button>
+          <div class="center">Journal</div>
+          <button class="m-btn">
+            <svg class="lkv-icon" viewBox="0 0 24 24" width="15" height="15"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          </button>
+        </div>
+
+        <div class="m-body">
+          <div class="jr-hero">
+            <div class="eye"><span class="dot"></span>Édition N°08 · automne 2026</div>
+            <h1>Récits <em>du terrain.</em></h1>
+            <p class="sub">Ce que nos testeurs rapportent des massifs.</p>
+          </div>
+
+          <a href="#" class="jr-feat">
+            <div class="kind">À la une · Reportage</div>
+            <div>
+              <h3>Six semaines,<br/><em>quatre saisons.</em></h3>
+            </div>
+            <div class="meta">
+              <div class="who">
+                <div class="av">M</div>
+                <div class="info">
+                  <div class="n">Margaux · testeuse</div>
+                  <div class="s">CHARTREUSE · SEPT. 26</div>
+                </div>
+              </div>
+              <div class="read">14 min de lecture</div>
+            </div>
+          </a>
+
+          <div class="jr-tabs">
+            <button class="on">Tout</button>
+            <button>Reportages</button>
+            <button>Tests matériel</button>
+            <button>Refuges</button>
+            <button>Méthode</button>
+          </div>
+
+          <div class="jr-list">
+            <a href="#" class="jr-post">
+              <div class="im j1"></div>
+              <div class="body">
+                <div>
+                  <div class="kind">Test matériel</div>
+                  <h4>Trois duvets,<br/>une <em>nuit à −8 °C.</em></h4>
+                </div>
+                <div class="meta">
+                  <span>10 min</span>
+                  <span class="sep">·</span>
+                  <span>PAUL R.</span>
+                  <span class="sep">·</span>
+                  <span>02.09.26</span>
+                </div>
+              </div>
+            </a>
+            <a href="#" class="jr-post">
+              <div class="im j2"></div>
+              <div class="body">
+                <div>
+                  <div class="kind">Refuge · Vercors</div>
+                  <h4>Nuit à la <em>Grande Cabane.</em></h4>
+                </div>
+                <div class="meta">
+                  <span>7 min</span>
+                  <span class="sep">·</span>
+                  <span>ADÈLE L.</span>
+                  <span class="sep">·</span>
+                  <span>28.08.26</span>
+                </div>
+              </div>
+            </a>
+            <a href="#" class="jr-post">
+              <div class="im j3"></div>
+              <div class="body">
+                <div>
+                  <div class="kind">Méthode</div>
+                  <h4>Pourquoi <em>six pièces,</em> et pas sept.</h4>
+                </div>
+                <div class="meta">
+                  <span>5 min</span>
+                  <span class="sep">·</span>
+                  <span>LA MAISON</span>
+                  <span class="sep">·</span>
+                  <span>19.08.26</span>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <div class="m-tabbar">
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Accueil</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 20l4-14 5 8 3-4 6 10z"/></svg>
+            <span>Aventures</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+            <span>Boutique</span>
+          </div>
+          <div class="tabi on">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 9h5M8 13h8"/></svg>
+            <span>Carnet</span>
+          </div>
+          <div class="tabi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+            <span>Compte</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="board-caption">07 · <em>Journal</em></div>
+  </div>
+
+</div>
+
+</body>
+</html>
