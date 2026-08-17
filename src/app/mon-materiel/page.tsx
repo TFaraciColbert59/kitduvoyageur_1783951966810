@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import Header from '@/components/Header';
 import { useEquipment, UserEquipmentItem } from '@/hooks/useEquipment';
 import { useUserKits, CustomKit, CustomKitItem } from '@/hooks/useUserKits';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -703,7 +704,8 @@ export default function MonMaterielCockpitPage() {
   const enterAnim = prefersReducedMotion ? '' : 'motion-safe:animate-[fadeInUp_0.4s_ease_both]';
 
   return (
-    <div className="fixed inset-0 z-50 h-dvh w-screen overflow-hidden bg-[#0B1F17] text-white select-none font-sans flex flex-col p-3 sm:p-4">
+    <div className="fixed inset-0 z-50 h-dvh w-screen overflow-hidden bg-[#0B1F17] text-white select-none font-sans flex flex-col p-3 sm:p-4 pt-16 sm:pt-20">
+      <Header />
       <style>{`
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
         .scrollbar-none::-webkit-scrollbar { display: none; }
@@ -734,7 +736,7 @@ export default function MonMaterielCockpitPage() {
         <div
           role="status"
           aria-live="polite"
-          className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-full border border-[#A3C4A3]/50 bg-[#0B1F17]/90 text-white text-xs font-semibold backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_20px_rgba(163,196,163,0.3)] flex items-center gap-2 animate-[fadeInUp_0.25s_ease_both]"
+          className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-full border border-[#A3C4A3]/50 bg-[#0B1F17]/90 text-white text-xs font-semibold backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_20px_rgba(163,196,163,0.3)] flex items-center gap-2 animate-[fadeInUp_0.25s_ease_both]"
         >
           <span className="w-2 h-2 rounded-full bg-[#A3C4A3] animate-pulse" />
           <span>{toastMessage.text}</span>
