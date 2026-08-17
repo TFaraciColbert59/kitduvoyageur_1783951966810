@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
-import { DM_Sans, Manrope, IBM_Plex_Mono } from 'next/font/google';
+import { DM_Sans, Manrope, IBM_Plex_Mono, Instrument_Serif } from 'next/font/google';
 import '@/styles/index.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
@@ -16,12 +16,6 @@ import { getOrganizationSchema, getWebsiteSchema } from '@/lib/seo-utils';
 import ReactQueryProvider from '@/components/ReactQueryProvider';
 import PageTransition from '@/components/ui/PageTransition';
 import CustomCursor from '@/components/ui/CustomCursor';
-
-
-
-
-
-import { DM_Sans, Manrope, IBM_Plex_Mono, Instrument_Serif } from 'next/font/google';
 
 // Fonts
 const dmSans = DM_Sans({

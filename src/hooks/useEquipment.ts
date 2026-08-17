@@ -875,7 +875,7 @@ export function useEquipment() {
     setKits((prev) => [...prev, kit]);
     if (!user) saveGuestKits([...kits, kit]);
     if (user && user.id) {
-      supabase.from('kits').insert({ ...kit, user_id: user.id }).catch((e) => console.warn('Kit insert error', e));
+      Promise.resolve(supabase.from('kits').insert({ ...kit, user_id: user.id })).catch((e: unknown) => console.warn('Kit insert error', e));
     }
   }, [user, supabase, kits]);
 
@@ -883,7 +883,7 @@ export function useEquipment() {
     setKits((prev) => prev.map((k) => (k.id === updatedKit.id ? updatedKit : k)));
     if (!user) saveGuestKits(kits.map((k) => (k.id === updatedKit.id ? updatedKit : k)));
     if (user && user.id) {
-      supabase.from('kits').update(updatedKit).eq('id', updatedKit.id).catch((e) => console.warn('Kit update error', e));
+      Promise.resolve(supabase.from('kits').update(updatedKit).eq('id', updatedKit.id)).catch((e: unknown) => console.warn('Kit update error', e));
     }
   }, [user, supabase, kits]);
 
@@ -891,7 +891,7 @@ export function useEquipment() {
     setKits((prev) => prev.filter((k) => k.id !== kitId));
     if (!user) saveGuestKits(kits.filter((k) => k.id !== kitId));
     if (user && user.id) {
-      supabase.from('kits').delete().eq('id', kitId).catch((e) => console.warn('Kit delete error', e));
+      Promise.resolve(supabase.from('kits').delete().eq('id', kitId)).catch((e: unknown) => console.warn('Kit delete error', e));
     }
   }, [user, supabase, kits]);
 
