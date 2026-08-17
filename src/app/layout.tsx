@@ -23,6 +23,7 @@ const dmSans = DM_Sans({
   variable: '--font-sans',
   display: 'swap',
   weight: ['300', '400', '500', '600', '700'],
+  preload: false,
 });
 
 const manrope = Manrope({
@@ -30,6 +31,7 @@ const manrope = Manrope({
   variable: '--font-display',
   display: 'swap',
   weight: ['400', '500', '600', '700', '800'],
+  preload: false,
 });
 
 const ibmPlexMono = IBM_Plex_Mono({
@@ -37,6 +39,7 @@ const ibmPlexMono = IBM_Plex_Mono({
   variable: '--font-mono',
   display: 'swap',
   weight: ['400', '500', '600'],
+  preload: false,
 });
 
 const instrumentSerif = Instrument_Serif({
@@ -45,6 +48,7 @@ const instrumentSerif = Instrument_Serif({
   display: 'swap',
   weight: ['400'],
   style: ['normal', 'italic'],
+  preload: false,
 });
 
 export const viewport: Viewport = {
