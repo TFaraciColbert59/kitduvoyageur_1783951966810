@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, Suspense } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
@@ -19,7 +19,7 @@ const SAMPLE_PHOTOS = [
   'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&q=80',
 ];
 
-export default function PublierPostPage() {
+function PublierPostContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialClubId = searchParams?.get('clubId') || '';
@@ -999,5 +999,19 @@ export default function PublierPostPage() {
         
       </div>
     </>
+  );
+}
+
+export default function PublierPostPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F5F2EA] flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-[#1C2620] border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <PublierPostContent />
+    </Suspense>
   );
 }
