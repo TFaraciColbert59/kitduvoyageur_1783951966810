@@ -23,6 +23,7 @@ interface KitsManagerViewProps {
   onRestoreFromTrash: (kitId: string) => Promise<any>;
   onPermanentDelete: (kitId: string) => Promise<any>;
   onSelectKitForDeparture: (kit: CustomKit) => void;
+  onOpenKitCockpit: (kit: CustomKit) => void;
 }
 
 function formatWeight(g: number): string {
@@ -40,6 +41,7 @@ export default function KitsManagerView({
   onRestoreFromTrash,
   onPermanentDelete,
   onSelectKitForDeparture,
+  onOpenKitCockpit,
 }: KitsManagerViewProps) {
   const { triggerHaptic } = useHapticFeedback();
   const [activeTab, setActiveTab] = useState<'active' | 'trash'>('active');
@@ -278,14 +280,22 @@ export default function KitsManagerView({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white rounded-2xl p-5 border border-black/[0.06] flex flex-col justify-between shadow-2xs hover:shadow-md transition-all"
+                onClick={() => {
+                  if (activeTab === 'active') {
+                    triggerHaptic('selection');
+                    onOpenKitCockpit(kit);
+                  }
+                }}
+                className={`bg-white rounded-3xl p-5 border border-black/[0.06] flex flex-col justify-between shadow-2xs hover:shadow-md transition-all ${
+                  activeTab === 'active' ? 'cursor-pointer hover:border-[#17402C]/40 group' : ''
+                }`}
               >
                 <div>
                   {/* Top tags */}
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {kit.source === 'configurator' && (
-                        <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-[#FAF0DC] text-amber-900 border border-amber-200">
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#FAF0DC] text-amber-950 border border-amber-200">
                           ✨ IA
                         </span>
                       )}
@@ -305,9 +315,14 @@ export default function KitsManagerView({
                   </div>
 
                   {/* Title */}
-                  <h4 className="text-sm font-bold text-[#0B1F17] leading-snug mb-1">
-                    {kit.name}
-                  </h4>
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <h4 className="text-sm font-bold text-[#0B1F17] leading-snug group-hover:text-[#17402C] transition-colors">
+                      {kit.name}
+                    </h4>
+                    <span className="text-[10px] text-[#17402C] font-bold opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                      Ouvrir cockpit ➔
+                    </span>
+                  </div>
                   <p className="text-[11px] text-[#6B7A72] line-clamp-2 mb-3">
                     {kit.description || `${kit.items.length} articles inclus`}
                   </p>
