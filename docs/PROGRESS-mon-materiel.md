@@ -3,7 +3,7 @@
 > **Branche :** `feat/cockpit-materiel-randonnees-kits-complet` (créée depuis `origin/refonte-cockpit-liquid-glass-mon-materiel`)  
 > **Cible :** `src/app/mon-materiel/page.tsx`  
 > **Auteur :** Antigravity Agent  
-> **Statut :** 🚀 En cours de réalisation  
+> **Statut :** ✅ Réalisé avec succès (Build & Tests validés)  
 
 ---
 
@@ -28,19 +28,24 @@
 ## 🎯 Plan d'Exécution
 
 - [x] **Tâche 0 :** Vérification de l'environnement, des branches Git et des assets visuels (`hero-misty.jpg`).
-- [ ] **Tâche 1 :** Intégration du module « Randonnées à venir & Prochain départ » dans le cockpit Liquid Glass :
-  - Affichage de la prochaine sortie planifiée (`prochainVoyage` / `DepartureHikeContext`).
-  - Indicateur de jours restants, météo estimée et taux de préparation du pack.
-  - Association directe entre la randonnée et le kit sélectionné.
-  - CTAs vers `/preparer-randonnee` et `/randonnee-active`.
-- [ ] **Tâche 2 :** Intégration complète de la vue des Kits (`useUserKits` + `KitCockpitDrawer`) :
-  - Switch de vue / Tiroir dédié aux kits avec liste des kits actifs et kits archivés.
-  - Assemblage, création, modification, duplication, corbeille/restauration.
-  - Coche d'articles, synchronisation avec le sac de départ et calcul du poids total.
-- [ ] **Tâche 3 :** Câblage de toutes les actions CRUD, éditions inline, multi-sélection, comparateur et alertes.
-- [ ] **Tâche 4 :** Sécurisation du Copilote IA (streaming Gemini + fallback expert local résilient sans clé API).
-- [ ] **Tâche 5 :** Validation du Design System Liquid Glass visionOS, A11y, WCAG, `prefers-reduced-motion` et suppression de tout élément mort ou décoratif.
-- [ ] **Tâche 6 :** Build complet (`npm run build` et `npm run type-check`), tests des parcours et ouverture de la Pull Request.
+- [x] **Tâche 1 :** Intégration du module « Randonnées à venir & Prochain départ » dans le cockpit Liquid Glass :
+  - Affichage des sorties planifiées avec calcul du compte à rebours (`J-16`, etc.).
+  - Indicateur météo estimée, profil altimétrique (+D) et distance (km).
+  - Sélecteur de kit assigné en temps réel avec calcul du taux de préparation du sac (`hikeReadiness.readinessPct`).
+  - Détection automatique des équipements manquants avec ajout direct au matériel.
+  - CTAs directs vers `/randonnee-active` (« 🚀 Démarrer ») et `/preparer-randonnee` (« Itinéraire »).
+- [x] **Tâche 2 :** Intégration complète de la vue des Kits (`useUserKits` + `KitCockpitDrawer`) :
+  - Switch de vue fluide dans le rail gauche et la barre supérieure.
+  - Création de kit (`createKit`), sélection active pour le départ, édition complète dans `KitCockpitDrawer`.
+  - Coche d'articles, calcul du poids total et répartition par catégorie.
+- [x] **Tâche 3 :** Câblage de toutes les actions CRUD, éditions inline, multi-sélection, comparateur et alertes :
+  - Tuiles de spécifications interactives (état, usure, incrément sorties, valeur, maintenance).
+  - Édition inline du poids et de la quantité directement dans la liste d'inventaire.
+  - Comparateur 2 articles avec barre de diff intégrée.
+  - Prêt de matériel (`LendItemModal`) avec sauvegarde du nom de l'emprunteur et statut.
+- [x] **Tâche 4 :** Sécurisation du Copilote IA (streaming Gemini + fallback expert local résilient sans clé API).
+- [x] **Tâche 5 :** Validation du Design System Liquid Glass visionOS, A11y, WCAG, `prefers-reduced-motion` et suppression de tout élément mort ou décoratif.
+- [x] **Tâche 6 :** Build complet (`npm run build` et `npm run type-check`), tests des parcours et ouverture de la Pull Request.
 
 ---
 
@@ -50,3 +55,12 @@
 - Création de la branche `feat/cockpit-materiel-randonnees-kits-complet` depuis `origin/refonte-cockpit-liquid-glass-mon-materiel`.
 - Vérification de la présence de l'image `public/assets/images/hero-misty.jpg`.
 - Création du document de suivi `docs/PROGRESS-mon-materiel.md`.
+
+### 2026-08-18 — Câblage & Intégration Totale
+- Implémentation du module **Randonnées à venir** dans le cockpit (`PlannedHike`, assignation de kit, score de préparation, détection des articles manquants, départ actif).
+- Implémentation du module **Kits assemblés** avec création, modification et sélection de kit de départ.
+- Intégration de la modale de planification rapide de sortie (`isNewHikeModalOpen`).
+- Intégration de la modale de réglages du cockpit (`isSettingsModalOpen`) avec ajustement de la cible de poids (5, 6, 8, 10, 12, 14, 16, 20 kg).
+- Câblage de la prop `onAddToKit` dans `GearDetailDrawer` et `ItemHero`.
+- Validation TypeScript stricte : `tsc --noEmit` -> 0 erreur.
+- Validation Build Next.js 15 : `npm run build` -> succès code 0.
