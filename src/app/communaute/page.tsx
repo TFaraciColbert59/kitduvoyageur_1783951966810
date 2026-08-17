@@ -1592,6 +1592,27 @@ export default function CommunautePage() {
             }}
             onOpenPublishModal={() => router.push('/communaute/publier')}
             onRefresh={fetchData}
+            onLoadMore={async () => {
+              if (loadingMore) return;
+              setLoadingMore(true);
+              const nextPage = postPage + 1;
+              const supabase = createClient();
+              const { data: newPosts } = await supabase
+                .from('community_posts')
+                .select(`
+                  *,
+                  author:user_profiles!community_posts_author_id_fkey(full_name, avatar_url, loyalty_level)
+                `)
+                .order('created_at', { ascending: false })
+                .range((nextPage - 1) * 20, nextPage * 20 - 1);
+
+              if (newPosts && newPosts.length > 0) {
+                setPosts(prev => [...prev, ...newPosts]);
+                setPostPage(nextPage);
+              }
+              setLoadingMore(false);
+            }}
+            hasMore={posts.length >= postPage * 20}
           />
         </MobilePageShell>
       </div>

@@ -195,22 +195,22 @@ export default function Icon({
     IconComponent = (variant === 'solid' ? outlineSet : solidSet)[name];
   }
 
-  if (!IconComponent) {
-    const Fallback = HeroIcons.QuestionMarkCircleIcon as React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  if (typeof IconComponent !== 'function') {
     return (
-      <Fallback
-        width={size}
-        height={size}
-        style={{ color, ...style }}
-        className={`text-gray-400 ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
+      <span
+        style={{ width: size, height: size, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color, ...style }}
+        className={`shrink-0 ${disabled ? 'opacity-50 cursor-not-allowed' : onClick ? 'cursor-pointer' : ''} ${className}`}
         onClick={disabled ? undefined : onClick}
         {...(props as any)}
-      />
+      >
+        <span style={{ fontSize: size * 0.7 }}>✦</span>
+      </span>
     );
   }
 
+  const RenderedComponent = IconComponent;
   return (
-    <IconComponent
+    <RenderedComponent
       width={size}
       height={size}
       style={{ color, ...style }}

@@ -6,6 +6,7 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
+import { SkeletonCard } from '@/components/ui/Skeleton';
 
 interface SavedTrail {
   id: string;
@@ -106,8 +107,10 @@ export default function MesAventuresPage() {
 
       {/* Loading */}
       {loading && (
-        <div className="flex items-center justify-center py-20">
-          <div className="w-10 h-10 border-4 border-[#17402C] border-t-transparent rounded-full animate-spin" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCard key={i} className="bg-[#1a2420] border-white/8" />
+          ))}
         </div>
       )}
 
@@ -255,13 +258,10 @@ export default function MesAventuresPage() {
 
       {/* Loading */}
       {loading && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 0' }}>
-          <div style={{ width: '28px', height: '28px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.15)', borderTopColor: '#17402C', animation: 'lkdv-spin 0.8s linear infinite' }} />
-          <style jsx>{`
-            @keyframes lkdv-spin {
-              to { transform: rotate(360deg); }
-            }
-          `}</style>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <SkeletonCard key={i} className="bg-[#1a2420] border-white/8" />
+          ))}
         </div>
       )}
 

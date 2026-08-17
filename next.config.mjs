@@ -28,13 +28,28 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/boutique',
+        destination: '/mon-materiel',
+        permanent: true,
+      },
+      {
+        source: '/mon-kit',
+        destination: '/mon-materiel',
+        permanent: true,
+      },
+      {
+        source: '/inventaire',
+        destination: '/mon-materiel',
+        permanent: true,
+      },
+      {
         source: '/shop',
-        destination: '/boutique',
+        destination: '/mon-materiel',
         permanent: true,
       },
       {
         source: '/catalogue/:path*',
-        destination: '/boutique',
+        destination: '/mon-materiel',
         permanent: true,
       },
       {

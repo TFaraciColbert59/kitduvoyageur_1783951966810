@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { runPreparation, PreparationResult, HikeContext } from '@/lib/preparation/PreparationEngine';
+import { recordPostHikeGearUsage } from '@/lib/preparation/SmartDepartureEngine';
 import { WeatherService } from '@/features/hiking/services/WeatherService';
 import { WeatherSnapshot } from '@/features/hiking/types';
 import { listOfflineRoutes } from '@/lib/offlineStorage';
@@ -265,17 +266,35 @@ export default function PreparationClient({ route, userId }: PreparationClientPr
           }
         },
         () => {
+          const usedGearIds = (report?.matchedRequirements || [])
+            .flatMap((m) => (m.matchingDetails || []).map((d) => d.item?.id))
+            .filter(Boolean);
+          if (usedGearIds.length > 0) {
+            recordPostHikeGearUsage(usedGearIds).catch(() => {});
+          }
           router.push(`/randonnee-active?routeId=${route.id}`);
         },
         { timeout: 4000 }
       );
     } else {
+      const usedGearIds = (report?.matchedRequirements || [])
+        .flatMap((m) => (m.matchingDetails || []).map((d) => d.item?.id))
+        .filter(Boolean);
+      if (usedGearIds.length > 0) {
+        recordPostHikeGearUsage(usedGearIds).catch(() => {});
+      }
       router.push(`/randonnee-active?routeId=${route.id}`);
     }
   };
 
   const handleConfirmStartAnyway = () => {
     setDistanceModalOpen(false);
+    const usedGearIds = (report?.matchedRequirements || [])
+      .flatMap((m) => (m.matchingDetails || []).map((d) => d.item?.id))
+      .filter(Boolean);
+    if (usedGearIds.length > 0) {
+      recordPostHikeGearUsage(usedGearIds).catch(() => {});
+    }
     router.push(`/randonnee-active?routeId=${route.id}`);
   };
 

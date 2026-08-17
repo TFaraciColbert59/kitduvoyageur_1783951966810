@@ -6,6 +6,8 @@ import Icon from '@/components/ui/AppIcon';
 import PostCard, { PostItem } from '@/components/social/PostCard';
 import CommunityHubNav from '@/components/social/CommunityHubNav';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 interface MobileCommunityHubProps {
   posts: PostItem[];
@@ -14,7 +16,9 @@ interface MobileCommunityHubProps {
   onLikePost: (postId: string, liked: boolean) => Promise<void>;
   onSavePost: (postId: string, saved: boolean) => Promise<void>;
   onOpenPublishModal: () => void;
-  onRefresh?: () => void;
+  onRefresh?: () => Promise<void> | void;
+  onLoadMore?: () => Promise<void>;
+  hasMore?: boolean;
 }
 
 export default function MobileCommunityHub({
@@ -25,9 +29,27 @@ export default function MobileCommunityHub({
   onSavePost,
   onOpenPublishModal,
   onRefresh,
+  onLoadMore,
+  hasMore = false,
 }: MobileCommunityHubProps) {
   const { triggerHaptic } = useHapticFeedback();
   const [activeFilter, setActiveFilter] = useState<'tous' | 'populaires' | 'conseils' | 'recents'>('tous');
+
+  const { isRefreshing, pullProgress } = usePullToRefresh(async () => {
+    if (onRefresh) {
+      triggerHaptic('medium');
+      await onRefresh();
+    }
+  });
+
+  const { sentinelRef } = useInfiniteScroll(
+    async () => {
+      if (onLoadMore && hasMore && !loading) {
+        await onLoadMore();
+      }
+    },
+    { threshold: 0.5 }
+  );
 
   const filteredPosts = posts.filter(p => {
     if (activeFilter === 'populaires') return (p.likes_count || 0) > 5;
@@ -36,7 +58,20 @@ export default function MobileCommunityHub({
   });
 
   return (
-    <div className="w-full min-h-screen bg-[#FBFAF6] pb-24">
+    <div className="w-full min-h-screen bg-[#FBFAF6] pb-24 relative">
+      {/* Pull to refresh visual feedback indicator */}
+      {(pullProgress > 0 || isRefreshing) && (
+        <div 
+          className="w-full flex items-center justify-center py-2 transition-all overflow-hidden"
+          style={{ height: isRefreshing ? '44px' : `${Math.min(pullProgress * 44, 44)}px` }}
+        >
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/90 shadow-sm border border-[#17402C]/10 text-xs font-medium text-[#17402C]">
+            <div className={`w-4 h-4 rounded-full border-2 border-[#17402C] border-t-transparent ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>{isRefreshing ? 'Actualisation...' : 'Tirer pour rafraîchir'}</span>
+          </div>
+        </div>
+      )}
+
       {/* Hero Header - Mobile Friendly */}
       <div className="relative px-4 pt-5 pb-4 bg-gradient-to-b from-[#17402C] to-[#122E20] text-white rounded-b-3xl shadow-lg">
         <div className="flex items-center justify-between gap-3 mb-2">
@@ -126,15 +161,23 @@ export default function MobileCommunityHub({
             </button>
           </div>
         ) : (
-          filteredPosts.map(post => (
-            <PostCard
-              key={post.id}
-              post={post}
-              currentUserId={user?.id}
-              onLike={(liked) => onLikePost(post.id, liked)}
-              onSave={(saved) => onSavePost(post.id, saved)}
-            />
-          ))
+          <>
+            {filteredPosts.map(post => (
+              <PostCard
+                key={post.id}
+                post={post}
+                currentUserId={user?.id}
+                onLike={(liked) => onLikePost(post.id, liked)}
+                onSave={(saved) => onSavePost(post.id, saved)}
+              />
+            ))}
+            {/* Sentinel for infinite scroll */}
+            <div ref={sentinelRef} className="h-6 flex items-center justify-center py-2">
+              {hasMore && (
+                <div className="w-5 h-5 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin" />
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>

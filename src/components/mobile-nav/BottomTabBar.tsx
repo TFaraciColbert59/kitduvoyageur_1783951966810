@@ -36,9 +36,9 @@ const DEFAULT_TABS: Tab[] = [
   },
   {
     href: '/mon-materiel',
-    label: 'Inventaire',
+    label: 'Matériel',
     iconName: 'box',
-    ariaLabel: 'Mon inventaire matériel',
+    ariaLabel: 'Mon matériel et équipement voyageur',
     matchPaths: ['/mon-materiel'],
     isHero: true,
   },

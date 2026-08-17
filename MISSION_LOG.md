@@ -1,5 +1,22 @@
 # LKDV — Mission Log
 
+## 2026-08-17 — Fusion Définitive « Mon Matériel / Boutique / Inventaire »
+
+### ✅ Fusion Complète & Architecture Unifiée (TERMINÉ ET VÉRIFIÉ AU BUILD)
+- **Source de vérité unique :** `useEquipment.ts` consolidé avec gestion complète des données riches `gear_items` (état, prochain entretien, date d'expiration, prêts, compartiments, notes d'usage, photos).
+- **Suppression du code mort :** `useOwnedEquipment.ts` supprimé physiquement. Fallback table `products` morte retiré au profit de `shop_products`.
+- **Catégories centralisées :** `src/constants/equipmentCategories.ts` créée avec chips horizontales et typage unique.
+- **Grille & UX unifiées :** `/mon-materiel` propose une seule vue minimaliste (Style Apple / AllTrails), où la possession est un état visuel de la carte.
+  - Recherche instantanée fluide.
+  - Tri discret (Tri intelligent pour maintenance/prêt, manquants d'abord, possédés d'abord, poids, nom).
+  - FAB '+' accessible au-dessus de la BottomTabBar pour l'enregistrement d'équipements personnels.
+  - Moteur d'anticipation et d'alertes proactives (`evaluateGearAlerts`).
+  - Drawer de fiche détaillée reconnectant `ItemHero`, `TechSpecTable`, `HistoryTimeline`, `LoansList`, `LendItemModal`, `NotesEditor`, `LocationCard`.
+- **SEO & Boutique :** `/boutique` est un alias fonctionnel direct de `/mon-materiel` préservant 100% des métadonnées SEO, alternates canonical et balisages Schema.org (`CollectionPage`, `BreadcrumbList`).
+- **Validation technique :** `npm run build` exécuté avec succès (114 pages générées sans aucune erreur).
+
+---
+
 ## 2026-08-09 — Session de développement
 
 ### ✅ Prompt #0 — Synchronisation des migrations Supabase (TERMINÉ ET VÉRIFIÉ EN PRODUCTION)

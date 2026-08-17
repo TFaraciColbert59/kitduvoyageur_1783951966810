@@ -49,6 +49,9 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/ios": "^8.5.0",
     "@dhiwise/component-tagger": "^1.0.15",
     "@heroicons/react": "^2.2.0",
     "@rocketnew/llm-sdk": "^1.1.0",

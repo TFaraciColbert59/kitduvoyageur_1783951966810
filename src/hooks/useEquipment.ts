@@ -32,9 +32,11 @@ export interface UserEquipmentItem {
   user_id: string;
   name: string;
   brand?: string | null;
+  model?: string | null;
   category: string;
   weight_g: number;
   purchase_price?: number | null;
+  purchase_date?: string | null;
   image?: string | null;
   condition?: 'neuf' | 'excellent' | 'bon' | 'moyen' | 'usé' | 'à_réparer' | 'à_remplacer';
   source?: 'achat' | 'kit' | 'manuel' | 'occasion' | 'catalogue';
@@ -44,6 +46,21 @@ export interface UserEquipmentItem {
   is_favorite?: boolean;
   is_listed_for_sale?: boolean;
   acquired_at?: string | null;
+  expiry_date?: string | null;
+  last_maintenance_date?: string | null;
+  next_maintenance_date?: string | null;
+  usage_count?: number;
+  serial_number?: string | null;
+  tags?: string[] | null;
+  loan_status?: 'disponible' | 'prêté' | string | null;
+  loan_to_name?: string | null;
+  compartment?: string | null;
+  wear_percentage?: number | null;
+  size_label?: string | null;
+  materials?: string | null;
+  sole_type?: string | null;
+  waterproof_rating?: string | null;
+  ref_code?: string | null;
 }
 
 const GUEST_GEAR_STORAGE_KEY = 'lkdv_guest_equipment';
@@ -88,18 +105,14 @@ export function useEquipment() {
     setLoading(true);
     setError(null);
     try {
-      // 1. Chargement réel depuis Supabase (shop_products, fallback products)
-      let { data: prodData, error: prodErr } = await supabase
+      // 1. Chargement réel depuis Supabase shop_products (catalogue unique)
+      const { data: prodData, error: prodErr } = await supabase
         .from('shop_products')
         .select('*')
         .order('name', { ascending: true });
 
-      if (prodErr || !prodData || prodData.length === 0) {
-        const fallback = await supabase
-          .from('products')
-          .select('*')
-          .eq('is_active', true);
-        prodData = fallback.data;
+      if (prodErr) {
+        console.warn('shop_products fetch warning:', prodErr);
       }
 
       const formattedProducts: UnifiedProduct[] = (prodData || []).map((p: any) => ({
@@ -107,7 +120,7 @@ export function useEquipment() {
         slug: p.slug || p.id,
         name: p.name,
         brand: p.brand || 'Le Kit du Voyageur',
-        category: p.category_main || p.category || 'Équipement',
+        category: p.category_main || p.category || 'Autre',
         category_main: p.category_main || p.category,
         weight_g: Number(p.weight_g || p.weight_grams || 0),
         price_eur: Number(p.price_eur || 0),
@@ -124,7 +137,7 @@ export function useEquipment() {
 
       setProducts(formattedProducts);
 
-      // 2. Chargement de l'équipement possédé
+      // 2. Chargement de l'équipement possédé (table riche gear_items)
       if (user && user.id) {
         const { data: gearData, error: gearErr } = await supabase
           .from('gear_items')
@@ -176,7 +189,7 @@ export function useEquipment() {
     [equipment]
   );
 
-  // Récupérer l'élément d'équipement possédé
+  // Récupérer l'élément d'équipement possédé correspondant
   const getOwnedItem = useCallback(
     (productOrId: string | { id?: string; name?: string }) => {
       const targetId = typeof productOrId === 'string' ? productOrId : productOrId.id;
@@ -263,7 +276,7 @@ export function useEquipment() {
     [triggerHaptic]
   );
 
-  // AJOUT MANUEL À L'ÉQUIPEMENT (Pour la page Mon Matériel)
+  // AJOUT À L'ÉQUIPEMENT (Mon Matériel)
   const addToEquipment = useCallback(
     async (
       product: Partial<UnifiedProduct> & { name: string },
@@ -276,17 +289,25 @@ export function useEquipment() {
         user_id: user?.id || 'guest',
         product_id: product.id || null,
         name: product.name,
-        brand: product.brand || null,
+        brand: overrides?.brand || product.brand || null,
+        model: overrides?.model || null,
         category: overrides?.category || product.category_main || product.category || 'Autre',
         weight_g: overrides?.weight_g ?? product.weight_g ?? 0,
         purchase_price: overrides?.purchase_price ?? product.price_eur ?? null,
         image: overrides?.image || product.image || null,
         condition: overrides?.condition || 'excellent',
-        source: overrides?.source || 'manuel',
+        source: overrides?.source || (product.id ? 'catalogue' : 'manuel'),
         quantity: overrides?.quantity || 1,
         notes: overrides?.notes || null,
         is_favorite: overrides?.is_favorite || false,
-        acquired_at: new Date().toISOString().split('T')[0],
+        acquired_at: overrides?.acquired_at || new Date().toISOString().split('T')[0],
+        next_maintenance_date: overrides?.next_maintenance_date || null,
+        last_maintenance_date: overrides?.last_maintenance_date || null,
+        expiry_date: overrides?.expiry_date || null,
+        usage_count: overrides?.usage_count || 0,
+        loan_status: overrides?.loan_status || 'disponible',
+        loan_to_name: overrides?.loan_to_name || null,
+        compartment: overrides?.compartment || null,
       };
 
       // Mise à jour optimiste
@@ -316,12 +337,19 @@ export function useEquipment() {
               notes: newItem.notes,
               is_favorite: newItem.is_favorite,
               acquired_at: newItem.acquired_at,
+              next_maintenance_date: newItem.next_maintenance_date,
+              last_maintenance_date: newItem.last_maintenance_date,
+              expiry_date: newItem.expiry_date,
+              usage_count: newItem.usage_count,
+              loan_status: newItem.loan_status,
+              loan_to_name: newItem.loan_to_name,
+              compartment: newItem.compartment,
             })
             .select('*')
             .maybeSingle();
 
           if (insertErr) {
-            console.warn('Note insertion gear_items (RLS ou auth):', insertErr.message || insertErr);
+            console.warn('Note insertion gear_items:', insertErr.message || insertErr);
           } else if (data) {
             setEquipment((prev) => [data as UserEquipmentItem, ...prev.filter((i) => i.id !== generatedId)]);
           }

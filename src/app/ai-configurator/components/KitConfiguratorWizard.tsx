@@ -220,16 +220,21 @@ export default function KitConfiguratorWizard() {
       const currentUserId = userId || (await supabase.auth.getUser()).data.user?.id;
 
       if (currentUserId) {
+        const dest = carnetData?.destination || trailName || groupInfo?.destination || 'Voyage Outdoor';
+        const season = answers[3] || 'frais_brumeux';
+        const activity = answers[1] || 'trek';
+        const totalWeightG = Math.round(report.totalWeightKg * 1000);
+
         const { data: session } = await supabase
           .from('configurator_sessions')
           .insert({
             user_id: currentUserId,
-            destination: carnetData?.destination || trailName || groupInfo?.destination || 'Voyage Outdoor',
+            destination: dest,
             country: 'France',
-            season: answers[3] || 'frais_brumeux',
-            activity: answers[1] || 'trek',
+            season: season,
+            activity: activity,
             level: answers[4] || 'equilibre',
-            max_weight_g: Math.round(report.totalWeightKg * 1000),
+            max_weight_g: totalWeightG,
             budget_eur: report.totalMissingPriceEur,
             climate: report.weatherLabel,
           })
@@ -239,18 +244,80 @@ export default function KitConfiguratorWizard() {
         await supabase.from('kit_reports').insert({
           user_id: currentUserId,
           session_id: session?.id || null,
-          destination: carnetData?.destination || trailName || groupInfo?.destination || 'Voyage Outdoor',
+          destination: dest,
           country: 'France',
-          season: answers[3] || 'frais_brumeux',
-          activity: answers[1] || 'trek',
+          season: season,
+          activity: activity,
           level: answers[4] || 'equilibre',
           climate: report.weatherLabel,
           budget_eur: report.totalMissingPriceEur,
           selected_items: report.missingItems,
-          total_weight_g: Math.round(report.totalWeightKg * 1000),
+          total_weight_g: totalWeightG,
           total_price_eur: report.totalMissingPriceEur,
           status: 'active',
         });
+
+        // Enregistrement direct dans custom_kits pour Mon Matériel
+        const { data: newCustomKit } = await supabase
+          .from('custom_kits')
+          .insert({
+            user_id: currentUserId,
+            name: `Kit ${dest} — ${activity}`,
+            description: `Généré automatiquement par le Configurateur IA (${report.weatherLabel})`,
+            for_destination: dest,
+            season: season,
+            activity: activity,
+            total_weight_g: totalWeightG,
+            source: 'configurator',
+            status: 'active',
+          })
+          .select('id')
+          .single();
+
+        if (newCustomKit && report.missingItems && report.missingItems.length > 0) {
+          const kitItemsToInsert = report.missingItems.map((item: any) => ({
+            kit_id: newCustomKit.id,
+            item_name: item.name || 'Article',
+            category: item.category || 'Autre',
+            weight_g: item.weightG || 0,
+            quantity: 1,
+            is_essential: Boolean(item.essential),
+          }));
+          await supabase.from('custom_kit_items').insert(kitItemsToInsert);
+        }
+      } else {
+        // Mode invité : enregistrement dans localStorage lkdv_guest_kits
+        try {
+          const dest = carnetData?.destination || trailName || groupInfo?.destination || 'Voyage Outdoor';
+          const localKey = 'lkdv_guest_kits';
+          const existing = JSON.parse(localStorage.getItem(localKey) || '[]');
+          const newGuestKit = {
+            id: crypto.randomUUID(),
+            user_id: 'guest',
+            name: `Kit ${dest} — IA`,
+            description: `Généré automatiquement par le Configurateur IA`,
+            for_destination: dest,
+            season: answers[3] || 'Toutes saisons',
+            activity: answers[1] || 'randonnee',
+            total_weight_g: Math.round(report.totalWeightKg * 1000),
+            source: 'configurator',
+            status: 'active',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            is_favorite: false,
+            items: (report.missingItems || []).map((item: any) => ({
+              id: crypto.randomUUID(),
+              kit_id: 'guest',
+              item_name: item.name || 'Article',
+              category: item.category || 'Autre',
+              weight_g: item.weightG || 0,
+              quantity: 1,
+              is_essential: Boolean(item.essential),
+              is_checked: false,
+            })),
+          };
+          localStorage.setItem(localKey, JSON.stringify([newGuestKit, ...existing]));
+        } catch {}
       }
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 4000);

@@ -21,6 +21,7 @@ export * from './safety/SafetyEngine';
 export * from './copilot/CopilotEngine';
 export * from './intelligence/TrailIntelligenceEngine';
 export * from './intelligence/TrailIntelligenceService';
+export * from './intelligence/HikerProfileEngine';
 
 // Components
 export { default as ContextualInsight } from './components/ContextualInsight';

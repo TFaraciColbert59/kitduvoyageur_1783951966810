@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PreparationResult } from '@/lib/preparation/PreparationEngine';
 import { WeatherSnapshot } from '@/features/hiking/types';
+import { savePlannedHike } from '@/lib/preparation/plannedHikes';
 
 import { PreparationHero } from './PreparationHero';
 import { PreparationScore } from './PreparationScore';
@@ -70,6 +71,10 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
   handleDeleteItem,
 }) => {
   const router = useRouter();
+  const [showDateModal, setShowDateModal] = useState(false);
+  const [targetDate, setTargetDate] = useState(
+    new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0]
+  );
   const diffLabel = getDifficultyLabel(route.difficulty);
 
   const mapTrails = [
@@ -162,6 +167,7 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
         <EquipmentUnifiedList
           items={equipmentList}
           canEdit={canEdit}
+          targetDate={targetDate}
           onAdd={handleAddInventory}
           onAddToCart={handleAddToCart}
           onQty={handleQty}
@@ -207,7 +213,66 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
         missingCount={allMissingOrPartial.length}
         anyEssentialMissing={anyEssentialMissing}
         onStart={handleStart}
+        onContinuePreparation={() => setShowDateModal(true)}
       />
+
+      {/* Modal Date de Départ Mobile */}
+      {showDateModal && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm pointer-events-auto">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-black/[0.08] space-y-4 animate-slide-up">
+            <div>
+              <h3 className="text-base font-bold text-[#0B1F17]">Date de votre départ</h3>
+              <p className="text-xs text-[#6B7A72] mt-0.5">
+                Planifiez cette randonnée dans votre espace Mon Matériel.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#0B1F17] mb-1.5">
+                Quand partez-vous ?
+              </label>
+              <input
+                type="date"
+                value={targetDate}
+                min={new Date().toISOString().split('T')[0]}
+                onChange={(e) => setTargetDate(e.target.value)}
+                className="w-full bg-[#FBFAF6] border border-black/10 rounded-xl px-3.5 py-2.5 text-xs text-[#0B1F17] outline-none font-mono focus:border-[#17402C]"
+              />
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowDateModal(false)}
+                className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#6B7A72] hover:bg-black/[0.04]"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  savePlannedHike({
+                    routeId: String(route.id || route.route_id || ''),
+                    name: route.name || 'Randonnée',
+                    distanceKm: Number(route.distance_km || route.distanceKm || 10),
+                    elevationGain: Number(route.elevation_gain || route.elevationGainM || 0),
+                    terrain: route.terrain || 'Sentier',
+                    season: 'Été',
+                    isOvernight: Number(route.duration_hours || 0) > 8,
+                    targetDate: targetDate || new Date().toISOString().split('T')[0],
+                    weather: weatherData,
+                  });
+                  setShowDateModal(false);
+                  router.push('/mon-materiel');
+                }}
+                className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#0B1F17] shadow-sm"
+              >
+                Enregistrer →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className={`toast ${toastMsg ? 'on' : ''}`} id="prep-toast">
         <div className="ic"><Icon name="check" /></div>

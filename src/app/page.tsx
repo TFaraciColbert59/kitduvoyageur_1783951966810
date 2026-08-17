@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from '@/components/Header';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
@@ -131,7 +132,14 @@ export default function HomePage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Card 1 */}
                 <div className="relative h-[480px] rounded-[0.75rem] overflow-hidden group cursor-pointer">
-                  <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80" alt="Chartreuse" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  <Image 
+                    src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80" 
+                    alt="Chartreuse sentier des balcons" 
+                    fill 
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    priority
+                    className="object-cover transition-transform duration-700 group-hover:scale-105" 
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
                     <span className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#1C2620] tracking-wide uppercase">3 Jours / 50 km</span>
@@ -149,7 +157,14 @@ export default function HomePage() {
 
                 {/* Card 2 */}
                 <div className="relative h-[480px] rounded-[0.75rem] overflow-hidden group cursor-pointer">
-                  <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80" alt="Vercors" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  <Image 
+                    src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80" 
+                    alt="Bivouac étoilé Vercors" 
+                    fill 
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    priority
+                    className="object-cover transition-transform duration-700 group-hover:scale-105" 
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
                     <span className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#1C2620] tracking-wide uppercase">2 Jours</span>
@@ -166,7 +181,14 @@ export default function HomePage() {
 
                 {/* Card 3 */}
                 <div className="relative h-[480px] rounded-[0.75rem] overflow-hidden group cursor-pointer">
-                  <img src="https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=800&q=80" alt="Kayak" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  <Image 
+                    src="https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=800&q=80" 
+                    alt="Kayak Sans-Rançon" 
+                    fill 
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    priority
+                    className="object-cover transition-transform duration-700 group-hover:scale-105" 
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
                     <span className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#1C2620] tracking-wide uppercase">1 Jour</span>
