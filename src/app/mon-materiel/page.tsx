@@ -57,7 +57,7 @@ const DEFAULT_PLANNED_HIKES: PlannedHike[] = [
   },
   {
     id: 'hike-tour-des-fiz',
-    name: 'Tour des Fiz & Désert de Platé',
+    name: 'Tour des Fiz & Platé',
     destination: 'Haut-Giffre · Haute-Savoie',
     dateRange: '24-25 oct. 2026',
     daysLeft: 28,
@@ -145,7 +145,7 @@ function GlassCard({
           maskComposite: 'exclude',
         }}
       />
-      <div className="relative h-full">{children}</div>
+      <div className="relative h-full flex flex-col">{children}</div>
     </div>
   );
 }
@@ -155,38 +155,38 @@ function WeightGauge({ currentG, targetKg }: { currentG: number; targetKg: numbe
   const targetG = targetKg * 1000;
   const ratio = targetG > 0 ? currentG / targetG : 0;
   const pct = Math.min(ratio, 1);
-  const r = 34;
+  const r = 32;
   const c = 2 * Math.PI * r;
   const dash = c * pct;
   const color = ratio <= 0.85 ? '#A3C4A3' : ratio <= 1 ? '#E9C46A' : '#E76F51';
   return (
-    <div className="relative w-[92px] h-[92px] shrink-0">
-      <svg viewBox="0 0 92 92" className="w-full h-full -rotate-90">
-        <circle cx="46" cy="46" r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="7" />
+    <div className="relative w-[84px] h-[84px] shrink-0">
+      <svg viewBox="0 0 84 84" className="w-full h-full -rotate-90">
+        <circle cx="42" cy="42" r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="6" />
         <circle
-          cx="46"
-          cy="46"
+          cx="42"
+          cy="42"
           r={r}
           fill="none"
           stroke={color}
-          strokeWidth="7"
+          strokeWidth="6"
           strokeLinecap="round"
           strokeDasharray={`${dash} ${c}`}
           style={{ transition: 'stroke-dasharray 0.6s ease, stroke 0.3s ease' }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-sm font-bold font-mono" style={{ color }}>
+        <span className="text-xs font-bold font-mono" style={{ color }}>
           {(currentG / 1000).toFixed(1)}
         </span>
-        <span className="text-[9px] text-white/50 font-mono">/ {targetKg} kg</span>
+        <span className="text-[8px] text-white/50 font-mono">/ {targetKg} kg</span>
       </div>
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────
-// Main Page Component
+// Main Page Component — Dashboard Cockpit Sans Sidebar
 // ─────────────────────────────────────────────────────────────
 export default function MonMaterielCockpitPage() {
   const { triggerHaptic } = useHapticFeedback();
@@ -210,17 +210,17 @@ export default function MonMaterielCockpitPage() {
 
   const isLoading = equipmentLoading || kitsLoading;
 
-  // Navigation states
-  const [activeNav, setActiveNav] = useState<'inventory' | 'kits' | 'hikes' | 'favorites'>('inventory');
+  // Filter and Selection States
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBrand, setSelectedBrand] = useState<string>('Tous');
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [selectedKitId, setSelectedKitId] = useState<string | null>(null);
   const [selectedHikeId, setSelectedHikeId] = useState<string | null>(DEFAULT_PLANNED_HIKES[0].id);
   const [targetKg, setTargetKg] = useState<number>(DEFAULT_TARGET_KG);
 
-  // Planned Hikes State (with localStorage persistance)
+  // Planned Hikes State (with localStorage persistence)
   const [plannedHikes, setPlannedHikes] = useState<PlannedHike[]>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -240,8 +240,7 @@ export default function MonMaterielCockpitPage() {
     }
   }, []);
 
-  // Responsive & Selection overlays
-  const [showTelemetryPanel, setShowTelemetryPanel] = useState(false);
+  // Selection & Compare states
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [compareIds, setCompareIds] = useState<string[]>([]);
 
@@ -319,7 +318,7 @@ export default function MonMaterielCockpitPage() {
   // Filtered equipment list
   const filteredEquipment = useMemo(() => {
     return equipment.filter((item) => {
-      if (activeNav === 'favorites' && !item.is_favorite) return false;
+      if (onlyFavorites && !item.is_favorite) return false;
       if (selectedBrand && selectedBrand !== 'Tous') {
         if (!item.brand?.toLowerCase().includes(selectedBrand.toLowerCase())) return false;
       }
@@ -344,7 +343,7 @@ export default function MonMaterielCockpitPage() {
       }
       return true;
     });
-  }, [equipment, activeNav, selectedBrand, activeCategory, searchQuery]);
+  }, [equipment, onlyFavorites, selectedBrand, activeCategory, searchQuery]);
 
   // Active selected item
   const activeItem = useMemo(() => {
@@ -363,11 +362,12 @@ export default function MonMaterielCockpitPage() {
 
   // Active selected kit
   const activeKit = useMemo(() => {
-    if (activeNav === 'hikes' && activeHike) {
-      return kits.find((k) => k.id === activeHike.assignedKitId) || kits[0] || null;
+    if (activeHike) {
+      const found = kits.find((k) => k.id === activeHike.assignedKitId);
+      if (found) return found;
     }
     return kits.find((k) => k.id === selectedKitId) || kits[0] || null;
-  }, [kits, selectedKitId, activeNav, activeHike]);
+  }, [kits, selectedKitId, activeHike]);
 
   // Hike readiness analysis
   const hikeReadiness = useMemo(() => {
@@ -421,10 +421,10 @@ export default function MonMaterielCockpitPage() {
       .slice(0, 4);
   }, [equipment]);
 
-  // Smart alerts
+  // Smart alerts & loans
   const alerts = useMemo(() => {
     const now = Date.now();
-    const out: { id: string; kind: 'maintenance' | 'expiry' | 'replace' | 'loan'; label: string; itemId: string }[] = [];
+    const out: { id: string; kind: 'maintenance' | 'expiry' | 'replace' | 'loan'; label: string; itemId: string; borrower?: string }[] = [];
     equipment.forEach((it) => {
       if (it.next_maintenance_date && new Date(it.next_maintenance_date).getTime() < now) {
         out.push({ id: `m-${it.id}`, kind: 'maintenance', label: `Révision due — ${it.name}`, itemId: it.id });
@@ -436,7 +436,7 @@ export default function MonMaterielCockpitPage() {
         out.push({ id: `r-${it.id}`, kind: 'replace', label: `À réparer/remplacer — ${it.name}`, itemId: it.id });
       }
       if (it.loan_status === 'prêté') {
-        out.push({ id: `l-${it.id}`, kind: 'loan', label: `Prêté${it.loan_to_name ? ` à ${it.loan_to_name}` : ''} — ${it.name}`, itemId: it.id });
+        out.push({ id: `l-${it.id}`, kind: 'loan', label: `Prêté à ${it.loan_to_name || 'un ami'} — ${it.name}`, itemId: it.id, borrower: it.loan_to_name || '' });
       }
     });
     return out;
@@ -448,7 +448,7 @@ export default function MonMaterielCockpitPage() {
     setSearchQuery('');
     setSelectedBrand('Tous');
     setActiveCategory('all');
-    setActiveNav('inventory');
+    setOnlyFavorites(false);
   };
 
   // Toggle favorite
@@ -564,7 +564,7 @@ export default function MonMaterielCockpitPage() {
 
       let advice = `🎒 **Analyse LKDV de ton pack :**\n\n`;
       advice += `• **Poids total inventorié :** ${formatWeight(totalWeightG)} (${diffStr} de ton objectif de ${targetKg} kg).\n`;
-      if (activeNav === 'hikes' && activeHike) {
+      if (activeHike) {
         advice += `• **Sortie active :** ${activeHike.name} (${activeHike.distanceKm} km, +${activeHike.elevationGain}m D+, ${activeHike.durationDays}j).\n`;
         advice += `• **Kit assigné :** ${activeKit?.name || 'Aucun'} (${hikeReadiness.readinessPct}% de matériel prêt).\n`;
       }
@@ -596,7 +596,7 @@ export default function MonMaterielCockpitPage() {
 
       return advice;
     },
-    [equipment, totalWeightG, targetKg, activeNav, activeHike, activeKit, hikeReadiness, categoryStats]
+    [equipment, totalWeightG, targetKg, activeHike, activeKit, hikeReadiness, categoryStats]
   );
 
   // AI Copilot streaming trigger
@@ -704,7 +704,7 @@ export default function MonMaterielCockpitPage() {
   const enterAnim = prefersReducedMotion ? '' : 'motion-safe:animate-[fadeInUp_0.4s_ease_both]';
 
   return (
-    <div className="fixed inset-0 z-50 h-dvh w-screen overflow-hidden bg-[#0B1F17] text-white select-none font-sans flex flex-col p-3 sm:p-4 pt-16 sm:pt-20">
+    <div className="min-h-screen w-full bg-[#0B1F17] text-white select-none font-sans flex flex-col pt-20 sm:pt-22 pb-8 px-3 sm:px-5 relative">
       <Header />
       <style>{`
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -714,20 +714,20 @@ export default function MonMaterielCockpitPage() {
       `}</style>
 
       {/* ═══ BACKGROUND — alpine trek landscape ═══ */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <Image
           src="/assets/images/hero-misty.jpg"
           alt="Paysage de montagne — trek alpin"
           fill
           priority
           sizes="100vw"
-          className={`object-cover object-center scale-[1.18] ${prefersReducedMotion ? '' : 'motion-safe:animate-[fadeInUp_1.2s_ease_both]'}`}
-          style={{ filter: 'blur(30px) saturate(1.18)' }}
+          className={`object-cover object-center scale-[1.15] ${prefersReducedMotion ? '' : 'motion-safe:animate-[fadeInUp_1.2s_ease_both]'}`}
+          style={{ filter: 'blur(32px) saturate(1.15)' }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0B1F17]/72 via-[#0B1F17]/55 to-[#0B1F17]/82" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0B1F17]/75 via-[#0B1F17]/60 to-[#0B1F17]/88" />
         <div
           className="absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse at 50% 28%, transparent 18%, rgba(11,31,23,0.9) 100%)' }}
+          style={{ background: 'radial-gradient(ellipse at 50% 25%, transparent 20%, rgba(11,31,23,0.92) 100%)' }}
         />
       </div>
 
@@ -736,571 +736,463 @@ export default function MonMaterielCockpitPage() {
         <div
           role="status"
           aria-live="polite"
-          className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-full border border-[#A3C4A3]/50 bg-[#0B1F17]/90 text-white text-xs font-semibold backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_20px_rgba(163,196,163,0.3)] flex items-center gap-2 animate-[fadeInUp_0.25s_ease_both]"
+          className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-full border border-[#A3C4A3]/50 bg-[#0B1F17]/90 text-white text-xs font-semibold backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_20px_rgba(163,196,163,0.3)] flex items-center gap-2 animate-[fadeInUp_0.25s_ease_both]"
         >
           <span className="w-2 h-2 rounded-full bg-[#A3C4A3] animate-pulse" />
           <span>{toastMessage.text}</span>
         </div>
       )}
 
-      {/* ═══ TOP FLOATING GLASS BAR ═══ */}
-      <header className="relative z-10 flex items-center justify-between gap-3 shrink-0 h-12 px-3 mb-3 rounded-full border border-white/12 bg-white/[0.07] backdrop-blur-2xl backdrop-saturate-150 shadow-[0_12px_40px_-12px_rgba(11,31,23,0.6),inset_0_1px_0_0_rgba(255,255,255,0.16)]">
-        <div className="flex items-center gap-2.5 pl-1 min-w-0">
-          <span className="w-8 h-8 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center shadow-inner shrink-0">
-            <svg viewBox="0 0 32 32" width="17" height="17" fill="none">
-              <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="#A3C4A3" strokeWidth="2.2" strokeLinejoin="round" />
-              <path d="M2 24 L30 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </span>
-          <span className="font-semibold tracking-wide text-sm text-white truncate">Mon Équipement</span>
-          <span className="text-white/25 hidden sm:inline">·</span>
-          <span className="text-[11px] text-white/70 font-medium hidden sm:inline tracking-wide">Cockpit visionOS</span>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          {/* Quick Nav Switches */}
-          <button
-            type="button"
-            onClick={() => { triggerHaptic('light'); setActiveNav('inventory'); }}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all active:scale-95 ${
-              activeNav === 'inventory' ? 'bg-[#A3C4A3] text-[#0B1F17]' : 'text-white/80 hover:text-white bg-white/8'
-            }`}
-          >
-            Matériel
-          </button>
-          <button
-            type="button"
-            onClick={() => { triggerHaptic('light'); setActiveNav('hikes'); }}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all active:scale-95 ${
-              activeNav === 'hikes' ? 'bg-[#A3C4A3] text-[#0B1F17]' : 'text-white/80 hover:text-white bg-white/8'
-            }`}
-          >
-            🧭 Randonnées ({plannedHikes.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => { triggerHaptic('light'); setActiveNav('kits'); }}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all active:scale-95 hidden sm:inline-block ${
-              activeNav === 'kits' ? 'bg-[#A3C4A3] text-[#0B1F17]' : 'text-white/80 hover:text-white bg-white/8'
-            }`}
-          >
-            🧰 Kits ({kits.length})
-          </button>
-
-          <Link
-            href="/boutique"
-            className="px-3.5 py-1.5 rounded-full text-xs font-medium text-white/85 hover:text-white bg-white/8 hover:bg-white/14 border border-white/12 transition-all active:scale-95 hidden lg:inline-block"
-          >
-            Boutique
-          </Link>
-
-          {/* Telemetry Mobile Button */}
-          <button
-            type="button"
-            onClick={() => { triggerHaptic('light'); setShowTelemetryPanel((v) => !v); }}
-            className="px-3 py-1.5 rounded-full text-xs font-medium text-white/85 hover:text-white bg-white/8 hover:bg-white/14 border border-white/12 transition-all active:scale-95 xl:hidden"
-          >
-            Télémétrie
-          </button>
-
-          {/* Exit Cockpit */}
-          <Link
-            href="/compte"
-            aria-label="Quitter le cockpit"
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white transition-all active:scale-90"
-            title="Quitter le cockpit"
-          >
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
-          </Link>
-
-          <button
-            type="button"
-            onClick={() => { triggerHaptic('light'); setIsSettingsModalOpen(true); }}
-            className="w-8 h-8 rounded-full bg-[#A3C4A3] text-[#0B1F17] flex items-center justify-center text-[11px] font-extrabold shadow-sm transition-transform active:scale-90"
-            title="Profil & Réglages"
-          >
-            MC
-          </button>
-        </div>
-      </header>
-
-      {/* ═══ SMART ALERTS RIBBON ═══ */}
-      {alerts.length > 0 && activeNav === 'inventory' && (
-        <div className="relative z-10 shrink-0 mb-3 flex gap-2 overflow-x-auto scrollbar-none">
-          {alerts.slice(0, 6).map((a) => {
-            const palette =
-              a.kind === 'expiry' || a.kind === 'replace'
-                ? 'bg-[#E76F51]/15 border-[#E76F51]/40 text-[#F4A18C]'
-                : a.kind === 'maintenance'
-                ? 'bg-[#E9C46A]/15 border-[#E9C46A]/40 text-[#EFD79B]'
-                : 'bg-white/8 border-white/15 text-white/80';
-            const icon = a.kind === 'expiry' ? '⏳' : a.kind === 'maintenance' ? '🛠️' : a.kind === 'replace' ? '⚠️' : '🤝';
-            return (
-              <button
-                key={a.id}
-                type="button"
-                onClick={() => { setSelectedItemId(a.itemId); triggerHaptic('light'); }}
-                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-medium whitespace-nowrap transition-all active:scale-95 ${palette}`}
-              >
-                <span>{icon}</span>
-                <span>{a.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ═══ MAIN COCKPIT GRID ═══ */}
-      <div className="relative z-10 flex-1 flex gap-3 sm:gap-4 min-h-0 max-h-full overflow-hidden">
-        {/* ─── LEFT RAIL ─── */}
-        <GlassCard className="w-14 shrink-0 hidden sm:block">
-          <div className="flex flex-col items-center justify-between py-4 px-1.5 h-full">
-            <Link
-              href="/"
-              className="w-10 h-10 rounded-2xl bg-white/8 hover:bg-white/14 border border-white/12 flex items-center justify-center text-white transition-transform active:scale-95"
-              title="Accueil LKDV"
-            >
+      {/* ═══ COCKPIT SUB-HEADER / SUMMARY HUD BAR ═══ */}
+      <div className="relative z-10 w-full max-w-[1600px] mx-auto mb-4 px-1">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-[24px] border border-white/12 bg-white/[0.06] backdrop-blur-xl shadow-lg">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center shadow-inner shrink-0">
               <svg viewBox="0 0 32 32" width="18" height="18" fill="none">
                 <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="#A3C4A3" strokeWidth="2.2" strokeLinejoin="round" />
                 <path d="M2 24 L30 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
-            </Link>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="font-extrabold text-base sm:text-lg text-white tracking-tight">Cockpit Mon Équipement</h1>
+                <span className="px-2 py-0.5 rounded-full bg-[#A3C4A3]/20 text-[#A3C4A3] text-[10px] font-mono font-bold">
+                  v2 visionOS
+                </span>
+              </div>
+              <p className="text-[11px] text-white/60">
+                Centre de pilotage en direct · {equipment.length} articles · {formatWeight(totalWeightG)} · {kits.length} kits · {plannedHikes.length} sorties
+              </p>
+            </div>
+          </div>
 
-            <div className="flex flex-col gap-3">
-              {/* Inventory */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => { setEditingItem(null); setIsAddModalOpen(true); triggerHaptic('light'); }}
+              className="px-3.5 py-1.5 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] font-bold text-xs shadow-sm transition-all active:scale-95 flex items-center gap-1.5"
+            >
+              <span>+</span> Ajouter du matériel
+            </button>
+            <button
+              type="button"
+              onClick={() => { setIsNewHikeModalOpen(true); triggerHaptic('light'); }}
+              className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/12 transition-all active:scale-95 flex items-center gap-1.5"
+            >
+              <span>🧭</span> Planifier sortie
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedKitForCockpit(null);
+                setIsKitDrawerOpen(true);
+                triggerHaptic('light');
+              }}
+              className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/12 transition-all active:scale-95 flex items-center gap-1.5"
+            >
+              <span>🧰</span> Gérer kits
+            </button>
+            <button
+              type="button"
+              onClick={() => { setIsSettingsModalOpen(true); triggerHaptic('light'); }}
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white text-xs transition-transform active:scale-90"
+              title="Réglages du Cockpit"
+              aria-label="Réglages"
+            >
+              ⚙️
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ MAIN COCKPIT DASHBOARD GRID (SANS SIDEBAR) ═══ */}
+      <main className="relative z-10 w-full max-w-[1600px] mx-auto flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+        
+        {/* ─────────────────────────────────────────────────────────────
+            COLONNE GAUCHE (4 colonnes) : INVENTAIRE MATÉRIEL & FILTRES
+           ───────────────────────────────────────────────────────────── */}
+        <div className="lg:col-span-4 xl:col-span-4 flex flex-col gap-4">
+          <GlassCard className="p-4">
+            <div className="flex items-baseline justify-between pb-3 border-b border-white/10 shrink-0">
+              <div>
+                <h2 className="text-sm font-extrabold uppercase tracking-wider text-white">Inventaire Matériel</h2>
+                <p className="text-[11px] text-white/50">{filteredEquipment.length} articles affichés</p>
+              </div>
+              <span className="text-xs font-mono text-[#A3C4A3] font-bold">
+                {formatWeight(totalWeightG)}
+              </span>
+            </div>
+
+            {/* Search + Clear */}
+            <div className="relative flex items-center mt-3">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 text-white/50">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M20 20l-3.5-3.5" />
+              </svg>
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Rechercher équipement…  ( / )"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-7 py-2 bg-black/30 rounded-2xl border border-white/12 text-xs text-white placeholder-white/50 focus:outline-none focus:border-[#A3C4A3]/60 focus:ring-1 focus:ring-[#A3C4A3]/40 transition-colors"
+              />
+              {searchQuery && (
+                <button type="button" onClick={() => setSearchQuery('')} className="absolute right-2.5 text-white/50 hover:text-white text-xs" aria-label="Effacer">✕</button>
+              )}
+            </div>
+
+            {/* Category Filter Pills */}
+            <div className="flex gap-1.5 overflow-x-auto pb-1 mt-2.5 scrollbar-none text-[11px]">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => { triggerHaptic('light'); setActiveCategory(cat); }}
+                  className={`px-3 py-1 rounded-full capitalize whitespace-nowrap transition-colors ${
+                    activeCategory === cat
+                      ? 'bg-[#A3C4A3] text-[#0B1F17] font-bold shadow-xs'
+                      : 'bg-white/8 text-white/75 hover:bg-white/14 hover:text-white border border-white/10'
+                  }`}
+                >
+                  {cat === 'all' ? 'Tous' : cat}
+                </button>
+              ))}
+            </div>
+
+            {/* Brands + Favorites switch */}
+            <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-white/8 text-[10px]">
+              <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
+                <span className="text-white/40 font-mono uppercase text-[9px] shrink-0">Marque:</span>
+                {availableBrands.slice(0, 5).map((b) => (
+                  <button
+                    key={b}
+                    type="button"
+                    onClick={() => { triggerHaptic('light'); setSelectedBrand(b); }}
+                    className={`px-2 py-0.5 rounded-lg whitespace-nowrap transition-colors ${
+                      selectedBrand === b
+                        ? 'bg-[#A3C4A3]/25 text-[#A3C4A3] font-bold border border-[#A3C4A3]/50'
+                        : 'bg-white/5 text-white/60 hover:text-white border border-white/10'
+                    }`}
+                  >
+                    {b}
+                  </button>
+                ))}
+              </div>
               <button
                 type="button"
-                onClick={() => { triggerHaptic('light'); setActiveNav('inventory'); }}
-                aria-label="Inventaire"
-                className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all active:scale-95 cursor-pointer ${
-                  activeNav === 'inventory'
-                    ? 'bg-[#A3C4A3] text-[#0B1F17] shadow-[0_0_20px_rgba(163,196,163,0.45)] scale-105'
-                    : 'text-white/60 hover:text-white hover:bg-white/8'
+                onClick={() => { triggerHaptic('light'); setOnlyFavorites((f) => !f); }}
+                className={`px-2 py-1 rounded-lg font-bold transition-colors shrink-0 flex items-center gap-1 ${
+                  onlyFavorites
+                    ? 'bg-[#E76F51]/25 text-[#F4A18C] border border-[#E76F51]/40'
+                    : 'bg-white/5 text-white/60 hover:text-white'
                 }`}
-                title="Inventaire Matériel"
+                title="Filtrer uniquement les favoris"
               >
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.1">
-                  <rect x="3" y="3" width="7" height="7" rx="2" />
-                  <rect x="14" y="3" width="7" height="7" rx="2" />
-                  <rect x="3" y="14" width="7" height="7" rx="2" />
-                  <rect x="14" y="14" width="7" height="7" rx="2" />
-                </svg>
-              </button>
-
-              {/* Hikes */}
-              <button
-                type="button"
-                onClick={() => { triggerHaptic('light'); setActiveNav('hikes'); }}
-                aria-label="Randonnées à venir"
-                className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all active:scale-95 cursor-pointer ${
-                  activeNav === 'hikes'
-                    ? 'bg-[#A3C4A3] text-[#0B1F17] shadow-[0_0_20px_rgba(163,196,163,0.45)] scale-105'
-                    : 'text-white/60 hover:text-white hover:bg-white/8'
-                }`}
-                title="Randonnées & Départs"
-              >
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.1">
-                  <path d="M12 2L2 22h20L12 2z" />
-                  <path d="M12 8v8" />
-                  <path d="M8 16h8" />
-                </svg>
-              </button>
-
-              {/* Kits */}
-              <button
-                type="button"
-                onClick={() => { triggerHaptic('light'); setActiveNav('kits'); }}
-                aria-label="Kits assemblés"
-                className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all active:scale-95 cursor-pointer ${
-                  activeNav === 'kits'
-                    ? 'bg-[#A3C4A3] text-[#0B1F17] shadow-[0_0_20px_rgba(163,196,163,0.45)] scale-105'
-                    : 'text-white/60 hover:text-white hover:bg-white/8'
-                }`}
-                title="Kits assemblés"
-              >
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-                </svg>
-              </button>
-
-              {/* Favorites */}
-              <button
-                type="button"
-                onClick={() => { triggerHaptic('light'); setActiveNav(activeNav === 'favorites' ? 'inventory' : 'favorites'); }}
-                aria-label="Favoris"
-                aria-pressed={activeNav === 'favorites'}
-                className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all active:scale-95 cursor-pointer ${
-                  activeNav === 'favorites'
-                    ? 'bg-[#A3C4A3] text-[#0B1F17] shadow-[0_0_20px_rgba(163,196,163,0.45)] scale-105'
-                    : 'text-white/60 hover:text-white hover:bg-white/8'
-                }`}
-                title="Favoris (f)"
-              >
-                <svg viewBox="0 0 24 24" width="18" height="18" fill={activeNav === 'favorites' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-                  <path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z" />
-                </svg>
+                <span>{onlyFavorites ? '❤️' : '🤍'}</span>
+                <span>Favoris ({favoritesCount})</span>
               </button>
             </div>
 
-            {/* Settings */}
-            <button
-              type="button"
-              onClick={() => { triggerHaptic('light'); setIsSettingsModalOpen(true); }}
-              className="w-10 h-10 rounded-2xl flex items-center justify-center text-white/60 hover:text-white hover:bg-white/8 transition-all active:scale-95 cursor-pointer"
-              title="Réglages du Cockpit"
-              aria-label="Réglages du Cockpit"
-            >
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
-              </svg>
-            </button>
-          </div>
-        </GlassCard>
-
-        {/* ─── COLUMN 1 : LIST VIEW (MATÉRIEL / RANDONNÉES / KITS) ─── */}
-        <GlassCard className="w-[280px] lg:w-[320px] xl:w-[340px] shrink-0 flex flex-col">
-          <div className="flex flex-col h-full p-3.5 overflow-hidden">
-            {activeNav === 'hikes' ? (
-              /* Hikes list view */
-              <div className="flex flex-col h-full space-y-3">
-                <div className="flex items-baseline justify-between pb-2 border-b border-white/10 shrink-0">
-                  <h2 className="text-base font-bold tracking-tight text-white">Randonnées prévues</h2>
-                  <span className="text-xs font-mono text-[#A3C4A3] font-bold">{plannedHikes.length} sorties</span>
-                </div>
-                <div className="flex-1 overflow-y-auto space-y-2.5 scrollbar-none pr-0.5">
-                  {plannedHikes.map((hike) => {
-                    const isSelected = hike.id === activeHike?.id;
-                    const assignedKit = kits.find((k) => k.id === hike.assignedKitId);
-                    return (
-                      <div
-                        key={hike.id}
-                        onClick={() => { triggerHaptic('light'); setSelectedHikeId(hike.id); }}
-                        className={`p-3 rounded-2xl border transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-white/[0.12] border-[#A3C4A3]/50 ring-1 ring-[#A3C4A3]/30 shadow-md'
-                            : 'bg-white/[0.04] border-white/8 hover:bg-white/[0.08]'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <h4 className="text-xs font-bold text-white truncate leading-snug">{hike.name}</h4>
-                          <span className="px-2 py-0.5 rounded-full bg-[#A3C4A3]/20 text-[#A3C4A3] text-[10px] font-mono font-bold shrink-0">
-                            J-{hike.daysLeft}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-white/65 mt-1 truncate">{hike.destination}</p>
-                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/8 text-[10px] text-white/50 font-mono">
-                          <span>{hike.distanceKm} km · +{hike.elevationGain}m</span>
-                          <span className="text-[#A3C4A3] font-semibold truncate max-w-[110px]">{assignedKit?.name || 'Kit 3j'}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <button
-                    type="button"
-                    onClick={() => setIsNewHikeModalOpen(true)}
-                    className="w-full py-2.5 rounded-2xl border border-dashed border-white/20 hover:border-[#A3C4A3] bg-white/[0.03] text-white/80 hover:text-[#A3C4A3] text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
-                  >
-                    + Planifier une sortie
-                  </button>
+            {/* Bulk Action Bar */}
+            {selectedIds.size > 0 && (
+              <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl bg-[#A3C4A3]/15 border border-[#A3C4A3]/30 mt-2">
+                <span className="text-[11px] text-white/90 font-medium">{selectedIds.size} sélectionné(s)</span>
+                <div className="flex items-center gap-1.5">
+                  <button type="button" onClick={bulkDelete} className="px-2.5 py-1 rounded-lg bg-[#E76F51]/25 hover:bg-[#E76F51]/35 text-[#F4A18C] text-[11px] font-semibold transition-all">Supprimer</button>
+                  <button type="button" onClick={clearSelection} className="px-2 py-1 rounded-lg bg-white/8 hover:bg-white/14 text-white/80 text-[11px]">Annuler</button>
                 </div>
               </div>
-            ) : activeNav === 'kits' ? (
-              /* Kits list view */
-              <div className="flex flex-col h-full space-y-3">
-                <div className="flex items-baseline justify-between pb-2 border-b border-white/10 shrink-0">
-                  <h2 className="text-base font-bold tracking-tight text-white">Mes Kits ({kits.length})</h2>
+            )}
+
+            {/* Item list */}
+            <div className="space-y-2 mt-3 max-h-[520px] overflow-y-auto scrollbar-none pr-0.5">
+              {isLoading && equipment.length === 0 ? (
+                <div className="space-y-2">
+                  {[1, 2, 3, 4].map((n) => (
+                    <div key={n} className="p-3 rounded-2xl bg-white/5 animate-pulse flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-white/10 shrink-0" />
+                      <div className="flex-1 space-y-1.5">
+                        <div className="w-3/4 h-3 rounded bg-white/15" />
+                        <div className="w-1/2 h-2.5 rounded bg-white/10" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : filteredEquipment.length === 0 ? (
+                <div className="p-4 rounded-2xl bg-white/5 text-center space-y-2 my-2 border border-white/10">
+                  <span className="text-2xl block">🧭</span>
+                  <p className="text-xs text-white/75 font-medium">Aucun équipement trouvé</p>
+                  <button
+                    type="button"
+                    onClick={handleResetFilters}
+                    className="px-3.5 py-1.5 rounded-full bg-white/12 hover:bg-white/20 text-white text-xs font-semibold transition-all"
+                  >
+                    Réinitialiser les filtres
+                  </button>
+                </div>
+              ) : (
+                filteredEquipment.map((item, i) => {
+                  const isSelected = item.id === (activeItem?.id || selectedItemId);
+                  const isChecked = selectedIds.has(item.id);
+                  const inCompare = compareIds.includes(item.id);
+                  const editing = inlineEditId === item.id;
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => { triggerHaptic('light'); setSelectedItemId(item.id); }}
+                      style={prefersReducedMotion ? undefined : { animationDelay: `${Math.min(i, 12) * 25}ms` }}
+                      className={`${enterAnim} p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-2.5 relative group ${
+                        isSelected
+                          ? 'bg-white/[0.12] border-[#A3C4A3]/50 ring-1 ring-[#A3C4A3]/30 shadow-md'
+                          : 'bg-white/[0.04] border-white/8 hover:bg-white/[0.08] hover:border-white/15'
+                      }`}
+                    >
+                      {isSelected && (
+                        <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-full bg-[#A3C4A3] shadow-[0_0_10px_rgba(163,196,163,0.8)]" />
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={(e) => toggleSelected(item.id, e)}
+                        aria-label={isChecked ? 'Désélectionner' : 'Sélectionner'}
+                        className={`w-4 h-4 rounded-md border shrink-0 flex items-center justify-center transition-all ${
+                          isChecked ? 'bg-[#A3C4A3] border-[#A3C4A3] text-[#0B1F17]' : 'border-white/30 text-transparent hover:border-white/60'
+                        }`}
+                      >
+                        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12l5 5L20 7" /></svg>
+                      </button>
+
+                      <div className="w-10 h-10 rounded-xl bg-black/30 overflow-hidden relative shrink-0 border border-white/10 flex items-center justify-center p-1 shadow-inner">
+                        <Image src={item.image || '/assets/images/no_image.png'} alt={item.name} width={36} height={36} className="object-contain max-h-full max-w-full" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-xs font-bold text-white truncate leading-tight">{item.name}</h4>
+                        {editing ? (
+                          <div className="flex items-center gap-1 mt-1" onClick={(e) => e.stopPropagation()}>
+                            <input value={inlineWeight} onChange={(e) => setInlineWeight(e.target.value)} inputMode="numeric" className="w-12 px-1.5 py-0.5 rounded bg-black/40 border border-white/20 text-[10px] text-white text-center focus:outline-none focus:border-[#A3C4A3]" aria-label="Poids en grammes" />
+                            <span className="text-[9px] text-white/50">g</span>
+                            <input value={inlineQty} onChange={(e) => setInlineQty(e.target.value)} inputMode="numeric" className="w-8 px-1 py-0.5 rounded bg-black/40 border border-white/20 text-[10px] text-white text-center focus:outline-none focus:border-[#A3C4A3]" aria-label="Quantité" />
+                            <button type="button" onClick={() => saveInlineEdit(item)} className="px-1.5 py-0.5 rounded bg-[#A3C4A3] text-[#0B1F17] text-[9px] font-bold">OK</button>
+                            <button type="button" onClick={() => setInlineEditId(null)} className="px-1 py-0.5 rounded bg-white/10 text-white/70 text-[9px]">✕</button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-[11px] text-white/60 mt-0.5 truncate">
+                            <span>{item.brand || 'Outdoor'}</span>
+                            <span>·</span>
+                            <button type="button" onClick={(e) => startInlineEdit(item, e)} className="font-mono text-[#A3C4A3] font-bold hover:underline" title="Cliquer pour éditer le poids">
+                              {formatWeight(item.weight_g || 0)}{(item.quantity || 1) > 1 ? ` ×${item.quantity}` : ''}
+                            </button>
+                            {item.loan_status === 'prêté' && (
+                              <span className="px-1 py-0.5 rounded bg-white/10 text-[9px] text-white/80 border border-white/15">Prêté</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); toggleCompare(item.id); }}
+                          className={`p-1 rounded-md transition-colors ${inCompare ? 'text-[#A3C4A3]' : 'text-white/35 hover:text-white/80'}`}
+                          title="Comparer"
+                          aria-label="Comparer"
+                        >
+                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h6v10H4zM14 7h6v10h-6z"/></svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setSelectedItemId(item.id); setIsDetailDrawerOpen(true); }}
+                          className="text-white/40 hover:text-[#A3C4A3] p-1 transition-colors"
+                          title="Fiche détaillée"
+                          aria-label="Ouvrir la fiche"
+                        >
+                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => { setEditingItem(null); setIsAddModalOpen(true); triggerHaptic('light'); }}
+              className="w-full mt-3 py-2.5 rounded-2xl border border-dashed border-white/20 hover:border-[#A3C4A3] bg-white/[0.03] hover:bg-white/[0.08] text-white/80 hover:text-[#A3C4A3] text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+            >
+              <span>+</span> Ajouter un article à l&apos;inventaire
+            </button>
+          </GlassCard>
+        </div>
+
+        {/* ─────────────────────────────────────────────────────────────
+            COLONNE CENTRALE (5 colonnes) : FICHE OUTIL ACTIVE & RANDOS
+           ───────────────────────────────────────────────────────────── */}
+        <div className="lg:col-span-5 xl:col-span-5 flex flex-col gap-4">
+          
+          {/* Card A : Fiche Outil Équipement Sélectionné */}
+          <GlassCard className="p-4 sm:p-5">
+            {activeItem ? (
+              <div className="space-y-3.5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded-full bg-[#A3C4A3]/20 text-[#A3C4A3] text-[10px] font-bold font-mono uppercase">
+                        {activeItem.category}
+                      </span>
+                      {activeItem.loan_status === 'prêté' && (
+                        <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/15 text-[10px] text-white/80">
+                          Prêté à {activeItem.loan_to_name || 'un ami'}
+                        </span>
+                      )}
+                    </div>
+                    <h2 className="text-xl font-extrabold text-white tracking-tight mt-1 truncate">{activeItem.name}</h2>
+                    <p className="text-xs text-white/60">{activeItem.brand || 'Outdoor'} · Matériel certifié</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setIsDetailDrawerOpen(true)}
+                      className="px-3.5 py-1.5 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] font-bold text-xs transition-all shadow-sm active:scale-95"
+                    >
+                      Fiche ➔
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleToggleFavorite(activeItem, e)}
+                      className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-xs text-white transition-transform active:scale-90"
+                      title="Favori (f)"
+                    >
+                      {activeItem.is_favorite ? '❤️' : '🤍'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Hero Visual Container */}
+                <div className="relative h-44 rounded-2xl bg-gradient-to-b from-white/[0.06] to-black/30 border border-white/10 overflow-hidden flex items-center justify-center p-3 group">
+                  <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.12) 0%, transparent 60%)' }} />
+                  <div className="relative z-10 w-full h-full max-h-[160px] flex items-center justify-center">
+                    <Image
+                      src={activeItem.image || '/assets/images/no_image.png'}
+                      alt={activeItem.name}
+                      width={280}
+                      height={180}
+                      className="object-contain max-h-full max-w-full drop-shadow-[0_15px_25px_rgba(11,31,23,0.7)] group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                </div>
+
+                {/* 7 Interactive Spec Tiles */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                  <SpecTile
+                    label="Poids pesé"
+                    value={formatWeight(activeItem.weight_g || 0)}
+                    accent
+                    onClick={() => { setEditingItem(activeItem); setIsAddModalOpen(true); }}
+                    title="Modifier le poids"
+                  />
+                  <SpecTile
+                    label="État"
+                    value={activeItem.condition || 'Excellent'}
+                    onClick={() => { setEditingItem(activeItem); setIsAddModalOpen(true); }}
+                    title="Modifier l'état"
+                  />
+                  <SpecTile
+                    label="Usure"
+                    value={activeItem.wear_percentage != null ? `${activeItem.wear_percentage}%` : '—'}
+                    onClick={() => { setEditingItem(activeItem); setIsAddModalOpen(true); }}
+                    title="Modifier l'usure"
+                  />
+                  <SpecTile
+                    label="Usages"
+                    value={activeItem.usage_count != null ? `${activeItem.usage_count} sortie(s)` : '0 sortie'}
+                    onClick={async () => {
+                      triggerHaptic('light');
+                      const nextCount = (activeItem.usage_count || 0) + 1;
+                      await updateEquipment(activeItem.id, { usage_count: nextCount });
+                      showToast(`+1 sortie enregistrée (${nextCount} au total)`, 'success');
+                    }}
+                    title="+1 sortie enregistrée"
+                  />
+                  <SpecTile
+                    label="Valeur"
+                    value={activeItem.purchase_price ? `${activeItem.purchase_price} €` : '—'}
+                    onClick={() => { setEditingItem(activeItem); setIsAddModalOpen(true); }}
+                    title="Modifier la valeur d'achat"
+                  />
+                  <SpecTile
+                    label="Matériaux"
+                    value={activeItem.materials || 'Standard'}
+                    onClick={() => setIsDetailDrawerOpen(true)}
+                    title="Ouvrir la fiche complète"
+                  />
+                  <SpecTile
+                    label="Imperm."
+                    value={activeItem.waterproof_rating || 'Standard'}
+                    onClick={() => setIsDetailDrawerOpen(true)}
+                    title="Détails imperméabilité"
+                  />
+                  <SpecTile
+                    label="Maintenance"
+                    value={activeItem.next_maintenance_date ? new Date(activeItem.next_maintenance_date).toLocaleDateString('fr-FR') : 'À planifier'}
+                    onClick={() => { setEditingItem(activeItem); setIsAddModalOpen(true); }}
+                    title="Planifier un entretien"
+                  />
+                </div>
+
+                {/* Direct Action Buttons */}
+                <div className="grid grid-cols-3 gap-2 pt-1 border-t border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => { setEditingItem(activeItem); setIsAddModalOpen(true); triggerHaptic('light'); }}
+                    className="py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-white text-xs font-semibold flex items-center justify-center gap-1 transition-all active:scale-95"
+                  >
+                    ✎ Éditer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setIsLendModalOpen(true); triggerHaptic('light'); }}
+                    className="py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-white text-xs font-semibold flex items-center justify-center gap-1 transition-all active:scale-95"
+                  >
+                    🤝 Prêter
+                  </button>
                   <button
                     type="button"
                     onClick={() => {
-                      setSelectedKitForCockpit(null);
-                      setIsKitDrawerOpen(true);
-                    }}
-                    className="text-[11px] font-bold text-[#A3C4A3] hover:underline"
-                  >
-                    Gérer
-                  </button>
-                </div>
-                <div className="flex-1 overflow-y-auto space-y-2.5 scrollbar-none pr-0.5">
-                  {kits.map((kit) => {
-                    const isSelected = kit.id === activeKit?.id;
-                    return (
-                      <div
-                        key={kit.id}
-                        onClick={() => { triggerHaptic('light'); setSelectedKitId(kit.id); }}
-                        className={`p-3 rounded-2xl border transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-white/[0.12] border-[#A3C4A3]/50 ring-1 ring-[#A3C4A3]/30 shadow-md'
-                            : 'bg-white/[0.04] border-white/8 hover:bg-white/[0.08]'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <h4 className="text-xs font-bold text-white truncate">{kit.name}</h4>
-                          <span className="text-[10px] font-mono text-[#A3C4A3] font-bold">{formatWeight(kit.total_weight_g || 0)}</span>
-                        </div>
-                        <p className="text-[11px] text-white/60 mt-0.5 truncate">{kit.description || kit.for_destination || 'Pack randonnée'}</p>
-                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/8 text-[10px] text-white/50">
-                          <span>{kit.items?.length || 0} articles</span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedKitForCockpit(kit);
-                              setIsKitDrawerOpen(true);
-                            }}
-                            className="text-[#A3C4A3] font-bold hover:underline"
-                          >
-                            Éditer ➔
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      triggerHaptic('success');
-                      const created = await createKit({
-                        name: `Nouveau Kit #${kits.length + 1}`,
-                        description: 'Kit sur-mesure pour expédition',
-                        for_destination: 'Haute Montagne',
-                        season: 'Été',
-                        activity: 'Trek',
-                        source: 'manuel',
-                        gearItems: [],
+                      triggerHaptic('selection');
+                      addToCart({
+                        id: activeItem.product_id || activeItem.id,
+                        slug: 'equipement',
+                        name: activeItem.name,
+                        brand: activeItem.brand || 'LKDV',
+                        priceEur: activeItem.purchase_price || 99,
+                        weightG: activeItem.weight_g || 100,
+                        image: activeItem.image || '/assets/images/no_image.png',
+                        imageAlt: activeItem.name,
+                        category: activeItem.category || 'équipement',
                       });
-                      if (created) {
-                        setSelectedKitId(created.id);
-                        setSelectedKitForCockpit(created);
-                        setIsKitDrawerOpen(true);
-                        showToast(`Kit « ${created.name} » créé !`, 'success');
-                      }
+                      showToast(`🛒 ${activeItem.name} ajouté au panier !`, 'success');
                     }}
-                    className="w-full py-2.5 rounded-2xl border border-dashed border-white/20 hover:border-[#A3C4A3] bg-white/[0.03] text-white/80 hover:text-[#A3C4A3] text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+                    className="py-2 rounded-xl bg-[#A3C4A3]/20 hover:bg-[#A3C4A3]/30 border border-[#A3C4A3]/40 text-[#A3C4A3] text-xs font-bold flex items-center justify-center gap-1 transition-all active:scale-95"
                   >
-                    + Créer un nouveau kit
+                    ↻ Racheter
                   </button>
                 </div>
               </div>
             ) : (
-              /* Equipment list view (standard) */
-              <div className="flex flex-col h-full overflow-hidden">
-                <div className="space-y-2.5 pb-3 border-b border-white/10 shrink-0">
-                  <div className="flex items-baseline justify-between">
-                    <h2 className="text-base font-bold tracking-tight text-white">Inventaire</h2>
-                    <span className="text-xs font-mono text-[#A3C4A3] font-bold">
-                      {filteredEquipment.length} · {formatWeight(totalWeightG)}
-                    </span>
-                  </div>
-
-                  <div className="relative flex items-center">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 text-white/50">
-                      <circle cx="11" cy="11" r="7" />
-                      <path d="M20 20l-3.5-3.5" />
-                    </svg>
-                    <input
-                      ref={searchInputRef}
-                      type="text"
-                      placeholder="Rechercher…  ( / )"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-7 py-2 bg-black/25 rounded-2xl border border-white/12 text-xs text-white placeholder-white/50 focus:outline-none focus:border-[#A3C4A3]/60 focus:ring-1 focus:ring-[#A3C4A3]/40 transition-colors"
-                    />
-                    {searchQuery && (
-                      <button type="button" onClick={() => setSearchQuery('')} className="absolute right-2.5 text-white/50 hover:text-white text-xs" aria-label="Effacer">✕</button>
-                    )}
-                  </div>
-
-                  {/* Categories */}
-                  <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none text-[11px]">
-                    {CATEGORIES.map((cat) => (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => { triggerHaptic('light'); setActiveCategory(cat); }}
-                        className={`px-3 py-1 rounded-full capitalize whitespace-nowrap transition-colors ${
-                          activeCategory === cat
-                            ? 'bg-[#A3C4A3] text-[#0B1F17] font-bold shadow-xs'
-                            : 'bg-white/8 text-white/75 hover:bg-white/14 hover:text-white border border-white/10'
-                        }`}
-                      >
-                        {cat === 'all' ? 'Tous' : cat}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Brands filter pills */}
-                  {availableBrands.length > 2 && (
-                    <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none text-[10px]">
-                      <span className="text-white/40 font-mono uppercase text-[9px] shrink-0 mr-0.5">Marque:</span>
-                      {availableBrands.map((b) => (
-                        <button
-                          key={b}
-                          type="button"
-                          onClick={() => { triggerHaptic('light'); setSelectedBrand(b); }}
-                          className={`px-2 py-0.5 rounded-lg whitespace-nowrap transition-colors ${
-                            selectedBrand === b
-                              ? 'bg-[#A3C4A3]/25 text-[#A3C4A3] font-bold border border-[#A3C4A3]/50'
-                              : 'bg-white/5 text-white/60 hover:text-white border border-white/10'
-                          }`}
-                        >
-                          {b}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Bulk action bar */}
-                  {selectedIds.size > 0 && (
-                    <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-xl bg-[#A3C4A3]/12 border border-[#A3C4A3]/30">
-                      <span className="text-[11px] text-white/90 font-medium">{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
-                      <div className="flex items-center gap-1.5">
-                        <button type="button" onClick={bulkDelete} className="px-2.5 py-1 rounded-lg bg-[#E76F51]/20 hover:bg-[#E76F51]/30 text-[#F4A18C] text-[11px] font-semibold transition-all active:scale-95">Supprimer</button>
-                        <button type="button" onClick={clearSelection} className="px-2 py-1 rounded-lg bg-white/8 hover:bg-white/14 text-white/80 text-[11px] transition-all active:scale-95">Annuler</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Item cards */}
-                <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-0.5 pt-2.5 scrollbar-none">
-                  {isLoading && equipment.length === 0 ? (
-                    <div className="space-y-2">
-                      {[1, 2, 3, 4, 5].map((n) => (
-                        <div key={n} className="p-3 rounded-2xl bg-white/5 animate-pulse flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-xl bg-white/10 shrink-0" />
-                          <div className="flex-1 space-y-1.5">
-                            <div className="w-3/4 h-3 rounded bg-white/15" />
-                            <div className="w-1/2 h-2.5 rounded bg-white/10" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : filteredEquipment.length === 0 ? (
-                    <div className="p-4 rounded-2xl bg-white/5 text-center space-y-2.5 my-3 border border-white/10">
-                      <span className="text-2xl block">🧭</span>
-                      <p className="text-xs text-white/75 font-medium">
-                        {equipment.length === 0 ? 'Commence ton inventaire' : 'Aucun équipement trouvé'}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={equipment.length === 0 ? () => { setEditingItem(null); setIsAddModalOpen(true); } : handleResetFilters}
-                        className="px-3.5 py-1.5 rounded-full bg-white/12 hover:bg-white/20 text-white text-xs font-semibold transition-all active:scale-95"
-                      >
-                        {equipment.length === 0 ? 'Ajouter un article' : 'Réinitialiser'}
-                      </button>
-                    </div>
-                  ) : (
-                    filteredEquipment.map((item, i) => {
-                      const isSelected = item.id === (activeItem?.id || selectedItemId);
-                      const isChecked = selectedIds.has(item.id);
-                      const inCompare = compareIds.includes(item.id);
-                      const editing = inlineEditId === item.id;
-                      return (
-                        <div
-                          key={item.id}
-                          onClick={() => { triggerHaptic('light'); setSelectedItemId(item.id); }}
-                          style={prefersReducedMotion ? undefined : { animationDelay: `${Math.min(i, 12) * 30}ms` }}
-                          className={`${enterAnim} p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 relative group ${
-                            isSelected
-                              ? 'bg-white/[0.12] border-[#A3C4A3]/50 ring-1 ring-[#A3C4A3]/30 shadow-[0_8px_24px_-8px_rgba(11,31,23,0.6)]'
-                              : 'bg-white/[0.04] border-white/8 hover:bg-white/[0.08] hover:border-white/15'
-                          }`}
-                        >
-                          {isSelected && (
-                            <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-full bg-[#A3C4A3] shadow-[0_0_10px_rgba(163,196,163,0.8)]" />
-                          )}
-
-                          <button
-                            type="button"
-                            onClick={(e) => toggleSelected(item.id, e)}
-                            aria-label={isChecked ? 'Désélectionner' : 'Sélectionner'}
-                            className={`w-4 h-4 rounded-md border shrink-0 flex items-center justify-center transition-all ${
-                              isChecked ? 'bg-[#A3C4A3] border-[#A3C4A3] text-[#0B1F17]' : 'border-white/30 text-transparent hover:border-white/60'
-                            }`}
-                          >
-                            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12l5 5L20 7" /></svg>
-                          </button>
-
-                          <div className="w-11 h-11 rounded-xl bg-black/30 overflow-hidden relative shrink-0 border border-white/10 flex items-center justify-center p-1.5 shadow-inner">
-                            <Image src={item.image || '/assets/images/no_image.png'} alt={item.name} width={40} height={40} className="object-contain max-h-full max-w-full" />
-                          </div>
-
-                          <div className="min-w-0 flex-1">
-                            <h4 className="text-xs sm:text-[13px] font-bold text-white truncate leading-tight">{item.name}</h4>
-                            {editing ? (
-                              <div className="flex items-center gap-1.5 mt-1" onClick={(e) => e.stopPropagation()}>
-                                <input value={inlineWeight} onChange={(e) => setInlineWeight(e.target.value)} inputMode="numeric" className="w-14 px-1.5 py-0.5 rounded-md bg-black/40 border border-white/20 text-[11px] text-white text-center focus:outline-none focus:border-[#A3C4A3]" aria-label="Poids en grammes" />
-                                <span className="text-[10px] text-white/50">g</span>
-                                <span className="text-white/30">×</span>
-                                <input value={inlineQty} onChange={(e) => setInlineQty(e.target.value)} inputMode="numeric" className="w-9 px-1.5 py-0.5 rounded-md bg-black/40 border border-white/20 text-[11px] text-white text-center focus:outline-none focus:border-[#A3C4A3]" aria-label="Quantité" />
-                                <button type="button" onClick={() => saveInlineEdit(item)} className="px-2 py-0.5 rounded-md bg-[#A3C4A3] text-[#0B1F17] text-[10px] font-bold">OK</button>
-                                <button type="button" onClick={() => setInlineEditId(null)} className="px-1.5 py-0.5 rounded-md bg-white/10 text-white/70 text-[10px]">✕</button>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-1.5 text-[11px] text-white/60 mt-0.5 truncate">
-                                <span>{item.brand || 'Outdoor'}</span>
-                                <span>·</span>
-                                <button type="button" onClick={(e) => startInlineEdit(item, e)} className="font-mono text-[#A3C4A3] font-bold hover:underline" title="Éditer le poids / la quantité">
-                                  {formatWeight(item.weight_g || 0)}{(item.quantity || 1) > 1 ? ` ×${item.quantity}` : ''}
-                                </button>
-                                {item.loan_status === 'prêté' && (
-                                  <span className="ml-1 px-1.5 py-0.5 rounded bg-white/10 text-[9px] text-white/70 border border-white/15">Prêté</span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex flex-col items-center gap-1 shrink-0">
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); toggleCompare(item.id); }}
-                              className={`p-1 rounded-md transition-colors ${inCompare ? 'text-[#A3C4A3]' : 'text-white/35 hover:text-white/80'}`}
-                              title="Comparer"
-                              aria-label="Comparer"
-                            >
-                              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h6v10H4zM14 7h6v10h-6z"/></svg>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); setSelectedItemId(item.id); setIsDetailDrawerOpen(true); }}
-                              className="text-white/40 hover:text-[#A3C4A3] p-1 transition-colors"
-                              title="Ouvrir la fiche"
-                              aria-label="Ouvrir la fiche"
-                            >
-                              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" />
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => { setEditingItem(null); setIsAddModalOpen(true); }}
-                    className="w-full py-2.5 rounded-2xl border border-dashed border-white/20 hover:border-[#A3C4A3] bg-white/[0.03] hover:bg-white/[0.08] text-white/80 hover:text-[#A3C4A3] text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
-                  >
-                    <span className="text-sm">+</span> Ajouter un article
-                  </button>
-                </div>
-              </div>
+              <div className="p-8 text-center text-white/60">Sélectionnez un équipement</div>
             )}
-          </div>
-        </GlassCard>
+          </GlassCard>
 
-        {/* ─── COLUMN 2 : HERO / STAGE (MATÉRIEL / RANDONNÉES / KITS) ─── */}
-        <GlassCard className="flex-1 min-w-0 flex flex-col">
-          <div className="flex flex-col h-full p-4 sm:p-5 overflow-hidden">
-            {activeNav === 'hikes' && activeHike ? (
-              /* ─── HIKE WORKBENCH STAGE ─── */
-              <div className="flex flex-col h-full space-y-4 overflow-y-auto scrollbar-none pr-1">
-                {/* Hike Header */}
-                <div className="flex items-start justify-between gap-3 shrink-0">
+          {/* Card B : Prochain Départ & Randonnées Prévues */}
+          <GlassCard className="p-4 sm:p-5">
+            {activeHike && (
+              <div className="space-y-3.5">
+                <div className="flex items-start justify-between gap-3 pb-2.5 border-b border-white/10">
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="px-2.5 py-0.5 rounded-full bg-[#A3C4A3]/20 text-[#A3C4A3] text-xs font-bold font-mono">
@@ -1308,19 +1200,19 @@ export default function MonMaterielCockpitPage() {
                       </span>
                       <span className="text-xs text-white/60">{activeHike.dateRange}</span>
                     </div>
-                    <h1 className="text-2xl font-extrabold text-white mt-1 leading-tight">{activeHike.name}</h1>
-                    <p className="text-xs text-white/70 mt-0.5">{activeHike.destination} · {activeHike.companions}</p>
+                    <h3 className="text-lg font-extrabold text-white mt-1 leading-tight">{activeHike.name}</h3>
+                    <p className="text-xs text-white/65">{activeHike.destination} · {activeHike.companions}</p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <Link
                       href="/randonnee-active"
-                      className="px-5 py-2 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] font-extrabold text-xs transition-all shadow-[0_0_20px_rgba(163,196,163,0.4)] active:scale-95 flex items-center gap-1.5"
+                      className="px-4 py-1.5 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] font-bold text-xs transition-all shadow-sm active:scale-95 flex items-center gap-1"
                     >
                       <span>🚀</span> Démarrer
                     </Link>
                     <Link
                       href="/preparer-randonnee"
-                      className="px-3.5 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all active:scale-95"
+                      className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all active:scale-95"
                     >
                       Itinéraire
                     </Link>
@@ -1328,77 +1220,61 @@ export default function MonMaterielCockpitPage() {
                 </div>
 
                 {/* Metrics ribbon */}
-                <div className="grid grid-cols-4 gap-2.5 shrink-0">
-                  <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10 text-center">
-                    <span className="text-lg font-bold font-mono text-[#A3C4A3]">{activeHike.distanceKm} km</span>
-                    <span className="text-[10px] text-white/60 block uppercase font-mono mt-0.5">Distance</span>
+                <div className="grid grid-cols-4 gap-2">
+                  <div className="p-2 rounded-xl bg-white/[0.04] border border-white/8 text-center">
+                    <span className="text-sm font-bold font-mono text-[#A3C4A3]">{activeHike.distanceKm} km</span>
+                    <span className="text-[9px] text-white/50 block font-mono">Distance</span>
                   </div>
-                  <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10 text-center">
-                    <span className="text-lg font-bold font-mono text-white">+{activeHike.elevationGain} m</span>
-                    <span className="text-[10px] text-white/60 block uppercase font-mono mt-0.5">Dénivelé D+</span>
+                  <div className="p-2 rounded-xl bg-white/[0.04] border border-white/8 text-center">
+                    <span className="text-sm font-bold font-mono text-white">+{activeHike.elevationGain}m</span>
+                    <span className="text-[9px] text-white/50 block font-mono">Dénivelé D+</span>
                   </div>
-                  <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10 text-center">
-                    <span className="text-lg font-bold font-mono text-white">{activeHike.durationDays} j</span>
-                    <span className="text-[10px] text-white/60 block uppercase font-mono mt-0.5">Durée</span>
+                  <div className="p-2 rounded-xl bg-white/[0.04] border border-white/8 text-center">
+                    <span className="text-sm font-bold font-mono text-white">{activeHike.durationDays}j</span>
+                    <span className="text-[9px] text-white/50 block font-mono">Durée</span>
                   </div>
-                  <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10 text-center">
-                    <span className="text-sm font-bold text-[#E9C46A] truncate block">{activeHike.weatherForecast}</span>
-                    <span className="text-[10px] text-white/60 block uppercase font-mono mt-0.5">Météo prévue</span>
+                  <div className="p-2 rounded-xl bg-white/[0.04] border border-white/8 text-center">
+                    <span className="text-xs font-bold text-[#E9C46A] truncate block">{activeHike.weatherForecast.split('·')[0]}</span>
+                    <span className="text-[9px] text-white/50 block font-mono">Météo</span>
                   </div>
                 </div>
 
-                {/* Kit Linker & Readiness Box */}
-                <div className="p-4 rounded-3xl bg-gradient-to-br from-white/[0.08] to-black/30 border border-white/12 space-y-3">
+                {/* Kit Linker & Readiness */}
+                <div className="p-3 rounded-2xl bg-black/25 border border-white/10 space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <span className="text-[10px] font-mono uppercase text-[#A3C4A3] font-bold tracking-wider block">Kit Assigné pour cette expédition</span>
-                      <h3 className="text-base font-bold text-white mt-0.5">{activeKit?.name || 'Aucun kit assigné'}</h3>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={activeHike.assignedKitId}
-                        onChange={(e) => handleAssignKitToHike(activeHike.id, e.target.value)}
-                        className="px-3 py-1.5 rounded-xl bg-black/40 border border-white/20 text-xs text-white focus:outline-none focus:border-[#A3C4A3] cursor-pointer"
-                      >
-                        {kits.map((k) => (
-                          <option key={k.id} value={k.id} className="bg-[#0B1F17] text-white">
-                            {k.name} ({formatWeight(k.total_weight_g || 0)})
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedKitForCockpit(activeKit);
-                          setIsKitDrawerOpen(true);
-                        }}
-                        className="px-3 py-1.5 rounded-xl bg-[#A3C4A3]/20 hover:bg-[#A3C4A3]/30 text-[#A3C4A3] text-xs font-bold transition-all"
-                      >
-                        Ouvrir le kit ➔
-                      </button>
-                    </div>
+                    <span className="text-[10px] font-mono uppercase text-[#A3C4A3] font-bold">Kit Assigné pour ce départ</span>
+                    <select
+                      value={activeHike.assignedKitId}
+                      onChange={(e) => handleAssignKitToHike(activeHike.id, e.target.value)}
+                      className="px-2.5 py-1 rounded-lg bg-[#0B1F17] border border-white/20 text-xs text-white focus:outline-none focus:border-[#A3C4A3] cursor-pointer"
+                    >
+                      {kits.map((k) => (
+                        <option key={k.id} value={k.id}>
+                          {k.name} ({formatWeight(k.total_weight_g || 0)})
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
-                  {/* Readiness bar */}
-                  <div className="space-y-1.5 pt-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-white/80">Matériel prêt dans ton sac : <strong className="text-white">{hikeReadiness.ownedCount} / {hikeReadiness.totalCount} articles</strong></span>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-white/80">Matériel prêt : <strong className="text-white">{hikeReadiness.ownedCount}/{hikeReadiness.totalCount} articles</strong></span>
                       <span className="font-mono font-bold text-[#A3C4A3]">{hikeReadiness.readinessPct}%</span>
                     </div>
-                    <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                      <div className="h-full bg-[#A3C4A3] transition-all duration-500 rounded-full" style={{ width: `${hikeReadiness.readinessPct}%` }} />
+                    <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                      <div className="h-full bg-[#A3C4A3] rounded-full transition-all duration-500" style={{ width: `${hikeReadiness.readinessPct}%` }} />
                     </div>
                   </div>
                 </div>
 
-                {/* Missing items alert */}
+                {/* Missing items list */}
                 {hikeReadiness.missingItems.length > 0 && (
-                  <div className="p-3.5 rounded-2xl bg-[#E76F51]/12 border border-[#E76F51]/30 space-y-2">
-                    <span className="text-xs font-bold text-[#F4A18C] block">⚠️ Articles manquants pour ce départ :</span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {hikeReadiness.missingItems.slice(0, 4).map((m) => (
-                        <div key={m.id} className="flex items-center justify-between p-2 rounded-xl bg-black/25 text-xs text-white">
-                          <span className="truncate">{m.item_name}</span>
+                  <div className="p-2.5 rounded-xl bg-[#E76F51]/12 border border-[#E76F51]/30 space-y-1.5">
+                    <span className="text-[11px] font-bold text-[#F4A18C] block">Articles manquants à emporter :</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {hikeReadiness.missingItems.slice(0, 3).map((m) => (
+                        <div key={m.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-black/30 text-[10px] text-white">
+                          <span>{m.item_name}</span>
                           <button
                             type="button"
                             onClick={() => {
@@ -1407,286 +1283,263 @@ export default function MonMaterielCockpitPage() {
                                 category: m.category || 'Autre',
                                 weight_g: m.weight_g || 100,
                               });
-                              showToast(`🎒 ${m.item_name} ajouté à ton inventaire`, 'success');
+                              showToast(`🎒 ${m.item_name} ajouté à votre inventaire`, 'success');
                             }}
-                            className="text-[10px] text-[#A3C4A3] font-bold hover:underline shrink-0 ml-2"
+                            className="text-[#A3C4A3] font-bold hover:underline"
                           >
-                            + Ajouter au matos
+                            + Ajouter
                           </button>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
-              </div>
-            ) : activeNav === 'kits' && activeKit ? (
-              /* ─── KITS WORKBENCH STAGE ─── */
-              <div className="flex flex-col h-full space-y-4 overflow-y-auto scrollbar-none pr-1">
-                <div className="flex items-start justify-between gap-3 shrink-0">
-                  <div>
-                    <span className="text-[10px] font-mono text-[#A3C4A3] font-bold uppercase tracking-wider">Kit Assemblé</span>
-                    <h1 className="text-2xl font-extrabold text-white leading-tight mt-0.5">{activeKit.name}</h1>
-                    <p className="text-xs text-white/70 mt-0.5">{activeKit.description || 'Optimisé pour vos prochaines sorties'}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
+
+                {/* Other Hikes Selector */}
+                <div className="pt-2 border-t border-white/8">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] font-bold uppercase text-white/50 font-mono">Toutes les sorties ({plannedHikes.length})</span>
                     <button
                       type="button"
-                      onClick={() => {
-                        setSelectedKitForCockpit(activeKit);
-                        setIsKitDrawerOpen(true);
-                      }}
-                      className="px-5 py-2 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] font-extrabold text-xs transition-all shadow-sm active:scale-95"
+                      onClick={() => setIsNewHikeModalOpen(true)}
+                      className="text-[10px] font-bold text-[#A3C4A3] hover:underline"
                     >
-                      Édition Complète
+                      + Planifier
                     </button>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10 text-center">
-                    <span className="text-xl font-bold font-mono text-[#A3C4A3]">{formatWeight(activeKit.total_weight_g || 0)}</span>
-                    <span className="text-[10px] text-white/60 block uppercase font-mono mt-0.5">Poids total</span>
-                  </div>
-                  <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10 text-center">
-                    <span className="text-xl font-bold font-mono text-white">{activeKit.items?.length || 0}</span>
-                    <span className="text-[10px] text-white/60 block uppercase font-mono mt-0.5">Articles</span>
-                  </div>
-                  <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10 text-center">
-                    <span className="text-base font-bold text-white capitalize">{activeKit.season || '3 Saisons'}</span>
-                    <span className="text-[10px] text-white/60 block uppercase font-mono mt-0.5">Saison</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <h3 className="text-xs font-bold text-white uppercase tracking-wider">Contenu du sac :</h3>
-                  <div className="space-y-1.5 max-h-64 overflow-y-auto scrollbar-none pr-1">
-                    {activeKit.items?.map((it) => (
-                      <div key={it.id} className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.04] border border-white/8 text-xs">
-                        <span className="text-white font-medium truncate">{it.item_name}</span>
-                        <div className="flex items-center gap-3 shrink-0">
-                          <span className="font-mono text-[#A3C4A3]">{formatWeight(it.weight_g || 0)}</span>
-                          <span className="text-[10px] text-white/40">{it.category}</span>
-                        </div>
-                      </div>
+                  <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+                    {plannedHikes.map((h) => (
+                      <button
+                        key={h.id}
+                        type="button"
+                        onClick={() => { triggerHaptic('light'); setSelectedHikeId(h.id); }}
+                        className={`px-2.5 py-1 rounded-xl text-left border shrink-0 transition-all ${
+                          h.id === activeHike.id
+                            ? 'bg-white/12 border-[#A3C4A3]/50 text-white font-bold'
+                            : 'bg-white/5 border-white/8 text-white/70 hover:bg-white/10'
+                        }`}
+                      >
+                        <span className="block text-[11px] truncate max-w-[120px]">{h.name}</span>
+                        <span className="text-[9px] text-[#A3C4A3] font-mono">J-{h.daysLeft}</span>
+                      </button>
                     ))}
                   </div>
                 </div>
               </div>
-            ) : (
-              /* ─── INVENTORY EQUIPMENT WORKBENCH (standard) ─── */
-              <>
-                {compareItems.length === 2 && (
-                  <div className="mb-3 shrink-0 rounded-2xl bg-white/[0.05] border border-white/12 p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] font-bold text-white uppercase tracking-wider">Comparateur ⚖️</span>
-                      <button type="button" onClick={() => setCompareIds([])} className="text-white/50 hover:text-white text-[11px]">Fermer ✕</button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      {compareItems.map((it) => (
-                        <div key={it.id} className="text-xs">
-                          <p className="font-bold text-white truncate">{it.name}</p>
-                          <p className="text-white/60 mt-1">Poids <span className="font-mono text-[#A3C4A3]">{formatWeight(it.weight_g || 0)}</span></p>
-                          <p className="text-white/60">Prix <span className="font-mono text-white">{it.purchase_price ? `${it.purchase_price} €` : '—'}</span></p>
-                          <p className="text-white/60 capitalize">État {it.condition || '—'}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {activeItem ? (
-                  <div className="flex items-start justify-between gap-3 shrink-0">
-                    <div className="min-w-0">
-                      <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white leading-tight truncate">{activeItem.name}</h1>
-                      <p className="text-xs text-white/70 mt-0.5">
-                        {activeItem.brand || 'Outdoor'} · Catégorie <span className="capitalize font-bold text-[#A3C4A3]">{activeItem.category}</span>
-                        {activeItem.loan_status === 'prêté' && (
-                          <span className="ml-2 px-2 py-0.5 rounded-full bg-white/10 border border-white/15 text-[10px] text-white/80">Prêté{activeItem.loan_to_name ? ` à ${activeItem.loan_to_name}` : ''}</span>
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button type="button" onClick={() => setIsDetailDrawerOpen(true)} className="px-5 py-2 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] font-extrabold text-xs transition-all shadow-[0_0_20px_rgba(163,196,163,0.4)] active:scale-95">
-                        Fiche complète
-                      </button>
-                      <button type="button" onClick={(e) => handleToggleFavorite(activeItem, e)} className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white text-xs transition-transform active:scale-90" title="Favori (f)" aria-label="Favori">
-                        {activeItem.is_favorite ? '❤️' : '🤍'}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-sm text-white/70">Sélectionnez un équipement</div>
-                )}
-
-                {/* Hero stage + tool sheet grid */}
-                <div className="flex-1 min-h-0 mt-3 grid grid-rows-[1fr_auto] gap-3 overflow-hidden">
-                  <div className="relative min-h-0 rounded-[24px] bg-gradient-to-b from-white/[0.06] to-black/25 border border-white/12 overflow-hidden flex items-center justify-center p-4 group">
-                    <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 28% 18%, rgba(255,255,255,0.14) 0%, transparent 58%)' }} />
-                    <div className="absolute bottom-6 w-56 sm:w-72 h-6 rounded-[100%] pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, rgba(11,31,23,0.85) 0%, rgba(11,31,23,0) 70%)', filter: 'blur(10px)' }} />
-                    {activeItem ? (
-                      <div key={activeItem.id} className={`relative z-10 w-full h-full max-h-[240px] flex items-center justify-center ${prefersReducedMotion ? '' : 'motion-safe:animate-[fadeInUp_0.45s_ease_both]'}`}>
-                        <Image src={activeItem.image || '/assets/images/no_image.png'} alt={activeItem.name} width={340} height={260} className="object-contain max-h-full max-w-full drop-shadow-[0_20px_32px_rgba(11,31,23,0.7)] group-hover:scale-105 transition-transform duration-500" />
-                      </div>
-                    ) : (
-                      <span className="text-4xl">🎒</span>
-                    )}
-                  </div>
-
-                  {activeItem && (
-                    <div className="shrink-0 grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-3 items-center border-t border-white/10 pt-3">
-                      <div className="flex items-center gap-4">
-                        <WeightGauge currentG={totalWeightG} targetKg={targetKg} />
-                        <div className="flex flex-col gap-1.5">
-                          <div className="flex items-center gap-2 text-[11px] text-white/60">
-                            <span className="uppercase font-mono tracking-widest">Objectif</span>
-                            <div className="flex items-center gap-1">
-                              {[6, 8, 10, 12].map((t) => (
-                                <button key={t} type="button" onClick={() => { setTargetKg(t); triggerHaptic('light'); }} className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors ${targetKg === t ? 'bg-[#A3C4A3] text-[#0B1F17] font-bold' : 'bg-white/8 text-white/70 hover:bg-white/14'}`}>{t}kg</button>
-                              ))}
-                            </div>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-white/60 uppercase tracking-widest block font-mono">Poids pesé</span>
-                            <span className="text-2xl font-bold font-mono text-[#A3C4A3]">{formatWeight(activeItem.weight_g || 0)}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Spec tiles */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        <SpecTile
-                          label="État"
-                          value={activeItem.condition || 'Excellent'}
-                          accent
-                          onClick={() => { setEditingItem(activeItem); setIsAddModalOpen(true); }}
-                          title="Modifier l'état"
-                        />
-                        <SpecTile
-                          label="Usure"
-                          value={activeItem.wear_percentage != null ? `${activeItem.wear_percentage}%` : '—'}
-                          onClick={() => { setEditingItem(activeItem); setIsAddModalOpen(true); }}
-                          title="Modifier l'usure"
-                        />
-                        <SpecTile
-                          label="Usages"
-                          value={activeItem.usage_count != null ? `${activeItem.usage_count} sortie(s)` : '0 sortie'}
-                          onClick={async () => {
-                            triggerHaptic('light');
-                            const nextCount = (activeItem.usage_count || 0) + 1;
-                            await updateEquipment(activeItem.id, { usage_count: nextCount });
-                            showToast(`+1 sortie enregistrée (${nextCount} au total)`, 'success');
-                          }}
-                          title="+1 sortie enregistrée"
-                        />
-                        <SpecTile
-                          label="Valeur"
-                          value={activeItem.purchase_price ? `${activeItem.purchase_price} €` : '—'}
-                          onClick={() => { setEditingItem(activeItem); setIsAddModalOpen(true); }}
-                          title="Modifier la valeur d'achat"
-                        />
-                        <SpecTile
-                          label="Matériaux"
-                          value={activeItem.materials || 'Non renseigné'}
-                          wide
-                          onClick={() => setIsDetailDrawerOpen(true)}
-                          title="Ouvrir la fiche complète"
-                        />
-                        <SpecTile
-                          label="Imperm."
-                          value={activeItem.waterproof_rating || 'Standard'}
-                          onClick={() => setIsDetailDrawerOpen(true)}
-                          title="Détails imperméabilité"
-                        />
-                        <SpecTile
-                          label="Maintenance"
-                          value={activeItem.next_maintenance_date ? new Date(activeItem.next_maintenance_date).toLocaleDateString('fr-FR') : 'À planifier'}
-                          onClick={() => { setEditingItem(activeItem); setIsAddModalOpen(true); }}
-                          title="Planifier un entretien"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Action row */}
-                  {activeItem && (
-                    <div className="grid grid-cols-3 gap-2.5 shrink-0">
-                      <button type="button" onClick={() => { setEditingItem(activeItem); setIsAddModalOpen(true); }} className="py-2.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95">✎ Éditer</button>
-                      <button type="button" onClick={() => setIsLendModalOpen(true)} className="py-2.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95">🤝 Prêter</button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          triggerHaptic('selection');
-                          addToCart({
-                            id: activeItem.product_id || activeItem.id,
-                            slug: 'equipement',
-                            name: activeItem.name,
-                            brand: activeItem.brand || 'LKDV',
-                            priceEur: activeItem.purchase_price || 99,
-                            weightG: activeItem.weight_g || 100,
-                            image: activeItem.image || '/assets/images/no_image.png',
-                            imageAlt: activeItem.name,
-                            category: activeItem.category || 'équipement',
-                          });
-                          showToast(`🛒 ${activeItem.name} ajouté au panier !`, 'success');
-                        }}
-                        className="py-2.5 rounded-2xl bg-[#A3C4A3]/15 hover:bg-[#A3C4A3]/25 border border-[#A3C4A3]/40 text-[#A3C4A3] text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95"
-                      >
-                        ↻ Racheter
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </>
             )}
-          </div>
-        </GlassCard>
+          </GlassCard>
 
-        {/* ─── COLUMN 3 : TELEMETRY + COPILOT IA (desktop) ─── */}
-        <div className="hidden xl:flex w-[320px] shrink-0 flex-col h-full gap-4 overflow-hidden">
-          <TelemetryCard
-            equipmentCount={equipment.length}
-            totalWeightG={totalWeightG}
-            favoritesCount={favoritesCount}
-            categoryStats={categoryStats}
-            totalValue={totalValue}
-            onResetFilters={handleResetFilters}
-            onToggleFavorites={() => setActiveNav((n) => (n === 'favorites' ? 'inventory' : 'favorites'))}
-            onFilterCategory={(cat) => setActiveCategory(cat.toLowerCase())}
-          />
-          <AiCard
-            aiInput={aiInput}
-            setAiInput={setAiInput}
-            aiResponse={aiResponse}
-            aiStreaming={aiStreaming}
-            aiError={aiError}
-            aiScrollRef={aiScrollRef}
-            runAi={runAi}
-            kits={kits}
-            openKit={(kit) => { setSelectedKitForCockpit(kit); setIsKitDrawerOpen(true); }}
-          />
+          {/* Comparator Card (when 2 items compared) */}
+          {compareItems.length === 2 && (
+            <GlassCard className="p-4 bg-gradient-to-r from-white/[0.08] to-black/30">
+              <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                <span className="text-xs font-bold text-white uppercase tracking-wider">Comparateur 2 Articles ⚖️</span>
+                <button type="button" onClick={() => setCompareIds([])} className="text-white/50 hover:text-white text-xs">Fermer ✕</button>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mt-2 text-xs">
+                {compareItems.map((it) => (
+                  <div key={it.id} className="p-2.5 rounded-xl bg-black/30 border border-white/10">
+                    <p className="font-bold text-white truncate">{it.name}</p>
+                    <p className="text-white/60 mt-1">Poids : <span className="font-mono text-[#A3C4A3] font-bold">{formatWeight(it.weight_g || 0)}</span></p>
+                    <p className="text-white/60">Prix : <span className="font-mono text-white">{it.purchase_price ? `${it.purchase_price} €` : '—'}</span></p>
+                    <p className="text-white/60 capitalize">État : {it.condition || '—'}</p>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
+          )}
         </div>
-      </div>
 
-      {/* ─── Mobile / tablet telemetry overlay ─── */}
-      {showTelemetryPanel && (
-        <div className="xl:hidden fixed inset-0 z-[60] flex justify-end">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowTelemetryPanel(false)} />
-          <div className="relative w-[340px] max-w-[88vw] h-full p-3 flex flex-col gap-3 overflow-y-auto scrollbar-none">
-            <button type="button" onClick={() => setShowTelemetryPanel(false)} className="self-end w-9 h-9 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white active:scale-90" aria-label="Fermer">✕</button>
-            <TelemetryCard
-              equipmentCount={equipment.length}
-              totalWeightG={totalWeightG}
-              favoritesCount={favoritesCount}
-              categoryStats={categoryStats}
-              totalValue={totalValue}
-              onResetFilters={handleResetFilters}
-              onToggleFavorites={() => setActiveNav((n) => (n === 'favorites' ? 'inventory' : 'favorites'))}
-              onFilterCategory={(cat) => { setActiveCategory(cat.toLowerCase()); setShowTelemetryPanel(false); }}
-            />
-            <AiCard aiInput={aiInput} setAiInput={setAiInput} aiResponse={aiResponse} aiStreaming={aiStreaming} aiError={aiError} aiScrollRef={aiScrollRef} runAi={runAi} kits={kits} openKit={(kit) => { setSelectedKitForCockpit(kit); setIsKitDrawerOpen(true); setShowTelemetryPanel(false); }} />
-          </div>
+        {/* ─────────────────────────────────────────────────────────────
+            COLONNE DROITE (3 colonnes) : KITS, TÉLÉMÉTRIE, IA & ALERTES
+           ───────────────────────────────────────────────────────────── */}
+        <div className="lg:col-span-3 xl:col-span-3 flex flex-col gap-4">
+          
+          {/* Card A : Kits Assemblés Directs */}
+          <GlassCard className="p-4">
+            <div className="flex items-baseline justify-between pb-2.5 border-b border-white/10">
+              <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">Kits & Sacs ({kits.length})</h3>
+              <button
+                type="button"
+                onClick={async () => {
+                  triggerHaptic('success');
+                  const created = await createKit({
+                    name: `Nouveau Kit #${kits.length + 1}`,
+                    description: 'Kit sur-mesure pour expédition',
+                    for_destination: 'Haute Montagne',
+                    season: 'Été',
+                    activity: 'Trek',
+                    source: 'manuel',
+                    gearItems: [],
+                  });
+                  if (created) {
+                    setSelectedKitForCockpit(created);
+                    setIsKitDrawerOpen(true);
+                    showToast(`Kit « ${created.name} » créé !`, 'success');
+                  }
+                }}
+                className="text-[10px] font-bold text-[#A3C4A3] hover:underline"
+              >
+                + Nouveau Kit
+              </button>
+            </div>
+
+            <div className="space-y-2 mt-2.5 max-h-[190px] overflow-y-auto scrollbar-none pr-0.5">
+              {kits.map((kit) => (
+                <div
+                  key={kit.id}
+                  onClick={() => {
+                    setSelectedKitForCockpit(kit);
+                    setIsKitDrawerOpen(true);
+                    triggerHaptic('light');
+                  }}
+                  className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 transition-all cursor-pointer flex items-center justify-between gap-2"
+                >
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-white truncate">{kit.name}</h4>
+                    <p className="text-[10px] text-white/50 truncate">{kit.items?.length || 0} articles · {kit.season || '3 saisons'}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-xs font-mono font-bold text-[#A3C4A3] block">{formatWeight(kit.total_weight_g || 0)}</span>
+                    <span className="text-[9px] text-white/40">Éditer ➔</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+
+          {/* Card B : Télémétrie du Pack & Jauge SVG */}
+          <GlassCard className="p-4">
+            <div className="flex items-center justify-between pb-2.5 border-b border-white/10">
+              <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">Télémétrie du pack</h3>
+              <span className="text-[9px] text-[#A3C4A3] font-mono font-bold uppercase tracking-wider">Live</span>
+            </div>
+
+            <div className="flex items-center gap-3 mt-3">
+              <WeightGauge currentG={totalWeightG} targetKg={targetKg} />
+              <div className="flex flex-col gap-1 text-xs">
+                <span className="text-[10px] text-white/60 uppercase font-mono">Objectif cible</span>
+                <div className="flex items-center gap-1">
+                  {[6, 8, 10, 12].map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => { setTargetKg(t); triggerHaptic('light'); showToast(`Objectif ajusté à ${t} kg`, 'info'); }}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors ${
+                        targetKg === t ? 'bg-[#A3C4A3] text-[#0B1F17] font-bold' : 'bg-white/8 text-white/70 hover:bg-white/14'
+                      }`}
+                    >
+                      {t}k
+                    </button>
+                  ))}
+                </div>
+                <span className="text-[11px] font-mono text-white/80 mt-0.5">Valeur : <strong className="text-white">{Math.round(totalValue)} €</strong></span>
+              </div>
+            </div>
+
+            {/* Category breakdown */}
+            <div className="mt-3 space-y-1.5 pt-2 border-t border-white/8">
+              {categoryStats.map((c) => (
+                <button
+                  key={c.label}
+                  type="button"
+                  onClick={() => { setActiveCategory(c.label.toLowerCase()); triggerHaptic('light'); }}
+                  className="w-full text-left p-1 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                  title={`Filtrer par ${c.label}`}
+                >
+                  <div className="flex items-center justify-between text-[10px] text-white/70 mb-0.5">
+                    <span className="capitalize truncate">{c.label}</span>
+                    <span className="font-mono text-[#A3C4A3]">{formatWeight(c.grams)} ({c.pct}%)</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                    <div className="h-full rounded-full bg-[#A3C4A3]" style={{ width: `${c.pct}%` }} />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </GlassCard>
+
+          {/* Card C : Alertes Opérationnelles & Prêts */}
+          {alerts.length > 0 && (
+            <GlassCard className="p-4">
+              <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">Alertes & Prêts ({alerts.length})</h3>
+                <span className="text-[9px] text-[#E9C46A] font-mono font-bold">Action requise</span>
+              </div>
+              <div className="space-y-1.5 mt-2.5 max-h-[140px] overflow-y-auto scrollbar-none pr-0.5">
+                {alerts.map((a) => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => { setSelectedItemId(a.itemId); triggerHaptic('light'); }}
+                    className="w-full text-left p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-[11px] text-white/85 flex items-center justify-between gap-1.5 transition-colors"
+                  >
+                    <span className="truncate">{a.label}</span>
+                    <span className="text-[10px] text-[#A3C4A3] font-bold shrink-0">Voir ➔</span>
+                  </button>
+                ))}
+              </div>
+            </GlassCard>
+          )}
+
+          {/* Card D : Copilote IA Équipement */}
+          <GlassCard className="p-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-white/10">
+              <span className="text-sm">✦</span>
+              <div>
+                <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">Copilote IA Équipement</h3>
+                <span className="text-[9px] text-[#A3C4A3] font-mono font-bold uppercase tracking-wider">
+                  {aiStreaming ? 'Analyse en cours…' : 'Prêt'}
+                </span>
+              </div>
+            </div>
+
+            <div ref={aiScrollRef} className="my-2.5 max-h-[170px] overflow-y-auto space-y-2 scrollbar-none pr-0.5 text-xs">
+              {aiResponse ? (
+                <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10 shadow-inner">
+                  <p className="text-white/90 leading-relaxed whitespace-pre-wrap">{aiResponse}{aiStreaming && <span className="inline-block w-1.5 h-3 ml-0.5 bg-[#A3C4A3] animate-pulse align-middle" />}</p>
+                </div>
+              ) : aiError ? (
+                <div className="p-2.5 rounded-xl bg-[#E76F51]/12 border border-[#E76F51]/30 text-[11px] text-[#F4A18C]">{aiError}</div>
+              ) : (
+                <div className="space-y-1.5">
+                  {['Optimise un pack bivouac sous 8 kg', 'Quel matériel alléger en priorité ?'].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => runAi(s)}
+                      className="w-full text-left p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-[11px] text-white/90 transition-all active:scale-[0.98]"
+                    >
+                      ✦ {s}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <form
+              onSubmit={(e) => { e.preventDefault(); runAi(aiInput); setAiInput(''); }}
+              className="flex items-center gap-1.5 rounded-xl bg-black/30 border border-white/12 px-2 py-1"
+            >
+              <input
+                value={aiInput}
+                onChange={(e) => setAiInput(e.target.value)}
+                placeholder="Question au copilote…"
+                className="flex-1 bg-transparent text-xs text-white placeholder-white/40 focus:outline-none py-1"
+                aria-label="Question IA"
+              />
+              <button
+                type="submit"
+                disabled={aiStreaming || !aiInput.trim()}
+                className="w-6 h-6 rounded-full bg-[#A3C4A3] text-[#0B1F17] flex items-center justify-center text-xs font-bold disabled:opacity-40 transition-all active:scale-90"
+                aria-label="Envoyer"
+              >
+                ↑
+              </button>
+            </form>
+          </GlassCard>
         </div>
-      )}
+      </main>
 
       {/* ═══ MODALS & DRAWERS ═══ */}
       <GearDetailDrawer
@@ -2032,14 +1885,12 @@ function SpecTile({
   label,
   value,
   accent,
-  wide,
   onClick,
   title,
 }: {
   label: string;
   value: string;
   accent?: boolean;
-  wide?: boolean;
   onClick?: () => void;
   title?: string;
 }) {
@@ -2048,178 +1899,15 @@ function SpecTile({
       type="button"
       onClick={onClick}
       title={title || label}
-      className={`p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 hover:border-white/20 text-left transition-all active:scale-95 cursor-pointer flex flex-col justify-between ${
-        wide ? 'col-span-2' : ''
-      }`}
+      className="p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 hover:border-white/15 text-left transition-all active:scale-95 cursor-pointer flex flex-col justify-between"
     >
-      <span className={`text-xs font-bold block truncate capitalize ${accent ? 'text-[#A3C4A3]' : 'text-white'}`}>
+      <span className={`text-[11px] font-bold block truncate capitalize ${accent ? 'text-[#A3C4A3]' : 'text-white'}`}>
         {value}
       </span>
-      <span className="text-[9px] text-white/55 uppercase font-mono tracking-wider mt-0.5 flex items-center justify-between w-full">
+      <span className="text-[9px] text-white/50 uppercase font-mono tracking-wider mt-0.5 flex items-center justify-between w-full">
         <span>{label}</span>
         {onClick && <span className="text-[8px] text-[#A3C4A3] opacity-60">✎</span>}
       </span>
     </button>
-  );
-}
-
-function TelemetryCard({
-  equipmentCount,
-  totalWeightG,
-  favoritesCount,
-  categoryStats,
-  totalValue,
-  onResetFilters,
-  onToggleFavorites,
-  onFilterCategory,
-}: {
-  equipmentCount: number;
-  totalWeightG: number;
-  favoritesCount: number;
-  categoryStats: { label: string; grams: number; pct: number }[];
-  totalValue: number;
-  onResetFilters?: () => void;
-  onToggleFavorites?: () => void;
-  onFilterCategory?: (cat: string) => void;
-}) {
-  return (
-    <GlassCard className="shrink-0">
-      <div className="p-4">
-        <div className="flex items-center justify-between pb-2.5 border-b border-white/10">
-          <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">Télémétrie du pack</h3>
-          <span className="text-[9px] text-[#A3C4A3] font-mono font-bold uppercase tracking-wider">Live</span>
-        </div>
-        <div className="grid grid-cols-3 gap-2 mt-3">
-          <button
-            type="button"
-            onClick={onResetFilters}
-            className="rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 p-2.5 text-center transition-all active:scale-95 cursor-pointer"
-            title="Afficher tous les articles"
-          >
-            <span className="block text-lg font-bold font-mono text-[#A3C4A3]">{equipmentCount}</span>
-            <span className="block text-[9px] text-white/60 uppercase font-mono mt-0.5">Articles</span>
-          </button>
-          <div className="rounded-2xl bg-white/[0.05] border border-white/10 p-2.5 text-center">
-            <span className="block text-lg font-bold font-mono text-white">{formatWeight(totalWeightG)}</span>
-            <span className="block text-[9px] text-white/60 uppercase font-mono mt-0.5">Poids</span>
-          </div>
-          <button
-            type="button"
-            onClick={onToggleFavorites}
-            className="rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 p-2.5 text-center transition-all active:scale-95 cursor-pointer"
-            title="Filtrer par favoris"
-          >
-            <span className="block text-lg font-bold font-mono text-white">{favoritesCount}</span>
-            <span className="block text-[9px] text-white/60 uppercase font-mono mt-0.5">Favoris</span>
-          </button>
-        </div>
-        <div className="mt-3 space-y-1.5">
-          {categoryStats.map((c) => (
-            <button
-              key={c.label}
-              type="button"
-              onClick={() => onFilterCategory && onFilterCategory(c.label)}
-              className="w-full text-left p-1 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
-              title={`Filtrer par ${c.label}`}
-            >
-              <div className="flex items-center justify-between text-[10px] text-white/70 mb-0.5">
-                <span className="capitalize truncate">{c.label}</span>
-                <span className="font-mono text-[#A3C4A3]">{formatWeight(c.grams)} ({c.pct}%)</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-                <div className="h-full rounded-full bg-[#A3C4A3]" style={{ width: `${c.pct}%` }} />
-              </div>
-            </button>
-          ))}
-        </div>
-        <div className="mt-3 flex items-center justify-between text-[11px] text-white/70 pt-2.5 border-t border-white/10">
-          <span>Valeur totale du kit</span>
-          <span className="font-mono font-bold text-white">{Math.round(totalValue)} €</span>
-        </div>
-      </div>
-    </GlassCard>
-  );
-}
-
-function AiCard({
-  aiInput,
-  setAiInput,
-  aiResponse,
-  aiStreaming,
-  aiError,
-  aiScrollRef,
-  runAi,
-  kits,
-  openKit,
-}: {
-  aiInput: string;
-  setAiInput: (v: string) => void;
-  aiResponse: string;
-  aiStreaming: boolean;
-  aiError: string | null;
-  aiScrollRef: React.RefObject<HTMLDivElement | null>;
-  runAi: (q: string) => void;
-  kits: CustomKit[];
-  openKit: (kit: CustomKit) => void;
-}) {
-  const suggestions = [
-    'Optimise un pack bivouac 3 jours sous 8 kg',
-    'Quel matériel alléger en priorité ?',
-    'Détecte le matériel à réviser avant mon départ',
-  ];
-  return (
-    <GlassCard className="flex-1 min-h-0 flex flex-col">
-      <div className="flex flex-col h-full p-4 overflow-hidden">
-        <div className="flex items-center gap-2 pb-2.5 border-b border-white/10 shrink-0">
-          <span className="text-sm">✦</span>
-          <div>
-            <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">Copilote IA Équipement</h3>
-            <span className="text-[9px] text-[#A3C4A3] font-mono font-bold uppercase tracking-wider">{aiStreaming ? 'Analyse en cours…' : 'Assistance active'}</span>
-          </div>
-        </div>
-
-        <div ref={aiScrollRef} className="flex-1 min-h-0 overflow-y-auto mt-3 space-y-2.5 pr-0.5 scrollbar-none">
-          {aiResponse ? (
-            <div className="p-3.5 rounded-2xl bg-white/[0.05] border border-white/10 shadow-inner">
-              <p className="text-xs text-white/90 leading-relaxed whitespace-pre-wrap">{aiResponse}{aiStreaming && <span className="inline-block w-1.5 h-3 ml-0.5 bg-[#A3C4A3] animate-pulse align-middle" />}</p>
-            </div>
-          ) : aiError ? (
-            <div className="p-3.5 rounded-2xl bg-[#E76F51]/12 border border-[#E76F51]/30 text-[11px] text-[#F4A18C]">{aiError}</div>
-          ) : (
-            <div className="space-y-2">
-              {suggestions.map((s) => (
-                <button key={s} type="button" onClick={() => runAi(s)} className="w-full text-left p-3 rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 hover:border-[#A3C4A3]/40 transition-all active:scale-[0.98] text-xs text-white/90">
-                  ✦ {s}
-                </button>
-              ))}
-              {kits.slice(0, 2).map((kit) => (
-                <button key={kit.id} type="button" onClick={() => openKit(kit)} className="w-full text-left p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/10 hover:border-[#A3C4A3]/40 transition-all active:scale-[0.98]">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white truncate">{kit.name || 'Kit assemblé'}</span>
-                    <span className="text-[10px] font-mono text-[#A3C4A3]">→</span>
-                  </div>
-                  <span className="text-[10px] text-white/60">{formatWeight(kit.total_weight_g || 0)} · {kit.items?.length || 0} articles</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Prompt input */}
-        <form
-          onSubmit={(e) => { e.preventDefault(); runAi(aiInput); setAiInput(''); }}
-          className="mt-3 shrink-0 flex items-center gap-2 rounded-2xl bg-black/25 border border-white/12 px-2.5 py-1.5"
-        >
-          <input
-            value={aiInput}
-            onChange={(e) => setAiInput(e.target.value)}
-            placeholder="Pose une question au copilote…"
-            className="flex-1 bg-transparent text-xs text-white placeholder-white/45 focus:outline-none py-1"
-            aria-label="Question au copilote IA"
-          />
-          <button type="submit" disabled={aiStreaming || !aiInput.trim()} className="w-7 h-7 rounded-full bg-[#A3C4A3] text-[#0B1F17] flex items-center justify-center text-sm font-bold disabled:opacity-40 transition-all active:scale-90" aria-label="Envoyer">↑</button>
-        </form>
-      </div>
-    </GlassCard>
   );
 }
