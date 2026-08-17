@@ -1,15 +1,12 @@
 # LKDV — Mission Log
 
-## 2026-08-18 — Passe 2 : Cockpit « Mon Équipement » Apple Perfect (Finition, Éléments & Micro-interactions)
+## 2026-08-18 — Refonte Définitive Cockpit KarZentra Dark Titanium Glass
 
-### ✅ Raffinement Apple Perfect Complet (TERMINÉ ET VÉRIFIÉ)
-- **Système d'Élévation 4 Niveaux :** Niveau 0 (Fond net 1080p + vignettage), Niveau 1 (`GLASS_STYLE_LEVEL_1` pour le dock, les colonnes et le header), Niveau 2 (`GLASS_STYLE_LEVEL_2` pour les cartes internes, combo cards, bulle IA, plateau hero et HUD tiles), Niveau 3 (`GLASS_STYLE_LEVEL_3_ACTIVE` pour les éléments actifs/sélectionnés et modals).
-- **Micro-interactions & Physique Apple :** Easing de physique `cubic-bezier(0.16, 1, 0.3, 1)`, feedback tactile `whileTap={{ scale: 0.94-0.96 }}` généralisé, simulation de pression mécanique `translateY(1px)` sur le dock, pulse organique `@keyframes apple-glow-pulse` pour le statut actif.
-- **États Manquants Complets :** Squelettes de chargement en verre shimmer (`isLoading`), vue vide dédiée avec réinitialisation instantanée des filtres, fallback d'accueil si 0 équipement, et anneaux de focus clavier (`focus-visible:ring-2 focus-visible:ring-[#D4F973]`) sur tous les contrôles.
-- **Transitions Fluides Hero :** `AnimatePresence` avec fade+slide doux lors de la sélection d'un nouvel équipement.
-- **Support Accessibilité :** Respect total de `prefers-reduced-motion` (`motion-reduce:transition-none`).
-- **Validation & Zéro Régression :** `npx tsc --noEmit` passé avec 0 erreur, zéro modification sur les hooks (`useEquipment`, `useUserKits`) ni les routes.
-- **Rapport de preuve :** `docs/reports/MON_MATERIEL_APPLE_PERFECT_STATE.md`.
+### ✅ Alignement 100% Fidèle sur le Mockup KarZentra (TERMINÉ ET VÉRIFIÉ AU BUILD)
+- **Suppression du voile délavé et des conflits de filtres :** Remplacement des doubles `backdrop-filter` imbriqués par des panneaux en verre fumé titane sombre (`#141820`/80) avec liseré supérieur lumineux (`border-t-white/20`) et ombres profondes 32px.
+- **Restauration de la scène Hero (Colonne 3) :** Fixation du conteneur de produit avec rendu explicite de l'image produit sur plateau studio avec éclairage zénithal, ellipse d'ombre de contact au sol et bouton CTA néon jaune/lime (`#D4F973`).
+- **Typographie et Contraste Impeccables :** Titres blancs nets sans bavement de sous-pixels, métriques en grand format (`text-2xl font-bold font-mono`), accent néon chartreuse sur les éléments clés.
+- **Zéro Régression :** Typage TypeScript strict (`npx tsc --noEmit`) à 0 erreur, build Next.js validé (`npm run build`).
 
 ---
 
