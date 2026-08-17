@@ -193,146 +193,184 @@ export function useUserKits(userEquipment: UserEquipmentItem[] = []) {
     });
 
     const totalWeight = kitItemsToInsert.reduce((sum, i) => sum + (i.weight_g * i.quantity), 0);
+    const newKitId = crypto.randomUUID();
+    const fallbackKit: CustomKit = {
+      id: newKitId,
+      user_id: user?.id || 'guest',
+      name: params.name.trim(),
+      description: params.description || '',
+      for_destination: params.for_destination || '',
+      season: params.season || 'Été',
+      activity: params.activity || 'randonnee',
+      total_weight_g: totalWeight,
+      source: params.source || 'configurator',
+      status: 'active',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      is_favorite: false,
+      items: kitItemsToInsert.map((i) => ({ ...i, kit_id: newKitId })),
+    };
 
+    // 1. Toujours enregistrer immédiatement dans l'état et le stockage local
+    setKits((prev) => {
+      const next = [fallbackKit, ...prev.filter((k) => k.id !== fallbackKit.id)];
+      try {
+        localStorage.setItem(GUEST_KITS_STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    // 2. Synchronisation Supabase en arrière-plan si connecté
     if (user) {
-      const supabase = createClient();
-      const { data: newKitData, error: kitErr } = await supabase
-        .from('custom_kits')
-        .insert({
-          user_id: user.id,
-          name: params.name.trim(),
-          description: params.description || '',
-          for_destination: params.for_destination || '',
-          season: params.season || '',
-          activity: params.activity || 'randonnee',
-          total_weight_g: totalWeight,
-          source: params.source || 'manuel',
-          status: 'active',
-        })
-        .select()
-        .single();
+      try {
+        const supabase = createClient();
+        const { data: newKitData, error: kitErr } = await supabase
+          .from('custom_kits')
+          .insert({
+            id: fallbackKit.id,
+            user_id: user.id,
+            name: fallbackKit.name,
+            description: fallbackKit.description,
+            for_destination: fallbackKit.for_destination,
+            season: fallbackKit.season,
+            activity: fallbackKit.activity,
+            total_weight_g: fallbackKit.total_weight_g,
+            source: fallbackKit.source,
+            status: 'active',
+          })
+          .select()
+          .single();
 
-      if (kitErr || !newKitData) return null;
+        if (!kitErr && newKitData && kitItemsToInsert.length > 0) {
+          const itemsWithKitId = kitItemsToInsert.map((item) => ({
+            kit_id: newKitData.id,
+            gear_item_id: item.gear_item_id,
+            item_name: item.item_name,
+            category: item.category,
+            weight_g: item.weight_g,
+            quantity: item.quantity,
+            is_essential: item.is_essential,
+            is_checked: false,
+          }));
 
-      if (kitItemsToInsert.length > 0) {
-        const itemsWithKitId = kitItemsToInsert.map((item) => ({
-          kit_id: newKitData.id,
-          gear_item_id: item.gear_item_id,
-          item_name: item.item_name,
-          category: item.category,
-          weight_g: item.weight_g,
-          quantity: item.quantity,
-          is_essential: item.is_essential,
-          is_checked: false,
-        }));
-
-        await supabase.from('custom_kit_items').insert(itemsWithKitId);
+          await supabase.from('custom_kit_items').insert(itemsWithKitId);
+        }
+      } catch (err) {
+        console.warn('[useUserKits] Supabase kit sync notice:', err);
       }
-
-      await loadKits();
-      return newKitData as CustomKit;
-    } else {
-      const newKit: CustomKit = {
-        id: crypto.randomUUID(),
-        user_id: 'guest',
-        name: params.name.trim(),
-        description: params.description || '',
-        for_destination: params.for_destination || '',
-        season: params.season || '',
-        activity: params.activity || 'randonnee',
-        total_weight_g: totalWeight,
-        source: params.source || 'manuel',
-        status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        is_favorite: false,
-        items: kitItemsToInsert.map((i) => ({ ...i, kit_id: 'guest' })),
-      };
-
-      const updated = [newKit, ...kits];
-      saveGuestKits(updated);
-      return newKit;
     }
+
+    return fallbackKit;
   };
 
   // 2. Modifier un kit
   const updateKit = async (kitId: string, patch: Partial<CustomKit>) => {
-    if (user) {
-      const supabase = createClient();
-      await supabase
-        .from('custom_kits')
-        .update({
-          ...patch,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', kitId)
-        .eq('user_id', user.id);
-
-      await loadKits();
-    } else {
-      const updated = kits.map((k) =>
+    setKits((prev) => {
+      const next = prev.map((k) =>
         k.id === kitId ? { ...k, ...patch, updated_at: new Date().toISOString() } : k
       );
-      saveGuestKits(updated);
+      try {
+        localStorage.setItem(GUEST_KITS_STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    if (user) {
+      try {
+        const supabase = createClient();
+        await supabase
+          .from('custom_kits')
+          .update({
+            ...patch,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', kitId)
+          .eq('user_id', user.id);
+      } catch (err) {
+        console.warn('[useUserKits] updateKit error:', err);
+      }
     }
   };
 
   // 3. Mettre à la corbeille (Cycle de vie 10 jours)
   const moveToTrash = async (kitId: string) => {
     const deletedAt = new Date().toISOString();
-    if (user) {
-      const supabase = createClient();
-      await supabase
-        .from('custom_kits')
-        .update({
-          status: 'trash',
-          deleted_at: deletedAt,
-          updated_at: deletedAt,
-        })
-        .eq('id', kitId)
-        .eq('user_id', user.id);
 
-      await loadKits();
-    } else {
-      const updated = kits.map((k) =>
+    setKits((prev) => {
+      const next = prev.map((k) =>
         k.id === kitId ? { ...k, status: 'trash' as const, deleted_at: deletedAt } : k
       );
-      saveGuestKits(updated);
+      try {
+        localStorage.setItem(GUEST_KITS_STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    if (user) {
+      try {
+        const supabase = createClient();
+        await supabase
+          .from('custom_kits')
+          .update({
+            status: 'trash',
+            deleted_at: deletedAt,
+            updated_at: deletedAt,
+          })
+          .eq('id', kitId)
+          .eq('user_id', user.id);
+      } catch (err) {
+        console.warn('[useUserKits] moveToTrash error:', err);
+      }
     }
   };
 
   // 4. Restaurer de la corbeille
   const restoreFromTrash = async (kitId: string) => {
-    if (user) {
-      const supabase = createClient();
-      await supabase
-        .from('custom_kits')
-        .update({
-          status: 'active',
-          deleted_at: null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', kitId)
-        .eq('user_id', user.id);
-
-      await loadKits();
-    } else {
-      const updated = kits.map((k) =>
+    setKits((prev) => {
+      const next = prev.map((k) =>
         k.id === kitId ? { ...k, status: 'active' as const, deleted_at: null } : k
       );
-      saveGuestKits(updated);
+      try {
+        localStorage.setItem(GUEST_KITS_STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    if (user) {
+      try {
+        const supabase = createClient();
+        await supabase
+          .from('custom_kits')
+          .update({
+            status: 'active',
+            deleted_at: null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', kitId)
+          .eq('user_id', user.id);
+      } catch (err) {
+        console.warn('[useUserKits] restoreFromTrash error:', err);
+      }
     }
   };
 
   // 5. Suppression définitive
   const permanentDelete = async (kitId: string) => {
+    setKits((prev) => {
+      const next = prev.filter((k) => k.id !== kitId);
+      try {
+        localStorage.setItem(GUEST_KITS_STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
     if (user) {
-      const supabase = createClient();
-      await supabase.from('custom_kits').delete().eq('id', kitId).eq('user_id', user.id);
-      await loadKits();
-    } else {
-      const updated = kits.filter((k) => k.id !== kitId);
-      saveGuestKits(updated);
+      try {
+        const supabase = createClient();
+        await supabase.from('custom_kits').delete().eq('id', kitId).eq('user_id', user.id);
+      } catch (err) {
+        console.warn('[useUserKits] permanentDelete error:', err);
+      }
     }
   };
 

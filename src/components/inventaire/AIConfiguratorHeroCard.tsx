@@ -138,6 +138,7 @@ export default function AIConfiguratorHeroCard({
         for_destination: preset.destination,
         season: preset.season,
         activity: preset.activity,
+        source: 'configurator',
         gearItems: mappedGear,
       });
 
@@ -182,6 +183,7 @@ export default function AIConfiguratorHeroCard({
         for_destination: 'Aventure sur-mesure',
         season: '4-saisons',
         activity: 'Randonnée & Bivouac',
+        source: 'configurator',
         gearItems: mappedGear,
       });
 
