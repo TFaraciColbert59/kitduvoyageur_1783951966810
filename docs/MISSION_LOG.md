@@ -1,6 +1,17 @@
 # LKDV — Mission Log
 
-## 2026-08-18 — Refonte Visuelle Cockpit « Mon Équipement » — Vrai Apple Liquid Glass
+## 2026-08-18 — Passe 2 : Cockpit « Mon Équipement » Apple Perfect (Finition, Éléments & Micro-interactions)
+
+### ✅ Raffinement Apple Perfect Complet (TERMINÉ ET VÉRIFIÉ)
+- **Système d'Élévation 4 Niveaux :** Niveau 0 (Fond net 1080p + vignettage), Niveau 1 (`GLASS_STYLE_LEVEL_1` pour le dock, les colonnes et le header), Niveau 2 (`GLASS_STYLE_LEVEL_2` pour les cartes internes, combo cards, bulle IA, plateau hero et HUD tiles), Niveau 3 (`GLASS_STYLE_LEVEL_3_ACTIVE` pour les éléments actifs/sélectionnés et modals).
+- **Micro-interactions & Physique Apple :** Easing de physique `cubic-bezier(0.16, 1, 0.3, 1)`, feedback tactile `whileTap={{ scale: 0.94-0.96 }}` généralisé, simulation de pression mécanique `translateY(1px)` sur le dock, pulse organique `@keyframes apple-glow-pulse` pour le statut actif.
+- **États Manquants Complets :** Squelettes de chargement en verre shimmer (`isLoading`), vue vide dédiée avec réinitialisation instantanée des filtres, fallback d'accueil si 0 équipement, et anneaux de focus clavier (`focus-visible:ring-2 focus-visible:ring-[#D4F973]`) sur tous les contrôles.
+- **Transitions Fluides Hero :** `AnimatePresence` avec fade+slide doux lors de la sélection d'un nouvel équipement.
+- **Support Accessibilité :** Respect total de `prefers-reduced-motion` (`motion-reduce:transition-none`).
+- **Validation & Zéro Régression :** `npx tsc --noEmit` passé avec 0 erreur, zéro modification sur les hooks (`useEquipment`, `useUserKits`) ni les routes.
+- **Rapport de preuve :** `docs/reports/MON_MATERIEL_APPLE_PERFECT_STATE.md`.
+
+---
 
 ### ✅ Refonte Visuelle 100% Fidèle (TERMINÉ ET VÉRIFIÉ AU BUILD)
 - **Fond haute netteté :** Utilisation de `/assets/images/journal-refuge.jpg` (résolution 1080p alpine avec refuge éclairé et sommets nets), suppression totale du `blur()` pour permettre une vraie réfraction du verre. Vitrage teinté `bg-black/25` et vignettage radial périphérique.

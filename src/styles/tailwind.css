@@ -705,4 +705,18 @@ a, button, select, input, textarea, [role="button"], [tabindex]:not([tabindex="-
 }
 .animate-pulse-lkv {
   animation: pulse-lkv 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
+}
+
+@keyframes apple-glow-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 6px rgba(212, 249, 115, 0.8);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.9);
+    box-shadow: 0 0 1px rgba(212, 249, 115, 0.2);
+  }
+}
+
