@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import CommentItem from '@/components/communaute/CommentItem';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { SkeletonCarnetCard } from '@/components/ui/Skeleton';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Carnet {
@@ -250,11 +251,11 @@ function CarnetDetailModal({
 
     supabase
       .from('carnet_comments')
-      .select('*, author:user_profiles(full_name, avatar_url)')
+      .select('id, carnet_id, author_id, content, created_at, author:user_profiles(full_name, avatar_url)')
       .eq('carnet_id', carnet.id)
       .order('created_at', { ascending: true })
       .then(({ data }) => {
-        const list = (data as Comment[]) ?? [];
+        const list = (data as unknown as Comment[]) ?? [];
         setComments(list);
         setLoadingComments(false);
         // Sync counter with the real comment count loaded from DB
@@ -269,10 +270,10 @@ function CarnetDetailModal({
     const { data } = await supabase
       .from('carnet_comments')
       .insert({ carnet_id: carnet.id, author_id: user.id, content: newComment.trim() })
-      .select('*, author:user_profiles(full_name, avatar_url)')
+      .select('id, carnet_id, author_id, content, created_at, author:user_profiles(full_name, avatar_url)')
       .single();
     if (data) {
-      setComments((prev) => [...prev, data as Comment]);
+      setComments((prev) => [...prev, data as unknown as Comment]);
       setCommentCount((prev) => prev + 1);
       onCommentCountChange(carnet.id, 1);
     }
@@ -777,7 +778,7 @@ export default function CarnetsPage() {
   const [carnets, setCarnets] = useState<Carnet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'mine' | 'favorites'>('all');
+  const [filter, setFilter] = useState<'all' | 'mine' | 'favorites' | 'drafts' | 'published'>('all');
   const [search, setSearch] = useState('');
 
   // Modals
@@ -803,7 +804,7 @@ export default function CarnetsPage() {
     try {
       let query = supabase
         .from('carnets')
-        .select('*, author:user_profiles(full_name, avatar_url, trust_score)')
+        .select('id,author_id,title,destination,description,cover_image,cover_image_alt,start_date,end_date,weather,route_rating,visibility,tags,map_points,is_collaborative,likes_count,comments_count,favorites_count,views_count,verified,created_at,author:user_profiles(full_name,avatar_url,trust_score)')
         .order('created_at', { ascending: false });
 
       if (filter === 'mine' && user) {
@@ -839,11 +840,12 @@ export default function CarnetsPage() {
       setCarnets(
         (data ?? []).map((c) => ({
           ...c,
+          author: Array.isArray(c.author) ? c.author[0] : c.author,
           map_points: Array.isArray(c.map_points) ? c.map_points : [],
           user_liked: likedIds.includes(c.id),
           user_favorited: favIds.includes(c.id),
           user_reaction: reactions[c.id],
-        }))
+        })) as Carnet[]
       );
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Erreur de chargement');
@@ -1045,63 +1047,101 @@ export default function CarnetsPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search */}
-        <div className="mb-6 relative">
-          <Icon name="MagnifyingGlassIcon" size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5C6B5E]" />
-          <input
-            className="w-full bg-[#EDEAE0] border border-[#C8C3B0] rounded-xl pl-10 pr-4 py-3 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30"
-            placeholder="Rechercher par titre ou destination..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+      {/* Main sections */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+        {/* Create Section */}
+        <section>
+          <h2 className="text-xl font-bold mb-4">✨ Créer</h2>
+          <button
+            onClick={() => { setEditCarnet(null); setShowCreate(true); }}
+            className="px-4 py-2 bg-[#17402C] text-white rounded-lg hover:bg-[#17402C]/90 transition"
+          >
+            Créer un carnet depuis zéro
+          </button>
+          {/* Future: button to create from a finished adventure */}
+        </section>
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{error}</div>
-        )}
+        {/* My Carnets Section */}
+        <section>
+          <h2 className="text-xl font-bold mb-4">📚 Mes carnets</h2>
+          <div className="flex gap-4 mb-4">
+            <button
+              onClick={() => setFilter('drafts')}
+              className={`px-3 py-1 rounded ${filter === 'drafts' ? 'bg-[#17402C] text-white' : 'bg-gray-200 text-black'}`}
+            >
+              Brouillons ({carnets.filter(c => c.author_id === user?.id && c.visibility === 'private').length})
+            </button>
+            <button
+              onClick={() => setFilter('published')}
+              className={`px-3 py-1 rounded ${filter === 'published' ? 'bg-[#17402C] text-white' : 'bg-gray-200 text-black'}`}
+            >
+              Publiés ({carnets.filter(c => c.author_id === user?.id && c.visibility !== 'private').length})
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {carnets
+              .filter(c => c.author_id === user?.id)
+              .filter(c => {
+                if (filter === 'drafts') return c.visibility === 'private';
+                if (filter === 'published') return c.visibility !== 'private';
+                return true;
+              })
+              .map(c => (
+                <CarnetCard
+                  key={c.id}
+                  carnet={c}
+                  currentUserId={user?.id}
+                  onViewDetail={setDetailCarnet}
+                  onEdit={(c) => { setEditCarnet(c); setShowCreate(true); }}
+                  onDelete={setDeleteCarnet}
+                  onLike={handleLike}
+                  onFavorite={handleFavorite}
+                  onShare={handleShare}
+                />
+              ))}
+          </div>
+        </section>
 
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl h-80 animate-pulse" />
-            ))}
+        {/* Discover Section */}
+        <section>
+          <h2 className="text-xl font-bold mb-4">🌍 Découvrir</h2>
+          {/* Search */}
+          <div className="mb-6 relative">
+            <Icon name="MagnifyingGlassIcon" size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5C6B5E]" />
+            <input
+              className="w-full bg-[#EDEAE0] border border-[#C8C3B0] rounded-xl pl-10 pr-4 py-3 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30"
+              placeholder="Rechercher par titre ou destination..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-5xl mb-4">🗺️</div>
-            <p className="font-display font-700 text-[#1C2620] text-xl mb-2">
-              {filter === 'mine' ? 'Aucun carnet publié' : filter === 'favorites' ? 'Aucun favori' : 'Aucun carnet trouvé'}
-            </p>
-            <p className="text-[#5C6B5E] text-sm mb-6">
-              {filter === 'mine' ? 'Partagez votre première expédition !' : 'Explorez les carnets de la communauté et sauvegardez vos inspirations.'}
-            </p>
-            {filter === 'mine' && (
-              <button
-                onClick={() => { setEditCarnet(null); setShowCreate(true); }}
-                className="px-6 py-3 bg-[#17402C] text-white rounded-xl font-700 text-sm hover:bg-[#17402C]/90 transition-colors"
-              >
-                Créer mon premier carnet
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filtered.map((c) => (
-              <CarnetCard
-                key={c.id}
-                carnet={c}
-                currentUserId={user?.id}
-                onViewDetail={setDetailCarnet}
-                onEdit={(c) => { setEditCarnet(c); setShowCreate(true); }}
-                onDelete={setDeleteCarnet}
-                onLike={handleLike}
-                onFavorite={handleFavorite}
-                onShare={handleShare}
-              />
-            ))}
-          </div>
-        )}
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <SkeletonCarnetCard key={i} />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {carnets
+                .filter(c => c.visibility === 'public')
+                .filter(c => !search || c.title.toLowerCase().includes(search.toLowerCase()) || c.destination.toLowerCase().includes(search.toLowerCase()))
+                .map(c => (
+                  <CarnetCard
+                    key={c.id}
+                    carnet={c}
+                    currentUserId={user?.id}
+                    onViewDetail={setDetailCarnet}
+                    onEdit={(c) => { setEditCarnet(c); setShowCreate(true); }}
+                    onDelete={setDeleteCarnet}
+                    onLike={handleLike}
+                    onFavorite={handleFavorite}
+                    onShare={handleShare}
+                  />
+                ))}
+            </div>
+          )}
+        </section>
       </div>
 
       <Footer />

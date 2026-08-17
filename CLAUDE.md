@@ -107,6 +107,22 @@ Tout en ink-based : `rgba(11,31,23, %)`. Jamais `rgba(0,0,0)`.
 
 ---
 
+## ⚡ Interaction Design & UX (Skill Aura)
+
+> **Règle Permanente :** Le skill Aura Interaction Design doit être utilisé pour toute décision relative aux interactions et à l'expérience utilisateur lorsqu'il est pertinent.
+
+- **Emplacement du skill :** `.agents/skills/interaction-design/SKILL.md` (et `.skills/interaction-design/SKILL.md`)
+- **Domaines couverts :** UX, navigation, micro-interactions, animations, transitions, feedback utilisateur, états loading/empty/error, gestes mobiles, onboarding, modales/sheets, boutons/actions, hiérarchie interactive, parcours utilisateur.
+- **Règles clés :**
+  - Compléter le design system LKDV sans casser l'existant.
+  - Toujours respecter `prefers-reduced-motion`.
+  - Animer uniquement `transform` et `opacity` (GPU-safe, 60fps).
+  - Respecter la palette LKDV (vert forêt `#17402C`, accents sage `#A3C4A3`, pas de orange `#E4501C`).
+  - Préserver les safe-areas et les composants shell (`MobilePageShell`, `BottomTabBar`, `HamburgerMenu`).
+
+
+---
+
 ## 📱 Responsive Pattern
 
 Toutes les pages suivent le pattern dual-view :

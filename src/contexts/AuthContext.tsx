@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data: existing } = await supabase
         .from('user_profiles')
-        .select('*')
+        .select('id,email,full_name,avatar_url,trust_score,loyalty_points,loyalty_level,bio,location,xp,level,username')
         .eq('id', authUser.id)
         .maybeSingle();
 
@@ -161,7 +161,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const getUserProfile = async (): Promise<UserProfile | null> => {
     if (!user) return null;
-    const { data, error } = await supabase.from('user_profiles').select('*').eq('id', user.id).single();
+    const { data, error } = await supabase.from('user_profiles').select('id,email,full_name,avatar_url,trust_score,loyalty_points,loyalty_level,bio,location,xp,level,username').eq('id', user.id).single();
     if (error) return null;
     setProfile(data as UserProfile);
     return data as UserProfile;

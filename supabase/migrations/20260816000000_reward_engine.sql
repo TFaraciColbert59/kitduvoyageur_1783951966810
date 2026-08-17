@@ -14,10 +14,13 @@ CREATE TABLE IF NOT EXISTS public.reward_config (
 
 ALTER TABLE public.reward_config ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow public read on reward_config" ON public.reward_config;
+DROP POLICY IF EXISTS "Allow admin write on reward_config" ON public.reward_config;
+
 CREATE POLICY "Allow public read on reward_config" 
   ON public.reward_config FOR SELECT TO public USING (true);
 
-CREATE POLICY "Allow admin write on reward_config" 
+CREATE POLICY "Allow admin write on reward_config"
   ON public.reward_config FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- ─── 2. REWARD PERIODS ────────────────────────────────────────────────────────
@@ -38,10 +41,13 @@ CREATE TABLE IF NOT EXISTS public.reward_periods (
 
 ALTER TABLE public.reward_periods ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow public read on reward_periods" 
+DROP POLICY IF EXISTS "Allow public read on reward_periods" ON public.reward_periods;
+DROP POLICY IF EXISTS "Allow admin write on reward_periods" ON public.reward_periods;
+
+CREATE POLICY "Allow public read on reward_periods"
   ON public.reward_periods FOR SELECT TO public USING (true);
 
-CREATE POLICY "Allow admin write on reward_periods" 
+CREATE POLICY "Allow admin write on reward_periods"
   ON public.reward_periods FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- ─── 3. REWARD ACCOUNTS ───────────────────────────────────────────────────────
@@ -61,6 +67,9 @@ CREATE TABLE IF NOT EXISTS public.reward_accounts (
 );
 
 ALTER TABLE public.reward_accounts ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow users read own reward_account" ON public.reward_accounts;
+DROP POLICY IF EXISTS "Allow admin write on reward_accounts" ON public.reward_accounts;
 
 CREATE POLICY "Allow users read own reward_account" 
   ON public.reward_accounts FOR SELECT TO authenticated USING (user_id = auth.uid() OR public.is_admin());
@@ -82,10 +91,13 @@ CREATE TABLE IF NOT EXISTS public.reward_transactions (
 
 ALTER TABLE public.reward_transactions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow users read own transactions" 
+DROP POLICY IF EXISTS "Allow users read own transactions" ON public.reward_transactions;
+DROP POLICY IF EXISTS "Allow admin write on reward_transactions" ON public.reward_transactions;
+
+CREATE POLICY "Allow users read own transactions"
   ON public.reward_transactions FOR SELECT TO authenticated USING (user_id = auth.uid() OR public.is_admin());
 
-CREATE POLICY "Allow admin write on reward_transactions" 
+CREATE POLICY "Allow admin write on reward_transactions"
   ON public.reward_transactions FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- ─── 5. PENDING CONTRIBUTIONS ────────────────────────────────────────────────
@@ -108,10 +120,13 @@ CREATE TABLE IF NOT EXISTS public.pending_contributions (
 
 ALTER TABLE public.pending_contributions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow users read own pending_contributions" 
+DROP POLICY IF EXISTS "Allow users read own pending_contributions" ON public.pending_contributions;
+DROP POLICY IF EXISTS "Allow admin write on pending_contributions" ON public.pending_contributions;
+
+CREATE POLICY "Allow users read own pending_contributions"
   ON public.pending_contributions FOR SELECT TO authenticated USING (user_id = auth.uid() OR public.is_admin());
 
-CREATE POLICY "Allow admin write on pending_contributions" 
+CREATE POLICY "Allow admin write on pending_contributions"
   ON public.pending_contributions FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- ─── 6. REWARD WITHDRAWALS (Cash-out) ────────────────────────────────────────
@@ -135,6 +150,9 @@ CREATE TABLE IF NOT EXISTS public.reward_withdrawals (
 );
 
 ALTER TABLE public.reward_withdrawals ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow users read own withdrawals" ON public.reward_withdrawals;
+DROP POLICY IF EXISTS "Allow admin write on reward_withdrawals" ON public.reward_withdrawals;
 
 CREATE POLICY "Allow users read own withdrawals" 
   ON public.reward_withdrawals FOR SELECT TO authenticated USING (user_id = auth.uid() OR public.is_admin());

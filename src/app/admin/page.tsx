@@ -970,19 +970,9 @@ function RewardsSection() {
     setLoading(true);
     setError(null);
     try {
-      const { data: cData } = await supabase.from('reward_config').select('*');
-      const configMap = (cData || []).reduce((acc: any, row: any) => {
-        acc[row.key] = row.value;
-        return acc;
-      }, {});
-      setConfig(configMap);
-
-      const { data: pData } = await supabase.from('reward_periods').select('*').eq('status', 'OPEN').limit(1).maybeSingle();
-      setActivePeriod(pData);
-
       const { data: wData } = await supabase
-        .from('reward_withdrawals')
-        .select('*, user:user_profiles(full_name, email, trust_score)')
+        .from('withdrawals')
+        .select('*')
         .in('status', ['pending', 'under_review'])
         .order('requested_at', { ascending: true });
       setWithdrawals(wData || []);

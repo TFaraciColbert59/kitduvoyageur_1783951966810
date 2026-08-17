@@ -8,7 +8,7 @@
 -- ============================================================
 
 -- ── 0. Fonctions d'appartenance (robustes, search_path sécurisé) ──────────
-DROP FUNCTION IF EXISTS public.is_group_member(uuid, uuid);
+-- DROP FUNCTION IF EXISTS public.is_group_member(uuid, uuid);
 CREATE OR REPLACE FUNCTION public.is_group_member(p_group_id uuid, p_user_id uuid)
 RETURNS boolean
 LANGUAGE sql
@@ -24,7 +24,7 @@ AS $$
   )
 $$;
 
-DROP FUNCTION IF EXISTS public.is_group_organizer(uuid, uuid);
+-- DROP FUNCTION IF EXISTS public.is_group_organizer(uuid, uuid);
 CREATE OR REPLACE FUNCTION public.is_group_organizer(p_group_id uuid, p_user_id uuid)
 RETURNS boolean
 LANGUAGE sql

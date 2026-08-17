@@ -1,9 +1,25 @@
-// src/lib/supabase/queries.ts
-// Helper functions for the inventory detail page.
-// All functions assume an authenticated Supabase client is passed in.
-
 import { createClient } from '@/lib/supabase/client';
-import type { GearItemData } from '@/lib/mock/mon-materiel-marceline';
+
+export interface GearItemData {
+  id: string;
+  user_id?: string;
+  name: string;
+  brand?: string;
+  model?: string;
+  category: string;
+  condition?: string;
+  weight_g: number;
+  purchase_price?: number;
+  purchase_date?: string;
+  image?: string;
+  alt?: string;
+  quantity?: number;
+  is_favorite?: boolean;
+  notes?: string;
+  loan_status?: string;
+  loan_to_name?: string;
+  is_listed_for_sale?: boolean;
+}
 
 /** Fetch a single gear item for the current user.
  *  Returns `null` when the item does not exist (PGRST116) for the user.

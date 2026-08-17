@@ -52,18 +52,18 @@ DROP POLICY IF EXISTS "Système peut insérer des notifications" ON public.notif
 DROP POLICY IF EXISTS "users_manage_own_notifications" ON public.notifications;
 
 -- Create secure policies for public.notifications
-CREATE POLICY "Users can read own notifications" ON public.notifications
-  FOR SELECT USING (auth.uid() = user_id OR public.is_admin());
+-- CREATE POLICY "Users can read own notifications" ON public.notifications
+--   FOR SELECT USING (auth.uid() = user_id OR public.is_admin());
 
-CREATE POLICY "Users can update own notifications" ON public.notifications
-  FOR UPDATE USING (auth.uid() = user_id OR public.is_admin());
+-- CREATE POLICY "Users can update own notifications" ON public.notifications
+--   FOR UPDATE USING (auth.uid() = user_id OR public.is_admin());
 
-CREATE POLICY "Users can delete own notifications" ON public.notifications
-  FOR DELETE USING (auth.uid() = user_id OR public.is_admin());
+-- CREATE POLICY "Users can delete own notifications" ON public.notifications
+--   FOR DELETE USING (auth.uid() = user_id OR public.is_admin());
 
 -- Create policies for public.notification_preferences
-CREATE POLICY "Users can read own preferences" ON public.notification_preferences
-  FOR SELECT USING (auth.uid() = user_id OR public.is_admin());
+-- CREATE POLICY "Users can read own preferences" ON public.notification_preferences
+--   FOR SELECT USING (auth.uid() = user_id OR public.is_admin());
 
 CREATE POLICY "Users can insert own preferences" ON public.notification_preferences
   FOR INSERT WITH CHECK (auth.uid() = user_id OR public.is_admin());

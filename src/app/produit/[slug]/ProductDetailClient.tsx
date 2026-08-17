@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/client';
 import { addToCart } from '@/lib/cart';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEquipment } from '@/hooks/useEquipment';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import ProductBuyBar from '@/components/produit/ProductBuyBar';
 
@@ -80,6 +81,10 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
   const [selectedStrap, setSelectedStrap] = useState('Ventrale + poitrine');
   const [isFavorite, setIsFavorite] = useState(false);
   const { user } = useAuth();
+  const { isOwned, isInCart, getCartQuantity, addToCart } = useEquipment();
+  const owned = product ? isOwned(product.id) : false;
+  const inCart = product ? isInCart(product.id) : false;
+  const cartQty = product ? getCartQuantity(product.id) : 0;
 
   useEffect(() => {
     let cancelled = false;
@@ -191,10 +196,10 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
       name: product.nom,
       brand: product.marque,
       category: product.categorie,
-      priceEur: product.prix_cents / 100,
-      weightG: product.poids_g,
+      price_eur: product.prix_cents / 100,
+      weight_g: product.poids_g,
       image: product.images[0]?.url ?? '',
-      imageAlt: product.images[0]?.alt ?? product.nom,
+      image_alt: product.images[0]?.alt ?? product.nom,
     }, qty);
     setCartAdded(true);
     setTimeout(() => setCartAdded(false), 3000);
@@ -376,13 +381,38 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                       </div>
                     </div>
 
+                    {owned && (
+                      <div className="mb-4 px-4 py-2.5 rounded-2xl bg-[#E1EBDD] border border-[#A9C6B0] text-xs font-bold text-[#17402C] flex items-center gap-2">
+                        <span>✓</span> Cet article est déjà enregistré dans votre sac / équipement
+                      </div>
+                    )}
+
                     <div className="flex gap-3">
                       <button
-                        onClick={() => handleAddToCart()}
-                        className={`flex-1 py-4 rounded-full font-semibold text-sm transition-all flex items-center justify-center gap-2 ${cartAdded ? 'bg-emerald-600 text-white' : 'bg-[#1C2620] hover:bg-[#2A3830] text-white'}`}
+                        onClick={() => {
+                          addToCart({
+                            id: product.id,
+                            slug: product.slug,
+                            name: product.nom,
+                            brand: product.marque,
+                            category: product.categorie,
+                            price_eur: product.prix_cents / 100,
+                            weight_g: product.poids_g,
+                            image: product.images[0]?.url,
+                          }, 1);
+                          setCartAdded(true);
+                          setTimeout(() => setCartAdded(false), 2500);
+                        }}
+                        className={`flex-1 py-4 rounded-full font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-sm ${
+                          inCart
+                            ? 'bg-[#17402C] text-white ring-2 ring-[#17402C]/30'
+                            : 'bg-[#17402C] hover:bg-[#0B1F17] text-white'
+                        }`}
                       >
                         {cartAdded ? (
-                          <><Icon name="CheckCircleIcon" size={18} /> Ajouté</>
+                          <><Icon name="CheckCircleIcon" size={18} /> Ajouté au panier !</>
+                        ) : inCart ? (
+                          <><Icon name="ShoppingBagIcon" size={18} /> ✓ Dans le panier ({cartQty}) — Ajouter +1</>
                         ) : (
                           <><Icon name="ShoppingBagIcon" size={18} /> Ajouter au panier</>
                         )}
@@ -711,8 +741,18 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
           {/* Buy bar */}
           <ProductBuyBar
             price={product.prix_cents / 100}
+            isOwned={owned}
             onAddToCart={(qty) => {
-              handleAddToCart(qty);
+              addToCart({
+                id: product.id,
+                slug: product.slug,
+                name: product.nom,
+                brand: product.marque,
+                category: product.categorie,
+                price_eur: product.prix_cents / 100,
+                weight_g: product.poids_g,
+                image: product.images[0]?.url,
+              }, qty);
             }}
           />
         </MobilePageShell>

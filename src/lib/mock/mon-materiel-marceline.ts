@@ -81,12 +81,7 @@ export interface RepairItemData {
   notes?: string;
 }
 
-export const INITIAL_GEAR_DATA: GearItemData[] = [
-  { id: '1', name: 'Sac de couchage', category: 'Hébergement', weight: 1.2, count: 1, is_rented: false, condition: 'excellent', weight_g: 1200 },
-  { id: '2', name: 'Tente 2 personnes', category: 'Hébergement', weight: 2.5, count: 1, is_rented: false, condition: 'bon', weight_g: 2500 },
-  { id: '3', name: 'Réchaud', category: 'Cuisine', weight: 0.3, count: 1, is_rented: false, condition: 'excellent', weight_g: 300 },
-];
-
+export const INITIAL_GEAR_DATA: GearItemData[] = [];
 export const INITIAL_KITS: UserKitData[] = [];
 export const INITIAL_LOANS: LoanItemData[] = [];
 export const INITIAL_REPAIRS: RepairItemData[] = [];

@@ -12,6 +12,10 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import MobilePageShell from "@/components/mobile-nav/MobilePageShell";
 import { getAllCountries, type Country } from "@/lib/countries";
+import MobileFilterBar from "@/app/pays/components/MobileFilterBar";
+import BouteilleALaMer from "@/components/pays/BouteilleALaMer";
+import PaysClubsList from "@/components/pays/PaysClubsList";
+import PaysCarnetsList from "@/components/pays/PaysCarnetsList";
 
 // Globe 3D dynamique
 const CountryGlobe = dynamic(
@@ -36,6 +40,7 @@ export default function EarthPage() {
   const [focusCode, setFocusCode] = useState<string | undefined>(undefined);
   const [selectedContinent, setSelectedContinent] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("Chartreuse");
+  const [activeFilter, setActiveFilter] = useState<string>("Tendance");
 
   const handleCountryClick = useCallback((code: string) => {
     router.push(`/pays/${code.toLowerCase()}`);
@@ -460,6 +465,7 @@ export default function EarthPage() {
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
         <MobilePageShell background="var(--lkv-forest-950)">
+          <MobileFilterBar activeFilter={activeFilter} setActiveFilter={setActiveFilter} />
           <div className="m-earth">
             <div className="m-earth-body">
               {/* Hero (Title, Search) */}
@@ -486,23 +492,21 @@ export default function EarthPage() {
                 </div>
               </div>
 
-              {/* Globe */}
-              <div className="m-globe-stage w-full h-[360px] mb-8 relative">
-                <div className="w-full h-full relative" id="mGlobeViz">
-                  {isMobile && (
-                    <CountryGlobe
-                      countries={ALL_COUNTRIES}
-                      onCountryClick={handleCountryClick}
-                      focusCode={focusCode}
-                      fullscreen={false}
-                    />
-                  )}
+              {/* Globe Stage */}
+              <div className="m-globe-stage">
+                <div id="mGlobeViz" className="w-full h-full flex items-center justify-center">
+                  <CountryGlobe
+                    countries={ALL_COUNTRIES}
+                    onCountryClick={handleCountryClick}
+                    focusCode={focusCode}
+                    fullscreen={false}
+                  />
                 </div>
                 <div className="m-orbit o1"></div>
                 <div className="m-orbit o2"></div>
               </div>
 
-              {/* Continent strip */}
+              {/* Continents Strip */}
               <div className="m-cont-strip">
                 <div className={`p ${selectedContinent === "europe" || selectedContinent === "all" ? "on" : ""} active:scale-95 transition-transform duration-100 cursor-pointer`} onClick={() => setSelectedContinent("europe")}>
                   <span className="k">01</span>Europe
@@ -559,39 +563,90 @@ export default function EarthPage() {
                     <div className="bg" style={{ backgroundImage: `url('https://images.pexels.com/photos/2437291/pexels-photo-2437291.jpeg?auto=compress&cs=tinysrgb&w=400')` }}></div>
                     <div className="fc">CL</div>
                     <div className="info">
-                      <h5>Torres del <em>Paine.</em></h5>
-                      <div className="sub">Patagonie</div>
-                    </div>
-                  </Link>
-                </div>
-
-                {/* Live Activity Box */}
-                <div className="m-live-box bg-white/5 border border-white/10 rounded-2xl p-4 mt-5">
-                  <div className="h flex items-center gap-2 mb-3">
-                    <span className="d w-1.5 h-1.5 rounded-full bg-[#8BAF7C] shadow-[0_0_8px_#8BAF7C] animate-pulse"></span>
-                    <span className="text-[10px] uppercase tracking-widest text-[#A8C4A2] font-semibold">Activité live · 8 428 en ligne</span>
-                  </div>
-                  <div className="m-live-item flex items-center gap-3 py-2 border-t border-white/5 first:border-t-0">
-                    <div className="av w-7 h-7 rounded-full bg-cover bg-center shrink-0 border border-white/10" style={{ backgroundImage: `url('https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
-                    <div className="n flex-1 text-xs text-white/85">Léna · bivouac au <em className="font-serif italic text-[#A8C4A2]">Grand Som</em></div>
-                    <div className="t font-mono text-[10px] text-white/40">4 m</div>
-                  </div>
-                  <div className="m-live-item flex items-center gap-3 py-2 border-t border-white/5 first:border-t-0">
-                    <div className="av w-7 h-7 rounded-full bg-cover bg-center shrink-0 border border-white/10" style={{ backgroundImage: `url('https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
-                    <div className="n flex-1 text-xs text-white/85">Antoine · carnet <em className="font-serif italic text-[#A8C4A2]">Kumano</em></div>
-                    <div className="t font-mono text-[10px] text-white/40">12 m</div>
-                  </div>
-                  <div className="m-live-item flex items-center gap-3 py-2 border-t border-white/5 first:border-t-0">
-                    <div className="av w-7 h-7 rounded-full bg-cover bg-center shrink-0 border border-white/10" style={{ backgroundImage: `url('https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
-                    <div className="n flex-1 text-xs text-white/85">Hélène · binôme <em className="font-serif italic text-[#A8C4A2]">Islande</em></div>
-                    <div className="t font-mono text-[10px] text-white/40">28 m</div>
-                  </div>
-                </div>
+  <h5>Torres del <em>Paine.</em></h5>
+  <div className="sub">Patagonie</div>
+</div>
+</Link>
+</div>
+</div>
+<section className="live-section w-full rounded-[0.75rem] mt-8">
+  <div className="max-w-[1400px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-10">
+    {/* Live Feed */}
+    <div className="live-panel lg:col-span-5">
+      <div className="head">
+        <div className="l"><span className="dot"></span><span>Activité live</span></div>
+        <div className="cnt">14:32 · 8 428 en ligne</div>
+      </div>
+      <h3>Ce qui se passe<br/><em>en ce moment.</em></h3>
+      <div className="live-feed">
+        <div className="live-item">
+          <div className="av" style={{ backgroundImage: `url('https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
+          <div className="txt">
+            <div className="n">Léna a bivouaqué au <em className="font-serif italic text-[#A8C4A2]">Grand Som</em></div>
+            <div className="m">FR · Chartreuse · il y a 4 min</div>
+          </div>
+          <div className="code">FR · 45.3N</div>
+        </div>
+        <div className="live-item">
+          <div className="av" style={{ backgroundImage: `url('https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
+          <div className="txt">
+            <div className="n">Antoine a publié un carnet <em className="font-serif italic text-[#A8C4A2]">Kumano</em></div>
+            <div className="m">JP · Kii · il y a 12 min</div>
+          </div>
+          <div className="code">JP · 33.8N</div>
+        </div>
+        <div className="live-item">
+          <div className="av" style={{ backgroundImage: `url('https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
+          <div className="txt">
+            <div className="n">Hélène cherche un binôme pour <em className="font-serif italic text-[#A8C4A2]">Landmannalaugar</em></div>
+            <div className="m">IS · Août 2026 · il y a 28 min</div>
+          </div>
+          <div className="code">IS · 63.9N</div>
+        </div>
+        <div className="live-item">
+          <div className="av" style={{ backgroundImage: `url('https://images.pexels.com/photos/1043473/pexels-photo-1043473.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
+          <div className="txt">
+            <div className="n">Bertrand a rejoint le club <em className="font-serif italic text-[#A8C4A2]">Patagonie 2026</em></div>
+            <div className="m">CL · Torres del Paine· il y a 41 min</div>
+          </div>
+          <div className="code">CL · 50.9S</div>
+        </div>
+        <div className="live-item">
+          <div className="av" style={{ backgroundImage: `url('https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=80')` }}></div>
+          <div className="txt">
+            <div className="n">Marie a validé le refuge <em className="font-serif italic text-[#A8C4A2]">Bellefond</em></div>
+            <div className="m">FR · Vercors · il y a 1 h</div>
+          </div>
+          <div className="code">FR · 45.0N</div>
+        </div>
+      </div>
+    </div>
+    {/* Stats */}
+    <div className="stats-panel lg:col-span-7">
+      <div className="stat-card">
+        <div className="lbl"><div className="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" width="12" height="12"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg></div>Pays cartographiés</div>
+        <div className="n">137<em> / 195</em></div>
+        <div className="desc">70 % du globe. On avance département par département, jamais par claim marketing.<span className="delta">+8 ce mois</span></div>
+      </div>
+      <div className="stat-card dark">
+        <div className="lbl"><div className="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" width="12" height="12"><path d="M9 20l-5-5 5-5M4 15h11a5 5 0 000-10H9"/></svg></div>Itinéraires vérifiés</div>
+        <div className="n">2 481</div>
+        <div className="desc">Chaque itinéraire passe par un testeur avant publication. Aucun accord commercial.<span className="delta">+12 % T3</span></div>
+      </div>
+      <div className="stat-card feat">
+        <div><div className="lbl"><div className="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" width="12" height="12"><path d="M12 22s-8-9-8-14a8 8 0 1116 0c0 5-8 14-8 14z"/><circle cx="12" cy="8" r="3"/></svg></div>Focus région · Été 2026</div></div>
+        <h4>La Chartreuse<br/><em>six semaines.</em></h4>
+        <p className="desc">Trois testeurs, 42 nuits en bivouac, 312 itinéraires notés. Le journal complet arrive en septembre.</p>
+        <Link href="/journal" className="lkv-btn lkv-btn-primary lkv-btn-sm cta">Lire les carnets<svg className="lkv-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></Link>
+        <div className="mini-map"><div className="pin p1"></div><div className="pin p2"></div><div className="pin p3"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
               </div>
             </div>
-          </div>
-        </MobilePageShell>
-      </div>
+          </MobilePageShell>
+        </div>
 
     </div>
   );

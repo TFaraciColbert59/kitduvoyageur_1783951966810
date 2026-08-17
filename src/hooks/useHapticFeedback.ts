@@ -37,5 +37,5 @@ export function useHapticFeedback() {
     }
   }, [vibrate]);
 
-  return { haptic, vibrate };
+  return { haptic, triggerHaptic: haptic, vibrate };
 }

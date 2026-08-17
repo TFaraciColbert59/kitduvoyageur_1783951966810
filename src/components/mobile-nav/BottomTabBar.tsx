@@ -1,13 +1,13 @@
-'use client';
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+"use client";
+
+import React, { useEffect, useState, memo } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { useRouter, usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import LkvIcon from '@/components/ui/LkvIcon';
 import { useSearchContext } from '@/contexts/SearchContext';
+import LkvIcon from '@/components/ui/LkvIcon';
 import { getCart } from '@/lib/cart';
 
 interface Tab {
@@ -69,93 +69,235 @@ const TABS: Tab[] = [
   },
 ];
 
-function TabLink({ tab, isActive, onPress }: { tab: Tab; isActive: boolean; onPress: (href: string) => void }) {
-  const { haptic } = useHapticFeedback();
-  const router = useRouter();
-
-  const handleTap = () => {
-    haptic(isActive ? 'selection' : 'medium');
+// A memoized tab link to avoid unnecessary re‑renders
+const TabLink = memo(function TabLink({ tab, isActive, onPress }: { tab: Tab; isActive: boolean; onPress: (href: string) => void }) {
+  const { triggerHaptic } = useHapticFeedback();
+  const handleClick = () => {
     onPress(tab.href);
+    triggerHaptic('light');
   };
-
-  if (tab.isHero) {
-    return (
-      <Link
-        href={tab.href}
-        aria-label={tab.ariaLabel}
-        aria-current={isActive ? 'page' : undefined}
-        onClick={handleTap}
-        onMouseEnter={() => router.prefetch(tab.href)}
-        className="relative flex flex-col items-center justify-center flex-1 h-full focus-visible:outline-none rounded-full"
-      >
-        <div
-          style={{
-            width: '38px',
-            height: '38px',
-            borderRadius: '999px',
-            background: isActive ? '#17402C' : '#1E4D33',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#fff',
-            boxShadow: isActive ? '0 3px 10px rgba(23,64,44,0.35)' : '0 2px 6px rgba(23,64,44,0.2)',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <LkvIcon name={tab.iconName} size={19} color="#fff" />
-        </div>
-      </Link>
-    );
-  }
 
   return (
     <Link
       href={tab.href}
+      onClick={handleClick}
       aria-label={tab.ariaLabel}
-      aria-current={isActive ? 'page' : undefined}
-      onClick={handleTap}
-      onMouseEnter={() => router.prefetch(tab.href)}
-      className="relative flex flex-col items-center justify-center flex-1 h-full focus-visible:outline-none rounded-full"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '4px',
+        textDecoration: 'none',
+        color: isActive ? '#A8C4A2' : 'rgba(255, 255, 255, 0.5)',
+        position: 'relative',
+        transition: 'color 0.2s ease',
+        userSelect: 'none',
+        WebkitTapHighlightColor: 'transparent',
+        width: '50px',
+      }}
     >
-      <div className="relative flex flex-col items-center justify-center" style={{ gap: '2px' }}>
-        <LkvIcon name={tab.iconName} size={19} color={isActive ? '#17402C' : '#6B7A72'} />
-        {isActive && (
-          <span
-            style={{
-              fontSize: '12px',
-              letterSpacing: '0.02em',
-              lineHeight: 1,
-              fontFamily: 'var(--font-sans)',
-              color: '#17402C',
-              fontWeight: 700,
-            }}
-          >
-            {tab.label}
-          </span>
-        )}
-      </div>
+      <motion.div
+        whileTap={{ scale: 0.85 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}
+      >
+        <LkvIcon name={tab.iconName} size={22} />
+        <span style={{ fontSize: '9px', fontWeight: isActive ? 600 : 500, fontFamily: 'var(--font-mono)' }}>{tab.label}</span>
+      </motion.div>
       {isActive && (
         <motion.div
-          layoutId="active-dot"
-          aria-hidden="true"
+          layoutId="tab-indicator"
+          transition={{ type: 'spring', stiffness: 450, damping: 30 }}
           style={{
-            width: '4px',
-            height: '4px',
-            borderRadius: '50%',
-            background: '#17402C',
             position: 'absolute',
-            bottom: '6px',
-            left: '50%',
-            marginLeft: '-2px',
+            top: '-12px',
+            width: '5px',
+            height: '5px',
+            borderRadius: '50%',
+            background: '#A8C4A2',
+            boxShadow: '0 0 10px rgba(168, 196, 162, 0.8)',
           }}
-          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
         />
       )}
     </Link>
   );
+});
+
+function HamburgerMenu({ menuOpen, setMenuOpen, openSearch }: { menuOpen: boolean; setMenuOpen: React.Dispatch<React.SetStateAction<boolean>>; openSearch?: () => void }) {
+  const { triggerHaptic } = useHapticFeedback();
+  return (
+    <div style={{ position: 'relative' }}>
+      <motion.button
+        type="button"
+        whileTap={{ scale: 0.9 }}
+        onClick={() => {
+          triggerHaptic('selection');
+          setMenuOpen(!menuOpen);
+        }}
+        aria-label="Menu actions"
+        style={{
+          width: '38px',
+          height: '38px',
+          borderRadius: '999px',
+          background: 'rgba(255,255,255,0.1)',
+          backdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255,255,255,0.15)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#fff',
+          cursor: 'pointer',
+          outline: 'none',
+        }}
+      >
+        <LkvIcon name="menu" size={16} />
+      </motion.button>
+      <AnimatePresence>
+        {menuOpen && (
+          <>
+            {/* Scrim to capture outside taps */}
+            <div
+              onClick={() => setMenuOpen(false)}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 55,
+              }}
+              aria-hidden="true"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 8 }}
+              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+              style={{
+                position: 'absolute',
+                right: 0,
+                bottom: '44px',
+                zIndex: 56,
+                background: 'rgba(11,31,23,0.92)',
+                backdropFilter: 'blur(30px)',
+                borderRadius: '16px',
+                border: '1px solid rgba(255,255,255,0.12)',
+                boxShadow: '0 12px 32px rgba(0,0,0,0.4)',
+                padding: '8px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+                minWidth: '130px',
+              }}
+            >
+              {/* Search */}
+              <button
+                onClick={() => {
+                  triggerHaptic('light');
+                  setMenuOpen(false);
+                  openSearch?.();
+                }}
+                aria-label="Rechercher"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 10px',
+                  borderRadius: '10px',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: 'none',
+                  color: '#fff',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <LkvIcon name="search" size={16} />
+                Recherche
+              </button>
+              {/* Notifications */}
+              <Link
+                href="/alertes"
+                onClick={() => {
+                  triggerHaptic('light');
+                  setMenuOpen(false);
+                }}
+                aria-label="Notifications"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 10px',
+                  borderRadius: '10px',
+                  background: 'rgba(255,255,255,0.06)',
+                  textDecoration: 'none',
+                  color: '#fff',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  position: 'relative',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+                </svg>
+                Alertes
+                <span style={{ position: 'absolute', top: '10px', right: '10px', width: '6px', height: '6px', borderRadius: '50%', background: '#A8C4A2' }} aria-hidden="true" />
+              </Link>
+              {/* Cart */}
+              <Link
+                href="/panier"
+                onClick={() => {
+                  triggerHaptic('light');
+                  setMenuOpen(false);
+                }}
+                aria-label="Panier"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 10px',
+                  borderRadius: '10px',
+                  background: 'rgba(255,255,255,0.06)',
+                  textDecoration: 'none',
+                  color: '#fff',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  position: 'relative',
+                }}
+              >
+                <LkvIcon name="bag" size={16} />
+                Panier
+                {(() => {
+                  const cart = getCart();
+                  const count = cart.reduce((acc, i) => acc + i.quantity, 0);
+                  return count > 0 ? (
+                    <span
+                      style={{
+                        marginLeft: 'auto',
+                        padding: '1px 6px',
+                        borderRadius: '999px',
+                        background: '#A8C4A2',
+                        color: '#0B1F17',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        fontFamily: 'var(--font-mono)',
+                      }}
+                      aria-hidden="true"
+                    >
+                      {count > 9 ? '9+' : count}
+                    </span>
+                  ) : null;
+                })()}
+              </Link>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
-export default function BottomTabBar() {
+function BottomTabBar() {
   const pathname = usePathname();
   const { loading } = useAuth();
   const { openSearch } = useSearchContext();
@@ -181,21 +323,19 @@ export default function BottomTabBar() {
   if (loading || !mounted) {
     return (
       <nav role="navigation" aria-label="Chargement de la navigation" className="md:hidden" style={{ position: 'fixed', left: '12px', right: '12px', bottom: 'calc(12px + env(safe-area-inset-bottom))', zIndex: 50 }}>
-        <div
-          style={{
-            height: '62px',
-            background: 'rgba(255,255,255,0.85)',
-            backdropFilter: 'blur(24px) saturate(1.5)',
-            WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
-            borderRadius: '22px',
-            border: '1px solid rgba(11,31,23,0.06)',
-            boxShadow: '0 10px 30px rgba(11,31,23,0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 8px',
-          }}
-        >
+        <div style={{
+          height: '62px',
+          background: 'rgba(255,255,255,0.85)',
+          backdropFilter: 'blur(24px) saturate(1.5)',
+          WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
+          borderRadius: '22px',
+          border: '1px solid rgba(11,31,23,0.06)',
+          boxShadow: '0 10px 30px rgba(11,31,23,0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 8px',
+        }}>
           {[...Array(5)].map((_, i) => (
             <div key={i} className="animate-pulse" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', width: '48px' }}>
               <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#E2E8E4' }} />
@@ -211,152 +351,29 @@ export default function BottomTabBar() {
     <nav role="navigation" aria-label="Navigation principale" className="md:hidden" style={{ position: 'fixed', left: '16px', right: '16px', bottom: 'calc(10px + env(safe-area-inset-bottom))', zIndex: 50 }}>
       <div
         style={{
-          height: '52px',
-          background: 'rgba(255,255,255,0.78)',
-          backdropFilter: 'blur(20px) saturate(1.8)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
+          height: '62px',
+          background: 'rgba(20, 40, 30, 0.45)',
+          backdropFilter: 'blur(40px) saturate(200%)',
+          WebkitBackdropFilter: 'blur(40px) saturate(200%)',
           borderRadius: '999px',
-          border: '1px solid rgba(255,255,255,0.6)',
-          boxShadow: '0 8px 24px rgba(11,31,23,0.08)',
+          borderTop: '1px solid rgba(255,255,255,0.3)',
+          borderLeft: '1px solid rgba(255,255,255,0.15)',
+          borderRight: '1px solid rgba(255,255,255,0.15)',
+          borderBottom: '1px solid rgba(255,255,255,0.05)',
+          boxShadow: '0 30px 60px rgba(0,0,0,0.4), inset 0 2px 10px rgba(255,255,255,0.1)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-around',
-          padding: '0 10px',
+          padding: '0 16px',
         }}
       >
         {TABS.map(tab => (
           <TabLink key={tab.href} tab={tab} isActive={isActive(tab)} onPress={setPressedTab} />
         ))}
-        {/* Hamburger menu for actions */}
-        <div style={{ position: 'relative' }}>
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Menu actions"
-            style={{
-              width: '34px',
-              height: '34px',
-              borderRadius: '999px',
-              background: 'rgba(255,255,255,0.85)',
-              backdropFilter: 'blur(16px)',
-              border: '1px solid rgba(255,255,255,0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#0B1F17',
-              cursor: 'pointer',
-              outline: 'none',
-            }}
-          >
-            <LkvIcon name="menu" size={16} />
-          </button>
-          {menuOpen && (
-            <div
-              style={{
-                position: 'absolute',
-                right: 0,
-                bottom: '44px',
-                background: 'rgba(255,255,255,0.95)',
-                borderRadius: '12px',
-                border: '1px solid rgba(11,31,23,0.1)',
-                boxShadow: '0 8px 24px rgba(11,31,23,0.1)',
-                padding: '8px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                minWidth: '120px',
-              }}
-            >
-              {/* Search */}
-              <button
-                onClick={() => {
-                  setMenuOpen(false);
-                  openSearch?.();
-                }}
-                aria-label="Rechercher"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '6px 8px',
-                  borderRadius: '8px',
-                  background: 'rgba(0,0,0,0.05)',
-                }}
-              >
-                <LkvIcon name="search" size={16} />
-                Recherche
-              </button>
-              {/* Notifications */}
-              <Link
-                href="/alertes"
-                aria-label="Notifications"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '6px 8px',
-                  borderRadius: '8px',
-                  background: 'rgba(0,0,0,0.05)',
-                  textDecoration: 'none',
-                  color: 'inherit',
-                }}
-              >
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                  <path d="M13.7 21a2 2 0 0 1-3.4 0" />
-                </svg>
-                Alertes
-                <span style={{ position: 'absolute', top: '2px', right: '2px', width: '7px', height: '7px', borderRadius: '50%', background: '#2D6A4F' }} aria-hidden="true" />
-              </Link>
-              {/* Cart */}
-              <Link
-                href="/panier"
-                aria-label="Panier"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '6px 8px',
-                  borderRadius: '8px',
-                  background: 'rgba(0,0,0,0.05)',
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  position: 'relative',
-                }}
-              >
-                <LkvIcon name="bag" size={16} />
-                Panier
-                {(() => {
-                  const cart = getCart();
-                  const count = cart.reduce((acc, i) => acc + i.quantity, 0);
-                  return count > 0 ? (
-                    <span
-                      style={{
-                        position: 'absolute',
-                        top: '-4px',
-                        right: '-4px',
-                        width: '16px',
-                        height: '16px',
-                        borderRadius: '50%',
-                        background: '#17402C',
-                        color: '#fff',
-                        fontSize: '9px',
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontFamily: 'var(--font-mono)',
-                      }}
-                      aria-hidden="true"
-                    >
-                      {count > 9 ? '9+' : count}
-                    </span>
-                  ) : null;
-                })()}
-              </Link>
-            </div>
-          )}
-        </div>
+        <HamburgerMenu menuOpen={menuOpen} setMenuOpen={setMenuOpen} openSearch={openSearch} />
       </div>
     </nav>
   );
 }
+
+export default memo(BottomTabBar);

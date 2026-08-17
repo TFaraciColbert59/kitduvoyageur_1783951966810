@@ -753,16 +753,6 @@ export default function CountryPage({ params }: { params: Promise<{ code: string
               <div className="flag-tag">{flagEmoji} {country.continent} · {country.saison_recommandee}</div>
               <h1>{country.nom}<br/>— <em>{country.slogan}</em></h1>
               <p>{country.subtitle}</p>
-
-              {/* Mobile Interactive 3D Globe in Hero */}
-              <div className="m-hero-globe-stage">
-                <CountryGlobe
-                  countries={ALL_COUNTRIES}
-                  onCountryClick={handleCountryGlobeClick}
-                  focusCode={country.code}
-                  fullscreen={false}
-                />
-              </div>
             </div>
 
             {/* Mobile Quick Stats */}
@@ -788,7 +778,6 @@ export default function CountryPage({ params }: { params: Promise<{ code: string
               <button className={activeSection === 'activites' ? 'on' : ''} onClick={() => scrollToSection('activites')}>Activités</button>
               <button className={activeSection === 'culture' ? 'on' : ''} onClick={() => scrollToSection('culture')}>Culture</button>
               <button className={activeSection === 'pratique' ? 'on' : ''} onClick={() => scrollToSection('pratique')}>Pratique &amp; Météo</button>
-              <button className={activeSection === 'globe-select' ? 'on' : ''} onClick={() => scrollToSection('globe-select')}>Globe 3D</button>
             </div>
 
             {/* Mobile Section : Présentation */}
@@ -858,38 +847,13 @@ export default function CountryPage({ params }: { params: Promise<{ code: string
               </div>
             </div>
 
-            {/* Mobile Section : VRAI GLOBE 3D INTERACTIF */}
-            <div id="m-globe-select" className="m-section-block mt-4">
-              <div className="m-kicker">05 · Explorer la Terre</div>
-              <h2>Le Globe <em>3D interactif</em></h2>
-              <p className="text-xs text-white/70">Faites tourner la planète au doigt et touchez un pays pour ouvrir sa page :</p>
-            </div>
-
-            <div className="m-globe-stage">
-              <CountryGlobe
-                countries={ALL_COUNTRIES}
-                onCountryClick={handleCountryGlobeClick}
-                focusCode={country.code}
-                fullscreen={false}
-              />
-            </div>
-
-            {/* Mobile Explorer Chips */}
-            <div className="px-4 flex gap-2 overflow-x-auto pb-4 scrollbar-none">
-              {exploreChips.slice(0, 8).map((c) => (
-                <Link
-                  key={c.code}
-                  href={`/pays/${c.code.toLowerCase()}`}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium shrink-0 flex items-center gap-1.5 ${
-                    c.code.toUpperCase() === country.code.toUpperCase()
-                      ? 'bg-[#1B4332] text-white border border-[#7FA97A]'
-                      : 'bg-white/10 text-white/80 border border-white/10'
-                  }`}
-                >
-                  <span>{c.flag}</span>
-                  <span>{c.name}</span>
-                </Link>
-              ))}
+            {/* Mobile Section : Communauté (Groupes, Carnets, Clubs) */}
+            <div id="m-communaute" className="m-section-block m-community-block">
+              <div className="m-kicker">05 · Communauté</div>
+              <h2>Rejoignez l'<em>aventure</em>.</h2>
+              <BouteilleALaMer countryIso={country.code} countryName={country.nom} />
+              <PaysClubsList countryIso={country.code} countryName={country.nom} />
+              <PaysCarnetsList countryIso={country.code} countryName={country.nom} />
             </div>
 
             {/* Mobile Action CTA Banner */}

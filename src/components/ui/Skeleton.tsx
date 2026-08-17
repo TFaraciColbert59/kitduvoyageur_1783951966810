@@ -27,6 +27,56 @@ export function SkeletonCard({ className = '' }: { className?: string }) {
   );
 }
 
+export function SkeletonCarnetCard({ className = '' }: { className?: string }) {
+  return (
+    <div className={`bg-[#FBFAF6] rounded-2xl p-4 border border-[#0B1F17]/10 space-y-3 shadow-sm ${className}`}>
+      <Skeleton className="w-full h-48 rounded-xl" />
+      <div className="flex items-center gap-2 pt-1">
+        <Skeleton className="w-7 h-7 rounded-full" />
+        <Skeleton className="w-28 h-4 rounded" />
+      </div>
+      <Skeleton className="w-4/5 h-5 rounded" />
+      <Skeleton className="w-full h-3.5 rounded" />
+      <div className="flex items-center justify-between pt-2">
+        <Skeleton className="w-20 h-6 rounded-full" />
+        <Skeleton className="w-14 h-4 rounded" />
+      </div>
+    </div>
+  );
+}
+
+export function SkeletonProductCard({ className = '' }: { className?: string }) {
+  return (
+    <div className={`bg-[#FBFAF6] rounded-2xl p-4 border border-[#0B1F17]/10 space-y-3 shadow-sm ${className}`}>
+      <Skeleton className="w-full aspect-square rounded-xl" />
+      <div className="space-y-1.5 pt-1">
+        <Skeleton className="w-1/3 h-3 rounded" />
+        <Skeleton className="w-3/4 h-5 rounded" />
+        <Skeleton className="w-1/2 h-4 rounded" />
+      </div>
+      <div className="flex items-center justify-between pt-2">
+        <Skeleton className="w-16 h-5 rounded" />
+        <Skeleton className="w-8 h-8 rounded-full" />
+      </div>
+    </div>
+  );
+}
+
+export function SkeletonClubCard({ className = '' }: { className?: string }) {
+  return (
+    <div className={`bg-[#FBFAF6] rounded-2xl p-5 border border-[#0B1F17]/10 space-y-4 shadow-sm ${className}`}>
+      <div className="flex items-center gap-3.5">
+        <Skeleton className="w-12 h-12 rounded-xl flex-shrink-0" />
+        <div className="space-y-1.5 flex-1">
+          <Skeleton className="w-3/4 h-5 rounded" />
+          <Skeleton className="w-1/2 h-3.5 rounded" />
+        </div>
+      </div>
+      <Skeleton className="w-full h-10 rounded-xl" />
+    </div>
+  );
+}
+
 export function SkeletonText({ lines = 3, className = '' }: { lines?: number; className?: string }) {
   return (
     <div className={`space-y-2 ${className}`}>

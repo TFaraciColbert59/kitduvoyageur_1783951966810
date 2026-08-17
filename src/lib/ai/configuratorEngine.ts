@@ -79,23 +79,33 @@ export interface ConnectedKitReport {
 export async function fetchRealCatalog(): Promise<RealShopProduct[]> {
   try {
     const supabase = createClient();
-    const { data } = await supabase
-      .from('products')
-      .select('id, slug, name, brand, category, price_eur, weight_g, image, stock')
-      .eq('is_active', true)
-      .gt('stock', 0)
+    let data: any[] | null = null;
+    const res = await supabase
+      .from('shop_products')
+      .select('id, slug, name, brand, category, category_main, price_eur, weight_g, image, stock')
       .order('rating', { ascending: false });
+
+    data = res.data;
+
+    if (!data || data.length === 0) {
+      const fallback = await supabase
+        .from('products')
+        .select('id, slug, name, brand, category, price_eur, weight_g, image, stock')
+        .eq('is_active', true)
+        .order('rating', { ascending: false });
+      data = fallback.data;
+    }
 
     if (!data || data.length === 0) return [];
 
-    return data.map((p) => ({
+    return data.map((p: any) => ({
       id: p.id,
-      slug: p.slug,
+      slug: p.slug || p.id,
       name: p.name,
       brand: p.brand || 'Le Kit du Voyageur',
-      category: p.category || 'Accessoires',
+      category: p.category_main || p.category || 'Accessoires',
       priceEur: Number(p.price_eur) || 0,
-      weightGrams: p.weight_g || 0,
+      weightGrams: Number(p.weight_g) || 0,
       image: p.image || 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400',
       stock: p.stock || 10,
     }));

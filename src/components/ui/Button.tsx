@@ -38,10 +38,15 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   style,
   children,
+  onMouseDown,
+  onMouseUp,
+  onTouchStart,
+  onTouchEnd,
   ...rest
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
 
   const isDisabled = disabled || loading;
 
@@ -50,16 +55,19 @@ export const Button: React.FC<ButtonProps> = ({
     alignItems: 'center',
     justifyContent: 'center',
     fontWeight: 500,
-    borderRadius: '8px',
+    borderRadius: '10px',
     cursor: isDisabled ? 'not-allowed' : 'pointer',
     fontFamily: 'inherit',
     lineHeight: 1.4,
-    transition: 'all 200ms cubic-bezier(0.16, 1, 0.3, 1)',
+    transform: !isDisabled && isPressed ? 'scale(0.97)' : !isDisabled && isHovered ? 'scale(1.012)' : 'scale(1)',
+    transition: 'transform 120ms cubic-bezier(0.16, 1, 0.3, 1), background-color 200ms ease, opacity 200ms ease, box-shadow 200ms ease',
     opacity: isDisabled ? 0.5 : 1,
+    userSelect: 'none',
+    WebkitTapHighlightColor: 'transparent',
     ...VARIANT_STYLES[variant],
     ...SIZE_STYLES[size],
     ...(isHovered && !isDisabled ? HOVER_STYLES[variant] || {} : {}),
-    ...(isFocused ? { outline: '2px solid #A8C8A0', outlineOffset: '2px' } : {}),
+    ...(isFocused ? { outline: '2px solid #82C39B', outlineOffset: '2px' } : {}),
     ...style,
   };
 
@@ -68,9 +76,13 @@ export const Button: React.FC<ButtonProps> = ({
       style={baseStyle}
       disabled={isDisabled}
       onMouseEnter={(e) => { setIsHovered(true); rest.onMouseEnter?.(e); }}
-      onMouseLeave={(e) => { setIsHovered(false); rest.onMouseLeave?.(e); }}
+      onMouseLeave={(e) => { setIsHovered(false); setIsPressed(false); rest.onMouseLeave?.(e); }}
+      onMouseDown={(e) => { setIsPressed(true); onMouseDown?.(e); }}
+      onMouseUp={(e) => { setIsPressed(false); onMouseUp?.(e); }}
+      onTouchStart={(e) => { setIsPressed(true); onTouchStart?.(e); }}
+      onTouchEnd={(e) => { setIsPressed(false); onTouchEnd?.(e); }}
       onFocus={(e) => { setIsFocused(true); rest.onFocus?.(e); }}
-      onBlur={(e) => { setIsFocused(false); rest.onBlur?.(e); }}
+      onBlur={(e) => { setIsFocused(false); setIsPressed(false); rest.onBlur?.(e); }}
       {...rest}
     >
       {loading && (

@@ -187,7 +187,7 @@ export default function ComptePage() {
             <TabsCompte
               activeTab={activeTab}
               onTabChange={(tab) => {
-                if (tab === 'recompenses') {
+                if ((tab as string) === 'recompenses') {
                   router.push('/recompenses');
                   return;
                 }

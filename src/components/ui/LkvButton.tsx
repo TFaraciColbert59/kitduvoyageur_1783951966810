@@ -31,10 +31,15 @@ export default function LkvButton({
   onMouseLeave,
   onFocus,
   onBlur,
+  onMouseDown,
+  onMouseUp,
+  onTouchStart,
+  onTouchEnd,
   ...props
 }: LkvButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
 
   const baseStyle: React.CSSProperties = {
     display: 'inline-flex',
@@ -47,7 +52,8 @@ export default function LkvButton({
     cursor: disabled ? 'not-allowed' : 'pointer',
     border: 'none',
     fontFamily: 'inherit',
-    transition: 'all 220ms cubic-bezier(0.16, 1, 0.3, 1)',
+    transform: !disabled && isPressed ? 'scale(0.97)' : !disabled && isHovered ? 'scale(1.015)' : 'scale(1)',
+    transition: 'transform 120ms cubic-bezier(0.16, 1, 0.3, 1), background-color 200ms ease, opacity 200ms ease, box-shadow 200ms ease',
     ...STYLES[variant],
     ...SIZES[size],
     ...(disabled ? { opacity: 0.5 } : {}),
@@ -60,9 +66,13 @@ export default function LkvButton({
     <button
       style={baseStyle}
       onMouseEnter={(e) => { setIsHovered(true); onMouseEnter?.(e); }}
-      onMouseLeave={(e) => { setIsHovered(false); onMouseLeave?.(e); }}
+      onMouseLeave={(e) => { setIsHovered(false); setIsPressed(false); onMouseLeave?.(e); }}
+      onMouseDown={(e) => { setIsPressed(true); onMouseDown?.(e); }}
+      onMouseUp={(e) => { setIsPressed(false); onMouseUp?.(e); }}
+      onTouchStart={(e) => { setIsPressed(true); onTouchStart?.(e); }}
+      onTouchEnd={(e) => { setIsPressed(false); onTouchEnd?.(e); }}
       onFocus={(e) => { setIsFocused(true); onFocus?.(e); }}
-      onBlur={(e) => { setIsFocused(false); onBlur?.(e); }}
+      onBlur={(e) => { setIsFocused(false); setIsPressed(false); onBlur?.(e); }}
       disabled={disabled}
       {...props}
     >

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-export type CompteTab = 'vue-d-ensemble' | 'aventures' | 'carnets' | 'clubs' | 'commandes' | 'fidelite' | 'parametres' | 'recompenses';
+export type CompteTab = 'vue-d-ensemble' | 'aventures' | 'carnets' | 'clubs' | 'commandes' | 'fidelite' | 'parametres';
 
 interface TabsCompteProps {
   activeTab: CompteTab;
@@ -23,8 +23,7 @@ export default function TabsCompte({ activeTab, onTabChange, counts }: TabsCompt
     { id: 'carnets' as CompteTab, label: `Carnets de route (${counts.carnets})`, hasDot: true },
     { id: 'clubs' as CompteTab, label: `Clubs (${counts.clubs})` },
     { id: 'commandes' as CompteTab, label: `Commandes (${counts.commandes})` },
-    { id: 'fidelite' as CompteTab, label: `Fidélité (${counts.fidelite})` },
-    { id: 'recompenses' as CompteTab, label: 'Gains & Récompenses' },
+    { id: 'fidelite' as CompteTab, label: 'Gains & Récompenses' },
     { id: 'parametres' as CompteTab, label: 'Paramètres' },
   ];
 

@@ -618,6 +618,7 @@ export default function CommunautePage() {
   const [clubFilterTab, setClubFilterTab] = useState<'all' | 'activite' | 'pays' | 'my_clubs'>('all');
   const [clubSearchQuery, setClubSearchQuery] = useState('');
   const [isCreateClubModalOpen, setIsCreateClubModalOpen] = useState(false);
+  const [isSavingClub, setIsSavingClub] = useState(false);
   const [selectedDetailClub, setSelectedDetailClub] = useState<any | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -1134,7 +1135,15 @@ export default function CommunautePage() {
                   {/* TABS CONTENT */}
                   <div className="space-y-8">
                     {error ? (
-                      <div className="text-center py-16 bg-white rounded-[0.75rem] border border-red-200 p-8 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
+                      <div className="relative text-center py-16 bg-white rounded-[0.75rem] border border-red-200 p-8 shadow-sm">
+                        {/* Close/Dismiss Button */}
+                        <button 
+                          onClick={() => setError(null)} 
+                          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#F5F2E8] flex items-center justify-center text-[#5C6B5E] hover:bg-[#E8E4D8] transition-colors"
+                          aria-label="Fermer l'alerte"
+                        >
+                          <Icon name="XMarkIcon" size={16} />
+                        </button>
                         <div className="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-3">
                           <Icon name="ExclamationTriangleIcon" size={24} />
                         </div>
@@ -1676,7 +1685,25 @@ export default function CommunautePage() {
             </div>
 
             {/* Tab Content */}
-            {loading ? (
+            {error ? (
+              <div style={{ margin: '0 16px 16px 16px', padding: '16px', background: 'var(--lkv-paper, #FBFAF6)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px', textAlign: 'center', position: 'relative' }}>
+                <button 
+                  onClick={() => setError(null)} 
+                  style={{ position: 'absolute', top: '8px', right: '8px', background: 'transparent', border: 'none', color: '#6B7A72', fontSize: '14px', cursor: 'pointer' }}
+                  aria-label="Fermer"
+                >
+                  ✕
+                </button>
+                <div style={{ color: '#EF4444', fontSize: '13px', fontWeight: 700, marginBottom: '4px' }}>Erreur de chargement</div>
+                <div style={{ color: '#6B7A72', fontSize: '11px', marginBottom: '12px' }}>{error}</div>
+                <button 
+                  onClick={() => fetchData()} 
+                  style={{ padding: '6px 16px', background: '#17402C', color: 'white', border: 'none', borderRadius: '999px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Réessayer
+                </button>
+              </div>
+            ) : loading ? (
               <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
                 <div style={{ width: '24px', height: '24px', border: '2px solid #17402C', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
               </div>
