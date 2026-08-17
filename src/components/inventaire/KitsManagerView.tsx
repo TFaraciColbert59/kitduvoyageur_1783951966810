@@ -171,34 +171,101 @@ export default function KitsManagerView({
         </div>
 
         {activeTab === 'active' && (
-          <button
-            onClick={handleOpenCreate}
-            className="px-4 py-2 rounded-full text-xs font-semibold bg-[#17402C] text-white hover:bg-[#0B1F17] transition-all flex items-center gap-1.5 shadow-xs"
-          >
-            <span>+ Nouveau kit</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                triggerHaptic('selection');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="px-4 py-2 rounded-full text-xs font-bold bg-[#17402C] text-white hover:bg-[#0B1F17] transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+            >
+              <span>✨ Générer un kit par IA</span>
+            </button>
+            <button
+              onClick={handleOpenCreate}
+              className="px-3.5 py-2 rounded-full text-xs font-semibold bg-black/[0.04] text-[#0B1F17] hover:bg-black/[0.08] transition-all flex items-center gap-1 cursor-pointer"
+            >
+              <span>+ Manuel</span>
+            </button>
+          </div>
         )}
       </div>
 
       {/* Liste des Kits */}
       {currentList.length === 0 ? (
-        <div className="p-12 text-center rounded-2xl bg-white border border-black/[0.04] shadow-2xs">
-          <p className="text-3xl mb-2">📦</p>
-          <h3 className="text-sm font-semibold text-[#0B1F17]">
-            {activeTab === 'active' ? 'Aucun kit pour le moment' : 'Corbeille vide'}
-          </h3>
-          <p className="text-xs text-[#6B7A72] max-w-xs mx-auto mt-1 mb-4">
-            {activeTab === 'active'
-              ? 'Créez un kit personnalisé ou utilisez le configurateur IA pour préparer vos aventures.'
-              : 'Les kits supprimés restent ici 10 jours avant suppression définitive.'}
-          </p>
+        <div className="p-8 sm:p-10 text-center rounded-3xl bg-white border border-black/[0.06] shadow-2xs space-y-6">
+          <div className="max-w-md mx-auto space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E1EBDD] text-[#17402C] text-[11px] font-mono font-bold uppercase tracking-wider">
+              ✨ Recommandé · Zéro effort
+            </div>
+            <h3 className="text-lg sm:text-xl font-bold text-[#0B1F17] tracking-tight font-display">
+              {activeTab === 'active'
+                ? 'Générez votre premier kit avec l\'IA'
+                : 'Corbeille vide'}
+            </h3>
+            <p className="text-xs text-[#6B7A72]">
+              {activeTab === 'active'
+                ? 'L\'assistant intelligent analyse votre façon de marcher et compose instantanément le kit idéal en sélectionnant votre équipement.'
+                : 'Les kits supprimés restent ici 10 jours avant suppression définitive.'}
+            </p>
+          </div>
+
           {activeTab === 'active' && (
-            <button
-              onClick={handleOpenCreate}
-              className="px-4 py-2 rounded-full text-xs font-semibold bg-[#17402C] text-white hover:bg-[#0B1F17]"
-            >
-              + Créer mon premier kit
-            </button>
+            <div className="space-y-4 max-w-xl mx-auto">
+              {/* 4 Presets 1-Tap Rapides */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-left">
+                {[
+                  { title: 'Trek Montagne', emoji: '🏔️', sub: '3j Bivouac', cat: 'Trek' },
+                  { title: 'Journée Estivale', emoji: '☀️', sub: 'Léger 15-25km', cat: 'Rando' },
+                  { title: 'Bivouac Forêt', emoji: '🌲', sub: '2j Nature', cat: 'Bivouac' },
+                  { title: 'Ultra-Light', emoji: '⚡', sub: 'Fastpacking 48h', cat: 'Trail' },
+                ].map((preset, idx) => (
+                  <button
+                    key={idx}
+                    onClick={async () => {
+                      triggerHaptic('selection');
+                      await onCreateKit({
+                        name: `Kit IA — ${preset.title}`,
+                        description: `Généré automatiquement par l'IA (${preset.sub})`,
+                        for_destination: 'France / Massifs',
+                        season: 'Été',
+                        activity: preset.cat,
+                        gearItems: userEquipment.slice(0, 8).map((ue) => ({
+                          item_name: ue.name,
+                          category: ue.category,
+                          weight_g: ue.weight_g || 0,
+                        })),
+                      });
+                    }}
+                    className="p-3 rounded-2xl bg-[#FBFAF6] hover:bg-[#E1EBDD]/40 border border-black/[0.05] hover:border-[#17402C]/30 transition-all text-left group cursor-pointer"
+                  >
+                    <span className="text-lg block mb-1">{preset.emoji}</span>
+                    <span className="font-bold text-xs text-[#0B1F17] block truncate">{preset.title}</span>
+                    <span className="text-[10px] text-[#6B7A72] block truncate">{preset.sub}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Bouton Principal de Génération IA */}
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button
+                  onClick={() => {
+                    triggerHaptic('selection');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="w-full sm:w-auto px-6 py-3 rounded-full text-xs font-bold bg-[#17402C] text-white hover:bg-[#0B1F17] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                >
+                  <span>✨ Utiliser le Configurateur IA N°1</span>
+                  <span>➔</span>
+                </button>
+                <button
+                  onClick={handleOpenCreate}
+                  className="w-full sm:w-auto px-4 py-3 rounded-full text-xs font-semibold text-[#6B7A72] hover:text-[#0B1F17] transition-colors"
+                >
+                  Ou créer manuellement
+                </button>
+              </div>
+            </div>
           )}
         </div>
       ) : (
