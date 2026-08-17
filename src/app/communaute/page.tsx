@@ -453,7 +453,7 @@ function CarnetCard({ carnet, user }: { carnet: any, user: any }) {
         <div className="absolute top-3.5 right-3.5 flex items-center gap-1.5">
           {carnet.verified && (
             <span className="bg-[#2D6A4F] text-white backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm flex items-center gap-1">
-              <span>✓</span> Vérifié
+              <span>✓</span> Ajouter
             </span>
           )}
         </div>

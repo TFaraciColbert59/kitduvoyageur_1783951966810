@@ -12,6 +12,7 @@ import { EQUIPMENT_CATEGORIES, getCategoryIcon } from '@/constants/equipmentCate
 import GearDetailDrawer from '@/components/inventaire/GearDetailDrawer';
 import KitCockpitDrawer from '@/components/inventaire/KitCockpitDrawer';
 import LendItemModal from '@/components/inventaire/LendItemModal';
+import ConsumablesSidebar from '@/components/inventaire/ConsumablesSidebar';
 import { addToCart } from '@/lib/cart';
 import {
   PlannedHike,
@@ -181,6 +182,7 @@ export default function MonMaterielPage() {
   const [lendingItem, setLendingItem] = useState<UserEquipmentItem | null>(null);
   const [cartToast, setCartToast] = useState<string | null>(null);
   const [wishlistItems, setWishlistItems] = useState<Set<string>>(new Set(['gear-osprey-40']));
+  const [isConsumablesOpen, setIsConsumablesOpen] = useState(false);
 
   // NL AI
   const [aiPrompt, setAiPrompt] = useState('');
@@ -614,6 +616,16 @@ export default function MonMaterielPage() {
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => {
+                triggerHaptic('selection');
+                setIsConsumablesOpen(true);
+              }}
+              className="flex-1 sm:flex-initial lkv-btn lkv-btn-ghost lkv-btn-sm text-xs py-2 px-3 justify-center min-h-[40px]"
+              title="Gérer les consommables & stocks"
+            >
+              <span>📦 Consommables</span>
+            </button>
             <button
               onClick={() => {
                 triggerHaptic('selection');
@@ -1329,6 +1341,13 @@ export default function MonMaterielPage() {
         onAddToCart={(product) => {
           handleAddToCart(product);
         }}
+      />
+
+      <ConsumablesSidebar
+        isOpen={isConsumablesOpen}
+        onClose={() => setIsConsumablesOpen(false)}
+        nightsCount={activeHike?.nightsCount ?? 3}
+        onToast={showNotificationToast}
       />
 
       {showAddModal && (

@@ -297,7 +297,7 @@ export default function DeparturePlannerView({
           </div>
 
           <span className="text-xs font-mono font-semibold text-[#17402C] bg-[#E1EBDD] px-2.5 py-1 rounded-full">
-            {checkedItems.size} / {departurePlan.checklist.inPackReady.length + departurePlan.checklist.consumablesToPack.length} vérifiés
+            {checkedItems.size} / {departurePlan.checklist.inPackReady.length + departurePlan.checklist.consumablesToPack.length} ajoutés
           </span>
         </div>
 
@@ -396,7 +396,7 @@ export default function DeparturePlannerView({
                     onClick={onOpenAddGearModal}
                     className="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-900 text-white shrink-0 hover:bg-black transition-colors"
                   >
-                    Vérifier
+                    Ajouter
                   </button>
                 </div>
               ))}

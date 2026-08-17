@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { getCart, addToCart as addCartItem, removeFromCart as removeCartItem, updateQuantity as updateCartQty, CartItem } from '@/lib/cart';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { Kit } from '@/types/kit';
 
 export interface UnifiedProduct {
   id: string;
@@ -64,6 +65,7 @@ export interface UserEquipmentItem {
 }
 
 const GUEST_GEAR_STORAGE_KEY = 'lkdv_guest_equipment';
+const GUEST_KITS_STORAGE_KEY = 'lkdv_guest_kits';
 
 export const FALLBACK_AUTHENTIC_PRODUCTS: UnifiedProduct[] = [
   {
@@ -515,6 +517,25 @@ function saveGuestGear(items: UserEquipmentItem[]): void {
   }
 }
 
+function getGuestKits(): Kit[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(GUEST_KITS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveGuestKits(kits: Kit[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(GUEST_KITS_STORAGE_KEY, JSON.stringify(kits));
+  } catch { /* ignore */ }
+}
+
 export function useEquipment() {
   const { user } = useAuth();
   const { triggerHaptic } = useHapticFeedback();
@@ -522,6 +543,7 @@ export function useEquipment() {
 
   const [products, setProducts] = useState<UnifiedProduct[]>(FALLBACK_AUTHENTIC_PRODUCTS);
   const [equipment, setEquipment] = useState<UserEquipmentItem[]>(INITIAL_AUTHENTIC_GUEST_EQUIPMENT);
+  const [kits, setKits] = useState<Kit[]>([]);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -580,8 +602,20 @@ export function useEquipment() {
         } else {
           setEquipment(getGuestGear());
         }
+
+        // Load kits for the user
+        const { data: kitData, error: kitErr } = await supabase
+          .from('kits')
+          .select('*')
+          .eq('user_id', user.id);
+        if (!kitErr && kitData && kitData.length > 0) {
+          setKits(kitData as Kit[]);
+        } else {
+          setKits([]);
+        }
       } else {
         setEquipment(getGuestGear());
+        setKits(getGuestKits());
       }
 
       syncCart();
@@ -589,6 +623,7 @@ export function useEquipment() {
       console.warn('Chargement fallback équipement:', err);
       setProducts(FALLBACK_AUTHENTIC_PRODUCTS);
       setEquipment(getGuestGear());
+      setKits(getGuestKits());
     } finally {
       setLoading(false);
     }
@@ -798,22 +833,22 @@ export function useEquipment() {
   const removeFromEquipment = useCallback(
     async (gearItemIdOrProductId: string) => {
       triggerHaptic('warning');
-      const target = equipment.find((i) => i.id === gearItemIdOrProductId || i.product_id === gearItemIdOrProductId);
-      const targetId = target ? target.id : gearItemIdOrProductId;
-
-      const updated = equipment.filter((item) => item.id !== targetId && item.product_id !== gearItemIdOrProductId);
-      setEquipment(updated);
-      if (!user) saveGuestGear(updated);
-
-      if (user && user.id && targetId) {
+      // Optimistic update
+      setEquipment((prev) => prev.filter((item) => item.id !== gearItemIdOrProductId && item.product_id !== gearItemIdOrProductId));
+      if (!user) {
+        const filtered = getGuestGear().filter((item) => item.id !== gearItemIdOrProductId && item.product_id !== gearItemIdOrProductId);
+        saveGuestGear(filtered);
+      }
+      
+      if (user && user.id) {
         try {
-          await supabase.from('gear_items').delete().eq('id', targetId).eq('user_id', user.id);
+          await supabase.from('gear_items').delete().eq('id', gearItemIdOrProductId).or(`product_id.eq.${gearItemIdOrProductId}`);
         } catch (err) {
           console.warn('Erreur suppression gear_item:', err);
         }
       }
     },
-    [user, supabase, equipment, triggerHaptic]
+    [user, supabase, triggerHaptic]
   );
 
   // MISE À JOUR ÉQUIPEMENT
@@ -835,9 +870,35 @@ export function useEquipment() {
     [user, supabase, equipment, triggerHaptic]
   );
 
+  // KIT CRUD
+  const addKit = useCallback((kit: Kit) => {
+    setKits((prev) => [...prev, kit]);
+    if (!user) saveGuestKits([...kits, kit]);
+    if (user && user.id) {
+      supabase.from('kits').insert({ ...kit, user_id: user.id }).catch((e) => console.warn('Kit insert error', e));
+    }
+  }, [user, supabase, kits]);
+
+  const updateKit = useCallback((updatedKit: Kit) => {
+    setKits((prev) => prev.map((k) => (k.id === updatedKit.id ? updatedKit : k)));
+    if (!user) saveGuestKits(kits.map((k) => (k.id === updatedKit.id ? updatedKit : k)));
+    if (user && user.id) {
+      supabase.from('kits').update(updatedKit).eq('id', updatedKit.id).catch((e) => console.warn('Kit update error', e));
+    }
+  }, [user, supabase, kits]);
+
+  const removeKit = useCallback((kitId: string) => {
+    setKits((prev) => prev.filter((k) => k.id !== kitId));
+    if (!user) saveGuestKits(kits.filter((k) => k.id !== kitId));
+    if (user && user.id) {
+      supabase.from('kits').delete().eq('id', kitId).catch((e) => console.warn('Kit delete error', e));
+    }
+  }, [user, supabase, kits]);
+
   return {
     products,
     equipment,
+    kits,
     cartItems,
     cartCount,
     loading,
@@ -853,6 +914,9 @@ export function useEquipment() {
     addToEquipment,
     removeFromEquipment,
     updateEquipment,
+    addKit,
+    updateKit,
+    removeKit,
     refresh: loadData,
   };
 }

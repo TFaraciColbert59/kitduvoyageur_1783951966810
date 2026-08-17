@@ -625,7 +625,7 @@ export default function OccasionPage() {
                         {isVerifiedPurchase && (
                           <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500 text-white font-medium flex items-center gap-1">
                             <Icon name="ShieldCheckIcon" size={10} variant="outline" />
-                            Vérifié
+                            Ajouter
                           </span>
                         )}
                       </div>

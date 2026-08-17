@@ -232,7 +232,7 @@ function CertificatAuthenticite({ certificat }: { certificat?: OccasionCertifica
         <div className="flex items-center gap-2">
           <Icon name="ShieldCheckIcon" size={16} variant="outline" className="text-emerald-400 flex-shrink-0" />
           <span className="text-sm font-semibold text-foreground">Certificat d&apos;authenticité</span>
-          <span className="px-2 py-0.5 rounded-full bg-emerald-400/10 text-emerald-400 text-[10px] font-mono border border-emerald-400/20" style={{ fontFamily: 'var(--font-mono)' }}>Vérifié</span>
+          <span className="px-2 py-0.5 rounded-full bg-emerald-400/10 text-emerald-400 text-[10px] font-mono border border-emerald-400/20" style={{ fontFamily: 'var(--font-mono)' }}>Ajouter</span>
         </div>
         <Icon name={open ? 'ChevronUpIcon' : 'ChevronDownIcon'} size={14} variant="outline" className="text-muted-foreground flex-shrink-0" />
       </button>
@@ -252,7 +252,7 @@ function CertificatAuthenticite({ certificat }: { certificat?: OccasionCertifica
           )}
           {certificat?.verifie_par && (
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Vérifié par</span>
+              <span className="text-muted-foreground">Ajouté par</span>
               <span className="text-foreground font-medium">{certificat.verifie_par}</span>
             </div>
           )}

@@ -127,7 +127,7 @@ export default function UnifiedGearCard({
                 className="flex-1 py-1.5 px-2 bg-black/[0.04] hover:bg-black/[0.08] text-[#0B1F17] rounded-lg text-[10px] font-semibold transition-colors truncate"
                 title="Ajouter à mon matériel possédé"
               >
-                + J'ai déjà
+                                Ajouter
               </button>
             )}
             {onAddToCart && price != null && (

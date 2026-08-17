@@ -77,7 +77,7 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
                   {carnet.verified && (
                     <div className="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="#C89A5A"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-                      <span className="text-[9px] font-bold text-[#0F2A20] uppercase tracking-wider">Vérifié</span>
+                      <span className="text-[9px] font-bold text-[#0F2A20] uppercase tracking-wider">Ajouter</span>
                     </div>
                   )}
                 </div>

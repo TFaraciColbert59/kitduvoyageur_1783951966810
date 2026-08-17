@@ -513,7 +513,7 @@ export default function KitCockpitDrawer({
                             className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white hover:bg-black/[0.04] border border-black/15 text-[#0B1F17]"
                             title="Indiquer que vous possédez déjà cet équipement"
                           >
-                            + J'ai déjà
+                                            Ajouter
                           </button>
                           <button
                             type="button"

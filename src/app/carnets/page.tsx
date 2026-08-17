@@ -303,7 +303,7 @@ function CarnetDetailModal({
 
           {/* Top actions */}
           <div className="absolute top-4 left-4 flex gap-2 flex-wrap">
-            {carnet.verified && <span className="text-[10px] bg-emerald-500 text-white px-2.5 py-1 rounded-full font-700">✓ Vérifié</span>}
+            {carnet.verified && <span className="text-[10px] bg-emerald-500 text-white px-2.5 py-1 rounded-full font-700">✓ Ajouter</span>}
             {carnet.is_collaborative && <span className="text-[10px] bg-blue-500 text-white px-2.5 py-1 rounded-full font-700">👥 Collaboratif</span>}
             <span className={`text-[10px] px-2.5 py-1 rounded-full font-700 ${carnet.visibility === 'public' ? 'bg-white/20 text-white' : carnet.visibility === 'friends' ? 'bg-blue-500/80 text-white' : 'bg-gray-800/80 text-white'}`}>
               {carnet.visibility === 'public' ? '🌍 Public' : carnet.visibility === 'friends' ? '👥 Amis' : '🔒 Privé'}
@@ -639,7 +639,7 @@ function CarnetCard({
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         {/* Badges */}
         <div className="absolute top-3 left-3 flex items-center gap-2 flex-wrap">
-          {carnet.verified && <span className="text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-700">✓ Vérifié</span>}
+          {carnet.verified && <span className="text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-700">✓ Ajouter</span>}
           {carnet.is_collaborative && <span className="text-[10px] bg-blue-500 text-white px-2 py-0.5 rounded-full font-700">👥 Collaboratif</span>}
           <span className={`text-[10px] px-2 py-0.5 rounded-full font-700 ${carnet.visibility === 'public' ? 'bg-white/20 text-white' : carnet.visibility === 'friends' ? 'bg-blue-500/80 text-white' : 'bg-gray-800/80 text-white'}`}>
             {carnet.visibility === 'public' ? '🌍' : carnet.visibility === 'friends' ? '👥' : '🔒'} {carnet.visibility}
