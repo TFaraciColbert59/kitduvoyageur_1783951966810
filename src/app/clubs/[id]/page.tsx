@@ -7,8 +7,12 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import Icon from '@/components/ui/AppIcon';
+import SocialActions from '@/components/social/SocialActions';
+import CommentsSheet, { CommentData } from '@/components/social/CommentsSheet';
+import MoreMenuSheet from '@/components/social/MoreMenuSheet';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface Club {
   id: string;
@@ -18,6 +22,7 @@ interface Club {
   emoji: string;
   description: string;
   cover_color: string;
+  cover_image?: string;
   category: string;
   rules: string;
   privacy: 'open' | 'closed' | 'secret';
@@ -66,6 +71,7 @@ const TAB_LINKS = ['Tous les contenus', 'Sorties', 'Membres', 'Photos', 'Discuss
 export default function ClubDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { triggerHaptic } = useHapticFeedback();
   const clubId = params?.id as string;
   const [club, setClub] = useState<Club | null>(null);
   const [topics, setTopics] = useState<ClubTopic[]>([]);
@@ -89,6 +95,9 @@ export default function ClubDetailPage() {
   const [replyingToTopic, setReplyingToTopic] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
   const [topicReplies, setTopicReplies] = useState<Record<string, any[]>>({});
+  const [activeCommentsTopic, setActiveCommentsTopic] = useState<ClubTopic | null>(null);
+  const [commentsList, setCommentsList] = useState<CommentData[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
 
   const { user } = useAuth();
   const supabase = useMemo(() => createClient(), []);
@@ -205,47 +214,106 @@ export default function ClubDetailPage() {
     }
   };
 
-  const handleLoadReplies = async (topicId: string) => {
-    const { data } = await supabase.from('club_topic_replies').select('*, author:user_profiles(full_name, avatar_url)').eq('topic_id', topicId).order('created_at', { ascending: true });
-    if (data) {
-      setTopicReplies(prev => ({ ...prev, [topicId]: data }));
-    }
-  };
+  const handleOpenCommentsSheet = async (topic: ClubTopic) => {
+    setActiveCommentsTopic(topic);
+    setCommentsLoading(true);
+    try {
+      const { data } = await supabase
+        .from('club_topic_replies')
+        .select('id, content, created_at, author_id, parent_id, author:user_profiles(full_name, avatar_url)')
+        .eq('topic_id', topic.id)
+        .order('created_at', { ascending: true });
 
-  const handleCreateReply = async (topicId: string) => {
-    if (!user) { showToast('Connectez-vous pour répondre'); return; }
-    if (!replyContent.trim()) return;
-
-    const { data, error } = await supabase.from('club_topic_replies').insert({
-      topic_id: topicId,
-      author_id: user.id,
-      content: replyContent
-    }).select('*, author:user_profiles(full_name, avatar_url)').single();
-
-    if (!error && data) {
-      setReplyContent('');
-      setReplyingToTopic(null);
-      setTopicReplies(prev => ({
-        ...prev,
-        [topicId]: [...(prev[topicId] || []), data]
-      }));
-      const topic = topics.find(t => t.id === topicId);
-      if (topic) {
-        await supabase.from('club_topics').update({ replies_count: (topic.replies_count || 0) + 1 }).eq('id', topicId);
-        setTopics(topics.map(t => t.id === topicId ? { ...t, replies_count: (t.replies_count || 0) + 1 } : t));
+      if (data) {
+        const formatted: CommentData[] = data.map((r: any) => ({
+          id: r.id,
+          author_id: r.author_id,
+          author_name: r.author?.full_name || 'Voyageur',
+          author_avatar: r.author?.avatar_url,
+          created_at: r.created_at,
+          content: r.content,
+          reply_to_id: r.parent_id,
+          likes_count: 0,
+          user_liked: false,
+        }));
+        setCommentsList(formatted);
       }
-      showToast("Réponse publiée !");
-    } else {
-      showToast("Erreur lors de la publication");
+    } finally {
+      setCommentsLoading(false);
     }
   };
 
-  // Répondre directement à un membre précis
-  const startReplyTo = (topicId: string, authorName?: string) => {
+  const handleAddTopicComment = async (content: string, replyToId?: string) => {
     if (!user) { showToast('Connectez-vous pour répondre'); return; }
-    setReplyingToTopic(topicId);
-    setReplyContent(authorName ? `@${authorName} ` : '');
-    handleLoadReplies(topicId);
+    if (!activeCommentsTopic) return;
+
+    const tempId = `temp-${Date.now()}`;
+    const optimistic: CommentData = {
+      id: tempId,
+      author_id: user.id,
+      author_name: 'Moi',
+      created_at: new Date().toISOString(),
+      content,
+      reply_to_id: replyToId,
+      likes_count: 0,
+      user_liked: false,
+    };
+    setCommentsList(prev => [...prev, optimistic]);
+
+    // Update topic counter in topics list
+    setTopics(prev =>
+      prev.map(t => (t.id === activeCommentsTopic.id ? { ...t, replies_count: (t.replies_count || 0) + 1 } : t))
+    );
+
+    try {
+      const { data, error } = await supabase
+        .from('club_topic_replies')
+        .insert({
+          topic_id: activeCommentsTopic.id,
+          author_id: user.id,
+          content,
+          parent_id: replyToId || null,
+        })
+        .select('id, content, created_at, author_id, parent_id, author:user_profiles(full_name, avatar_url)')
+        .single();
+
+      if (!error && data) {
+        setCommentsList(prev =>
+          prev.map(c =>
+            c.id === tempId
+              ? {
+                  id: (data as any).id,
+                  author_id: (data as any).author_id,
+                  author_name: (data as any).author?.full_name || 'Moi',
+                  author_avatar: (data as any).author?.avatar_url,
+                  created_at: (data as any).created_at,
+                  content: (data as any).content,
+                  reply_to_id: (data as any).parent_id || replyToId,
+                  likes_count: 0,
+                  user_liked: false,
+                }
+              : c
+          )
+        );
+      }
+    } catch (err) {
+      console.warn('Error inserting topic comment:', err);
+    }
+  };
+
+  const handleDeleteTopicComment = async (commentId: string) => {
+    await supabase.from('club_topic_replies').delete().eq('id', commentId);
+    setCommentsList(prev => {
+      const toRemove = prev.filter(c => c.id === commentId || c.reply_to_id === commentId);
+      if (activeCommentsTopic) {
+        setTopics(tList =>
+          tList.map(t =>
+            t.id === activeCommentsTopic.id ? { ...t, replies_count: Math.max(0, (t.replies_count || 0) - toRemove.length) } : t
+          )
+        );
+      }
+      return prev.filter(c => c.id !== commentId && c.reply_to_id !== commentId);
+    });
   };
 
   const [submitting, setSubmitting] = useState(false);
@@ -518,52 +586,16 @@ export default function ClubDetailPage() {
                 </div>
               )}
               <div className="flex flex-col">
-                <div className="flex items-center gap-6 pt-4 border-t border-emerald-900/5 mt-4 text-sm font-700 text-emerald-900/60">
-                  <button onClick={() => handleLikePost(topic.id, topic.likes_count)} className={`flex items-center gap-2 transition-colors ${likedTopics[topic.id] ? 'text-rose-500' : 'hover:text-emerald-600'}`}>
-                    {likedTopics[topic.id] ? <Icon name="HeartIconSolid" size={18} /> : <Icon name="HeartIcon" size={18} />} {topic.likes_count}
-                  </button>
-                  <button onClick={() => { setReplyingToTopic(replyingToTopic === topic.id ? null : topic.id); if (replyingToTopic !== topic.id) handleLoadReplies(topic.id); }} className={`flex items-center gap-2 transition-colors ${replyingToTopic === topic.id ? 'text-emerald-700' : 'hover:text-emerald-600'}`}>
-                    <Icon name="ChatBubbleLeftIcon" size={18} /> {topic.replies_count}
-                  </button>
-                </div>
-                {replyingToTopic === topic.id && (
-                  <div className="mt-6 pt-6 border-t border-emerald-900/5">
-                    <div className="space-y-4 mb-6">
-                      {topicReplies[topic.id]?.map(reply => (
-                        <div key={reply.id} className="flex gap-3">
-                          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-950 font-800 text-xs shrink-0">
-                            {reply.author?.full_name[0] || '?'}
-                          </div>
-                          <div className="bg-emerald-50 rounded-2xl rounded-tl-none p-4 flex-1">
-                            <div className="flex justify-between items-baseline mb-1">
-                              <span className="font-800 text-sm">{reply.author?.full_name || 'Anonyme'}</span>
-                              <span className="text-[10px] text-emerald-900/50 flex items-center gap-2">
-                                {new Date(reply.created_at).toLocaleDateString('fr-FR')}
-                                <button onClick={() => startReplyTo(topic.id, reply.author?.full_name)} className="font-700 text-emerald-700 hover:underline">Répondre</button>
-                              </span>
-                            </div>
-                            <p className="text-sm text-emerald-900/80">{reply.content}</p>
-                          </div>
-                        </div>
-                      ))}
-                      {(!topicReplies[topic.id] || topicReplies[topic.id].length === 0) && (
-                        <p className="text-sm text-emerald-900/40 italic">Aucun commentaire pour l'instant.</p>
-                      )}
-                    </div>
-                    <div className="flex gap-3">
-                      <input
-                        type="text"
-                        value={replyContent}
-                        onChange={(e) => setReplyContent(e.target.value)}
-                        placeholder="Écrire un commentaire..."
-                        className="flex-1 bg-emerald-900/5 border-none rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500"
-                      />
-                      <button onClick={() => handleCreateReply(topic.id)} className="px-4 py-2 bg-emerald-950 text-white rounded-full text-sm font-700 hover:bg-emerald-800">
-                        Envoyer
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <SocialActions
+                  contentId={topic.id}
+                  contentType="club"
+                  likesCount={topic.likes_count}
+                  commentsCount={topic.replies_count}
+                  isLiked={likedTopics[topic.id]}
+                  onLike={() => handleLikePost(topic.id, topic.likes_count)}
+                  onOpenComments={() => handleOpenCommentsSheet(topic)}
+                  onShare={handleShare}
+                />
               </div>
             </div>
           ))}
@@ -652,7 +684,7 @@ export default function ClubDetailPage() {
                       <span className="text-xs text-emerald-900/50 font-600">Posté le {new Date(topic.created_at).toLocaleDateString('fr-FR')}</span>
                     </div>
                   </div>
-                  <button onClick={() => { setReplyingToTopic(replyingToTopic === topic.id ? null : topic.id); if (replyingToTopic !== topic.id) handleLoadReplies(topic.id); }} className="text-emerald-900/40 hover:text-emerald-900" title="Voir les réponses"><Icon name="EllipsisHorizontalIcon" size={24} /></button>
+                  <button onClick={() => handleOpenCommentsSheet(topic)} className="text-emerald-900/40 hover:text-emerald-900" title="Commentaires et options"><Icon name="EllipsisHorizontalIcon" size={24} /></button>
                 </div>
                 <div className="mb-4">
                   <h3 className="font-800 text-xl mb-2">{topic.title}</h3>
@@ -664,55 +696,16 @@ export default function ClubDetailPage() {
                   )}
                 </div>
                 <div className="flex flex-col">
-                  <div className="flex items-center gap-6 pt-4 border-t border-emerald-900/5 text-sm font-700 text-emerald-900/60">
-                    <button onClick={() => handleLikePost(topic.id, topic.likes_count)} className={`flex items-center gap-2 transition-colors ${likedTopics[topic.id] ? 'text-rose-500' : 'hover:text-emerald-600'}`}>
-                      {likedTopics[topic.id] ? <Icon name="HeartIconSolid" size={18} /> : <Icon name="HeartIcon" size={18} />} {topic.likes_count}
-                    </button>
-                    <button onClick={() => { setReplyingToTopic(replyingToTopic === topic.id ? null : topic.id); if (replyingToTopic !== topic.id) handleLoadReplies(topic.id); }} className={`flex items-center gap-2 transition-colors ${replyingToTopic === topic.id ? 'text-emerald-700' : 'hover:text-emerald-600'}`}>
-                      <Icon name="ChatBubbleLeftIcon" size={18} /> {topic.replies_count}
-                    </button>
-                    <button onClick={handleShare} className="flex items-center gap-2 hover:text-emerald-600 transition-colors ml-auto">
-                      <Icon name="ShareIcon" size={18} /> Partager
-                    </button>
-                  </div>
-                  {replyingToTopic === topic.id && (
-                    <div className="mt-6 pt-6 border-t border-emerald-900/5">
-                      <div className="space-y-4 mb-6">
-                        {topicReplies[topic.id]?.map(reply => (
-                          <div key={reply.id} className="flex gap-3">
-                            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-950 font-800 text-xs shrink-0">
-                              {reply.author?.full_name[0] || '?'}
-                            </div>
-                            <div className="bg-emerald-50 rounded-2xl rounded-tl-none p-4 flex-1">
-                              <div className="flex justify-between items-baseline mb-1">
-                                <span className="font-800 text-sm">{reply.author?.full_name || 'Anonyme'}</span>
-                                <span className="text-[10px] text-emerald-900/50 flex items-center gap-2">
-                                  {new Date(reply.created_at).toLocaleDateString('fr-FR')}
-                                  <button onClick={() => startReplyTo(topic.id, reply.author?.full_name)} className="font-700 text-emerald-700 hover:underline">Répondre</button>
-                                </span>
-                              </div>
-                              <p className="text-sm text-emerald-900/80">{reply.content}</p>
-                            </div>
-                          </div>
-                        ))}
-                        {(!topicReplies[topic.id] || topicReplies[topic.id].length === 0) && (
-                          <p className="text-sm text-emerald-900/40 italic">Aucun commentaire pour l'instant.</p>
-                        )}
-                      </div>
-                      <div className="flex gap-3">
-                        <input
-                          type="text"
-                          value={replyContent}
-                          onChange={(e) => setReplyContent(e.target.value)}
-                          placeholder="Écrire un commentaire..."
-                          className="flex-1 bg-emerald-900/5 border-none rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500"
-                        />
-                        <button onClick={() => handleCreateReply(topic.id)} className="px-4 py-2 bg-emerald-950 text-white rounded-full text-sm font-700 hover:bg-emerald-800">
-                          Envoyer
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  <SocialActions
+                    contentId={topic.id}
+                    contentType="club"
+                    likesCount={topic.likes_count}
+                    commentsCount={topic.replies_count}
+                    isLiked={likedTopics[topic.id]}
+                    onLike={() => handleLikePost(topic.id, topic.likes_count)}
+                    onOpenComments={() => handleOpenCommentsSheet(topic)}
+                    onShare={handleShare}
+                  />
                 </div>
               </div>
             ))}
@@ -979,306 +972,504 @@ export default function ClubDetailPage() {
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <div>
-            {/* Hero */}
-            <div style={{ background: 'linear-gradient(to bottom, #0B1F17, #17402C)', borderRadius: '0 0 24px 24px', padding: '24px 16px', marginBottom: '16px', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
-                <Link href="/clubs" style={{ color: 'rgba(255,255,255,0.6)', textDecoration: 'none' }}>Clubs</Link> › {club.type}
+          <div className="min-h-screen bg-[#FBFAF6] pb-28">
+            {/* Instagram-grade Cover & Hero Profile Header */}
+            <div className="relative">
+              {/* Cover Banner Image with immersive gradient */}
+              <div className="relative w-full h-44 sm:h-52 overflow-hidden bg-[#17402C]">
+                <img
+                  src={club.cover_image || "https://images.unsplash.com/photo-1504280387948-406560940733?q=80&w=1200&auto=format&fit=crop"}
+                  alt={club.name}
+                  className="w-full h-full object-cover brightness-90"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20" />
+                
+                {/* Top Nav Action Row */}
+                <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
+                  <button
+                    onClick={() => router.push('/clubs')}
+                    className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-xl border border-white/25 flex items-center justify-center text-white active:scale-90 transition-transform shadow-md"
+                    aria-label="Retour aux clubs"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="19" y1="12" x2="5" y2="12" />
+                      <polyline points="12 19 5 12 12 5" />
+                    </svg>
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleShare}
+                      className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-xl border border-white/25 flex items-center justify-center text-white active:scale-90 transition-transform shadow-md"
+                      aria-label="Partager le club"
+                    >
+                      <Icon name="ShareIcon" size={16} />
+                    </button>
+                    <button
+                      onClick={() => showToast('Options du club')}
+                      className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-xl border border-white/25 flex items-center justify-center text-white active:scale-90 transition-transform shadow-md"
+                      aria-label="Plus d'options"
+                    >
+                      <Icon name="EllipsisHorizontalIcon" size={18} />
+                    </button>
+                  </div>
+                </div>
               </div>
-              <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#fff', marginBottom: '4px', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-                {club.name}
-              </h1>
-              <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>
-                <span><strong style={{ color: '#fff' }}>{club.members_count}</strong> membres</span>
-                <span><strong style={{ color: '#A3C4A3' }}>{club.active_this_month}</strong> en ligne</span>
-                <span><strong style={{ color: '#fff' }}>{events.length}</strong> événements</span>
+
+              {/* Profile Card Overlay */}
+              <div className="px-4 -mt-10 relative z-20">
+                <div className="bg-white rounded-[28px] p-5 shadow-[0_8px_30px_rgba(11,31,23,0.08)] border border-[#1C2620]/8 flex flex-col gap-3.5">
+                  <div className="flex items-start justify-between gap-3">
+                    {/* Club Story Icon */}
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#17402C] to-[#1E5238] border-2 border-white shadow-md flex items-center justify-center text-3xl shrink-0 -mt-10">
+                      {club.emoji || '🏕️'}
+                    </div>
+
+                    {/* Join / Leave Action Button */}
+                    <button
+                      onClick={handleToggleMember}
+                      disabled={joining}
+                      className={`px-5 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 ${
+                        isMember
+                          ? 'bg-[#F5F2E8] text-[#17402C] border border-[#17402C]/15 hover:bg-[#EAE6DF]'
+                          : 'bg-gradient-to-r from-[#17402C] to-[#1E5238] text-white hover:brightness-110 shadow-[0_4px_12px_rgba(23,64,44,0.3)]'
+                      }`}
+                    >
+                      {joining ? (
+                        'Patientez...'
+                      ) : isMember ? (
+                        <><span>✓</span><span>Membre</span></>
+                      ) : (
+                        <><span>＋</span><span>Rejoindre</span></>
+                      )}
+                    </button>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <h1 className="font-display font-bold text-xl text-[#1C2620] tracking-tight">
+                        {club.name}
+                      </h1>
+                      {club.is_verified && (
+                        <span className="text-xs text-emerald-600 font-bold" title="Club vérifié">✓</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[#5C6B5E] font-mono mt-0.5">
+                      {club.category || 'Outdoor & Randonnée'} · 📍 {club.location || 'France'}
+                    </p>
+                  </div>
+
+                  {club.description && (
+                    <p className="text-xs text-[#1C2620]/80 leading-relaxed font-normal">
+                      {club.description}
+                    </p>
+                  )}
+
+                  {/* Instagram-style Stat Counters */}
+                  <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#1C2620]/6 text-center">
+                    <div className="p-2 rounded-xl bg-[#F5F2E8]/60">
+                      <span className="block font-display font-bold text-sm text-[#1C2620]">{club.members_count || 1}</span>
+                      <span className="text-[10px] text-[#5C6B5E] uppercase tracking-wider font-mono">Membres</span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-[#F5F2E8]/60">
+                      <span className="block font-display font-bold text-sm text-emerald-700">{club.active_this_month || 0}</span>
+                      <span className="text-[10px] text-[#5C6B5E] uppercase tracking-wider font-mono">Actifs</span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-[#F5F2E8]/60">
+                      <span className="block font-display font-bold text-sm text-[#1C2620]">{events.length}</span>
+                      <span className="text-[10px] text-[#5C6B5E] uppercase tracking-wider font-mono">Sorties</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <button
-                onClick={handleToggleMember}
-                disabled={joining}
-                style={{
-                  padding: '10px 24px',
-                  borderRadius: '999px',
-                  border: 'none',
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  background: isMember ? 'rgba(255,255,255,0.2)' : '#fff',
-                  color: isMember ? '#fff' : '#0B1F17',
-                  width: '100%',
-                  fontFamily: 'inherit',
-                }}
-              >
-                {isMember ? '✓ Membre' : 'Rejoindre le club'}
-              </button>
             </div>
 
-            {/* Sub-navigation tabs */}
-            <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', padding: '0 16px 12px', marginBottom: '8px', borderBottom: '1px solid rgba(11,31,23,0.06)', WebkitOverflowScrolling: 'touch' }}>
-              {TAB_LINKS.map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  style={{
-                    padding: '8px 14px',
-                    borderRadius: '20px',
-                    border: 'none',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    whiteSpace: 'nowrap',
-                    cursor: 'pointer',
-                    background: activeTab === tab ? '#17402C' : 'transparent',
-                    color: activeTab === tab ? '#fff' : '#6B7A72',
-                    fontFamily: 'inherit',
-                    flexShrink: 0,
-                  }}
-                >
-                  {tab}
-                </button>
-              ))}
+            {/* Segmented Tab Navigation */}
+            <div className="px-4 mt-4">
+              <div className="flex gap-2 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                {TAB_LINKS.map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => {
+                      triggerHaptic('selection');
+                      setActiveTab(tab);
+                    }}
+                    className={`px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
+                      activeTab === tab
+                        ? 'bg-[#17402C] text-white shadow-[0_2px_8px_rgba(23,64,44,0.25)]'
+                        : 'bg-white text-[#5C6B5E] border border-[#1C2620]/8 hover:text-[#1C2620]'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Tab content */}
-            <div style={{ padding: '0 16px 16px' }}>
-              {/* Render a simplified version of tab content */}
+            {/* Tab Content Cards */}
+            <div className="px-4 mt-2 space-y-3.5">
+              {/* SORTIES */}
               {activeTab === 'Sorties' && (
-                <div>
+                <div className="space-y-3">
                   {events.length === 0 ? (
-                    <p style={{ color: '#6B7A72', fontSize: '13px' }}>Aucune sortie prévue.</p>
-                  ) : events.map((ev) => {
-                    const dateObj = ev.event_date ? new Date(ev.event_date) : null;
-                    return (
-                      <div key={ev.id} style={{ background: '#FBFAF6', borderRadius: '16px', padding: '14px', marginBottom: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                          <div style={{ width: '56px', height: '56px', background: '#0B1F17', color: '#fff', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <span style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{dateObj ? dateObj.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase() : 'TBD'}</span>
-                            <span style={{ fontSize: '20px', fontWeight: 900, lineHeight: 1 }}>{dateObj ? dateObj.getDate() : '-'}</span>
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: '14px', fontWeight: 700, color: '#0B1F17', marginBottom: '4px' }}>{ev.title}</div>
-                            <div style={{ fontSize: '11px', color: '#6B7A72', marginBottom: '8px' }}>{ev.description}</div>
-                            <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: '#6B7A72' }}>
-                              <span>📍 {ev.location}</span>
-                              <span>👥 {ev.participants_count}/{ev.max_participants}</span>
+                    <div className="text-center py-14 bg-white rounded-3xl p-6 border border-[#1C2620]/6">
+                      <span className="text-3xl block mb-2">🏔️</span>
+                      <p className="text-xs font-bold text-[#1C2620]">Aucune sortie prévue pour le moment</p>
+                    </div>
+                  ) : (
+                    events.map((ev) => {
+                      const dateObj = ev.event_date ? new Date(ev.event_date) : null;
+                      return (
+                        <div key={ev.id} className="bg-white rounded-3xl p-4 border border-[#1C2620]/8 shadow-sm flex flex-col gap-3">
+                          <div className="flex gap-3 items-start">
+                            <div className="w-14 h-14 bg-[#17402C] text-white rounded-2xl flex flex-col items-center justify-center shrink-0 shadow-sm">
+                              <span className="text-[9px] font-bold uppercase tracking-wider text-[#A8C4A2]">{dateObj ? dateObj.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase() : 'TBD'}</span>
+                              <span className="text-xl font-bold leading-none">{dateObj ? dateObj.getDate() : '-'}</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-bold text-sm text-[#1C2620] truncate">{ev.title}</h4>
+                              <p className="text-xs text-[#5C6B5E] line-clamp-2 mt-0.5">{ev.description}</p>
+                              <div className="flex items-center gap-3 mt-1 text-[11px] text-[#5C6B5E] font-mono">
+                                <span>📍 {ev.location}</span>
+                                <span>👥 {ev.participants_count}/{ev.max_participants}</span>
+                              </div>
                             </div>
                           </div>
+                          <button
+                            onClick={() => handleRegisterEvent(ev.id, ev.participants_count)}
+                            className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all ${
+                              registeredEvents[ev.id]
+                                ? 'bg-[#EDF3ED] text-[#17402C]'
+                                : 'bg-[#17402C] text-white shadow-sm hover:brightness-110'
+                            }`}
+                          >
+                            {registeredEvents[ev.id] ? '✓ Inscrit(e)' : "S'inscrire à la sortie"}
+                          </button>
                         </div>
-                        <button
-                          onClick={() => handleRegisterEvent(ev.id, ev.participants_count)}
-                          style={{
-                            marginTop: '10px',
-                            padding: '8px 20px',
-                            borderRadius: '999px',
-                            border: 'none',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            width: '100%',
-                            background: registeredEvents[ev.id] ? '#EDF3ED' : '#0B1F17',
-                            color: registeredEvents[ev.id] ? '#17402C' : '#fff',
-                            fontFamily: 'inherit',
-                          }}
-                        >
-                          {registeredEvents[ev.id] ? '✓ Inscrit' : "S'inscrire"}
-                        </button>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  )}
                 </div>
               )}
+
+              {/* MEMBRES */}
               {activeTab === 'Membres' && (
-                <div>
+                <div className="bg-white rounded-3xl p-4 border border-[#1C2620]/8 shadow-sm divide-y divide-gray-100">
                   {members.map(member => (
                     <Link
                       key={member.id}
                       href={member.user_id ? `/profil/${member.user_id}` : '/clubs'}
-                      style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: '1px solid rgba(11,31,23,0.04)', textDecoration: 'none' }}
+                      className="flex items-center justify-between py-3 first:pt-0 last:pb-0 hover:opacity-80 transition-opacity"
                     >
-                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#EDF3ED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: '#0B1F17', fontSize: '14px' }}>
-                        {member.user?.full_name[0] || '?'}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-full bg-[#17402C]/10 text-[#17402C] flex items-center justify-center font-bold text-sm shrink-0 border border-[#17402C]/15">
+                          {member.user?.full_name?.charAt(0) || '👤'}
+                        </div>
+                        <div className="truncate">
+                          <h4 className="font-bold text-xs text-[#1C2620] truncate">{member.user?.full_name || 'Voyageur'}</h4>
+                          <span className="text-[10px] text-[#5C6B5E] uppercase font-mono font-bold tracking-wider">{member.role}</span>
+                        </div>
                       </div>
-                      <div>
-                        <div style={{ fontSize: '13px', fontWeight: 700, color: '#0B1F17' }}>{member.user?.full_name}</div>
-                        <div style={{ fontSize: '10px', color: '#6B7A72', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>{member.role}</div>
-                      </div>
+                      <span className="text-xs text-[#17402C] font-bold">Voir ➔</span>
                     </Link>
                   ))}
-                  {members.length === 0 && <p style={{ color: '#6B7A72', fontSize: '13px' }}>Aucun membre.</p>}
+                  {members.length === 0 && <p className="text-xs text-[#5C6B5E] text-center py-6">Aucun membre répertorié.</p>}
                 </div>
               )}
+
+              {/* PHOTOS */}
               {activeTab === 'Photos' && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <div className="grid grid-cols-2 gap-2.5">
                   {topics.filter(t => t.image_url).map(topic => (
-                    <div key={topic.id} style={{ aspectRatio: '1/1', borderRadius: '12px', overflow: 'hidden', background: '#EDF3ED' }}>
-                      <img src={topic.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <div key={topic.id} className="aspect-square rounded-2xl overflow-hidden bg-gray-100 shadow-sm border border-black/5">
+                      <img src={topic.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
                     </div>
                   ))}
-                  {topics.filter(t => t.image_url).length === 0 && <p style={{ color: '#6B7A72', fontSize: '13px', gridColumn: '1/-1' }}>Aucune photo.</p>}
+                  {topics.filter(t => t.image_url).length === 0 && (
+                    <div className="col-span-2 py-12 text-center bg-white rounded-3xl border border-[#1C2620]/6">
+                      <span className="text-3xl block mb-1">📷</span>
+                      <p className="text-xs text-[#5C6B5E]">Aucune photo partagée dans ce club.</p>
+                    </div>
+                  )}
                 </div>
               )}
+
+              {/* DISCUSSIONS & GUIDES */}
               {(activeTab === 'Discussions' || activeTab === 'Guides & Astuces') && (
-                <div>
+                <div className="space-y-3">
                   {topics.filter(t => activeTab === 'Guides & Astuces' ? t.is_pinned : true).length === 0 ? (
-                    <p style={{ color: '#6B7A72', fontSize: '13px' }}>Aucune discussion.</p>
-                  ) : topics.filter(t => activeTab === 'Guides & Astuces' ? t.is_pinned : true).map(topic => (
-                    <div key={topic.id} style={{ background: '#FBFAF6', borderRadius: '16px', padding: '14px', marginBottom: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#EDF3ED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: '#0B1F17', fontSize: '12px' }}>
-                          {topic.author?.full_name[0] || '?'}
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '12px', fontWeight: 700, color: '#0B1F17' }}>{topic.author?.full_name || 'Anonyme'}</div>
-                          <div style={{ fontSize: '10px', color: '#6B7A72' }}>{new Date(topic.created_at).toLocaleDateString('fr-FR')}</div>
-                        </div>
-                      </div>
-                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#0B1F17', marginBottom: '4px' }}>{topic.title}</div>
-                      <div style={{ fontSize: '12px', color: '#0B1F17', opacity: 0.8, marginBottom: '8px' }}>{topic.content}</div>
-                      <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: '#6B7A72' }}>
-                        <span>❤️ {topic.likes_count}</span>
-                        <span>💬 {topic.replies_count}</span>
-                      </div>
+                    <div className="text-center py-12 bg-white rounded-3xl p-6 border border-[#1C2620]/6">
+                      <span className="text-3xl block mb-2">💬</span>
+                      <p className="text-xs text-[#5C6B5E]">Aucune discussion publiée.</p>
                     </div>
-                  ))}
+                  ) : (
+                    topics.filter(t => activeTab === 'Guides & Astuces' ? t.is_pinned : true).map(topic => (
+                      <div key={topic.id} className="bg-white rounded-3xl p-4 border border-[#1C2620]/8 shadow-sm flex flex-col gap-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-8 h-8 rounded-full bg-[#17402C]/10 text-[#17402C] flex items-center justify-center font-bold text-xs shrink-0 border border-[#17402C]/15">
+                              {topic.author?.full_name?.charAt(0) || '👤'}
+                            </div>
+                            <div className="min-w-0">
+                              <h5 className="font-bold text-xs text-[#1C2620] truncate">{topic.author?.full_name || 'Anonyme'}</h5>
+                              <span className="text-[10px] text-[#5C6B5E] font-mono">{new Date(topic.created_at).toLocaleDateString('fr-FR')}</span>
+                            </div>
+                          </div>
+                          <span className="px-2 py-0.5 bg-[#F5F2E8] text-[#17402C] rounded-full text-[9px] font-mono font-bold uppercase tracking-wider">
+                            Discussion
+                          </span>
+                        </div>
+
+                        <h4 className="font-bold text-sm text-[#1C2620]">{topic.title}</h4>
+                        <p className="text-xs text-[#1C2620]/80 leading-relaxed font-normal">{topic.content}</p>
+
+                        <SocialActions
+                          contentId={topic.id}
+                          contentType="club"
+                          likesCount={topic.likes_count}
+                          commentsCount={topic.replies_count}
+                          isLiked={likedTopics[topic.id]}
+                          onLike={() => handleLikePost(topic.id, topic.likes_count)}
+                          onOpenComments={() => handleOpenCommentsSheet(topic)}
+                          onShare={handleShare}
+                        />
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
-              {activeTab === 'Parcours' && (
-                <div style={{ textAlign: 'center', padding: '40px 0', color: '#6B7A72' }}>
-                  <div style={{ fontSize: '32px', marginBottom: '8px' }}>🗺️</div>
-                  <p style={{ fontSize: '13px' }}>Parcours en construction.</p>
-                </div>
-              )}
-              {/* Default 'Tous les contenus' tab - show feed + events + discussions */}
+
+              {/* DEFAULT FEED 'TOUS LES CONTENUS' */}
               {activeTab === 'Tous les contenus' && (
-                <>
-                  {/* Upcoming events */}
-                  {events.length > 0 && (
-                    <div style={{ marginBottom: '20px' }}>
-                      <div style={{ fontSize: '16px', fontWeight: 800, color: '#0B1F17', marginBottom: '10px' }}>Prochaines sorties</div>
-                      {events.slice(0, 3).map((ev) => {
-                        const dateObj = ev.event_date ? new Date(ev.event_date) : null;
-                        return (
-                          <div key={ev.id} style={{ background: '#FBFAF6', borderRadius: '14px', padding: '12px', marginBottom: '8px', border: '1px solid rgba(11,31,23,0.06)' }}>
-                            <div style={{ fontSize: '13px', fontWeight: 700, color: '#0B1F17' }}>{ev.title}</div>
-                            <div style={{ fontSize: '11px', color: '#6B7A72', marginTop: '4px' }}>📍 {ev.location} · {dateObj ? dateObj.toLocaleDateString('fr-FR') : 'Date TBD'}</div>
-                          </div>
-                        );
-                      })}
+                <div className="space-y-4">
+                  {/* Exact Reference Composer Card for Club */}
+                  <div
+                    onClick={() => {
+                      triggerHaptic('selection');
+                      router.push(`/communaute/publier?clubId=${club.id}&clubName=${encodeURIComponent(club.name)}`);
+                    }}
+                    className="p-3 bg-white text-[#1C2620] rounded-[20px] shadow-[0_2px_12px_rgba(11,31,23,0.04)] border border-[#1C2620]/6 flex items-center justify-between cursor-pointer transition-all active:scale-[0.98]"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#17402C] to-[#2D6B4A] text-white flex items-center justify-center font-serif italic text-base shrink-0 shadow-sm">
+                        {user?.user_metadata?.full_name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'M'}
+                      </div>
+                      <p className="text-xs text-[#5C6B5E] font-normal truncate">
+                        Partager un <em className="font-serif italic text-[#17402C]">récit</em> ou une photo dans le club...
+                      </p>
                     </div>
-                  )}
-
-                  {/* Recent posts */}
-                  {topics.length > 0 && (
-                    <div>
-                      <div style={{ fontSize: '16px', fontWeight: 800, color: '#0B1F17', marginBottom: '10px' }}>Fil d'actualité</div>
-                      {topics.slice(0, 5).map(topic => (
-                        <div key={topic.id} style={{ background: '#FBFAF6', borderRadius: '16px', padding: '14px', marginBottom: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#EDF3ED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: '#0B1F17', fontSize: '12px' }}>
-                              {topic.author?.full_name[0] || '?'}
-                            </div>
-                            <div>
-                              <div style={{ fontSize: '12px', fontWeight: 700, color: '#0B1F17' }}>{topic.author?.full_name || 'Anonyme'}</div>
-                              <div style={{ fontSize: '10px', color: '#6B7A72' }}>{new Date(topic.created_at).toLocaleDateString('fr-FR')}</div>
-                            </div>
-                          </div>
-                          <div style={{ fontSize: '13px', fontWeight: 700, color: '#0B1F17', marginBottom: '4px' }}>{topic.title}</div>
-                          <div style={{ fontSize: '12px', color: '#0B1F17', opacity: 0.8, marginBottom: '8px' }}>{topic.content}</div>
-                          {topic.image_url && (
-                            <div style={{ width: '100%', height: '180px', borderRadius: '12px', overflow: 'hidden', marginBottom: '8px', background: '#EDF3ED' }}>
-                              <img src={topic.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            </div>
-                          )}
-                          <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: '#6B7A72' }}>
-                            <button onClick={() => handleLikePost(topic.id, topic.likes_count)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: likedTopics[topic.id] ? '#e11d48' : '#6B7A72', fontSize: '11px', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '4px' }}>❤️ {topic.likes_count}</button>
-                            <button onClick={() => { setReplyingToTopic(replyingToTopic === topic.id ? null : topic.id); if (replyingToTopic !== topic.id) handleLoadReplies(topic.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7A72', fontSize: '11px', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '4px' }}>💬 {topic.replies_count}</button>
-                          </div>
-                          {replyingToTopic === topic.id && (
-                            <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(11,31,23,0.06)' }}>
-                              {topicReplies[topic.id]?.map(reply => (
-                                <div key={reply.id} style={{ display: 'flex', gap: '8px', marginBottom: '8px', fontSize: '12px' }}>
-                                  <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#EDF3ED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '9px', color: '#0B1F17', flexShrink: 0 }}>{reply.author?.full_name[0] || '?'}</div>
-                                  <div style={{ background: '#EDF3ED', borderRadius: '12px', padding: '8px 12px', flex: 1 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
-                                      <span style={{ fontWeight: 700 }}>{reply.author?.full_name || 'Anonyme'}</span>
-                                      <button onClick={() => startReplyTo(topic.id, reply.author?.full_name)} style={{ background: 'none', border: 'none', fontSize: '10px', fontWeight: 700, color: '#17402C', cursor: 'pointer', fontFamily: 'inherit' }}>Répondre</button>
-                                    </div>
-                                    <div style={{ color: '#0B1F17', opacity: 0.8 }}>{reply.content}</div>
-                                  </div>
-                                </div>
-                              ))}
-                              <input
-                                type="text"
-                                value={replyContent}
-                                onChange={(e) => setReplyContent(e.target.value)}
-                                placeholder="Écrire un commentaire..."
-                                style={{ width: '100%', padding: '8px 14px', borderRadius: '999px', border: '1px solid rgba(11,31,23,0.06)', background: '#EDF3ED', fontSize: '12px', color: '#0B1F17', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
-                              />
-                              <button onClick={() => handleCreateReply(topic.id)} style={{ marginTop: '6px', padding: '6px 16px', borderRadius: '999px', border: 'none', background: '#0B1F17', color: '#fff', fontSize: '11px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Envoyer</button>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* About club section */}
-                  <div style={{ background: '#FBFAF6', borderRadius: '16px', padding: '16px', border: '1px solid rgba(11,31,23,0.06)', marginTop: '16px' }}>
-                    <div style={{ fontSize: '15px', fontWeight: 800, color: '#0B1F17', marginBottom: '8px' }}>À propos du club</div>
-                    <p style={{ fontSize: '12px', color: '#6B7A72', marginBottom: '12px' }}>{club.description}</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '11px', color: '#6B7A72' }}>
-                      <div>Visibilité: {club.privacy === 'open' ? 'Public' : 'Privé'}</div>
-                      <div>Lieu: {club.location || 'Monde'}</div>
-                      <div>Catégorie: {club.category}</div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        className="w-8 h-8 rounded-xl bg-[#F5F2E8] text-[#17402C] flex items-center justify-center hover:bg-[#EAE6DF] transition-colors"
+                        aria-label="Ajouter une photo"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="18" height="18" rx="3" />
+                          <circle cx="8.5" cy="8.5" r="1.5" />
+                          <polyline points="21 15 16 10 5 21" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        className="w-8 h-8 rounded-xl bg-[#F5F2E8] text-[#17402C] flex items-center justify-center hover:bg-[#EAE6DF] transition-colors"
+                        aria-label="Ajouter un lieu"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="10" r="3" />
+                          <path d="M12 2a8 8 0 0 1 8 8c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 8-8z" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
-                </>
+
+                  {/* Topics feed */}
+                  {topics.slice(0, 5).map(topic => (
+                    <div key={topic.id} className="bg-white rounded-[24px] p-4 sm:p-5 border border-[#1C2620]/8 shadow-[0_2px_12px_rgba(11,31,23,0.03)] hover:shadow-md transition-shadow duration-200 flex flex-col gap-3.5">
+                      {/* Header : Author info, Origin/Time & context menu */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <a
+                            href={topic.author?.full_name ? `#` : '#'}
+                            className="w-10 h-10 rounded-full bg-[#EDF3ED] text-[#17402C] border border-[#A8C4A2] flex items-center justify-center font-serif italic text-lg overflow-hidden shrink-0 hover:opacity-90 transition-opacity shadow-sm"
+                          >
+                            {topic.author?.avatar_url ? (
+                              <img
+                                src={topic.author?.avatar_url}
+                                alt={topic.author?.full_name}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <span>{topic.author?.full_name?.charAt(0)?.toUpperCase() || 'P'}</span>
+                            )}
+                          </a>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm text-[#1C2620] tracking-tight truncate">
+                                {topic.author?.full_name || 'Voyageur'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[11px] text-[#5C6B5E] font-mono mt-0.5">
+                              <span>{new Date(topic.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+                              <span>·</span>
+                              <span className="text-[#17402C] font-medium truncate">
+                                {club.name}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 3 Dots at top right */}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenCommentsSheet(topic)}
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-[#5C6B5E]/60 hover:text-[#1C2620] hover:bg-[#F5F2E8] transition-colors"
+                          aria-label="Options"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18" strokeLinecap="round">
+                            <circle cx="5" cy="12" r="1" fill="currentColor" />
+                            <circle cx="12" cy="12" r="1" fill="currentColor" />
+                            <circle cx="19" cy="12" r="1" fill="currentColor" />
+                          </svg>
+                        </button>
+                      </div>
+
+                      {/* Body content */}
+                      <div className="text-sm text-[#1C2620] leading-relaxed break-words font-sans">
+                        <h4 className="font-bold text-sm text-[#1C2620] mb-1">{topic.title}</h4>
+                        <p className="whitespace-pre-line text-[#1C2620]/90">
+                          {topic.content}
+                        </p>
+                      </div>
+
+                      {/* Media attachment with top-right date mono badge & bottom-left geo badge ONLY if image_url exists */}
+                      {topic.image_url && (
+                        <div className="relative w-full rounded-2xl overflow-hidden bg-black/5 max-h-80 flex items-center justify-center border border-[#1C2620]/5 group">
+                          <img
+                            src={topic.image_url}
+                            alt="Média publication"
+                            className="w-full h-auto max-h-80 object-cover rounded-2xl"
+                            loading="lazy"
+                          />
+                          <div className="absolute top-2.5 right-2.5 px-2.5 py-1 bg-black/60 backdrop-blur-md rounded-full text-[10px] font-mono text-white tracking-wider">
+                            {new Date(topic.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Standardized SocialActions Component */}
+                      <SocialActions
+                        contentId={topic.id}
+                        contentType="club"
+                        likesCount={topic.likes_count}
+                        commentsCount={topic.replies_count}
+                        isLiked={likedTopics[topic.id]}
+                        onLike={() => handleLikePost(topic.id, topic.likes_count)}
+                        onOpenComments={() => handleOpenCommentsSheet(topic)}
+                        onShare={handleShare}
+                      />
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
-          <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
         </MobilePageShell>
-        
       </div>
 
-      {/* CREATE POST MODAL */}
+      {/* Modern Liquid Glass CommentsSheet */}
+      <CommentsSheet
+        isOpen={!!activeCommentsTopic}
+        onClose={() => setActiveCommentsTopic(null)}
+        title={activeCommentsTopic?.title || 'Commentaires'}
+        comments={commentsList}
+        loading={commentsLoading}
+        currentUserId={user?.id}
+        onAddComment={handleAddTopicComment}
+        onDeleteComment={handleDeleteTopicComment}
+      />
+
+      {/* CREATE POST MODAL (Same as community) */}
       {createPostModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-[0.75rem] w-full max-w-lg shadow-2xl overflow-hidden animate-slide-up active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-            <div className="p-6 border-b border-emerald-900/10 flex justify-between items-center">
-              <h3 className="font-display font-800 text-2xl text-emerald-950">{createPostType === 'guide' ? 'Créer un guide' : 'Créer une discussion'}</h3>
-              <button onClick={() => setCreatePostModalOpen(false)} className="text-emerald-900/50 hover:text-emerald-900 bg-emerald-50 w-8 h-8 rounded-full flex items-center justify-center">
-                <Icon name="XMarkIcon" size={20} />
+          <div className="bg-white rounded-[24px] w-full max-w-lg shadow-2xl overflow-hidden animate-slide-up flex flex-col border border-[#1C2620]/10">
+            <div className="p-5 border-b border-[#1C2620]/8 flex justify-between items-center bg-[#FBFAF6]">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-[#17402C]/10 text-[#17402C] flex items-center justify-center font-bold text-xs">
+                  🏕️
+                </div>
+                <h3 className="font-display font-bold text-base text-[#1C2620]">
+                  Publier dans {club.name}
+                </h3>
+              </div>
+              <button
+                onClick={() => setCreatePostModalOpen(false)}
+                className="text-[#5C6B5E] hover:text-[#1C2620] bg-white border border-[#1C2620]/10 w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-sm"
+              >
+                <Icon name="XMarkIcon" size={18} />
               </button>
             </div>
-            <form onSubmit={handleCreatePost} className="p-6 space-y-4">
+
+            <form onSubmit={handleCreatePost} className="p-5 space-y-4">
               <div>
-                <label className="block text-sm font-700 text-emerald-950 mb-2">Titre {createPostType === 'guide' ? 'du guide' : 'de la discussion'}</label>
+                <label className="block text-xs font-bold text-[#1C2620] uppercase tracking-wider mb-1.5 font-mono">
+                  Titre du récit ou sujet
+                </label>
                 <input
                   type="text"
                   value={newPostTitle}
                   onChange={(e) => setNewPostTitle(e.target.value)}
-                  placeholder={createPostType === 'guide' ? "Ex: Quel matelas pour le GR20 ?" : "Ex: Vos retours sur la tente MSR ?"}
-                  className="w-full bg-[#F5F3ED] border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 font-600"
+                  placeholder="Ex: Nuit au refuge du Habert..."
+                  className="w-full bg-[#F5F2E8]/60 border border-[#1C2620]/10 rounded-2xl px-4 py-3 text-xs text-[#1C2620] focus:ring-2 focus:ring-[#17402C] outline-none font-medium"
                   required
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-700 text-emerald-950 mb-2">Contenu</label>
+                <label className="block text-xs font-bold text-[#1C2620] uppercase tracking-wider mb-1.5 font-mono">
+                  Votre message
+                </label>
                 <textarea
                   value={newPostContent}
                   onChange={(e) => setNewPostContent(e.target.value)}
-                  placeholder="Détaillez votre question ou votre partage..."
-                  className="w-full bg-[#F5F3ED] border-none rounded-xl px-4 py-3 min-h-[150px] focus:ring-2 focus:ring-emerald-500 font-500 resize-none"
+                  placeholder="Partagez vos impressions, conditions météo, matériel testé..."
+                  className="w-full bg-[#F5F2E8]/60 border border-[#1C2620]/10 rounded-2xl px-4 py-3 min-h-[140px] text-xs text-[#1C2620] focus:ring-2 focus:ring-[#17402C] outline-none font-normal resize-none"
                   required
                 />
               </div>
-              <div className="pt-4 flex justify-end gap-3">
-                <button type="button" onClick={() => setCreatePostModalOpen(false)} className="px-6 py-3 text-emerald-900 font-700 hover:bg-emerald-50 rounded-full">
-                  Annuler
-                </button>
-                <button type="submit" disabled={submitting} className="px-6 py-3 bg-emerald-950 text-white font-800 rounded-full hover:bg-emerald-800 shadow-lg hover:shadow-xl transition-all disabled:opacity-50">
-                  {submitting ? 'Publication...' : 'Publier'}
-                </button>
+
+              <div className="pt-2 flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => showToast('Lieu défini sur ' + (club.location || club.name))}
+                    className="w-9 h-9 rounded-xl bg-[#F5F2E8] text-[#17402C] flex items-center justify-center hover:bg-[#EAE6DF] transition-colors border border-[#17402C]/10"
+                    title="Lieu"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="10" r="3" />
+                      <path d="M12 2a8 8 0 0 1 8 8c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 8-8z" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCreatePostModalOpen(false)}
+                    className="px-4 py-2.5 text-[#5C6B5E] hover:text-[#1C2620] font-bold text-xs transition-colors"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="px-6 py-2.5 bg-[#17402C] text-white font-bold rounded-2xl text-xs hover:bg-[#122E20] shadow-[0_4px_16px_rgba(23,64,44,0.25)] transition-all disabled:opacity-50 active:scale-95"
+                  >
+                    {submitting ? 'Publication...' : 'Publier dans le club'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

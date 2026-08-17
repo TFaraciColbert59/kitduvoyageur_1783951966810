@@ -8,7 +8,7 @@ import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import LkvIcon from '@/components/ui/LkvIcon';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
-import MobileGroupesV2 from '@/components/groupes/MobileGroupesV2';
+import MobileGroupesHub from '@/components/groupes/MobileGroupesHub';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -746,20 +746,27 @@ function GroupesPageInner() {
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
         <MobilePageShell background="#F5F2E8">
-          <MobileGroupesV2
-            user={user}
+          <MobileGroupesHub
             myGroups={myGroups}
             publicGroups={publicGroups}
-            pendingInvites={pendingInvites}
             loading={loading}
-            error={error}
-            onRetry={() => { setError(null); setLoading(true); loadAll().finally(() => setLoading(false)); }}
-            onJoin={handleJoinGroup}
-            onLeave={handleLeaveGroup}
-            onDelete={handleDeleteGroup}
-            onEdit={openEditModal}
-            onAcceptInvite={(gid) => handleInvite(gid, true)}
-            onDeclineInvite={(gid) => handleInvite(gid, false)}
+            user={user}
+            onJoinGroup={async (gid) => handleJoinGroup(gid)}
+            onOpenCreateModal={() => {
+              if (!user) {
+                toast('Veuillez vous connecter pour créer un groupe.', 'error');
+                router.push('/connexion?next=/nouveau-groupe');
+                return;
+              }
+              router.push('/nouveau-groupe');
+            }}
+            onOpenJoinByCode={() => {
+              const code = window.prompt('Entrez le code d’invitation du groupe :');
+              if (code) {
+                setJoinCode(code);
+                handleJoinByCode();
+              }
+            }}
           />
         </MobilePageShell>
       </div>

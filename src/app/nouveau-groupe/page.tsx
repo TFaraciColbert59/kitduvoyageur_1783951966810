@@ -53,17 +53,55 @@ export default function NouveauGroupePage() {
   const [loading, setLoading] = useState(false);
 
   // Form State
-  const [name, setName] = useState('Chartreuse en octobre');
-  const [description, setDescription] = useState('Traversée de la Chartreuse à 6, octobre 2026');
+  const [name, setName] = useState('Chartreuse en automne');
+  const [description, setDescription] = useState('Traversée en groupe avec bivouac et refuges');
   const [accentColor, setAccentColor] = useState(ACCENT_COLORS[0].value);
   const [pictogram, setPictogram] = useState(PICTOGRAMS[0].icon);
 
+  const DEFAULT_TRAILS = [
+    { id: 't-1', name: 'Traversée de la Chartreuse (GR9)', region: 'Chartreuse', distance_km: 27.4, elevation_gain: 1620, duration_hours: 18, difficulty: 'Modéré', start_lat: 45.33, start_lng: 5.82 },
+    { id: 't-2', name: 'Tour du Mont-Blanc Intégral', region: 'Mont-Blanc', distance_km: 170, elevation_gain: 10000, duration_hours: 65, difficulty: 'Difficile', start_lat: 45.92, start_lng: 6.87 },
+    { id: 't-3', name: 'Hautes Terres du Vercors', region: 'Vercors', distance_km: 48.5, elevation_gain: 2100, duration_hours: 24, difficulty: 'Modéré', start_lat: 44.98, start_lng: 5.53 },
+    { id: 't-4', name: 'Tour des Glaciers de la Vanoise', region: 'Vanoise', distance_km: 72.0, elevation_gain: 3800, duration_hours: 32, difficulty: 'Difficile', start_lat: 45.38, start_lng: 6.74 },
+    { id: 't-5', name: 'Traversée des Écrins (GR54)', region: 'Écrins', distance_km: 184, elevation_gain: 12800, duration_hours: 72, difficulty: 'Expert', start_lat: 44.92, start_lng: 6.35 },
+    { id: 't-6', name: 'GR20 — Sentier des Crêtes Corse', region: 'Corse', distance_km: 180, elevation_gain: 11000, duration_hours: 80, difficulty: 'Expert', start_lat: 42.45, start_lng: 8.85 },
+    { id: 't-7', name: 'Tour du Queyras (GR58)', region: 'Queyras', distance_km: 130, elevation_gain: 7500, duration_hours: 48, difficulty: 'Modéré', start_lat: 44.75, start_lng: 6.85 },
+  ];
+
+  // Trails state
+  const [availableTrails, setAvailableTrails] = useState<any[]>(DEFAULT_TRAILS);
+  const [selectedTrail, setSelectedTrail] = useState<any>(DEFAULT_TRAILS[0]);
+  const [showTrailPicker, setShowTrailPicker] = useState(false);
+  const [trailSearch, setTrailSearch] = useState('');
+
   // Context State
-  const [linkedAdventure, setLinkedAdventure] = useState('Traversée de la Chartreuse');
+  const [linkedAdventure, setLinkedAdventure] = useState(DEFAULT_TRAILS[0].name);
   const [startDate, setStartDate] = useState('2026-10-12');
   const [endDate, setEndDate] = useState('2026-10-14');
   const [groupType, setGroupType] = useState<'Ponctuel' | 'Récurrent' | 'Ouvert'>('Ponctuel');
   const [maxMembers, setMaxMembers] = useState(6);
+
+  // Fetch available hiking trails with direct API call
+  useEffect(() => {
+    async function loadTrails() {
+      try {
+        const res = await fetch('/api/trails');
+        if (res.ok) {
+          const json = await res.json();
+          if (json.trails && json.trails.length > 0) {
+            setAvailableTrails(json.trails);
+            const first = json.trails[0];
+            setSelectedTrail(first);
+            setLinkedAdventure(first.name);
+            setName(`Expédition ${first.name}`);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading trails:', err);
+      }
+    }
+    loadTrails();
+  }, []);
 
   // Invitation State
   const [inviteTab, setInviteTab] = useState<'pseudo' | 'email' | 'link'>('pseudo');
@@ -111,6 +149,14 @@ export default function NouveauGroupePage() {
   };
 
   const totalInvitedCount = invitedPartners.length + customInvites.length;
+
+  // Select a trail
+  const handleSelectTrail = (trail: any) => {
+    setSelectedTrail(trail);
+    setLinkedAdventure(trail.name);
+    setName(`Expédition ${trail.name}`);
+    setShowTrailPicker(false);
+  };
 
   // Toggle Partner
   const togglePartner = (partner: typeof PARTNER_SUGGESTIONS[0]) => {
@@ -420,39 +466,32 @@ export default function NouveauGroupePage() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-700 text-[#1C2620] uppercase tracking-wider">
-                  Aventure liée
+                  Randonnée sélectionnée (Page Aventures) *
                 </label>
-                <span className="text-[11px] text-[#9CA89E]">Ou laissez vide pour un groupe ouvert</span>
+                <span className="text-[11px] text-[#9CA89E]">Itinéraire officiel & tracé GPS</span>
               </div>
 
               <div className="bg-[#FAF9F5] border border-[#E8E4D8] rounded-2xl p-4 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-[#EDEAE0] overflow-hidden flex-shrink-0 relative">
-                    <img
-                      src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=200&q=80"
-                      alt="Traversée de la Chartreuse"
-                      className="object-cover w-full h-full"
-                    />
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-12 h-12 rounded-xl bg-[#17402C]/10 text-xl flex items-center justify-center flex-shrink-0 border border-[#17402C]/15">
+                    🏔️
                   </div>
-                  <div>
-                    <h4 className="font-display font-700 text-sm text-[#1C2620]">
-                      {linkedAdventure}
+                  <div className="min-w-0">
+                    <h4 className="font-display font-700 text-sm text-[#1C2620] truncate">
+                      {selectedTrail?.name || linkedAdventure}
                     </h4>
-                    <p className="text-[11px] text-[#9CA89E] mt-0.5 font-mono">
-                      12-14 oct. 2026 · 27.4 km · 3 refuges
+                    <p className="text-[11px] text-[#5C6B5E] mt-0.5 font-mono">
+                      {selectedTrail?.distance_km ? `${selectedTrail.distance_km} km` : '27.4 km'} · +{selectedTrail?.elevation_gain ? `${selectedTrail.elevation_gain} m D+` : '1 620 m D+'} · {selectedTrail?.difficulty || 'Modéré'}
                     </p>
                   </div>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => {
-                    const newAdv = prompt('Nom de la nouvelle aventure rattachée :', linkedAdventure);
-                    if (newAdv) setLinkedAdventure(newAdv);
-                  }}
-                  className="px-4 py-2 bg-white border border-[#C8C3B0] hover:border-[#1C2620] text-[#1C2620] rounded-full text-xs font-700 transition-colors shadow-sm"
+                  onClick={() => setShowTrailPicker(true)}
+                  className="px-4 py-2 bg-[#17402C] hover:bg-[#122E20] text-white rounded-full text-xs font-700 transition-colors shadow-sm shrink-0"
                 >
-                  Changer
+                  Choisir une rando →
                 </button>
               </div>
             </div>
@@ -997,6 +1036,37 @@ export default function NouveauGroupePage() {
               </p>
             </div>
 
+            {/* Randonnée liée Mobile */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 600, color: '#0B1F17', display: 'block', marginBottom: '6px' }}>Randonnée officielle (Aventures)</label>
+              <div
+                onClick={() => setShowTrailPicker(true)}
+                style={{
+                  padding: '12px',
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(11,31,23,0.12)',
+                  borderRadius: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '8px',
+                  cursor: 'pointer',
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#0B1F17', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {selectedTrail?.name || linkedAdventure}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#17402C', fontFamily: 'monospace', marginTop: '2px' }}>
+                    {selectedTrail?.distance_km ? `${selectedTrail.distance_km} km` : '27.4 km'} · +{selectedTrail?.elevation_gain ? `${selectedTrail.elevation_gain} m D+` : '1 620 m D+'}
+                  </div>
+                </div>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#17402C', background: '#F0EDE1', padding: '6px 10px', borderRadius: '10px', whiteSpace: 'nowrap' }}>
+                  Changer →
+                </span>
+              </div>
+            </div>
+
             {/* Nom du groupe */}
             <div style={{ marginBottom: '16px' }}>
               <label style={{ fontSize: '11px', fontWeight: 600, color: '#0B1F17', display: 'block', marginBottom: '6px' }}>Nom du groupe</label>
@@ -1004,7 +1074,7 @@ export default function NouveauGroupePage() {
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="Chartreuse en octobre"
+                placeholder="Expédition Chartreuse"
                 style={{ width: '100%', padding: '12px', background: '#F4F1EA', border: '1px solid rgba(11,31,23,0.08)', borderRadius: '12px', fontSize: '14px', color: '#0B1F17', boxSizing: 'border-box' }}
               />
             </div>
@@ -1016,7 +1086,7 @@ export default function NouveauGroupePage() {
                 type="text"
                 value={description}
                 onChange={e => setDescription(e.target.value)}
-                placeholder="Traversée de la Chartreuse à 6, octobre 2026"
+                placeholder="Traversée en groupe"
                 style={{ width: '100%', padding: '12px', background: '#F4F1EA', border: '1px solid rgba(11,31,23,0.08)', borderRadius: '12px', fontSize: '14px', color: '#0B1F17', boxSizing: 'border-box' }}
               />
             </div>
@@ -1073,6 +1143,76 @@ export default function NouveauGroupePage() {
           </div>
         </MobilePageShell>
       </div>
+
+      {/* ── TRAIL PICKER MODAL (Desktop & Mobile) ── */}
+      {showTrailPicker && (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#FAF9F5] border border-[#C8C3B0] rounded-[24px] w-full max-w-xl p-5 sm:p-6 shadow-2xl max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-[#1C2620]/10">
+              <div>
+                <h3 className="font-display font-bold text-lg text-[#1C2620]">
+                  Sélectionner une randonnée
+                </h3>
+                <p className="text-xs text-[#5C6B5E]">
+                  Itinéraires et tracés GPS certifiés de la page Aventures
+                </p>
+              </div>
+              <button
+                onClick={() => setShowTrailPicker(false)}
+                className="w-8 h-8 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Search filter */}
+            <div className="my-3 relative">
+              <input
+                type="text"
+                value={trailSearch}
+                onChange={(e) => setTrailSearch(e.target.value)}
+                placeholder="Rechercher par massif, nom (Vercors, Tour du Mont-Blanc...)"
+                className="w-full bg-white border border-[#1C2620]/15 rounded-xl px-4 py-2.5 text-xs text-[#1C2620] focus:ring-2 focus:ring-[#17402C] outline-none"
+              />
+            </div>
+
+            {/* Trails list */}
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+              {availableTrails
+                .filter((t) => !trailSearch.trim() || t.name?.toLowerCase().includes(trailSearch.toLowerCase()))
+                .map((trail) => {
+                  const isSelected = selectedTrail?.id === trail.id || selectedTrail?.name === trail.name;
+                  return (
+                    <div
+                      key={trail.id}
+                      onClick={() => handleSelectTrail(trail)}
+                      className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                        isSelected
+                          ? 'bg-[#17402C] text-white border-[#17402C]'
+                          : 'bg-white text-[#1C2620] border-[#1C2620]/8 hover:border-[#17402C]/40'
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-xs sm:text-sm truncate">
+                          {trail.name}
+                        </h4>
+                        <p className={`text-[11px] font-mono mt-0.5 ${isSelected ? 'text-white/80' : 'text-[#5C6B5E]'}`}>
+                          📍 {trail.distance_km ? `${trail.distance_km} km` : '20 km'} · +{trail.elevation_gain ? `${trail.elevation_gain} m D+` : '1200 m D+'} · {trail.difficulty || 'Modéré'}
+                        </p>
+                      </div>
+
+                      <span className={`px-3 py-1 rounded-xl text-xs font-bold shrink-0 ${
+                        isSelected ? 'bg-white text-[#17402C]' : 'bg-[#17402C]/10 text-[#17402C]'
+                      }`}>
+                        {isSelected ? '✓ Choisi' : 'Sélectionner'}
+                      </span>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

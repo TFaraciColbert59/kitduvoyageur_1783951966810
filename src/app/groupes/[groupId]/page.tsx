@@ -128,7 +128,7 @@ export default function GroupesPage() {
               
               {activeTab === 'overview' && (
                 <>
-                  <ParcoursCard groupId={groupId} />
+                  <ParcoursCard groupId={groupId} trail={formattedData.trail} meta={formattedData.meta} />
                   <TachesCard tasks={formattedData.tasks} groupId={groupId} onRefresh={refreshData} user={user} members={members} />
                   <EquipementCard equipment={formattedData.equipment} groupId={groupId} onRefresh={refreshData} user={user} members={members} />
                 </>

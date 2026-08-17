@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import CommentItem from '@/components/communaute/CommentItem';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import MobileCarnetsHub from '@/components/carnets/MobileCarnetsHub';
 import { SkeletonCarnetCard } from '@/components/ui/Skeleton';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1150,120 +1151,29 @@ export default function CarnetsPage() {
 
       {/* MOBILE VIEW */}
       <div className="block md:hidden">
-        <MobilePageShell background="#E7E3D6">
-          {/* Hero */}
-          <div style={{ padding: '12px 16px 16px', background: '#FBFAF6' }}>
-            <div style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '6px' }}>
-              Carnets d&apos;expédition
-            </div>
-            <h1 style={{ fontSize: '30px', fontWeight: 500, letterSpacing: '-0.025em', lineHeight: 1.1, margin: 0 }}>
-              Récits du <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>terrain.</em>
-            </h1>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '14px', fontSize: '12px', color: '#6B7A72' }}>
-              <span style={{ fontWeight: 500 }}>{carnets.length} article{carnets.length !== 1 ? 's' : ''}</span>
-              {user && (
-                <>
-                  <span>·</span>
-                  <button
-                    onClick={() => { setEditCarnet(null); setShowCreate(true); }}
-                    style={{ background: 'none', border: 'none', padding: 0, color: '#17402C', fontWeight: 600, fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}
-                  >
-                    + Nouveau
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Filter tabs */}
-          <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', padding: '0 16px 12px', scrollbarWidth: 'none' }}>
-            {[
-              { id: 'all', label: 'Tous' },
-              { id: 'mine', label: 'Mes carnets' },
-              { id: 'favorites', label: 'Favoris' },
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setFilter(tab.id as typeof filter)}
-                style={{
-                  padding: '6px 14px', borderRadius: '999px',
-                  background: filter === tab.id ? '#17402C' : '#FBFAF6',
-                  border: `1px solid ${filter === tab.id ? '#17402C' : 'rgba(11,31,23,0.06)'}`,
-                  color: filter === tab.id ? '#fff' : '#384A42',
-                  fontSize: '12px', fontWeight: 500, whiteSpace: 'nowrap',
-                  cursor: 'pointer', fontFamily: 'inherit',
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Carnet list from real data */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '0 16px 16px' }}>
-            {loading ? (
-              <div style={{ padding: '40px 0', textAlign: 'center', color: '#6B7A72', fontSize: '13px' }}>Chargement...</div>
-            ) : filtered.length === 0 ? (
-              <div style={{ padding: '40px 0', textAlign: 'center', color: '#6B7A72', fontSize: '13px' }}>
-                {filter === 'mine' ? 'Aucun carnet publié' : filter === 'favorites' ? 'Aucun favori' : 'Aucun carnet trouvé'}
-              </div>
-            ) : (
-              filtered.map(c => {
-                const authorName = (c as any).author?.full_name ?? 'Voyageur';
-                const authorInitial = authorName.charAt(0).toUpperCase();
-                return (
-                  <div
-                    key={c.id}
-                    onClick={() => setDetailCarnet(c)}
-                    style={{ display: 'flex', gap: '12px', padding: '12px', background: '#FBFAF6', borderRadius: '14px', border: '1px solid rgba(11,31,23,0.05)', cursor: 'pointer' }}
-                  >
-                    <div style={{
-                      width: '80px', height: '90px', borderRadius: '10px', flexShrink: 0,
-                      background: c.cover_image ? `url(${c.cover_image}) center/cover` : 'linear-gradient(135deg, #17402C 20%, #2D6B4A 100%)'
-                    }} />
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                      <div>
-                        <div style={{ fontSize: '9px', color: '#6B7A72', fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                          {c.destination || 'Voyage'}
-                        </div>
-                        <div style={{ fontSize: '14px', fontWeight: 500, color: '#0B1F17', marginTop: '2px', lineHeight: 1.2 }}>{c.title}</div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', color: '#6B7A72' }}>
-                        {c.author_id ? (
-                          <Link
-                            href={`/profil/${c.author_id}`}
-                            onClick={(e) => e.stopPropagation()}
-                            style={{ display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none', color: '#6B7A72' }}
-                          >
-                            <div style={{ width: '18px', height: '18px', borderRadius: '999px', background: '#A3C4A3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', color: '#0B1F17', fontWeight: 600 }}>
-                              {authorInitial}
-                            </div>
-                            <span style={{ fontWeight: 600, color: '#0B1F17' }}>{authorName}</span>
-                          </Link>
-                        ) : (
-                          <>
-                            <div style={{ width: '18px', height: '18px', borderRadius: '999px', background: '#A3C4A3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', color: '#0B1F17', fontWeight: 600 }}>
-                              {authorInitial}
-                            </div>
-                            <span>{authorName}</span>
-                          </>
-                        )}
-                        {c.likes_count !== undefined && c.likes_count > 0 && (
-                          <>
-                            <span>·</span>
-                            <span>{c.likes_count} ❤</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          {/* Footer spacer */}
-          <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
+        <MobilePageShell background="#FBFAF6">
+          <MobileCarnetsHub
+            carnets={carnets}
+            myCarnets={user ? carnets.filter(c => c.author_id === user.id) : []}
+            loading={loading}
+            user={user}
+            onLikeCarnet={async (cid, liked) => {
+              const target = carnets.find(c => c.id === cid);
+              if (target) handleLike(target, 'heart');
+            }}
+            onSaveCarnet={async (cid, saved) => {
+              const target = carnets.find(c => c.id === cid);
+              if (target) handleFavorite(target);
+            }}
+            onOpenCreateModal={() => {
+              if (!user) {
+                setToast('Veuillez vous connecter pour rédiger un carnet.');
+                return;
+              }
+              setEditCarnet(null);
+              setShowCreate(true);
+            }}
+          />
         </MobilePageShell>
       </div>
 

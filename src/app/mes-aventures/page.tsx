@@ -356,9 +356,15 @@ export default function MesAventuresPage() {
                 </p>
 
                 {/* Action button */}
-                <Link href={`/preparer-randonnee?routeId=${saved.trail_id}`}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#17402C', color: '#fff', fontSize: '12px', fontWeight: 600, padding: '10px', borderRadius: '10px', textDecoration: 'none' }}>
-                  🎒 Préparer ma randonnée
+                <Link
+                  href={`/preparer-randonnee?routeId=${saved.trail_id}`}
+                  className="w-full relative overflow-hidden group flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#17402C] via-[#1E5238] to-[#17402C] text-white text-xs font-bold tracking-wide shadow-[0_4px_12px_rgba(23,64,44,0.3)] border border-white/15 active:scale-[0.98] transition-all no-underline"
+                >
+                  <span className="text-sm">🎒</span>
+                  <span>Préparer ma randonnée</span>
+                  <svg className="w-3.5 h-3.5 ml-0.5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
                 </Link>
               </div>
             );

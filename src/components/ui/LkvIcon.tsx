@@ -2,14 +2,45 @@
 import React from 'react';
 
 interface LkvIconProps {
-  name: 'home' | 'mountain' | 'bag' | 'doc' | 'user' | 'search' | 'chevron-left' | 'chevron-right' | 'heart' | 'bookmark' | 'bell' | 'map-pin' | 'star' | 'minus' | 'plus' | 'close' | 'menu' | 'arrow-right' | 'lock' | 'filter' | 'users' | 'compass' | 'box';
+  name: 'home' | 'mountain' | 'bag' | 'doc' | 'user' | 'search' | 'chevron-left' | 'chevron-right' | 'heart' | 'bookmark' | 'bell' | 'map-pin' | 'star' | 'minus' | 'plus' | 'close' | 'menu' | 'arrow-right' | 'arrow-left' | 'lock' | 'filter' | 'users' | 'compass' | 'box' | 'sparkles' | 'tent' | 'book';
   size?: number;
   color?: string;
+  className?: string;
+  style?: React.CSSProperties;
 }
 
-const PATHS: Record<LkvIconProps['name'], string | string[]> = {
+const LKV_MODERN_MAP: Partial<Record<LkvIconProps['name'], string>> = {
+  home: 'Home.png',
+  'arrow-right': 'Arrow Right.png',
+  'arrow-left': 'Circle Arrow Left.png',
+  'chevron-left': 'V Arrow Left.png',
+  'chevron-right': 'V Arrow Right.png',
+  search: 'search.png',
+  close: 'bubble chat x.png',
+  menu: 'Burger.png',
+  filter: 'Filter.png',
+  plus: 'Plus.png',
+  minus: 'Minus.png',
+  user: 'user.png',
+  users: 'user group.png',
+  heart: 'whislist.png',
+  bookmark: 'saved.png',
+  bell: 'bell.png',
+  'map-pin': 'Compass.png',
+  compass: 'Compass.png',
+  doc: 'Invoice.png',
+  bag: 'Cart.png',
+  box: 'archieve.png',
+  lock: 'setting.png',
+  sparkles: 'Story.png',
+  tent: 'World.png',
+  book: 'book.png',
+};
+
+const PATHS: Partial<Record<LkvIconProps['name'], string | string[]>> = {
   home: 'M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z',
   mountain: 'M3 20l4-14 5 8 3-4 6 10z',
+  heart: 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z',
   bag: ['M5 7h14l-1.5 11a2 2 0 0 1-2 1.7H8.5a2 2 0 0 1-2-1.7z', 'M9 7V5a3 3 0 0 1 6 0v2'],
   doc: ['M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z', 'M8 9h5 M8 13h8'],
   user: ['M12 8a4 4 0 1 0 0-8 4 4 0 0 0 0 8', 'M4 21c0-4 4-6 8-6s8 2 8 6'],
@@ -17,6 +48,7 @@ const PATHS: Record<LkvIconProps['name'], string | string[]> = {
   'chevron-left': 'M15 6l-6 6 6 6',
   'chevron-right': 'M9 6l6 6-6 6',
   'arrow-right': ['M5 12h14', 'M13 6l6 6-6 6'],
+  'arrow-left': ['M19 12H5', 'M11 18l-6-6 6-6'],
   close: ['M6 6l12 12', 'M18 6l-12 12'],
   menu: ['M4 6h16', 'M4 12h16', 'M4 18h10'],
   star: 'M12 2l3 7h7l-6 4 2 8-6-4-6 4 2-8-6-4h7z',
@@ -27,13 +59,43 @@ const PATHS: Record<LkvIconProps['name'], string | string[]> = {
   plus: ['M12 5v14', 'M5 12h14'],
   'map-pin': ['M12 2a8 8 0 0 0-8 8c0 6 8 12 8 12s8-6 8-12a8 8 0 0 0-8-8z', 'M12 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6'],
   bookmark: 'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z',
-  heart: 'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z',
   users: ['M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8', 'M20 21c0-4-4-6-8-6s-8 2-8 6', 'M17 8a3 3 0 1 0 0-6', 'M22 21c0-3-2.5-5-5-5'],
   compass: ['M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z', 'M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z'],
   box: ['M2 7l10-4 10 4-10 4z', 'M2 7v10l10 4 10-4V7', 'M2 7l10 4 10-4', 'M12 11v10'],
+  sparkles: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
+  tent: 'M2 20L12 4l10 16H2z',
+  book: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z',
 };
 
-export default function LkvIcon({ name, size = 20, color = 'currentColor' }: LkvIconProps) {
+export default function LkvIcon({ name, size = 20, color = 'currentColor', className = '', style }: LkvIconProps) {
+  const modernFile = LKV_MODERN_MAP[name];
+
+  if (modernFile) {
+    const iconSrc = `/icons/${encodeURIComponent(modernFile)}`;
+    return (
+      <span
+        role="img"
+        aria-label={name}
+        className={`inline-flex items-center justify-center shrink-0 select-none ${className}`}
+        style={{
+          width: size,
+          height: size,
+          display: 'inline-flex',
+          backgroundColor: color === 'currentColor' ? 'currentColor' : color,
+          maskImage: `url("${iconSrc}")`,
+          WebkitMaskImage: `url("${iconSrc}")`,
+          maskSize: 'contain',
+          WebkitMaskSize: 'contain',
+          maskRepeat: 'no-repeat',
+          WebkitMaskRepeat: 'no-repeat',
+          maskPosition: 'center',
+          WebkitMaskPosition: 'center',
+          ...style,
+        }}
+      />
+    );
+  }
+
   const pathData = PATHS[name];
   if (!pathData) return null;
 
@@ -49,6 +111,8 @@ export default function LkvIcon({ name, size = 20, color = 'currentColor' }: Lkv
       strokeWidth={1.6}
       strokeLinecap="round"
       strokeLinejoin="round"
+      className={className}
+      style={style}
     >
       {paths.map((d, i) => (
         <path key={i} d={d} />

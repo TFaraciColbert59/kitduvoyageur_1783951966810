@@ -397,10 +397,14 @@ Ne sois pas redondant, ne fais pas juste la liste des chiffres, mais utilise-les
             onClick={() => {
               router.push(`/preparer-randonnee?routeId=${trail.id}`);
             }}
-            className="w-full py-3.5 bg-[#17402C] text-white text-sm font-bold rounded-xl shadow-lg hover:bg-[#0F2B1D] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            className="w-full relative overflow-hidden group py-3.5 px-4 bg-gradient-to-r from-[#17402C] via-[#1E5238] to-[#17402C] text-white text-sm font-bold rounded-2xl shadow-[0_6px_20px_rgba(23,64,44,0.35)] border border-white/20 hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
-            <span>🎒</span>
-            <span>Préparer ma randonnée</span>
+            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+            <span className="text-base">🎒</span>
+            <span className="tracking-wide">Préparer ma randonnée</span>
+            <svg className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
           </button>
 
           <button

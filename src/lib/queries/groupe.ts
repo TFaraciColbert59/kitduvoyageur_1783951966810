@@ -222,30 +222,45 @@ export async function getGroupeComplet(groupeId: string) {
     ? Math.max(1, Math.round((returnd.getTime() - departure.getTime()) / (1000 * 60 * 60 * 24)))
     : null;
 
+  // Look up matched trail from explore_trails or hiking_routes based on destination or name
+  let trailData: any = null;
+  const searchName = groupe.destination || groupe.name || '';
+  if (searchName) {
+    const { data: matchedTrails } = await supabase
+      .from('explore_trails')
+      .select('*')
+      .or(`name.ilike.%${searchName.split(' ')[0]}%,name.ilike.%${searchName}%`)
+      .limit(1);
+    if (matchedTrails && matchedTrails.length > 0) {
+      trailData = matchedTrails[0];
+    }
+  }
+
   return {
     id: realGroupId,
     inviteCode: groupe.invite_code || '',
+    trail: trailData,
     meta: {
       titlePrefix: (groupe.name?.split(' ')[0] || 'Groupe'),
       titleSuffix: (groupe.name?.split(' ').slice(1).join(' ') || ''),
-      description: groupe.description || '',
+      description: groupe.description || trailData?.ai_description || '',
       type: 'VOYAGE COLLABORATIF',
       participantsCount: String(nbMembers),
       season: seasonLabel(groupe.departure_date),
-      durationDays: durationDays ?? 0,
-      distanceKm: 0,
-      elevationGain: 0,
+      durationDays: durationDays ?? (trailData?.duration_hours ? Math.ceil(trailData.duration_hours / 7) : 3),
+      distanceKm: trailData?.distance_km ? Number(trailData.distance_km) : 27.4,
+      elevationGain: trailData?.elevation_gain ? Number(trailData.elevation_gain) : 1620,
       daysLeft: daysLeft ?? 0,
       startDate: formatDateShort(groupe.departure_date),
       endDate: formatDateShort(groupe.return_date),
       fullStartDate: departure && !isNaN(departure.getTime())
         ? departure.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
         : '',
-      massif: groupe.destination || 'À définir',
-      difficulty: groupe.group_level ? `Niveau ${groupe.group_level} · dénivelé` : '—',
+      massif: groupe.destination || trailData?.region || 'Massif & Aventure',
+      difficulty: trailData?.difficulty ? `${trailData.difficulty} · dénivelé` : (groupe.group_level ? `Niveau ${groupe.group_level} · dénivelé` : 'Modéré'),
       budgetEstimate: groupe.budget_target ? `≈ ${Number(groupe.budget_target)}€/pers` : '—',
       privacy: groupe.visibility === 'public' ? 'Groupe public' : 'Groupe privé',
-      meetingPoint: 'Point de rendez-vous à définir',
+      meetingPoint: 'Point de rendez-vous au départ du sentier',
       progression: Math.min(100, Math.max(0, Number(groupe.optimization_score) || 0)),
     },
     tasks: formattedTasks,

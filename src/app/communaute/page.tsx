@@ -14,6 +14,7 @@ import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 import CommentItem from '@/components/communaute/CommentItem';
+import MobileCommunityHub from '@/components/communaute/MobileCommunityHub';
 import dynamic from 'next/dynamic';
 
 const CarnetFormModal = dynamic(() => import('@/components/communaute/CarnetFormModal'), { ssr: false });
@@ -1556,226 +1557,43 @@ export default function CommunautePage() {
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
         <MobilePageShell>
-          {/* Pull to refresh indicator */}
-          {(isRefreshing || pullProgress > 0) && (
-            <div
-              style={{
-                position: 'fixed',
-                top: '10px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                zIndex: 100,
-                background: 'rgba(255, 255, 255, 0.95)',
-                borderRadius: '999px',
-                boxShadow: '0 4px 12px rgba(11,31,23,0.15)',
-                padding: '6px 14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '11px',
-                fontWeight: 600,
-                color: '#17402C',
-                transition: 'opacity 0.2s',
-                opacity: isRefreshing ? 1 : pullProgress,
-              }}
-            >
-              {isRefreshing ? (
-                <>
-                  <div style={{ width: '12px', height: '12px', border: '2px solid #17402C', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                  Mise à jour...
-                </>
-              ) : (
-                'Glisser pour rafraîchir'
-              )}
-            </div>
-          )}
-          <div>
-            {/* Compact Hero */}
-            <div style={{ background: 'linear-gradient(180deg, #0B1F17 0%, #1C2620 100%)', borderRadius: '0 0 24px 24px', padding: '20px 16px', marginBottom: '16px' }}>
-              <div style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: 'rgba(255,255,255,0.5)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '8px' }}>Le Hub Voyageurs</div>
-              <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#fff', lineHeight: 1.05, marginBottom: '6px' }}>
-                Ceux qui marchent,<br /><em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#A3C4A3', fontWeight: 400 }}>parlent doucement.</em>
-              </h1>
-              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', maxWidth: '280px', marginBottom: '12px' }}>Un feed sans algorithme. Des voyageurs, des refuges partagés.</p>
-              <div style={{ display: 'flex', gap: '16px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                <div><div style={{ fontSize: '18px', fontWeight: 800, color: '#fff' }}>12k</div><div style={{ fontSize: '8px', fontFamily: 'ui-monospace, monospace', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Voyageurs</div></div>
-                <div><div style={{ fontSize: '18px', fontWeight: 800, color: '#fff' }}>348</div><div style={{ fontSize: '8px', fontFamily: 'ui-monospace, monospace', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Récits</div></div>
-                <div><div style={{ fontSize: '18px', fontWeight: 800, color: '#fff' }}>{clubs.length * 12 || 62}</div><div style={{ fontSize: '8px', fontFamily: 'ui-monospace, monospace', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Clubs</div></div>
-              </div>
-            </div>
-
-            {/* Tabs */}
-            <div style={{ display: 'flex', gap: '4px', padding: '0 16px', marginBottom: '16px', overflowX: 'auto' }}>
-              {['Feed', 'Carnets', 'Clubs', 'Groupes'].map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  style={{
-                    padding: '8px 16px', borderRadius: '999px', border: 'none', fontSize: '12px', fontWeight: 600,
-                    cursor: 'pointer', whiteSpace: 'nowrap',
-                    background: activeTab === tab ? '#17402C' : '#F4F1EA',
-                    color: activeTab === tab ? '#fff' : '#6B7A72', fontFamily: 'inherit',
-                  }}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-
-            {/* Tab Content */}
-            {error ? (
-              <div style={{ margin: '0 16px 16px 16px', padding: '16px', background: 'var(--lkv-paper, #FBFAF6)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px', textAlign: 'center', position: 'relative' }}>
-                <button 
-                  onClick={() => setError(null)} 
-                  style={{ position: 'absolute', top: '8px', right: '8px', background: 'transparent', border: 'none', color: '#6B7A72', fontSize: '14px', cursor: 'pointer' }}
-                  aria-label="Fermer"
-                >
-                  ✕
-                </button>
-                <div style={{ color: '#EF4444', fontSize: '13px', fontWeight: 700, marginBottom: '4px' }}>Erreur de chargement</div>
-                <div style={{ color: '#6B7A72', fontSize: '11px', marginBottom: '12px' }}>{error}</div>
-                <button 
-                  onClick={() => fetchData()} 
-                  style={{ padding: '6px 16px', background: '#17402C', color: 'white', border: 'none', borderRadius: '999px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
-                >
-                  Réessayer
-                </button>
-              </div>
-            ) : loading ? (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-                <div style={{ width: '24px', height: '24px', border: '2px solid #17402C', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-              </div>
-            ) : activeTab === 'Feed' ? (
-              <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {posts.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '40px 16px', color: '#6B7A72' }}>
-                    <p style={{ fontSize: '13px' }}>Le fil est vide. Soyez le premier à publier !</p>
-                  </div>
-                ) : (
-                  <>
-                    {posts.map((post, i) => (
-                      <PostCard key={post.id || i} post={post} user={user} />
-                    ))}
-                    <div ref={sentinelRef} style={{ height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '10px 0' }}>
-                      {loadingMore && (
-                        <div style={{ width: '16px', height: '16px', border: '2px solid #17402C', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            ) : activeTab === 'Carnets' ? (
-              <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#0B1F17' }}>Carnets ({carnets.length})</span>
-                  <button onClick={() => setIsCreateCarnetModalOpen(true)} style={{ padding: '6px 14px', background: '#17402C', color: '#fff', borderRadius: '999px', border: 'none', fontSize: '11px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+ Nouveau</button>
-                </div>
-                {filteredCarnets.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '40px 16px', color: '#6B7A72' }}>
-                    <p style={{ fontSize: '13px' }}>Aucun carnet trouvé.</p>
-                  </div>
-                ) : filteredCarnets.slice(0, 5).map((carnet, i) => (
-                  <div key={carnet.id || i} onClick={() => router.push(`/carnets/${carnet.id || encodeURIComponent(carnet.title)}`)} style={{ background: '#FBFAF6', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(11,31,23,0.06)', cursor: 'pointer' }}>
-                    <div style={{ width: '100%', height: '140px', background: '#EDF3ED', overflow: 'hidden', position: 'relative' }}>
-                      <img src={carnet.cover_image || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      <div style={{ position: 'absolute', top: '8px', left: '8px', display: 'flex', gap: '4px' }}>
-                        {carnet.destination && <span style={{ background: 'rgba(255,255,255,0.9)', padding: '4px 10px', borderRadius: '999px', fontSize: '9px', fontWeight: 700, color: '#0B1F17' }}>📍 {carnet.destination}</span>}
-                      </div>
-                    </div>
-                    <div style={{ padding: '12px' }}>
-                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#0B1F17', marginBottom: '4px' }}>{carnet.title}</div>
-                      {carnet.distance_km && <div style={{ fontSize: '10px', color: '#6B7A72', fontFamily: 'ui-monospace, monospace' }}>📏 {carnet.distance_km} km · ⛰️ +{carnet.elevation_m || 0}m</div>}
-                      <div style={{ fontSize: '10px', color: '#6B7A72', marginTop: '6px' }}>Par {carnet.author?.full_name || 'Voyageur'}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : activeTab === 'Clubs' ? (
-              <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', marginBottom: '4px' }}>
-                  {[
-                    { id: 'all', label: 'Tous', count: clubs.length },
-                    { id: 'activite', label: 'Activités', count: clubs.filter(c => c.type === 'activité' || c.type === 'activite').length },
-                    { id: 'pays', label: 'Destinations', count: clubs.filter(c => c.type === 'pays').length },
-                    { id: 'my_clubs', label: 'Mes Clubs', count: clubs.filter(c => c.is_member).length }
-                  ].map(t => (
-                    <button key={t.id} onClick={() => setClubFilterTab(t.id as any)} style={{
-                      padding: '6px 12px', borderRadius: '999px', border: 'none', fontSize: '11px', fontWeight: 600,
-                      cursor: 'pointer', whiteSpace: 'nowrap',
-                      background: clubFilterTab === t.id ? '#17402C' : '#F4F1EA',
-                      color: clubFilterTab === t.id ? '#fff' : '#6B7A72', fontFamily: 'inherit',
-                    }}>
-                      {t.label} ({t.count})
-                    </button>
-                  ))}
-                </div>
-                {clubs.filter(c => {
-                  if (clubFilterTab === 'activite' && c.type !== 'activité' && c.type !== 'activite') return false;
-                  if (clubFilterTab === 'pays' && c.type !== 'pays') return false;
-                  if (clubFilterTab === 'my_clubs' && !c.is_member) return false;
-                  return true;
-                }).length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '40px 16px', color: '#6B7A72' }}>
-                    <p style={{ fontSize: '13px', marginBottom: '12px' }}>Aucun club trouvé.</p>
-                    <button onClick={() => router.push('/clubs/nouveau')} style={{ padding: '10px 20px', background: '#17402C', color: '#fff', borderRadius: '999px', border: 'none', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+ Fonder un club</button>
-                  </div>
-                ) : clubs.filter(c => {
-                  if (clubFilterTab === 'activite' && c.type !== 'activité' && c.type !== 'activite') return false;
-                  if (clubFilterTab === 'pays' && c.type !== 'pays') return false;
-                  if (clubFilterTab === 'my_clubs' && !c.is_member) return false;
-                  return true;
-                }).slice(0, 10).map(club => (
-                  <div key={club.id} onClick={() => setSelectedDetailClub(club)} style={{ background: '#FBFAF6', borderRadius: '16px', padding: '14px', border: '1px solid rgba(11,31,23,0.06)', cursor: 'pointer' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '8px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#EDF3ED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0 }}>{club.emoji || '🏔️'}</div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '13px', fontWeight: 700, color: '#0B1F17' }}>{club.name}</span>
-                          {club.is_verified && <span style={{ fontSize: '10px', color: '#17402C' }}>✓</span>}
-                        </div>
-                        <span style={{ fontSize: '10px', color: '#6B7A72' }}>{club.type === 'pays' ? 'Destination' : 'Activité'} · {club.members_count} membres</span>
-                      </div>
-                      <button onClick={(e) => { e.stopPropagation(); handleToggleClubMember(club.id, !!club.is_member); }} style={{
-                        padding: '6px 14px', borderRadius: '999px', border: 'none',
-                        fontSize: '10px', fontWeight: 700, cursor: 'pointer', flexShrink: 0,
-                        background: club.is_member ? '#F4F1EA' : '#17402C',
-                        color: club.is_member ? '#0B1F17' : '#fff', fontFamily: 'inherit',
-                      }}>{club.is_member ? 'Membre' : '+ Rejoindre'}</button>
-                    </div>
-                    <p style={{ fontSize: '11px', color: '#6B7A72', margin: 0 }}>{club.description || 'Club de passionnés.'}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              /* Groupes tab */
-              <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <button onClick={() => router.push('/nouveau-groupe')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '16px', borderRadius: '16px', border: '2px dashed rgba(11,31,23,0.15)', background: 'rgba(244,241,234,0.5)', cursor: 'pointer', color: '#0B1F17', fontSize: '13px', fontWeight: 700, fontFamily: 'inherit' }}>
-                  + Créer un groupe
-                </button>
-                {travelGroups.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '40px 16px', color: '#6B7A72' }}>
-                    <p style={{ fontSize: '13px' }}>Aucun groupe public pour l'instant.</p>
-                  </div>
-                ) : travelGroups.slice(0, 5).map(group => (
-                  <div key={group.id} onClick={() => router.push(`/groupes/${group.id}`)} style={{ background: '#FBFAF6', borderRadius: '16px', padding: '14px', border: '1px solid rgba(11,31,23,0.06)', cursor: 'pointer' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#EDF3ED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>
-                        {group.theme === 'Trek' ? '🏔️' : group.theme === 'Van Life' ? '🚐' : '🎒'}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '13px', fontWeight: 700, color: '#0B1F17' }}>{group.name}</div>
-                        <div style={{ fontSize: '10px', color: '#6B7A72' }}>{group.destination || ''} {group.owner?.full_name ? `par ${group.owner.full_name}` : ''}</div>
-                      </div>
-                    </div>
-                    <p style={{ fontSize: '11px', color: '#6B7A72', margin: 0, lineHeight: 1.4 }}>{group.description}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
+          <MobileCommunityHub
+            posts={posts.map(p => ({
+              id: p.id,
+              author_id: p.author_id,
+              author_name: p.author?.full_name || 'Voyageur LKDV',
+              author_avatar: p.author?.avatar_url,
+              author_trust_score: p.author?.trust_score || 80,
+              created_at: p.created_at,
+              content: p.content || '',
+              media_url: p.media_url,
+              media_type: p.media_type,
+              tags: p.tags,
+              location: p.location,
+              origin: p.club_id ? 'club' : p.group_id ? 'group' : p.carnet_id ? 'carnet' : 'communaute',
+              origin_name: p.club?.name || p.group?.name || p.carnet?.title || 'Communauté',
+              likes_count: p.likes_count || 0,
+              comments_count: p.comments_count || 0,
+            }))}
+            loading={loading}
+            user={user}
+            onLikePost={async (postId, liked) => {
+              const supabase = createClient();
+              await supabase.rpc('toggle_community_post_like', { p_post_id: postId });
+            }}
+            onSavePost={async (postId, saved) => {
+              if (!user) return;
+              const supabase = createClient();
+              if (saved) {
+                await supabase.from('carnet_favorites').insert({ carnet_id: postId, user_id: user.id });
+              } else {
+                await supabase.from('carnet_favorites').delete().eq('carnet_id', postId).eq('user_id', user.id);
+              }
+            }}
+            onOpenPublishModal={() => router.push('/communaute/publier')}
+            onRefresh={fetchData}
+          />
         </MobilePageShell>
-        
       </div>
 
       {/* Modals (shared) */}

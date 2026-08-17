@@ -19,4 +19,20 @@ export const imageHosts = [
         protocol: 'https',
         hostname: 'img.rocket.new',
     },
+    {
+        protocol: 'https',
+        hostname: 'api.dicebear.com',
+    },
+    {
+        protocol: 'https',
+        hostname: 'i.pravatar.cc',
+    },
+    {
+        protocol: 'https',
+        hostname: 'icxyvwzfjbflcbqukpfz.supabase.co',
+    },
+    {
+        protocol: 'https',
+        hostname: '**.supabase.co',
+    },
 ];

@@ -6,7 +6,7 @@ import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import BackButton from '@/components/ui/BackButton';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 
@@ -21,11 +21,14 @@ const SAMPLE_PHOTOS = [
 
 export default function PublierPostPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialClubId = searchParams?.get('clubId') || '';
+  const initialClubName = searchParams?.get('clubName') || '';
   const { user } = useAuth();
 
   // Form State
   const [postType, setPostType] = useState<PostType>('photo');
-  const [title, setTitle] = useState('Retour du col du Charmant Som — première neige sur les crêtes.');
+  const [title, setTitle] = useState(initialClubName ? `Récit dans ${initialClubName}` : 'Retour du col du Charmant Som — première neige sur les crêtes.');
   const [content, setContent] = useState(
     "Trois jours dans le brouillard, et puis ce matin. La lumière est revenue par la face nord, doucement — comme si le col avait attendu qu'on soit prêts pour se montrer.\n\nLe sentier était ouvert jusqu'au col, cuisse par endroits. On a fait demi-tour à 250m du sommet, prudence oblige, mais franchement : quelle 1ère avant-saison... la première neige d'automne, c'est autre chose.\n\n\"Marcher en montagne, c'est apprendre à ne pas insister.\"\n\nProchaine sortie prévue le week-end du 24 — cette fois avec les crampons. Qui vient ?"
   );
@@ -51,9 +54,9 @@ export default function PublierPostPage() {
   const [mentionInput, setMentionInput] = useState('');
 
   // Destination & Timing
-  const [audience, setAudience] = useState<AudienceType>('public');
+  const [audience, setAudience] = useState<AudienceType>(initialClubId ? 'club' : 'public');
   const [userClubs, setUserClubs] = useState<any[]>([]);
-  const [selectedClub, setSelectedClub] = useState<string>('');
+  const [selectedClub, setSelectedClub] = useState<string>(initialClubId);
   const [loadingUserClubs, setLoadingUserClubs] = useState(false);
 
   const [scheduleTime, setScheduleTime] = useState<'maintenant' | '1h' | 'matin' | 'planifier'>('maintenant');
@@ -84,7 +87,7 @@ export default function PublierPostPage() {
         if (memberships && memberships.length > 0) {
           const activeClubs = memberships.map((m: any) => m.club).filter(Boolean);
           setUserClubs(activeClubs);
-          if (activeClubs.length > 0) {
+          if (activeClubs.length > 0 && !selectedClub) {
             setSelectedClub(activeClubs[0].id);
           }
         }
@@ -96,7 +99,7 @@ export default function PublierPostPage() {
     }
 
     fetchUserClubs();
-  }, [user]);
+  }, [user, selectedClub]);
 
   // Word count computation
   const wordCount = useMemo(() => {
@@ -195,6 +198,28 @@ export default function PublierPostPage() {
       }
       if (tags.length > 0) {
         fullContent += `\n\n` + tags.map((t) => `#${t}`).join(' ');
+      }
+
+      // Target club topic if audience is club
+      if (audience === 'club' && selectedClub) {
+        const clubPayload = {
+          club_id: selectedClub,
+          author_id: user?.id,
+          title: title.trim() || 'Récit de voyage',
+          content: fullContent,
+          image_url: photos[0] || null,
+          likes_count: 0,
+          replies_count: 0,
+        };
+
+        const { error: clubError } = await supabase.from('club_topics').insert(clubPayload);
+        if (clubError) throw clubError;
+
+        setToastMessage(draft ? 'Brouillon sauvegardé !' : 'Discussion publiée dans le club avec succès ! 🏕️');
+        setTimeout(() => {
+          router.push(`/clubs/${selectedClub}`);
+        }, 1200);
+        return;
       }
 
       // Valid columns matching PostgreSQL community_posts table

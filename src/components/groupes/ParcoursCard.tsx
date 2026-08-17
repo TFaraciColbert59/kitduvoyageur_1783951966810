@@ -3,16 +3,34 @@
 import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
+import 'leaflet/dist/leaflet.css';
 
-export default function ParcoursCard({ groupId }: { groupId?: string }) {
+interface ParcoursCardProps {
+  groupId?: string;
+  trail?: any;
+  meta?: any;
+}
+
+export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
 
+  const startLat = Number(trail?.start_lat ?? (trail?.lat ?? 45.33));
+  const startLng = Number(trail?.start_lng ?? (trail?.lng ?? 5.82));
+  const distanceKm = meta?.distanceKm ?? (trail?.distance_km ?? 27.4);
+  const elevationGain = meta?.elevationGain ?? (trail?.elevation_gain ?? 1620);
+  const trailName = trail?.name ?? meta?.massif ?? 'Traversée du massif';
+
   useEffect(() => {
-    if (!containerRef.current || mapRef.current || typeof window === 'undefined') return;
+    if (!containerRef.current || typeof window === 'undefined') return;
     const container = containerRef.current;
-    // Safety : évite "Map container is already initialized" (StrictMode/HMR double-mount)
-    if ((container as any)._leaflet_id) return;
+
+    // Remove existing map if previously initialized on this container
+    if (mapRef.current) {
+      try { mapRef.current.remove(); } catch {}
+      mapRef.current = null;
+    }
+    try { delete (container as any)._leaflet_id; } catch {}
 
     import('leaflet').then((L) => {
       delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -22,11 +40,9 @@ export default function ParcoursCard({ groupId }: { groupId?: string }) {
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
 
-      if ((container as any)._leaflet_id) return;
-
       const map = L.map(container, {
-        center: [45.33, 5.82],
-        zoom: 11,
+        center: [startLat, startLng],
+        zoom: 12,
         zoomControl: false,
         attributionControl: false,
       });
@@ -37,70 +53,107 @@ export default function ParcoursCard({ groupId }: { groupId?: string }) {
         keepBuffer: 6,
       }).addTo(map);
 
-      // Real trail route line
-      const routeCoords: [number, number][] = [
-        [45.31, 5.78],
-        [45.325, 5.81],
-        [45.34, 5.83],
-        [45.355, 5.85],
-      ];
+      // Construct realistic GPS polyline based on distance and start coords
+      let routeCoords: [number, number][] = [];
+      if (trail?.geojson?.coordinates && Array.isArray(trail.geojson.coordinates)) {
+        routeCoords = trail.geojson.coordinates.map((pt: [number, number]) => [pt[1], pt[0]]);
+      } else {
+        const dist = Number(distanceKm) || 15;
+        const r = (dist / 111) * 0.3;
+        routeCoords = [
+          [startLat, startLng],
+          [startLat + r * 0.35, startLng + r * 0.25],
+          [startLat + r * 0.7, startLng + r * 0.65],
+          [startLat + r * 0.85, startLng + r * 0.3],
+          [startLat + r * 1.1, startLng + r * 0.8],
+          [startLat + r * 0.75, startLng + r * 1.15],
+          [startLat + r * 0.25, startLng + r * 0.85],
+          [startLat, startLng],
+        ];
+      }
 
+      // Outer contrasting halo
+      L.polyline(routeCoords, {
+        color: '#FFFFFF',
+        weight: 8,
+        opacity: 0.95,
+        lineCap: 'round',
+        lineJoin: 'round',
+      }).addTo(map);
+
+      // Main GPS line
       const polyline = L.polyline(routeCoords, {
         color: '#17402C',
         weight: 5,
-        opacity: 0.9,
+        opacity: 1.0,
+        lineCap: 'round',
+        lineJoin: 'round',
       }).addTo(map);
 
-      map.fitBounds(polyline.getBounds(), { padding: [20, 20] });
+      if (routeCoords.length > 0) {
+        map.fitBounds(polyline.getBounds(), { padding: [28, 28] });
+      }
 
-      // Start & Finish markers
+      // Start Marker (Green pin)
       L.circleMarker(routeCoords[0], {
-        radius: 6,
-        color: '#17402C',
-        fillColor: '#2D5A27',
+        radius: 7,
+        color: '#FFFFFF',
+        fillColor: '#17402C',
         fillOpacity: 1,
-        weight: 2,
-      }).addTo(map).bindPopup('Point de départ');
+        weight: 2.5,
+      }).addTo(map).bindPopup(`📍 <strong>Départ</strong> : ${trailName}`);
 
-      L.circleMarker(routeCoords[routeCoords.length - 1], {
-        radius: 6,
-        color: '#B85838',
-        fillColor: '#D96B43',
-        fillOpacity: 1,
-        weight: 2,
-      }).addTo(map).bindPopup('🏁 Arrivée: Col de la Chamette');
+      // Summit / Middle Marker
+      const midIndex = Math.floor(routeCoords.length / 2);
+      if (midIndex > 0 && midIndex < routeCoords.length - 1) {
+        L.circleMarker(routeCoords[midIndex], {
+          radius: 5,
+          color: '#FFFFFF',
+          fillColor: '#D97746',
+          fillOpacity: 1,
+          weight: 2,
+        }).addTo(map).bindPopup(`⛰️ <strong>Point haut (+${elevationGain}m)</strong>`);
+      }
 
       mapRef.current = map;
+
+      // Invalidate size after layout mounts to ensure 100% tile coverage
+      setTimeout(() => {
+        if (mapRef.current) {
+          mapRef.current.invalidateSize();
+          mapRef.current.fitBounds(polyline.getBounds(), { padding: [28, 28] });
+        }
+      }, 250);
     });
 
     return () => {
       if (mapRef.current) {
         try { mapRef.current.remove(); } catch {}
         mapRef.current = null;
-        // Permet à Leaflet de ré-initialiser ce même nœud DOM (StrictMode / HMR)
         try { delete (container as any)._leaflet_id; } catch {}
       }
     };
-  }, []);
+  }, [startLat, startLng, trailName, distanceKm, elevationGain]);
 
   const handleDownloadGpx = () => {
-    const routeCoords: [number, number][] = [
-      [45.31, 5.78],
-      [45.325, 5.81],
-      [45.34, 5.83],
-      [45.355, 5.85],
+    const offset = 0.015;
+    const routeCoords = [
+      [startLat, startLng],
+      [startLat + offset * 0.6, startLng + offset * 0.8],
+      [startLat + offset * 1.2, startLng + offset * 1.5],
+      [startLat + offset * 1.8, startLng + offset * 2.0],
     ];
     const trackPoints = routeCoords
       .map(([lat, lon], i) =>
-        `      <trkpt lat="${lat}" lon="${lon}"><ele>${800 + i * 120}</ele></trkpt>`
+        `      <trkpt lat="${lat}" lon="${lon}"><ele>${800 + i * 150}</ele></trkpt>`
       )
       .join('\n');
-    const gpx = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Le Kit du Voyageur" xmlns="http://www.topografix.com/GPX/1/1">\n  <trk>\n    <name>Parcours du groupe</name>\n    <trkseg>\n${trackPoints}\n    </trkseg>\n  </trk>\n</gpx>`;
+    const gpx = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Le Kit du Voyageur" xmlns="http://www.topografix.com/GPX/1/1">\n  <trk>\n    <name>${trailName}</name>\n    <trkseg>\n${trackPoints}\n    </trkseg>\n  </trk>\n</gpx>`;
     const blob = new Blob([gpx], { type: 'application/gpx+xml' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'parcours-groupe.gpx';
+    a.download = `${trailName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-parcours.gpx`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -108,47 +161,56 @@ export default function ParcoursCard({ groupId }: { groupId?: string }) {
   };
 
   return (
-    <div className="bg-white rounded-[0.75rem] p-6 border border-[#1C2620]/10 shadow-sm relative overflow-hidden group active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-      <div className="flex justify-between items-start mb-4">
+    <div className="bg-white rounded-[22px] p-5 sm:p-6 border border-[#1C2620]/8 shadow-sm relative overflow-hidden transition-all duration-150">
+      <div className="flex justify-between items-start mb-3">
         <div>
-          <h2 className="font-display text-xl text-[#1C2620]">Le <span className="font-serif italic font-bold">parcours</span></h2>
+          <h2 className="font-display text-xl text-[#1C2620]">
+            Le <span className="font-serif italic font-bold text-[#17402C]">parcours GPS</span>
+          </h2>
           <div className="flex items-center gap-2 mt-1">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-[#1C2620]/60 bg-[#1C2620]/5 px-2 py-0.5 rounded-full">3 étapes</span>
-            <span className="font-mono text-[10px] uppercase tracking-widest text-[#1C2620]/60 bg-[#1C2620]/5 px-2 py-0.5 rounded-full">27,4 km</span>
+            <span className="font-mono text-[10px] uppercase tracking-widest text-[#17402C] bg-[#17402C]/10 px-2.5 py-0.5 rounded-full font-bold">
+              {meta?.durationDays || 3} jours
+            </span>
+            <span className="font-mono text-[10px] uppercase tracking-widest text-[#1C2620]/70 bg-[#1C2620]/5 px-2.5 py-0.5 rounded-full font-semibold">
+              {distanceKm} km
+            </span>
           </div>
         </div>
         <div className="flex gap-2">
-          <button onClick={handleDownloadGpx} className="px-3 py-1.5 rounded-full bg-[#1C2620]/5 text-[#1C2620] font-sans font-medium text-xs hover:bg-[#1C2620]/10 transition-colors flex items-center gap-1.5 cursor-pointer">
+          <button
+            onClick={handleDownloadGpx}
+            className="px-3 py-1.5 rounded-full bg-[#17402C]/5 text-[#17402C] font-mono font-medium text-xs hover:bg-[#17402C]/10 transition-colors flex items-center gap-1.5 active:scale-95"
+          >
             <Icon name="ArrowDownTrayIcon" size={12} /> GPX
           </button>
-          {groupId ? (
-            <Link
-              href={`/ai-configurator?groupId=${groupId}`}
-              className="px-3 py-1.5 rounded-full bg-[#1C2620]/5 text-[#1C2620] font-sans font-medium text-xs hover:bg-[#1C2620]/10 transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              Modifier
-            </Link>
-          ) : (
-            <span className="px-3 py-1.5 rounded-full bg-[#1C2620]/5 text-[#1C2620] font-sans font-medium text-xs cursor-default opacity-60">
-              Modifier
-            </span>
-          )}
+          <Link
+            href="/explorer"
+            className="px-3 py-1.5 rounded-full bg-[#17402C] text-white font-mono font-medium text-xs hover:bg-[#122E20] transition-colors flex items-center gap-1.5 active:scale-95"
+          >
+            Carte →
+          </Link>
         </div>
       </div>
       
-      <p className="text-sm text-[#1C2620]/80 mb-6 font-sans">
-        Saint-Pierre-de-Chartreuse — Charmant Som — Grand Vaneau — Col de la Chamette. Deux nuits en refuge gardé.
+      <p className="text-xs text-[#1C2620]/80 mb-4 font-normal leading-relaxed">
+        {meta?.description || `Tracé de ${trailName} avec dénivelé cumulé de +${elevationGain} m.`}
       </p>
       
       {/* Real Interactive Leaflet Map */}
-      <div className="h-48 bg-[#E7E3D6]/50 rounded-xl relative overflow-hidden border border-[#1C2620]/10 mb-4 z-0">
+      <div className="h-48 sm:h-56 bg-[#E7E3D6]/40 rounded-2xl relative overflow-hidden border border-[#1C2620]/10 mb-3 z-0 shadow-inner">
         <div ref={containerRef} className="w-full h-full z-0" />
       </div>
       
-      <div className="flex flex-wrap items-center gap-4 text-[10px] font-mono uppercase tracking-widest text-[#1C2620]/60">
-        <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] bg-[#17402C]" /> Tracé GPS principal</span>
-        <span className="flex items-center gap-1.5"><Icon name="ArrowTrendingUpIcon" size={12} /> 1 620 m D+</span>
-        <span className="flex items-center gap-1.5"><Icon name="HomeIcon" size={12} /> 3 refuges</span>
+      <div className="flex flex-wrap items-center gap-4 text-[10px] font-mono uppercase tracking-widest text-[#5C6B5E]">
+        <span className="flex items-center gap-1.5 font-semibold text-[#17402C]">
+          <span className="w-3 h-[2px] bg-[#17402C]" /> Tracé GPS actif
+        </span>
+        <span className="flex items-center gap-1.5 font-semibold">
+          <Icon name="ArrowTrendingUpIcon" size={12} /> +{elevationGain} m D+
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Icon name="MapPinIcon" size={12} /> {trailName}
+        </span>
       </div>
     </div>
   );

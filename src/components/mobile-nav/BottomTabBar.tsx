@@ -13,13 +13,13 @@ import { getCart } from '@/lib/cart';
 interface Tab {
   href: string;
   label: string;
-  iconName: 'home' | 'mountain' | 'bag' | 'box' | 'users' | 'user' | 'compass' | 'menu' | 'search';
+  iconName: 'home' | 'mountain' | 'bag' | 'doc' | 'user' | 'search' | 'chevron-left' | 'chevron-right' | 'heart' | 'bookmark' | 'bell' | 'map-pin' | 'star' | 'minus' | 'plus' | 'close' | 'menu' | 'arrow-right' | 'arrow-left' | 'lock' | 'filter' | 'users' | 'compass' | 'box' | 'sparkles' | 'tent' | 'book';
   ariaLabel: string;
   matchPaths?: string[];
   isHero?: boolean;
 }
 
-const TABS: Tab[] = [
+const DEFAULT_TABS: Tab[] = [
   {
     href: '/pays',
     label: 'Earth',
@@ -52,6 +52,7 @@ const TABS: Tab[] = [
       '/communaute/publier',
       '/clubs',
       '/groupes',
+      '/carnets',
       '/entraide',
       '/createurs',
       '/experts',
@@ -66,6 +67,37 @@ const TABS: Tab[] = [
     iconName: 'user',
     ariaLabel: 'Mon compte',
     matchPaths: ['/compte', '/profil', '/connexion', '/inscription'],
+  },
+];
+
+const COMMUNITY_TABS: Tab[] = [
+  {
+    href: '/communaute',
+    label: 'Fil',
+    iconName: 'sparkles',
+    ariaLabel: 'Fil d’actualité communauté',
+    matchPaths: ['/communaute', '/communaute/publier', '/feed'],
+  },
+  {
+    href: '/groupes',
+    label: 'Groupes',
+    iconName: 'users',
+    ariaLabel: 'Groupes de voyage',
+    matchPaths: ['/groupes'],
+  },
+  {
+    href: '/clubs',
+    label: 'Clubs',
+    iconName: 'tent',
+    ariaLabel: 'Clubs outdoor',
+    matchPaths: ['/clubs'],
+  },
+  {
+    href: '/carnets',
+    label: 'Carnets',
+    iconName: 'book',
+    ariaLabel: 'Carnets d’expédition',
+    matchPaths: ['/carnets'],
   },
 ];
 
@@ -87,23 +119,23 @@ const TabLink = memo(function TabLink({ tab, isActive, onPress }: { tab: Tab; is
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '4px',
+        gap: '2px',
         textDecoration: 'none',
         color: isActive ? '#A8C4A2' : 'rgba(255, 255, 255, 0.5)',
         position: 'relative',
         transition: 'color 0.2s ease',
         userSelect: 'none',
         WebkitTapHighlightColor: 'transparent',
-        width: '50px',
+        width: '44px',
       }}
     >
       <motion.div
         whileTap={{ scale: 0.85 }}
         transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}
       >
-        <LkvIcon name={tab.iconName} size={22} />
-        <span style={{ fontSize: '9px', fontWeight: isActive ? 600 : 500, fontFamily: 'var(--font-mono)' }}>{tab.label}</span>
+        <LkvIcon name={tab.iconName} size={18} />
+        <span style={{ fontSize: '8.5px', fontWeight: isActive ? 600 : 500, fontFamily: 'var(--font-mono)', letterSpacing: '-0.02em' }}>{tab.label}</span>
       </motion.div>
       {isActive && (
         <motion.div
@@ -111,12 +143,12 @@ const TabLink = memo(function TabLink({ tab, isActive, onPress }: { tab: Tab; is
           transition={{ type: 'spring', stiffness: 450, damping: 30 }}
           style={{
             position: 'absolute',
-            top: '-12px',
-            width: '5px',
-            height: '5px',
+            top: '-8px',
+            width: '4px',
+            height: '4px',
             borderRadius: '50%',
             background: '#A8C4A2',
-            boxShadow: '0 0 10px rgba(168, 196, 162, 0.8)',
+            boxShadow: '0 0 8px rgba(168, 196, 162, 0.8)',
           }}
         />
       )}
@@ -124,7 +156,7 @@ const TabLink = memo(function TabLink({ tab, isActive, onPress }: { tab: Tab; is
   );
 });
 
-function HamburgerMenu({ menuOpen, setMenuOpen, openSearch }: { menuOpen: boolean; setMenuOpen: React.Dispatch<React.SetStateAction<boolean>>; openSearch?: () => void }) {
+function HamburgerMenu({ menuOpen, setMenuOpen, openSearch, isCommunity }: { menuOpen: boolean; setMenuOpen: React.Dispatch<React.SetStateAction<boolean>>; openSearch?: () => void; isCommunity?: boolean }) {
   const { triggerHaptic } = useHapticFeedback();
   return (
     <div style={{ position: 'relative' }}>
@@ -137,8 +169,8 @@ function HamburgerMenu({ menuOpen, setMenuOpen, openSearch }: { menuOpen: boolea
         }}
         aria-label="Menu actions"
         style={{
-          width: '38px',
-          height: '38px',
+          width: '32px',
+          height: '32px',
           borderRadius: '999px',
           background: 'rgba(255,255,255,0.1)',
           backdropFilter: 'blur(16px)',
@@ -151,7 +183,7 @@ function HamburgerMenu({ menuOpen, setMenuOpen, openSearch }: { menuOpen: boolea
           outline: 'none',
         }}
       >
-        <LkvIcon name="menu" size={16} />
+        <LkvIcon name="menu" size={14} />
       </motion.button>
       <AnimatePresence>
         {menuOpen && (
@@ -214,6 +246,34 @@ function HamburgerMenu({ menuOpen, setMenuOpen, openSearch }: { menuOpen: boolea
                 <LkvIcon name="search" size={16} />
                 Recherche
               </button>
+
+              {/* Enregistrés / Favoris (Visible in Community Section) */}
+              {isCommunity && (
+                <Link
+                  href="/carnets?tab=favorites"
+                  onClick={() => {
+                    triggerHaptic('light');
+                    setMenuOpen(false);
+                  }}
+                  aria-label="Enregistrés"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 10px',
+                    borderRadius: '10px',
+                    background: 'rgba(255,255,255,0.06)',
+                    textDecoration: 'none',
+                    color: '#A8C4A2',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                  }}
+                >
+                  <LkvIcon name="bookmark" size={16} color="#A8C4A2" />
+                  Enregistrés
+                </Link>
+              )}
+
               {/* Notifications */}
               <Link
                 href="/alertes"
@@ -299,6 +359,8 @@ function HamburgerMenu({ menuOpen, setMenuOpen, openSearch }: { menuOpen: boolea
 
 function BottomTabBar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { triggerHaptic } = useHapticFeedback();
   const { loading } = useAuth();
   const { openSearch } = useSearchContext();
   const [mounted, setMounted] = useState(false);
@@ -314,32 +376,63 @@ function BottomTabBar() {
     setPressedTab(null);
   }, [pathname]);
 
+  const isCommunitySection = Boolean(
+    pathname && (
+      pathname.startsWith('/communaute') ||
+      pathname.startsWith('/groupes') ||
+      pathname.startsWith('/clubs') ||
+      pathname.startsWith('/carnets')
+    )
+  );
+
+  const currentTabs = isCommunitySection ? COMMUNITY_TABS : DEFAULT_TABS;
+
   const isActive = (tab: Tab): boolean => {
     if (pressedTab && pressedTab === tab.href) return true;
     if (!tab.matchPaths) return pathname === tab.href;
     return tab.matchPaths.some(p => pathname === p || pathname?.startsWith(p + '/'));
   };
 
+  const handleBack = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    triggerHaptic('light');
+    try {
+      if (typeof window !== 'undefined' && window.history.length > 1) {
+        window.history.back();
+      } else {
+        router.push('/explorer');
+      }
+    } catch {
+      router.push('/explorer');
+    }
+  };
+
   if (loading || !mounted) {
     return (
-      <nav role="navigation" aria-label="Chargement de la navigation" className="md:hidden" style={{ position: 'fixed', left: '12px', right: '12px', bottom: 'calc(12px + env(safe-area-inset-bottom))', zIndex: 50 }}>
+      <nav role="navigation" aria-label="Chargement de la navigation" className="md:hidden" style={{ position: 'fixed', left: '10px', right: '10px', bottom: 'calc(4px + env(safe-area-inset-bottom))', zIndex: 50 }}>
         <div style={{
-          height: '62px',
-          background: 'rgba(255,255,255,0.85)',
-          backdropFilter: 'blur(24px) saturate(1.5)',
-          WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
-          borderRadius: '22px',
-          border: '1px solid rgba(11,31,23,0.06)',
-          boxShadow: '0 10px 30px rgba(11,31,23,0.1)',
+          height: '52px',
+          background: 'rgba(20, 40, 30, 0.65)',
+          backdropFilter: 'blur(40px) saturate(200%)',
+          WebkitBackdropFilter: 'blur(40px) saturate(200%)',
+          borderRadius: '999px',
+          borderTop: '1px solid rgba(255,255,255,0.25)',
+          borderLeft: '1px solid rgba(255,255,255,0.12)',
+          borderRight: '1px solid rgba(255,255,255,0.12)',
+          borderBottom: '1px solid rgba(255,255,255,0.05)',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.35), inset 0 1px 6px rgba(255,255,255,0.1)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          justifyContent: 'space-around',
           padding: '0 8px',
         }}>
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="animate-pulse" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', width: '48px' }}>
-              <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#E2E8E4' }} />
-              <div style={{ width: '32px', height: '6px', borderRadius: '4px', background: '#E2E8E4' }} />
+            <div key={i} className="animate-pulse" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', width: '44px' }}>
+              <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }} />
+              <div style={{ width: '26px', height: '5px', borderRadius: '4px', background: 'rgba(255,255,255,0.2)' }} />
             </div>
           ))}
         </div>
@@ -348,29 +441,62 @@ function BottomTabBar() {
   }
 
   return (
-    <nav role="navigation" aria-label="Navigation principale" className="md:hidden" style={{ position: 'fixed', left: '16px', right: '16px', bottom: 'calc(10px + env(safe-area-inset-bottom))', zIndex: 50 }}>
+    <nav role="navigation" aria-label="Navigation principale" className="md:hidden" style={{ position: 'fixed', left: '10px', right: '10px', bottom: 'calc(4px + env(safe-area-inset-bottom))', zIndex: 50 }}>
       <div
         style={{
-          height: '62px',
-          background: 'rgba(20, 40, 30, 0.45)',
+          height: '52px',
+          background: 'rgba(20, 40, 30, 0.65)',
           backdropFilter: 'blur(40px) saturate(200%)',
           WebkitBackdropFilter: 'blur(40px) saturate(200%)',
           borderRadius: '999px',
-          borderTop: '1px solid rgba(255,255,255,0.3)',
-          borderLeft: '1px solid rgba(255,255,255,0.15)',
-          borderRight: '1px solid rgba(255,255,255,0.15)',
+          borderTop: '1px solid rgba(255,255,255,0.25)',
+          borderLeft: '1px solid rgba(255,255,255,0.12)',
+          borderRight: '1px solid rgba(255,255,255,0.12)',
           borderBottom: '1px solid rgba(255,255,255,0.05)',
-          boxShadow: '0 30px 60px rgba(0,0,0,0.4), inset 0 2px 10px rgba(255,255,255,0.1)',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.35), inset 0 1px 6px rgba(255,255,255,0.1)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-around',
-          padding: '0 16px',
+          padding: '0 8px',
         }}
       >
-        {TABS.map(tab => (
+        {/* Left-most back arrow when in community section */}
+        {isCommunitySection && (
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.85 }}
+            onClick={handleBack}
+            aria-label="Retour"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '2px',
+              background: 'transparent',
+              border: 'none',
+              color: 'rgba(255, 255, 255, 0.8)',
+              cursor: 'pointer',
+              userSelect: 'none',
+              WebkitTapHighlightColor: 'transparent',
+              width: '38px',
+            }}
+          >
+            <LkvIcon name="arrow-left" size={17} />
+            <span style={{ fontSize: '8px', fontWeight: 600, fontFamily: 'var(--font-mono)', letterSpacing: '-0.02em' }}>Retour</span>
+          </motion.button>
+        )}
+
+        {currentTabs.map(tab => (
           <TabLink key={tab.href} tab={tab} isActive={isActive(tab)} onPress={setPressedTab} />
         ))}
-        <HamburgerMenu menuOpen={menuOpen} setMenuOpen={setMenuOpen} openSearch={openSearch} />
+
+        <HamburgerMenu
+          menuOpen={menuOpen}
+          setMenuOpen={setMenuOpen}
+          openSearch={openSearch}
+          isCommunity={isCommunitySection}
+        />
       </div>
     </nav>
   );

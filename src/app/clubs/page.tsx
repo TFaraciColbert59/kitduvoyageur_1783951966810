@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import MobileClubsHub from '@/components/clubs/MobileClubsHub';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -1227,168 +1228,28 @@ export default function ClubsPage() {
         </main>
       </div>
 
-      {/* ── MOBILE ── */}
+      {/* ── MOBILE VIEW ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
-          <div style={{ padding: '16px' }}>
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <div>
-                <div style={{ fontSize: '10px', color: '#6B7A72', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>Les Clubs</div>
-                <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0B1F17', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-                  Clubs <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>voyageurs</em>
-                </h1>
-              </div>
-              <Link
-                href="/clubs/nouveau"
-                style={{ padding: '10px 18px', background: '#17402C', color: '#fff', borderRadius: '999px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                + Nouveau
-              </Link>
-            </div>
-
-            {/* Filter Tabs */}
-            <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
-              {[
-                { id: 'activite', label: 'Par Activité', count: activityClubs.length },
-                { id: 'pays', label: 'Par Destination', count: countryClubs.length },
-                { id: 'mes-clubs', label: 'Mes Clubs', count: myClubs.length },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: '999px',
-                    border: 'none',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    background: activeTab === tab.id ? '#17402C' : '#F4F1EA',
-                    color: activeTab === tab.id ? '#fff' : '#6B7A72',
-                    fontFamily: 'inherit',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  {tab.label}
-                  {tab.count > 0 && (
-                    <span style={{
-                      fontSize: '10px',
-                      padding: '1px 6px',
-                      borderRadius: '999px',
-                      background: activeTab === tab.id ? 'rgba(255,255,255,0.2)' : '#EDF3ED',
-                      color: activeTab === tab.id ? '#fff' : '#6B7A72',
-                    }}>
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* Error */}
-            {error && (
-              <div style={{ padding: '12px', background: 'rgba(239,68,68,0.08)', borderRadius: '12px', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', fontSize: '12px', fontWeight: 600, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                ⚠️ {error}
-              </div>
-            )}
-
-            {/* Clubs Content */}
-            {loading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {[1, 2, 3].map((i) => (
-                  <div key={i} style={{ height: '140px', background: '#F4F1EA', borderRadius: '16px', opacity: 0.5 }} />
-                ))}
-              </div>
-            ) : displayedClubs.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px 16px', background: 'rgba(244,241,234,0.5)', borderRadius: '24px', border: '1px dashed rgba(11,31,23,0.1)' }}>
-                <div style={{ fontSize: '36px', marginBottom: '12px' }}>{activeTab === 'mes-clubs' ? '🏕️' : '✨'}</div>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0B1F17', marginBottom: '8px' }}>
-                  {activeTab === 'mes-clubs' ? "Vous n'avez rejoint aucun club" : 'Espace encore vierge'}
-                </h3>
-                <p style={{ fontSize: '13px', color: '#6B7A72', marginBottom: '16px' }}>
-                  {activeTab === 'mes-clubs'
-                    ? 'Explorez les clubs existants et trouvez votre prochaine équipe.'
-                    : "Soyez le pionnier et créez le vôtre !"}
-                </p>
-                {activeTab === 'mes-clubs' ? (
-                  user ? (
-                    <button onClick={() => setActiveTab('activite')} style={{ padding: '12px 28px', background: '#0B1F17', color: '#fff', borderRadius: '999px', border: 'none', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                      Explorer les clubs
-                    </button>
-                  ) : (
-                    <Link href="/connexion" style={{ padding: '12px 28px', background: '#17402C', color: '#fff', borderRadius: '999px', fontSize: '13px', fontWeight: 700, textDecoration: 'none', display: 'inline-block', fontFamily: 'inherit' }}>
-                      Se connecter
-                    </Link>
-                  )
-                ) : (
-                  <Link href="/clubs/nouveau" style={{ padding: '12px 28px', background: '#17402C', color: '#fff', borderRadius: '999px', fontSize: '13px', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', fontFamily: 'inherit' }}>
-                    + Fonder le premier club
-                  </Link>
-                )}
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {displayedClubs.map((c) => (
-                  <div
-                    key={c.id}
-                    style={{ background: '#FBFAF6', borderRadius: '16px', padding: '14px', border: '1px solid rgba(11,31,23,0.06)', cursor: 'pointer' }}
-                    onClick={() => router.push(`/clubs/${c.slug}`)}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'linear-gradient(135deg, #F4F1EA, #EDF3ED)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
-                          {c.emoji || '🏔️'}
-                        </div>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <span style={{ fontSize: '14px', fontWeight: 700, color: '#0B1F17' }}>{c.name}</span>
-                            {c.is_verified && <span style={{ fontSize: '14px', color: '#17402C' }}>✓</span>}
-                          </div>
-                          <span style={{ fontSize: '10px', color: '#6B7A72', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{c.type === 'pays' ? 'Destination' : 'Activité'} · {c.privacy === 'open' ? 'Public' : 'Privé'}</span>
-                        </div>
-                      </div>
-                      {c.is_member && (
-                        <span style={{ fontSize: '10px', color: '#17402C', background: '#EDF3ED', padding: '2px 8px', borderRadius: '999px', fontWeight: 700 }}>Membre</span>
-                      )}
-                    </div>
-                    <p style={{ fontSize: '12px', color: '#6B7A72', margin: '0 0 10px', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.description}</p>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: '#6B7A72' }}>
-                        <span>👥 {c.members_count} membres</span>
-                        <span>⚡ {c.active_this_month} actifs</span>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleMember(c.id, !!c.is_member);
-                        }}
-                        style={{
-                          padding: '6px 14px',
-                          borderRadius: '999px',
-                          border: 'none',
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          background: c.is_member ? '#F4F1EA' : '#17402C',
-                          color: c.is_member ? '#0B1F17' : '#fff',
-                          fontFamily: 'inherit',
-                        }}
-                      >
-                        {c.is_member ? 'Quitter' : 'Rejoindre'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
+        <MobilePageShell background="#FBFAF6">
+          <MobileClubsHub
+            clubs={clubs}
+            myClubs={clubs.filter(c => c.is_member)}
+            loading={loading}
+            user={user}
+            onJoinClub={async (clubId) => {
+              const target = clubs.find(c => c.id === clubId);
+              if (target) handleToggleMember(clubId, !!target.is_member);
+            }}
+            onOpenCreateModal={() => {
+              if (!user) {
+                setToast('Veuillez vous connecter pour créer un club.');
+                return;
+              }
+              setEditClub(null);
+              setShowCreateModal(true);
+            }}
+          />
         </MobilePageShell>
-        
       </div>
 
       {/* Modals */}

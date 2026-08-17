@@ -752,17 +752,20 @@
 /* Mobile styles */
 .m-earth {
   display: flex; flex-direction: column;
-  height: 100%;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 .m-earth-body {
-  flex: 1; overflow-y: auto;
+  flex: 1;
   background: var(--lkv-forest-950);
   color: #fff;
   position: relative;
+  width: 100%;
 }
 .m-earth-hero {
   position: relative;
-  padding: 22px 18px 20px;
+  padding: 24px 16px 20px;
   background: radial-gradient(ellipse at 50% 30%, #0F3A2A 0%, #0A1E17 60%, #050D0A 100%);
   color: #fff;
   text-align: center;
@@ -785,8 +788,8 @@
 }
 .m-earth-hero h1 {
   font-family: var(--lkv-font-sans);
-  font-size: 40px; font-weight: 500;
-  letter-spacing: -0.03em; line-height: 0.96;
+  font-size: 32px; font-weight: 500;
+  letter-spacing: -0.03em; line-height: 1.05;
   margin: 0 0 8px;
 }
 .m-earth-hero h1 em {
@@ -805,28 +808,34 @@
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(168,196,162,0.20);
   border-radius: 999px;
+  max-width: 100%;
 }
 .m-earth-hero .m-search input {
   flex: 1; background: transparent; border: 0; outline: 0;
   color: #fff; font-size: 12px;
+  min-width: 0;
 }
 .m-earth-hero .m-search input::placeholder { color: rgba(255,255,255,0.4); }
 .m-earth-hero .m-search .b {
-  padding: 6px 12px; background: var(--lkv-sage-500);
+  padding: 6px 14px; background: var(--lkv-sage-500);
   color: var(--lkv-forest-950);
   border-radius: 999px;
-  font-size: 11px; font-weight: 500; border: none; cursor: pointer;
+  font-size: 11px; font-weight: 600; border: none; cursor: pointer;
+  shrink: 0;
 }
 
 .m-globe-stage {
   position: relative;
-  height: 360px;
+  width: 100%;
+  height: 320px;
+  overflow: hidden;
   background: radial-gradient(ellipse at center, #0F3A2A 0%, #0A1E17 60%, #050D0A 100%);
 }
 #mGlobeViz {
   position: absolute; inset: 0;
+  width: 100%; height: 100%;
 }
-#mGlobeViz canvas { display: block; margin: 0 auto; }
+#mGlobeViz canvas { display: block; margin: 0 auto; width: 100% !important; max-width: 100%; }
 
 .m-globe-stage .m-orbit {
   position: absolute; left: 50%; top: 50%;
@@ -985,4 +994,40 @@
 .m-live-item .t {
   font-family: var(--lkv-font-mono);
   font-size: 10px; color: rgba(255,255,255,0.4);
+}
+
+/* ── RESPONSIVE FIXES FOR LIVE SECTION & STATS ── */
+@media (max-width: 1024px) {
+  .live-section {
+    padding: 32px 16px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .live-panel {
+    padding: 20px 16px;
+    border-radius: 20px;
+  }
+  .live-panel h3 {
+    font-size: 24px;
+  }
+  .stats-panel {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    width: 100%;
+  }
+  .stat-card {
+    padding: 20px;
+    border-radius: 18px;
+  }
+  .stat-card.feat {
+    grid-column: span 1;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 20px;
+  }
+  .stat-card.feat .mini-map {
+    width: 100%;
+    min-height: 160px;
+  }
 }
