@@ -2251,25 +2251,26 @@ const renderExpandedWidget = (id: string): React.ReactNode => {
       layout
       layoutId={`lkdv-exp-${id}`}
       transition={{ type: 'spring', stiffness: 280, damping: 32, mass: 1.05 }}
-      className="fixed inset-0 z-[5000] flex flex-col bg-[#FBFAF6]/97 backdrop-blur-2xl overflow-hidden"
+      className="fixed inset-0 z-[5000] flex flex-col bg-[#FBFAF6]/50 backdrop-blur-md overflow-hidden"
     >
-        <div className="flex items-center justify-between gap-3 p-4 sm:p-5 border-b border-[#1C2620]/[0.08] bg-white/60 backdrop-blur-xl shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            {iconChip}
-            <div className="min-w-0">
-              <h2 className="text-sm font-extrabold uppercase tracking-wider text-[#1C2620] truncate">{title}</h2>
-              {subtitle && <p className="text-xs text-[#1C2620]/60 truncate">{subtitle}</p>}
-            </div>
-          </div>
-          {closeBtn}
-        </div>
-<div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
+        <Header />
+        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none pt-20 sm:pt-[88px]">
             <motion.div
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.26, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
               className="max-w-5xl mx-auto p-4 sm:p-6 space-y-4"
             >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  {iconChip}
+                  <div className="min-w-0">
+                    <h2 className="text-sm font-extrabold uppercase tracking-wider text-[#1C2620] truncate">{title}</h2>
+                    {subtitle && <p className="text-xs text-[#1C2620]/60 truncate">{subtitle}</p>}
+                  </div>
+                </div>
+                {closeBtn}
+              </div>
               {body}
             </motion.div>
           </div>

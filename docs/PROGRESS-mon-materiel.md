@@ -174,3 +174,8 @@ Transformer `src/app/mon-materiel/page.tsx` en véritable cockpit dashboard **sa
 - **Motion** : spring `stiffness 280 / damping 32` (≈ ouverture 420–600 ms, fermeture 320–480 ms) ; `prefers-reduced-motion` géré par `MotionConfig reducedMotion="user"` (transform `none` immédiat, vérifié).
 - **Robustesse** : drag & drop désactivé tant qu'un fullscreen est ouvert (`draggable={!expandedWidget}`), garde anti double-ouverture, **focus restauré sur le bouton Agrandir d'origine** à la fermeture, trap Tab conservé, aucun scroll de fond.
 - **Vérifié Playwright** : ouverture/fermeture (Escape) ×6, focus, trap, reduced-motion, persistance ; **26/26** + probes de transform (expansion active / désactivée en reduced-motion). Build final 47,9 kB.
+
+### Retour utilisateur — fond fullscreen transparent + Header du site
+- Fond de la vue fullscreen passé de `#FBFAF6/97 + blur(40px)` à **`#FBFAF6/50 + blur(12px)`** : la photo `urban-vintage` du cockpit **transparaît** derrière le contenu détaillé.
+- La **barre custom** de la vue (icône/titre/bouton) est remplacée par le **Header global du site** (`<Header />` rendu dans l'overlay, z au-dessus) ; le titre du widget + bouton « Fermer (échap) » sont conservés dans une rangée compacte en haut du contenu (`pt-20/88` pour dégager le header flottant).
+- Vérifié : `bg rgba(251,250,246,0.5)` + `blur(12px)`, `header` présent dans l'overlay, **Playwright 26/26** inchangé.
