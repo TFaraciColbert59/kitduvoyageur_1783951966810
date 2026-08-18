@@ -53,6 +53,7 @@
     "@capacitor/core": "^8.5.0",
     "@capacitor/ios": "^8.5.0",
     "@dhiwise/component-tagger": "^1.0.15",
+    "@hello-pangea/dnd": "^18.0.1",
     "@heroicons/react": "^2.2.0",
     "@rocketnew/llm-sdk": "^1.1.0",
     "@supabase/ssr": "^0.6.1",
