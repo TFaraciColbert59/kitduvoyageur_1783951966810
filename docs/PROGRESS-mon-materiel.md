@@ -160,3 +160,9 @@ Transformer `src/app/mon-materiel/page.tsx` en véritable cockpit dashboard **sa
 - `tsc --noEmit` 0 erreur · `npm run lint` 0 warning page · `npm run build` OK (route `/mon-materiel` 47,1 kB).
 - **Playwright 25/25 :** 6 widgets (Copilote IA absent) · sans scroll · 6 boutons Agrandir · les **6 fullscreen s'ouvrent/se ferment (Escape)** · focus sur « Fermer (échap) » · réordonnancement + persistance · checklist cochée persistée (`lkdv_forget_checked`) · Assistance IA dans le drawer (fallback badge+texte) · mobile 380 px sans overflow · 0 erreur console hors fallback IA attendu · 0 HTTP ≥ 400.
 - ⚠️ Erreur console attendue : `/api/ai/chat-completion` log un 404 fournisseur sans clé Gemini avant de basculer en « Mode dégradé » (comportement existant).
+
+### Polissage a11y / tactile (suite du lot)
+- **Cibles tactiles ≥44px** (spec §7/§12 + skill ux-mobile) : cases de la checklist « À ne pas oublier » agrandies (`w-11 h-11` en fullscreen, ligne compacte `min-h-[44px]` cliquable avec `aria-pressed`), bouton de fermeture fullscreen `w-11 h-11`.
+- **Focus trap** dans les vues fullscreen : Tab / Shift+Tab contenu dans l'overlay (`[data-fullscreen]`), focus initial sur « Fermer (échap) », Escape ferme.
+- **Actions réelles** sur les items « À ne pas oublier » issus de données : bouton « Ouvrir la fiche ➔ » → `GearDetailDrawer` sur l'équipement concerné (`itemId`).
+- **Playwright 26/26** après polissage (inclut « Focus piégé dans le fullscreen (Tab) »).

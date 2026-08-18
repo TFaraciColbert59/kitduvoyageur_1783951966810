@@ -435,14 +435,36 @@ export default function MonMaterielCockpitPage() {
     triggerHaptic('light');
   };
 
-  // Vue fullscreen d'un widget — Escape ferme, focus sur le bouton de fermeture
+// Vue fullscreen d'un widget — Escape ferme, focus piégé dans l'overlay, focus sur le bouton de fermeture
   useEffect(() => {
     if (!expandedWidget) return;
+    const root = document.querySelector('[data-fullscreen]') as HTMLElement | null;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setExpandedWidget(null);
+      if (e.key === 'Escape') {
+        setExpandedWidget(null);
+        return;
+      }
+      if (e.key === 'Tab' && root) {
+        const focusables = [...root.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+          .filter((el) => !el.hasAttribute('disabled'));
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        const active = document.activeElement as HTMLElement | null;
+        const inside = !!active && root.contains(active);
+        if (e.shiftKey && (!inside || active === first)) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && (!inside || active === last)) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     window.addEventListener('keydown', onKey);
-    const t = setTimeout(() => expandedCloseRef.current?.focus(), 50);
+    const t = setTimeout(() => {
+      root?.querySelector<HTMLElement>('[aria-label="Fermer (échap)"]')?.focus();
+    }, 50);
     return () => {
       window.removeEventListener('keydown', onKey);
       clearTimeout(t);
@@ -1543,27 +1565,25 @@ export default function MonMaterielCockpitPage() {
               </div>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-1.5 pr-0.5">
-              {forgetCriticalCount === 0 ? (
+{forgetCriticalCount === 0 ? (
                 <p className="text-xs text-[#1C2620]/70 text-center py-4">Aucun élément critique ✨</p>
               ) : (
                 critical.slice(0, 4).map((it) => (
-                  <div
+                  <button
                     key={it.id}
-                    className="p-2 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs flex items-center justify-between gap-2"
+                    type="button"
+                    onClick={() => toggleForgetChecked(it.id)}
+                    aria-pressed={forgetChecked.has(it.id)}
+                    className="w-full text-left p-2.5 rounded-xl bg-white/40 hover:bg-white/60 border border-[#1C2620]/[0.07] text-xs flex items-center justify-between gap-2 min-h-[44px] transition-colors"
                   >
                     <div className="min-w-0">
-                      <p className="text-[#1C2620]/90 font-semibold truncate">{it.label}</p>
+                      <p className={`font-semibold truncate ${forgetChecked.has(it.id) ? 'text-[#1C2620]/45 line-through' : 'text-[#1C2620]/90'}`}>{it.label}</p>
                       <p className="text-[#1C2620]/60 truncate">{it.reason}</p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => toggleForgetChecked(it.id)}
-                      className={`w-5 h-5 rounded-md border shrink-0 flex items-center justify-center transition-all ${forgetChecked.has(it.id) ? 'bg-[#2D5A3D] border-[#2D5A3D] text-white' : 'border-[#1C2620]/30 text-transparent hover:border-[#1C2620]/60'}`}
-                      aria-label={forgetChecked.has(it.id) ? `Décocher ${it.label}` : `Cocher ${it.label}`}
-                    >
+                    <span className={`w-6 h-6 rounded-md border shrink-0 flex items-center justify-center ${forgetChecked.has(it.id) ? 'bg-[#2D5A3D] border-[#2D5A3D] text-white' : 'border-[#1C2620]/30 text-transparent'}`}>
                       <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12l5 5L20 7" /></svg>
-                    </button>
-                  </div>
+                    </span>
+                  </button>
                 ))
               )}
             </div>
@@ -1674,14 +1694,14 @@ export default function MonMaterielCockpitPage() {
   };
   const FORGET_CATEGORY_ORDER = ['Kit', 'Péremptions', 'Entretien', 'Prêts', 'Consommables', 'Contexte départ', 'Documents'];
 
-  const renderExpandedWidget = (id: string): React.ReactNode => {
+const renderExpandedWidget = (id: string): React.ReactNode => {
     const title = WIDGET_LABEL[id] || id;
     const closeBtn = (
       <button
         ref={expandedCloseRef}
         type="button"
         onClick={() => setExpandedWidget(null)}
-        className="w-9 h-9 rounded-full bg-[#1C2620]/[0.06] hover:bg-[#1C2620]/[0.1] border border-[#1C2620]/[0.1] flex items-center justify-center text-sm text-[#1C2620] shrink-0"
+        className="w-11 h-11 rounded-full bg-[#1C2620]/[0.06] hover:bg-[#1C2620]/[0.1] border border-[#1C2620]/[0.1] flex items-center justify-center text-base text-[#1C2620] shrink-0"
         aria-label="Fermer (échap)"
       >
         ✕
@@ -2046,22 +2066,32 @@ export default function MonMaterielCockpitPage() {
                   const meta = FORGET_LEVEL_META[it.level] || FORGET_LEVEL_META.conseille;
                   const checked = forgetChecked.has(it.id);
                   return (
-                    <div key={it.id} className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs flex items-start justify-between gap-2">
+<div key={it.id} className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs flex items-start justify-between gap-2">
                       <div className="min-w-0 space-y-0.5">
                         <p className={`font-semibold truncate ${checked ? 'text-[#1C2620]/45 line-through' : 'text-[#1C2620]/90'}`}>{it.label}</p>
                         <p className="text-[#1C2620]/60">{it.reason}</p>
                         <div className="flex flex-wrap gap-1 pt-1">
                           <span className={`px-2 py-0.5 rounded-full border font-mono font-bold ${meta.cls}`}>{meta.label}</span>
                           <span className="px-2 py-0.5 rounded-full bg-[#1C2620]/[0.05] border border-[#1C2620]/[0.08] font-mono text-[#1C2620]/60">{it.source === 'donnée' ? 'Vos données' : 'Règle générique'}</span>
+                          {it.itemId && (
+                            <button
+                              type="button"
+                              onClick={() => { setSelectedItemId(it.itemId!); setExpandedWidget(null); setIsDetailDrawerOpen(true); }}
+                              className="px-2 py-0.5 rounded-full bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] font-bold"
+                            >
+                              Ouvrir la fiche ➔
+                            </button>
+                          )}
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => toggleForgetChecked(it.id)}
-                        className={`w-6 h-6 rounded-md border shrink-0 flex items-center justify-center transition-all ${checked ? 'bg-[#2D5A3D] border-[#2D5A3D] text-white' : 'border-[#1C2620]/30 text-transparent hover:border-[#1C2620]/60'}`}
+                        aria-pressed={checked}
+                        className={`w-11 h-11 rounded-lg border shrink-0 flex items-center justify-center transition-all ${checked ? 'bg-[#2D5A3D] border-[#2D5A3D] text-white' : 'border-[#1C2620]/30 text-transparent hover:border-[#1C2620]/60 hover:bg-white/60'}`}
                         aria-label={checked ? `Décocher ${it.label}` : `Cocher ${it.label}`}
                       >
-                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12l5 5L20 7" /></svg>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12l5 5L20 7" /></svg>
                       </button>
                     </div>
                   );
@@ -2201,7 +2231,7 @@ export default function MonMaterielCockpitPage() {
     }
 
     return (
-      <div className="fixed inset-0 z-[5000] flex flex-col bg-[#FBFAF6]/97 backdrop-blur-2xl animate-[fadeInUp_0.2s_ease_both]">
+      <div data-fullscreen className="fixed inset-0 z-[5000] flex flex-col bg-[#FBFAF6]/97 backdrop-blur-2xl animate-[fadeInUp_0.2s_ease_both]">
         <div className="flex items-center justify-between gap-3 p-4 sm:p-5 border-b border-[#1C2620]/[0.08] bg-white/60 backdrop-blur-xl shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             {iconChip}
