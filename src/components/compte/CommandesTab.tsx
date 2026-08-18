@@ -108,7 +108,7 @@ const PRODUCT_IMAGES: Record<string, string> = {
   'sous-vetements-tech-001': 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=200&q=80',
   'sac-couchage-001': 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=200&q=80',
   'serviette-microfibre-001': 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=200&q=80',
-  'lampe-frontale-001': 'https://images.unsplash.com/photo-1508873696983-2df515122519?auto=format&fit=crop&w=200&q=80',
+  'lampe-frontale-001': 'https://images.unsplash.com/photo-1606206873764-fd15e145ccc4?auto=format&fit=crop&w=200&q=80',
   'batterie-externe-001': 'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?auto=format&fit=crop&w=200&q=80',
   'bonnet-gants-001': 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=200&q=80',
   'lunettes-soleil-001': 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&w=200&q=80',

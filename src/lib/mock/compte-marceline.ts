@@ -263,7 +263,7 @@ export const MOCK_MARCELINE_DATA = {
       order_number: 'CMD-2026-1098',
       price: '189€',
       status: 'Préparation',
-      image_url: 'https://images.unsplash.com/photo-1508873696983-2df515122519?auto=format&fit=crop&w=200&q=80',
+      image_url: 'https://images.unsplash.com/photo-1606206873764-fd15e145ccc4?auto=format&fit=crop&w=200&q=80',
     },
     {
       id: 'cmd-3',
