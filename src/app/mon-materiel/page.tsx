@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { motion, MotionConfig, AnimatePresence } from 'framer-motion';
 import Header from '@/components/Header';
 import { useEquipment, UserEquipmentItem } from '@/hooks/useEquipment';
 import { useUserKits, CustomKit, CustomKitItem } from '@/hooks/useUserKits';
@@ -377,8 +378,9 @@ export default function MonMaterielCockpitPage() {
   const [voirToutTab, setVoirToutTab] = useState<'inventaire' | 'prets' | 'reglages' | 'actions'>('inventaire');
   const [dragWidget, setDragWidget] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
-  const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
+const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
   const expandedCloseRef = useRef<HTMLButtonElement | null>(null);
+  const expandOriginRef = useRef<HTMLButtonElement | null>(null);
   const [forgetChecked, setForgetChecked] = useState<Set<string>>(new Set());
   const [alertFilter, setAlertFilter] = useState('');
 
@@ -469,6 +471,14 @@ export default function MonMaterielCockpitPage() {
       window.removeEventListener('keydown', onKey);
       clearTimeout(t);
     };
+  }, [expandedWidget]);
+
+  // Restauration du focus sur le bouton « Agrandir » du widget d'origine à la fermeture
+  useEffect(() => {
+    if (expandedWidget === null) {
+      const t = setTimeout(() => expandOriginRef.current?.focus(), 0);
+      return () => clearTimeout(t);
+    }
   }, [expandedWidget]);
 
   // New Hike Form state
@@ -1150,9 +1160,9 @@ export default function MonMaterielCockpitPage() {
             {subtitle && <p className="text-xs text-[#1C2620]/70 truncate">{subtitle}</p>}
           </div>
         </div>
-        <div className="flex items-center gap-0.5 shrink-0">
+<div className="flex items-center gap-0.5 shrink-0">
           <span
-            draggable
+            draggable={!expandedWidget}
             onDragStart={handleGripDragStart(id)}
             onDragEnd={handleGripDragEnd}
             role="button"
@@ -1166,13 +1176,18 @@ export default function MonMaterielCockpitPage() {
             }}
             title="Réorganiser le module (glisser, ou via Réglages)"
             aria-label="Réorganiser le module"
-            className="cursor-grab active:cursor-grabbing p-1.5 text-[#1C2620]/50 hover:text-[#1C2620] rounded-lg hover:bg-[#1C2620]/[0.06] text-xs"
+            className={`${expandedWidget ? 'pointer-events-none opacity-40' : 'cursor-grab active:cursor-grabbing'} p-1.5 text-[#1C2620]/50 hover:text-[#1C2620] rounded-lg hover:bg-[#1C2620]/[0.06] text-xs`}
           >
             ⠿
           </span>
           <button
             type="button"
-            onClick={() => { setExpandedWidget(id); triggerHaptic('light'); }}
+            onClick={(e) => {
+              if (expandedWidget) return;
+              expandOriginRef.current = e.currentTarget;
+              setExpandedWidget(id);
+              triggerHaptic('light');
+            }}
             title={`Agrandir le widget ${WIDGET_LABEL[id] || id}`}
             aria-label={`Agrandir le widget ${WIDGET_LABEL[id] || id}`}
             className="p-1.5 text-[#1C2620]/50 hover:text-[#2D5A3D] hover:bg-[#2D5A3D]/[0.08] rounded-lg transition-colors flex items-center justify-center"
@@ -2231,7 +2246,13 @@ const renderExpandedWidget = (id: string): React.ReactNode => {
     }
 
     return (
-      <div data-fullscreen className="fixed inset-0 z-[5000] flex flex-col bg-[#FBFAF6]/97 backdrop-blur-2xl animate-[fadeInUp_0.2s_ease_both]">
+      <motion.div
+      data-fullscreen
+      layout
+      layoutId={`lkdv-exp-${id}`}
+      transition={{ type: 'spring', stiffness: 280, damping: 32, mass: 1.05 }}
+      className="fixed inset-0 z-[5000] flex flex-col bg-[#FBFAF6]/97 backdrop-blur-2xl overflow-hidden"
+    >
         <div className="flex items-center justify-between gap-3 p-4 sm:p-5 border-b border-[#1C2620]/[0.08] bg-white/60 backdrop-blur-xl shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             {iconChip}
@@ -2242,17 +2263,25 @@ const renderExpandedWidget = (id: string): React.ReactNode => {
           </div>
           {closeBtn}
         </div>
-        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
-          <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-4">{body}</div>
-        </div>
-      </div>
+<div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.26, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="max-w-5xl mx-auto p-4 sm:p-6 space-y-4"
+            >
+              {body}
+            </motion.div>
+          </div>
+        </motion.div>
     );
   };
 
-  const renderWidgetFrame = (id: string) => {
+const renderWidgetFrame = (id: string) => {
     return (
-      <div
+      <motion.div
         key={id}
+        layoutId={`lkdv-exp-${id}`}
         className={`${WIDGET_SPAN[id] || 'col-span-2 lg:col-span-1'} min-h-0 ${dragWidget === id ? 'opacity-50' : ''} ${dragOverId === id ? 'ring-2 ring-[#2D5A3D]/70 ring-inset rounded-[28px]' : ''} transition-opacity`}
         onDragOver={(e) => {
           if (dragWidget && dragWidget !== id) {
@@ -2264,11 +2293,12 @@ const renderExpandedWidget = (id: string): React.ReactNode => {
         onDrop={() => handleDropOn(id)}
       >
         <GlassCard className="h-full">{renderWidget(id)}</GlassCard>
-      </div>
+      </motion.div>
     );
   };
 
   return (
+    <MotionConfig reducedMotion="user">
     <>
     <div className="fixed inset-0 w-full bg-[#F5F3EE] text-[#1C2620] select-none font-sans flex flex-col overflow-hidden">
       <Header />
@@ -2328,12 +2358,15 @@ const renderExpandedWidget = (id: string): React.ReactNode => {
         </div>
 
         {/* Grille des 6 modules — Rang 1 [Poids|Départ|État] · Rang 2 [IA|Alertes|Kits] */}
-        <div
+        <motion.div
           className="min-h-0 grid grid-cols-2 grid-flow-dense gap-3 items-stretch lg:grid-cols-4 lg:auto-rows-fr lg:flex-1 lg:min-h-0"
+          animate={{ opacity: expandedWidget ? 0.35 : 1, scale: expandedWidget ? 0.985 : 1 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          style={{ transformOrigin: 'center top' }}
           onDragOver={(e) => e.preventDefault()}
         >
           {widgetOrder.map((id) => renderWidgetFrame(id))}
-        </div>
+        </motion.div>
       </main>
       </div>
 
@@ -3207,8 +3240,11 @@ const renderExpandedWidget = (id: string): React.ReactNode => {
     </div>
 
       {/* ═══ VUE FULLSCREEN D'UN WIDGET (bouton Agrandir) — hors root stacking context ═══ */}
-      {expandedWidget !== null && renderExpandedWidget(expandedWidget)}
+      <AnimatePresence>
+        {expandedWidget !== null && renderExpandedWidget(expandedWidget)}
+      </AnimatePresence>
     </>
+    </MotionConfig>
   );
 }
 

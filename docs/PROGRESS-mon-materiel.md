@@ -166,3 +166,11 @@ Transformer `src/app/mon-materiel/page.tsx` en véritable cockpit dashboard **sa
 - **Focus trap** dans les vues fullscreen : Tab / Shift+Tab contenu dans l'overlay (`[data-fullscreen]`), focus initial sur « Fermer (échap) », Escape ferme.
 - **Actions réelles** sur les items « À ne pas oublier » issus de données : bouton « Ouvrir la fiche ➔ » → `GearDetailDrawer` sur l'équipement concerné (`itemId`).
 - **Playwright 26/26** après polissage (inclut « Focus piégé dans le fullscreen (Tab) »).
+
+### §8.1 — Expansion cinématique fullscreen (shared element, framer-motion)
+- **Magic motion `layoutId` (`lkdv-exp-{id}`)** : la card cliquée partage une identité avec la vue fullscreen → celle-ci **s'étend depuis sa position réelle** (transform mesuré en vol : `matrix(0.72,0,0,0.78,…)` à ~120 ms), quelle que soit la position après drag & drop.
+- **Fond** : la grille du cockpit passe à `opacity 0.35` + `scale 0.985` pendant l'ouverture (retrait/voile), restaurée à la fermeture. Fermeture = **animation inverse** via `AnimatePresence` (l'overlay se replie vers la card d'origine).
+- **Contenu** : le corps de la vue apparaît en décalé (`delay ~0.26s`, `y:14→0`, ease spring) — la valeur dominante reste, les détails suivent.
+- **Motion** : spring `stiffness 280 / damping 32` (≈ ouverture 420–600 ms, fermeture 320–480 ms) ; `prefers-reduced-motion` géré par `MotionConfig reducedMotion="user"` (transform `none` immédiat, vérifié).
+- **Robustesse** : drag & drop désactivé tant qu'un fullscreen est ouvert (`draggable={!expandedWidget}`), garde anti double-ouverture, **focus restauré sur le bouton Agrandir d'origine** à la fermeture, trap Tab conservé, aucun scroll de fond.
+- **Vérifié Playwright** : ouverture/fermeture (Escape) ×6, focus, trap, reduced-motion, persistance ; **26/26** + probes de transform (expansion active / désactivée en reduced-motion). Build final 47,9 kB.
