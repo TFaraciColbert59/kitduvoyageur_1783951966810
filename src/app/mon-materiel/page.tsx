@@ -838,69 +838,8 @@ export default function MonMaterielCockpitPage() {
         </div>
       )}
 
-      {/* ═══ COCKPIT SUB-HEADER / SUMMARY HUD BAR ═══ */}
-      <div className="relative z-10 w-full shrink-0 px-3 pb-2">
-        <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-[20px] border border-white/12 bg-white/[0.06] backdrop-blur-xl shadow-lg">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center shadow-inner shrink-0">
-              <svg viewBox="0 0 32 32" width="16" height="16" fill="none">
-                <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="#A3C4A3" strokeWidth="2.2" strokeLinejoin="round" />
-                <path d="M2 24 L30 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-extrabold text-sm sm:text-base text-white tracking-tight">Cockpit Mon Équipement</h1>
-                <span className="px-2 py-0.5 rounded-full bg-[#A3C4A3]/20 text-[#A3C4A3] text-[10px] font-mono font-bold">
-                  v4 fullscreen
-                </span>
-              </div>
-              <p className="text-[10px] text-white/60">
-                Centre de pilotage en direct · {equipment.length} articles · {formatWeight(totalWeightG)} · {kits.length} kits · {plannedHikes.length} sorties
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => { setEditingItem(null); setIsAddModalOpen(true); triggerHaptic('light'); }}
-              className="px-3 py-1.5 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] font-bold text-xs shadow-sm transition-all active:scale-95 flex items-center gap-1.5"
-            >
-              <span>+</span> Ajouter du matériel
-            </button>
-            <button
-              type="button"
-              onClick={() => { setIsNewHikeModalOpen(true); triggerHaptic('light'); }}
-              className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/12 transition-all active:scale-95 flex items-center gap-1.5"
-            >
-              <span>🧭</span> Planifier sortie
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedKitForCockpit(null);
-                setIsKitDrawerOpen(true);
-                triggerHaptic('light');
-              }}
-              className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/12 transition-all active:scale-95 flex items-center gap-1.5"
-            >
-              <span>🧰</span> Gérer kits
-            </button>
-            <button
-              type="button"
-              onClick={() => { setIsSettingsModalOpen(true); triggerHaptic('light'); }}
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white text-xs transition-transform active:scale-90"
-              title="Réglages du Cockpit"
-              aria-label="Réglages"
-            >
-              ⚙️
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* ═══ MAIN COCKPIT DASHBOARD — SANS SIDEBAR, GRID DE CARDS ═══ */}
+      <h1 className="sr-only">Cockpit Mon Équipement</h1>
       <main className="relative z-10 w-full max-w-[1800px] mx-auto flex-1 min-h-0 px-3 pb-20 lg:pb-14 flex flex-col lg:gap-3 overflow-hidden">
 
         {/* ─── RANG 1 : Inventaire · Fiche outil · Télémétrie + État du matériel ─── */}
@@ -1299,7 +1238,18 @@ export default function MonMaterielCockpitPage() {
             <GlassCard className="p-4">
               <div className="flex items-center justify-between pb-2.5 border-b border-white/10">
                 <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">Télémétrie du pack</h3>
-                <span className="text-[9px] text-[#A3C4A3] font-mono font-bold uppercase tracking-wider">Live</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] text-[#A3C4A3] font-mono font-bold uppercase tracking-wider">Live</span>
+                  <button
+                    type="button"
+                    onClick={() => { setIsSettingsModalOpen(true); triggerHaptic('light'); }}
+                    className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white text-[10px] transition-transform active:scale-90"
+                    title="Réglages du Cockpit"
+                    aria-label="Réglages"
+                  >
+                    ⚙️
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center gap-3 mt-3">
