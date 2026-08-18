@@ -75,7 +75,14 @@ Transformer `src/app/mon-materiel/page.tsx` en véritable cockpit dashboard **sa
 - **Bug rencontré :** Hydration mismatch React #418 (lecture `localStorage` dans le state initial). → Correction par chargement après hydration.
 - **Bug rencontré :** boutons `Itinéraire` → rebond 302 vers `/explorer` (route `/preparer-randonnee` exige `routeId`). → Lien conditionnel.
 - **Vérifications Playwright (localhost) :** favorite toggle ✅ · drawer fiche ✅ · planifier une sortie (persiste) ✅ · assigner un kit ✅ · IA fallback local avec badge ✅ · aucun 404 image ✅ · aucune erreur de console ❌→ resolve ✅ · overflow mobile 0px ✅ · SSR 200 ✅.
-- **État final :** `tsc --noEmit` = 0 erreur, ESLint = pas de nouvelle erreur, `npm run build` = succès (route `/mon-materiel` 39.1 kB).
+- **État final :** `tsc --noEmit` = 0 erreur, ESLint = pas de nouvelle erreur, `npm run build` = succès (route `/mon-materiel` ~40 kB).
+
+### 2026-08-18 — Contrainte critique : cockpit FULLSCREEN sans scroll de page
+- Converti en **surface de pilotage plein écran** : racine `fixed inset-0 overflow-hidden` + `html, body { overflow: hidden }` + 3 bandes proportionnelles (46/30/24) internes à `main` ; **scrol*scroll de page impossible** à toutes les tailles (vérifié 1280→1920 px : `deSH===deCH`).
+- Seuls des **scrolls internes localisés** autorisés (liste inventaire `flex-1 min-h-0 overflow-y-auto`, colonnes `lg:overflow-y-auto`, lists kits/alertes/prêts).
+- Densité revue : HUD compact, hero fiche `h-24/28`, paddings réduits, en-tête inventaire compacté (la liste inv. garde 85–170 px de hauteur visible).
+- **Z-index des overlays relevés au-dessus du Header `z-[1000]`** : GearDetailDrawer `z-50→1050`, KitCockpitDrawer `110→1050`, LendItemModal/AddEditGearModal `200→1100`, modales cockpit `200→1100` (les clics « Fermer » n'étaient plus interceptés par le header).
+- Marge basse `pb-20/pb-14` pour que le bas des cards reste cliquable au-dessus de la bannière cookies (`z-[60]`).
 
 ## 🚦 Risques & Points de Vigilance
 - **Format localStorage `lkdv_planned_hikes` :** si de vieilles sorties v1 (dateRange) existent déjà, elles s'affichent avec « Date à définir » mais ne plantent pas — la normalisation laisse le temps aux utilisateurs de les supprimer/recréer. L'écriture utilise désormais systématiquement le format v2.

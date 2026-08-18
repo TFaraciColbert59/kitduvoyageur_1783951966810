@@ -797,13 +797,15 @@ export default function MonMaterielCockpitPage() {
   const enterAnim = prefersReducedMotion ? '' : 'motion-safe:animate-[fadeInUp_0.4s_ease_both]';
 
   return (
-    <div className="min-h-screen w-full bg-[#0B1F17] text-white select-none font-sans flex flex-col pt-20 sm:pt-22 pb-8 px-3 sm:px-5 relative">
+    <div className="fixed inset-0 w-full bg-[#0B1F17] text-white select-none font-sans flex flex-col overflow-hidden">
       <Header />
+      <div className="h-full w-full flex flex-col pt-20 sm:pt-[88px] overflow-y-auto lg:overflow-hidden">
       <style>{`
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
         .scrollbar-none::-webkit-scrollbar { display: none; }
         .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
         @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+        html, body { overflow: hidden !important; }
       `}</style>
 
       {/* ═══ BACKGROUND — alpine trek landscape ═══ */}
@@ -837,23 +839,23 @@ export default function MonMaterielCockpitPage() {
       )}
 
       {/* ═══ COCKPIT SUB-HEADER / SUMMARY HUD BAR ═══ */}
-      <div className="relative z-10 w-full max-w-[1600px] mx-auto mb-4 px-1">
-        <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-[24px] border border-white/12 bg-white/[0.06] backdrop-blur-xl shadow-lg">
+      <div className="relative z-10 w-full shrink-0 px-3 pb-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-[20px] border border-white/12 bg-white/[0.06] backdrop-blur-xl shadow-lg">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center shadow-inner shrink-0">
-              <svg viewBox="0 0 32 32" width="18" height="18" fill="none">
+            <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center shadow-inner shrink-0">
+              <svg viewBox="0 0 32 32" width="16" height="16" fill="none">
                 <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="#A3C4A3" strokeWidth="2.2" strokeLinejoin="round" />
                 <path d="M2 24 L30 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-extrabold text-base sm:text-lg text-white tracking-tight">Cockpit Mon Équipement</h1>
+                <h1 className="font-extrabold text-sm sm:text-base text-white tracking-tight">Cockpit Mon Équipement</h1>
                 <span className="px-2 py-0.5 rounded-full bg-[#A3C4A3]/20 text-[#A3C4A3] text-[10px] font-mono font-bold">
-                  v3 dashboard
+                  v4 fullscreen
                 </span>
               </div>
-              <p className="text-[11px] text-white/60">
+              <p className="text-[10px] text-white/60">
                 Centre de pilotage en direct · {equipment.length} articles · {formatWeight(totalWeightG)} · {kits.length} kits · {plannedHikes.length} sorties
               </p>
             </div>
@@ -863,7 +865,7 @@ export default function MonMaterielCockpitPage() {
             <button
               type="button"
               onClick={() => { setEditingItem(null); setIsAddModalOpen(true); triggerHaptic('light'); }}
-              className="px-3.5 py-1.5 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] font-bold text-xs shadow-sm transition-all active:scale-95 flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] font-bold text-xs shadow-sm transition-all active:scale-95 flex items-center gap-1.5"
             >
               <span>+</span> Ajouter du matériel
             </button>
@@ -899,15 +901,15 @@ export default function MonMaterielCockpitPage() {
       </div>
 
       {/* ═══ MAIN COCKPIT DASHBOARD — SANS SIDEBAR, GRID DE CARDS ═══ */}
-      <main className="relative z-10 w-full max-w-[1600px] mx-auto flex-1 space-y-4">
+      <main className="relative z-10 w-full max-w-[1800px] mx-auto flex-1 min-h-0 px-3 pb-20 lg:pb-14 flex flex-col lg:gap-3 overflow-hidden">
 
         {/* ─── RANG 1 : Inventaire · Fiche outil · Télémétrie + État du matériel ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+        <div className="min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch lg:basis-0 lg:min-h-0 grow-[1] lg:grow-[46]">
 
           {/* Colonne gauche : INVENTAIRE MATÉRIEL & FILTRES */}
-          <div className="lg:col-span-4 xl:col-span-4 flex flex-col gap-4">
-            <GlassCard className="p-4">
-              <div className="flex items-baseline justify-between pb-3 border-b border-white/10 shrink-0">
+          <div className="lg:col-span-4 xl:col-span-4 flex flex-col gap-3 min-h-0">
+            <GlassCard className="p-3 min-h-0 flex-1">
+              <div className="flex items-baseline justify-between pb-2 border-b border-white/10 shrink-0">
                 <div>
                   <h2 className="text-sm font-extrabold uppercase tracking-wider text-white">Inventaire Matériel</h2>
                   <p className="text-[11px] text-white/50">{filteredEquipment.length} articles affichés</p>
@@ -918,7 +920,7 @@ export default function MonMaterielCockpitPage() {
               </div>
 
               {/* Search + Clear */}
-              <div className="relative flex items-center mt-3">
+              <div className="relative flex items-center mt-2.5">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 text-white/50">
                   <circle cx="11" cy="11" r="7" />
                   <path d="M20 20l-3.5-3.5" />
@@ -929,7 +931,7 @@ export default function MonMaterielCockpitPage() {
                   placeholder="Rechercher équipement…  ( / )"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-7 py-2 bg-black/30 rounded-2xl border border-white/12 text-xs text-white placeholder-white/50 focus:outline-none focus:border-[#A3C4A3]/60 focus:ring-1 focus:ring-[#A3C4A3]/40 transition-colors"
+                  className="w-full pl-9 pr-7 py-1.5 bg-black/30 rounded-xl border border-white/12 text-xs text-white placeholder-white/50 focus:outline-none focus:border-[#A3C4A3]/60 focus:ring-1 focus:ring-[#A3C4A3]/40 transition-colors"
                 />
                 {searchQuery && (
                   <button type="button" onClick={() => setSearchQuery('')} className="absolute right-2.5 text-white/50 hover:text-white text-xs" aria-label="Effacer">✕</button>
@@ -937,7 +939,7 @@ export default function MonMaterielCockpitPage() {
               </div>
 
               {/* Category Filter Pills */}
-              <div className="flex gap-1.5 overflow-x-auto pb-1 mt-2.5 scrollbar-none text-[11px]">
+              <div className="flex gap-1.5 overflow-x-auto pb-1 mt-2 scrollbar-none text-[11px]">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat}
@@ -955,7 +957,7 @@ export default function MonMaterielCockpitPage() {
               </div>
 
               {/* Brands + Favorites + Condition filter toggle */}
-              <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-white/8 text-[10px]">
+              <div className="flex items-center justify-between gap-2 mt-1.5 pt-1.5 border-t border-white/8 text-[10px]">
                 <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
                   <span className="text-white/40 font-mono uppercase text-[9px] shrink-0">Marque:</span>
                   {availableBrands.slice(0, 5).map((b) => (
@@ -1011,7 +1013,7 @@ export default function MonMaterielCockpitPage() {
               )}
 
               {/* Item list */}
-              <div className="space-y-2 mt-3 max-h-[520px] overflow-y-auto scrollbar-none pr-0.5">
+              <div className="space-y-2 mt-3 flex-1 min-h-0 overflow-y-auto scrollbar-none pr-0.5">
                 {isLoading && equipment.length === 0 ? (
                   <div className="space-y-2">
                     {[1, 2, 3, 4].map((n) => (
@@ -1127,7 +1129,7 @@ export default function MonMaterielCockpitPage() {
               <button
                 type="button"
                 onClick={() => { setEditingItem(null); setIsAddModalOpen(true); triggerHaptic('light'); }}
-                className="w-full mt-3 py-2.5 rounded-2xl border border-dashed border-white/20 hover:border-[#A3C4A3] bg-white/[0.03] hover:bg-white/[0.08] text-white/80 hover:text-[#A3C4A3] text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+                className="w-full mt-2 py-2 rounded-xl border border-dashed border-white/20 hover:border-[#A3C4A3] bg-white/[0.03] hover:bg-white/[0.08] text-white/80 hover:text-[#A3C4A3] text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
               >
                 <span>+</span> Ajouter un article à l&apos;inventaire
               </button>
@@ -1135,7 +1137,7 @@ export default function MonMaterielCockpitPage() {
           </div>
 
           {/* Colonne centrale : FICHE OUTIL ACTIVE */}
-          <div className="lg:col-span-5 xl:col-span-5 flex flex-col gap-4">
+          <div className="lg:col-span-5 xl:col-span-5 flex flex-col gap-3 min-h-0 lg:overflow-y-auto scrollbar-none">
             <GlassCard className="p-4 sm:p-5">
               {activeItem ? (
                 <div className="space-y-3.5">
@@ -1174,9 +1176,9 @@ export default function MonMaterielCockpitPage() {
                   </div>
 
                   {/* Hero Visual Container */}
-                  <div className="relative h-44 rounded-2xl bg-gradient-to-b from-white/[0.06] to-black/30 border border-white/10 overflow-hidden flex items-center justify-center p-3 group">
+                  <div className="relative h-24 sm:h-28 rounded-2xl bg-gradient-to-b from-white/[0.06] to-black/30 border border-white/10 overflow-hidden flex items-center justify-center p-2 group">
                     <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.12) 0%, transparent 60%)' }} />
-                    <div className="relative z-10 w-full h-full max-h-[160px] flex items-center justify-center">
+                    <div className="relative z-10 w-full h-full max-h-[104px] flex items-center justify-center">
                       <Image
                         src={activeItem.image || '/assets/images/no_image.png'}
                         alt={activeItem.name}
@@ -1291,7 +1293,7 @@ export default function MonMaterielCockpitPage() {
           </div>
 
           {/* Colonne droite rang 1 : TÉLÉMÉTRIE + ÉTAT DU MATÉRIEL */}
-          <div className="lg:col-span-3 xl:col-span-3 flex flex-col gap-4">
+          <div className="lg:col-span-3 xl:col-span-3 flex flex-col gap-3 min-h-0 lg:overflow-y-auto scrollbar-none">
 
             {/* Card Télémétrie du Pack & Jauge SVG */}
             <GlassCard className="p-4">
@@ -1393,10 +1395,10 @@ export default function MonMaterielCockpitPage() {
         </div>
 
         {/* ─── RANG 2 : Prochain départ · Kits & Alertes ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+        <div className="min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch lg:basis-0 lg:min-h-0 grow-[1] lg:grow-[30]">
 
           {/* Card Prochain Départ & Randonnées Prévues + moteur intelligent */}
-          <GlassCard className="lg:col-span-8 xl:col-span-8 p-4 sm:p-5">
+          <GlassCard className="lg:col-span-8 xl:col-span-8 p-4 sm:p-5 min-h-0 lg:overflow-y-auto scrollbar-none">
             {activeHike ? (
               <div className="space-y-3.5">
                 <div className="flex items-start justify-between gap-3 pb-2.5 border-b border-white/10">
@@ -1629,7 +1631,7 @@ export default function MonMaterielCockpitPage() {
           </GlassCard>
 
           {/* Colonne droite rang 2 : KITS + ALERTES */}
-          <div className="lg:col-span-4 xl:col-span-4 flex flex-col gap-4">
+          <div className="lg:col-span-4 xl:col-span-4 flex flex-col gap-3 min-h-0">
 
             {/* Card Kits Assemblés */}
             <GlassCard className="p-4">
@@ -1747,10 +1749,10 @@ export default function MonMaterielCockpitPage() {
         )}
 
         {/* ─── RANG 3 : Copilote IA · Matériel prêté · Actions rapides ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+        <div className="min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch lg:basis-0 lg:min-h-0 grow-[1] lg:grow-[24]">
 
           {/* Card Copilote IA Équipement */}
-          <GlassCard className="lg:col-span-8 xl:col-span-7 p-4">
+          <GlassCard className="lg:col-span-8 xl:col-span-7 p-4 min-h-0 lg:overflow-y-auto scrollbar-none">
             <div className="flex items-center justify-between gap-2 pb-2 border-b border-white/10">
               <div className="flex items-center gap-2">
                 <span className="text-sm">✦</span>
@@ -1819,7 +1821,7 @@ export default function MonMaterielCockpitPage() {
           </GlassCard>
 
           {/* Colonne droite rang 3 : Prêts + Actions rapides */}
-          <div className="lg:col-span-4 xl:col-span-5 flex flex-col gap-4">
+          <div className="lg:col-span-4 xl:col-span-5 flex flex-col gap-3 min-h-0 lg:overflow-y-auto scrollbar-none">
 
             {/* Card Matériel Prêté */}
             <GlassCard className="p-4">
@@ -1897,6 +1899,7 @@ export default function MonMaterielCockpitPage() {
           </div>
         </div>
       </main>
+      </div>
 
       {/* ═══ MODALS & DRAWERS ═══ */}
       <GearDetailDrawer
@@ -2060,7 +2063,7 @@ export default function MonMaterielCockpitPage() {
 
       {/* ═══ NEW HIKE MODAL ═══ */}
       {isNewHikeModalOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-[fadeInUp_0.2s_ease_both]">
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-[fadeInUp_0.2s_ease_both]">
           <div className="relative w-full max-w-md rounded-[28px] border border-white/15 bg-[#0B1F17]/95 p-6 text-white shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">Planifier une nouvelle sortie</h3>
@@ -2157,7 +2160,7 @@ export default function MonMaterielCockpitPage() {
 
       {/* ═══ KIT TRASH MODAL ═══ */}
       {isTrashModalOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-[fadeInUp_0.2s_ease_both]">
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-[fadeInUp_0.2s_ease_both]">
           <div className="relative w-full max-w-md rounded-[28px] border border-white/15 bg-[#0B1F17]/95 p-6 text-white shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">Corbeille des kits ({trashCount})</h3>
@@ -2217,7 +2220,7 @@ export default function MonMaterielCockpitPage() {
 
       {/* ═══ COCKPIT SETTINGS MODAL ═══ */}
       {isSettingsModalOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-[fadeInUp_0.2s_ease_both]">
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-[fadeInUp_0.2s_ease_both]">
           <div className="relative w-full max-w-md rounded-[28px] border border-white/15 bg-[#0B1F17]/95 p-6 text-white shadow-2xl space-y-5">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div className="flex items-center gap-2">
