@@ -18,6 +18,10 @@ const NAV_LINKS = [
 
 import { getCart } from '@/lib/cart';
 
+// Canal unique par instance de Header : plusieurs <Header /> (ex. cockpit + vue fullscreen)
+// partagent sinon le même nom de canal Supabase → « cannot add postgres_changes after subscribe ».
+let headerChannelSeq = 0;
+
 export default function Header() {
   const pathname = usePathname();
   const { user } = useAuth();
@@ -62,7 +66,7 @@ export default function Header() {
     fetchUnread();
 
     const channel = supabase
-      .channel('notifications-header-changes')
+      .channel(`notifications-header-changes-${++headerChannelSeq}`)
       .on(
         'postgres_changes',
         {
