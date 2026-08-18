@@ -83,6 +83,7 @@ Transformer `src/app/mon-materiel/page.tsx` en véritable cockpit dashboard **sa
 - Densité revue : HUD compact, hero fiche `h-24/28`, paddings réduits, en-tête inventaire compacté (la liste inv. garde 85–170 px de hauteur visible).
 - **Z-index des overlays relevés au-dessus du Header `z-[1000]`** : GearDetailDrawer `z-50→1050`, KitCockpitDrawer `110→1050`, LendItemModal/AddEditGearModal `200→1100`, modales cockpit `200→1100` (les clics « Fermer » n'étaient plus interceptés par le header).
 - Marge basse `pb-20/pb-14` pour que le bas des cards reste cliquable au-dessus de la bannière cookies (`z-[60]`).
+- **Topbar summary retirée** (Header de navigation global conservé) : le bandeau « Cockpit Mon Équipement » et ses boutons ont disparu pour maximiser l'espace ; les actions restent dans les cards (ajout inventaire, « + Planifier », « + Nouveau Kit »/clic kit) et l'accès ⚙️ Réglages a été déplacé dans l'en-tête de la card Télémétrie. `h1` `sr-only` ajouté (accessibilité).
 
 ## 🚦 Risques & Points de Vigilance
 - **Format localStorage `lkdv_planned_hikes` :** si de vieilles sorties v1 (dateRange) existent déjà, elles s'affichent avec « Date à définir » mais ne plantent pas — la normalisation laisse le temps aux utilisateurs de les supprimer/recréer. L'écriture utilise désormais systématiquement le format v2.
