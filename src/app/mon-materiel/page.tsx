@@ -66,13 +66,13 @@ const DEFAULT_TARGET_KG = 8;
 
 const CONDITION_ORDER = ['neuf', 'excellent', 'bon', 'moyen', 'usé', 'à_réparer', 'à_remplacer'];
 const CONDITION_META: Record<string, { label: string; color: string; bg: string }> = {
-  neuf: { label: 'Neuf', color: '#A3C4A3', bg: 'rgba(163,196,163,0.16)' },
-  excellent: { label: 'Excellent', color: '#7FBE7F', bg: 'rgba(127,190,127,0.16)' },
-  bon: { label: 'Bon', color: '#E9C46A', bg: 'rgba(233,196,106,0.16)' },
-  moyen: { label: 'Moyen', color: '#E9A23B', bg: 'rgba(233,162,59,0.22)' },
-  usé: { label: 'Usé', color: '#E76F51', bg: 'rgba(231,111,81,0.22)' },
-  à_réparer: { label: 'À réparer', color: '#E76F51', bg: 'rgba(231,111,81,0.22)' },
-  à_remplacer: { label: 'À remplacer', color: '#C24E3D', bg: 'rgba(194,78,61,0.26)' },
+  neuf: { label: 'Neuf', color: '#2D5A3D', bg: 'rgba(45,90,61,0.08)' },
+  excellent: { label: 'Excellent', color: '#3D7A52', bg: 'rgba(61,122,82,0.08)' },
+  bon: { label: 'Bon', color: '#B8932A', bg: 'rgba(184,147,42,0.1)' },
+  moyen: { label: 'Moyen', color: '#A1701F', bg: 'rgba(161,112,31,0.12)' },
+  usé: { label: 'Usé', color: '#C0532E', bg: 'rgba(192,83,46,0.12)' },
+  à_réparer: { label: 'À réparer', color: '#C0532E', bg: 'rgba(192,83,46,0.12)' },
+  à_remplacer: { label: 'À remplacer', color: '#9B2C2C', bg: 'rgba(155,44,44,0.14)' },
 };
 
 function daysUntil(targetDate?: string): number | null {
@@ -146,7 +146,7 @@ function extractChunkText(chunk: unknown): string {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Reusable Liquid Glass card (visionOS style)
+// Reusable Liquid Glass card — vitre claire (visionOS style, fond papier)
 // ─────────────────────────────────────────────────────────────
 function GlassCard({
   children,
@@ -155,20 +155,20 @@ function GlassCard({
 }: React.HTMLAttributes<HTMLDivElement> & { className?: string }) {
   return (
     <div
-      className={`relative rounded-[28px] overflow-hidden border border-white/12 bg-white/[0.06] backdrop-blur-2xl backdrop-saturate-150 shadow-[0_20px_60px_-15px_rgba(11,31,23,0.6),inset_0_1px_0_0_rgba(255,255,255,0.18)] ${className}`}
+      className={`relative rounded-[28px] overflow-hidden border border-white/70 bg-white/55 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_24px_60px_-24px_rgba(11,31,23,0.22),0_4px_16px_rgba(11,31,23,0.06),inset_0_1px_0_0_rgba(255,255,255,0.85)] ${className}`}
       {...rest}
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-24 opacity-70"
-        style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.14) 0%, transparent 100%)' }}
+        className="pointer-events-none absolute inset-x-0 top-0 h-28 opacity-80"
+        style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.12) 55%, transparent 100%)' }}
       />
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 rounded-[28px]"
         style={{
           padding: 1,
-          background: 'linear-gradient(140deg, rgba(255,255,255,0.35), rgba(255,255,255,0.04) 40%, transparent 70%)',
+          background: 'linear-gradient(140deg, rgba(255,255,255,1), rgba(255,255,255,0.4) 40%, rgba(255,255,255,0.15) 75%)',
           WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
           WebkitMaskComposite: 'xor',
           maskComposite: 'exclude',
@@ -187,11 +187,11 @@ function WeightGauge({ currentG, targetKg }: { currentG: number; targetKg: numbe
   const r = 32;
   const c = 2 * Math.PI * r;
   const dash = c * pct;
-  const color = ratio <= 0.85 ? '#A3C4A3' : ratio <= 1 ? '#E9C46A' : '#E76F51';
+  const color = ratio <= 0.85 ? '#2D5A3D' : ratio <= 1 ? '#B8932A' : '#C0532E';
   return (
     <div className="relative w-[84px] h-[84px] shrink-0">
       <svg viewBox="0 0 84 84" className="w-full h-full -rotate-90">
-        <circle cx="42" cy="42" r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="6" />
+        <circle cx="42" cy="42" r={r} fill="none" stroke="rgba(11,31,23,0.08)" strokeWidth="6" />
         <circle
           cx="42"
           cy="42"
@@ -208,7 +208,7 @@ function WeightGauge({ currentG, targetKg }: { currentG: number; targetKg: numbe
         <span className="text-xs font-bold font-mono" style={{ color }}>
           {(currentG / 1000).toFixed(1)}
         </span>
-        <span className="text-xs text-white/60 font-mono">/ {targetKg} kg</span>
+        <span className="text-xs text-[#1C2620]/60 font-mono">/ {targetKg} kg</span>
       </div>
     </div>
   );
@@ -973,14 +973,14 @@ export default function MonMaterielCockpitPage() {
     children: React.ReactNode
   ) => (
     <div className="h-full flex flex-col p-3.5 min-h-0">
-      <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-white/10 shrink-0">
+      <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[#1C2620]/[0.08] shrink-0">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="w-7 h-7 rounded-lg bg-white/[0.08] border border-white/12 flex items-center justify-center text-sm shrink-0 text-[#A3C4A3]">
+          <span className="w-7 h-7 rounded-lg bg-[#2D5A3D]/[0.08] border border-[#1C2620]/[0.09] flex items-center justify-center text-sm shrink-0 text-[#2D5A3D]">
             {icon}
           </span>
           <div className="min-w-0">
-            <h2 className="text-xs font-extrabold uppercase tracking-wider text-white truncate">{title}</h2>
-            {subtitle && <p className="text-xs text-white/70 truncate">{subtitle}</p>}
+            <h2 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620] truncate">{title}</h2>
+            {subtitle && <p className="text-xs text-[#1C2620]/70 truncate">{subtitle}</p>}
           </div>
         </div>
         <div className="flex items-center gap-0.5 shrink-0">
@@ -999,7 +999,7 @@ export default function MonMaterielCockpitPage() {
             }}
             title="Réorganiser le module (glisser, ou via Réglages)"
             aria-label="Réorganiser le module"
-            className="cursor-grab active:cursor-grabbing p-1.5 text-white/50 hover:text-white rounded-lg hover:bg-white/8 text-xs"
+            className="cursor-grab active:cursor-grabbing p-1.5 text-[#1C2620]/50 hover:text-[#1C2620] rounded-lg hover:bg-[#1C2620]/[0.06] text-xs"
           >
             ⠿
           </span>
@@ -1010,7 +1010,7 @@ export default function MonMaterielCockpitPage() {
               setVoirToutOpen(true);
               triggerHaptic('light');
             }}
-            className="px-2 py-1 text-xs font-semibold text-[#A3C4A3] hover:text-white hover:bg-white/8 rounded-lg transition-colors"
+            className="px-2 py-1 text-xs font-semibold text-[#2D5A3D] hover:text-[#1C2620] hover:bg-[#1C2620]/[0.06] rounded-lg transition-colors"
           >
             Tout voir
           </button>
@@ -1033,27 +1033,27 @@ export default function MonMaterielCockpitPage() {
             const targetG = targetKg * 1000;
             const ratio = targetG > 0 ? totalWeightG / targetG : 0;
             const pct = Math.min(100, Math.round(ratio * 100));
-            const color = ratio <= 0.85 ? '#A3C4A3' : ratio <= 1 ? '#E9C46A' : '#E76F51';
+            const color = ratio <= 0.85 ? '#2D5A3D' : ratio <= 1 ? '#B8932A' : '#C0532E';
             return (
               <>
                 <div className="flex items-end justify-between gap-3 shrink-0">
                   <div className="min-w-0">
-                    <div className="text-4xl font-extrabold font-mono tracking-tight leading-none text-white">
+                    <div className="text-4xl font-extrabold font-mono tracking-tight leading-none text-[#1C2620]">
                       {formatWeight(totalWeightG)}
                     </div>
-                    <p className="text-xs text-white/70 mt-2">
+                    <p className="text-xs text-[#1C2620]/70 mt-2">
                       Cible <span className="font-bold" style={{ color }}>{targetKg} kg</span> · {pct}% chargé
                     </p>
                   </div>
                   <WeightGauge currentG={totalWeightG} targetKg={targetKg} />
                 </div>
                 <div className="mt-3 shrink-0">
-                  <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-2 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: color }} />
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 mt-3 shrink-0 flex-wrap">
-                  <span className="text-xs text-white/70">Objectif :</span>
+                  <span className="text-xs text-[#1C2620]/70">Objectif :</span>
                   {[6, 8, 10, 12].map((t) => (
                     <button
                       key={t}
@@ -1061,8 +1061,8 @@ export default function MonMaterielCockpitPage() {
                       onClick={() => { setTargetKg(t); triggerHaptic('light'); showToast(`Objectif ajusté à ${t} kg`, 'info'); }}
                       className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-colors ${
                         targetKg === t
-                          ? 'bg-[#A3C4A3] text-[#0B1F17]'
-                          : 'bg-white/[0.07] hover:bg-white/[0.14] text-white/80 border border-white/10'
+                          ? 'bg-[#2D5A3D] text-white'
+                          : 'bg-[#1C2620]/[0.04]0 hover:bg-[#1C2620]/[0.1] text-[#1C2620]/80 border border-[#1C2620]/[0.08]'
                       }`}
                     >
                       {t}k
@@ -1091,18 +1091,18 @@ export default function MonMaterielCockpitPage() {
                     return (
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold font-mono ${
                         d === null
-                          ? 'bg-white/10 text-white/70'
+                          ? 'bg-[#1C2620]/[0.07] text-[#1C2620]/70'
                           : d < 0
-                          ? 'bg-white/10 text-white/60'
+                          ? 'bg-[#1C2620]/[0.07] text-[#1C2620]/60'
                           : imminent
-                          ? 'bg-[#E9C46A] text-[#0B1F17] shadow-[0_0_18px_rgba(233,196,106,0.55)]'
-                          : 'bg-[#A3C4A3]/20 text-[#A3C4A3]'
+                          ? 'bg-[#8C6A1A] text-white shadow-[0_0_18px_rgba(233,196,106,0.55)]'
+                          : 'bg-[#2D5A3D]/20 text-[#2D5A3D]'
                       }`}>
                         {d === null ? 'Date à définir' : d < 0 ? `J+${Math.abs(d)}` : d === 0 ? "C'est aujourd'hui !" : `J-${d} jours`}
                       </span>
                     );
                   })()}
-                  <p className="text-xs text-white/70 mt-1.5">
+                  <p className="text-xs text-[#1C2620]/70 mt-1.5">
                     {formatDateRange(activeHike)}
                     {activeHike.companions ? ` · ${activeHike.companions}` : ''}
                   </p>
@@ -1110,20 +1110,20 @@ export default function MonMaterielCockpitPage() {
                 <div className="flex items-center gap-1.5 shrink-0">
                   <Link
                     href={activeHike.routeId ? `/randonnee-active?routeId=${activeHike.routeId}` : '/randonnee-active'}
-                    className="px-3.5 py-1.5 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] font-bold text-xs transition-all active:scale-95"
+                    className="px-3.5 py-1.5 rounded-full bg-[#2D5A3D] hover:bg-[#235030] text-white font-bold text-xs transition-all active:scale-95"
                   >
                     🚀 Démarrer
                   </Link>
                   <Link
                     href={activeHike.routeId ? `/preparer-randonnee?routeId=${activeHike.routeId}` : '/explorer'}
-                    className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all active:scale-95"
+                    className="px-3 py-1.5 rounded-full bg-[#1C2620]/[0.07] hover:bg-white/20 text-[#1C2620] text-xs font-bold transition-all active:scale-95"
                   >
                     Itinéraire
                   </Link>
                   <button
                     type="button"
                     onClick={() => handleDeleteHike(activeHike.id)}
-                    className="w-8 h-8 rounded-full bg-white/8 hover:bg-[#E76F51]/30 border border-white/10 text-white/70 hover:text-white text-xs transition-colors"
+                    className="w-8 h-8 rounded-full bg-[#1C2620]/[0.06] hover:bg-[#E76F51]/30 border border-[#1C2620]/[0.08] text-[#1C2620]/70 hover:text-[#1C2620] text-xs transition-colors"
                     title="Supprimer cette sortie"
                     aria-label="Supprimer cette sortie"
                   >
@@ -1133,32 +1133,32 @@ export default function MonMaterielCockpitPage() {
               </div>
 
               <div className="grid grid-cols-4 gap-2 shrink-0 mt-3">
-                <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/8">
-                  <span className="block text-lg font-bold font-mono text-white leading-none">{activeHike.distanceKm}<span className="text-xs text-white/70 font-normal"> km</span></span>
-                  <span className="block text-xs text-white/70 mt-1">Distance</span>
+                <div className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07]">
+                  <span className="block text-lg font-bold font-mono text-[#1C2620] leading-none">{activeHike.distanceKm}<span className="text-xs text-[#1C2620]/70 font-normal"> km</span></span>
+                  <span className="block text-xs text-[#1C2620]/70 mt-1">Distance</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/8">
-                  <span className="block text-lg font-bold font-mono text-white leading-none">+{activeHike.elevationGain || 0}<span className="text-xs text-white/70 font-normal"> m</span></span>
-                  <span className="block text-xs text-white/70 mt-1">Dénivelé D+</span>
+                <div className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07]">
+                  <span className="block text-lg font-bold font-mono text-[#1C2620] leading-none">+{activeHike.elevationGain || 0}<span className="text-xs text-[#1C2620]/70 font-normal"> m</span></span>
+                  <span className="block text-xs text-[#1C2620]/70 mt-1">Dénivelé D+</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/8">
-                  <span className="block text-lg font-bold font-mono text-white leading-none">{activeHike.isOvernight ? `${(activeHike.nightsCount || 1) + 1}` : '1'}<span className="text-xs text-white/70 font-normal"> j</span></span>
-                  <span className="block text-xs text-white/70 mt-1">Durée</span>
+                <div className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07]">
+                  <span className="block text-lg font-bold font-mono text-[#1C2620] leading-none">{activeHike.isOvernight ? `${(activeHike.nightsCount || 1) + 1}` : '1'}<span className="text-xs text-[#1C2620]/70 font-normal"> j</span></span>
+                  <span className="block text-xs text-[#1C2620]/70 mt-1">Durée</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/8">
-                  <span className="block text-xs font-bold text-[#E9C46A] truncate leading-none">{formatWeather(activeHike)}</span>
-                  <span className="block text-xs text-white/70 mt-1">Météo {formatTemp(activeHike)}</span>
+                <div className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07]">
+                  <span className="block text-xs font-bold text-[#8C6A1A] truncate leading-none">{formatWeather(activeHike)}</span>
+                  <span className="block text-xs text-[#1C2620]/70 mt-1">Météo {formatTemp(activeHike)}</span>
                 </div>
               </div>
 
               <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-3 pr-0.5">
-                <div className="p-3 rounded-2xl bg-black/25 border border-white/10 space-y-2">
+                <div className="p-3 rounded-2xl bg-[#1C2620]/[0.04] border border-[#1C2620]/[0.08] space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-mono uppercase text-[#A3C4A3] font-bold">Kit pour ce départ</span>
+                    <span className="text-xs font-mono uppercase text-[#2D5A3D] font-bold">Kit pour ce départ</span>
                     <select
                       value={activeHike.assignedKitId || ''}
                       onChange={(e) => handleAssignKitToHike(activeHike.id, e.target.value)}
-                      className="px-2.5 py-1 rounded-lg bg-[#0B1F17] border border-white/20 text-xs text-white focus:outline-none focus:border-[#A3C4A3] cursor-pointer"
+                      className="px-2.5 py-1 rounded-lg bg-white border border-[#1C2620]/[0.14] text-xs text-[#1C2620] focus:outline-none focus:border-[#2D5A3D] cursor-pointer"
                     >
                       {kits.length === 0 && <option value="">Aucun kit</option>}
                       {kits.map((k) => (
@@ -1170,60 +1170,60 @@ export default function MonMaterielCockpitPage() {
                   </div>
                   <div className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-white/80">Prêt : <strong className="text-white">{hikeReadiness.ownedCount}/{hikeReadiness.totalCount} articles</strong></span>
-                      <span className="font-mono font-bold text-[#A3C4A3]">{hikeReadiness.readinessPct}%</span>
+                      <span className="text-[#1C2620]/80">Prêt : <strong className="text-[#1C2620]">{hikeReadiness.ownedCount}/{hikeReadiness.totalCount} articles</strong></span>
+                      <span className="font-mono font-bold text-[#2D5A3D]">{hikeReadiness.readinessPct}%</span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-                      <div className="h-full bg-[#A3C4A3] rounded-full transition-all duration-500" style={{ width: `${hikeReadiness.readinessPct}%` }} />
+                    <div className="h-1.5 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
+                      <div className="h-full bg-[#2D5A3D] rounded-full transition-all duration-500" style={{ width: `${hikeReadiness.readinessPct}%` }} />
                     </div>
                   </div>
                 </div>
 
                 {departurePlan && (
-                  <div className="p-3 rounded-2xl bg-[#A3C4A3]/[0.08] border border-[#A3C4A3]/25 space-y-2">
+                  <div className="p-3 rounded-2xl bg-[#2D5A3D]/[0.08] border border-[#2D5A3D]/25 space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <span className="text-xs font-mono uppercase text-[#A3C4A3] font-bold block">Kit recommandé pour cette sortie</span>
+                        <span className="text-xs font-mono uppercase text-[#2D5A3D] font-bold block">Kit recommandé pour cette sortie</span>
                         {recommendedKit ? (
-                          <p className="text-xs text-white/90 font-semibold truncate mt-0.5">
+                          <p className="text-xs text-[#1C2620]/90 font-semibold truncate mt-0.5">
                             {recommendedKit.name} · score {departurePlan.suitabilityScore}/100
                           </p>
                         ) : (
-                          <p className="text-xs text-white/70 mt-0.5">Kit auto-généré à partir de votre inventaire</p>
+                          <p className="text-xs text-[#1C2620]/70 mt-0.5">Kit auto-généré à partir de votre inventaire</p>
                         )}
                       </div>
                       {recommendedKit && recommendedKit.id !== activeKit?.id && (
                         <button
                           type="button"
                           onClick={() => handleAssignKitToHike(activeHike.id, recommendedKit.id)}
-                          className="px-3 py-1.5 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] text-xs font-bold transition-all active:scale-95 shrink-0"
+                          className="px-3 py-1.5 rounded-full bg-[#2D5A3D] hover:bg-[#235030] text-white text-xs font-bold transition-all active:scale-95 shrink-0"
                         >
                           Utiliser ce kit
                         </button>
                       )}
                       {recommendedKit && recommendedKit.id === activeKit?.id && (
-                        <span className="px-2.5 py-1 rounded-full bg-white/10 border border-white/15 text-xs text-white/80 shrink-0">✓ Déjà sélectionné</span>
+                        <span className="px-2.5 py-1 rounded-full bg-[#1C2620]/[0.07] border border-[#1C2620]/[0.11] text-xs text-[#1C2620]/80 shrink-0">✓ Déjà sélectionné</span>
                       )}
                     </div>
                     {(departurePlan.consumables.waterLiters > 0 || departurePlan.consumables.foodMealsCount > 0) && (
                       <div className="flex flex-wrap gap-1.5 pt-1">
-                        <span className="px-2 py-1 rounded-lg bg-black/30 text-xs text-white/85">
+                        <span className="px-2 py-1 rounded-lg bg-white/50 text-xs text-[#1C2620]/85">
                           💧 {departurePlan.consumables.waterLiters.toFixed(1).replace('.', ',')} L d&apos;eau
                         </span>
                         {departurePlan.consumables.foodMealsCount > 0 && (
-                          <span className="px-2 py-1 rounded-lg bg-black/30 text-xs text-white/85">
+                          <span className="px-2 py-1 rounded-lg bg-white/50 text-xs text-[#1C2620]/85">
                             🍽️ {departurePlan.consumables.foodMealsCount} repas
                           </span>
                         )}
-                        <span className="px-2 py-1 rounded-lg bg-black/30 text-xs text-white/85">
+                        <span className="px-2 py-1 rounded-lg bg-white/50 text-xs text-[#1C2620]/85">
                           🥨 {departurePlan.consumables.snacksCount} en-cas
                         </span>
                         {departurePlan.consumables.fuelGrams > 0 && (
-                          <span className="px-2 py-1 rounded-lg bg-black/30 text-xs text-white/85">
+                          <span className="px-2 py-1 rounded-lg bg-white/50 text-xs text-[#1C2620]/85">
                             🔥 {departurePlan.consumables.fuelGrams} g gaz
                           </span>
                         )}
-                        <span className="px-2 py-1 rounded-lg bg-black/30 text-xs text-[#E9C46A]">
+                        <span className="px-2 py-1 rounded-lg bg-white/50 text-xs text-[#8C6A1A]">
                           {departurePlan.weatherSummary.advice}
                         </span>
                       </div>
@@ -1233,10 +1233,10 @@ export default function MonMaterielCockpitPage() {
 
                 {hikeReadiness.missingItems.length > 0 && (
                   <div className="p-2.5 rounded-xl bg-[#E76F51]/12 border border-[#E76F51]/30 space-y-1.5">
-                    <span className="text-xs font-bold text-[#F4A18C] block">Articles manquants à emporter :</span>
+                    <span className="text-xs font-bold text-[#C0532E] block">Articles manquants à emporter :</span>
                     <div className="flex flex-wrap gap-1.5">
                       {hikeReadiness.missingItems.slice(0, 3).map((m) => (
-                        <div key={m.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-black/30 text-xs text-white">
+                        <div key={m.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/50 text-xs text-[#1C2620]">
                           <span>{m.item_name}</span>
                           <button
                             type="button"
@@ -1248,7 +1248,7 @@ export default function MonMaterielCockpitPage() {
                               });
                               showToast(`🎒 ${m.item_name} ajouté à votre inventaire`, 'success');
                             }}
-                            className="text-[#A3C4A3] font-bold hover:underline"
+                            className="text-[#2D5A3D] font-bold hover:underline"
                           >
                             + Ajouter
                           </button>
@@ -1258,13 +1258,13 @@ export default function MonMaterielCockpitPage() {
                   </div>
                 )}
 
-                <div className="pt-2 border-t border-white/8">
+                <div className="pt-2 border-t border-[#1C2620]/[0.07]">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-bold uppercase text-white/60 font-mono">Toutes les sorties ({plannedHikes.length})</span>
+                    <span className="text-xs font-bold uppercase text-[#1C2620]/60 font-mono">Toutes les sorties ({plannedHikes.length})</span>
                     <button
                       type="button"
                       onClick={() => setIsNewHikeModalOpen(true)}
-                      className="text-xs font-bold text-[#A3C4A3] hover:underline"
+                      className="text-xs font-bold text-[#2D5A3D] hover:underline"
                     >
                       + Planifier
                     </button>
@@ -1277,12 +1277,12 @@ export default function MonMaterielCockpitPage() {
                         onClick={() => handleSelectHike(h)}
                         className={`px-2.5 py-1 rounded-xl text-left border shrink-0 transition-all ${
                           h.id === activeHike.id
-                            ? 'bg-white/12 border-[#A3C4A3]/50 text-white font-bold'
-                            : 'bg-white/5 border-white/8 text-white/70 hover:bg-white/10'
+                            ? 'bg-[#1C2620]/[0.08] border-[#2D5A3D]/50 text-[#1C2620] font-bold'
+                            : 'bg-[#1C2620]/[0.04] border-[#1C2620]/[0.07] text-[#1C2620]/70 hover:bg-[#1C2620]/[0.07]'
                         }`}
                       >
                         <span className="block text-xs truncate max-w-[120px]">{h.name}</span>
-                        <span className="text-xs text-[#A3C4A3] font-mono">
+                        <span className="text-xs text-[#2D5A3D] font-mono">
                           {daysUntil(h.targetDate) !== null ? `J-${daysUntil(h.targetDate)}` : 'Date à définir'}
                         </span>
                       </button>
@@ -1294,11 +1294,11 @@ export default function MonMaterielCockpitPage() {
           ) : (
             <div className="h-full flex flex-col items-center justify-center gap-3 text-center">
               <span className="text-3xl block">🧭</span>
-              <p className="text-xs text-white/80 font-medium">Aucune sortie planifiée pour le moment</p>
+              <p className="text-xs text-[#1C2620]/80 font-medium">Aucune sortie planifiée pour le moment</p>
               <button
                 type="button"
                 onClick={() => setIsNewHikeModalOpen(true)}
-                className="px-5 py-2 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] font-bold text-xs transition-all active:scale-95"
+                className="px-5 py-2 rounded-full bg-[#2D5A3D] hover:bg-[#235030] text-white font-bold text-xs transition-all active:scale-95"
               >
                 🧭 Planifier ma première sortie
               </button>
@@ -1320,17 +1320,17 @@ export default function MonMaterielCockpitPage() {
           <>
             <div className="flex items-end justify-between gap-3 shrink-0">
               <div>
-                <div className="text-4xl font-extrabold font-mono leading-none text-white">{readyPct}%</div>
-                <p className="text-xs text-white/70 mt-2">{ready}/{equipment.length} articles en bon état</p>
+                <div className="text-4xl font-extrabold font-mono leading-none text-[#1C2620]">{readyPct}%</div>
+                <p className="text-xs text-[#1C2620]/70 mt-2">{ready}/{equipment.length} articles en bon état</p>
               </div>
               <IconActivity />
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-2 pr-0.5">
               {conditionStats.length === 0 ? (
-                <p className="text-xs text-white/70 text-center py-3">Aucun article inventorié</p>
+                <p className="text-xs text-[#1C2620]/70 text-center py-3">Aucun article inventorié</p>
               ) : (
                 conditionStats.map((s) => {
-                  const meta = CONDITION_META[s.key] || { label: s.key, color: '#A3C4A3', bg: 'rgba(163,196,163,0.16)' };
+                  const meta = CONDITION_META[s.key] || { label: s.key, color: '#2D5A3D', bg: 'rgba(45,90,61,0.08)' };
                   const active = conditionFilter === s.key;
                   const pct = totalWeightG > 0 ? Math.round((s.weight / totalWeightG) * 100) : 0;
                   return (
@@ -1344,19 +1344,19 @@ export default function MonMaterielCockpitPage() {
                       title={active ? 'Retirer le filtre' : `Filtrer par état : ${meta.label}`}
                       className={`w-full text-left p-2 rounded-xl border transition-all ${
                         active
-                          ? 'bg-white/[0.12] border-[#A3C4A3]/50 ring-1 ring-[#A3C4A3]/30'
-                          : 'bg-white/[0.04] hover:bg-white/[0.09] border-white/8'
+                          ? 'bg-[#1C2620]/[0.09] border-[#2D5A3D]/50 ring-1 ring-[#2D5A3D]/30'
+                          : 'bg-white/40 hover:bg-[#1C2620]/[0.06] border-[#1C2620]/[0.07]'
                       }`}
                     >
-                      <div className="flex items-center justify-between text-xs text-white/80 mb-1">
+                      <div className="flex items-center justify-between text-xs text-[#1C2620]/80 mb-1">
                         <span className="font-semibold capitalize truncate">{meta.label}</span>
                         <span className="shrink-0 pl-2">
-                          <span className="font-mono text-white font-bold">{s.count}</span>
-                          <span className="text-white/40"> · </span>
+                          <span className="font-mono text-[#1C2620] font-bold">{s.count}</span>
+                          <span className="text-[#1C2620]/40"> · </span>
                           <span className="font-mono" style={{ color: meta.color }}>{formatWeight(s.weight)}</span>
                         </span>
                       </div>
-                      <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                      <div className="h-1.5 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
                         <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: meta.color }} />
                       </div>
                     </button>
@@ -1384,11 +1384,11 @@ export default function MonMaterielCockpitPage() {
           <>
             <div ref={aiScrollRef} className="flex-1 min-h-0 overflow-y-auto scrollbar-none space-y-2 pr-0.5 text-xs">
               {aiResponse ? (
-                <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10 shadow-inner">
-                  <p className="text-white/90 leading-relaxed whitespace-pre-wrap">{aiResponse}{aiStreaming && <span className="inline-block w-1.5 h-3 ml-0.5 bg-[#A3C4A3] animate-pulse align-middle" />}</p>
+                <div className="p-3 rounded-2xl bg-[#1C2620]/[0.04]0 border border-[#1C2620]/[0.08] shadow-inner">
+                  <p className="text-[#1C2620]/90 leading-relaxed whitespace-pre-wrap">{aiResponse}{aiStreaming && <span className="inline-block w-1.5 h-3 ml-0.5 bg-[#2D5A3D] animate-pulse align-middle" />}</p>
                 </div>
               ) : aiError ? (
-                <div className="p-2.5 rounded-xl bg-[#E76F51]/12 border border-[#E76F51]/30 text-xs text-[#F4A18C]">{aiError}</div>
+                <div className="p-2.5 rounded-xl bg-[#E76F51]/12 border border-[#E76F51]/30 text-xs text-[#C0532E]">{aiError}</div>
               ) : (
                 <div className="space-y-1.5">
                   {['Optimise un pack bivouac sous 8 kg', 'Quel matériel alléger en priorité ?'].map((s) => (
@@ -1396,7 +1396,7 @@ export default function MonMaterielCockpitPage() {
                       key={s}
                       type="button"
                       onClick={() => runAi(s)}
-                      className="w-full text-left p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-xs text-white/90 transition-all active:scale-[0.98]"
+                      className="w-full text-left p-2 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/90 transition-all active:scale-[0.98]"
                     >
                       ✦ {s}
                     </button>
@@ -1406,19 +1406,19 @@ export default function MonMaterielCockpitPage() {
             </div>
             <form
               onSubmit={(e) => { e.preventDefault(); runAi(aiInput); setAiInput(''); }}
-              className="flex items-center gap-1.5 rounded-xl bg-black/30 border border-white/12 px-2 py-1.5 shrink-0 mt-3"
+              className="flex items-center gap-1.5 rounded-xl bg-white/50 border border-[#1C2620]/[0.09] px-2 py-1.5 shrink-0 mt-3"
             >
               <input
                 value={aiInput}
                 onChange={(e) => setAiInput(e.target.value)}
                 placeholder="Question au copilote…"
-                className="flex-1 bg-transparent text-xs text-white placeholder-white/40 focus:outline-none"
+                className="flex-1 bg-transparent text-xs text-[#1C2620] placeholder-[#1C2620]/40 focus:outline-none"
                 aria-label="Question IA"
               />
               <button
                 type="submit"
                 disabled={aiStreaming || !aiInput.trim()}
-                className="w-6 h-6 rounded-full bg-[#A3C4A3] text-[#0B1F17] flex items-center justify-center text-xs font-bold disabled:opacity-40 transition-all active:scale-90"
+                className="w-6 h-6 rounded-full bg-[#2D5A3D] text-white flex items-center justify-center text-xs font-bold disabled:opacity-40 transition-all active:scale-90"
                 aria-label="Envoyer"
               >
                 ↑
@@ -1438,25 +1438,25 @@ export default function MonMaterielCockpitPage() {
           <>
             <div className="flex items-end justify-between gap-3 shrink-0">
               <div>
-                <div className={`text-4xl font-extrabold font-mono leading-none ${alerts.length > 0 ? 'text-[#E9C46A] drop-shadow-[0_0_14px_rgba(233,196,106,0.5)]' : 'text-[#A3C4A3]'}`}>
+                <div className={`text-4xl font-extrabold font-mono leading-none ${alerts.length > 0 ? 'text-[#8C6A1A] drop-shadow-[0_0_14px_rgba(233,196,106,0.5)]' : 'text-[#2D5A3D]'}`}>
                   {alerts.length}
                 </div>
-                <p className="text-xs text-white/70 mt-2">{alerts.length === 0 ? 'Tout est en ordre' : 'Alertes actives'}</p>
+                <p className="text-xs text-[#1C2620]/70 mt-2">{alerts.length === 0 ? 'Tout est en ordre' : 'Alertes actives'}</p>
               </div>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-1.5 pr-0.5">
               {alerts.length === 0 ? (
-                <p className="text-xs text-white/70 text-center py-4">Aucune alerte — tout est en ordre ✨</p>
+                <p className="text-xs text-[#1C2620]/70 text-center py-4">Aucune alerte — tout est en ordre ✨</p>
               ) : (
                 alerts.slice(0, 6).map((a) => (
                   <button
                     key={a.id}
                     type="button"
                     onClick={() => { setSelectedItemId(a.itemId); setIsDetailDrawerOpen(true); triggerHaptic('light'); }}
-                    className="w-full text-left p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-xs text-white/85 flex items-center justify-between gap-1.5 transition-colors"
+                    className="w-full text-left p-2 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/85 flex items-center justify-between gap-1.5 transition-colors"
                   >
                     <span className="truncate">{a.label}</span>
-                    <span className="text-xs text-[#A3C4A3] font-bold shrink-0">Voir ➔</span>
+                    <span className="text-xs text-[#2D5A3D] font-bold shrink-0">Voir ➔</span>
                   </button>
                 ))
               )}
@@ -1475,20 +1475,20 @@ export default function MonMaterielCockpitPage() {
           <>
             <div className="flex items-end justify-between gap-3 shrink-0">
               <div>
-                <div className="text-4xl font-extrabold font-mono leading-none text-white">{kits.length}</div>
-                <p className="text-xs text-white/70 mt-2">Poids total {formatWeight(kits.reduce((s, k) => s + (k.total_weight_g || 0), 0))}</p>
+                <div className="text-4xl font-extrabold font-mono leading-none text-[#1C2620]">{kits.length}</div>
+                <p className="text-xs text-[#1C2620]/70 mt-2">Poids total {formatWeight(kits.reduce((s, k) => s + (k.total_weight_g || 0), 0))}</p>
               </div>
               <button
                 type="button"
                 onClick={handleCreateNewKit}
-                className="px-3 py-1.5 rounded-full bg-[#A3C4A3]/20 hover:bg-[#A3C4A3]/30 border border-[#A3C4A3]/40 text-[#A3C4A3] text-xs font-bold transition-all active:scale-95 shrink-0"
+                className="px-3 py-1.5 rounded-full bg-[#2D5A3D]/20 hover:bg-[#2D5A3D]/30 border border-[#2D5A3D]/40 text-[#2D5A3D] text-xs font-bold transition-all active:scale-95 shrink-0"
               >
                 + Nouveau
               </button>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-2 pr-0.5">
               {kits.length === 0 ? (
-                <p className="text-xs text-white/70 text-center py-4">Aucun kit actif. Créez votre premier kit.</p>
+                <p className="text-xs text-[#1C2620]/70 text-center py-4">Aucun kit actif. Créez votre premier kit.</p>
               ) : (
                 kits.map((kit) => (
                   <div
@@ -1498,15 +1498,15 @@ export default function MonMaterielCockpitPage() {
                       setIsKitDrawerOpen(true);
                       triggerHaptic('light');
                     }}
-                    className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 transition-all cursor-pointer flex items-center justify-between gap-2"
+                    className="p-2.5 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] transition-all cursor-pointer flex items-center justify-between gap-2"
                   >
                     <div className="min-w-0">
-                      <h4 className="text-xs font-bold text-white truncate">{kit.name}</h4>
-                      <p className="text-xs text-white/60 truncate">{kit.items?.length || 0} articles · {kit.season || '3 saisons'}</p>
+                      <h4 className="text-xs font-bold text-[#1C2620] truncate">{kit.name}</h4>
+                      <p className="text-xs text-[#1C2620]/60 truncate">{kit.items?.length || 0} articles · {kit.season || '3 saisons'}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <span className="text-xs font-mono font-bold text-[#A3C4A3] block">{formatWeight(kit.total_weight_g || 0)}</span>
-                      <span className="text-xs text-white/50">Éditer ➔</span>
+                      <span className="text-xs font-mono font-bold text-[#2D5A3D] block">{formatWeight(kit.total_weight_g || 0)}</span>
+                      <span className="text-xs text-[#1C2620]/50">Éditer ➔</span>
                     </div>
                   </div>
                 ))
@@ -1524,7 +1524,7 @@ export default function MonMaterielCockpitPage() {
     return (
       <div
         key={id}
-        className={`${WIDGET_SPAN[id] || 'col-span-2 lg:col-span-1'} min-h-0 ${dragWidget === id ? 'opacity-50' : ''} ${dragOverId === id ? 'ring-2 ring-[#A3C4A3]/70 ring-inset rounded-[28px]' : ''} transition-opacity`}
+        className={`${WIDGET_SPAN[id] || 'col-span-2 lg:col-span-1'} min-h-0 ${dragWidget === id ? 'opacity-50' : ''} ${dragOverId === id ? 'ring-2 ring-[#2D5A3D]/70 ring-inset rounded-[28px]' : ''} transition-opacity`}
         onDragOver={(e) => {
           if (dragWidget && dragWidget !== id) {
             e.preventDefault();
@@ -1540,7 +1540,7 @@ export default function MonMaterielCockpitPage() {
   };
 
   return (
-    <div className="fixed inset-0 w-full bg-[#0B1F17] text-white select-none font-sans flex flex-col overflow-hidden">
+    <div className="fixed inset-0 w-full bg-[#F5F3EE] text-[#1C2620] select-none font-sans flex flex-col overflow-hidden">
       <Header />
       <div className="h-full w-full flex flex-col pt-20 sm:pt-[88px] overflow-y-auto lg:overflow-hidden">
       <style>{`
@@ -1551,11 +1551,11 @@ export default function MonMaterielCockpitPage() {
         html, body { overflow: hidden !important; }
       `}</style>
 
-      {/* ═══ BACKGROUND — sombre sobre Polestar (aucune photo) ═══ */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-[#0B1F17]">
+      {/* ═══ BACKGROUND — papier clair LKDV + halos doux (aucune photo) ═══ */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-[#F5F3EE]">
         <div
           className="absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse at 70% -10%, rgba(163,196,163,0.14) 0%, transparent 55%), radial-gradient(ellipse at 15% 110%, rgba(233,196,106,0.08) 0%, transparent 45%)' }}
+          style={{ background: 'radial-gradient(ellipse at 72% -12%, rgba(45,90,61,0.07) 0%, transparent 55%), radial-gradient(ellipse at 14% 112%, rgba(180,160,120,0.14) 0%, transparent 45%)' }}
         />
       </div>
 
@@ -1564,9 +1564,9 @@ export default function MonMaterielCockpitPage() {
         <div
           role="status"
           aria-live="polite"
-          className="fixed top-24 left-1/2 -translate-x-1/2 z-[1200] px-4 py-2 rounded-full border border-[#A3C4A3]/50 bg-[#0B1F17]/90 text-white text-xs font-semibold backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_20px_rgba(163,196,163,0.3)] flex items-center gap-2 animate-[fadeInUp_0.25s_ease_both]"
+          className="fixed top-24 left-1/2 -translate-x-1/2 z-[1200] px-4 py-2 rounded-full border border-[#2D5A3D]/30 bg-white/95 text-[#1C2620] text-xs font-semibold backdrop-blur-xl shadow-[0_10px_30px_rgba(11,31,23,0.18),inset_0_1px_0_0_rgba(255,255,255,0.9)] flex items-center gap-2 animate-[fadeInUp_0.25s_ease_both]"
         >
-          <span className="w-2 h-2 rounded-full bg-[#A3C4A3] animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-[#2D5A3D] animate-pulse" />
           <span>{toastMessage.text}</span>
         </div>
       )}
@@ -1577,11 +1577,11 @@ export default function MonMaterielCockpitPage() {
 
         {/* Barre d'état du cockpit */}
         <div className="flex items-center justify-between gap-2 shrink-0 px-1">
-          <span className="text-xs font-mono uppercase tracking-widest text-white/60">Cockpit · 6 modules</span>
+          <span className="text-xs font-mono uppercase tracking-widest text-[#1C2620]/60">Cockpit · 6 modules</span>
           <button
             type="button"
             onClick={() => { setVoirToutTab('inventaire'); setVoirToutOpen(true); triggerHaptic('light'); }}
-            className="text-xs font-bold text-[#A3C4A3] hover:text-white px-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 transition-all active:scale-95"
+            className="text-xs font-bold text-[#2D5A3D] hover:text-[#1C2620] px-3 py-1.5 rounded-full bg-white/60 hover:bg-[#1C2620]/[0.09] border border-[#1C2620]/[0.09] transition-all active:scale-95"
           >
             Tout voir ▸
           </button>
@@ -1600,21 +1600,21 @@ export default function MonMaterielCockpitPage() {
       {/* ═══ DRAWER « TOUT VOIR » — fonctionnalités reléguées ═══ */}
       {voirToutOpen && (
         <div className="fixed inset-0 z-[1040]" role="dialog" aria-modal="true" aria-label="Tout voir">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setVoirToutOpen(false)} />
-          <div className="absolute right-0 top-0 h-full w-full max-w-md bg-[#0B1F17] border-l border-white/15 shadow-2xl flex flex-col animate-[fadeInUp_0.2s_ease_both]">
-            <div className="flex items-center justify-between p-4 border-b border-white/10 shrink-0">
-              <h2 className="text-sm font-extrabold uppercase tracking-wider text-white">Tout voir</h2>
+          <div className="absolute inset-0 bg-[#1C2620]/55 backdrop-blur-sm" onClick={() => setVoirToutOpen(false)} />
+          <div className="absolute right-0 top-0 h-full w-full max-w-md bg-[#FBFAF6]/95 backdrop-blur-2xl border-l border-[#1C2620]/[0.1] shadow-2xl flex flex-col animate-[fadeInUp_0.2s_ease_both]">
+            <div className="flex items-center justify-between p-4 border-b border-[#1C2620]/[0.08] shrink-0">
+              <h2 className="text-sm font-extrabold uppercase tracking-wider text-[#1C2620]">Tout voir</h2>
               <button
                 type="button"
                 onClick={() => setVoirToutOpen(false)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm text-white"
+                className="w-8 h-8 rounded-full bg-[#1C2620]/[0.07] hover:bg-white/20 flex items-center justify-center text-sm text-[#1C2620]"
                 aria-label="Fermer"
               >
                 ✕
               </button>
             </div>
 
-            <div className="flex gap-1 p-2 border-b border-white/10 shrink-0">
+            <div className="flex gap-1 p-2 border-b border-[#1C2620]/[0.08] shrink-0">
               {([['inventaire', 'Inventaire'], ['prets', 'Prêts & Alertes'], ['reglages', 'Réglages'], ['actions', 'Actions']] as const).map(([tab, label]) => (
                 <button
                   key={tab}
@@ -1622,8 +1622,8 @@ export default function MonMaterielCockpitPage() {
                   onClick={() => { setVoirToutTab(tab); triggerHaptic('light'); }}
                   className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
                     voirToutTab === tab
-                      ? 'bg-[#A3C4A3] text-[#0B1F17]'
-                      : 'bg-white/[0.06] hover:bg-white/[0.12] text-white/80 border border-white/10'
+                      ? 'bg-[#2D5A3D] text-white'
+                      : 'bg-white/60 hover:bg-[#1C2620]/[0.09] text-[#1C2620]/80 border border-[#1C2620]/[0.08]'
                   }`}
                 >
                   {label}
@@ -1634,34 +1634,34 @@ export default function MonMaterielCockpitPage() {
             <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none p-4 space-y-4">
               {voirToutTab === 'inventaire' && (
                 <div className="space-y-3">
-                  <section className="rounded-2xl bg-white/[0.04] border border-white/8 p-3 space-y-1.5">
-                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-white">Répartition par catégorie</h3>
+                  <section className="rounded-2xl bg-white/40 border border-[#1C2620]/[0.07] p-3 space-y-1.5">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Répartition par catégorie</h3>
                     {categoryStats.map((c) => (
-                      <div key={c.label} className="flex items-center justify-between text-xs text-white/80">
+                      <div key={c.label} className="flex items-center justify-between text-xs text-[#1C2620]/80">
                         <span className="capitalize truncate">{c.label}</span>
-                        <span className="font-mono text-[#A3C4A3]">{formatWeight(c.grams)} ({c.pct}%)</span>
+                        <span className="font-mono text-[#2D5A3D]">{formatWeight(c.grams)} ({c.pct}%)</span>
                       </div>
                     ))}
                   </section>
 
-                  <section className="rounded-2xl bg-white/[0.04] border border-white/8 p-3 space-y-2">
+                  <section className="rounded-2xl bg-white/40 border border-[#1C2620]/[0.07] p-3 space-y-2">
                     <div className="flex items-baseline justify-between gap-2">
-                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-white">Inventaire matériel</h3>
-                      <span className="text-xs text-white/70 shrink-0">{filteredEquipment.length} articles · {formatWeight(totalWeightG)}</span>
+                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Inventaire matériel</h3>
+                      <span className="text-xs text-[#1C2620]/70 shrink-0">{filteredEquipment.length} articles · {formatWeight(totalWeightG)}</span>
                     </div>
 
                     <div className="relative flex items-center">
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 text-white/50"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 text-[#1C2620]/50"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
                       <input
                         ref={searchInputRef}
                         type="text"
                         placeholder="Rechercher équipement…  ( / )"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-7 py-1.5 bg-black/30 rounded-xl border border-white/12 text-xs text-white placeholder-white/50 focus:outline-none focus:border-[#A3C4A3]/60 focus:ring-1 focus:ring-[#A3C4A3]/40 transition-colors"
+                        className="w-full pl-9 pr-7 py-1.5 bg-white/50 rounded-xl border border-[#1C2620]/[0.09] text-xs text-[#1C2620] placeholder-[#1C2620]/50 focus:outline-none focus:border-[#2D5A3D]/60 focus:ring-1 focus:ring-[#2D5A3D]/40 transition-colors"
                       />
                       {searchQuery && (
-                        <button type="button" onClick={() => setSearchQuery('')} className="absolute right-2.5 text-white/50 hover:text-white text-xs" aria-label="Effacer">✕</button>
+                        <button type="button" onClick={() => setSearchQuery('')} className="absolute right-2.5 text-[#1C2620]/50 hover:text-[#1C2620] text-xs" aria-label="Effacer">✕</button>
                       )}
                     </div>
 
@@ -1673,8 +1673,8 @@ export default function MonMaterielCockpitPage() {
                           onClick={() => { triggerHaptic('light'); setActiveCategory(cat); }}
                           className={`px-3 py-1 rounded-full capitalize whitespace-nowrap transition-colors ${
                             activeCategory === cat
-                              ? 'bg-[#A3C4A3] text-[#0B1F17] font-bold'
-                              : 'bg-white/8 text-white/75 hover:bg-white/14 hover:text-white border border-white/10'
+                              ? 'bg-[#2D5A3D] text-white font-bold'
+                              : 'bg-[#1C2620]/[0.06] text-[#1C2620]/75 hover:bg-white/14 hover:text-[#1C2620] border border-[#1C2620]/[0.08]'
                           }`}
                         >
                           {cat === 'all' ? 'Tous' : cat}
@@ -1684,7 +1684,7 @@ export default function MonMaterielCockpitPage() {
 
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
-                        <span className="text-xs text-white/50 font-mono uppercase shrink-0">Marque :</span>
+                        <span className="text-xs text-[#1C2620]/50 font-mono uppercase shrink-0">Marque :</span>
                         {availableBrands.slice(0, 5).map((b) => (
                           <button
                             key={b}
@@ -1692,8 +1692,8 @@ export default function MonMaterielCockpitPage() {
                             onClick={() => { triggerHaptic('light'); setSelectedBrand(b); }}
                             className={`px-2 py-0.5 rounded-lg whitespace-nowrap transition-colors ${
                               selectedBrand === b
-                                ? 'bg-[#A3C4A3]/25 text-[#A3C4A3] font-bold border border-[#A3C4A3]/50'
-                                : 'bg-white/5 text-white/60 hover:text-white border border-white/10'
+                                ? 'bg-[#2D5A3D]/25 text-[#2D5A3D] font-bold border border-[#2D5A3D]/50'
+                                : 'bg-[#1C2620]/[0.04] text-[#1C2620]/60 hover:text-[#1C2620] border border-[#1C2620]/[0.08]'
                             }`}
                           >
                             {b}
@@ -1705,8 +1705,8 @@ export default function MonMaterielCockpitPage() {
                         onClick={() => { triggerHaptic('light'); setOnlyFavorites((f) => !f); }}
                         className={`px-2 py-1 rounded-lg font-bold transition-colors shrink-0 flex items-center gap-1 ${
                           onlyFavorites
-                            ? 'bg-[#E76F51]/25 text-[#F4A18C] border border-[#E76F51]/40'
-                            : 'bg-white/5 text-white/60 hover:text-white'
+                            ? 'bg-[#E76F51]/25 text-[#C0532E] border border-[#E76F51]/40'
+                            : 'bg-[#1C2620]/[0.04] text-[#1C2620]/60 hover:text-[#1C2620]'
                         }`}
                         title="Filtrer uniquement les favoris"
                       >
@@ -1719,7 +1719,7 @@ export default function MonMaterielCockpitPage() {
                       <button
                         type="button"
                         onClick={() => { setConditionFilter('all'); triggerHaptic('light'); }}
-                        className="w-full px-2.5 py-1.5 rounded-xl bg-[#E9A23B]/15 border border-[#E9A23B]/40 text-[#E9C46A] text-xs font-semibold flex items-center justify-between transition-all hover:bg-[#E9A23B]/25"
+                        className="w-full px-2.5 py-1.5 rounded-xl bg-[#E9A23B]/15 border border-[#E9A23B]/40 text-[#8C6A1A] text-xs font-semibold flex items-center justify-between transition-all hover:bg-[#E9A23B]/25"
                       >
                         <span>Filtre actif : {CONDITION_META[conditionFilter]?.label || conditionFilter}</span>
                         <span>✕ Réinitialiser</span>
@@ -1727,11 +1727,11 @@ export default function MonMaterielCockpitPage() {
                     )}
 
                     {selectedIds.size > 0 && (
-                      <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl bg-[#A3C4A3]/15 border border-[#A3C4A3]/30">
-                        <span className="text-xs text-white/90 font-medium">{selectedIds.size} sélectionné(s)</span>
+                      <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl bg-[#2D5A3D]/15 border border-[#2D5A3D]/30">
+                        <span className="text-xs text-[#1C2620]/90 font-medium">{selectedIds.size} sélectionné(s)</span>
                         <div className="flex items-center gap-1.5">
-                          <button type="button" onClick={bulkDelete} className="px-2.5 py-1 rounded-lg bg-[#E76F51]/25 hover:bg-[#E76F51]/35 text-[#F4A18C] text-xs font-semibold transition-all">Supprimer</button>
-                          <button type="button" onClick={clearSelection} className="px-2 py-1 rounded-lg bg-white/8 hover:bg-white/14 text-white/80 text-xs">Annuler</button>
+                          <button type="button" onClick={bulkDelete} className="px-2.5 py-1 rounded-lg bg-[#E76F51]/25 hover:bg-[#E76F51]/35 text-[#C0532E] text-xs font-semibold transition-all">Supprimer</button>
+                          <button type="button" onClick={clearSelection} className="px-2 py-1 rounded-lg bg-[#1C2620]/[0.06] hover:bg-white/14 text-[#1C2620]/80 text-xs">Annuler</button>
                         </div>
                       </div>
                     )}
@@ -1740,23 +1740,23 @@ export default function MonMaterielCockpitPage() {
                       {isLoading && equipment.length === 0 ? (
                         <div className="space-y-2">
                           {[...Array(4)].map((_, n) => (
-                            <div key={n} className="p-3 rounded-2xl bg-white/5 animate-pulse flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-white/10 shrink-0" />
+                            <div key={n} className="p-3 rounded-2xl bg-[#1C2620]/[0.04] animate-pulse flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-[#1C2620]/[0.07] shrink-0" />
                               <div className="flex-1 space-y-1.5">
-                                <div className="w-3/4 h-3 rounded bg-white/15" />
-                                <div className="w-1/2 h-2.5 rounded bg-white/10" />
+                                <div className="w-3/4 h-3 rounded bg-[#1C2620]/[0.1]" />
+                                <div className="w-1/2 h-2.5 rounded bg-[#1C2620]/[0.07]" />
                               </div>
                             </div>
                           ))}
                         </div>
                       ) : filteredEquipment.length === 0 ? (
-                        <div className="p-4 rounded-2xl bg-white/5 text-center space-y-2 border border-white/10">
+                        <div className="p-4 rounded-2xl bg-[#1C2620]/[0.04] text-center space-y-2 border border-[#1C2620]/[0.08]">
                           <span className="text-2xl block">🧭</span>
-                          <p className="text-xs text-white/75 font-medium">Aucun équipement trouvé</p>
+                          <p className="text-xs text-[#1C2620]/75 font-medium">Aucun équipement trouvé</p>
                           <button
                             type="button"
                             onClick={handleResetFilters}
-                            className="px-3.5 py-1.5 rounded-full bg-white/12 hover:bg-white/20 text-white text-xs font-semibold transition-all"
+                            className="px-3.5 py-1.5 rounded-full bg-[#1C2620]/[0.08] hover:bg-white/20 text-[#1C2620] text-xs font-semibold transition-all"
                           >
                             Réinitialiser les filtres
                           </button>
@@ -1774,45 +1774,45 @@ export default function MonMaterielCockpitPage() {
                               style={prefersReducedMotion ? undefined : { animationDelay: `${Math.min(i, 12) * 25}ms` }}
                               className={`${enterAnim} p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-2.5 relative group ${
                                 isSelected
-                                  ? 'bg-white/[0.12] border-[#A3C4A3]/50 ring-1 ring-[#A3C4A3]/30 shadow-md'
-                                  : 'bg-white/[0.04] border-white/8 hover:bg-white/[0.08] hover:border-white/15'
+                                  ? 'bg-[#1C2620]/[0.09] border-[#2D5A3D]/50 ring-1 ring-[#2D5A3D]/30 shadow-md'
+                                  : 'bg-white/40 border-[#1C2620]/[0.07] hover:bg-[#2D5A3D]/[0.08] hover:border-[#1C2620]/[0.11]'
                               }`}
                             >
                               {isSelected && (
-                                <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-full bg-[#A3C4A3] shadow-[0_0_10px_rgba(163,196,163,0.8)]" />
+                                <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-full bg-[#2D5A3D] shadow-[0_0_10px_rgba(45,90,61,0.4)]" />
                               )}
                               <button
                                 type="button"
                                 onClick={(e) => toggleSelected(item.id, e)}
                                 aria-label={isChecked ? 'Désélectionner' : 'Sélectionner'}
                                 className={`w-4 h-4 rounded-md border shrink-0 flex items-center justify-center transition-all ${
-                                  isChecked ? 'bg-[#A3C4A3] border-[#A3C4A3] text-[#0B1F17]' : 'border-white/30 text-transparent hover:border-white/60'
+                                  isChecked ? 'bg-[#2D5A3D] border-[#2D5A3D] text-white' : 'border-[#1C2620]/[0.3] text-transparent hover:border-[#1C2620]/60'
                                 }`}
                               >
                                 <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12l5 5L20 7" /></svg>
                               </button>
-                              <div className="w-10 h-10 rounded-xl bg-black/30 overflow-hidden relative shrink-0 border border-white/10 flex items-center justify-center p-1 shadow-inner">
+                              <div className="w-10 h-10 rounded-xl bg-white/50 overflow-hidden relative shrink-0 border border-[#1C2620]/[0.08] flex items-center justify-center p-1 shadow-inner">
                                 <Image src={item.image || '/assets/images/no_image.png'} alt={item.name} width={36} height={36} className="object-contain max-h-full max-w-full" />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <h4 className="text-xs font-bold text-white truncate leading-tight">{item.name}</h4>
+                                <h4 className="text-xs font-bold text-[#1C2620] truncate leading-tight">{item.name}</h4>
                                 {editing ? (
                                   <div className="flex items-center gap-1 mt-1" onClick={(e) => e.stopPropagation()}>
-                                    <input value={inlineWeight} onChange={(e) => setInlineWeight(e.target.value)} inputMode="numeric" className="w-12 px-1.5 py-0.5 rounded bg-black/40 border border-white/20 text-xs text-white text-center focus:outline-none focus:border-[#A3C4A3]" aria-label="Poids en grammes" />
-                                    <span className="text-xs text-white/50">g</span>
-                                    <input value={inlineQty} onChange={(e) => setInlineQty(e.target.value)} inputMode="numeric" className="w-8 px-1 py-0.5 rounded bg-black/40 border border-white/20 text-xs text-white text-center focus:outline-none focus:border-[#A3C4A3]" aria-label="Quantité" />
-                                    <button type="button" onClick={() => saveInlineEdit(item)} className="px-1.5 py-0.5 rounded bg-[#A3C4A3] text-[#0B1F17] text-xs font-bold">OK</button>
-                                    <button type="button" onClick={() => setInlineEditId(null)} className="px-1 py-0.5 rounded bg-white/10 text-white/70 text-xs">✕</button>
+                                    <input value={inlineWeight} onChange={(e) => setInlineWeight(e.target.value)} inputMode="numeric" className="w-12 px-1.5 py-0.5 rounded bg-white/60 border border-[#1C2620]/[0.14] text-xs text-[#1C2620] text-center focus:outline-none focus:border-[#2D5A3D]" aria-label="Poids en grammes" />
+                                    <span className="text-xs text-[#1C2620]/50">g</span>
+                                    <input value={inlineQty} onChange={(e) => setInlineQty(e.target.value)} inputMode="numeric" className="w-8 px-1 py-0.5 rounded bg-white/60 border border-[#1C2620]/[0.14] text-xs text-[#1C2620] text-center focus:outline-none focus:border-[#2D5A3D]" aria-label="Quantité" />
+                                    <button type="button" onClick={() => saveInlineEdit(item)} className="px-1.5 py-0.5 rounded bg-[#2D5A3D] text-white text-xs font-bold">OK</button>
+                                    <button type="button" onClick={() => setInlineEditId(null)} className="px-1 py-0.5 rounded bg-[#1C2620]/[0.07] text-[#1C2620]/70 text-xs">✕</button>
                                   </div>
                                 ) : (
-                                  <div className="flex items-center gap-1.5 text-xs text-white/60 mt-0.5 truncate">
+                                  <div className="flex items-center gap-1.5 text-xs text-[#1C2620]/60 mt-0.5 truncate">
                                     <span>{item.brand || 'Outdoor'}</span>
                                     <span>·</span>
-                                    <button type="button" onClick={(e) => startInlineEdit(item, e)} className="font-mono text-[#A3C4A3] font-bold hover:underline" title="Cliquer pour éditer le poids">
+                                    <button type="button" onClick={(e) => startInlineEdit(item, e)} className="font-mono text-[#2D5A3D] font-bold hover:underline" title="Cliquer pour éditer le poids">
                                       {formatWeight(item.weight_g || 0)}{(item.quantity || 1) > 1 ? ` ×${item.quantity}` : ''}
                                     </button>
                                     {item.loan_status === 'prêté' && (
-                                      <span className="px-1 py-0.5 rounded bg-white/10 text-xs text-white/80 border border-white/15">Prêté</span>
+                                      <span className="px-1 py-0.5 rounded bg-[#1C2620]/[0.07] text-xs text-[#1C2620]/80 border border-[#1C2620]/[0.11]">Prêté</span>
                                     )}
                                   </div>
                                 )}
@@ -1821,7 +1821,7 @@ export default function MonMaterielCockpitPage() {
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); toggleCompare(item.id); }}
-                                  className={`p-1 rounded-md transition-colors ${inCompare ? 'text-[#A3C4A3]' : 'text-white/35 hover:text-white/80'}`}
+                                  className={`p-1 rounded-md transition-colors ${inCompare ? 'text-[#2D5A3D]' : 'text-[#1C2620]/35 hover:text-[#1C2620]/80'}`}
                                   title="Comparer"
                                   aria-label="Comparer"
                                 >
@@ -1830,7 +1830,7 @@ export default function MonMaterielCockpitPage() {
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); setSelectedItemId(item.id); setIsDetailDrawerOpen(true); }}
-                                  className="text-white/40 hover:text-[#A3C4A3] p-1 transition-colors"
+                                  className="text-[#1C2620]/40 hover:text-[#2D5A3D] p-1 transition-colors"
                                   title="Fiche détaillée"
                                   aria-label="Ouvrir la fiche"
                                 >
@@ -1848,25 +1848,25 @@ export default function MonMaterielCockpitPage() {
                     <button
                       type="button"
                       onClick={() => { setEditingItem(null); setIsAddModalOpen(true); triggerHaptic('light'); }}
-                      className="w-full mt-1 py-2 rounded-xl border border-dashed border-white/20 hover:border-[#A3C4A3] bg-white/[0.03] hover:bg-white/[0.08] text-white/80 hover:text-[#A3C4A3] text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+                      className="w-full mt-1 py-2 rounded-xl border border-dashed border-[#1C2620]/[0.14] hover:border-[#2D5A3D] bg-white/30 hover:bg-[#2D5A3D]/[0.08] text-[#1C2620]/80 hover:text-[#2D5A3D] text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
                     >
                       <span>+</span> Ajouter un article à l&apos;inventaire
                     </button>
                   </section>
 
                   {compareItems.length === 2 && (
-                    <section className="rounded-2xl bg-gradient-to-r from-white/[0.08] to-black/30 border border-white/10 p-3 space-y-2">
+                    <section className="rounded-2xl bg-gradient-to-r from-white/[0.08] to-black/30 border border-[#1C2620]/[0.08] p-3 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-white uppercase tracking-wider">Comparateur 2 Articles ⚖️</span>
-                        <button type="button" onClick={() => setCompareIds([])} className="text-white/50 hover:text-white text-xs">Fermer ✕</button>
+                        <span className="text-xs font-bold text-[#1C2620] uppercase tracking-wider">Comparateur 2 Articles ⚖️</span>
+                        <button type="button" onClick={() => setCompareIds([])} className="text-[#1C2620]/50 hover:text-[#1C2620] text-xs">Fermer ✕</button>
                       </div>
                       <div className="grid grid-cols-2 gap-3 text-xs">
                         {compareItems.map((it) => (
-                          <div key={it.id} className="p-2.5 rounded-xl bg-black/30 border border-white/10">
-                            <p className="font-bold text-white truncate">{it.name}</p>
-                            <p className="text-white/70 mt-1">Poids : <span className="font-mono text-[#A3C4A3] font-bold">{formatWeight(it.weight_g || 0)}</span></p>
-                            <p className="text-white/70">Prix : <span className="font-mono text-white">{it.purchase_price ? `${it.purchase_price} €` : '—'}</span></p>
-                            <p className="text-white/70 capitalize">État : {CONDITION_META[it.condition || 'bon']?.label || it.condition || '—'}</p>
+                          <div key={it.id} className="p-2.5 rounded-xl bg-white/50 border border-[#1C2620]/[0.08]">
+                            <p className="font-bold text-[#1C2620] truncate">{it.name}</p>
+                            <p className="text-[#1C2620]/70 mt-1">Poids : <span className="font-mono text-[#2D5A3D] font-bold">{formatWeight(it.weight_g || 0)}</span></p>
+                            <p className="text-[#1C2620]/70">Prix : <span className="font-mono text-[#1C2620]">{it.purchase_price ? `${it.purchase_price} €` : '—'}</span></p>
+                            <p className="text-[#1C2620]/70 capitalize">État : {CONDITION_META[it.condition || 'bon']?.label || it.condition || '—'}</p>
                           </div>
                         ))}
                       </div>
@@ -1878,9 +1878,9 @@ export default function MonMaterielCockpitPage() {
               {voirToutTab === 'prets' && (
                 <div className="space-y-4">
                   <section>
-                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-white mb-2">Alertes ({alerts.length})</h3>
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620] mb-2">Alertes ({alerts.length})</h3>
                     {alerts.length === 0 ? (
-                      <p className="text-xs text-white/70 text-center py-4 rounded-2xl bg-white/[0.04] border border-white/8">Aucune alerte — tout est en ordre ✨</p>
+                      <p className="text-xs text-[#1C2620]/70 text-center py-4 rounded-2xl bg-white/40 border border-[#1C2620]/[0.07]">Aucune alerte — tout est en ordre ✨</p>
                     ) : (
                       <div className="space-y-1.5">
                         {alerts.map((a) => (
@@ -1888,24 +1888,24 @@ export default function MonMaterielCockpitPage() {
                             key={a.id}
                             type="button"
                             onClick={() => { setVoirToutOpen(false); setSelectedItemId(a.itemId); setIsDetailDrawerOpen(true); triggerHaptic('light'); }}
-                            className="w-full text-left p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-xs text-white/85 flex items-center justify-between gap-1.5 transition-colors"
+                            className="w-full text-left p-2 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/85 flex items-center justify-between gap-1.5 transition-colors"
                           >
                             <span className="truncate">{a.label}</span>
-                            <span className="text-xs text-[#A3C4A3] font-bold shrink-0">Voir ➔</span>
+                            <span className="text-xs text-[#2D5A3D] font-bold shrink-0">Voir ➔</span>
                           </button>
                         ))}
                       </div>
                     )}
                   </section>
 
-                  <section className="pt-2 border-t border-white/10">
+                  <section className="pt-2 border-t border-[#1C2620]/[0.08]">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-white">Prêts ({loanedItems.length})</h3>
+                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Prêts ({loanedItems.length})</h3>
                       {trashCount > 0 && (
                         <button
                           type="button"
                           onClick={() => { setVoirToutOpen(false); setIsTrashModalOpen(true); }}
-                          className="text-xs font-bold text-white/60 hover:text-[#F4A18C] underline"
+                          className="text-xs font-bold text-[#1C2620]/60 hover:text-[#C0532E] underline"
                           title="Voir la corbeille des kits"
                         >
                           Corbeille ({trashCount})
@@ -1913,19 +1913,19 @@ export default function MonMaterielCockpitPage() {
                       )}
                     </div>
                     {loanedItems.length === 0 ? (
-                      <p className="text-xs text-white/70 text-center py-4 rounded-2xl bg-white/[0.04] border border-white/8">Aucun matériel actuellement prêté 🤝</p>
+                      <p className="text-xs text-[#1C2620]/70 text-center py-4 rounded-2xl bg-white/40 border border-[#1C2620]/[0.07]">Aucun matériel actuellement prêté 🤝</p>
                     ) : (
                       <div className="space-y-1.5">
                         {loanedItems.map((item) => (
-                          <div key={item.id} className="p-2 rounded-xl bg-white/[0.04] border border-white/8 text-xs flex items-center justify-between gap-2">
+                          <div key={item.id} className="p-2 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs flex items-center justify-between gap-2">
                             <div className="min-w-0">
-                              <p className="text-white/90 font-semibold truncate">{item.name}</p>
-                              <p className="text-xs text-white/60 truncate">Prêté à {item.loan_to_name || 'un ami'}</p>
+                              <p className="text-[#1C2620]/90 font-semibold truncate">{item.name}</p>
+                              <p className="text-xs text-[#1C2620]/60 truncate">Prêté à {item.loan_to_name || 'un ami'}</p>
                             </div>
                             <button
                               type="button"
                               onClick={() => handleMarkReturned(item)}
-                              className="px-2.5 py-1 rounded-lg bg-[#A3C4A3]/20 hover:bg-[#A3C4A3]/30 border border-[#A3C4A3]/40 text-[#A3C4A3] text-xs font-bold shrink-0 transition-all active:scale-95"
+                              className="px-2.5 py-1 rounded-lg bg-[#2D5A3D]/20 hover:bg-[#2D5A3D]/30 border border-[#2D5A3D]/40 text-[#2D5A3D] text-xs font-bold shrink-0 transition-all active:scale-95"
                             >
                               Rendu ✓
                             </button>
@@ -1940,7 +1940,7 @@ export default function MonMaterielCockpitPage() {
               {voirToutTab === 'reglages' && (
                 <div className="space-y-5">
                   <section>
-                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-white mb-2">Objectif de poids du sac</h3>
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620] mb-2">Objectif de poids du sac</h3>
                     <div className="grid grid-cols-4 gap-2">
                       {[5, 6, 8, 10, 12, 14, 16, 20].map((t) => (
                         <button
@@ -1949,8 +1949,8 @@ export default function MonMaterielCockpitPage() {
                           onClick={() => { setTargetKg(t); triggerHaptic('light'); showToast(`Objectif ajusté à ${t} kg`, 'info'); }}
                           className={`py-2 rounded-xl text-center font-mono font-bold text-xs transition-all active:scale-95 ${
                             targetKg === t
-                              ? 'bg-[#A3C4A3] text-[#0B1F17] shadow-sm'
-                              : 'bg-white/8 hover:bg-white/14 text-white/80 border border-white/10'
+                              ? 'bg-[#2D5A3D] text-white shadow-sm'
+                              : 'bg-[#1C2620]/[0.06] hover:bg-white/14 text-[#1C2620]/80 border border-[#1C2620]/[0.08]'
                           }`}
                         >
                           {t} kg
@@ -1959,18 +1959,18 @@ export default function MonMaterielCockpitPage() {
                     </div>
                   </section>
 
-                  <section className="pt-2 border-t border-white/10">
-                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-white mb-2">Disposition des modules</h3>
+                  <section className="pt-2 border-t border-[#1C2620]/[0.08]">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620] mb-2">Disposition des modules</h3>
                     <div className="space-y-2">
                       {widgetOrder.map((id, i) => (
-                        <div key={id} className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/[0.04] border border-white/8">
-                          <span className="text-xs text-white/90 capitalize">{WIDGET_LABEL[id] || id}</span>
+                        <div key={id} className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/40 border border-[#1C2620]/[0.07]">
+                          <span className="text-xs text-[#1C2620]/90 capitalize">{WIDGET_LABEL[id] || id}</span>
                           <div className="flex items-center gap-1">
                             <button
                               type="button"
                               onClick={() => moveWidget(id, -1)}
                               disabled={i === 0}
-                              className="w-7 h-7 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-white text-xs disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                              className="w-7 h-7 rounded-lg bg-white/60 hover:bg-[#1C2620]/[0.09] border border-[#1C2620]/[0.08] text-[#1C2620] text-xs disabled:opacity-30 disabled:pointer-events-none transition-colors"
                               aria-label={`Déplacer ${WIDGET_LABEL[id]} vers le haut`}
                             >
                               ▲
@@ -1979,7 +1979,7 @@ export default function MonMaterielCockpitPage() {
                               type="button"
                               onClick={() => moveWidget(id, 1)}
                               disabled={i === widgetOrder.length - 1}
-                              className="w-7 h-7 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-white text-xs disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                              className="w-7 h-7 rounded-lg bg-white/60 hover:bg-[#1C2620]/[0.09] border border-[#1C2620]/[0.08] text-[#1C2620] text-xs disabled:opacity-30 disabled:pointer-events-none transition-colors"
                               aria-label={`Déplacer ${WIDGET_LABEL[id]} vers le bas`}
                             >
                               ▼
@@ -1991,26 +1991,26 @@ export default function MonMaterielCockpitPage() {
                     <button
                       type="button"
                       onClick={resetWidgetOrder}
-                      className="mt-2 w-full py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-white/90 text-xs font-semibold transition-colors"
+                      className="mt-2 w-full py-2 rounded-xl bg-white/60 hover:bg-[#1C2620]/[0.09] border border-[#1C2620]/[0.09] text-[#1C2620]/90 text-xs font-semibold transition-colors"
                     >
                       ↺ Réinitialiser la disposition
                     </button>
                   </section>
 
-                  <section className="pt-2 border-t border-white/10">
-                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-white mb-2">Général</h3>
+                  <section className="pt-2 border-t border-[#1C2620]/[0.08]">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620] mb-2">Général</h3>
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
                         onClick={() => { handleResetFilters(); showToast('Filtres réinitialisés', 'info'); }}
-                        className="py-2.5 px-3 rounded-xl bg-white/8 hover:bg-white/14 border border-white/10 text-white/90 text-xs font-semibold text-left transition-colors flex items-center gap-1.5"
+                        className="py-2.5 px-3 rounded-xl bg-[#1C2620]/[0.06] hover:bg-white/14 border border-[#1C2620]/[0.08] text-[#1C2620]/90 text-xs font-semibold text-left transition-colors flex items-center gap-1.5"
                       >
                         <span>🔄</span> Réinitialiser filtres
                       </button>
                       <Link
                         href="/compte"
                         onClick={() => setVoirToutOpen(false)}
-                        className="py-2.5 px-3 rounded-xl bg-white/8 hover:bg-white/14 border border-white/10 text-white/90 text-xs font-semibold text-left transition-colors flex items-center gap-1.5"
+                        className="py-2.5 px-3 rounded-xl bg-[#1C2620]/[0.06] hover:bg-white/14 border border-[#1C2620]/[0.08] text-[#1C2620]/90 text-xs font-semibold text-left transition-colors flex items-center gap-1.5"
                       >
                         <span>👤</span> Mon Profil LKDV
                       </Link>
@@ -2022,67 +2022,67 @@ export default function MonMaterielCockpitPage() {
               {voirToutTab === 'actions' && (
                 <div className="space-y-4">
                   <section>
-                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-white mb-2">Navigation</h3>
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620] mb-2">Navigation</h3>
                     <div className="grid grid-cols-2 gap-2">
                       <Link
                         href="/explorer"
                         onClick={() => setVoirToutOpen(false)}
-                        className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-xs text-white/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
+                        className="p-2.5 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
                       >
                         <span>🗺️</span>
                         <span className="font-bold">Explorer</span>
-                        <span className="text-xs text-white/60">Trouver des randonnées</span>
+                        <span className="text-xs text-[#1C2620]/60">Trouver des randonnées</span>
                       </Link>
                       <Link
                         href="/ai-configurator"
                         onClick={() => setVoirToutOpen(false)}
-                        className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-xs text-white/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
+                        className="p-2.5 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
                       >
                         <span>✨</span>
                         <span className="font-bold">Configurateur IA</span>
-                        <span className="text-xs text-white/60">Générer un kit</span>
+                        <span className="text-xs text-[#1C2620]/60">Générer un kit</span>
                       </Link>
                       <Link
                         href="/rapport-kit"
                         onClick={() => setVoirToutOpen(false)}
-                        className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-xs text-white/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
+                        className="p-2.5 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
                       >
                         <span>📦</span>
                         <span className="font-bold">Rapport Kit</span>
-                        <span className="text-xs text-white/60">Évaluer son sac</span>
+                        <span className="text-xs text-[#1C2620]/60">Évaluer son sac</span>
                       </Link>
                       <Link
                         href="/jumeau-3d"
                         onClick={() => setVoirToutOpen(false)}
-                        className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-xs text-white/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
+                        className="p-2.5 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
                       >
                         <span>🧊</span>
                         <span className="font-bold">Jumeau 3D</span>
-                        <span className="text-xs text-white/60">Vue du sac</span>
+                        <span className="text-xs text-[#1C2620]/60">Vue du sac</span>
                       </Link>
                     </div>
                   </section>
 
-                  <section className="pt-2 border-t border-white/10 space-y-2">
-                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-white">Actions rapides</h3>
+                  <section className="pt-2 border-t border-[#1C2620]/[0.08] space-y-2">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Actions rapides</h3>
                     <button
                       type="button"
                       onClick={() => { setVoirToutOpen(false); setEditingItem(null); setIsAddModalOpen(true); }}
-                      className="w-full py-2.5 px-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-white/90 text-xs font-semibold text-left flex items-center gap-2 transition-colors"
+                      className="w-full py-2.5 px-3 rounded-xl bg-white/60 hover:bg-[#1C2620]/[0.09] border border-[#1C2620]/[0.09] text-[#1C2620]/90 text-xs font-semibold text-left flex items-center gap-2 transition-colors"
                     >
                       <span>➕</span> Ajouter un article à l&apos;inventaire
                     </button>
                     <button
                       type="button"
                       onClick={() => { setVoirToutOpen(false); setIsNewHikeModalOpen(true); }}
-                      className="w-full py-2.5 px-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-white/90 text-xs font-semibold text-left flex items-center gap-2 transition-colors"
+                      className="w-full py-2.5 px-3 rounded-xl bg-white/60 hover:bg-[#1C2620]/[0.09] border border-[#1C2620]/[0.09] text-[#1C2620]/90 text-xs font-semibold text-left flex items-center gap-2 transition-colors"
                     >
                       <span>🧭</span> Planifier une nouvelle sortie
                     </button>
                     <button
                       type="button"
                       onClick={() => { setVoirToutOpen(false); handleCreateNewKit(); }}
-                      className="w-full py-2.5 px-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-white/90 text-xs font-semibold text-left flex items-center gap-2 transition-colors"
+                      className="w-full py-2.5 px-3 rounded-xl bg-white/60 hover:bg-[#1C2620]/[0.09] border border-[#1C2620]/[0.09] text-[#1C2620]/90 text-xs font-semibold text-left flex items-center gap-2 transition-colors"
                     >
                       <span>🎒</span> Créer un nouveau kit
                     </button>
@@ -2256,14 +2256,14 @@ export default function MonMaterielCockpitPage() {
 
       {/* ═══ NEW HIKE MODAL ═══ */}
       {isNewHikeModalOpen && (
-        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-[fadeInUp_0.2s_ease_both]">
-          <div className="relative w-full max-w-md rounded-[28px] border border-white/15 bg-[#0B1F17]/95 p-6 text-white shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">Planifier une nouvelle sortie</h3>
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-[#1C2620]/55 backdrop-blur-md animate-[fadeInUp_0.2s_ease_both]">
+          <div className="relative w-full max-w-md rounded-[28px] border border-[#1C2620]/[0.11] bg-[#FBFAF6]/97 backdrop-blur-2xl p-6 text-[#1C2620] shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#1C2620]/[0.08] pb-3">
+              <h3 className="text-sm font-extrabold text-[#1C2620] uppercase tracking-wider">Planifier une nouvelle sortie</h3>
               <button
                 type="button"
                 onClick={() => setIsNewHikeModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-xs text-white"
+                className="w-7 h-7 rounded-full bg-[#1C2620]/[0.07] hover:bg-white/20 flex items-center justify-center text-xs text-[#1C2620]"
               >
                 ✕
               </button>
@@ -2271,62 +2271,62 @@ export default function MonMaterielCockpitPage() {
 
             <form onSubmit={handleCreateHike} className="space-y-3 text-xs">
               <div>
-                <label className="text-xs text-white/70 block mb-1">Nom de la randonnée / trek *</label>
+                <label className="text-xs text-[#1C2620]/70 block mb-1">Nom de la randonnée / trek *</label>
                 <input
                   required
                   value={newHikeName}
                   onChange={(e) => setNewHikeName(e.target.value)}
                   placeholder="Ex. Tour du Mont Blanc, GR20 Sud…"
-                  className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/15 text-white focus:outline-none focus:border-[#A3C4A3]"
+                  className="w-full px-3 py-2 rounded-xl bg-white/50 border border-[#1C2620]/[0.11] text-[#1C2620] focus:outline-none focus:border-[#2D5A3D]"
                 />
               </div>
               <div>
-                <label className="text-xs text-white/70 block mb-1">Massif / Destination</label>
+                <label className="text-xs text-[#1C2620]/70 block mb-1">Massif / Destination</label>
                 <input
                   value={newHikeDest}
                   onChange={(e) => setNewHikeDest(e.target.value)}
                   placeholder="Ex. Massif des Écrins, Vercors…"
-                  className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/15 text-white focus:outline-none focus:border-[#A3C4A3]"
+                  className="w-full px-3 py-2 rounded-xl bg-white/50 border border-[#1C2620]/[0.11] text-[#1C2620] focus:outline-none focus:border-[#2D5A3D]"
                 />
               </div>
               <div>
-                <label className="text-xs text-white/70 block mb-1">Compagnons (optionnel)</label>
+                <label className="text-xs text-[#1C2620]/70 block mb-1">Compagnons (optionnel)</label>
                 <input
                   value={newHikeCompanions}
                   onChange={(e) => setNewHikeCompanions(e.target.value)}
                   placeholder="Ex. Léna & Antoine"
-                  className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/15 text-white focus:outline-none focus:border-[#A3C4A3]"
+                  className="w-full px-3 py-2 rounded-xl bg-white/50 border border-[#1C2620]/[0.11] text-[#1C2620] focus:outline-none focus:border-[#2D5A3D]"
                 />
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="text-xs text-white/70 block mb-1">Durée (jours)</label>
+                  <label className="text-xs text-[#1C2620]/70 block mb-1">Durée (jours)</label>
                   <input
                     type="number"
                     min="1"
                     value={newHikeDays}
                     onChange={(e) => setNewHikeDays(Number(e.target.value))}
-                    className="w-full px-2 py-1.5 rounded-xl bg-black/30 border border-white/15 text-white text-center focus:outline-none focus:border-[#A3C4A3]"
+                    className="w-full px-2 py-1.5 rounded-xl bg-white/50 border border-[#1C2620]/[0.11] text-[#1C2620] text-center focus:outline-none focus:border-[#2D5A3D]"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-white/70 block mb-1">Distance (km)</label>
+                  <label className="text-xs text-[#1C2620]/70 block mb-1">Distance (km)</label>
                   <input
                     type="number"
                     min="1"
                     value={newHikeKm}
                     onChange={(e) => setNewHikeKm(Number(e.target.value))}
-                    className="w-full px-2 py-1.5 rounded-xl bg-black/30 border border-white/15 text-white text-center focus:outline-none focus:border-[#A3C4A3]"
+                    className="w-full px-2 py-1.5 rounded-xl bg-white/50 border border-[#1C2620]/[0.11] text-[#1C2620] text-center focus:outline-none focus:border-[#2D5A3D]"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-white/70 block mb-1">D+ (mètres)</label>
+                  <label className="text-xs text-[#1C2620]/70 block mb-1">D+ (mètres)</label>
                   <input
                     type="number"
                     min="0"
                     value={newHikeDPlus}
                     onChange={(e) => setNewHikeDPlus(Number(e.target.value))}
-                    className="w-full px-2 py-1.5 rounded-xl bg-black/30 border border-white/15 text-white text-center focus:outline-none focus:border-[#A3C4A3]"
+                    className="w-full px-2 py-1.5 rounded-xl bg-white/50 border border-[#1C2620]/[0.11] text-[#1C2620] text-center focus:outline-none focus:border-[#2D5A3D]"
                   />
                 </div>
               </div>
@@ -2335,13 +2335,13 @@ export default function MonMaterielCockpitPage() {
                 <button
                   type="button"
                   onClick={() => setIsNewHikeModalOpen(false)}
-                  className="px-4 py-2 rounded-full bg-white/10 text-white text-xs font-semibold"
+                  className="px-4 py-2 rounded-full bg-[#1C2620]/[0.07] text-[#1C2620] text-xs font-semibold"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-full bg-[#A3C4A3] text-[#0B1F17] font-bold text-xs hover:bg-[#b3d4b3]"
+                  className="px-5 py-2 rounded-full bg-[#2D5A3D] text-white font-bold text-xs hover:bg-[#235030]"
                 >
                   Enregistrer la sortie
                 </button>
@@ -2353,14 +2353,14 @@ export default function MonMaterielCockpitPage() {
 
       {/* ═══ KIT TRASH MODAL ═══ */}
       {isTrashModalOpen && (
-        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-[fadeInUp_0.2s_ease_both]">
-          <div className="relative w-full max-w-md rounded-[28px] border border-white/15 bg-[#0B1F17]/95 p-6 text-white shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">Corbeille des kits ({trashCount})</h3>
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-[#1C2620]/55 backdrop-blur-md animate-[fadeInUp_0.2s_ease_both]">
+          <div className="relative w-full max-w-md rounded-[28px] border border-[#1C2620]/[0.11] bg-[#FBFAF6]/97 backdrop-blur-2xl p-6 text-[#1C2620] shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#1C2620]/[0.08] pb-3">
+              <h3 className="text-sm font-extrabold text-[#1C2620] uppercase tracking-wider">Corbeille des kits ({trashCount})</h3>
               <button
                 type="button"
                 onClick={() => setIsTrashModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-xs text-white"
+                className="w-7 h-7 rounded-full bg-[#1C2620]/[0.07] hover:bg-white/20 flex items-center justify-center text-xs text-[#1C2620]"
                 aria-label="Fermer"
               >
                 ✕
@@ -2369,13 +2369,13 @@ export default function MonMaterielCockpitPage() {
 
             <div className="space-y-2 max-h-[60vh] overflow-y-auto scrollbar-none pr-0.5">
               {trashKits.length === 0 && (
-                <p className="text-xs text-white/50 text-center py-6">Corbeille vide</p>
+                <p className="text-xs text-[#1C2620]/50 text-center py-6">Corbeille vide</p>
               )}
               {trashKits.map((kit) => (
-                <div key={kit.id} className="p-3 rounded-xl bg-white/[0.04] border border-white/8 flex items-center justify-between gap-2">
+                <div key={kit.id} className="p-3 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-white truncate">{kit.name}</p>
-                    <p className="text-xs text-white/45">
+                    <p className="text-xs font-bold text-[#1C2620] truncate">{kit.name}</p>
+                    <p className="text-xs text-[#1C2620]/45">
                       Supprimé {kit.deleted_at ? new Date(kit.deleted_at).toLocaleDateString('fr-FR') : ''}
                     </p>
                   </div>
@@ -2387,7 +2387,7 @@ export default function MonMaterielCockpitPage() {
                         await restoreFromTrash(kit.id);
                         showToast(`Kit « ${kit.name} » restauré`, 'success');
                       }}
-                      className="px-2.5 py-1 rounded-lg bg-[#A3C4A3]/20 hover:bg-[#A3C4A3]/30 border border-[#A3C4A3]/40 text-[#A3C4A3] text-xs font-bold transition-all active:scale-95"
+                      className="px-2.5 py-1 rounded-lg bg-[#2D5A3D]/20 hover:bg-[#2D5A3D]/30 border border-[#2D5A3D]/40 text-[#2D5A3D] text-xs font-bold transition-all active:scale-95"
                     >
                       Restaurer
                     </button>
@@ -2399,7 +2399,7 @@ export default function MonMaterielCockpitPage() {
                           showToast('Kit supprimé définitivement', 'info');
                         }
                       }}
-                      className="px-2.5 py-1 rounded-lg bg-[#E76F51]/20 hover:bg-[#E76F51]/30 border border-[#E76F51]/40 text-[#F4A18C] text-xs font-bold transition-all active:scale-95"
+                      className="px-2.5 py-1 rounded-lg bg-[#E76F51]/20 hover:bg-[#E76F51]/30 border border-[#E76F51]/40 text-[#C0532E] text-xs font-bold transition-all active:scale-95"
                     >
                       Suppr.
                     </button>

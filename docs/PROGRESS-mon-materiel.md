@@ -9,10 +9,11 @@
 ## 🆕 Lot « Cockpit 6 Modules — Style Polestar/Automotive » (2026-08-18)
 
 ### Direction visuelle
-- **Fond sombre sobre sans photo** : la photo `hero-misty.jpg` est supprimée du fond → `#0B1F17` uni + 2 halos radiaux très subtils (sage/ambre). Liquid glass conservé sur les widgets.
+- **Fond papier clair aligné sur le reste du site** : suppression du fond sombre `#0B1F17` et de la photo `hero-misty.jpg` → `#F5F3EE`/`#FBFAF6` (tokens site `--lkv-paper`/`--background`) + 2 halos radiaux très subtils (forest / sable). Encre `#1C2620`, accents forest `#2D5A3D` (cohérent avec Header, boutons et cartes du site).
+- **Liquid glass clair amélioré** (visionOS, style clair) : fond `rgba(255,255,255,0.55)` + `backdrop-blur(40px) saturate(1.5)`, liseré `border-white/70`, reflet supérieur blanc `rgba(255,255,255,0.6)→transparent`, **masque de bord dégradé blanc lumineux**, ombre douce encre (`0 24px 60px -24px rgba(11,31,23,.22)`) + **inner-highlight `inset 0 1px 0 rgba(255,255,255,.85)`**. Overlays (drawer, modales, toast) transposés en blanc translucide `rgba(251,250,246,.95)`.
 - **Une valeur dominante par widget** (`text-4xl`/`text-5xl`, `font-mono` extrabold) : Poids du pack · Compte à rebours J-X · % matériel en bon état · nombre d'alertes · nombre de kits.
-- **Plancher typographique `text-xs`** : tous les `text-[9px]`/`text-[10px]`/`text-[11px]` de la page sont supprimés (labels secondaires ≥ 12px, `text-white/60`→`/70` pour le contraste WCAG AA).
-- **Glow réservé aux états actifs** : départ imminent (J≤3, ombre ambre), alertes présentes (chiffre ambre lumineux), Copilote en streaming (icône pulse).
+- **Plancher typographique `text-xs`** : tous les `text-[9px]`/`text-[10px]`/`text-[11px]` de la page sont supprimés (labels secondaires ≥ 12px) et les textes secondaires sont en encre `#1C2620/60–80` (contraste WCAG AA sur papier clair).
+- **Glow réservé aux états actifs** : départ imminent (J≤3, badge ambre `#8C6A1A`), alertes présentes (chiffre ambre lumineux), Copilote en streaming (icône pulse).
 - **Icônes fortes monochromes** (SVG inline : balance, navigation, activité, sparkle, cloche, sac à dos) — pas d'emoji dans les en-têtes.
 
 ### Layout 6 modules (grille asymétrique, 2 rangs, sans scroll de page)
@@ -41,6 +42,12 @@ Héberge toutes les fonctionnalités reléguées, organisées en 4 onglets :
 - `tsc --noEmit` = 0 erreur · `npm run lint` = aucun warning sur `mon-materiel/page.tsx` · `npm run build` = succès (route `/mon-materiel` 39,8 kB, en baisse).
 - **Playwright (15/16) :** 6 widgets visibles ✅ · aucun scroll de page 1440×900 ✅ · 6 poignées DnD ✅ · drawer « Tout voir » (4 onglets, Inventaire par défaut) ✅ · clic article → fiche ✅ · réordonnancement ▲ + persistance localStorage + restore après reload ✅ · reset disposition ✅ · **drag & drop HTML5 natif réordonne + persiste** (departure→weight) ✅ · Copilote IA fallback local (badge « Mode dégradé » + réponse) ✅ · mobile 380 px sans débordement horizontal, 6/6 widgets ✅ · aucune réponse HTTP ≥ 400 ✅.
 - ⚠️ **1 erreur console attendue :** en absence de clé Gemini, la route `/api/ai/chat-completion` log `API Route Error` (404 fournisseur) puis l'UI bascule proprement en « Mode dégradé » (fallback local) — comportement existant, non bloquant.
+
+### 2026-08-18 — Ajustement : fond papier clair (reste du site) + liquid glass clair
+- **Fond clair** : racine `#0B1F17` → `#F5F3EE` (fond du site), diversion sous-jacente, halos forest/sable, encre `#1C2620`, accents `#2D5A3D`, ambre `#8C6A1A`, danger `#9B2C2C`: remplacement des 157 `text-white/*`→encre, bordures `white/x`→`[#1C2620]/x`, surfaces `white/black`→verres + teintes ink, `#A3C4A3`→`#2D5A3D`, `#E9C46A`→`#8C6A1A`, `#F4A18C`→`#C0532E`, couleurs `CONDITION_META` assombries (WCAG AA).
+- **GlassCard clair amélioré** : `bg-white/55` + `blur(40px) saturate(1.5)` + liseré `white/70` + sheen supérieur + masque de bord lumineux + ombre encre douce + inner-highlight blanc.
+- Overlays (drawer « Tout voir », modales, toast, sélecteurs) transposés en surfaces claires translucides ; scrims `bg-(black/70)`→`[#1C2620]/55`.
+- Vérifié par Playwright : `rootBg rgb(245,243,238)`, `glass rgba(255,255,255,0.55) + blur(40px)`, encre `rgb(28,38,32)` ; suite de tests 6 modules toujours verte (15/16, seule 1 erreur console = fallback IA attendu).
 
 ---
 
