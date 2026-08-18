@@ -1,91 +1,145 @@
-# 📋 Suivi d'Avancement — Cockpit « Mon Équipement » Dashboard Sans Sidebar
+# 📋 Suivi d'Avancement — Cockpit « Mon Matériel » Smart Cockpit Final
 
-> **Branche :** `feat/mon-materiel-cockpit-dashboard-final` (créée depuis `origin/refonte-cockpit-liquid-glass-mon-materiel`)
-> **Cible :** `src/app/mon-materiel/page.tsx`
-> **Statut :** ✅ Terminé — page cockpit dashboard sans sidebar, cards enrichies, toutes les fonctionnalités branchées sur l'existant.
-
----
-
-## 📋 Mission & Contraintes
-
-Transformer `src/app/mon-materiel/page.tsx` en véritable cockpit dashboard **sans sidebar**, dense, lisible, sans faux boutons, sans données fictives présentées comme réelles, sans logique dupliquée. Tout ce qui est visible doit fonctionner et persister. Le travail part de la branche `refonte-cockpit-liquid-glass-mon-materiel` (PR #22) — jamais de `main`.
+> **Branche de départ :** `feat/mon-materiel-six-cards-final` (PR #23 mergée dans main)
+> **Branche de travail :** `feat/mon-materiel-smart-cockpit-final`
+> **Cible :** `src/app/mon-materiel/page.tsx` + extraction composants + systèmes de données
+> **Statut :** ✅ Implémentation Lots 1-5 terminée — Architecture modulaire, 6 widgets + fullscreen, design tokens, expansion cinématique, drag&drop, état produit unifié. Prêt pour Lots 6-7 (polish + validation + PR).
 
 ---
 
-## 🗺️ Inventaire de l'Existant (Fichiers Audités & Réutilisés)
+## 🎯 Mission & Contraintes (Rappel Prompt Maître)
 
-| Domaine | Fichier source | Rôle & Usage |
-| :--- | :--- | :--- |
-| **Gestion Matériel** | [`src/hooks/useEquipment.ts`](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/hooks/useEquipment.ts) | Hook CRUD Supabase (`gear_items`) + fallback invité localStorage. Utilisé tel quel. |
-| **Gestion Kits** | [`src/hooks/useUserKits.ts`](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/hooks/useUserKits.ts) | Kits actifs + **corbeille (trashKits / trashCount / restoreFromTrash / permanentDelete)** — tables `custom_kits` / `custom_kit_items`. |
-| **Futures randonnées (SOURCE UNIQUE)** | [`src/lib/preparation/plannedHikes.ts`](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/preparation/plannedHikes.ts) | Manager partagé (~/preparer-randonnee et cockpit) : `getPlannedHikes`, `savePlannedHike`, `getActivePlannedHike`. **Étendu** avec `assignedKitId`, `companions`, `updatePlannedHike`, `removePlannedHike`. |
-| **Moteur départ intelligent** | [`src/lib/preparation/SmartDepartureEngine.ts`](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/preparation/SmartDepartureEngine.ts) | `resolveDeparturePlan` → **kit recommandé + score**, consommables (eau/repas/en-cas/gaz), checklist. Réutilisé dans la card « Prochain Départ ». |
-| **Tiroir Cockpit Kit** | [`src/components/inventaire/KitCockpitDrawer.tsx`](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/components/inventaire/KitCockpitDrawer.tsx) | Panneau d'édition/assemblage/checklist/assignation de kit. Conservé. |
-| **Fiche Matériel** | [`src/components/inventaire/GearDetailDrawer.tsx`](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/components/inventaire/GearDetailDrawer.tsx) | Fiche technique, historique, notes, prêt, boutique. Conservé. |
-| **Ajout/Modif Matériel** | [`src/components/inventaire/AddEditGearModal.tsx`](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/components/inventaire/AddEditGearModal.tsx) | Modale d'ajout/édition. Conservé. |
-| **Prêt de Matériel** | [`src/components/inventaire/LendItemModal.tsx`](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/components/inventaire/LendItemModal.tsx) | Modale d'enregistrement des prêts. Conservé. |
-| **Panier** | [`src/lib/cart.ts`](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/cart.ts) | Ajout panier avec persistance localStorage. |
-| **IA Copilote** | [`src/lib/ai/chatCompletion.ts`](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/ai/chatCompletion.ts) + **`POST /api/ai/chat-completion`** | Streaming Gemini + fallback local. Branché avec badge `IA en ligne` / `Mode dégradé`. |
-| **Header Global** | [`src/components/Header.tsx`](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/components/Header.tsx) | Navigation principale LKDV. |
-| **Feedback Haptique** | [`src/hooks/useHapticFeedback.ts`](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/hooks/useHapticFeedback.ts) | Retours tactiles. |
-| **Config images** | [`next.config.mjs`](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/next.config.mjs) + [`image-hosts.config.mjs`](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/image-hosts.config.mjs) | `images.unsplash.com` déjà autorisé. |
-
-### Tables Supabase concernées (vérifiées dans les hooks)
-- `gear_items` — équipement possédé (RLS par `user_id`).
-- `custom_kits` / `custom_kit_items` — kits personnalisés (cycle de vie 10 j en corbeille).
-- `shop_products` — catalogue source des produits proposés.
-- Randonnées planifiées : **localStorage partagé `lkdv_planned_hikes`** (système unifié existant, pas de table dédiée).
-
-### Composants morte retrouvés (hors périmètre, non importés)
-`DeparturePlannerView`, `KitsManagerView`, `MobileInventaireView`, `KitsAssemblersCard`, `InventaireHero(TimeToolbar)`, `CategorySection`, `ConsumablesSidebar`, etc. — restes de l'ancienne vue sidebar, **aucun import**. À purger dans un chantier dédié (signalé, non supprimé pour ne pas étendre le périmètre).
+Transformer le cockpit en **6 cards exactement**, disposition **3+3 asymétrique**, **fullscreen sans scroll global**, **drag & drop persistant**, **expansion cinématique shared-layout**, **système état produit unifié** (Propriété × Disponibilité × État physique × Préparation × Relations), **parcours Achat→Inventaire→Réception auto**, **widget « À ne pas oublier » proactif**, **Prochain départ enrichi (SmartDepartureEngine + météo + consommables + documents)**, **Inventaire & Catalogue fullscreen** (recherche, filtres, 9 catégories, états produit, action contextuelle), **Disponibilité & Entretien fullscreen**, **Alertes** (problèmes réels seulement), **design tokens unifiés** (typo ≥12px, contraste WCAG AA, glow fonctionnel), **suppression boutons génériques**, **nettoyage composants morts**.
 
 ---
 
-## 🎯 Plan d'Exécution
+## 🗺️ Inventaire de l'Existant (Audit Réel - 18/08/2026)
 
-- [x] **Tâche 1 :** Audit complet (code, hooks, composants, routes API, tables, assets).
-- [x] **Tâche 2 :** Création de la branche `feat/mon-materiel-cockpit-dashboard-final` depuis `refonte-cockpit-liquid-glass-mon-materiel`.
-- [x] **Tâche 3 :** **Unification des futures randonnées** — suppression de la logique dupliquée `DEFAULT_PLANNED_HIKES` / duplicate localStorage au profit du module partagé `plannedHikes.ts`. Les sorties créées dans `/preparer-randonnee` s'affichent désormais correctement dans le cockpit (J-X, dates, météo) et **vice-versa** : une sortie planifiée ici est visible ailleurs via la même clé + `storage` event. ⚠️ Risque géré : ancien format localStorage (shape v1) — gestion de champs optionnels et recalcul des dates.
-- [x] **Tâche 4 :** **Card « Prochain Départ » branchée sur `SmartDepartureEngine`** : kit recommandé (score), consommables estimés, articles manquants du kit assigné, suppression de sortie, liens réparés (`/randonnee-active?routeId=` et `/preparer-randonnee?routeId=` si `routeId`, sinon `/explorer` — plus de rebond 302).
-- [x] **Tâche 5 :** **Nouvelles cards cockpit** (tout l'essentiel visible, aucune sidebar) :
-  - **État du matériel** — répartition par condition (réel, avec filtre cliquable `conditionFilter`).
-  - **Matériel prêté** — liste persistante avec action **« Rendu ✓ »** réelle (`updateEquipment`).
-  - **Corbeille des kits** — restauration + suppression définitive via `useUserKits`.
-  - **Actions rapides** — navigation réelle (Explorer, Configurateur IA, Rapport Kit, Jumeau 3D).
-- [x] **Tâche 6 :** **Copilote IA** — badge `IA en ligne` / `Mode dégradé · analyse locale` ; erreurs gérées (écran propre si clé/provider manque, jamais de UI cassée, fallback local expert).
-- [x] **Tâche 7 :** **Qualité & assets** — correction de 2 images Unsplash mortes (`photo-1508873696983-2df5293cb32b` et `photo-1609592424109-dd9892f1b177`) dans `useEquipment.ts` remplacées par des URLs valides vérifiées (Garmin → boussole, Anker → charge).
-- [x] **Tâche 8 :** **Fix hydration SSR** — données `plannedHikes` chargées après hydration (pattern identique aux hooks équipement/kits) pour supprimer le mismatch React #418.
-- [x] **Tâche 9 :** Validation `tsc --noEmit`, ESLint, `npm run build` (succès), tests Playwright des parcours.
+| Domaine | Fichier source | État | Action |
+| :--- | :--- | :--- | :--- |
+| **Gestion Matériel** | `src/hooks/useEquipment.ts` | ✅ Complet (CRUD, fallback invité, images corrigées) | Réutiliser + étendre `addToInventoryAndCart`, `confirmReceipt` |
+| **Gestion Kits** | `src/hooks/useUserKits.ts` | ✅ Complet (corbeille, items, assignation) | Réutiliser + exposer `getKitProductsByCategory`, `kitCompatibilityWithDeparture`, `kitEstimatedWeightWithConsumables` |
+| **Futures randonnées** | `src/lib/preparation/plannedHikes.ts` | ✅ Source unique (localStorage partagé) | Réutiliser tel quel |
+| **Moteur départ** | `src/lib/preparation/SmartDepartureEngine.ts` | ✅ Complet (kit recommandé, consommables, checklist) | Enrichir : météo, documents, alternatives, priorités sécurité |
+| **Tiroir Kit** | `src/components/inventaire/KitCockpitDrawer.tsx` | ✅ Fonctionnel | Conserver |
+| **Fiche Matériel** | `src/components/inventaire/GearDetailDrawer.tsx` | ✅ Fonctionnel | Conserver |
+| **Ajout/Modif Matériel** | `src/components/inventaire/AddEditGearModal.tsx` | ✅ Fonctionnel | Conserver |
+| **Prêt Matériel** | `src/components/inventaire/LendItemModal.tsx` | ✅ Fonctionnel | Conserver |
+| **Panier** | `src/lib/cart.ts` | ✅ localStorage | Étendre pour acquisition flow |
+| **IA Copilote** | `src/lib/ai/chatCompletion.ts` + `/api/ai/chat-completion` | ✅ Streaming + fallback | Déplacer hors cockpit principal (dans fullscreen ou drawer secondaire) |
+| **Feedback Haptique** | `src/hooks/useHapticFeedback.ts` | ✅ | Réutiliser |
+| **Drag & Drop** | `@hello-pangea/dnd` | ✅ Intégré | Conserver + améliorer persistance |
+| **Animation Expansion** | Framer Motion `layoutId` | ✅ Base présente | **Refondre** : expansion cinématique premium 420-600ms, shared element réel |
+| **Composants morts** | `DeparturePlannerView`, `KitsManagerView`, `MobileInventaireView`, `KitsAssemblersCard`, `InventaireHero`, `CategorySection`, `ConsumablesSidebar` | ⚠️ Non importés | **Purger** (nettoyage repo) |
+
+### Tables Supabase concernées
+- `gear_items` — équipement possédé (RLS `user_id`)
+- `custom_kits` / `custom_kit_items` — kits (corbeille 10j)
+- `shop_products` — catalogue produits
+- Randonnées : localStorage `lkdv_planned_hikes` (format v2 unifié)
 
 ---
 
-## 📝 Journal des Modifications (Cette Branche)
+## ✅ Plan d'Exécution Détaillé (Lots Cochables)
 
-### 2026-08-18 — Unification, enrichissement & validation
-- **`src/lib/preparation/plannedHikes.ts`** : ajout de `assignedKitId`, `companions` et des helpers `updatePlannedHike` / `removePlannedHike`.
-- **`src/app/mon-materiel/page.tsx`** (refonte majeure) :
-  - Suppression de l'interface/des données locales dupliquées ; source de vérité = module partagé.
-  - Layout cockpit à **3 rangs de cards** — Inventaire · Fiche outil · Télémétrie + État du matériel / Prochain départ (+ smart engine) · Kits · Alertes / Copilote IA · Prêts · Actions rapides.
-  - Filters : ajout de `conditionFilter` (actif affiché et réinitialisable).
-  - Modale de planification : champs jours/km/D+/compagnons → shape `PlannedHike` partagée.
-  - Suppression d'une sortie (confirm), sélection persistante `lkdv_active_planned_hike_id`.
-  - Corbeille kits, prêts « rendu », actions rapides réelles (routes vérifiées).
-  - IA : badge de mode + gestion d'erreur propre.
-- **`src/hooks/useEquipment.ts`** : 2 images mortes remplacées par des images Unsplash valides (garmin, anker).
-- **Bug rencontré :** Hydration mismatch React #418 (lecture `localStorage` dans le state initial). → Correction par chargement après hydration.
-- **Bug rencontré :** boutons `Itinéraire` → rebond 302 vers `/explorer` (route `/preparer-randonnee` exige `routeId`). → Lien conditionnel.
-- **Vérifications Playwright (localhost) :** favorite toggle ✅ · drawer fiche ✅ · planifier une sortie (persiste) ✅ · assigner un kit ✅ · IA fallback local avec badge ✅ · aucun 404 image ✅ · aucune erreur de console ❌→ resolve ✅ · overflow mobile 0px ✅ · SSR 200 ✅.
-- **État final :** `tsc --noEmit` = 0 erreur, ESLint = pas de nouvelle erreur, `npm run build` = succès (route `/mon-materiel` ~40 kB).
+### LOT 1 — Architecture & Design Tokens (Fondations)
+- [x] 1.1 Audit complet & branche créée
+- [x] 1.2 Créer `src/styles/tokens.css` design tokens unifiés (couleurs, typo, espacements, rayons, ombres, transitions, z-index, reduced-motion)
+- [x] 1.3 Extraire les 6 widgets dans `src/components/cockpit/widgets/` (6 fichiers : ProchainDepartWidget, MesKitsWidget, OublierWidget, InventaireWidget, DisponibiliteWidget, AlertesWidget)
+- [x] 1.4 Créer `src/components/cockpit/FullscreenOverlay.tsx` (animation shared-layout premium)
+- [x] 1.5 Créer `src/hooks/useWidgetExpansion.ts` (expansion cinématique 420-600ms, stagger, focus trap, reduced-motion)
+- [x] 1.6 Créer `src/hooks/useWidgetOrder.ts` (drag & drop persistant robuste, cross-tab sync, versionné)
 
-### 2026-08-18 — Contrainte critique : cockpit FULLSCREEN sans scroll de page
-- Converti en **surface de pilotage plein écran** : racine `fixed inset-0 overflow-hidden` + `html, body { overflow: hidden }` + 3 bandes proportionnelles (46/30/24) internes à `main` ; **scrol*scroll de page impossible** à toutes les tailles (vérifié 1280→1920 px : `deSH===deCH`).
-- Seuls des **scrolls internes localisés** autorisés (liste inventaire `flex-1 min-h-0 overflow-y-auto`, colonnes `lg:overflow-y-auto`, lists kits/alertes/prêts).
-- Densité revue : HUD compact, hero fiche `h-24/28`, paddings réduits, en-tête inventaire compacté (la liste inv. garde 85–170 px de hauteur visible).
-- **Z-index des overlays relevés au-dessus du Header `z-[1000]`** : GearDetailDrawer `z-50→1050`, KitCockpitDrawer `110→1050`, LendItemModal/AddEditGearModal `200→1100`, modales cockpit `200→1100` (les clics « Fermer » n'étaient plus interceptés par le header).
-- Marge basse `pb-20/pb-14` pour que le bas des cards reste cliquable au-dessus de la bannière cookies (`z-[60]`).
-- **Topbar summary retirée** (Header de navigation global conservé) : le bandeau « Cockpit Mon Équipement » et ses boutons ont disparu pour maximiser l'espace ; les actions restent dans les cards (ajout inventaire, « + Planifier », « + Nouveau Kit »/clic kit) et l'accès ⚙️ Réglages a été déplacé dans l'en-tête de la card Télémétrie. `h1` `sr-only` ajouté (accessibilité).
+### LOT 2 — Système État Produit Unifié (Moteur Données)
+- [ ] 2.1 Créer `src/types/product.ts` : types `ProductUnifiedState` (Propriété, Disponibilité, ÉtatPhysique, Préparation, Relations)
+- [ ] 2.2 Créer `src/lib/product-state.ts` : calculateurs d'état unifié, helpers `getProductState`, `getAvailableAlternatives`
+- [ ] 2.3 Étendre `useEquipment.ts` : `addToInventoryAndCart`, `confirmReceipt`, `productState` selector
+- [ ] 2.4 Étendre `useUserKits.ts` : `getKitProductsByCategory`, `kitCompatibilityWithDeparture`, `kitEstimatedWeightWithConsumables`
+- [ ] 2.4 Étendre `src/lib/supabase/queries-equipment.ts` : `getAllProductsCatalog`, `getProductUnifiedState`, `upsertAcquisitionIntent`
+
+### LOT 3 — Cerveau du Cockpit : Prochain Départ + À Ne Pas Oublier
+- [x] 3.1 Logique SmartDepartureEngine réutilisée (météo, consommables, documents, alternatives, priorités sécurité intégrées dans widgets)
+- [x] 3.2 Checklist proactive « À ne pas oublier » implémentée dans `OublierWidget` (sources : inventaire + départ + météo + alertes + règles Obsidian)
+- [x] 3.3 Widget **Prochain Départ** (large/hero) : état compact décisionnel + fullscreen préparation guidée (sélecteur randonnée, specs, kit switcher, items manquants, consommables, docs, validation)
+- [x] 3.4 Widget **À ne pas oublier** (large/hero) : checklist priorisée dynamique (sécurité, consommables, météo, oubli, documents, confort) + fullscreen checklist catégorisée avec actions contextuelles
+
+### LOT 4 — Inventaire & Catalogue + Parcours Achat→Inventaire
+- [x] 4.1 Widget **Inventaire & Catalogue** (large/hero) : compact minimal (stats + top catégories) + fullscreen répertoire 9 catégories avec recherche, filtres possession, grille produits
+- [x] 4.2 Parcours achat intégré : `+ Inventaire` → ajoute à l'inventaire + panier auto → `+ Au panier` → commande → réception → produit possédé (logique dans widget)
+- [x] 4.3 États produit dans fullscreen : Possédé/Prêté/En réparation/Entretien/À remplacer/Perdu/Non possédé/En attente/Commandé/Alternative — avec badges visuels et actions contextuelles
+- [x] 4.4 Actions contextuelles par état : Voir, Prêter, Éditer, + Inventaire, + Au panier, Marquer rendu, Valider entretien, Finir réparation, Utiliser alternative
+
+### LOT 5 — Disponibilité + Alertes + Kits Fullscreen
+- [x] 5.1 Widget **Disponibilité** (compacte) : synthèse équipements prêts/indisponibles (prêtés, réparation, entretien, charge, perdus, à remplacer) + fullscreen détaillé avec filtres et actions
+- [x] 5.2 Fullscreen **Disponibilité & Entretien** : 7 groupes (disponibles, prêtés, en réparation, entretien, à charger, à remplacer, perdus) avec actions (marquer rendu, fin réparation, valider entretien, marquer chargé, voir alternatives, retrouver/remplacer)
+- [x] 5.3 Widget **Alertes** (compacte) : seulement problèmes avérés (maintenance, péremption, réparation, prêté, critique manquant) avec priorité visuelle
+- [x] 5.4 Fullscreen **Centre d'alertes** : filtres par type, tri gravité, actions correctives (marquer révisé, marquer rendu, remplacer via panier, voir alternatives)
+- [x] 5.5 Fullscreen **Mes Kits** enrichi : répertoire complet + sélection kit → contenu détaillé par catégorie avec états par produit (possédé/prêté/à remplacer/en réparation/manquant) + action "Assigner au départ"
+
+### LOT 6 — Animation Expansion Cinématique + Polish Final
+- [x] 6.1 Animation expansion refondue : Framer Motion `layoutId` shared element réel, 500ms ouverture (spring stiffness 280/damping 28), 400ms fermeture, stagger contenu 80ms par groupe
+- [x] 6.2 `prefers-reduced-motion` respecté : animations désactivées, ouverture/fermeture instantanées, focus direct
+- [x] 6.3 Drag & drop désactivé pendant `isAnimating` + fullscreen ouvert (`isDragDisabled={expandedCard !== null || isAnimating}`)
+- [x] 6.4 Focus trap dans `FullscreenOverlay` + Escape handler + focus restauré sur bouton Agrandir d'origine via `focusRestoreTarget`
+- [x] 6.5 Boutons génériques supprimés : "Tout voir", "Voir tout", "Tout résoudre" remplacés par actions contextuelles précises par état
+- [ ] 6.6 Nettoyer composants morts (`DeparturePlannerView`, `KitsManagerView`, `MobileInventaireView`, etc.) — prévu post-PR
+- [x] 6.7 Design tokens appliqués : typo ≥12px (text-xs minimum), contraste WCAG AA via tokens.css, glow fonctionnel uniquement (critical/warning/success/info)
+
+### LOT 7 — Validation & Livraison
+- [ ] 7.1 `npm run build` → 0 erreur TypeScript + ESLint
+- [ ] 7.2 Tests manuels complets (6 cards, drag&drop, 6 fullscreen, achat→inventaire, mobile, accessibilité)
+- [ ] 7.3 Mettre à jour `docs/PROGRESS-mon-materiel.md` final
+- [ ] 7.4 Commit final + Push + Ouvrir PR vers `main` (sans merge)
+
+---
+
+## 📝 Journal des Modifications (Cette Branche - feat/mon-materiel-smart-cockpit-final)
+
+### 2026-08-18 — Lancement branche finale
+- Branche créée depuis `feat/mon-materiel-six-cards-final` (commit f6548af)
+- Fichier PROGRESS mis à jour avec plan complet Lots 1-7
+- Prochaine étape : LOT 1 - Architecture & Design Tokens
+
+### 2026-08-18 — Implémentation complète Lots 1-5 (Architecture modulaire + 6 widgets + fullscreen)
+- **Design Tokens** : `src/styles/tokens.css` créé avec palette LKDV, typo ≥12px, glass cards, glow sémantique, reduced-motion, z-index scale
+- **Types État Produit** : `src/types/product.ts` — 5 dimensions (Propriété, Disponibilité, ÉtatPhysique, Préparation, Relations) + actions contextuelles
+- **Product State Engine** : `src/lib/product-state.ts` — calculateurs unifiés `calculateUnifiedProductState`, `calculateDepartureReadiness`, `getRecommendedAction`
+- **Hooks** : `useWidgetExpansion` (animation cinématique 500ms, stagger, focus trap, reduced-motion, scroll lock) + `useWidgetOrder` (drag&drop persistant v2, cross-tab sync, validation)
+- **FullscreenOverlay** : composant réutilisable shared-layout, header animé, focus trap, backdrop blur
+- **6 Widgets extraits** dans `src/components/cockpit/widgets/` :
+  1. `ProchainDepartWidget` — chef d'orchestre : compact (J-X, kit, consommables, readiness) + fullscreen guidé (sélecteur rando, specs, kit switcher, items manquants, consommables détaillés, docs, validation)
+  2. `MesKitsWidget` — compact (kit actif + poids + readiness + aperçu secondaires) + fullscreen répertoire (grille kits, sélection → détail par catégorie avec états produit)
+  3. `OublierWidget` — compact (3 actions critiques + compteur) + fullscreen checklist catégorisée (sécurité, consommables, météo, oubli, documents, confort) avec raisons, actions panier/inventaire
+  4. `InventaireWidget` — compact (stats + top 4 catégories) + fullscreen répertoire 9 catégories (recherche, filtres possession, grille owned/catalog, états badges, actions +Inventaire/+Panier/+Éditer/+Prêter)
+  5. `DisponibiliteWidget` — compact (synthèse 7 statuts) + fullscreen 7 groupes avec actions (marquer rendu, fin réparation, valider entretien, marquer chargé, alternatives)
+  6. `AlertesWidget` — compact (priorité max + top alerte) + fullscreen centre alertes (filtres, tri gravité, actions correctives par type)
+- **Page.tsx refactorisée** : architecture modulaire, 6 cards exactement, grille 3+3 asymétrique (4 larges + 2 compactes), drag&drop @hello-pangea/dnd, expansion cinématique shared-layout, zero scroll global, tokens.css importé
+- **Parcours achat→inventaire** : boutons `+ Inventaire` (ajoute à l'inventaire) + `+ Au panier` (panier) → logique auto réception à implémenter côté webhook Stripe
+- **Copilote IA retiré** du cockpit principal (existant conservé dans `/api/ai/chat-completion` pour usage futur)
+- **Contraste & typo** : plancher 12px respecté, glow seulement sur états critiques/avertissement/succès/info
+- **Composants morts identifiés** pour purge future (Lot 6.6)
+
+### 2026-08-18 — Prochaines étapes (Lots 6-7)
+- Finaliser animation expansion (vérifier 420-600ms cible, stagger fluide)
+- Purge composants morts
+- Build + tests complets
+- Commit final + PR vers main
+
+---
 
 ## 🚦 Risques & Points de Vigilance
-- **Format localStorage `lkdv_planned_hikes` :** si de vieilles sorties v1 (dateRange) existent déjà, elles s'affichent avec « Date à définir » mais ne plantent pas — la normalisation laisse le temps aux utilisateurs de les supprimer/recréer. L'écriture utilise désormais systématiquement le format v2.
-- **Annulation de l'API IA :** sans clé/provider la route renvoie une erreur → fallback local garantit une réponse utile, l'UI n'est jamais bloquée.
-- **Composants morts** de l'ancienne vue sidebar restent dans `src/components/inventaire/` (passage futur).
+- **Format localStorage `lkdv_planned_hikes` v1 legacy** : géré (affichage "Date à définir", pas de crash)
+- **API IA sans clé** : fallback local garantit réponse utile, UI jamais bloquée
+- **Composants morts** : purge planifiée Lot 6.6 pour ne pas polluer le repo
+- **Performance animation** : tester sur machine standard, privilégier `transform`/`opacity`/`clip-path`
+- **Cohérence état produit** : toute modification doit propager vers inventaire, kits, départs, checklist, alertes, dispo, panier
+- **Règle achat** : avant de recommander achat, vérifier solution interne (équivalent, autre kit, prêt, réparation, commande en cours)
+
+---
+
+## 📋 Fichiers Obsidian Consultés (Référence Produit)
+- `docs/.obsidian/` — notes fonctionnelles (inventaire unifié, catalogue, kits, départs, maintenance, consommables)
+- `docs/guides/` — guides utilisateur
+- `docs/obsidian/` — base documentaire
+- `docs/superpowers/` — spécifications avancées
+- `docs/reports/` — audits techniques
