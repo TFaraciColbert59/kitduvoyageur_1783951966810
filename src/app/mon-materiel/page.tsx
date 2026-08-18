@@ -628,12 +628,14 @@ export default function MonMaterielPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => {
-                                addToEquipment({
-                                  name: mi.item_name,
-                                  category: mi.category,
-                                  weight_g: mi.weight_g,
-                                  condition: 'bon',
-                                });
+                                addToEquipment(
+                                  {
+                                    name: mi.item_name,
+                                    category: mi.category,
+                                    weight_g: mi.weight_g,
+                                  },
+                                  { condition: 'bon' }
+                                );
                                 showToast(`✓ "${mi.item_name}" ajouté à votre inventaire`);
                               }}
                               className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-bold transition-colors"
@@ -1286,14 +1288,16 @@ export default function MonMaterielPage() {
                       <div className="flex gap-2 pt-3 mt-3 border-t border-white/5">
                         <button
                           onClick={() => {
-                            addToEquipment({
-                              name: product.name,
-                              brand: product.brand,
-                              category: product.category,
-                              weight_g: product.weight_g,
-                              purchase_price: product.price_eur,
-                              condition: 'neuf',
-                            });
+                            addToEquipment(
+                              {
+                                name: product.name,
+                                brand: product.brand,
+                                category: product.category,
+                                weight_g: product.weight_g,
+                                price_eur: product.price_eur,
+                              },
+                              { condition: 'neuf' }
+                            );
                             showToast(`✓ "${product.name}" ajouté à votre inventaire`);
                           }}
                           className="flex-1 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-bold transition-colors"
