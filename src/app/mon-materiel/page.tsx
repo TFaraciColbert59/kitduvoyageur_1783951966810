@@ -38,23 +38,47 @@ import {
 const PLANNED_HIKES_STORAGE_KEY = 'lkdv_planned_hikes';
 const WIDGET_ORDER_KEY = 'lkdv_cockpit_widget_order';
 const FORGET_CHECK_KEY = 'lkdv_forget_checked';
-const DEFAULT_WIDGET_ORDER = ['weight', 'departure', 'condition', 'forget', 'alerts', 'kits'];
+const FORGET_DISMISS_KEY = 'lkdv_forget_dismissed';
+const FORGET_REMIND_KEY = 'lkdv_forget_remind';
+const DEPART_CHECK_KEY = 'lkdv_depart_check';
+const DEFAULT_WIDGET_ORDER = ['sac', 'departure', 'gear', 'forget', 'alerts', 'kits'];
 const WIDGET_SPAN: Record<string, string> = {
-  weight: 'col-span-1 lg:col-span-1',
+  sac: 'col-span-1 lg:col-span-1',
   departure: 'col-span-2 lg:col-span-2',
-  condition: 'col-span-1 lg:col-span-1',
+  gear: 'col-span-1 lg:col-span-1',
   forget: 'col-span-2 lg:col-span-2',
   alerts: 'col-span-1 lg:col-span-1',
   kits: 'col-span-1 lg:col-span-1',
 };
 const WIDGET_LABEL: Record<string, string> = {
-  weight: 'Poids du pack',
+  sac: 'Mon sac',
   departure: 'Prochain départ',
-  condition: 'État du matériel',
+  gear: 'Mes équipements',
   forget: 'À ne pas oublier',
-  alerts: 'Alertes & entretien',
-  kits: 'Kits & sacs',
+  alerts: 'Alertes & actions',
+  kits: 'Mes kits',
 };
+
+// ── Cartographie des 9 catégories produit (spec « Mes équipements ») ──
+const GEAR_CATEGORY_META: { key: string; label: string; kws: string[] }[] = [
+  { key: 'abri', label: 'Abri & couchage', kws: ['tente', 'couchage', 'duvet', 'matelas', 'bivouac', 'abri', 'sac de couchage', 'hamac'] },
+  { key: 'cuisine', label: 'Cuisine & eau', kws: ['cuisine', 'eau', 'réchaud', 'rechaud', 'popote', 'hydratation', 'filtre', 'gourde', 'gamelle', 'gaz'] },
+  { key: 'vetement', label: 'Vêtements & portage', kws: ['vêtement', 'vetement', 'textile', 'veste', 'chaussure', 'pantalon', 'polaire', 'sac', 'portage', 'poncho'] },
+  { key: 'hygiene', label: 'Hygiène & santé', kws: ['hygiène', 'hygiene', 'santé', 'sante', 'pharmacie', 'trousse', 'savon', 'crème', 'solaires', 'repulsif', 'répulsif'] },
+  { key: 'orientation', label: 'Orientation & sécurité', kws: ['navigation', 'gps', 'boussole', 'carte', 'sécurité', 'securite', 'secours', 'sifflet', 'allume-fe', 'briquet', 'couteau'] },
+  { key: 'energie', label: 'Énergie & électronique', kws: ['lampe', 'frontale', 'pile', 'batterie', 'powerbank', 'chargeur', 'éclairage', 'eclairage', 'solaire'] },
+  { key: 'organisation', label: 'Organisation du sac', kws: ['organisation', 'pochette', 'étanche', 'etanche', 'compression', 'déchets', 'dechets', 'sachet'] },
+  { key: 'protection', label: 'Protection météo', kws: ['imperméable', 'impermeable', 'waterproof', 'pluie', 'couverture de survie', 'surveste', 'gore-tex'] },
+  { key: 'reparation', label: 'Réparation & urgence', kws: ['réparation', 'reparation', 'sangle', 'lacet', 'duct tape', 'adhésif', 'aiguille', 'rustine', 'scotch'] },
+];
+const GEAR_CATEGORY_LABEL: Record<string, string> = Object.fromEntries(GEAR_CATEGORY_META.map((c) => [c.key, c.label]));
+function mapGearCategory(raw?: string, name?: string): string {
+  const hay = `${raw || ''} ${name || ''}`.toLowerCase();
+  for (const c of GEAR_CATEGORY_META) {
+    if (c.kws.some((k) => hay.includes(k))) return c.key;
+  }
+  return 'organisation';
+}
 
 function formatWeight(g: number): string {
   if (g >= 1000) {
@@ -66,7 +90,6 @@ function formatWeight(g: number): string {
 const CATEGORIES = ['all', 'couchage', 'portage', 'cuisine', 'vêtement', 'navigation'];
 const DEFAULT_TARGET_KG = 8;
 
-const CONDITION_ORDER = ['neuf', 'excellent', 'bon', 'moyen', 'usé', 'à_réparer', 'à_remplacer'];
 const CONDITION_META: Record<string, { label: string; color: string; bg: string }> = {
   neuf: { label: 'Neuf', color: '#2D5A3D', bg: 'rgba(45,90,61,0.08)' },
   excellent: { label: 'Excellent', color: '#3D7A52', bg: 'rgba(61,122,82,0.08)' },
@@ -177,41 +200,6 @@ function GlassCard({
         }}
       />
       <div className="relative h-full flex flex-col">{children}</div>
-    </div>
-  );
-}
-
-// Radial Weight Gauge
-function WeightGauge({ currentG, targetKg }: { currentG: number; targetKg: number }) {
-  const targetG = targetKg * 1000;
-  const ratio = targetG > 0 ? currentG / targetG : 0;
-  const pct = Math.min(ratio, 1);
-  const r = 32;
-  const c = 2 * Math.PI * r;
-  const dash = c * pct;
-  const color = ratio <= 0.85 ? '#2D5A3D' : ratio <= 1 ? '#B8932A' : '#C0532E';
-  return (
-    <div className="relative w-[84px] h-[84px] shrink-0">
-      <svg viewBox="0 0 84 84" className="w-full h-full -rotate-90">
-        <circle cx="42" cy="42" r={r} fill="none" stroke="rgba(11,31,23,0.08)" strokeWidth="6" />
-        <circle
-          cx="42"
-          cy="42"
-          r={r}
-          fill="none"
-          stroke={color}
-          strokeWidth="6"
-          strokeLinecap="round"
-          strokeDasharray={`${dash} ${c}`}
-          style={{ transition: 'stroke-dasharray 0.6s ease, stroke 0.3s ease' }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-xs font-bold font-mono" style={{ color }}>
-          {(currentG / 1000).toFixed(1)}
-        </span>
-        <span className="text-xs text-[#1C2620]/60 font-mono">/ {targetKg} kg</span>
-      </div>
     </div>
   );
 }
@@ -381,7 +369,10 @@ export default function MonMaterielCockpitPage() {
 const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
   const expandedCloseRef = useRef<HTMLButtonElement | null>(null);
   const expandOriginRef = useRef<HTMLButtonElement | null>(null);
-  const [forgetChecked, setForgetChecked] = useState<Set<string>>(new Set());
+const [forgetChecked, setForgetChecked] = useState<Set<string>>(new Set());
+  const [forgetDismissed, setForgetDismissed] = useState<Set<string>>(new Set());
+  const [forgetReminded, setForgetReminded] = useState<Set<string>>(new Set());
+  const [departCheck, setDepartCheck] = useState<Set<string>>(new Set());
   const [alertFilter, setAlertFilter] = useState('');
 
   useEffect(() => {
@@ -422,7 +413,7 @@ const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
     }
   }, []);
 
-  const toggleForgetChecked = (id: string) => {
+const toggleForgetChecked = (id: string) => {
     setForgetChecked((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -436,6 +427,41 @@ const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
     });
     triggerHaptic('light');
   };
+
+  // États « Pas nécessaire », « Me rappeler demain » de la checklist + checklist départ
+  useEffect(() => {
+    const load = (key: string, set: (s: Set<string>) => void) => {
+      try {
+        const raw = window.localStorage.getItem(key);
+        if (raw) set(new Set(JSON.parse(raw) as string[]));
+      } catch {
+        /* ignore */
+      }
+    };
+    load(FORGET_DISMISS_KEY, setForgetDismissed);
+    load(FORGET_REMIND_KEY, setForgetReminded);
+    load(DEPART_CHECK_KEY, setDepartCheck);
+  }, []);
+
+  const persistSetUpdate =
+    (key: string, setter: React.Dispatch<React.SetStateAction<Set<string>>>) =>
+    (id: string) => {
+      triggerHaptic('light');
+      setter((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        try {
+          window.localStorage.setItem(key, JSON.stringify([...next]));
+        } catch {
+          /* ignore */
+        }
+        return next;
+      });
+    };
+  const toggleForgetDismissed = persistSetUpdate(FORGET_DISMISS_KEY, setForgetDismissed);
+  const toggleForgetReminded = persistSetUpdate(FORGET_REMIND_KEY, setForgetReminded);
+  const toggleDepartCheck = persistSetUpdate(DEPART_CHECK_KEY, setDepartCheck);
 
 // Vue fullscreen d'un widget — Escape ferme, focus piégé dans l'overlay, focus sur le bouton de fermeture
   useEffect(() => {
@@ -607,6 +633,98 @@ const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
 
   const recommendedKit = departurePlan?.selectedKit ?? null;
 
+  // Kit de référence (recommandé pour le prochain départ, sinon actif, sinon premier)
+  const contextKit = useMemo(() => recommendedKit || activeKit || kits[0] || null, [recommendedKit, activeKit, kits]);
+
+  // Préparation par kit (nom → état réel de complétude)
+  const kitReadinessOf = useCallback(
+    (kit: CustomKit) => {
+      const items = kit.items || [];
+      let owned = 0;
+      const missing: CustomKitItem[] = [];
+      items.forEach((ki) => {
+        const isO = equipment.some((e) => (ki.gear_item_id && e.id === ki.gear_item_id) || e.name.toLowerCase() === ki.item_name.toLowerCase());
+        if (isO) owned++;
+        else missing.push(ki);
+      });
+      return {
+        readinessPct: items.length ? Math.round((owned / items.length) * 100) : 100,
+        ownedCount: owned,
+        totalCount: items.length,
+        missingItems: missing,
+      };
+    },
+    [equipment]
+  );
+
+  // Poids de départ estimé = kit de référence + consommables du prochain départ (spec « Mon sac »)
+  const consumablesWeightG = useMemo(() => {
+    if (!departurePlan) return 0;
+    const c = departurePlan.consumables;
+    return (c.waterLiters || 0) * 1000 + (c.fuelGrams || 0) + (c.foodMealsCount || 0) * 600 + (c.snacksCount || 0) * 100;
+  }, [departurePlan]);
+  const sacKitWeightG = contextKit?.total_weight_g || 0;
+  const sacEstimatedG = sacKitWeightG + consumablesWeightG;
+  const sacInfo = contextKit ? kitReadinessOf(contextKit) : null;
+  const sacMarginG = targetKg * 1000 - sacEstimatedG;
+  const sacStatus: 'pret' | 'incomplet' | 'troplourd' | 'none' = !contextKit
+    ? 'none'
+    : sacMarginG < 0
+    ? 'troplourd'
+    : sacInfo && sacInfo.missingItems.length > 0
+    ? 'incomplet'
+    : 'pret';
+
+  // Essentiels « Mes équipements » : items du kit de référence avec leur état réel
+  const gearEssentials = useMemo(() => {
+    const kit = recommendedKit || activeKit || kits[0] || null;
+    if (!kit || !kit.items || kit.items.length === 0) return null;
+    return kit.items.map((ki) => {
+      const owned = equipment.find(
+        (e) => (ki.gear_item_id && e.id === ki.gear_item_id) || e.name.toLowerCase() === ki.item_name.toLowerCase()
+      );
+      let state: 'owned' | 'preparer' | 'prete' | 'entretien' | 'manquant' = 'manquant';
+      if (owned) {
+        if (owned.loan_status === 'prêté') state = 'prete';
+        else if (
+          owned.condition === 'à_réparer' ||
+          owned.condition === 'à_remplacer' ||
+          (owned.next_maintenance_date && new Date(owned.next_maintenance_date).getTime() < Date.now())
+        )
+          state = 'entretien';
+        else state = 'owned';
+      }
+      return { key: `${ki.id}-${ki.item_name}`, cat: mapGearCategory(ki.category, ki.item_name), label: ki.item_name, state, itemId: owned?.id ?? null, weight: ki.weight_g || 0 };
+    });
+  }, [recommendedKit, activeKit, kits, equipment]);
+  const gearEssentialsByCat = useMemo(() => {
+    if (!gearEssentials) return null;
+    const map = new Map<string, { total: number; owned: number }>();
+    gearEssentials.forEach((g) => {
+      const cur = map.get(g.cat) || { total: 0, owned: 0 };
+      cur.total++;
+      if (g.state === 'owned') cur.owned++;
+      map.set(g.cat, cur);
+    });
+    return [...map.entries()]
+      .map(([cat, v]) => ({ cat, label: GEAR_CATEGORY_LABEL[cat] || cat, ...v }))
+      .sort((a, b) => b.total - a.total);
+  }, [gearEssentials]);
+  const gearCoveragePct =
+    gearEssentials && gearEssentials.length > 0
+      ? Math.round((gearEssentials.filter((g) => g.state === 'owned').length / gearEssentials.length) * 100)
+      : 0;
+  const gearInventoryCats = useMemo(() => {
+    const map = new Map<string, number>();
+    equipment.forEach((it) => {
+      const c = mapGearCategory(it.category, it.name);
+      map.set(c, (map.get(c) || 0) + 1);
+    });
+    return [...map.entries()]
+      .map(([cat, n]) => ({ cat, label: GEAR_CATEGORY_LABEL[cat] || cat, count: n }))
+      .sort((a, b) => b.count - a.count);
+  }, [equipment]);
+
   // Hike readiness analysis (kit assigné)
   const hikeReadiness = useMemo(() => {
     if (!activeKit) return { readinessPct: 100, ownedCount: 0, totalCount: 0, missingItems: [] };
@@ -634,13 +752,9 @@ const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
     };
   }, [activeKit, equipment]);
 
-  // Totals
+// Totals
   const totalWeightG = useMemo(
     () => equipment.reduce((sum, it) => sum + (it.weight_g || 0) * (it.quantity || 1), 0),
-    [equipment]
-  );
-  const totalValue = useMemo(
-    () => equipment.reduce((sum, it) => sum + (Number(it.purchase_price) || 0) * (it.quantity || 1), 0),
     [equipment]
   );
   const favoritesCount = useMemo(() => equipment.filter((e) => e.is_favorite).length, [equipment]);
@@ -657,15 +771,6 @@ const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
       .map(([label, grams]) => ({ label, grams, pct: Math.round((grams / total) * 100) }))
       .sort((a, b) => b.grams - a.grams)
       .slice(0, 4);
-  }, [equipment]);
-
-  // État du matériel (répartition par condition)
-  const conditionStats = useMemo(() => {
-    return CONDITION_ORDER.map((key) => {
-      const items = equipment.filter((it) => (it.condition || 'bon') === key);
-      const weight = items.reduce((sum, it) => sum + (it.weight_g || 0) * (it.quantity || 1), 0);
-      return { key, count: items.length, weight };
-    }).filter((s) => s.count > 0);
   }, [equipment]);
 
   // Smart alerts & loans
@@ -759,7 +864,7 @@ const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
       out.push({ id: `f-doc-${i}`, label: d.label, reason: d.reason, level: 'conseille', category: 'Documents', source: 'règle' });
     });
 
-    if (activeHike) {
+if (activeHike) {
       if (activeHike.isOvernight) {
         out.push({ id: 'f-ctx-bivouac', label: 'Équipement bivouac (pauses, fil, lampe)', reason: `Nuit sur place (${(activeHike.nightsCount || 1) + 1} jours)`, level: 'verifier', category: 'Contexte départ', source: 'règle' });
       }
@@ -771,12 +876,29 @@ const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
       }
     }
 
-    return out;
+    // Priorité stricte (spec) : sécurité/indispensable d'abord, puis consommables, puis confort/documents
+    const PRIORITY: Record<string, number> = {
+      Kit: 1,
+      'Prêts': 1,
+      'Péremptions': 2,
+      'Entretien': 2,
+      'Contexte départ': 2,
+      'Consommables': 3,
+      'Documents': 4,
+    };
+    const LEVEL_W: Record<string, number> = { critique: 0, verifier: 1, conseille: 2, pret: 3, facultatif: 4 };
+    return out
+      .map((it) => ({ ...it, priority: PRIORITY[it.category] ?? 3 }))
+      .sort((a, b) => a.priority - b.priority || LEVEL_W[a.level] - LEVEL_W[b.level]);
   }, [alerts, activeKit, hikeReadiness, equipment, activeHike]);
 
   const forgetCriticalCount = useMemo(
     () => forgetItems.filter((i) => i.level === 'critique' || i.level === 'verifier').length,
     [forgetItems]
+  );
+  const forgetActionableCount = useMemo(
+    () => forgetItems.filter((i) => i.level !== 'pret' && i.level !== 'facultatif' && !forgetDismissed.has(i.id)).length,
+    [forgetItems, forgetDismissed]
   );
 
   const handleMarkReturned = async (item: UserEquipmentItem) => {
@@ -1213,64 +1335,62 @@ const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
 
   const renderWidget = (id: string): React.ReactNode => {
     switch (id) {
-      case 'weight':
+case 'sac': {
+        const barColor = sacMarginG >= 0 ? '#2D5A3D' : '#C0532E';
+        const pct = targetKg > 0 ? Math.min(100, Math.round((sacEstimatedG / (targetKg * 1000)) * 100)) : 0;
         return widgetShell(
-          'weight',
+          'sac',
           <IconScale />,
-          'Poids du pack',
-          `${equipment.length} articles · ${Math.round(totalValue)} €`,
-          'reglages',
-          (() => {
-            const targetG = targetKg * 1000;
-            const ratio = targetG > 0 ? totalWeightG / targetG : 0;
-            const pct = Math.min(100, Math.round(ratio * 100));
-            const color = ratio <= 0.85 ? '#2D5A3D' : ratio <= 1 ? '#B8932A' : '#C0532E';
-            return (
-              <>
-                <div className="flex items-end justify-between gap-3 shrink-0">
-                  <div className="min-w-0">
-                    <div className="text-4xl font-extrabold font-mono tracking-tight leading-none text-[#1C2620]">
-                      {formatWeight(totalWeightG)}
-                    </div>
-                    <p className="text-xs text-[#1C2620]/70 mt-2">
-                      Cible <span className="font-bold" style={{ color }}>{targetKg} kg</span> · {pct}% chargé
-                    </p>
-                  </div>
-                  <WeightGauge currentG={totalWeightG} targetKg={targetKg} />
+          'Mon sac',
+          contextKit ? `${contextKit.name} · objectif ${targetKg} kg` : 'Sélectionnez un kit',
+          'actions',
+          <>
+            <div className="flex items-end justify-between gap-3 shrink-0">
+              <div className="min-w-0">
+                <div className="text-4xl font-extrabold font-mono tracking-tight leading-none text-[#1C2620]">
+                  {formatWeight(sacEstimatedG)}
                 </div>
-                <div className="mt-3 shrink-0">
-                  <div className="h-2 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: color }} />
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5 mt-3 shrink-0 flex-wrap">
-                  <span className="text-xs text-[#1C2620]/70">Objectif :</span>
-                  {[6, 8, 10, 12].map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => { setTargetKg(t); triggerHaptic('light'); showToast(`Objectif ajusté à ${t} kg`, 'info'); }}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-colors ${
-                        targetKg === t
-                          ? 'bg-[#2D5A3D] text-white'
-                          : 'bg-[#1C2620]/[0.04]0 hover:bg-[#1C2620]/[0.1] text-[#1C2620]/80 border border-[#1C2620]/[0.08]'
-                      }`}
-                    >
-                      {t}k
-                    </button>
-                  ))}
-                </div>
-              </>
-            );
-          })()
+                <p className="text-xs text-[#1C2620]/70 mt-2">
+                  Objectif {targetKg} kg · {formatWeight(Math.abs(sacMarginG))} {sacMarginG >= 0 ? 'de marge' : 'au-dessus'}
+                </p>
+              </div>
+              {sacInfo && (
+                <span className={`px-2 py-0.5 rounded-full text-xs font-bold font-mono shrink-0 ${
+                  sacStatus === 'pret'
+                    ? 'bg-[#2D5A3D]/10 text-[#2D5A3D] border border-[#2D5A3D]/25'
+                    : sacStatus === 'incomplet'
+                    ? 'bg-[#8C6A1A]/10 text-[#8C6A1A] border border-[#8C6A1A]/30'
+                    : sacStatus === 'troplourd'
+                    ? 'bg-[#C0532E]/10 text-[#C0532E] border border-[#C0532E]/30'
+                    : 'bg-[#1C2620]/[0.06] text-[#1C2620]/60'
+                }`}>
+                  {sacStatus === 'pret' ? 'Prêt' : sacStatus === 'incomplet' ? 'Incomplet' : sacStatus === 'troplourd' ? 'Trop lourd' : '—'}
+                </span>
+              )}
+            </div>
+            <div className="mt-3 shrink-0">
+              <div className="h-2 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+              </div>
+            </div>
+            {consumablesWeightG > 0 && (
+              <p className="text-xs text-[#1C2620]/60 mt-2 shrink-0">Inclut {formatWeight(consumablesWeightG)} de consommables (eau, repas, gaz)</p>
+            )}
+            {!contextKit && (
+              <button type="button" onClick={() => { setIsKitDrawerOpen(true); }} className="mt-3 w-full py-2 rounded-full bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] text-xs font-bold shrink-0">
+                Choisir un kit
+              </button>
+            )}
+          </>
         );
+      }
 
       case 'departure':
         return widgetShell(
           'departure',
           <IconNav />,
-          'Prochain départ',
-          activeHike ? `${activeHike.name} · ${activeHike.terrain || activeHike.season || 'Randonnée'}` : 'Aucune sortie planifiée',
+'Prochain départ',
+          activeHike ? `Prêt à ${hikeReadiness.readinessPct}% · ${hikeReadiness.missingItems.length + alerts.length} chose(s) à régler` : 'Aucune sortie planifiée',
           'actions',
           activeHike ? (
             <>
@@ -1340,7 +1460,15 @@ const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
                   <span className="block text-xs font-bold text-[#8C6A1A] truncate leading-none">{formatWeather(activeHike)}</span>
                   <span className="block text-xs text-[#1C2620]/70 mt-1">Météo {formatTemp(activeHike)}</span>
                 </div>
-              </div>
+</div>
+
+              <button
+                type="button"
+                onClick={() => { if (!expandedWidget) { expandOriginRef.current = null; setExpandedWidget('departure'); triggerHaptic('selection'); } }}
+                className="mt-3 w-full py-2.5 rounded-full bg-[#2D5A3D] hover:bg-[#235030] text-white font-bold text-xs transition-all active:scale-[0.98] shrink-0"
+              >
+                🎒 Préparer mon départ
+              </button>
 
               <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-3 pr-0.5">
                 <div className="p-3 rounded-2xl bg-[#1C2620]/[0.04] border border-[#1C2620]/[0.08] space-y-2">
@@ -1497,93 +1625,70 @@ const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
           )
         );
 
-      case 'condition': {
-        const ready = conditionStats
-          .filter((s) => ['neuf', 'excellent', 'bon'].includes(s.key))
-          .reduce((n, s) => n + s.count, 0);
-        const readyPct = equipment.length > 0 ? Math.round((ready / equipment.length) * 100) : 0;
+case 'gear': {
+        const cats = gearEssentialsByCat || gearInventoryCats.map((c) => ({ label: c.label, total: c.count, owned: c.count }));
+        const isEssentials = !!gearEssentialsByCat;
         return widgetShell(
-          'condition',
+          'gear',
           <IconActivity />,
-          'État du matériel',
-          `${equipment.length} articles suivis`,
+          'Mes équipements',
+          gearEssentials ? `${gearEssentials.length} essentiels du kit de référence` : `${equipment.length} équipement(s) possédé(s)`,
           'inventaire',
           <>
             <div className="flex items-end justify-between gap-3 shrink-0">
               <div>
-                <div className="text-4xl font-extrabold font-mono leading-none text-[#1C2620]">{readyPct}%</div>
-                <p className="text-xs text-[#1C2620]/70 mt-2">{ready}/{equipment.length} articles en bon état</p>
+                <div className="text-4xl font-extrabold font-mono leading-none text-[#2D5A3D]">{gearCoveragePct}%</div>
+                <p className="text-xs text-[#1C2620]/70 mt-2">{isEssentials ? 'des essentiels couverts' : 'du matériel inventorié'}</p>
               </div>
-              <IconActivity />
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-2 pr-0.5">
-              {conditionStats.length === 0 ? (
-                <p className="text-xs text-[#1C2620]/70 text-center py-3">Aucun article inventorié</p>
-              ) : (
-                conditionStats.map((s) => {
-                  const meta = CONDITION_META[s.key] || { label: s.key, color: '#2D5A3D', bg: 'rgba(45,90,61,0.08)' };
-                  const active = conditionFilter === s.key;
-                  const pct = totalWeightG > 0 ? Math.round((s.weight / totalWeightG) * 100) : 0;
-                  return (
-                    <button
-                      key={s.key}
-                      type="button"
-                      onClick={() => {
-                        triggerHaptic('light');
-                        setConditionFilter(active ? 'all' : s.key);
-                      }}
-                      title={active ? 'Retirer le filtre' : `Filtrer par état : ${meta.label}`}
-                      className={`w-full text-left p-2 rounded-xl border transition-all ${
-                        active
-                          ? 'bg-[#1C2620]/[0.09] border-[#2D5A3D]/50 ring-1 ring-[#2D5A3D]/30'
-                          : 'bg-white/40 hover:bg-[#1C2620]/[0.06] border-[#1C2620]/[0.07]'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between text-xs text-[#1C2620]/80 mb-1">
-                        <span className="font-semibold capitalize truncate">{meta.label}</span>
-                        <span className="shrink-0 pl-2">
-                          <span className="font-mono text-[#1C2620] font-bold">{s.count}</span>
-                          <span className="text-[#1C2620]/40"> · </span>
-                          <span className="font-mono" style={{ color: meta.color }}>{formatWeight(s.weight)}</span>
-                        </span>
-                      </div>
-                      <div className="h-1.5 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
-                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: meta.color }} />
-                      </div>
-                    </button>
-                  );
-                })
+              {!gearEssentials && gearInventoryCats.length === 0 && (
+                <p className="text-xs text-[#1C2620]/60 text-center py-3">Inventaire vide</p>
               )}
+              {cats.slice(0, 4).map((c) => {
+                const ratio = c.total > 0 ? Math.round((c.owned / c.total) * 100) : 0;
+                return (
+                  <div key={c.label} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs text-[#1C2620]/80">
+                      <span className="truncate">{c.label}</span>
+                      <span className="font-mono text-[#2D5A3D]">{isEssentials ? `${c.owned} / ${c.total}` : `${c.owned} possédé(s)`}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
+                      <div className="h-full rounded-full bg-[#2D5A3D]" style={{ width: `${isEssentials ? ratio : Math.min(100, (c.owned || 1) * 20)}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </>
         );
       }
 
       case 'forget': {
-        const critical = forgetItems.filter((i) => i.level === 'critique' || i.level === 'verifier');
+const actionable = forgetItems.filter((i) => i.level !== 'pret' && i.level !== 'facultatif' && !forgetDismissed.has(i.id));
         const done = forgetItems.filter((i) => forgetChecked.has(i.id)).length;
         return widgetShell(
           'forget',
           <IconChecklist />,
           'À ne pas oublier',
-          forgetCriticalCount > 0 ? `${forgetCriticalCount} élément(s) à vérifier` : 'Tout est en ordre',
+          forgetActionableCount > 0 ? `${forgetActionableCount} élément(s) pour votre départ` : 'Tout est en ordre',
           'actions',
           <>
             <div className="flex items-end justify-between gap-3 shrink-0">
               <div>
-                <div className={`text-4xl font-extrabold font-mono leading-none ${forgetCriticalCount > 0 ? 'text-[#8C6A1A] drop-shadow-[0_0_14px_rgba(184,147,42,0.4)]' : 'text-[#2D5A3D]'}`}>
-                  {forgetCriticalCount}
+                <div className={`text-4xl font-extrabold font-mono leading-none ${forgetActionableCount > 0 ? 'text-[#8C6A1A] drop-shadow-[0_0_14px_rgba(184,147,42,0.4)]' : 'text-[#2D5A3D]'}`}>
+                  {forgetActionableCount}
                 </div>
                 <p className="text-xs text-[#1C2620]/70 mt-2">
-                  {forgetCriticalCount > 0 ? 'critiques à vérifier' : `tout est prêt · ${done}/${forgetItems.length} cochés`}
+                  {forgetActionableCount > 0 ? `${forgetCriticalCount} à vérifier · ${done} traité(s)` : `tout est prêt · ${done}/${forgetItems.length} cochés`}
                 </p>
               </div>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-1.5 pr-0.5">
-{forgetCriticalCount === 0 ? (
+{actionable.length === 0 ? (
                 <p className="text-xs text-[#1C2620]/70 text-center py-4">Aucun élément critique ✨</p>
               ) : (
-                critical.slice(0, 4).map((it) => (
+                actionable.slice(0, 4).map((it) => (
                   <button
                     key={it.id}
                     type="button"
@@ -1592,8 +1697,9 @@ const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
                     className="w-full text-left p-2.5 rounded-xl bg-white/40 hover:bg-white/60 border border-[#1C2620]/[0.07] text-xs flex items-center justify-between gap-2 min-h-[44px] transition-colors"
                   >
                     <div className="min-w-0">
-                      <p className={`font-semibold truncate ${forgetChecked.has(it.id) ? 'text-[#1C2620]/45 line-through' : 'text-[#1C2620]/90'}`}>{it.label}</p>
+                      <p className={`font-semibold truncate ${forgetChecked.has(it.id) ? 'text-[#1C2620]/45 line-through' : 'text-[#1C2620]/90'}`}>• {it.label}</p>
                       <p className="text-[#1C2620]/60 truncate">{it.reason}</p>
+                      {forgetReminded.has(it.id) && <span className="inline-flex text-[#8C6A1A] font-semibold">⏰ Rappel demain</span>}
                     </div>
                     <span className={`w-6 h-6 rounded-md border shrink-0 flex items-center justify-center ${forgetChecked.has(it.id) ? 'bg-[#2D5A3D] border-[#2D5A3D] text-white' : 'border-[#1C2620]/30 text-transparent'}`}>
                       <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12l5 5L20 7" /></svg>
@@ -1606,93 +1712,117 @@ const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
         );
       }
 
-      case 'alerts': {
-        const critical = alerts.filter((a) => a.kind === 'replace' || a.kind === 'expiry').length;
+case 'alerts': {
         return widgetShell(
           'alerts',
           <IconBell />,
-          'Alertes & entretien',
-          alerts.length > 0 ? `${critical} action(s) critique(s)` : 'Tout est en ordre',
+          'Alertes & actions',
+          alerts.length > 0 ? `${alerts.length} action(s) nécessaire(s)` : 'Tout est en ordre',
           'prets',
           <>
             <div className="flex items-end justify-between gap-3 shrink-0">
               <div>
-                <div className={`text-4xl font-extrabold font-mono leading-none ${alerts.length > 0 ? 'text-[#8C6A1A] drop-shadow-[0_0_14px_rgba(233,196,106,0.5)]' : 'text-[#2D5A3D]'}`}>
+                <div className={`text-4xl font-extrabold font-mono leading-none ${alerts.length > 0 ? 'text-[#8C6A1A] drop-shadow-[0_0_12px_rgba(184,147,42,0.4)]' : 'text-[#2D5A3D]'}`}>
                   {alerts.length}
                 </div>
-                <p className="text-xs text-[#1C2620]/70 mt-2">{alerts.length === 0 ? 'Tout est en ordre' : 'Alertes actives'}</p>
+                <p className="text-xs text-[#1C2620]/70 mt-2">{alerts.length === 0 ? 'Tout est en ordre' : 'sujets réellement urgents'}</p>
               </div>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-1.5 pr-0.5">
               {alerts.length === 0 ? (
-                <p className="text-xs text-[#1C2620]/70 text-center py-4">Aucune alerte — tout est en ordre ✨</p>
+                <p className="text-xs text-[#1C2620]/70 text-center py-4">Aucune alerte ✨</p>
               ) : (
-                alerts.slice(0, 6).map((a) => (
+                alerts.slice(0, 4).map((a) => (
                   <button
                     key={a.id}
                     type="button"
                     onClick={() => { setSelectedItemId(a.itemId); setIsDetailDrawerOpen(true); triggerHaptic('light'); }}
                     className="w-full text-left p-2 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/85 flex items-center justify-between gap-1.5 transition-colors"
                   >
-                    <span className="truncate">{a.label}</span>
+                    <span className="truncate">• {a.label}</span>
                     <span className="text-xs text-[#2D5A3D] font-bold shrink-0">Voir ➔</span>
                   </button>
                 ))
               )}
             </div>
+            <div className="grid grid-cols-3 gap-1.5 shrink-0 mt-3 border-t border-[#1C2620]/[0.07] pt-2.5">
+              <button type="button" onClick={() => { setEditingItem(null); setIsAddModalOpen(true); }} title="Ajouter un équipement" className="text-xs py-2 rounded-lg bg-white/40 hover:bg-white/60 border border-[#1C2620]/[0.07] text-[#1C2620]/85 font-semibold transition-colors">+ Équipement</button>
+              <button type="button" onClick={handleCreateNewKit} title="Créer un kit" className="text-xs py-2 rounded-lg bg-white/40 hover:bg-white/60 border border-[#1C2620]/[0.07] text-[#1C2620]/85 font-semibold transition-colors">🎒 Créer un kit</button>
+              <button type="button" onClick={() => setIsNewHikeModalOpen(true)} title="Planifier un départ" className="text-xs py-2 rounded-lg bg-white/40 hover:bg-white/60 border border-[#1C2620]/[0.07] text-[#1C2620]/85 font-semibold transition-colors">🧭 Planifier</button>
+            </div>
           </>
         );
       }
 
-      case 'kits':
+case 'kits': {
+        const rec = recommendedKit;
+        const recInfo = rec ? kitReadinessOf(rec) : null;
         return widgetShell(
           'kits',
           <IconBackpack />,
-          'Kits & sacs',
-          `${kits.length} kit${kits.length > 1 ? 's' : ''} assemblés`,
+          'Mes kits',
+          `${kits.length} kit${kits.length > 1 ? 's' : ''} disponible${kits.length > 1 ? 's' : ''}`,
           'actions',
           <>
-            <div className="flex items-end justify-between gap-3 shrink-0">
-              <div>
-                <div className="text-4xl font-extrabold font-mono leading-none text-[#1C2620]">{kits.length}</div>
-                <p className="text-xs text-[#1C2620]/70 mt-2">Poids total {formatWeight(kits.reduce((s, k) => s + (k.total_weight_g || 0), 0))}</p>
+            {rec && activeHike && (
+              <div className="shrink-0 rounded-2xl bg-[#2D5A3D]/[0.08] border border-[#2D5A3D]/25 p-2.5 space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-mono uppercase text-[#2D5A3D] font-bold">Kit recommandé</span>
+                  <span className="px-2 py-0.5 rounded-full bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-xs font-mono text-[#2D5A3D]">
+                    {activeHike.name.slice(0, 14)}{activeHike.name.length > 14 ? '…' : ''}
+                  </span>
+                </div>
+                <p className="text-xs font-bold text-[#1C2620] truncate">{rec.name}</p>
+                {recInfo && recInfo.missingItems.length > 0 ? (
+                  <p className="text-xs text-[#C0532E]">Il manque : {recInfo.missingItems.slice(0, 2).map((m) => m.item_name).join(' · ')}</p>
+                ) : (
+                  <p className="text-xs text-[#2D5A3D]">Prêt à {recInfo?.readinessPct ?? 100}%</p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => { setSelectedKitForCockpit(rec); setIsKitDrawerOpen(true); }}
+                  className="w-full py-1.5 rounded-full bg-[#2D5A3D] text-white text-xs font-bold transition-all active:scale-[0.98]"
+                >
+                  Compléter / gérer
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={handleCreateNewKit}
-                className="px-3 py-1.5 rounded-full bg-[#2D5A3D]/20 hover:bg-[#2D5A3D]/30 border border-[#2D5A3D]/40 text-[#2D5A3D] text-xs font-bold transition-all active:scale-95 shrink-0"
-              >
-                + Nouveau
-              </button>
-            </div>
-            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-2 pr-0.5">
+            )}
+            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-2.5 space-y-2 pr-0.5">
               {kits.length === 0 ? (
-                <p className="text-xs text-[#1C2620]/70 text-center py-4">Aucun kit actif. Créez votre premier kit.</p>
+                <p className="text-xs text-[#1C2620]/70 text-center py-3">Aucun kit actif. Créez votre premier kit.</p>
               ) : (
-                kits.map((kit) => (
-                  <div
-                    key={kit.id}
-                    onClick={() => {
-                      setSelectedKitForCockpit(kit);
-                      setIsKitDrawerOpen(true);
-                      triggerHaptic('light');
-                    }}
-                    className="p-2.5 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] transition-all cursor-pointer flex items-center justify-between gap-2"
-                  >
-                    <div className="min-w-0">
-                      <h4 className="text-xs font-bold text-[#1C2620] truncate">{kit.name}</h4>
-                      <p className="text-xs text-[#1C2620]/60 truncate">{kit.items?.length || 0} articles · {kit.season || '3 saisons'}</p>
+                kits.slice(0, 3).map((kit) => {
+                  const info = kitReadinessOf(kit);
+                  return (
+                    <div
+                      key={kit.id}
+                      onClick={() => {
+                        setSelectedKitForCockpit(kit);
+                        setIsKitDrawerOpen(true);
+                        triggerHaptic('light');
+                      }}
+                      className="p-2.5 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] transition-all cursor-pointer flex items-center justify-between gap-2"
+                    >
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-bold text-[#1C2620] truncate">{kit.name}</h4>
+                        <p className="text-xs text-[#1C2620]/60 truncate">{info.totalCount} équipement(s) · {info.readinessPct}% prêt</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-xs font-mono font-bold text-[#2D5A3D] block">{formatWeight(kit.total_weight_g || 0)}</span>
+                        {info.missingItems.length > 0 ? (
+                          <span className="text-xs text-[#C0532E]">{info.missingItems.length} manquant(s)</span>
+                        ) : (
+                          <span className="text-xs text-[#2D5A3D]">Complet ✓</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <span className="text-xs font-mono font-bold text-[#2D5A3D] block">{formatWeight(kit.total_weight_g || 0)}</span>
-                      <span className="text-xs text-[#1C2620]/50">Éditer ➔</span>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </>
         );
+      }
 
       default:
         return null;
@@ -1707,7 +1837,7 @@ const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
     facultatif: { label: 'Facultatif', cls: 'bg-[#1C2620]/[0.06] text-[#1C2620]/70 border-[#1C2620]/[0.1]' },
     pret: { label: 'Prêt ✓', cls: 'bg-[#2D5A3D]/10 text-[#2D5A3D] border-[#2D5A3D]/25' },
   };
-  const FORGET_CATEGORY_ORDER = ['Kit', 'Péremptions', 'Entretien', 'Prêts', 'Consommables', 'Contexte départ', 'Documents'];
+  const FORGET_CATEGORY_ORDER = ['Kit', 'Prêts', 'Péremptions', 'Entretien', 'Contexte départ', 'Consommables', 'Documents'];
 
 const renderExpandedWidget = (id: string): React.ReactNode => {
     const title = WIDGET_LABEL[id] || id;
@@ -1722,10 +1852,10 @@ const renderExpandedWidget = (id: string): React.ReactNode => {
         ✕
       </button>
     );
-    const icons: Record<string, React.ReactNode> = {
-      weight: <IconScale />,
+const icons: Record<string, React.ReactNode> = {
+      sac: <IconScale />,
       departure: <IconNav />,
-      condition: <IconActivity />,
+      gear: <IconActivity />,
       forget: <IconChecklist />,
       alerts: <IconBell />,
       kits: <IconBackpack />,
@@ -1739,46 +1869,41 @@ const renderExpandedWidget = (id: string): React.ReactNode => {
     let subtitle = '';
     let body: React.ReactNode = null;
 
-    if (id === 'weight') {
-      subtitle = `${equipment.length} articles · ${Math.round(totalValue)} €`;
-      const targetG = targetKg * 1000;
-      const ratio = targetG > 0 ? totalWeightG / targetG : 0;
-      const pct = Math.min(100, Math.round(ratio * 100));
-      const color = ratio <= 0.85 ? '#2D5A3D' : ratio <= 1 ? '#B8932A' : '#C0532E';
+if (id === 'sac') {
+      subtitle = contextKit ? `${contextKit.name} · objectif ${targetKg} kg` : 'Aucun kit sélectionné';
+      const pct = targetKg > 0 ? Math.min(100, Math.round((sacEstimatedG / (targetKg * 1000)) * 100)) : 0;
+      const barColor = sacMarginG >= 0 ? '#2D5A3D' : '#C0532E';
       const heaviest = [...equipment]
         .sort((a, b) => (b.weight_g || 0) * (b.quantity || 1) - (a.weight_g || 0) * (a.quantity || 1))
         .slice(0, 6);
       body = (
         <div className="grid gap-4 lg:grid-cols-2">
           <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-3">
-            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Synthèse du poids</h3>
-            <div className="flex items-end gap-4">
-              <div className="min-w-0">
-                <div className="text-5xl font-extrabold font-mono leading-none text-[#1C2620]">{formatWeight(totalWeightG)}</div>
-                <p className="text-xs text-[#1C2620]/70 mt-2">
-                  Objectif <strong style={{ color }}>{targetKg} kg</strong> · {pct}% de l&apos;objectif
-                </p>
-              </div>
-              <WeightGauge currentG={totalWeightG} targetKg={targetKg} />
-            </div>
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Poids de départ estimé</h3>
+            <div className="text-5xl font-extrabold font-mono leading-none text-[#1C2620]">{formatWeight(sacEstimatedG)}</div>
+            <p className="text-xs text-[#1C2620]/70">
+              Objectif <strong className="text-[#1C2620]">{targetKg} kg</strong> · {formatWeight(Math.abs(sacMarginG))} {sacMarginG >= 0 ? 'de marge' : 'au-dessus'} · {pct}%
+            </p>
             <div className="h-2 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: color }} />
+              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: barColor }} />
             </div>
+            <ul className="text-xs text-[#1C2620]/75 space-y-1">
+              {contextKit && <li>📦 Kit « {contextKit.name} » : {formatWeight(sacKitWeightG)}</li>}
+              <li>💧 Consommables (eau, repas, gaz) : {formatWeight(consumablesWeightG)}</li>
+              {sacInfo && (
+                <li className={sacInfo.missingItems.length > 0 ? 'text-[#C0532E]' : 'text-[#2D5A3D]'}>
+                  {sacInfo.missingItems.length > 0 ? `⚠ ${sacInfo.missingItems.length} élément(s) manquant(s) au kit` : '✓ Kit complet'}
+                </li>
+              )}
+            </ul>
             <div className="flex gap-1.5 flex-wrap">
               {[6, 8, 10, 12, 14, 20].map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => { setTargetKg(t); triggerHaptic('light'); showToast(`Objectif ajusté à ${t} kg`, 'info'); }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-colors ${targetKg === t ? 'bg-[#2D5A3D] text-white' : 'bg-white/50 text-[#1C2620]/80 border border-[#1C2620]/[0.1]'}`}
-                >
-                  {t} kg
-                </button>
+                <button key={t} type="button" onClick={() => { setTargetKg(t); triggerHaptic('light'); showToast(`Objectif ajusté à ${t} kg`, 'info'); }} className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-colors ${targetKg === t ? 'bg-[#2D5A3D] text-white' : 'bg-white/50 text-[#1C2620]/80 border border-[#1C2620]/[0.1]'}`}>{t} kg</button>
               ))}
             </div>
           </section>
           <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
-            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Répartition par catégorie</h3>
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Poids par catégorie</h3>
             {categoryStats.length === 0 && <p className="text-xs text-[#1C2620]/60">Aucune donnée — ajoutez des articles</p>}
             {categoryStats.map((c) => (
               <div key={c.label} className="space-y-1">
@@ -1803,19 +1928,17 @@ const renderExpandedWidget = (id: string): React.ReactNode => {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="font-mono font-bold text-[#2D5A3D]">{formatWeight((it.weight_g || 0) * (it.quantity || 1))}</span>
-                  <button
-                    type="button"
-                    onClick={() => { setSelectedItemId(it.id); setExpandedWidget(null); setIsDetailDrawerOpen(true); }}
-                    className="px-2 py-1 rounded-lg bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] text-xs font-bold"
-                  >
-                    Fiche
-                  </button>
+                  <button type="button" onClick={() => { setSelectedItemId(it.id); setExpandedWidget(null); setIsDetailDrawerOpen(true); }} className="px-2 py-1 rounded-lg bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] text-xs font-bold">Fiche</button>
                 </div>
               </div>
             ))}
-            {kits.length > 0 && (
-              <p className="text-xs text-[#1C2620]/60">Kit(s) : {kits.map((k) => `${k.name} (${formatWeight(k.total_weight_g || 0)})`).join(' · ')}</p>
-            )}
+            <p className="text-xs text-[#1C2620]/60 border-t border-[#1C2620]/[0.05] pt-2">
+              {sacMarginG < 0 && heaviest[0]
+                ? `💡 Retirer ${formatWeight((heaviest[0].weight_g || 0) * (heaviest[0].quantity || 1))} (« ${heaviest[0].name} ») ou choisir une alternative plus légère pour rentrer dans l&apos;objectif.`
+                : sacInfo && sacInfo.missingItems.length > 0
+                ? '💡 Complétez d\'abord le kit manquant avant de viser l\'allègement.'
+                : `💡 Vous disposez de ${formatWeight(Math.abs(sacMarginG))} de marge — vous pouvez ajouter du matériel confort si besoin.`}
+            </p>
           </section>
         </div>
       );
@@ -1953,6 +2076,38 @@ const renderExpandedWidget = (id: string): React.ReactNode => {
                 </button>
               ))}
             </div>
+</section>
+
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Check final avant départ</h3>
+              <span className="text-xs text-[#1C2620]/60 font-mono">{departCheck.size + (hikeReadiness.readinessPct === 100 ? 1 : 0) + (alerts.filter((a) => a.kind !== 'loan').length === 0 ? 1 : 0)}/5</span>
+            </div>
+            {[
+              { key: 'pret', label: 'Matériel prêt (100%)', auto: hikeReadiness.readinessPct === 100 },
+              { key: 'charge', label: 'Sac chargé — poids contre objectif', auto: false },
+              { key: 'entretien', label: 'Équipement entretenu (aucune alerte)', auto: alerts.filter((a) => a.kind !== 'loan').length === 0 },
+              { key: 'emballe', label: 'Affaires emballées', auto: false },
+              { key: 'valide', label: 'Validation avant départ', auto: false },
+            ].map((item) => {
+              const checked = item.auto || departCheck.has(item.key);
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => toggleDepartCheck(item.key)}
+                  className={`w-full text-left p-2 rounded-xl text-xs flex items-center justify-between gap-2 transition-colors ${checked ? 'bg-[#2D5A3D]/10 border border-[#2D5A3D]/25 text-[#1C2620]/75' : 'bg-white/40 border border-[#1C2620]/[0.07] text-[#1C2620]/90'}`}
+                >
+                  <span className={`font-semibold flex items-center gap-2 ${checked ? 'line-through decoration-[#1C2620]/40' : ''}`}>
+                    <span className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 ${checked ? 'bg-[#2D5A3D] border-[#2D5A3D] text-white' : 'border-[#1C2620]/30'}`}>
+                      {checked && <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12l5 5L20 7" /></svg>}
+                    </span>
+                    {item.label}
+                  </span>
+                  <span className="text-[#1C2620]/60 shrink-0">{checked ? '✓' : 'À cocher'}</span>
+                </button>
+              );
+            })}
           </section>
         </div>
       ) : (
@@ -1962,90 +2117,97 @@ const renderExpandedWidget = (id: string): React.ReactNode => {
           <button type="button" onClick={() => setIsNewHikeModalOpen(true)} className="px-5 py-2 rounded-full bg-[#2D5A3D] text-white font-bold text-xs">🧭 Planifier ma première sortie</button>
         </div>
       );
-    } else if (id === 'condition') {
-      subtitle = 'Santé et fiabilité de l&apos;équipement';
-      const ready = conditionStats.filter((s) => ['neuf', 'excellent', 'bon'].includes(s.key)).reduce((n, s) => n + s.count, 0);
-      const readyPct = equipment.length > 0 ? Math.round((ready / equipment.length) * 100) : 0;
-      const maintenance = alerts.filter((a) => a.kind === 'maintenance');
-      const expirations = alerts.filter((a) => a.kind === 'expiry');
-      const replacements = alerts.filter((a) => a.kind === 'replace');
-      const mostUsed = [...equipment].sort((a, b) => (b.usage_count || 0) - (a.usage_count || 0)).slice(0, 5);
+} else if (id === 'gear') {
+      subtitle = 'Essentiels couverts vs manquants, par catégorie';
+      const ess = gearEssentials;
       body = (
         <div className="grid gap-4 lg:grid-cols-2">
           <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-3">
-            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Taux global de préparation</h3>
-            <div className="text-5xl font-extrabold font-mono leading-none text-[#2D5A3D]">{readyPct}%</div>
-            <p className="text-xs text-[#1C2620]/70">{ready}/{equipment.length} articles en bon état</p>
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Couverture des essentiels</h3>
+            <div className="text-5xl font-extrabold font-mono leading-none text-[#2D5A3D]">{gearCoveragePct}%</div>
+            <p className="text-xs text-[#1C2620]/70">
+              {ess ? `${ess.filter((g) => g.state === 'owned').length}/${ess.length} essentiels du kit possédés` : `${equipment.length} équipement(s) possédés`}
+            </p>
             <div className="h-2 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
-              <div className="h-full bg-[#2D5A3D] rounded-full transition-all duration-500" style={{ width: `${readyPct}%` }} />
+              <div className="h-full bg-[#2D5A3D] rounded-full transition-all duration-500" style={{ width: `${gearCoveragePct}%` }} />
             </div>
             <div className="space-y-2 pt-1">
-              {conditionStats.length === 0 && <p className="text-xs text-[#1C2620]/60">Aucun article inventorié</p>}
-              {conditionStats.map((s) => {
-                const meta = CONDITION_META[s.key] || { label: s.key, color: '#2D5A3D', bg: '' };
-                const active = conditionFilter === s.key;
-                const pct = totalWeightG > 0 ? Math.round((s.weight / totalWeightG) * 100) : 0;
+              {(gearEssentialsByCat || gearInventoryCats.map((c) => ({ label: c.label, total: c.count, owned: c.count }))).slice(0, 6).map((c) => {
+                const ratio = c.total > 0 ? Math.round((c.owned / c.total) * 100) : 0;
                 return (
-                  <button
-                    key={s.key}
-                    type="button"
-                    onClick={() => { triggerHaptic('light'); setConditionFilter(active ? 'all' : s.key); }}
-                    className={`w-full text-left p-2 rounded-xl border transition-all ${active ? 'bg-white/50 border-[#2D5A3D]/50' : 'bg-white/40 hover:bg-white/60 border-[#1C2620]/[0.07]'}`}
-                  >
-                    <div className="flex items-center justify-between text-xs text-[#1C2620]/80 mb-1">
-                      <span className="font-semibold capitalize truncate">{meta.label}</span>
-                      <span className="shrink-0 pl-2"><span className="font-mono text-[#1C2620] font-bold">{s.count}</span><span className="text-[#1C2620]/40"> · </span><span className="font-mono" style={{ color: meta.color }}>{formatWeight(s.weight)}</span></span>
+                  <div key={c.label} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs text-[#1C2620]/80">
+                      <span className="truncate">{c.label}</span>
+                      <span className="font-mono text-[#2D5A3D]">{gearEssentialsByCat ? `${c.owned} / ${c.total}` : `${c.owned} possédé(s)`}</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: meta.color }} />
+                      <div className="h-full rounded-full bg-[#2D5A3D]" style={{ width: `${gearEssentialsByCat ? ratio : Math.min(100, (c.owned || 1) * 14)}%` }} />
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
           </section>
 
-          <section className="space-y-4">
-            <div className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
-              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">À traiter ({maintenance.length + expirations.length + replacements.length})</h3>
-              {maintenance.length + expirations.length + replacements.length === 0 && <p className="text-xs text-[#1C2620]/60">Aucune action requise ✨</p>}
-              {[...maintenance, ...expirations, ...replacements].slice(0, 8).map((a) => (
-                <button
-                  key={a.id}
-                  type="button"
-                  onClick={() => { setSelectedItemId(a.itemId); setExpandedWidget(null); setIsDetailDrawerOpen(true); }}
-                  className="w-full text-left p-2 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/85 flex items-center justify-between gap-2"
-                >
-                  <span className="truncate">{a.label}</span>
-                  <span className="text-[#2D5A3D] font-bold shrink-0">Voir ➔</span>
-                </button>
-              ))}
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-3 lg:col-span-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Par catégorie</h3>
+              <button type="button" onClick={() => { setEditingItem(null); setExpandedWidget(null); setIsAddModalOpen(true); }} className="px-3 py-1.5 rounded-full bg-[#2D5A3D] text-white text-xs font-bold">+ Ajouter un équipement</button>
             </div>
-
-            <div className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
-              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Prêts ({loanedItems.length})</h3>
-              {loanedItems.length === 0 && <p className="text-xs text-[#1C2620]/60">Aucun matériel prêté 🤝</p>}
-              {loanedItems.map((item) => (
-                <div key={item.id} className="p-2 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-[#1C2620]/90 font-semibold truncate">{item.name}</p>
-                    <p className="text-[#1C2620]/60 truncate">Prêté à {item.loan_to_name || 'un ami'}</p>
+            {!ess ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {(gearInventoryCats.length ? gearInventoryCats : [{ label: 'Inventaire', cat: 'organisation', count: 0 }]).map((c) => (
+                  <div key={c.label} className="p-3 rounded-xl bg-white/40 border border-[#1C2620]/[0.07]">
+                    <p className="text-xs font-bold text-[#1C2620]">{c.label}</p>
+                    <p className="text-xs text-[#1C2620]/60 mt-0.5">{c.count} équipement(s) possédé(s)</p>
                   </div>
-                  <button type="button" onClick={() => handleMarkReturned(item)} className="px-2.5 py-1 rounded-lg bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] text-xs font-bold shrink-0">Rendu ✓</button>
-                </div>
-              ))}
-            </div>
-
-            <div className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
-              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Le plus utilisé</h3>
-              {mostUsed.length === 0 && <p className="text-xs text-[#1C2620]/60">Aucune donnée d&apos;usage</p>}
-              {mostUsed.map((it) => (
-                <div key={it.id} className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs">
-                  <span className="truncate text-[#1C2620]/85">{it.name}</span>
-                  <span className="font-mono text-[#1C2620]/60 shrink-0">{it.usage_count || 0} sortie(s)</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              GEAR_CATEGORY_META.map((cat) => {
+                const items = ess.filter((g) => g.cat === cat.key);
+                if (items.length === 0) return null;
+                return (
+                  <div key={cat.key} className="space-y-1.5">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-[#2D5A3D] pt-1 border-b border-[#1C2620]/[0.05] pb-1">{cat.label} ({items.length})</h4>
+                    {items.map((g) => (
+                      <div key={g.key} className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className={g.state === 'owned' ? 'font-semibold text-[#2D5A3D] truncate' : 'text-[#1C2620]/90 truncate'}>
+                            {g.state === 'owned' ? '✓ ' : g.state === 'prete' ? '🤝 ' : g.state === 'entretien' ? '🛠 ' : '○ '}{g.label}
+                          </p>
+                          <p className="text-[#1C2620]/60">
+                            {g.state === 'owned' && `Possédé · ${formatWeight(g.weight)}`}
+                            {g.state === 'prete' && 'Prêté — à récupérer avant départ'}
+                            {g.state === 'entretien' && 'Maintenance dépassée — à préparer'}
+                            {g.state === 'manquant' && 'Non possédé — nécessaire pour ce départ'}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {g.state === 'manquant' ? (
+                            <button
+                              type="button"
+                              onClick={() => { addToEquipment({ name: g.label, category: 'Autre', weight_g: g.weight || 100 }); showToast(`🎒 « ${g.label} » ajouté à l&apos;inventaire`, 'success'); }}
+                              className="px-2.5 py-1 rounded-lg bg-[#2D5A3D] text-white text-xs font-bold"
+                            >
+                              + Ajouter à l&apos;inventaire
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => { if (g.itemId) { setSelectedItemId(g.itemId); setExpandedWidget(null); setIsDetailDrawerOpen(true); } }}
+                              className="px-2.5 py-1 rounded-lg bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] text-xs font-bold"
+                            >
+                              {g.state === 'owned' ? 'Fiche' : 'Gérer'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })
+            )}
           </section>
         </div>
       );
@@ -2072,7 +2234,7 @@ const renderExpandedWidget = (id: string): React.ReactNode => {
           </section>
 
           {FORGET_CATEGORY_ORDER.map((cat) => {
-            const items = forgetItems.filter((i) => i.category === cat);
+            const items = forgetItems.filter((i) => i.category === cat && !forgetDismissed.has(i.id));
             if (items.length === 0) return null;
             return (
               <section key={cat} className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
@@ -2097,6 +2259,29 @@ const renderExpandedWidget = (id: string): React.ReactNode => {
                               Ouvrir la fiche ➔
                             </button>
                           )}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 pt-1.5">
+                          <button
+                            type="button"
+                            onClick={() => toggleForgetChecked(it.id)}
+                            className={`px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${checked ? 'bg-[#2D5A3D]/10 text-[#2D5A3D] border border-[#2D5A3D]/25' : 'bg-white/50 border border-[#1C2620]/[0.1] text-[#1C2620]/80'}`}
+                          >
+                            ✓ J&apos;ai déjà
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleForgetDismissed(it.id)}
+                            className={`px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${forgetDismissed.has(it.id) ? 'bg-[#1C2620]/[0.06] text-[#1C2620]/50' : 'bg-white/50 border border-[#1C2620]/[0.1] text-[#1C2620]/80'}`}
+                          >
+                            − Pas nécessaire
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleForgetReminded(it.id)}
+                            className={`px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${forgetReminded.has(it.id) ? 'bg-[#8C6A1A]/10 text-[#8C6A1A] border border-[#8C6A1A]/30' : 'bg-white/50 border border-[#1C2620]/[0.1] text-[#1C2620]/80'}`}
+                          >
+                            ⏰ Rappel demain
+                          </button>
                         </div>
                       </div>
                       <button
