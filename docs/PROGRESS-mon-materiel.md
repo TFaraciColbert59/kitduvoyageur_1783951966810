@@ -48,6 +48,7 @@ Héberge toutes les fonctionnalités reléguées, organisées en 4 onglets :
 - **GlassCard clair amélioré** : `bg-white/55` + `blur(40px) saturate(1.5)` + liseré `white/70` + sheen supérieur + masque de bord lumineux + ombre encre douce + inner-highlight blanc.
 - Overlays (drawer « Tout voir », modales, toast, sélecteurs) transposés en surfaces claires translucides ; scrims `bg-(black/70)`→`[#1C2620]/55`.
 - Vérifié par Playwright : `rootBg rgb(245,243,238)`, `glass rgba(255,255,255,0.55) + blur(40px)`, encre `rgb(28,38,32)` ; suite de tests 6 modules toujours verte (15/16, seule 1 erreur console = fallback IA attendu).
+- **Fond photo voilée** : ajout de `public/assets/images/urban-vintage.jpg` (≈1 Mo, source `~/Downloads/urban-vintage-78A265wPiO4-unsplash.jpg`) en arrière-plan `fixed z-0`, `object-cover` + `blur(12px) saturate(1.08) brightness(1.06)`, **voile papier clair** (dégradé `#F5F3EE/90→#FBFAF6/80→#F5F3EE/92` + halo radial blanc) pour conserver le thème clair et le contraste AA ; `GlassCard` monté à `bg-white/65` (frosting sur photo). Vérifié : image servie (200 via next/image), glass `rgba(255,255,255,0.65) + blur(40px)`, toujours sans scroll.
 
 ---
 

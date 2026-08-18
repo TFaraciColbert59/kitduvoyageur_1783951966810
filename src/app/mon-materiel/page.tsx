@@ -155,7 +155,7 @@ function GlassCard({
 }: React.HTMLAttributes<HTMLDivElement> & { className?: string }) {
   return (
     <div
-      className={`relative rounded-[28px] overflow-hidden border border-white/70 bg-white/55 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_24px_60px_-24px_rgba(11,31,23,0.22),0_4px_16px_rgba(11,31,23,0.06),inset_0_1px_0_0_rgba(255,255,255,0.85)] ${className}`}
+      className={`relative rounded-[28px] overflow-hidden border border-white/70 bg-white/65 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_24px_60px_-24px_rgba(11,31,23,0.22),0_4px_16px_rgba(11,31,23,0.06),inset_0_1px_0_0_rgba(255,255,255,0.85)] ${className}`}
       {...rest}
     >
       <div
@@ -1551,11 +1551,21 @@ export default function MonMaterielCockpitPage() {
         html, body { overflow: hidden !important; }
       `}</style>
 
-      {/* ═══ BACKGROUND — papier clair LKDV + halos doux (aucune photo) ═══ */}
+      {/* ═══ BACKGROUND — photo « urban vintage » voilée de verre clair (thème papier LKDV) ═══ */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-[#F5F3EE]">
+        <Image
+          src="/assets/images/urban-vintage.jpg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
+          style={{ filter: 'blur(12px) saturate(1.08) brightness(1.06)' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#F5F3EE]/90 via-[#FBFAF6]/80 to-[#F5F3EE]/92" />
         <div
           className="absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse at 72% -12%, rgba(45,90,61,0.07) 0%, transparent 55%), radial-gradient(ellipse at 14% 112%, rgba(180,160,120,0.14) 0%, transparent 45%)' }}
+          style={{ background: 'radial-gradient(ellipse at 50% 18%, rgba(255,255,255,0.4) 0%, transparent 62%)' }}
         />
       </div>
 
