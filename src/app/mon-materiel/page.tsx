@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
@@ -36,12 +36,13 @@ import {
 // ─────────────────────────────────────────────────────────────
 const PLANNED_HIKES_STORAGE_KEY = 'lkdv_planned_hikes';
 const WIDGET_ORDER_KEY = 'lkdv_cockpit_widget_order';
-const DEFAULT_WIDGET_ORDER = ['weight', 'departure', 'condition', 'copilot', 'alerts', 'kits'];
+const FORGET_CHECK_KEY = 'lkdv_forget_checked';
+const DEFAULT_WIDGET_ORDER = ['weight', 'departure', 'condition', 'forget', 'alerts', 'kits'];
 const WIDGET_SPAN: Record<string, string> = {
   weight: 'col-span-1 lg:col-span-1',
   departure: 'col-span-2 lg:col-span-2',
   condition: 'col-span-1 lg:col-span-1',
-  copilot: 'col-span-2 lg:col-span-2',
+  forget: 'col-span-2 lg:col-span-2',
   alerts: 'col-span-1 lg:col-span-1',
   kits: 'col-span-1 lg:col-span-1',
 };
@@ -49,7 +50,7 @@ const WIDGET_LABEL: Record<string, string> = {
   weight: 'Poids du pack',
   departure: 'Prochain départ',
   condition: 'État du matériel',
-  copilot: 'Copilote IA',
+  forget: 'À ne pas oublier',
   alerts: 'Alertes & entretien',
   kits: 'Kits & sacs',
 };
@@ -270,6 +271,23 @@ function IconBackpack() {
   );
 }
 
+function IconChecklist() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M9 5h12M9 12h12M9 19h12" />
+      <path d="M3.5 5l1 1 2-2M3.5 12l1 1 2-2M3.5 19l1 1 2-2" />
+    </svg>
+  );
+}
+
+function IconMaximize() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+    </svg>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────
 // Main Page Component — Cockpit Polestar 6 Modules (Sans Sidebar)
 // ─────────────────────────────────────────────────────────────
@@ -359,6 +377,10 @@ export default function MonMaterielCockpitPage() {
   const [voirToutTab, setVoirToutTab] = useState<'inventaire' | 'prets' | 'reglages' | 'actions'>('inventaire');
   const [dragWidget, setDragWidget] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
+  const expandedCloseRef = useRef<HTMLButtonElement | null>(null);
+  const [forgetChecked, setForgetChecked] = useState<Set<string>>(new Set());
+  const [alertFilter, setAlertFilter] = useState('');
 
   useEffect(() => {
     try {
@@ -387,6 +409,45 @@ export default function MonMaterielCockpitPage() {
       /* ignore quota errors */
     }
   }, [widgetOrder, widgetOrderLoaded]);
+
+  // Checklist « À ne pas oublier » — état persisté des éléments cochés
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(FORGET_CHECK_KEY);
+      if (raw) setForgetChecked(new Set(JSON.parse(raw) as string[]));
+    } catch {
+      /* ignore malformed localStorage */
+    }
+  }, []);
+
+  const toggleForgetChecked = (id: string) => {
+    setForgetChecked((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      try {
+        window.localStorage.setItem(FORGET_CHECK_KEY, JSON.stringify([...next]));
+      } catch {
+        /* ignore quota errors */
+      }
+      return next;
+    });
+    triggerHaptic('light');
+  };
+
+  // Vue fullscreen d'un widget — Escape ferme, focus sur le bouton de fermeture
+  useEffect(() => {
+    if (!expandedWidget) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setExpandedWidget(null);
+    };
+    window.addEventListener('keydown', onKey);
+    const t = setTimeout(() => expandedCloseRef.current?.focus(), 50);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      clearTimeout(t);
+    };
+  }, [expandedWidget]);
 
   // New Hike Form state
   const [newHikeName, setNewHikeName] = useState('');
@@ -600,6 +661,90 @@ export default function MonMaterielCockpitPage() {
   const loanedItems = useMemo(
     () => equipment.filter((it) => it.loan_status === 'prêté'),
     [equipment]
+  );
+
+  // ── Widget « À ne pas oublier » : checklist intelligente priorisée ──
+  // Données réelles (inventaire, kits, alertes, départ) + règles génériques explicites (jamais présenté comme personnalisé s'il n'y a pas de donnée).
+  const forgetItems = useMemo(() => {
+    const out: {
+      id: string;
+      label: string;
+      reason: string;
+      level: 'critique' | 'verifier' | 'conseille' | 'facultatif' | 'pret';
+      category: string;
+      source: 'donnée' | 'règle';
+      itemId?: string;
+    }[] = [];
+
+    for (const a of alerts) {
+      if (a.kind === 'expiry') {
+        out.push({ id: `f-exp-${a.itemId}`, label: a.label.replace('Péremption — ', ''), reason: 'Produit périmé — ne pas l\'emporter sans contrôle', level: 'critique', category: 'Péremptions', source: 'donnée', itemId: a.itemId });
+      } else if (a.kind === 'maintenance') {
+        out.push({ id: `f-maint-${a.itemId}`, label: a.label.replace('Révision due — ', ''), reason: 'Maintenance dépassée avant départ', level: 'verifier', category: 'Entretien', source: 'donnée', itemId: a.itemId });
+      } else if (a.kind === 'replace') {
+        out.push({ id: `f-rep-${a.itemId}`, label: a.label.replace('À réparer/remplacer — ', ''), reason: 'État dégradé — à remplacer ou réparer', level: 'critique', category: 'Entretien', source: 'donnée', itemId: a.itemId });
+      } else if (a.kind === 'loan') {
+        out.push({ id: `f-loan-${a.itemId}`, label: a.label.replace(`Prêté à ${a.borrower || 'un ami'} — `, ''), reason: 'Actuellement prêté — penser à le récupérer', level: 'verifier', category: 'Prêts', source: 'donnée', itemId: a.itemId });
+      }
+    }
+
+    if (activeKit && hikeReadiness.missingItems.length > 0) {
+      hikeReadiness.missingItems.forEach((m, i) => {
+        if (i < 4) {
+          out.push({ id: `f-miss-${m.id}`, label: m.item_name, reason: 'Manquant au kit assigné au prochain départ', level: 'critique', category: 'Kit', source: 'donnée' });
+        }
+      });
+    }
+
+    const invNames = equipment.map((e) => `${e.name} ${e.category || ''}`.toLowerCase());
+    const hasKw = (kws: string[]) => kws.some((k) => invNames.some((n) => n.includes(k)));
+    const consumChecks: { label: string; kws: string[]; reason: string }[] = [
+      { label: 'Gaz / cartouche pour réchaud', kws: ['gaz', 'cartouche', 'réchaud', 'rechaud'], reason: 'Non détecté dans l\'inventaire — indispensable si cuisine au réchaud' },
+      { label: 'Pastilles de purification d\'eau', kws: ['pastille', 'purif', 'micropur'], reason: 'Autonomie eau — purifier en rando sans point d\'eau sûr' },
+      { label: 'Piles / batterie externe', kws: ['piles', 'pile ', 'batterie', 'powerbank', 'power bank'], reason: 'Sécurité électronique (frontale, GPS) — à charger' },
+      { label: 'Pharmacie (pansements, anti-douleur)', kws: ['pharmacie', 'pansement', 'trousse', 'secours'], reason: 'Essentiel en milieu isolé' },
+      { label: 'Crème solaire', kws: ['crème solaire', 'creme solaire', 'solaire'], reason: 'Protection UV — été ou altitude' },
+      { label: 'Répulsif anti-moustiques', kws: ['répulsif', 'repulsif', 'anti-moustique', 'moustique'], reason: 'Confort et santé en forêt / zones humides' },
+    ];
+    consumChecks.forEach((c) => {
+      out.push({
+        id: `f-con-${c.label.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}`,
+        label: c.label,
+        reason: hasKw(c.kws) ? 'Présent dans l\'inventaire' : c.reason,
+        level: hasKw(c.kws) ? 'pret' : 'conseille',
+        category: 'Consommables',
+        source: 'règle',
+      });
+    });
+
+    const docChecks = [
+      { label: 'Pièce d\'identité', reason: 'Obligatoire si déplacement hors zone résidence' },
+      { label: 'Assurance (annulation / rapatriement)', reason: 'Rarement emporté de tête — vérifier avant départ' },
+      { label: 'Argent liquide', reason: 'Souvent indispensable hors réseau' },
+      { label: 'Numéros d\'urgence', reason: 'A avoir à portée en cas de souci' },
+    ];
+    docChecks.forEach((d, i) => {
+      out.push({ id: `f-doc-${i}`, label: d.label, reason: d.reason, level: 'conseille', category: 'Documents', source: 'règle' });
+    });
+
+    if (activeHike) {
+      if (activeHike.isOvernight) {
+        out.push({ id: 'f-ctx-bivouac', label: 'Équipement bivouac (pauses, fil, lampe)', reason: `Nuit sur place (${(activeHike.nightsCount || 1) + 1} jours)`, level: 'verifier', category: 'Contexte départ', source: 'règle' });
+      }
+      if (activeHike.weather && typeof activeHike.weather.tempC === 'number' && activeHike.weather.tempC < 5) {
+        out.push({ id: 'f-ctx-cold', label: 'Couche chaude supplémentaire', reason: `${Math.round(activeHike.weather.tempC)} °C annoncés au prochain départ`, level: 'verifier', category: 'Contexte départ', source: 'donnée' });
+      }
+      if (activeHike.weather && typeof activeHike.weather.tempC === 'number' && activeHike.weather.tempC > 24) {
+        out.push({ id: 'f-ctx-hot', label: 'Hydratation & protection solaire', reason: `Temps chaud annoncé (${Math.round(activeHike.weather.tempC)} °C)`, level: 'verifier', category: 'Contexte départ', source: 'donnée' });
+      }
+    }
+
+    return out;
+  }, [alerts, activeKit, hikeReadiness, equipment, activeHike]);
+
+  const forgetCriticalCount = useMemo(
+    () => forgetItems.filter((i) => i.level === 'critique' || i.level === 'verifier').length,
+    [forgetItems]
   );
 
   const handleMarkReturned = async (item: UserEquipmentItem) => {
@@ -1005,6 +1150,15 @@ export default function MonMaterielCockpitPage() {
           </span>
           <button
             type="button"
+            onClick={() => { setExpandedWidget(id); triggerHaptic('light'); }}
+            title={`Agrandir le widget ${WIDGET_LABEL[id] || id}`}
+            aria-label={`Agrandir le widget ${WIDGET_LABEL[id] || id}`}
+            className="p-1.5 text-[#1C2620]/50 hover:text-[#2D5A3D] hover:bg-[#2D5A3D]/[0.08] rounded-lg transition-colors flex items-center justify-center"
+          >
+            <IconMaximize />
+          </button>
+          <button
+            type="button"
             onClick={() => {
               setVoirToutTab(moreTab);
               setVoirToutOpen(true);
@@ -1368,64 +1522,54 @@ export default function MonMaterielCockpitPage() {
         );
       }
 
-      case 'copilot':
+      case 'forget': {
+        const critical = forgetItems.filter((i) => i.level === 'critique' || i.level === 'verifier');
+        const done = forgetItems.filter((i) => forgetChecked.has(i.id)).length;
         return widgetShell(
-          'copilot',
-          <span className={aiStreaming ? 'animate-pulse' : ''}><IconSparkle /></span>,
-          'Copilote IA Équipement',
-          aiStreaming
-            ? 'Analyse en cours…'
-            : aiMode === 'live'
-            ? 'IA en ligne'
-            : aiMode === 'local'
-            ? 'Mode dégradé · analyse locale'
-            : 'Prêt à répondre',
-          'inventaire',
+          'forget',
+          <IconChecklist />,
+          'À ne pas oublier',
+          forgetCriticalCount > 0 ? `${forgetCriticalCount} élément(s) à vérifier` : 'Tout est en ordre',
+          'actions',
           <>
-            <div ref={aiScrollRef} className="flex-1 min-h-0 overflow-y-auto scrollbar-none space-y-2 pr-0.5 text-xs">
-              {aiResponse ? (
-                <div className="p-3 rounded-2xl bg-[#1C2620]/[0.04]0 border border-[#1C2620]/[0.08] shadow-inner">
-                  <p className="text-[#1C2620]/90 leading-relaxed whitespace-pre-wrap">{aiResponse}{aiStreaming && <span className="inline-block w-1.5 h-3 ml-0.5 bg-[#2D5A3D] animate-pulse align-middle" />}</p>
+            <div className="flex items-end justify-between gap-3 shrink-0">
+              <div>
+                <div className={`text-4xl font-extrabold font-mono leading-none ${forgetCriticalCount > 0 ? 'text-[#8C6A1A] drop-shadow-[0_0_14px_rgba(184,147,42,0.4)]' : 'text-[#2D5A3D]'}`}>
+                  {forgetCriticalCount}
                 </div>
-              ) : aiError ? (
-                <div className="p-2.5 rounded-xl bg-[#E76F51]/12 border border-[#E76F51]/30 text-xs text-[#C0532E]">{aiError}</div>
+                <p className="text-xs text-[#1C2620]/70 mt-2">
+                  {forgetCriticalCount > 0 ? 'critiques à vérifier' : `tout est prêt · ${done}/${forgetItems.length} cochés`}
+                </p>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-1.5 pr-0.5">
+              {forgetCriticalCount === 0 ? (
+                <p className="text-xs text-[#1C2620]/70 text-center py-4">Aucun élément critique ✨</p>
               ) : (
-                <div className="space-y-1.5">
-                  {['Optimise un pack bivouac sous 8 kg', 'Quel matériel alléger en priorité ?'].map((s) => (
+                critical.slice(0, 4).map((it) => (
+                  <div
+                    key={it.id}
+                    className="p-2 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs flex items-center justify-between gap-2"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-[#1C2620]/90 font-semibold truncate">{it.label}</p>
+                      <p className="text-[#1C2620]/60 truncate">{it.reason}</p>
+                    </div>
                     <button
-                      key={s}
                       type="button"
-                      onClick={() => runAi(s)}
-                      className="w-full text-left p-2 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/90 transition-all active:scale-[0.98]"
+                      onClick={() => toggleForgetChecked(it.id)}
+                      className={`w-5 h-5 rounded-md border shrink-0 flex items-center justify-center transition-all ${forgetChecked.has(it.id) ? 'bg-[#2D5A3D] border-[#2D5A3D] text-white' : 'border-[#1C2620]/30 text-transparent hover:border-[#1C2620]/60'}`}
+                      aria-label={forgetChecked.has(it.id) ? `Décocher ${it.label}` : `Cocher ${it.label}`}
                     >
-                      ✦ {s}
+                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12l5 5L20 7" /></svg>
                     </button>
-                  ))}
-                </div>
+                  </div>
+                ))
               )}
             </div>
-            <form
-              onSubmit={(e) => { e.preventDefault(); runAi(aiInput); setAiInput(''); }}
-              className="flex items-center gap-1.5 rounded-xl bg-white/50 border border-[#1C2620]/[0.09] px-2 py-1.5 shrink-0 mt-3"
-            >
-              <input
-                value={aiInput}
-                onChange={(e) => setAiInput(e.target.value)}
-                placeholder="Question au copilote…"
-                className="flex-1 bg-transparent text-xs text-[#1C2620] placeholder-[#1C2620]/40 focus:outline-none"
-                aria-label="Question IA"
-              />
-              <button
-                type="submit"
-                disabled={aiStreaming || !aiInput.trim()}
-                className="w-6 h-6 rounded-full bg-[#2D5A3D] text-white flex items-center justify-center text-xs font-bold disabled:opacity-40 transition-all active:scale-90"
-                aria-label="Envoyer"
-              >
-                ↑
-              </button>
-            </form>
           </>
         );
+      }
 
       case 'alerts': {
         const critical = alerts.filter((a) => a.kind === 'replace' || a.kind === 'expiry').length;
@@ -1520,6 +1664,561 @@ export default function MonMaterielCockpitPage() {
     }
   };
 
+  // ── Vues fullscreen détaillées (bouton « Agrandir » de chaque widget) ──
+  const FORGET_LEVEL_META: Record<string, { label: string; cls: string }> = {
+    critique: { label: 'Critique', cls: 'bg-[#9B2C2C]/10 text-[#9B2C2C] border-[#9B2C2C]/30' },
+    verifier: { label: 'À vérifier', cls: 'bg-[#8C6A1A]/10 text-[#8C6A1A] border-[#8C6A1A]/30' },
+    conseille: { label: 'Conseillé', cls: 'bg-[#2D5A3D]/10 text-[#2D5A3D] border-[#2D5A3D]/25' },
+    facultatif: { label: 'Facultatif', cls: 'bg-[#1C2620]/[0.06] text-[#1C2620]/70 border-[#1C2620]/[0.1]' },
+    pret: { label: 'Prêt ✓', cls: 'bg-[#2D5A3D]/10 text-[#2D5A3D] border-[#2D5A3D]/25' },
+  };
+  const FORGET_CATEGORY_ORDER = ['Kit', 'Péremptions', 'Entretien', 'Prêts', 'Consommables', 'Contexte départ', 'Documents'];
+
+  const renderExpandedWidget = (id: string): React.ReactNode => {
+    const title = WIDGET_LABEL[id] || id;
+    const closeBtn = (
+      <button
+        ref={expandedCloseRef}
+        type="button"
+        onClick={() => setExpandedWidget(null)}
+        className="w-9 h-9 rounded-full bg-[#1C2620]/[0.06] hover:bg-[#1C2620]/[0.1] border border-[#1C2620]/[0.1] flex items-center justify-center text-sm text-[#1C2620] shrink-0"
+        aria-label="Fermer (échap)"
+      >
+        ✕
+      </button>
+    );
+    const icons: Record<string, React.ReactNode> = {
+      weight: <IconScale />,
+      departure: <IconNav />,
+      condition: <IconActivity />,
+      forget: <IconChecklist />,
+      alerts: <IconBell />,
+      kits: <IconBackpack />,
+    };
+    const iconChip = (
+      <span className="w-9 h-9 rounded-xl bg-[#2D5A3D]/[0.08] border border-[#1C2620]/[0.08] flex items-center justify-center text-[#2D5A3D] shrink-0">
+        {icons[id] || null}
+      </span>
+    );
+
+    let subtitle = '';
+    let body: React.ReactNode = null;
+
+    if (id === 'weight') {
+      subtitle = `${equipment.length} articles · ${Math.round(totalValue)} €`;
+      const targetG = targetKg * 1000;
+      const ratio = targetG > 0 ? totalWeightG / targetG : 0;
+      const pct = Math.min(100, Math.round(ratio * 100));
+      const color = ratio <= 0.85 ? '#2D5A3D' : ratio <= 1 ? '#B8932A' : '#C0532E';
+      const heaviest = [...equipment]
+        .sort((a, b) => (b.weight_g || 0) * (b.quantity || 1) - (a.weight_g || 0) * (a.quantity || 1))
+        .slice(0, 6);
+      body = (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-3">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Synthèse du poids</h3>
+            <div className="flex items-end gap-4">
+              <div className="min-w-0">
+                <div className="text-5xl font-extrabold font-mono leading-none text-[#1C2620]">{formatWeight(totalWeightG)}</div>
+                <p className="text-xs text-[#1C2620]/70 mt-2">
+                  Objectif <strong style={{ color }}>{targetKg} kg</strong> · {pct}% de l&apos;objectif
+                </p>
+              </div>
+              <WeightGauge currentG={totalWeightG} targetKg={targetKg} />
+            </div>
+            <div className="h-2 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
+              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: color }} />
+            </div>
+            <div className="flex gap-1.5 flex-wrap">
+              {[6, 8, 10, 12, 14, 20].map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => { setTargetKg(t); triggerHaptic('light'); showToast(`Objectif ajusté à ${t} kg`, 'info'); }}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-colors ${targetKg === t ? 'bg-[#2D5A3D] text-white' : 'bg-white/50 text-[#1C2620]/80 border border-[#1C2620]/[0.1]'}`}
+                >
+                  {t} kg
+                </button>
+              ))}
+            </div>
+          </section>
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Répartition par catégorie</h3>
+            {categoryStats.length === 0 && <p className="text-xs text-[#1C2620]/60">Aucune donnée — ajoutez des articles</p>}
+            {categoryStats.map((c) => (
+              <div key={c.label} className="space-y-1">
+                <div className="flex items-center justify-between text-xs text-[#1C2620]/80">
+                  <span className="capitalize truncate">{c.label}</span>
+                  <span className="font-mono text-[#2D5A3D]">{formatWeight(c.grams)} ({c.pct}%)</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
+                  <div className="h-full rounded-full bg-[#2D5A3D]" style={{ width: `${c.pct}%` }} />
+                </div>
+              </div>
+            ))}
+          </section>
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2 lg:col-span-2">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Équipements les plus lourds</h3>
+            {heaviest.length === 0 && <p className="text-xs text-[#1C2620]/60">Inventaire vide</p>}
+            {heaviest.map((it) => (
+              <div key={it.id} className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs">
+                <div className="min-w-0">
+                  <p className="font-semibold text-[#1C2620] truncate">{it.name}</p>
+                  <p className="text-[#1C2620]/60">{it.brand || 'Outdoor'} · {it.category || 'Autre'}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="font-mono font-bold text-[#2D5A3D]">{formatWeight((it.weight_g || 0) * (it.quantity || 1))}</span>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedItemId(it.id); setExpandedWidget(null); setIsDetailDrawerOpen(true); }}
+                    className="px-2 py-1 rounded-lg bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] text-xs font-bold"
+                  >
+                    Fiche
+                  </button>
+                </div>
+              </div>
+            ))}
+            {kits.length > 0 && (
+              <p className="text-xs text-[#1C2620]/60">Kit(s) : {kits.map((k) => `${k.name} (${formatWeight(k.total_weight_g || 0)})`).join(' · ')}</p>
+            )}
+          </section>
+        </div>
+      );
+    } else if (id === 'departure') {
+      subtitle = 'Préparation de la prochaine sortie';
+      body = activeHike ? (
+        <div className="space-y-4">
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-3">
+            {(() => {
+              const d = daysUntil(activeHike.targetDate);
+              const imminent = d !== null && d >= 0 && d <= 3;
+              return (
+                <>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold font-mono ${d === null ? 'bg-white/50 text-[#1C2620]/70 border border-[#1C2620]/[0.1]' : d < 0 ? 'bg-white/50 text-[#1C2620]/60 border border-[#1C2620]/[0.1]' : imminent ? 'bg-[#8C6A1A] text-white shadow-[0_0_18px_rgba(184,147,42,0.5)]' : 'bg-[#2D5A3D]/10 text-[#2D5A3D] border border-[#2D5A3D]/25'}`}>
+                      {d === null ? 'Date à définir' : d < 0 ? `J+${Math.abs(d)}` : d === 0 ? "C'est aujourd'hui !" : `J-${d} jours`}
+                    </span>
+                    <span className="text-xs text-[#1C2620]/60">{formatDateRange(activeHike)}</span>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-extrabold text-[#1C2620]">{activeHike.name}</h3>
+                    <p className="text-xs text-[#1C2620]/70 mt-1">{activeHike.terrain || activeHike.season || 'Randonnée'}{activeHike.companions ? ` · ${activeHike.companions}` : ''}</p>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07]">
+                      <span className="block text-lg font-bold font-mono text-[#1C2620] leading-none">{activeHike.distanceKm}<span className="text-xs text-[#1C2620]/70 font-normal"> km</span></span>
+                      <span className="block text-xs text-[#1C2620]/70 mt-1">Distance</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07]">
+                      <span className="block text-lg font-bold font-mono text-[#1C2620] leading-none">+{activeHike.elevationGain || 0}<span className="text-xs text-[#1C2620]/70 font-normal"> m</span></span>
+                      <span className="block text-xs text-[#1C2620]/70 mt-1">Dénivelé D+</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07]">
+                      <span className="block text-lg font-bold font-mono text-[#1C2620] leading-none">{activeHike.isOvernight ? `${(activeHike.nightsCount || 1) + 1}` : '1'}<span className="text-xs text-[#1C2620]/70 font-normal"> j</span></span>
+                      <span className="block text-xs text-[#1C2620]/70 mt-1">Durée</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07]">
+                      <span className="block text-xs font-bold text-[#8C6A1A] truncate leading-none">{formatWeather(activeHike)}</span>
+                      <span className="block text-xs text-[#1C2620]/70 mt-1">Météo {formatTemp(activeHike)}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Link href={activeHike.routeId ? `/randonnee-active?routeId=${activeHike.routeId}` : '/randonnee-active'} onClick={() => setExpandedWidget(null)} className="px-4 py-2 rounded-full bg-[#2D5A3D] text-white font-bold text-xs">🚀 Démarrer</Link>
+                    <Link href={activeHike.routeId ? `/preparer-randonnee?routeId=${activeHike.routeId}` : '/explorer'} onClick={() => setExpandedWidget(null)} className="px-4 py-2 rounded-full bg-white/50 hover:bg-[#1C2620]/[0.06] text-[#1C2620] font-bold text-xs border border-[#1C2620]/[0.1]">Itinéraire</Link>
+                    <button type="button" onClick={() => handleDeleteHike(activeHike.id)} className="px-4 py-2 rounded-full bg-[#E76F51]/10 hover:bg-[#E76F51]/20 text-[#C0532E] font-bold text-xs border border-[#E76F51]/30">🗑️ Supprimer la sortie</button>
+                  </div>
+                </>
+              );
+            })()}
+          </section>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-3">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Kit pour ce départ</h3>
+              <select
+                value={activeHike.assignedKitId || ''}
+                onChange={(e) => handleAssignKitToHike(activeHike.id, e.target.value)}
+                className="w-full px-2.5 py-2 rounded-xl bg-white border border-[#1C2620]/[0.14] text-xs text-[#1C2620] focus:outline-none focus:border-[#2D5A3D] cursor-pointer"
+              >
+                {kits.length === 0 && <option value="">Aucun kit</option>}
+                {kits.map((k) => (
+                  <option key={k.id} value={k.id}>{k.name} ({formatWeight(k.total_weight_g || 0)})</option>
+                ))}
+              </select>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#1C2620]/80">Prêt : <strong className="text-[#1C2620]">{hikeReadiness.ownedCount}/{hikeReadiness.totalCount} articles</strong></span>
+                  <span className="font-mono font-bold text-[#2D5A3D]">{hikeReadiness.readinessPct}%</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
+                  <div className="h-full bg-[#2D5A3D] rounded-full transition-all duration-500" style={{ width: `${hikeReadiness.readinessPct}%` }} />
+                </div>
+              </div>
+              {hikeReadiness.missingItems.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-xs font-bold text-[#C0532E]">Articles manquants ({hikeReadiness.missingItems.length}) :</p>
+                  {hikeReadiness.missingItems.map((m) => (
+                    <div key={m.id} className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs">
+                      <span className="truncate text-[#1C2620]/90">{m.item_name}</span>
+                      <button
+                        type="button"
+                        onClick={() => { addToEquipment({ name: m.item_name, category: m.category || 'Autre', weight_g: m.weight_g || 100 }); showToast(`🎒 ${m.item_name} ajouté à votre inventaire`, 'success'); }}
+                        className="px-2.5 py-1 rounded-lg bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] text-xs font-bold shrink-0"
+                      >
+                        + Ajouter
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-3">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Recommandation & consommables</h3>
+              {departurePlan ? (
+                <>
+                  <div className="p-2.5 rounded-xl bg-[#2D5A3D]/[0.06] border border-[#2D5A3D]/25 text-xs">
+                    <span className="text-[#2D5A3D] font-mono uppercase font-bold block">Kit recommandé — score {departurePlan.suitabilityScore}/100</span>
+                    <p className="text-[#1C2620]/90 font-semibold mt-0.5">{recommendedKit ? recommendedKit.name : 'Kit auto-généré à partir de votre inventaire'}</p>
+                    {recommendedKit && recommendedKit.id !== activeKit?.id && (
+                      <button type="button" onClick={() => handleAssignKitToHike(activeHike.id, recommendedKit.id)} className="mt-2 px-3 py-1.5 rounded-full bg-[#2D5A3D] text-white text-xs font-bold">
+                        Utiliser ce kit
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {departurePlan.consumables.waterLiters > 0 && <span className="px-2 py-1 rounded-lg bg-white/50 border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/85">💧 {departurePlan.consumables.waterLiters.toFixed(1).replace('.', ',')} L d&apos;eau</span>}
+                    {departurePlan.consumables.foodMealsCount > 0 && <span className="px-2 py-1 rounded-lg bg-white/50 border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/85">🍽️ {departurePlan.consumables.foodMealsCount} repas</span>}
+                    <span className="px-2 py-1 rounded-lg bg-white/50 border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/85">🥨 {departurePlan.consumables.snacksCount} en-cas</span>
+                    {departurePlan.consumables.fuelGrams > 0 && <span className="px-2 py-1 rounded-lg bg-white/50 border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/85">🔥 {departurePlan.consumables.fuelGrams} g gaz</span>}
+                    <span className="px-2 py-1 rounded-lg bg-white/50 border border-[#8C6A1A]/25 text-xs text-[#8C6A1A]">{departurePlan.weatherSummary.advice}</span>
+                  </div>
+                </>
+              ) : (
+                <p className="text-xs text-[#1C2620]/60">Moteur de recommandation indisponible pour cette sortie</p>
+              )}
+            </section>
+          </div>
+
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Toutes les sorties ({plannedHikes.length})</h3>
+              <button type="button" onClick={() => { setExpandedWidget(null); setIsNewHikeModalOpen(true); }} className="text-xs font-bold text-[#2D5A3D] hover:underline">+ Planifier</button>
+            </div>
+            <div className="flex gap-2 overflow-x-auto scrollbar-none">
+              {plannedHikes.map((h) => (
+                <button
+                  key={h.id}
+                  type="button"
+                  onClick={() => handleSelectHike(h)}
+                  className={`px-3 py-1.5 rounded-xl text-left border shrink-0 transition-all ${h.id === activeHike.id ? 'bg-[#2D5A3D]/10 border-[#2D5A3D]/50 text-[#1C2620] font-bold' : 'bg-white/40 border-[#1C2620]/[0.07] text-[#1C2620]/70'}`}
+                >
+                  <span className="block text-xs truncate max-w-[140px]">{h.name}</span>
+                  <span className="text-xs font-mono text-[#2D5A3D]">{daysUntil(h.targetDate) !== null ? `J-${daysUntil(h.targetDate)}` : 'Date à définir'}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+      ) : (
+        <div className="h-full flex flex-col items-center justify-center gap-3 text-center py-16">
+          <span className="text-3xl block">🧭</span>
+          <p className="text-sm text-[#1C2620]/75 font-medium">Aucune sortie planifiée</p>
+          <button type="button" onClick={() => setIsNewHikeModalOpen(true)} className="px-5 py-2 rounded-full bg-[#2D5A3D] text-white font-bold text-xs">🧭 Planifier ma première sortie</button>
+        </div>
+      );
+    } else if (id === 'condition') {
+      subtitle = 'Santé et fiabilité de l&apos;équipement';
+      const ready = conditionStats.filter((s) => ['neuf', 'excellent', 'bon'].includes(s.key)).reduce((n, s) => n + s.count, 0);
+      const readyPct = equipment.length > 0 ? Math.round((ready / equipment.length) * 100) : 0;
+      const maintenance = alerts.filter((a) => a.kind === 'maintenance');
+      const expirations = alerts.filter((a) => a.kind === 'expiry');
+      const replacements = alerts.filter((a) => a.kind === 'replace');
+      const mostUsed = [...equipment].sort((a, b) => (b.usage_count || 0) - (a.usage_count || 0)).slice(0, 5);
+      body = (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-3">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Taux global de préparation</h3>
+            <div className="text-5xl font-extrabold font-mono leading-none text-[#2D5A3D]">{readyPct}%</div>
+            <p className="text-xs text-[#1C2620]/70">{ready}/{equipment.length} articles en bon état</p>
+            <div className="h-2 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
+              <div className="h-full bg-[#2D5A3D] rounded-full transition-all duration-500" style={{ width: `${readyPct}%` }} />
+            </div>
+            <div className="space-y-2 pt-1">
+              {conditionStats.length === 0 && <p className="text-xs text-[#1C2620]/60">Aucun article inventorié</p>}
+              {conditionStats.map((s) => {
+                const meta = CONDITION_META[s.key] || { label: s.key, color: '#2D5A3D', bg: '' };
+                const active = conditionFilter === s.key;
+                const pct = totalWeightG > 0 ? Math.round((s.weight / totalWeightG) * 100) : 0;
+                return (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => { triggerHaptic('light'); setConditionFilter(active ? 'all' : s.key); }}
+                    className={`w-full text-left p-2 rounded-xl border transition-all ${active ? 'bg-white/50 border-[#2D5A3D]/50' : 'bg-white/40 hover:bg-white/60 border-[#1C2620]/[0.07]'}`}
+                  >
+                    <div className="flex items-center justify-between text-xs text-[#1C2620]/80 mb-1">
+                      <span className="font-semibold capitalize truncate">{meta.label}</span>
+                      <span className="shrink-0 pl-2"><span className="font-mono text-[#1C2620] font-bold">{s.count}</span><span className="text-[#1C2620]/40"> · </span><span className="font-mono" style={{ color: meta.color }}>{formatWeight(s.weight)}</span></span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: meta.color }} />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="space-y-4">
+            <div className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">À traiter ({maintenance.length + expirations.length + replacements.length})</h3>
+              {maintenance.length + expirations.length + replacements.length === 0 && <p className="text-xs text-[#1C2620]/60">Aucune action requise ✨</p>}
+              {[...maintenance, ...expirations, ...replacements].slice(0, 8).map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => { setSelectedItemId(a.itemId); setExpandedWidget(null); setIsDetailDrawerOpen(true); }}
+                  className="w-full text-left p-2 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/85 flex items-center justify-between gap-2"
+                >
+                  <span className="truncate">{a.label}</span>
+                  <span className="text-[#2D5A3D] font-bold shrink-0">Voir ➔</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Prêts ({loanedItems.length})</h3>
+              {loanedItems.length === 0 && <p className="text-xs text-[#1C2620]/60">Aucun matériel prêté 🤝</p>}
+              {loanedItems.map((item) => (
+                <div key={item.id} className="p-2 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-[#1C2620]/90 font-semibold truncate">{item.name}</p>
+                    <p className="text-[#1C2620]/60 truncate">Prêté à {item.loan_to_name || 'un ami'}</p>
+                  </div>
+                  <button type="button" onClick={() => handleMarkReturned(item)} className="px-2.5 py-1 rounded-lg bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] text-xs font-bold shrink-0">Rendu ✓</button>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Le plus utilisé</h3>
+              {mostUsed.length === 0 && <p className="text-xs text-[#1C2620]/60">Aucune donnée d&apos;usage</p>}
+              {mostUsed.map((it) => (
+                <div key={it.id} className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs">
+                  <span className="truncate text-[#1C2620]/85">{it.name}</span>
+                  <span className="font-mono text-[#1C2620]/60 shrink-0">{it.usage_count || 0} sortie(s)</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      );
+    } else if (id === 'forget') {
+      subtitle = 'Checklist intelligente — données réelles + règles métier';
+      const critical = forgetItems.filter((i) => i.level === 'critique' || i.level === 'verifier');
+      body = (
+        <div className="space-y-4">
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-3">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <div className={`text-5xl font-extrabold font-mono leading-none ${critical.length > 0 ? 'text-[#8C6A1A]' : 'text-[#2D5A3D]'}`}>{critical.length}</div>
+                <p className="text-xs text-[#1C2620]/70 mt-2">{critical.length > 0 ? 'élément(s) à vérifier avant départ' : 'Tout est en ordre'}</p>
+              </div>
+              <div className="flex flex-wrap gap-1.5 justify-end">
+                <span className="px-2 py-1 rounded-lg bg-[#9B2C2C]/10 border border-[#9B2C2C]/30 text-xs font-mono text-[#9B2C2C]">Critique</span>
+                <span className="px-2 py-1 rounded-lg bg-[#8C6A1A]/10 border border-[#8C6A1A]/30 text-xs font-mono text-[#8C6A1A]">À vérifier</span>
+                <span className="px-2 py-1 rounded-lg bg-[#2D5A3D]/10 border border-[#2D5A3D]/25 text-xs font-mono text-[#2D5A3D]">Conseillé / Prêt</span>
+              </div>
+            </div>
+            <p className="text-xs text-[#1C2620]/60">
+              {forgetItems.filter((i) => i.source === 'donnée').length} recommandation(s) issues de vos données · {forgetItems.filter((i) => i.source === 'règle').length} règle(s) générique(s) de bon sens.
+            </p>
+          </section>
+
+          {FORGET_CATEGORY_ORDER.map((cat) => {
+            const items = forgetItems.filter((i) => i.category === cat);
+            if (items.length === 0) return null;
+            return (
+              <section key={cat} className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620] pb-1 border-b border-[#1C2620]/[0.05]">{cat} ({items.length})</h3>
+                {items.map((it) => {
+                  const meta = FORGET_LEVEL_META[it.level] || FORGET_LEVEL_META.conseille;
+                  const checked = forgetChecked.has(it.id);
+                  return (
+                    <div key={it.id} className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs flex items-start justify-between gap-2">
+                      <div className="min-w-0 space-y-0.5">
+                        <p className={`font-semibold truncate ${checked ? 'text-[#1C2620]/45 line-through' : 'text-[#1C2620]/90'}`}>{it.label}</p>
+                        <p className="text-[#1C2620]/60">{it.reason}</p>
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          <span className={`px-2 py-0.5 rounded-full border font-mono font-bold ${meta.cls}`}>{meta.label}</span>
+                          <span className="px-2 py-0.5 rounded-full bg-[#1C2620]/[0.05] border border-[#1C2620]/[0.08] font-mono text-[#1C2620]/60">{it.source === 'donnée' ? 'Vos données' : 'Règle générique'}</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => toggleForgetChecked(it.id)}
+                        className={`w-6 h-6 rounded-md border shrink-0 flex items-center justify-center transition-all ${checked ? 'bg-[#2D5A3D] border-[#2D5A3D] text-white' : 'border-[#1C2620]/30 text-transparent hover:border-[#1C2620]/60'}`}
+                        aria-label={checked ? `Décocher ${it.label}` : `Cocher ${it.label}`}
+                      >
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12l5 5L20 7" /></svg>
+                      </button>
+                    </div>
+                  );
+                })}
+              </section>
+            );
+          })}
+          {forgetItems.length === 0 && (
+            <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-6 text-center">
+              <p className="text-xs text-[#1C2620]/60">Aucune information à signaler pour le moment.</p>
+            </section>
+          )}
+        </div>
+      );
+    } else if (id === 'alerts') {
+      subtitle = 'Consolidation des alertes opérationnelles';
+      const kinds = [
+        { k: '', label: 'Toutes' },
+        { k: 'replace', label: 'Remplacer' },
+        { k: 'expiry', label: 'Périmé' },
+        { k: 'maintenance', label: 'Entretien' },
+        { k: 'loan', label: 'Prêt' },
+      ] as const;
+      const shown = alertFilter ? alerts.filter((a) => a.kind === alertFilter) : alerts;
+      body = (
+        <div className="space-y-4">
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-3">
+            <div className="text-5xl font-extrabold font-mono leading-none text-[#8C6A1A]">{alerts.length}</div>
+            <p className="text-xs text-[#1C2620]/70">{alerts.length === 0 ? 'Aucune alerte active' : 'alertes actives'}</p>
+            <div className="flex gap-1.5 flex-wrap">
+              {kinds.map((kind) => (
+                <button
+                  key={kind.k || 'all'}
+                  type="button"
+                  onClick={() => { triggerHaptic('light'); setAlertFilter(kind.k); }}
+                  className={`px-2.5 py-1 rounded-full text-xs font-bold ${alertFilter === kind.k ? 'bg-[#2D5A3D] text-white' : 'bg-white/50 text-[#1C2620]/80 border border-[#1C2620]/[0.1]'}`}
+                >
+                  {kind.label}
+                </button>
+              ))}
+            </div>
+          </section>
+          {shown.length === 0 ? (
+            <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-6 text-center">
+              <p className="text-xs text-[#1C2620]/60">Aucune alerte dans cette catégorie ✨</p>
+            </section>
+          ) : (
+            <div className="space-y-2">
+              {shown.map((a) => (
+                <div key={a.id} className="p-3 rounded-2xl bg-white/60 border border-[#1C2620]/[0.07] text-xs flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[#1C2620]/90 font-semibold truncate">{a.label}</p>
+                    <p className="text-[#1C2620]/60">
+                      {a.kind === 'maintenance' && 'Révision planifiée dépassée'}
+                      {a.kind === 'expiry' && 'Produit arrivé à péremption'}
+                      {a.kind === 'replace' && 'État dégradé — à réparer ou remplacer'}
+                      {a.kind === 'loan' && `Prêté à ${a.borrower || 'un ami'}`}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedItemId(a.itemId); setExpandedWidget(null); setIsDetailDrawerOpen(true); }}
+                    className="px-2.5 py-1 rounded-lg bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] text-xs font-bold shrink-0"
+                  >
+                    Corriger ➔
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    } else if (id === 'kits') {
+      subtitle = 'Création, édition, sélection et corbeille';
+      body = (
+        <div className="space-y-4">
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-5xl font-extrabold font-mono leading-none text-[#2D5A3D]">{kits.length}</div>
+                <p className="text-xs text-[#1C2620]/70 mt-2">kit(s) actifs · {formatWeight(kits.reduce((s, k) => s + (k.total_weight_g || 0), 0))}</p>
+              </div>
+              <div className="flex gap-2">
+                <button type="button" onClick={handleCreateNewKit} className="px-4 py-2 rounded-full bg-[#2D5A3D] text-white text-xs font-bold">+ Nouveau kit</button>
+                {trashCount > 0 && (
+                  <button type="button" onClick={() => { setExpandedWidget(null); setIsTrashModalOpen(true); }} className="px-4 py-2 rounded-full bg-white/50 border border-[#1C2620]/[0.1] text-[#1C2620]/80 text-xs font-bold">Corbeille ({trashCount})</button>
+                )}
+              </div>
+            </div>
+          </section>
+
+          <div className="grid gap-3 lg:grid-cols-2">
+            {kits.length === 0 && (
+              <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-6 text-center lg:col-span-2">
+                <p className="text-xs text-[#1C2620]/60">Aucun kit actif — créez votre premier kit.</p>
+              </section>
+            )}
+            {kits.map((kit) => {
+              const missing = activeKit?.id === kit.id ? hikeReadiness.missingItems.length : null;
+              return (
+                <section key={kit.id} className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-extrabold text-[#1C2620] truncate">{kit.name}</h3>
+                      <p className="text-xs text-[#1C2620]/60">{kit.items?.length || 0} articles · {kit.season || '3 saisons'}</p>
+                    </div>
+                    <span className="font-mono font-bold text-[#2D5A3D] shrink-0">{formatWeight(kit.total_weight_g || 0)}</span>
+                  </div>
+                  {missing !== null && (
+                    <p className="text-xs text-[#C0532E] font-semibold">{missing > 0 ? `${missing} élément(s) manquant(s) au kit du prochain départ` : 'Kit complet pour le prochain départ ✓'}</p>
+                  )}
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedKitForCockpit(kit); setExpandedWidget(null); setIsKitDrawerOpen(true); }}
+                      className="px-3 py-1.5 rounded-full bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] text-xs font-bold"
+                    >
+                      Ouvrir le kit
+                    </button>
+                    {activeHike && (
+                      <button
+                        type="button"
+                        onClick={() => { handleAssignKitToHike(activeHike.id, kit.id); showToast(`Kit « ${kit.name} » assigné au départ`, 'success'); }}
+                        disabled={activeHike.assignedKitId === kit.id}
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold disabled:opacity-50 ${activeHike.assignedKitId === kit.id ? 'bg-[#2D5A3D] text-white' : 'bg-white/50 border border-[#1C2620]/[0.1] text-[#1C2620]/80'}`}
+                      >
+                        {activeHike.assignedKitId === kit.id ? '✓ Assigné au départ' : 'Assigner au départ'}
+                      </button>
+                    )}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="fixed inset-0 z-[5000] flex flex-col bg-[#FBFAF6]/97 backdrop-blur-2xl animate-[fadeInUp_0.2s_ease_both]">
+        <div className="flex items-center justify-between gap-3 p-4 sm:p-5 border-b border-[#1C2620]/[0.08] bg-white/60 backdrop-blur-xl shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            {iconChip}
+            <div className="min-w-0">
+              <h2 className="text-sm font-extrabold uppercase tracking-wider text-[#1C2620] truncate">{title}</h2>
+              {subtitle && <p className="text-xs text-[#1C2620]/60 truncate">{subtitle}</p>}
+            </div>
+          </div>
+          {closeBtn}
+        </div>
+        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
+          <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-4">{body}</div>
+        </div>
+      </div>
+    );
+  };
+
   const renderWidgetFrame = (id: string) => {
     return (
       <div
@@ -1540,6 +2239,7 @@ export default function MonMaterielCockpitPage() {
   };
 
   return (
+    <>
     <div className="fixed inset-0 w-full bg-[#F5F3EE] text-[#1C2620] select-none font-sans flex flex-col overflow-hidden">
       <Header />
       <div className="h-full w-full flex flex-col pt-20 sm:pt-[88px] overflow-y-auto lg:overflow-hidden">
@@ -2097,6 +2797,60 @@ export default function MonMaterielCockpitPage() {
                       <span>🎒</span> Créer un nouveau kit
                     </button>
                   </section>
+
+                  <section className="pt-2 border-t border-[#1C2620]/[0.07] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620] flex items-center gap-1.5"><span className="text-[#2D5A3D]"><IconSparkle /></span> Assistance IA</h3>
+                      {aiMode === 'local' && (
+                        <span className="px-2 py-0.5 rounded-full bg-[#8C6A1A]/10 border border-[#8C6A1A]/30 text-xs font-mono font-bold text-[#8C6A1A]">Mode dégradé</span>
+                      )}
+                      {aiMode === 'live' && (
+                        <span className="px-2 py-0.5 rounded-full bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-xs font-mono font-bold text-[#2D5A3D]">IA en ligne</span>
+                      )}
+                    </div>
+                    <div ref={aiScrollRef} className="space-y-1.5 text-xs max-h-[180px] overflow-y-auto scrollbar-none pr-0.5">
+                      {aiResponse ? (
+                        <div className="p-3 rounded-2xl bg-white/50 border border-[#1C2620]/[0.08] shadow-inner">
+                          <p className="text-[#1C2620]/90 leading-relaxed whitespace-pre-wrap">{aiResponse}{aiStreaming && <span className="inline-block w-1.5 h-3 ml-0.5 bg-[#2D5A3D] animate-pulse align-middle" />}</p>
+                        </div>
+                      ) : aiError ? (
+                        <div className="p-2.5 rounded-xl bg-[#E76F51]/12 border border-[#E76F51]/30 text-xs text-[#C0532E]">{aiError}</div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {['Optimise un pack bivouac sous 8 kg', 'Quel matériel alléger en priorité ?'].map((s) => (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => runAi(s)}
+                              className="w-full text-left p-2 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/90 transition-all active:scale-[0.98]"
+                            >
+                              ✦ {s}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <form
+                      onSubmit={(e) => { e.preventDefault(); runAi(aiInput); setAiInput(''); }}
+                      className="flex items-center gap-1.5 rounded-xl bg-white/50 border border-[#1C2620]/[0.09] px-2 py-1.5"
+                    >
+                      <input
+                        value={aiInput}
+                        onChange={(e) => setAiInput(e.target.value)}
+                        placeholder="Question au copilote…"
+                        className="flex-1 bg-transparent text-xs text-[#1C2620] placeholder-[#1C2620]/40 focus:outline-none"
+                        aria-label="Question IA"
+                      />
+                      <button
+                        type="submit"
+                        disabled={aiStreaming || !aiInput.trim()}
+                        className="w-6 h-6 rounded-full bg-[#2D5A3D] text-white flex items-center justify-center text-xs font-bold disabled:opacity-40 transition-all active:scale-90"
+                        aria-label="Envoyer"
+                      >
+                        ↑
+                      </button>
+                    </form>
+                  </section>
                 </div>
               )}
             </div>
@@ -2414,12 +3168,17 @@ export default function MonMaterielCockpitPage() {
                       Suppr.
                     </button>
                   </div>
-                </div>
+</div>
               ))}
             </div>
           </div>
         </div>
       )}
     </div>
+
+      {/* ═══ VUE FULLSCREEN D'UN WIDGET (bouton Agrandir) — hors root stacking context ═══ */}
+      {expandedWidget !== null && renderExpandedWidget(expandedWidget)}
+    </>
   );
 }
+

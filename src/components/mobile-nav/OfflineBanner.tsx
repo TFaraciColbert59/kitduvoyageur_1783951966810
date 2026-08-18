@@ -35,14 +35,13 @@ export default function OfflineBanner() {
           transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
           role="status"
           aria-live="polite"
-          className="md:hidden"
+          className="flex md:hidden"
           style={{
             position: 'fixed',
             top: 'calc(env(safe-area-inset-top) + 60px)',
             left: '12px',
             right: '12px',
             zIndex: 55,
-            display: 'flex',
             alignItems: 'center',
             gap: '10px',
             padding: '10px 14px',

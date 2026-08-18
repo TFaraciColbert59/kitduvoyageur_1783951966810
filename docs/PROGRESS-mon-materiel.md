@@ -135,3 +135,28 @@ Transformer `src/app/mon-materiel/page.tsx` en véritable cockpit dashboard **sa
 - **Format localStorage `lkdv_planned_hikes` :** si de vieilles sorties v1 (dateRange) existent déjà, elles s'affichent avec « Date à définir » mais ne plantent pas — la normalisation laisse le temps aux utilisateurs de les supprimer/recréer. L'écriture utilise désormais systématiquement le format v2.
 - **Annulation de l'API IA :** sans clé/provider la route renvoie une erreur → fallback local garantit une réponse utile, l'UI n'est jamais bloquée.
 - **Composants morts** de l'ancienne vue sidebar restent dans `src/components/inventaire/` (passage futur).
+
+---
+
+## 🆕 Lot « 6 widgets PC + À ne pas oublier + vues fullscreen Agrandir » (2026-08-18)
+
+> **Contexte :** spécification complète « REFONTE PC DU COCKPIT » — 6 widgets uniquement, disposition 3+3 asymétrique, widget « À ne pas oublier » remplaçant le Copilote IA, bouton **Agrandir** par widget ouvrant une **vue fullscreen spécialisée**, drag & drop persistant. Thème conservé : **clair + photo voilée** (choix utilisateur).
+
+### Notes .obsidian consultées (source de conception)
+- `02 — 🧩 ÉCOSYSTÈME/Inventaire.md` — module unifié, 5 catégories structurantes, alertes `evaluateGearAlerts()`, entretien/prêt/péremption, fiche tiroir.
+- `07 — 🛒 COMMERCE/Kits.md` — kits clé en main, poids, composition.
+- Retenus : le poids par catégorie, l'état/usure/maintenance/prêt/péremption comme source des alertes, le kit ↔ randonnée.
+- Écartés : « points & récompenses » (+10 XP…), « scan code-barres » (non implémentés), comptes rendus de boutiques (hors cockpit).
+
+### Changements
+- **Widgets :** `Copilote IA` → **« À ne pas oublier »** (large, rang 2) : checklist intelligente priorisée (niveaux Critique / À vérifier / Conseillé / Prêt), calculée à partir des **données réelles** (alertes maintenance/péremption/remplacement/prêt, manquants du kit assigné, météo du prochain départ) + **règles génériques explicites** (consommables, documents) **marquées comme telles** dans l'UI (« Vos données » / « Règle générique »). Coche persistée en `localStorage` (`lkdv_forget_checked`).
+- **Copilote IA conservé mais relégué** (décision documentée) : déplacé dans le drawer « Tout voir » → onglet **Actions → Assistance IA** (streaming + fallback « Mode dégradé » inchangés).
+- **Bouton Agrandir** sur chaque widget, **à côté du drag handle** (`aria-label` explicite) → **6 vues fullscreen** spécialisées : Analyse du poids · Préparation du départ (plannedHikes + SmartDepartureEngine + kit + manquants + consommables + checklist) · Santé de l'équipement (readiness, entretien, péremptions, prêts, usage) · Checklist intelligente (groupée par domaine, source donnée/règle, coche persistée) · Centre d'alertes (filtres par type) · Gestion des kits (ouverture, création, corbeille, assignation au départ).
+- **Fullscreen technique :** `fixed inset-0 z-[5000]` **hors du stacking-context de la page** (sibling du root) pour dominer le chrome global ; **Escape** ferme, **focus** posé sur le bouton de fermeture, scroll interne seul, `prefers-reduced-motion` respecté.
+- **Bug global corrigé (cause racine) :** `OfflineBanner` forçait `display:flex` en inline, invalidant son `md:hidden` → la bannière mobile « Hors ligne » recouvrait tout l'écran desktop et interceptait les clics des overlays. Correction : `className="flex md:hidden"` + suppression du `display` inline.
+- `DEFAULT_WIDGET_ORDER` passe à `['weight','departure','condition','forget','alerts','kits']` — un ancien ordre localStorage contenant `copilot` est invalidé et **restauré à l'ordre par défaut** (robustesse demandée).
+
+### Validation
+- `tsc --noEmit` 0 erreur · `npm run lint` 0 warning page · `npm run build` OK (route `/mon-materiel` 47,1 kB).
+- **Playwright 25/25 :** 6 widgets (Copilote IA absent) · sans scroll · 6 boutons Agrandir · les **6 fullscreen s'ouvrent/se ferment (Escape)** · focus sur « Fermer (échap) » · réordonnancement + persistance · checklist cochée persistée (`lkdv_forget_checked`) · Assistance IA dans le drawer (fallback badge+texte) · mobile 380 px sans overflow · 0 erreur console hors fallback IA attendu · 0 HTTP ≥ 400.
+- ⚠️ Erreur console attendue : `/api/ai/chat-completion` log un 404 fournisseur sans clé Gemini avant de basculer en « Mode dégradé » (comportement existant).
