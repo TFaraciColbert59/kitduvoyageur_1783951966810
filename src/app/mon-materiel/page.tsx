@@ -1560,7 +1560,7 @@ export default function MonMaterielCockpitPage() {
           priority
           sizes="100vw"
           className="object-cover object-center"
-          style={{ filter: 'blur(12px) saturate(1.08) brightness(1.06)' }}
+          style={{ filter: 'blur(12px) saturate(1.08) brightness(1.06)', opacity: 0.05 }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#F5F3EE]/90 via-[#FBFAF6]/80 to-[#F5F3EE]/92" />
         <div
