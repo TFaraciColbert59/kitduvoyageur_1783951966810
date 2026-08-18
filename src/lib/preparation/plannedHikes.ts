@@ -22,6 +22,10 @@ export interface PlannedHike {
   targetDate: string; // YYYY-MM-DD
   createdAt: string;
   weather?: any;
+  /** Kit LKDV assigné à cette sortie (affiché et sélectionnable depuis Mon Matériel). */
+  assignedKitId?: string;
+  /** Compagnons de sortie (informational, saisi dans le cockpit). */
+  companions?: string;
 }
 
 const STORAGE_KEY = 'lkdv_planned_hikes';
@@ -128,4 +132,34 @@ export function setActivePlannedHikeId(id: string) {
       localStorage.setItem(ACTIVE_HIKE_KEY, id);
     } catch {}
   }
+}
+
+function persist(all: PlannedHike[]): PlannedHike[] {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    } catch {}
+  }
+  return all;
+}
+
+/** Met à jour partiellement une randonnée planifiée (ex. kit assigné, compagnons). */
+export function updatePlannedHike(id: string, patch: Partial<Omit<PlannedHike, 'id' | 'createdAt'>>): PlannedHike[] {
+  const all = getPlannedHikes().map((h) => (h.id === id ? { ...h, ...patch } : h));
+  persist(all);
+  return all;
+}
+
+/** Supprime une randonnée planifiée. */
+export function removePlannedHike(id: string): PlannedHike[] {
+  const all = getPlannedHikes().filter((h) => h.id !== id);
+  persist(all);
+  if (typeof window !== 'undefined') {
+    try {
+      if (localStorage.getItem(ACTIVE_HIKE_KEY) === id) {
+        localStorage.removeItem(ACTIVE_HIKE_KEY);
+      }
+    } catch {}
+  }
+  return all;
 }

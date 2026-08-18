@@ -86,7 +86,7 @@ export default function AddEditGearModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in font-sans">
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in font-sans">
       <div className="bg-white rounded-[0.75rem] w-full max-w-lg shadow-2xl overflow-hidden animate-slide-up flex flex-col max-h-[90vh] active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
         
         {/* Modal Header */}

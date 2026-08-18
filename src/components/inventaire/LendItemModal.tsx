@@ -52,7 +52,7 @@ export default function LendItemModal({ isOpen, onClose, item, onSaveLoan, onSav
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in font-sans">
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in font-sans">
       <div className="bg-white rounded-[0.75rem] w-full max-w-md shadow-2xl overflow-hidden p-6 space-y-5 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
         <div className="flex justify-between items-center border-b border-[#E8E4D8] pb-4">
           <div>

@@ -21,6 +21,7 @@ interface GearDetailDrawerProps {
   onEdit: (item: UserEquipmentItem) => void;
   onDelete: (id: string) => void;
   onUpdateNotes?: (gearId: string, notes: string) => Promise<void>;
+  onAddToKit?: (item: UserEquipmentItem) => void;
   onLend?: (item: UserEquipmentItem) => void;
   onToggleFavorite?: (id: string) => void;
   onAddToCart?: (item: any) => void;
@@ -33,6 +34,7 @@ export default function GearDetailDrawer({
   onEdit,
   onDelete,
   onUpdateNotes,
+  onAddToKit,
   onLend,
   onToggleFavorite,
   onAddToCart,
@@ -79,7 +81,7 @@ export default function GearDetailDrawer({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-stretch sm:justify-end font-sans">
+        <div className="fixed inset-0 z-[1050] flex items-end sm:items-stretch sm:justify-end font-sans">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -255,7 +257,7 @@ export default function GearDetailDrawer({
                   <ItemHero
                     item={adaptedData}
                     onEdit={() => onEdit(item)}
-                    onAddToKit={() => {}}
+                    onAddToKit={() => onAddToKit && onAddToKit(item)}
                     onLend={() => onLend && onLend(item)}
                     onToggleFavorite={() => onToggleFavorite && onToggleFavorite(item.id)}
                   />

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -239,7 +239,7 @@ export const FALLBACK_AUTHENTIC_PRODUCTS: UnifiedProduct[] = [
     category_main: 'Navigation',
     weight_g: 100,
     price_eur: 399,
-    image: 'https://images.unsplash.com/photo-1508873696983-2df5293cb32b?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1551524559-8af4e6624178?w=600&q=80',
     image_alt: 'Balise satellite Garmin inReach Mini 2',
     rating: 4.9,
     review_count: 145,
@@ -293,7 +293,7 @@ export const FALLBACK_AUTHENTIC_PRODUCTS: UnifiedProduct[] = [
     category_main: 'Autre',
     weight_g: 180,
     price_eur: 29.99,
-    image: 'https://images.unsplash.com/photo-1609592424109-dd9892f1b177?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=600&q=80',
     image_alt: 'Batterie externe Anker 10000mAh',
     rating: 4.8,
     review_count: 640,
@@ -444,7 +444,7 @@ const INITIAL_AUTHENTIC_GUEST_EQUIPMENT: UserEquipmentItem[] = [
     usage_count: 8,
     notes: 'Abonnement satellite actif. Synchronisé avec l\'app Garmin Explore.',
     is_favorite: true,
-    image: 'https://images.unsplash.com/photo-1508873696983-2df5293cb32b?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1551524559-8af4e6624178?w=600&q=80',
   },
   {
     id: 'gear-opinel-8',
@@ -489,7 +489,7 @@ const INITIAL_AUTHENTIC_GUEST_EQUIPMENT: UserEquipmentItem[] = [
     source: 'achat',
     usage_count: 35,
     notes: 'Permet 2.5 recharges de smartphone et 4 recharges de frontale.',
-    image: 'https://images.unsplash.com/photo-1609592424109-dd9892f1b177?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=600&q=80',
   },
 ];
 
