@@ -1,8 +1,46 @@
 # 📋 Suivi d'Avancement — Cockpit « Mon Équipement » Dashboard Sans Sidebar
 
-> **Branche :** `feat/mon-materiel-cockpit-dashboard-final` (créée depuis `origin/refonte-cockpit-liquid-glass-mon-materiel`)
+> **Branche :** `feat/mon-materiel-cockpit-polestar` (créée depuis `feat/mon-materiel-cockpit-dashboard-final`, PR #23)
 > **Cible :** `src/app/mon-materiel/page.tsx`
-> **Statut :** ✅ Terminé — page cockpit dashboard sans sidebar, cards enrichies, toutes les fonctionnalités branchées sur l'existant.
+> **Statut :** 🚧 Lot 6 modules Polestar — refonte du cockpit en dashboard automobile à 6 widgets, drag & drop persistant, drawer « Tout voir ».
+
+---
+
+## 🆕 Lot « Cockpit 6 Modules — Style Polestar/Automotive » (2026-08-18)
+
+### Direction visuelle
+- **Fond sombre sobre sans photo** : la photo `hero-misty.jpg` est supprimée du fond → `#0B1F17` uni + 2 halos radiaux très subtils (sage/ambre). Liquid glass conservé sur les widgets.
+- **Une valeur dominante par widget** (`text-4xl`/`text-5xl`, `font-mono` extrabold) : Poids du pack · Compte à rebours J-X · % matériel en bon état · nombre d'alertes · nombre de kits.
+- **Plancher typographique `text-xs`** : tous les `text-[9px]`/`text-[10px]`/`text-[11px]` de la page sont supprimés (labels secondaires ≥ 12px, `text-white/60`→`/70` pour le contraste WCAG AA).
+- **Glow réservé aux états actifs** : départ imminent (J≤3, ombre ambre), alertes présentes (chiffre ambre lumineux), Copilote en streaming (icône pulse).
+- **Icônes fortes monochromes** (SVG inline : balance, navigation, activité, sparkle, cloche, sac à dos) — pas d'emoji dans les en-têtes.
+
+### Layout 6 modules (grille asymétrique, 2 rangs, sans scroll de page)
+- `grid-cols-4` (desktop) + `grid-flow-dense` + `auto-rows-fr` + `flex-1 min-h-0` : **Rang 1 = [Poids] [Prochain départ ×2] [État du matériel]** · **Rang 2 = [Copilote IA ×2] [Alertes] [Kits]**.
+- La somme des spans = 8 unités = 2 rangs pleins : `grid-flow-dense` garantit **2 rangs exactement** quel que soit l'ordre choisi par l'utilisateur (aucun trou, aucune colonne vide).
+- Mobile : `grid-cols-2`, les petits modules s'apparient (Poids+État / Alertes+Kits), les LARGE occupent toute la ligne ; le wrapper mobile scroll (comportement précédent conservé), desktop reste `overflow-hidden` (vérifié 1280→1920 px).
+
+### Drag & drop réordonnable + persistance
+- Poignée `⠿` sur chaque en-tête de module : HTML5 DnD natif (pas de dépendance), highlight du module cible (ring sage), reorder via `splice`.
+- **Persistance `localStorage`** : clé `lkdv_cockpit_widget_order` (chargée après hydration pour éviter le mismatch SSR #418, écriture après chargement).
+- **Accessible** : l'onglet **Réglages** du drawer liste les 6 modules avec ▲▼ (clavier/tactile) + « ↺ Réinitialiser la disposition ».
+
+### Drawer « Tout voir » (`z-[1040]`, sous les overlays 1050/1100)
+Héberge toutes les fonctionnalités reléguées, organisées en 4 onglets :
+- **Inventaire** : recherche, catégories, marques, favoris, filtre état, sélection multiple/bulk, édition inline poids/qté, comparateur 2 articles, répartition par catégorie, ajout d'article, fiche → `GearDetailDrawer` (clique ligne ouvre la fiche).
+- **Prêts & Alertes** : alertes opérationnelles (→ fiche), prêts avec « Rendu ✓ » réel, corbeille des kits.
+- **Réglages** : objectif de poids (5–20 kg), ordre des modules (▲▼ + reset), réinitialiser filtres, Mon Profil.
+- **Actions** : navigation (Explorer, Configurateur IA, Rapport Kit, Jumeau 3D) + actions rapides (ajout article, planifier sortie, nouveau kit).
+
+### Évolutions du code
+- `src/app/mon-materiel/page.tsx` : refonte complète du rendu — les 3 bandes 46/30/24 sont remplacées par la grille 6 modules ; la card « Fiche outil active » et ses `SpecTile` sont retirées (la fiche vit désormais dans `GearDetailDrawer`) ; la modale Réglages (⚙️) est remplacée par l'onglet Réglages du drawer ; toast monté à `z-[1200]` pour rester visible au-dessus du drawer.
+- Suppression du warning `refreshHikes` inutilisé ; `handleToggleFavorite` enveloppé dans `useCallback` (deps du raccourci clavier stables).
+- `WeightGauge` : labels internes passés en `text-xs`.
+
+### Validation
+- `tsc --noEmit` = 0 erreur · `npm run lint` = aucun warning sur `mon-materiel/page.tsx` · `npm run build` = succès (route `/mon-materiel` 39,8 kB, en baisse).
+- **Playwright (15/16) :** 6 widgets visibles ✅ · aucun scroll de page 1440×900 ✅ · 6 poignées DnD ✅ · drawer « Tout voir » (4 onglets, Inventaire par défaut) ✅ · clic article → fiche ✅ · réordonnancement ▲ + persistance localStorage + restore après reload ✅ · reset disposition ✅ · **drag & drop HTML5 natif réordonne + persiste** (departure→weight) ✅ · Copilote IA fallback local (badge « Mode dégradé » + réponse) ✅ · mobile 380 px sans débordement horizontal, 6/6 widgets ✅ · aucune réponse HTTP ≥ 400 ✅.
+- ⚠️ **1 erreur console attendue :** en absence de clé Gemini, la route `/api/ai/chat-completion` log `API Route Error` (404 fournisseur) puis l'UI bascule proprement en « Mode dégradé » (fallback local) — comportement existant, non bloquant.
 
 ---
 

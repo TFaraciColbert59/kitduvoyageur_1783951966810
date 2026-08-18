@@ -35,6 +35,24 @@ import {
 // Constants & Helpers
 // ─────────────────────────────────────────────────────────────
 const PLANNED_HIKES_STORAGE_KEY = 'lkdv_planned_hikes';
+const WIDGET_ORDER_KEY = 'lkdv_cockpit_widget_order';
+const DEFAULT_WIDGET_ORDER = ['weight', 'departure', 'condition', 'copilot', 'alerts', 'kits'];
+const WIDGET_SPAN: Record<string, string> = {
+  weight: 'col-span-1 lg:col-span-1',
+  departure: 'col-span-2 lg:col-span-2',
+  condition: 'col-span-1 lg:col-span-1',
+  copilot: 'col-span-2 lg:col-span-2',
+  alerts: 'col-span-1 lg:col-span-1',
+  kits: 'col-span-1 lg:col-span-1',
+};
+const WIDGET_LABEL: Record<string, string> = {
+  weight: 'Poids du pack',
+  departure: 'Prochain départ',
+  condition: 'État du matériel',
+  copilot: 'Copilote IA',
+  alerts: 'Alertes & entretien',
+  kits: 'Kits & sacs',
+};
 
 function formatWeight(g: number): string {
   if (g >= 1000) {
@@ -190,14 +208,70 @@ function WeightGauge({ currentG, targetKg }: { currentG: number; targetKg: numbe
         <span className="text-xs font-bold font-mono" style={{ color }}>
           {(currentG / 1000).toFixed(1)}
         </span>
-        <span className="text-[8px] text-white/50 font-mono">/ {targetKg} kg</span>
+        <span className="text-xs text-white/60 font-mono">/ {targetKg} kg</span>
       </div>
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────
-// Main Page Component — Dashboard Cockpit Sans Sidebar
+// Cockpit icons (Polestar automotive — strong, monochrome)
+// ─────────────────────────────────────────────────────────────
+function IconScale() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 3v4M9 7h6M12 7l5 13H7l5-13Z" />
+      <path d="M5 20h14" />
+    </svg>
+  );
+}
+
+function IconNav() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M15.5 8.5l-2 5-5 2 2-5 5-2Z" />
+    </svg>
+  );
+}
+
+function IconActivity() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M3 12h4l2-7 4 14 2-7h6" />
+    </svg>
+  );
+}
+
+function IconSparkle() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z" />
+      <path d="M19 15l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7.7-2Z" />
+    </svg>
+  );
+}
+
+function IconBell() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" />
+      <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+    </svg>
+  );
+}
+
+function IconBackpack() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M6 9a6 6 0 0 1 12 0v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V9Z" />
+      <path d="M9 6a3 3 0 0 1 6 0M8 14h8M8 18h8" />
+    </svg>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Main Page Component — Cockpit Polestar 6 Modules (Sans Sidebar)
 // ─────────────────────────────────────────────────────────────
 export default function MonMaterielCockpitPage() {
   const { triggerHaptic } = useHapticFeedback();
@@ -240,10 +314,6 @@ export default function MonMaterielCockpitPage() {
   // Chargé après hydration pour rester cohérent avec le SSR (pattern identique aux hooks équipement/kits).
   const [plannedHikes, setPlannedHikes] = useState<PlannedHike[]>([]);
 
-  const refreshHikes = useCallback(() => {
-    setPlannedHikes(getPlannedHikes());
-  }, []);
-
   useEffect(() => {
     const all = getPlannedHikes();
     setPlannedHikes(all);
@@ -279,9 +349,44 @@ export default function MonMaterielCockpitPage() {
   const [isKitDrawerOpen, setIsKitDrawerOpen] = useState(false);
   const [selectedKitForCockpit, setSelectedKitForCockpit] = useState<CustomKit | null>(null);
   const [isLendModalOpen, setIsLendModalOpen] = useState(false);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isNewHikeModalOpen, setIsNewHikeModalOpen] = useState(false);
   const [isTrashModalOpen, setIsTrashModalOpen] = useState(false);
+
+  // Cockpit Polestar — ordre des 6 modules (drag & drop + persistance localStorage)
+  const [widgetOrder, setWidgetOrder] = useState<string[]>(DEFAULT_WIDGET_ORDER);
+  const [widgetOrderLoaded, setWidgetOrderLoaded] = useState(false);
+  const [voirToutOpen, setVoirToutOpen] = useState(false);
+  const [voirToutTab, setVoirToutTab] = useState<'inventaire' | 'prets' | 'reglages' | 'actions'>('inventaire');
+  const [dragWidget, setDragWidget] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(WIDGET_ORDER_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (
+          Array.isArray(parsed) &&
+          parsed.length === DEFAULT_WIDGET_ORDER.length &&
+          DEFAULT_WIDGET_ORDER.every((w) => parsed.includes(w))
+        ) {
+          setWidgetOrder(parsed as string[]);
+        }
+      }
+    } catch {
+      /* ignore malformed localStorage */
+    }
+    setWidgetOrderLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!widgetOrderLoaded) return;
+    try {
+      window.localStorage.setItem(WIDGET_ORDER_KEY, JSON.stringify(widgetOrder));
+    } catch {
+      /* ignore quota errors */
+    }
+  }, [widgetOrder, widgetOrderLoaded]);
 
   // New Hike Form state
   const [newHikeName, setNewHikeName] = useState('');
@@ -514,13 +619,16 @@ export default function MonMaterielCockpitPage() {
   };
 
   // Toggle favorite
-  const handleToggleFavorite = async (item: UserEquipmentItem, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    triggerHaptic('light');
-    const nextState = !item.is_favorite;
-    await updateEquipment(item.id, { is_favorite: nextState });
-    showToast(nextState ? `❤️ ${item.name} ajouté aux favoris` : `Retiré des favoris`, 'info');
-  };
+  const handleToggleFavorite = useCallback(
+    async (item: UserEquipmentItem, e?: React.MouseEvent) => {
+      e?.stopPropagation();
+      triggerHaptic('light');
+      const nextState = !item.is_favorite;
+      await updateEquipment(item.id, { is_favorite: nextState });
+      showToast(nextState ? `❤️ ${item.name} ajouté aux favoris` : `Retiré des favoris`, 'info');
+    },
+    [updateEquipment, triggerHaptic, showToast]
+  );
 
   // Inline edit save
   const startInlineEdit = (item: UserEquipmentItem, e: React.MouseEvent) => {
@@ -640,6 +748,65 @@ export default function MonMaterielCockpitPage() {
     setSelectedHikeId(h.id);
     setActivePlannedHikeId(h.id);
     if (h.assignedKitId) setSelectedKitId(h.assignedKitId);
+  };
+
+  // Créer un nouveau kit (réutilisé par le widget Kits et l'onglet Actions)
+  const handleCreateNewKit = async () => {
+    triggerHaptic('success');
+    const created = await createKit({
+      name: `Nouveau Kit #${kits.length + 1}`,
+      description: 'Kit sur-mesure pour expédition',
+      for_destination: 'Haute Montagne',
+      season: 'Été',
+      activity: 'Trek',
+      source: 'manuel',
+      gearItems: [],
+    });
+    if (created) {
+      setSelectedKitForCockpit(created);
+      setIsKitDrawerOpen(true);
+      showToast(`Kit « ${created.name} » créé !`, 'success');
+    }
+  };
+
+  // ── Drag & drop : réordonner les 6 modules ──
+  const handleGripDragStart = (id: string) => (e: React.DragEvent) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', id);
+    setDragWidget(id);
+  };
+  const handleGripDragEnd = () => {
+    setDragWidget(null);
+    setDragOverId(null);
+  };
+  const handleDropOn = (targetId: string) => {
+    if (!dragWidget || dragWidget === targetId) return;
+    setWidgetOrder((prev) => {
+      const next = [...prev];
+      const from = next.indexOf(dragWidget);
+      const to = next.indexOf(targetId);
+      next.splice(from, 1);
+      next.splice(to, 0, dragWidget);
+      return next;
+    });
+    triggerHaptic('selection');
+    setDragWidget(null);
+    setDragOverId(null);
+  };
+  const moveWidget = (id: string, dir: -1 | 1) => {
+    setWidgetOrder((prev) => {
+      const idx = prev.indexOf(id);
+      const to = idx + dir;
+      if (idx < 0 || to < 0 || to >= prev.length) return prev;
+      const next = [...prev];
+      next.splice(to, 0, next.splice(idx, 1)[0]);
+      return next;
+    });
+    triggerHaptic('light');
+  };
+  const resetWidgetOrder = () => {
+    setWidgetOrder([...DEFAULT_WIDGET_ORDER]);
+    showToast('Disposition des modules réinitialisée', 'info');
   };
 
   // Local AI Expert generator (instant fallback when offline or no API key)
@@ -796,633 +963,198 @@ export default function MonMaterielCockpitPage() {
 
   const enterAnim = prefersReducedMotion ? '' : 'motion-safe:animate-[fadeInUp_0.4s_ease_both]';
 
-  return (
-    <div className="fixed inset-0 w-full bg-[#0B1F17] text-white select-none font-sans flex flex-col overflow-hidden">
-      <Header />
-      <div className="h-full w-full flex flex-col pt-20 sm:pt-[88px] overflow-y-auto lg:overflow-hidden">
-      <style>{`
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-        .scrollbar-none::-webkit-scrollbar { display: none; }
-        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
-        @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
-        html, body { overflow: hidden !important; }
-      `}</style>
-
-      {/* ═══ BACKGROUND — alpine trek landscape ═══ */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <Image
-          src="/assets/images/hero-misty.jpg"
-          alt="Paysage de montagne — trek alpin"
-          fill
-          priority
-          sizes="100vw"
-          className={`object-cover object-center scale-[1.15] ${prefersReducedMotion ? '' : 'motion-safe:animate-[fadeInUp_1.2s_ease_both]'}`}
-          style={{ filter: 'blur(32px) saturate(1.15)' }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0B1F17]/75 via-[#0B1F17]/60 to-[#0B1F17]/88" />
-        <div
-          className="absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse at 50% 25%, transparent 20%, rgba(11,31,23,0.92) 100%)' }}
-        />
-      </div>
-
-      {/* ═══ FLOATING TOAST NOTIFICATION ═══ */}
-      {toastMessage && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-full border border-[#A3C4A3]/50 bg-[#0B1F17]/90 text-white text-xs font-semibold backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_20px_rgba(163,196,163,0.3)] flex items-center gap-2 animate-[fadeInUp_0.25s_ease_both]"
-        >
-          <span className="w-2 h-2 rounded-full bg-[#A3C4A3] animate-pulse" />
-          <span>{toastMessage.text}</span>
+  // ── Widget shells (en-tête commun + corps des 6 modules) ──
+  const widgetShell = (
+    id: string,
+    icon: React.ReactNode,
+    title: string,
+    subtitle: string,
+    moreTab: 'inventaire' | 'prets' | 'reglages' | 'actions',
+    children: React.ReactNode
+  ) => (
+    <div className="h-full flex flex-col p-3.5 min-h-0">
+      <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-white/10 shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="w-7 h-7 rounded-lg bg-white/[0.08] border border-white/12 flex items-center justify-center text-sm shrink-0 text-[#A3C4A3]">
+            {icon}
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-xs font-extrabold uppercase tracking-wider text-white truncate">{title}</h2>
+            {subtitle && <p className="text-xs text-white/70 truncate">{subtitle}</p>}
+          </div>
         </div>
-      )}
+        <div className="flex items-center gap-0.5 shrink-0">
+          <span
+            draggable
+            onDragStart={handleGripDragStart(id)}
+            onDragEnd={handleGripDragEnd}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setVoirToutTab('reglages');
+                setVoirToutOpen(true);
+              }
+            }}
+            title="Réorganiser le module (glisser, ou via Réglages)"
+            aria-label="Réorganiser le module"
+            className="cursor-grab active:cursor-grabbing p-1.5 text-white/50 hover:text-white rounded-lg hover:bg-white/8 text-xs"
+          >
+            ⠿
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setVoirToutTab(moreTab);
+              setVoirToutOpen(true);
+              triggerHaptic('light');
+            }}
+            className="px-2 py-1 text-xs font-semibold text-[#A3C4A3] hover:text-white hover:bg-white/8 rounded-lg transition-colors"
+          >
+            Tout voir
+          </button>
+        </div>
+      </div>
+      <div className="flex-1 min-h-0 mt-3 flex flex-col overflow-hidden">{children}</div>
+    </div>
+  );
 
-      {/* ═══ MAIN COCKPIT DASHBOARD — SANS SIDEBAR, GRID DE CARDS ═══ */}
-      <h1 className="sr-only">Cockpit Mon Équipement</h1>
-      <main className="relative z-10 w-full max-w-[1800px] mx-auto flex-1 min-h-0 px-3 pb-20 lg:pb-14 flex flex-col lg:gap-3 overflow-hidden">
-
-        {/* ─── RANG 1 : Inventaire · Fiche outil · Télémétrie + État du matériel ─── */}
-        <div className="min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch lg:basis-0 lg:min-h-0 grow-[1] lg:grow-[46]">
-
-          {/* Colonne gauche : INVENTAIRE MATÉRIEL & FILTRES */}
-          <div className="lg:col-span-4 xl:col-span-4 flex flex-col gap-3 min-h-0">
-            <GlassCard className="p-3 min-h-0 flex-1">
-              <div className="flex items-baseline justify-between pb-2 border-b border-white/10 shrink-0">
-                <div>
-                  <h2 className="text-sm font-extrabold uppercase tracking-wider text-white">Inventaire Matériel</h2>
-                  <p className="text-[11px] text-white/50">{filteredEquipment.length} articles affichés</p>
+  const renderWidget = (id: string): React.ReactNode => {
+    switch (id) {
+      case 'weight':
+        return widgetShell(
+          'weight',
+          <IconScale />,
+          'Poids du pack',
+          `${equipment.length} articles · ${Math.round(totalValue)} €`,
+          'reglages',
+          (() => {
+            const targetG = targetKg * 1000;
+            const ratio = targetG > 0 ? totalWeightG / targetG : 0;
+            const pct = Math.min(100, Math.round(ratio * 100));
+            const color = ratio <= 0.85 ? '#A3C4A3' : ratio <= 1 ? '#E9C46A' : '#E76F51';
+            return (
+              <>
+                <div className="flex items-end justify-between gap-3 shrink-0">
+                  <div className="min-w-0">
+                    <div className="text-4xl font-extrabold font-mono tracking-tight leading-none text-white">
+                      {formatWeight(totalWeightG)}
+                    </div>
+                    <p className="text-xs text-white/70 mt-2">
+                      Cible <span className="font-bold" style={{ color }}>{targetKg} kg</span> · {pct}% chargé
+                    </p>
+                  </div>
+                  <WeightGauge currentG={totalWeightG} targetKg={targetKg} />
                 </div>
-                <span className="text-xs font-mono text-[#A3C4A3] font-bold">
-                  {formatWeight(totalWeightG)}
-                </span>
-              </div>
-
-              {/* Search + Clear */}
-              <div className="relative flex items-center mt-2.5">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 text-white/50">
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="M20 20l-3.5-3.5" />
-                </svg>
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Rechercher équipement…  ( / )"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-7 py-1.5 bg-black/30 rounded-xl border border-white/12 text-xs text-white placeholder-white/50 focus:outline-none focus:border-[#A3C4A3]/60 focus:ring-1 focus:ring-[#A3C4A3]/40 transition-colors"
-                />
-                {searchQuery && (
-                  <button type="button" onClick={() => setSearchQuery('')} className="absolute right-2.5 text-white/50 hover:text-white text-xs" aria-label="Effacer">✕</button>
-                )}
-              </div>
-
-              {/* Category Filter Pills */}
-              <div className="flex gap-1.5 overflow-x-auto pb-1 mt-2 scrollbar-none text-[11px]">
-                {CATEGORIES.map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => { triggerHaptic('light'); setActiveCategory(cat); }}
-                    className={`px-3 py-1 rounded-full capitalize whitespace-nowrap transition-colors ${
-                      activeCategory === cat
-                        ? 'bg-[#A3C4A3] text-[#0B1F17] font-bold shadow-xs'
-                        : 'bg-white/8 text-white/75 hover:bg-white/14 hover:text-white border border-white/10'
-                    }`}
-                  >
-                    {cat === 'all' ? 'Tous' : cat}
-                  </button>
-                ))}
-              </div>
-
-              {/* Brands + Favorites + Condition filter toggle */}
-              <div className="flex items-center justify-between gap-2 mt-1.5 pt-1.5 border-t border-white/8 text-[10px]">
-                <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
-                  <span className="text-white/40 font-mono uppercase text-[9px] shrink-0">Marque:</span>
-                  {availableBrands.slice(0, 5).map((b) => (
+                <div className="mt-3 shrink-0">
+                  <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: color }} />
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 mt-3 shrink-0 flex-wrap">
+                  <span className="text-xs text-white/70">Objectif :</span>
+                  {[6, 8, 10, 12].map((t) => (
                     <button
-                      key={b}
+                      key={t}
                       type="button"
-                      onClick={() => { triggerHaptic('light'); setSelectedBrand(b); }}
-                      className={`px-2 py-0.5 rounded-lg whitespace-nowrap transition-colors ${
-                        selectedBrand === b
-                          ? 'bg-[#A3C4A3]/25 text-[#A3C4A3] font-bold border border-[#A3C4A3]/50'
-                          : 'bg-white/5 text-white/60 hover:text-white border border-white/10'
+                      onClick={() => { setTargetKg(t); triggerHaptic('light'); showToast(`Objectif ajusté à ${t} kg`, 'info'); }}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-colors ${
+                        targetKg === t
+                          ? 'bg-[#A3C4A3] text-[#0B1F17]'
+                          : 'bg-white/[0.07] hover:bg-white/[0.14] text-white/80 border border-white/10'
                       }`}
                     >
-                      {b}
+                      {t}k
                     </button>
                   ))}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => { triggerHaptic('light'); setOnlyFavorites((f) => !f); }}
-                  className={`px-2 py-1 rounded-lg font-bold transition-colors shrink-0 flex items-center gap-1 ${
-                    onlyFavorites
-                      ? 'bg-[#E76F51]/25 text-[#F4A18C] border border-[#E76F51]/40'
-                      : 'bg-white/5 text-white/60 hover:text-white'
-                  }`}
-                  title="Filtrer uniquement les favoris"
-                >
-                  <span>{onlyFavorites ? '❤️' : '🤍'}</span>
-                  <span>Favoris ({favoritesCount})</span>
-                </button>
-              </div>
+              </>
+            );
+          })()
+        );
 
-              {conditionFilter !== 'all' && (
-                <button
-                  type="button"
-                  onClick={() => { setConditionFilter('all'); triggerHaptic('light'); }}
-                  className="mt-2 w-full px-2.5 py-1.5 rounded-xl bg-[#E9A23B]/15 border border-[#E9A23B]/40 text-[#E9C46A] text-[11px] font-semibold flex items-center justify-between transition-all hover:bg-[#E9A23B]/25"
-                >
-                  <span>Filtre actif : {CONDITION_META[conditionFilter]?.label || conditionFilter}</span>
-                  <span>✕ Réinitialiser</span>
-                </button>
-              )}
-
-              {/* Bulk Action Bar */}
-              {selectedIds.size > 0 && (
-                <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl bg-[#A3C4A3]/15 border border-[#A3C4A3]/30 mt-2">
-                  <span className="text-[11px] text-white/90 font-medium">{selectedIds.size} sélectionné(s)</span>
-                  <div className="flex items-center gap-1.5">
-                    <button type="button" onClick={bulkDelete} className="px-2.5 py-1 rounded-lg bg-[#E76F51]/25 hover:bg-[#E76F51]/35 text-[#F4A18C] text-[11px] font-semibold transition-all">Supprimer</button>
-                    <button type="button" onClick={clearSelection} className="px-2 py-1 rounded-lg bg-white/8 hover:bg-white/14 text-white/80 text-[11px]">Annuler</button>
-                  </div>
-                </div>
-              )}
-
-              {/* Item list */}
-              <div className="space-y-2 mt-3 flex-1 min-h-0 overflow-y-auto scrollbar-none pr-0.5">
-                {isLoading && equipment.length === 0 ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3, 4].map((n) => (
-                      <div key={n} className="p-3 rounded-2xl bg-white/5 animate-pulse flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-white/10 shrink-0" />
-                        <div className="flex-1 space-y-1.5">
-                          <div className="w-3/4 h-3 rounded bg-white/15" />
-                          <div className="w-1/2 h-2.5 rounded bg-white/10" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : filteredEquipment.length === 0 ? (
-                  <div className="p-4 rounded-2xl bg-white/5 text-center space-y-2 my-2 border border-white/10">
-                    <span className="text-2xl block">🧭</span>
-                    <p className="text-xs text-white/75 font-medium">Aucun équipement trouvé</p>
-                    <button
-                      type="button"
-                      onClick={handleResetFilters}
-                      className="px-3.5 py-1.5 rounded-full bg-white/12 hover:bg-white/20 text-white text-xs font-semibold transition-all"
-                    >
-                      Réinitialiser les filtres
-                    </button>
-                  </div>
-                ) : (
-                  filteredEquipment.map((item, i) => {
-                    const isSelected = item.id === (activeItem?.id || selectedItemId);
-                    const isChecked = selectedIds.has(item.id);
-                    const inCompare = compareIds.includes(item.id);
-                    const editing = inlineEditId === item.id;
+      case 'departure':
+        return widgetShell(
+          'departure',
+          <IconNav />,
+          'Prochain départ',
+          activeHike ? `${activeHike.name} · ${activeHike.terrain || activeHike.season || 'Randonnée'}` : 'Aucune sortie planifiée',
+          'actions',
+          activeHike ? (
+            <>
+              <div className="flex items-start justify-between gap-3 shrink-0">
+                <div className="min-w-0">
+                  {(() => {
+                    const d = daysUntil(activeHike.targetDate);
+                    const imminent = d !== null && d >= 0 && d <= 3;
                     return (
-                      <div
-                        key={item.id}
-                        onClick={() => { triggerHaptic('light'); setSelectedItemId(item.id); }}
-                        style={prefersReducedMotion ? undefined : { animationDelay: `${Math.min(i, 12) * 25}ms` }}
-                        className={`${enterAnim} p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-2.5 relative group ${
-                          isSelected
-                            ? 'bg-white/[0.12] border-[#A3C4A3]/50 ring-1 ring-[#A3C4A3]/30 shadow-md'
-                            : 'bg-white/[0.04] border-white/8 hover:bg-white/[0.08] hover:border-white/15'
-                        }`}
-                      >
-                        {isSelected && (
-                          <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-full bg-[#A3C4A3] shadow-[0_0_10px_rgba(163,196,163,0.8)]" />
-                        )}
-
-                        <button
-                          type="button"
-                          onClick={(e) => toggleSelected(item.id, e)}
-                          aria-label={isChecked ? 'Désélectionner' : 'Sélectionner'}
-                          className={`w-4 h-4 rounded-md border shrink-0 flex items-center justify-center transition-all ${
-                            isChecked ? 'bg-[#A3C4A3] border-[#A3C4A3] text-[#0B1F17]' : 'border-white/30 text-transparent hover:border-white/60'
-                          }`}
-                        >
-                          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12l5 5L20 7" /></svg>
-                        </button>
-
-                        <div className="w-10 h-10 rounded-xl bg-black/30 overflow-hidden relative shrink-0 border border-white/10 flex items-center justify-center p-1 shadow-inner">
-                          <Image src={item.image || '/assets/images/no_image.png'} alt={item.name} width={36} height={36} className="object-contain max-h-full max-w-full" />
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <h4 className="text-xs font-bold text-white truncate leading-tight">{item.name}</h4>
-                          {editing ? (
-                            <div className="flex items-center gap-1 mt-1" onClick={(e) => e.stopPropagation()}>
-                              <input value={inlineWeight} onChange={(e) => setInlineWeight(e.target.value)} inputMode="numeric" className="w-12 px-1.5 py-0.5 rounded bg-black/40 border border-white/20 text-[10px] text-white text-center focus:outline-none focus:border-[#A3C4A3]" aria-label="Poids en grammes" />
-                              <span className="text-[9px] text-white/50">g</span>
-                              <input value={inlineQty} onChange={(e) => setInlineQty(e.target.value)} inputMode="numeric" className="w-8 px-1 py-0.5 rounded bg-black/40 border border-white/20 text-[10px] text-white text-center focus:outline-none focus:border-[#A3C4A3]" aria-label="Quantité" />
-                              <button type="button" onClick={() => saveInlineEdit(item)} className="px-1.5 py-0.5 rounded bg-[#A3C4A3] text-[#0B1F17] text-[9px] font-bold">OK</button>
-                              <button type="button" onClick={() => setInlineEditId(null)} className="px-1 py-0.5 rounded bg-white/10 text-white/70 text-[9px]">✕</button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1.5 text-[11px] text-white/60 mt-0.5 truncate">
-                              <span>{item.brand || 'Outdoor'}</span>
-                              <span>·</span>
-                              <button type="button" onClick={(e) => startInlineEdit(item, e)} className="font-mono text-[#A3C4A3] font-bold hover:underline" title="Cliquer pour éditer le poids">
-                                {formatWeight(item.weight_g || 0)}{(item.quantity || 1) > 1 ? ` ×${item.quantity}` : ''}
-                              </button>
-                              {item.loan_status === 'prêté' && (
-                                <span className="px-1 py-0.5 rounded bg-white/10 text-[9px] text-white/80 border border-white/15">Prêté</span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); toggleCompare(item.id); }}
-                            className={`p-1 rounded-md transition-colors ${inCompare ? 'text-[#A3C4A3]' : 'text-white/35 hover:text-white/80'}`}
-                            title="Comparer"
-                            aria-label="Comparer"
-                          >
-                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h6v10H4zM14 7h6v10h-6z"/></svg>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); setSelectedItemId(item.id); setIsDetailDrawerOpen(true); }}
-                            className="text-white/40 hover:text-[#A3C4A3] p-1 transition-colors"
-                            title="Fiche détaillée"
-                            aria-label="Ouvrir la fiche"
-                          >
-                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold font-mono ${
+                        d === null
+                          ? 'bg-white/10 text-white/70'
+                          : d < 0
+                          ? 'bg-white/10 text-white/60'
+                          : imminent
+                          ? 'bg-[#E9C46A] text-[#0B1F17] shadow-[0_0_18px_rgba(233,196,106,0.55)]'
+                          : 'bg-[#A3C4A3]/20 text-[#A3C4A3]'
+                      }`}>
+                        {d === null ? 'Date à définir' : d < 0 ? `J+${Math.abs(d)}` : d === 0 ? "C'est aujourd'hui !" : `J-${d} jours`}
+                      </span>
                     );
-                  })
-                )}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => { setEditingItem(null); setIsAddModalOpen(true); triggerHaptic('light'); }}
-                className="w-full mt-2 py-2 rounded-xl border border-dashed border-white/20 hover:border-[#A3C4A3] bg-white/[0.03] hover:bg-white/[0.08] text-white/80 hover:text-[#A3C4A3] text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
-              >
-                <span>+</span> Ajouter un article à l&apos;inventaire
-              </button>
-            </GlassCard>
-          </div>
-
-          {/* Colonne centrale : FICHE OUTIL ACTIVE */}
-          <div className="lg:col-span-5 xl:col-span-5 flex flex-col gap-3 min-h-0 lg:overflow-y-auto scrollbar-none">
-            <GlassCard className="p-4 sm:p-5">
-              {activeItem ? (
-                <div className="space-y-3.5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 rounded-full bg-[#A3C4A3]/20 text-[#A3C4A3] text-[10px] font-bold font-mono uppercase">
-                          {activeItem.category}
-                        </span>
-                        {activeItem.loan_status === 'prêté' && (
-                          <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/15 text-[10px] text-white/80">
-                            Prêté à {activeItem.loan_to_name || 'un ami'}
-                          </span>
-                        )}
-                      </div>
-                      <h2 className="text-xl font-extrabold text-white tracking-tight mt-1 truncate">{activeItem.name}</h2>
-                      <p className="text-xs text-white/60">{activeItem.brand || 'Outdoor'} · Matériel certifié</p>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => setIsDetailDrawerOpen(true)}
-                        className="px-3.5 py-1.5 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] font-bold text-xs transition-all shadow-sm active:scale-95"
-                      >
-                        Fiche ➔
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => handleToggleFavorite(activeItem, e)}
-                        className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-xs text-white transition-transform active:scale-90"
-                        title="Favori (f)"
-                      >
-                        {activeItem.is_favorite ? '❤️' : '🤍'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Hero Visual Container */}
-                  <div className="relative h-24 sm:h-28 rounded-2xl bg-gradient-to-b from-white/[0.06] to-black/30 border border-white/10 overflow-hidden flex items-center justify-center p-2 group">
-                    <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.12) 0%, transparent 60%)' }} />
-                    <div className="relative z-10 w-full h-full max-h-[104px] flex items-center justify-center">
-                      <Image
-                        src={activeItem.image || '/assets/images/no_image.png'}
-                        alt={activeItem.name}
-                        width={280}
-                        height={180}
-                        className="object-contain max-h-full max-w-full drop-shadow-[0_15px_25px_rgba(11,31,23,0.7)] group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                  </div>
-
-                  {/* 7 Interactive Spec Tiles */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-                    <SpecTile
-                      label="Poids pesé"
-                      value={formatWeight(activeItem.weight_g || 0)}
-                      accent
-                      onClick={() => { setEditingItem(activeItem); setIsAddModalOpen(true); }}
-                      title="Modifier le poids"
-                    />
-                    <SpecTile
-                      label="État"
-                      value={CONDITION_META[activeItem.condition || 'bon']?.label || activeItem.condition || 'Excellent'}
-                      onClick={() => { setEditingItem(activeItem); setIsAddModalOpen(true); }}
-                      title="Modifier l'état"
-                    />
-                    <SpecTile
-                      label="Usure"
-                      value={activeItem.wear_percentage != null ? `${activeItem.wear_percentage}%` : '—'}
-                      onClick={() => { setEditingItem(activeItem); setIsAddModalOpen(true); }}
-                      title="Modifier l'usure"
-                    />
-                    <SpecTile
-                      label="Usages"
-                      value={activeItem.usage_count != null ? `${activeItem.usage_count} sortie(s)` : '0 sortie'}
-                      onClick={async () => {
-                        triggerHaptic('light');
-                        const nextCount = (activeItem.usage_count || 0) + 1;
-                        await updateEquipment(activeItem.id, { usage_count: nextCount });
-                        showToast(`+1 sortie enregistrée (${nextCount} au total)`, 'success');
-                      }}
-                      title="+1 sortie enregistrée"
-                    />
-                    <SpecTile
-                      label="Valeur"
-                      value={activeItem.purchase_price ? `${activeItem.purchase_price} €` : '—'}
-                      onClick={() => { setEditingItem(activeItem); setIsAddModalOpen(true); }}
-                      title="Modifier la valeur d'achat"
-                    />
-                    <SpecTile
-                      label="Matériaux"
-                      value={activeItem.materials || 'Standard'}
-                      onClick={() => setIsDetailDrawerOpen(true)}
-                      title="Ouvrir la fiche complète"
-                    />
-                    <SpecTile
-                      label="Imperm."
-                      value={activeItem.waterproof_rating || 'Standard'}
-                      onClick={() => setIsDetailDrawerOpen(true)}
-                      title="Détails imperméabilité"
-                    />
-                    <SpecTile
-                      label="Maintenance"
-                      value={activeItem.next_maintenance_date ? new Date(activeItem.next_maintenance_date).toLocaleDateString('fr-FR') : 'À planifier'}
-                      onClick={() => { setEditingItem(activeItem); setIsAddModalOpen(true); }}
-                      title="Planifier un entretien"
-                    />
-                  </div>
-
-                  {/* Direct Action Buttons */}
-                  <div className="grid grid-cols-3 gap-2 pt-1 border-t border-white/10">
-                    <button
-                      type="button"
-                      onClick={() => { setEditingItem(activeItem); setIsAddModalOpen(true); triggerHaptic('light'); }}
-                      className="py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-white text-xs font-semibold flex items-center justify-center gap-1 transition-all active:scale-95"
-                    >
-                      ✎ Éditer
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setIsLendModalOpen(true); triggerHaptic('light'); }}
-                      className="py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-white text-xs font-semibold flex items-center justify-center gap-1 transition-all active:scale-95"
-                    >
-                      🤝 Prêter
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        triggerHaptic('selection');
-                        addToCart({
-                          id: activeItem.product_id || activeItem.id,
-                          slug: 'equipement',
-                          name: activeItem.name,
-                          brand: activeItem.brand || 'LKDV',
-                          priceEur: activeItem.purchase_price || 99,
-                          weightG: activeItem.weight_g || 100,
-                          image: activeItem.image || '/assets/images/no_image.png',
-                          imageAlt: activeItem.name,
-                          category: activeItem.category || 'équipement',
-                        });
-                        showToast(`🛒 ${activeItem.name} ajouté au panier !`, 'success');
-                      }}
-                      className="py-2 rounded-xl bg-[#A3C4A3]/20 hover:bg-[#A3C4A3]/30 border border-[#A3C4A3]/40 text-[#A3C4A3] text-xs font-bold flex items-center justify-center gap-1 transition-all active:scale-95"
-                    >
-                      ↻ Racheter
-                    </button>
-                  </div>
+                  })()}
+                  <p className="text-xs text-white/70 mt-1.5">
+                    {formatDateRange(activeHike)}
+                    {activeHike.companions ? ` · ${activeHike.companions}` : ''}
+                  </p>
                 </div>
-              ) : (
-                <div className="p-8 text-center text-white/60">Sélectionnez un équipement</div>
-              )}
-            </GlassCard>
-          </div>
-
-          {/* Colonne droite rang 1 : TÉLÉMÉTRIE + ÉTAT DU MATÉRIEL */}
-          <div className="lg:col-span-3 xl:col-span-3 flex flex-col gap-3 min-h-0 lg:overflow-y-auto scrollbar-none">
-
-            {/* Card Télémétrie du Pack & Jauge SVG */}
-            <GlassCard className="p-4">
-              <div className="flex items-center justify-between pb-2.5 border-b border-white/10">
-                <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">Télémétrie du pack</h3>
-                <div className="flex items-center gap-2">
-                  <span className="text-[9px] text-[#A3C4A3] font-mono font-bold uppercase tracking-wider">Live</span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Link
+                    href={activeHike.routeId ? `/randonnee-active?routeId=${activeHike.routeId}` : '/randonnee-active'}
+                    className="px-3.5 py-1.5 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] font-bold text-xs transition-all active:scale-95"
+                  >
+                    🚀 Démarrer
+                  </Link>
+                  <Link
+                    href={activeHike.routeId ? `/preparer-randonnee?routeId=${activeHike.routeId}` : '/explorer'}
+                    className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all active:scale-95"
+                  >
+                    Itinéraire
+                  </Link>
                   <button
                     type="button"
-                    onClick={() => { setIsSettingsModalOpen(true); triggerHaptic('light'); }}
-                    className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white text-[10px] transition-transform active:scale-90"
-                    title="Réglages du Cockpit"
-                    aria-label="Réglages"
+                    onClick={() => handleDeleteHike(activeHike.id)}
+                    className="w-8 h-8 rounded-full bg-white/8 hover:bg-[#E76F51]/30 border border-white/10 text-white/70 hover:text-white text-xs transition-colors"
+                    title="Supprimer cette sortie"
+                    aria-label="Supprimer cette sortie"
                   >
-                    ⚙️
+                    🗑️
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 mt-3">
-                <WeightGauge currentG={totalWeightG} targetKg={targetKg} />
-                <div className="flex flex-col gap-1 text-xs">
-                  <span className="text-[10px] text-white/60 uppercase font-mono">Objectif cible</span>
-                  <div className="flex items-center gap-1">
-                    {[6, 8, 10, 12].map((t) => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => { setTargetKg(t); triggerHaptic('light'); showToast(`Objectif ajusté à ${t} kg`, 'info'); }}
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors ${
-                          targetKg === t ? 'bg-[#A3C4A3] text-[#0B1F17] font-bold' : 'bg-white/8 text-white/70 hover:bg-white/14'
-                        }`}
-                      >
-                        {t}k
-                      </button>
-                    ))}
-                  </div>
-                  <span className="text-[11px] font-mono text-white/80 mt-0.5">Valeur : <strong className="text-white">{Math.round(totalValue)} €</strong></span>
+              <div className="grid grid-cols-4 gap-2 shrink-0 mt-3">
+                <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/8">
+                  <span className="block text-lg font-bold font-mono text-white leading-none">{activeHike.distanceKm}<span className="text-xs text-white/70 font-normal"> km</span></span>
+                  <span className="block text-xs text-white/70 mt-1">Distance</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/8">
+                  <span className="block text-lg font-bold font-mono text-white leading-none">+{activeHike.elevationGain || 0}<span className="text-xs text-white/70 font-normal"> m</span></span>
+                  <span className="block text-xs text-white/70 mt-1">Dénivelé D+</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/8">
+                  <span className="block text-lg font-bold font-mono text-white leading-none">{activeHike.isOvernight ? `${(activeHike.nightsCount || 1) + 1}` : '1'}<span className="text-xs text-white/70 font-normal"> j</span></span>
+                  <span className="block text-xs text-white/70 mt-1">Durée</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/8">
+                  <span className="block text-xs font-bold text-[#E9C46A] truncate leading-none">{formatWeather(activeHike)}</span>
+                  <span className="block text-xs text-white/70 mt-1">Météo {formatTemp(activeHike)}</span>
                 </div>
               </div>
 
-              {/* Category breakdown */}
-              <div className="mt-3 space-y-1.5 pt-2 border-t border-white/8">
-                {categoryStats.map((c) => (
-                  <button
-                    key={c.label}
-                    type="button"
-                    onClick={() => { setActiveCategory(c.label.toLowerCase()); triggerHaptic('light'); }}
-                    className="w-full text-left p-1 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
-                    title={`Filtrer par ${c.label}`}
-                  >
-                    <div className="flex items-center justify-between text-[10px] text-white/70 mb-0.5">
-                      <span className="capitalize truncate">{c.label}</span>
-                      <span className="font-mono text-[#A3C4A3]">{formatWeight(c.grams)} ({c.pct}%)</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-                      <div className="h-full rounded-full bg-[#A3C4A3]" style={{ width: `${c.pct}%` }} />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </GlassCard>
-
-            {/* Card État du Matériel */}
-            <GlassCard className="p-4">
-              <div className="flex items-center justify-between pb-2.5 border-b border-white/10">
-                <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">État du matériel</h3>
-                <span className="text-[9px] text-white/50 font-mono">{equipment.length} articles</span>
-              </div>
-              <div className="space-y-2 mt-3">
-                {conditionStats.length === 0 && (
-                  <p className="text-[11px] text-white/50 text-center py-3">Aucun article inventorié</p>
-                )}
-                {conditionStats.map((s) => {
-                  const meta = CONDITION_META[s.key] || { label: s.key, color: '#A3C4A3', bg: 'rgba(163,196,163,0.16)' };
-                  const active = conditionFilter === s.key;
-                  const pct = totalWeightG > 0 ? Math.round((s.weight / totalWeightG) * 100) : 0;
-                  return (
-                    <button
-                      key={s.key}
-                      type="button"
-                      onClick={() => {
-                        triggerHaptic('light');
-                        setConditionFilter(active ? 'all' : s.key);
-                      }}
-                      title={active ? 'Retirer le filtre' : `Filtrer par état : ${meta.label}`}
-                      className={`w-full text-left p-2 rounded-xl border transition-all ${
-                        active
-                          ? 'bg-white/[0.12] border-[#A3C4A3]/50 ring-1 ring-[#A3C4A3]/30'
-                          : 'bg-white/[0.04] hover:bg-white/[0.09] border-white/8'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between text-[11px] text-white/80 mb-1">
-                        <span className="font-semibold capitalize truncate">{meta.label}</span>
-                        <span className="shrink-0 pl-2">
-                          <span className="font-mono text-white font-bold">{s.count}</span>
-                          <span className="text-white/40"> · </span>
-                          <span className="font-mono" style={{ color: meta.color }}>{formatWeight(s.weight)}</span>
-                        </span>
-                      </div>
-                      <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: meta.color }} />
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </GlassCard>
-          </div>
-        </div>
-
-        {/* ─── RANG 2 : Prochain départ · Kits & Alertes ─── */}
-        <div className="min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch lg:basis-0 lg:min-h-0 grow-[1] lg:grow-[30]">
-
-          {/* Card Prochain Départ & Randonnées Prévues + moteur intelligent */}
-          <GlassCard className="lg:col-span-8 xl:col-span-8 p-4 sm:p-5 min-h-0 lg:overflow-y-auto scrollbar-none">
-            {activeHike ? (
-              <div className="space-y-3.5">
-                <div className="flex items-start justify-between gap-3 pb-2.5 border-b border-white/10">
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {daysUntil(activeHike.targetDate) !== null && (
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold font-mono ${
-                          (daysUntil(activeHike.targetDate) ?? 0) < 0
-                            ? 'bg-white/10 text-white/50'
-                            : 'bg-[#A3C4A3]/20 text-[#A3C4A3]'
-                        }`}>
-                          {(daysUntil(activeHike.targetDate) ?? 0) < 0
-                            ? `Terminée (J+${Math.abs(daysUntil(activeHike.targetDate) ?? 0)})`
-                            : `J-${daysUntil(activeHike.targetDate)}`}
-                        </span>
-                      )}
-                      <span className="text-xs text-white/60">{formatDateRange(activeHike)}</span>
-                    </div>
-                    <h3 className="text-lg font-extrabold text-white mt-1 leading-tight">{activeHike.name}</h3>
-                    <p className="text-xs text-white/65">
-                      {activeHike.terrain || activeHike.season || 'Randonnée'} · {activeHike.companions || `${activeHike.isOvernight ? 'Nuitée en refuge/bivouac' : 'Sortie à la journée'}`}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <Link
-                      href={activeHike.routeId ? `/randonnee-active?routeId=${activeHike.routeId}` : '/randonnee-active'}
-                      className="px-4 py-1.5 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] font-bold text-xs transition-all shadow-sm active:scale-95 flex items-center gap-1"
-                    >
-                      <span>🚀</span> Démarrer
-                    </Link>
-                    <Link
-                      href={activeHike.routeId ? `/preparer-randonnee?routeId=${activeHike.routeId}` : '/explorer'}
-                      className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all active:scale-95"
-                    >
-                      {activeHike.routeId ? 'Itinéraire' : 'Trouver une rando'}
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteHike(activeHike.id)}
-                      className="w-8 h-8 rounded-full bg-white/8 hover:bg-[#E76F51]/30 border border-white/10 text-white/70 hover:text-white text-xs transition-colors"
-                      title="Supprimer cette sortie"
-                      aria-label="Supprimer cette sortie"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </div>
-
-                {/* Metrics ribbon */}
-                <div className="grid grid-cols-4 gap-2">
-                  <div className="p-2 rounded-xl bg-white/[0.04] border border-white/8 text-center">
-                    <span className="text-sm font-bold font-mono text-[#A3C4A3]">{activeHike.distanceKm} km</span>
-                    <span className="text-[9px] text-white/50 block font-mono">Distance</span>
-                  </div>
-                  <div className="p-2 rounded-xl bg-white/[0.04] border border-white/8 text-center">
-                    <span className="text-sm font-bold font-mono text-white">+{activeHike.elevationGain || 0}m</span>
-                    <span className="text-[9px] text-white/50 block font-mono">Dénivelé D+</span>
-                  </div>
-                  <div className="p-2 rounded-xl bg-white/[0.04] border border-white/8 text-center">
-                    <span className="text-sm font-bold font-mono text-white">
-                      {activeHike.isOvernight ? `${(activeHike.nightsCount || 1) + 1}j` : 'Journée'}
-                    </span>
-                    <span className="text-[9px] text-white/50 block font-mono">Durée</span>
-                  </div>
-                  <div className="p-2 rounded-xl bg-white/[0.04] border border-white/8 text-center">
-                    <span className="text-xs font-bold text-[#E9C46A] truncate block">{formatWeather(activeHike)}</span>
-                    <span className="text-[9px] text-white/50 block font-mono">Météo {formatTemp(activeHike)}</span>
-                  </div>
-                </div>
-
-                {/* Kit Linker & Readiness */}
+              <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-3 pr-0.5">
                 <div className="p-3 rounded-2xl bg-black/25 border border-white/10 space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-mono uppercase text-[#A3C4A3] font-bold">Kit Assigné pour ce départ</span>
+                    <span className="text-xs font-mono uppercase text-[#A3C4A3] font-bold">Kit pour ce départ</span>
                     <select
                       value={activeHike.assignedKitId || ''}
                       onChange={(e) => handleAssignKitToHike(activeHike.id, e.target.value)}
@@ -1436,10 +1168,9 @@ export default function MonMaterielCockpitPage() {
                       ))}
                     </select>
                   </div>
-
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-white/80">Matériel prêt : <strong className="text-white">{hikeReadiness.ownedCount}/{hikeReadiness.totalCount} articles</strong></span>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-white/80">Prêt : <strong className="text-white">{hikeReadiness.ownedCount}/{hikeReadiness.totalCount} articles</strong></span>
                       <span className="font-mono font-bold text-[#A3C4A3]">{hikeReadiness.readinessPct}%</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
@@ -1448,12 +1179,11 @@ export default function MonMaterielCockpitPage() {
                   </div>
                 </div>
 
-                {/* Kit recommandé par le SmartDepartureEngine + consommables */}
                 {departurePlan && (
                   <div className="p-3 rounded-2xl bg-[#A3C4A3]/[0.08] border border-[#A3C4A3]/25 space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <span className="text-[10px] font-mono uppercase text-[#A3C4A3] font-bold block">Kit recommandé pour cette sortie</span>
+                        <span className="text-xs font-mono uppercase text-[#A3C4A3] font-bold block">Kit recommandé pour cette sortie</span>
                         {recommendedKit ? (
                           <p className="text-xs text-white/90 font-semibold truncate mt-0.5">
                             {recommendedKit.name} · score {departurePlan.suitabilityScore}/100
@@ -1466,36 +1196,34 @@ export default function MonMaterielCockpitPage() {
                         <button
                           type="button"
                           onClick={() => handleAssignKitToHike(activeHike.id, recommendedKit.id)}
-                          className="px-3 py-1.5 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] text-[11px] font-bold transition-all active:scale-95 shrink-0"
+                          className="px-3 py-1.5 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] text-xs font-bold transition-all active:scale-95 shrink-0"
                         >
                           Utiliser ce kit
                         </button>
                       )}
                       {recommendedKit && recommendedKit.id === activeKit?.id && (
-                        <span className="px-2.5 py-1 rounded-full bg-white/10 border border-white/15 text-[10px] text-white/80 shrink-0">✓ Déjà sélectionné</span>
+                        <span className="px-2.5 py-1 rounded-full bg-white/10 border border-white/15 text-xs text-white/80 shrink-0">✓ Déjà sélectionné</span>
                       )}
                     </div>
-
-                    {/* Consommables estimés */}
                     {(departurePlan.consumables.waterLiters > 0 || departurePlan.consumables.foodMealsCount > 0) && (
                       <div className="flex flex-wrap gap-1.5 pt-1">
-                        <span className="px-2 py-1 rounded-lg bg-black/30 text-[10px] text-white/85">
+                        <span className="px-2 py-1 rounded-lg bg-black/30 text-xs text-white/85">
                           💧 {departurePlan.consumables.waterLiters.toFixed(1).replace('.', ',')} L d&apos;eau
                         </span>
                         {departurePlan.consumables.foodMealsCount > 0 && (
-                          <span className="px-2 py-1 rounded-lg bg-black/30 text-[10px] text-white/85">
+                          <span className="px-2 py-1 rounded-lg bg-black/30 text-xs text-white/85">
                             🍽️ {departurePlan.consumables.foodMealsCount} repas
                           </span>
                         )}
-                        <span className="px-2 py-1 rounded-lg bg-black/30 text-[10px] text-white/85">
+                        <span className="px-2 py-1 rounded-lg bg-black/30 text-xs text-white/85">
                           🥨 {departurePlan.consumables.snacksCount} en-cas
                         </span>
                         {departurePlan.consumables.fuelGrams > 0 && (
-                          <span className="px-2 py-1 rounded-lg bg-black/30 text-[10px] text-white/85">
+                          <span className="px-2 py-1 rounded-lg bg-black/30 text-xs text-white/85">
                             🔥 {departurePlan.consumables.fuelGrams} g gaz
                           </span>
                         )}
-                        <span className="px-2 py-1 rounded-lg bg-black/30 text-[10px] text-[#E9C46A]">
+                        <span className="px-2 py-1 rounded-lg bg-black/30 text-xs text-[#E9C46A]">
                           {departurePlan.weatherSummary.advice}
                         </span>
                       </div>
@@ -1503,13 +1231,12 @@ export default function MonMaterielCockpitPage() {
                   </div>
                 )}
 
-                {/* Missing items list */}
                 {hikeReadiness.missingItems.length > 0 && (
                   <div className="p-2.5 rounded-xl bg-[#E76F51]/12 border border-[#E76F51]/30 space-y-1.5">
-                    <span className="text-[11px] font-bold text-[#F4A18C] block">Articles manquants à emporter :</span>
+                    <span className="text-xs font-bold text-[#F4A18C] block">Articles manquants à emporter :</span>
                     <div className="flex flex-wrap gap-1.5">
                       {hikeReadiness.missingItems.slice(0, 3).map((m) => (
-                        <div key={m.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-black/30 text-[10px] text-white">
+                        <div key={m.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-black/30 text-xs text-white">
                           <span>{m.item_name}</span>
                           <button
                             type="button"
@@ -1531,14 +1258,13 @@ export default function MonMaterielCockpitPage() {
                   </div>
                 )}
 
-                {/* Other Hikes Selector */}
                 <div className="pt-2 border-t border-white/8">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] font-bold uppercase text-white/50 font-mono">Toutes les sorties ({plannedHikes.length})</span>
+                    <span className="text-xs font-bold uppercase text-white/60 font-mono">Toutes les sorties ({plannedHikes.length})</span>
                     <button
                       type="button"
                       onClick={() => setIsNewHikeModalOpen(true)}
-                      className="text-[10px] font-bold text-[#A3C4A3] hover:underline"
+                      className="text-xs font-bold text-[#A3C4A3] hover:underline"
                     >
                       + Planifier
                     </button>
@@ -1555,8 +1281,8 @@ export default function MonMaterielCockpitPage() {
                             : 'bg-white/5 border-white/8 text-white/70 hover:bg-white/10'
                         }`}
                       >
-                        <span className="block text-[11px] truncate max-w-[120px]">{h.name}</span>
-                        <span className="text-[9px] text-[#A3C4A3] font-mono">
+                        <span className="block text-xs truncate max-w-[120px]">{h.name}</span>
+                        <span className="text-xs text-[#A3C4A3] font-mono">
                           {daysUntil(h.targetDate) !== null ? `J-${daysUntil(h.targetDate)}` : 'Date à définir'}
                         </span>
                       </button>
@@ -1564,174 +1290,105 @@ export default function MonMaterielCockpitPage() {
                   </div>
                 </div>
               </div>
-            ) : (
-              <div className="p-8 text-center space-y-3">
-                <span className="text-3xl block">🧭</span>
-                <p className="text-sm text-white/75 font-medium">Aucune sortie planifiée pour le moment</p>
-                <p className="text-xs text-white/50">Planifiez votre prochaine randonnée pour voir ici le kit recommandé, les articles manquants et les consommables.</p>
-                <button
-                  type="button"
-                  onClick={() => setIsNewHikeModalOpen(true)}
-                  className="px-5 py-2 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] font-bold text-xs transition-all"
-                >
-                  🧭 Planifier ma première sortie
-                </button>
-              </div>
-            )}
-          </GlassCard>
+            </>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center gap-3 text-center">
+              <span className="text-3xl block">🧭</span>
+              <p className="text-xs text-white/80 font-medium">Aucune sortie planifiée pour le moment</p>
+              <button
+                type="button"
+                onClick={() => setIsNewHikeModalOpen(true)}
+                className="px-5 py-2 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] font-bold text-xs transition-all active:scale-95"
+              >
+                🧭 Planifier ma première sortie
+              </button>
+            </div>
+          )
+        );
 
-          {/* Colonne droite rang 2 : KITS + ALERTES */}
-          <div className="lg:col-span-4 xl:col-span-4 flex flex-col gap-3 min-h-0">
-
-            {/* Card Kits Assemblés */}
-            <GlassCard className="p-4">
-              <div className="flex items-baseline justify-between pb-2.5 border-b border-white/10">
-                <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">Kits & Sacs ({kits.length})</h3>
-                <div className="flex items-center gap-2">
-                  {trashCount > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setIsTrashModalOpen(true)}
-                      className="text-[10px] font-bold text-white/60 hover:text-[#F4A18C] underline"
-                      title="Voir la corbeille des kits"
-                    >
-                      Corbeille ({trashCount})
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      triggerHaptic('success');
-                      const created = await createKit({
-                        name: `Nouveau Kit #${kits.length + 1}`,
-                        description: 'Kit sur-mesure pour expédition',
-                        for_destination: 'Haute Montagne',
-                        season: 'Été',
-                        activity: 'Trek',
-                        source: 'manuel',
-                        gearItems: [],
-                      });
-                      if (created) {
-                        setSelectedKitForCockpit(created);
-                        setIsKitDrawerOpen(true);
-                        showToast(`Kit « ${created.name} » créé !`, 'success');
-                      }
-                    }}
-                    className="text-[10px] font-bold text-[#A3C4A3] hover:underline"
-                  >
-                    + Nouveau Kit
-                  </button>
-                </div>
+      case 'condition': {
+        const ready = conditionStats
+          .filter((s) => ['neuf', 'excellent', 'bon'].includes(s.key))
+          .reduce((n, s) => n + s.count, 0);
+        const readyPct = equipment.length > 0 ? Math.round((ready / equipment.length) * 100) : 0;
+        return widgetShell(
+          'condition',
+          <IconActivity />,
+          'État du matériel',
+          `${equipment.length} articles suivis`,
+          'inventaire',
+          <>
+            <div className="flex items-end justify-between gap-3 shrink-0">
+              <div>
+                <div className="text-4xl font-extrabold font-mono leading-none text-white">{readyPct}%</div>
+                <p className="text-xs text-white/70 mt-2">{ready}/{equipment.length} articles en bon état</p>
               </div>
-
-              <div className="space-y-2 mt-2.5 max-h-[190px] overflow-y-auto scrollbar-none pr-0.5">
-                {kits.length === 0 && (
-                  <p className="text-[11px] text-white/50 text-center py-4">Aucun kit actif. Créez votre premier kit ci-dessus.</p>
-                )}
-                {kits.map((kit) => (
-                  <div
-                    key={kit.id}
-                    onClick={() => {
-                      setSelectedKitForCockpit(kit);
-                      setIsKitDrawerOpen(true);
-                      triggerHaptic('light');
-                    }}
-                    className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 transition-all cursor-pointer flex items-center justify-between gap-2"
-                  >
-                    <div className="min-w-0">
-                      <h4 className="text-xs font-bold text-white truncate">{kit.name}</h4>
-                      <p className="text-[10px] text-white/50 truncate">{kit.items?.length || 0} articles · {kit.season || '3 saisons'}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <span className="text-xs font-mono font-bold text-[#A3C4A3] block">{formatWeight(kit.total_weight_g || 0)}</span>
-                      <span className="text-[9px] text-white/40">Éditer ➔</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </GlassCard>
-
-            {/* Card Alertes Opérationnelles & Prêts */}
-            <GlassCard className="p-4">
-              <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">Alertes & Entretien ({alerts.length})</h3>
-                <span className="text-[9px] text-[#E9C46A] font-mono font-bold">Action requise</span>
-              </div>
-              {alerts.length === 0 ? (
-                <p className="text-[11px] text-white/50 py-3 text-center">Aucune alerte — tout est en ordre ✨</p>
+              <IconActivity />
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-2 pr-0.5">
+              {conditionStats.length === 0 ? (
+                <p className="text-xs text-white/70 text-center py-3">Aucun article inventorié</p>
               ) : (
-                <div className="space-y-1.5 mt-2.5 max-h-[140px] overflow-y-auto scrollbar-none pr-0.5">
-                  {alerts.map((a) => (
+                conditionStats.map((s) => {
+                  const meta = CONDITION_META[s.key] || { label: s.key, color: '#A3C4A3', bg: 'rgba(163,196,163,0.16)' };
+                  const active = conditionFilter === s.key;
+                  const pct = totalWeightG > 0 ? Math.round((s.weight / totalWeightG) * 100) : 0;
+                  return (
                     <button
-                      key={a.id}
+                      key={s.key}
                       type="button"
-                      onClick={() => { setSelectedItemId(a.itemId); triggerHaptic('light'); }}
-                      className="w-full text-left p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-[11px] text-white/85 flex items-center justify-between gap-1.5 transition-colors"
+                      onClick={() => {
+                        triggerHaptic('light');
+                        setConditionFilter(active ? 'all' : s.key);
+                      }}
+                      title={active ? 'Retirer le filtre' : `Filtrer par état : ${meta.label}`}
+                      className={`w-full text-left p-2 rounded-xl border transition-all ${
+                        active
+                          ? 'bg-white/[0.12] border-[#A3C4A3]/50 ring-1 ring-[#A3C4A3]/30'
+                          : 'bg-white/[0.04] hover:bg-white/[0.09] border-white/8'
+                      }`}
                     >
-                      <span className="truncate">{a.label}</span>
-                      <span className="text-[10px] text-[#A3C4A3] font-bold shrink-0">Voir ➔</span>
+                      <div className="flex items-center justify-between text-xs text-white/80 mb-1">
+                        <span className="font-semibold capitalize truncate">{meta.label}</span>
+                        <span className="shrink-0 pl-2">
+                          <span className="font-mono text-white font-bold">{s.count}</span>
+                          <span className="text-white/40"> · </span>
+                          <span className="font-mono" style={{ color: meta.color }}>{formatWeight(s.weight)}</span>
+                        </span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: meta.color }} />
+                      </div>
                     </button>
-                  ))}
-                </div>
-              )}
-            </GlassCard>
-          </div>
-        </div>
-
-        {/* Comparateur (quand 2 articles sélectionnés) */}
-        {compareItems.length === 2 && (
-          <GlassCard className="p-4 bg-gradient-to-r from-white/[0.08] to-black/30">
-            <div className="flex items-center justify-between pb-2 border-b border-white/10">
-              <span className="text-xs font-bold text-white uppercase tracking-wider">Comparateur 2 Articles ⚖️</span>
-              <button type="button" onClick={() => setCompareIds([])} className="text-white/50 hover:text-white text-xs">Fermer ✕</button>
-            </div>
-            <div className="grid grid-cols-2 gap-3 mt-2 text-xs">
-              {compareItems.map((it) => (
-                <div key={it.id} className="p-2.5 rounded-xl bg-black/30 border border-white/10">
-                  <p className="font-bold text-white truncate">{it.name}</p>
-                  <p className="text-white/60 mt-1">Poids : <span className="font-mono text-[#A3C4A3] font-bold">{formatWeight(it.weight_g || 0)}</span></p>
-                  <p className="text-white/60">Prix : <span className="font-mono text-white">{it.purchase_price ? `${it.purchase_price} €` : '—'}</span></p>
-                  <p className="text-white/60 capitalize">État : {CONDITION_META[it.condition || 'bon']?.label || it.condition || '—'}</p>
-                </div>
-              ))}
-            </div>
-          </GlassCard>
-        )}
-
-        {/* ─── RANG 3 : Copilote IA · Matériel prêté · Actions rapides ─── */}
-        <div className="min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch lg:basis-0 lg:min-h-0 grow-[1] lg:grow-[24]">
-
-          {/* Card Copilote IA Équipement */}
-          <GlassCard className="lg:col-span-8 xl:col-span-7 p-4 min-h-0 lg:overflow-y-auto scrollbar-none">
-            <div className="flex items-center justify-between gap-2 pb-2 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <span className="text-sm">✦</span>
-                <div>
-                  <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">Copilote IA Équipement</h3>
-                  <span className="text-[9px] text-[#A3C4A3] font-mono font-bold uppercase tracking-wider">
-                    {aiStreaming ? 'Analyse en cours…' : 'Prêt'}
-                  </span>
-                </div>
-              </div>
-              {aiMode === 'local' && (
-                <span className="px-2 py-0.5 rounded-full bg-[#E9C46A]/15 border border-[#E9C46A]/30 text-[9px] font-mono font-bold text-[#E9C46A]">
-                  Mode dégradé · analyse locale
-                </span>
-              )}
-              {aiMode === 'live' && (
-                <span className="px-2 py-0.5 rounded-full bg-[#A3C4A3]/15 border border-[#A3C4A3]/30 text-[9px] font-mono font-bold text-[#A3C4A3]">
-                  IA en ligne
-                </span>
+                  );
+                })
               )}
             </div>
+          </>
+        );
+      }
 
-            <div ref={aiScrollRef} className="my-2.5 max-h-[170px] overflow-y-auto space-y-2 scrollbar-none pr-0.5 text-xs">
+      case 'copilot':
+        return widgetShell(
+          'copilot',
+          <span className={aiStreaming ? 'animate-pulse' : ''}><IconSparkle /></span>,
+          'Copilote IA Équipement',
+          aiStreaming
+            ? 'Analyse en cours…'
+            : aiMode === 'live'
+            ? 'IA en ligne'
+            : aiMode === 'local'
+            ? 'Mode dégradé · analyse locale'
+            : 'Prêt à répondre',
+          'inventaire',
+          <>
+            <div ref={aiScrollRef} className="flex-1 min-h-0 overflow-y-auto scrollbar-none space-y-2 pr-0.5 text-xs">
               {aiResponse ? (
                 <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10 shadow-inner">
                   <p className="text-white/90 leading-relaxed whitespace-pre-wrap">{aiResponse}{aiStreaming && <span className="inline-block w-1.5 h-3 ml-0.5 bg-[#A3C4A3] animate-pulse align-middle" />}</p>
                 </div>
               ) : aiError ? (
-                <div className="p-2.5 rounded-xl bg-[#E76F51]/12 border border-[#E76F51]/30 text-[11px] text-[#F4A18C]">{aiError}</div>
+                <div className="p-2.5 rounded-xl bg-[#E76F51]/12 border border-[#E76F51]/30 text-xs text-[#F4A18C]">{aiError}</div>
               ) : (
                 <div className="space-y-1.5">
                   {['Optimise un pack bivouac sous 8 kg', 'Quel matériel alléger en priorité ?'].map((s) => (
@@ -1739,7 +1396,7 @@ export default function MonMaterielCockpitPage() {
                       key={s}
                       type="button"
                       onClick={() => runAi(s)}
-                      className="w-full text-left p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-[11px] text-white/90 transition-all active:scale-[0.98]"
+                      className="w-full text-left p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-xs text-white/90 transition-all active:scale-[0.98]"
                     >
                       ✦ {s}
                     </button>
@@ -1747,16 +1404,15 @@ export default function MonMaterielCockpitPage() {
                 </div>
               )}
             </div>
-
             <form
               onSubmit={(e) => { e.preventDefault(); runAi(aiInput); setAiInput(''); }}
-              className="flex items-center gap-1.5 rounded-xl bg-black/30 border border-white/12 px-2 py-1"
+              className="flex items-center gap-1.5 rounded-xl bg-black/30 border border-white/12 px-2 py-1.5 shrink-0 mt-3"
             >
               <input
                 value={aiInput}
                 onChange={(e) => setAiInput(e.target.value)}
                 placeholder="Question au copilote…"
-                className="flex-1 bg-transparent text-xs text-white placeholder-white/40 focus:outline-none py-1"
+                className="flex-1 bg-transparent text-xs text-white placeholder-white/40 focus:outline-none"
                 aria-label="Question IA"
               />
               <button
@@ -1768,88 +1424,675 @@ export default function MonMaterielCockpitPage() {
                 ↑
               </button>
             </form>
-          </GlassCard>
+          </>
+        );
 
-          {/* Colonne droite rang 3 : Prêts + Actions rapides */}
-          <div className="lg:col-span-4 xl:col-span-5 flex flex-col gap-3 min-h-0 lg:overflow-y-auto scrollbar-none">
-
-            {/* Card Matériel Prêté */}
-            <GlassCard className="p-4">
-              <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">Matériel prêté ({loanedItems.length})</h3>
-                <span className="text-[9px] text-[#F4A18C] font-mono font-bold">À récupérer</span>
-              </div>
-              {loanedItems.length === 0 ? (
-                <p className="text-[11px] text-white/50 py-3 text-center">Aucun matériel actuellement prêté 🤝</p>
-              ) : (
-                <div className="space-y-1.5 mt-2.5 max-h-[200px] overflow-y-auto scrollbar-none pr-0.5">
-                  {loanedItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="p-2 rounded-xl bg-white/[0.04] border border-white/8 text-[11px] flex items-center justify-between gap-2"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-white/90 font-semibold truncate">{item.name}</p>
-                        <p className="text-[10px] text-white/50 truncate">Prêté à {item.loan_to_name || 'un ami'}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleMarkReturned(item)}
-                        className="px-2.5 py-1 rounded-lg bg-[#A3C4A3]/20 hover:bg-[#A3C4A3]/30 border border-[#A3C4A3]/40 text-[#A3C4A3] text-[10px] font-bold shrink-0 transition-all active:scale-95"
-                      >
-                        Rendu ✓
-                      </button>
-                    </div>
-                  ))}
+      case 'alerts': {
+        const critical = alerts.filter((a) => a.kind === 'replace' || a.kind === 'expiry').length;
+        return widgetShell(
+          'alerts',
+          <IconBell />,
+          'Alertes & entretien',
+          alerts.length > 0 ? `${critical} action(s) critique(s)` : 'Tout est en ordre',
+          'prets',
+          <>
+            <div className="flex items-end justify-between gap-3 shrink-0">
+              <div>
+                <div className={`text-4xl font-extrabold font-mono leading-none ${alerts.length > 0 ? 'text-[#E9C46A] drop-shadow-[0_0_14px_rgba(233,196,106,0.5)]' : 'text-[#A3C4A3]'}`}>
+                  {alerts.length}
                 </div>
+                <p className="text-xs text-white/70 mt-2">{alerts.length === 0 ? 'Tout est en ordre' : 'Alertes actives'}</p>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-1.5 pr-0.5">
+              {alerts.length === 0 ? (
+                <p className="text-xs text-white/70 text-center py-4">Aucune alerte — tout est en ordre ✨</p>
+              ) : (
+                alerts.slice(0, 6).map((a) => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => { setSelectedItemId(a.itemId); setIsDetailDrawerOpen(true); triggerHaptic('light'); }}
+                    className="w-full text-left p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-xs text-white/85 flex items-center justify-between gap-1.5 transition-colors"
+                  >
+                    <span className="truncate">{a.label}</span>
+                    <span className="text-xs text-[#A3C4A3] font-bold shrink-0">Voir ➔</span>
+                  </button>
+                ))
               )}
-            </GlassCard>
+            </div>
+          </>
+        );
+      }
 
-            {/* Card Actions Rapides */}
-            <GlassCard className="p-4">
-              <div className="flex items-center justify-between pb-2.5 border-b border-white/10">
-                <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">Actions rapides</h3>
-                <span className="text-[9px] text-white/50 font-mono">Navigation</span>
+      case 'kits':
+        return widgetShell(
+          'kits',
+          <IconBackpack />,
+          'Kits & sacs',
+          `${kits.length} kit${kits.length > 1 ? 's' : ''} assemblés`,
+          'actions',
+          <>
+            <div className="flex items-end justify-between gap-3 shrink-0">
+              <div>
+                <div className="text-4xl font-extrabold font-mono leading-none text-white">{kits.length}</div>
+                <p className="text-xs text-white/70 mt-2">Poids total {formatWeight(kits.reduce((s, k) => s + (k.total_weight_g || 0), 0))}</p>
               </div>
-              <div className="grid grid-cols-2 gap-2 mt-3">
-                <Link
-                  href="/explorer"
-                  className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-[11px] text-white/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
-                >
-                  <span>🗺️</span>
-                  <span className="font-bold">Explorer</span>
-                  <span className="text-[9px] text-white/45">Trouver des randonnées</span>
-                </Link>
-                <Link
-                  href="/ai-configurator"
-                  className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-[11px] text-white/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
-                >
-                  <span>✨</span>
-                  <span className="font-bold">Configurateur IA</span>
-                  <span className="text-[9px] text-white/45">Générer un kit</span>
-                </Link>
-                <Link
-                  href="/rapport-kit"
-                  className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-[11px] text-white/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
-                >
-                  <span>📦</span>
-                  <span className="font-bold">Rapport Kit</span>
-                  <span className="text-[9px] text-white/45">Évaluer son sac</span>
-                </Link>
-                <Link
-                  href="/jumeau-3d"
-                  className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-[11px] text-white/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
-                >
-                  <span>🧊</span>
-                  <span className="font-bold">Jumeau 3D</span>
-                  <span className="text-[9px] text-white/45">Vue du sac</span>
-                </Link>
-              </div>
-            </GlassCard>
-          </div>
+              <button
+                type="button"
+                onClick={handleCreateNewKit}
+                className="px-3 py-1.5 rounded-full bg-[#A3C4A3]/20 hover:bg-[#A3C4A3]/30 border border-[#A3C4A3]/40 text-[#A3C4A3] text-xs font-bold transition-all active:scale-95 shrink-0"
+              >
+                + Nouveau
+              </button>
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-2 pr-0.5">
+              {kits.length === 0 ? (
+                <p className="text-xs text-white/70 text-center py-4">Aucun kit actif. Créez votre premier kit.</p>
+              ) : (
+                kits.map((kit) => (
+                  <div
+                    key={kit.id}
+                    onClick={() => {
+                      setSelectedKitForCockpit(kit);
+                      setIsKitDrawerOpen(true);
+                      triggerHaptic('light');
+                    }}
+                    className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 transition-all cursor-pointer flex items-center justify-between gap-2"
+                  >
+                    <div className="min-w-0">
+                      <h4 className="text-xs font-bold text-white truncate">{kit.name}</h4>
+                      <p className="text-xs text-white/60 truncate">{kit.items?.length || 0} articles · {kit.season || '3 saisons'}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="text-xs font-mono font-bold text-[#A3C4A3] block">{formatWeight(kit.total_weight_g || 0)}</span>
+                      <span className="text-xs text-white/50">Éditer ➔</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  const renderWidgetFrame = (id: string) => {
+    return (
+      <div
+        key={id}
+        className={`${WIDGET_SPAN[id] || 'col-span-2 lg:col-span-1'} min-h-0 ${dragWidget === id ? 'opacity-50' : ''} ${dragOverId === id ? 'ring-2 ring-[#A3C4A3]/70 ring-inset rounded-[28px]' : ''} transition-opacity`}
+        onDragOver={(e) => {
+          if (dragWidget && dragWidget !== id) {
+            e.preventDefault();
+            setDragOverId(id);
+          }
+        }}
+        onDragLeave={() => setDragOverId((cur) => (cur === id ? null : cur))}
+        onDrop={() => handleDropOn(id)}
+      >
+        <GlassCard className="h-full">{renderWidget(id)}</GlassCard>
+      </div>
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 w-full bg-[#0B1F17] text-white select-none font-sans flex flex-col overflow-hidden">
+      <Header />
+      <div className="h-full w-full flex flex-col pt-20 sm:pt-[88px] overflow-y-auto lg:overflow-hidden">
+      <style>{`
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+        @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+        html, body { overflow: hidden !important; }
+      `}</style>
+
+      {/* ═══ BACKGROUND — sombre sobre Polestar (aucune photo) ═══ */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-[#0B1F17]">
+        <div
+          className="absolute inset-0"
+          style={{ background: 'radial-gradient(ellipse at 70% -10%, rgba(163,196,163,0.14) 0%, transparent 55%), radial-gradient(ellipse at 15% 110%, rgba(233,196,106,0.08) 0%, transparent 45%)' }}
+        />
+      </div>
+
+      {/* ═══ FLOATING TOAST NOTIFICATION ═══ */}
+      {toastMessage && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed top-24 left-1/2 -translate-x-1/2 z-[1200] px-4 py-2 rounded-full border border-[#A3C4A3]/50 bg-[#0B1F17]/90 text-white text-xs font-semibold backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_20px_rgba(163,196,163,0.3)] flex items-center gap-2 animate-[fadeInUp_0.25s_ease_both]"
+        >
+          <span className="w-2 h-2 rounded-full bg-[#A3C4A3] animate-pulse" />
+          <span>{toastMessage.text}</span>
+        </div>
+      )}
+
+      {/* ═══ MAIN COCKPIT — 6 MODULES POLESTAR (Sans Sidebar, Sans Scroll) ═══ */}
+      <h1 className="sr-only">Cockpit Mon Équipement</h1>
+      <main className="relative z-10 w-full max-w-[1800px] mx-auto flex-1 min-h-0 px-3 pb-20 lg:pb-14 flex flex-col gap-2.5 overflow-y-auto lg:overflow-hidden">
+
+        {/* Barre d'état du cockpit */}
+        <div className="flex items-center justify-between gap-2 shrink-0 px-1">
+          <span className="text-xs font-mono uppercase tracking-widest text-white/60">Cockpit · 6 modules</span>
+          <button
+            type="button"
+            onClick={() => { setVoirToutTab('inventaire'); setVoirToutOpen(true); triggerHaptic('light'); }}
+            className="text-xs font-bold text-[#A3C4A3] hover:text-white px-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 transition-all active:scale-95"
+          >
+            Tout voir ▸
+          </button>
+        </div>
+
+        {/* Grille des 6 modules — Rang 1 [Poids|Départ|État] · Rang 2 [IA|Alertes|Kits] */}
+        <div
+          className="min-h-0 grid grid-cols-2 grid-flow-dense gap-3 items-stretch lg:grid-cols-4 lg:auto-rows-fr lg:flex-1 lg:min-h-0"
+          onDragOver={(e) => e.preventDefault()}
+        >
+          {widgetOrder.map((id) => renderWidgetFrame(id))}
         </div>
       </main>
       </div>
+
+      {/* ═══ DRAWER « TOUT VOIR » — fonctionnalités reléguées ═══ */}
+      {voirToutOpen && (
+        <div className="fixed inset-0 z-[1040]" role="dialog" aria-modal="true" aria-label="Tout voir">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setVoirToutOpen(false)} />
+          <div className="absolute right-0 top-0 h-full w-full max-w-md bg-[#0B1F17] border-l border-white/15 shadow-2xl flex flex-col animate-[fadeInUp_0.2s_ease_both]">
+            <div className="flex items-center justify-between p-4 border-b border-white/10 shrink-0">
+              <h2 className="text-sm font-extrabold uppercase tracking-wider text-white">Tout voir</h2>
+              <button
+                type="button"
+                onClick={() => setVoirToutOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm text-white"
+                aria-label="Fermer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex gap-1 p-2 border-b border-white/10 shrink-0">
+              {([['inventaire', 'Inventaire'], ['prets', 'Prêts & Alertes'], ['reglages', 'Réglages'], ['actions', 'Actions']] as const).map(([tab, label]) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => { setVoirToutTab(tab); triggerHaptic('light'); }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                    voirToutTab === tab
+                      ? 'bg-[#A3C4A3] text-[#0B1F17]'
+                      : 'bg-white/[0.06] hover:bg-white/[0.12] text-white/80 border border-white/10'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none p-4 space-y-4">
+              {voirToutTab === 'inventaire' && (
+                <div className="space-y-3">
+                  <section className="rounded-2xl bg-white/[0.04] border border-white/8 p-3 space-y-1.5">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-white">Répartition par catégorie</h3>
+                    {categoryStats.map((c) => (
+                      <div key={c.label} className="flex items-center justify-between text-xs text-white/80">
+                        <span className="capitalize truncate">{c.label}</span>
+                        <span className="font-mono text-[#A3C4A3]">{formatWeight(c.grams)} ({c.pct}%)</span>
+                      </div>
+                    ))}
+                  </section>
+
+                  <section className="rounded-2xl bg-white/[0.04] border border-white/8 p-3 space-y-2">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-white">Inventaire matériel</h3>
+                      <span className="text-xs text-white/70 shrink-0">{filteredEquipment.length} articles · {formatWeight(totalWeightG)}</span>
+                    </div>
+
+                    <div className="relative flex items-center">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 text-white/50"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+                      <input
+                        ref={searchInputRef}
+                        type="text"
+                        placeholder="Rechercher équipement…  ( / )"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-9 pr-7 py-1.5 bg-black/30 rounded-xl border border-white/12 text-xs text-white placeholder-white/50 focus:outline-none focus:border-[#A3C4A3]/60 focus:ring-1 focus:ring-[#A3C4A3]/40 transition-colors"
+                      />
+                      {searchQuery && (
+                        <button type="button" onClick={() => setSearchQuery('')} className="absolute right-2.5 text-white/50 hover:text-white text-xs" aria-label="Effacer">✕</button>
+                      )}
+                    </div>
+
+                    <div className="flex gap-1.5 overflow-x-auto scrollbar-none text-xs">
+                      {CATEGORIES.map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => { triggerHaptic('light'); setActiveCategory(cat); }}
+                          className={`px-3 py-1 rounded-full capitalize whitespace-nowrap transition-colors ${
+                            activeCategory === cat
+                              ? 'bg-[#A3C4A3] text-[#0B1F17] font-bold'
+                              : 'bg-white/8 text-white/75 hover:bg-white/14 hover:text-white border border-white/10'
+                          }`}
+                        >
+                          {cat === 'all' ? 'Tous' : cat}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
+                        <span className="text-xs text-white/50 font-mono uppercase shrink-0">Marque :</span>
+                        {availableBrands.slice(0, 5).map((b) => (
+                          <button
+                            key={b}
+                            type="button"
+                            onClick={() => { triggerHaptic('light'); setSelectedBrand(b); }}
+                            className={`px-2 py-0.5 rounded-lg whitespace-nowrap transition-colors ${
+                              selectedBrand === b
+                                ? 'bg-[#A3C4A3]/25 text-[#A3C4A3] font-bold border border-[#A3C4A3]/50'
+                                : 'bg-white/5 text-white/60 hover:text-white border border-white/10'
+                            }`}
+                          >
+                            {b}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { triggerHaptic('light'); setOnlyFavorites((f) => !f); }}
+                        className={`px-2 py-1 rounded-lg font-bold transition-colors shrink-0 flex items-center gap-1 ${
+                          onlyFavorites
+                            ? 'bg-[#E76F51]/25 text-[#F4A18C] border border-[#E76F51]/40'
+                            : 'bg-white/5 text-white/60 hover:text-white'
+                        }`}
+                        title="Filtrer uniquement les favoris"
+                      >
+                        <span>{onlyFavorites ? '❤️' : '🤍'}</span>
+                        <span>Favoris ({favoritesCount})</span>
+                      </button>
+                    </div>
+
+                    {conditionFilter !== 'all' && (
+                      <button
+                        type="button"
+                        onClick={() => { setConditionFilter('all'); triggerHaptic('light'); }}
+                        className="w-full px-2.5 py-1.5 rounded-xl bg-[#E9A23B]/15 border border-[#E9A23B]/40 text-[#E9C46A] text-xs font-semibold flex items-center justify-between transition-all hover:bg-[#E9A23B]/25"
+                      >
+                        <span>Filtre actif : {CONDITION_META[conditionFilter]?.label || conditionFilter}</span>
+                        <span>✕ Réinitialiser</span>
+                      </button>
+                    )}
+
+                    {selectedIds.size > 0 && (
+                      <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl bg-[#A3C4A3]/15 border border-[#A3C4A3]/30">
+                        <span className="text-xs text-white/90 font-medium">{selectedIds.size} sélectionné(s)</span>
+                        <div className="flex items-center gap-1.5">
+                          <button type="button" onClick={bulkDelete} className="px-2.5 py-1 rounded-lg bg-[#E76F51]/25 hover:bg-[#E76F51]/35 text-[#F4A18C] text-xs font-semibold transition-all">Supprimer</button>
+                          <button type="button" onClick={clearSelection} className="px-2 py-1 rounded-lg bg-white/8 hover:bg-white/14 text-white/80 text-xs">Annuler</button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      {isLoading && equipment.length === 0 ? (
+                        <div className="space-y-2">
+                          {[...Array(4)].map((_, n) => (
+                            <div key={n} className="p-3 rounded-2xl bg-white/5 animate-pulse flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-white/10 shrink-0" />
+                              <div className="flex-1 space-y-1.5">
+                                <div className="w-3/4 h-3 rounded bg-white/15" />
+                                <div className="w-1/2 h-2.5 rounded bg-white/10" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : filteredEquipment.length === 0 ? (
+                        <div className="p-4 rounded-2xl bg-white/5 text-center space-y-2 border border-white/10">
+                          <span className="text-2xl block">🧭</span>
+                          <p className="text-xs text-white/75 font-medium">Aucun équipement trouvé</p>
+                          <button
+                            type="button"
+                            onClick={handleResetFilters}
+                            className="px-3.5 py-1.5 rounded-full bg-white/12 hover:bg-white/20 text-white text-xs font-semibold transition-all"
+                          >
+                            Réinitialiser les filtres
+                          </button>
+                        </div>
+                      ) : (
+                        filteredEquipment.map((item, i) => {
+                          const isSelected = item.id === (activeItem?.id || selectedItemId);
+                          const isChecked = selectedIds.has(item.id);
+                          const inCompare = compareIds.includes(item.id);
+                          const editing = inlineEditId === item.id;
+                          return (
+                            <div
+                              key={item.id}
+                              onClick={() => { triggerHaptic('light'); setSelectedItemId(item.id); setIsDetailDrawerOpen(true); }}
+                              style={prefersReducedMotion ? undefined : { animationDelay: `${Math.min(i, 12) * 25}ms` }}
+                              className={`${enterAnim} p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-2.5 relative group ${
+                                isSelected
+                                  ? 'bg-white/[0.12] border-[#A3C4A3]/50 ring-1 ring-[#A3C4A3]/30 shadow-md'
+                                  : 'bg-white/[0.04] border-white/8 hover:bg-white/[0.08] hover:border-white/15'
+                              }`}
+                            >
+                              {isSelected && (
+                                <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-full bg-[#A3C4A3] shadow-[0_0_10px_rgba(163,196,163,0.8)]" />
+                              )}
+                              <button
+                                type="button"
+                                onClick={(e) => toggleSelected(item.id, e)}
+                                aria-label={isChecked ? 'Désélectionner' : 'Sélectionner'}
+                                className={`w-4 h-4 rounded-md border shrink-0 flex items-center justify-center transition-all ${
+                                  isChecked ? 'bg-[#A3C4A3] border-[#A3C4A3] text-[#0B1F17]' : 'border-white/30 text-transparent hover:border-white/60'
+                                }`}
+                              >
+                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12l5 5L20 7" /></svg>
+                              </button>
+                              <div className="w-10 h-10 rounded-xl bg-black/30 overflow-hidden relative shrink-0 border border-white/10 flex items-center justify-center p-1 shadow-inner">
+                                <Image src={item.image || '/assets/images/no_image.png'} alt={item.name} width={36} height={36} className="object-contain max-h-full max-w-full" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <h4 className="text-xs font-bold text-white truncate leading-tight">{item.name}</h4>
+                                {editing ? (
+                                  <div className="flex items-center gap-1 mt-1" onClick={(e) => e.stopPropagation()}>
+                                    <input value={inlineWeight} onChange={(e) => setInlineWeight(e.target.value)} inputMode="numeric" className="w-12 px-1.5 py-0.5 rounded bg-black/40 border border-white/20 text-xs text-white text-center focus:outline-none focus:border-[#A3C4A3]" aria-label="Poids en grammes" />
+                                    <span className="text-xs text-white/50">g</span>
+                                    <input value={inlineQty} onChange={(e) => setInlineQty(e.target.value)} inputMode="numeric" className="w-8 px-1 py-0.5 rounded bg-black/40 border border-white/20 text-xs text-white text-center focus:outline-none focus:border-[#A3C4A3]" aria-label="Quantité" />
+                                    <button type="button" onClick={() => saveInlineEdit(item)} className="px-1.5 py-0.5 rounded bg-[#A3C4A3] text-[#0B1F17] text-xs font-bold">OK</button>
+                                    <button type="button" onClick={() => setInlineEditId(null)} className="px-1 py-0.5 rounded bg-white/10 text-white/70 text-xs">✕</button>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-1.5 text-xs text-white/60 mt-0.5 truncate">
+                                    <span>{item.brand || 'Outdoor'}</span>
+                                    <span>·</span>
+                                    <button type="button" onClick={(e) => startInlineEdit(item, e)} className="font-mono text-[#A3C4A3] font-bold hover:underline" title="Cliquer pour éditer le poids">
+                                      {formatWeight(item.weight_g || 0)}{(item.quantity || 1) > 1 ? ` ×${item.quantity}` : ''}
+                                    </button>
+                                    {item.loan_status === 'prêté' && (
+                                      <span className="px-1 py-0.5 rounded bg-white/10 text-xs text-white/80 border border-white/15">Prêté</span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); toggleCompare(item.id); }}
+                                  className={`p-1 rounded-md transition-colors ${inCompare ? 'text-[#A3C4A3]' : 'text-white/35 hover:text-white/80'}`}
+                                  title="Comparer"
+                                  aria-label="Comparer"
+                                >
+                                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h6v10H4zM14 7h6v10h-6z"/></svg>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setSelectedItemId(item.id); setIsDetailDrawerOpen(true); }}
+                                  className="text-white/40 hover:text-[#A3C4A3] p-1 transition-colors"
+                                  title="Fiche détaillée"
+                                  aria-label="Ouvrir la fiche"
+                                >
+                                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => { setEditingItem(null); setIsAddModalOpen(true); triggerHaptic('light'); }}
+                      className="w-full mt-1 py-2 rounded-xl border border-dashed border-white/20 hover:border-[#A3C4A3] bg-white/[0.03] hover:bg-white/[0.08] text-white/80 hover:text-[#A3C4A3] text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+                    >
+                      <span>+</span> Ajouter un article à l&apos;inventaire
+                    </button>
+                  </section>
+
+                  {compareItems.length === 2 && (
+                    <section className="rounded-2xl bg-gradient-to-r from-white/[0.08] to-black/30 border border-white/10 p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white uppercase tracking-wider">Comparateur 2 Articles ⚖️</span>
+                        <button type="button" onClick={() => setCompareIds([])} className="text-white/50 hover:text-white text-xs">Fermer ✕</button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        {compareItems.map((it) => (
+                          <div key={it.id} className="p-2.5 rounded-xl bg-black/30 border border-white/10">
+                            <p className="font-bold text-white truncate">{it.name}</p>
+                            <p className="text-white/70 mt-1">Poids : <span className="font-mono text-[#A3C4A3] font-bold">{formatWeight(it.weight_g || 0)}</span></p>
+                            <p className="text-white/70">Prix : <span className="font-mono text-white">{it.purchase_price ? `${it.purchase_price} €` : '—'}</span></p>
+                            <p className="text-white/70 capitalize">État : {CONDITION_META[it.condition || 'bon']?.label || it.condition || '—'}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )}
+                </div>
+              )}
+
+              {voirToutTab === 'prets' && (
+                <div className="space-y-4">
+                  <section>
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-white mb-2">Alertes ({alerts.length})</h3>
+                    {alerts.length === 0 ? (
+                      <p className="text-xs text-white/70 text-center py-4 rounded-2xl bg-white/[0.04] border border-white/8">Aucune alerte — tout est en ordre ✨</p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {alerts.map((a) => (
+                          <button
+                            key={a.id}
+                            type="button"
+                            onClick={() => { setVoirToutOpen(false); setSelectedItemId(a.itemId); setIsDetailDrawerOpen(true); triggerHaptic('light'); }}
+                            className="w-full text-left p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-xs text-white/85 flex items-center justify-between gap-1.5 transition-colors"
+                          >
+                            <span className="truncate">{a.label}</span>
+                            <span className="text-xs text-[#A3C4A3] font-bold shrink-0">Voir ➔</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+
+                  <section className="pt-2 border-t border-white/10">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-white">Prêts ({loanedItems.length})</h3>
+                      {trashCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => { setVoirToutOpen(false); setIsTrashModalOpen(true); }}
+                          className="text-xs font-bold text-white/60 hover:text-[#F4A18C] underline"
+                          title="Voir la corbeille des kits"
+                        >
+                          Corbeille ({trashCount})
+                        </button>
+                      )}
+                    </div>
+                    {loanedItems.length === 0 ? (
+                      <p className="text-xs text-white/70 text-center py-4 rounded-2xl bg-white/[0.04] border border-white/8">Aucun matériel actuellement prêté 🤝</p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {loanedItems.map((item) => (
+                          <div key={item.id} className="p-2 rounded-xl bg-white/[0.04] border border-white/8 text-xs flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-white/90 font-semibold truncate">{item.name}</p>
+                              <p className="text-xs text-white/60 truncate">Prêté à {item.loan_to_name || 'un ami'}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleMarkReturned(item)}
+                              className="px-2.5 py-1 rounded-lg bg-[#A3C4A3]/20 hover:bg-[#A3C4A3]/30 border border-[#A3C4A3]/40 text-[#A3C4A3] text-xs font-bold shrink-0 transition-all active:scale-95"
+                            >
+                              Rendu ✓
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                </div>
+              )}
+
+              {voirToutTab === 'reglages' && (
+                <div className="space-y-5">
+                  <section>
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-white mb-2">Objectif de poids du sac</h3>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[5, 6, 8, 10, 12, 14, 16, 20].map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => { setTargetKg(t); triggerHaptic('light'); showToast(`Objectif ajusté à ${t} kg`, 'info'); }}
+                          className={`py-2 rounded-xl text-center font-mono font-bold text-xs transition-all active:scale-95 ${
+                            targetKg === t
+                              ? 'bg-[#A3C4A3] text-[#0B1F17] shadow-sm'
+                              : 'bg-white/8 hover:bg-white/14 text-white/80 border border-white/10'
+                          }`}
+                        >
+                          {t} kg
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="pt-2 border-t border-white/10">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-white mb-2">Disposition des modules</h3>
+                    <div className="space-y-2">
+                      {widgetOrder.map((id, i) => (
+                        <div key={id} className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/[0.04] border border-white/8">
+                          <span className="text-xs text-white/90 capitalize">{WIDGET_LABEL[id] || id}</span>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => moveWidget(id, -1)}
+                              disabled={i === 0}
+                              className="w-7 h-7 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-white text-xs disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                              aria-label={`Déplacer ${WIDGET_LABEL[id]} vers le haut`}
+                            >
+                              ▲
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveWidget(id, 1)}
+                              disabled={i === widgetOrder.length - 1}
+                              className="w-7 h-7 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-white text-xs disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                              aria-label={`Déplacer ${WIDGET_LABEL[id]} vers le bas`}
+                            >
+                              ▼
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={resetWidgetOrder}
+                      className="mt-2 w-full py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-white/90 text-xs font-semibold transition-colors"
+                    >
+                      ↺ Réinitialiser la disposition
+                    </button>
+                  </section>
+
+                  <section className="pt-2 border-t border-white/10">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-white mb-2">Général</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => { handleResetFilters(); showToast('Filtres réinitialisés', 'info'); }}
+                        className="py-2.5 px-3 rounded-xl bg-white/8 hover:bg-white/14 border border-white/10 text-white/90 text-xs font-semibold text-left transition-colors flex items-center gap-1.5"
+                      >
+                        <span>🔄</span> Réinitialiser filtres
+                      </button>
+                      <Link
+                        href="/compte"
+                        onClick={() => setVoirToutOpen(false)}
+                        className="py-2.5 px-3 rounded-xl bg-white/8 hover:bg-white/14 border border-white/10 text-white/90 text-xs font-semibold text-left transition-colors flex items-center gap-1.5"
+                      >
+                        <span>👤</span> Mon Profil LKDV
+                      </Link>
+                    </div>
+                  </section>
+                </div>
+              )}
+
+              {voirToutTab === 'actions' && (
+                <div className="space-y-4">
+                  <section>
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-white mb-2">Navigation</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Link
+                        href="/explorer"
+                        onClick={() => setVoirToutOpen(false)}
+                        className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-xs text-white/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
+                      >
+                        <span>🗺️</span>
+                        <span className="font-bold">Explorer</span>
+                        <span className="text-xs text-white/60">Trouver des randonnées</span>
+                      </Link>
+                      <Link
+                        href="/ai-configurator"
+                        onClick={() => setVoirToutOpen(false)}
+                        className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-xs text-white/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
+                      >
+                        <span>✨</span>
+                        <span className="font-bold">Configurateur IA</span>
+                        <span className="text-xs text-white/60">Générer un kit</span>
+                      </Link>
+                      <Link
+                        href="/rapport-kit"
+                        onClick={() => setVoirToutOpen(false)}
+                        className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-xs text-white/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
+                      >
+                        <span>📦</span>
+                        <span className="font-bold">Rapport Kit</span>
+                        <span className="text-xs text-white/60">Évaluer son sac</span>
+                      </Link>
+                      <Link
+                        href="/jumeau-3d"
+                        onClick={() => setVoirToutOpen(false)}
+                        className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 text-xs text-white/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
+                      >
+                        <span>🧊</span>
+                        <span className="font-bold">Jumeau 3D</span>
+                        <span className="text-xs text-white/60">Vue du sac</span>
+                      </Link>
+                    </div>
+                  </section>
+
+                  <section className="pt-2 border-t border-white/10 space-y-2">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-white">Actions rapides</h3>
+                    <button
+                      type="button"
+                      onClick={() => { setVoirToutOpen(false); setEditingItem(null); setIsAddModalOpen(true); }}
+                      className="w-full py-2.5 px-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-white/90 text-xs font-semibold text-left flex items-center gap-2 transition-colors"
+                    >
+                      <span>➕</span> Ajouter un article à l&apos;inventaire
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setVoirToutOpen(false); setIsNewHikeModalOpen(true); }}
+                      className="w-full py-2.5 px-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-white/90 text-xs font-semibold text-left flex items-center gap-2 transition-colors"
+                    >
+                      <span>🧭</span> Planifier une nouvelle sortie
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setVoirToutOpen(false); handleCreateNewKit(); }}
+                      className="w-full py-2.5 px-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-white/90 text-xs font-semibold text-left flex items-center gap-2 transition-colors"
+                    >
+                      <span>🎒</span> Créer un nouveau kit
+                    </button>
+                  </section>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ═══ MODALS & DRAWERS ═══ */}
       <GearDetailDrawer
@@ -2028,7 +2271,7 @@ export default function MonMaterielCockpitPage() {
 
             <form onSubmit={handleCreateHike} className="space-y-3 text-xs">
               <div>
-                <label className="text-[11px] text-white/70 block mb-1">Nom de la randonnée / trek *</label>
+                <label className="text-xs text-white/70 block mb-1">Nom de la randonnée / trek *</label>
                 <input
                   required
                   value={newHikeName}
@@ -2038,7 +2281,7 @@ export default function MonMaterielCockpitPage() {
                 />
               </div>
               <div>
-                <label className="text-[11px] text-white/70 block mb-1">Massif / Destination</label>
+                <label className="text-xs text-white/70 block mb-1">Massif / Destination</label>
                 <input
                   value={newHikeDest}
                   onChange={(e) => setNewHikeDest(e.target.value)}
@@ -2047,7 +2290,7 @@ export default function MonMaterielCockpitPage() {
                 />
               </div>
               <div>
-                <label className="text-[11px] text-white/70 block mb-1">Compagnons (optionnel)</label>
+                <label className="text-xs text-white/70 block mb-1">Compagnons (optionnel)</label>
                 <input
                   value={newHikeCompanions}
                   onChange={(e) => setNewHikeCompanions(e.target.value)}
@@ -2057,7 +2300,7 @@ export default function MonMaterielCockpitPage() {
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="text-[10px] text-white/70 block mb-1">Durée (jours)</label>
+                  <label className="text-xs text-white/70 block mb-1">Durée (jours)</label>
                   <input
                     type="number"
                     min="1"
@@ -2067,7 +2310,7 @@ export default function MonMaterielCockpitPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-white/70 block mb-1">Distance (km)</label>
+                  <label className="text-xs text-white/70 block mb-1">Distance (km)</label>
                   <input
                     type="number"
                     min="1"
@@ -2077,7 +2320,7 @@ export default function MonMaterielCockpitPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-white/70 block mb-1">D+ (mètres)</label>
+                  <label className="text-xs text-white/70 block mb-1">D+ (mètres)</label>
                   <input
                     type="number"
                     min="0"
@@ -2132,7 +2375,7 @@ export default function MonMaterielCockpitPage() {
                 <div key={kit.id} className="p-3 rounded-xl bg-white/[0.04] border border-white/8 flex items-center justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-white truncate">{kit.name}</p>
-                    <p className="text-[10px] text-white/45">
+                    <p className="text-xs text-white/45">
                       Supprimé {kit.deleted_at ? new Date(kit.deleted_at).toLocaleDateString('fr-FR') : ''}
                     </p>
                   </div>
@@ -2144,7 +2387,7 @@ export default function MonMaterielCockpitPage() {
                         await restoreFromTrash(kit.id);
                         showToast(`Kit « ${kit.name} » restauré`, 'success');
                       }}
-                      className="px-2.5 py-1 rounded-lg bg-[#A3C4A3]/20 hover:bg-[#A3C4A3]/30 border border-[#A3C4A3]/40 text-[#A3C4A3] text-[10px] font-bold transition-all active:scale-95"
+                      className="px-2.5 py-1 rounded-lg bg-[#A3C4A3]/20 hover:bg-[#A3C4A3]/30 border border-[#A3C4A3]/40 text-[#A3C4A3] text-xs font-bold transition-all active:scale-95"
                     >
                       Restaurer
                     </button>
@@ -2156,7 +2399,7 @@ export default function MonMaterielCockpitPage() {
                           showToast('Kit supprimé définitivement', 'info');
                         }
                       }}
-                      className="px-2.5 py-1 rounded-lg bg-[#E76F51]/20 hover:bg-[#E76F51]/30 border border-[#E76F51]/40 text-[#F4A18C] text-[10px] font-bold transition-all active:scale-95"
+                      className="px-2.5 py-1 rounded-lg bg-[#E76F51]/20 hover:bg-[#E76F51]/30 border border-[#E76F51]/40 text-[#F4A18C] text-xs font-bold transition-all active:scale-95"
                     >
                       Suppr.
                     </button>
@@ -2167,126 +2410,6 @@ export default function MonMaterielCockpitPage() {
           </div>
         </div>
       )}
-
-      {/* ═══ COCKPIT SETTINGS MODAL ═══ */}
-      {isSettingsModalOpen && (
-        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-[fadeInUp_0.2s_ease_both]">
-          <div className="relative w-full max-w-md rounded-[28px] border border-white/15 bg-[#0B1F17]/95 p-6 text-white shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-base">⚙️</span>
-                <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">Réglages du Cockpit</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsSettingsModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-xs text-white"
-                aria-label="Fermer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs">
-              <div className="space-y-2">
-                <label className="text-[11px] font-semibold text-white/70 uppercase tracking-wide block">
-                  Objectif de poids de base du sac (kg)
-                </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {[5, 6, 8, 10, 12, 14, 16, 20].map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => {
-                        setTargetKg(t);
-                        triggerHaptic('light');
-                        showToast(`Objectif ajusté à ${t} kg`, 'info');
-                      }}
-                      className={`py-2 rounded-xl text-center font-mono font-bold transition-all active:scale-95 ${
-                        targetKg === t
-                          ? 'bg-[#A3C4A3] text-[#0B1F17] shadow-sm'
-                          : 'bg-white/8 hover:bg-white/14 text-white/80 border border-white/10'
-                      }`}
-                    >
-                      {t} kg
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-2 border-t border-white/10 space-y-2">
-                <label className="text-[11px] font-semibold text-white/70 uppercase tracking-wide block">
-                  Raccourcis & Navigation
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleResetFilters();
-                      setIsSettingsModalOpen(false);
-                      showToast('Filtres réinitialisés', 'info');
-                    }}
-                    className="py-2.5 px-3 rounded-xl bg-white/8 hover:bg-white/14 border border-white/10 text-white/90 text-[11px] font-semibold text-left transition-colors flex items-center gap-1.5"
-                  >
-                    <span>🔄</span> Réinitialiser filtres
-                  </button>
-                  <Link
-                    href="/compte"
-                    onClick={() => setIsSettingsModalOpen(false)}
-                    className="py-2.5 px-3 rounded-xl bg-white/8 hover:bg-white/14 border border-white/10 text-white/90 text-[11px] font-semibold text-left transition-colors flex items-center gap-1.5"
-                  >
-                    <span>👤</span> Mon Profil LKDV
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setIsSettingsModalOpen(false)}
-                className="px-5 py-2 rounded-full bg-[#A3C4A3] text-[#0B1F17] font-bold text-xs hover:bg-[#b3d4b3] transition-colors"
-              >
-                Terminer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// Sub-components
-// ─────────────────────────────────────────────────────────────
-function SpecTile({
-  label,
-  value,
-  accent,
-  onClick,
-  title,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-  onClick?: () => void;
-  title?: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={title || label}
-      className="p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/8 hover:border-white/15 text-left transition-all active:scale-95 cursor-pointer flex flex-col justify-between"
-    >
-      <span className={`text-[11px] font-bold block truncate capitalize ${accent ? 'text-[#A3C4A3]' : 'text-white'}`}>
-        {value}
-      </span>
-      <span className="text-[9px] text-white/50 uppercase font-mono tracking-wider mt-0.5 flex items-center justify-between w-full">
-        <span>{label}</span>
-        {onClick && <span className="text-[8px] text-[#A3C4A3] opacity-60">✎</span>}
-      </span>
-    </button>
   );
 }
