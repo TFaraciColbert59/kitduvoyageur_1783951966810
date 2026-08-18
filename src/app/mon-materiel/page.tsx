@@ -155,7 +155,7 @@ function GlassCard({
 }: React.HTMLAttributes<HTMLDivElement> & { className?: string }) {
   return (
     <div
-      className={`relative rounded-[28px] overflow-hidden border border-white/70 bg-white/65 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_24px_60px_-24px_rgba(11,31,23,0.22),0_4px_16px_rgba(11,31,23,0.06),inset_0_1px_0_0_rgba(255,255,255,0.85)] ${className}`}
+      className={`relative rounded-[28px] overflow-hidden border border-white/60 bg-white/40 backdrop-blur-xl backdrop-saturate-150 shadow-[0_24px_60px_-24px_rgba(11,31,23,0.22),0_4px_16px_rgba(11,31,23,0.06),inset_0_1px_0_0_rgba(255,255,255,0.85)] ${className}`}
       {...rest}
     >
       <div
@@ -1560,12 +1560,12 @@ export default function MonMaterielCockpitPage() {
           priority
           sizes="100vw"
           className="object-cover object-center"
-          style={{ filter: 'blur(12px) saturate(1.08) brightness(1.06)', opacity: 0.95 }}
+          style={{ filter: 'blur(8px) saturate(1.08) brightness(1.02)', opacity: 0.95 }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#F5F3EE]/55 via-[#FBFAF6]/30 to-[#F5F3EE]/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#F5F3EE]/45 via-[#F5F3EE]/20 to-[#F5F3EE]/45" />
         <div
           className="absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse at 50% 18%, rgba(255,255,255,0.28) 0%, transparent 62%)' }}
+          style={{ background: 'radial-gradient(ellipse at 50% 18%, rgba(255,255,255,0.2) 0%, transparent 60%)' }}
         />
       </div>
 
