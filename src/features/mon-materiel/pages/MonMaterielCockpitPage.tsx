@@ -867,6 +867,11 @@ export default function MonMaterielCockpitPage() {
         const penalty = criticalCount * 25 + warningCount * 10;
         const healthScore = Math.max(0, Math.min(100, 100 - Math.round((penalty / totalItems) * 10)));
         const worstAlert = alerts.find(a => a.severity === 'critical') ?? alerts[0];
+        // Count alerts by cause categories
+        const maintenanceCount = alerts.filter(a => a.kind === 'maintenance_due' || a.kind === 'maintenance_soon').length;
+        const expiryCount = alerts.filter(a => a.kind === 'expired' || a.kind === 'expiring_soon').length;
+        const wearCount = alerts.filter(a => a.kind === 'wear_replace' || a.kind === 'wear_repair').length;
+        const loanCount = alerts.filter(a => a.kind === 'loan_active' || a.kind === 'loan_overdue').length;
         return {
           metric: String(alerts.length),
           caption: criticalCount > 0 ? `${criticalCount} action(s) critique(s)` : 'Aucune alerte critique',
@@ -886,6 +891,16 @@ export default function MonMaterielCockpitPage() {
             : [],
           footerText: worstAlert ? `⚠ ${worstAlert.label ?? worstAlert.detail ?? 'Voir détail'}` : 'Équipement sain',
           footerAction: alerts.length > 0 ? { label: 'Voir détail →', onClick: () => setExpandedWidget('alerts') } : undefined,
+          richBody: (
+            <MiniBars
+              data={[
+                { label: 'Maintenance', value: maintenanceCount },
+                { label: 'Péremption', value: expiryCount },
+                { label: 'Usure', value: wearCount },
+                { label: 'Prêt', value: loanCount },
+              ]}
+            />
+          ),
         };
       }
       case 'kits': {
@@ -1102,7 +1117,24 @@ export default function MonMaterielCockpitPage() {
         id={id}
         icon={entry.icon}
         title={entry.title}
-        subtitle={id === 'departure' && activeHike ? `${activeHike.terrain || activeHike.season || 'Randonnée'}` : id === 'inventory' ? `${products.length} au catalogue` : id === 'alerts' ? 'entretien, péremption, prêts' : id === 'kits' ? 'actifs + corbeille' : id === 'forget' ? (activeHike ? `pour ${activeHike.name}` : 'checklist de préparation') : 'prêts, conflits, engagement'}
+        subtitle={(() => {
+          switch (id) {
+            case 'forget':
+              return activeHike ? countdownLabel(activeHike.targetDate) : '';
+            case 'departure':
+              return activeHike ? countdownLabel(activeHike.targetDate) : '';
+            case 'inventory':
+              return `${products.length} au catalogue`;
+            case 'alerts':
+              return 'Alertes & fiabilité';
+            case 'kits':
+              return 'actifs + corbeille';
+            case 'availability':
+              return 'Disponibilité';
+            default:
+              return '';
+          }
+        })()}
         metric={meta.metric}
         metricCaption={meta.caption}
         badges={meta.badges}
