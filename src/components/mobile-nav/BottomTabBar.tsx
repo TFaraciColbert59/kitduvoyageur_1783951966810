@@ -503,3 +503,7 @@ function BottomTabBar() {
 }
 
 export default memo(BottomTabBar);
+
+
+
+

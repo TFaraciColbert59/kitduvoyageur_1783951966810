@@ -11,6 +11,7 @@ import GoogleAnalytics from '@/components/GoogleAnalytics';
 import MobileNavWrapper from '@/components/mobile-nav/MobileNavWrapper';
 import CookieConsentBanner from '@/components/CookieConsentBanner';
 import RocketConsentScripts from '@/components/RocketConsentScripts';
+import MigrationEffect from '@/lib/storage/MigrationEffect';
 import { getOrganizationSchema, getWebsiteSchema } from '@/lib/seo-utils';
 import ReactQueryProvider from '@/components/ReactQueryProvider';
 import PageTransition from '@/components/ui/PageTransition';
@@ -240,6 +241,8 @@ export default function RootLayout({
                     </main>
                     <CookieConsentBanner />
                     <CustomCursor />
+                    {/* Migration Mon Matériel — exécutée UNE SEULE FOIS au montage */}
+                    <MigrationEffect />
                   </ReactQueryProvider>
                 </ErrorBoundaryWrapper>
               </SearchProvider>
