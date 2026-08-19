@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -20,7 +20,7 @@ export function useGoogleAnalytics() {
 
     if (!window.dataLayer) {
       const script = document.createElement('script');
-      script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
+      script.src = 'https://www.googletagmanager.com/gtag/js?id=' + measurementId;
       script.async = true;
       document.head.appendChild(script);
 
@@ -32,7 +32,7 @@ export function useGoogleAnalytics() {
       window.gtag('config', measurementId);
     }
 
-    const url = pathname + (searchParams.toString() ? `?${searchParams}` : '');
+    const url = pathname + (searchParams?.toString() ? '?' + searchParams.toString() : '');
     window.gtag('event', 'page_view', { page_path: url });
   }, [pathname, searchParams]);
 }

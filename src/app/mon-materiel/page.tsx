@@ -1,10 +1,12 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { motion, MotionConfig, AnimatePresence } from 'framer-motion';
+import Header from '@/components/Header';
 import { useEquipment, UserEquipmentItem } from '@/hooks/useEquipment';
-import { useUserKits, CustomKit } from '@/hooks/useUserKits';
+import { useUserKits, CustomKit, CustomKitItem } from '@/hooks/useUserKits';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import AddEditGearModal from '@/components/inventaire/AddEditGearModal';
 import GearDetailDrawer from '@/components/inventaire/GearDetailDrawer';
@@ -16,10 +18,44 @@ import {
   GEMINI_PROVIDER,
   GEMINI_DEFAULT_MODEL,
 } from '@/lib/ai/chatCompletion';
+import {
+  PlannedHike,
+  getPlannedHikes,
+  savePlannedHike,
+  updatePlannedHike,
+  removePlannedHike,
+  getActivePlannedHike,
+  setActivePlannedHikeId,
+} from '@/lib/preparation/plannedHikes';
+import {
+  DepartureHikeContext,
+  resolveDeparturePlan,
+} from '@/lib/preparation/SmartDepartureEngine';
 
 // ─────────────────────────────────────────────────────────────
-// Helpers
+// Constants & Helpers
 // ─────────────────────────────────────────────────────────────
+const PLANNED_HIKES_STORAGE_KEY = 'lkdv_planned_hikes';
+const WIDGET_ORDER_KEY = 'lkdv_cockpit_widget_order';
+const FORGET_CHECK_KEY = 'lkdv_forget_checked';
+const DEFAULT_WIDGET_ORDER = ['weight', 'departure', 'condition', 'forget', 'alerts', 'kits'];
+const WIDGET_SPAN: Record<string, string> = {
+  weight: 'col-span-1 lg:col-span-1',
+  departure: 'col-span-2 lg:col-span-2',
+  condition: 'col-span-1 lg:col-span-1',
+  forget: 'col-span-2 lg:col-span-2',
+  alerts: 'col-span-1 lg:col-span-1',
+  kits: 'col-span-1 lg:col-span-1',
+};
+const WIDGET_LABEL: Record<string, string> = {
+  weight: 'Poids du pack',
+  departure: 'Prochain départ',
+  condition: 'État du matériel',
+  forget: 'À ne pas oublier',
+  alerts: 'Alertes & entretien',
+  kits: 'Kits & sacs',
+};
+
 function formatWeight(g: number): string {
   if (g >= 1000) {
     return `${(g / 1000).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 2 })} kg`;
@@ -28,11 +64,74 @@ function formatWeight(g: number): string {
 }
 
 const CATEGORIES = ['all', 'couchage', 'portage', 'cuisine', 'vêtement', 'navigation'];
-
-// Objectif de poids par défaut du pack (kg) — pilotable via l'UI
 const DEFAULT_TARGET_KG = 8;
 
-// Extract plain text from a streaming chunk regardless of provider shape
+const CONDITION_ORDER = ['neuf', 'excellent', 'bon', 'moyen', 'usé', 'à_réparer', 'à_remplacer'];
+const CONDITION_META: Record<string, { label: string; color: string; bg: string }> = {
+  neuf: { label: 'Neuf', color: '#2D5A3D', bg: 'rgba(45,90,61,0.08)' },
+  excellent: { label: 'Excellent', color: '#3D7A52', bg: 'rgba(61,122,82,0.08)' },
+  bon: { label: 'Bon', color: '#B8932A', bg: 'rgba(184,147,42,0.1)' },
+  moyen: { label: 'Moyen', color: '#A1701F', bg: 'rgba(161,112,31,0.12)' },
+  usé: { label: 'Usé', color: '#C0532E', bg: 'rgba(192,83,46,0.12)' },
+  à_réparer: { label: 'À réparer', color: '#C0532E', bg: 'rgba(192,83,46,0.12)' },
+  à_remplacer: { label: 'À remplacer', color: '#9B2C2C', bg: 'rgba(155,44,44,0.14)' },
+};
+
+function daysUntil(targetDate?: string): number | null {
+  if (!targetDate) return null;
+  const target = new Date(`${targetDate}T00:00:00`);
+  if (Number.isNaN(target.getTime())) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((target.getTime() - today.getTime()) / 86400000);
+}
+
+function formatDateRange(h: PlannedHike): string {
+  if (!h.targetDate) return 'Date à définir';
+  const start = new Date(`${h.targetDate}T00:00:00`);
+  if (Number.isNaN(start.getTime())) return 'Date à définir';
+  const fmt = start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+  if (h.isOvernight && h.nightsCount) {
+    const end = new Date(start);
+    end.setDate(end.getDate() + (h.nightsCount || 1));
+    return `${fmt} → ${end.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`;
+  }
+  return fmt;
+}
+
+function formatWeather(h: PlannedHike): string {
+  if (h.weather && h.weather.condition) return h.weather.condition;
+  return 'Prévisions non disponibles';
+}
+
+function formatTemp(h: PlannedHike): string {
+  const w = h.weather;
+  if (w && typeof w.tempC === 'number') return `${Math.round(w.tempC)}°C`;
+  return '—';
+}
+
+function buildHikeContext(h: PlannedHike & { companions?: string }): DepartureHikeContext {
+  const days = (h.isOvernight && h.nightsCount ? h.nightsCount : 0) + (h.isOvernight ? 1 : 0);
+  return {
+    id: h.routeId || h.id,
+    name: h.name,
+    distanceKm: h.distanceKm,
+    elevationGain: h.elevationGain,
+    elevationLoss: h.elevationLoss,
+    difficulty: h.difficulty,
+    season: h.season,
+    terrain: h.terrain,
+    hasWaterPoints: h.hasWaterPoints,
+    waterPointsCount: h.waterPointsCount,
+    hasRefuges: h.hasRefuges,
+    isOvernight: h.isOvernight,
+    nightsCount: h.nightsCount,
+    weather: h.weather || null,
+    startDate: h.targetDate,
+    durationHours: days > 0 ? days * 6 : Math.round((h.distanceKm / 3.8) * 10) / 10,
+  };
+}
+
 function extractChunkText(chunk: unknown): string {
   if (typeof chunk === 'string') return chunk;
   const c = chunk as Record<string, any>;
@@ -49,7 +148,7 @@ function extractChunkText(chunk: unknown): string {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Reusable Liquid Glass card (visionOS style)
+// Reusable Liquid Glass card — vitre claire (visionOS style, fond papier)
 // ─────────────────────────────────────────────────────────────
 function GlassCard({
   children,
@@ -58,71 +157,145 @@ function GlassCard({
 }: React.HTMLAttributes<HTMLDivElement> & { className?: string }) {
   return (
     <div
-      className={`relative rounded-[28px] overflow-hidden border border-white/12 bg-white/[0.06] backdrop-blur-2xl backdrop-saturate-150 shadow-[0_20px_60px_-15px_rgba(11,31,23,0.6),inset_0_1px_0_0_rgba(255,255,255,0.18)] ${className}`}
+      className={`relative rounded-[28px] overflow-hidden border border-white/60 bg-white/40 backdrop-blur-xl backdrop-saturate-150 shadow-[0_24px_60px_-24px_rgba(11,31,23,0.22),0_4px_16px_rgba(11,31,23,0.06),inset_0_1px_0_0_rgba(255,255,255,0.85)] ${className}`}
       {...rest}
     >
-      {/* Top specular sheen */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-24 opacity-70"
-        style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.14) 0%, transparent 100%)' }}
+        className="pointer-events-none absolute inset-x-0 top-0 h-28 opacity-80"
+        style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.12) 55%, transparent 100%)' }}
       />
-      {/* Light-refraction edge (gradient border via mask) */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 rounded-[28px]"
         style={{
           padding: 1,
-          background: 'linear-gradient(140deg, rgba(255,255,255,0.35), rgba(255,255,255,0.04) 40%, transparent 70%)',
+          background: 'linear-gradient(140deg, rgba(255,255,255,1), rgba(255,255,255,0.4) 40%, rgba(255,255,255,0.15) 75%)',
           WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
           WebkitMaskComposite: 'xor',
           maskComposite: 'exclude',
         }}
       />
-      <div className="relative h-full">{children}</div>
+      <div className="relative h-full flex flex-col">{children}</div>
     </div>
   );
 }
 
-// Weight-target radial gauge
+// Radial Weight Gauge
 function WeightGauge({ currentG, targetKg }: { currentG: number; targetKg: number }) {
   const targetG = targetKg * 1000;
   const ratio = targetG > 0 ? currentG / targetG : 0;
   const pct = Math.min(ratio, 1);
-  const r = 34;
+  const r = 32;
   const c = 2 * Math.PI * r;
   const dash = c * pct;
-  const color = ratio <= 0.85 ? '#A3C4A3' : ratio <= 1 ? '#E9C46A' : '#E76F51';
+  const color = ratio <= 0.85 ? '#2D5A3D' : ratio <= 1 ? '#B8932A' : '#C0532E';
   return (
-    <div className="relative w-[92px] h-[92px] shrink-0">
-      <svg viewBox="0 0 92 92" className="w-full h-full -rotate-90">
-        <circle cx="46" cy="46" r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="7" />
+    <div className="relative w-[84px] h-[84px] shrink-0">
+      <svg viewBox="0 0 84 84" className="w-full h-full -rotate-90">
+        <circle cx="42" cy="42" r={r} fill="none" stroke="rgba(11,31,23,0.08)" strokeWidth="6" />
         <circle
-          cx="46"
-          cy="46"
+          cx="42"
+          cy="42"
           r={r}
           fill="none"
           stroke={color}
-          strokeWidth="7"
+          strokeWidth="6"
           strokeLinecap="round"
           strokeDasharray={`${dash} ${c}`}
           style={{ transition: 'stroke-dasharray 0.6s ease, stroke 0.3s ease' }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-sm font-bold font-mono" style={{ color }}>
+        <span className="text-xs font-bold font-mono" style={{ color }}>
           {(currentG / 1000).toFixed(1)}
         </span>
-        <span className="text-[9px] text-white/50 font-mono">/ {targetKg} kg</span>
+        <span className="text-xs text-[#1C2620]/60 font-mono">/ {targetKg} kg</span>
       </div>
     </div>
   );
 }
 
+// ─────────────────────────────────────────────────────────────
+// Cockpit icons (Polestar automotive — strong, monochrome)
+// ─────────────────────────────────────────────────────────────
+function IconScale() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 3v4M9 7h6M12 7l5 13H7l5-13Z" />
+      <path d="M5 20h14" />
+    </svg>
+  );
+}
+
+function IconNav() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M15.5 8.5l-2 5-5 2 2-5 5-2Z" />
+    </svg>
+  );
+}
+
+function IconActivity() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M3 12h4l2-7 4 14 2-7h6" />
+    </svg>
+  );
+}
+
+function IconSparkle() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z" />
+      <path d="M19 15l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7.7-2Z" />
+    </svg>
+  );
+}
+
+function IconBell() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" />
+      <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+    </svg>
+  );
+}
+
+function IconBackpack() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M6 9a6 6 0 0 1 12 0v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V9Z" />
+      <path d="M9 6a3 3 0 0 1 6 0M8 14h8M8 18h8" />
+    </svg>
+  );
+}
+
+function IconChecklist() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M9 5h12M9 12h12M9 19h12" />
+      <path d="M3.5 5l1 1 2-2M3.5 12l1 1 2-2M3.5 19l1 1 2-2" />
+    </svg>
+  );
+}
+
+function IconMaximize() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+    </svg>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Main Page Component — Cockpit Polestar 6 Modules (Sans Sidebar)
+// ─────────────────────────────────────────────────────────────
 export default function MonMaterielCockpitPage() {
   const { triggerHaptic } = useHapticFeedback();
 
-  // Supabase Hooks (logic preserved)
+  // Supabase Hooks
   const {
     equipment,
     loading: equipmentLoading,
@@ -133,25 +306,57 @@ export default function MonMaterielCockpitPage() {
 
   const {
     kits,
+    trashKits,
+    trashCount,
     loading: kitsLoading,
     updateKit,
     moveToTrash,
+    createKit,
+    restoreFromTrash,
+    permanentDelete,
   } = useUserKits(equipment);
 
   const isLoading = equipmentLoading || kitsLoading;
 
-  // States
-  const [activeNav, setActiveNav] = useState<'inventory' | 'telemetry' | 'favorites' | 'settings'>('inventory');
+  // Filter and Selection States
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBrand, setSelectedBrand] = useState<string>('Tous');
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [conditionFilter, setConditionFilter] = useState<string>('all');
+  const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [selectedKitId, setSelectedKitId] = useState<string | null>(null);
+  const [selectedHikeId, setSelectedHikeId] = useState<string | null>(null);
   const [targetKg, setTargetKg] = useState<number>(DEFAULT_TARGET_KG);
-  const [showTelemetryPanel, setShowTelemetryPanel] = useState(false); // mobile/tablet overlay
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set()); // multi-select
-  const [compareIds, setCompareIds] = useState<string[]>([]); // comparator
 
-  // Inline edit
+  // Planned Hikes State — source de vérité partagée (src/lib/preparation/plannedHikes.ts)
+  // Chargé après hydration pour rester cohérent avec le SSR (pattern identique aux hooks équipement/kits).
+  const [plannedHikes, setPlannedHikes] = useState<PlannedHike[]>([]);
+
+  useEffect(() => {
+    const all = getPlannedHikes();
+    setPlannedHikes(all);
+    const active = getActivePlannedHike();
+    setSelectedHikeId((prev) => prev ?? active?.id ?? all[0]?.id ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Synchronise automatiquement avec les sorties planifiées ailleurs (préparateur, autre onglet)
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === PLANNED_HIKES_STORAGE_KEY) {
+        setPlannedHikes(getPlannedHikes());
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  // Selection & Compare states
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+
+  // Inline edit state
   const [inlineEditId, setInlineEditId] = useState<string | null>(null);
   const [inlineWeight, setInlineWeight] = useState<string>('');
   const [inlineQty, setInlineQty] = useState<string>('');
@@ -163,14 +368,143 @@ export default function MonMaterielCockpitPage() {
   const [isKitDrawerOpen, setIsKitDrawerOpen] = useState(false);
   const [selectedKitForCockpit, setSelectedKitForCockpit] = useState<CustomKit | null>(null);
   const [isLendModalOpen, setIsLendModalOpen] = useState(false);
+  const [isNewHikeModalOpen, setIsNewHikeModalOpen] = useState(false);
+  const [isTrashModalOpen, setIsTrashModalOpen] = useState(false);
 
-  // AI Copilot (real streaming)
+  // Cockpit Polestar — ordre des 6 modules (drag & drop + persistance localStorage)
+  const [widgetOrder, setWidgetOrder] = useState<string[]>(DEFAULT_WIDGET_ORDER);
+  const [widgetOrderLoaded, setWidgetOrderLoaded] = useState(false);
+  const [voirToutOpen, setVoirToutOpen] = useState(false);
+  const [voirToutTab, setVoirToutTab] = useState<'inventaire' | 'prets' | 'reglages' | 'actions'>('inventaire');
+  const [dragWidget, setDragWidget] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
+  const expandedCloseRef = useRef<HTMLButtonElement | null>(null);
+  const expandOriginRef = useRef<HTMLButtonElement | null>(null);
+  const [forgetChecked, setForgetChecked] = useState<Set<string>>(new Set());
+  const [alertFilter, setAlertFilter] = useState('');
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(WIDGET_ORDER_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (
+          Array.isArray(parsed) &&
+          parsed.length === DEFAULT_WIDGET_ORDER.length &&
+          DEFAULT_WIDGET_ORDER.every((w) => parsed.includes(w))
+        ) {
+          setWidgetOrder(parsed as string[]);
+        }
+      }
+    } catch {
+      /* ignore malformed localStorage */
+    }
+    setWidgetOrderLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!widgetOrderLoaded) return;
+    try {
+      window.localStorage.setItem(WIDGET_ORDER_KEY, JSON.stringify(widgetOrder));
+    } catch {
+      /* ignore quota errors */
+    }
+  }, [widgetOrder, widgetOrderLoaded]);
+
+  // Checklist « À ne pas oublier » — état persisté des éléments cochés
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(FORGET_CHECK_KEY);
+      if (raw) setForgetChecked(new Set(JSON.parse(raw) as string[]));
+    } catch {
+      /* ignore malformed localStorage */
+    }
+  }, []);
+
+  const toggleForgetChecked = (id: string) => {
+    setForgetChecked((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      try {
+        window.localStorage.setItem(FORGET_CHECK_KEY, JSON.stringify([...next]));
+      } catch {
+        /* ignore quota errors */
+      }
+      return next;
+    });
+    triggerHaptic('light');
+  };
+
+// Vue fullscreen d'un widget — Escape ferme, focus piégé dans l'overlay, focus sur le bouton de fermeture
+  useEffect(() => {
+    if (!expandedWidget) return;
+    const root = document.querySelector('[data-fullscreen]') as HTMLElement | null;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setExpandedWidget(null);
+        return;
+      }
+      if (e.key === 'Tab' && root) {
+        const focusables = [...root.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+          .filter((el) => !el.hasAttribute('disabled'));
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        const active = document.activeElement as HTMLElement | null;
+        const inside = !!active && root.contains(active);
+        if (e.shiftKey && (!inside || active === first)) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && (!inside || active === last)) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    const t = setTimeout(() => {
+      root?.querySelector<HTMLElement>('[aria-label="Fermer (échap)"]')?.focus();
+    }, 50);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      clearTimeout(t);
+    };
+  }, [expandedWidget]);
+
+  // Restauration du focus sur le bouton « Agrandir » du widget d'origine à la fermeture
+  useEffect(() => {
+    if (expandedWidget === null) {
+      const t = setTimeout(() => expandOriginRef.current?.focus(), 0);
+      return () => clearTimeout(t);
+    }
+  }, [expandedWidget]);
+
+  // New Hike Form state
+  const [newHikeName, setNewHikeName] = useState('');
+  const [newHikeDest, setNewHikeDest] = useState('');
+  const [newHikeDays, setNewHikeDays] = useState(2);
+  const [newHikeKm, setNewHikeKm] = useState(30);
+  const [newHikeDPlus, setNewHikeDPlus] = useState(1500);
+  const [newHikeCompanions, setNewHikeCompanions] = useState('');
+
+  // Toast feedback state
+  const [toastMessage, setToastMessage] = useState<{ id: number; text: string; type?: 'success' | 'info' } | null>(null);
+  const showToast = useCallback((text: string, type: 'success' | 'info' = 'success') => {
+    setToastMessage({ id: Date.now(), text, type });
+    setTimeout(() => {
+      setToastMessage((cur) => (cur && Date.now() - cur.id >= 2400 ? null : cur));
+    }, 2500);
+  }, []);
+
+  // AI Copilot State
   const [aiInput, setAiInput] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [aiStreaming, setAiStreaming] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [aiMode, setAiMode] = useState<'live' | 'local' | null>(null);
   const aiScrollRef = useRef<HTMLDivElement | null>(null);
-
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const prefersReducedMotion =
@@ -178,7 +512,7 @@ export default function MonMaterielCockpitPage() {
     window.matchMedia &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Set default selected item
+  // Reset search when filters change (garder la sélection cohérente)
   useEffect(() => {
     if (equipment.length > 0) {
       if (!selectedItemId || !equipment.some((e) => e.id === selectedItemId)) {
@@ -187,27 +521,55 @@ export default function MonMaterielCockpitPage() {
     }
   }, [equipment, selectedItemId]);
 
+  useEffect(() => {
+    if (kits.length > 0) {
+      if (!selectedKitId || !kits.some((k) => k.id === selectedKitId)) {
+        setSelectedKitId(kits[0].id);
+      }
+    }
+  }, [kits, selectedKitId]);
+
+  // Available brands computed from inventory
+  const availableBrands = useMemo(() => {
+    const set = new Set<string>();
+    equipment.forEach((e) => {
+      if (e.brand && e.brand.trim()) set.add(e.brand.trim());
+    });
+    return ['Tous', ...Array.from(set).sort()];
+  }, [equipment]);
+
   // Filtered equipment list
   const filteredEquipment = useMemo(() => {
     return equipment.filter((item) => {
-      if (activeNav === 'favorites' && !item.is_favorite) return false;
+      if (onlyFavorites && !item.is_favorite) return false;
       if (selectedBrand && selectedBrand !== 'Tous') {
         if (!item.brand?.toLowerCase().includes(selectedBrand.toLowerCase())) return false;
       }
+      if (conditionFilter && conditionFilter !== 'all') {
+        if ((item.condition || 'bon') !== conditionFilter) return false;
+      }
       if (activeCategory !== 'all') {
         const cat = (item.category || '').toLowerCase();
-        if (!cat.includes(activeCategory.toLowerCase())) return false;
+        const t = activeCategory.toLowerCase();
+        let matches = cat.includes(t);
+        if (t === 'portage' && (cat.includes('sac') || cat.includes('pack') || cat.includes('portage'))) matches = true;
+        if (t === 'couchage' && (cat.includes('tente') || cat.includes('duvet') || cat.includes('matelas') || cat.includes('bivouac') || cat.includes('couchage'))) matches = true;
+        if (t === 'cuisine' && (cat.includes('hydrat') || cat.includes('eau') || cat.includes('rechaud') || cat.includes('réchaud') || cat.includes('popote') || cat.includes('filtre') || cat.includes('cuisine'))) matches = true;
+        if (t === 'vêtement' && (cat.includes('vetement') || cat.includes('vêtement') || cat.includes('textile') || cat.includes('veste') || cat.includes('chaussure'))) matches = true;
+        if (t === 'navigation' && (cat.includes('gps') || cat.includes('boussole') || cat.includes('carte') || cat.includes('sécurité') || cat.includes('securite') || cat.includes('secours') || cat.includes('éclair') || cat.includes('eclair') || cat.includes('lampe') || cat.includes('navigation'))) matches = true;
+        if (!matches) return false;
       }
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchName = item.name?.toLowerCase().includes(q);
         const matchBrand = item.brand?.toLowerCase().includes(q);
         const matchCat = item.category?.toLowerCase().includes(q);
-        if (!matchName && !matchBrand && !matchCat) return false;
+        const matchNotes = item.notes?.toLowerCase().includes(q);
+        if (!matchName && !matchBrand && !matchCat && !matchNotes) return false;
       }
       return true;
     });
-  }, [equipment, activeNav, selectedBrand, activeCategory, searchQuery]);
+  }, [equipment, onlyFavorites, selectedBrand, conditionFilter, activeCategory, searchQuery]);
 
   // Active selected item
   const activeItem = useMemo(() => {
@@ -218,6 +580,59 @@ export default function MonMaterielCockpitPage() {
     }
     return equipment.find((e) => e.id === selectedItemId) || equipment[0] || null;
   }, [filteredEquipment, equipment, selectedItemId]);
+
+  // Active selected hike
+  const activeHike = useMemo(() => {
+    return plannedHikes.find((h) => h.id === selectedHikeId) || plannedHikes[0] || null;
+  }, [plannedHikes, selectedHikeId]);
+
+  // Active selected kit
+  const activeKit = useMemo(() => {
+    if (activeHike?.assignedKitId) {
+      const found = kits.find((k) => k.id === activeHike.assignedKitId);
+      if (found) return found;
+    }
+    return kits.find((k) => k.id === selectedKitId) || kits[0] || null;
+  }, [kits, selectedKitId, activeHike]);
+
+  // Moteur de départ intelligent (SmartDepartureEngine) — kit recommandé + consommables réels
+  const departurePlan = useMemo(() => {
+    if (!activeHike) return null;
+    try {
+      return resolveDeparturePlan(buildHikeContext(activeHike), kits, equipment);
+    } catch {
+      return null;
+    }
+  }, [activeHike, kits, equipment]);
+
+  const recommendedKit = departurePlan?.selectedKit ?? null;
+
+  // Hike readiness analysis (kit assigné)
+  const hikeReadiness = useMemo(() => {
+    if (!activeKit) return { readinessPct: 100, ownedCount: 0, totalCount: 0, missingItems: [] };
+    const kitItems = activeKit.items || [];
+    const missing: CustomKitItem[] = [];
+    let owned = 0;
+
+    kitItems.forEach((ki) => {
+      const isOwned = equipment.some(
+        (e) => (ki.gear_item_id && e.id === ki.gear_item_id) || e.name.toLowerCase() === ki.item_name.toLowerCase()
+      );
+      if (isOwned) {
+        owned++;
+      } else {
+        missing.push(ki);
+      }
+    });
+
+    const pct = kitItems.length > 0 ? Math.round((owned / kitItems.length) * 100) : 100;
+    return {
+      readinessPct: pct,
+      ownedCount: owned,
+      totalCount: kitItems.length,
+      missingItems: missing,
+    };
+  }, [activeKit, equipment]);
 
   // Totals
   const totalWeightG = useMemo(
@@ -244,10 +659,19 @@ export default function MonMaterielCockpitPage() {
       .slice(0, 4);
   }, [equipment]);
 
-  // ── Smart alerts (Lot 4) ──
+  // État du matériel (répartition par condition)
+  const conditionStats = useMemo(() => {
+    return CONDITION_ORDER.map((key) => {
+      const items = equipment.filter((it) => (it.condition || 'bon') === key);
+      const weight = items.reduce((sum, it) => sum + (it.weight_g || 0) * (it.quantity || 1), 0);
+      return { key, count: items.length, weight };
+    }).filter((s) => s.count > 0);
+  }, [equipment]);
+
+  // Smart alerts & loans
   const alerts = useMemo(() => {
     const now = Date.now();
-    const out: { id: string; kind: 'maintenance' | 'expiry' | 'replace' | 'loan'; label: string; itemId: string }[] = [];
+    const out: { id: string; kind: 'maintenance' | 'expiry' | 'replace' | 'loan'; label: string; itemId: string; borrower?: string }[] = [];
     equipment.forEach((it) => {
       if (it.next_maintenance_date && new Date(it.next_maintenance_date).getTime() < now) {
         out.push({ id: `m-${it.id}`, kind: 'maintenance', label: `Révision due — ${it.name}`, itemId: it.id });
@@ -255,15 +679,111 @@ export default function MonMaterielCockpitPage() {
       if (it.expiry_date && new Date(it.expiry_date).getTime() < now) {
         out.push({ id: `e-${it.id}`, kind: 'expiry', label: `Péremption — ${it.name}`, itemId: it.id });
       }
-      if (it.condition === 'à_remplacer') {
-        out.push({ id: `r-${it.id}`, kind: 'replace', label: `À remplacer — ${it.name}`, itemId: it.id });
+      if (it.condition === 'à_remplacer' || it.condition === 'à_réparer') {
+        out.push({ id: `r-${it.id}`, kind: 'replace', label: `À réparer/remplacer — ${it.name}`, itemId: it.id });
       }
       if (it.loan_status === 'prêté') {
-        out.push({ id: `l-${it.id}`, kind: 'loan', label: `Prêté${it.loan_to_name ? ` à ${it.loan_to_name}` : ''} — ${it.name}`, itemId: it.id });
+        out.push({ id: `l-${it.id}`, kind: 'loan', label: `Prêté à ${it.loan_to_name || 'un ami'} — ${it.name}`, itemId: it.id, borrower: it.loan_to_name || '' });
       }
     });
     return out;
   }, [equipment]);
+
+  // Matériel actuellement prêté (card dédiée, action « rendu » réelle)
+  const loanedItems = useMemo(
+    () => equipment.filter((it) => it.loan_status === 'prêté'),
+    [equipment]
+  );
+
+  // ── Widget « À ne pas oublier » : checklist intelligente priorisée ──
+  // Données réelles (inventaire, kits, alertes, départ) + règles génériques explicites (jamais présenté comme personnalisé s'il n'y a pas de donnée).
+  const forgetItems = useMemo(() => {
+    const out: {
+      id: string;
+      label: string;
+      reason: string;
+      level: 'critique' | 'verifier' | 'conseille' | 'facultatif' | 'pret';
+      category: string;
+      source: 'donnée' | 'règle';
+      itemId?: string;
+    }[] = [];
+
+    for (const a of alerts) {
+      if (a.kind === 'expiry') {
+        out.push({ id: `f-exp-${a.itemId}`, label: a.label.replace('Péremption — ', ''), reason: 'Produit périmé — ne pas l\'emporter sans contrôle', level: 'critique', category: 'Péremptions', source: 'donnée', itemId: a.itemId });
+      } else if (a.kind === 'maintenance') {
+        out.push({ id: `f-maint-${a.itemId}`, label: a.label.replace('Révision due — ', ''), reason: 'Maintenance dépassée avant départ', level: 'verifier', category: 'Entretien', source: 'donnée', itemId: a.itemId });
+      } else if (a.kind === 'replace') {
+        out.push({ id: `f-rep-${a.itemId}`, label: a.label.replace('À réparer/remplacer — ', ''), reason: 'État dégradé — à remplacer ou réparer', level: 'critique', category: 'Entretien', source: 'donnée', itemId: a.itemId });
+      } else if (a.kind === 'loan') {
+        out.push({ id: `f-loan-${a.itemId}`, label: a.label.replace(`Prêté à ${a.borrower || 'un ami'} — `, ''), reason: 'Actuellement prêté — penser à le récupérer', level: 'verifier', category: 'Prêts', source: 'donnée', itemId: a.itemId });
+      }
+    }
+
+    if (activeKit && hikeReadiness.missingItems.length > 0) {
+      hikeReadiness.missingItems.forEach((m, i) => {
+        if (i < 4) {
+          out.push({ id: `f-miss-${m.id}`, label: m.item_name, reason: 'Manquant au kit assigné au prochain départ', level: 'critique', category: 'Kit', source: 'donnée' });
+        }
+      });
+    }
+
+    const invNames = equipment.map((e) => `${e.name} ${e.category || ''}`.toLowerCase());
+    const hasKw = (kws: string[]) => kws.some((k) => invNames.some((n) => n.includes(k)));
+    const consumChecks: { label: string; kws: string[]; reason: string }[] = [
+      { label: 'Gaz / cartouche pour réchaud', kws: ['gaz', 'cartouche', 'réchaud', 'rechaud'], reason: 'Non détecté dans l\'inventaire — indispensable si cuisine au réchaud' },
+      { label: 'Pastilles de purification d\'eau', kws: ['pastille', 'purif', 'micropur'], reason: 'Autonomie eau — purifier en rando sans point d\'eau sûr' },
+      { label: 'Piles / batterie externe', kws: ['piles', 'pile ', 'batterie', 'powerbank', 'power bank'], reason: 'Sécurité électronique (frontale, GPS) — à charger' },
+      { label: 'Pharmacie (pansements, anti-douleur)', kws: ['pharmacie', 'pansement', 'trousse', 'secours'], reason: 'Essentiel en milieu isolé' },
+      { label: 'Crème solaire', kws: ['crème solaire', 'creme solaire', 'solaire'], reason: 'Protection UV — été ou altitude' },
+      { label: 'Répulsif anti-moustiques', kws: ['répulsif', 'repulsif', 'anti-moustique', 'moustique'], reason: 'Confort et santé en forêt / zones humides' },
+    ];
+    consumChecks.forEach((c) => {
+      out.push({
+        id: `f-con-${c.label.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}`,
+        label: c.label,
+        reason: hasKw(c.kws) ? 'Présent dans l\'inventaire' : c.reason,
+        level: hasKw(c.kws) ? 'pret' : 'conseille',
+        category: 'Consommables',
+        source: 'règle',
+      });
+    });
+
+    const docChecks = [
+      { label: 'Pièce d\'identité', reason: 'Obligatoire si déplacement hors zone résidence' },
+      { label: 'Assurance (annulation / rapatriement)', reason: 'Rarement emporté de tête — vérifier avant départ' },
+      { label: 'Argent liquide', reason: 'Souvent indispensable hors réseau' },
+      { label: 'Numéros d\'urgence', reason: 'A avoir à portée en cas de souci' },
+    ];
+    docChecks.forEach((d, i) => {
+      out.push({ id: `f-doc-${i}`, label: d.label, reason: d.reason, level: 'conseille', category: 'Documents', source: 'règle' });
+    });
+
+    if (activeHike) {
+      if (activeHike.isOvernight) {
+        out.push({ id: 'f-ctx-bivouac', label: 'Équipement bivouac (pauses, fil, lampe)', reason: `Nuit sur place (${(activeHike.nightsCount || 1) + 1} jours)`, level: 'verifier', category: 'Contexte départ', source: 'règle' });
+      }
+      if (activeHike.weather && typeof activeHike.weather.tempC === 'number' && activeHike.weather.tempC < 5) {
+        out.push({ id: 'f-ctx-cold', label: 'Couche chaude supplémentaire', reason: `${Math.round(activeHike.weather.tempC)} °C annoncés au prochain départ`, level: 'verifier', category: 'Contexte départ', source: 'donnée' });
+      }
+      if (activeHike.weather && typeof activeHike.weather.tempC === 'number' && activeHike.weather.tempC > 24) {
+        out.push({ id: 'f-ctx-hot', label: 'Hydratation & protection solaire', reason: `Temps chaud annoncé (${Math.round(activeHike.weather.tempC)} °C)`, level: 'verifier', category: 'Contexte départ', source: 'donnée' });
+      }
+    }
+
+    return out;
+  }, [alerts, activeKit, hikeReadiness, equipment, activeHike]);
+
+  const forgetCriticalCount = useMemo(
+    () => forgetItems.filter((i) => i.level === 'critique' || i.level === 'verifier').length,
+    [forgetItems]
+  );
+
+  const handleMarkReturned = async (item: UserEquipmentItem) => {
+    triggerHaptic('success');
+    await updateEquipment(item.id, { loan_status: 'disponible', loan_to_name: null });
+    showToast(`✅ ${item.name} marqué comme rendu`, 'success');
+  };
 
   // Reset filters
   const handleResetFilters = () => {
@@ -271,15 +791,21 @@ export default function MonMaterielCockpitPage() {
     setSearchQuery('');
     setSelectedBrand('Tous');
     setActiveCategory('all');
-    setActiveNav('inventory');
+    setConditionFilter('all');
+    setOnlyFavorites(false);
   };
 
   // Toggle favorite
-  const handleToggleFavorite = async (item: UserEquipmentItem, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    triggerHaptic('light');
-    await updateEquipment(item.id, { is_favorite: !item.is_favorite });
-  };
+  const handleToggleFavorite = useCallback(
+    async (item: UserEquipmentItem, e?: React.MouseEvent) => {
+      e?.stopPropagation();
+      triggerHaptic('light');
+      const nextState = !item.is_favorite;
+      await updateEquipment(item.id, { is_favorite: nextState });
+      showToast(nextState ? `❤️ ${item.name} ajouté aux favoris` : `Retiré des favoris`, 'info');
+    },
+    [updateEquipment, triggerHaptic, showToast]
+  );
 
   // Inline edit save
   const startInlineEdit = (item: UserEquipmentItem, e: React.MouseEvent) => {
@@ -297,9 +823,10 @@ export default function MonMaterielCockpitPage() {
       quantity: q,
     });
     setInlineEditId(null);
+    showToast(`Poids mis à jour : ${formatWeight((Number.isFinite(w) ? w : item.weight_g) * q)}`, 'success');
   };
 
-  // Multi-select
+  // Multi-select & Bulk delete
   const toggleSelected = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     triggerHaptic('light');
@@ -313,10 +840,12 @@ export default function MonMaterielCockpitPage() {
   const clearSelection = () => setSelectedIds(new Set());
   const bulkDelete = async () => {
     triggerHaptic('warning');
+    const count = selectedIds.size;
     for (const id of Array.from(selectedIds)) {
       await removeFromEquipment(id);
     }
     clearSelection();
+    showToast(`${count} article(s) supprimé(s)`, 'info');
   };
 
   // Comparator
@@ -333,7 +862,177 @@ export default function MonMaterielCockpitPage() {
     [compareIds, equipment]
   );
 
-  // ── AI Copilot (Lot 5) ──
+  // Assign kit to hike (persisté via le module partagé)
+  const handleAssignKitToHike = (hikeId: string, kitId: string) => {
+    triggerHaptic('selection');
+    const updated = updatePlannedHike(hikeId, { assignedKitId: kitId });
+    setPlannedHikes(updated);
+    const kitObj = kits.find((k) => k.id === kitId);
+    showToast(`Kit « ${kitObj?.name || 'Sélectionné'} » assigné à cette sortie`, 'success');
+  };
+
+  // Delete a planned hike
+  const handleDeleteHike = (hikeId: string) => {
+    const hike = plannedHikes.find((h) => h.id === hikeId);
+    if (!hike) return;
+    if (!window.confirm(`Supprimer la sortie « ${hike.name} » ?`)) return;
+    triggerHaptic('warning');
+    const remaining = removePlannedHike(hikeId);
+    setPlannedHikes(remaining);
+    setSelectedHikeId(remaining[0]?.id ?? null);
+    showToast('Sortie supprimée', 'info');
+  };
+
+  // Create new planned hike (source partagée)
+  const handleCreateHike = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newHikeName.trim()) return;
+    triggerHaptic('success');
+    const days = Math.max(1, Number(newHikeDays) || 1);
+    const target = new Date();
+    target.setDate(target.getDate() + 30);
+    const targetDate = target.toISOString().split('T')[0];
+
+    const newHike = savePlannedHike({
+      name: newHikeName.trim(),
+      distanceKm: Number(newHikeKm) || 25,
+      elevationGain: Number(newHikeDPlus) || 1200,
+      targetDate,
+      difficulty: 'Moyen',
+      season: 'Toutes saisons',
+      terrain: newHikeDest.trim() || 'Massif Alpin',
+      isOvernight: days > 1,
+      nightsCount: days > 1 ? days - 1 : 0,
+      assignedKitId: kits[0]?.id,
+      companions: newHikeCompanions.trim() || undefined,
+    });
+    setPlannedHikes((prev) => [newHike, ...prev]);
+    setSelectedHikeId(newHike.id);
+    setActivePlannedHikeId(newHike.id);
+    setIsNewHikeModalOpen(false);
+    setNewHikeName('');
+    setNewHikeDest('');
+    setNewHikeDays(2);
+    setNewHikeKm(30);
+    setNewHikeDPlus(1500);
+    setNewHikeCompanions('');
+    showToast(`Randonnée « ${newHike.name} » planifiée !`, 'success');
+  };
+
+  // Sélection d'une sortie dans la liste
+  const handleSelectHike = (h: PlannedHike) => {
+    triggerHaptic('light');
+    setSelectedHikeId(h.id);
+    setActivePlannedHikeId(h.id);
+    if (h.assignedKitId) setSelectedKitId(h.assignedKitId);
+  };
+
+  // Créer un nouveau kit (réutilisé par le widget Kits et l'onglet Actions)
+  const handleCreateNewKit = async () => {
+    triggerHaptic('success');
+    const created = await createKit({
+      name: `Nouveau Kit #${kits.length + 1}`,
+      description: 'Kit sur-mesure pour expédition',
+      for_destination: 'Haute Montagne',
+      season: 'Été',
+      activity: 'Trek',
+      source: 'manuel',
+      gearItems: [],
+    });
+    if (created) {
+      setSelectedKitForCockpit(created);
+      setIsKitDrawerOpen(true);
+      showToast(`Kit « ${created.name} » créé !`, 'success');
+    }
+  };
+
+  // ── Drag & drop : réordonner les 6 modules ──
+  const handleGripDragStart = (id: string) => (e: React.DragEvent) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', id);
+    setDragWidget(id);
+  };
+  const handleGripDragEnd = () => {
+    setDragWidget(null);
+    setDragOverId(null);
+  };
+  const handleDropOn = (targetId: string) => {
+    if (!dragWidget || dragWidget === targetId) return;
+    setWidgetOrder((prev) => {
+      const next = [...prev];
+      const from = next.indexOf(dragWidget);
+      const to = next.indexOf(targetId);
+      next.splice(from, 1);
+      next.splice(to, 0, dragWidget);
+      return next;
+    });
+    triggerHaptic('selection');
+    setDragWidget(null);
+    setDragOverId(null);
+  };
+  const moveWidget = (id: string, dir: -1 | 1) => {
+    setWidgetOrder((prev) => {
+      const idx = prev.indexOf(id);
+      const to = idx + dir;
+      if (idx < 0 || to < 0 || to >= prev.length) return prev;
+      const next = [...prev];
+      next.splice(to, 0, next.splice(idx, 1)[0]);
+      return next;
+    });
+    triggerHaptic('light');
+  };
+  const resetWidgetOrder = () => {
+    setWidgetOrder([...DEFAULT_WIDGET_ORDER]);
+    showToast('Disposition des modules réinitialisée', 'info');
+  };
+
+  // Local AI Expert generator (instant fallback when offline or no API key)
+  const generateLocalAiAdvice = useCallback(
+    (q: string) => {
+      const sortedByWeight = [...equipment].sort((a, b) => (b.weight_g || 0) - (a.weight_g || 0));
+      const heaviest = sortedByWeight.slice(0, 3);
+      const targetG = targetKg * 1000;
+      const diffG = totalWeightG - targetG;
+      const diffStr = diffG > 0 ? `+${formatWeight(diffG)} au-dessus` : `${formatWeight(Math.abs(diffG))} sous`;
+
+      let advice = `🎒 **Analyse LKDV de ton pack :**\n\n`;
+      advice += `• **Poids total inventorié :** ${formatWeight(totalWeightG)} (${diffStr} de ton objectif de ${targetKg} kg).\n`;
+      if (activeHike) {
+        advice += `• **Sortie active :** ${activeHike.name} (${activeHike.distanceKm} km, +${activeHike.elevationGain || 0}m D+, ${activeHike.isOvernight ? `${(activeHike.nightsCount || 1) + 1} jours` : 'journée'}).\n`;
+        advice += `• **Kit assigné :** ${activeKit?.name || 'Aucun'} (${hikeReadiness.readinessPct}% de matériel prêt).\n`;
+      }
+      advice += `• **Top 3 des articles les plus lourds :**\n`;
+      heaviest.forEach((it, idx) => {
+        advice += `  ${idx + 1}. **${it.name}** (${it.brand || 'Outdoor'}) : ${formatWeight(it.weight_g || 0)}\n`;
+      });
+
+      if (q.toLowerCase().includes('alléger') || q.toLowerCase().includes('poids') || q.toLowerCase().includes('optimis')) {
+        advice += `\n⚡ **Pistes d'allègement prioritaires :**\n`;
+        if (heaviest[0]) {
+          advice += `1. **Remplacement de « ${heaviest[0].name} »** par une alternative ultralégère (-${Math.round((heaviest[0].weight_g || 500) * 0.4)} g estimé).\n`;
+        }
+        advice += `2. **Mutualisation** des consommables et popote si départ à plusieurs.\n`;
+        advice += `3. Contrôle des doublons textiles et petits accessoires.\n`;
+      } else if (q.toLowerCase().includes('réviser') || q.toLowerCase().includes('départ') || q.toLowerCase().includes('mainten')) {
+        advice += `\n🛠️ **Vérifications avant départ :**\n`;
+        const toCheck = equipment.filter((e) => e.condition === 'à_réparer' || e.condition === 'à_remplacer' || e.next_maintenance_date);
+        if (toCheck.length > 0) {
+          toCheck.forEach((it) => {
+            advice += `• **${it.name}** : État ${it.condition || 'révision requise'}.\n`;
+          });
+        } else {
+          advice += `• Tout le matériel inventorié est en bon état opérationnel.\n• Pense à tester l'étanchéité de la tente et les piles de la frontale.\n`;
+        }
+      } else {
+        advice += `\n💡 **Recommandation LKDV :** Ton équipement couvre ${categoryStats.length} grandes catégories. Pense à équilibrer le portage avec les charges les plus denses près du dos.`;
+      }
+
+      return advice;
+    },
+    [equipment, totalWeightG, targetKg, activeHike, activeKit, hikeReadiness, categoryStats]
+  );
+
+  // AI Copilot streaming trigger
   const runAi = useCallback(
     (question: string) => {
       const q = question.trim();
@@ -341,6 +1040,7 @@ export default function MonMaterielCockpitPage() {
       triggerHaptic('selection');
       setAiStreaming(true);
       setAiError(null);
+      setAiMode(null);
       setAiResponse('');
 
       const inventorySummary = equipment
@@ -355,35 +1055,61 @@ export default function MonMaterielCockpitPage() {
         },
         {
           role: 'user',
-          content: `Voici mon inventaire actuel (${equipment.length} articles, poids total ${formatWeight(totalWeightG)}, objectif ${targetKg} kg):\n${inventorySummary}\n\nDemande: ${q}`,
+          content: `Voici mon inventaire actuel (${equipment.length} articles, poids total ${formatWeight(totalWeightG)}, objectif ${targetKg} kg, rando active: ${activeHike?.name || 'Trek standard'}):\n${inventorySummary}\n\nDemande: ${q}`,
         },
       ];
 
-      getStreamingChatCompletion(
-        GEMINI_PROVIDER,
-        GEMINI_DEFAULT_MODEL,
-        messages,
-        (chunk) => {
-          const text = extractChunkText(chunk);
-          if (text) {
-            setAiResponse((prev) => prev + text);
-            requestAnimationFrame(() => {
-              if (aiScrollRef.current) aiScrollRef.current.scrollTop = aiScrollRef.current.scrollHeight;
-            });
-          }
-        },
-        () => setAiStreaming(false),
-        (err) => {
-          setAiError(err.message || 'Le copilote est indisponible pour le moment.');
-          setAiStreaming(false);
-        },
-        { temperature: 0.6, max_tokens: 700 }
-      );
+      let receivedAnyChunk = false;
+
+      try {
+        getStreamingChatCompletion(
+          GEMINI_PROVIDER,
+          GEMINI_DEFAULT_MODEL,
+          messages,
+          (chunk) => {
+            const text = extractChunkText(chunk);
+            if (text) {
+              receivedAnyChunk = true;
+              setAiMode('live');
+              setAiResponse((prev) => prev + text);
+              requestAnimationFrame(() => {
+                if (aiScrollRef.current) aiScrollRef.current.scrollTop = aiScrollRef.current.scrollHeight;
+              });
+            }
+          },
+          () => setAiStreaming(false),
+          (_err) => {
+            if (!receivedAnyChunk) {
+              setAiMode('local');
+              const fallbackText = generateLocalAiAdvice(q);
+              let currIdx = 0;
+              const interval = setInterval(() => {
+                currIdx += 12;
+                if (currIdx >= fallbackText.length) {
+                  setAiResponse(fallbackText);
+                  setAiStreaming(false);
+                  clearInterval(interval);
+                } else {
+                  setAiResponse(fallbackText.slice(0, currIdx));
+                }
+              }, 25);
+            } else {
+              setAiStreaming(false);
+            }
+          },
+          { temperature: 0.6, max_tokens: 700 }
+        );
+      } catch {
+        setAiMode('local');
+        const fallbackText = generateLocalAiAdvice(q);
+        setAiResponse(fallbackText);
+        setAiStreaming(false);
+      }
     },
-    [aiStreaming, equipment, totalWeightG, targetKg, triggerHaptic]
+    [aiStreaming, equipment, totalWeightG, targetKg, activeHike, triggerHaptic, generateLocalAiAdvice]
   );
 
-  // ── Keyboard shortcuts (Lot 6) ──
+  // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -410,550 +1136,1787 @@ export default function MonMaterielCockpitPage() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredEquipment, activeItem, selectedItemId]);
+  }, [filteredEquipment, activeItem, selectedItemId, handleToggleFavorite, triggerHaptic]);
 
   const enterAnim = prefersReducedMotion ? '' : 'motion-safe:animate-[fadeInUp_0.4s_ease_both]';
 
+  // ── Widget shells (en-tête commun + corps des 6 modules) ──
+  const widgetShell = (
+    id: string,
+    icon: React.ReactNode,
+    title: string,
+    subtitle: string,
+    moreTab: 'inventaire' | 'prets' | 'reglages' | 'actions',
+    children: React.ReactNode
+  ) => (
+    <div className="h-full flex flex-col p-3.5 min-h-0">
+      <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[#1C2620]/[0.08] shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="w-7 h-7 rounded-lg bg-[#2D5A3D]/[0.08] border border-[#1C2620]/[0.09] flex items-center justify-center text-sm shrink-0 text-[#2D5A3D]">
+            {icon}
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620] truncate">{title}</h2>
+            {subtitle && <p className="text-xs text-[#1C2620]/70 truncate">{subtitle}</p>}
+          </div>
+        </div>
+<div className="flex items-center gap-0.5 shrink-0">
+          <span
+            draggable={!expandedWidget}
+            onDragStart={handleGripDragStart(id)}
+            onDragEnd={handleGripDragEnd}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setVoirToutTab('reglages');
+                setVoirToutOpen(true);
+              }
+            }}
+            title="Réorganiser le module (glisser, ou via Réglages)"
+            aria-label="Réorganiser le module"
+            className={`${expandedWidget ? 'pointer-events-none opacity-40' : 'cursor-grab active:cursor-grabbing'} p-1.5 text-[#1C2620]/50 hover:text-[#1C2620] rounded-lg hover:bg-[#1C2620]/[0.06] text-xs`}
+          >
+            ⠿
+          </span>
+          <button
+            type="button"
+            onClick={(e) => {
+              if (expandedWidget) return;
+              expandOriginRef.current = e.currentTarget;
+              setExpandedWidget(id);
+              triggerHaptic('light');
+            }}
+            title={`Agrandir le widget ${WIDGET_LABEL[id] || id}`}
+            aria-label={`Agrandir le widget ${WIDGET_LABEL[id] || id}`}
+            className="p-1.5 text-[#1C2620]/50 hover:text-[#2D5A3D] hover:bg-[#2D5A3D]/[0.08] rounded-lg transition-colors flex items-center justify-center"
+          >
+            <IconMaximize />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setVoirToutTab(moreTab);
+              setVoirToutOpen(true);
+              triggerHaptic('light');
+            }}
+            className="px-2 py-1 text-xs font-semibold text-[#2D5A3D] hover:text-[#1C2620] hover:bg-[#1C2620]/[0.06] rounded-lg transition-colors"
+          >
+            Tout voir
+          </button>
+        </div>
+      </div>
+      <div className="flex-1 min-h-0 mt-3 flex flex-col overflow-hidden">{children}</div>
+    </div>
+  );
+
+  const renderWidget = (id: string): React.ReactNode => {
+    switch (id) {
+      case 'weight':
+        return widgetShell(
+          'weight',
+          <IconScale />,
+          'Poids du pack',
+          `${equipment.length} articles · ${Math.round(totalValue)} €`,
+          'reglages',
+          (() => {
+            const targetG = targetKg * 1000;
+            const ratio = targetG > 0 ? totalWeightG / targetG : 0;
+            const pct = Math.min(100, Math.round(ratio * 100));
+            const color = ratio <= 0.85 ? '#2D5A3D' : ratio <= 1 ? '#B8932A' : '#C0532E';
+            return (
+              <>
+                <div className="flex items-end justify-between gap-3 shrink-0">
+                  <div className="min-w-0">
+                    <div className="text-4xl font-extrabold font-mono tracking-tight leading-none text-[#1C2620]">
+                      {formatWeight(totalWeightG)}
+                    </div>
+                    <p className="text-xs text-[#1C2620]/70 mt-2">
+                      Cible <span className="font-bold" style={{ color }}>{targetKg} kg</span> · {pct}% chargé
+                    </p>
+                  </div>
+                  <WeightGauge currentG={totalWeightG} targetKg={targetKg} />
+                </div>
+                <div className="mt-3 shrink-0">
+                  <div className="h-2 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: color }} />
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 mt-3 shrink-0 flex-wrap">
+                  <span className="text-xs text-[#1C2620]/70">Objectif :</span>
+                  {[6, 8, 10, 12].map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => { setTargetKg(t); triggerHaptic('light'); showToast(`Objectif ajusté à ${t} kg`, 'info'); }}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-colors ${
+                        targetKg === t
+                          ? 'bg-[#2D5A3D] text-white'
+                          : 'bg-[#1C2620]/[0.04]0 hover:bg-[#1C2620]/[0.1] text-[#1C2620]/80 border border-[#1C2620]/[0.08]'
+                      }`}
+                    >
+                      {t}k
+                    </button>
+                  ))}
+                </div>
+              </>
+            );
+          })()
+        );
+
+      case 'departure':
+        return widgetShell(
+          'departure',
+          <IconNav />,
+          'Prochain départ',
+          activeHike ? `${activeHike.name} · ${activeHike.terrain || activeHike.season || 'Randonnée'}` : 'Aucune sortie planifiée',
+          'actions',
+          activeHike ? (
+            <>
+              <div className="flex items-start justify-between gap-3 shrink-0">
+                <div className="min-w-0">
+                  {(() => {
+                    const d = daysUntil(activeHike.targetDate);
+                    const imminent = d !== null && d >= 0 && d <= 3;
+                    return (
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold font-mono ${
+                        d === null
+                          ? 'bg-[#1C2620]/[0.07] text-[#1C2620]/70'
+                          : d < 0
+                          ? 'bg-[#1C2620]/[0.07] text-[#1C2620]/60'
+                          : imminent
+                          ? 'bg-[#8C6A1A] text-white shadow-[0_0_18px_rgba(233,196,106,0.55)]'
+                          : 'bg-[#2D5A3D]/20 text-[#2D5A3D]'
+                      }`}>
+                        {d === null ? 'Date à définir' : d < 0 ? `J+${Math.abs(d)}` : d === 0 ? "C'est aujourd'hui !" : `J-${d} jours`}
+                      </span>
+                    );
+                  })()}
+                  <p className="text-xs text-[#1C2620]/70 mt-1.5">
+                    {formatDateRange(activeHike)}
+                    {activeHike.companions ? ` · ${activeHike.companions}` : ''}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Link
+                    href={activeHike.routeId ? `/randonnee-active?routeId=${activeHike.routeId}` : '/randonnee-active'}
+                    className="px-3.5 py-1.5 rounded-full bg-[#2D5A3D] hover:bg-[#235030] text-white font-bold text-xs transition-all active:scale-95"
+                  >
+                    🚀 Démarrer
+                  </Link>
+                  <Link
+                    href={activeHike.routeId ? `/preparer-randonnee?routeId=${activeHike.routeId}` : '/explorer'}
+                    className="px-3 py-1.5 rounded-full bg-[#1C2620]/[0.07] hover:bg-white/20 text-[#1C2620] text-xs font-bold transition-all active:scale-95"
+                  >
+                    Itinéraire
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteHike(activeHike.id)}
+                    className="w-8 h-8 rounded-full bg-[#1C2620]/[0.06] hover:bg-[#E76F51]/30 border border-[#1C2620]/[0.08] text-[#1C2620]/70 hover:text-[#1C2620] text-xs transition-colors"
+                    title="Supprimer cette sortie"
+                    aria-label="Supprimer cette sortie"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-2 shrink-0 mt-3">
+                <div className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07]">
+                  <span className="block text-lg font-bold font-mono text-[#1C2620] leading-none">{activeHike.distanceKm}<span className="text-xs text-[#1C2620]/70 font-normal"> km</span></span>
+                  <span className="block text-xs text-[#1C2620]/70 mt-1">Distance</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07]">
+                  <span className="block text-lg font-bold font-mono text-[#1C2620] leading-none">+{activeHike.elevationGain || 0}<span className="text-xs text-[#1C2620]/70 font-normal"> m</span></span>
+                  <span className="block text-xs text-[#1C2620]/70 mt-1">Dénivelé D+</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07]">
+                  <span className="block text-lg font-bold font-mono text-[#1C2620] leading-none">{activeHike.isOvernight ? `${(activeHike.nightsCount || 1) + 1}` : '1'}<span className="text-xs text-[#1C2620]/70 font-normal"> j</span></span>
+                  <span className="block text-xs text-[#1C2620]/70 mt-1">Durée</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07]">
+                  <span className="block text-xs font-bold text-[#8C6A1A] truncate leading-none">{formatWeather(activeHike)}</span>
+                  <span className="block text-xs text-[#1C2620]/70 mt-1">Météo {formatTemp(activeHike)}</span>
+                </div>
+              </div>
+
+              <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-3 pr-0.5">
+                <div className="p-3 rounded-2xl bg-[#1C2620]/[0.04] border border-[#1C2620]/[0.08] space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-mono uppercase text-[#2D5A3D] font-bold">Kit pour ce départ</span>
+                    <select
+                      value={activeHike.assignedKitId || ''}
+                      onChange={(e) => handleAssignKitToHike(activeHike.id, e.target.value)}
+                      className="px-2.5 py-1 rounded-lg bg-white border border-[#1C2620]/[0.14] text-xs text-[#1C2620] focus:outline-none focus:border-[#2D5A3D] cursor-pointer"
+                    >
+                      {kits.length === 0 && <option value="">Aucun kit</option>}
+                      {kits.map((k) => (
+                        <option key={k.id} value={k.id}>
+                          {k.name} ({formatWeight(k.total_weight_g || 0)})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[#1C2620]/80">Prêt : <strong className="text-[#1C2620]">{hikeReadiness.ownedCount}/{hikeReadiness.totalCount} articles</strong></span>
+                      <span className="font-mono font-bold text-[#2D5A3D]">{hikeReadiness.readinessPct}%</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
+                      <div className="h-full bg-[#2D5A3D] rounded-full transition-all duration-500" style={{ width: `${hikeReadiness.readinessPct}%` }} />
+                    </div>
+                  </div>
+                </div>
+
+                {departurePlan && (
+                  <div className="p-3 rounded-2xl bg-[#2D5A3D]/[0.08] border border-[#2D5A3D]/25 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <span className="text-xs font-mono uppercase text-[#2D5A3D] font-bold block">Kit recommandé pour cette sortie</span>
+                        {recommendedKit ? (
+                          <p className="text-xs text-[#1C2620]/90 font-semibold truncate mt-0.5">
+                            {recommendedKit.name} · score {departurePlan.suitabilityScore}/100
+                          </p>
+                        ) : (
+                          <p className="text-xs text-[#1C2620]/70 mt-0.5">Kit auto-généré à partir de votre inventaire</p>
+                        )}
+                      </div>
+                      {recommendedKit && recommendedKit.id !== activeKit?.id && (
+                        <button
+                          type="button"
+                          onClick={() => handleAssignKitToHike(activeHike.id, recommendedKit.id)}
+                          className="px-3 py-1.5 rounded-full bg-[#2D5A3D] hover:bg-[#235030] text-white text-xs font-bold transition-all active:scale-95 shrink-0"
+                        >
+                          Utiliser ce kit
+                        </button>
+                      )}
+                      {recommendedKit && recommendedKit.id === activeKit?.id && (
+                        <span className="px-2.5 py-1 rounded-full bg-[#1C2620]/[0.07] border border-[#1C2620]/[0.11] text-xs text-[#1C2620]/80 shrink-0">✓ Déjà sélectionné</span>
+                      )}
+                    </div>
+                    {(departurePlan.consumables.waterLiters > 0 || departurePlan.consumables.foodMealsCount > 0) && (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        <span className="px-2 py-1 rounded-lg bg-white/50 text-xs text-[#1C2620]/85">
+                          💧 {departurePlan.consumables.waterLiters.toFixed(1).replace('.', ',')} L d&apos;eau
+                        </span>
+                        {departurePlan.consumables.foodMealsCount > 0 && (
+                          <span className="px-2 py-1 rounded-lg bg-white/50 text-xs text-[#1C2620]/85">
+                            🍽️ {departurePlan.consumables.foodMealsCount} repas
+                          </span>
+                        )}
+                        <span className="px-2 py-1 rounded-lg bg-white/50 text-xs text-[#1C2620]/85">
+                          🥨 {departurePlan.consumables.snacksCount} en-cas
+                        </span>
+                        {departurePlan.consumables.fuelGrams > 0 && (
+                          <span className="px-2 py-1 rounded-lg bg-white/50 text-xs text-[#1C2620]/85">
+                            🔥 {departurePlan.consumables.fuelGrams} g gaz
+                          </span>
+                        )}
+                        <span className="px-2 py-1 rounded-lg bg-white/50 text-xs text-[#8C6A1A]">
+                          {departurePlan.weatherSummary.advice}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {hikeReadiness.missingItems.length > 0 && (
+                  <div className="p-2.5 rounded-xl bg-[#E76F51]/12 border border-[#E76F51]/30 space-y-1.5">
+                    <span className="text-xs font-bold text-[#C0532E] block">Articles manquants à emporter :</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {hikeReadiness.missingItems.slice(0, 3).map((m) => (
+                        <div key={m.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/50 text-xs text-[#1C2620]">
+                          <span>{m.item_name}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              addToEquipment({
+                                name: m.item_name,
+                                category: m.category || 'Autre',
+                                weight_g: m.weight_g || 100,
+                              });
+                              showToast(`🎒 ${m.item_name} ajouté à votre inventaire`, 'success');
+                            }}
+                            className="text-[#2D5A3D] font-bold hover:underline"
+                          >
+                            + Ajouter
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-2 border-t border-[#1C2620]/[0.07]">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-bold uppercase text-[#1C2620]/60 font-mono">Toutes les sorties ({plannedHikes.length})</span>
+                    <button
+                      type="button"
+                      onClick={() => setIsNewHikeModalOpen(true)}
+                      className="text-xs font-bold text-[#2D5A3D] hover:underline"
+                    >
+                      + Planifier
+                    </button>
+                  </div>
+                  <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+                    {plannedHikes.map((h) => (
+                      <button
+                        key={h.id}
+                        type="button"
+                        onClick={() => handleSelectHike(h)}
+                        className={`px-2.5 py-1 rounded-xl text-left border shrink-0 transition-all ${
+                          h.id === activeHike.id
+                            ? 'bg-[#1C2620]/[0.08] border-[#2D5A3D]/50 text-[#1C2620] font-bold'
+                            : 'bg-[#1C2620]/[0.04] border-[#1C2620]/[0.07] text-[#1C2620]/70 hover:bg-[#1C2620]/[0.07]'
+                        }`}
+                      >
+                        <span className="block text-xs truncate max-w-[120px]">{h.name}</span>
+                        <span className="text-xs text-[#2D5A3D] font-mono">
+                          {daysUntil(h.targetDate) !== null ? `J-${daysUntil(h.targetDate)}` : 'Date à définir'}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center gap-3 text-center">
+              <span className="text-3xl block">🧭</span>
+              <p className="text-xs text-[#1C2620]/80 font-medium">Aucune sortie planifiée pour le moment</p>
+              <button
+                type="button"
+                onClick={() => setIsNewHikeModalOpen(true)}
+                className="px-5 py-2 rounded-full bg-[#2D5A3D] hover:bg-[#235030] text-white font-bold text-xs transition-all active:scale-95"
+              >
+                🧭 Planifier ma première sortie
+              </button>
+            </div>
+          )
+        );
+
+      case 'condition': {
+        const ready = conditionStats
+          .filter((s) => ['neuf', 'excellent', 'bon'].includes(s.key))
+          .reduce((n, s) => n + s.count, 0);
+        const readyPct = equipment.length > 0 ? Math.round((ready / equipment.length) * 100) : 0;
+        return widgetShell(
+          'condition',
+          <IconActivity />,
+          'État du matériel',
+          `${equipment.length} articles suivis`,
+          'inventaire',
+          <>
+            <div className="flex items-end justify-between gap-3 shrink-0">
+              <div>
+                <div className="text-4xl font-extrabold font-mono leading-none text-[#1C2620]">{readyPct}%</div>
+                <p className="text-xs text-[#1C2620]/70 mt-2">{ready}/{equipment.length} articles en bon état</p>
+              </div>
+              <IconActivity />
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-2 pr-0.5">
+              {conditionStats.length === 0 ? (
+                <p className="text-xs text-[#1C2620]/70 text-center py-3">Aucun article inventorié</p>
+              ) : (
+                conditionStats.map((s) => {
+                  const meta = CONDITION_META[s.key] || { label: s.key, color: '#2D5A3D', bg: 'rgba(45,90,61,0.08)' };
+                  const active = conditionFilter === s.key;
+                  const pct = totalWeightG > 0 ? Math.round((s.weight / totalWeightG) * 100) : 0;
+                  return (
+                    <button
+                      key={s.key}
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic('light');
+                        setConditionFilter(active ? 'all' : s.key);
+                      }}
+                      title={active ? 'Retirer le filtre' : `Filtrer par état : ${meta.label}`}
+                      className={`w-full text-left p-2 rounded-xl border transition-all ${
+                        active
+                          ? 'bg-[#1C2620]/[0.09] border-[#2D5A3D]/50 ring-1 ring-[#2D5A3D]/30'
+                          : 'bg-white/40 hover:bg-[#1C2620]/[0.06] border-[#1C2620]/[0.07]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between text-xs text-[#1C2620]/80 mb-1">
+                        <span className="font-semibold capitalize truncate">{meta.label}</span>
+                        <span className="shrink-0 pl-2">
+                          <span className="font-mono text-[#1C2620] font-bold">{s.count}</span>
+                          <span className="text-[#1C2620]/40"> · </span>
+                          <span className="font-mono" style={{ color: meta.color }}>{formatWeight(s.weight)}</span>
+                        </span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
+                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: meta.color }} />
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </>
+        );
+      }
+
+      case 'forget': {
+        const critical = forgetItems.filter((i) => i.level === 'critique' || i.level === 'verifier');
+        const done = forgetItems.filter((i) => forgetChecked.has(i.id)).length;
+        return widgetShell(
+          'forget',
+          <IconChecklist />,
+          'À ne pas oublier',
+          forgetCriticalCount > 0 ? `${forgetCriticalCount} élément(s) à vérifier` : 'Tout est en ordre',
+          'actions',
+          <>
+            <div className="flex items-end justify-between gap-3 shrink-0">
+              <div>
+                <div className={`text-4xl font-extrabold font-mono leading-none ${forgetCriticalCount > 0 ? 'text-[#8C6A1A] drop-shadow-[0_0_14px_rgba(184,147,42,0.4)]' : 'text-[#2D5A3D]'}`}>
+                  {forgetCriticalCount}
+                </div>
+                <p className="text-xs text-[#1C2620]/70 mt-2">
+                  {forgetCriticalCount > 0 ? 'critiques à vérifier' : `tout est prêt · ${done}/${forgetItems.length} cochés`}
+                </p>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-1.5 pr-0.5">
+{forgetCriticalCount === 0 ? (
+                <p className="text-xs text-[#1C2620]/70 text-center py-4">Aucun élément critique ✨</p>
+              ) : (
+                critical.slice(0, 4).map((it) => (
+                  <button
+                    key={it.id}
+                    type="button"
+                    onClick={() => toggleForgetChecked(it.id)}
+                    aria-pressed={forgetChecked.has(it.id)}
+                    className="w-full text-left p-2.5 rounded-xl bg-white/40 hover:bg-white/60 border border-[#1C2620]/[0.07] text-xs flex items-center justify-between gap-2 min-h-[44px] transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <p className={`font-semibold truncate ${forgetChecked.has(it.id) ? 'text-[#1C2620]/45 line-through' : 'text-[#1C2620]/90'}`}>{it.label}</p>
+                      <p className="text-[#1C2620]/60 truncate">{it.reason}</p>
+                    </div>
+                    <span className={`w-6 h-6 rounded-md border shrink-0 flex items-center justify-center ${forgetChecked.has(it.id) ? 'bg-[#2D5A3D] border-[#2D5A3D] text-white' : 'border-[#1C2620]/30 text-transparent'}`}>
+                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12l5 5L20 7" /></svg>
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+          </>
+        );
+      }
+
+      case 'alerts': {
+        const critical = alerts.filter((a) => a.kind === 'replace' || a.kind === 'expiry').length;
+        return widgetShell(
+          'alerts',
+          <IconBell />,
+          'Alertes & entretien',
+          alerts.length > 0 ? `${critical} action(s) critique(s)` : 'Tout est en ordre',
+          'prets',
+          <>
+            <div className="flex items-end justify-between gap-3 shrink-0">
+              <div>
+                <div className={`text-4xl font-extrabold font-mono leading-none ${alerts.length > 0 ? 'text-[#8C6A1A] drop-shadow-[0_0_14px_rgba(233,196,106,0.5)]' : 'text-[#2D5A3D]'}`}>
+                  {alerts.length}
+                </div>
+                <p className="text-xs text-[#1C2620]/70 mt-2">{alerts.length === 0 ? 'Tout est en ordre' : 'Alertes actives'}</p>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-1.5 pr-0.5">
+              {alerts.length === 0 ? (
+                <p className="text-xs text-[#1C2620]/70 text-center py-4">Aucune alerte — tout est en ordre ✨</p>
+              ) : (
+                alerts.slice(0, 6).map((a) => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => { setSelectedItemId(a.itemId); setIsDetailDrawerOpen(true); triggerHaptic('light'); }}
+                    className="w-full text-left p-2 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/85 flex items-center justify-between gap-1.5 transition-colors"
+                  >
+                    <span className="truncate">{a.label}</span>
+                    <span className="text-xs text-[#2D5A3D] font-bold shrink-0">Voir ➔</span>
+                  </button>
+                ))
+              )}
+            </div>
+          </>
+        );
+      }
+
+      case 'kits':
+        return widgetShell(
+          'kits',
+          <IconBackpack />,
+          'Kits & sacs',
+          `${kits.length} kit${kits.length > 1 ? 's' : ''} assemblés`,
+          'actions',
+          <>
+            <div className="flex items-end justify-between gap-3 shrink-0">
+              <div>
+                <div className="text-4xl font-extrabold font-mono leading-none text-[#1C2620]">{kits.length}</div>
+                <p className="text-xs text-[#1C2620]/70 mt-2">Poids total {formatWeight(kits.reduce((s, k) => s + (k.total_weight_g || 0), 0))}</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleCreateNewKit}
+                className="px-3 py-1.5 rounded-full bg-[#2D5A3D]/20 hover:bg-[#2D5A3D]/30 border border-[#2D5A3D]/40 text-[#2D5A3D] text-xs font-bold transition-all active:scale-95 shrink-0"
+              >
+                + Nouveau
+              </button>
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none mt-3 space-y-2 pr-0.5">
+              {kits.length === 0 ? (
+                <p className="text-xs text-[#1C2620]/70 text-center py-4">Aucun kit actif. Créez votre premier kit.</p>
+              ) : (
+                kits.map((kit) => (
+                  <div
+                    key={kit.id}
+                    onClick={() => {
+                      setSelectedKitForCockpit(kit);
+                      setIsKitDrawerOpen(true);
+                      triggerHaptic('light');
+                    }}
+                    className="p-2.5 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] transition-all cursor-pointer flex items-center justify-between gap-2"
+                  >
+                    <div className="min-w-0">
+                      <h4 className="text-xs font-bold text-[#1C2620] truncate">{kit.name}</h4>
+                      <p className="text-xs text-[#1C2620]/60 truncate">{kit.items?.length || 0} articles · {kit.season || '3 saisons'}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="text-xs font-mono font-bold text-[#2D5A3D] block">{formatWeight(kit.total_weight_g || 0)}</span>
+                      <span className="text-xs text-[#1C2620]/50">Éditer ➔</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  // ── Vues fullscreen détaillées (bouton « Agrandir » de chaque widget) ──
+  const FORGET_LEVEL_META: Record<string, { label: string; cls: string }> = {
+    critique: { label: 'Critique', cls: 'bg-[#9B2C2C]/10 text-[#9B2C2C] border-[#9B2C2C]/30' },
+    verifier: { label: 'À vérifier', cls: 'bg-[#8C6A1A]/10 text-[#8C6A1A] border-[#8C6A1A]/30' },
+    conseille: { label: 'Conseillé', cls: 'bg-[#2D5A3D]/10 text-[#2D5A3D] border-[#2D5A3D]/25' },
+    facultatif: { label: 'Facultatif', cls: 'bg-[#1C2620]/[0.06] text-[#1C2620]/70 border-[#1C2620]/[0.1]' },
+    pret: { label: 'Prêt ✓', cls: 'bg-[#2D5A3D]/10 text-[#2D5A3D] border-[#2D5A3D]/25' },
+  };
+  const FORGET_CATEGORY_ORDER = ['Kit', 'Péremptions', 'Entretien', 'Prêts', 'Consommables', 'Contexte départ', 'Documents'];
+
+const renderExpandedWidget = (id: string): React.ReactNode => {
+    const title = WIDGET_LABEL[id] || id;
+    const closeBtn = (
+      <button
+        ref={expandedCloseRef}
+        type="button"
+        onClick={() => setExpandedWidget(null)}
+        className="w-11 h-11 rounded-full bg-[#1C2620]/[0.06] hover:bg-[#1C2620]/[0.1] border border-[#1C2620]/[0.1] flex items-center justify-center text-base text-[#1C2620] shrink-0"
+        aria-label="Fermer (échap)"
+      >
+        ✕
+      </button>
+    );
+    const icons: Record<string, React.ReactNode> = {
+      weight: <IconScale />,
+      departure: <IconNav />,
+      condition: <IconActivity />,
+      forget: <IconChecklist />,
+      alerts: <IconBell />,
+      kits: <IconBackpack />,
+    };
+    const iconChip = (
+      <span className="w-9 h-9 rounded-xl bg-[#2D5A3D]/[0.08] border border-[#1C2620]/[0.08] flex items-center justify-center text-[#2D5A3D] shrink-0">
+        {icons[id] || null}
+      </span>
+    );
+
+    let subtitle = '';
+    let body: React.ReactNode = null;
+
+    if (id === 'weight') {
+      subtitle = `${equipment.length} articles · ${Math.round(totalValue)} €`;
+      const targetG = targetKg * 1000;
+      const ratio = targetG > 0 ? totalWeightG / targetG : 0;
+      const pct = Math.min(100, Math.round(ratio * 100));
+      const color = ratio <= 0.85 ? '#2D5A3D' : ratio <= 1 ? '#B8932A' : '#C0532E';
+      const heaviest = [...equipment]
+        .sort((a, b) => (b.weight_g || 0) * (b.quantity || 1) - (a.weight_g || 0) * (a.quantity || 1))
+        .slice(0, 6);
+      body = (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-3">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Synthèse du poids</h3>
+            <div className="flex items-end gap-4">
+              <div className="min-w-0">
+                <div className="text-5xl font-extrabold font-mono leading-none text-[#1C2620]">{formatWeight(totalWeightG)}</div>
+                <p className="text-xs text-[#1C2620]/70 mt-2">
+                  Objectif <strong style={{ color }}>{targetKg} kg</strong> · {pct}% de l&apos;objectif
+                </p>
+              </div>
+              <WeightGauge currentG={totalWeightG} targetKg={targetKg} />
+            </div>
+            <div className="h-2 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
+              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: color }} />
+            </div>
+            <div className="flex gap-1.5 flex-wrap">
+              {[6, 8, 10, 12, 14, 20].map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => { setTargetKg(t); triggerHaptic('light'); showToast(`Objectif ajusté à ${t} kg`, 'info'); }}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-colors ${targetKg === t ? 'bg-[#2D5A3D] text-white' : 'bg-white/50 text-[#1C2620]/80 border border-[#1C2620]/[0.1]'}`}
+                >
+                  {t} kg
+                </button>
+              ))}
+            </div>
+          </section>
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Répartition par catégorie</h3>
+            {categoryStats.length === 0 && <p className="text-xs text-[#1C2620]/60">Aucune donnée — ajoutez des articles</p>}
+            {categoryStats.map((c) => (
+              <div key={c.label} className="space-y-1">
+                <div className="flex items-center justify-between text-xs text-[#1C2620]/80">
+                  <span className="capitalize truncate">{c.label}</span>
+                  <span className="font-mono text-[#2D5A3D]">{formatWeight(c.grams)} ({c.pct}%)</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
+                  <div className="h-full rounded-full bg-[#2D5A3D]" style={{ width: `${c.pct}%` }} />
+                </div>
+              </div>
+            ))}
+          </section>
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2 lg:col-span-2">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Équipements les plus lourds</h3>
+            {heaviest.length === 0 && <p className="text-xs text-[#1C2620]/60">Inventaire vide</p>}
+            {heaviest.map((it) => (
+              <div key={it.id} className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs">
+                <div className="min-w-0">
+                  <p className="font-semibold text-[#1C2620] truncate">{it.name}</p>
+                  <p className="text-[#1C2620]/60">{it.brand || 'Outdoor'} · {it.category || 'Autre'}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="font-mono font-bold text-[#2D5A3D]">{formatWeight((it.weight_g || 0) * (it.quantity || 1))}</span>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedItemId(it.id); setExpandedWidget(null); setIsDetailDrawerOpen(true); }}
+                    className="px-2 py-1 rounded-lg bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] text-xs font-bold"
+                  >
+                    Fiche
+                  </button>
+                </div>
+              </div>
+            ))}
+            {kits.length > 0 && (
+              <p className="text-xs text-[#1C2620]/60">Kit(s) : {kits.map((k) => `${k.name} (${formatWeight(k.total_weight_g || 0)})`).join(' · ')}</p>
+            )}
+          </section>
+        </div>
+      );
+    } else if (id === 'departure') {
+      subtitle = 'Préparation de la prochaine sortie';
+      body = activeHike ? (
+        <div className="space-y-4">
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-3">
+            {(() => {
+              const d = daysUntil(activeHike.targetDate);
+              const imminent = d !== null && d >= 0 && d <= 3;
+              return (
+                <>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold font-mono ${d === null ? 'bg-white/50 text-[#1C2620]/70 border border-[#1C2620]/[0.1]' : d < 0 ? 'bg-white/50 text-[#1C2620]/60 border border-[#1C2620]/[0.1]' : imminent ? 'bg-[#8C6A1A] text-white shadow-[0_0_18px_rgba(184,147,42,0.5)]' : 'bg-[#2D5A3D]/10 text-[#2D5A3D] border border-[#2D5A3D]/25'}`}>
+                      {d === null ? 'Date à définir' : d < 0 ? `J+${Math.abs(d)}` : d === 0 ? "C'est aujourd'hui !" : `J-${d} jours`}
+                    </span>
+                    <span className="text-xs text-[#1C2620]/60">{formatDateRange(activeHike)}</span>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-extrabold text-[#1C2620]">{activeHike.name}</h3>
+                    <p className="text-xs text-[#1C2620]/70 mt-1">{activeHike.terrain || activeHike.season || 'Randonnée'}{activeHike.companions ? ` · ${activeHike.companions}` : ''}</p>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07]">
+                      <span className="block text-lg font-bold font-mono text-[#1C2620] leading-none">{activeHike.distanceKm}<span className="text-xs text-[#1C2620]/70 font-normal"> km</span></span>
+                      <span className="block text-xs text-[#1C2620]/70 mt-1">Distance</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07]">
+                      <span className="block text-lg font-bold font-mono text-[#1C2620] leading-none">+{activeHike.elevationGain || 0}<span className="text-xs text-[#1C2620]/70 font-normal"> m</span></span>
+                      <span className="block text-xs text-[#1C2620]/70 mt-1">Dénivelé D+</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07]">
+                      <span className="block text-lg font-bold font-mono text-[#1C2620] leading-none">{activeHike.isOvernight ? `${(activeHike.nightsCount || 1) + 1}` : '1'}<span className="text-xs text-[#1C2620]/70 font-normal"> j</span></span>
+                      <span className="block text-xs text-[#1C2620]/70 mt-1">Durée</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07]">
+                      <span className="block text-xs font-bold text-[#8C6A1A] truncate leading-none">{formatWeather(activeHike)}</span>
+                      <span className="block text-xs text-[#1C2620]/70 mt-1">Météo {formatTemp(activeHike)}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Link href={activeHike.routeId ? `/randonnee-active?routeId=${activeHike.routeId}` : '/randonnee-active'} onClick={() => setExpandedWidget(null)} className="px-4 py-2 rounded-full bg-[#2D5A3D] text-white font-bold text-xs">🚀 Démarrer</Link>
+                    <Link href={activeHike.routeId ? `/preparer-randonnee?routeId=${activeHike.routeId}` : '/explorer'} onClick={() => setExpandedWidget(null)} className="px-4 py-2 rounded-full bg-white/50 hover:bg-[#1C2620]/[0.06] text-[#1C2620] font-bold text-xs border border-[#1C2620]/[0.1]">Itinéraire</Link>
+                    <button type="button" onClick={() => handleDeleteHike(activeHike.id)} className="px-4 py-2 rounded-full bg-[#E76F51]/10 hover:bg-[#E76F51]/20 text-[#C0532E] font-bold text-xs border border-[#E76F51]/30">🗑️ Supprimer la sortie</button>
+                  </div>
+                </>
+              );
+            })()}
+          </section>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-3">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Kit pour ce départ</h3>
+              <select
+                value={activeHike.assignedKitId || ''}
+                onChange={(e) => handleAssignKitToHike(activeHike.id, e.target.value)}
+                className="w-full px-2.5 py-2 rounded-xl bg-white border border-[#1C2620]/[0.14] text-xs text-[#1C2620] focus:outline-none focus:border-[#2D5A3D] cursor-pointer"
+              >
+                {kits.length === 0 && <option value="">Aucun kit</option>}
+                {kits.map((k) => (
+                  <option key={k.id} value={k.id}>{k.name} ({formatWeight(k.total_weight_g || 0)})</option>
+                ))}
+              </select>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#1C2620]/80">Prêt : <strong className="text-[#1C2620]">{hikeReadiness.ownedCount}/{hikeReadiness.totalCount} articles</strong></span>
+                  <span className="font-mono font-bold text-[#2D5A3D]">{hikeReadiness.readinessPct}%</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
+                  <div className="h-full bg-[#2D5A3D] rounded-full transition-all duration-500" style={{ width: `${hikeReadiness.readinessPct}%` }} />
+                </div>
+              </div>
+              {hikeReadiness.missingItems.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-xs font-bold text-[#C0532E]">Articles manquants ({hikeReadiness.missingItems.length}) :</p>
+                  {hikeReadiness.missingItems.map((m) => (
+                    <div key={m.id} className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs">
+                      <span className="truncate text-[#1C2620]/90">{m.item_name}</span>
+                      <button
+                        type="button"
+                        onClick={() => { addToEquipment({ name: m.item_name, category: m.category || 'Autre', weight_g: m.weight_g || 100 }); showToast(`🎒 ${m.item_name} ajouté à votre inventaire`, 'success'); }}
+                        className="px-2.5 py-1 rounded-lg bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] text-xs font-bold shrink-0"
+                      >
+                        + Ajouter
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-3">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Recommandation & consommables</h3>
+              {departurePlan ? (
+                <>
+                  <div className="p-2.5 rounded-xl bg-[#2D5A3D]/[0.06] border border-[#2D5A3D]/25 text-xs">
+                    <span className="text-[#2D5A3D] font-mono uppercase font-bold block">Kit recommandé — score {departurePlan.suitabilityScore}/100</span>
+                    <p className="text-[#1C2620]/90 font-semibold mt-0.5">{recommendedKit ? recommendedKit.name : 'Kit auto-généré à partir de votre inventaire'}</p>
+                    {recommendedKit && recommendedKit.id !== activeKit?.id && (
+                      <button type="button" onClick={() => handleAssignKitToHike(activeHike.id, recommendedKit.id)} className="mt-2 px-3 py-1.5 rounded-full bg-[#2D5A3D] text-white text-xs font-bold">
+                        Utiliser ce kit
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {departurePlan.consumables.waterLiters > 0 && <span className="px-2 py-1 rounded-lg bg-white/50 border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/85">💧 {departurePlan.consumables.waterLiters.toFixed(1).replace('.', ',')} L d&apos;eau</span>}
+                    {departurePlan.consumables.foodMealsCount > 0 && <span className="px-2 py-1 rounded-lg bg-white/50 border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/85">🍽️ {departurePlan.consumables.foodMealsCount} repas</span>}
+                    <span className="px-2 py-1 rounded-lg bg-white/50 border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/85">🥨 {departurePlan.consumables.snacksCount} en-cas</span>
+                    {departurePlan.consumables.fuelGrams > 0 && <span className="px-2 py-1 rounded-lg bg-white/50 border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/85">🔥 {departurePlan.consumables.fuelGrams} g gaz</span>}
+                    <span className="px-2 py-1 rounded-lg bg-white/50 border border-[#8C6A1A]/25 text-xs text-[#8C6A1A]">{departurePlan.weatherSummary.advice}</span>
+                  </div>
+                </>
+              ) : (
+                <p className="text-xs text-[#1C2620]/60">Moteur de recommandation indisponible pour cette sortie</p>
+              )}
+            </section>
+          </div>
+
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Toutes les sorties ({plannedHikes.length})</h3>
+              <button type="button" onClick={() => { setExpandedWidget(null); setIsNewHikeModalOpen(true); }} className="text-xs font-bold text-[#2D5A3D] hover:underline">+ Planifier</button>
+            </div>
+            <div className="flex gap-2 overflow-x-auto scrollbar-none">
+              {plannedHikes.map((h) => (
+                <button
+                  key={h.id}
+                  type="button"
+                  onClick={() => handleSelectHike(h)}
+                  className={`px-3 py-1.5 rounded-xl text-left border shrink-0 transition-all ${h.id === activeHike.id ? 'bg-[#2D5A3D]/10 border-[#2D5A3D]/50 text-[#1C2620] font-bold' : 'bg-white/40 border-[#1C2620]/[0.07] text-[#1C2620]/70'}`}
+                >
+                  <span className="block text-xs truncate max-w-[140px]">{h.name}</span>
+                  <span className="text-xs font-mono text-[#2D5A3D]">{daysUntil(h.targetDate) !== null ? `J-${daysUntil(h.targetDate)}` : 'Date à définir'}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+      ) : (
+        <div className="h-full flex flex-col items-center justify-center gap-3 text-center py-16">
+          <span className="text-3xl block">🧭</span>
+          <p className="text-sm text-[#1C2620]/75 font-medium">Aucune sortie planifiée</p>
+          <button type="button" onClick={() => setIsNewHikeModalOpen(true)} className="px-5 py-2 rounded-full bg-[#2D5A3D] text-white font-bold text-xs">🧭 Planifier ma première sortie</button>
+        </div>
+      );
+    } else if (id === 'condition') {
+      subtitle = 'Santé et fiabilité de l&apos;équipement';
+      const ready = conditionStats.filter((s) => ['neuf', 'excellent', 'bon'].includes(s.key)).reduce((n, s) => n + s.count, 0);
+      const readyPct = equipment.length > 0 ? Math.round((ready / equipment.length) * 100) : 0;
+      const maintenance = alerts.filter((a) => a.kind === 'maintenance');
+      const expirations = alerts.filter((a) => a.kind === 'expiry');
+      const replacements = alerts.filter((a) => a.kind === 'replace');
+      const mostUsed = [...equipment].sort((a, b) => (b.usage_count || 0) - (a.usage_count || 0)).slice(0, 5);
+      body = (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-3">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Taux global de préparation</h3>
+            <div className="text-5xl font-extrabold font-mono leading-none text-[#2D5A3D]">{readyPct}%</div>
+            <p className="text-xs text-[#1C2620]/70">{ready}/{equipment.length} articles en bon état</p>
+            <div className="h-2 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
+              <div className="h-full bg-[#2D5A3D] rounded-full transition-all duration-500" style={{ width: `${readyPct}%` }} />
+            </div>
+            <div className="space-y-2 pt-1">
+              {conditionStats.length === 0 && <p className="text-xs text-[#1C2620]/60">Aucun article inventorié</p>}
+              {conditionStats.map((s) => {
+                const meta = CONDITION_META[s.key] || { label: s.key, color: '#2D5A3D', bg: '' };
+                const active = conditionFilter === s.key;
+                const pct = totalWeightG > 0 ? Math.round((s.weight / totalWeightG) * 100) : 0;
+                return (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => { triggerHaptic('light'); setConditionFilter(active ? 'all' : s.key); }}
+                    className={`w-full text-left p-2 rounded-xl border transition-all ${active ? 'bg-white/50 border-[#2D5A3D]/50' : 'bg-white/40 hover:bg-white/60 border-[#1C2620]/[0.07]'}`}
+                  >
+                    <div className="flex items-center justify-between text-xs text-[#1C2620]/80 mb-1">
+                      <span className="font-semibold capitalize truncate">{meta.label}</span>
+                      <span className="shrink-0 pl-2"><span className="font-mono text-[#1C2620] font-bold">{s.count}</span><span className="text-[#1C2620]/40"> · </span><span className="font-mono" style={{ color: meta.color }}>{formatWeight(s.weight)}</span></span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-[#1C2620]/[0.07] overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: meta.color }} />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="space-y-4">
+            <div className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">À traiter ({maintenance.length + expirations.length + replacements.length})</h3>
+              {maintenance.length + expirations.length + replacements.length === 0 && <p className="text-xs text-[#1C2620]/60">Aucune action requise ✨</p>}
+              {[...maintenance, ...expirations, ...replacements].slice(0, 8).map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => { setSelectedItemId(a.itemId); setExpandedWidget(null); setIsDetailDrawerOpen(true); }}
+                  className="w-full text-left p-2 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/85 flex items-center justify-between gap-2"
+                >
+                  <span className="truncate">{a.label}</span>
+                  <span className="text-[#2D5A3D] font-bold shrink-0">Voir ➔</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Prêts ({loanedItems.length})</h3>
+              {loanedItems.length === 0 && <p className="text-xs text-[#1C2620]/60">Aucun matériel prêté 🤝</p>}
+              {loanedItems.map((item) => (
+                <div key={item.id} className="p-2 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-[#1C2620]/90 font-semibold truncate">{item.name}</p>
+                    <p className="text-[#1C2620]/60 truncate">Prêté à {item.loan_to_name || 'un ami'}</p>
+                  </div>
+                  <button type="button" onClick={() => handleMarkReturned(item)} className="px-2.5 py-1 rounded-lg bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] text-xs font-bold shrink-0">Rendu ✓</button>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Le plus utilisé</h3>
+              {mostUsed.length === 0 && <p className="text-xs text-[#1C2620]/60">Aucune donnée d&apos;usage</p>}
+              {mostUsed.map((it) => (
+                <div key={it.id} className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs">
+                  <span className="truncate text-[#1C2620]/85">{it.name}</span>
+                  <span className="font-mono text-[#1C2620]/60 shrink-0">{it.usage_count || 0} sortie(s)</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      );
+    } else if (id === 'forget') {
+      subtitle = 'Checklist intelligente — données réelles + règles métier';
+      const critical = forgetItems.filter((i) => i.level === 'critique' || i.level === 'verifier');
+      body = (
+        <div className="space-y-4">
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-3">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <div className={`text-5xl font-extrabold font-mono leading-none ${critical.length > 0 ? 'text-[#8C6A1A]' : 'text-[#2D5A3D]'}`}>{critical.length}</div>
+                <p className="text-xs text-[#1C2620]/70 mt-2">{critical.length > 0 ? 'élément(s) à vérifier avant départ' : 'Tout est en ordre'}</p>
+              </div>
+              <div className="flex flex-wrap gap-1.5 justify-end">
+                <span className="px-2 py-1 rounded-lg bg-[#9B2C2C]/10 border border-[#9B2C2C]/30 text-xs font-mono text-[#9B2C2C]">Critique</span>
+                <span className="px-2 py-1 rounded-lg bg-[#8C6A1A]/10 border border-[#8C6A1A]/30 text-xs font-mono text-[#8C6A1A]">À vérifier</span>
+                <span className="px-2 py-1 rounded-lg bg-[#2D5A3D]/10 border border-[#2D5A3D]/25 text-xs font-mono text-[#2D5A3D]">Conseillé / Prêt</span>
+              </div>
+            </div>
+            <p className="text-xs text-[#1C2620]/60">
+              {forgetItems.filter((i) => i.source === 'donnée').length} recommandation(s) issues de vos données · {forgetItems.filter((i) => i.source === 'règle').length} règle(s) générique(s) de bon sens.
+            </p>
+          </section>
+
+          {FORGET_CATEGORY_ORDER.map((cat) => {
+            const items = forgetItems.filter((i) => i.category === cat);
+            if (items.length === 0) return null;
+            return (
+              <section key={cat} className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620] pb-1 border-b border-[#1C2620]/[0.05]">{cat} ({items.length})</h3>
+                {items.map((it) => {
+                  const meta = FORGET_LEVEL_META[it.level] || FORGET_LEVEL_META.conseille;
+                  const checked = forgetChecked.has(it.id);
+                  return (
+<div key={it.id} className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs flex items-start justify-between gap-2">
+                      <div className="min-w-0 space-y-0.5">
+                        <p className={`font-semibold truncate ${checked ? 'text-[#1C2620]/45 line-through' : 'text-[#1C2620]/90'}`}>{it.label}</p>
+                        <p className="text-[#1C2620]/60">{it.reason}</p>
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          <span className={`px-2 py-0.5 rounded-full border font-mono font-bold ${meta.cls}`}>{meta.label}</span>
+                          <span className="px-2 py-0.5 rounded-full bg-[#1C2620]/[0.05] border border-[#1C2620]/[0.08] font-mono text-[#1C2620]/60">{it.source === 'donnée' ? 'Vos données' : 'Règle générique'}</span>
+                          {it.itemId && (
+                            <button
+                              type="button"
+                              onClick={() => { setSelectedItemId(it.itemId!); setExpandedWidget(null); setIsDetailDrawerOpen(true); }}
+                              className="px-2 py-0.5 rounded-full bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] font-bold"
+                            >
+                              Ouvrir la fiche ➔
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => toggleForgetChecked(it.id)}
+                        aria-pressed={checked}
+                        className={`w-11 h-11 rounded-lg border shrink-0 flex items-center justify-center transition-all ${checked ? 'bg-[#2D5A3D] border-[#2D5A3D] text-white' : 'border-[#1C2620]/30 text-transparent hover:border-[#1C2620]/60 hover:bg-white/60'}`}
+                        aria-label={checked ? `Décocher ${it.label}` : `Cocher ${it.label}`}
+                      >
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12l5 5L20 7" /></svg>
+                      </button>
+                    </div>
+                  );
+                })}
+              </section>
+            );
+          })}
+          {forgetItems.length === 0 && (
+            <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-6 text-center">
+              <p className="text-xs text-[#1C2620]/60">Aucune information à signaler pour le moment.</p>
+            </section>
+          )}
+        </div>
+      );
+    } else if (id === 'alerts') {
+      subtitle = 'Consolidation des alertes opérationnelles';
+      const kinds = [
+        { k: '', label: 'Toutes' },
+        { k: 'replace', label: 'Remplacer' },
+        { k: 'expiry', label: 'Périmé' },
+        { k: 'maintenance', label: 'Entretien' },
+        { k: 'loan', label: 'Prêt' },
+      ] as const;
+      const shown = alertFilter ? alerts.filter((a) => a.kind === alertFilter) : alerts;
+      body = (
+        <div className="space-y-4">
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-3">
+            <div className="text-5xl font-extrabold font-mono leading-none text-[#8C6A1A]">{alerts.length}</div>
+            <p className="text-xs text-[#1C2620]/70">{alerts.length === 0 ? 'Aucune alerte active' : 'alertes actives'}</p>
+            <div className="flex gap-1.5 flex-wrap">
+              {kinds.map((kind) => (
+                <button
+                  key={kind.k || 'all'}
+                  type="button"
+                  onClick={() => { triggerHaptic('light'); setAlertFilter(kind.k); }}
+                  className={`px-2.5 py-1 rounded-full text-xs font-bold ${alertFilter === kind.k ? 'bg-[#2D5A3D] text-white' : 'bg-white/50 text-[#1C2620]/80 border border-[#1C2620]/[0.1]'}`}
+                >
+                  {kind.label}
+                </button>
+              ))}
+            </div>
+          </section>
+          {shown.length === 0 ? (
+            <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-6 text-center">
+              <p className="text-xs text-[#1C2620]/60">Aucune alerte dans cette catégorie ✨</p>
+            </section>
+          ) : (
+            <div className="space-y-2">
+              {shown.map((a) => (
+                <div key={a.id} className="p-3 rounded-2xl bg-white/60 border border-[#1C2620]/[0.07] text-xs flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[#1C2620]/90 font-semibold truncate">{a.label}</p>
+                    <p className="text-[#1C2620]/60">
+                      {a.kind === 'maintenance' && 'Révision planifiée dépassée'}
+                      {a.kind === 'expiry' && 'Produit arrivé à péremption'}
+                      {a.kind === 'replace' && 'État dégradé — à réparer ou remplacer'}
+                      {a.kind === 'loan' && `Prêté à ${a.borrower || 'un ami'}`}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedItemId(a.itemId); setExpandedWidget(null); setIsDetailDrawerOpen(true); }}
+                    className="px-2.5 py-1 rounded-lg bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] text-xs font-bold shrink-0"
+                  >
+                    Corriger ➔
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    } else if (id === 'kits') {
+      subtitle = 'Création, édition, sélection et corbeille';
+      body = (
+        <div className="space-y-4">
+          <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-5xl font-extrabold font-mono leading-none text-[#2D5A3D]">{kits.length}</div>
+                <p className="text-xs text-[#1C2620]/70 mt-2">kit(s) actifs · {formatWeight(kits.reduce((s, k) => s + (k.total_weight_g || 0), 0))}</p>
+              </div>
+              <div className="flex gap-2">
+                <button type="button" onClick={handleCreateNewKit} className="px-4 py-2 rounded-full bg-[#2D5A3D] text-white text-xs font-bold">+ Nouveau kit</button>
+                {trashCount > 0 && (
+                  <button type="button" onClick={() => { setExpandedWidget(null); setIsTrashModalOpen(true); }} className="px-4 py-2 rounded-full bg-white/50 border border-[#1C2620]/[0.1] text-[#1C2620]/80 text-xs font-bold">Corbeille ({trashCount})</button>
+                )}
+              </div>
+            </div>
+          </section>
+
+          <div className="grid gap-3 lg:grid-cols-2">
+            {kits.length === 0 && (
+              <section className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-6 text-center lg:col-span-2">
+                <p className="text-xs text-[#1C2620]/60">Aucun kit actif — créez votre premier kit.</p>
+              </section>
+            )}
+            {kits.map((kit) => {
+              const missing = activeKit?.id === kit.id ? hikeReadiness.missingItems.length : null;
+              return (
+                <section key={kit.id} className="rounded-3xl bg-white/60 border border-[#1C2620]/[0.07] p-4 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-extrabold text-[#1C2620] truncate">{kit.name}</h3>
+                      <p className="text-xs text-[#1C2620]/60">{kit.items?.length || 0} articles · {kit.season || '3 saisons'}</p>
+                    </div>
+                    <span className="font-mono font-bold text-[#2D5A3D] shrink-0">{formatWeight(kit.total_weight_g || 0)}</span>
+                  </div>
+                  {missing !== null && (
+                    <p className="text-xs text-[#C0532E] font-semibold">{missing > 0 ? `${missing} élément(s) manquant(s) au kit du prochain départ` : 'Kit complet pour le prochain départ ✓'}</p>
+                  )}
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedKitForCockpit(kit); setExpandedWidget(null); setIsKitDrawerOpen(true); }}
+                      className="px-3 py-1.5 rounded-full bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] text-xs font-bold"
+                    >
+                      Ouvrir le kit
+                    </button>
+                    {activeHike && (
+                      <button
+                        type="button"
+                        onClick={() => { handleAssignKitToHike(activeHike.id, kit.id); showToast(`Kit « ${kit.name} » assigné au départ`, 'success'); }}
+                        disabled={activeHike.assignedKitId === kit.id}
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold disabled:opacity-50 ${activeHike.assignedKitId === kit.id ? 'bg-[#2D5A3D] text-white' : 'bg-white/50 border border-[#1C2620]/[0.1] text-[#1C2620]/80'}`}
+                      >
+                        {activeHike.assignedKitId === kit.id ? '✓ Assigné au départ' : 'Assigner au départ'}
+                      </button>
+                    )}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <motion.div
+      data-fullscreen
+      layout
+      layoutId={`lkdv-exp-${id}`}
+      transition={{ type: 'spring', stiffness: 280, damping: 32, mass: 1.05 }}
+      className="fixed inset-0 z-[5000] flex flex-col bg-[#FBFAF6]/97 backdrop-blur-2xl overflow-hidden"
+    >
+        <div className="flex items-center justify-between gap-3 p-4 sm:p-5 border-b border-[#1C2620]/[0.08] bg-white/60 backdrop-blur-xl shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            {iconChip}
+            <div className="min-w-0">
+              <h2 className="text-sm font-extrabold uppercase tracking-wider text-[#1C2620] truncate">{title}</h2>
+              {subtitle && <p className="text-xs text-[#1C2620]/60 truncate">{subtitle}</p>}
+            </div>
+          </div>
+          {closeBtn}
+        </div>
+<div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.26, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="max-w-5xl mx-auto p-4 sm:p-6 space-y-4"
+            >
+              {body}
+            </motion.div>
+          </div>
+        </motion.div>
+    );
+  };
+
+const renderWidgetFrame = (id: string) => {
+    return (
+      <motion.div
+        key={id}
+        layoutId={`lkdv-exp-${id}`}
+        className={`${WIDGET_SPAN[id] || 'col-span-2 lg:col-span-1'} min-h-0 ${dragWidget === id ? 'opacity-50' : ''} ${dragOverId === id ? 'ring-2 ring-[#2D5A3D]/70 ring-inset rounded-[28px]' : ''} transition-opacity`}
+        onDragOver={(e) => {
+          if (dragWidget && dragWidget !== id) {
+            e.preventDefault();
+            setDragOverId(id);
+          }
+        }}
+        onDragLeave={() => setDragOverId((cur) => (cur === id ? null : cur))}
+        onDrop={() => handleDropOn(id)}
+      >
+        <GlassCard className="h-full">{renderWidget(id)}</GlassCard>
+      </motion.div>
+    );
+  };
+
   return (
-    <div className="fixed inset-0 z-50 h-dvh w-screen overflow-hidden bg-[#0B1F17] text-white select-none font-sans flex flex-col p-3 sm:p-4">
-      {/* keyframes + no-scrollbar utility injected locally */}
+    <MotionConfig reducedMotion="user">
+    <>
+    <div className="fixed inset-0 w-full bg-[#F5F3EE] text-[#1C2620] select-none font-sans flex flex-col overflow-hidden">
+      <Header />
+      <div className="h-full w-full flex flex-col pt-20 sm:pt-[88px] overflow-y-auto lg:overflow-hidden">
       <style>{`
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
         .scrollbar-none::-webkit-scrollbar { display: none; }
         .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
         @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+        html, body { overflow: hidden !important; }
       `}</style>
 
-      {/* ═══ BACKGROUND — blurred alpine trek landscape (parallax) ═══ */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+      {/* ═══ BACKGROUND — photo « urban vintage » voilée de verre clair (thème papier LKDV) ═══ */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-[#F5F3EE]">
         <Image
-          src="/assets/images/hero-misty.jpg"
-          alt="Paysage de montagne — trek alpin"
+          src="/assets/images/urban-vintage.jpg"
+          alt=""
           fill
           priority
           sizes="100vw"
-          className={`object-cover object-center scale-[1.18] ${prefersReducedMotion ? '' : 'motion-safe:animate-[fadeInUp_1.2s_ease_both]'}`}
-          style={{ filter: 'blur(30px) saturate(1.18)' }}
+          className="object-cover object-center"
+          style={{ filter: 'blur(8px) saturate(1.08) brightness(1.02)', opacity: 0.95 }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0B1F17]/72 via-[#0B1F17]/55 to-[#0B1F17]/82" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#F5F3EE]/45 via-[#F5F3EE]/20 to-[#F5F3EE]/45" />
         <div
           className="absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse at 50% 28%, transparent 18%, rgba(11,31,23,0.9) 100%)' }}
-        />
-        {/* Grain overlay (anti-banding) */}
-        <div
-          className="absolute inset-0 opacity-[0.05] mix-blend-overlay"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-          }}
+          style={{ background: 'radial-gradient(ellipse at 50% 18%, rgba(255,255,255,0.2) 0%, transparent 60%)' }}
         />
       </div>
 
-      {/* ═══ TOP FLOATING GLASS BAR ═══ */}
-      <header className="relative z-10 flex items-center justify-between gap-3 shrink-0 h-12 px-3 mb-3 rounded-full border border-white/12 bg-white/[0.07] backdrop-blur-2xl backdrop-saturate-150 shadow-[0_12px_40px_-12px_rgba(11,31,23,0.6),inset_0_1px_0_0_rgba(255,255,255,0.16)]">
-        <div className="flex items-center gap-2.5 pl-1 min-w-0">
-          <span className="w-8 h-8 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center shadow-inner shrink-0">
-            <svg viewBox="0 0 32 32" width="17" height="17" fill="none">
-              <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="#A3C4A3" strokeWidth="2.2" strokeLinejoin="round" />
-              <path d="M2 24 L30 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </span>
-          <span className="font-semibold tracking-wide text-sm text-white truncate">Mon Équipement</span>
-          <span className="text-white/25 hidden sm:inline">·</span>
-          <span className="text-[11px] text-white/70 font-medium hidden sm:inline tracking-wide">Cockpit d&apos;équipement</span>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => { triggerHaptic('light'); setShowTelemetryPanel((v) => !v); }}
-            className="px-3 py-1.5 rounded-full text-xs font-medium text-white/85 hover:text-white bg-white/8 hover:bg-white/14 border border-white/12 transition-all active:scale-95 xl:hidden"
-          >
-            Télémétrie
-          </button>
-          <button
-            type="button"
-            onClick={() => { triggerHaptic('light'); setIsKitDrawerOpen(true); }}
-            className="px-3.5 py-1.5 rounded-full text-xs font-medium text-white/85 hover:text-white bg-white/8 hover:bg-white/14 border border-white/12 transition-all active:scale-95 hidden sm:inline-block"
-          >
-            Kits assemblés
-          </button>
-          <Link
-            href="/boutique"
-            className="px-3.5 py-1.5 rounded-full text-xs font-medium text-white/85 hover:text-white bg-white/8 hover:bg-white/14 border border-white/12 transition-all active:scale-95 hidden lg:inline-block"
-          >
-            Boutique
-          </Link>
-          {/* Clear exit from the immersive cockpit */}
-          <Link
-            href="/compte"
-            aria-label="Quitter le cockpit"
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white transition-all active:scale-90"
-            title="Quitter le cockpit"
-          >
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
-          </Link>
-          <Link
-            href="/compte"
-            className="w-8 h-8 rounded-full bg-[#A3C4A3] text-[#0B1F17] flex items-center justify-center text-[11px] font-extrabold shadow-sm transition-transform active:scale-90"
-          >
-            MC
-          </Link>
-        </div>
-      </header>
-
-      {/* ═══ SMART ALERTS RIBBON (Lot 4) ═══ */}
-      {alerts.length > 0 && (
-        <div className="relative z-10 shrink-0 mb-3 flex gap-2 overflow-x-auto scrollbar-none">
-          {alerts.slice(0, 6).map((a) => {
-            const palette =
-              a.kind === 'expiry' || a.kind === 'replace'
-                ? 'bg-[#E76F51]/15 border-[#E76F51]/40 text-[#F4A18C]'
-                : a.kind === 'maintenance'
-                ? 'bg-[#E9C46A]/15 border-[#E9C46A]/40 text-[#EFD79B]'
-                : 'bg-white/8 border-white/15 text-white/80';
-            const icon = a.kind === 'expiry' ? '⏳' : a.kind === 'maintenance' ? '🛠️' : a.kind === 'replace' ? '⚠️' : '🤝';
-            return (
-              <button
-                key={a.id}
-                type="button"
-                onClick={() => { setSelectedItemId(a.itemId); triggerHaptic('light'); }}
-                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-medium whitespace-nowrap transition-all active:scale-95 ${palette}`}
-              >
-                <span>{icon}</span>
-                <span>{a.label}</span>
-              </button>
-            );
-          })}
+      {/* ═══ FLOATING TOAST NOTIFICATION ═══ */}
+      {toastMessage && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed top-24 left-1/2 -translate-x-1/2 z-[1200] px-4 py-2 rounded-full border border-[#2D5A3D]/30 bg-white/95 text-[#1C2620] text-xs font-semibold backdrop-blur-xl shadow-[0_10px_30px_rgba(11,31,23,0.18),inset_0_1px_0_0_rgba(255,255,255,0.9)] flex items-center gap-2 animate-[fadeInUp_0.25s_ease_both]"
+        >
+          <span className="w-2 h-2 rounded-full bg-[#2D5A3D] animate-pulse" />
+          <span>{toastMessage.text}</span>
         </div>
       )}
 
-      {/* ═══ MAIN COCKPIT ═══ */}
-      <div className="relative z-10 flex-1 flex gap-3 sm:gap-4 min-h-0 max-h-full overflow-hidden">
+      {/* ═══ MAIN COCKPIT — 6 MODULES POLESTAR (Sans Sidebar, Sans Scroll) ═══ */}
+      <h1 className="sr-only">Cockpit Mon Équipement</h1>
+      <main className="relative z-10 w-full max-w-[1800px] mx-auto flex-1 min-h-0 px-3 pb-20 lg:pb-14 flex flex-col gap-2.5 overflow-y-auto lg:overflow-hidden">
 
-        {/* ─── LEFT RAIL ─── */}
-        <GlassCard className="w-14 shrink-0 hidden sm:block">
-          <div className="flex flex-col items-center justify-between py-4 px-1.5 h-full">
-            <Link
-              href="/"
-              className="w-10 h-10 rounded-2xl bg-white/8 hover:bg-white/14 border border-white/12 flex items-center justify-center text-white transition-transform active:scale-95"
-              title="Accueil LKDV"
-            >
-              <svg viewBox="0 0 32 32" width="18" height="18" fill="none">
-                <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="#A3C4A3" strokeWidth="2.2" strokeLinejoin="round" />
-                <path d="M2 24 L30 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </Link>
-
-            <div className="flex flex-col gap-3">
-              <button
-                type="button"
-                onClick={() => { triggerHaptic('light'); setActiveNav('inventory'); }}
-                aria-label="Inventaire"
-                className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all active:scale-95 ${
-                  activeNav === 'inventory'
-                    ? 'bg-[#A3C4A3] text-[#0B1F17] shadow-[0_0_20px_rgba(163,196,163,0.45)] scale-105'
-                    : 'text-white/60 hover:text-white hover:bg-white/8'
-                }`}
-                title="Inventaire"
-              >
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.1">
-                  <rect x="3" y="3" width="7" height="7" rx="2" />
-                  <rect x="14" y="3" width="7" height="7" rx="2" />
-                  <rect x="3" y="14" width="7" height="7" rx="2" />
-                  <rect x="14" y="14" width="7" height="7" rx="2" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                onClick={() => { triggerHaptic('light'); setIsKitDrawerOpen(true); }}
-                aria-label="Kits assemblés"
-                className="w-10 h-10 rounded-2xl flex items-center justify-center text-white/60 hover:text-white hover:bg-white/8 transition-all active:scale-95"
-                title="Kits assemblés"
-              >
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                onClick={() => { triggerHaptic('light'); setActiveNav(activeNav === 'favorites' ? 'inventory' : 'favorites'); }}
-                aria-label="Favoris"
-                aria-pressed={activeNav === 'favorites'}
-                className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all active:scale-95 ${
-                  activeNav === 'favorites'
-                    ? 'bg-[#A3C4A3] text-[#0B1F17] shadow-[0_0_20px_rgba(163,196,163,0.45)] scale-105'
-                    : 'text-white/60 hover:text-white hover:bg-white/8'
-                }`}
-                title="Favoris"
-              >
-                <svg viewBox="0 0 24 24" width="18" height="18" fill={activeNav === 'favorites' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-                  <path d="M12 20s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 10c0 5.65-7 10-7 10z" />
-                </svg>
-              </button>
-            </div>
-
-            <Link
-              href="/compte"
-              className="w-10 h-10 rounded-2xl flex items-center justify-center text-white/60 hover:text-white hover:bg-white/8 transition-all active:scale-95"
-              title="Paramètres"
-            >
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
-              </svg>
-            </Link>
-          </div>
-        </GlassCard>
-
-        {/* ─── COLUMN 1 : INVENTORY ─── */}
-        <GlassCard className="w-[280px] lg:w-[320px] xl:w-[340px] shrink-0 flex flex-col">
-          <div className="flex flex-col h-full p-3.5 overflow-hidden">
-            <div className="space-y-2.5 pb-3 border-b border-white/10 shrink-0">
-              <div className="flex items-baseline justify-between">
-                <h2 className="text-base font-bold tracking-tight text-white">Inventaire</h2>
-                <span className="text-xs font-mono text-[#A3C4A3] font-bold">
-                  {filteredEquipment.length} · {formatWeight(totalWeightG)}
-                </span>
-              </div>
-
-              <div className="relative flex items-center">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 text-white/50">
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="M20 20l-3.5-3.5" />
-                </svg>
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Rechercher…  ( / )"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-7 py-2 bg-black/25 rounded-2xl border border-white/12 text-xs text-white placeholder-white/50 focus:outline-none focus:border-[#A3C4A3]/60 focus:ring-1 focus:ring-[#A3C4A3]/40 transition-colors"
-                />
-                {searchQuery && (
-                  <button type="button" onClick={() => setSearchQuery('')} className="absolute right-2.5 text-white/50 hover:text-white text-xs" aria-label="Effacer">✕</button>
-                )}
-              </div>
-
-              <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none text-[11px]">
-                {CATEGORIES.map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => { triggerHaptic('light'); setActiveCategory(cat); }}
-                    className={`px-3 py-1 rounded-full capitalize whitespace-nowrap transition-colors ${
-                      activeCategory === cat
-                        ? 'bg-[#A3C4A3] text-[#0B1F17] font-bold'
-                        : 'bg-white/8 text-white/75 hover:bg-white/14 hover:text-white border border-white/10'
-                    }`}
-                  >
-                    {cat === 'all' ? 'Tous' : cat}
-                  </button>
-                ))}
-              </div>
-
-              {/* Bulk action bar */}
-              {selectedIds.size > 0 && (
-                <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-xl bg-[#A3C4A3]/12 border border-[#A3C4A3]/30">
-                  <span className="text-[11px] text-white/90 font-medium">{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
-                  <div className="flex items-center gap-1.5">
-                    <button type="button" onClick={bulkDelete} className="px-2.5 py-1 rounded-lg bg-[#E76F51]/20 hover:bg-[#E76F51]/30 text-[#F4A18C] text-[11px] font-semibold transition-all active:scale-95">Supprimer</button>
-                    <button type="button" onClick={clearSelection} className="px-2 py-1 rounded-lg bg-white/8 hover:bg-white/14 text-white/80 text-[11px] transition-all active:scale-95">Annuler</button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Item cards */}
-            <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-0.5 pt-2.5 scrollbar-none">
-              {isLoading && equipment.length === 0 ? (
-                <div className="space-y-2">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <div key={n} className="p-3 rounded-2xl bg-white/5 animate-pulse flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-white/10 shrink-0" />
-                      <div className="flex-1 space-y-1.5">
-                        <div className="w-3/4 h-3 rounded bg-white/15" />
-                        <div className="w-1/2 h-2.5 rounded bg-white/10" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : filteredEquipment.length === 0 ? (
-                <div className="p-4 rounded-2xl bg-white/5 text-center space-y-2.5 my-3 border border-white/10">
-                  <span className="text-2xl block">🧭</span>
-                  <p className="text-xs text-white/75 font-medium">
-                    {equipment.length === 0 ? 'Commence ton inventaire' : 'Aucun équipement trouvé'}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={equipment.length === 0 ? () => { setEditingItem(null); setIsAddModalOpen(true); } : handleResetFilters}
-                    className="px-3.5 py-1.5 rounded-full bg-white/12 hover:bg-white/20 text-white text-xs font-semibold transition-all active:scale-95"
-                  >
-                    {equipment.length === 0 ? 'Ajouter un article' : 'Réinitialiser'}
-                  </button>
-                </div>
-              ) : (
-                filteredEquipment.map((item, i) => {
-                  const isSelected = item.id === (activeItem?.id || selectedItemId);
-                  const isChecked = selectedIds.has(item.id);
-                  const inCompare = compareIds.includes(item.id);
-                  const editing = inlineEditId === item.id;
-                  return (
-                    <div
-                      key={item.id}
-                      onClick={() => { triggerHaptic('light'); setSelectedItemId(item.id); }}
-                      style={prefersReducedMotion ? undefined : { animationDelay: `${Math.min(i, 12) * 30}ms` }}
-                      className={`${enterAnim} p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 relative group ${
-                        isSelected
-                          ? 'bg-white/[0.12] border-[#A3C4A3]/50 ring-1 ring-[#A3C4A3]/30 shadow-[0_8px_24px_-8px_rgba(11,31,23,0.6)]'
-                          : 'bg-white/[0.04] border-white/8 hover:bg-white/[0.08] hover:border-white/15'
-                      }`}
-                    >
-                      {isSelected && (
-                        <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-full bg-[#A3C4A3] shadow-[0_0_10px_rgba(163,196,163,0.8)]" />
-                      )}
-
-                      {/* select checkbox */}
-                      <button
-                        type="button"
-                        onClick={(e) => toggleSelected(item.id, e)}
-                        aria-label={isChecked ? 'Désélectionner' : 'Sélectionner'}
-                        className={`w-4 h-4 rounded-md border shrink-0 flex items-center justify-center transition-all ${
-                          isChecked ? 'bg-[#A3C4A3] border-[#A3C4A3] text-[#0B1F17]' : 'border-white/30 text-transparent hover:border-white/60'
-                        }`}
-                      >
-                        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12l5 5L20 7" /></svg>
-                      </button>
-
-                      <div className="w-11 h-11 rounded-xl bg-black/30 overflow-hidden relative shrink-0 border border-white/10 flex items-center justify-center p-1.5 shadow-inner">
-                        <Image src={item.image || '/assets/images/no_image.png'} alt={item.name} width={40} height={40} className="object-contain max-h-full max-w-full" />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <h4 className="text-xs sm:text-[13px] font-bold text-white truncate leading-tight">{item.name}</h4>
-                        {editing ? (
-                          <div className="flex items-center gap-1.5 mt-1" onClick={(e) => e.stopPropagation()}>
-                            <input value={inlineWeight} onChange={(e) => setInlineWeight(e.target.value)} inputMode="numeric" className="w-14 px-1.5 py-0.5 rounded-md bg-black/40 border border-white/20 text-[11px] text-white text-center focus:outline-none focus:border-[#A3C4A3]" aria-label="Poids en grammes" />
-                            <span className="text-[10px] text-white/50">g</span>
-                            <span className="text-white/30">×</span>
-                            <input value={inlineQty} onChange={(e) => setInlineQty(e.target.value)} inputMode="numeric" className="w-9 px-1.5 py-0.5 rounded-md bg-black/40 border border-white/20 text-[11px] text-white text-center focus:outline-none focus:border-[#A3C4A3]" aria-label="Quantité" />
-                            <button type="button" onClick={() => saveInlineEdit(item)} className="px-2 py-0.5 rounded-md bg-[#A3C4A3] text-[#0B1F17] text-[10px] font-bold">OK</button>
-                            <button type="button" onClick={() => setInlineEditId(null)} className="px-1.5 py-0.5 rounded-md bg-white/10 text-white/70 text-[10px]">✕</button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1.5 text-[11px] text-white/60 mt-0.5 truncate">
-                            <span>{item.brand || 'Outdoor'}</span>
-                            <span>·</span>
-                            <button type="button" onClick={(e) => startInlineEdit(item, e)} className="font-mono text-[#A3C4A3] font-bold hover:underline" title="Éditer le poids / la quantité">
-                              {formatWeight(item.weight_g || 0)}{(item.quantity || 1) > 1 ? ` ×${item.quantity}` : ''}
-                            </button>
-                            {item.loan_status === 'prêté' && (
-                              <span className="ml-1 px-1.5 py-0.5 rounded bg-white/10 text-[9px] text-white/70 border border-white/15">Prêté</span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col items-center gap-1 shrink-0">
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); toggleCompare(item.id); }}
-                          className={`p-1 rounded-md transition-colors ${inCompare ? 'text-[#A3C4A3]' : 'text-white/35 hover:text-white/80'}`}
-                          title="Comparer"
-                          aria-label="Comparer"
-                        >
-                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 3v18M15 3v18M3 9h18M3 15h18" opacity="0.0"/><path d="M4 7h6v10H4zM14 7h6v10h-6z"/></svg>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); setSelectedItemId(item.id); setIsDetailDrawerOpen(true); }}
-                          className="text-white/40 hover:text-[#A3C4A3] p-1 transition-colors"
-                          title="Ouvrir la fiche"
-                          aria-label="Ouvrir la fiche"
-                        >
-                          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-
-              <button
-                type="button"
-                onClick={() => { setEditingItem(null); setIsAddModalOpen(true); }}
-                className="w-full py-2.5 rounded-2xl border border-dashed border-white/20 hover:border-[#A3C4A3] bg-white/[0.03] hover:bg-white/[0.08] text-white/80 hover:text-[#A3C4A3] text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
-              >
-                <span className="text-sm">+</span> Ajouter un article
-              </button>
-            </div>
-          </div>
-        </GlassCard>
-
-        {/* ─── COLUMN 2 : HERO + TOOL SHEET ─── */}
-        <GlassCard className="flex-1 min-w-0 flex flex-col">
-          <div className="flex flex-col h-full p-4 sm:p-5 overflow-hidden">
-            {/* Comparator strip */}
-            {compareItems.length === 2 && (
-              <div className="mb-3 shrink-0 rounded-2xl bg-white/[0.05] border border-white/12 p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-bold text-white uppercase tracking-wider">Comparateur</span>
-                  <button type="button" onClick={() => setCompareIds([])} className="text-white/50 hover:text-white text-[11px]">Fermer ✕</button>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {compareItems.map((it) => (
-                    <div key={it.id} className="text-xs">
-                      <p className="font-bold text-white truncate">{it.name}</p>
-                      <p className="text-white/60 mt-1">Poids <span className="font-mono text-[#A3C4A3]">{formatWeight(it.weight_g || 0)}</span></p>
-                      <p className="text-white/60">Prix <span className="font-mono text-white">{it.purchase_price ? `${it.purchase_price} €` : '—'}</span></p>
-                      <p className="text-white/60 capitalize">État {it.condition || '—'}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {activeItem ? (
-              <div className="flex items-start justify-between gap-3 shrink-0">
-                <div className="min-w-0">
-                  <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white leading-tight truncate">{activeItem.name}</h1>
-                  <p className="text-xs text-white/70 mt-0.5">
-                    {activeItem.brand || 'Outdoor'} · Catégorie <span className="capitalize font-bold text-[#A3C4A3]">{activeItem.category}</span>
-                    {activeItem.loan_status === 'prêté' && (
-                      <span className="ml-2 px-2 py-0.5 rounded-full bg-white/10 border border-white/15 text-[10px] text-white/80">Prêté{activeItem.loan_to_name ? ` à ${activeItem.loan_to_name}` : ''}</span>
-                    )}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button type="button" onClick={() => setIsDetailDrawerOpen(true)} className="px-5 py-2 rounded-full bg-[#A3C4A3] hover:bg-[#b3d4b3] text-[#0B1F17] font-extrabold text-xs transition-all shadow-[0_0_20px_rgba(163,196,163,0.4)] active:scale-95">
-                    Fiche complète
-                  </button>
-                  <button type="button" onClick={(e) => handleToggleFavorite(activeItem, e)} className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white text-xs transition-transform active:scale-90" title="Favori (f)" aria-label="Favori">
-                    {activeItem.is_favorite ? '❤️' : '🤍'}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="text-sm text-white/70">Sélectionnez un équipement</div>
-            )}
-
-            {/* Hero stage + tool sheet grid */}
-            <div className="flex-1 min-h-0 mt-3 grid grid-rows-[1fr_auto] gap-3 overflow-hidden">
-              {/* Hero */}
-              <div className="relative min-h-0 rounded-[24px] bg-gradient-to-b from-white/[0.06] to-black/25 border border-white/12 overflow-hidden flex items-center justify-center p-4 group">
-                <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 28% 18%, rgba(255,255,255,0.14) 0%, transparent 58%)' }} />
-                <div className="absolute bottom-6 w-56 sm:w-72 h-6 rounded-[100%] pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, rgba(11,31,23,0.85) 0%, rgba(11,31,23,0) 70%)', filter: 'blur(10px)' }} />
-                {activeItem ? (
-                  <div key={activeItem.id} className={`relative z-10 w-full h-full max-h-[240px] flex items-center justify-center ${prefersReducedMotion ? '' : 'motion-safe:animate-[fadeInUp_0.45s_ease_both]'}`}>
-                    <Image src={activeItem.image || '/assets/images/no_image.png'} alt={activeItem.name} width={340} height={260} className="object-contain max-h-full max-w-full drop-shadow-[0_20px_32px_rgba(11,31,23,0.7)] group-hover:scale-105 transition-transform duration-500" />
-                  </div>
-                ) : (
-                  <span className="text-4xl">🎒</span>
-                )}
-              </div>
-
-              {/* Tool sheet: metrics + gauge + specs */}
-              {activeItem && (
-                <div className="shrink-0 grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-3 items-center border-t border-white/10 pt-3">
-                  <div className="flex items-center gap-4">
-                    <WeightGauge currentG={totalWeightG} targetKg={targetKg} />
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center gap-2 text-[11px] text-white/60">
-                        <span className="uppercase font-mono tracking-widest">Objectif</span>
-                        <div className="flex items-center gap-1">
-                          {[6, 8, 10, 12].map((t) => (
-                            <button key={t} type="button" onClick={() => { setTargetKg(t); triggerHaptic('light'); }} className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors ${targetKg === t ? 'bg-[#A3C4A3] text-[#0B1F17] font-bold' : 'bg-white/8 text-white/70 hover:bg-white/14'}`}>{t}kg</button>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-white/60 uppercase tracking-widest block font-mono">Poids pesé</span>
-                        <span className="text-2xl font-bold font-mono text-[#A3C4A3]">{formatWeight(activeItem.weight_g || 0)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Spec tiles from DB fields */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <SpecTile label="État" value={activeItem.condition || 'Excellent'} accent />
-                    <SpecTile label="Usure" value={activeItem.wear_percentage != null ? `${activeItem.wear_percentage}%` : '—'} />
-                    <SpecTile label="Usages" value={activeItem.usage_count != null ? String(activeItem.usage_count) : '—'} />
-                    <SpecTile label="Valeur" value={activeItem.purchase_price ? `${activeItem.purchase_price} €` : '—'} />
-                    <SpecTile label="Matériaux" value={activeItem.materials || '—'} wide />
-                    <SpecTile label="Imperm." value={activeItem.waterproof_rating || '—'} />
-                    <SpecTile label="Maintenance" value={activeItem.next_maintenance_date ? new Date(activeItem.next_maintenance_date).toLocaleDateString('fr-FR') : '—'} />
-                  </div>
-                </div>
-              )}
-
-              {/* Action row */}
-              {activeItem && (
-                <div className="grid grid-cols-3 gap-2.5 shrink-0">
-                  <button type="button" onClick={() => { setEditingItem(activeItem); setIsAddModalOpen(true); }} className="py-2.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95">✎ Éditer</button>
-                  <button type="button" onClick={() => setIsLendModalOpen(true)} className="py-2.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95">🤝 Prêter</button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic('selection');
-                      addToCart({
-                        id: activeItem.product_id || activeItem.id,
-                        slug: 'equipement',
-                        name: activeItem.name,
-                        brand: activeItem.brand || 'LKDV',
-                        priceEur: activeItem.purchase_price || 99,
-                        weightG: activeItem.weight_g || 100,
-                        image: activeItem.image || '/assets/images/no_image.png',
-                        imageAlt: activeItem.name,
-                        category: activeItem.category || 'équipement',
-                      });
-                    }}
-                    className="py-2.5 rounded-2xl bg-[#A3C4A3]/15 hover:bg-[#A3C4A3]/25 border border-[#A3C4A3]/40 text-[#A3C4A3] text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95"
-                  >
-                    ↻ Racheter
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </GlassCard>
-
-        {/* ─── COLUMN 3 : TELEMETRY + AI (desktop) ─── */}
-        <div className="hidden xl:flex w-[320px] shrink-0 flex-col h-full gap-4 overflow-hidden">
-          <TelemetryCard
-            equipmentCount={equipment.length}
-            totalWeightG={totalWeightG}
-            favoritesCount={favoritesCount}
-            categoryStats={categoryStats}
-            totalValue={totalValue}
-          />
-          <AiCard
-            aiInput={aiInput}
-            setAiInput={setAiInput}
-            aiResponse={aiResponse}
-            aiStreaming={aiStreaming}
-            aiError={aiError}
-            aiScrollRef={aiScrollRef}
-            runAi={runAi}
-            kits={kits}
-            openKit={(kit) => { setSelectedKitForCockpit(kit); setIsKitDrawerOpen(true); }}
-          />
+        {/* Barre d'état du cockpit */}
+        <div className="flex items-center justify-between gap-2 shrink-0 px-1">
+          <span className="text-xs font-mono uppercase tracking-widest text-[#1C2620]/60">Cockpit · 6 modules</span>
+          <button
+            type="button"
+            onClick={() => { setVoirToutTab('inventaire'); setVoirToutOpen(true); triggerHaptic('light'); }}
+            className="text-xs font-bold text-[#2D5A3D] hover:text-[#1C2620] px-3 py-1.5 rounded-full bg-white/60 hover:bg-[#1C2620]/[0.09] border border-[#1C2620]/[0.09] transition-all active:scale-95"
+          >
+            Tout voir ▸
+          </button>
         </div>
+
+        {/* Grille des 6 modules — Rang 1 [Poids|Départ|État] · Rang 2 [IA|Alertes|Kits] */}
+        <motion.div
+          className="min-h-0 grid grid-cols-2 grid-flow-dense gap-3 items-stretch lg:grid-cols-4 lg:auto-rows-fr lg:flex-1 lg:min-h-0"
+          animate={{ opacity: expandedWidget ? 0.35 : 1, scale: expandedWidget ? 0.985 : 1 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          style={{ transformOrigin: 'center top' }}
+          onDragOver={(e) => e.preventDefault()}
+        >
+          {widgetOrder.map((id) => renderWidgetFrame(id))}
+        </motion.div>
+      </main>
       </div>
 
-      {/* ─── Mobile / tablet telemetry overlay ─── */}
-      {showTelemetryPanel && (
-        <div className="xl:hidden fixed inset-0 z-[60] flex justify-end">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowTelemetryPanel(false)} />
-          <div className="relative w-[340px] max-w-[88vw] h-full p-3 flex flex-col gap-3 overflow-y-auto scrollbar-none">
-            <button type="button" onClick={() => setShowTelemetryPanel(false)} className="self-end w-9 h-9 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white active:scale-90" aria-label="Fermer">✕</button>
-            <TelemetryCard equipmentCount={equipment.length} totalWeightG={totalWeightG} favoritesCount={favoritesCount} categoryStats={categoryStats} totalValue={totalValue} />
-            <AiCard aiInput={aiInput} setAiInput={setAiInput} aiResponse={aiResponse} aiStreaming={aiStreaming} aiError={aiError} aiScrollRef={aiScrollRef} runAi={runAi} kits={kits} openKit={(kit) => { setSelectedKitForCockpit(kit); setIsKitDrawerOpen(true); }} />
+      {/* ═══ DRAWER « TOUT VOIR » — fonctionnalités reléguées ═══ */}
+      {voirToutOpen && (
+        <div className="fixed inset-0 z-[1040]" role="dialog" aria-modal="true" aria-label="Tout voir">
+          <div className="absolute inset-0 bg-[#1C2620]/55 backdrop-blur-sm" onClick={() => setVoirToutOpen(false)} />
+          <div className="absolute right-0 top-0 h-full w-full max-w-md bg-[#FBFAF6]/95 backdrop-blur-2xl border-l border-[#1C2620]/[0.1] shadow-2xl flex flex-col animate-[fadeInUp_0.2s_ease_both]">
+            <div className="flex items-center justify-between p-4 border-b border-[#1C2620]/[0.08] shrink-0">
+              <h2 className="text-sm font-extrabold uppercase tracking-wider text-[#1C2620]">Tout voir</h2>
+              <button
+                type="button"
+                onClick={() => setVoirToutOpen(false)}
+                className="w-8 h-8 rounded-full bg-[#1C2620]/[0.07] hover:bg-white/20 flex items-center justify-center text-sm text-[#1C2620]"
+                aria-label="Fermer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex gap-1 p-2 border-b border-[#1C2620]/[0.08] shrink-0">
+              {([['inventaire', 'Inventaire'], ['prets', 'Prêts & Alertes'], ['reglages', 'Réglages'], ['actions', 'Actions']] as const).map(([tab, label]) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => { setVoirToutTab(tab); triggerHaptic('light'); }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                    voirToutTab === tab
+                      ? 'bg-[#2D5A3D] text-white'
+                      : 'bg-white/60 hover:bg-[#1C2620]/[0.09] text-[#1C2620]/80 border border-[#1C2620]/[0.08]'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none p-4 space-y-4">
+              {voirToutTab === 'inventaire' && (
+                <div className="space-y-3">
+                  <section className="rounded-2xl bg-white/40 border border-[#1C2620]/[0.07] p-3 space-y-1.5">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Répartition par catégorie</h3>
+                    {categoryStats.map((c) => (
+                      <div key={c.label} className="flex items-center justify-between text-xs text-[#1C2620]/80">
+                        <span className="capitalize truncate">{c.label}</span>
+                        <span className="font-mono text-[#2D5A3D]">{formatWeight(c.grams)} ({c.pct}%)</span>
+                      </div>
+                    ))}
+                  </section>
+
+                  <section className="rounded-2xl bg-white/40 border border-[#1C2620]/[0.07] p-3 space-y-2">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Inventaire matériel</h3>
+                      <span className="text-xs text-[#1C2620]/70 shrink-0">{filteredEquipment.length} articles · {formatWeight(totalWeightG)}</span>
+                    </div>
+
+                    <div className="relative flex items-center">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 text-[#1C2620]/50"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+                      <input
+                        ref={searchInputRef}
+                        type="text"
+                        placeholder="Rechercher équipement…  ( / )"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-9 pr-7 py-1.5 bg-white/50 rounded-xl border border-[#1C2620]/[0.09] text-xs text-[#1C2620] placeholder-[#1C2620]/50 focus:outline-none focus:border-[#2D5A3D]/60 focus:ring-1 focus:ring-[#2D5A3D]/40 transition-colors"
+                      />
+                      {searchQuery && (
+                        <button type="button" onClick={() => setSearchQuery('')} className="absolute right-2.5 text-[#1C2620]/50 hover:text-[#1C2620] text-xs" aria-label="Effacer">✕</button>
+                      )}
+                    </div>
+
+                    <div className="flex gap-1.5 overflow-x-auto scrollbar-none text-xs">
+                      {CATEGORIES.map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => { triggerHaptic('light'); setActiveCategory(cat); }}
+                          className={`px-3 py-1 rounded-full capitalize whitespace-nowrap transition-colors ${
+                            activeCategory === cat
+                              ? 'bg-[#2D5A3D] text-white font-bold'
+                              : 'bg-[#1C2620]/[0.06] text-[#1C2620]/75 hover:bg-white/14 hover:text-[#1C2620] border border-[#1C2620]/[0.08]'
+                          }`}
+                        >
+                          {cat === 'all' ? 'Tous' : cat}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
+                        <span className="text-xs text-[#1C2620]/50 font-mono uppercase shrink-0">Marque :</span>
+                        {availableBrands.slice(0, 5).map((b) => (
+                          <button
+                            key={b}
+                            type="button"
+                            onClick={() => { triggerHaptic('light'); setSelectedBrand(b); }}
+                            className={`px-2 py-0.5 rounded-lg whitespace-nowrap transition-colors ${
+                              selectedBrand === b
+                                ? 'bg-[#2D5A3D]/25 text-[#2D5A3D] font-bold border border-[#2D5A3D]/50'
+                                : 'bg-[#1C2620]/[0.04] text-[#1C2620]/60 hover:text-[#1C2620] border border-[#1C2620]/[0.08]'
+                            }`}
+                          >
+                            {b}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { triggerHaptic('light'); setOnlyFavorites((f) => !f); }}
+                        className={`px-2 py-1 rounded-lg font-bold transition-colors shrink-0 flex items-center gap-1 ${
+                          onlyFavorites
+                            ? 'bg-[#E76F51]/25 text-[#C0532E] border border-[#E76F51]/40'
+                            : 'bg-[#1C2620]/[0.04] text-[#1C2620]/60 hover:text-[#1C2620]'
+                        }`}
+                        title="Filtrer uniquement les favoris"
+                      >
+                        <span>{onlyFavorites ? '❤️' : '🤍'}</span>
+                        <span>Favoris ({favoritesCount})</span>
+                      </button>
+                    </div>
+
+                    {conditionFilter !== 'all' && (
+                      <button
+                        type="button"
+                        onClick={() => { setConditionFilter('all'); triggerHaptic('light'); }}
+                        className="w-full px-2.5 py-1.5 rounded-xl bg-[#E9A23B]/15 border border-[#E9A23B]/40 text-[#8C6A1A] text-xs font-semibold flex items-center justify-between transition-all hover:bg-[#E9A23B]/25"
+                      >
+                        <span>Filtre actif : {CONDITION_META[conditionFilter]?.label || conditionFilter}</span>
+                        <span>✕ Réinitialiser</span>
+                      </button>
+                    )}
+
+                    {selectedIds.size > 0 && (
+                      <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl bg-[#2D5A3D]/15 border border-[#2D5A3D]/30">
+                        <span className="text-xs text-[#1C2620]/90 font-medium">{selectedIds.size} sélectionné(s)</span>
+                        <div className="flex items-center gap-1.5">
+                          <button type="button" onClick={bulkDelete} className="px-2.5 py-1 rounded-lg bg-[#E76F51]/25 hover:bg-[#E76F51]/35 text-[#C0532E] text-xs font-semibold transition-all">Supprimer</button>
+                          <button type="button" onClick={clearSelection} className="px-2 py-1 rounded-lg bg-[#1C2620]/[0.06] hover:bg-white/14 text-[#1C2620]/80 text-xs">Annuler</button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      {isLoading && equipment.length === 0 ? (
+                        <div className="space-y-2">
+                          {[...Array(4)].map((_, n) => (
+                            <div key={n} className="p-3 rounded-2xl bg-[#1C2620]/[0.04] animate-pulse flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-[#1C2620]/[0.07] shrink-0" />
+                              <div className="flex-1 space-y-1.5">
+                                <div className="w-3/4 h-3 rounded bg-[#1C2620]/[0.1]" />
+                                <div className="w-1/2 h-2.5 rounded bg-[#1C2620]/[0.07]" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : filteredEquipment.length === 0 ? (
+                        <div className="p-4 rounded-2xl bg-[#1C2620]/[0.04] text-center space-y-2 border border-[#1C2620]/[0.08]">
+                          <span className="text-2xl block">🧭</span>
+                          <p className="text-xs text-[#1C2620]/75 font-medium">Aucun équipement trouvé</p>
+                          <button
+                            type="button"
+                            onClick={handleResetFilters}
+                            className="px-3.5 py-1.5 rounded-full bg-[#1C2620]/[0.08] hover:bg-white/20 text-[#1C2620] text-xs font-semibold transition-all"
+                          >
+                            Réinitialiser les filtres
+                          </button>
+                        </div>
+                      ) : (
+                        filteredEquipment.map((item, i) => {
+                          const isSelected = item.id === (activeItem?.id || selectedItemId);
+                          const isChecked = selectedIds.has(item.id);
+                          const inCompare = compareIds.includes(item.id);
+                          const editing = inlineEditId === item.id;
+                          return (
+                            <div
+                              key={item.id}
+                              onClick={() => { triggerHaptic('light'); setSelectedItemId(item.id); setIsDetailDrawerOpen(true); }}
+                              style={prefersReducedMotion ? undefined : { animationDelay: `${Math.min(i, 12) * 25}ms` }}
+                              className={`${enterAnim} p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-2.5 relative group ${
+                                isSelected
+                                  ? 'bg-[#1C2620]/[0.09] border-[#2D5A3D]/50 ring-1 ring-[#2D5A3D]/30 shadow-md'
+                                  : 'bg-white/40 border-[#1C2620]/[0.07] hover:bg-[#2D5A3D]/[0.08] hover:border-[#1C2620]/[0.11]'
+                              }`}
+                            >
+                              {isSelected && (
+                                <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-full bg-[#2D5A3D] shadow-[0_0_10px_rgba(45,90,61,0.4)]" />
+                              )}
+                              <button
+                                type="button"
+                                onClick={(e) => toggleSelected(item.id, e)}
+                                aria-label={isChecked ? 'Désélectionner' : 'Sélectionner'}
+                                className={`w-4 h-4 rounded-md border shrink-0 flex items-center justify-center transition-all ${
+                                  isChecked ? 'bg-[#2D5A3D] border-[#2D5A3D] text-white' : 'border-[#1C2620]/[0.3] text-transparent hover:border-[#1C2620]/60'
+                                }`}
+                              >
+                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12l5 5L20 7" /></svg>
+                              </button>
+                              <div className="w-10 h-10 rounded-xl bg-white/50 overflow-hidden relative shrink-0 border border-[#1C2620]/[0.08] flex items-center justify-center p-1 shadow-inner">
+                                <Image src={item.image || '/assets/images/no_image.png'} alt={item.name} width={36} height={36} className="object-contain max-h-full max-w-full" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <h4 className="text-xs font-bold text-[#1C2620] truncate leading-tight">{item.name}</h4>
+                                {editing ? (
+                                  <div className="flex items-center gap-1 mt-1" onClick={(e) => e.stopPropagation()}>
+                                    <input value={inlineWeight} onChange={(e) => setInlineWeight(e.target.value)} inputMode="numeric" className="w-12 px-1.5 py-0.5 rounded bg-white/60 border border-[#1C2620]/[0.14] text-xs text-[#1C2620] text-center focus:outline-none focus:border-[#2D5A3D]" aria-label="Poids en grammes" />
+                                    <span className="text-xs text-[#1C2620]/50">g</span>
+                                    <input value={inlineQty} onChange={(e) => setInlineQty(e.target.value)} inputMode="numeric" className="w-8 px-1 py-0.5 rounded bg-white/60 border border-[#1C2620]/[0.14] text-xs text-[#1C2620] text-center focus:outline-none focus:border-[#2D5A3D]" aria-label="Quantité" />
+                                    <button type="button" onClick={() => saveInlineEdit(item)} className="px-1.5 py-0.5 rounded bg-[#2D5A3D] text-white text-xs font-bold">OK</button>
+                                    <button type="button" onClick={() => setInlineEditId(null)} className="px-1 py-0.5 rounded bg-[#1C2620]/[0.07] text-[#1C2620]/70 text-xs">✕</button>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-1.5 text-xs text-[#1C2620]/60 mt-0.5 truncate">
+                                    <span>{item.brand || 'Outdoor'}</span>
+                                    <span>·</span>
+                                    <button type="button" onClick={(e) => startInlineEdit(item, e)} className="font-mono text-[#2D5A3D] font-bold hover:underline" title="Cliquer pour éditer le poids">
+                                      {formatWeight(item.weight_g || 0)}{(item.quantity || 1) > 1 ? ` ×${item.quantity}` : ''}
+                                    </button>
+                                    {item.loan_status === 'prêté' && (
+                                      <span className="px-1 py-0.5 rounded bg-[#1C2620]/[0.07] text-xs text-[#1C2620]/80 border border-[#1C2620]/[0.11]">Prêté</span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); toggleCompare(item.id); }}
+                                  className={`p-1 rounded-md transition-colors ${inCompare ? 'text-[#2D5A3D]' : 'text-[#1C2620]/35 hover:text-[#1C2620]/80'}`}
+                                  title="Comparer"
+                                  aria-label="Comparer"
+                                >
+                                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h6v10H4zM14 7h6v10h-6z"/></svg>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setSelectedItemId(item.id); setIsDetailDrawerOpen(true); }}
+                                  className="text-[#1C2620]/40 hover:text-[#2D5A3D] p-1 transition-colors"
+                                  title="Fiche détaillée"
+                                  aria-label="Ouvrir la fiche"
+                                >
+                                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => { setEditingItem(null); setIsAddModalOpen(true); triggerHaptic('light'); }}
+                      className="w-full mt-1 py-2 rounded-xl border border-dashed border-[#1C2620]/[0.14] hover:border-[#2D5A3D] bg-white/30 hover:bg-[#2D5A3D]/[0.08] text-[#1C2620]/80 hover:text-[#2D5A3D] text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+                    >
+                      <span>+</span> Ajouter un article à l&apos;inventaire
+                    </button>
+                  </section>
+
+                  {compareItems.length === 2 && (
+                    <section className="rounded-2xl bg-gradient-to-r from-white/[0.08] to-black/30 border border-[#1C2620]/[0.08] p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-[#1C2620] uppercase tracking-wider">Comparateur 2 Articles ⚖️</span>
+                        <button type="button" onClick={() => setCompareIds([])} className="text-[#1C2620]/50 hover:text-[#1C2620] text-xs">Fermer ✕</button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        {compareItems.map((it) => (
+                          <div key={it.id} className="p-2.5 rounded-xl bg-white/50 border border-[#1C2620]/[0.08]">
+                            <p className="font-bold text-[#1C2620] truncate">{it.name}</p>
+                            <p className="text-[#1C2620]/70 mt-1">Poids : <span className="font-mono text-[#2D5A3D] font-bold">{formatWeight(it.weight_g || 0)}</span></p>
+                            <p className="text-[#1C2620]/70">Prix : <span className="font-mono text-[#1C2620]">{it.purchase_price ? `${it.purchase_price} €` : '—'}</span></p>
+                            <p className="text-[#1C2620]/70 capitalize">État : {CONDITION_META[it.condition || 'bon']?.label || it.condition || '—'}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )}
+                </div>
+              )}
+
+              {voirToutTab === 'prets' && (
+                <div className="space-y-4">
+                  <section>
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620] mb-2">Alertes ({alerts.length})</h3>
+                    {alerts.length === 0 ? (
+                      <p className="text-xs text-[#1C2620]/70 text-center py-4 rounded-2xl bg-white/40 border border-[#1C2620]/[0.07]">Aucune alerte — tout est en ordre ✨</p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {alerts.map((a) => (
+                          <button
+                            key={a.id}
+                            type="button"
+                            onClick={() => { setVoirToutOpen(false); setSelectedItemId(a.itemId); setIsDetailDrawerOpen(true); triggerHaptic('light'); }}
+                            className="w-full text-left p-2 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/85 flex items-center justify-between gap-1.5 transition-colors"
+                          >
+                            <span className="truncate">{a.label}</span>
+                            <span className="text-xs text-[#2D5A3D] font-bold shrink-0">Voir ➔</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+
+                  <section className="pt-2 border-t border-[#1C2620]/[0.08]">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Prêts ({loanedItems.length})</h3>
+                      {trashCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => { setVoirToutOpen(false); setIsTrashModalOpen(true); }}
+                          className="text-xs font-bold text-[#1C2620]/60 hover:text-[#C0532E] underline"
+                          title="Voir la corbeille des kits"
+                        >
+                          Corbeille ({trashCount})
+                        </button>
+                      )}
+                    </div>
+                    {loanedItems.length === 0 ? (
+                      <p className="text-xs text-[#1C2620]/70 text-center py-4 rounded-2xl bg-white/40 border border-[#1C2620]/[0.07]">Aucun matériel actuellement prêté 🤝</p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {loanedItems.map((item) => (
+                          <div key={item.id} className="p-2 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] text-xs flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-[#1C2620]/90 font-semibold truncate">{item.name}</p>
+                              <p className="text-xs text-[#1C2620]/60 truncate">Prêté à {item.loan_to_name || 'un ami'}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleMarkReturned(item)}
+                              className="px-2.5 py-1 rounded-lg bg-[#2D5A3D]/20 hover:bg-[#2D5A3D]/30 border border-[#2D5A3D]/40 text-[#2D5A3D] text-xs font-bold shrink-0 transition-all active:scale-95"
+                            >
+                              Rendu ✓
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                </div>
+              )}
+
+              {voirToutTab === 'reglages' && (
+                <div className="space-y-5">
+                  <section>
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620] mb-2">Objectif de poids du sac</h3>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[5, 6, 8, 10, 12, 14, 16, 20].map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => { setTargetKg(t); triggerHaptic('light'); showToast(`Objectif ajusté à ${t} kg`, 'info'); }}
+                          className={`py-2 rounded-xl text-center font-mono font-bold text-xs transition-all active:scale-95 ${
+                            targetKg === t
+                              ? 'bg-[#2D5A3D] text-white shadow-sm'
+                              : 'bg-[#1C2620]/[0.06] hover:bg-white/14 text-[#1C2620]/80 border border-[#1C2620]/[0.08]'
+                          }`}
+                        >
+                          {t} kg
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="pt-2 border-t border-[#1C2620]/[0.08]">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620] mb-2">Disposition des modules</h3>
+                    <div className="space-y-2">
+                      {widgetOrder.map((id, i) => (
+                        <div key={id} className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/40 border border-[#1C2620]/[0.07]">
+                          <span className="text-xs text-[#1C2620]/90 capitalize">{WIDGET_LABEL[id] || id}</span>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => moveWidget(id, -1)}
+                              disabled={i === 0}
+                              className="w-7 h-7 rounded-lg bg-white/60 hover:bg-[#1C2620]/[0.09] border border-[#1C2620]/[0.08] text-[#1C2620] text-xs disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                              aria-label={`Déplacer ${WIDGET_LABEL[id]} vers le haut`}
+                            >
+                              ▲
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveWidget(id, 1)}
+                              disabled={i === widgetOrder.length - 1}
+                              className="w-7 h-7 rounded-lg bg-white/60 hover:bg-[#1C2620]/[0.09] border border-[#1C2620]/[0.08] text-[#1C2620] text-xs disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                              aria-label={`Déplacer ${WIDGET_LABEL[id]} vers le bas`}
+                            >
+                              ▼
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={resetWidgetOrder}
+                      className="mt-2 w-full py-2 rounded-xl bg-white/60 hover:bg-[#1C2620]/[0.09] border border-[#1C2620]/[0.09] text-[#1C2620]/90 text-xs font-semibold transition-colors"
+                    >
+                      ↺ Réinitialiser la disposition
+                    </button>
+                  </section>
+
+                  <section className="pt-2 border-t border-[#1C2620]/[0.08]">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620] mb-2">Général</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => { handleResetFilters(); showToast('Filtres réinitialisés', 'info'); }}
+                        className="py-2.5 px-3 rounded-xl bg-[#1C2620]/[0.06] hover:bg-white/14 border border-[#1C2620]/[0.08] text-[#1C2620]/90 text-xs font-semibold text-left transition-colors flex items-center gap-1.5"
+                      >
+                        <span>🔄</span> Réinitialiser filtres
+                      </button>
+                      <Link
+                        href="/compte"
+                        onClick={() => setVoirToutOpen(false)}
+                        className="py-2.5 px-3 rounded-xl bg-[#1C2620]/[0.06] hover:bg-white/14 border border-[#1C2620]/[0.08] text-[#1C2620]/90 text-xs font-semibold text-left transition-colors flex items-center gap-1.5"
+                      >
+                        <span>👤</span> Mon Profil LKDV
+                      </Link>
+                    </div>
+                  </section>
+                </div>
+              )}
+
+              {voirToutTab === 'actions' && (
+                <div className="space-y-4">
+                  <section>
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620] mb-2">Navigation</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Link
+                        href="/explorer"
+                        onClick={() => setVoirToutOpen(false)}
+                        className="p-2.5 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
+                      >
+                        <span>🗺️</span>
+                        <span className="font-bold">Explorer</span>
+                        <span className="text-xs text-[#1C2620]/60">Trouver des randonnées</span>
+                      </Link>
+                      <Link
+                        href="/ai-configurator"
+                        onClick={() => setVoirToutOpen(false)}
+                        className="p-2.5 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
+                      >
+                        <span>✨</span>
+                        <span className="font-bold">Configurateur IA</span>
+                        <span className="text-xs text-[#1C2620]/60">Générer un kit</span>
+                      </Link>
+                      <Link
+                        href="/rapport-kit"
+                        onClick={() => setVoirToutOpen(false)}
+                        className="p-2.5 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
+                      >
+                        <span>📦</span>
+                        <span className="font-bold">Rapport Kit</span>
+                        <span className="text-xs text-[#1C2620]/60">Évaluer son sac</span>
+                      </Link>
+                      <Link
+                        href="/jumeau-3d"
+                        onClick={() => setVoirToutOpen(false)}
+                        className="p-2.5 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/90 flex flex-col gap-0.5 transition-all active:scale-[0.98]"
+                      >
+                        <span>🧊</span>
+                        <span className="font-bold">Jumeau 3D</span>
+                        <span className="text-xs text-[#1C2620]/60">Vue du sac</span>
+                      </Link>
+                    </div>
+                  </section>
+
+                  <section className="pt-2 border-t border-[#1C2620]/[0.08] space-y-2">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Actions rapides</h3>
+                    <button
+                      type="button"
+                      onClick={() => { setVoirToutOpen(false); setEditingItem(null); setIsAddModalOpen(true); }}
+                      className="w-full py-2.5 px-3 rounded-xl bg-white/60 hover:bg-[#1C2620]/[0.09] border border-[#1C2620]/[0.09] text-[#1C2620]/90 text-xs font-semibold text-left flex items-center gap-2 transition-colors"
+                    >
+                      <span>➕</span> Ajouter un article à l&apos;inventaire
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setVoirToutOpen(false); setIsNewHikeModalOpen(true); }}
+                      className="w-full py-2.5 px-3 rounded-xl bg-white/60 hover:bg-[#1C2620]/[0.09] border border-[#1C2620]/[0.09] text-[#1C2620]/90 text-xs font-semibold text-left flex items-center gap-2 transition-colors"
+                    >
+                      <span>🧭</span> Planifier une nouvelle sortie
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setVoirToutOpen(false); handleCreateNewKit(); }}
+                      className="w-full py-2.5 px-3 rounded-xl bg-white/60 hover:bg-[#1C2620]/[0.09] border border-[#1C2620]/[0.09] text-[#1C2620]/90 text-xs font-semibold text-left flex items-center gap-2 transition-colors"
+                    >
+                      <span>🎒</span> Créer un nouveau kit
+                    </button>
+                  </section>
+
+                  <section className="pt-2 border-t border-[#1C2620]/[0.07] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620] flex items-center gap-1.5"><span className="text-[#2D5A3D]"><IconSparkle /></span> Assistance IA</h3>
+                      {aiMode === 'local' && (
+                        <span className="px-2 py-0.5 rounded-full bg-[#8C6A1A]/10 border border-[#8C6A1A]/30 text-xs font-mono font-bold text-[#8C6A1A]">Mode dégradé</span>
+                      )}
+                      {aiMode === 'live' && (
+                        <span className="px-2 py-0.5 rounded-full bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-xs font-mono font-bold text-[#2D5A3D]">IA en ligne</span>
+                      )}
+                    </div>
+                    <div ref={aiScrollRef} className="space-y-1.5 text-xs max-h-[180px] overflow-y-auto scrollbar-none pr-0.5">
+                      {aiResponse ? (
+                        <div className="p-3 rounded-2xl bg-white/50 border border-[#1C2620]/[0.08] shadow-inner">
+                          <p className="text-[#1C2620]/90 leading-relaxed whitespace-pre-wrap">{aiResponse}{aiStreaming && <span className="inline-block w-1.5 h-3 ml-0.5 bg-[#2D5A3D] animate-pulse align-middle" />}</p>
+                        </div>
+                      ) : aiError ? (
+                        <div className="p-2.5 rounded-xl bg-[#E76F51]/12 border border-[#E76F51]/30 text-xs text-[#C0532E]">{aiError}</div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {['Optimise un pack bivouac sous 8 kg', 'Quel matériel alléger en priorité ?'].map((s) => (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => runAi(s)}
+                              className="w-full text-left p-2 rounded-xl bg-white/40 hover:bg-[#1C2620]/[0.06] border border-[#1C2620]/[0.07] text-xs text-[#1C2620]/90 transition-all active:scale-[0.98]"
+                            >
+                              ✦ {s}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <form
+                      onSubmit={(e) => { e.preventDefault(); runAi(aiInput); setAiInput(''); }}
+                      className="flex items-center gap-1.5 rounded-xl bg-white/50 border border-[#1C2620]/[0.09] px-2 py-1.5"
+                    >
+                      <input
+                        value={aiInput}
+                        onChange={(e) => setAiInput(e.target.value)}
+                        placeholder="Question au copilote…"
+                        className="flex-1 bg-transparent text-xs text-[#1C2620] placeholder-[#1C2620]/40 focus:outline-none"
+                        aria-label="Question IA"
+                      />
+                      <button
+                        type="submit"
+                        disabled={aiStreaming || !aiInput.trim()}
+                        className="w-6 h-6 rounded-full bg-[#2D5A3D] text-white flex items-center justify-center text-xs font-bold disabled:opacity-40 transition-all active:scale-90"
+                        aria-label="Envoyer"
+                      >
+                        ↑
+                      </button>
+                    </form>
+                  </section>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -964,7 +2927,19 @@ export default function MonMaterielCockpitPage() {
         item={activeItem}
         onClose={() => setIsDetailDrawerOpen(false)}
         onEdit={(item) => { setIsDetailDrawerOpen(false); setEditingItem(item); setIsAddModalOpen(true); }}
-        onDelete={(id) => { removeFromEquipment(id); setIsDetailDrawerOpen(false); }}
+        onDelete={async (id) => {
+          await removeFromEquipment(id);
+          setIsDetailDrawerOpen(false);
+          showToast('Article supprimé de l\'inventaire', 'info');
+        }}
+        onUpdateNotes={async (gearId, notes) => {
+          await updateEquipment(gearId, { notes });
+          showToast('Notes enregistrées avec succès', 'success');
+        }}
+        onAddToKit={(_item) => {
+          setIsDetailDrawerOpen(false);
+          setIsKitDrawerOpen(true);
+        }}
         onLend={() => { setIsDetailDrawerOpen(false); setIsLendModalOpen(true); }}
         onToggleFavorite={() => { if (activeItem) handleToggleFavorite(activeItem); }}
         onAddToCart={(p) => {
@@ -979,6 +2954,7 @@ export default function MonMaterielCockpitPage() {
             imageAlt: p.name || 'Équipement',
             category: p.category || 'équipement',
           });
+          showToast(`🛒 ${p.name || 'Article'} ajouté au panier !`, 'success');
         }}
       />
 
@@ -1018,6 +2994,7 @@ export default function MonMaterielCockpitPage() {
               image: itemData.image,
               purchase_price: itemData.purchase_price,
             });
+            showToast(`« ${itemData.name} » mis à jour`, 'success');
           } else {
             await addToEquipment(
               {
@@ -1033,6 +3010,7 @@ export default function MonMaterielCockpitPage() {
                 purchase_price: itemData.purchase_price || undefined,
               }
             );
+            showToast(`« ${itemData.name || 'Nouvel article'} » ajouté à votre inventaire`, 'success');
           }
           setIsAddModalOpen(false);
           setEditingItem(null);
@@ -1041,12 +3019,25 @@ export default function MonMaterielCockpitPage() {
 
       <KitCockpitDrawer
         isOpen={isKitDrawerOpen}
-        kit={selectedKitForCockpit || kits[0] || null}
+        kit={selectedKitForCockpit || activeKit || kits[0] || null}
         userEquipment={equipment}
         onClose={() => { setIsKitDrawerOpen(false); setSelectedKitForCockpit(null); }}
-        onSelectForDeparture={(kit) => { setSelectedKitForCockpit(kit); setIsKitDrawerOpen(false); }}
-        onUpdateKit={async (kitId, patch) => { await updateKit(kitId, patch); }}
-        onDeleteKit={async (kitId) => { await moveToTrash(kitId); setIsKitDrawerOpen(false); setSelectedKitForCockpit(null); }}
+        onSelectForDeparture={(kit) => {
+          setSelectedKitForCockpit(kit);
+          if (activeHike) handleAssignKitToHike(activeHike.id, kit.id);
+          setIsKitDrawerOpen(false);
+          showToast(`🚀 Kit « ${kit.name} » sélectionné pour le départ`, 'success');
+        }}
+        onUpdateKit={async (kitId, patch) => {
+          await updateKit(kitId, patch);
+          showToast('Kit mis à jour', 'success');
+        }}
+        onDeleteKit={async (kitId) => {
+          await moveToTrash(kitId);
+          setIsKitDrawerOpen(false);
+          setSelectedKitForCockpit(null);
+          showToast('Kit déplacé dans la corbeille', 'info');
+        }}
         onAddGearToInventory={async (product) => {
           await addToEquipment({
             name: product.name,
@@ -1055,6 +3046,7 @@ export default function MonMaterielCockpitPage() {
             weight_g: product.weight_g || 100,
             image: product.image,
           });
+          showToast(`🎒 ${product.name} ajouté à votre inventaire`, 'success');
         }}
         onAddToCart={(p) => {
           addToCart({
@@ -1068,6 +3060,7 @@ export default function MonMaterielCockpitPage() {
             imageAlt: p.name || 'Équipement',
             category: p.category || 'équipement',
           });
+          showToast(`🛒 ${p.name || 'Article'} ajouté au panier !`, 'success');
         }}
       />
 
@@ -1075,168 +3068,183 @@ export default function MonMaterielCockpitPage() {
         isOpen={isLendModalOpen}
         item={activeItem}
         onClose={() => setIsLendModalOpen(false)}
-        onSaveLoan={async (borrowerName, returnDate, notes) => {
+        onSaveLoan={async (borrowerName, _returnDate, notes) => {
           if (activeItem) {
             await updateEquipment(activeItem.id, {
               loan_status: 'prêté',
               loan_to_name: borrowerName,
               notes: notes || activeItem.notes,
             });
+            showToast(`🤝 Matériel prêté à ${borrowerName}`, 'success');
           }
           setIsLendModalOpen(false);
         }}
       />
-    </div>
-  );
-}
 
-// ─────────────────────────────────────────────────────────────
-// Sub-components
-// ─────────────────────────────────────────────────────────────
-function SpecTile({ label, value, accent, wide }: { label: string; value: string; accent?: boolean; wide?: boolean }) {
-  return (
-    <div className={`p-2.5 rounded-xl bg-white/[0.05] border border-white/10 ${wide ? 'col-span-2' : ''}`}>
-      <span className={`text-xs font-bold block truncate capitalize ${accent ? 'text-[#A3C4A3]' : 'text-white'}`}>{value}</span>
-      <span className="text-[9px] text-white/55 uppercase font-mono tracking-wider mt-0.5 block">{label}</span>
-    </div>
-  );
-}
-
-function TelemetryCard({
-  equipmentCount,
-  totalWeightG,
-  favoritesCount,
-  categoryStats,
-  totalValue,
-}: {
-  equipmentCount: number;
-  totalWeightG: number;
-  favoritesCount: number;
-  categoryStats: { label: string; grams: number; pct: number }[];
-  totalValue: number;
-}) {
-  return (
-    <GlassCard className="shrink-0">
-      <div className="p-4">
-        <div className="flex items-center justify-between pb-2.5 border-b border-white/10">
-          <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">Télémétrie du pack</h3>
-          <span className="text-[9px] text-[#A3C4A3] font-mono font-bold uppercase tracking-wider">Live</span>
-        </div>
-        <div className="grid grid-cols-3 gap-2 mt-3">
-          <div className="rounded-2xl bg-white/[0.05] border border-white/10 p-2.5 text-center">
-            <span className="block text-lg font-bold font-mono text-[#A3C4A3]">{equipmentCount}</span>
-            <span className="block text-[9px] text-white/60 uppercase font-mono mt-0.5">Articles</span>
-          </div>
-          <div className="rounded-2xl bg-white/[0.05] border border-white/10 p-2.5 text-center">
-            <span className="block text-lg font-bold font-mono text-white">{formatWeight(totalWeightG)}</span>
-            <span className="block text-[9px] text-white/60 uppercase font-mono mt-0.5">Poids</span>
-          </div>
-          <div className="rounded-2xl bg-white/[0.05] border border-white/10 p-2.5 text-center">
-            <span className="block text-lg font-bold font-mono text-white">{favoritesCount}</span>
-            <span className="block text-[9px] text-white/60 uppercase font-mono mt-0.5">Favoris</span>
-          </div>
-        </div>
-        <div className="mt-3 space-y-1.5">
-          {categoryStats.map((c) => (
-            <div key={c.label}>
-              <div className="flex items-center justify-between text-[10px] text-white/70 mb-0.5">
-                <span className="capitalize truncate">{c.label}</span>
-                <span className="font-mono text-[#A3C4A3]">{formatWeight(c.grams)}</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-                <div className="h-full rounded-full bg-[#A3C4A3]" style={{ width: `${c.pct}%` }} />
-              </div>
+      {/* ═══ NEW HIKE MODAL ═══ */}
+      {isNewHikeModalOpen && (
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-[#1C2620]/55 backdrop-blur-md animate-[fadeInUp_0.2s_ease_both]">
+          <div className="relative w-full max-w-md rounded-[28px] border border-[#1C2620]/[0.11] bg-[#FBFAF6]/97 backdrop-blur-2xl p-6 text-[#1C2620] shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#1C2620]/[0.08] pb-3">
+              <h3 className="text-sm font-extrabold text-[#1C2620] uppercase tracking-wider">Planifier une nouvelle sortie</h3>
+              <button
+                type="button"
+                onClick={() => setIsNewHikeModalOpen(false)}
+                className="w-7 h-7 rounded-full bg-[#1C2620]/[0.07] hover:bg-white/20 flex items-center justify-center text-xs text-[#1C2620]"
+              >
+                ✕
+              </button>
             </div>
-          ))}
-        </div>
-        <div className="mt-3 flex items-center justify-between text-[11px] text-white/70 pt-2.5 border-t border-white/10">
-          <span>Valeur totale du kit</span>
-          <span className="font-mono font-bold text-white">{Math.round(totalValue)} €</span>
-        </div>
-      </div>
-    </GlassCard>
-  );
-}
 
-function AiCard({
-  aiInput,
-  setAiInput,
-  aiResponse,
-  aiStreaming,
-  aiError,
-  aiScrollRef,
-  runAi,
-  kits,
-  openKit,
-}: {
-  aiInput: string;
-  setAiInput: (v: string) => void;
-  aiResponse: string;
-  aiStreaming: boolean;
-  aiError: string | null;
-  aiScrollRef: React.RefObject<HTMLDivElement | null>;
-  runAi: (q: string) => void;
-  kits: CustomKit[];
-  openKit: (kit: CustomKit) => void;
-}) {
-  const suggestions = [
-    'Optimise un pack bivouac 3 jours sous 8 kg',
-    'Quel matériel alléger en priorité ?',
-    'Détecte le matériel à réviser avant mon départ',
-  ];
-  return (
-    <GlassCard className="flex-1 min-h-0 flex flex-col">
-      <div className="flex flex-col h-full p-4 overflow-hidden">
-        <div className="flex items-center gap-2 pb-2.5 border-b border-white/10 shrink-0">
-          <span className="text-sm">✦</span>
-          <div>
-            <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">Copilote IA Équipement</h3>
-            <span className="text-[9px] text-[#A3C4A3] font-mono font-bold uppercase tracking-wider">{aiStreaming ? 'Analyse en cours…' : 'Assistance active'}</span>
-          </div>
-        </div>
+            <form onSubmit={handleCreateHike} className="space-y-3 text-xs">
+              <div>
+                <label className="text-xs text-[#1C2620]/70 block mb-1">Nom de la randonnée / trek *</label>
+                <input
+                  required
+                  value={newHikeName}
+                  onChange={(e) => setNewHikeName(e.target.value)}
+                  placeholder="Ex. Tour du Mont Blanc, GR20 Sud…"
+                  className="w-full px-3 py-2 rounded-xl bg-white/50 border border-[#1C2620]/[0.11] text-[#1C2620] focus:outline-none focus:border-[#2D5A3D]"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-[#1C2620]/70 block mb-1">Massif / Destination</label>
+                <input
+                  value={newHikeDest}
+                  onChange={(e) => setNewHikeDest(e.target.value)}
+                  placeholder="Ex. Massif des Écrins, Vercors…"
+                  className="w-full px-3 py-2 rounded-xl bg-white/50 border border-[#1C2620]/[0.11] text-[#1C2620] focus:outline-none focus:border-[#2D5A3D]"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-[#1C2620]/70 block mb-1">Compagnons (optionnel)</label>
+                <input
+                  value={newHikeCompanions}
+                  onChange={(e) => setNewHikeCompanions(e.target.value)}
+                  placeholder="Ex. Léna & Antoine"
+                  className="w-full px-3 py-2 rounded-xl bg-white/50 border border-[#1C2620]/[0.11] text-[#1C2620] focus:outline-none focus:border-[#2D5A3D]"
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="text-xs text-[#1C2620]/70 block mb-1">Durée (jours)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={newHikeDays}
+                    onChange={(e) => setNewHikeDays(Number(e.target.value))}
+                    className="w-full px-2 py-1.5 rounded-xl bg-white/50 border border-[#1C2620]/[0.11] text-[#1C2620] text-center focus:outline-none focus:border-[#2D5A3D]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-[#1C2620]/70 block mb-1">Distance (km)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={newHikeKm}
+                    onChange={(e) => setNewHikeKm(Number(e.target.value))}
+                    className="w-full px-2 py-1.5 rounded-xl bg-white/50 border border-[#1C2620]/[0.11] text-[#1C2620] text-center focus:outline-none focus:border-[#2D5A3D]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-[#1C2620]/70 block mb-1">D+ (mètres)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={newHikeDPlus}
+                    onChange={(e) => setNewHikeDPlus(Number(e.target.value))}
+                    className="w-full px-2 py-1.5 rounded-xl bg-white/50 border border-[#1C2620]/[0.11] text-[#1C2620] text-center focus:outline-none focus:border-[#2D5A3D]"
+                  />
+                </div>
+              </div>
 
-        <div ref={aiScrollRef} className="flex-1 min-h-0 overflow-y-auto mt-3 space-y-2.5 pr-0.5 scrollbar-none">
-          {aiResponse ? (
-            <div className="p-3.5 rounded-2xl bg-white/[0.05] border border-white/10 shadow-inner">
-              <p className="text-xs text-white/90 leading-relaxed whitespace-pre-wrap">{aiResponse}{aiStreaming && <span className="inline-block w-1.5 h-3 ml-0.5 bg-[#A3C4A3] animate-pulse align-middle" />}</p>
-            </div>
-          ) : aiError ? (
-            <div className="p-3.5 rounded-2xl bg-[#E76F51]/12 border border-[#E76F51]/30 text-[11px] text-[#F4A18C]">{aiError}</div>
-          ) : (
-            <div className="space-y-2">
-              {suggestions.map((s) => (
-                <button key={s} type="button" onClick={() => runAi(s)} className="w-full text-left p-3 rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 hover:border-[#A3C4A3]/40 transition-all active:scale-[0.98] text-xs text-white/90">
-                  ✦ {s}
+              <div className="pt-3 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsNewHikeModalOpen(false)}
+                  className="px-4 py-2 rounded-full bg-[#1C2620]/[0.07] text-[#1C2620] text-xs font-semibold"
+                >
+                  Annuler
                 </button>
-              ))}
-              {kits.slice(0, 2).map((kit) => (
-                <button key={kit.id} type="button" onClick={() => openKit(kit)} className="w-full text-left p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/10 hover:border-[#A3C4A3]/40 transition-all active:scale-[0.98]">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white truncate">{kit.name || 'Kit assemblé'}</span>
-                    <span className="text-[10px] font-mono text-[#A3C4A3]">→</span>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-full bg-[#2D5A3D] text-white font-bold text-xs hover:bg-[#235030]"
+                >
+                  Enregistrer la sortie
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ KIT TRASH MODAL ═══ */}
+      {isTrashModalOpen && (
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-[#1C2620]/55 backdrop-blur-md animate-[fadeInUp_0.2s_ease_both]">
+          <div className="relative w-full max-w-md rounded-[28px] border border-[#1C2620]/[0.11] bg-[#FBFAF6]/97 backdrop-blur-2xl p-6 text-[#1C2620] shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#1C2620]/[0.08] pb-3">
+              <h3 className="text-sm font-extrabold text-[#1C2620] uppercase tracking-wider">Corbeille des kits ({trashCount})</h3>
+              <button
+                type="button"
+                onClick={() => setIsTrashModalOpen(false)}
+                className="w-7 h-7 rounded-full bg-[#1C2620]/[0.07] hover:bg-white/20 flex items-center justify-center text-xs text-[#1C2620]"
+                aria-label="Fermer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-2 max-h-[60vh] overflow-y-auto scrollbar-none pr-0.5">
+              {trashKits.length === 0 && (
+                <p className="text-xs text-[#1C2620]/50 text-center py-6">Corbeille vide</p>
+              )}
+              {trashKits.map((kit) => (
+                <div key={kit.id} className="p-3 rounded-xl bg-white/40 border border-[#1C2620]/[0.07] flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-[#1C2620] truncate">{kit.name}</p>
+                    <p className="text-xs text-[#1C2620]/45">
+                      Supprimé {kit.deleted_at ? new Date(kit.deleted_at).toLocaleDateString('fr-FR') : ''}
+                    </p>
                   </div>
-                  <span className="text-[10px] text-white/60">{formatWeight(kit.total_weight_g || 0)} · {kit.items?.length || 0} articles</span>
-                </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        triggerHaptic('light');
+                        await restoreFromTrash(kit.id);
+                        showToast(`Kit « ${kit.name} » restauré`, 'success');
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-[#2D5A3D]/20 hover:bg-[#2D5A3D]/30 border border-[#2D5A3D]/40 text-[#2D5A3D] text-xs font-bold transition-all active:scale-95"
+                    >
+                      Restaurer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm(`Supprimer définitivement le kit « ${kit.name} » ?`)) {
+                          permanentDelete(kit.id);
+                          showToast('Kit supprimé définitivement', 'info');
+                        }
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-[#E76F51]/20 hover:bg-[#E76F51]/30 border border-[#E76F51]/40 text-[#C0532E] text-xs font-bold transition-all active:scale-95"
+                    >
+                      Suppr.
+                    </button>
+                  </div>
+</div>
               ))}
             </div>
-          )}
+          </div>
         </div>
+      )}
+    </div>
 
-        {/* Prompt input */}
-        <form
-          onSubmit={(e) => { e.preventDefault(); runAi(aiInput); setAiInput(''); }}
-          className="mt-3 shrink-0 flex items-center gap-2 rounded-2xl bg-black/25 border border-white/12 px-2.5 py-1.5"
-        >
-          <input
-            value={aiInput}
-            onChange={(e) => setAiInput(e.target.value)}
-            placeholder="Pose une question au copilote…"
-            className="flex-1 bg-transparent text-xs text-white placeholder-white/45 focus:outline-none py-1"
-            aria-label="Question au copilote IA"
-          />
-          <button type="submit" disabled={aiStreaming || !aiInput.trim()} className="w-7 h-7 rounded-full bg-[#A3C4A3] text-[#0B1F17] flex items-center justify-center text-sm font-bold disabled:opacity-40 transition-all active:scale-90" aria-label="Envoyer">↑</button>
-        </form>
-      </div>
-    </GlassCard>
+      {/* ═══ VUE FULLSCREEN D'UN WIDGET (bouton Agrandir) — hors root stacking context ═══ */}
+      <AnimatePresence>
+        {expandedWidget !== null && renderExpandedWidget(expandedWidget)}
+      </AnimatePresence>
+    </>
+    </MotionConfig>
   );
 }
+

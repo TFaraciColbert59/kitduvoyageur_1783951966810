@@ -187,7 +187,7 @@ export default function KitCockpitDrawer({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[110] flex justify-end">
+      <div className="fixed inset-0 z-[1050] flex justify-end">
         {/* Backdrop sombre */}
         <motion.div
           initial={{ opacity: 0 }}
