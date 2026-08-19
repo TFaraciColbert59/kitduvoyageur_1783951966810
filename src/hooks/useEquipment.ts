@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -50,6 +50,7 @@ export interface UserEquipmentItem {
   expiry_date?: string | null;
   last_maintenance_date?: string | null;
   next_maintenance_date?: string | null;
+  last_used_date?: string | null;
   usage_count?: number;
   serial_number?: string | null;
   tags?: string[] | null;
