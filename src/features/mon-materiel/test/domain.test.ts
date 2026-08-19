@@ -12,7 +12,7 @@ import type { PlannedHike } from '@/lib/preparation/plannedHikes';
 import { evaluateGearAlerts, prioritizeAlerts } from '../domain/gear-alerts';
 import { computeGearAvailability, buildAvailabilitySlots } from '../domain/gear-availability';
 import { getGearStatus } from '../domain/gear-status';
-import { evaluateKitCompleteness, findSubstitutes, kitTotalWeight } from '../domain/gear-completeness';
+import { evaluateKitCompleteness, findSubstitutes, kitTotalWeight, countKitItemStock } from '../domain/gear-completeness';
 import { evaluateDepartureReadiness, buildDepartureChecklist, buildDepartureSnapshot } from '../domain/departure-readiness';
 import { buildReceptionGear, hasDuplicate, toOrderedProductItem, destinationSummary } from '../domain/order-reception';
 
@@ -302,6 +302,31 @@ export function runAllMonMaterielDomainTests(): { success: boolean; passed: numb
   runTest('destination summary', () => {
     assert.strictEqual(destinationSummary({ type: 'kit', refId: 'k1', label: 'Kit Test' }), 'Rattachement au kit « Kit Test » à confirmer');
     assert.strictEqual(destinationSummary(undefined), undefined);
+  });
+
+  runTest('stock checklist : quantité requise vs disponible', () => {
+    const item = (over: Partial<CustomKit['items'][number]> = {}): CustomKit['items'][number] => ({
+      id: 'i1', kit_id: 'k1', gear_item_id: 'g1', item_name: 'Lampe frontale', category: 'Éclairage', weight_g: 85,
+      quantity: 2, is_essential: true, is_checked: false, ...over,
+    });
+    // Requis 2, possédé 2 disponibles → 2/2
+    const inStock = countKitItemStock(item(), [gear({ id: 'g1', name: 'Lampe frontale', quantity: 2 })]);
+    assert.deepStrictEqual(inStock, { available: 2, required: 2, total: 2 });
+    // Aucun objet → 0 stock
+    const none = countKitItemStock(item({ gear_item_id: undefined, item_name: 'Objet absent' }), []);
+    assert.deepStrictEqual(none, { available: 0, required: 2, total: 0 });
+    // Possédé mais en prêt → disponible 0, total > 0
+    const lent = countKitItemStock(
+      item(),
+      [gear({ id: 'g1', name: 'Lampe frontale', loan_status: 'prêté', loan_to_name: 'Ana', quantity: 1 })]
+    );
+    assert.deepStrictEqual(lent, { available: 0, required: 2, total: 1 });
+  });
+
+  runTest('stock checklist : nomenclature catalogue vs inventaire', () => {
+    const item = { id: 'i2', kit_id: 'k1', item_name: 'Tente 2 places', category: 'Abri', weight_g: 1800, quantity: 1, is_essential: true, is_checked: false } as CustomKit['items'][number];
+    const stock = countKitItemStock(item, [gear({ id: 'g2', name: 'Tente 2 places', quantity: 3 })]);
+    assert.deepStrictEqual(stock, { available: 3, required: 1, total: 3 });
   });
 
   /// ── Bilan ──────────────────────────────────────────────────────────────────

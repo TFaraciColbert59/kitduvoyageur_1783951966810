@@ -174,6 +174,9 @@ export default function MonMaterielCockpitPage() {
     removeFromEquipment,
     updateEquipment,
     addToCart,
+    loading: equipmentLoading,
+    error: equipmentError,
+    refresh: refreshEquipment,
   } = useEquipment();
 
   const {
@@ -186,6 +189,7 @@ export default function MonMaterielCockpitPage() {
     restoreFromTrash,
     permanentDelete,
     addGearToKit,
+    loading: kitsLoading,
   } = useUserKits(equipment);
 
   // ── Randonnées planifiées (source partagée) ────────────────────────────────
@@ -297,6 +301,7 @@ export default function MonMaterielCockpitPage() {
   const [widgetOrderLoaded, setWidgetOrderLoaded] = useState(false);
   const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
   const expandOriginRef = useRef<HTMLElement | null>(null);
+  const [inventoryInitialQuery, setInventoryInitialQuery] = useState('');
   const [dragWidget, setDragWidget] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [forgetChecked, setForgetChecked] = useState<Set<string>>(new Set());
@@ -681,6 +686,11 @@ export default function MonMaterielCockpitPage() {
     return advice;
   }, [equipment, totalWeightG, targetKg, activeHike]);
 
+  const refreshData = useCallback(() => {
+    void refreshEquipment();
+    showToast('Données rechargées', 'info');
+  }, [refreshEquipment, showToast]);
+
   const runAi = useCallback(
     (question: string) => {
       const q = question.trim();
@@ -755,6 +765,14 @@ export default function MonMaterielCockpitPage() {
       return () => clearTimeout(t);
     }
   }, [expandedWidget]);
+
+  // Pré-filtre « Inventaire & catalogue » jetable une fois consommé.
+  useEffect(() => {
+    if (expandedWidget === 'inventory' && inventoryInitialQuery) {
+      const t = setTimeout(() => setInventoryInitialQuery(''), 600);
+      return () => clearTimeout(t);
+    }
+  }, [expandedWidget, inventoryInitialQuery]);
 
   // ── Render : 6 cartes ────────────────────────────────────────────────────────
   const cardMetric = (id: string): { metric: string; caption: string; badges: GearCardBadge[] } => {
@@ -854,6 +872,54 @@ export default function MonMaterielCockpitPage() {
         isDragTarget={dragOverId === id}
         isDragging={dragWidget === id}
       >
+        {id === 'departure' && !activeHike && (
+          <div className="space-y-2 shrink-0">
+            <p className="text-xs text-[#1C2620]/60 leading-snug">
+              Aucune sortie planifiée. Ajoutez un départ pour suivre sa préparation (poids, kit, météo, blocants).
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsNewHikeModalOpen(true)}
+              className="w-full px-3 py-2 rounded-full bg-[#2D5A3D] text-white text-xs font-bold min-h-[44px]"
+            >
+              Planifier une sortie
+            </button>
+          </div>
+        )}
+        {id === 'kits' && kits.length === 0 && (
+          <div className="space-y-2 shrink-0">
+            <p className="text-xs text-[#1C2620]/60 leading-snug">
+              Aucun kit actif. Créez un kit type (bivouac, trek, alpinisme…) pour le réutiliser à chaque départ.
+            </p>
+            <button
+              type="button"
+              onClick={() => void handleCreateNewKit()}
+              className="w-full px-3 py-2 rounded-full bg-[#2D5A3D] text-white text-xs font-bold min-h-[44px]"
+            >
+              Créer mon premier kit
+            </button>
+          </div>
+        )}
+        {id === 'inventory' && equipment.length === 0 && (
+          <p className="text-xs text-[#1C2620]/60 shrink-0">
+            Inventaire vide — ajoutez des articles depuis le drawer « Tout voir » ou découvrez le catalogue (products réels).
+          </p>
+        )}
+        {id === 'availability' && equipment.length === 0 && (
+          <p className="text-xs text-[#1C2620]/60 shrink-0">
+            Rien à prêter ou à réserver tant que l’inventaire est vide. Commencez par ajouter votre matériel.
+          </p>
+        )}
+        {id === 'forget' && checklist.length === 0 && (
+          <p className="text-xs text-[#1C2620]/60 shrink-0">
+            Checklist générée depuis vos données (kit assigné, alertes) + règles génériques. Rien à prévoir pour l’instant.
+          </p>
+        )}
+        {id === 'alerts' && alerts.length === 0 && (
+          <p className="text-xs text-[#1C2620]/60 shrink-0">
+            Aucune alerte (entretien, péremption, prêt, état). Votre équipement est en bonne santé.
+          </p>
+        )}
         {id === 'departure' && activeHike && (
           <div className="grid grid-cols-4 gap-2 shrink-0">
             <PreviewStat value={`${activeHike.distanceKm}`} label="km" />
@@ -955,6 +1021,11 @@ export default function MonMaterielCockpitPage() {
             handleValidatePreparation();
           }}
           onOpenGear={handleOpenGear}
+          onNeedStock={(q) => {
+            setExpandedWidget(null);
+            setInventoryInitialQuery(q);
+            setExpandedWidget('inventory');
+          }}
         />
       );
     } else if (id === 'departure') {
@@ -979,6 +1050,11 @@ export default function MonMaterielCockpitPage() {
           consumables={consumables}
           recommended={recommendedKit ? { kit: recommendedKit, score: departurePlan?.suitabilityScore ?? null } : undefined}
           onOpenGear={handleOpenGear}
+          onNeedStock={(q) => {
+            setExpandedWidget(null);
+            setInventoryInitialQuery(q);
+            setExpandedWidget('inventory');
+          }}
         />
       ) : (
         <div className="flex flex-col items-center gap-3 py-12 text-center">
@@ -1050,6 +1126,7 @@ export default function MonMaterielCockpitPage() {
           statuses={statuses}
           ordered={orderedItems}
           departureName={activeHike?.name || null}
+          initialQuery={inventoryInitialQuery}
           onOpenGear={handleOpenGear}
           onEditGear={(gear) => {
             setExpandedWidget(null);
@@ -1279,7 +1356,6 @@ export default function MonMaterielCockpitPage() {
           <div className="grid grid-cols-2 gap-2">
             <DrawerLink href="/ai-configurator" title="Configurateur IA" sub="Générer un kit" icon={<IconSparkle size={15} />} onOpen={() => setVoirToutOpen(false)} />
             <DrawerLink href="/rapport-kit" title="Rapport Kit" sub="Évaluer son sac" icon={<IconScale size={15} />} onOpen={() => setVoirToutOpen(false)} />
-            <DrawerLink href="/jumeau-3d" title="Jumeau 3D" sub="Vue du sac" icon={<IconBox size={15} />} onOpen={() => setVoirToutOpen(false)} />
             <DrawerLink href="/explorer" title="Explorer" sub="Trouver des randonnées" icon={<IconNav size={15} />} onOpen={() => setVoirToutOpen(false)} />
           </div>
         </section>
@@ -1437,6 +1513,32 @@ export default function MonMaterielCockpitPage() {
                 renderCard={renderCard}
                 dimmed={expandedWidget !== null}
               />
+
+              {(equipmentLoading || kitsLoading) && equipment.length === 0 && (
+                <div className="space-y-3" aria-busy="true" aria-label="Chargement de votre matériel">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {[0, 1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className={`h-44 rounded-[28px] bg-white/35 border border-[#1C2620]/8 animate-pulse ${i === 0 || i === 4 ? 'lg:col-span-2' : ''}`} />
+                    ))}
+                  </div>
+                  <p className="text-center text-xs text-[#1C2620]/55">
+                    Chargement de l’inventaire, des kits et du catalogue…
+                  </p>
+                </div>
+              )}
+
+              {equipmentError && (
+                <div role="alert" className="rounded-2xl bg-[#9B2C2C]/8 border border-[#9B2C2C]/25 px-4 py-3 text-xs text-[#9B2C2C] flex items-center justify-between gap-3">
+                  <span>Impossible de charger certaines données : {equipmentError}</span>
+                  <button
+                    type="button"
+                    onClick={() => void refreshData()}
+                    className="px-3 py-1.5 rounded-full bg-white/80 border border-[#9B2C2C]/30 text-[#9B2C2C] font-bold shrink-0"
+                  >
+                    Réessayer
+                  </button>
+                </div>
+              )}
             </main>
           </div>
 

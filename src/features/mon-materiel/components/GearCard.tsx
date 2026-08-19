@@ -69,8 +69,10 @@ export function GearCard({
 }: GearCardProps) {
   return (
     <motion.div
+      layout
       layoutId={`lkdv-exp-${id}`}
-      className={`h-full min-h-0 ${isDragging ? 'opacity-50' : ''} ${isDragTarget ? 'ring-2 ring-[#2D5A3D]/70 ring-inset rounded-[28px]' : ''} ${className}`}
+      transition={{ type: 'spring', stiffness: 280, damping: 34, mass: 1.05 }}
+      className={`h-full min-h-0 ${isDragging ? 'opacity-50 scale-[0.98]' : ''} ${isDragTarget ? 'ring-2 ring-[#2D5A3D]/70 ring-inset rounded-[28px]' : ''} ${className}`}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}

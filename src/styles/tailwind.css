@@ -32,6 +32,12 @@
   --dark-bg: #1A1F1C;
   --dark-surface: #243028;
 
+  /* Mon Matériel — liquid glass : palette verte LKDV (Forest / Stone) */
+  --mm-forest: #17402C;
+  --mm-forest-soft: #2D6B4A;
+  --mm-ink: #A3C4A3;
+  --mm-paper: #FBFAF6;
+
   /* PWA safe-area insets */
   --safe-top: env(safe-area-inset-top);
   --safe-bottom: env(safe-area-inset-bottom);

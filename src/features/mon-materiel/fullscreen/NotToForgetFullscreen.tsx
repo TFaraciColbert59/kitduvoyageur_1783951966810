@@ -20,6 +20,8 @@ export interface NotToForgetFullscreenProps {
   departureName?: string | null;
   onValidate: () => void;
   onOpenGear?: (gearId: string) => void;
+  /** Ouvre le plein écran « Inventaire & catalogue » pré-filtré sur un objet. */
+  onNeedStock?: (query: string) => void;
 }
 
 type LevelFilter = 'all' | 'critique' | 'verifier' | 'conseille' | 'done';
@@ -39,6 +41,7 @@ export function NotToForgetFullscreen({
   departureName,
   onValidate,
   onOpenGear,
+  onNeedStock,
 }: NotToForgetFullscreenProps) {
   const [filter, setFilter] = useState<LevelFilter>('all');
 
@@ -128,24 +131,28 @@ export function NotToForgetFullscreen({
         </div>
       </SectionCard>
 
-      {categories.length === 0 && (
+{categories.length === 0 && (
         <SectionCard title="Checklist">
           <p className="text-xs text-[#1C2620]/60">Rien à signaler pour le moment.</p>
         </SectionCard>
       )}
 
-      {categories.map(([cat, items]) => {
-        const shown = items.filter(matchesFilter);
-        if (shown.length === 0) return null;
-        return (
-          <SectionCard key={cat} title={`${cat} (${items.length})`}>
-            <div className="space-y-2">
+      <div className="grid gap-4 lg:grid-cols-2 items-start">
+        {categories.map(([cat, items]) => {
+          const shown = items.filter(matchesFilter);
+          if (shown.length === 0) return null;
+          return (
+            <SectionCard key={cat} title={`${cat} (${items.length})`}>
+              <div className="space-y-2">
               {shown.map((it) => {
                 const checked = checkedSet.has(it.id);
                 const meta = LEVEL_META[it.level];
+                const hasStockInfo = typeof it.availableQty === 'number' && typeof it.requiredQty === 'number';
+                const outOfStock = hasStockInfo && it.availableQty === 0;
                 return (
                   <div
                     key={it.id}
+                    data-checklist-item={it.id}
                     className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/7 text-xs flex items-start justify-between gap-2"
                   >
                     <div className="min-w-0 space-y-0.5">
@@ -158,6 +165,18 @@ export function NotToForgetFullscreen({
                         <span className="px-2 py-0.5 rounded-full bg-[#1C2620]/5 border border-[#1C2620]/8 font-mono text-[#1C2620]/60">
                           {it.source === 'donnée' ? 'Vos données' : 'Règle générique'}
                         </span>
+                        {hasStockInfo && (
+                          <span
+                            data-stock-count
+                            className={`px-2 py-0.5 rounded-full border font-mono font-bold ${
+                              outOfStock
+                                ? 'bg-[#9B2C2C]/8 border-[#9B2C2C]/25 text-[#9B2C2C]'
+                                : 'bg-[#2D5A3D]/8 border-[#2D5A3D]/25 text-[#2D5A3D]'
+                            }`}
+                          >
+                            {it.availableQty}/{it.requiredQty}
+                          </span>
+                        )}
                         {it.gearId && onOpenGear && (
                           <button
                             type="button"
@@ -165,6 +184,16 @@ export function NotToForgetFullscreen({
                             className="px-2 py-0.5 rounded-full bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] font-bold"
                           >
                             Ouvrir la fiche
+                          </button>
+                        )}
+                        {outOfStock && onNeedStock && (
+                          <button
+                            type="button"
+                            onClick={() => onNeedStock(it.searchQuery || it.label)}
+                            aria-label={`Ajouter à l’inventaire ${it.label}`}
+                            className="px-2 py-0.5 rounded-full bg-[#9B2C2C]/10 border border-[#9B2C2C]/30 text-[#9B2C2C] font-bold"
+                          >
+                            Aucun article en stock — ajouter
                           </button>
                         )}
                       </div>
@@ -189,6 +218,7 @@ export function NotToForgetFullscreen({
           </SectionCard>
         );
       })}
+      </div>
 
       <div className="flex justify-center">
         <button

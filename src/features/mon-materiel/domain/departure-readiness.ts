@@ -8,7 +8,7 @@
 import type { UserEquipmentItem } from '@/hooks/useEquipment';
 import type { CustomKit } from '@/hooks/useUserKits';
 import type { PlannedHike } from '@/lib/preparation/plannedHikes';
-import { evaluateKitCompleteness, assessKitItem } from './gear-completeness';
+import { evaluateKitCompleteness, assessKitItem, countKitItemStock } from './gear-completeness';
 import { countdownLabel, daysUntil, formatWeather, pct } from './gear-format';
 import type { GearAlert } from './gear-alerts';
 
@@ -24,6 +24,11 @@ export interface DepartureChecklistItem {
   category: string;
   source: 'donnée' | 'règle';
   gearId?: string;
+  /** Stock réel dans l'inventaire (affiché `{available}/{required}`). */
+  availableQty?: number;
+  requiredQty?: number;
+  /** Nom de recherche pour la relance « Ajouter à l'inventaire ». */
+  searchQuery?: string;
 }
 
 export interface DepartureBlocker {
@@ -175,6 +180,8 @@ export function buildDepartureChecklist(
   if (kit && kit.items.length > 0) {
     const completeness = evaluateKitCompleteness(kit, equipment);
     for (const assessment of completeness.assessments) {
+      const { available, required } = countKitItemStock(assessment.item, equipment);
+      const stockInfo = { availableQty: available, requiredQty: required, searchQuery: assessment.item.item_name };
       if (!assessment.owned) {
         out.push({
           id: `ck-kit-missing-${assessment.item.id}`,
@@ -183,6 +190,7 @@ export function buildDepartureChecklist(
           level: 'critique',
           category: `Kit ${kit.name}`,
           source: 'donnée',
+          ...stockInfo,
         });
       } else if (!assessment.available && assessment.reason) {
         out.push({
@@ -193,6 +201,7 @@ export function buildDepartureChecklist(
           category: `Kit ${kit.name}`,
           source: 'donnée',
           gearId: assessment.gear?.id,
+          ...stockInfo,
         });
       }
     }

@@ -60,6 +60,29 @@ export function assessKitItem(
   };
 }
 
+/**
+ * Nombre d'articles correspondants présents ET disponibles dans l'inventaire
+ * pour un article de kit (catalogue/kit). Utilisé par les checklists pour
+ * afficher `{available}/{required}`.
+ */
+export function countKitItemStock(
+  item: CustomKitItem,
+  equipment: UserEquipmentItem[],
+  ctx: GearStatusContext = {}
+): { available: number; required: number; total: number } {
+  const required = Math.max(1, item.quantity || 1);
+  const matches = equipment.filter((e) =>
+    item.gear_item_id
+      ? e.id === item.gear_item_id
+      : e.name.trim().toLowerCase() === (item.item_name || '').trim().toLowerCase()
+  );
+  const total = matches.reduce((sum, e) => sum + Math.max(1, e.quantity || 1), 0);
+  const available = matches
+    .filter((e) => computeGearAvailability(e, ctx).available)
+    .reduce((sum, e) => sum + Math.max(1, e.quantity || 1), 0);
+  return { available, required, total };
+}
+
 export function evaluateKitCompleteness(
   kit: CustomKit,
   equipment: UserEquipmentItem[],

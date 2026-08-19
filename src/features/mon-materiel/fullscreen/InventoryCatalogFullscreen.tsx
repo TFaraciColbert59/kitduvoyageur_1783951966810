@@ -26,6 +26,8 @@ export interface InventoryCatalogFullscreenProps {
   statuses: Map<string, GearStatus>;
   ordered: OrderedProductItem[];
   departureName?: string | null;
+  /** Pré-filtre initial (recherche + ouverture sur l'onglet Catalogue). */
+  initialQuery?: string;
   onOpenGear: (gearId: string) => void;
   onEditGear: (gear: UserEquipmentItem) => void;
   onDeleteGear: (gearId: string) => void;
@@ -48,6 +50,7 @@ export function InventoryCatalogFullscreen({
   statuses,
   ordered,
   departureName,
+  initialQuery = '',
   onOpenGear,
   onEditGear,
   onDeleteGear,
@@ -60,8 +63,8 @@ export function InventoryCatalogFullscreen({
   onPermanentDeleteKit,
   onToast,
 }: InventoryCatalogFullscreenProps) {
-  const [tab, setTab] = useState<Tab>('inventory');
-  const [query, setQuery] = useState('');
+  const [tab, setTab] = useState<Tab>(initialQuery ? 'catalog' : 'inventory');
+  const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState('all');
 
   const categories = useMemo(() => {

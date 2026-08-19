@@ -43,6 +43,8 @@ export interface NextDepartureFullscreenProps {
   consumables?: DepartureConsumables | null;
   recommended?: { kit: CustomKit | null; score: number | null };
   onOpenGear?: (gearId: string) => void;
+  /** Ouvre le plein écran « Inventaire & catalogue » pré-filtré sur un objet. */
+  onNeedStock?: (query: string) => void;
 }
 
 export function NextDepartureFullscreen({
@@ -62,6 +64,7 @@ export function NextDepartureFullscreen({
   consumables,
   recommended,
   onOpenGear,
+  onNeedStock,
 }: NextDepartureFullscreenProps) {
   const d = useMemo(() => countdownLabel(hike.targetDate), [hike]);
   const kitWeight = kit ? kitTotalWeight(kit) : 0;
@@ -222,6 +225,8 @@ export function NextDepartureFullscreen({
         <div className="space-y-1.5">
           {checklist.slice(0, 8).map((it) => {
             const checked = checkedSet.has(it.id);
+            const hasStockInfo = typeof it.availableQty === 'number' && typeof it.requiredQty === 'number';
+            const outOfStock = hasStockInfo && it.availableQty === 0;
             return (
               <button
                 key={it.id}
@@ -233,13 +238,40 @@ export function NextDepartureFullscreen({
                 <span className={`min-w-0 truncate ${checked ? 'text-[#1C2620]/45 line-through' : 'text-[#1C2620]/90'}`}>
                   {it.label}
                 </span>
-                <span
-                  className={`w-6 h-6 rounded-md border shrink-0 flex items-center justify-center ${
-                    checked ? 'bg-[#2D5A3D] border-[#2D5A3D] text-white' : 'border-[#1C2620]/30 text-transparent'
-                  }`}
-                >
-                  <IconCheck size={12} />
-                </span>
+                {hasStockInfo ? (
+                  outOfStock && onNeedStock ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onNeedStock(it.searchQuery || it.label);
+                      }}
+                      aria-label={`Ajouter à l’inventaire ${it.label}`}
+                      className="px-2.5 py-1 rounded-full bg-[#9B2C2C]/10 border border-[#9B2C2C]/30 text-[#9B2C2C] font-bold shrink-0"
+                    >
+                      Aucun stock — ajouter
+                    </button>
+                  ) : (
+                    <span
+                      data-stock-count
+                      className={`px-2 py-0.5 rounded-full border font-mono font-bold shrink-0 ${
+                        outOfStock
+                          ? 'bg-[#9B2C2C]/8 border-[#9B2C2C]/25 text-[#9B2C2C]'
+                          : 'bg-[#2D5A3D]/8 border-[#2D5A3D]/25 text-[#2D5A3D]'
+                      }`}
+                    >
+                      {it.availableQty}/{it.requiredQty}
+                    </span>
+                  )
+                ) : (
+                  <span
+                    className={`w-6 h-6 rounded-md border shrink-0 flex items-center justify-center ${
+                      checked ? 'bg-[#2D5A3D] border-[#2D5A3D] text-white' : 'border-[#1C2620]/30 text-transparent'
+                    }`}
+                  >
+                    <IconCheck size={12} />
+                  </span>
+                )}
               </button>
             );
           })}

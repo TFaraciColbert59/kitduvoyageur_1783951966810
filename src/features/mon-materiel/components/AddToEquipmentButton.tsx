@@ -18,6 +18,7 @@ import type { CustomKit } from '@/hooks/useUserKits';
 import type { GearDestination } from '../types';
 import type { GearStatus } from '../domain/gear-status';
 import { setEquipmentDestination } from '@/lib/storage/equipmentDestinations';
+import { RadioGroup } from './RadioButton';
 import {
   IconBox,
   IconCheck,
@@ -220,20 +221,21 @@ export function AddToEquipmentButton({
             Non possédé actuellement — il sera ajouté au panier puis visible dans « En commande »
             jusqu’à réception (aucun objet créé par anticipation).
           </p>
-          <label className="block">
-            <span className="block font-semibold mb-1">Destination</span>
-            <select
-              data-testid="add-to-equipment-destination"
-              value={destType}
-              onChange={(e) => setDestType(e.target.value as GearDestination['type'])}
-              className="w-full rounded-lg bg-white border border-[#1C2620]/12 px-2.5 py-2 text-[#1C2620] focus:outline-none focus:border-[#2D5A3D]"
-            >
-              <option value="kit">Kit</option>
-              <option value="departure">Prochain départ</option>
-              <option value="checklist">Checklist de préparation</option>
-              <option value="inventory">Simple inventaire</option>
-            </select>
-          </label>
+          <RadioGroup
+            name="destination"
+            value={destType}
+            onChange={(v) => {
+              setDestType(v as GearDestination['type']);
+              if (v === 'kit' && kits.length === 1) setDestKitId(kits[0].id);
+            }}
+            className="grid-cols-1"
+            options={[
+              { value: 'kit', label: 'Kit', description: 'Destination : un de vos kits actifs' },
+              { value: 'departure', label: 'Prochain départ', description: departureName ? `Pour « ${departureName} »` : 'Préparé pour le prochain départ' },
+              { value: 'checklist', label: 'Checklist de préparation', description: 'À ne pas oublier avant le départ' },
+              { value: 'inventory', label: 'Simple inventaire', description: 'Aucune affectation particulière' },
+            ]}
+          />
           {destType === 'kit' && kits.length > 0 && (
             <select
               value={destKitId}
