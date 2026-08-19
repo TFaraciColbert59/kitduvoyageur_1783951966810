@@ -79,7 +79,38 @@ async function main() {
 
   await page.screenshot({ path: `${SHOT_DIR}/01-cockpit-desktop-1920.png`, fullPage: false });
 
-  // ═══ 2. Responsive mobile 380 ═══
+  // ═══ 1b. Page jumeau-3d supprimée : aucune référence ne doit subsister ═══
+  let jumeauStatus = -1;
+  try {
+    const resp = await page.request.get(`${BASE}/jumeau-3d`, { maxRedirects: 0 });
+    jumeauStatus = resp.status();
+  } catch (err: any) {
+    jumeauStatus = err?.response?.status?.() ?? 0;
+  }
+  report('Page jumeau-3d supprimée (404)', jumeauStatus === 404, `status ${jumeauStatus}`);
+  const noJumeauRef = await page.evaluate(() => {
+    const html = document.documentElement.outerHTML;
+    return !/jumeau/gi.test(html);
+  });
+  report('Aucune référence « jumeau » dans le DOM cockpit', noJumeauRef);
+
+  // ═══ 1c. Fond vidéo animé (object-cover, autoplay muted loop playsInline) + overlay forest ═══
+  await page.goto(`${BASE}/mon-materiel`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(900);
+  const videoFlags = await page.evaluate(() => {
+    const v = document.querySelector('video[class*="object-cover"]') as HTMLVideoElement | null;
+    if (!v) return 'absent';
+    const src = (v.getAttribute('src') || '').includes('mm-ambient');
+    return `${v.autoplay},${v.muted},${v.loop},${v.playsInline},${src}`;
+  });
+  report('Fond vidéo animé autoplay/muted/loop/playsInline', videoFlags === 'true,true,true,true,true', videoFlags);
+  const overlayForest = await page.evaluate(() => {
+    const el = document.querySelector('[data-overlay="forest"]') as HTMLElement | null;
+    if (!el) return 'absent';
+    return getComputedStyle(el).backgroundColor;
+  });
+  report('Overlay forest-soft semi-transparent présent', overlayForest !== 'absent', overlayForest);
+
   await page.setViewportSize({ width: 380, height: 844 });
   await page.waitForTimeout(600);
   const mobileCols = await page.evaluate(() => {
@@ -146,6 +177,78 @@ async function main() {
       return raw ? JSON.parse(raw).length : 0;
     });
     report('Coche persistée (localStorage)', clickedCheck && pressed > 0, `${pressed} élément(s)`);
+  }
+  await pressEscapeUntilClosed(page);
+
+  // ═══ 4b. Checklists : stock {available}/{required} + relance « Ajouter à l'inventaire » ═══
+  // Préparation déterministe : un départ assigné à un kit, avec un article NOUVEAU
+  // absent de l'inventaire → la checklist doit afficher 0/1 et proposer la relance.
+  await page.goto(`${BASE}/mon-materiel`, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(500);
+  const seedOk = await page.evaluate(() => {
+    const target = new Date(Date.now() + 86400000 * 5).toISOString().split('T')[0];
+    const hike = {
+      id: 'pw-hike-stock',
+      name: 'Secteur Alpin — Test Stock',
+      distanceKm: 12,
+      elevationGain: 800,
+      targetDate: target,
+      createdAt: new Date().toISOString(),
+      terrain: 'Alpage',
+      assignedKitId: 'pw-kit-stock',
+    };
+    const kit = {
+      id: 'pw-kit-stock',
+      user_id: 'guest',
+      name: 'Kit Stock Test',
+      description: '',
+      for_destination: 'Alpes',
+      season: 'Été',
+      activity: 'Rando',
+      total_weight_g: 0,
+      source: 'manuel',
+      status: 'active',
+      is_favorite: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      items: [
+        { id: 'pw-item-missing', kit_id: 'pw-kit-stock', gear_item_id: null, item_name: 'Briquet Stormproof', category: 'Sécurité', weight_g: 40, quantity: 1, is_essential: true, is_checked: false },
+      ],
+    };
+    localStorage.setItem('lkdv_planned_hikes', JSON.stringify([hike]));
+    localStorage.setItem('lkdv_active_planned_hike_id', 'pw-hike-stock');
+    localStorage.setItem('lkdv_guest_kits', JSON.stringify([kit]));
+    localStorage.setItem('lkdv_guest_equipment', JSON.stringify([]));
+    localStorage.removeItem('lkdv_forget_checked');
+    return { hike, kit };
+  });
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(800);
+  await page.locator('button[aria-label^="Agrandir la carte"]').nth(0).click(); // À ne pas oublier
+  await page.waitForTimeout(800);
+  const stockInfo = await page.evaluate(() => {
+    const badges = Array.from(document.querySelectorAll('[data-stock-count]')).map((b) => b.textContent?.trim());
+    const addBtn = document.querySelector('button[aria-label^="Ajouter à l’inventaire"]') as HTMLButtonElement | null;
+    const relance = addBtn ? addBtn.textContent?.trim() : '';
+    return { badges, relance };
+  });
+  const stockBadges = stockInfo.badges?.length || 0;
+  if (stockBadges > 0) {
+    report('Checklist affiche {available}/{required} par objet', stockInfo.badges?.includes('0/1') === true, stockInfo.badges?.join(','));
+    report('Message « Aucun article en stock » + relance affichée', Boolean(stockInfo.relance), stockInfo.relance || '');
+    const addBtn = page.locator('button[aria-label^="Ajouter à l’inventaire"]').first();
+    if ((await addBtn.count()) > 0) {
+      await addBtn.click();
+      await page.waitForTimeout(900);
+      const prefilled = await page.evaluate(() => {
+        const input = document.querySelector('input[placeholder^="Rechercher"]') as HTMLInputElement | null;
+        const onCatalogue = Array.from(document.querySelectorAll('button')).some((b) => (b.textContent || '').trim() === 'Catalogue');
+        return { hasQuery: Boolean(input && input.value.trim()), onCatalogue, value: input?.value || '' };
+      });
+      report('Relance ouvre Inventaire & catalogue pré-filtré', prefilled.hasQuery && prefilled.onCatalogue, `${prefilled.value}`);
+    }
+  } else {
+    report('Checklist stock : badges attendus (seed kits/hike)', false, '0 badge détecté');
   }
   await pressEscapeUntilClosed(page);
 
@@ -236,9 +339,17 @@ async function main() {
   if ((await caseCBtn.count()) > 0) {
     await caseCBtn.click();
     await page.waitForTimeout(400);
-    const destSelect = page.locator('[data-testid="add-to-equipment-destination"]');
-    if ((await destSelect.count()) > 0) {
-      await destSelect.selectOption('inventory');
+    const radioGroup = page.locator('[role="radiogroup"][aria-label="destination"]');
+    if ((await radioGroup.count()) > 0) {
+      const radioCount = await radioGroup.locator('[role="radio"]').count();
+      report('Cas C : destination en radio-bouton personnalisé (cercle + point central)', radioCount >= 4, `${radioCount} options`);
+      await radioGroup.evaluate((el) => {
+        // Le radio custom met à jour destType sur les options selectionnées.
+        const radios = el.querySelectorAll('[role="radio"]');
+        for (const r of radios) {
+          if ((r.textContent || '').includes('Simple inventaire')) (r as HTMLButtonElement).click();
+        }
+      });
       await page.waitForTimeout(200);
       const confirmBtn = page.locator('[data-testid="add-to-equipment-confirm"]');
       if ((await confirmBtn.count()) > 0) {
@@ -253,7 +364,7 @@ async function main() {
         report('Cas C : bouton confirmer manquant', false);
       }
     } else {
-      report('Cas C : panneau destination non affiché', false);
+      report('Cas C : délégation radio destination non affichée', false);
     }
   } else {
     report('Cas C : produit non possédé disponible', false, 'aucun bouton « À l’équipement »');
@@ -327,6 +438,7 @@ async function main() {
   }
 
   // ═══ Erreurs console ═══
+  // - `/api/ai/chat-completion` : 404 fournisseur sans clé Gemini → fallback local attendu.
   const criticalErrors = errors.filter((e) => !e.includes('/api/ai/chat-completion'));
   report('Aucune erreur console critique', criticalErrors.length === 0, criticalErrors.length ? criticalErrors[0] : '');
 

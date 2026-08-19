@@ -25,6 +25,20 @@ const BASE = 'http://localhost:4028';
     if (root) {
       results.rootBg = getComputedStyle(root).backgroundColor;
     }
+    // Fond vidéo animé (object-cover autoplay muted loop playsInline)
+    const video = document.querySelector('video[class*="object-cover"]') as HTMLVideoElement | null;
+    results.videoPresent = video ? 'oui' : 'non';
+    if (video) {
+      results.videoAutoplay = String(video.autoplay);
+      results.videoMuted = String(video.muted);
+      results.videoLoop = String(video.loop);
+      results.videoPlaysInline = String(video.playsInline);
+      results.videoObjectCover = getComputedStyle(video).objectFit;
+      results.videoPoster = video.getAttribute('poster') || '';
+    }
+    // Overlay forest-soft à 30% (demande mission)
+    const overlay = document.querySelector('[data-overlay="forest"]') as HTMLElement | null;
+    results.overlayForest = overlay ? getComputedStyle(overlay).backgroundColor : 'absent';
     // Première carte (glass)
     const card = document.querySelector('[class*="lg:grid-cols-3"] > div > div.relative.overflow-hidden') as HTMLElement | null;
     if (card) {

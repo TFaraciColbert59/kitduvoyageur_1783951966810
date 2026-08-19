@@ -69,6 +69,37 @@
 
 ## Journal des modifications
 
+### 2026-08-19 — 20:40 — Phase 0/1 bis : suppression définitive de la page jumeau-3d + références nettoyées
+- Réalisé :
+  - **Page `localhost/jumeau-3d` supprimée** : dossier `src/app/jumeau-3d/` (page + layout) retiré. Aucune référence ne subsiste dans le code.
+  - `src/app/robots.ts` : 3 occurrences `/jumeau-3d` retirées (règles `*`, `Googlebot`, `Bingbot`).
+  - `src/app/mon-materiel/page.tsx` : lien `DrawerLink` « Jumeau 3D » retiré de l'onglet Actions (navigation).
+  - `src/app/cgu/page.tsx` : mention « jumeau numérique 3D » retirée (2 sur l'énumération des services).
+  - Docs : `CLAUDE.md` (ligne table des routes), `docs/reports/PROGRESS.md` (chantier historique marqué supprimé + liste Tier 2), `docs/reports/MOBILE_DESIGN_AUDIT_STATE.md` (ligne 10 marquée supprimée), `docs/PROGRESS-mon-materiel.md` (archive — lien drawer).
+- Fichiers : supprimé `src/app/jumeau-3d/` ; modifié `src/app/robots.ts`, `src/app/mon-materiel/page.tsx`, `src/app/cgu/page.tsx`, `CLAUDE.md`, docs/reports/*.
+- Validation : build OK sans la route — Playwright sonde `GET /jumeau-3d` → **404** et vérifie l'absence du motif « jumeau » dans le DOM (32/32 attendu à terme).
+- Décisions : les CGU restent alignées sur l'offre réelle (feature retirée de la liste). Docs historiques annotés « supprimé » plutôt que supprimés (traçabilité).
+- Prochaine sous-phase : fond vidéo animé + radio personnalisés + grille hétérogène + stock checklists (ci-dessous).
+
+### 2026-08-19 — 21:20 — Phases 2.1→3.7 : fond vidéo animé, radio custom, grille hétérogène animée, stock checklists, états loading/erreur/vide
+- Réalisé :
+  - **Fond vidéo animé** : génération d'un boucle ambient discrète `public/assets/videos/mm-ambient.mp4` (8 s, 960×540, h264, 162 Ko, à partir de `urban-vintage.jpg`, Ken Burns doux). `AnimatedBackground` réécrit : `<video>` **object-cover autoPlay muted loop playsInline** + `poster` (fallback image) + repli sur l'image Ken Burns si `prefers-reduced-motion` ou erreur vidéo + **overlay forest-soft `rgba(45,107,74,.3)`** (`data-overlay="forest"`) + halo papier, zéro orange.
+  - **Variables CSS `--mm-forest`/`--mm-forest-soft`/`--mm-ink`/`--mm-paper`** ajoutées dans `src/styles/tailwind.css` (`:root`) — palette verte LKDV.
+  - **Grille hétérogène** : `MonMaterielGrid` → 3 colonnes × 2 rangées avec **rangée prioritaire plus haute** (`lg:grid-rows-[1.15fr_0.85fr]`) ; `GearCard` gagne `layout` + spring (transition élastique) → le réordonnancement glisse vers la nouvelle position (drag & drop animé, contraintes = grille, retour élastique).
+  - **Radio-bouton personnalisé** : nouveau composant `RadioButton.tsx` (`RadioButton`, `RadioCircle`, `RadioGroup`) — cercle animé avec **point central** `--mm-forest`, micro-interaction `active:scale`, `role=radio`/`aria-checked`/focus visible. Appliqué au **flux « Ajouter à l'équipement »** (destination Kit / Prochain départ / Checklist / Inventaire — remplace le `<select>` natif) et exporté pour réutilisation.
+  - **Stock {available}/{required} dans les checklists** : `countKitItemStock` dans le domaine (gear-completeness) ; `DepartureChecklistItem` enrichi (`availableQty`, `requiredQty`, `searchQuery`) et renseigné dans `buildDepartureChecklist` (échecs kit). `NotToForgetFullscreen` et `NextDepartureFullscreen` affichent le badge `0/x` en ambre/rouge, et si `available === 0` → **« Aucun article en stock » + bouton « Ajouter à l'inventaire »** qui ouvre `InventoryCatalogFullscreen` **pré-filtré** (onglet Catalogue + requête) via `initialQuery` (état page consommé à l'usage).
+  - **États loading / erreur / vide + aide** : `loading` de `useEquipment`/`useUserKits` branché → skeletons `aria-busy` ; bannière d'erreur avec « Réessayer » (`refresh`); messages d'aide + CTA sur chaque carte vide (`Planifier une sortie`, `Créer mon premier kit`, etc.).
+  - **Fullscreen deux colonnes** : `NotToForgetFullscreen` — catégories en `lg:grid-cols-2` ; micro-interactions conservées (hover, active:scale, focus).
+- Fichiers : créé `public/assets/videos/mm-ambient.mp4`, `RadioButton.tsx` ; modifié `AnimatedBackground.tsx`, `MonMaterielGrid.tsx`, `GearCard.tsx`, `AddToEquipmentButton.tsx`, `gear-completeness.ts`, `departure-readiness.ts`, `NotToForgetFullscreen.tsx`, `NextDepartureFullscreen.tsx`, `InventoryCatalogFullscreen.tsx`, `src/app/mon-materiel/page.tsx`, `src/styles/tailwind.css`.
+- Supabase : aucun changement (logique du stock = purement domaine/inventaire, RLS intactes).
+- Validation : `tsc` 0 erreur · lint propre sur fichiers touchés · `npm run build` OK · **tests domaine 23/23** · **Playwright 31/31** (grille 3×2, jumeau 404 + zéro ref, vidéo autoplay/muted/loop/playsInline/overlay, radio 4 options + sélection, stock 0/1 + relance pré-filtrée « Briquet Stormproof », cas A/C, reload anciennes clés, drawer) · sonde visuelle : fond `#F5F3EE`, vidéo `object-cover`, overlay `rgba(45,107,74,.3)`, `hasOrange=non`, `emojisInTitles=non`, 6 titres.
+- Décisions et risques :
+  - Boucle vidéo générée par build local (ffmpeg) : discret, léger (162 Ko) — sous `preload="auto"` mais `poster` immédiat ; inoffensif en perf. Si le navigateur bloque l'autoplay, le `poster` sert de fallback statique.
+  - `bg-[var(--mm-forest-soft)]/30` (classe Tailwind) n'est pas générée pour un **var** arbitraire → overlay implémenté en style inline `rgba(45,107,74,.3)` (homogène à `--mm-forest-soft`), détecté par `[data-overlay="forest"]`.
+  - Radio custom : remplace le `<select>` natif (mêmes `data-testid` sous le groupe `radiogroup`) ; les conventions Playwright sont mises à jour en conséquence.
+  - Deux collections invitées conservées (`lkdv_guest_gear` ≠ `lkdv_guest_equipment`), non fusionnées (décision antérieure maintenue).
+- Prochaine sous-phase : commits + PR vers `main`.
+
 ### 2026-08-19 — 14:15 — Phases 1.1 → 1.3 terminées : réparation du socle cassé
 - Réalisé :
   - `src/app/layout.tsx` : **restauré intégralement** (le fichier était minifié puis commenté, `RootLayout`/fonts/metadata hors scope). Migration Mon Matériel branchée **une seule fois au montage** via un composant client `MigrationEffect` (le RootLayout étant un Server Component, un hook `useEffect` ne peut pas y être appelé directement — décision documentée).
@@ -234,7 +265,7 @@ Héberge toutes les fonctionnalités reléguées, organisées en 4 onglets :
 - **Inventaire** : recherche, catégories, marques, favoris, filtre état, sélection multiple/bulk, édition inline poids/qté, comparateur 2 articles, répartition par catégorie, ajout d'article, fiche → `GearDetailDrawer` (clique ligne ouvre la fiche).
 - **Prêts & Alertes** : alertes opérationnelles (→ fiche), prêts avec « Rendu ✓ » réel, corbeille des kits.
 - **Réglages** : objectif de poids (5–20 kg), ordre des modules (▲▼ + reset), réinitialiser filtres, Mon Profil.
-- **Actions** : navigation (Explorer, Configurateur IA, Rapport Kit, Jumeau 3D) + actions rapides (ajout article, planifier sortie, nouveau kit).
+- **Actions** : navigation (Explorer, Configurateur IA, Rapport Kit — le lien « Jumeau 3D » a depuis été supprimé) + actions rapides (ajout article, planifier sortie, nouveau kit).
 
 ### Évolutions du code
 - `src/app/mon-materiel/page.tsx` : refonte complète du rendu — les 3 bandes 46/30/24 sont remplacées par la grille 6 modules ; la card « Fiche outil active » et ses `SpecTile` sont retirées (la fiche vit désormais dans `GearDetailDrawer`) ; la modale Réglages (⚙️) est remplacée par l'onglet Réglages du drawer ; toast monté à `z-[1200]` pour rester visible au-dessus du drawer.
@@ -300,7 +331,7 @@ Transformer `src/app/mon-materiel/page.tsx` en véritable cockpit dashboard **sa
   - **État du matériel** — répartition par condition (réel, avec filtre cliquable `conditionFilter`).
   - **Matériel prêté** — liste persistante avec action **« Rendu ✓ »** réelle (`updateEquipment`).
   - **Corbeille des kits** — restauration + suppression définitive via `useUserKits`.
-  - **Actions rapides** — navigation réelle (Explorer, Configurateur IA, Rapport Kit, Jumeau 3D).
+  - **Actions rapides** — navigation réelle (Explorer, Configurateur IA, Rapport Kit — lien « Jumeau 3D » supprimé en v3).
 - [x] **Tâche 6 :** **Copilote IA** — badge `IA en ligne` / `Mode dégradé · analyse locale` ; erreurs gérées (écran propre si clé/provider manque, jamais de UI cassée, fallback local expert).
 - [x] **Tâche 7 :** **Qualité & assets** — correction de 2 images Unsplash mortes (`photo-1508873696983-2df5293cb32b` et `photo-1609592424109-dd9892f1b177`) dans `useEquipment.ts` remplacées par des URLs valides vérifiées (Garmin → boussole, Anker → charge).
 - [x] **Tâche 8 :** **Fix hydration SSR** — données `plannedHikes` chargées après hydration (pattern identique aux hooks équipement/kits) pour supprimer le mismatch React #418.
