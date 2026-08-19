@@ -1,3 +1,208 @@
+# Mon Matériel — Nettoyage et enrichissement v3
+
+> Démarré le 19 août 2026 à 12:30 — Europe/Paris
+
+## Phase 0 — Audit initial (terminé)
+
+### 0.1 Contexte
+- Branche : `feat/mon-materiel-clean-rebuild-v3` (créée depuis `main`, merge-base = `5edd93d` = tip origin/main, pas de pull nécessaire).
+- Le fichier de progression contenait un plan v3 ébauché par un agent précédent (cases cochées sans journal). Beaucoup de cases restaient à traiter.
+- **État de l'arbre de travail : INCOMPLET/CASSÉ** laissé par le travail précédent. Un commit initial sain est impératif avant toute avancée fonctionnelle.
+
+### 0.2 Fichiers cassés à réparer immédiatement
+| Fichier | Problème détecté |
+| :--- | :--- |
+| `src/app/layout.tsx` | Contenu minifié puis **commenté** (`// Fonts const dmSans = …` couvre tout le reste) → `RootLayout`, `metadata`, `viewport` et les polices sont dans un commentaire. Fichier structurellement inutilisable (4 lignes). La migration a été branchée (`useMonMaterielMigration`) mais le fichier est corrompu. |
+| `src/components/mobile-nav/BottomTabBar.tsx` | Ligne 413 : `}>` orphelin — la branche `if (loading || !mounted)` a été remplacée par un fragment invalide → erreur de parsing. |
+| `src/lib/storage/MigrationEffect.tsx` | Contenu avec des `\n` littéraux non interprétés (une seule ligne de texte échappé) → code invalide. |
+| `src/app/mon-materiel/page.tsx` | Import dupliqué ligne 9-10 : `getItemStatus, EquipmentStatus` importé 2× depuis `@/lib/equipmentStatus`. |
+| `src/components/cockpit/fullscreen/*.tsx` | 6 stubs brisés : imports terminés par `;;;;`, `alert()` partout, **données fictives (loans dummy) présentées comme réelles** (contraire à la mission), classes inexistantes (`bg-accent-forest` n'existe pas dans Tailwind), `GlassCard` importé en nommé alors qu'il est en export default, API `useEquipment()` inventées (`totalPackWeight`, `products`)… → à remplacer par la vraie implémentation dans `src/features/mon-materiel/`. |
+
+### 0.3 Audit du stockage navigateur / cache / PWA
+- **Service Worker** : `public/sw.js` — cache `lkdv-cache-v2`, précache app-shell (`/`, `/offline.html`, logos) ; **navigations network-first** avec fallback `offline.html` → **aucun risque de bundle stale servi** ; assets statiques cache-first ; `/api/*` network-only ; tuiles cache-first par route (`lkdv-tiles-route-{routeId}`). La nouvelle interface ne sera donc jamais écrasée par du cache usé.
+- **Manifest** : `public/manifest.json`, `start_url: "/"`, shortcut « Mon Inventaire » pointe déjà vers `/inventaire`.
+- **Clés localStorage identifiées** (audit global) :
+  - Mon Matériel cockpit : `lkdv_cockpit_widget_order` (∂risposi), `lkdv_forget_checked`, `lkdv_mon_materiel_storage_version`, `lkdv_mon_materiel_equipment_v1/v2`, `lkdv_mon_materiel_layout_v1`, `lkdv_inventory_filters_v1`, `lkdv_cockpit_widget_order_v1/v2`
+  - Inventaire/équipement : `lkdv_guest_equipment` (useEquipment), `lkdv_guest_gear` (useOfflineInventory — **dédoublonnage à signaler**), `lkdv_guest_kits`, `lkdv_offline_sync_queue`
+  - Randonnées : `lkdv_planned_hikes` (v2), `lkdv_active_planned_hike_id`, `lkdv_hike_state`
+  - Panier/commande : `kdv_cart`, `kdv_wishlist`, `lkdv_recent_searches`, `lkdv_consumables_state`, `lkdv_compte_cache_*`, `lkdv_cache_*`, `lkdv_install_dismissed_at`, `lkdv_page_views`, `lkdv_cookie_consent`, session Supabase `sb_*`
+- **Migration actuelle** (`src/lib/storage/storageVersion.ts`) : versionne via `lkdv_mon_materiel_storage_version = "v3"` mais ne migre que des clés quasi inexistantes (`lkdv_mon_materiel_equipment_v1`). À enrichir : transformation réelle des shapes, nettoyage de clés réellement utilisées/obsolètes, gestion d'erreurs robuste, exécution unique via `useMonMaterielMigration` (déjà créé).
+
+### 0.4 Audit Supabase (projet réel : `icxyvwzfjbflcbqukpfz` = `lekitduvoyageur2`, région **eu-west-3**, confirmé par `supabase/.temp/linked-project.json`)
+- **`gear_items`** : colonnes de base (id, user_id, name, brand, model, category, condition, purchase_date/price, weight_g, expiry_date, last/next_maintenance_date, notes, serial_number, usage_count, image, alt, tags) + ajouts ultérieurs (product_id, source avec CHECK `('achat','kit','manuel','occasion')`, origin_order_id, origin_kit_id, is_listed_for_sale, acquired_at, transferred_to_user_id, location_id, custom_category_id, insurance_value, last_used_date, service_interval_months, compartment, sorties_count). **RLS** : `users_manage_own_gear` FOR ALL USING `user_id = auth.uid()` ✓.
+- ⚠️ **Bug source** : `useEquipment.addToEquipment` écrit `source: 'catalogue'` mais le CHECK l'exclut → insert DB silencieusement refusée pour les articles ajoutés depuis le catalogue. Migration nécessaire (étendre le CHECK / utiliser `'achat'`).
+- ⚠️ **Colonnes manquantes côté DB alors que l'UI les lit** : `quantity`, `is_favorite`, `loan_status`, `loan_to_name`, `wear_percentage`, `size_label`, `materials`, `sole_type`, `waterproof_rating`, `ref_code`. Les 2 migrations non suivies (`20260819125556_add_missing_gear_item_columns.sql`, `20260819125615_fix_gear_item_columns.sql`) les ajoutent — à consolider en une seule migration propre.
+- **`loans`** (id, gear_item_id, loaned_to, loaned_at, returned_at, status) et **`gear_history`** (id, gear_item_id, event_type, event_date, notes) : créées dans `20260728150000` avec **RLS SELECT-only** (authenticated). L'écriture reste gérée via `gear_items.loan_status` + `updateEquipment` (pattern existant conservé).
+- **`custom_kits` / `custom_kit_items`** (20260821000000) : RLS par `auth.uid()` ✓, cycle de vie corbeille 10 j via `cleanup_expired_trash_kits()`.
+- **`orders` / `order_items`** (20260715240000) : RLS `users_manage_own_orders` FOR ALL ✓ ; le webhook Stripe écrit les `order_items`.
+- **`shop_products`** : source catalogue lue par `useEquipment` (fallback `FALLBACK_AUTHENTIC_PRODUCTS` marquées comme telles).
+- **`gear_loans`** (20260810200000) : table de prêts avec RLS user_id FOR ALL.
+
+### 0.5 Infrastructure de test
+- **Aucun framework de test installé** (ni Jest, ni Vitest, ni @testing-library, ni @playwright/test). Les 9 tests existants (`src/features/hiking/**/__tests__`) utilisent un **harness maison sur `node:assert`** exécuté via `npx tsx <fichier>`.
+- CI : `nextjs.yml` (build + deploy Pages) et `lighthouse-ci.yml` (build + LHCI). Pas de test/lint en CI.
+- **Décision** : suivre la convention du dépôt (tests `node:assert` + `npx tsx`), ne pas installer Jest pour ne pas mener une refonte test d'un outil qui n'existe pas. Les scénarios navigateur seront joués via le Chromium Playwright disponible (`C:/Users/Tony/.claude/skills/seo/.venv/.../playwright`), comme les scripts existants `scripts/probe_pw.ts` / `scripts/hikes/e2e_hike.ts`.
+
+### 0.6 Design system
+- Palette LKDV confirmée : `--lkv-paper #FBFAF6`, encre `#0B1F17/#1C2620`, forest `#17402C/#2D5A3D`, sage `#A3C4A3/#2D6B4A`, danger `#9B2C2C`, ambre `#8C6A1A`, border `rgba(11,31,23,…)`. **Interdiction : `#E4501C`** (l'ancien code utilise `#E76F51` — l'orange doit disparaître des nouveaux composants).
+- **Aucune vidéo dans le dépôt** (`public/**` : aucun .mp4/.webm/.mov). `accent-forest` n'existe pas dans Tailwind.
+- **Décision fond animé** : pas d'asset vidéo → implémentation d'un **fond animé « Ken Burns »** (zoom/pan lent via CSS sur l'image locale `urban-vintage.jpg`, floutée et voilée) + fallback statique si `prefers-reduced-motion`. Documenté au journal.
+- Les composants de modales/tiroirs existants sont réutilisables tels quels : `AddEditGearModal`, `GearDetailDrawer`, `KitCockpitDrawer`, `LendItemModal` (props vérifiées).
+
+### 0.7 État des travaux précédents
+- La page `/mon-materiel` (3252 lignes) implémente déjà un cockpit 6 modules fonctionnel (Poids, Prochain départ, État, À ne pas oublier, Alertes, Kits) : grille asymétrique lg:grid-cols-4, fullscreen partagés (layoutId), drawer « Tout voir » 4 onglets, modales réelles, Copilote IA (fallback local), drag & drop persistant. Vérifié au préalable : 26/26 tests Playwright, build OK (~48 kB).
+- **Ce qui manque pour v3** : grille 3×2 avec les 6 cartes imposées, fullscreens dédiés riches (NotToForget, AlertsReliability, MyKits, NextDeparture, InventoryCatalog, Availability), logique centralisée dans `src/features/mon-materiel/domain/`, flux universel « Ajouter à l'équipement » (Cas A/B/C) avec réception de commande → inventaire → kit, zéro emoji, liquid glass clair sur fond animé, suppression des stubs cassés.
+
+## Plan d'implémentation v3
+
+| Phase | Contenu |
+| :--- | :--- |
+| **1** | Réparer les fichiers cassés (layout, BottomTabBar, MigrationEffect, import dupliqué) + optimiser la migration storage + commissariat d'un commit « fondation ». |
+| **2** | Créer `src/features/mon-materiel/` : `domain/` (getGearStatus, availability, alerts, completeness, departure-readiness, order-reception — fonctions pures), `types/`, `services/` (Gear, Kit, Order, Loan — RLS respectée), `hooks/` (useGearStatus, useGearAlerts, useMonMaterielMigration). |
+| **3** | Composants UI : `GlassCard` liquid glass (palette LKDV), `GearCard`, `MonMaterielGrid` (3×2 desktop / 1 col mobile), `AddToEquipmentButton` (Cas A/B/C), icônes SVG (zéro emoji), fond animé Ken Burns + `prefers-reduced-motion`. |
+| **4** | 6 fullscreens dédiés dans `features/mon-materiel/fullscreen/` (NotToForget, AlertsReliability, MyKits, NextDeparture avec validation snapshot, InventoryCatalog avec flux commande→réception, Availability). |
+| **5** | Réécrire `/mon-materiel/page.tsx` comme orchestrateur (grille 3×2 branchée sur le domaine, plein écran, drawer « Tout voir » conservé, modales, IA). |
+| **6** | Nettoyer les stubs `src/components/cockpit/` (remplacés), supprimer `page.tsx.bak` et `MigrationEffect.tsx` (déprécié), migrer Supabase (colonnes gear_items manquantes + CHECK `source 'catalogue'`). |
+| **7** | Tests unitaires du domaine (tsx + node:assert), lint, `tsc --noEmit`, build. |
+| **8** | Playwright/Chromium (venv) : 7 écrans × desktop 1920 × mobile 380, scénarios critiques (grid, fullscreens, Escape/focus trap, flux ajout équipement, réception, reload old key). |
+| **9** | Journal complet PROGRESS, commits cohérents, PR vers `main`. |
+
+## Journal des modifications
+
+### 2026-08-19 — 14:15 — Phases 1.1 → 1.3 terminées : réparation du socle cassé
+- Réalisé :
+  - `src/app/layout.tsx` : **restauré intégralement** (le fichier était minifié puis commenté, `RootLayout`/fonts/metadata hors scope). Migration Mon Matériel branchée **une seule fois au montage** via un composant client `MigrationEffect` (le RootLayout étant un Server Component, un hook `useEffect` ne peut pas y être appelé directement — décision documentée).
+  - `src/components/mobile-nav/BottomTabBar.tsx` : restauration du bloc `if (loading || !mounted)` (fragment `}>` orphelin ligne ~413 cassait le parsing).
+  - `src/lib/storage/MigrationEffect.tsx` : réécrit correctement (le fichier contenait des `\n` littéraux non interprétés).
+  - `src/app/mon-materiel/page.tsx` : retrait de l'import dupliqué `getItemStatus` (ligne 9-10).
+- Fichiers :
+  - Créé : `src/lib/storage/MigrationEffect.tsx`
+  - Modifié : `src/app/layout.tsx`, `src/components/mobile-nav/BottomTabBar.tsx`, `src/app/mon-materiel/page.tsx`
+- Validation : `tsc --noEmit` 0 erreur · `npm run build` OK à ce stade.
+- Décisions : la migration du storage **doit** rester côté client ; `useMonMaterielMigration` (déjà créé par le chantier précédent) est conservé à `src/hooks/`.
+
+### 2026-08-19 — 14:30 — Phase 1.3 : migration storage optimisée (v3)
+- Réalisé :
+  - `src/lib/storage/storageVersion.ts` réécrit : `MON_MATERIEL_STORAGE_VERSION = 'v3'`, migration **idempotente et isolées par clé** (try/catch par étape) : normalisation de l'équipement invité v1/v2 → `lkdv_guest_equipment`, validation/réinitialisation de `lkdv_cockpit_widget_order` (anciens ids `copilot/weight/condition` invalides → les 6 cartes v3), normalisation de `lkdv_forget_checked`, nettoyage des clés obsolètes (`lkdv_mon_materiel_layout_v1/v2`, `lkdv_inventory_filters_v1/v2`, `lkdv_cockpit_widget_order_v1/v2`, `lkdv_mon_materiel_equipment_v1/v2`), marqueur de version. `resetMonMaterielLayout()` ajouté.
+  - `src/hooks/useMonMaterielMigration.ts` : importé par `MigrationEffect` (exécution unique au montage, plus jamais par changement de route).
+- Fichiers :
+  - Modifié : `src/lib/storage/storageVersion.ts`, `src/hooks/useMonMaterielMigration.ts`
+- Décisions : **collection séparée** `lkdv_guest_gear` (useOfflineInventory, système configurateur) ≠ `lkdv_guest_equipment` (inventaire cockpit) → non fusionnées (hors périmètre, risque de perte).
+
+### 2026-08-19 — 15:10 — Phases 2.4 → 2.5 : domaine centralisé + services + hooks
+- Réalisé — création de `src/features/mon-materiel/` :
+  - `domain/` (fonctions pures, sans effet de bord) :
+    - `gear-status.ts` → `getGearStatus(gear, context)` : possession, commande, état, entretien, validité, disponibilité, prêt, engagement kit/départ, vente, alertes, badges, action recommandée ; `getUnownedStatus`.
+    - `gear-alerts.ts` → alertes cumulables (maintenance, péremption, prêt, usure, conflit départ) + `prioritizeAlerts` + compteurs.
+    - `gear-availability.ts` → disponibilité + timeline de blocages + conflits.
+    - `gear-completeness.ts` → complétude de kit (possédés/disponibles/manquants), substituts.
+    - `departure-readiness.ts` → statut départ (Prêt / À vérifier / Bloqué), blocants, checklist contextualisée (données + règles génériques explicitement sourcées), snapshot de validation.
+    - `order-reception.ts` → `toOrderedProductItem`, `buildReceptionGear` (source `'achat'`), `buildReceptionHistory`, `hasDuplicate`, `destinationSummary`.
+    - `gear-format.ts` → helpers poids/dates/countdown.
+  - `types/gear.ts` (contextes, OrderedProductItem, GearDestination, LoanRecord, HistoryEvent) + `types/index.ts`.
+  - `services/` : `GearService` (loans/history lecture, insertGear, markReviewed), `OrderService` (listOrders, listOrderItems → « En commande », `confirmReception` commande → inventaire → kit), `LoanService` (markReturned, nudge), `KitService` (membership, engagement, auto-link) — **RLS respectée** (mutations via `gear_items` FOR ALL user; `loans`/`gear_history` en lecture seule, écritures best-effort).
+  - `hooks/` : `useGearStatus`, `useGearAlerts`, `useGearAvailability` (mémoïsés).
+- Validation : `tsc --noEmit` 0 erreur.
+- Décisions : pas de service « copie » de `useEquipment`/`useUserKits` (les hooks restent les sources vivantes) — le domaine consomme leurs data ; les services ne couvrent que l'ITO/commande/historique manquant.
+
+### 2026-08-19 — 15:45 — Phases 3.1 → 3.4 : design system + composants + 6 pleins écrans
+- Réalisé :
+  - `src/components/ui/glass-card.tsx` : **Liquid Glass clair LKDV** (blanc chaud translucide `rgba(255,255,255,0.55)` + `backdrop-blur(40px) saturate(1.5)`, liseré lumineux masqué, reflet supérieur, ombre encre douce + inner highlight, teinte sage `#A3C4A3`).
+  - `components/icons.tsx` : 30 SVG monochromes (zéro emoji).
+  - `components/AnimatedBackground.tsx` : fond Ken Burns sur `urban-vintage.jpg` + voile papier LKDV + **`prefers-reduced-motion` ⇒ figé** (audit : aucun asset vidéo dans le dépôt → décision documentée).
+  - `components/GearCard.tsx` / `MonMaterielGrid.tsx` (3×2 desktop, 1–2 colonnes mobile, DnD) / `FullscreenShell.tsx` (Escape, focus trap, shared-element `layoutId`, focus restauré sur la carte d'origine).
+  - `components/AddToEquipmentButton.tsx` : **flux universel Cas A/B/C** (possédé+dispo → ajout kit ; indisponible → pourquoi/où/quand + Relancer, Voir l'autre départ, Résoudre le conflit, Remplacer, 2ᵉ exemplaire ; non possédé → panier + destination mémorisée → « En commande », aucun faux objet avant réception).
+  - `fullscreen/` : `NotToForgetFullscreen`, `NextDepartureFullscreen` (validation snapshot + réservation), `AlertsReliabilityFullscreen` (score fiabilité, filtres, cartes objet, péremptions à venir, résolues repliables), `MyKitsFullscreen` (3 onglets, détail/substituts), `InventoryCatalogFullscreen` (4 onglets, catalogue **données réelles `shop_products`**, En commande + Confirmer réception), `AvailabilityFullscreen` (3 onglets, synthèse, timeline, actions).
+- Fichiers : `src/components/ui/glass-card.tsx` (mod), `src/features/mon-materiel/{components,fullscreen}` (créé).
+- Validation : `tsc` 0 erreur · lint propre sur les fichiers touchés.
+- Décisions : suppression des stubs cassés `src/components/cockpit/` (remplacés), `MigrationEffect` recréé proprement, palette interdite `#E4501C` jamais utilisée (vérifié par sonde DOM : `hasOrange = non`).
+
+### 2026-08-19 — 16:20 — Phase 3.5 : réécriture de `/mon-materiel/page.tsx` (orchestrateur)
+- Réalisé :
+  - Grille **3×2 desktop / 1 col mobile** avec les 6 cartes : À ne pas oublier · Alertes & fiabilité · Mes kits · Prochain départ · Inventaire & catalogue · Disponibilité (icône + titre + métrique + contexte + badges + action → plein écran).
+  - Métriques branchées sur le domaine (`useGearStatus/useGearAlerts/useGearAvailability`, `evaluateDepartureReadiness`, `buildDepartureChecklist`).
+  - 6 pleins écrans montés via `FullscreenShell` (Escape/focus trap/restore focus), contexe partagé (loans + commandes chargés via services, destinations localStorage).
+  - Drawer « Tout voir » conservé (Inventaire · Prêts & Alertes · Réglages · Actions) **sans emoji**, objectif de poids persisté (`lkdv_cockpit_target_kg`), réordonnancement DnD persistant.
+  - Copilote IA conservé (fallback local) · toasts · modales réelles (fiche, ajout/édition, kit, prêt, nouvelle sortie).
+  - `UserEquipmentItem` : ajout `last_used_date` (colonne DB existante, interface l'ignorait).
+- Fichiers : modifié `src/app/mon-materiel/page.tsx`, `src/hooks/useEquipment.ts`.
+- Validation : `tsc` 0 erreur · `npm run build` OK (route `/mon-materiel` 55,3 kB) · lint clean sur le fichier.
+
+### 2026-08-19 — 16:35 — Phase 3.6 : migration Supabase consolidée
+- Réalisé :
+  - Suppression des 2 ébauches non mergées (`20260819125556`, `20260819125615`) remplacées par **`20260820120000_mon_materiel_gear_items_consolidated.sql`** : colonnes `gear_items` manquantes (quantity, is_favorite, loan_status, loan_to_name, wear_percentage, size_label, materials, sole_type, waterproof_rating, ref_code, product_id, source, origin_order_id, origin_kit_id, is_listed_for_sale, acquired_at, transferred_to_user_id) — **idempotent**, RLS conservées, **zéro suppression de données**.
+  - Extension du CHECK `source` à `'catalogue'` (bug `addToEquipment` écrivait `'catalogue'` → insert refusé silencieusement).
+  - Ajout `order_items.received_at` (réception commande) + index partiel `idx_order_items_received_at`.
+  - Politique `auth_insert_own_gear_history` (INSERT vérifiant `gear_item_id` dans les `gear_items` de `auth.uid()`) pour l'historique best-effort.
+- Supabase : tables lues `gear_items, orders, order_items, loans, gear_history, shop_products, custom_kits, custom_kit_items` ; migration `20260820120000_...` (à appliquer via `supabase db push`).
+- Décisions : toutes les écritures restent protégées par RLS (`user_id = auth.uid()` sur `gear_items`) ; `loans`/`gear_history` restent en lecture seule pour les mutations prêts (pattern `gear_items.loan_status` conservé).
+
+### 2026-08-19 — 17:00 — Phase 4 : tests, validation, captures
+- Tests unitaires du domaine — `src/features/mon-materiel/test/domain.test.ts` (convention dépôt `node:assert` + `npx tsx`) : **21/21 OK** (alertes cumulées, priorisation, disponibilité, conflit départ, complétude kit, substituts, readiness, snapshot, réception commande, doublons, destination).
+- `package.json` : scripts `test` / `test:domain` ajoutés (rocketCritical.scripts synchro).
+- Playwright (Chromium venv SEO) — `scripts/pw_mon_materiel_v3.ts` : **23/23 OK** :
+  - 6 cartes présentes · grille 3 colonnes desktop · 1 colonne mobile · aucun overflow (1920 & 380)
+  - 6 boutons Agrandir · ouverture/fermeture Escape ×6 · focus initial sur Fermer · focus trap Tab
+  - checklist cochée persistée (`lkdv_forget_checked`)
+  - **Cas A** objet possédé → ajout au kit (`lkdv_guest_kits`) · **Cas C** non possédé → panier + destination (`kdv_cart`)
+  - reload/hard reload avec **ancienne clé** (ordre v2/copilot) → interface v3 uniquement, jamais d'ancienne UI
+  - drawer « Tout voir » ouvre (4 onglets) · aucune erreur console critique
+- Sonde visuelle — `scripts/probe_visual_v3.ts` : fond `rgb(245,243,238)` (#F5F3EE), glass `blur(40px)`, **`hasOrange = non`**, **`emojisInTitles = non`**, titres des 6 cartes corrects.
+- Captures : `docs/screenshots/mon-materiel-v3/` — cockpit + 6 pleins écrans, desktop 1920 & mobile 380 (14 PNG).
+- Validation globale : `npm run lint` (fichiers touchés : 0 warning) · `npx tsc --noEmit` : 0 erreur · `npm run build` : OK · tests 21/21 · Playwright 23/23.
+- Décisions et risques :
+  - Pas d'installation de Jest/Playwright dans le dépôt (aucun framework présent) — application de la convention `tsx` + `node:assert`, et Chromium Playwright via l'environnement venv existant.
+  - La migration `20260820120000` doit être poussée (`supabase db push`) pour activer `received_at`, le CHECK `catalogue` et la politique `gear_history` (le code est défensif : sans elles, erreurs loggées en warning, flux OK pour l'inventaire).
+  - `lkdv_guest_gear` (offline) vs `lkdv_guest_equipment` (cockpit) : deux stores distincts conservés, documentation du risque de divergence.
+- Prochaine sous-phase : commits cohérents + PR vers `main` (Phase 5).
+
+- [ ] 1.1 Lire le fichier de progression existant
+- [ ] 1.2 Cartographier les routes concernées
+- [ ] 1.3 Cartographier les composants liés
+- [ ] 1.4 Rechercher les imports de composants historiques
+- [ ] 1.5 Identifier les clés localStorage/sessionStorage
+- [ ] 1.6 Identifier Service Worker, PWA et caches
+- [ ] 1.7 Documenter les décisions de conservation, migration ou dépréciation
+
+## Phase 2 — Nettoyage et refactorisation du code
+
+- [ ][x] 2.1 Auditer les composants et les pages liés à Mon Matériel
+- [ ][x] 2.2 Supprimer le code mort après vérification globale
+- [ ][x] 2.3 Centraliser la logique du statut du matériel (disponibilité, prêt, entretien, etc.)
+- [ ][x] 2.4 Mettre à jour les composants obsolètes avec les nouveaux patterns
+- [ ] 2.5 S'assurer de la compatibilité avec l'inventaire, les kits, le panier, etc.
+
+## Phase 3 — Mise à jour de la base de données
+
+- [ ][x] 3.1 Auditer le schéma Supabase lié à Mon Matériel
+- [ ][x] 3.2 Identifier les champs manquants ou obsolètes
+- [ ][x] 3.3 Créer des migrations Supabase si nécessaire (en préservant les données)
+- [ ] 3.4 Vérifier les politiques RLS
+
+## Phase 4 — Implémentation des fonctionnalités
+
+- [ ] 4.1 Mettre à jour la grille des 6 cards (3x2 sur desktop)
+- [ ] 4.2 Implémenter les 6 fullscreen avec les flux détaillés
+- [ ] 4.3 Intégrer le flux commande → réception → inventaire
+- [ ] 4.4 Mettre à jour la logique des alertes et de l'entretien
+- [ ] 4.5 S'assurer de la persistance des préférences (localStorage, etc.)
+
+## Phase 5 — Tests et validation
+
+- [ ] 5.1 Écrire les tests unitaires pour la logique métier
+- [ ] 5.2 Écrire les tests Playwright pour les scénarios critiques
+- [ ] 5.3 Exécuter les tests, le lint, le build et corriger les régressions
+- [ ] 5.4 Vérifier l'accessibilité et la performance
+
+## Phase 6 — Documentation et préparation de la pull request
+
+- [ ] 6.1 Mettre à jour le fichier de progression après chaque sous-phase
+- [ ] 6.2 Créer des commits cohérents
+- [ ] 6.3 Ouvrir une pull request vers main avec un résumé complet
+- [ ] 6.4 Inclure les captures visuelles et les détails des modifications
+
+## Archive — Versions antérieures
+
 # 📋 Suivi d'Avancement — Cockpit « Mon Équipement » Dashboard Sans Sidebar
 
 > **Branche :** `feat/mon-materiel-cockpit-polestar` (créée depuis `feat/mon-materiel-cockpit-dashboard-final`, PR #23)
@@ -174,3 +379,10 @@ Transformer `src/app/mon-materiel/page.tsx` en véritable cockpit dashboard **sa
 - **Motion** : spring `stiffness 280 / damping 32` (≈ ouverture 420–600 ms, fermeture 320–480 ms) ; `prefers-reduced-motion` géré par `MotionConfig reducedMotion="user"` (transform `none` immédiat, vérifié).
 - **Robustesse** : drag & drop désactivé tant qu'un fullscreen est ouvert (`draggable={!expandedWidget}`), garde anti double-ouverture, **focus restauré sur le bouton Agrandir d'origine** à la fermeture, trap Tab conservé, aucun scroll de fond.
 - **Vérifié Playwright** : ouverture/fermeture (Escape) ×6, focus, trap, reduced-motion, persistance ; **26/26** + probes de transform (expansion active / désactivée en reduced-motion). Build final 47,9 kB.
+
+
+
+
+
+
+
