@@ -66,6 +66,7 @@ export function InventoryCatalogFullscreen({
   const [tab, setTab] = useState<Tab>(initialQuery ? 'catalog' : 'inventory');
   const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState('all');
+  const [sort, setSort] = useState<'recent' | 'usage' | 'name' | 'weight' | 'category'>('recent');
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -89,21 +90,40 @@ export function InventoryCatalogFullscreen({
     [products, category, query]
   );
 
-  const filteredEquipment = useMemo(
-    () =>
-      equipment.filter((g) => {
-        if (query.trim()) {
-          const q = query.toLowerCase();
-          return (
-            g.name.toLowerCase().includes(q) ||
-            (g.brand || '').toLowerCase().includes(q) ||
-            (g.category || '').toLowerCase().includes(q)
-          );
-        }
-        return true;
-      }),
-    [equipment, query]
-  );
+  const filteredAndSortedEquipment = useMemo(() => {
+    let filtered = equipment.filter((g) => {
+      if (query.trim()) {
+        const q = query.toLowerCase();
+        return (
+          g.name.toLowerCase().includes(q) ||
+          (g.brand || '').toLowerCase().includes(q) ||
+          (g.category || '').toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+
+    // Apply sorting
+    filtered = [...filtered].sort((a, b) => {
+      switch (sort) {
+        case 'usage':
+          return (b.usage_count || 0) - (a.usage_count || 0);
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'weight':
+          const weightA = (a.weight_g || 0) * (a.quantity || 1);
+          const weightB = (b.weight_g || 0) * (b.quantity || 1);
+          return weightB - weightA;
+        case 'category':
+          return (a.category || '').localeCompare(b.category || '');
+        case 'recent':
+        default:
+          return (b.updated_at || '').localeCompare(a.updated_at || '');
+      }
+    });
+
+    return filtered;
+  }, [equipment, query, sort]);
 
   const ownedByProduct = (product: UnifiedProduct): UserEquipmentItem | undefined =>
     equipment.find(
@@ -129,6 +149,20 @@ export function InventoryCatalogFullscreen({
             className="flex-1 min-w-[160px] px-3 py-2 rounded-xl bg-white/60 border border-[#1C2620]/10 text-xs text-[#1C2620] placeholder-[#1C2620]/45 focus:outline-none focus:border-[#2D5A3D]"
             aria-label="Rechercher"
           />
+          {tab === 'inventory' && (
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as typeof sort)}
+              className="px-2.5 py-2 rounded-xl bg-white/60 border border-[#1C2620]/10 text-xs text-[#1C2620] focus:outline-none"
+              aria-label="Trier l'inventaire"
+            >
+              <option value="recent">Récents</option>
+              <option value="usage">Utilisation</option>
+              <option value="name">Nom</option>
+              <option value="weight">Poids</option>
+              <option value="category">Catégorie</option>
+            </select>
+          )}
           {tab === 'catalog' && (
             <select
               value={category}
@@ -146,7 +180,7 @@ export function InventoryCatalogFullscreen({
 
       {tab === 'inventory' && (
         <>
-          {filteredEquipment.length === 0 && (
+          {filteredAndSortedEquipment.length === 0 && (
             <SectionCard title="Mon inventaire">
               <p className="text-xs text-[#1C2620]/60">
                 {query ? 'Aucun résultat pour cette recherche.' : 'Votre inventaire est vide — ajoutez votre premier article.'}
@@ -154,7 +188,7 @@ export function InventoryCatalogFullscreen({
             </SectionCard>
           )}
           <div className="grid gap-3 lg:grid-cols-2">
-            {filteredEquipment.map((gear) => {
+            {filteredAndSortedEquipment.map((gear) => {
               const status = statuses.get(gear.id);
               return (
                 <div key={gear.id} className="rounded-2xl bg-white/60 border border-[#1C2620]/7 p-3 flex items-start gap-3">
@@ -168,6 +202,14 @@ export function InventoryCatalogFullscreen({
                         <p className="text-xs text-[#1C2620]/60 truncate">
                           {gear.brand || 'Outdoor'} · {gear.category || 'Autre'} · {formatWeight((gear.weight_g || 0) * (gear.quantity || 1))}
                         </p>
+                        <div className="flex items-center gap-1 text-xs mt-0.5">
+                          <span className="text-[#1C2620]/60">Utilisé</span>
+                          <span className="font-mono text-[#2D5A3D]">{gear.usage_count || 0}</span>
+                          <span className="text-[#1C2620]/60">fois</span>
+                          {(gear.usage_count || 0) > 0 && gear.last_used_date && (
+                            <span className="ml-1 text-[#1C2620]/50">· {formatDateFr(gear.last_used_date, true)}</span>
+                          )}
+                        </div>
                       </div>
                       <button
                         type="button"
@@ -187,6 +229,13 @@ export function InventoryCatalogFullscreen({
                         {status.badges.slice(0, 3).map((b) => (
                           <Badge key={b.id} label={b.label} tone={b.severity} />
                         ))}
+                        {gear.usage_count !== undefined && gear.usage_count >= 10 && (
+                          <Badge
+                            key={`usage-${gear.id}`}
+                            label={gear.usage_count >= 20 ? 'Extrêmement utilisé' : 'Très utilisé'}
+                            tone='success'
+                          />
+                        )}
                       </div>
                     )}
                     <div className="flex items-center gap-1.5 mt-2 flex-wrap">
@@ -237,6 +286,16 @@ export function InventoryCatalogFullscreen({
                         ))}
                       </div>
                     )}
+                    {owned && (
+                      <div className="mt-1 space-x-2 text-xs">
+                        <span className="text-[#1C2620]/60">Utilisé</span>
+                        <span className="font-mono text-[#2D5A3D]">{owned.usage_count || 0}</span>
+                        <span className="text-[#1C2620]/60">fois</span>
+                        {(owned.usage_count || 0) > 0 && owned.last_used_date && (
+                          <span className="ml-1 text-[#1C2620]/50">· {formatDateFr(owned.last_used_date, true)}</span>
+                        )}
+                      </div>
+                    )}
                     <div className="mt-2">
                       <AddToEquipmentButton
                         product={product}
@@ -270,7 +329,7 @@ export function InventoryCatalogFullscreen({
               </p>
             </SectionCard>
           )}
-          <div className="space-y-2">
+          <div className="grid gap-4 lg:grid-cols-2">
             {orderedNotReceived.map((o) => (
               <div key={o.orderItemId} className="rounded-2xl bg-white/60 border border-[#1C2620]/7 p-3 flex items-start gap-3">
                 <div className="flex-1 min-w-0">

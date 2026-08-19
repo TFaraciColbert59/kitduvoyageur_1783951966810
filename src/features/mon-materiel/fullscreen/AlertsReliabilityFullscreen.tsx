@@ -123,14 +123,14 @@ export function AlertsReliabilityFullscreen({
   return (
     <div className="space-y-4">
       <SectionCard title="Fiabilité de l’équipement">
-        <div className="flex items-end justify-between gap-4">
-          <div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="space-y-3">
             <div className="text-5xl font-extrabold font-mono leading-none text-[#2D5A3D]">{reliabilityPct}%</div>
-            <p className="text-xs text-[#1C2620]/70 mt-2">
+            <p className="text-xs text-[#1C2620]/70">
               {equipment.length - critical}/{equipment.length} objets sans alerte critique
             </p>
           </div>
-          <div className="text-right">
+          <div className="space-y-3 text-right">
             <div className="text-4xl font-extrabold font-mono leading-none text-[#8C6A1A]">{critical}</div>
             <p className="text-xs text-[#1C2620]/70 mt-1">alerte(s) critique(s)</p>
           </div>
@@ -138,103 +138,113 @@ export function AlertsReliabilityFullscreen({
         <div className="h-2 rounded-full bg-[#1C2620]/7 overflow-hidden">
           <div className="h-full bg-[#2D5A3D] rounded-full transition-all duration-500" style={{ width: `${reliabilityPct}%` }} />
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          {FILTERS.map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => onFilterChange(key)}
-              className={`px-2.5 py-1 rounded-full text-xs font-bold transition-colors ${
-                filter === key ? 'bg-[#2D5A3D] text-white' : 'bg-white/50 text-[#1C2620]/80 border border-[#1C2620]/10'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </SectionCard>
-
-      {expirationsSoon.length > 0 && (
-        <SectionCard title="Péremptions des 30 prochains jours">
-          <div className="grid gap-1.5 sm:grid-cols-2">
-            {expirationsSoon.map((e) => (
-              <button
-                key={e.gear.id}
-                type="button"
-                onClick={() => onOpenGear(e.gear.id)}
-                className="flex items-center justify-between gap-2 p-2 rounded-xl bg-[#8C6A1A]/8 border border-[#8C6A1A]/20 text-xs text-left hover:bg-[#8C6A1A]/15 transition-colors"
-              >
-                <span className="truncate font-semibold text-[#1C2620]/90">{e.gear.name}</span>
-                <span className="font-mono font-bold text-[#8C6A1A] shrink-0">
-                  {new Date(e.gear.expiry_date!).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                </span>
-              </button>
-            ))}
+        <div className="lg:grid lg:grid-cols-[200px_1fr] lg:gap-4">
+          {/* Sidebar - Filtres */}
+          <div className="lg:sticky lg:top-8">
+            <div className="space-y-2">
+              <div className="flex flex-wrap gap-1.5">
+                {FILTERS.map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => onFilterChange(key)}
+                    className={`w-full text-left px-2.5 py-1 rounded-full text-xs font-bold transition-colors ${
+                      filter === key ? 'bg-[#2D5A3D] text-white' : 'bg-white/50 text-[#1C2620]/80 border border-[#1C2620]/10'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        </SectionCard>
-      )}
 
-      {criticalGroup.map(({ gear, alerts: gAlerts }) => (
-        <GearAlertCard
-          key={gear.id}
-          gear={gear}
-          alerts={gAlerts}
-          status={statuses.get(gear.id)}
-          onOpenGear={onOpenGear}
-          onMarkReviewed={onMarkReviewed}
-          onToast={onToast}
-        />
-      ))}
-      {otherGroup.map(({ gear, alerts: gAlerts }) => (
-        <GearAlertCard
-          key={gear.id}
-          gear={gear}
-          alerts={gAlerts}
-          status={statuses.get(gear.id)}
-          onOpenGear={onOpenGear}
-          onMarkReviewed={onMarkReviewed}
-          onToast={onToast}
-        />
-      ))}
+          {/* Main Content */}
+          <div className="space-y-4">
+            {expirationsSoon.length > 0 && (
+              <SectionCard title="Péremptions des 30 prochains jours">
+                <div className="grid gap-1.5 sm:grid-cols-2">
+                  {expirationsSoon.map((e) => (
+                    <button
+                      key={e.gear.id}
+                      type="button"
+                      onClick={() => onOpenGear(e.gear.id)}
+                      className="flex items-center justify-between gap-2 p-2 rounded-xl bg-[#8C6A1A]/8 border border-[#8C6A1A]/20 text-xs text-left hover:bg-[#8C6A1A]/15 transition-colors"
+                    >
+                      <span className="truncate font-semibold text-[#1C2620]/90">{e.gear.name}</span>
+                      <span className="font-mono font-bold text-[#8C6A1A] shrink-0">
+                        {new Date(e.gear.expiry_date!).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </SectionCard>
+            )}
 
-      {byGear.length === 0 && (
-        <SectionCard title="Alertes">
-          <p className="text-xs text-[#1C2620]/60">Aucune alerte dans cette catégorie.</p>
-        </SectionCard>
-      )}
+            {criticalGroup.map(({ gear, alerts: gAlerts }) => (
+              <GearAlertCard
+                key={gear.id}
+                gear={gear}
+                alerts={gAlerts}
+                status={statuses.get(gear.id)}
+                onOpenGear={onOpenGear}
+                onMarkReviewed={onMarkReviewed}
+                onToast={onToast}
+              />
+            ))}
+            {otherGroup.map(({ gear, alerts: gAlerts }) => (
+              <GearAlertCard
+                key={gear.id}
+                gear={gear}
+                alerts={gAlerts}
+                status={statuses.get(gear.id)}
+                onOpenGear={onOpenGear}
+                onMarkReviewed={onMarkReviewed}
+                onToast={onToast}
+              />
+            ))}
 
-      {resolvedCount > 0 && (
-        <SectionCard
-          title={`Alertes résolues (${resolvedCount})`}
-          action={
-            <button
-              type="button"
-              onClick={() => onToggleResolved('__all__')}
-              className="text-xs font-bold text-[#2D5A3D] hover:underline"
-            >
-              Tout réafficher
-            </button>
-          }
-        >
-          <div className="space-y-1.5">
-            {alerts
-              .filter((a) => resolvedIds.has(`${a.kind}-${a.gearId}`))
-              .slice(0, 10)
-              .map((a) => (
-                <div key={`${a.kind}-${a.gearId}`} className="p-2 rounded-xl bg-white/40 border border-[#1C2620]/7 text-xs flex items-center justify-between gap-2">
-                  <span className="truncate text-[#1C2620]/70 line-through">{a.label}</span>
+            {byGear.length === 0 && (
+              <SectionCard title="Alertes">
+                <p className="text-xs text-[#1C2620]/60">Aucune alerte dans cette catégorie.</p>
+              </SectionCard>
+            )}
+
+            {resolvedCount > 0 && (
+              <SectionCard
+                title={`Alertes résolues (${resolvedCount})`}
+                action={
                   <button
                     type="button"
-                    onClick={() => onToggleResolved(`${a.kind}-${a.gearId}`)}
-                    className="text-[#2D5A3D] font-bold shrink-0"
+                    onClick={() => onToggleResolved('__all__')}
+                    className="text-xs font-bold text-[#2D5A3D] hover:underline"
                   >
-                    Réafficher
+                    Tout réafficher
                   </button>
+                }
+              >
+                <div className="space-y-1.5">
+                  {alerts
+                    .filter((a) => resolvedIds.has(`${a.kind}-${a.gearId}`))
+                    .slice(0, 10)
+                    .map((a) => (
+                      <div key={`${a.kind}-${a.gearId}`} className="p-2 rounded-xl bg-white/40 border border-[#1C2620]/7 text-xs flex items-center justify-between gap-2">
+                        <span className="truncate text-[#1C2620]/70 line-through">{a.label}</span>
+                        <button
+                          type="button"
+                          onClick={() => onToggleResolved(`${a.kind}-${a.gearId}`)}
+                          className="text-[#2D5A3D] font-bold shrink-0"
+                        >
+                          Réafficher
+                        </button>
+                      </div>
+                    ))}
                 </div>
-              ))}
+              </SectionCard>
+            )}
           </div>
-        </SectionCard>
-      )}
+        </div>
+      </SectionCard>
     </div>
   );
 }
@@ -290,6 +300,7 @@ function GearAlertCard({
           <Meta label="Dernier entretien" value={formatDateFr(gear.last_maintenance_date, true)} />
           <Meta label="Prochaine maintenance" value={formatDateFr(gear.next_maintenance_date, true)} />
           <Meta label="Dernière utilisation" value={formatDateFr(gear.last_used_date || undefined, true)} />
+<Meta label="Utilisation" value={(gear.usage_count ?? 0) + ' fois'} />
         </div>
       </div>
 

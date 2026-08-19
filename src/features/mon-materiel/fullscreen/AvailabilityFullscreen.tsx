@@ -102,113 +102,128 @@ export function AvailabilityFullscreen({
           <Synth value={conflictCount} label="Conflits" />
           <Synth value={lentItems.length} label="En prêt" />
         </div>
-        <div className="flex gap-1 flex-wrap">
-          {(
-            [
-              ['lent', `Prêté par moi (${lentItems.length})`],
-              ['borrowed', `Emprunté par moi (${borrowedItems.length})`],
-              ['engaged', `Engagé dans un départ (${engagedItems.length})`],
-            ] as [Tab, string][]
-          ).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setTab(key)}
-              className={`px-2.5 py-1 rounded-full text-xs font-bold transition-colors ${
-                tab === key ? 'bg-[#2D5A3D] text-white' : 'bg-white/50 text-[#1C2620]/80 border border-[#1C2620]/10'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+        <div className="lg:grid lg:grid-cols-[200px_1fr] lg:gap-4">
+          {/* Tabs sidebar */}
+          <div className="lg:sticky lg:top-8">
+            <div className="flex gap-1 flex-wrap">
+              {(
+                [
+                  ['lent', `Prêté par moi (${lentItems.length})`],
+                  ['borrowed', `Emprunté par moi (${borrowedItems.length})`],
+                  ['engaged', `Engagé dans un départ (${engagedItems.length})`],
+                ] as [Tab, string][]
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setTab(key)}
+                  className={`w-full text-left px-2.5 py-1 rounded-full text-xs font-bold transition-colors ${
+                    tab === key ? 'bg-[#2D5A3D] text-white' : 'bg-white/50 text-[#1C2620]/80 border border-[#1C2620]/10'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Main content */}
+          <div className="space-y-4">
+            {tab === 'engaged' && (
+              <SectionCard
+                title={activeDeparture ? `Engagement pour « ${activeDeparture.name} »` : 'Engagement départ'}
+                action={
+                  activeDeparture ? (
+                    <button type="button" onClick={onOpenDeparture} className="text-xs font-bold text-[#2D5A3D] hover:underline">
+                      Voir le départ
+                    </button>
+                  ) : undefined
+                }
+              >
+                {!activeDeparture ? (
+                  <p className="text-xs text-[#1C2620]/60">Aucun départ planifié avec kit assigné.</p>
+                ) : (
+                  <p className="text-xs text-[#1C2620]/70">
+                    {engagedItems.length} objet(s) réservés pour ce départ — ils deviennent indisponibles sur la période.
+                  </p>
+                )}
+              </SectionCard>
+            )}
+
+            {list.length === 0 ? (
+              <SectionCard title="Disponibilité">
+                <p className="text-xs text-[#1C2620]/60">Rien à afficher dans cet onglet.</p>
+              </SectionCard>
+            ) : (
+              <div className="grid gap-3 lg:grid-cols-2">
+                {list.map((gear) => {
+                  const st = statuses.get(gear.id);
+                  const av = availability.get(gear.id);
+                  return (
+                    <div key={gear.id} className="rounded-2xl bg-white/60 border border-[#1C2620]/7 p-3 flex items-start gap-3">
+                      <div className="w-14 h-14 rounded-2xl bg-white/60 border border-[#1C2620]/8 overflow-hidden relative shrink-0 flex items-center justify-center p-1">
+                        <Image src={gear.image || '/assets/images/no_image.png'} alt={gear.name} width={44} height={44} className="object-contain max-h-full max-w-full" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-[#1C2620] truncate">{gear.name}</p>
+                        <p className="text-xs text-[#1C2620]/60 truncate">
+                          {gear.category || 'Autre'}
+                          {st?.loan.to ? ` · prêté à ${st.loan.to}` : ''}
+                          {st?.engagement.departureName ? ` · ${st.engagement.departureName}` : ''}
+                          {gear.usage_count !== undefined && (
+                            <>
+                              <span className="ml-1 text-[#1C2620]/60">·</span>
+                              <span className="font-mono text-[#2D5A3D]">{gear.usage_count}</span>
+                              <span className="text-[#1C2620]/60">fois</span>
+                            </>
+                          )}
+                        </p>
+
+                        {av && !av.available && (
+                          <div className="mt-1.5 space-y-1">
+                            {av.blocks.map((slot) => (
+                              <div key={slot.id} className="flex items-center gap-2 text-xs">
+                                <span className={`px-2 py-0.5 rounded-full border font-mono font-bold ${SLOT_COLORS[slot.reason].label}`}>
+                                  {SLOT_COLORS[slot.reason].text}
+                                </span>
+                                <span className="text-[#1C2620]/75 truncate">{slot.label}</span>
+                                {slot.from && <span className="text-[#1C2620]/45 shrink-0">{formatDateFr(slot.from, true)}</span>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {av?.available && (
+                          <p className="text-xs text-[#2D5A3D] font-semibold mt-1.5">Disponible</p>
+                        )}
+
+                        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                          <MiniBtn
+                            label="Marquer rendu"
+                            primary
+                            onClick={() =>
+                              void onMarkReturned(gear.id).then(() => onToast(`« ${gear.name} » marqué rendu`, 'success'))
+                            }
+                            icon={<IconCheck size={13} />}
+                          />
+                          <MiniBtn
+                            label="Relancer"
+                            onClick={() => {
+                              onNudge(gear.id);
+                              onToast('Relance enregistrée', 'info');
+                            }}
+                            icon={<IconRefresh size={13} />}
+                          />
+                          <MiniBtn label="Ouvrir la fiche" onClick={() => onOpenGear(gear.id)} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </SectionCard>
-
-      {tab === 'engaged' && (
-        <SectionCard
-          title={activeDeparture ? `Engagement pour « ${activeDeparture.name} »` : 'Engagement départ'}
-          action={
-            activeDeparture ? (
-              <button type="button" onClick={onOpenDeparture} className="text-xs font-bold text-[#2D5A3D] hover:underline">
-                Voir le départ
-              </button>
-            ) : undefined
-          }
-        >
-          {!activeDeparture ? (
-            <p className="text-xs text-[#1C2620]/60">Aucun départ planifié avec kit assigné.</p>
-          ) : (
-            <p className="text-xs text-[#1C2620]/70">
-              {engagedItems.length} objet(s) réservés pour ce départ — ils deviennent indisponibles sur la période.
-            </p>
-          )}
-        </SectionCard>
-      )}
-
-      {list.length === 0 ? (
-        <SectionCard title="Disponibilité">
-          <p className="text-xs text-[#1C2620]/60">Rien à afficher dans cet onglet.</p>
-        </SectionCard>
-      ) : (
-        <div className="grid gap-3 lg:grid-cols-2">
-          {list.map((gear) => {
-            const st = statuses.get(gear.id);
-            const av = availability.get(gear.id);
-            return (
-              <div key={gear.id} className="rounded-2xl bg-white/60 border border-[#1C2620]/7 p-3 flex items-start gap-3">
-                <div className="w-14 h-14 rounded-2xl bg-white/60 border border-[#1C2620]/8 overflow-hidden relative shrink-0 flex items-center justify-center p-1">
-                  <Image src={gear.image || '/assets/images/no_image.png'} alt={gear.name} width={44} height={44} className="object-contain max-h-full max-w-full" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-[#1C2620] truncate">{gear.name}</p>
-                  <p className="text-xs text-[#1C2620]/60 truncate">
-                    {gear.category || 'Autre'}
-                    {st?.loan.to ? ` · prêté à ${st.loan.to}` : ''}
-                    {st?.engagement.departureName ? ` · ${st.engagement.departureName}` : ''}
-                  </p>
-
-                  {av && !av.available && (
-                    <div className="mt-1.5 space-y-1">
-                      {av.blocks.map((slot) => (
-                        <div key={slot.id} className="flex items-center gap-2 text-xs">
-                          <span className={`px-2 py-0.5 rounded-full border font-mono font-bold ${SLOT_COLORS[slot.reason].label}`}>
-                            {SLOT_COLORS[slot.reason].text}
-                          </span>
-                          <span className="text-[#1C2620]/75 truncate">{slot.label}</span>
-                          {slot.from && <span className="text-[#1C2620]/45 shrink-0">{formatDateFr(slot.from, true)}</span>}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {av?.available && (
-                    <p className="text-xs text-[#2D5A3D] font-semibold mt-1.5">Disponible</p>
-                  )}
-
-                  <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                    <MiniBtn
-                      label="Marquer rendu"
-                      primary
-                      onClick={() =>
-                        void onMarkReturned(gear.id).then(() => onToast(`« ${gear.name} » marqué rendu`, 'success'))
-                      }
-                      icon={<IconCheck size={13} />}
-                    />
-                    <MiniBtn
-                      label="Relancer"
-                      onClick={() => {
-                        onNudge(gear.id);
-                        onToast('Relance enregistrée', 'info');
-                      }}
-                      icon={<IconRefresh size={13} />}
-                    />
-                    <MiniBtn label="Ouvrir la fiche" onClick={() => onOpenGear(gear.id)} />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }

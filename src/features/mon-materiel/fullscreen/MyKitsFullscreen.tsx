@@ -61,7 +61,7 @@ export function MyKitsFullscreen({
   const [tab, setTab] = useState<Tab>('kits');
   const [search, setSearch] = useState('');
   const [selectedKitId, setSelectedKitId] = useState<string | null>(null);
-  const [sort, setSort] = useState<'recent' | 'weight' | 'name'>('recent');
+  const [sort, setSort] = useState<'recent' | 'usage' | 'weight' | 'name'>('recent');
 
   const nextKit = useMemo(() => {
     if (!activeHike?.assignedKitId) return null;
@@ -75,6 +75,7 @@ export function MyKitsFullscreen({
     return [...filtered].sort((a, b) => {
       if (sort === 'weight') return kitTotalWeight(b) - kitTotalWeight(a);
       if (sort === 'name') return a.name.localeCompare(b.name);
+      if (sort === 'usage') return (b.last_used_at || 0) - (a.last_used_at || 0);
       return (b.updated_at || '').localeCompare(a.updated_at || '');
     });
   }, [kits, search, sort]);
@@ -82,195 +83,202 @@ export function MyKitsFullscreen({
   const selectedKit = kits.find((k) => k.id === selectedKitId) || null;
 
   return (
-    <div className="space-y-4">
-      <SectionCard title={`Mes kits (${kits.length})`} action={<HeaderTabs tab={tab} onChange={setTab} trashCount={trashCount} />}>
-        <div className="flex items-center gap-2 flex-wrap">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher un kit…"
-            className="flex-1 min-w-[160px] px-3 py-2 rounded-xl bg-white/60 border border-[#1C2620]/10 text-xs text-[#1C2620] placeholder-[#1C2620]/45 focus:outline-none focus:border-[#2D5A3D]"
-            aria-label="Rechercher un kit"
-          />
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as typeof sort)}
-            className="px-2.5 py-2 rounded-xl bg-white/60 border border-[#1C2620]/10 text-xs text-[#1C2620] focus:outline-none"
-            aria-label="Trier les kits"
-          >
-            <option value="recent">Récents</option>
-            <option value="weight">Poids</option>
-            <option value="name">Nom</option>
-          </select>
-          <button
-            type="button"
-            onClick={onCreateKit}
-            className="px-4 py-2 rounded-full bg-[#2D5A3D] text-white text-xs font-bold min-h-[44px] inline-flex items-center gap-1.5"
-          >
-            <IconPlus size={14} /> Nouveau kit
-          </button>
-        </div>
-      </SectionCard>
+    <div className="lg:grid lg:grid-cols-[260px_1fr] lg:gap-4">
+      {/* Sidebar - Controls and Tabs */}
+      <div className="lg:sticky lg:top-8">
+        <SectionCard title={`Mes kits (${kits.length})`} action={<HeaderTabs tab={tab} onChange={setTab} trashCount={trashCount} />}>
+          <div className="flex items-center gap-2 flex-wrap">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Rechercher un kit…"
+              className="flex-1 min-w-[160px] px-3 py-2 rounded-xl bg-white/60 border border-[#1C2620]/10 text-xs text-[#1C2620] placeholder-[#1C2620]/45 focus:outline-none focus:border-[#2D5A3D]"
+              aria-label="Rechercher un kit"
+            />
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as typeof sort)}
+              className="px-2.5 py-2 rounded-xl bg-white/60 border border-[#1C2620]/10 text-xs text-[#1C2620] focus:outline-none"
+              aria-label="Trier les kits"
+            >
+              <option value="recent">Récents</option>
+              <option value="usage">Utilisation</option>
+              <option value="weight">Poids</option>
+              <option value="name">Nom</option>
+            </select>
+            <button
+              type="button"
+              onClick={onCreateKit}
+              className="px-4 py-2 rounded-full bg-[#2D5A3D] text-white text-xs font-bold min-h-[44px] inline-flex items-center gap-1.5"
+            >
+              <IconPlus size={14} /> Nouveau kit
+            </button>
+          </div>
+        </SectionCard>
+      </div>
 
-      {tab === 'kits' && (
-        <>
-          {sorted.length === 0 && (
-            <SectionCard title="Kits">
-              <p className="text-xs text-[#1C2620]/60">Aucun kit actif — créez votre premier kit.</p>
-            </SectionCard>
-          )}
-          <div className="grid gap-3 lg:grid-cols-2">
-            {sorted.map((kit) => {
-              const completeness = evaluateKitCompleteness(kit, equipment);
-              const assigned = activeHike?.assignedKitId === kit.id;
-              return (
-                <SectionCard
-                  key={kit.id}
-                  title={
-                    <span className="inline-flex items-center gap-2">
-                      {kit.name}
-                      {assigned && (
-                        <span className="px-2 py-0.5 rounded-full bg-[#2D5A3D]/10 text-[#235030] border border-[#2D5A3D]/30 font-mono text-[10px]">
-                          Kit départ
-                        </span>
+      {/* Main Content */}
+      <div className="space-y-4">
+        {tab === 'kits' && (
+          <>
+            {sorted.length === 0 && (
+              <SectionCard title="Kits">
+                <p className="text-xs text-[#1C2620]/60">Aucun kit actif — créez votre premier kit.</p>
+              </SectionCard>
+            )}
+            <div className="grid gap-3 lg:grid-cols-2">
+              {sorted.map((kit) => {
+                const completeness = evaluateKitCompleteness(kit, equipment);
+                const assigned = activeHike?.assignedKitId === kit.id;
+                return (
+                  <SectionCard
+                    key={kit.id}
+                    title={
+                      <span className="inline-flex items-center gap-2">
+                        {kit.name}
+                        {assigned && (
+                          <span className="px-2 py-0.5 rounded-full bg-[#2D5A3D]/10 text-[#235030] border border-[#2D5A3D]/30 font-mono text-[10px]">
+                            Kit départ
+                          </span>
+                        )}
+                      </span>
+                    }
+                    action={<KitActions kit={kit} onOpen={onOpenKit} onDuplicate={onDuplicateKit} />}
+                  >
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#1C2620]/75">
+                      <span>{kit.activity || 'Randonnée'}</span>
+                      {kit.season && <span>· {kit.season}</span>}
+                      <span>· {kit.items?.length || 0} articles</span>
+                      <span>· {formatWeight(kitTotalWeight(kit))}</span>
+                      {kit.last_used_at && <span>· utilisé {formatDateFr(kit.last_used_at, true)}</span>}
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[#1C2620]/70">
+                        Prêt : <strong className="text-[#1C2620]">{completeness.availableCount}/{completeness.totalItems}</strong>
+                        {completeness.missingCount > 0 && (
+                          <span className="ml-1 text-[#9B2C2C]">· {completeness.missingCount} manquant(s)</span>
+                        )}
+                        {completeness.unavailableCount > 0 && (
+                          <span className="ml-1 text-[#8C6A1A]">· {completeness.unavailableCount} indisponible(s)</span>
+                        )}
+                      </span>
+                      <span className="font-mono font-bold text-[#2D5A3D]">{completeness.availabilityPct}%</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-[#1C2620]/7 overflow-hidden">
+                      <div className="h-full bg-[#2D5A3D] rounded-full transition-all duration-500" style={{ width: `${completeness.availabilityPct}%` }} />
+                    </div>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedKitId(selectedKitId === kit.id ? null : kit.id)}
+                        className="px-3 py-1.5 rounded-full bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] text-xs font-bold min-h-[44px]"
+                      >
+                        {selectedKitId === kit.id ? 'Masquer le détail' : 'Voir le détail'}
+                      </button>
+                      {activeHike && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onAssignKit(activeHike.id, kit.id);
+                            onToast(`Kit « ${kit.name} » assigné au départ`, 'success');
+                          }}
+                          disabled={assigned}
+                          className={`px-3 py-1.5 rounded-full text-xs font-bold min-h-[44px] disabled:opacity-50 ${
+                            assigned ? 'bg-[#2D5A3D] text-white' : 'bg-white/60 border border-[#1C2620]/10 text-[#1C2620]/80'
+                          }`}
+                        >
+                          {assigned ? 'Assigné au départ' : 'Assigner au départ'}
+                        </button>
                       )}
-                    </span>
-                  }
-                  action={<KitActions kit={kit} onOpen={onOpenKit} onDuplicate={onDuplicateKit} />}
-                >
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#1C2620]/75">
-                    <span>{kit.activity || 'Randonnée'}</span>
-                    {kit.season && <span>· {kit.season}</span>}
-                    <span>· {kit.items?.length || 0} articles</span>
-                    <span>· {formatWeight(kitTotalWeight(kit))}</span>
-                    {kit.last_used_at && <span>· utilisé {formatDateFr(kit.last_used_at, true)}</span>}
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-[#1C2620]/70">
-                      Prêt : <strong className="text-[#1C2620]">{completeness.availableCount}/{completeness.totalItems}</strong>
-                      {completeness.missingCount > 0 && (
-                        <span className="ml-1 text-[#9B2C2C]">· {completeness.missingCount} manquant(s)</span>
-                      )}
-                      {completeness.unavailableCount > 0 && (
-                        <span className="ml-1 text-[#8C6A1A]">· {completeness.unavailableCount} indisponible(s)</span>
-                      )}
-                    </span>
-                    <span className="font-mono font-bold text-[#2D5A3D]">{completeness.availabilityPct}%</span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-[#1C2620]/7 overflow-hidden">
-                    <div className="h-full bg-[#2D5A3D] rounded-full transition-all duration-500" style={{ width: `${completeness.availabilityPct}%` }} />
-                  </div>
-                  <div className="flex flex-wrap gap-2 pt-1">
+                    </div>
                     <button
                       type="button"
-                      onClick={() => setSelectedKitId(selectedKitId === kit.id ? null : kit.id)}
-                      className="px-3 py-1.5 rounded-full bg-[#2D5A3D]/10 border border-[#2D5A3D]/30 text-[#2D5A3D] text-xs font-bold min-h-[44px]"
+                      onClick={() => void onPermanentDelete(kit.id)}
+                      className="text-xs font-bold text-[#9B2C2C]/70 hover:text-[#9B2C2C] inline-flex items-center gap-1"
                     >
-                      {selectedKitId === kit.id ? 'Masquer le détail' : 'Voir le détail'}
+                      <IconTrash size={12} /> Vers la corbeille
                     </button>
-                    {activeHike && (
+                  </SectionCard>
+                );
+              })}
+            </div>
+
+            {selectedKit && (
+              <KitDetail
+                kit={selectedKit}
+                equipment={equipment}
+                onOpenGear={onOpenGear}
+              />
+            )}
+          </>
+        )}
+
+        {tab === 'next' && (
+          <SectionCard title={nextKit ? `Kit du prochain départ — ${nextKit.name}` : 'Kit du prochain départ'}>
+            {!nextKit ? (
+              <p className="text-xs text-[#1C2620]/60">
+                {activeHike ? `Aucun kit assigné à « ${activeHike.name} ».` : 'Aucun départ planifié.'}
+              </p>
+            ) : (
+              <>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#1C2620]/80">
+                    {activeHike ? `Pour « ${activeHike.name} » — ${countdownLabel(activeHike.targetDate)}` : ''}
+                  </span>
+                  <span className="font-mono font-bold text-[#2D5A3D]">{formatWeight(kitTotalWeight(nextKit))}</span>
+                </div>
+                <KitDetail kit={nextKit} equipment={equipment} onOpenGear={onOpenGear} compact />
+              </>
+            )}
+          </SectionCard>
+        )}
+
+        {tab === 'trash' && (
+          <SectionCard title={`Corbeille (${trashCount})`}>
+            {trashKits.length === 0 ? (
+              <p className="text-xs text-[#1C2620]/60">Corbeille vide.</p>
+            ) : (
+              <div className="space-y-2">
+                {trashKits.map((k) => (
+                  <div key={k.id} className="p-3 rounded-xl bg-white/40 border border-[#1C2620]/7 flex items-center justify-between gap-2 text-xs">
+                    <div className="min-w-0">
+                      <p className="font-bold text-[#1C2620] truncate">{k.name}</p>
+                      <p className="text-[#1C2620]/45">
+                        Supprimé {k.deleted_at ? new Date(k.deleted_at).toLocaleDateString('fr-FR') : ''}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         type="button"
                         onClick={() => {
-                          onAssignKit(activeHike.id, kit.id);
-                          onToast(`Kit « ${kit.name} » assigné au départ`, 'success');
+                          onRestore(k.id);
+                          onToast(`Kit « ${k.name} » restauré`, 'success');
                         }}
-                        disabled={assigned}
-                        className={`px-3 py-1.5 rounded-full text-xs font-bold min-h-[44px] disabled:opacity-50 ${
-                          assigned ? 'bg-[#2D5A3D] text-white' : 'bg-white/60 border border-[#1C2620]/10 text-[#1C2620]/80'
-                        }`}
+                        className="px-2.5 py-1.5 rounded-lg bg-[#2D5A3D]/15 hover:bg-[#2D5A3D]/25 border border-[#2D5A3D]/30 text-[#2D5A3D] font-bold"
                       >
-                        {assigned ? 'Assigné au départ' : 'Assigner au départ'}
+                        Restaurer
                       </button>
-                    )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`Supprimer définitivement « ${k.name} » ?`)) {
+                            onPermanentDelete(k.id);
+                            onToast('Kit supprimé définitivement', 'info');
+                          }
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg bg-[#9B2C2C]/10 hover:bg-[#9B2C2C]/20 border border-[#9B2C2C]/20 text-[#9B2C2C] font-bold"
+                      >
+                        Suppr. définitif
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => void onPermanentDelete(kit.id)}
-                    className="text-xs font-bold text-[#9B2C2C]/70 hover:text-[#9B2C2C] inline-flex items-center gap-1"
-                  >
-                    <IconTrash size={12} /> Vers la corbeille
-                  </button>
-                </SectionCard>
-              );
-            })}
-          </div>
-
-          {selectedKit && (
-            <KitDetail
-              kit={selectedKit}
-              equipment={equipment}
-              onOpenGear={onOpenGear}
-            />
-          )}
-        </>
-      )}
-
-      {tab === 'next' && (
-        <SectionCard title={nextKit ? `Kit du prochain départ — ${nextKit.name}` : 'Kit du prochain départ'}>
-          {!nextKit ? (
-            <p className="text-xs text-[#1C2620]/60">
-              {activeHike ? `Aucun kit assigné à « ${activeHike.name} ».` : 'Aucun départ planifié.'}
-            </p>
-          ) : (
-            <>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-[#1C2620]/80">
-                  {activeHike ? `Pour « ${activeHike.name} » — ${countdownLabel(activeHike.targetDate)}` : ''}
-                </span>
-                <span className="font-mono font-bold text-[#2D5A3D]">{formatWeight(kitTotalWeight(nextKit))}</span>
+                ))}
               </div>
-              <KitDetail kit={nextKit} equipment={equipment} onOpenGear={onOpenGear} compact />
-            </>
-          )}
-        </SectionCard>
-      )}
-
-      {tab === 'trash' && (
-        <SectionCard title={`Corbeille (${trashCount})`}>
-          {trashKits.length === 0 ? (
-            <p className="text-xs text-[#1C2620]/60">Corbeille vide.</p>
-          ) : (
-            <div className="space-y-2">
-              {trashKits.map((k) => (
-                <div key={k.id} className="p-3 rounded-xl bg-white/40 border border-[#1C2620]/7 flex items-center justify-between gap-2 text-xs">
-                  <div className="min-w-0">
-                    <p className="font-bold text-[#1C2620] truncate">{k.name}</p>
-                    <p className="text-[#1C2620]/45">
-                      Supprimé {k.deleted_at ? new Date(k.deleted_at).toLocaleDateString('fr-FR') : ''}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onRestore(k.id);
-                        onToast(`Kit « ${k.name} » restauré`, 'success');
-                      }}
-                      className="px-2.5 py-1.5 rounded-lg bg-[#2D5A3D]/15 hover:bg-[#2D5A3D]/25 border border-[#2D5A3D]/30 text-[#2D5A3D] font-bold"
-                    >
-                      Restaurer
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (window.confirm(`Supprimer définitivement « ${k.name} » ?`)) {
-                          onPermanentDelete(k.id);
-                          onToast('Kit supprimé définitivement', 'info');
-                        }
-                      }}
-                      className="px-2.5 py-1.5 rounded-lg bg-[#9B2C2C]/10 hover:bg-[#9B2C2C]/20 border border-[#9B2C2C]/20 text-[#9B2C2C] font-bold"
-                    >
-                      Suppr. définitif
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </SectionCard>
-      )}
+            )}
+          </SectionCard>
+        )}
+      </div>
     </div>
   );
 }

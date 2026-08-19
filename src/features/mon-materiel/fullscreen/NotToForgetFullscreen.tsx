@@ -78,8 +78,8 @@ export function NotToForgetFullscreen({
   return (
     <div className="space-y-4">
       <SectionCard title="Checklist intelligente — vos données + règles génériques">
-        <div className="flex items-end justify-between gap-4">
-          <div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="space-y-3">
             <div className={`text-5xl font-extrabold font-mono leading-none ${criticalCount > 0 ? 'text-[#8C6A1A]' : 'text-[#2D5A3D]'}`}>
               {criticalCount + toCheckCount}
             </div>
@@ -87,7 +87,7 @@ export function NotToForgetFullscreen({
               {departureName ? `Pour « ${departureName} »` : 'À traiter avant départ'}
             </p>
           </div>
-          <div className="text-right space-y-0.5">
+          <div className="space-y-3 text-right">
             <p className="text-xs text-[#1C2620]/70">
               {doneCount}/{checklist.length} cochés
             </p>

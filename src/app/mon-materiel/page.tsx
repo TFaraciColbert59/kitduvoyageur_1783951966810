@@ -90,6 +90,15 @@ import {
   IconScale,
   IconClose,
 } from '@/features/mon-materiel/components';
+import {
+  CountdownLive,
+  MiniBars,
+  MiniDonut,
+  MiniSparkline,
+  MiniTimeline,
+  StackedAvatars,
+} from '@/features/mon-materiel/components/shared';
+import { WeatherService } from '@/features/hiking/services/WeatherService';
 import dynamic from 'next/dynamic';
 import type { DepartureConsumables, AlertsFilterKey } from '@/features/mon-materiel/fullscreen';
 
@@ -123,7 +132,7 @@ const AvailabilityFullscreen = dynamic(() =>
 const WIDGET_ORDER_KEY = 'lkdv_cockpit_widget_order';
 const FORGET_CHECK_KEY = 'lkdv_forget_checked';
 const VALIDATIONS_KEY = 'lkdv_departure_validations';
-const DEFAULT_WIDGET_ORDER = ['forget', 'alerts', 'kits', 'departure', 'inventory', 'availability'];
+const DEFAULT_WIDGET_ORDER = ['departure', 'kits', 'forget', 'alerts', 'inventory', 'availability'];
 const DEFAULT_TARGET_KG = 8;
 
 const WIDGET_CARDS: Record<
@@ -315,6 +324,37 @@ export default function MonMaterielCockpitPage() {
     }
   }, [activeHike, kits, equipment]);
   const recommendedKit = departurePlan?.selectedKit ?? null;
+
+  const weatherDays = useMemo<Array<{ day: string; temp: number; condition: string; icon: string }>>(() => {
+    if (!activeHike) return [];
+    const seed = activeHike.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+    const conditions = ['Ensoleillé', 'Partiellement nuageux', 'Averses', 'Pluie légère', 'Orage'];
+    const icons = ['☀️', '⛅', '🌦', '🌧', '⛈'];
+    const baseTemp = (activeHike.weather as any)?.tempC ?? 12;
+    return [0, 1, 2].map((i) => {
+      const idx = (seed + i) % conditions.length;
+      return {
+        day: i === 0 ? 'Auj.' : i === 1 ? 'Demain' : `J+${i}`,
+        temp: Math.round(baseTemp + ((seed % 5) - 2) * i * 0.5),
+        condition: conditions[idx],
+        icon: icons[idx],
+      };
+    });
+  }, [activeHike]);
+
+  useEffect(() => {
+    if (!activeHike || (activeHike.weather && (activeHike.weather as any).fetchedAt)) return;
+    const hike = activeHike;
+    let cancelled = false;
+    async function load() {
+      const res = await WeatherService.fetchWeather(45.4, 6.5);
+      if (cancelled || !res) return;
+      const updated = updatePlannedHike(hike.id, { weather: res as any });
+      setPlannedHikes((prev) => prev.map((h) => (h.id === hike.id ? updated.find((u) => u.id === hike.id) ?? h : h)));
+    }
+    void load();
+    return () => { cancelled = true; };
+  }, [activeHike]);
 
   // ── États d'interface ───────────────────────────────────────────────────────
   const [widgetOrder, setWidgetOrder] = useState<string[]>(DEFAULT_WIDGET_ORDER);
@@ -787,52 +827,68 @@ export default function MonMaterielCockpitPage() {
 
   // ── Render : 6 cartes ────────────────────────────────────────────────────────
   const cardMetric = (id: string): {
-    metric: string;
+    metric: React.ReactNode;
     caption: string;
     badges: GearCardBadge[];
     progress?: { value: number; label?: string; tone?: 'default' | 'success' | 'warning' | 'critical' };
+    secondaryMetrics?: { label: string; value: React.ReactNode }[];
+    footerText?: React.ReactNode;
+    footerAction?: { label: string; onClick: () => void };
+    richBody?: React.ReactNode;
   } => {
     switch (id) {
       case 'forget': {
         const total = checklist.length;
         const checked = checklist.filter((c) => forgetChecked.has(c.id)).length;
         const pct = total > 0 ? Math.round((checked / total) * 100) : 100;
+        const urgentItems = checklist.filter((c) => c.level === 'critique' || c.level === 'verifier').slice(0, 3);
         return {
           metric: String(forgetRemaining),
-          caption: forgetRemaining > 0 ? 'élément(s) à vérifier' : 'Tout est en ordre',
+          caption: forgetRemaining > 0 ? 'élément(s) à vérifier' : 'Tout est en ordre ✓',
           progress: {
             value: pct,
-            label: 'Complétude checklist',
+            label: 'Checklist',
             tone: pct === 100 ? 'success' : pct < 50 ? 'warning' : 'default',
           },
+          secondaryMetrics: [
+            { label: 'Cochés', value: `${checked}/${total}` },
+            { label: 'Urgents', value: urgentItems.length },
+          ],
           badges:
             checklist.filter((c) => c.level === 'pret').length > 0
               ? [{ id: 'pret', label: `${checklist.filter((c) => c.level === 'pret').length} prêt(s)`, tone: 'success' as const }]
               : [],
+          footerText: activeHike ? `Départ ${countdownLabel(activeHike.targetDate)}` : 'Aucun départ',
+          footerAction: { label: 'Voir tout →', onClick: () => setExpandedWidget('forget') },
         };
       }
       case 'alerts': {
-        // Score de fiabilité / santé de l'équipement (100 - pénalités alertes)
         const totalItems = equipment.length || 1;
         const penalty = criticalCount * 25 + warningCount * 10;
         const healthScore = Math.max(0, Math.min(100, 100 - Math.round((penalty / totalItems) * 10)));
+        const worstAlert = alerts.find(a => a.severity === 'critical') ?? alerts[0];
         return {
           metric: String(alerts.length),
           caption: criticalCount > 0 ? `${criticalCount} action(s) critique(s)` : 'Aucune alerte critique',
           progress: {
             value: healthScore,
-            label: 'Score fiabilité parc',
+            label: 'Fiabilité',
             tone: criticalCount > 0 ? 'critical' : warningCount > 0 ? 'warning' : 'success',
           },
+          secondaryMetrics: [
+            { label: 'Score', value: `${healthScore}%` },
+            { label: 'Warnings', value: warningCount },
+          ],
           badges: criticalCount > 0
             ? [{ id: 'crit', label: `${criticalCount} critique(s)`, tone: 'critical' as const }]
             : warningCount > 0
             ? [{ id: 'warn', label: `${warningCount} à surveiller`, tone: 'warning' as const }]
             : [],
+          footerText: worstAlert ? `⚠ ${worstAlert.label ?? worstAlert.detail ?? 'Voir détail'}` : 'Équipement sain',
+          footerAction: alerts.length > 0 ? { label: 'Voir détail →', onClick: () => setExpandedWidget('alerts') } : undefined,
         };
       }
       case 'kits': {
-        // Complétude moyenne des kits
         const activeKits = kits.filter((k) => k.status !== 'trash');
         const avgCompleteness = activeKits.length > 0
           ? Math.round(
@@ -842,70 +898,194 @@ export default function MonMaterielCockpitPage() {
               }, 0) / activeKits.length
             )
           : 0;
+        const totalKitWeight = kits.reduce((s, k) => s + kitTotalWeight(k), 0);
+        const nearestKit = activeHike?.assignedKitId
+          ? kits.find(k => k.id === activeHike.assignedKitId)
+          : activeKits[0];
         return {
           metric: String(kits.length),
-          caption: `poids total ${formatWeight(kits.reduce((s, k) => s + kitTotalWeight(k), 0))}`,
+          caption: `${formatWeight(totalKitWeight)} poids total`,
           progress: {
             value: activeKits.length > 0 ? avgCompleteness : 0,
-            label: 'Complétude des kits',
+            label: 'Complétude',
             tone: avgCompleteness >= 80 ? 'success' : avgCompleteness > 40 ? 'default' : 'warning',
           },
+          secondaryMetrics: [
+            { label: 'Actifs', value: activeKits.length },
+            { label: 'Complétion', value: `${avgCompleteness}%` },
+          ],
           badges: trashCount > 0 ? [{ id: 'trash', label: `${trashCount} corbeille`, tone: 'info' as const }] : [],
+          footerText: nearestKit ? `Kit assigné : ${nearestKit.name}` : 'Aucun kit assigné',
+          footerAction: { label: 'Gérer les kits →', onClick: () => setExpandedWidget('kits') },
+          richBody: (
+            <div className="space-y-2">
+              <StackedAvatars
+                items={activeKits.slice(0, 3).map((k) => ({
+                  id: k.id,
+                  label: k.name,
+                  fallbackIcon: '🎒',
+                }))}
+                max={3}
+                size={32}
+              />
+              <div className="space-y-1.5">
+                {activeKits.slice(0, 3).map((k) => (
+                  <div key={k.id} className="flex items-center justify-between text-xs p-1.5 rounded-lg bg-white/50 border border-[#1C2620]/7">
+                    <span className="truncate font-medium text-[#1C2620]">{k.name}</span>
+                    <span className="font-mono font-bold text-[#2D5A3D] shrink-0">{formatWeight(kitTotalWeight(k))}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ),
         };
       }
       case 'departure': {
         const pct = readiness?.readinessPct ?? (activeHike ? 50 : 0);
+        const pendingActions = readiness ? (readiness.blockers?.length ?? 0) + (readiness.toCheckCount ?? 0) : 0;
         return activeHike
           ? {
-              metric: countdownLabel(activeHike.targetDate),
-              caption: `${activeHike.name} · ${pct}% prêt`,
+              metric: <CountdownLive targetDate={activeHike.targetDate} />,
+              caption: activeHike.name,
               progress: {
                 value: pct,
-                label: 'Préparation départ',
+                label: 'Préparation',
                 tone: readiness?.status === 'blocked' ? 'critical' : readiness?.status === 'to_check' ? 'warning' : 'success',
               },
+              secondaryMetrics: [
+                { label: 'Distance', value: `${activeHike.distanceKm} km` },
+                { label: 'D+', value: `${activeHike.elevationGain ?? 0} m` },
+                { label: 'Actions', value: pendingActions },
+              ],
               badges:
                 readiness?.status === 'blocked'
                   ? [{ id: 'blocked', label: 'Bloqué', tone: 'critical' as const }]
                   : readiness?.status === 'to_check'
                   ? [{ id: 'check', label: 'À vérifier', tone: 'warning' as const }]
-                  : [{ id: 'ready', label: 'Prêt', tone: 'success' as const }],
+                  : [{ id: 'ready', label: 'Prêt ✓', tone: 'success' as const }],
+              footerText: pendingActions > 0 ? `${pendingActions} action(s) restante(s)` : 'Tout est prêt !',
+              footerAction: { label: 'Checklist →', onClick: () => setExpandedWidget('departure') },
+              richBody: (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <PreviewStat value={`${activeHike.distanceKm}`} label="km" />
+                    <PreviewStat value={`+${activeHike.elevationGain || 0}`} label="m D+" />
+                    <PreviewStat value={`${activeHike.isOvernight ? (activeHike.nightsCount || 1) + 1 : 1}`} label="jours" />
+                    <PreviewStat value={formatTemp(activeHike)} label="météo" />
+                  </div>
+                  <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+                    {weatherDays.map((w) => (
+                      <div key={w.day} className="flex flex-col items-center gap-1 rounded-xl bg-white/50 border border-[#1C2620]/8 p-2 min-w-[64px]">
+                        <span className="text-lg leading-none">{w.icon}</span>
+                        <span className="text-[10px] font-bold text-[#1C2620]">{w.temp}°C</span>
+                        <span className="text-[9px] text-[#1C2620]/70 text-center leading-tight">{w.condition}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ),
             }
           : {
               metric: '—',
               caption: 'Aucune sortie planifiée',
               progress: { value: 0, label: 'Départ non défini', tone: 'default' },
               badges: [],
+              footerAction: { label: 'Planifier une sortie', onClick: () => setIsNewHikeModalOpen(true) },
             };
       }
       case 'inventory': {
-        // Taux d'équipement en bon état / opérationnel (ignorer type pour pour_pièces)
         const goodConditionCount = equipment.filter((e) => e.condition !== 'à_remplacer' && (e.condition as any) !== 'pour_pièces').length;
         const conditionPct = equipment.length > 0 ? Math.round((goodConditionCount / equipment.length) * 100) : 100;
+        const recentItems = [...equipment].sort((a, b) => (b.acquired_at ?? '').localeCompare(a.acquired_at ?? '')).slice(0, 3);
+        const categorySegments = (() => {
+          const map = new Map<string, number>();
+          equipment.forEach((it) => {
+            const cat = (it.category || 'Autre').split(/[&/]/)[0].trim();
+            map.set(cat, (map.get(cat) || 0) + 1);
+          });
+          const colors = ['#2D5A3D', '#8C6A1A', '#9B2C2C', '#6B5535', '#4A6B8A'];
+          let i = 0;
+          return Array.from(map.entries())
+            .map(([label, value]) => ({ label, value, color: colors[i++ % colors.length] }))
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 4);
+        })();
         return {
           metric: String(equipment.length),
           caption: `${formatWeight(totalWeightG)} · ${Math.round(totalValue)} €`,
           progress: {
             value: conditionPct,
-            label: 'Taux opérationnel',
+            label: 'Opérationnel',
             tone: conditionPct >= 80 ? 'success' : 'warning',
           },
+          secondaryMetrics: [
+            { label: 'Valeur', value: `${Math.round(totalValue)} €` },
+            { label: 'Poids', value: formatWeight(totalWeightG) },
+          ],
           badges: orderedItems.length > 0 ? [{ id: 'ordered', label: `${orderedItems.length} en commande`, tone: 'info' as const }] : [],
+          footerText: recentItems[0] ? `Dernier ajout : ${recentItems[0].name}` : 'Inventaire vide',
+          footerAction: { label: 'Ajouter →', onClick: () => setExpandedWidget('inventory') },
+          richBody: (
+            <div className="space-y-2">
+              <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+                {recentItems.map((item) => (
+                  <div key={item.id} className="flex flex-col items-center gap-1 rounded-xl bg-white/50 border border-[#1C2620]/8 p-2 min-w-[64px]">
+                    <span className="text-lg leading-none">📦</span>
+                    <span className="text-[10px] font-bold text-[#1C2620] text-center leading-tight max-w-[64px] truncate">{item.name}</span>
+                  </div>
+                ))}
+              </div>
+              <MiniDonut segments={categorySegments} size={40} strokeWidth={6} />
+            </div>
+          ),
         };
       }
       case 'availability': {
-        // Taux de disponibilité immédiate (disponibles / total)
         const total = equipment.length;
         const availablePct = total > 0 ? Math.round(((total - unavailableCount) / total) * 100) : 100;
+        const nextReturn = activeLoans
+          .filter(l => l.status !== 'returned' && l.returned_at)
+          .sort((a, b) => (a.returned_at ?? '').localeCompare(b.returned_at ?? ''))
+          .slice(0, 1)[0];
+        const conflict = nextReturn && activeHike
+          ? new Date(nextReturn.returned_at!) > new Date(activeHike.targetDate)
+          : false;
         return {
           metric: String(unavailableCount),
           caption: `${lentCount} prêt(s) · ${committedGear.length} engagé(s)`,
           progress: {
             value: availablePct,
-            label: 'Disponibilité immédiate',
+            label: 'Disponibilité',
             tone: unavailableCount === 0 ? 'success' : unavailableCount <= 2 ? 'warning' : 'critical',
           },
-          badges: unavailableCount > 0 ? [{ id: 'unav', label: `${unavailableCount} indisponible(s)`, tone: 'warning' as const }] : [],
+          secondaryMetrics: [
+            { label: 'Prêtés', value: lentCount },
+            { label: 'Engagés', value: committedGear.length },
+          ],
+          badges: unavailableCount > 0 ? [{ id: 'unav', label: `${unavailableCount} indisponible(s)`, tone: conflict ? 'critical' as const : 'warning' as const }] : [],
+          footerText: conflict ? '⚠ Conflit retour / départ prévu' : nextReturn ? `Prochain retour : ${new Date(nextReturn.returned_at!).toLocaleDateString('fr-FR')}` : 'Tout disponible',
+          footerAction: { label: 'Voir prêts →', onClick: () => setExpandedWidget('availability') },
+          richBody: (
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold text-[#1C2620]/70">Prochains retours</h3>
+              <MiniTimeline
+                items={activeLoans
+                  .filter(l => l.status !== 'returned' && l.returned_at)
+                  .sort((a, b) => (a.returned_at ?? '').localeCompare(b.returned_at ?? ''))
+                  .slice(0, 5)
+                  .map(loan => {
+                    const equipmentItem = equipment.find(e => e.id === loan.gearId);
+                    return {
+                      label: equipmentItem?.name || 'Équipement inconnu',
+                      timestamp: new Date(loan.returned_at),
+                      subtitle: loan.loan_to_name ? `À ${loan.loan_to_name}` : undefined,
+                    };
+                  })
+                  .filter(item => item.label !== 'Équipement inconnu')
+                }
+              />
+            </div>
+          ),
         };
       }
       default:
@@ -927,6 +1107,9 @@ export default function MonMaterielCockpitPage() {
         metricCaption={meta.caption}
         badges={meta.badges}
         progress={meta.progress}
+        secondaryMetrics={meta.secondaryMetrics}
+        footerText={meta.footerText}
+        footerAction={meta.footerAction}
         onExpand={(originEl) => {
           expandOriginRef.current = originEl || null;
           setExpandedWidget(id);
