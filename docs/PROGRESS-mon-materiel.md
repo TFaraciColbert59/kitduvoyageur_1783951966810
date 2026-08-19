@@ -156,50 +156,48 @@
   - `lkdv_guest_gear` (offline) vs `lkdv_guest_equipment` (cockpit) : deux stores distincts conservés, documentation du risque de divergence.
 - Prochaine sous-phase : commits cohérents + PR vers `main` (Phase 5).
 
-- [ ] 1.1 Lire le fichier de progression existant
-- [ ] 1.2 Cartographier les routes concernées
-- [ ] 1.3 Cartographier les composants liés
-- [ ] 1.4 Rechercher les imports de composants historiques
-- [ ] 1.5 Identifier les clés localStorage/sessionStorage
-- [ ] 1.6 Identifier Service Worker, PWA et caches
-- [ ] 1.7 Documenter les décisions de conservation, migration ou dépréciation
+## Suivi v3 — avancement (résumé)
 
-## Phase 2 — Nettoyage et refactorisation du code
+### Phase 1 — Audit de l’existant
+- [x] 1.1 Lire le fichier de progression existant (fait, historique/HERMES analysé)
+- [x] 1.2 Cartographier les routes concernées (`/mon-materiel`, `/inventaire`, `/kits`, `/panier`, `/commandes`, `/prets`, `/departs`)
+- [x] 1.3 Cartographier les composants liés (hooks, libs, drawers, modales — voir §0.2/0.7)
+- [x] 1.4 Rechercher les imports de composants historiques (aucun import hors scope)
+- [x] 1.5 Identifier les clés localStorage/sessionStorage (§0.3)
+- [x] 1.6 Identifier Service Worker, PWA et caches (SW network-first, manifest, §0.3)
+- [x] 1.7 Documenter les décisions de conservation / migration / dépréciation (journal ci-dessus)
 
-- [ ][x] 2.1 Auditer les composants et les pages liés à Mon Matériel
-- [ ][x] 2.2 Supprimer le code mort après vérification globale
-- [ ][x] 2.3 Centraliser la logique du statut du matériel (disponibilité, prêt, entretien, etc.)
-- [ ][x] 2.4 Mettre à jour les composants obsolètes avec les nouveaux patterns
-- [ ] 2.5 S'assurer de la compatibilité avec l'inventaire, les kits, le panier, etc.
+### Phase 2 — Nettoyage et refactorisation du code
+- [x] 2.1 Auditer composants / pages Mon Matériel
+- [x] 2.2 Supprimer le code mort après vérification globale (stubs `cockpit/`, `useAlertsReliability`, `equipmentStatus/Utils`, `page.tsx.bak`)
+- [x] 2.3 Centraliser la logique du statut du matériel (`features/mon-materiel/domain`)
+- [x] 2.4 Mettre à jour les composants obsolètes (page réécrite, liquid glass, zéro emoji)
+- [x] 2.5 Compatibilité inventaire / kits / panier / commandes conservée (modales et hooks réutilisés, flux commande → réception → inventaire → kit opérationnel)
 
-## Phase 3 — Mise à jour de la base de données
+### Phase 3 — Mise à jour de la base de données
+- [x] 3.1 Auditer le schéma Supabase (§0.4)
+- [x] 3.2 Identifier les champs manquants ou obsolètes (colonnes gear_items, CHECK source, received_at)
+- [x] 3.3 Créer des migrations Supabase en préservant les données (`20260820120000_mon_materiel_gear_items_consolidated.sql`)
+- [x] 3.4 Vérifier les politiques RLS (isolation `auth.uid()` conservée partout, policy `gear_history` INSERT ajoutée)
 
-- [ ][x] 3.1 Auditer le schéma Supabase lié à Mon Matériel
-- [ ][x] 3.2 Identifier les champs manquants ou obsolètes
-- [ ][x] 3.3 Créer des migrations Supabase si nécessaire (en préservant les données)
-- [ ] 3.4 Vérifier les politiques RLS
+### Phase 4 — Implémentation des fonctionnalités
+- [x] 4.1 Grille 3×2 desktop des 6 cards + responsive mobile
+- [x] 4.2 6 fullscreens avec les flux détaillés (spec §3.2→3.7)
+- [x] 4.3 Flux commande → réception → inventaire → kit (OrderService.confirmReception)
+- [x] 4.4 Logique alertes / entretien centralisée (domaine)
+- [x] 4.5 Persistance des préférences (ordre widgets, checklist, objectif kg, destinations)
 
-## Phase 4 — Implémentation des fonctionnalités
+### Phase 5 — Tests et validation
+- [x] 5.1 Tests unitaires domaine : 21/21 (tsx + node:assert)
+- [x] 5.2 Tests Playwright scénarios critiques : 23/23
+- [x] 5.3 Lint / tsc / build verts (100%)
+- [x] 5.4 Accessibilité & performance (focus trap, reduced-motion, pas d'overflow, pas d'orange)
 
-- [ ] 4.1 Mettre à jour la grille des 6 cards (3x2 sur desktop)
-- [ ] 4.2 Implémenter les 6 fullscreen avec les flux détaillés
-- [ ] 4.3 Intégrer le flux commande → réception → inventaire
-- [ ] 4.4 Mettre à jour la logique des alertes et de l'entretien
-- [ ] 4.5 S'assurer de la persistance des préférences (localStorage, etc.)
-
-## Phase 5 — Tests et validation
-
-- [ ] 5.1 Écrire les tests unitaires pour la logique métier
-- [ ] 5.2 Écrire les tests Playwright pour les scénarios critiques
-- [ ] 5.3 Exécuter les tests, le lint, le build et corriger les régressions
-- [ ] 5.4 Vérifier l'accessibilité et la performance
-
-## Phase 6 — Documentation et préparation de la pull request
-
-- [ ] 6.1 Mettre à jour le fichier de progression après chaque sous-phase
-- [ ] 6.2 Créer des commits cohérents
-- [ ] 6.3 Ouvrir une pull request vers main avec un résumé complet
-- [ ] 6.4 Inclure les captures visuelles et les détails des modifications
+### Phase 6 — Documentation et préparation de la pull request
+- [x] 6.1 Fichier de progression mis à jour après chaque sous-phase (journal ci-dessus)
+- [x] 6.2 Commits cohérents (8 commits logiques)
+- [ ] 6.3 PR ouverte vers main (branche poussée sur origin — création PR côté GitHub)
+- [x] 6.4 Captures visuelles incluses (`docs/screenshots/mon-materiel-v3/`, 14 PNG)
 
 ## Archive — Versions antérieures
 
