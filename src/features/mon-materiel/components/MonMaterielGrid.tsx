@@ -1,20 +1,17 @@
-'use client';
+﻿'use client';
 
 /**
- * LKDV — Mon Matériel : grille du cockpit « 3×2 » (desktop) / 1 colonne (mobile).
- * Six cartes en strict 3 colonnes × 2 rangées, avec tailles hétérogènes :
- * la première rangée (priorité) est plus haute que la seconde — concentration
- * de l'attention sur les cartes critiques (départ, alertes, inventaire).
+ * LKDV — Mon Matériel : grille du cockpit asymétrique (desktop) / 1 colonne (mobile).
  *
- * Drag & drop ANIMÉ via framer-motion `Reorder` :
- * - chaque carte est un `Reorder.Item` qui se déplace SEUL et prend sa place
- *   automatiquement pendant le glisser (contraintes = grille) ;
- * - le drag est déclenché par la poignée (dragControls.start / pointer) ;
- * - spring élastique LKDV sur l'animation de retour/layout ;
- * - persistance inchangée : `widgetOrder` (lkdv_cockpit_widget_order).
+ * Disposition desktop (lg) — Option B :
+ *   Colonnes : 3 | Rangées : 2 auto
+ *   - Cartes 0 et 1 (grandes) : row-span-2 → occupent chacune 1 col × 2 rangées,
+ *     côte à côte sur les colonnes 1 et 2.
+ *   - Cartes 2, 3, 4, 5 (petites) : row-span-1 → remplissent la colonne 3
+ *     en 2 rangées de 2 (wrapping naturel).
  *
- * `dimmed` efface la grille pendant l'ouverture d'un plein écran
- * (shared element framer-motion).
+ * Drag & drop ANIMÉ via framer-motion Reorder.
+ * `dimmed` efface la grille pendant l'ouverture d'un plein écran.
  */
 
 import React from 'react';
@@ -31,14 +28,18 @@ export interface MonMaterielGridProps {
 interface GridDragItemProps {
   id: string;
   children: React.ReactNode;
+  isLarge?: boolean;
 }
 
-function GridDragItem({ id, children }: GridDragItemProps) {
+function GridDragItem({ id, children, isLarge = false }: GridDragItemProps) {
   const controls = useDragControls();
   const child = React.isValidElement(children)
-    ? React.cloneElement(children as React.ReactElement<{ onDragHandlePointerDown?: (e: React.PointerEvent<HTMLElement>) => void }>, {
-        onDragHandlePointerDown: (e: React.PointerEvent<HTMLElement>) => controls.start(e),
-      })
+    ? React.cloneElement(
+        children as React.ReactElement<{
+          onDragHandlePointerDown?: (e: React.PointerEvent<HTMLElement>) => void;
+        }>,
+        { onDragHandlePointerDown: (e: React.PointerEvent<HTMLElement>) => controls.start(e) }
+      )
     : children;
 
   return (
@@ -48,7 +49,9 @@ function GridDragItem({ id, children }: GridDragItemProps) {
       dragControls={controls}
       dragElastic={0.12}
       whileDrag={{ scale: 1.02, zIndex: 30 }}
-      className="h-full min-h-0"
+      layout
+      transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+      className={isLarge ? 'min-h-0 lg:row-span-2' : 'min-h-0'}
     >
       {child}
     </Reorder.Item>
@@ -67,13 +70,18 @@ export function MonMaterielGrid({
       as="div"
       values={order}
       onReorder={onReorder}
-      className={`min-h-0 grid grid-cols-1 gap-3 items-stretch sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-[1.15fr_0.85fr] lg:auto-rows-fr lg:flex-1 lg:min-h-0 ${className}`}
+      className={[
+        'grid grid-cols-1 gap-6 items-stretch',
+        'sm:grid-cols-2',
+        'lg:grid-cols-3 lg:grid-rows-2 lg:auto-rows-fr lg:flex-1 lg:min-h-0',
+        className,
+      ].join(' ')}
       animate={{ opacity: dimmed ? 0.35 : 1, scale: dimmed ? 0.985 : 1 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       style={{ transformOrigin: 'center top' }}
     >
-      {order.map((id) => (
-        <GridDragItem key={id} id={id}>
+      {order.map((id, index) => (
+        <GridDragItem key={id} id={id} isLarge={index < 2}>
           {renderCard(id)}
         </GridDragItem>
       ))}
