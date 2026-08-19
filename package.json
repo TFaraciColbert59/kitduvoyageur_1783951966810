@@ -34,7 +34,9 @@
       "lint:fix",
       "format",
       "serve",
-      "type-check"
+      "type-check",
+      "test",
+      "test:domain"
     ],
     "warning": "🚨 CRITICAL: DO NOT REMOVE OR MODIFY ABOVE DEPENDENCIES - Required for Next.js 15 TypeScript app functionality"
   },
@@ -46,7 +48,9 @@
     "lint:fix": "next lint --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,md,json}\"",
     "serve": "next start",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "tsx src/features/mon-materiel/test/domain.test.ts",
+    "test:domain": "tsx src/features/mon-materiel/test/domain.test.ts"
   },
   "dependencies": {
     "@capacitor/cli": "^8.5.0",
