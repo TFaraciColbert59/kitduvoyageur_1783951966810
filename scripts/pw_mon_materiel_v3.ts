@@ -73,6 +73,34 @@ async function main() {
   });
   report('Grille desktop 3×2 (3 colonnes)', gridCols === 3, `${gridCols} colonnes`);
 
+  // ═══ 1a. Réordonnancement Drag & Drop (T1/T6) ═══
+  const gripHandles = page.locator('span[title="Réorganiser le module"]');
+  if ((await gripHandles.count()) >= 2) {
+    const source = gripHandles.nth(0);
+    const target = gripHandles.nth(1);
+    const sBox = await source.boundingBox();
+    const tBox = await target.boundingBox();
+    if (sBox && tBox) {
+      await page.mouse.move(sBox.x + sBox.width / 2, sBox.y + sBox.height / 2);
+      await page.mouse.down();
+      // Animation spring : on déplace puis on attend un instant que Framer Motion actualise le layoutId
+      await page.mouse.move(tBox.x + tBox.width / 2, tBox.y + tBox.height / 2, { steps: 20 });
+      await page.waitForTimeout(300);
+      await page.mouse.up();
+      await page.waitForTimeout(600); // Wait for settle
+      
+      const savedOrder = await page.evaluate(() => {
+        const raw = localStorage.getItem('lkdv_cockpit_widget_order');
+        return raw ? JSON.parse(raw) : [];
+      });
+      report('DnD: ordre sauvegardé dans localStorage', Array.isArray(savedOrder) && savedOrder.length === 6, savedOrder[0]);
+    } else {
+      report('DnD: éléments inaccessibles', false);
+    }
+  } else {
+    report('DnD: poignées manquantes', false);
+  }
+
   // Aucun overflow horizontal
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   report('Pas de débordement horizontal desktop', overflow <= 0, `${overflow}px`);
@@ -159,7 +187,36 @@ async function main() {
   report('Focus piégé dans le plein écran (Tab)', trapOk);
   await pressEscapeUntilClosed(page);
 
-  // ═══ 4. Checklist « À ne pas oublier » persistée ═══
+  // ═══ 4c. États vides et CTAs d'aide (T6) ═══
+  // On s'assure qu'il n'y a pas de sortie pour tester l'état vide
+  await page.evaluate(() => {
+    localStorage.removeItem('lkdv_planned_hikes');
+    localStorage.removeItem('lkdv_active_planned_hike_id');
+    localStorage.removeItem('lkdv_guest_kits');
+  });
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(800);
+
+  const emptyPlanifier = page.getByRole('button', { name: /Planifier une sortie/i });
+  if (await emptyPlanifier.count() > 0) {
+    report('État vide CTA: Planifier une sortie présent', true);
+    await emptyPlanifier.first().click();
+    await page.waitForTimeout(500);
+    const newHikeModal = await page.getByRole('heading', { name: /Nouvelle sortie/i }).count();
+    report('État vide CTA: ouvre la modale Nouvelle sortie', newHikeModal > 0);
+    await pressEscapeUntilClosed(page);
+  } else {
+    report('État vide CTA: Planifier une sortie manquant', false);
+  }
+  
+  const emptyCreerKit = page.getByRole('button', { name: /Créer mon premier kit/i });
+  if (await emptyCreerKit.count() > 0) {
+    report('État vide CTA: Créer mon premier kit présent', true);
+  } else {
+    report('État vide CTA: Créer mon premier kit manquant', false);
+  }
+
+  // ═══ 5. Cas C : Ajout à l'inventaire complet (workflow depuis recherche / checklist) ═══
   await page.locator('button[aria-label^="Agrandir la carte"]').nth(0).click(); // À ne pas oublier
   await page.waitForTimeout(700);
   const hadCheckbox = (await page.locator('button[aria-pressed="false"]').count()) > 0;

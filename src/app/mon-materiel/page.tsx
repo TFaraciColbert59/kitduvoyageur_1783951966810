@@ -58,6 +58,8 @@ import {
   formatWeight,
   formatTemp,
   kitTotalWeight,
+  newHikeFormSchema,
+  evaluateKitCompleteness,
 } from '@/features/mon-materiel/domain';
 import {
   GearService,
@@ -88,16 +90,34 @@ import {
   IconScale,
   IconClose,
 } from '@/features/mon-materiel/components';
-import {
-  NotToForgetFullscreen,
-  NextDepartureFullscreen,
-  AlertsReliabilityFullscreen,
-  MyKitsFullscreen,
-  InventoryCatalogFullscreen,
-  AvailabilityFullscreen,
-  type DepartureConsumables,
-  type AlertsFilterKey,
-} from '@/features/mon-materiel/fullscreen';
+import dynamic from 'next/dynamic';
+import type { DepartureConsumables, AlertsFilterKey } from '@/features/mon-materiel/fullscreen';
+
+// Imports dynamiques des six vues pleins écran (contrainte LKDV : composants lourds).
+const NotToForgetFullscreen = dynamic(() =>
+  import('@/features/mon-materiel/fullscreen').then((m) => m.NotToForgetFullscreen),
+  { ssr: false, loading: () => <div className="h-24 animate-pulse rounded-3xl bg-white/35 border border-[#1C2620]/8" /> }
+);
+const NextDepartureFullscreen = dynamic(() =>
+  import('@/features/mon-materiel/fullscreen').then((m) => m.NextDepartureFullscreen),
+  { ssr: false, loading: () => <div className="h-24 animate-pulse rounded-3xl bg-white/35 border border-[#1C2620]/8" /> }
+);
+const AlertsReliabilityFullscreen = dynamic(() =>
+  import('@/features/mon-materiel/fullscreen').then((m) => m.AlertsReliabilityFullscreen),
+  { ssr: false, loading: () => <div className="h-24 animate-pulse rounded-3xl bg-white/35 border border-[#1C2620]/8" /> }
+);
+const MyKitsFullscreen = dynamic(() =>
+  import('@/features/mon-materiel/fullscreen').then((m) => m.MyKitsFullscreen),
+  { ssr: false, loading: () => <div className="h-24 animate-pulse rounded-3xl bg-white/35 border border-[#1C2620]/8" /> }
+);
+const InventoryCatalogFullscreen = dynamic(() =>
+  import('@/features/mon-materiel/fullscreen').then((m) => m.InventoryCatalogFullscreen),
+  { ssr: false, loading: () => <div className="h-24 animate-pulse rounded-3xl bg-white/35 border border-[#1C2620]/8" /> }
+);
+const AvailabilityFullscreen = dynamic(() =>
+  import('@/features/mon-materiel/fullscreen').then((m) => m.AvailabilityFullscreen),
+  { ssr: false, loading: () => <div className="h-24 animate-pulse rounded-3xl bg-white/35 border border-[#1C2620]/8" /> }
+);
 
 // ── Constantes & libellés ──────────────────────────────────────────────────────
 const WIDGET_ORDER_KEY = 'lkdv_cockpit_widget_order';
@@ -302,8 +322,6 @@ export default function MonMaterielCockpitPage() {
   const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
   const expandOriginRef = useRef<HTMLElement | null>(null);
   const [inventoryInitialQuery, setInventoryInitialQuery] = useState('');
-  const [dragWidget, setDragWidget] = useState<string | null>(null);
-  const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [forgetChecked, setForgetChecked] = useState<Set<string>>(new Set());
   const [alertFilter, setAlertFilter] = useState<AlertsFilterKey>('all');
   const [resolvedAlerts, setResolvedAlerts] = useState<Set<string>>(new Set());
@@ -571,21 +589,33 @@ export default function MonMaterielCockpitPage() {
 
   const handleCreateHike = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newHikeName.trim()) return;
+    // Validation stricte (Zod) des entrées utilisateur.
+    const parsed = newHikeFormSchema.safeParse({
+      name: newHikeName,
+      terrainMassif: newHikeDest,
+      days: newHikeDays,
+      distanceKm: newHikeKm,
+      elevationGain: newHikeDPlus,
+      companions: newHikeCompanions,
+    });
+    if (!parsed.success) {
+      showToast(parsed.error.issues[0]?.message || 'Formulaire invalide', 'warning');
+      return;
+    }
     const target = new Date();
     target.setDate(target.getDate() + 30);
     const newHike = savePlannedHike({
-      name: newHikeName.trim(),
-      distanceKm: Number(newHikeKm) || 25,
-      elevationGain: Number(newHikeDPlus) || 1200,
+      name: parsed.data.name,
+      distanceKm: parsed.data.distanceKm,
+      elevationGain: parsed.data.elevationGain,
       targetDate: target.toISOString().split('T')[0],
       difficulty: 'Moyen',
       season: 'Toutes saisons',
-      terrain: newHikeDest.trim() || 'Massif Alpin',
-      isOvernight: Number(newHikeDays) > 1,
-      nightsCount: Number(newHikeDays) > 1 ? Number(newHikeDays) - 1 : 0,
+      terrain: parsed.data.terrainMassif || 'Massif Alpin',
+      isOvernight: parsed.data.days > 1,
+      nightsCount: parsed.data.days > 1 ? parsed.data.days - 1 : 0,
       assignedKitId: kits[0]?.id,
-      companions: newHikeCompanions.trim() || undefined,
+      companions: parsed.data.companions || undefined,
     });
     setPlannedHikes((prev) => [newHike, ...prev]);
     setSelectedHikeId(newHike.id);
@@ -637,29 +667,10 @@ export default function MonMaterielCockpitPage() {
     if (created) showToast(`Kit « ${created.name} » créé`, 'success');
   };
 
-  // ── Drag & drop (réordonnancement des 6 cartes) ──────────────────────────────
-  const handleGripDragStart = (id: string) => (e: React.DragEvent) => {
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', id);
-    setDragWidget(id);
-  };
-  const handleGripDragEnd = () => {
-    setDragWidget(null);
-    setDragOverId(null);
-  };
-  const handleDropOn = (targetId: string) => {
-    if (!dragWidget || dragWidget === targetId) return;
-    setWidgetOrder((prev) => {
-      const next = [...prev];
-      const from = next.indexOf(dragWidget);
-      const to = next.indexOf(targetId);
-      next.splice(from, 1);
-      next.splice(to, 0, dragWidget);
-      return next;
-    });
+  // ── Réordonnancement : drag & drop ANIMÉ (framer-motion Reorder) ─────────────
+  const handleReorder = (next: string[]) => {
+    setWidgetOrder(next);
     triggerHaptic('selection');
-    setDragWidget(null);
-    setDragOverId(null);
   };
   const resetWidgetOrder = () => {
     setWidgetOrder([...DEFAULT_WIDGET_ORDER]);
@@ -775,38 +786,84 @@ export default function MonMaterielCockpitPage() {
   }, [expandedWidget, inventoryInitialQuery]);
 
   // ── Render : 6 cartes ────────────────────────────────────────────────────────
-  const cardMetric = (id: string): { metric: string; caption: string; badges: GearCardBadge[] } => {
+  const cardMetric = (id: string): {
+    metric: string;
+    caption: string;
+    badges: GearCardBadge[];
+    progress?: { value: number; label?: string; tone?: 'default' | 'success' | 'warning' | 'critical' };
+  } => {
     switch (id) {
-      case 'forget':
+      case 'forget': {
+        const total = checklist.length;
+        const checked = checklist.filter((c) => forgetChecked.has(c.id)).length;
+        const pct = total > 0 ? Math.round((checked / total) * 100) : 100;
         return {
           metric: String(forgetRemaining),
           caption: forgetRemaining > 0 ? 'élément(s) à vérifier' : 'Tout est en ordre',
+          progress: {
+            value: pct,
+            label: 'Complétude checklist',
+            tone: pct === 100 ? 'success' : pct < 50 ? 'warning' : 'default',
+          },
           badges:
             checklist.filter((c) => c.level === 'pret').length > 0
               ? [{ id: 'pret', label: `${checklist.filter((c) => c.level === 'pret').length} prêt(s)`, tone: 'success' as const }]
               : [],
         };
-      case 'alerts':
+      }
+      case 'alerts': {
+        // Score de fiabilité / santé de l'équipement (100 - pénalités alertes)
+        const totalItems = equipment.length || 1;
+        const penalty = criticalCount * 25 + warningCount * 10;
+        const healthScore = Math.max(0, Math.min(100, 100 - Math.round((penalty / totalItems) * 10)));
         return {
           metric: String(alerts.length),
           caption: criticalCount > 0 ? `${criticalCount} action(s) critique(s)` : 'Aucune alerte critique',
+          progress: {
+            value: healthScore,
+            label: 'Score fiabilité parc',
+            tone: criticalCount > 0 ? 'critical' : warningCount > 0 ? 'warning' : 'success',
+          },
           badges: criticalCount > 0
             ? [{ id: 'crit', label: `${criticalCount} critique(s)`, tone: 'critical' as const }]
             : warningCount > 0
             ? [{ id: 'warn', label: `${warningCount} à surveiller`, tone: 'warning' as const }]
             : [],
         };
-      case 'kits':
+      }
+      case 'kits': {
+        // Complétude moyenne des kits
+        const activeKits = kits.filter((k) => k.status !== 'trash');
+        const avgCompleteness = activeKits.length > 0
+          ? Math.round(
+              activeKits.reduce((acc, k) => {
+                const c = k.items.length > 0 ? (k.items.filter(i => equipment.some(e => e.id === i.gear_item_id)).length / k.items.length) * 100 : 0;
+                return acc + c;
+              }, 0) / activeKits.length
+            )
+          : 0;
         return {
           metric: String(kits.length),
           caption: `poids total ${formatWeight(kits.reduce((s, k) => s + kitTotalWeight(k), 0))}`,
+          progress: {
+            value: activeKits.length > 0 ? avgCompleteness : 0,
+            label: 'Complétude des kits',
+            tone: avgCompleteness >= 80 ? 'success' : avgCompleteness > 40 ? 'default' : 'warning',
+          },
           badges: trashCount > 0 ? [{ id: 'trash', label: `${trashCount} corbeille`, tone: 'info' as const }] : [],
         };
-      case 'departure':
+      }
+      case 'departure': {
+        const pct = readiness?.readinessPct ?? (activeHike ? 50 : 0);
         return activeHike
           ? {
               metric: countdownLabel(activeHike.targetDate),
-              caption: `${activeHike.name} · ${readiness?.readinessPct ?? 0}% prêt`,
+              caption: `${activeHike.name} · ${pct}% prêt`,
+              progress: {
+                value: pct,
+                label: 'Préparation départ',
+                tone: readiness?.status === 'blocked' ? 'critical' : readiness?.status === 'to_check' ? 'warning' : 'success',
+              },
               badges:
                 readiness?.status === 'blocked'
                   ? [{ id: 'blocked', label: 'Bloqué', tone: 'critical' as const }]
@@ -817,20 +874,40 @@ export default function MonMaterielCockpitPage() {
           : {
               metric: '—',
               caption: 'Aucune sortie planifiée',
+              progress: { value: 0, label: 'Départ non défini', tone: 'default' },
               badges: [],
             };
-      case 'inventory':
+      }
+      case 'inventory': {
+        // Taux d'équipement en bon état / opérationnel (ignorer type pour pour_pièces)
+        const goodConditionCount = equipment.filter((e) => e.condition !== 'à_remplacer' && (e.condition as any) !== 'pour_pièces').length;
+        const conditionPct = equipment.length > 0 ? Math.round((goodConditionCount / equipment.length) * 100) : 100;
         return {
           metric: String(equipment.length),
           caption: `${formatWeight(totalWeightG)} · ${Math.round(totalValue)} €`,
+          progress: {
+            value: conditionPct,
+            label: 'Taux opérationnel',
+            tone: conditionPct >= 80 ? 'success' : 'warning',
+          },
           badges: orderedItems.length > 0 ? [{ id: 'ordered', label: `${orderedItems.length} en commande`, tone: 'info' as const }] : [],
         };
-      case 'availability':
+      }
+      case 'availability': {
+        // Taux de disponibilité immédiate (disponibles / total)
+        const total = equipment.length;
+        const availablePct = total > 0 ? Math.round(((total - unavailableCount) / total) * 100) : 100;
         return {
           metric: String(unavailableCount),
           caption: `${lentCount} prêt(s) · ${committedGear.length} engagé(s)`,
+          progress: {
+            value: availablePct,
+            label: 'Disponibilité immédiate',
+            tone: unavailableCount === 0 ? 'success' : unavailableCount <= 2 ? 'warning' : 'critical',
+          },
           badges: unavailableCount > 0 ? [{ id: 'unav', label: `${unavailableCount} indisponible(s)`, tone: 'warning' as const }] : [],
         };
+      }
       default:
         return { metric: '—', caption: '', badges: [] };
     }
@@ -849,6 +926,7 @@ export default function MonMaterielCockpitPage() {
         metric={meta.metric}
         metricCaption={meta.caption}
         badges={meta.badges}
+        progress={meta.progress}
         onExpand={(originEl) => {
           expandOriginRef.current = originEl || null;
           setExpandedWidget(id);
@@ -858,19 +936,6 @@ export default function MonMaterielCockpitPage() {
           setVoirToutTab(id === 'alerts' || id === 'availability' ? 'prets' : id === 'reglages' ? 'reglages' : 'actions');
           setVoirToutOpen(true);
         }}
-        draggable={expandedWidget === null}
-        onDragStart={handleGripDragStart(id)}
-        onDragEnd={handleGripDragEnd}
-        onDragOver={(e) => {
-          if (dragWidget && dragWidget !== id) {
-            e.preventDefault();
-            setDragOverId(id);
-          }
-        }}
-        onDragLeave={() => setDragOverId((cur) => (cur === id ? null : cur))}
-        onDrop={() => handleDropOn(id)}
-        isDragTarget={dragOverId === id}
-        isDragging={dragWidget === id}
       >
         {id === 'departure' && !activeHike && (
           <div className="space-y-2 shrink-0">
@@ -1510,6 +1575,7 @@ export default function MonMaterielCockpitPage() {
 
               <MonMaterielGrid
                 order={widgetOrder}
+                onReorder={handleReorder}
                 renderCard={renderCard}
                 dimmed={expandedWidget !== null}
               />
@@ -1829,6 +1895,17 @@ function PreviewStat({ value, label }: { value: string | number; label: string }
     <div className="p-2 rounded-xl bg-white/40 border border-[#1C2620]/7">
       <span className="block text-sm font-bold font-mono text-[#1C2620] leading-none truncate">{value}</span>
       <span className="block text-xs text-[#1C2620]/70 mt-1">{label}</span>
+    </div>
+  );
+}
+
+function MiniProgress({ pct, tone = 'sage' }: { pct: number; tone?: 'sage' | 'amber' | 'danger' }) {
+  const safe = Math.max(0, Math.min(100, Math.round(pct)));
+  const color =
+    tone === 'amber' ? 'bg-[#8C6A1A]' : tone === 'danger' ? 'bg-[#9B2C2C]' : 'bg-[#2D5A3D]';
+  return (
+    <div className="h-1.5 rounded-full bg-[#1C2620]/7 overflow-hidden" aria-hidden>
+      <div className={`h-full ${color} rounded-full transition-all duration-500`} style={{ width: `${safe}%` }} />
     </div>
   );
 }

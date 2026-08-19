@@ -18,6 +18,7 @@ import type { CustomKit } from '@/hooks/useUserKits';
 import type { GearDestination } from '../types';
 import type { GearStatus } from '../domain/gear-status';
 import { setEquipmentDestination } from '@/lib/storage/equipmentDestinations';
+import { gearDestinationSchema } from '../domain/validation';
 import { RadioGroup } from './RadioButton';
 import {
   IconBox,
@@ -105,6 +106,12 @@ export function AddToEquipmentButton({
           : undefined,
       reason: destType === 'departure' ? 'Préparé pour le prochain départ' : undefined,
     };
+    // Validation stricte (Zod) de la destination avant mémorisation.
+    const destParsed = gearDestinationSchema.safeParse(destination);
+    if (!destParsed.success) {
+      onToast?.(destParsed.error.issues[0]?.message || 'Destination invalide', 'warning');
+      return;
+    }
     setEquipmentDestination(product.id, destination);
     setBusy(true);
     try {

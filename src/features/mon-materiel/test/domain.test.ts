@@ -15,6 +15,7 @@ import { getGearStatus } from '../domain/gear-status';
 import { evaluateKitCompleteness, findSubstitutes, kitTotalWeight, countKitItemStock } from '../domain/gear-completeness';
 import { evaluateDepartureReadiness, buildDepartureChecklist, buildDepartureSnapshot } from '../domain/departure-readiness';
 import { buildReceptionGear, hasDuplicate, toOrderedProductItem, destinationSummary } from '../domain/order-reception';
+import { gearDestinationSchema, orderedProductItemSchema, newHikeFormSchema, safeParse } from '../domain/validation';
 
 export function runAllMonMaterielDomainTests(): { success: boolean; passed: number; failed: number } {
   let passed = 0;
@@ -327,6 +328,79 @@ export function runAllMonMaterielDomainTests(): { success: boolean; passed: numb
     const item = { id: 'i2', kit_id: 'k1', item_name: 'Tente 2 places', category: 'Abri', weight_g: 1800, quantity: 1, is_essential: true, is_checked: false } as CustomKit['items'][number];
     const stock = countKitItemStock(item, [gear({ id: 'g2', name: 'Tente 2 places', quantity: 3 })]);
     assert.deepStrictEqual(stock, { available: 3, required: 1, total: 3 });
+  });
+
+  /// ── Validation Zod (T3) ───────────────────────────────────────────────────
+  runTest('Zod : newHikeFormSchema valide une saisie correcte', () => {
+    const valid = safeParse(newHikeFormSchema, {
+      name: 'Tour du Mont-Blanc',
+      terrainMassif: 'Alpes',
+      days: 7,
+      distanceKm: 170,
+      elevationGain: 10000,
+      companions: 'Marc, Sophie',
+    });
+    assert.strictEqual(valid.ok, true);
+  });
+
+  runTest('Zod : newHikeFormSchema rejette un nom trop court ou des jours ≤ 0', () => {
+    const shortName = safeParse(newHikeFormSchema, {
+      name: 'X',
+      days: 3,
+      distanceKm: 20,
+      elevationGain: 500,
+    });
+    assert.strictEqual(shortName.ok, false);
+    assert.ok(shortName.error.includes('Nom de sortie requis'));
+
+    const badDays = safeParse(newHikeFormSchema, {
+      name: 'Sortie',
+      days: 0,
+      distanceKm: 20,
+      elevationGain: 500,
+    });
+    assert.strictEqual(badDays.ok, false);
+    assert.ok(badDays.error.includes('Durée ≥ 1 jour'));
+  });
+
+  runTest('Zod : gearDestinationSchema valide les types autorisés', () => {
+    const kitDest = safeParse(gearDestinationSchema, {
+      type: 'kit',
+      refId: 'k1',
+      label: 'Kit Bivouac',
+    });
+    assert.strictEqual(kitDest.ok, true);
+
+    const invDest = safeParse(gearDestinationSchema, {
+      type: 'inventory',
+    });
+    assert.strictEqual(invDest.ok, true);
+
+    const invalidType = safeParse(gearDestinationSchema, {
+      type: 'unknown',
+    });
+    assert.strictEqual(invalidType.ok, false);
+  });
+
+  runTest('Zod : orderedProductItemSchema valide les commandes reçues', () => {
+    const valid = safeParse(orderedProductItemSchema, {
+      orderId: 'o123',
+      orderItemId: 'oi456',
+      name: 'Sac de couchage',
+      quantity: 1,
+      status: 'paid',
+    });
+    assert.strictEqual(valid.ok, true);
+
+    const invalidQty = safeParse(orderedProductItemSchema, {
+      orderId: 'o123',
+      orderItemId: 'oi456',
+      name: 'Sac de couchage',
+      quantity: 0,
+      status: 'paid',
+    });
+    assert.strictEqual(invalidQty.ok, false);
+    assert.ok(invalidQty.error.includes('Quantité ≥ 1'));
   });
 
   /// ── Bilan ──────────────────────────────────────────────────────────────────

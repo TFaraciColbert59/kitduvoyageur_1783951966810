@@ -4,6 +4,9 @@
  * LKDV — Mon Matériel : GearCard (carte de la grille 3×2).
  * Shell cohérent : icône, titre, métrique dominante, contexte court,
  * badges/indicateurs, action d'ouverture fullscreen (shared element framer-motion).
+ * La poignée déclenche le drag & drop animé du `Reorder` parent via
+ * `onDragHandlePointerDown` (dragControls) — l'accessibilité clavier ouvre le
+ * drawer « Tout voir » (comportement historique conservé).
  */
 
 import React from 'react';
@@ -25,17 +28,17 @@ export interface GearCardProps {
   metric: React.ReactNode;
   metricCaption: string;
   badges?: GearBadgeDatum[];
+  /** Progression (0 à 100) pour enrichir l'aperçu visuel de la carte. */
+  progress?: {
+    value: number;
+    label?: string;
+    tone?: 'default' | 'success' | 'warning' | 'critical';
+  };
   children?: React.ReactNode;
   onExpand: (originEl?: HTMLElement) => void;
   onMore?: () => void;
-  draggable?: React.HTMLAttributes<HTMLDivElement>['draggable'];
-  onDragStart?: React.DragEventHandler;
-  onDragEnd?: React.DragEventHandler;
-  onDragOver?: React.DragEventHandler;
-  onDragLeave?: React.DragEventHandler;
-  onDrop?: React.DragEventHandler;
-  isDragTarget?: boolean;
-  isDragging?: boolean;
+  /** Démarrer le drag animé (framer-motion dragControls du Reorder parent). */
+  onDragHandlePointerDown?: (e: React.PointerEvent<HTMLElement>) => void;
   className?: string;
 }
 
@@ -46,6 +49,13 @@ const BADGE_TONES: Record<GearBadgeDatum['tone'], string> = {
   success: 'bg-[#2D5A3D]/10 text-[#235030] border-[#2D5A3D]/30',
 };
 
+const PROGRESS_TONES: Record<'default' | 'success' | 'warning' | 'critical', string> = {
+  default: 'bg-[#2D5A3D]',
+  success: 'bg-[#235030]',
+  warning: 'bg-[#8C6A1A]',
+  critical: 'bg-[#9B2C2C]',
+};
+
 export function GearCard({
   id,
   icon,
@@ -54,17 +64,11 @@ export function GearCard({
   metric,
   metricCaption,
   badges = [],
+  progress,
   children,
   onExpand,
   onMore,
-  draggable,
-  onDragStart,
-  onDragEnd,
-  onDragOver,
-  onDragLeave,
-  onDrop,
-  isDragTarget = false,
-  isDragging = false,
+  onDragHandlePointerDown,
   className = '',
 }: GearCardProps) {
   return (
@@ -72,10 +76,7 @@ export function GearCard({
       layout
       layoutId={`lkdv-exp-${id}`}
       transition={{ type: 'spring', stiffness: 280, damping: 34, mass: 1.05 }}
-      className={`h-full min-h-0 ${isDragging ? 'opacity-50 scale-[0.98]' : ''} ${isDragTarget ? 'ring-2 ring-[#2D5A3D]/70 ring-inset rounded-[28px]' : ''} ${className}`}
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
+      className={`h-full min-h-0 ${className}`}
     >
       <GlassCard className="h-full">
         <div className="h-full flex flex-col p-3.5 min-h-0">
@@ -91,9 +92,7 @@ export function GearCard({
             </div>
             <div className="flex items-center gap-0.5 shrink-0">
               <span
-                draggable={draggable}
-                onDragStart={onDragStart}
-                onDragEnd={onDragEnd}
+                onPointerDown={onDragHandlePointerDown}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
@@ -104,7 +103,7 @@ export function GearCard({
                 }}
                 title="Réorganiser le module"
                 aria-label="Réorganiser le module"
-                className={`${draggable === false ? 'pointer-events-none opacity-40' : 'cursor-grab active:cursor-grabbing'} p-1.5 text-[#1C2620]/50 hover:text-[#1C2620] rounded-lg hover:bg-[#1C2620]/6 text-xs`}
+                className="cursor-grab active:cursor-grabbing touch-none p-1.5 text-[#1C2620]/50 hover:text-[#1C2620] rounded-lg hover:bg-[#1C2620]/6 text-xs select-none"
               >
                 <IconGrip size={14} />
               </span>
@@ -129,6 +128,21 @@ export function GearCard({
                 <p className="text-xs text-[#1C2620]/70 mt-2">{metricCaption}</p>
               </div>
             </div>
+
+            {progress && (
+              <div className="mt-2.5 shrink-0" aria-label={progress.label || `Progression : ${progress.value}%`}>
+                <div className="flex items-center justify-between text-[10px] font-mono font-bold text-[#1C2620]/60 mb-1">
+                  <span>{progress.label || 'Progression'}</span>
+                  <span>{Math.round(Math.max(0, Math.min(100, progress.value)))}%</span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-[#1C2620]/10 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${PROGRESS_TONES[progress.tone || 'default']}`}
+                    style={{ width: `${Math.max(0, Math.min(100, progress.value))}%` }}
+                  />
+                </div>
+              </div>
+            )}
 
             {badges.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2.5 shrink-0">

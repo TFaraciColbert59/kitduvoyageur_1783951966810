@@ -15,6 +15,7 @@ import {
   hasDuplicate,
   toOrderedProductItem,
 } from '../domain/order-reception';
+import { gearDestinationSchema, orderedProductItemSchema } from '../domain/validation';
 import { GearService } from './GearService';
 
 export interface OrderConfirmation {
@@ -101,6 +102,18 @@ export class OrderService {
     onAttachToKit?: (kitId: string, gear: UserEquipmentItem) => Promise<void>;
   }): Promise<OrderConfirmation> {
     const { userId, ordered, product, equipment, destination, onAttachToKit } = params;
+
+    // Validation stricte (Zod) avant toute mutation.
+    const orderedParsed = orderedProductItemSchema.safeParse(ordered);
+    if (!orderedParsed.success) {
+      return { ok: false, error: orderedParsed.error.issues[0]?.message || 'Ligne de commande invalide.' };
+    }
+    if (destination) {
+      const destParsed = gearDestinationSchema.safeParse(destination);
+      if (!destParsed.success) {
+        return { ok: false, error: destParsed.error.issues[0]?.message || 'Destination invalide.' };
+      }
+    }
 
     const gear = buildReceptionGear(ordered, product);
     gear.user_id = userId;
