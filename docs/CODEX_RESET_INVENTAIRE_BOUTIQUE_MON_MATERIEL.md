@@ -1,315 +1,609 @@
-# Mission Codex — Suppression complète d’Inventaire, Boutique et Mon Matériel (LKDV)
+# Mission Codex — Mise à jour et nettoyage non destructif d’Inventaire, Boutique et Mon Matériel (LKDV)
 
-## 0. Mandat
+> **Date de cadrage : mercredi 19 août 2026, 12:20 — Europe/Paris**
 
-Tu es l’agent technique principal de LKDV. Ta mission est de **supprimer complètement et proprement les modules Inventaire, Boutique et Mon Matériel** du produit LKDV.
+## 0. Changement de décision — règle absolue
 
-Cette mission est un **reset fonctionnel et technique total** de ces trois domaines. Il ne s’agit pas de les cacher, de les désactiver visuellement, ni de les refondre : ils doivent disparaître du frontend, de la navigation, des routes, des composants, des hooks, des API et des dépendances qui leur sont exclusivement dédiées.
+La décision précédente de suppression est annulée.
 
-> Le produit doit continuer à compiler, fonctionner et naviguer correctement après la suppression. Aucune page restante ne doit contenir un lien mort vers Inventaire, Boutique ou Mon Matériel.
+Tu ne dois **supprimer aucun module fonctionnel** parmi :
 
-Les données Supabase existantes ne doivent **pas être supprimées** dans cette mission. Les tables et données liées sont conservées temporairement pour préserver l’historique et permettre une future reconstruction propre. Seul le code et l’expérience produit sont retirés.
+- **Mon Matériel** ;
+- **Inventaire** ;
+- **Boutique** ;
+- leurs routes, leurs pages, leurs composants, leurs hooks, leurs services, leurs API, leurs tables Supabase ou leurs données.
+
+La mission est désormais une **mise à jour, une consolidation et un nettoyage non destructif**.
+
+> Conserver les fonctionnalités existantes, éliminer la dette technique, les doublons, les incohérences visuelles et les comportements fragiles, puis moderniser l’expérience sans casser les parcours utilisateurs actuels.
+
+Toute suppression de fichier, de route, de composant ou de code est interdite par défaut. Si un élément semble obsolète, dupliqué ou inutilisé :
+
+1. le documenter ;
+2. vérifier ses imports, appels, routes et usages réels dans l’ensemble du dépôt ;
+3. le conserver ou le déplacer/encapsuler de manière rétrocompatible ;
+4. ne le supprimer que si une consigne explicite ultérieure l’autorise.
 
 ---
 
-# 1. Règles d’autonomie absolue
+# 1. Mission produit
 
-Tu es **100 % autonome**.
+Rénover les domaines **Mon Matériel**, **Inventaire** et **Boutique** pour qu’ils soient :
 
-- Ne t’arrête pas pour demander une confirmation intermédiaire.
-- Analyse l’intégralité du dépôt avant de supprimer quoi que ce soit.
-- Construis un plan exhaustif avant toute modification.
-- Exécute le plan sous-étape par sous-étape.
-- Après chaque sous-étape terminée : exécute les validations, corrige les erreurs, mets à jour le fichier de progression et coche uniquement la sous-étape réellement terminée.
-- Utilise tous les outils, skills et agents disponibles de façon proactive : recherche globale du dépôt, Supabase, lint, TypeScript, build, tests, Playwright et captures visuelles.
-- Ne supprime pas des composants, routes ou services partagés sans avoir vérifié tous leurs imports/usages dans le dépôt.
-- Ne supprime jamais de données Supabase réelles et ne modifie jamais le schéma de production dans cette mission.
+- cohérents entre eux ;
+- visuellement homogènes ;
+- techniquement maintenables ;
+- robustes face aux données incomplètes ;
+- accessibles ;
+- simples à comprendre ;
+- connectés sans doublons aux sources Supabase existantes.
+
+L’utilisateur doit pouvoir suivre un parcours clair :
+
+```text
+Catalogue / Boutique → Panier / Commande → Réception → Inventaire → Kit → Départ → Disponibilité / prêt / entretien
+```
+
+Ce parcours doit s’appuyer sur les données réelles quand elles existent. Il ne faut jamais présenter des données mock comme des données personnelles réelles.
+
+---
+
+# 2. Autonomie complète de Codex
+
+Tu es un agent de développement **100 % autonome**.
+
+- Ne demande pas de validation intermédiaire.
+- Commence par analyser le dépôt, le schéma Supabase et la documentation existante.
+- Construis un plan complet, avec phases et sous-étapes, avant de modifier le code.
+- Réalise les tâches dans l’ordre le plus sûr.
+- Après chaque sous-étape réellement terminée : teste, corrige, documente et coche la sous-étape.
+- Utilise tous les skills, outils et agents disponibles de manière proactive : recherche de code, audit Supabase, migrations seulement si indispensables, lint, TypeScript, build, tests, Playwright et captures visuelles.
 - Ne désactive jamais RLS et ne contourne jamais une policy de sécurité.
-- Ne laisse aucun import inutilisé, route cassée, lien mort, erreur console ou dépendance orpheline.
+- Ne supprime jamais de données Supabase.
+- Ne supprime jamais un fichier, une route ou une dépendance dans cette mission.
+- N’écrase pas une fonctionnalité existante sans conserver son comportement à travers une couche de compatibilité ou une migration progressive.
+- Préfère extraire, centraliser, déprécier et rediriger les usages internes plutôt que supprimer.
 
 ---
 
-# 2. Dépôt, branche et livrables
+# 3. Dépôt, branche et fichiers de pilotage
 
 | Élément | Valeur |
 |---|---|
 | Dépôt | `TFaraciColbert59/kitduvoyageur_1783951966810` |
 | Branche de départ | `main` |
-| Nouvelle branche | `chore/remove-inventaire-boutique-mon-materiel` |
+| Branche de travail | `feat/mon-materiel-inventaire-boutique-cleanup-v3` |
+| Page principale | `src/app/mon-materiel/page.tsx` |
 | Fichier de progression | `docs/PROGRESS-mon-materiel.md` |
-| Fichier de spécification | `docs/CODEX_RESET_INVENTAIRE_BOUTIQUE_MON_MATERIEL.md` |
-| Fuseau de référence | Europe/Paris |
+| Présente spécification | `docs/CODEX_RESET_INVENTAIRE_BOUTIQUE_MON_MATERIEL.md` |
+| Projet Supabase attendu | `lekitduvoyageur2` |
+| Région attendue | `eu-west-3` |
+| Fuseau horaire de référence | Europe/Paris |
 
-## Livrables obligatoires
+## Livrables
 
-- Inventaire, Boutique et Mon Matériel totalement retirés du frontend LKDV.
-- Aucune route accessible ou lien de navigation pointant vers ces modules.
-- Composants, hooks, stores, types, routes API et styles exclusivement dédiés supprimés.
-- Les briques partagées extraites/conservées seulement si elles sont toujours utilisées ailleurs.
-- Dépendances NPM devenues inutiles retirées avec prudence.
-- `docs/PROGRESS-mon-materiel.md` tenu à jour après chaque phase.
-- `npm run lint`, `npx tsc --noEmit` et `npm run build` verts.
-- Tests existants adaptés et nouveaux tests de non-régression de navigation.
-- PR ouverte vers `main`, documentée précisément.
-
----
-
-# 3. Définition stricte du périmètre supprimé
-
-## Modules à supprimer intégralement
-
-1. **Mon Matériel**
-   - route `/mon-materiel` ;
-   - cockpit, widgets, fullscreen ;
-   - gestion de kits, disponibilité, alertes, checklist et préparation liée au matériel ;
-   - logique de drag-and-drop, localStorage et persistance associées ;
-   - composants et styles exclusivement liés.
-
-2. **Inventaire**
-   - routes d’inventaire et de gestion d’équipement ;
-   - fiches produit personnelles ;
-   - ajout/modification/suppression d’équipement ;
-   - prêts, maintenance, images, historique, kits personnels ;
-   - hooks, stores, services et endpoints dédiés ;
-   - liens depuis les autres pages vers ces expériences.
-
-3. **Boutique**
-   - routes boutique, catalogue, panier et checkout liés à l’achat de matériel ;
-   - fiches produits marchandes, commandes, suivi de livraison, favoris boutique ;
-   - composants, hooks, services, API et états client dédiés ;
-   - liens et CTA vers achat/catalogue/panier.
-
-## Important : vérifier avant suppression
-
-Certaines briques peuvent être utilisées en dehors de ces modules. Avant suppression, rechercher systématiquement les imports et appels.
-
-| Élément potentiellement partagé | Décision attendue |
-|---|---|
-| Navigation / header / footer | Retirer uniquement les liens et badges liés aux modules supprimés ; préserver le reste. |
-| Design system / primitives UI | Conserver si utilisé ailleurs. |
-| Authentification | Conserver. |
-| Composants image génériques | Conserver si utilisé ailleurs. |
-| Système de notification / toast | Conserver si utilisé ailleurs. |
-| Intégrations paiement | Ne retirer que si elles sont exclusivement utilisées par la Boutique ; documenter toute décision. |
-| Supabase client / types génériques | Conserver. |
-| Pages de départ, itinéraire, communauté ou IA | Conserver sauf dépendances exclusivement matérielles à retirer/remplacer. |
-| Panier global | Supprimer uniquement s’il n’a aucun usage restant ; sinon retirer seulement le flux matériel/boutique. |
-
-## Ce qui doit rester intact
-
-- Toutes les fonctionnalités LKDV hors Inventaire, Boutique et Mon Matériel.
-- Comptes, authentification, profils et permissions.
-- Toutes les données Supabase existantes.
-- Les autres routes, leurs styles et leur navigation.
-- Le design system commun lorsqu’il est encore utilisé.
+- Inventaire, Boutique et Mon Matériel conservés et modernisés.
+- Architecture assainie sans suppression destructive.
+- Sources de données et règles métier centralisées.
+- Expérience visuelle cohérente sur les trois modules.
+- Tous les parcours existants conservés ou améliorés.
+- Tests et captures visuelles ajoutés ou mis à jour.
+- Fichier de progression rigoureusement tenu à jour.
+- Commits clairs et pull request vers `main`.
 
 ---
 
-# 4. Étape 0 obligatoire — Audit et plan avant toute suppression
+# 4. Principe de non-régression et nettoyage sans suppression
 
-Avant d’écrire ou supprimer la moindre ligne de code :
+## Interdictions
 
-1. Lire entièrement `docs/PROGRESS-mon-materiel.md`.
-2. Faire une recherche globale dans le dépôt pour tous les termes, routes et symboles suivants, puis élargir selon les résultats :
+Ne pas :
 
-```text
-mon-materiel
-inventaire
-inventory
-boutique
-shop
-catalog
-cart
-checkout
-gear
-gear_items
-kit
-custom_kits
-loan
-loans
-order
-orders
-shop_products
-AddEditGearModal
-GearDetailDrawer
-KitCockpitDrawer
-useEquipment
-useUserKits
-src/lib/cart.ts
-```
+- supprimer `/mon-materiel` ;
+- supprimer les routes Inventaire, Boutique, Panier ou Checkout ;
+- supprimer les composants métier existants ;
+- supprimer les hooks existants ;
+- supprimer les endpoints API ;
+- supprimer les tables, policies, triggers, données ou buckets Supabase ;
+- supprimer les dépendances NPM ;
+- supprimer les assets ;
+- casser les URLs publiques ou internes ;
+- supprimer les tests existants.
 
-3. Identifier :
-   - toutes les routes ;
-   - tous les composants ;
-   - tous les hooks ;
-   - tous les stores/contextes ;
-   - toutes les routes API ;
-   - tous les types ;
-   - tous les tests ;
-   - toutes les migrations qui seraient encore référencées ;
-   - toutes les entrées navigation/header/footer/mobile ;
-   - tous les liens écrits en dur ;
-   - tous les imports de dépendances NPM propres à ces modules.
-4. Produire dans `docs/PROGRESS-mon-materiel.md` un inventaire exhaustif, avant toute suppression.
-5. Établir un plan complet à sous-étapes cochables.
+## Nettoyage autorisé et attendu
 
-Créer ou compléter cette section :
+Tu peux et dois :
+
+- déplacer du code vers une architecture plus claire ;
+- créer des wrappers rétrocompatibles ;
+- marquer un composant ou hook comme déprécié dans son commentaire ;
+- remplacer ses usages internes progressivement ;
+- fusionner la logique dans une source de vérité unique ;
+- retirer les imports inutilisés **à l’intérieur d’un fichier conservé** ;
+- corriger les types, les erreurs lint, les états de chargement et les erreurs utilisateur ;
+- normaliser noms, types et conventions ;
+- améliorer les performances sans modifier le résultat fonctionnel ;
+- améliorer l’accessibilité ;
+- améliorer les tests ;
+- ajouter des migrations uniquement si une donnée structurante manque réellement et si la migration est additive, réversible et sécurisée.
+
+## Inventaire des éléments “à nettoyer”
+
+Avant toute modification, produire une cartographie dans `docs/PROGRESS-mon-materiel.md` :
 
 ```md
-# Reset v3 — Suppression Inventaire, Boutique et Mon Matériel
+## Audit v3 — Inventaire / Boutique / Mon Matériel
 
-## Inventaire de suppression
+| Élément | Type | Usages externes vérifiés | Problème observé | Décision non destructive | Risque |
+|---|---|---:|---|---|---|
+| ... | route / composant / hook / API / table / style | ... | duplication / dette / incohérence / bug | conserver + extraire / adapter / déprécier / encapsuler | ... |
+```
 
-| Élément | Type | Usages externes vérifiés | Décision | Justification |
-|---|---|---:|---|---|
-| ... | route / composant / hook / API / style / dépendance | ... | supprimer / conserver / extraire / remplacer | ... |
+---
 
+# 5. Fichier de progression — protocole obligatoire
+
+Conserver l’intégralité de l’historique actuel dans `docs/PROGRESS-mon-materiel.md`.
+
+Ajouter une nouvelle section :
+
+```md
+# Mise à jour v3 — Inventaire, Boutique et Mon Matériel
+```
+
+Puis écrire un plan complet avant de coder :
+
+```md
 ## Plan d’exécution
 
-- [ ] Phase 1 — Audit complet et cartographie des dépendances
+- [ ] Phase 0 — Audit du code, des routes, de la navigation et de Supabase
+  - [ ] Lire intégralement le fichier de progression existant
+  - [ ] Répertorier les routes et parcours existants
+  - [ ] Auditer les tables et policies Supabase concernées
+  - [ ] Identifier le code dupliqué ou fragile sans le supprimer
+- [ ] Phase 1 — Architecture et compatibilité
+  - [ ] Définir les sources de vérité métier
+  - [ ] Créer les adaptateurs rétrocompatibles nécessaires
+  - [ ] Centraliser les types et états partagés
+- [ ] Phase 2 — Nettoyage technique de Mon Matériel
   - [ ] ...
-- [ ] Phase 2 — Retrait des routes et de la navigation
+- [ ] Phase 3 — Nettoyage technique de l’Inventaire
   - [ ] ...
-- [ ] Phase 3 — Retrait du code exclusivement dédié
+- [ ] Phase 4 — Nettoyage technique de la Boutique
   - [ ] ...
-- [ ] Phase 4 — Nettoyage des références, tests et dépendances
+- [ ] Phase 5 — Cohérence des flux inter-modules
   - [ ] ...
-- [ ] Phase 5 — Validation exhaustive et PR
+- [ ] Phase 6 — Passe visuelle et accessibilité
+  - [ ] ...
+- [ ] Phase 7 — Tests, captures, documentation et PR
   - [ ] ...
 ```
 
-Ne cocher aucune étape par anticipation.
+Après chaque sous-étape terminée, ajouter :
+
+```md
+### Journal des modifications
+
+#### YYYY-MM-DD — HH:MM Europe/Paris — Phase X.Y terminée
+- Réalisé :
+  - ...
+- Fichiers :
+  - Créé : `...`
+  - Modifié : `...`
+  - Conservé / déprécié : `...`
+- Données :
+  - Tables consultées : `...`
+  - Migration additive : aucune / `...`
+- Validation :
+  - `npm run lint` : OK
+  - `npx tsc --noEmit` : OK
+  - `npm run build` : OK
+  - Tests : X/X OK
+  - Captures : `...`
+- Décisions / risques :
+  - ...
+- Prochaine étape :
+  - ...
+```
 
 ---
 
-# 5. Protocole de suppression sûr
+# 6. Audit Supabase obligatoire avant toute implémentation
 
-## Phase 1 — Cartographier et sécuriser
+Utiliser le skill Supabase. Ne pas supposer les colonnes, contraintes ou RLS.
 
-- Réaliser l’inventaire de tout le périmètre.
-- Identifier tous les usages externes de chaque fichier avant suppression.
-- Pour toute brique partagée, extraire ce qui est générique avant de retirer le code propre aux modules supprimés.
-- Vérifier la structure de routing Next.js afin de ne laisser aucun segment, layout, metadata ou import d’erreur.
-- Vérifier les redirections existantes.
+## Tables prioritaires
 
-## Phase 2 — Retirer routes et navigation
+| Table | Rôle attendu |
+|---|---|
+| `gear_items` | inventaire personnel |
+| `gear_images` | photos de matériel |
+| `gear_history` | historique de vie, entretien, événements |
+| `loans` | prêts et retours |
+| `custom_kits` | kits personnels |
+| `custom_kit_items` | contenu des kits personnels |
+| `kits` | kits catalogue/modèles |
+| `kit_items` | contenu des kits catalogue |
+| `shop_products` | catalogue Boutique |
+| `orders` | commandes |
+| `order_items` | lignes de commande |
+| `stock_movements` | mouvements et traçabilité |
+| `occasion_items` | matériel d’occasion |
+| `rental_items` | location |
+| `listings` | annonces |
+| `configurator_sessions` | sessions configurateur |
+| `kit_reports` | rapports liés aux kits |
+| tables de départ/randonnée | à identifier par analyse du dépôt |
 
-Supprimer ou remplacer proprement :
+## Vérifications impératives
 
-- route `/mon-materiel` ;
-- routes inventaire ;
-- routes boutique ;
-- routes panier/checkout liées au matériel ;
-- liens dans header, footer, menu mobile, command palette, raccourcis, breadcrumbs et CTA ;
-- badges de quantité panier ou alertes matériel ;
-- liens présents dans les pages restantes.
+Pour chaque table réellement touchée :
 
-### Comportement des anciennes URLs
+- colonnes et types exacts ;
+- clés et relations ;
+- index ;
+- contraintes ;
+- policies RLS ;
+- triggers et fonctions ;
+- usages frontend existants ;
+- cas de données vides ;
+- comportement multi-utilisateur.
 
-Ne pas laisser une page blanche ni une erreur brute.
-
-- Mettre en place une redirection appropriée vers une destination existante et cohérente, ou une page `not-found` propre selon les conventions du projet.
-- Le choix doit être documenté dans le fichier de progression.
-- Vérifier les URLs avec Playwright et les requêtes directes.
-
-## Phase 3 — Retirer le code exclusif
-
-Supprimer après vérification :
-
-- composants d’inventaire ;
-- composants de boutique ;
-- composants de Mon Matériel ;
-- hooks et services exclusifs ;
-- stores et contextes exclusifs ;
-- endpoints API exclusifs ;
-- types exclusifs ;
-- styles exclusifs ;
-- assets exclusivement liés si aucun autre usage ;
-- tests devenus obsolètes, à remplacer par des tests de non-régression adaptés.
-
-Ne supprimer aucune primitive partagée uniquement parce qu’elle est importée depuis un dossier supprimé. Vérifier son usage réel.
-
-## Phase 4 — Nettoyer les dépendances et configurations
-
-- Chercher les imports morts dans tout le dépôt.
-- Retirer les dépendances NPM devenues inutiles **uniquement** après avoir confirmé qu’elles ne sont plus importées nulle part.
-- Mettre à jour `package.json` et lockfile via le gestionnaire de paquets déjà utilisé par le dépôt.
-- Nettoyer les variables d’environnement exclusivement liées à la boutique, sans supprimer de secrets ni modifier la production si une vérification manque.
-- Retirer les entrées sitemap, robots, metadata, analytics events, feature flags, traductions et documentation exclusivement liées si elles existent.
-- Vérifier que les types Supabase générés ou manuels ne cassent pas : ne pas supprimer les tables côté Supabase ni les types globaux sans raison. Les laisser est acceptable si leur suppression casse des flux conservés.
+Documenter les résultats dans le fichier de progression. Ne modifier le schéma que de manière additive et seulement si aucune structure existante ne permet de résoudre proprement le besoin.
 
 ---
 
-# 6. Supabase : conservation stricte des données
+# 7. Architecture cible : consolidation non destructive
 
-## Règle fondamentale
+Ne pas réécrire brutalement toute l’application. Extraire et centraliser progressivement les responsabilités métier dans une couche partagée.
 
-Cette mission supprime le **code et l’expérience frontend**. Elle ne supprime pas les données ni tables Supabase.
+Structure indicative, à adapter aux conventions réelles :
 
-Ne pas supprimer ou modifier :
+```text
+src/
+  features/
+    equipment/
+      domain/
+        gear-status.ts
+        gear-availability.ts
+        gear-alerts.ts
+        gear-history.ts
+      hooks/
+        useEquipmentData.ts
+        useGearStatuses.ts
+      components/
+        GearStatusStack.tsx
+        GearCard.tsx
 
-- `gear_items` ;
-- `gear_images` ;
-- `gear_history` ;
-- `loans` ;
-- `custom_kits` ;
-- `custom_kit_items` ;
-- `kits` ;
-- `kit_items` ;
-- `shop_products` ;
-- `orders` ;
-- `order_items` ;
-- `stock_movements` ;
-- `occasion_items` ;
-- `rental_items` ;
-- `listings` ;
-- ni toute table commerciale ou inventaire associée.
+    kits/
+      domain/
+        kit-completeness.ts
+        kit-availability.ts
+      hooks/
+        useKitsData.ts
 
-## Audit Supabase requis
+    commerce/
+      domain/
+        order-lifecycle.ts
+        product-compatibility.ts
+      hooks/
+        useCatalogData.ts
+        useOrdersData.ts
 
-Utiliser le skill Supabase pour :
+    mon-materiel/
+      components/
+      fullscreen/
+      hooks/
+```
 
-- identifier les tables réellement sollicitées par le code supprimé ;
-- vérifier qu’aucun trigger, edge function, cron, webhook ou vue n’est appelé par une page conservée ;
-- documenter ces résultats dans le fichier de progression ;
-- ne créer une migration que si une route/API supprimée laisse une dépendance dangereuse prouvée. Sinon, aucune migration.
+Cette structure est indicative. Le but est :
 
-Les données restent volontairement disponibles pour une future reconstruction ou une migration produit ultérieure.
+- une seule logique de statuts ;
+- des appels Supabase regroupés ;
+- des types partagés ;
+- des composants réutilisables ;
+- une compatibilité avec les exports et hooks existants.
+
+## Compatibilité obligatoire
+
+Si tu crées un nouveau hook ou service :
+
+- conserve les anciens hooks/fichiers ;
+- transforme-les si nécessaire en adaptateurs vers la nouvelle couche ;
+- préserve leur signature publique autant que possible ;
+- ajoute un commentaire de dépréciation si pertinent ;
+- migre les usages internes progressivement.
 
 ---
 
-# 7. Qualité du frontend après retrait
+# 8. Source de vérité : statuts cumulables du matériel
 
-Le produit restant doit être propre et cohérent.
+Un équipement peut être en même temps :
 
-## Navigation
+- possédé ;
+- neuf, bon état, usé ou à remplacer ;
+- entretenu ou à réviser ;
+- valide, bientôt périmé ou périmé ;
+- disponible, prêté, emprunté, réservé, engagé dans un kit ou perdu ;
+- lié à plusieurs kits ou départs ;
+- favori ;
+- en vente ou en location ;
+- en commande ou reçu.
 
-- Aucun lien « Mon Matériel », « Inventaire », « Boutique », « Catalogue », « Panier » ou « Checkout » ne doit subsister si lié aux modules supprimés.
-- Aucun badge avec quantité d’articles, de commandes ou d’alertes matérielles ne doit apparaître.
-- Aucun bouton d’achat matériel, d’ajout panier ou d’ajout équipement ne doit subsister.
-- Aucun lien ne doit conduire vers une route retirée.
+Créer, ou consolider si elle existe déjà, une fonction pure et testable du type :
 
-## États et erreurs
+```ts
+getGearStatus(gear, context): GearStatus
+```
 
-- Aucune page restante ne doit crasher si les données d’inventaire/boutique ne sont plus demandées.
-- Supprimer les appels réseau superflus vers les tables de matériel/boutique depuis les composants restants.
-- Aucune erreur console causée par un import, hook ou provider supprimé.
-- Aucune erreur de build liée à une route/ressource supprimée.
+Exemple de contrat :
 
-## Visuel
+```ts
+type GearStatus = {
+  ownership: "owned" | "ordered" | "wanted" | "not_owned";
+  condition: "new" | "good" | "worn" | "maintenance_due" | "replace";
+  validity: "valid" | "expiring" | "expired";
+  availability: "available" | "loaned_out" | "borrowed" | "reserved" | "lost";
+  assignments: {
+    kitIds: string[];
+    departureIds: string[];
+  };
+  alerts: GearAlert[];
+  badges: GearBadge[];
+  primaryAction: GearAction;
+};
+```
 
-- Retirer seulement les surfaces, fonds, badges et styles propres à ces modules.
-- Ne pas dégrader le design global du site.
-- Vérifier desktop et mobile sur les principales pages restantes.
+Adapter ce type au schéma et aux types existants, sans casser les usages.
+
+## Règles UI
+
+- Les statuts sont cumulés, jamais écrasés par un statut unique.
+- Les badges suivent un ordre de gravité cohérent.
+- Chaque badge a un texte, une icône et une couleur ; la couleur n’est jamais le seul signal.
+- Toutes les pages utilisant un équipement doivent exploiter la même logique.
 
 ---
 
-# 8. Tests et validations obligatoires
+# 9. Flux inter-modules à fiabiliser sans retirer l’existant
 
-## Avant suppression
+## Boutique → Panier → Commande → Inventaire
 
-- Lancer la suite de tests existante pour obtenir une baseline.
-- Documenter les tests déjà rouges avant intervention, s’il y en a.
+Conserver les flux existants, puis les fiabiliser.
+
+Pour un produit non possédé :
+
+1. ajout au panier via la logique existante ;
+2. mémorisation de la destination si disponible (kit, checklist ou départ) ;
+3. affichage comme “En commande” lorsque les données de commande existent ;
+4. confirmation de réception par l’utilisateur ou statut fiable de livraison ;
+5. création/mise à jour de l’équipement dans `gear_items` si le flux actuel le supporte ;
+6. rattachement au kit ou départ cible si l’intention a été mémorisée ;
+7. écriture dans `gear_history` si ce journal est réellement employé par le modèle existant.
+
+Ne pas inventer une automatisation impossible avec le schéma réel. Si l’intention de destination manque, ajouter une structure **additive** et documentée seulement après audit.
+
+## Inventaire → Kits → Départs
+
+- Les kits doivent refléter la disponibilité réelle des objets.
+- Les objets prêtés, périmés, perdus ou déjà réservés doivent être clairement signalés.
+- Les départs doivent identifier les blocages matériels sans dupliquer les calculs à plusieurs endroits.
+- Toute résolution doit proposer une action réaliste : utiliser un substitut, récupérer un prêt, remplacer, ajouter au panier, ou modifier le kit.
+
+## Prêts et disponibilité
+
+- Conserver les données de `loans` et les parcours actuels.
+- Calculer les retards, conflits et disponibilités via une logique partagée.
+- Ne jamais rendre automatiquement un prêt sans action utilisateur ou donnée de retour fiable.
+
+---
+
+# 10. Mise à jour de Mon Matériel
+
+Conserver la route et les capacités existantes. Mettre à jour l’expérience en évitant les régressions.
+
+## Cockpit principal
+
+- Conserver les six domaines métier :
+  1. À ne pas oublier
+  2. Alertes & fiabilité
+  3. Mes kits
+  4. Prochain départ
+  5. Inventaire & catalogue
+  6. Disponibilité
+- Conserver les actions et les chemins utilisateur existants.
+- Assainir les composants pour réduire les duplications.
+- Mettre à jour les cards pour qu’elles affichent des valeurs réelles ou des états vides explicites.
+
+## Disposition visuelle
+
+Desktop :
+
+```text
+3 cards en haut
+3 cards en bas
+Grille régulière 3 × 2
+```
+
+- mêmes gabarits de cards ;
+- espacement régulier ;
+- comportement mobile adapté, sans forcer trois colonnes ;
+- conserver le drag-and-drop seulement s’il fonctionne déjà, s’il est accessible et s’il apporte de la valeur ;
+- si le drag-and-drop est conservé, préserver la persistance existante et la compatibilité avec les utilisateurs actuels.
+
+## Fullscreen
+
+Conserver les fullscreen existants et leurs liens. Les restructurer de façon modulaire si nécessaire, sans casser :
+
+- l’ouverture depuis une card ;
+- la fermeture `Escape` ;
+- le focus trap ;
+- le retour de focus ;
+- l’absence de scroll du fond ;
+- les animations et préférences `prefers-reduced-motion`.
+
+Chaque fullscreen doit pouvoir afficher :
+
+- chargement ;
+- erreur ;
+- état vide ;
+- données réelles ;
+- actions directes contextualisées.
+
+---
+
+# 11. Mise à jour de l’Inventaire
+
+Conserver toutes les pages, fiches, modales et parcours existants.
+
+## Objectifs de nettoyage
+
+- unifier l’affichage des badges de statut ;
+- réutiliser une card équipement commune partout où possible ;
+- centraliser les calculs de poids, disponibilité, péremption et entretien ;
+- éviter les requêtes Supabase répétées ou contradictoires ;
+- traiter correctement images absentes, poids inconnus, dates absentes, objets sans catégorie et inventaire vide ;
+- conserver les formulaires d’ajout/modification avec validations claires ;
+- conserver les flux de prêt, maintenance, historique et kits.
+
+## Recherche, filtres et tri
+
+Ne pas retirer les capacités existantes. Fiabiliser :
+
+- recherche par nom, marque, catégorie, tag et kit ;
+- filtres par état, disponibilité, favori et usage ;
+- tri par récent, poids, fréquence, urgence ;
+- annulation/réinitialisation claire ;
+- synchronisation d’URL uniquement si déjà utilisée ou ajoutée de manière non disruptive.
+
+## Fiche équipement
+
+Améliorer sans supprimer les fonctionnalités actuelles :
+
+- images ;
+- informations techniques ;
+- statuts cumulés ;
+- historique ;
+- prêts ;
+- entretien ;
+- kits associés ;
+- provenance et commande si disponible ;
+- actions contextuelles.
+
+---
+
+# 12. Mise à jour de la Boutique
+
+Conserver routes, catalogue, panier, commandes et checkout existants.
+
+## Objectifs de nettoyage
+
+- réutiliser les types produit et composants partagés lorsque cela ne casse pas les parcours ;
+- normaliser disponibilité, stock, prix, poids, catégorie et marque depuis `shop_products` ;
+- rendre les erreurs panier/checkout explicites ;
+- ne pas dupliquer localStorage et Supabase si un mécanisme de synchronisation existe déjà ;
+- préserver les comportements d’achat actuels ;
+- améliorer les états de chargement, vide, indisponible et rupture de stock.
+
+## Compatibilité équipement
+
+Lorsqu’un utilisateur consulte un produit :
+
+- signaler de façon non bloquante s’il possède un équivalent fonctionnel ;
+- proposer d’ouvrir l’objet existant ou de poursuivre l’achat ;
+- ne jamais empêcher l’achat sur une supposition ;
+- afficher le contexte kit/départ seulement si la donnée est réellement disponible.
+
+## Commandes
+
+- Conserver les pages et modèles existants.
+- Clarifier les statuts : commandé, expédié, livré, réception à confirmer.
+- Centraliser ces statuts dans une couche de domaine ou adaptateur, sans casser les API actuelles.
+- Conserver toute traçabilité existante (`orders`, `order_items`, `stock_movements`).
+
+---
+
+# 13. Direction visuelle — liquid glass clair, fond animé vert
+
+## Intention
+
+L’interface doit devenir plus claire, apaisante et premium, sans perdre la teinte nature/verte de LKDV :
+
+> Un cockpit outdoor lumineux, lisible et calme, posé sur un paysage naturel vivant.
+
+## Fond vidéo animé
+
+Une vidéo de référence a été transmise par l’utilisateur. Utiliser cet asset seulement s’il est présent dans le dépôt ou fourni dans l’environnement de travail.
+
+Ne pas télécharger un nouvel asset externe sans instruction explicite.
+
+Comportement :
+
+```html
+<video autoplay muted loop playsinline preload="metadata">
+```
+
+Exigences :
+
+- arrière-plan plein écran ;
+- `object-cover` ;
+- sans interaction ;
+- poster/fallback si la vidéo est indisponible ;
+- `prefers-reduced-motion` : image fixe ou première frame ;
+- overlay vert clair pour préserver la lisibilité ;
+- performance mobile surveillée.
+
+## Liquid glass
+
+Faire évoluer les surfaces sans casser le design system global :
+
+- surfaces très claires et légèrement chaudes ;
+- transparence de l’ordre de `bg-white/70` à `bg-white/80` ;
+- flou fort mais maîtrisé ;
+- bordure blanche subtile ;
+- ombre douce ;
+- teinte verte douce en halo ou en accent ;
+- fond vidéo perceptible mais jamais gênant ;
+- contraste WCAG AA maintenu.
+
+Tokens indicatifs à centraliser si le projet le permet :
+
+```css
+--mm-ink: #1C2620;
+--mm-forest: #2D5A3D;
+--mm-forest-soft: #E6F0E7;
+--mm-paper: #F5F3EE;
+--mm-amber: #8C6A1A;
+--mm-danger: #9B2C2C;
+--mm-glass: rgba(255, 255, 255, 0.76);
+--mm-glass-border: rgba(255, 255, 255, 0.82);
+```
+
+Ne pas imposer ces tokens si un système équivalent existe déjà : préférer l’extension cohérente des tokens en place.
+
+## Accessibilité
+
+- jamais une information portée uniquement par une couleur ;
+- icône + texte + couleur pour les statuts ;
+- focus visible ;
+- navigation clavier ;
+- cibles tactiles d’au moins 44 px ;
+- aucun emoji dans l’UI ;
+- `Escape` ferme les overlays ;
+- focus trap et retour de focus dans les fullscreen ;
+- contraste WCAG AA minimum.
+
+---
+
+# 14. Tests et qualité obligatoires
+
+## Baseline avant modifications
+
+Avant toute évolution :
+
+1. exécuter les tests existants ;
+2. relever les échecs préexistants ;
+3. documenter cette baseline dans le fichier de progression.
 
 ## Après chaque phase majeure
 
@@ -321,112 +615,95 @@ npx tsc --noEmit
 npm run build
 ```
 
-Puis exécuter la suite de tests applicable.
+Puis lancer les tests applicables.
 
-## Tests Playwright à ajouter ou adapter
+## Tests fonctionnels à préserver ou ajouter
 
-Valider au minimum :
+- affichage d’un équipement avec statuts cumulés ;
+- inventaire vide et inventaire renseigné ;
+- ajout/modification d’un équipement ;
+- affichage d’une fiche équipement ;
+- prêt et retour ;
+- kit complet/incomplet ;
+- objet indisponible dans un départ ;
+- catalogue et fiche produit ;
+- ajout panier ;
+- commande et réception si le flux existe ;
+- navigation de Mon Matériel ;
+- ouverture/fermeture des six fullscreen ;
+- chargement, erreur et états vides.
 
-1. L’application charge sans erreur console sur les pages principales conservées.
-2. Header, footer et menu mobile ne montrent plus les modules supprimés.
-3. Les anciennes URLs `/mon-materiel`, inventaire, boutique, panier et checkout ont le comportement attendu (redirection ou `not-found` selon le choix documenté).
-4. Aucun lien dans les pages restantes ne dirige vers les modules supprimés.
-5. Aucun appel critique vers API boutique/inventaire ne survient au chargement des pages restantes.
-6. Desktop 1920 px et mobile 380 px : navigation restante utilisable.
+## Playwright et captures visuelles
 
-## Captures obligatoires
+Ajouter ou adapter les tests Playwright pour couvrir :
 
-Prendre et documenter des captures desktop et mobile :
-
-- page d’accueil ;
-- navigation/header ;
+- Mon Matériel desktop 1920 et mobile 380 ;
+- cockpit grille 3 × 2 en desktop ;
+- chacun des six fullscreen ;
+- Inventaire ;
+- Boutique ;
+- panier et commande si les tests existants possèdent un environnement sûr ;
 - menu mobile ;
-- une page métier principale conservée ;
-- comportement de chaque ancienne URL supprimée.
+- navigation clavier ;
+- absence d’erreurs console ;
+- `prefers-reduced-motion`.
 
-Ajouter les chemins des captures et une courte vérification dans `docs/PROGRESS-mon-materiel.md`.
+Captures obligatoires documentées dans le fichier de progression :
 
----
-
-# 9. Fichier de progression : format obligatoire
-
-Conserver l’historique existant, puis ajouter une section de reset v3.
-
-Après chaque sous-étape, ajouter :
-
-```md
-### Journal des modifications
-
-#### YYYY-MM-DD — HH:MM Europe/Paris — Phase X.Y terminée
-- Réalisé :
-  - ...
-- Fichiers :
-  - Créé : `...`
-  - Modifié : `...`
-  - Supprimé : `...`
-- Supabase :
-  - Tables auditées : `...`
-  - Migration : aucune / `...`
-- Validation :
-  - `npm run lint` : OK / erreur documentée et corrigée
-  - `npx tsc --noEmit` : OK
-  - `npm run build` : OK
-  - Tests : X/X OK
-  - Captures : `...`
-- Risques / décisions :
-  - ...
-- Prochaine étape :
-  - ...
-```
+| Écran | Desktop 1920 | Mobile 380 |
+|---|---:|---:|
+| Mon Matériel — cockpit | obligatoire | obligatoire |
+| Les 6 fullscreen | obligatoire | obligatoire |
+| Inventaire | obligatoire | obligatoire |
+| Boutique | obligatoire | obligatoire |
+| Panier / commande si testable | obligatoire | obligatoire |
 
 ---
 
-# 10. Stratégie de commits
+# 15. Commits et pull request
 
-Créer des commits atomiques et lisibles. Exemple de découpe :
+## Commits
 
-1. `docs: add removal plan for inventory shop and mon materiel`
-2. `chore: remove inventory shop and mon materiel navigation`
-3. `chore: remove mon materiel route and exclusive components`
-4. `chore: remove inventory and shop routes and exclusive code`
-5. `chore: clean orphan imports services and dependencies`
-6. `test: cover navigation after inventory shop removal`
-7. `docs: complete inventory shop and mon materiel reset report`
+Créer des commits atomiques, sans suppression destructive. Exemple :
 
-Adapter les commits si la structure réelle du projet le nécessite.
+1. `docs: add non-destructive cleanup plan for equipment commerce`
+2. `refactor: centralize equipment status and availability logic`
+3. `refactor: consolidate inventory data hooks with compatibility adapters`
+4. `refactor: consolidate shop order and product states`
+5. `feat: refresh mon materiel cockpit and fullscreen experience`
+6. `style: apply accessible light liquid glass system`
+7. `test: expand equipment inventory and commerce coverage`
+8. `docs: complete cleanup progress report`
 
----
+## Pull request
 
-# 11. Pull request finale
+Ouvrir une PR vers `main` avec :
 
-Créer une PR de `chore/remove-inventaire-boutique-mon-materiel` vers `main`.
-
-La description doit contenir :
-
-- le périmètre supprimé ;
-- les routes supprimées ou redirigées ;
-- les composants/hooks/services/API retirés ;
-- les composants partagés conservés/extraits ;
-- confirmation explicite que les données Supabase n’ont pas été supprimées ;
-- dépendances retirées ;
-- résultats lint / TypeScript / build / Playwright ;
-- captures réalisées ;
-- risques, limites et éléments volontairement conservés pour une future reconstruction.
+- les modules conservés ;
+- les fichiers et couches de compatibilité ajoutés ;
+- les doublons/dettes nettoyés ;
+- les tables Supabase auditées ;
+- les migrations additives éventuelles ;
+- les parcours protégés contre régression ;
+- les résultats lint, TypeScript, build et Playwright ;
+- les captures ;
+- les risques restants et les éléments marqués dépréciés, sans suppression.
 
 ---
 
-# 12. Définition de terminé
+# 16. Définition de terminé
 
-La mission est terminée uniquement si :
+La mission est terminée uniquement quand :
 
-- Inventaire, Boutique et Mon Matériel sont totalement retirés du frontend ;
-- leurs routes ne sont plus accessibles comme fonctionnalités actives ;
-- la navigation ne contient aucun lien ni badge associé ;
-- il n’existe aucun lien mort vers ces modules ;
-- aucun import, composant, hook, API ou dépendance exclusivement dédié ne subsiste ;
-- les données et tables Supabase ont été conservées intactes ;
-- l’application restante fonctionne sans régression visible ;
-- `npm run lint`, `npx tsc --noEmit` et `npm run build` sont verts ;
-- les tests et captures demandés sont réalisés ;
-- le fichier de progression est complet et à jour ;
-- une PR claire est ouverte vers `main`.
+- Inventaire, Boutique et Mon Matériel sont tous conservés et accessibles ;
+- aucune route, donnée, table, composant métier, hook, API ou dépendance n’a été supprimé ;
+- la dette technique identifiée est documentée et nettoyée de manière non destructive ;
+- les règles de statut et disponibilité sont centralisées ou clairement encapsulées ;
+- les parcours Boutique → Commande → Inventaire → Kit → Départ sont cohérents et non régressifs ;
+- Mon Matériel est visuellement plus clair, avec une grille 3 × 2 desktop et une teinte verte cohérente ;
+- les fullscreen existants restent fonctionnels, accessibles et riches en états réels ;
+- les données Supabase sont utilisées correctement et sans contournement de RLS ;
+- les tests, lint, TypeScript et build sont verts ;
+- les captures desktop/mobile sont vérifiées ;
+- `docs/PROGRESS-mon-materiel.md` est complet et à jour après chaque phase ;
+- une PR documentée est ouverte vers `main`.
