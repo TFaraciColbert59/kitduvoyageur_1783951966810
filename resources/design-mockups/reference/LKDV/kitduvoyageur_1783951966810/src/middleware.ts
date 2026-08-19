@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getCountryCodeByName, getCountryByCode } from '@/lib/countries';
 
@@ -20,7 +20,7 @@ function isAdmin(pathname: string) {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // ─── Auth protection ──────────────────────────────────────────────────────
+  // Auth protection
   if (isProtected(pathname)) {
     let response = NextResponse.next({ request });
 
@@ -32,7 +32,7 @@ export async function middleware(request: NextRequest) {
           getAll() {
             return request.cookies.getAll();
           },
-          setAll(cookiesToSet) {
+          setAll(cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
             cookiesToSet.forEach(({ name, value }) =>
               request.cookies.set(name, value)
             );
@@ -74,14 +74,14 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // ─── /catalogue → /shop redirects (301) ──────────────────────────────────
+  // /catalogue /shop redirects (301)
   if (pathname === '/catalogue' || pathname.startsWith('/catalogue/')) {
     const url = request.nextUrl.clone();
     url.pathname = pathname.replace(/^\/catalogue/, '/shop');
     return NextResponse.redirect(url, { status: 301 });
   }
 
-  // ─── /kits → /shop?type=kit redirect (301) ───────────────────────────────
+  // /kits /shop?type=kit redirect (301)
   if (pathname === '/kits') {
     const url = request.nextUrl.clone();
     url.pathname = '/shop';
@@ -89,7 +89,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, { status: 301 });
   }
 
-  // ─── Country redirect logic ───────────────────────────────────────────────
+  // Country redirect logic
   const paysMatch = pathname.match(/^\/pays\/([a-zà-ü-]+)$/i);
   if (paysMatch) {
     const slug = paysMatch[1];
@@ -104,7 +104,7 @@ export async function middleware(request: NextRequest) {
     const code = getCountryCodeByName(slug);
     if (code) {
       const url = request.nextUrl.clone();
-      url.pathname = `/pays/${code.toLowerCase()}`;
+      url.pathname = '/pays/' + code.toLowerCase();
       return NextResponse.redirect(url, { status: 301 });
     }
   }
