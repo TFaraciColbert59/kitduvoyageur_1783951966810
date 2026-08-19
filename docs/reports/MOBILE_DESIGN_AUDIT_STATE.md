@@ -22,7 +22,7 @@
 | 7 | Admin | `src/app/admin/page.tsx` | ✅ Complété (contraste de couleur corrigé sur la barre supérieure) |
 | 8 | Carnet de voyage (Fiche) | `src/app/carnets/[id]/page.tsx` | ✅ Complété (déjà conforme en inline styles dans CarnetView) |
 | 9 | Terrain (Hub) | `src/app/terrain/page.tsx` | ✅ Complété (déjà conforme en inline styles dans TerrainHub) |
-| 10 | Jumeau 3D | `src/app/jumeau-3d/page.tsx` | ✅ Complété (modal d'ajout refactorisé en inline styles) |
+| 10 | ~~Jumeau 3D~~ (supprimé) | ~~`src/app/jumeau-3d/page.tsx`~~ | ❌ Page supprimée définitivement (mission refonte Mon Matériel v3) — la fiche de la mission interdit toute référence restante |
 | 11 | Rapport Kit | `src/app/rapport-kit/page.tsx` | ✅ Complété (contraste corrigé, spacer rendu inconditionnel) |
 | 12 | Rapport Expédition | `src/app/rapport-expedition/page.tsx` | ✅ Complété (déjà conforme en inline styles) |
 | 13 | Boutique (Index) | `src/app/boutique/page.tsx` | ✅ Complété (spinner refactorisé, spacer ajouté dans BoutiqueClient) |

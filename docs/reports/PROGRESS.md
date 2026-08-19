@@ -5,7 +5,7 @@
 | # | Chantier | Statut | Fichiers | Cause racine | Correctif |
 |---|---|---|---|---|---|
 | 1 | Collision `dynamic` (TDZ) | ✅ | `src/app/groupes/[groupId]/page.tsx` | `import dynamic from 'next/dynamic'` + `export const dynamic = 'force-dynamic'` dans la même route → `Cannot access 'dynamic' before initialization` | Import renommé `nextDynamic`, plus de conflit de nom |
-| 2 | Jumeau 3D interactif mobile + globe robuste | ✅ | `src/app/jumeau-3d/page.tsx`, `src/components/pays/CountryGlobe.tsx` | Jumeau 3D peu interactif sur mobile ; globe fragile (crashes WebGL, DPR non géré) | Refactor jumeau 3D (pods, barres, top articles) + globe robuste (ResizeObserver, DPR cap, fallback, focus caméra) |
+| 2 | Ancien chantier « Jumeau 3D » (page depuis supprimée) | ✅ | ~~`src/app/jumeau-3d/page.tsx`~~ (retiré v3) | Jumeau 3D peu interactif sur mobile ; globe fragile | Refactor historique puis **suppression définitive** de la page dans la refonte Mon Matériel v3 — aucune référence restante |
 | 3 | Interactions sociales (like / comment / fav) | ✅ | `src/app/carnets/page.tsx` + migration `content_counters_triggers` | Compteurs (likes/comments/views/favorites) jamais resynchronisés après mutation → état UI incohérent | Triggers SQL `sync_carnet_*_count` + resync état React (`onCommentCountChange`, diff calculé à la lecture) |
 | 4 | Carnets ne chargent pas au clic (mobile) | ✅ | `src/app/carnets/page.tsx` | Modals (détail/création/suppression) rendues DANS le bloc desktop `hidden md:block` → invisibles sur mobile ; clic carte ne montrait rien | Modals + toast déplacés à la racine, partagés desktop & mobile |
 | 5 | Clubs ne chargent pas (liste + détail) | ✅ | migration `clubs_public_read_policy_fix` | Table `clubs` RLS activée mais AUCUNE policy SELECT (supposée existante puis droppée) → zéro ligne côté client, détail replié sur données factices | Création policy `clubs_read` FOR SELECT TO public USING (true) |
@@ -77,7 +77,7 @@
 
 ### Phase 2 (25 layouts — this session)
 - ✅ pays, communaute, avis, carte-interactive, evenements, faq — Tier 1 high-traffic public pages
-- ✅ ambassadeurs, carbone, clubs, communaute-pro, cookies, copilote, createurs, entraide, experts, feed, fidelite, gamification, jumeau-3d, naviguer, nouveau-groupe, pro, publier, recommandations, voyage-ia — Tier 2 public pages
+- ✅ ambassadeurs, carbone, clubs, communaute-pro, cookies, copilote, createurs, entraide, experts, feed, fidelite, gamification (⚠️ jumeau-3d supprimé en v3), naviguer, nouveau-groupe, pro, publier, recommandations, voyage-ia — Tier 2 public pages
 - ✅ 25 layouts enriched with WebPage + BreadcrumbList via metadata `other` field
 - ✅ All reference root website via `isPartOf: { '@id': \`\${siteUrl}/#website\` }`
 - ✅ Build vérifié (exit 0, clean build)

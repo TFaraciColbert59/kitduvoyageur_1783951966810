@@ -225,7 +225,6 @@ transpilePackages: ['react-globe.gl', 'three', 'lucide-react']
 | Création carnet | `communauté/page.tsx` + `CarnetFormModal` | Modal de création avec upload photos |
 | Terrain | `terrain/page.tsx` | Hub mobile (GPS, carte, kit, recherche, mode hors ligne) |
 | Randonnée active | `randonnee-active` + `HikingCockpitPage` | Cockpit desktop complet (TopBar, LeftPanel, RightPanel, DockBar, MapOverlay) |
-| Jumeau 3D | `jumeau-3d/page.tsx` | Résumé pods sac, barres catégoriques, top articles, placeholder 3D |
 | Rapport Kit | `rapport-kit/page.tsx` | En-tête stats, objets par catégorie, barres pods, recommandations |
 | Rapport Expédition | `rapport-expedition/page.tsx` | Titre+dates, stats clés, résumé jour par jour, équipement |
 

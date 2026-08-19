@@ -37,7 +37,6 @@ function CGUSections() {
           <li><strong>Inventaire personnel</strong> : gestion de l&apos;équipement possédé</li>
           <li><strong>Fiches destinations</strong> : informations pratiques sur les pays et itinéraires</li>
           <li><strong>Espace communautaire</strong> : carnets de voyage, avis, groupes, messagerie</li>
-          <li><strong>Jumeau numérique 3D</strong> : visualisation interactive de l&apos;équipement</li>
         </ul>
         <p className="mt-3">
           Le Kit du Voyageur se réserve le droit de modifier, suspendre ou interrompre tout ou partie des services à tout moment.
@@ -144,7 +143,7 @@ function MobileCGUSections() {
 
       <section style={sectionStyle}>
         <h2 style={h2Style}>2. Description des services</h2>
-        <p style={pStyle}>La Plateforme propose : configurateur IA, boutique e-commerce, marketplace occasion, inventaire personnel, fiches destinations, espace communautaire et jumeau numérique 3D.</p>
+        <p style={pStyle}>La Plateforme propose : configurateur IA, boutique e-commerce, marketplace occasion, inventaire personnel, fiches destinations, espace communautaire.</p>
       </section>
 
       <section style={sectionStyle}>
