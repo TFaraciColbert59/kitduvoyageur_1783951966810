@@ -36,9 +36,6 @@ const BASE = 'http://localhost:4028';
       results.videoObjectCover = getComputedStyle(video).objectFit;
       results.videoPoster = video.getAttribute('poster') || '';
     }
-    // Overlay forest-soft à 30% (demande mission)
-    const overlay = document.querySelector('[data-overlay="forest"]') as HTMLElement | null;
-    results.overlayForest = overlay ? getComputedStyle(overlay).backgroundColor : 'absent';
     // Première carte (glass)
     const card = document.querySelector('[class*="lg:grid-cols-3"] > div > div.relative.overflow-hidden') as HTMLElement | null;
     if (card) {

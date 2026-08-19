@@ -66,24 +66,6 @@ export function AnimatedBackground({
           />
         </div>
       )}
-      {veil && (
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#F5F3EE]/70 via-[#FBFAF6]/40 to-[#F5F3EE]/75" />
-          {/* Teinte verte LKDV (mission : overlay `--mm-forest-soft` à 30%) */}
-          <div
-            data-overlay="forest"
-            className="absolute inset-0"
-            style={{ backgroundColor: 'rgba(45, 107, 74, 0.3)' }}
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                'radial-gradient(ellipse at 50% 12%, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 55%)',
-            }}
-          />
-        </div>
-      )}
     </div>
   );
 }

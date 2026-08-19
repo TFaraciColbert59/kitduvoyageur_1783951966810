@@ -132,12 +132,6 @@ async function main() {
     return `${v.autoplay},${v.muted},${v.loop},${v.playsInline},${src}`;
   });
   report('Fond vidéo animé autoplay/muted/loop/playsInline', videoFlags === 'true,true,true,true,true', videoFlags);
-  const overlayForest = await page.evaluate(() => {
-    const el = document.querySelector('[data-overlay="forest"]') as HTMLElement | null;
-    if (!el) return 'absent';
-    return getComputedStyle(el).backgroundColor;
-  });
-  report('Overlay forest-soft semi-transparent présent', overlayForest !== 'absent', overlayForest);
 
   await page.setViewportSize({ width: 380, height: 844 });
   await page.waitForTimeout(600);
