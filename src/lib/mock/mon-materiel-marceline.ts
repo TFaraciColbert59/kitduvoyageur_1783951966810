@@ -9,7 +9,7 @@ export interface GearItemData {
   quantity?: number;
   is_rented: boolean;
   product_id?: string;
-  condition?: 'excellent' | 'bon' | 'moyen' | 'à réparer' | 'neuf' | 'usé' | 'à_réparer' | 'à_remplacer';
+  condition?: 'excellent' | 'bon' | 'moyen' | 'à_réparer' | 'neuf' | 'usé' | 'à_remplacer';
   model?: string;
   brand?: string;
   purchase_date?: string;

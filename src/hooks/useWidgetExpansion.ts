@@ -287,7 +287,7 @@ export function useWidgetExpansion(options: UseWidgetExpansionOptions = {}) {
 }
 
 /* ---------- Hook complémentaire : Focus Trap pour fullscreen ---------- */
-export function useFocusTrap(active: boolean, containerRef: React.RefObject<HTMLElement>) {
+export function useFocusTrap(active: boolean, containerRef: React.RefObject<HTMLDivElement | null>) {
   useEffect(() => {
     if (!active || !containerRef.current) return;
 

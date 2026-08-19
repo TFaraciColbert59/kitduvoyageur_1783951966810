@@ -2,16 +2,17 @@
    LKDV — Widget Inventaire & Catalogue (Large/Hero)
    =============================================================================
    Card compacte : synthèse inventaire | Fullscreen : répertoire complet 9 catégories
-   États produit : Possédé/Prêté/Abîmé/En réparation/En entretien/Perdu/Non possédé/En attente/Commandé/À réceptionner/Alternative
+   États produit : Possédé/Prêté/Abîmé/En réparation/En entretien/Perdu/Non possédé/En attente/Commandé/à réceptionner/Alternative
    Parcours achat : Ajouter à l'inventaire → Panier → Commande → Réception → Produit possédé auto
    ============================================================================= */
 
 import React, { memo, useMemo } from 'react';
 import { UserEquipmentItem, UnifiedProduct, FALLBACK_AUTHENTIC_PRODUCTS } from '@/hooks/useEquipment';
-import { EQUIPMENT_CATEGORIES, EquipmentCategory } from '@/types/product';
+import { EQUIPMENT_CATEGORIES, EquipmentCategory, UnifiedProductState } from '@/types/product';
 
 interface InventaireWidgetProps {
   equipment: UserEquipmentItem[];
+  productStates: UnifiedProductState[];
   catalogProducts: UnifiedProduct[];
   selectedCategoryTab: string;
   setSelectedCategoryTab: (cat: string) => void;
@@ -27,8 +28,8 @@ interface InventaireWidgetProps {
   onExpand: () => void;
   onCloseExpanded: () => void;
   isExpanded: boolean;
-  cardRef: React.RefObject<HTMLDivElement>;
-  headerRef: React.RefObject<HTMLDivElement>;
+  cardRef: HTMLDivElement | null;
+  headerRef: HTMLDivElement | null;
   layoutId: string;
   headerLayoutId: string;
 }
@@ -86,7 +87,7 @@ export const InventaireWidget = memo(function InventaireWidget({
           </div>
           <div className="bg-white/5 p-2 rounded-xl border border-white/5 text-center">
             <span className="text-xl font-black text-[#E9C46A]">{missingEssentialCount || '—'}</span>
-            <span className="text-[10px] text-white/50 block">À compléter</span>
+            <span className="text-[10px] text-white/50 block">à compléter</span>
           </div>
         </div>
 
@@ -217,19 +218,23 @@ export const InventaireWidget = memo(function InventaireWidget({
                   statusLabel = 'Prêté';
                   statusColor = 'bg-[#E9C46A]/20 text-[#E9C46A]';
                   statusDetail = `Prêté à ${item.loan_to_name || 'quelqu\'un'}`;
-                } else if (item.condition === 'en_reparation' || item.condition === 'a_reparer') {
+                } else if (item.condition === 'à_réparer') {
                   statusLabel = 'En réparation';
                   statusColor = 'bg-[#6BA3D6]/20 text-[#6BA3D6]';
-                } else if (item.condition === 'en_entretien' || item.condition === 'maintenance_requise') {
-                  statusLabel = 'Entretien';
-                  statusColor = 'bg-[#E9C46A]/20 text-[#E9C46A]';
-                } else if (item.condition === 'a_remplacer') {
-                  statusLabel = 'À remplacer';
-                  statusColor = 'bg-[#E76F51]/20 text-[#E76F51]';
-                } else if (item.condition === 'perdu') {
-                  statusLabel = 'Perdu';
-                  statusColor = 'bg-neutral-500/20 text-neutral-400';
+                } else if (item.condition === 'à_remplacer') {
+                  // Differentiate based on notes or other fields
+                  if (item.notes?.toLowerCase().includes('perdu') || item.notes?.toLowerCase().includes('lost')) {
+                    statusLabel = 'Perdu';
+                    statusColor = 'bg-neutral-500/20 text-neutral-400';
+                  } else if (item.notes?.toLowerCase().includes('entretien') || item.notes?.toLowerCase().includes('maintenance')) {
+                    statusLabel = 'Entretien';
+                    statusColor = 'bg-[#E9C46A]/20 text-[#E9C46A]';
+                  } else {
+                    statusLabel = 'à remplacer';
+                    statusColor = 'bg-[#E76F51]/20 text-[#E76F51]';
+                  }
                 }
+
 
                 return (
                   <div key={item.id} className="p-4 bg-white/5 border border-white/10 rounded-2xl flex flex-col justify-between">
@@ -341,3 +346,9 @@ function formatWeight(g: number): string {
 }
 
 InventaireWidget.displayName = 'InventaireWidget';
+
+
+
+
+
+

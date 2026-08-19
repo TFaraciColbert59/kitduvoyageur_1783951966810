@@ -7,22 +7,25 @@
 import React, { memo } from 'react';
 import { CustomKit } from '@/hooks/useUserKits';
 import { UserEquipmentItem } from '@/hooks/useEquipment';
-import { formatWeight } from '@/app/mon-materiel/page';
+import { formatWeight } from '@/lib/utils/format';
+import { UnifiedProductState } from '@/types/product';
 
 interface MesKitsWidgetProps {
   kits: CustomKit[];
   activeKit: CustomKit | null;
   activeHike: any; // PlannedHike
   equipment: UserEquipmentItem[];
+  productStates: UnifiedProductState[];
   selectedKitInFullscreen: string | null;
   onSetSelectedKitInFullscreen: (kitId: string) => void;
   onOpenKitDrawer: () => void;
   onCreateKit: () => void;
   onAssignKitToDeparture: (kit: CustomKit) => void;
   onExpand: () => void;
+  onCloseExpanded: () => void;
   isExpanded: boolean;
-  cardRef: React.RefObject<HTMLDivElement>;
-  headerRef: React.RefObject<HTMLDivElement>;
+  cardRef: HTMLDivElement | null;
+  headerRef: HTMLDivElement | null;
   layoutId: string;
   headerLayoutId: string;
 }
@@ -38,6 +41,7 @@ export const MesKitsWidget = memo(function MesKitsWidget({
   onCreateKit,
   onAssignKitToDeparture,
   onExpand,
+  onCloseExpanded,
   isExpanded,
   cardRef,
   headerRef,
@@ -264,7 +268,7 @@ export const MesKitsWidget = memo(function MesKitsWidget({
                               e.name.toLowerCase() === item.item_name.toLowerCase()
                             );
                             const isOwned = !!ownedItem;
-                            const isAvailable = isOwned && ownedItem!.loan_status !== 'prêté' && ownedItem!.condition !== 'a_remplacer';
+                            const isAvailable = isOwned && ownedItem!.loan_status !== 'prêté' && ownedItem!.condition !== 'à_remplacer';
 
                             return (
                               <div key={item.id} className="p-3 bg-black/30 rounded-xl border border-white/5 flex justify-between items-center">
@@ -281,10 +285,10 @@ export const MesKitsWidget = memo(function MesKitsWidget({
                                       {ownedItem!.loan_status === 'prêté' && (
                                         <span className="px-2 py-0.5 rounded bg-[#E9C46A]/20 text-[#E9C46A] text-[10px] font-bold">Prêté</span>
                                       )}
-                                      {ownedItem!.condition === 'a_remplacer' && (
+                                      {ownedItem!.condition === 'à_remplacer' && (
                                         <span className="px-2 py-0.5 rounded bg-[#E76F51]/20 text-[#E76F51] text-[10px] font-bold">À remplacer</span>
                                       )}
-                                      {ownedItem!.condition === 'en_reparation' && (
+                                      {ownedItem!.condition === 'à_réparer' && (
                                         <span className="px-2 py-0.5 rounded bg-[#6BA3D6]/20 text-[#6BA3D6] text-[10px] font-bold">En réparation</span>
                                       )}
                                       {isAvailable && (
@@ -322,3 +326,9 @@ export const MesKitsWidget = memo(function MesKitsWidget({
 });
 
 MesKitsWidget.displayName = 'MesKitsWidget';
+
+
+
+
+
+

@@ -46,7 +46,7 @@ function normalizeCategory(cat: string): EquipmentCategory {
 }
 
 /* ---------- HELPERS : Correspondance produit catalogue ---------- */
-function findCatalogMatch(
+export function findCatalogMatch(
   equipment: UserEquipmentItem,
   catalog: UnifiedProduct[]
 ): UnifiedProduct | null {
@@ -90,8 +90,8 @@ export function calculateUnifiedProductState(
   const brand = baseProduct.brand || 'Sans marque';
   const category = normalizeCategory(baseProduct.category || 'Autre');
   const weight_g = baseProduct.weight_g || 0;
-  const price_eur = baseProduct.price_eur;
-  const image = baseProduct.image;
+  const price_eur = (baseProduct as any).price_eur || 0;
+  const image = baseProduct.image || undefined;
 
   // ---- 1. PROPRIÉTÉ ----
   let ownership: ProductOwnership = 'non_possede';
@@ -135,15 +135,15 @@ export function calculateUnifiedProductState(
 
     // Vérifier état physique pour réparation/entretien
     const cond = equipmentItem!.condition;
-    if (cond === 'en_reparation' || cond === 'a_reparer') {
+    if (cond === 'à_réparer') {
       availability = 'en_reparation';
-    } else if (cond === 'en_entretien' || cond === 'maintenance_requise') {
+    } else if (cond === 'à_remplacer') {
       availability = 'en_entretien';
     }
 
     // Vérifier réservé pour départ
     if (activeDeparture && departurePlan) {
-      const isRequired = departurePlan.requiredItems?.some((ri: any) =>
+      const isRequired = departurePlan.checklist.missingItems?.some((ri: any) =>
         ri.name.toLowerCase() === equipmentItem!.name.toLowerCase()
       );
       if (isRequired) availability = 'reserve_depart';
@@ -157,18 +157,15 @@ export function calculateUnifiedProductState(
   // ---- 3. ÉTAT PHYSIQUE ----
   let physicalCondition: PhysicalCondition = 'bon';
   if (isEquipment) {
-    switch (equipmentItem!.condition) {
-      case 'neuf': physicalCondition = 'excellent'; break;
-      case 'bon': physicalCondition = 'bon'; break;
-      case 'a_surveiller': physicalCondition = 'a_surveiller'; break;
-      case 'abime': physicalCondition = 'abime'; break;
-      case 'a_reparer': physicalCondition = 'a_reparer'; break;
-      case 'a_remplacer': physicalCondition = 'a_remplacer'; break;
-      case 'en_reparation': physicalCondition = 'a_reparer'; break;
-      case 'en_entretien': physicalCondition = 'a_surveiller'; break;
-      case 'perdu': physicalCondition = 'a_remplacer'; break;
-      default: physicalCondition = 'bon';
-    }
+    const cond = equipmentItem!.condition;
+    if (cond === 'neuf') physicalCondition = 'excellent';
+    else if (cond === 'excellent') physicalCondition = 'excellent';
+    else if (cond === 'bon') physicalCondition = 'bon';
+    else if (cond === 'moyen') physicalCondition = 'a_surveiller';
+    else if (cond === 'usé') physicalCondition = 'abime';
+    else if (cond === 'à_réparer') physicalCondition = 'a_reparer';
+    else if (cond === 'à_remplacer') physicalCondition = 'a_remplacer';
+    else physicalCondition = 'bon';
   } else {
     physicalCondition = 'excellent'; // Catalogue = neuf
   }
@@ -203,13 +200,13 @@ export function calculateUnifiedProductState(
 
   if (activeDeparture && departurePlan) {
     // Recommandé par SmartDepartureEngine
-    const isRecommended = departurePlan.recommendedItems?.some((ri: any) =>
+    const isRecommended = departurePlan.checklist.inPackReady?.some((ri: any) =>
       ri.name.toLowerCase() === name.toLowerCase()
     );
     if (isRecommended) relations.recommendedForDeparture.push(activeDeparture.id);
 
     // Requis (manquant dans kit)
-    const isRequired = departurePlan.requiredItems?.some((ri: any) =>
+    const isRequired = departurePlan.checklist.missingItems?.some((ri: any) =>
       ri.name.toLowerCase() === name.toLowerCase()
     );
     if (isRequired) relations.requiredForDeparture.push(activeDeparture.id);
@@ -224,12 +221,12 @@ export function calculateUnifiedProductState(
   relations.replacedBy = replacedBy;
 
   // ---- MÉTADONNÉES TEMPORELLES ----
-  const lastMaintenanceDate = equipmentItem?.last_maintenance_date;
-  const nextMaintenanceDate = equipmentItem?.next_maintenance_date;
-  const expiryDate = equipmentItem?.expiry_date;
-  const loanToName = equipmentItem?.loan_to_name;
-  const loanExpiryDate = equipmentItem?.expiry_date; // réutilisé pour date retour prêt
-  const purchaseDate = equipmentItem?.created_at?.split('T')[0];
+  const lastMaintenanceDate = equipmentItem?.last_maintenance_date || undefined;
+  const nextMaintenanceDate = equipmentItem?.next_maintenance_date || undefined;
+  const expiryDate = equipmentItem?.expiry_date || undefined;
+  const loanToName = equipmentItem?.loan_to_name || undefined;
+  const loanExpiryDate = equipmentItem?.expiry_date || undefined; // réutilisé pour date retour prêt
+  const purchaseDate = equipmentItem?.acquired_at?.split('T')[0] || equipmentItem?.purchase_date?.split('T')[0] || undefined;
 
   // ---- FLAGS CALCULÉS ----
   const isCritical = isCriticalProduct(
@@ -266,7 +263,7 @@ export function calculateUnifiedProductState(
     loanToName,
     loanExpiryDate,
     purchaseDate,
-    receiptConfirmedDate: ownership === 'a_receptionner' ? undefined : undefined,
+    receiptConfirmedDate: undefined,
     isCritical,
     isActionable,
     suggestedAction,
@@ -363,7 +360,6 @@ function findAlternativeProduct(
 
   return null;
 }
-
 /* ---------- ACTION RECOMMANDÉE ---------- */
 function getRecommendedAction(
   ownership: ProductOwnership,
@@ -374,7 +370,7 @@ function getRecommendedAction(
   baseProduct: UserEquipmentItem | UnifiedProduct,
   allEquipment: UserEquipmentItem[],
   cartItems: any[]
-): ProductAction | null {
+): ProductAction | undefined {
   const name = baseProduct.name;
   const category = normalizeCategory(baseProduct.category || 'Autre');
   const weight_g = baseProduct.weight_g || 0;
@@ -519,7 +515,7 @@ function getRecommendedAction(
     };
   }
 
-  return null;
+  return undefined;
 }
 
 /* ---------- CALCUL PRÉPARATION DÉPART ---------- */
@@ -577,13 +573,13 @@ export function calculateDepartureReadiness(
         relations: {
           kits: [kit.id],
           departures: [departure.id],
-          recommendedForDeparture: departurePlan?.recommendedItems?.some(r => r.name.toLowerCase() === ki.item_name.toLowerCase()) ? [departure.id] : [],
-          requiredForDeparture: departurePlan?.requiredItems?.some(r => r.name.toLowerCase() === ki.item_name.toLowerCase()) ? [departure.id] : [],
+          recommendedForDeparture: departurePlan?.checklist.inPackReady?.some(r => r.name.toLowerCase() === ki.item_name.toLowerCase()) ? [departure.id] : [],
+          requiredForDeparture: departurePlan?.checklist.missingItems?.some(r => r.name.toLowerCase() === ki.item_name.toLowerCase()) ? [departure.id] : [],
           replacedBy: null,
           inCart: false,
           acquisitionIntentId: null,
         },
-        isCritical: departurePlan?.requiredItems?.some(r => r.name.toLowerCase() === ki.item_name.toLowerCase()) || false,
+        isCritical: departurePlan?.checklist.missingItems?.some(r => r.name.toLowerCase() === ki.item_name.toLowerCase()) || false,
         isActionable: true,
         suggestedAction: {
           type: 'add_to_cart',
@@ -645,3 +641,15 @@ export const ProductStateEngine = {
   normalizeCategory,
   findCatalogMatch,
 };
+
+
+
+
+
+
+
+
+
+
+
+

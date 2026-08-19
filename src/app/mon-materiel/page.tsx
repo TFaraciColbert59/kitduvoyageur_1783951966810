@@ -22,6 +22,7 @@ import {
   resolveDeparturePlan,
   DeparturePreparationPlan,
 } from '@/lib/preparation/SmartDepartureEngine';
+import { calculateUnifiedProductState, findCatalogMatch, calculateDepartureReadiness } from '@/lib/product-state';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -37,6 +38,7 @@ import { useWidgetOrder, CardId as OrderCardId } from '@/hooks/useWidgetOrder';
 import { FullscreenOverlay } from '@/components/cockpit/FullscreenOverlay';
 
 import '@/styles/tokens.css';
+import { formatWeight, daysUntil, buildHikeContext } from '@/lib/utils/format';
 
 // Types
 type WidgetId = CardId;
@@ -58,45 +60,6 @@ const WIDGET_CONFIGS: Record<WidgetId, WidgetConfig> = {
   disponibilite: { id: 'disponibilite', title: 'Disponibilité', isLarge: false },
   alertes: { id: 'alertes', title: 'Alertes & Fiabilité', isLarge: false },
 };
-
-function formatWeight(g: number): string {
-  if (!g || g <= 0) return '0 g';
-  if (g >= 1000) {
-    return `${(g / 1000).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 2 })} kg`;
-  }
-  return `${Math.round(g)} g`;
-}
-
-function daysUntil(targetDate?: string): number | null {
-  if (!targetDate) return null;
-  const target = new Date(`${targetDate}T00:00:00`);
-  if (Number.isNaN(target.getTime())) return null;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return Math.round((target.getTime() - today.getTime()) / 86400000);
-}
-
-function buildHikeContext(h: PlannedHike): DepartureHikeContext {
-  const days = (h.isOvernight && h.nightsCount ? h.nightsCount : 0) + (h.isOvernight ? 1 : 0);
-  return {
-    id: h.routeId || h.id,
-    name: h.name,
-    distanceKm: h.distanceKm,
-    elevationGain: h.elevationGain,
-    elevationLoss: h.elevationLoss,
-    difficulty: h.difficulty,
-    season: h.season,
-    terrain: h.terrain,
-    hasWaterPoints: h.hasWaterPoints,
-    waterPointsCount: h.waterPointsCount,
-    hasRefuges: h.hasRefuges,
-    isOvernight: h.isOvernight,
-    nightsCount: h.nightsCount,
-    weather: h.weather || null,
-    startDate: h.targetDate,
-    durationHours: days > 0 ? days * 6 : Math.round((h.distanceKm / 3.8) * 10) / 10,
-  };
-}
 
 export default function MonMaterielPage() {
   const { triggerHaptic } = useHapticFeedback();
@@ -282,6 +245,30 @@ export default function MonMaterielPage() {
     return out;
   }, [equipment]);
 
+  // --- Unified Product States (Phase 1) ---
+  const allProductStates = useMemo(() => {
+    return equipment.map(e => calculateUnifiedProductState(
+      e,
+      findCatalogMatch(e, catalogProducts || []),
+      kits,
+      activeHike,
+      departurePlan,
+      [], // cartItems - TODO: get from cart context
+      equipment
+    ));
+  }, [equipment, catalogProducts, kits, activeHike, departurePlan]);
+
+  // Cart items for product state calculation
+  const [cartItems, setCartItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('lkdv_cart');
+    if (saved) {
+      try { setCartItems(JSON.parse(saved)); } catch (e) {}
+    }
+  }, []);
+
+
   // Actions
   const handleAddProductToCart = (product: UnifiedProduct | { name: string; price_eur?: number; weight_g?: number; id?: string }) => {
     addToCart({
@@ -313,7 +300,7 @@ export default function MonMaterielPage() {
     showToast(`✓ Entretien de "${item.name}" validé pour 1 an`);
   };
 
-  const handleAddToEquipment = useCallback(async (product: any, condition = { condition: 'neuf' }) => {
+  const handleAddToEquipment = useCallback(async (product: any, condition: Partial<UserEquipmentItem> = { condition: "neuf" }) => {
     await addToEquipment(product, condition);
     showToast(`✓ "${product.name}" ajouté à votre inventaire`);
   }, [addToEquipment, showToast]);
@@ -360,7 +347,7 @@ export default function MonMaterielPage() {
       season: '3 Saisons',
       activity: 'Randonnée',
       for_destination: 'Toutes destinations',
-      items: [],
+      gearItems: [],
     });
     showToast('✓ Nouveau kit créé');
   };
@@ -569,6 +556,7 @@ export default function MonMaterielPage() {
             kits={kits}
             departurePlan={departurePlan}
             hikeReadiness={hikeReadiness}
+            productStates={allProductStates}
             equipment={equipment}
             onSetActiveHike={handleSetActiveHike}
             onOpenKitDrawer={handleOpenKitDrawer}
@@ -589,6 +577,7 @@ export default function MonMaterielPage() {
             activeKit={activeKit}
             activeHike={activeHike}
             equipment={equipment}
+            productStates={allProductStates}
             selectedKitInFullscreen={selectedKitInFullscreen}
             onSetSelectedKitInFullscreen={setSelectedKitInFullscreen}
             onOpenKitDrawer={handleOpenKitDrawer}
@@ -613,6 +602,7 @@ export default function MonMaterielPage() {
             departurePlan={departurePlan}
             hikeReadiness={hikeReadiness}
             equipment={equipment}
+            productStates={allProductStates}
             catalogProducts={catalogProducts || []}
             alerts={alerts}
             checkedOublis={checkedOublis}
@@ -632,6 +622,7 @@ export default function MonMaterielPage() {
       case 'inventaire':
         return (
           <InventaireWidget
+            productStates={allProductStates}
             equipment={equipment}
             catalogProducts={catalogProducts || []}
             selectedCategoryTab={selectedCategoryTab}
@@ -658,6 +649,7 @@ export default function MonMaterielPage() {
       case 'disponibilite':
         return (
           <DisponibiliteWidget
+            productStates={allProductStates}
             equipment={equipment}
             onExpand={() => expandCard('disponibilite')}
             onCloseExpanded={collapseCard}
@@ -672,6 +664,7 @@ export default function MonMaterielPage() {
       case 'alertes':
         return (
           <AlertesWidget
+            productStates={allProductStates}
             equipment={equipment}
             kits={kits}
             activeHike={activeHike}
@@ -694,3 +687,18 @@ export default function MonMaterielPage() {
     }
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

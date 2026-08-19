@@ -10,7 +10,8 @@ import { PlannedHike } from '@/lib/preparation/plannedHikes';
 import { DeparturePreparationPlan } from '@/lib/preparation/SmartDepartureEngine';
 import { CustomKit } from '@/hooks/useUserKits';
 import { UserEquipmentItem } from '@/hooks/useEquipment';
-import { formatWeight, daysUntil, buildHikeContext } from '@/app/mon-materiel/page';
+import { formatWeight, daysUntil, buildHikeContext } from '@/lib/utils/format';
+import { UnifiedProductState } from '@/types/product';
 
 interface ProchainDepartWidgetProps {
   // Données
@@ -26,6 +27,7 @@ interface ProchainDepartWidgetProps {
     missingItems: any[];
   };
   equipment: UserEquipmentItem[];
+  productStates: UnifiedProductState[];
   // Actions
   onSetActiveHike: (hike: PlannedHike) => void;
   onOpenKitDrawer: () => void;
@@ -34,8 +36,8 @@ interface ProchainDepartWidgetProps {
   // État expansion
   isExpanded: boolean;
   // Refs pour animation
-  cardRef: React.RefObject<HTMLDivElement>;
-  headerRef: React.RefObject<HTMLDivElement>;
+  cardRef: HTMLDivElement | null;
+  headerRef: HTMLDivElement | null;
   // Layout IDs
   layoutId: string;
   headerLayoutId: string;
@@ -428,3 +430,13 @@ export const ProchainDepartWidget = memo(function ProchainDepartWidget({
 });
 
 ProchainDepartWidget.displayName = 'ProchainDepartWidget';
+
+
+
+
+
+
+
+
+
+

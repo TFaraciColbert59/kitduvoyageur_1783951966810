@@ -10,6 +10,7 @@ import { PlannedHike } from '@/lib/preparation/plannedHikes';
 import { DeparturePreparationPlan } from '@/lib/preparation/SmartDepartureEngine';
 import { CustomKit } from '@/hooks/useUserKits';
 import { UserEquipmentItem, UnifiedProduct, FALLBACK_AUTHENTIC_PRODUCTS } from '@/hooks/useEquipment';
+import { UnifiedProductState } from '@/types/product';
 
 interface OublierWidgetProps {
   activeHike: PlannedHike | null;
@@ -18,6 +19,7 @@ interface OublierWidgetProps {
   departurePlan: DeparturePreparationPlan | null;
   hikeReadiness: { missingItems: any[] };
   equipment: UserEquipmentItem[];
+  productStates: UnifiedProductState[];
   catalogProducts: UnifiedProduct[];
   alerts: any[];
   checkedOublis: Record<string, boolean>;
@@ -27,8 +29,8 @@ interface OublierWidgetProps {
   onAddToCart: (product: any) => void;
   onAddToEquipment: (product: any) => void;
   isExpanded: boolean;
-  cardRef: React.RefObject<HTMLDivElement>;
-  headerRef: React.RefObject<HTMLDivElement>;
+  cardRef: HTMLDivElement | null;
+  headerRef: HTMLDivElement | null;
   layoutId: string;
   headerLayoutId: string;
 }
@@ -284,7 +286,7 @@ export const OublierWidget = memo(function OublierWidget({
             <div key={cat.key} className="bg-white/5 p-4 rounded-2xl border border-white/10">
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold text-sm text-white flex items-center gap-2">
-                  <span style={{ color: cat.color }}●</span>
+                  <span style={{ color: cat.color }}>●</span>
                   {cat.label}
                   {uncheckedInCat > 0 && (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/10 text-white/70">
@@ -382,3 +384,9 @@ export const OublierWidget = memo(function OublierWidget({
 });
 
 OublierWidget.displayName = 'OublierWidget';
+
+
+
+
+
+

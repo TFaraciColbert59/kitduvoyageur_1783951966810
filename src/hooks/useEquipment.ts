@@ -871,7 +871,180 @@ export function useEquipment() {
   );
 
   // KIT CRUD
-  const addKit = useCallback((kit: Kit) => {
+  
+    // === WORKFLOW ACHAT → RÉCEPTION ===
+    // Ajouter à l'''inventaire (ownership = '''en_attente_achat''') + au panier
+    const addToInventoryAndCart = useCallback(
+      async (product: UnifiedProduct) => {
+        triggerHaptic('selection');
+        const acquisitionIntentId = crypto.randomUUID();
+        const now = new Date().toISOString();
+
+        // 1. Créer l'''item d'''inventaire avec ownership '''en_attente_achat'''
+        const newItem: UserEquipmentItem = {
+          id: acquisitionIntentId,
+          user_id: user?.id || 'guest',
+          name: product.name,
+          brand: product.brand,
+          model: null,
+          category: product.category,
+          weight_g: product.weight_g,
+          purchase_price: product.price_eur,
+          purchase_date: now,
+          image: product.image,
+          condition: 'neuf',
+          source: 'catalogue',
+          product_id: product.id,
+          quantity: 1,
+          notes: 'En attente de réception (commande)',
+          is_favorite: false,
+          is_listed_for_sale: false,
+          acquired_at: null,
+          expiry_date: null,
+          last_maintenance_date: null,
+          next_maintenance_date: null,
+          usage_count: 0,
+          serial_number: null,
+          tags: null,
+          loan_status: 'disponible',
+          loan_to_name: null,
+          compartment: null,
+          wear_percentage: null,
+          size_label: null,
+          materials: null,
+          sole_type: null,
+          waterproof_rating: null,
+          ref_code: null,
+        };
+
+        // Mise à jour optimiste
+        setEquipment((prev) => [newItem, ...prev]);
+        if (!user) {
+          saveGuestGear([newItem, ...equipment]);
+        }
+
+        // 2. Ajouter au panier
+        addCartItem(
+          {
+            id: product.id,
+            slug: product.slug,
+            name: product.name,
+            brand: product.brand,
+            priceEur: product.price_eur,
+            weightG: product.weight_g,
+            image: product.image,
+            imageAlt: product.image_alt || product.name,
+            category: product.category,
+          },
+          1
+        );
+
+        // 3. Persistance Supabase si user authentifié
+        if (user && user.id) {
+          try {
+            await supabase.from('gear_items').insert({
+              id: acquisitionIntentId,
+              user_id: user.id,
+              product_id: product.id,
+              name: product.name,
+              brand: product.brand,
+              category: product.category,
+              weight_g: product.weight_g,
+              purchase_price: product.price_eur,
+              purchase_date: now,
+              image: product.image,
+              condition: 'neuf',
+              source: 'catalogue',
+              quantity: 1,
+              notes: 'En attente de réception (commande)',
+              is_favorite: false,
+              acquired_at: null,
+              next_maintenance_date: null,
+              last_maintenance_date: null,
+              expiry_date: null,
+              usage_count: 0,
+              loan_status: 'disponible',
+              loan_to_name: null,
+              compartment: null,
+            });
+          } catch (err) {
+            console.warn('Erreur insertion gear_item (achat):', err);
+          }
+        }
+
+        return acquisitionIntentId;
+      },
+      [user, supabase, equipment, triggerHaptic]
+    );
+
+    // Confirmer la réception : ownership '''en_attente_achat''' → '''possede''', retirer du panier
+    const confirmReceipt = useCallback(
+      async (acquisitionIntentId: string) => {
+        triggerHaptic('success');
+        const now = new Date().toISOString();
+
+        // Optimistic update : passer ownership + availability
+        setEquipment((prev) =>
+          prev.map((item) =>
+            item.id === acquisitionIntentId
+              ? {
+                  ...item,
+                  loan_status: 'disponible',
+                  notes: item.notes?.replace('En attente de réception', 'Reçu et validé') || 'Reçu et validé',
+                  acquired_at: now,
+                  purchase_date: item.purchase_date || now,
+                }
+              : item
+          )
+        );
+
+        if (!user) {
+          const updated = getGuestGear().map((item) =>
+            item.id === acquisitionIntentId
+              ? { ...item, loan_status: 'disponible', acquired_at: now, notes: 'Reçu et validé' }
+              : item
+          );
+          saveGuestGear(updated);
+        }
+
+        // Retirer du panier (trouver par product_id ou nom)
+        const itemToRemove = equipment.find((e) => e.id === acquisitionIntentId);
+        if (itemToRemove) {
+          removeCartItem(itemToRemove.product_id || itemToRemove.name);
+        }
+
+        // Supabase
+        if (user && user.id) {
+          try {
+            await supabase
+              .from('gear_items')
+              .update({
+                loan_status: 'disponible',
+                acquired_at: now,
+                purchase_date: now,
+                notes: 'Reçu et validé',
+              })
+              .eq('id', acquisitionIntentId)
+              .eq('user_id', user.id);
+          } catch (err) {
+            console.warn('Erreur confirmReceipt:', err);
+          }
+        }
+      },
+      [user, supabase, equipment, triggerHaptic]
+    );
+
+    // Selector pour widgets : récupère l'''état unifié d'''un produit
+    const getProductState = useCallback(
+      (productId: string) => {
+        const item = equipment.find((e) => e.id === productId || e.product_id === productId);
+        if (item) return item;
+        return null;
+      },
+      [equipment]
+    );
+
+const addKit = useCallback((kit: Kit) => {
     setKits((prev) => [...prev, kit]);
     if (!user) saveGuestKits([...kits, kit]);
     if (user && user.id) {
@@ -917,6 +1090,9 @@ export function useEquipment() {
     addKit,
     updateKit,
     removeKit,
+    addToInventoryAndCart,
+    confirmReceipt,
+    getProductState,
     refresh: loadData,
   };
 }

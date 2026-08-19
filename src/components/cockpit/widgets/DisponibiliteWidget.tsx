@@ -6,14 +6,16 @@
 
 import React, { memo, useMemo } from 'react';
 import { UserEquipmentItem } from '@/hooks/useEquipment';
+import { UnifiedProductState } from '@/types/product';
 
 interface DisponibiliteWidgetProps {
   equipment: UserEquipmentItem[];
+  productStates: UnifiedProductState[];
   onExpand: () => void;
   onCloseExpanded: () => void;
   isExpanded: boolean;
-  cardRef: React.RefObject<HTMLDivElement>;
-  headerRef: React.RefObject<HTMLDivElement>;
+  cardRef: HTMLDivElement | null;
+  headerRef: HTMLDivElement | null;
   layoutId: string;
   headerLayoutId: string;
 }
@@ -38,22 +40,22 @@ export const DisponibiliteWidget = memo(function DisponibiliteWidget({
     let aRemplacer = 0;
     let disponibles = 0;
 
-    equipment.forEach(item => {
+    equipment.forEach((item: UserEquipmentItem) => {
       if (item.loan_status === 'prêté') {
         prets++;
-      } else if (item.condition === 'en_reparation' || item.condition === 'a_reparer') {
-        enReparation++;
-      } else if (item.condition === 'en_entretien' || item.condition === 'maintenance_requise') {
-        enEntretien++;
-      } else if (item.condition === 'perdu') {
-        perdus++;
-      } else if (item.condition === 'a_remplacer') {
-        aRemplacer++;
-      } else if (['Éclairage', 'Énergie & électronique', 'Navigation'].some(c => item.category?.includes(c))) {
-        // Heuristique : électronique = à charger
-        aCharger++;
       } else {
-        disponibles++;
+        const condition = item.condition;
+        if (condition === 'à_réparer') {
+          enReparation++;
+        } else if (condition === 'à_remplacer') {
+          // à_remplacer covers: à_remplacer, perdu, en_entretien, etc.
+          aRemplacer++;
+        } else if (['Éclairage', 'Énergie & électronique', 'Navigation'].some(c => item.category?.includes(c))) {
+          // Heuristique : électronique = à charger
+          aCharger++;
+        } else {
+          disponibles++;
+        }
       }
     });
 
@@ -124,21 +126,21 @@ export const DisponibiliteWidget = memo(function DisponibiliteWidget({
         a_remplacer: [],
       };
 
-      equipment.forEach(item => {
+      equipment.forEach((item: UserEquipmentItem) => {
         if (item.loan_status === 'prêté') {
           groups.prets.push(item);
-        } else if (item.condition === 'en_reparation' || item.condition === 'a_reparer') {
-          groups.en_reparation.push(item);
-        } else if (item.condition === 'en_entretien' || item.condition === 'maintenance_requise') {
-          groups.en_entretien.push(item);
-        } else if (item.condition === 'perdu') {
-          groups.perdus.push(item);
-        } else if (item.condition === 'a_remplacer') {
-          groups.a_remplacer.push(item);
-        } else if (['Éclairage', 'Énergie & électronique', 'Navigation'].some(c => item.category?.includes(c))) {
-          groups.a_charger.push(item);
         } else {
-          groups.disponibles.push(item);
+          const condition = item.condition;
+          if (condition === 'à_réparer') {
+            groups.en_reparation.push(item);
+          } else if (condition === 'à_remplacer') {
+            // à_remplacer covers: à_remplacer, perdu, en_entretien, etc.
+            groups.a_remplacer.push(item);
+          } else if (['Éclairage', 'Énergie & électronique', 'Navigation'].some(c => item.category?.includes(c))) {
+            groups.a_charger.push(item);
+          } else {
+            groups.disponibles.push(item);
+          }
         }
       });
 
@@ -284,3 +286,9 @@ export const DisponibiliteWidget = memo(function DisponibiliteWidget({
 });
 
 DisponibiliteWidget.displayName = 'DisponibiliteWidget';
+
+
+
+
+
+

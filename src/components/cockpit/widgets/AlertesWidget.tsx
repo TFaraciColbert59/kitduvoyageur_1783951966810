@@ -7,6 +7,7 @@
 
 import React, { memo, useMemo } from 'react';
 import { UserEquipmentItem } from '@/hooks/useEquipment';
+import { UnifiedProductState } from '@/types/product';
 import { CustomKit } from '@/hooks/useUserKits';
 import { PlannedHike } from '@/lib/preparation/plannedHikes';
 import { DeparturePreparationPlan } from '@/lib/preparation/SmartDepartureEngine';
@@ -23,14 +24,15 @@ interface Alert {
 
 interface AlertesWidgetProps {
   equipment: UserEquipmentItem[];
+  productStates: UnifiedProductState[];
   kits: CustomKit[];
   activeHike: PlannedHike | null;
   departurePlan: DeparturePreparationPlan | null;
   onExpand: () => void;
   onCloseExpanded: () => void;
   isExpanded: boolean;
-  cardRef: React.RefObject<HTMLDivElement>;
-  headerRef: React.RefObject<HTMLDivElement>;
+  cardRef: HTMLDivElement | null;
+  headerRef: HTMLDivElement | null;
   layoutId: string;
   headerLayoutId: string;
   onResolveMaintenance: (item: UserEquipmentItem) => void;
@@ -121,7 +123,7 @@ export const AlertesWidget = memo(function AlertesWidget({
         ? Math.ceil((new Date(activeHike.targetDate).getTime() - now) / 86400000)
         : null;
       if (daysLeft !== null && daysLeft <= 7) {
-        departurePlan.requiredItems?.forEach((ri: any) => {
+        departurePlan.checklist.missingItems?.forEach((ri: any) => {
           const isOwned = equipment.some(e =>
             e.name.toLowerCase() === ri.name.toLowerCase()
           );
@@ -301,3 +303,9 @@ export const AlertesWidget = memo(function AlertesWidget({
 });
 
 AlertesWidget.displayName = 'AlertesWidget';
+
+
+
+
+
+

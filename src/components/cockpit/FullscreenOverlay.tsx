@@ -27,7 +27,7 @@ interface FullscreenOverlayProps {
   'aria-label'?: string;
 }
 
-export const FullscreenOverlay = forwardRef<HTMLDivElement, FullscreenOverlayProps>(
+export const FullscreenOverlay = forwardRef<{ focus: () => void; close: () => void }, FullscreenOverlayProps>(
   (
     {
       isOpen,
