@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { scanRequestSchema, productOwnershipSchema } from '@/lib/schemas/materiel';
+import { parseScanExtract } from '@/lib/materiel/scanner';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -80,16 +81,7 @@ export async function POST(req: NextRequest) {
       barcode?: string;
     } = {};
 
-    const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    try {
-      extracted = JSON.parse(cleaned);
-    } catch {
-      // Si le LLM n'a pas renvoyé de JSON propre, on essaye d'extraire les champs par heuristique.
-      const brandMatch = text.match(/marque\s*[: -]?\s*([A-Za-z0-9 ]{2,30})/i);
-      const weightMatch = text.match(/(\d{2,5})\s*g/i);
-      if (brandMatch) extracted.brand = brandMatch[1].trim();
-      if (weightMatch) extracted.weight_g_estimate = Number(weightMatch[1]);
-    }
+    extracted = parseScanExtract(text);
 
     // Créer un brouillon de fiche à partir de l'extraction
     const draft = {

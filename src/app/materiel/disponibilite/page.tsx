@@ -14,6 +14,7 @@ import { CollectiveActions } from '@/features/materiel/components/disponibilite/
 import { GlassCard } from '@/components/ui/GlassCard';
 import { getLoans } from '@/features/materiel/services/getLoans';
 import { getInventory } from '@/features/materiel/services/getInventory';
+import { detectConflicts } from '@/lib/materiel/conflicts';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +31,7 @@ export default async function DisponibilitePage() {
   const available = inventory.length - active.length;
   const score = Math.max(0, 100 - active.length * 8 - overdue * 15);
 
-  // Conflits : objet prêté ET présent dans un kit
+  // Conflits : objet prêté ET présent dans un kit (logique pure lib/materiel/conflicts)
   let kitProductIds = new Set<string>();
   if (user) {
     const { data: kitItems } = await supabase
@@ -40,16 +41,8 @@ export default async function DisponibilitePage() {
       .not('product_ownership_id', 'is', null);
     kitProductIds = new Set((kitItems ?? []).map((k) => k.product_ownership_id));
   }
-  const conflicts = active
-    .filter((l) => l.product_ownership_id && kitProductIds.has(l.product_ownership_id))
-    .map((l) => {
-      const item = inventory.find((i) => i.id === l.product_ownership_id);
-      return {
-        itemId: l.product_ownership_id!,
-        itemName: item?.name ?? 'Objet en conflit',
-        details: `Assigné à un kit alors qu'il est prêté (retour prévu ${l.due_date ? new Date(l.due_date).toLocaleDateString('fr-FR') : '—'}).`,
-      };
-    });
+  const itemsById = new Map(inventory.map((i) => [i.id, i.name]));
+  const conflicts = detectConflicts(loans, kitProductIds, itemsById);
 
   const byMonth = new Map<string, number>();
   for (const l of loans) {
