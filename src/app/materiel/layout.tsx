@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { BackgroundVideo } from '@/components/materiel/BackgroundVideo';
+import { GlassCommand } from '@/components/ui/GlassCommand';
 
 export const metadata: Metadata = {
   title: 'Mon Matériel — Le Kit du Voyageur',
@@ -12,6 +13,7 @@ export default function MaterielLayout({ children }: { children: React.ReactNode
     <div data-lkv-material-theme="light" className="min-h-screen relative">
       <BackgroundVideo />
       <div className="relative z-10">{children}</div>
+      <GlassCommand />
     </div>
   );
 }

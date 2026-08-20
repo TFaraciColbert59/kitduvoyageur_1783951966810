@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Metric } from '@/components/ui/Metric';
@@ -17,6 +18,12 @@ export function AssignedKitCard({ kit }: { kit: { id: string; name: string; tota
           </li>
         ))}
       </ul>
+      <Link
+        href={`/hiking/cockpit?kitId=${kit.id}`}
+        className="glass interactive h-9 px-4 rounded-full flex items-center justify-center text-sm font-medium text-sage-600 mt-3"
+      >
+        Utiliser ce kit →
+      </Link>
     </GlassCard>
   );
 }
