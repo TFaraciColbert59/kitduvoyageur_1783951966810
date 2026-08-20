@@ -11,7 +11,7 @@ const staticRoutes: Array<{
   changeFrequency: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
 }> = [
   { url: '/', priority: 1.0, changeFrequency: 'daily' },
-  { url: '/mon-materiel', priority: 0.95, changeFrequency: 'daily' },
+  { url: '/materiel', priority: 0.95, changeFrequency: 'daily' },
   { url: '/pays', priority: 0.9, changeFrequency: 'weekly' },
   { url: '/explorer', priority: 0.85, changeFrequency: 'weekly' },
   { url: '/carte-interactive', priority: 0.85, changeFrequency: 'weekly' },
