@@ -12,7 +12,7 @@ import { createClient } from '@/lib/supabase/client';
 const NAV_LINKS = [
   { label: 'Aventures', href: '/explorer' },
   { label: 'Earth', href: '/pays' },
-  { label: 'Matériel', href: '/mon-materiel' },
+  { label: 'Matériel', href: '/materiel' },
   { label: 'Communauté', href: '/communaute' },
 ];
 

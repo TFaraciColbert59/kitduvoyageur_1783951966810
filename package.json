@@ -48,6 +48,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css,md,json}\"",
     "serve": "next start",
     "type-check": "tsc --noEmit",
+    "test": "vitest run",
     "test:e2e": "playwright test",
     "supabase:status": "supabase status"
   },
@@ -79,6 +80,7 @@
     "lucide-react": "^1.7.0",
     "maplibre-gl": "^6.4.1",
     "next": "15.5.18",
+    "pg": "^8.23.0",
     "react": "19.0.3",
     "react-dom": "19.0.3",
     "react-globe.gl": "^2.38.0",
@@ -93,6 +95,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/eslintrc": "^3",
     "@netlify/plugin-nextjs": "^5.11.1",
     "@playwright/test": "^1.51.1",
@@ -115,6 +118,7 @@
     "tailwindcss-animate": "^1.0.7",
     "ts-node": "^10.9.2",
     "tsx": "^4.7.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.11"
   }
 }

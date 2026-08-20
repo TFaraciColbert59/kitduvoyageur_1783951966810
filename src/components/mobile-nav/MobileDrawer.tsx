@@ -26,22 +26,22 @@ interface NavSection {
 }
 
 const SECTIONS: NavSection[] = [
-  {
-    label: 'Découvrir & Terrain',
-    items: [
-      { label: 'Rechercher', icon: 'search', href: '', action: 'search' },
-      { label: 'Panier', icon: 'bag', href: '/panier' },
-      { label: 'Carte interactive', icon: 'map-pin', href: '/carte-interactive' },
-      { label: 'Boussole augmentée', icon: 'search', href: '/boussole' },
-      { label: 'Mode hors-ligne', icon: 'bookmark', href: '/hors-ligne' },
-      { label: 'Mon matériel', icon: 'bag', href: '/mon-materiel' },
-      { label: 'Carnets', icon: 'doc', href: '/carnets' },
-      { label: 'Guides', icon: 'bookmark', href: '/guides' },
-      { label: 'Blog', icon: 'doc', href: '/blog' },
-      { label: 'Outils terrain', icon: 'search', href: '/outils' },
-      { label: 'Mode rando GPS/SOS', icon: 'map-pin', href: '/naviguer' },
-    ],
-  },
+{
+        label: 'Découvrir & Terrain',
+        items: [
+          { label: 'Rechercher', icon: 'search', href: '', action: 'search' },
+          { label: 'Panier', icon: 'bag', href: '/panier' },
+          { label: 'Carte interactive', icon: 'map-pin', href: '/carte-interactive' },
+          { label: 'Boussole augmentée', icon: 'search', href: '/boussole' },
+          { label: 'Mode hors-ligne', icon: 'bookmark', href: '/hors-ligne' },
+          { label: 'Carnets', icon: 'doc', href: '/carnets' },
+          { label: 'Guides', icon: 'bookmark', href: '/guides' },
+          { label: 'Blog', icon: 'doc', href: '/blog' },
+          { label: 'Outils terrain', icon: 'search', href: '/outils' },
+          { label: 'Mon Matériel', icon: 'bag', href: '/materiel' },
+          { label: 'Mode rando GPS/SOS', icon: 'map-pin', href: '/naviguer' },
+        ],
+      },
   {
     label: 'Vie pro & occasion',
     items: [
