@@ -156,9 +156,9 @@
   --bg-primary: #FAF8F5;
   --bg-secondary: #F1EDE6;
   --bg-tertiary: #E4DED3;
-  --glass-bg-light: color-mix(in oklab, #FAF8F5 32%, transparent);
-  --glass-bg-medium: color-mix(in oklab, #FAF8F5 44%, transparent);
-  --glass-bg-strong: color-mix(in oklab, #FAF8F5 62%, transparent);
+  --glass-bg-light: color-mix(in oklab, #FAF8F5 18%, transparent);
+  --glass-bg-medium: color-mix(in oklab, #FAF8F5 26%, transparent);
+  --glass-bg-strong: color-mix(in oklab, #FAF8F5 42%, transparent);
   --glass-border: color-mix(in oklab, white 35%, transparent);
   --elevation-3: 0 8px 32px -8px rgba(20, 20, 15, 0.12), 0 2px 8px -2px rgba(20, 20, 15, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }

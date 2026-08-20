@@ -10,7 +10,7 @@ export function ForgetChecklistItem({
       onClick={onToggle}
       whileTap={{ scale: 0.95 }}
       aria-pressed={checked}
-      className="bg-white/35 rounded-[var(--r-sm)] w-full flex items-center gap-3 p-2 text-left"
+      className="bg-white/20 rounded-[var(--r-sm)] w-full flex items-center gap-3 p-2 text-left"
     >
       <span
         className={`h-5 w-5 rounded-full flex items-center justify-center shrink-0 ${

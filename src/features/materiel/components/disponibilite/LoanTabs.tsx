@@ -44,7 +44,7 @@ export function LoanTabs({ loans, userId }: { loans: LoanItem[]; userId: string 
       </div>
       <ul className="mt-3 flex flex-col gap-2">
         {filtered.map((l) => (
-          <li key={l.id} className="bg-white/35 rounded-[var(--r-sm)] p-3 flex items-center justify-between gap-2">
+          <li key={l.id} className="bg-white/20 rounded-[var(--r-sm)] p-3 flex items-center justify-between gap-2">
             <span className="text-sm text-[color:var(--label)]">
               {l.borrower_contact ?? 'Emprunteur'} · {l.due_date ? new Date(l.due_date).toLocaleDateString('fr-FR') : 'sans date'}
             </span>

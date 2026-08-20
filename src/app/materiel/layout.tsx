@@ -15,7 +15,7 @@ export default function MaterielLayout({ children }: { children: React.ReactNode
       <BackgroundVideo />
       <div className="relative z-10">
         <Header />
-        {children}
+        <div className="pt-20">{children}</div>
       </div>
       <GlassCommand />
     </div>

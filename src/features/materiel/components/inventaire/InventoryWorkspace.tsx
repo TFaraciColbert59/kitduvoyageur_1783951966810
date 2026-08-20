@@ -224,7 +224,7 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
         {cmpAItem && cmpBItem && (
           <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
             {(['weight_g', 'price_cents', 'condition', 'brand'] as const).map((field) => (
-              <div key={field} className="bg-white/35 rounded-[var(--r-sm)] p-2 flex flex-col gap-1">
+              <div key={field} className="bg-white/20 rounded-[var(--r-sm)] p-2 flex flex-col gap-1">
                 <span className="text-[10px] uppercase tracking-wider text-[color:var(--label-tertiary)]">{field}</span>
                 <span className="flex justify-between">
                   <span className="text-[color:var(--label)]">{field === 'weight_g' ? `${(cmpAItem[field] ?? 0) / 1000} kg` : cmpAItem[field] ?? '—'}</span>
