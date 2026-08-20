@@ -1,9 +1,13 @@
 import Link from 'next/link';
 import { Eyebrow } from '@/components/ui/Eyebrow';
-import { GlassCard } from '@/components/ui/GlassCard';
-import { ForgetChecklist } from '@/features/materiel/components/forget/ForgetChecklist';
+import { ForgetWorkspace } from '@/features/materiel/components/forget/ForgetWorkspace';
+import { getForgetChecklist } from '@/features/materiel/services/getForgetChecklist';
 
-export default function ForgetPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function ForgetPage() {
+  const items = await getForgetChecklist();
+
   return (
     <main className="max-w-[var(--page-max-w)] mx-auto px-4 py-8 pb-24">
       <header className="flex items-center justify-between mb-6">
@@ -16,13 +20,7 @@ export default function ForgetPage() {
         </Link>
       </header>
 
-      <ForgetChecklist />
-
-      <GlassCard className="p-4 mt-4">
-        <button className="w-full glass interactive h-12 rounded-full flex items-center justify-center text-sm font-medium text-white bg-sage-800">
-          Valider la préparation
-        </button>
-      </GlassCard>
+      <ForgetWorkspace items={items} />
     </main>
   );
 }
