@@ -49,7 +49,7 @@ export default async function InventairePage() {
         </Link>
       </header>
 
-      <div className="grid grid-cols-12 gap-4">
+      <div className="grid grid-cols-12 gap-[var(--grid-gap)]">
         <div className="col-span-12"><InventoryOverview data={{ count: items.length, totalWeightG: totalWeight, lentCount: lent, reliabilityPct: reliability }} /></div>
         <div className="col-span-12"><InventoryWorkspace items={items} /></div>
         <div className="col-span-12 md:col-span-6"><PurchasesInvest series={purchasesSeries} totalEur={totalInvestment / 100} /></div>
@@ -59,3 +59,4 @@ export default async function InventairePage() {
     </main>
   );
 }
+

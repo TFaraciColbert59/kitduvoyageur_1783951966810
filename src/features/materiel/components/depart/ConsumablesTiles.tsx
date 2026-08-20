@@ -27,7 +27,7 @@ export function ConsumablesTiles({ initial }: { initial?: Record<string, number>
       <h3 id="consumables-title" className="sr-only">Consommables à prévoir</h3>
       <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2">
         {FIELDS.map((f) => (
-          <label key={f.key} className="glass size-sm p-2 flex flex-col gap-1">
+          <label key={f.key} className="bg-white/60 rounded-[var(--r-sm)] p-2 flex flex-col gap-1">
             <span className="text-[11px] text-[color:var(--label-secondary)]">{f.label}</span>
             <span className="flex items-baseline gap-1">
               <input

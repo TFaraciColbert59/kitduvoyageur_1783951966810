@@ -52,7 +52,7 @@ export default async function DepartPage({ params }: { params: { id: string } })
         </Link>
       </header>
 
-      <div className="grid grid-cols-12 gap-4">
+      <div className="grid grid-cols-12 gap-[var(--grid-gap)]">
         <div className="col-span-12 md:col-span-8 h-[320px]">
           <LazyMap3D route={depart.route} className="h-full w-full" />
         </div>

@@ -23,7 +23,7 @@ export function SimilarCommunityKits({ kits }: { kits: CommunityKit[] }) {
           <Link
             key={k.id}
             href="/communaute"
-            className="glass interactive block w-[200px] shrink-0 p-3"
+            className="bg-white/60 rounded-[var(--r-md)] block w-[200px] shrink-0 p-3"
             aria-label={`${k.name}, par ${k.author}`}
           >
             <div className="flex items-center justify-between">

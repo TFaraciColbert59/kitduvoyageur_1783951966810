@@ -43,7 +43,7 @@ export default async function AlertesPage() {
         </Link>
       </header>
 
-      <div className="grid grid-cols-12 gap-4">
+      <div className="grid grid-cols-12 gap-[var(--grid-gap)]">
         <div className="col-span-12 md:col-span-3"><ReliabilityScore score={score} critical={critical} warning={warning} /></div>
         <div className="col-span-12 md:col-span-9"><CategoryTabs alerts={alerts} /></div>
         <div className="col-span-12"><TopAlertsAccordion alerts={alerts} /></div>
@@ -85,3 +85,4 @@ export default async function AlertesPage() {
     </main>
   );
 }
+

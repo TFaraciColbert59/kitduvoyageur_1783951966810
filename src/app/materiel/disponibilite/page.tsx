@@ -63,7 +63,7 @@ export default async function DisponibilitePage() {
         </Link>
       </header>
 
-      <div className="grid grid-cols-12 gap-4">
+      <div className="grid grid-cols-12 gap-[var(--grid-gap)]">
         <GlassCard className="col-span-12 md:col-span-4 p-4 flex items-center gap-4" aria-labelledby="gauge-title">
           <AvailabilityGauge availableCount={Math.max(0, available)} total={inventory.length} />
           <div>
@@ -87,3 +87,4 @@ export default async function DisponibilitePage() {
     </main>
   );
 }
+

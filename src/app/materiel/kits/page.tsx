@@ -45,7 +45,7 @@ export default async function KitsPage() {
         </Link>
       </header>
 
-      <div className="grid grid-cols-12 gap-4">
+      <div className="grid grid-cols-12 gap-[var(--grid-gap)]">
         <div className="col-span-12"><KitsKpiBar kpi={kpi} /></div>
         <div className="col-span-12"><KitsGrid kits={kits} /></div>
         <div className="col-span-12"><KitManager kits={kits} inventory={inventory} /></div>
@@ -60,3 +60,4 @@ export default async function KitsPage() {
     </main>
   );
 }
+
