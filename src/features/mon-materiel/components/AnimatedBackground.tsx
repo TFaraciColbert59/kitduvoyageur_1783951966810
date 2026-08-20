@@ -16,14 +16,11 @@ export interface AnimatedBackgroundProps {
   videoSrc?: string;
   /** Image de secours / poster (fond animé antérieur Ken Burns). */
   src?: string;
-  /** Accent supérieur gauche du voile (halo). */
-  veil?: boolean;
 }
 
 export function AnimatedBackground({
   videoSrc = '/assets/videos/mm-ambient.mp4',
   src = '/assets/images/urban-vintage.jpg',
-  veil = true,
 }: AnimatedBackgroundProps) {
   const [reducedMotion, setReducedMotion] = React.useState(false);
   const [videoFailed, setVideoFailed] = React.useState(false);

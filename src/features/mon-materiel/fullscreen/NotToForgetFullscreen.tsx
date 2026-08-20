@@ -9,6 +9,8 @@
 import React, { useMemo, useState } from 'react';
 import type { DepartureChecklistItem } from '../domain/departure-readiness';
 import { SectionCard } from '../components/SectionCard';
+import { ExportButton } from '../components/shared/ExportButton';
+import { exportServiceSingleton as exportService } from '../components/shared/ExportButton';
 import { IconCheck, IconChecklist } from '../components/icons';
 import { formatWeight } from '../domain/gear-format';
 
@@ -22,6 +24,11 @@ export interface NotToForgetFullscreenProps {
   onOpenGear?: (gearId: string) => void;
   /** Ouvre le plein écran « Inventaire & catalogue » pré-filtré sur un objet. */
   onNeedStock?: (query: string) => void;
+  /** Compagnons de route du départ (texte libre du formulaire). */
+  companions?: string;
+  /** Poids total du sac (stack bar sec / consommables). */
+  packWeightG?: number;
+  consumablesWeightG?: number;
 }
 
 type LevelFilter = 'all' | 'critique' | 'verifier' | 'conseille' | 'done';
@@ -42,6 +49,9 @@ export function NotToForgetFullscreen({
   onValidate,
   onOpenGear,
   onNeedStock,
+  companions,
+  packWeightG,
+  consumablesWeightG,
 }: NotToForgetFullscreenProps) {
   const [filter, setFilter] = useState<LevelFilter>('all');
 
@@ -128,6 +138,43 @@ export function NotToForgetFullscreen({
               {label}
             </button>
           ))}
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 pt-1">
+          <div className="p-3 rounded-xl bg-white/40 border border-[#1C2620]/7">
+            <p className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Compagnons</p>
+            {companions ? (
+              <p className="text-xs text-[#1C2620]/80 mt-1">{companions}</p>
+            ) : (
+              <p className="text-xs text-[#1C2620]/45 mt-1">Aucun compagnon renseigné</p>
+            )}
+          </div>
+          <div className="p-3 rounded-xl bg-white/40 border border-[#1C2620]/7">
+            <p className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Poids du sac</p>
+            <div className="flex items-start justify-between gap-2 mt-1">
+              <div className="min-w-0">
+                <p className="text-lg font-bold font-mono text-[#2D5A3D] leading-none">
+                  {packWeightG ? formatWeight(packWeightG) : '—'}
+                </p>
+                {(typeof consumablesWeightG === 'number' && consumablesWeightG > 0) && (
+                  <p className="text-[10px] text-[#1C2620]/55 mt-0.5">
+                    dont {formatWeight(consumablesWeightG)} de consommables
+                  </p>
+                )}
+              </div>
+              {(typeof packWeightG === 'number' && packWeightG > 0 &&
+                typeof consumablesWeightG === 'number' && consumablesWeightG > 0) && (
+                <StackedWeightBar dryG={packWeightG - consumablesWeightG} consumablesG={consumablesWeightG} />
+              )}
+            </div>
+          </div>
+          <div className="p-3 rounded-xl bg-white/40 border border-[#1C2620]/7 flex flex-col justify-center gap-1">
+            <p className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Actions</p>
+            <ExportButton
+              label="Exporter la checklist"
+              onExport={() => exportService.exportChecklistCsv(checklist, checkedSet, departureName || undefined)}
+            />
+          </div>
         </div>
       </SectionCard>
 
@@ -228,6 +275,25 @@ export function NotToForgetFullscreen({
         >
           <IconChecklist size={16} /> Valider la préparation
         </button>
+      </div>
+    </div>
+  );
+}
+
+/** Stacked bar sec / consommables (répartition du poids du sac). */
+function StackedWeightBar({ dryG, consumablesG }: { dryG: number; consumablesG: number }) {
+  const total = dryG + consumablesG;
+  const dryPct = total > 0 ? Math.round((dryG / total) * 100) : 0;
+  const consPct = 100 - dryPct;
+  return (
+    <div className="flex-1 min-w-[80px]">
+      <div className="h-2 rounded-full overflow-hidden flex">
+        <div className="bg-[#2D5A3D]" style={{ width: `${dryPct}%` }} title={`Sec ${formatWeight(dryG)}`} />
+        <div className="bg-[#8C6A1A]" style={{ width: `${consPct}%` }} title={`Consommables ${formatWeight(consumablesG)}`} />
+      </div>
+      <div className="flex justify-between text-[10px] font-mono text-[#1C2620]/55 mt-1">
+        <span title="Sec">{formatWeight(dryG)}</span>
+        <span title="Consommables">{formatWeight(consumablesG)}</span>
       </div>
     </div>
   );

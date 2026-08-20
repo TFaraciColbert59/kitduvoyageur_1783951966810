@@ -120,6 +120,48 @@ export function AlertsReliabilityFullscreen({
 
   const resolvedCount = alerts.length - active.length;
 
+  const averageWear = useMemo(() => {
+    const withWear = equipment.filter((g) => typeof g.wear_percentage === 'number' && g.wear_percentage != null);
+    if (withWear.length === 0) return 0;
+    return Math.round(withWear.reduce((s, g) => s + (g.wear_percentage || 0), 0) / withWear.length);
+  }, [equipment]);
+
+  const wornCount = useMemo(
+    () => equipment.filter((g) => typeof g.wear_percentage === 'number' && (g.wear_percentage || 0) > 0).length,
+    [equipment]
+  );
+
+  const topWorn = useMemo(
+    () =>
+      [...equipment]
+        .sort(
+          (a, b) =>
+            Number(b.wear_percentage || 0) - Number(a.wear_percentage || 0) ||
+            Number(a.condition === 'à_remplacer' ? 1 : 0) - Number(b.condition === 'à_remplacer' ? 1 : 0)
+        )
+        .slice(0, 3),
+    [equipment]
+  );
+
+  const missingInfo = useMemo(
+    () => equipment.filter((g) => !g.image || !g.size_label || !g.serial_number || !g.condition),
+    [equipment]
+  );
+
+  const seasonalTip = useMemo(() => {
+    const month = new Date().getMonth();
+    const rainLayer = equipment.some((g) => /poncho|gore.?tex|imperm|pluie/i.test(`${g.name} ${g.materials || ''}`));
+    if (month >= 10 || month <= 2) {
+      return rainLayer
+        ? 'Hiver : couche imperméable présente — vérifiez gants et éclairage frontal.'
+        : 'Hiver : pensez à ajouter une couche imperméable et un éclairage frontal.';
+    }
+    if (month >= 5 && month <= 8) {
+      return 'Été : prévoyez protection solaire et volume d’eau adapté dans vos kits.';
+    }
+    return null;
+  }, [equipment]);
+
   return (
     <div className="space-y-4">
       <SectionCard title="Fiabilité de l’équipement">
@@ -138,6 +180,67 @@ export function AlertsReliabilityFullscreen({
         <div className="h-2 rounded-full bg-[#1C2620]/7 overflow-hidden">
           <div className="h-full bg-[#2D5A3D] rounded-full transition-all duration-500" style={{ width: `${reliabilityPct}%` }} />
         </div>
+
+        <div className="grid gap-3 lg:grid-cols-3">
+          <div className="p-3 rounded-xl bg-white/40 border border-[#1C2620]/7">
+            <p className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Usure moyenne</p>
+            <div className="flex items-end justify-between gap-2 mt-1">
+              <span className="text-3xl font-extrabold font-mono text-[#8C6A1A] leading-none">{averageWear}%</span>
+              <span className="text-xs text-[#1C2620]/55">{wornCount} objet(s) utilisés</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-[#1C2620]/7 overflow-hidden mt-2">
+              <div className="h-full bg-[#8C6A1A] transition-all duration-500" style={{ width: `${averageWear}%` }} />
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-white/40 border border-[#1C2620]/7">
+            <p className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Top 3 à surveiller</p>
+            <div className="space-y-1 mt-1">
+              {topWorn.map((g) => (
+                <button
+                  key={g.id}
+                  type="button"
+                  onClick={() => onOpenGear(g.id)}
+                  className="flex items-center justify-between gap-2 w-full text-left p-1.5 rounded-lg bg-white/45 border border-[#1C2620]/7 text-xs hover:bg-white/70 transition-colors"
+                >
+                  <span className="truncate font-semibold text-[#1C2620]/90">{g.name}</span>
+                  <span className="font-mono font-bold text-[#8C6A1A] shrink-0">{writeWear(g)}</span>
+                </button>
+              ))}
+              {topWorn.length === 0 && (
+                <p className="text-xs text-[#1C2620]/45">Aucune usure renseignée.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-white/40 border border-[#1C2620]/7">
+            <p className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">À compléter</p>
+            <div className="space-y-1 mt-1">
+              {missingInfo.length > 0 ? (
+                missingInfo.slice(0, 3).map((g) => (
+                  <button
+                    key={g.id}
+                    type="button"
+                    onClick={() => onOpenGear(g.id)}
+                    className="flex items-center justify-between gap-2 w-full text-left p-1.5 rounded-lg bg-white/45 border border-[#1C2620]/7 text-xs hover:bg-white/70 transition-colors"
+                  >
+                    <span className="truncate font-semibold text-[#1C2620]/90">{g.name}</span>
+                    <span className="text-[#2D5A3D] font-bold shrink-0">Compléter</span>
+                  </button>
+                ))
+              ) : (
+                <p className="text-xs text-[#1C2620]/45">Fiches complètes.</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {seasonalTip && (
+          <div className="p-3 rounded-xl bg-[#2D5A3D]/8 border border-[#2D5A3D]/20 text-xs text-[#1C2620]/85 flex items-start gap-2">
+            <span className="text-base leading-none mt-0.5" aria-hidden>ℹ</span>
+            <p><strong className="text-[#2D5A3D]">Tendance saisonnière :</strong> {seasonalTip}</p>
+          </div>
+        )}
         <div className="lg:grid lg:grid-cols-[200px_1fr] lg:gap-4">
           {/* Sidebar - Filtres */}
           <div className="lg:sticky lg:top-8">
@@ -361,4 +464,11 @@ function Meta({ label, value }: { label: string; value: string }) {
       <span className="text-[#1C2620]/85 truncate block">{value}</span>
     </p>
   );
+}
+
+function writeWear(g: UserEquipmentItem): string {
+  if (typeof g.wear_percentage === 'number' && g.wear_percentage > 0) return `${g.wear_percentage}%`;
+  if (g.condition === 'à_remplacer') return 'À remplacer';
+  if (g.condition === 'à_réparer') return 'À réparer';
+  return '—';
 }

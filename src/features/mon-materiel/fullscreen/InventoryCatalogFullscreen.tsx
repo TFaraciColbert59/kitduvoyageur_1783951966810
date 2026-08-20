@@ -14,9 +14,10 @@ import type { UserEquipmentItem, UnifiedProduct } from '@/hooks/useEquipment';
 import type { CustomKit } from '@/hooks/useUserKits';
 import type { GearStatus } from '../domain/gear-status';
 import type { OrderedProductItem, GearDestination } from '../types';
-import { formatEuro, formatWeight } from '../domain/gear-format';
+import { formatEuro, formatWeight, formatDateFr } from '../domain/gear-format';
 import { SectionCard } from '../components/SectionCard';
 import { AddToEquipmentButton } from '../components/AddToEquipmentButton';
+import { ExportButton, exportServiceSingleton as exportService } from '../components/shared/ExportButton';
 import { IconCheck } from '../components/icons';
 
 export interface InventoryCatalogFullscreenProps {
@@ -110,15 +111,19 @@ export function InventoryCatalogFullscreen({
           return (b.usage_count || 0) - (a.usage_count || 0);
         case 'name':
           return a.name.localeCompare(b.name);
-        case 'weight':
+        case 'weight': {
           const weightA = (a.weight_g || 0) * (a.quantity || 1);
           const weightB = (b.weight_g || 0) * (b.quantity || 1);
           return weightB - weightA;
+        }
         case 'category':
           return (a.category || '').localeCompare(b.category || '');
-        case 'recent':
-        default:
-          return (b.updated_at || '').localeCompare(a.updated_at || '');
+case 'recent':
+          default: {
+            const dateA = a.acquired_at ? new Date(a.acquired_at).getTime() : 0;
+            const dateB = b.acquired_at ? new Date(b.acquired_at).getTime() : 0;
+            return dateB - dateA;
+          }
       }
     });
 
@@ -180,6 +185,7 @@ export function InventoryCatalogFullscreen({
 
       {tab === 'inventory' && (
         <>
+          <EquipmentOverviewBar equipment={equipment} onOpenGear={onOpenGear} onToast={onToast} />
           {filteredAndSortedEquipment.length === 0 && (
             <SectionCard title="Mon inventaire">
               <p className="text-xs text-[#1C2620]/60">
@@ -482,5 +488,104 @@ function IconHeartBeat({ filled }: { filled: boolean }) {
     <svg viewBox="0 0 24 24" width="15" height="15" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d="M20.8 8.7a5 5 0 0 0-9-0 5 5 0 0 0-9 0c0 4.4 4.8 7.6 9 11.3 4.2-3.7 9-6.9 9-11.3Z" />
     </svg>
+  );
+}
+
+function EquipmentOverviewBar({
+  equipment,
+  onOpenGear,
+  onToast,
+}: {
+  equipment: UserEquipmentItem[];
+  onOpenGear: (id: string) => void;
+  onToast: (text: string, type?: 'success' | 'info' | 'warning') => void;
+}) {
+  const totalWeightG = equipment.reduce((s, g) => s + (g.weight_g || 0) * (g.quantity || 1), 0);
+  const totalValue = equipment.reduce((s, g) => s + (Number(g.purchase_price || 0)) * (g.quantity || 1), 0);
+  const needPhoto = equipment.filter((g) => !g.image).length;
+  const incomplete = equipment.filter((g) => !g.size_label || !g.serial_number || !g.condition).length;
+  const duplicates: Array<[UserEquipmentItem, UserEquipmentItem]> = [];
+  for (let i = 0; i < equipment.length; i++) {
+    for (let j = i + 1; j < equipment.length; j++) {
+      const a = (equipment[i].name || '').toLowerCase().trim();
+      const b = (equipment[j].name || '').toLowerCase().trim();
+      if (a && a === b) duplicates.push([equipment[i], equipment[j]]);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <SectionCard title="Vue d’ensemble">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <p className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/7 text-xs">
+            <strong className="block font-mono text-lg text-[#2D5A3D] leading-none">{equipment.length}</strong>
+            objets
+          </p>
+          <p className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/7 text-xs">
+            <strong className="block font-mono text-lg text-[#2D5A3D] leading-none">{formatWeight(totalWeightG)}</strong>
+            poids total
+          </p>
+          <p className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/7 text-xs">
+            <strong className="block font-mono text-lg text-[#2D5A3D] leading-none">{formatEuro(totalValue)}</strong>
+            valeur
+          </p>
+          <div className="p-2.5 rounded-xl bg-white/40 border border-[#1C2620]/7 text-xs flex flex-col justify-center">
+            <ExportButton
+              label="Exporter CSV"
+              onExport={() => exportService.exportInventoryCsv(equipment)}
+              onResult={(r) => onToast(r.ok ? `Export « ${r.fileName} » généré` : r.error || 'Export impossible', r.ok ? 'success' : 'warning')}
+            />
+          </div>
+        </div>
+      </SectionCard>
+
+      {(needPhoto > 0 || incomplete > 0 || duplicates.length > 0) && (
+        <SectionCard title="Fiabilisation de la fiche">
+          <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+            {needPhoto > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const first = equipment.find((g) => !g.image);
+                  if (first) onOpenGear(first.id);
+                }}
+                className="p-2 rounded-xl bg-[#8C6A1A]/8 border border-[#8C6A1A]/20 text-xs text-left hover:bg-[#8C6A1A]/15 transition-colors"
+              >
+                <strong className="text-[#8C6A1A]">{needPhoto} photo(s) manquante(s)</strong>
+                <span className="block text-[#1C2620]/65 mt-0.5">Cliquez pour ajouter une photo.</span>
+              </button>
+            )}
+            {incomplete > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const first = equipment.find((g) => !g.size_label || !g.serial_number || !g.condition);
+                  if (first) onOpenGear(first.id);
+                }}
+                className="p-2 rounded-xl bg-[#8C6A1A]/8 border border-[#8C6A1A]/20 text-xs text-left hover:bg-[#8C6A1A]/15 transition-colors"
+              >
+                <strong className="text-[#8C6A1A]">{incomplete} fiche(s) incomplète(s)</strong>
+                <span className="block text-[#1C2620]/65 mt-0.5">Taille, n° série ou état manquant.</span>
+              </button>
+            )}
+            {duplicates.length > 0 && (
+              <div className="p-2 rounded-xl bg-[#9B2C2C]/8 border border-[#9B2C2C]/20 text-xs">
+                <strong className="text-[#9B2C2C]">{duplicates.length} doublon(s) détecté(s)</strong>
+                <ul className="mt-1 space-y-1">
+                  {duplicates.slice(0, 3).map(([a, b]) => (
+                    <li key={`${a.id}-${b.id}`} className="flex items-center justify-between gap-1">
+                      <span className="truncate text-[#1C2620]/70">{a.name}</span>
+                      <button type="button" onClick={() => onOpenGear(a.id)} className="text-[#2D5A3D] font-bold shrink-0">
+                        Fiche
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </SectionCard>
+      )}
+    </div>
   );
 }

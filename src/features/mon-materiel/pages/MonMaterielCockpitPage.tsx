@@ -59,7 +59,6 @@ import {
   formatTemp,
   kitTotalWeight,
   newHikeFormSchema,
-  evaluateKitCompleteness,
 } from '@/features/mon-materiel/domain';
 import {
   GearService,
@@ -76,7 +75,6 @@ import {
 import {
   MonMaterielGrid,
   GearCard,
-  AnimatedBackground,
   FullscreenShell,
   IconChecklist,
   IconBell,
@@ -94,7 +92,6 @@ import {
   CountdownLive,
   MiniBars,
   MiniDonut,
-  MiniSparkline,
   MiniTimeline,
   StackedAvatars,
 } from '@/features/mon-materiel/components/shared';
@@ -834,6 +831,7 @@ export default function MonMaterielCockpitPage() {
     secondaryMetrics?: { label: string; value: React.ReactNode }[];
     footerText?: React.ReactNode;
     footerAction?: { label: string; onClick: () => void };
+    status?: { level: 'ok' | 'warning' | 'critical' | 'info' | 'neutral'; label: string };
     richBody?: React.ReactNode;
   } => {
     switch (id) {
@@ -860,6 +858,7 @@ export default function MonMaterielCockpitPage() {
               : [],
           footerText: activeHike ? `Départ ${countdownLabel(activeHike.targetDate)}` : 'Aucun départ',
           footerAction: { label: 'Voir tout →', onClick: () => setExpandedWidget('forget') },
+        status: { level: forgetRemaining > 0 ? 'critical' : 'ok', label: forgetRemaining > 0 ? 'Bloquant' : 'Ok' },
         };
       }
       case 'alerts': {
@@ -891,6 +890,7 @@ export default function MonMaterielCockpitPage() {
             : [],
           footerText: worstAlert ? `⚠ ${worstAlert.label ?? worstAlert.detail ?? 'Voir détail'}` : 'Équipement sain',
           footerAction: alerts.length > 0 ? { label: 'Voir détail →', onClick: () => setExpandedWidget('alerts') } : undefined,
+        status: { level: criticalCount > 0 ? 'critical' : warningCount > 0 ? 'warning' : 'ok', label: criticalCount > 0 ? 'Bloquant' : warningCount > 0 ? 'À vérifier' : 'Ok' },
           richBody: (
             <MiniBars
               data={[
@@ -932,6 +932,10 @@ export default function MonMaterielCockpitPage() {
           badges: trashCount > 0 ? [{ id: 'trash', label: `${trashCount} corbeille`, tone: 'info' as const }] : [],
           footerText: nearestKit ? `Kit assigné : ${nearestKit.name}` : 'Aucun kit assigné',
           footerAction: { label: 'Gérer les kits →', onClick: () => setExpandedWidget('kits') },
+        status: {
+          level: activeKits.length === 0 ? 'neutral' : avgCompleteness >= 80 ? 'ok' : avgCompleteness > 40 ? 'warning' : 'critical',
+          label: activeKits.length === 0 ? 'Aucun kit' : avgCompleteness >= 80 ? 'Complet' : avgCompleteness > 40 ? 'Incomplet' : 'Manque matériel',
+        },
           richBody: (
             <div className="space-y-2">
               <StackedAvatars
@@ -944,12 +948,22 @@ export default function MonMaterielCockpitPage() {
                 size={32}
               />
               <div className="space-y-1.5">
-                {activeKits.slice(0, 3).map((k) => (
-                  <div key={k.id} className="flex items-center justify-between text-xs p-1.5 rounded-lg bg-white/50 border border-[#1C2620]/7">
-                    <span className="truncate font-medium text-[#1C2620]">{k.name}</span>
-                    <span className="font-mono font-bold text-[#2D5A3D] shrink-0">{formatWeight(kitTotalWeight(k))}</span>
-                  </div>
-                ))}
+                {activeKits.slice(0, 3).map((k) => {
+                  const total = k.items.length;
+                  const owned = k.items.filter((i) => equipment.some((e) => i.gear_item_id ? e.id === i.gear_item_id : e.name.trim().toLowerCase() === (i.item_name || '').trim().toLowerCase())).length;
+                  const pct = total > 0 ? Math.round((owned / total) * 100) : 0;
+                  return (
+                    <div key={k.id} className="flex items-center justify-between text-xs p-1.5 rounded-lg bg-white/50 border border-[#1C2620]/7">
+                      <span className="truncate font-medium text-[#1C2620]">{k.name}</span>
+                      <span className="shrink-0 flex items-center gap-1.5">
+                        <span className="h-1.5 w-12 rounded-full bg-[#1C2620]/8 overflow-hidden">
+                          <span className={`block h-full rounded-full ${pct >= 80 ? 'bg-[#2D5A3D]' : pct >= 40 ? 'bg-[#8C6A1A]' : 'bg-[#9B2C2C]'}`} style={{ width: `${pct}%` }} />
+                        </span>
+                        <span className="font-mono font-bold text-[#2D5A3D]">{formatWeight(kitTotalWeight(k))}</span>
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ),
@@ -980,6 +994,10 @@ export default function MonMaterielCockpitPage() {
                   : [{ id: 'ready', label: 'Prêt ✓', tone: 'success' as const }],
               footerText: pendingActions > 0 ? `${pendingActions} action(s) restante(s)` : 'Tout est prêt !',
               footerAction: { label: 'Checklist →', onClick: () => setExpandedWidget('departure') },
+          status: {
+            level: readiness?.status === 'blocked' ? 'critical' : readiness?.status === 'to_check' ? 'warning' : 'ok',
+            label: readiness?.status === 'blocked' ? 'Bloqué' : readiness?.status === 'to_check' ? 'À vérifier' : 'Prêt',
+          },
               richBody: (
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -1040,6 +1058,10 @@ export default function MonMaterielCockpitPage() {
           badges: orderedItems.length > 0 ? [{ id: 'ordered', label: `${orderedItems.length} en commande`, tone: 'info' as const }] : [],
           footerText: recentItems[0] ? `Dernier ajout : ${recentItems[0].name}` : 'Inventaire vide',
           footerAction: { label: 'Ajouter →', onClick: () => setExpandedWidget('inventory') },
+        status: {
+          level: equipment.length === 0 ? 'neutral' : conditionPct >= 80 ? 'ok' : conditionPct >= 60 ? 'warning' : 'critical',
+          label: equipment.length === 0 ? 'Inventaire vide' : conditionPct >= 80 ? 'Opérationnel' : conditionPct >= 60 ? 'À surveiller' : 'À remplacer',
+        },
           richBody: (
             <div className="space-y-2">
               <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
@@ -1080,8 +1102,28 @@ export default function MonMaterielCockpitPage() {
           badges: unavailableCount > 0 ? [{ id: 'unav', label: `${unavailableCount} indisponible(s)`, tone: conflict ? 'critical' as const : 'warning' as const }] : [],
           footerText: conflict ? '⚠ Conflit retour / départ prévu' : nextReturn ? `Prochain retour : ${new Date(nextReturn.returned_at!).toLocaleDateString('fr-FR')}` : 'Tout disponible',
           footerAction: { label: 'Voir prêts →', onClick: () => setExpandedWidget('availability') },
+        status: {
+          level: unavailableCount === 0 ? 'ok' : unavailableCount <= 2 ? 'warning' : 'critical',
+          label: unavailableCount === 0 ? 'Tout disponible' : conflict ? 'Conflit retour/départ' : `${unavailableCount} indisponible(s)`,
+        },
           richBody: (
             <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <MiniDonut
+                  segments={[
+                    { label: 'Disponible', value: Math.max(0, equipment.length - lentCount - committedGear.length), color: '#2D5A3D' },
+                    { label: 'Engagé départ', value: committedGear.length, color: '#4A7C5B' },
+                    { label: 'En prêt', value: lentCount, color: '#8C6A1A' },
+                  ]}
+                  size={44}
+                  strokeWidth={7}
+                />
+                <div className="text-[10px] leading-relaxed text-[#1C2620]/70">
+                  <p><span className="font-mono font-bold text-[#2D5A3D]">{Math.max(0, equipment.length - lentCount - committedGear.length)}</span> dispo</p>
+                  <p><span className="font-mono font-bold text-[#4A7C5B]">{committedGear.length}</span> engagés</p>
+                  <p><span className="font-mono font-bold text-[#8C6A1A]">{lentCount}</span> prêtés</p>
+                </div>
+              </div>
               <h3 className="text-xs font-semibold text-[#1C2620]/70">Prochains retours</h3>
               <MiniTimeline
                 items={activeLoans
@@ -1089,11 +1131,11 @@ export default function MonMaterielCockpitPage() {
                   .sort((a, b) => (a.returned_at ?? '').localeCompare(b.returned_at ?? ''))
                   .slice(0, 5)
                   .map(loan => {
-                    const equipmentItem = equipment.find(e => e.id === loan.gearId);
+                    const equipmentItem = equipment.find(e => e.id === loan.gear_item_id);
                     return {
                       label: equipmentItem?.name || 'Équipement inconnu',
-                      timestamp: new Date(loan.returned_at),
-                      subtitle: loan.loan_to_name ? `À ${loan.loan_to_name}` : undefined,
+                      timestamp: new Date(loan.returned_at ?? 0),
+                      subtitle: loan.loaned_to ? `À ${loan.loaned_to}` : undefined,
                     };
                   })
                   .filter(item => item.label !== 'Équipement inconnu')
@@ -1142,6 +1184,7 @@ export default function MonMaterielCockpitPage() {
         secondaryMetrics={meta.secondaryMetrics}
         footerText={meta.footerText}
         footerAction={meta.footerAction}
+        status={meta.status}
         onExpand={(originEl) => {
           expandOriginRef.current = originEl || null;
           setExpandedWidget(id);
@@ -1306,6 +1349,13 @@ export default function MonMaterielCockpitPage() {
             setInventoryInitialQuery(q);
             setExpandedWidget('inventory');
           }}
+          companions={activeHike?.companions || undefined}
+          packWeightG={totalWeightG}
+          consumablesWeightG={
+            consumables
+              ? Math.round(consumables.waterL * 1000 + consumables.fuelG + consumables.meals * 120 + consumables.snacks * 60)
+              : 0
+          }
         />
       );
     } else if (id === 'departure') {
@@ -1452,6 +1502,11 @@ export default function MonMaterielCockpitPage() {
           onOpenDeparture={() => {
             setExpandedWidget(null);
             setExpandedWidget('departure');
+          }}
+          onListForSale={(gearId, listed) => {
+            void updateEquipment(gearId, { is_listed_for_sale: listed }).then(() =>
+              showToast(listed ? 'Objet mis en vente' : 'Retiré de la vente', 'success')
+            );
           }}
           onToast={showToast}
         />
@@ -1740,8 +1795,6 @@ export default function MonMaterielCockpitPage() {
     <MotionConfig reducedMotion="user">
       <>
         <div className="fixed inset-0 w-full bg-[#F5F3EE] text-[#1C2620] select-none font-sans flex flex-col overflow-hidden">
-          <AnimatedBackground />
-
           <Header />
 
           <div className="h-full w-full flex flex-col pt-20 sm:pt-[88px] overflow-y-auto lg:overflow-hidden">
@@ -2110,17 +2163,6 @@ function PreviewStat({ value, label }: { value: string | number; label: string }
     <div className="p-2 rounded-xl bg-white/40 border border-[#1C2620]/7">
       <span className="block text-sm font-bold font-mono text-[#1C2620] leading-none truncate">{value}</span>
       <span className="block text-xs text-[#1C2620]/70 mt-1">{label}</span>
-    </div>
-  );
-}
-
-function MiniProgress({ pct, tone = 'sage' }: { pct: number; tone?: 'sage' | 'amber' | 'danger' }) {
-  const safe = Math.max(0, Math.min(100, Math.round(pct)));
-  const color =
-    tone === 'amber' ? 'bg-[#8C6A1A]' : tone === 'danger' ? 'bg-[#9B2C2C]' : 'bg-[#2D5A3D]';
-  return (
-    <div className="h-1.5 rounded-full bg-[#1C2620]/7 overflow-hidden" aria-hidden>
-      <div className={`h-full ${color} rounded-full transition-all duration-500`} style={{ width: `${safe}%` }} />
     </div>
   );
 }

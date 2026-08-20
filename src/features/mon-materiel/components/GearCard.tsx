@@ -10,6 +10,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import GlassCard from '@/components/ui/glass-card';
 import { IconGrip, IconMaximize } from './icons';
+import { StatusBadge } from './shared/StatusBadge';
 
 export interface GearBadgeDatum {
   id: string;
@@ -35,10 +36,11 @@ export interface GearCardProps {
   secondaryMetrics?: { label: string; value: React.ReactNode }[];
   /** Slot libre pour sparkline / mini-liste / frise dans le corps. */
   richBody?: React.ReactNode;
-  /** Texte court en bas de carte (prochaine échéance, dernier événement). */
+/** Texte court en bas de carte (prochaine échéance, dernier événement). */
   footerText?: React.ReactNode;
   /** CTA discret en bas de carte. */
   footerAction?: { label: string; onClick: () => void };
+  status?: { level: 'ok' | 'warning' | 'critical' | 'info' | 'neutral'; label: string };
   children?: React.ReactNode;
   onExpand: (originEl?: HTMLElement) => void;
   onMore?: () => void;
@@ -72,8 +74,9 @@ export function GearCard({
   progress,
   secondaryMetrics,
   richBody,
-  footerText,
+footerText,
   footerAction,
+  status,
   children,
   onExpand,
   onMore,
@@ -100,6 +103,7 @@ export function GearCard({
               </span>
               <div className="min-w-0">
                 <h2 className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620] truncate">{title}</h2>
+                {status && <StatusBadge level={status.level} label={status.label} className="mt-0.5" />}
                 {subtitle && <p className="text-[10px] text-[#1C2620]/60 truncate">{subtitle}</p>}
               </div>
             </div>

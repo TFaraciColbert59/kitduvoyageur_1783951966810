@@ -75,8 +75,14 @@ export function MyKitsFullscreen({
     return [...filtered].sort((a, b) => {
       if (sort === 'weight') return kitTotalWeight(b) - kitTotalWeight(a);
       if (sort === 'name') return a.name.localeCompare(b.name);
-      if (sort === 'usage') return (b.last_used_at || 0) - (a.last_used_at || 0);
-      return (b.updated_at || '').localeCompare(a.updated_at || '');
+      if (sort === 'usage') {
+        const dateA = a.last_used_at ? new Date(a.last_used_at).getTime() : 0;
+        const dateB = b.last_used_at ? new Date(b.last_used_at).getTime() : 0;
+        return dateB - dateA;
+      }
+      const dateA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+      const dateB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+      return dateB - dateA;
     });
   }, [kits, search, sort]);
 

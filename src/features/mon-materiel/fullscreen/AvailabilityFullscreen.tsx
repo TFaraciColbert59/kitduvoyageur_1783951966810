@@ -16,6 +16,7 @@ import type { GearStatus } from '../domain/gear-status';
 import type { GearLoanRecord } from '../types';
 import { formatDateFr, formatEuro } from '../domain/gear-format';
 import { SectionCard } from '../components/SectionCard';
+import { MiniDonut } from '../components/shared/MiniDonut';
 import { IconCheck, IconRefresh } from '../components/icons';
 
 export interface AvailabilityFullscreenProps {
@@ -29,6 +30,7 @@ export interface AvailabilityFullscreenProps {
   onNudge: (gearId: string) => void;
   onOpenGear: (gearId: string) => void;
   onOpenDeparture: () => void;
+  onListForSale?: (gearId: string, listed: boolean) => void;
   onToast: (text: string, type?: 'success' | 'info' | 'warning') => void;
 }
 
@@ -46,16 +48,18 @@ export function AvailabilityFullscreen({
   equipment,
   statuses,
   availability,
-  activeLoans: _activeLoans,
+  activeLoans,
   committedGear,
   activeDeparture,
   onMarkReturned,
   onNudge,
   onOpenGear,
   onOpenDeparture,
+  onListForSale,
   onToast,
 }: AvailabilityFullscreenProps) {
   const [tab, setTab] = useState<Tab>('lent');
+  const [days, setDays] = useState<7 | 30>(30);
 
   const lentItems = useMemo(
     () =>
@@ -91,6 +95,58 @@ export function AvailabilityFullscreen({
     [availability]
   );
 
+  const idleItems = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - 6);
+    return equipment.filter((g) => {
+      const lastUsed = (g as UserEquipmentItem & { last_used_at?: string }).last_used_at || g.last_used_date;
+      if (lastUsed) return new Date(lastUsed) < cutoff;
+      return !g.usage_count;
+    });
+  }, [equipment]);
+
+  const urgentReturn = useMemo(() => {
+    const returns = equipment
+      .filter((g) => {
+        const due = (g as UserEquipmentItem & { loan_due_date?: string }).loan_due_date;
+        return due && new Date(due).getTime() >= Date.now();
+      })
+      .sort((a, b) => {
+        const da = new Date((a as UserEquipmentItem & { loan_due_date?: string }).loan_due_date!).getTime();
+        const db = new Date((b as UserEquipmentItem & { loan_due_date?: string }).loan_due_date!).getTime();
+        return da - db;
+      });
+    if (returns.length > 0) return returns[0];
+    const fallback = activeLoans
+      .filter((l) => l.status !== 'returned' && l.returned_at && new Date(l.returned_at!).getTime() >= Date.now())
+      .sort((a, b) => (a.returned_at || '').localeCompare(b.returned_at || ''))[0];
+    return fallback ? equipment.find((e) => e.id === fallback.gear_item_id) || null : null;
+  }, [equipment, activeLoans]);
+
+  const upcomingReturns = useMemo(
+    () =>
+      activeLoans
+        .filter((l) => l.status !== 'returned' && l.returned_at)
+        .filter((l) => {
+          const t = new Date(l.returned_at!).getTime();
+          return t >= Date.now() && t <= Date.now() + days * 86400000;
+        })
+        .sort((a, b) => (a.returned_at || '').localeCompare(b.returned_at || ''))
+        .slice(0, 6),
+    [activeLoans, days]
+  );
+
+  const donutSegments = useMemo(() => {
+    const engaged = committedGear.filter((g) => equipment.some((e) => e.id === g.id)).length;
+    const lent = lentItems.length;
+    const available = Math.max(0, equipment.length - engaged - lent);
+    return [
+      { label: 'Disponible', value: available, color: '#2D5A3D' },
+      { label: 'Engagé départ', value: engaged, color: '#4A7C5B' },
+      { label: 'En prêt', value: lent, color: '#8C6A1A' },
+    ];
+  }, [equipment, committedGear, lentItems]);
+
   const list = tab === 'lent' ? lentItems : tab === 'borrowed' ? borrowedItems : engagedItems;
 
   return (
@@ -102,6 +158,81 @@ export function AvailabilityFullscreen({
           <Synth value={conflictCount} label="Conflits" />
           <Synth value={lentItems.length} label="En prêt" />
         </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 pt-1">
+          <div className="p-3 rounded-xl bg-white/40 border border-[#1C2620]/7 flex items-center gap-3">
+            <MiniDonut segments={donutSegments} size={56} strokeWidth={8} />
+            <div className="min-w-0">
+              <p className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Dispo / engagé</p>
+              <p className="text-xs text-[#1C2620]/65 mt-0.5">{donutSegments[0].value.toLocaleString('fr-FR')} libres</p>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-white/40 border border-[#1C2620]/7">
+            <p className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Fenêtre</p>
+            <div className="flex gap-1 mt-1.5">
+              {([7, 30] as const).map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setDays(d)}
+                  aria-pressed={days === d}
+                  className={`px-2.5 py-1 rounded-full text-xs font-bold transition-colors ${
+                    days === d ? 'bg-[#2D5A3D] text-white' : 'bg-white/50 text-[#1C2620]/70 border border-[#1C2620]/10'
+                  }`}
+                >
+                  {d} j
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-[#1C2620]/55 mt-1.5">{upcomingReturns.length} retour(s) dans la fenêtre</p>
+          </div>
+
+          <div className="p-3 rounded-xl bg-white/40 border border-[#1C2620]/7">
+            <p className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Retour urgent</p>
+            {urgentReturn ? (
+              <div className="mt-1.5 flex items-center justify-between gap-2 text-xs">
+                <span className="truncate font-semibold text-[#1C2620]/90">{urgentReturn.name}</span>
+                <button
+                  type="button"
+                  onClick={() => onOpenGear(urgentReturn.id)}
+                  className="text-[#2D5A3D] font-bold shrink-0 hover:underline"
+                >
+                  Fiche
+                </button>
+              </div>
+            ) : (
+              <p className="text-xs text-[#1C2620]/45 mt-1.5">Aucun retour imminent.</p>
+            )}
+          </div>
+
+          <div className="p-3 rounded-xl bg-white/40 border border-[#1C2620]/7">
+            <p className="text-xs font-extrabold uppercase tracking-wider text-[#1C2620]">Objets dormants</p>
+            {idleItems.length > 0 ? (
+              <div className="space-y-1 mt-1.5 max-h-24 overflow-y-auto scrollbar-none">
+                {idleItems.slice(0, 3).map((g) => (
+                  <div key={g.id} className="flex items-center justify-between gap-2 text-xs">
+                    <button type="button" onClick={() => onOpenGear(g.id)} className="truncate font-semibold text-[#1C2620]/90 hover:underline">
+                      {g.name}
+                    </button>
+                    {onListForSale && (
+                      <button
+                        type="button"
+                        onClick={() => onListForSale(g.id, true)}
+                        className="text-[#8C6A1A] font-bold shrink-0 text-[10px] hover:underline"
+                      >
+                        Vendre
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-[#1C2620]/45 mt-1.5">Aucun objet dormant.</p>
+            )}
+          </div>
+        </div>
+
         <div className="lg:grid lg:grid-cols-[200px_1fr] lg:gap-4">
           {/* Tabs sidebar */}
           <div className="lg:sticky lg:top-8">

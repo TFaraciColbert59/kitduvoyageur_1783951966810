@@ -166,11 +166,14 @@ export function NextDepartureFullscreen({
                   />
                 </div>
                 <p className="text-xs text-[#1C2620]/60">Poids du kit : {(kitWeight / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} kg</p>
-                {kit.items && kit.items.length > 0 && (
+                {kit && kit.items && kit.items.length > 0 && (
                   <div className="mt-1 space-x-2 text-xs">
                     <span className="text-[#1C2620]/60">Utilisation moyenne :</span>
                     <span className="font-mono text-[#2D5A3D]">
-                      {((kit.items.reduce((sum, item) => sum + (item.usage_count || 0), 0) / kit.items.length) || 0).toFixed(1)}
+                      {((_equipment && kit.items.reduce((sum, item) => {
+                        const equipmentItem = _equipment.find((e: { id: string }) => e.id === item.gear_item_id);
+                        return sum + (equipmentItem?.usage_count || 0);
+                      }, 0) / kit.items.length) || 0).toFixed(1)}
                     </span>
                     <span className="text-[#1C2620]/60">fois</span>
                   </div>
