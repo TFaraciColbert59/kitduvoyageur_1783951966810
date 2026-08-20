@@ -345,6 +345,32 @@ TOTAL TS ERRORS: 0
 #### Statut
 ✅ TERMINÉE.
 
+#### Refonte A→G (fidélité prompt + vidéo de fond + CRUD complet)
+- **A. Design & vidéo** : `public/materiel/background.mp4` + `BackgroundVideo` (autoplay/muted/loop,
+  fixed -z-10) monté dans le layout `/materiel` ; contenu sur `z-10` ; cards glass semi-opaques lisibles.
+- **B. CRUD complet** : items `PATCH`/`DELETE` (`/api/materiel/items/[id]`), alertes résolution
+  (`/api/materiel/alerts/[id]`), prêts « rendu » (`/api/materiel/loans/[id]`), kits create/edit/delete
+  (`KitManager`) ; toasts via `useToast` sur toutes les mutations ; `router.refresh()`.
+- **C. Connecter les simulés** : météo **Open-Meteo** (`getWeather`, sans clé) → W-D-2 + W-L-7 ;
+  kits communauté réels → W-D-9.
+- **D. Modules métier** : `lib/materiel/conflicts.ts`, `scanner.ts` (extraits + testés).
+- **E. Interconnexions** : `POST /api/materiel/fork` + bouton TemplateStore ; `GlassCommand ⌘K`
+  monté dans le layout ; deeplink `/hiking/cockpit?kitId=` sur AssignedKitCard.
+- **G. Offline** : `sync.ts` (reuse `db.syncOffline`) + `startOfflineSync`.
+
+#### Preuve finale (build + tests + routes)
+```
+> npm run test        # 5 files, 20 tests pass
+> npm run build       # ✓ Compiled successfully
+  /materiel/inventaire   20 kB   /materiel/depart/[id]   12.7 kB   /materiel/kits   8.89 kB
+> GET (dev) : /materiel, /materiel/kits, /materiel/inventaire, /materiel/alertes,
+             /materiel/disponibilite, /materiel/forget, /materiel/depart/test-id,
+             /materiel/background.mp4  -> 200
+```
+
+#### Statut
+✅ TERMINÉE.
+
 ---
 
 ### PHASE 6 — Interconnexions natives
