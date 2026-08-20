@@ -252,6 +252,12 @@
   box-shadow: var(--elevation-3), 0 0 0 2px var(--bg-primary), 0 0 0 4px color-mix(in oklab, var(--sage-500) 60%, transparent);
 }
 
+/* Liquid Glass — lisibilité du texte sur verre très translucide (règle d'accessibilité
+   « text on glass must remain readable »). Ombre légère + léger voile sous les textes. */
+.glass h1, .glass h2, .glass h3, .glass p, .glass li, .glass span {
+  text-shadow: 0 1px 1px rgba(250, 248, 245, 0.55), 0 1px 3px rgba(20, 20, 15, 0.18);
+}
+
 /* Variantes tone */
 .glass.tone-sage {
   background: color-mix(in oklab, var(--sage-100) 55%, transparent);
