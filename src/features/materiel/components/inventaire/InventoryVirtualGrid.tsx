@@ -5,7 +5,7 @@ import type { InventoryItem } from '@/features/materiel/services/getInventory';
 import { InventoryCard } from './InventoryCard';
 
 /** W-I-3 InventoryVirtualGrid — grille virtualisée 2 colonnes (TanStack Virtual). */
-export function InventoryVirtualGrid({ items }: { items: InventoryItem[] }) {
+export function InventoryVirtualGrid({ items, onSelect }: { items: InventoryItem[]; onSelect?: (item: InventoryItem) => void }) {
   const parentRef = useRef<HTMLDivElement>(null);
   const rowVirtualizer = useVirtualizer({
     count: Math.ceil(items.length / 2),
@@ -25,7 +25,7 @@ export function InventoryVirtualGrid({ items }: { items: InventoryItem[] }) {
               className="grid grid-cols-2 gap-3 absolute top-0 left-0 w-full"
               style={{ transform: `translateY(${virtualRow.start}px)`, height: 96 }}
             >
-              {pair.map((item) => <InventoryCard key={item.id} item={item} />)}
+              {pair.map((item) => <InventoryCard key={item.id} item={item} onSelect={onSelect} />)}
             </div>
           );
         })}

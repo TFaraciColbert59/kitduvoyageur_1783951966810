@@ -3,9 +3,13 @@ import type { InventoryItem } from '@/features/materiel/services/getInventory';
 import { Badge } from '@/components/ui/Badge';
 
 /** W-I-3 InventoryCard — carte d'objet (96px). */
-export function InventoryCard({ item }: { item: InventoryItem }) {
+export function InventoryCard({ item, onSelect }: { item: InventoryItem; onSelect?: (item: InventoryItem) => void }) {
   return (
-    <article className="glass interactive p-2 flex flex-col gap-1 h-full">
+    <button
+      type="button"
+      onClick={() => onSelect?.(item)}
+      className="glass interactive p-2 flex flex-col gap-1 h-full text-left"
+    >
       <div className="relative h-[44px] w-full rounded-[var(--r-sm)] overflow-hidden bg-stone-100">
         {item.photo_url ? (
           <Image src={item.photo_url} alt={item.name} fill sizes="200px" className="object-cover" />
@@ -20,6 +24,7 @@ export function InventoryCard({ item }: { item: InventoryItem }) {
         </span>
         {item.is_lent && <Badge tone="warn">Prêt</Badge>}
       </div>
-    </article>
+    </button>
   );
 }
+

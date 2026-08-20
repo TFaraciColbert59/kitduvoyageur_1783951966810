@@ -1,18 +1,42 @@
 'use client';
 import { useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 import { GlassDrawer } from '@/components/ui/GlassDrawer';
+import { useToast } from '@/contexts/ToastContext';
 import type { InventoryItem } from '@/features/materiel/services/getInventory';
 import { InventoryVirtualGrid } from './InventoryVirtualGrid';
 
 type View = 'grid' | 'table';
 
-interface ScanDraft { name?: string; brand?: string | null; category?: string; weight_g?: number }
+interface ItemFormState {
+  name: string;
+  brand: string;
+  category: string;
+  weight_g: string;
+  price_cents: string;
+  condition: string;
+}
 
-/** W-I-2..W-I-7 — workspace inventaire interactif (recherche, filtres, grille, détail, scan, comparateur). */
+const CATEGORIES = ['Sacs & Portage', 'Couchage & Tentes', 'Vêtements & Vestes', 'Cuisine & Réchauds', 'Eau & Filtres', 'Lampes & Éclairage', 'Navigation & GPS', 'Sécurité & Soins', 'Accessoires & Outils', 'Autre'];
+const CONDITIONS = ['neuf', 'bon', 'use', 'a_remplacer', 'pour_pieces'];
+
+const EMPTY_FORM: ItemFormState = { name: '', brand: '', category: 'Autre', weight_g: '', price_cents: '', condition: 'bon' };
+
+function toForm(i: InventoryItem): ItemFormState {
+  return {
+    name: i.name, brand: i.brand ?? '', category: i.category ?? 'Autre',
+    weight_g: i.weight_g != null ? String(i.weight_g) : '', price_cents: i.price_cents != null ? String(i.price_cents) : '',
+    condition: i.condition ?? 'bon',
+  };
+}
+
+/** W-I-2..W-I-7 — workspace inventaire avec CRUD complet (connecté Supabase). */
 export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
+  const router = useRouter();
+  const { toast } = useToast();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [lentOnly, setLentOnly] = useState(false);
@@ -21,8 +45,12 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
   const [selected, setSelected] = useState<InventoryItem | null>(null);
   const [cmpA, setCmpA] = useState('');
   const [cmpB, setCmpB] = useState('');
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<InventoryItem | null>(null);
+  const [form, setForm] = useState<ItemFormState>(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
   const [scanning, setScanning] = useState(false);
-  const [scanResult, setScanResult] = useState<ScanDraft | null>(null);
+  const [scanResult, setScanResult] = useState<string | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -43,6 +71,51 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
   const cmpAItem = items.find((i) => i.id === cmpA);
   const cmpBItem = items.find((i) => i.id === cmpB);
 
+  const openCreate = () => { setEditing(null); setForm(EMPTY_FORM); setFormOpen(true); };
+  const openEdit = (i: InventoryItem) => { setEditing(i); setForm(toForm(i)); setFormOpen(true); };
+
+  const handleSave = async () => {
+    if (!form.name.trim()) { toast('Le nom est requis', 'error'); return; }
+    setSaving(true);
+    const payload = {
+      name: form.name.trim(),
+      brand: form.brand || null,
+      category: form.category,
+      weight_g: form.weight_g ? Number(form.weight_g) : 0,
+      price_cents: form.price_cents ? Number(form.price_cents) : null,
+      condition: form.condition,
+    };
+    try {
+      const url = editing ? `/api/materiel/items/${editing.id}` : '/api/materiel/items';
+      const res = await fetch(url, {
+        method: editing ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error((await res.json()).error ?? 'Erreur');
+      toast(editing ? 'Objet modifié' : 'Objet ajouté', 'success');
+      setFormOpen(false);
+      router.refresh();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Erreur', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (item: InventoryItem) => {
+    if (!confirm(`Supprimer « ${item.name} » ?`)) return;
+    try {
+      const res = await fetch(`/api/materiel/items/${item.id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Erreur');
+      toast('Objet supprimé', 'success');
+      setSelected(null);
+      router.refresh();
+    } catch {
+      toast('Erreur de suppression', 'error');
+    }
+  };
+
   const handleScan = async (file: File) => {
     setScanning(true); setScanError(null); setScanResult(null);
     try {
@@ -59,7 +132,9 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Erreur scan');
-      setScanResult(data.draft ?? {});
+      setScanResult(data.draft?.name ?? 'Article scanné');
+      toast('Article scanné — ajouté à l’inventaire', 'success');
+      router.refresh();
     } catch (e) {
       setScanError(e instanceof Error ? e.message : 'Erreur');
     } finally {
@@ -69,17 +144,10 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
 
   return (
     <>
-      {/* W-I-2 Recherche + tri + toggle vue */}
       <GlassCard className="p-3" aria-labelledby="inv-toolbar">
         <h2 id="inv-toolbar" className="sr-only">Recherche et tri</h2>
         <div className="flex flex-wrap items-center gap-2">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher un objet…"
-            aria-label="Rechercher"
-            className="glass-input flex-1 min-w-[160px]"
-          />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un objet…" aria-label="Rechercher" className="glass-input flex-1 min-w-[160px]" />
           <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} aria-label="Trier" className="glass-input">
             <option value="recent">Récents</option>
             <option value="weight">Poids</option>
@@ -89,10 +157,10 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
             <button type="button" className={`glass-segmented-item ${view === 'grid' ? 'active' : ''}`} onClick={() => setView('grid')}>Cartes</button>
             <button type="button" className={`glass-segmented-item ${view === 'table' ? 'active' : ''}`} onClick={() => setView('table')}>Table</button>
           </div>
+          <button type="button" onClick={openCreate} className="glass interactive h-10 px-4 rounded-full text-sm font-medium text-white bg-sage-800">+ Ajouter</button>
         </div>
       </GlassCard>
 
-      {/* W-I-4 Filtres avancés + W-I-3 grille / table */}
       <div className="grid grid-cols-12 gap-4">
         <GlassCard className="col-span-12 md:col-span-3 p-4 self-start" aria-labelledby="inv-filters">
           <h2 id="inv-filters" className="sr-only">Filtres</h2>
@@ -110,7 +178,7 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
         </GlassCard>
 
         <div className="col-span-12 md:col-span-9">
-          {view === 'grid' && (filtered.length > 0 ? <InventoryVirtualGrid items={filtered} /> : (
+          {view === 'grid' && (filtered.length > 0 ? <InventoryVirtualGrid items={filtered} onSelect={setSelected} /> : (
             <p className="text-sm text-[color:var(--label-secondary)]">Aucun objet ne correspond.</p>
           ))}
           {view === 'table' && (
@@ -123,7 +191,7 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
                 </thead>
                 <tbody>
                   {filtered.map((i) => (
-                    <tr key={i.id} className="border-t border-[var(--separator)]">
+                    <tr key={i.id} className="border-t border-[var(--separator)] cursor-pointer" onClick={() => setSelected(i)}>
                       <td className="py-2 text-[color:var(--label)]">{i.name}</td>
                       <td className="py-2 text-[color:var(--label-secondary)]">{i.category ?? '—'}</td>
                       <td className="py-2">{i.weight_g ? `${(i.weight_g / 1000).toFixed(2)} kg` : '—'}</td>
@@ -138,7 +206,7 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
         </div>
       </div>
 
-      {/* W-I-7 Comparateur multi-objets */}
+      {/* W-I-7 Comparateur */}
       <GlassCard className="p-4" aria-labelledby="inv-comparator">
         <h3 id="inv-comparator" className="sr-only">Comparateur d'objets</h3>
         <Eyebrow>Comparateur</Eyebrow>
@@ -168,27 +236,14 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
         )}
       </GlassCard>
 
-      {/* W-I-6 Scan — bouton flottant + input fichier */}
+      {/* W-I-6 Scan */}
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleScan(f); e.target.value = ''; }} aria-label="Scanner un article" />
-      <button
-        type="button"
-        onClick={() => fileRef.current?.click()}
-        className="fixed bottom-24 right-5 z-30 h-14 w-14 rounded-full glass interactive flex items-center justify-center text-[color:var(--label)] shadow-[var(--elevation-4)]"
-        aria-label="Scanner un article (OCR)"
-      >
-        📷
-      </button>
+      <button type="button" onClick={() => fileRef.current?.click()} className="fixed bottom-24 right-5 z-30 h-14 w-14 rounded-full glass interactive flex items-center justify-center text-[color:var(--label)] shadow-[var(--elevation-4)]" aria-label="Scanner un article (OCR)">📷</button>
       {scanning && <p className="text-sm text-[color:var(--label-secondary)]">Analyse…</p>}
       {scanError && <p className="text-sm text-danger">{scanError}</p>}
-      {scanResult && (
-        <GlassCard className="p-4 mt-4">
-          <Eyebrow>Article scanné</Eyebrow>
-          <p className="text-sm text-[color:var(--label)] mt-1">{scanResult.name ?? 'Article'}</p>
-          <p className="text-xs text-[color:var(--label-tertiary)]">{scanResult.brand ?? ''} · {scanResult.category ?? ''} · {scanResult.weight_g ? `${scanResult.weight_g} g` : ''}</p>
-        </GlassCard>
-      )}
+      {scanResult && <p className="text-sm text-[color:var(--label-secondary)]">Ajouté : {scanResult}</p>}
 
-      {/* W-I-5 Détail — GlassDrawer */}
+      {/* Détail */}
       <GlassDrawer open={!!selected} onOpenChange={(v) => { if (!v) setSelected(null); }} title={selected?.name ?? 'Détail'}>
         {selected && (
           <div className="flex flex-col gap-3">
@@ -202,8 +257,49 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
               <div className="flex justify-between"><dt className="text-[color:var(--label-tertiary)]">Poids</dt><dd className="text-[color:var(--label)]">{selected.weight_g ? `${(selected.weight_g / 1000).toFixed(2)} kg` : '—'}</dd></div>
               <div className="flex justify-between"><dt className="text-[color:var(--label-tertiary)]">Prix</dt><dd className="text-[color:var(--label)]">{selected.price_cents ? `${(selected.price_cents / 100).toFixed(2)} €` : '—'}</dd></div>
             </dl>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => { setSelected(null); openEdit(selected); }} className="glass interactive h-10 px-4 rounded-full text-sm font-medium">Modifier</button>
+              <button type="button" onClick={() => handleDelete(selected)} className="glass interactive h-10 px-4 rounded-full text-sm font-medium text-danger">Supprimer</button>
+            </div>
           </div>
         )}
+      </GlassDrawer>
+
+      {/* Formulaire Ajouter/Modifier */}
+      <GlassDrawer open={formOpen} onOpenChange={setFormOpen} title={editing ? 'Modifier l’objet' : 'Ajouter un objet'}>
+        <div className="flex flex-col gap-3">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-[color:var(--label-secondary)]">Nom *</span>
+            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="glass-input" />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-[color:var(--label-secondary)]">Marque</span>
+            <input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} className="glass-input" />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-[color:var(--label-secondary)]">Catégorie</span>
+            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="glass-input">
+              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-[color:var(--label-secondary)]">Poids (g)</span>
+            <input type="number" value={form.weight_g} onChange={(e) => setForm({ ...form, weight_g: e.target.value })} className="glass-input" />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-[color:var(--label-secondary)]">Prix (centimes)</span>
+            <input type="number" value={form.price_cents} onChange={(e) => setForm({ ...form, price_cents: e.target.value })} className="glass-input" />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-[color:var(--label-secondary)]">État</span>
+            <select value={form.condition} onChange={(e) => setForm({ ...form, condition: e.target.value })} className="glass-input">
+              {CONDITIONS.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </label>
+          <button type="button" onClick={handleSave} disabled={saving} className="glass interactive h-12 rounded-full text-sm font-medium text-white bg-sage-800 disabled:opacity-40">
+            {saving ? 'Enregistrement…' : 'Enregistrer'}
+          </button>
+        </div>
       </GlassDrawer>
     </>
   );
