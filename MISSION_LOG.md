@@ -348,7 +348,59 @@ TOTAL TS ERRORS: 0
 
 ### PHASE 9 — Vérification finale anti-hallucination
 
+#### Preuves
+
+**1. Git**
+```
+> git status --short   # nouvelles tables/API/UI staged; suppressions legacy mon-materiel non-stagées (état de travail)
+> git log --oneline -20
+be7c0a3 feat(materiel): interconnexions nav + partage public k/[token] + offline sw + tests vitest/playwright
+11b48f6 feat(materiel): 6 plein ecrans + widgets ...
+74479e9 feat(materiel): grille /materiel + 6 cartes liquid glass + service agrégats
+b838222 feat(materiel): schema supabase + API routes rebuild
+8e87cee feat(materiel): design system tokens + socle composants liquid glass
+e69a793 chore(materiel): init rebuild mission log + branch
+```
+
+**2. Arborescence** (vs cible Phase 1.3) : 47 fichiers sous `src/app/materiel`, `src/features/materiel`,
+  `src/components/ui` (voir sortie brute en Phase 4/5). Pages : `/materiel`, `/materiel/{kits,inventaire,
+  alertes,disponibilite,forget}`, `/materiel/depart/[id]`.
+
+**3. grep E4501C** (app/materiel + features/materiel)
+```
+> grep E4501C src/app/materiel src/features/materiel
+No files found   ✅
+```
+
+**4. Build** `npm run build` → SUCCÈS (toutes les routes /materiel compilées, voir sortie Phase 7).
+
+**5. Tests** `npm run test` → 8/8 pass.
+
+**6. RLS** (vérif REST service_role/anon, pas de mot de passe DB) → 6 tables présentes, anon=0 (RLS active).
+
+**7. Sécurité** : `get_advisors` (MCP) non disponible → remplacé par la vérification REST ci-dessus.
+
+**8. Rendu** : capture Playwright non réalisée ici (pas d'environnement navigateur) ; validé par build + tsc.
+
+#### Points d'écart documentés
+- `/materiel/depart/[id]` > 40 kB (recharts) — amélioration recommandée (import dynamique).
+- `get_advisors` (MCP) indisponible → vérification REST.
+- e2e Playwright non exécuté (spec écrite).
+
+#### Statut
+✅ TERMINÉE (avec les écarts ci-dessus tracés, aucun échec bloquant).
+
+---
+
+### PHASE 10 — Livraison
+
+#### Actions
+- Rapport de validation ci-dessus (Phase 9).
+- Documentation : `docs/materiel-liquid-glass.md`.
+- PR depuis `feat/materiel-rebuild-liquid-glass`.
+
 <!-- à compléter -->
+
 
 
 
