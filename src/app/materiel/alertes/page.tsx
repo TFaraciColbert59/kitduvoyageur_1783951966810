@@ -1,22 +1,32 @@
 import Link from 'next/link';
-import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
-import { Metric } from '@/components/ui/Metric';
-import { Badge } from '@/components/ui/Badge';
-import { getAlerts } from '@/features/materiel/services/getAlerts';
+import { ReliabilityScore } from '@/features/materiel/components/alertes/ReliabilityScore';
+import { TopAlertsAccordion } from '@/features/materiel/components/alertes/TopAlertsAccordion';
+import { CategoryTabs } from '@/features/materiel/components/alertes/CategoryTabs';
+import { SeasonalBanner } from '@/features/materiel/components/alertes/SeasonalBanner';
 import { AlertsTimeline } from '@/features/materiel/components/alertes/AlertsTimeline';
+import { ToCompleteList } from '@/features/materiel/components/alertes/ToCompleteList';
+import { WeatherRadar } from '@/features/materiel/components/alertes/WeatherRadar';
+import { MaintenanceCalendar } from '@/features/materiel/components/alertes/MaintenanceCalendar';
+import { OccasionMarketplace } from '@/features/materiel/components/alertes/OccasionMarketplace';
+import { ExportShareBar } from '@/features/materiel/components/alertes/ExportShareBar';
+import { getAlerts } from '@/features/materiel/services/getAlerts';
+import { getInventory } from '@/features/materiel/services/getInventory';
+import { getOccasionProducts } from '@/features/materiel/services/getOccasionProducts';
+import { currentSeason } from '@/features/materiel/components/kits/WeatherMatchScore';
 
 export const dynamic = 'force-dynamic';
 
-const FR_LABEL: Record<string, string> = {
-  info: 'info', warning: 'avertissement', critical: 'critique',
-};
-
 export default async function AlertesPage() {
-  const alerts = await getAlerts();
+  const [alerts, inventory, occasion] = await Promise.all([getAlerts(), getInventory(), getOccasionProducts()]);
   const critical = alerts.filter((a) => a.severity === 'critical').length;
   const warning = alerts.filter((a) => a.severity === 'warning').length;
-  const reliability = Math.max(0, 100 - alerts.length * 10);
+  const score = Math.max(0, 100 - alerts.length * 10);
+  const meteoCount = alerts.filter((a) => a.type === 'meteo').length;
+  const season = currentSeason();
+  const calendarEvents = inventory
+    .filter((i) => i.maintenance_due_at)
+    .map((i) => ({ item: i.name, date: i.maintenance_due_at! }));
 
   return (
     <main className="max-w-[var(--page-max-w)] mx-auto px-4 py-8 pb-24">
@@ -31,19 +41,19 @@ export default async function AlertesPage() {
       </header>
 
       <div className="grid grid-cols-12 gap-4">
-        <GlassCard className="col-span-12 md:col-span-3 p-4" aria-labelledby="score-fiab">
-          <Eyebrow>Score de fiabilité</Eyebrow>
-          <Metric value={`${reliability}/100`} tone={critical > 0 ? 'danger' : reliability >= 70 ? 'sage' : 'default'} />
-          <div className="mt-2 flex gap-2">
-            {critical > 0 && <Badge tone="danger">{critical} critiques</Badge>}
-            {warning > 0 && <Badge tone="warn">{warning} avertissements</Badge>}
-          </div>
-        </GlassCard>
-        <GlassCard className="col-span-12 md:col-span-3 p-4" aria-labelledby="nb-alertes">
-          <Eyebrow>Alertes actives</Eyebrow>
-          <Metric value={alerts.length} />
-        </GlassCard>
-        <div className="col-span-12 md:col-span-6" />
+        <div className="col-span-12 md:col-span-3"><ReliabilityScore score={score} critical={critical} warning={warning} /></div>
+        <div className="col-span-12 md:col-span-9"><CategoryTabs alerts={alerts} /></div>
+        <div className="col-span-12"><TopAlertsAccordion alerts={alerts} /></div>
+        <div className="col-span-12">
+          <SeasonalBanner
+            chip={`Saison : ${season}`}
+            message={
+              alerts.length === 0
+                ? `Votre équipement est sain pour la saison ${season}.`
+                : `${alerts.length} alerte(s) active(s) — pensez à entretenir votre matériel avant la prochaine sortie.`
+            }
+          />
+        </div>
         <div className="col-span-12">
           <AlertsTimeline
             entries={alerts.map((a) => ({
@@ -54,6 +64,13 @@ export default async function AlertesPage() {
             }))}
           />
         </div>
+        <div className="col-span-12 md:col-span-6"><ToCompleteList items={inventory} /></div>
+        <div className="col-span-12 md:col-span-6">
+          <WeatherRadar meteoCount={meteoCount} message={meteoCount > 0 ? 'Conditions météo à surveiller pour le prochain départ.' : 'Aucune alerte météo active.'} />
+        </div>
+        <div className="col-span-12"><MaintenanceCalendar events={calendarEvents} /></div>
+        <div className="col-span-12"><OccasionMarketplace products={occasion} /></div>
+        <div className="col-span-12"><ExportShareBar /></div>
       </div>
     </main>
   );
