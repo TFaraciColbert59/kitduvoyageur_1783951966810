@@ -50,7 +50,9 @@
     "serve": "next start",
     "type-check": "tsc --noEmit",
     "test": "tsx src/features/mon-materiel/test/domain.test.ts",
-    "test:domain": "tsx src/features/mon-materiel/test/domain.test.ts"
+    "test:domain": "tsx src/features/mon-materiel/test/domain.test.ts",
+    "test:e2e": "playwright test",
+    "supabase:status": "supabase status"
   },
   "dependencies": {
     "@capacitor/cli": "^8.5.0",
@@ -85,6 +87,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@netlify/plugin-nextjs": "^5.11.1",
+    "@playwright/test": "^1.51.1",
     "@types/leaflet": "1.9.21",
     "@types/node": "^20",
     "@types/react": "19.0.3",
