@@ -71,6 +71,7 @@ export const materielKitSchema = z.object({
   is_trashed: z.boolean().default(false),
   cover_image_url: z.string().url('URL d’image invalide').nullable().optional(),
   tags: z.array(z.string().max(40)).max(20).nullable().optional(),
+  consumables: z.record(z.string(), z.number()).optional(),
   items: z.array(materielKitItemSchema).max(200, 'Un kit ne peut contenir plus de 200 articles.'),
 });
 

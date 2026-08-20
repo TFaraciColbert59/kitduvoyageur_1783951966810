@@ -1,7 +1,9 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
+import { useToast } from '@/contexts/ToastContext';
 
 interface ConsumableField { key: string; label: string; unit: string; min: number }
 
@@ -12,8 +14,10 @@ const FIELDS: ConsumableField[] = [
   { key: 'snacks', label: 'En-cas', unit: 'nb', min: 0 },
 ];
 
-/** W-D-5 ConsumablesTiles — tuiles consommables éditées inline. */
-export function ConsumablesTiles({ initial }: { initial?: Record<string, number> }) {
+/** W-D-5 ConsumablesTiles — tuiles consommables + sauvegarde (jsonb kit, persistée). */
+export function ConsumablesTiles({ kitId, initial }: { kitId?: string; initial?: Record<string, number> }) {
+  const router = useRouter();
+  const { toast } = useToast();
   const [values, setValues] = useState<Record<string, number>>(() => ({
     water: initial?.water ?? 3,
     gas: initial?.gas ?? 230,
@@ -21,9 +25,25 @@ export function ConsumablesTiles({ initial }: { initial?: Record<string, number>
     snacks: initial?.snacks ?? 4,
   }));
 
+  const save = async () => {
+    if (!kitId) return;
+    const res = await fetch(`/api/materiel/kits/${kitId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ consumables: values }),
+    });
+    if (res.ok) { toast('Consommables enregistrés', 'success'); router.refresh(); }
+    else toast('Erreur', 'error');
+  };
+
   return (
     <GlassCard as="article" ariaLabelledBy="consumables-title" className="p-4">
-      <Eyebrow>Consommables</Eyebrow>
+      <div className="flex items-center justify-between">
+        <Eyebrow>Consommables</Eyebrow>
+        {kitId && (
+          <button type="button" onClick={save} className="glass interactive h-8 px-3 rounded-full text-xs font-medium text-sage-600">
+            Enregistrer
+          </button>
+        )}
+      </div>
       <h3 id="consumables-title" className="sr-only">Consommables à prévoir</h3>
       <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2">
         {FIELDS.map((f) => (

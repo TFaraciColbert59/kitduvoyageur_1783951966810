@@ -61,8 +61,8 @@ export default async function DepartPage({ params }: { params: { id: string } })
           <TerrainReadinessScore score={depart.readinessScore} />
         </div>
         <div className="col-span-12 md:col-span-4"><AssignedKitCard kit={depart.assignedKit} /></div>
-        <div className="col-span-12 md:col-span-4"><ChecklistDonut pct={50} /></div>
-        <div className="col-span-12 md:col-span-6"><ConsumablesTiles /></div>
+        <div className="col-span-12 md:col-span-4"><ChecklistDonut pct={depart.checklistPct} /></div>
+        <div className="col-span-12 md:col-span-6"><ConsumablesTiles kitId={depart.id} initial={depart.consumables} /></div>
         <div className="col-span-12 md:col-span-6"><WeightDistributionDonut items={depart.weightBreakdown} /></div>
         <div className="col-span-12">
           <ParticipantsEmergency participants={depart.participants} emergencyContact={depart.emergencyContact} />
