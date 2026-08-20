@@ -88,6 +88,76 @@ icxyvwzfjbflcbqukpfz
 #### Statut
 EN COURS (nettoyage orphelins + audit DB à terminer avant Phase 1).
 
+#### Actions suite (Phase 0, suite)
+- Nettoyage orphelins : `src/app/sitemap.ts` (`/mon-materiel` → `/materiel`),
+  `src/app/robots.ts` (3 blocs `disallow` : `/mon-materiel` → `/materiel`).
+- Vérification : plus aucune référence `/mon-materiel` dans le code live (nav/footer/sitemap/SearchOverlay/SearchContext).
+  Les seules occurrences restantes sont documentaires (`docs/`, `.obsidian/`, scripts de probe).
+
+#### Preuve — build de référence (avant Phase 1)
+```
+> npx tsc --noEmit
+TOTAL TS ERRORS: 0
+```
+→ L'arborescence (avec suppressions) compile. Pas de casse préexistante liée à materiel.
+
+#### Statut
+✅ TERMINÉE.
+
 ---
 
-<!-- Journal des phases suivantes ajouté ci-dessous -->
+### PHASE 1 — Fondations du Design System
+
+#### Objectif
+Tokens complets, reconcile Tailwind, structure de dossiers cible.
+
+#### Actions
+- Tokens : `src/styles/liquid-glass.css` (déjà importé via `src/styles/index.css`) conserve
+  les tokens du prompt (Stone/Sage/Ink + sémantiques + glass + élévations + radii + spacing + motion).
+- `tailwind.config.js` : ajout des couleurs `stone`/`sage`/`ink`/`warn`/`danger`/`info`,
+  radii iOS 26, `elevation-1..5`, timing `glass`/`emphasis`, font `body`. Config existante préservée.
+- Structure cible créée : `src/features/materiel/**` (16 dossiers) + `src/app/materiel/**`.
+
+#### Preuve
+```
+> New-Item (16 dossiers)
+created 16 dirs
+> npx tsc --noEmit
+TOTAL TS ERRORS: 0
+```
+
+#### Statut
+✅ TERMINÉE.
+
+---
+
+### PHASE 2 — Composants socles (réécrits depuis le prompt)
+
+#### Objectif
+Composants canoniques Liquid Glass réécrits depuis le code du prompt (pas réutilisés).
+
+#### Actions
+- Ajout deps : `zustand`, `@headlessui/react`, `@tanstack/react-virtual`, `@radix-ui/react-dialog`,
+  `@radix-ui/react-toast`, `maplibre-gl`, `dexie`, `class-variance-authority`, `cmdk`, `clsx`, `tailwind-merge`.
+- Créé `src/lib/utils.ts` (helper `cn` = clsx + tailwind-merge).
+- Réécrit : `GlassCard`, `Eyebrow`, `Metric`, `Badge`, `ProgressBar`, `GlassSheet`, `GlassDrawer`,
+  `GlassCommand` (store Zustand `useCommandStore`), `ProductGlassCard`.
+- Supprimé le doublon legacy `src/components/ui/glass-card.tsx` (règle anti-fichier fantôme).
+
+#### Preuve
+```
+> Remove-Item src\components\ui\glass-card.tsx
+Test-Path -> False
+> npx tsc --noEmit
+TOTAL TS ERRORS: 0
+```
+
+#### Statut
+✅ TERMINÉE.
+
+---
+
+### PHASE 3 — Supabase : schéma, RLS, migrations
+
+<!-- à compléter -->
+
