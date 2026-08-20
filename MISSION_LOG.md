@@ -371,9 +371,32 @@ TOTAL TS ERRORS: 0
 #### Statut
 ✅ TERMINÉE.
 
----
+#### Finition design + widgets (Phases 2→6)
+- **Un-nest glass** : suppression des surfaces glass empilées dans les widgets → une seule feuille
+  glass par carte, éléments internes (listes, tuiles, cellules, champs) en fonds opaques
+  (`bg-white/60` + radius) ; petits boutons/pills conservés en glass (conforme règle d'or du prompt).
+- **Gaps uniformisés** : plein écrans passés de `gap-4` à `gap-[var(--grid-gap)]` (20 px) = même
+  rythme que la grille `/materiel`.
+- **⌘K fonctionnel** : `GlassCommand` connecté à la recherche Supabase
+  (`GET /api/materiel/search?q=` → kits + items) avec navigation.
+- **Départ complété** : W-D-4 % checklist réel (is_checked), W-D-5 consommables persistés
+  (jsonb `consumables` sur `materiel_kits`), W-D-1 route réelle via `hiking_routes.geometry`
+  (fallback synthétique), W-D-7 participants réels (`depart_participants`, RLS), W-D-10 actions
+  branchées (share `share_tokens`, delete, calendar ICS).
+- **Migrations** : `20260825030000` (consumables jsonb + `depart_participants` RLS) appliquée prod.
 
-### PHASE 6 — Interconnexions natives
+#### Preuve finale
+```
+> npm run test        # 5 files, 20 tests pass
+> npm run build       # ✓ Compiled successfully
+  /materiel/inventaire  20 kB   /materiel/depart/[id]  13.8 kB   /materiel/kits  8.92 kB
+> GET (dev) : /materiel, /materiel/kits, /materiel/inventaire, /materiel/alertes,
+             /materiel/disponibilite, /materiel/forget, /materiel/depart/test-id,
+             /materiel/background.mp4  -> 200
+```
+
+#### Statut
+✅ TERMINÉE.
 
 #### Objectif
 Brancher le module sur le reste de LKDV (nav, partage public, export, calendrier).
