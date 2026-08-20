@@ -3,6 +3,7 @@ import { Eyebrow } from '@/components/ui/Eyebrow';
 import { KitsKpiBar } from '@/features/materiel/components/kits/KitsKpiBar';
 import { KitsGrid } from '@/features/materiel/components/kits/KitsGrid';
 import { KitBuilder } from '@/features/materiel/components/kits/KitBuilder';
+import { KitManager } from '@/features/materiel/components/kits/KitManager';
 import { KitOptimizer } from '@/features/materiel/components/kits/KitOptimizer';
 import { KitComparator } from '@/features/materiel/components/kits/KitComparator';
 import { TemplateStore } from '@/features/materiel/components/kits/TemplateStore';
@@ -47,6 +48,7 @@ export default async function KitsPage() {
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12"><KitsKpiBar kpi={kpi} /></div>
         <div className="col-span-12"><KitsGrid kits={kits} /></div>
+        <div className="col-span-12"><KitManager kits={kits} inventory={inventory} /></div>
         <div className="col-span-12" aria-label="Assembleur de kit"><KitBuilder inventory={inventory} initialKitItems={[]} /></div>
         <div className="col-span-12"><KitOptimizer kits={kits} /></div>
         <div className="col-span-12 md:col-span-6"><KitComparator kits={kits} /></div>

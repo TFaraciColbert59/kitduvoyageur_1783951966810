@@ -74,11 +74,7 @@ export async function getDepartDetail(id: string): Promise<DepartDetail | null> 
         { name: 'Lucas', initial: 'L', color: '#C89A3B' },
       ],
       emergencyContact: '06 12 34 56 78 (héliport régional)',
-      similarKits: [
-        { id: 'c1', name: 'Trek Jura 2j', author: 'Alice', likes: 42, totalWeightG: 9800, itemsCount: 24 },
-        { id: 'c2', name: 'GR20 léger', author: 'Tom', likes: 87, totalWeightG: 8400, itemsCount: 19 },
-        { id: 'c3', name: 'Vanlife été', author: 'Sara', likes: 63, totalWeightG: 12000, itemsCount: 31 },
-      ],
+      similarKits: [],
     };
   } catch (err) {
     console.error('getDepartDetail', err);

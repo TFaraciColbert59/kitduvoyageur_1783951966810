@@ -13,12 +13,15 @@ import { ExportShareBar } from '@/features/materiel/components/alertes/ExportSha
 import { getAlerts } from '@/features/materiel/services/getAlerts';
 import { getInventory } from '@/features/materiel/services/getInventory';
 import { getOccasionProducts } from '@/features/materiel/services/getOccasionProducts';
+import { getWeather, weatherLabel } from '@/features/materiel/services/getWeather';
 import { currentSeason } from '@/features/materiel/components/kits/WeatherMatchScore';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AlertesPage() {
-  const [alerts, inventory, occasion] = await Promise.all([getAlerts(), getInventory(), getOccasionProducts()]);
+  const [alerts, inventory, occasion, weather] = await Promise.all([
+    getAlerts(), getInventory(), getOccasionProducts(), getWeather(),
+  ]);
   const critical = alerts.filter((a) => a.severity === 'critical').length;
   const warning = alerts.filter((a) => a.severity === 'warning').length;
   const score = Math.max(0, 100 - alerts.length * 10);
@@ -66,7 +69,14 @@ export default async function AlertesPage() {
         </div>
         <div className="col-span-12 md:col-span-6"><ToCompleteList items={inventory} /></div>
         <div className="col-span-12 md:col-span-6">
-          <WeatherRadar meteoCount={meteoCount} message={meteoCount > 0 ? 'Conditions météo à surveiller pour le prochain départ.' : 'Aucune alerte météo active.'} />
+          <WeatherRadar
+            meteoCount={meteoCount}
+            message={
+              weather
+                ? `${weatherLabel(weather.current.weathercode)} · ${weather.current.tempC}°C, précip ${weather.current.precipPct}% (${weather.location.label})`
+                : 'Prévisions météo indisponibles.'
+            }
+          />
         </div>
         <div className="col-span-12"><MaintenanceCalendar events={calendarEvents} /></div>
         <div className="col-span-12"><OccasionMarketplace products={occasion} /></div>

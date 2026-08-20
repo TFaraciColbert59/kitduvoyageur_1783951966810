@@ -10,6 +10,8 @@ import { ConsumablesTiles } from '@/features/materiel/components/depart/Consumab
 import { ParticipantsEmergency } from '@/features/materiel/components/depart/ParticipantsEmergency';
 import { SimilarCommunityKits } from '@/features/materiel/components/depart/SimilarCommunityKits';
 import { LazyMap3D } from '@/features/materiel/components/depart/LazyMap3D';
+import { getWeather } from '@/features/materiel/services/getWeather';
+import { getPublicKits } from '@/features/materiel/services/getPublicKits';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 
@@ -17,7 +19,15 @@ export const dynamic = 'force-dynamic';
 
 export default async function DepartPage({ params }: { params: { id: string } }) {
   const { id } = await params;
-  const depart = await getDepartDetail(id);
+  const [depart, weather, publicKits] = await Promise.all([getDepartDetail(id), getWeather(), getPublicKits()]);
+  const similarKits = publicKits.map((k) => ({
+    id: k.id,
+    name: k.name,
+    author: 'Communauté',
+    likes: 0,
+    totalWeightG: k.total_weight_g,
+    itemsCount: k.itemsCount,
+  }));
 
   if (!depart) {
     return (
@@ -47,7 +57,7 @@ export default async function DepartPage({ params }: { params: { id: string } })
           <LazyMap3D route={depart.route} className="h-full w-full" />
         </div>
         <div className="col-span-12 md:col-span-4 flex flex-col gap-4">
-          <WeatherTimeline48h />
+          <WeatherTimeline48h forecast={weather} />
           <TerrainReadinessScore score={depart.readinessScore} />
         </div>
         <div className="col-span-12 md:col-span-4"><AssignedKitCard kit={depart.assignedKit} /></div>
@@ -58,7 +68,7 @@ export default async function DepartPage({ params }: { params: { id: string } })
           <ParticipantsEmergency participants={depart.participants} emergencyContact={depart.emergencyContact} />
         </div>
         <div className="col-span-12">
-          <SimilarCommunityKits kits={depart.similarKits} />
+          <SimilarCommunityKits kits={similarKits} />
         </div>
       </div>
 
