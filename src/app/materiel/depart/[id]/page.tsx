@@ -5,6 +5,11 @@ import { AssignedKitCard } from '@/features/materiel/components/depart/AssignedK
 import { WeightDistributionDonut } from '@/features/materiel/components/depart/WeightDistributionDonut';
 import { ChecklistDonut } from '@/features/materiel/components/depart/ChecklistDonut';
 import { DepartActionsBar } from '@/features/materiel/components/depart/DepartActionsBar';
+import { WeatherTimeline48h } from '@/features/materiel/components/depart/WeatherTimeline48h';
+import { ConsumablesTiles } from '@/features/materiel/components/depart/ConsumablesTiles';
+import { ParticipantsEmergency } from '@/features/materiel/components/depart/ParticipantsEmergency';
+import { SimilarCommunityKits } from '@/features/materiel/components/depart/SimilarCommunityKits';
+import { LazyMap3D } from '@/features/materiel/components/depart/LazyMap3D';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 
@@ -38,22 +43,23 @@ export default async function DepartPage({ params }: { params: { id: string } })
       </header>
 
       <div className="grid grid-cols-12 gap-4">
-        <GlassCard className="col-span-12 md:col-span-8 h-[320px] flex items-center justify-center" aria-labelledby="map-title">
-          <div className="text-center">
-            <h2 id="map-title" className="sr-only">Carte immersive</h2>
-            <p className="text-sm text-[color:var(--label-tertiary)]">Carte immersive (MapLibre) — à brancher sur la géométrie du kit/itinéraire.</p>
-          </div>
-        </GlassCard>
+        <div className="col-span-12 md:col-span-8 h-[320px]">
+          <LazyMap3D route={depart.route} className="h-full w-full" />
+        </div>
         <div className="col-span-12 md:col-span-4 flex flex-col gap-4">
+          <WeatherTimeline48h />
           <TerrainReadinessScore score={depart.readinessScore} />
-          <GlassCard className="p-4">
-            <Eyebrow>Météo 48h</Eyebrow>
-            <p className="text-sm text-[color:var(--label-tertiary)] mt-1">Timeline météo à brancher (API météo).</p>
-          </GlassCard>
         </div>
         <div className="col-span-12 md:col-span-4"><AssignedKitCard kit={depart.assignedKit} /></div>
         <div className="col-span-12 md:col-span-4"><ChecklistDonut pct={50} /></div>
-        <div className="col-span-12 md:col-span-4"><WeightDistributionDonut items={depart.weightBreakdown} /></div>
+        <div className="col-span-12 md:col-span-6"><ConsumablesTiles /></div>
+        <div className="col-span-12 md:col-span-6"><WeightDistributionDonut items={depart.weightBreakdown} /></div>
+        <div className="col-span-12">
+          <ParticipantsEmergency participants={depart.participants} emergencyContact={depart.emergencyContact} />
+        </div>
+        <div className="col-span-12">
+          <SimilarCommunityKits kits={depart.similarKits} />
+        </div>
       </div>
 
       <DepartActionsBar departId={depart.id} className="sticky bottom-0 mt-4" />

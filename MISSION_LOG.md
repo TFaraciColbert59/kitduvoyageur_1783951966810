@@ -257,6 +257,28 @@ TOTAL TS ERRORS: 0
     **W-D-6 WeightDistributionDonut** (recharts), **W-D-10 DepartActionsBar**, placeholder carte/météo.
 - `Metric` étendu (prop `unit`) pour la cohérence.
 
+#### Complément — Cockpit Départ (10/10 widgets W-D)
+- **W-D-1 Map3DImmersive** (MapLibre + OSM teinté Sage + tracé/halo + fitBounds) chargé en
+  `next/dynamic` ssr:false via `LazyMap3D` (split du bundle maplibre).
+- **W-D-2 WeatherTimeline48h** (24 cellules glass scrollable).
+- **W-D-5 ConsumablesTiles** (4 tuiles éditées inline : Eau/Gaz/Repas/En-cas).
+- **W-D-7 ParticipantsEmergency** (avatars empilés + contact d'urgence révélé sur action).
+- **W-D-9 SimilarCommunityKits** (strip horizontal type ProductGlassCard).
+- `getDepartDetail` étendu (route, participants, emergencyContact, similarKits).
+- Layout 12-col complet conformément au prompt 5.1 (Map col-8 + Météo/Score col-4, Kit/Donut col-4,
+  Consommables/Weight col-6, Participants col-12, Similar col-12, ActionsBar sticky).
+
+#### Preuve
+```
+> npx tsc --noEmit
+TOTAL TS ERRORS: 0
+> npm run build
+✓ Compiled successfully in 11.5s
+ƒ /materiel/depart/[id]   106 kB
+```
+> Note bundle : le depart embarque encore recharts (donuts) → ~106 kB. Optimisation (import dynamique
+> des donuts) proposée en suivi pour passer sous 40 kB.
+
 #### Preuve
 ```
 > npx tsc --noEmit

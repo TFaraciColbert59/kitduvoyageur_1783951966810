@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
+import type { Participant } from '@/features/materiel/components/depart/ParticipantsEmergency';
+import type { CommunityKit } from '@/features/materiel/components/depart/SimilarCommunityKits';
 
 export interface DepartDetail {
   id: string;
@@ -7,6 +9,10 @@ export interface DepartDetail {
   readinessScore: { grade: string; factors: string[] };
   assignedKit: { id: string; name: string; totalWeightG: number; items: { name: string; category: string | null; weight_g: number }[] };
   weightBreakdown: { category: string; value: number }[];
+  route: { coordinates: [number, number][] } | null;
+  participants: Participant[];
+  emergencyContact: string | null;
+  similarKits: CommunityKit[];
 }
 
 /** getDepartDetail — synthèse du prochain départ à partir du kit assigné + inventaire. */
@@ -54,6 +60,25 @@ export async function getDepartDetail(id: string): Promise<DepartDetail | null> 
         items: items.map((i) => ({ name: i.name ?? 'Article', category: i.category, weight_g: i.weight_g ?? 0 })),
       },
       weightBreakdown,
+      route: {
+        coordinates: [
+          [2.2, 46.6],
+          [2.55, 46.75],
+          [2.9, 46.9],
+          [3.2, 47.1],
+        ],
+      },
+      participants: [
+        { name: 'Vous', initial: 'V', color: '#5B7F55' },
+        { name: 'Marie', initial: 'M', color: '#4B6B7C' },
+        { name: 'Lucas', initial: 'L', color: '#C89A3B' },
+      ],
+      emergencyContact: '06 12 34 56 78 (héliport régional)',
+      similarKits: [
+        { id: 'c1', name: 'Trek Jura 2j', author: 'Alice', likes: 42, totalWeightG: 9800, itemsCount: 24 },
+        { id: 'c2', name: 'GR20 léger', author: 'Tom', likes: 87, totalWeightG: 8400, itemsCount: 19 },
+        { id: 'c3', name: 'Vanlife été', author: 'Sara', likes: 63, totalWeightG: 12000, itemsCount: 31 },
+      ],
     };
   } catch (err) {
     console.error('getDepartDetail', err);
