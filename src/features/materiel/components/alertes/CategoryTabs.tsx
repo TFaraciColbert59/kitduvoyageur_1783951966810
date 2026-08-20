@@ -39,7 +39,7 @@ export function CategoryTabs({ alerts }: { alerts: AlertItem[] }) {
       </div>
       <ul className="mt-3 flex flex-col gap-2">
         {filtered.map((a) => (
-          <li key={a.id} className="bg-white/60 rounded-[var(--r-sm)] p-2 flex items-center justify-between gap-2">
+          <li key={a.id} className="bg-white/35 rounded-[var(--r-sm)] p-2 flex items-center justify-between gap-2">
             <span className="text-sm text-[color:var(--label)]">{a.message}</span>
             <div className="flex items-center gap-2 shrink-0">
               <Badge tone={TONE[a.severity]}>{a.severity}</Badge>

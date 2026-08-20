@@ -24,7 +24,7 @@ export function TopAlertsAccordion({ alerts }: { alerts: AlertItem[] }) {
             type="button"
             onClick={() => setOpen(open === a.id ? null : a.id)}
             aria-expanded={open === a.id}
-            className="bg-white/60 rounded-[var(--r-sm)] p-3 text-left"
+            className="bg-white/35 rounded-[var(--r-sm)] p-3 text-left"
           >
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-[color:var(--label)]">{a.type}</span>

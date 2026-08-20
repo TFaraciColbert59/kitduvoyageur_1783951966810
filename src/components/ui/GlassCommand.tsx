@@ -63,7 +63,7 @@ export function GlassCommand() {
           aria-label={`Recherche universelle — contexte ${context}`}
           className="fixed z-[70] left-1/2 top-24 -translate-x-1/2 w-[min(640px,92vw)] glass p-2"
         >
-          <div className="flex items-center gap-2 px-3 h-11 rounded-[var(--r-md)] bg-white/60">
+          <div className="flex items-center gap-2 px-3 h-11 rounded-[var(--r-md)] bg-white/35">
             <Search size={18} className="text-[color:var(--label-tertiary)]" aria-hidden="true" />
             <input
               autoFocus
@@ -84,7 +84,7 @@ export function GlassCommand() {
                 key={`${r.type}-${r.id}`}
                 type="button"
                 onClick={() => go(r)}
-                className="flex items-center gap-2 px-3 py-2 rounded-[var(--r-sm)] text-left hover:bg-white/40"
+                className="flex items-center gap-2 px-3 py-2 rounded-[var(--r-sm)] text-left hover:bg-white/30"
               >
                 <span className="text-sm text-[color:var(--label)]">{r.label}</span>
                 <span className="ml-auto text-xs text-[color:var(--label-tertiary)]">{r.sublabel}</span>

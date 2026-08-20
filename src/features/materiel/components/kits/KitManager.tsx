@@ -85,7 +85,7 @@ export function KitManager({ kits, inventory }: { kits: KitListItem[]; inventory
       </div>
       <ul className="mt-3 flex flex-col gap-2">
         {kits.filter((k) => !k.is_trashed).map((k) => (
-          <li key={k.id} className="bg-white/60 rounded-[var(--r-sm)] p-3 flex items-center justify-between gap-2">
+          <li key={k.id} className="bg-white/35 rounded-[var(--r-sm)] p-3 flex items-center justify-between gap-2">
             <div>
               <p className="text-sm font-medium text-[color:var(--label)]">{k.name}</p>
               <p className="text-xs text-[color:var(--label-tertiary)]">{(k.total_weight_g / 1000).toFixed(1)} kg · {k.item_count} articles</p>

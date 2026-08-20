@@ -14,7 +14,7 @@ export function ConflictDetector({ conflicts }: { conflicts: Conflict[] }) {
       ) : (
         <ul className="mt-2 flex flex-col gap-2">
           {conflicts.map((c) => (
-            <li key={c.itemId} className="bg-white/60 rounded-[var(--r-sm)] p-3 ring-1 ring-danger/25">
+            <li key={c.itemId} className="bg-white/35 rounded-[var(--r-sm)] p-3 ring-1 ring-danger/25">
               <p className="text-sm font-medium text-danger">{c.itemName}</p>
               <p className="text-xs text-[color:var(--label-secondary)]">{c.details}</p>
             </li>

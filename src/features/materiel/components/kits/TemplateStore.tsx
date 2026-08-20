@@ -25,7 +25,7 @@ export function TemplateStore({ kits }: { kits: PublicKit[] }) {
       <h3 id="templates-title" className="sr-only">Kits publics de la communauté</h3>
       <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {kits.map((k) => (
-          <div key={k.id} className="bg-white/60 rounded-[var(--r-md)] p-4 flex flex-col gap-2">
+          <div key={k.id} className="bg-white/35 rounded-[var(--r-md)] p-4 flex flex-col gap-2">
             <span className="font-display font-semibold text-[16px] text-[color:var(--label)]">{k.name}</span>
             {k.description && <p className="text-xs text-[color:var(--label-tertiary)] line-clamp-2">{k.description}</p>}
             <div className="flex items-center justify-between mt-auto pt-1">
