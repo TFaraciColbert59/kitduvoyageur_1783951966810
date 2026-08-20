@@ -44,6 +44,13 @@ export async function POST(req: NextRequest) {
       if (itemsError) throw itemsError;
     }
 
+    await supabase.from('materiel_kit_history').insert({
+      kit_id: created.id,
+      user_id: user.id,
+      action: 'created',
+      payload: { item_count: items?.length ?? 0 },
+    });
+
     return NextResponse.json({ kit: created }, { status: 201 });
   } catch (err) {
     console.error('POST /api/materiel/kits', err);

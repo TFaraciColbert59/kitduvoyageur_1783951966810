@@ -52,6 +52,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       }
     }
 
+    await supabase.from('materiel_kit_history').insert({
+      kit_id: id,
+      user_id: user.id,
+      action: 'updated',
+      payload: patch,
+    });
+
     return NextResponse.json({ kit: data });
   } catch (err) {
     console.error('PATCH /api/materiel/kits/:id', err);

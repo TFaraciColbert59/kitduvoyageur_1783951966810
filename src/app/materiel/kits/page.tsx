@@ -1,21 +1,36 @@
 import Link from 'next/link';
-import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
-import { Metric } from '@/components/ui/Metric';
-import { Badge } from '@/components/ui/Badge';
+import { KitsKpiBar } from '@/features/materiel/components/kits/KitsKpiBar';
+import { KitsGrid } from '@/features/materiel/components/kits/KitsGrid';
+import { KitBuilder } from '@/features/materiel/components/kits/KitBuilder';
+import { KitOptimizer } from '@/features/materiel/components/kits/KitOptimizer';
+import { KitComparator } from '@/features/materiel/components/kits/KitComparator';
+import { TemplateStore } from '@/features/materiel/components/kits/TemplateStore';
+import { KitHistoryTimeline } from '@/features/materiel/components/kits/KitHistoryTimeline';
+import { WeatherMatchScore } from '@/features/materiel/components/kits/WeatherMatchScore';
+import { KitProductSuggestions } from '@/features/materiel/components/kits/KitProductSuggestions';
 import { getKits } from '@/features/materiel/services/getKits';
 import { getInventory } from '@/features/materiel/services/getInventory';
-import { KitBuilder } from '@/features/materiel/components/kits/KitBuilder';
+import { getPublicKits } from '@/features/materiel/services/getPublicKits';
+import { getProductSuggestions } from '@/features/materiel/services/getProductSuggestions';
+import { getKitHistory } from '@/features/materiel/services/getKitHistory';
 
 export const dynamic = 'force-dynamic';
 
 export default async function KitsPage() {
-  const [kits, inventory] = await Promise.all([getKits(), getInventory()]);
+  const [kits, inventory, publicKits, products] = await Promise.all([
+    getKits(), getInventory(), getPublicKits(), getProductSuggestions(),
+  ]);
+
   const active = kits.filter((k) => !k.is_trashed);
+  const firstKit = active[0] ?? null;
+  const history = firstKit ? await getKitHistory(firstKit.id) : [];
+
   const avgCompletion = active.length
     ? active.reduce((s, k) => s + (k.item_count ? (k.checked_count / k.item_count) * 100 : 100), 0) / active.length
     : 0;
   const totalWeight = active.reduce((s, k) => s + k.total_weight_g, 0);
+  const kpi = { active: active.length, avgCompletionPct: avgCompletion, totalWeightG: totalWeight, trash: kits.length - active.length };
 
   return (
     <main className="max-w-[var(--page-max-w)] mx-auto px-4 py-8 pb-24">
@@ -29,46 +44,17 @@ export default async function KitsPage() {
         </Link>
       </header>
 
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" aria-label="Indicateurs clés">
-        <GlassCard className="p-4"><Eyebrow>Kits actifs</Eyebrow><Metric value={active.length} /></GlassCard>
-        <GlassCard className="p-4"><Eyebrow>Complétude moyenne</Eyebrow><Metric value={`${Math.round(avgCompletion)}%`} tone="sage" /></GlassCard>
-        <GlassCard className="p-4"><Eyebrow>Poids total</Eyebrow><Metric value={(totalWeight / 1000).toFixed(1)} unit="kg" /></GlassCard>
-        <GlassCard className="p-4"><Eyebrow>En corbeille</Eyebrow><Metric value={kits.length - active.length} /></GlassCard>
-      </section>
-
-      <section className="grid grid-cols-12 gap-4 mb-6">
-        <GlassCard className="col-span-12 md:col-span-9 p-4" aria-labelledby="kits-grid">
-          <h2 id="kits-grid" className="sr-only">Grille de kits</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {active.map((k) => {
-              const pct = k.item_count ? (k.checked_count / k.item_count) * 100 : 100;
-              return (
-                <Link key={k.id} href={`/materiel/kits`} className="glass interactive p-4 flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-display font-semibold text-[17px] text-[color:var(--label)]">{k.name}</span>
-                    {k.is_favorite && <Badge tone="sage">★</Badge>}
-                  </div>
-                  {k.description && <p className="text-xs text-[color:var(--label-tertiary)] line-clamp-2">{k.description}</p>}
-                  <div className="text-xs text-[color:var(--label-secondary)]">{(k.total_weight_g / 1000).toFixed(1)} kg · {k.item_count} article(s)</div>
-                  <div className="h-1.5 w-full rounded-full bg-stone-200/70 overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-sage-500 to-sage-300" style={{ width: `${pct}%` }} />
-                  </div>
-                </Link>
-              );
-            })}
-            {active.length === 0 && <p className="text-sm text-[color:var(--label-secondary)] col-span-full">Aucun kit pour le moment.</p>}
-          </div>
-        </GlassCard>
-        <GlassCard className="col-span-12 md:col-span-3 p-4" aria-labelledby="kits-filters">
-          <h2 id="kits-filters" className="sr-only">Filtres</h2>
-          <Eyebrow>Filtres</Eyebrow>
-          <p className="text-sm text-[color:var(--label-secondary)] mt-2">Recherche & saison à venir.</p>
-        </GlassCard>
-      </section>
-
-      <section aria-label="Assembleur de kit">
-        <KitBuilder inventory={inventory} initialKitItems={[]} />
-      </section>
+      <div className="grid grid-cols-12 gap-4">
+        <div className="col-span-12"><KitsKpiBar kpi={kpi} /></div>
+        <div className="col-span-12"><KitsGrid kits={kits} /></div>
+        <div className="col-span-12" aria-label="Assembleur de kit"><KitBuilder inventory={inventory} initialKitItems={[]} /></div>
+        <div className="col-span-12"><KitOptimizer kits={kits} /></div>
+        <div className="col-span-12 md:col-span-6"><KitComparator kits={kits} /></div>
+        <div className="col-span-12 md:col-span-6"><WeatherMatchScore season={firstKit?.season ?? null} /></div>
+        <div className="col-span-12"><TemplateStore kits={publicKits} /></div>
+        <div className="col-span-12"><KitHistoryTimeline history={history} /></div>
+        <div className="col-span-12"><KitProductSuggestions products={products} /></div>
+      </div>
     </main>
   );
 }
