@@ -313,6 +313,38 @@ TOTAL TS ERRORS: 0
 #### Statut
 ✅ TERMINÉE.
 
+#### Complément — Écrans Inventaire / Alertes / Dispo / Forget (tout connecté Supabase)
+- **Inventaire (W-I-1..10)** : Overview (KPI+fiabilité), Workspace (recherche, tri, toggle vue grille/table,
+  filtres catégorie/prêt, grille virtualisée, détail GlassDrawer, scan OCR `/api/materiel/scan`,
+  comparateur, achats recharts `PurchasesInvest`, insight `AiInsightBanner`, cross-sell `CrossSellStrip`
+  sur `shop_products`).
+- **Alertes (W-L-1..10)** : `ReliabilityScore`, `TopAlertsAccordion`, `CategoryTabs`, `SeasonalBanner`,
+  `AlertsTimeline`, `ToCompleteList` (entretien/expiration), `WeatherRadar` (alertes meteo),
+  `MaintenanceCalendar`, `OccasionMarketplace` (`shop_products` occasion), `ExportShareBar` (export/share/ICS).
+- **Dispo (W-A-1..10)** : `AvailabilityGauge`, `DispoKpis`, `GanttTimeline`, `LoanTabs` (Par moi/À moi/Tous),
+  `ConflictDetector` (objet prêté + dans un kit), `LoanHeatmap`, `DigitalLoanContract`, `AutoReminders`,
+  `DispoScore`, `CollectiveActions` + API `PATCH /api/materiel/loans/[id]`.
+- **Forget** : checklist connectée à `materiel_kit_items` (persist `is_checked` via
+  `PATCH /api/materiel/kit-items/[id]`).
+
+#### Preuve (Phase 9 — build complet)
+```
+> npm run test        # 3 files, 14 tests pass
+> npm run build       # ✓ Compiled successfully
+  /materiel                     3.11 kB
+  /materiel/kits                6.29 kB
+  /materiel/inventaire         32.5 kB
+  /materiel/alertes             2.33 kB
+  /materiel/disponibilite       3.39 kB
+  /materiel/forget              2.56 kB
+  /materiel/depart/[id]         12.7 kB
+> GET (dev) : /materiel, /materiel/kits, /materiel/inventaire, /materiel/alertes,
+             /materiel/disponibilite, /materiel/forget, /materiel/depart/test-id  -> 200
+```
+
+#### Statut
+✅ TERMINÉE.
+
 ---
 
 ### PHASE 6 — Interconnexions natives

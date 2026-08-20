@@ -9,12 +9,12 @@ Supabase (Postgres), Zod, Zustand.
 | Route | Description |
 |---|---|
 | `/materiel` | Grille des 6 cartes (Départ hero, À ne pas oublier, Mes kits, Inventaire, Alertes, Disponibilité) |
-| `/materiel/depart/[id]` | Cockpit de préparation de départ (score terrain, kit assigné, poids, checklist, actions) |
-| `/materiel/forget` | Checklist « à ne pas oublier » |
-| `/materiel/kits` | Kits : KPIs, grille, assembleur drag & drop (KitBuilder) |
-| `/materiel/inventaire` | Inventaire : vue d'ensemble + grille virtualisée |
-| `/materiel/alertes` | Alertes & fiabilité : score + timeline |
-| `/materiel/disponibilite` | Disponibilité : jauge, prêts, conflits |
+| `/materiel/depart/[id]` | Cockpit de préparation de départ (10 widgets : MapLibre, météo 48h, kit, checklist, consommables, poids, participants/urgence, score terrain, kits communauté, actions) |
+| `/materiel/forget` | Checklist « à ne pas oublier » (persist `is_checked`) |
+| `/materiel/kits` | Kits : KPIs, grille+filtres, assembleur DnD, optimiseur IA, comparateur, templates, historique, weather match, suggestions |
+| `/materiel/inventaire` | Inventaire : vue d'ensemble, recherche/tri, grille virtualisée, détail, scan OCR, comparateur, achats, insight, cross-sell |
+| `/materiel/alertes` | Alertes & fiabilité : score, top accordéon, onglets, timeline, entretien, météo, calendrier, occasion, export |
+| `/materiel/disponibilite` | Disponibilité : jauge, KPIs, gantt, onglets prêts, conflits, heatmap, contrat, rappels, score, actions |
 | `/k/[token]` | Page publique de partage d'un kit |
 
 ## Design System
@@ -31,6 +31,7 @@ Tables (schéma `public`, RLS par `auth.uid()`), migration `20260825000000_mater
 |---|---|
 | `materiel_kits` | Kits utilisateur (user-owned) |
 | `materiel_kit_items` | Articles de kit (FK `materiel_kits`, `product_ownership`) |
+| `materiel_kit_history` | Historique des versions/activités d'un kit |
 | `product_ownership` | Inventaire personnel |
 | `alerts` | Alertes de fiabilité |
 | `materiel_loans` | Prêts (accès croisé prêteur/emprunteur) |
