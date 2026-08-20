@@ -1,28 +1,62 @@
 import Link from 'next/link';
-import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
-import { Badge } from '@/components/ui/Badge';
+import { createClient } from '@/lib/supabase/server';
+import { AvailabilityGauge } from '@/features/materiel/components/disponibilite/AvailabilityGauge';
+import { DispoKpis } from '@/features/materiel/components/disponibilite/DispoKpis';
+import { GanttTimeline } from '@/features/materiel/components/disponibilite/GanttTimeline';
+import { LoanTabs } from '@/features/materiel/components/disponibilite/LoanTabs';
+import { ConflictDetector } from '@/features/materiel/components/disponibilite/ConflictDetector';
+import { LoanHeatmap } from '@/features/materiel/components/disponibilite/LoanHeatmap';
+import { DigitalLoanContract } from '@/features/materiel/components/disponibilite/DigitalLoanContract';
+import { AutoReminders } from '@/features/materiel/components/disponibilite/AutoReminders';
+import { DispoScore } from '@/features/materiel/components/disponibilite/DispoScore';
+import { CollectiveActions } from '@/features/materiel/components/disponibilite/CollectiveActions';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { getLoans } from '@/features/materiel/services/getLoans';
 import { getInventory } from '@/features/materiel/services/getInventory';
-import { AvailabilityGauge } from '@/features/materiel/components/disponibilite/AvailabilityGauge';
 
 export const dynamic = 'force-dynamic';
 
-const STATUS_TONE: Record<string, 'sage' | 'warn' | 'danger' | 'info'> = {
-  en_cours: 'info', en_retard: 'danger', rendu: 'sage', litige: 'danger',
-};
-const STATUS_LABEL: Record<string, string> = {
-  en_cours: 'En cours', en_retard: 'En retard', rendu: 'Rendu', litige: 'Litige',
-};
-
 export default async function DisponibilitePage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id ?? null;
+
   const [loans, inventory] = await Promise.all([getLoans(), getInventory()]);
   const active = loans.filter((l) => l.status === 'en_cours' || l.status === 'en_retard');
-  const unavailable = active.length;
-  const available = inventory.length - unavailable;
-  const nextReturn = active
-    .filter((l) => l.due_date)
-    .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime())[0];
+  const overdue = loans.filter((l) => l.status === 'en_retard').length;
+  const returned = loans.filter((l) => l.status === 'rendu').length;
+
+  const available = inventory.length - active.length;
+  const score = Math.max(0, 100 - active.length * 8 - overdue * 15);
+
+  // Conflits : objet prêté ET présent dans un kit
+  let kitProductIds = new Set<string>();
+  if (user) {
+    const { data: kitItems } = await supabase
+      .from('materiel_kit_items')
+      .select('product_ownership_id')
+      .eq('user_id', user.id)
+      .not('product_ownership_id', 'is', null);
+    kitProductIds = new Set((kitItems ?? []).map((k) => k.product_ownership_id));
+  }
+  const conflicts = active
+    .filter((l) => l.product_ownership_id && kitProductIds.has(l.product_ownership_id))
+    .map((l) => {
+      const item = inventory.find((i) => i.id === l.product_ownership_id);
+      return {
+        itemId: l.product_ownership_id!,
+        itemName: item?.name ?? 'Objet en conflit',
+        details: `Assigné à un kit alors qu'il est prêté (retour prévu ${l.due_date ? new Date(l.due_date).toLocaleDateString('fr-FR') : '—'}).`,
+      };
+    });
+
+  const byMonth = new Map<string, number>();
+  for (const l of loans) {
+    const m = (l.loaned_at ?? '').slice(0, 7);
+    if (m) byMonth.set(m, (byMonth.get(m) ?? 0) + 1);
+  }
+  const heatmap = Array.from(byMonth.entries()).map(([month, count]) => ({ month, count })).sort((a, b) => a.month.localeCompare(b.month)).slice(-6);
 
   return (
     <main className="max-w-[var(--page-max-w)] mx-auto px-4 py-8 pb-24">
@@ -42,39 +76,20 @@ export default async function DisponibilitePage() {
           <div>
             <h2 id="gauge-title" className="sr-only">Disponibilité</h2>
             <Eyebrow>Objets disponibles</Eyebrow>
-            <p className="text-sm text-[color:var(--label-secondary)]">{unavailable} en prêt</p>
+            <p className="text-sm text-[color:var(--label-secondary)]">{active.length} en prêt</p>
           </div>
         </GlassCard>
-        <GlassCard className="col-span-12 md:col-span-4 p-4" aria-labelledby="retour-title">
-          <Eyebrow>Prochain retour</Eyebrow>
-          <p className="text-sm text-[color:var(--label)] mt-1">
-            {nextReturn ? new Date(nextReturn.due_date!).toLocaleDateString('fr-FR') : 'Aucun prêt en cours'}
-          </p>
-        </GlassCard>
-        <GlassCard className="col-span-12 md:col-span-4 p-4" aria-labelledby="conflit-title">
-          <Eyebrow>Conflits</Eyebrow>
-          <p className="text-sm text-[color:var(--label)] mt-1">
-            {active.length > 0 ? `${active.length} objet(s) indisponible(s)` : 'Aucun conflit détecté'}
-          </p>
-        </GlassCard>
-
-        <div className="col-span-12">
-          <GlassCard className="p-4" aria-labelledby="loans-list">
-            <h2 id="loans-list" className="sr-only">Prêts</h2>
-            <Eyebrow>Prêts</Eyebrow>
-            <ul className="mt-3 flex flex-col gap-2">
-              {loans.map((l) => (
-                <li key={l.id} className="glass p-3 flex items-center justify-between">
-                  <span className="text-sm text-[color:var(--label)]">
-                    {l.borrower_contact ?? 'Emprunteur'} · {l.due_date ? new Date(l.due_date).toLocaleDateString('fr-FR') : 'sans date'}
-                  </span>
-                  <Badge tone={STATUS_TONE[l.status] ?? 'info'}>{STATUS_LABEL[l.status] ?? l.status}</Badge>
-                </li>
-              ))}
-              {loans.length === 0 && <li className="text-sm text-[color:var(--label-secondary)]">Aucun prêt.</li>}
-            </ul>
-          </GlassCard>
+        <div className="col-span-12 md:col-span-8">
+          <DispoKpis data={{ active: active.length, overdue, returned, totalObjects: inventory.length }} />
         </div>
+        <div className="col-span-12"><GanttTimeline loans={loans.map((l) => ({ id: l.id, label: l.borrower_contact ?? 'Prêt', start: l.loaned_at ?? '', end: l.due_date ?? l.loaned_at ?? '' }))} /></div>
+        <div className="col-span-12"><LoanTabs loans={loans} userId={userId} /></div>
+        <div className="col-span-12"><ConflictDetector conflicts={conflicts} /></div>
+        <div className="col-span-12 md:col-span-6"><LoanHeatmap byMonth={heatmap} /></div>
+        <div className="col-span-12 md:col-span-6"><DigitalLoanContract loan={active[0] ?? null} /></div>
+        <div className="col-span-12"><AutoReminders reminders={active.filter((l) => l.due_date).map((l) => ({ id: l.id, label: `Retour de ${l.borrower_contact ?? 'prêt'}`, due: l.due_date! }))} /></div>
+        <div className="col-span-12 md:col-span-6"><DispoScore score={score} overdue={overdue} /></div>
+        <div className="col-span-12 md:col-span-6"><CollectiveActions /></div>
       </div>
     </main>
   );
