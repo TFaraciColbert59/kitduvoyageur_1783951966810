@@ -6,8 +6,13 @@ import type { InventoryItem } from '@/features/materiel/services/getInventory';
 /** W-K-4 KitBuilder — drag & drop inventaire → kit en cours. */
 export function KitBuilder({
   inventory, initialKitItems, onDrop,
-}: { inventory: InventoryItem[]; initialKitItems: InventoryItem[]; onDrop: (item: InventoryItem) => void }) {
+}: { inventory: InventoryItem[]; initialKitItems: InventoryItem[]; onDrop?: (item: InventoryItem) => void }) {
   const [kitItems, setKitItems] = useState(initialKitItems);
+
+  const handleDrop = (item: InventoryItem) => {
+    onDrop?.(item);
+    setKitItems((prev) => [...prev, item]);
+  };
 
   return (
     <div className="grid grid-cols-2 gap-4">
@@ -32,7 +37,7 @@ export function KitBuilder({
         onDrop={(e) => {
           const itemId = e.dataTransfer.getData('itemId');
           const item = inventory.find((i) => i.id === itemId);
-          if (item) { onDrop(item); setKitItems((prev) => [...prev, item]); }
+          if (item) handleDrop(item);
         }}
       >
         <p className="text-sm font-medium mb-2">Kit en cours</p>

@@ -67,7 +67,7 @@ export default async function KitsPage() {
       </section>
 
       <section aria-label="Assembleur de kit">
-        <KitBuilder inventory={inventory} initialKitItems={[]} onDrop={() => {}} />
+        <KitBuilder inventory={inventory} initialKitItems={[]} />
       </section>
     </main>
   );
