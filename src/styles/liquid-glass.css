@@ -101,6 +101,10 @@
   --space-12: 48px;
   --space-16: 64px;
 
+  /* ---- Grille de page ---- */
+  --page-max-w: 1280px;
+  --grid-gap: var(--space-5);
+
   /* ---- Motion ---- */
   --ease-glass: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-emphasis: cubic-bezier(0.32, 0.72, 0, 1);
