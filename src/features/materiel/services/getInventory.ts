@@ -10,6 +10,7 @@ export interface InventoryItem {
   condition: string | null;
   photo_url: string | null;
   is_lent: boolean;
+  purchase_date: string | null;
   maintenance_due_at: string | null;
   expiry_date: string | null;
   tags: string[] | null;
