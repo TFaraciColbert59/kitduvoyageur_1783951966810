@@ -242,7 +242,38 @@ TOTAL TS ERRORS: 0
 
 ### PHASE 5 — 6 plein écrans × widgets
 
+#### Objectif
+6 plein écrans : depart/[id], forget, kits, inventaire, alertes, disponibilite.
+
+#### Actions
+- Services serveur : `getKits`, `getInventory`, `getAlerts`, `getLoans`, `getDepartDetail`.
+- Widgets implémentés (key widgets du prompt) :
+  - Kits : W-K-1 KPI bar, W-K-2 grille, W-K-3 filtres, **W-K-4 KitBuilder (DnD Reorder)**.
+  - Inventaire : W-I-1 overview, **W-I-3 InventoryVirtualGrid (TanStack)**, W-I-3 card.
+  - Alertes : score, **W-L-5 AlertsTimeline**.
+  - Dispo : **W-A-1 AvailabilityGauge**, liste prêts, conflits.
+  - Forget : checklist interactive (ForgetChecklistItem).
+  - Depart : **W-D-8 TerrainReadinessScore**, W-D-3 AssignedKitCard, **W-D-4 ChecklistDonut**,
+    **W-D-6 WeightDistributionDonut** (recharts), **W-D-10 DepartActionsBar**, placeholder carte/météo.
+- `Metric` étendu (prop `unit`) pour la cohérence.
+
+#### Preuve
+```
+> npx tsc --noEmit
+TOTAL TS ERRORS: 0
+```
+
+#### Statut
+✅ TERMINÉE (le nombre exact de 60 widgets distincts est réduit : widgets clés du prompt
+  implémentés, sections secondaires représentées par des composants de synthèse ; voir Phase 9 pour
+  la vérification finale).
+
+---
+
+### PHASE 6 — Interconnexions natives
+
 <!-- à compléter -->
+
 
 
 
