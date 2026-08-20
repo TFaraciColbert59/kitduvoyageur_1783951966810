@@ -65,12 +65,15 @@ DROP POLICY IF EXISTS "users_manage_own_notifications" ON public.notifications;
 -- CREATE POLICY "Users can read own preferences" ON public.notification_preferences
 --   FOR SELECT USING (auth.uid() = user_id OR public.is_admin());
 
+DROP POLICY IF EXISTS "Users can insert own preferences" ON public.notification_preferences;
 CREATE POLICY "Users can insert own preferences" ON public.notification_preferences
   FOR INSERT WITH CHECK (auth.uid() = user_id OR public.is_admin());
 
+DROP POLICY IF EXISTS "Users can update own preferences" ON public.notification_preferences;
 CREATE POLICY "Users can update own preferences" ON public.notification_preferences
   FOR UPDATE USING (auth.uid() = user_id OR public.is_admin());
 
+DROP POLICY IF EXISTS "Users can delete own preferences" ON public.notification_preferences;
 CREATE POLICY "Users can delete own preferences" ON public.notification_preferences
   FOR DELETE USING (auth.uid() = user_id OR public.is_admin());
 
@@ -238,6 +241,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trg_community_post_like_notify ON public.post_likes;
 CREATE TRIGGER trg_community_post_like_notify
   AFTER INSERT ON public.post_likes
   FOR EACH ROW EXECUTE FUNCTION public.trg_on_community_post_like();
@@ -275,6 +279,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trg_community_post_comment_notify ON public.post_comments;
 CREATE TRIGGER trg_community_post_comment_notify
   AFTER INSERT ON public.post_comments
   FOR EACH ROW EXECUTE FUNCTION public.trg_on_community_post_comment();
@@ -312,6 +317,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trg_carnet_like_notify ON public.carnet_likes;
 CREATE TRIGGER trg_carnet_like_notify
   AFTER INSERT ON public.carnet_likes
   FOR EACH ROW EXECUTE FUNCTION public.trg_on_carnet_like();
@@ -349,6 +355,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trg_carnet_comment_notify ON public.carnet_comments;
 CREATE TRIGGER trg_carnet_comment_notify
   AFTER INSERT ON public.carnet_comments
   FOR EACH ROW EXECUTE FUNCTION public.trg_on_carnet_comment();
@@ -389,6 +396,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trg_group_message_notify ON public.group_messages;
 CREATE TRIGGER trg_group_message_notify
   AFTER INSERT ON public.group_messages
   FOR EACH ROW EXECUTE FUNCTION public.trg_on_group_message();

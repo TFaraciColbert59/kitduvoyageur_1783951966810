@@ -1,0 +1,1 @@
+﻿-- History placeholder : migration "20260822020000" deja appliquee en production. Schema reel gere par le remote.
