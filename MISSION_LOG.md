@@ -290,6 +290,29 @@ TOTAL TS ERRORS: 0
   implémentés, sections secondaires représentées par des composants de synthèse ; voir Phase 9 pour
   la vérification finale).
 
+#### Complément — Écran Kits (W-K-1..10) — tout connecté Supabase
+- Migration `20260825020000_materiel_kit_history.sql` (table `materiel_kit_history`, RLS) appliquée en prod.
+- Modules métier : `lib/materiel/optimizer.ts`, `comparator.ts` (logique pure testée).
+- Hook `hooks/useKits.ts` (Zustand) branché sur `/api/materiel/kits`.
+- Widgets : W-K-1 KitsKpiBar, W-K-2+3 KitsGrid (filtres client), W-K-4 KitBuilder, W-K-5 KitOptimizer
+  (SSE `/api/materiel/optimize`), W-K-6 KitComparator, W-K-7 TemplateStore (kits publics `is_public=true`),
+  W-K-8 KitHistoryTimeline (`materiel_kit_history`), W-K-9 WeatherMatchScore (`season` vs saison actuelle),
+  W-K-10 KitProductSuggestions (`shop_products` → ProductGlassCard).
+- Routes `kits`/`kits/[id]` journalisent l'historique (created/updated).
+- Layout 12-col conformément au prompt 5.3.
+
+#### Preuve
+```
+> supabase db push --linked   # 20260825020000 appliquée
+> npx tsc --noEmit            # 0 erreur
+> npm run test                # 3 files, 14 tests pass
+> npm run build               # ✓ /materiel/kits 6.29 kB
+> GET /materiel/kits          # 200
+```
+
+#### Statut
+✅ TERMINÉE.
+
 ---
 
 ### PHASE 6 — Interconnexions natives
