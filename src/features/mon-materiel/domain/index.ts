@@ -6,3 +6,5 @@ export * from './gear-status';
 export * from './departure-readiness';
 export * from './order-reception';
 export * from './validation';
+export * from './inventory-stats';
+export * from './kit-aggregation';

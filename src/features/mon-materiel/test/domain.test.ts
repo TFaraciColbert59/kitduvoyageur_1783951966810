@@ -5,6 +5,7 @@
  */
 
 import assert from 'node:assert';
+/* eslint-disable no-console */
 import type { UserEquipmentItem } from '@/hooks/useEquipment';
 import type { CustomKit } from '@/hooks/useUserKits';
 import type { PlannedHike } from '@/lib/preparation/plannedHikes';
@@ -16,6 +17,17 @@ import { evaluateKitCompleteness, findSubstitutes, kitTotalWeight, countKitItemS
 import { evaluateDepartureReadiness, buildDepartureChecklist, buildDepartureSnapshot } from '../domain/departure-readiness';
 import { buildReceptionGear, hasDuplicate, toOrderedProductItem, destinationSummary } from '../domain/order-reception';
 import { gearDestinationSchema, orderedProductItemSchema, newHikeFormSchema, safeParse } from '../domain/validation';
+import { inventoryValueStats, weightAndValue } from '../domain/inventory-stats';
+import {
+  aggregateKitProgress,
+  weightByCategory,
+  kitUsageScore,
+  mostUsedKit,
+  neverUsedKits,
+  missingKitItems,
+} from '../domain/kit-aggregation';
+import { toUnifiedProduct } from '../services/CatalogService';
+import { alertTypeOf } from '../services/AlertService';
 
 export function runAllMonMaterielDomainTests(): { success: boolean; passed: number; failed: number } {
   let passed = 0;
@@ -401,6 +413,124 @@ export function runAllMonMaterielDomainTests(): { success: boolean; passed: numb
     });
     assert.strictEqual(invalidQty.ok, false);
     assert.ok(invalidQty.error.includes('Quantité ≥ 1'));
+  });
+
+  /// ── Statistiques d'inventaire (2.1 : inventoryValueStats) ─────────────────
+  runTest('inventoryValueStats : poids × quantité et valeur × quantité', () => {
+    const stats = inventoryValueStats([
+      gear({ id: 'a', name: 'Sac', category: 'Portage', weight_g: 1000, purchase_price: 100, quantity: 1 }),
+      gear({ id: 'b', name: 'Lampe', category: 'Éclairage', weight_g: 100, purchase_price: 20, quantity: 2 }),
+    ]);
+    assert.strictEqual(stats.totalItems, 2);
+    assert.strictEqual(stats.totalWeightG, 1200);
+    assert.strictEqual(stats.totalValueEur, 140);
+    assert.strictEqual(stats.byCategory.length, 2);
+  });
+
+  runTest('inventoryValueStats : répartition par catégorie triée par poids', () => {
+    const stats = inventoryValueStats([
+      gear({ id: 'a', category: 'Portage', weight_g: 1500 }),
+      gear({ id: 'b', category: 'Cuisine', weight_g: 80 }),
+      gear({ id: 'c', category: 'Portage', weight_g: 200 }),
+    ]);
+    assert.strictEqual(stats.byCategory[0].label, 'Portage');
+    assert.strictEqual(stats.byCategory[0].weightG, 1700);
+  });
+
+  runTest('inventoryValueStats : opérationnel exclut à_remplacer', () => {
+    const stats = inventoryValueStats([
+      gear({ id: 'a', condition: 'bon' }),
+      gear({ id: 'b', condition: 'à_remplacer' }),
+    ]);
+    assert.strictEqual(stats.operationalPct, 50);
+  });
+
+  runTest('weightAndValue : raccourci poids/valeur', () => {
+    const { totalWeightG, totalValueEur } = weightAndValue([
+      gear({ id: 'a', weight_g: 500, purchase_price: 10, quantity: 2 }),
+    ]);
+    assert.strictEqual(totalWeightG, 1000);
+    assert.strictEqual(totalValueEur, 20);
+  });
+
+  /// ── Agrégation de kits (2.1 : aggregateKitProgress) ───────────────────────
+  runTest('aggregateKitProgress : parfait si tout est possédé', () => {
+    const progress = aggregateKitProgress(
+      [kit({ items: [{ id: 'i1', kit_id: 'k1', gear_item_id: 'g1', item_name: 'Lampe', category: 'Éclairage', weight_g: 80, quantity: 1, is_essential: true, is_checked: false }, { id: 'i2', kit_id: 'k1', gear_item_id: 'g2', item_name: 'Sac', category: 'Portage', weight_g: 1000, quantity: 1, is_essential: true, is_checked: false }] })],
+      [gear({ id: 'g1' }), gear({ id: 'g2' })]
+    );
+    assert.strictEqual(progress[0].completenessPct, 100);
+    assert.strictEqual(progress[0].missingCount, 0);
+  });
+
+  runTest('aggregateKitProgress : manquant si article absent', () => {
+    const progress = aggregateKitProgress(
+      [kit({ items: [{ id: 'i1', kit_id: 'k1', item_name: 'Absent', category: 'Autre', weight_g: 10, quantity: 1, is_essential: true, is_checked: false }] })],
+      [gear()]
+    );
+    assert.strictEqual(progress[0].missingCount, 1);
+    assert.strictEqual(progress[0].completenessPct, 0);
+  });
+
+  runTest('weightByCategory : répartition du poids du kit', () => {
+    const kitObj = kit({
+      items: [
+        { id: 'i1', kit_id: 'k1', item_name: 'Sac', category: 'Portage', weight_g: 1000, quantity: 1, is_essential: true, is_checked: false },
+        { id: 'i2', kit_id: 'k1', item_name: 'Réchaud', category: 'Cuisine', weight_g: 300, quantity: 1, is_essential: true, is_checked: false },
+      ],
+    });
+    const cats = weightByCategory(kitObj);
+    assert.strictEqual(cats[0].label, 'Portage');
+    assert.strictEqual(cats.reduce((s, c) => s + c.grams, 0), 1300);
+  });
+
+  runTest('kitUsageScore / mostUsedKit : agrégation des utilisations', () => {
+    const used = kit({ id: 'k1', items: [{ id: 'i1', kit_id: 'k1', gear_item_id: 'g1', item_name: 'Lampe', category: 'Éclairage', weight_g: 80, quantity: 1, is_essential: true, is_checked: false }] });
+    const unused = kit({ id: 'k2', items: [{ id: 'i2', kit_id: 'k2', gear_item_id: 'g2', item_name: 'Sac', category: 'Portage', weight_g: 1000, quantity: 1, is_essential: true, is_checked: false }] });
+    const equipment = [gear({ id: 'g1', usage_count: 7 }), gear({ id: 'g2', usage_count: 0 })];
+    assert.strictEqual(kitUsageScore(used, equipment), 7);
+    assert.strictEqual(mostUsedKit([unused, used], equipment)?.id, 'k1');
+  });
+
+  runTest('neverUsedKits : kit sans last_used_at', () => {
+    const fresh = kit({ id: 'k1', last_used_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+    const old = kit({ id: 'k2', last_used_at: null });
+    const never = neverUsedKits([fresh, old], []);
+    assert.strictEqual(never.length, 1);
+    assert.strictEqual(never[0].id, 'k2');
+  });
+
+  runTest('missingKitItems : liste les articles non possédés', () => {
+    const k = kit({ items: [
+      { id: 'i1', kit_id: 'k1', item_name: 'Présent', category: 'Autre', weight_g: 10, quantity: 1, is_essential: true, is_checked: false },
+      { id: 'i2', kit_id: 'k1', item_name: 'Manquant', category: 'Autre', weight_g: 10, quantity: 1, is_essential: true, is_checked: false },
+    ] });
+    const missing = missingKitItems(k, [gear({ id: 'x', name: 'Présent' })]);
+    assert.strictEqual(missing.length, 1);
+    assert.strictEqual(missing[0].item_name, 'Manquant');
+  });
+
+  /// ── Catalogue & alertes (services purs) ───────────────────────────────────
+  runTest('toUnifiedProduct : normalise shop_products', () => {
+    const p = toUnifiedProduct({ id: 'p1', slug: 'sac-40l', name: 'Sac 40L', brand: 'Osprey', weight_g: 1420, price_eur: 179.5, is_active: true });
+    assert.strictEqual(p.weight_g, 1420);
+    assert.strictEqual(p.price_eur, 179.5);
+    assert.strictEqual(p.slug, 'sac-40l');
+  });
+
+  runTest('toUnifiedProduct : fallback weight_grams et catégorie', () => {
+    const p = toUnifiedProduct({ id: 'p2', name: 'Tente', weight_grams: 1800 });
+    assert.strictEqual(p.weight_g, 1800);
+    assert.strictEqual(p.category, 'Autre');
+  });
+
+  runTest('alertTypeOf : mappe kind → onglet', () => {
+    assert.strictEqual(alertTypeOf('maintenance_due'), 'maintenance');
+    assert.strictEqual(alertTypeOf('expired'), 'expiry');
+    assert.strictEqual(alertTypeOf('loan_active'), 'loan');
+    assert.strictEqual(alertTypeOf('wear_replace'), 'wear');
+    assert.strictEqual(alertTypeOf('departure_conflict'), 'departure_conflict');
+    assert.strictEqual(alertTypeOf('listed_for_sale'), 'all');
   });
 
   /// ── Bilan ──────────────────────────────────────────────────────────────────
