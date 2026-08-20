@@ -219,6 +219,30 @@ TOTAL TS ERRORS: 0
 
 ### PHASE 4 — Page grille `/materiel`
 
+#### Objectif
+Grille des 6 cartes (Départ hero 8 col + 5 cartes).
+
+#### Actions
+- `src/app/materiel/layout.tsx` (data-lkv-material-theme light) + `page.tsx` (Server Component, `force-dynamic`).
+- `MaterielGrid.tsx` + `MaterielGrid.module.css` (grid-template-areas, 12 col desktop / 1 col mobile).
+- 6 cartes (`GearCardDepart/Forget/Kits/Inventaire/Alertes/Dispo`) + `CountdownLive`.
+- Service serveur `getMaterielSummary.ts` : agrégats sur `materiel_kits`, `product_ownership`,
+  `alerts`, `materiel_loans` (RLS, `createClient()`).
+
+#### Preuve
+```
+> npx tsc --noEmit
+TOTAL TS ERRORS: 0
+```
+
+#### Statut
+✅ TERMINÉE.
+
+---
+
+### PHASE 5 — 6 plein écrans × widgets
+
 <!-- à compléter -->
+
 
 
