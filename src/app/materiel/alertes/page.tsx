@@ -38,7 +38,7 @@ export default async function AlertesPage() {
           <Eyebrow>Mon Matériel</Eyebrow>
           <h1 className="font-display font-semibold text-[32px] tracking-tight text-[color:var(--label)]">Alertes & fiabilité</h1>
         </div>
-        <Link href="/materiel" className="glass interactive h-9 px-4 rounded-full flex items-center text-sm font-medium text-sage-600">
+        <Link href="/materiel" className="glass-capsule-btn secondary">
           ← Retour
         </Link>
       </header>

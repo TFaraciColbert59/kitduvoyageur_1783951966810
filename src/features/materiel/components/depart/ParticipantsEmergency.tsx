@@ -1,7 +1,9 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
+import { useToast } from '@/contexts/ToastContext';
 
 export interface Participant {
   name: string;
@@ -11,11 +13,38 @@ export interface Participant {
 
 const AVATAR_COLORS = ['#5B7F55', '#4B6B7C', '#C89A3B', '#7A7365', '#A8443A'];
 
-/** W-D-7 ParticipantsEmergency — avatars empilés + contact d'urgence masqué. */
-export function ParticipantsEmergency({ participants, emergencyContact }: { participants: Participant[]; emergencyContact?: string | null }) {
+/** W-D-7 ParticipantsEmergency — avatars empilés + contact d'urgence + ajout (connecté Supabase). */
+export function ParticipantsEmergency({
+  participants, emergencyContact, kitId,
+}: { participants: Participant[]; emergencyContact?: string | null; kitId?: string }) {
+  const router = useRouter();
+  const { toast } = useToast();
   const [revealed, setRevealed] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [name, setName] = useState('');
+  const [contact, setContact] = useState('');
   const shown = participants.slice(0, 5);
   const extra = Math.max(0, participants.length - 5);
+
+  const addParticipant = async () => {
+    if (!kitId || !name.trim()) { toast('Nom requis', 'error'); return; }
+    setAdding(true);
+    try {
+      const res = await fetch('/api/materiel/participants', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kit_id: kitId, name: name.trim(), contact: contact.trim() || null }),
+      });
+      if (!res.ok) throw new Error('Erreur');
+      toast('Participant ajouté', 'success');
+      setName(''); setContact('');
+      router.refresh();
+    } catch {
+      toast('Erreur', 'error');
+    } finally {
+      setAdding(false);
+    }
+  };
 
   return (
     <GlassCard as="article" ariaLabelledBy="participants-title" className="p-4">
@@ -56,6 +85,18 @@ export function ParticipantsEmergency({ participants, emergencyContact }: { part
           </button>
         )}
       </div>
+
+      {kitId && (
+        <div className="mt-3 flex flex-col gap-2">
+          <div className="flex gap-2">
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom du participant" aria-label="Nom du participant" className="glass-input flex-1" />
+            <input value={contact} onChange={(e) => setContact(e.target.value)} placeholder="Contact (optionnel)" aria-label="Contact" className="glass-input flex-1" />
+          </div>
+          <button type="button" onClick={addParticipant} disabled={adding} className="glass interactive h-10 rounded-full text-sm font-medium text-white bg-sage-800 disabled:opacity-40">
+            {adding ? 'Ajout…' : '+ Ajouter un participant'}
+          </button>
+        </div>
+      )}
     </GlassCard>
   );
 }

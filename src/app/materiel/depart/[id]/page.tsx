@@ -35,7 +35,7 @@ export default async function DepartPage({ params }: { params: { id: string } })
         <GlassCard className="p-6 flex flex-col gap-3 items-start">
           <Eyebrow>Prochain départ</Eyebrow>
           <p className="text-sm text-[color:var(--label-secondary)]">Aucun kit assigné. Créez un kit pour préparer votre départ.</p>
-          <Link href="/materiel/kits" className="glass interactive h-9 px-4 rounded-full flex items-center text-sm font-medium text-sage-600">
+          <Link href="/materiel/kits" className="glass-capsule-btn secondary">
             Mes kits →
           </Link>
         </GlassCard>
@@ -47,7 +47,7 @@ export default async function DepartPage({ params }: { params: { id: string } })
     <main className="max-w-[var(--page-max-w)] mx-auto px-4 py-8 pb-24">
       <header className="flex items-center justify-between mb-6">
         <h1 className="font-display font-semibold text-[32px] tracking-tight text-[color:var(--label)]">{depart.destination}</h1>
-        <Link href="/materiel" className="glass interactive h-9 px-4 rounded-full flex items-center text-sm font-medium text-sage-600">
+        <Link href="/materiel" className="glass-capsule-btn secondary">
           ← Retour
         </Link>
       </header>
@@ -65,7 +65,7 @@ export default async function DepartPage({ params }: { params: { id: string } })
         <div className="col-span-12 md:col-span-6"><ConsumablesTiles kitId={depart.id} initial={depart.consumables} /></div>
         <div className="col-span-12 md:col-span-6"><WeightDistributionDonut items={depart.weightBreakdown} /></div>
         <div className="col-span-12">
-          <ParticipantsEmergency participants={depart.participants} emergencyContact={depart.emergencyContact} />
+          <ParticipantsEmergency participants={depart.participants} emergencyContact={depart.emergencyContact} kitId={depart.id} />
         </div>
         <div className="col-span-12">
           <SimilarCommunityKits kits={similarKits} />

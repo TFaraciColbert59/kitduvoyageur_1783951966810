@@ -100,6 +100,13 @@ export const shareSchema = z.object({
   expires_in_days: z.number().int().min(1).max(365).default(7),
 });
 
+export const participantSchema = z.object({
+  kit_id: z.string().uuid('Identifiant de kit invalide'),
+  name: z.string().min(1, 'Nom requis').max(80),
+  is_emergency_contact: z.boolean().default(false),
+  contact: z.string().max(160).nullable().optional(),
+});
+
 export const exportSchema = z.object({
   format: z.enum(['csv', 'json', 'pdf', 'gpx']),
   scope: z.enum(['inventory', 'kit']),
