@@ -60,7 +60,7 @@ export default async function DepartPage({ params }: { params: { id: string } })
       </header>
 
       {/* HERO — carte pleine largeur + overlay glass */}
-      <div className="relative mb-5 h-[300px] md:h-[320px]">
+      <div className="relative mb-5 h-[220px]">
         <LazyMap3D route={depart.route} className="h-full w-full" />
         <div className="absolute left-4 top-4 max-w-xs glass size-hero p-4 flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">

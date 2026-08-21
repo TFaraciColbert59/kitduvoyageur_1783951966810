@@ -10,8 +10,8 @@ export function ChecklistDonut({ pct }: { pct: number }) {
     <GlassCard as="article" ariaLabelledBy="checklist-donut-title" className="p-4">
       <Eyebrow>Checklist condensée</Eyebrow>
       <h3 id="checklist-donut-title" className="sr-only">Complétude de la checklist</h3>
-      <div className="h-[120px] flex items-center justify-center">
-        <ResponsiveContainer width={120} height={120}>
+      <div className="h-[96px] flex items-center justify-center">
+        <ResponsiveContainer width={96} height={96}>
           <RadialBarChart data={data} innerRadius="70%" outerRadius="100%" startAngle={90} endAngle={-270}>
             <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
             <RadialBar dataKey="value" cornerRadius={8} fill="var(--sage-500)" background={{ fill: 'var(--stone-200)' }} />

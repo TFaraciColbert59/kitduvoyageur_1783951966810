@@ -12,7 +12,7 @@ export function WeightDistributionDonut({ items }: { items: { category: string; 
     <GlassCard as="article" ariaLabelledBy="weight-donut-title" className="p-4">
       <Eyebrow>Répartition du poids</Eyebrow>
       <h3 id="weight-donut-title" className="sr-only">Répartition du poids par catégorie</h3>
-      <div className="h-[180px]">
+      <div className="h-[140px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie data={data} dataKey="value" nameKey="category" innerRadius={50} outerRadius={75} paddingAngle={2}>

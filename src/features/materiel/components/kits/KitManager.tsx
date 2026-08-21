@@ -79,25 +79,10 @@ export function KitManager({ kits, inventory }: { kits: KitListItem[]; inventory
 
   return (
     <GlassCard className="p-4" aria-labelledby="kit-manager-title">
-      <div className="flex items-center justify-between">
+<div className="flex items-center justify-between">
         <Eyebrow>Gestion des kits</Eyebrow>
         <button type="button" onClick={openCreate} className="glass interactive h-10 px-4 rounded-full text-sm font-medium text-white bg-sage-800">+ Nouveau kit</button>
       </div>
-      <ul className="mt-3 flex flex-col gap-2">
-        {kits.filter((k) => !k.is_trashed).map((k) => (
-          <li key={k.id} className="bg-white/20 rounded-[var(--r-sm)] p-3 flex items-center justify-between gap-2">
-            <div>
-              <p className="text-sm font-medium text-[color:var(--label)]">{k.name}</p>
-              <p className="text-xs text-[color:var(--label-tertiary)]">{(k.total_weight_g / 1000).toFixed(1)} kg · {k.item_count} articles</p>
-            </div>
-            <div className="flex gap-2">
-              <button type="button" onClick={() => openEdit(k)} className="glass interactive h-8 px-3 rounded-full text-xs font-medium">Éditer</button>
-              <button type="button" onClick={() => remove(k)} className="glass interactive h-8 px-3 rounded-full text-xs font-medium text-danger">Supprimer</button>
-            </div>
-          </li>
-        ))}
-        {kits.filter((k) => !k.is_trashed).length === 0 && <li className="text-sm text-[color:var(--label-secondary)]">Aucun kit. Créez votre premier kit.</li>}
-      </ul>
 
       <GlassDrawer open={open} onOpenChange={setOpen} title={editing ? 'Modifier le kit' : 'Nouveau kit'}>
         <div className="flex flex-col gap-3">

@@ -11,7 +11,7 @@ export function AssignedKitCard({ kit }: { kit: { id: string; name: string; tota
       <h3 id="assigned-kit-title" className="font-display font-semibold text-[20px] text-[color:var(--label)] mt-1">{kit.name}</h3>
       <Metric value={(kit.totalWeightG / 1000).toFixed(1)} unit="kg" size="md" />
       <ul className="mt-3 flex flex-col gap-1">
-        {kit.items.slice(0, 8).map((i) => (
+        {kit.items.slice(0, 4).map((i) => (
           <li key={i.name} className="flex items-center justify-between text-sm text-[color:var(--label-secondary)]">
             <span>{i.name}</span>
             <span className="text-xs text-[color:var(--label-tertiary)]">{((i.weight_g ?? 0) / 1000).toFixed(2)} kg</span>
