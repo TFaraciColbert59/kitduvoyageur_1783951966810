@@ -73,6 +73,17 @@
   --glass-blur-lg: 32px;
   --glass-sat: 180%;
 
+  /* Specular / sheen / depth — Liquid Glass (iOS 26) */
+  --glass-edge-light: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.85),
+    rgba(255, 255, 255, 0.18) 38%,
+    rgba(255, 255, 255, 0) 62%,
+    rgba(11, 31, 23, 0.08) 100%
+  );
+  --glass-sheen: radial-gradient(130% 85% at 28% 0%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 55%);
+  --glass-depth-inset: inset 0 1px 0 rgba(255, 255, 255, 0.38), inset 0 -1px 1px rgba(20, 20, 15, 0.07);
+
   /* ---- Elevation (5 niveaux, ink-based, jamais rgba(0,0,0)) ---- */
   --elevation-1: 0 1px 2px -1px rgba(11, 31, 23, 0.06), 0 2px 4px -2px rgba(11, 31, 23, 0.04);
   --elevation-2: 0 4px 12px -4px rgba(11, 31, 23, 0.08), 0 1px 2px -1px rgba(11, 31, 23, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.5);
@@ -205,16 +216,19 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background: var(--glass-bg-medium);
+  background:
+    var(--glass-sheen),
+    var(--glass-bg-medium);
   backdrop-filter: blur(var(--glass-blur-md)) saturate(var(--glass-sat));
   -webkit-backdrop-filter: blur(var(--glass-blur-md)) saturate(var(--glass-sat));
   border: 1px solid var(--glass-border);
   border-radius: var(--r-lg);
-  box-shadow: var(--elevation-3);
+  box-shadow: var(--glass-depth-inset), var(--elevation-3);
   transition:
     transform var(--dur-med) var(--ease-glass),
     box-shadow var(--dur-med) var(--ease-glass),
-    background var(--dur-med) var(--ease-glass);
+    background var(--dur-med) var(--ease-glass),
+    filter var(--dur-med) var(--ease-glass);
 }
 
 .glass::before {
@@ -227,19 +241,26 @@
   z-index: 1;
 }
 
+/* Specular edge (rim light) : liseré masqué top/left brillant, bottom/right doux */
 .glass::after {
   content: "";
   position: absolute;
   inset: -1px;
   border-radius: inherit;
-  background: var(--glass-highlight-radial);
+  padding: 1px;
+  background: var(--glass-edge-light);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
   pointer-events: none;
   z-index: 1;
 }
 
 .glass.interactive:hover {
   transform: translateY(-2px);
-  box-shadow: var(--elevation-4);
+  box-shadow: var(--glass-depth-inset), var(--elevation-4), 0 0 26px -8px color-mix(in oklab, var(--sage-500) 40%, transparent);
+  filter: brightness(1.02);
 }
 
 .glass.interactive:active {
@@ -249,7 +270,7 @@
 
 .glass:focus-visible {
   outline: none;
-  box-shadow: var(--elevation-3), 0 0 0 2px var(--bg-primary), 0 0 0 4px color-mix(in oklab, var(--sage-500) 60%, transparent);
+  box-shadow: var(--glass-depth-inset), var(--elevation-3), 0 0 0 2px var(--bg-primary), 0 0 0 4px color-mix(in oklab, var(--sage-500) 60%, transparent);
 }
 
 /* Liquid Glass — lisibilité du texte sur verre très translucide (règle d'accessibilité
@@ -306,13 +327,12 @@
   box-shadow: var(--elevation-3);
 }
 
-/* Spotlight (utilise --mx / --my mis à jour par SpotlightTracker) */
-.glass.spotlight::before {
-  background: radial-gradient(
-    circle at var(--mx, 50%) var(--my, 0%),
-    rgba(255, 255, 255, 0.25),
-    transparent 55%
-  );
+/* Spotlight (utilise --mx / --my mis à jour par SpotlightTracker) :
+   reflet lumineux qui suit le curseur sur la surface de la carte. */
+.glass.spotlight {
+  background:
+    radial-gradient(circle at var(--mx, 28%) var(--my, 0%), rgba(255, 255, 255, 0.38), transparent 55%),
+    var(--glass-bg-medium);
 }
 
 /* Keyframes utilitaires */
