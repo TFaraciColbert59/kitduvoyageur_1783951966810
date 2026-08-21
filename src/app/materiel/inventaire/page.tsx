@@ -38,7 +38,7 @@ export default async function InventairePage() {
   if (items.length > 0 && totalWeight > 0) insights.push({ title: `${(totalWeight / 1000).toFixed(1)} kg`, body: 'Poids total de votre équipement.', tone: 'sage' });
 
   return (
-    <main className="max-w-[var(--page-max-w)] mx-auto px-4 py-8 pb-28">
+    <div className="max-w-[var(--page-max-w)] mx-auto px-4 py-8 pb-28">
       <header className="flex items-center justify-between mb-6">
         <div>
           <Eyebrow>Mon Matériel</Eyebrow>
@@ -56,7 +56,7 @@ export default async function InventairePage() {
         <div className="col-span-12 md:col-span-6"><AiInsightBanner insights={insights} /></div>
         <div className="col-span-12"><CrossSellStrip products={products} /></div>
       </div>
-    </main>
+    </div>
   );
 }
 

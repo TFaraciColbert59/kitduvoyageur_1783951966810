@@ -9,7 +9,7 @@ export default async function ForgetPage() {
   const items = await getForgetChecklist();
 
   return (
-    <main className="max-w-[var(--page-max-w)] mx-auto px-4 py-8 pb-24">
+    <div className="max-w-[var(--page-max-w)] mx-auto px-4 py-8 pb-24">
       <header className="flex items-center justify-between mb-6">
         <div>
           <Eyebrow>Mon Matériel</Eyebrow>
@@ -21,6 +21,6 @@ export default async function ForgetPage() {
       </header>
 
       <ForgetWorkspace items={items} />
-    </main>
+    </div>
   );
 }

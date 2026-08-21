@@ -32,7 +32,7 @@ export default async function AlertesPage() {
     .map((i) => ({ item: i.name, date: i.maintenance_due_at! }));
 
   return (
-    <main className="max-w-[var(--page-max-w)] mx-auto px-4 py-8 pb-24">
+    <div className="max-w-[var(--page-max-w)] mx-auto px-4 py-8 pb-24">
       <header className="flex items-center justify-between mb-6">
         <div>
           <Eyebrow>Mon Matériel</Eyebrow>
@@ -82,7 +82,7 @@ export default async function AlertesPage() {
         <div className="col-span-12"><OccasionMarketplace products={occasion} /></div>
         <div className="col-span-12"><ExportShareBar /></div>
       </div>
-    </main>
+    </div>
   );
 }
 

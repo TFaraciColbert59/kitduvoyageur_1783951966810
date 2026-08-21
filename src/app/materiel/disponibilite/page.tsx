@@ -52,7 +52,7 @@ export default async function DisponibilitePage() {
   const heatmap = Array.from(byMonth.entries()).map(([month, count]) => ({ month, count })).sort((a, b) => a.month.localeCompare(b.month)).slice(-6);
 
   return (
-    <main className="max-w-[var(--page-max-w)] mx-auto px-4 py-8 pb-24">
+    <div className="max-w-[var(--page-max-w)] mx-auto px-4 py-8 pb-24">
       <header className="flex items-center justify-between mb-6">
         <div>
           <Eyebrow>Mon Matériel</Eyebrow>
@@ -84,7 +84,7 @@ export default async function DisponibilitePage() {
         <div className="col-span-12 md:col-span-6"><DispoScore score={score} overdue={overdue} /></div>
         <div className="col-span-12 md:col-span-6"><CollectiveActions /></div>
       </div>
-    </main>
+    </div>
   );
 }
 

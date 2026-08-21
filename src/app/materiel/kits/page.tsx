@@ -34,7 +34,7 @@ export default async function KitsPage() {
   const kpi = { active: active.length, avgCompletionPct: avgCompletion, totalWeightG: totalWeight, trash: kits.length - active.length };
 
   return (
-    <main className="max-w-[var(--page-max-w)] mx-auto px-4 py-8 pb-24">
+    <div className="max-w-[var(--page-max-w)] mx-auto px-4 py-8 pb-24">
       <header className="flex items-center justify-between mb-6">
         <div>
           <Eyebrow>Mon Matériel</Eyebrow>
@@ -57,7 +57,7 @@ export default async function KitsPage() {
         <div className="col-span-12"><KitHistoryTimeline history={history} /></div>
         <div className="col-span-12"><KitProductSuggestions products={products} /></div>
       </div>
-    </main>
+    </div>
   );
 }
 

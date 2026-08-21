@@ -1,15 +1,8 @@
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
+import { historyLabel, historyTone } from '@/lib/materiel/history';
 import type { KitHistoryEntry } from '@/features/materiel/services/getKitHistory';
-
-const ACTION_LABEL: Record<string, string> = {
-  created: 'Création', updated: 'Mise à jour', deleted: 'Suppression', restored: 'Restauré',
-  forked: 'Fork', optimized: 'Optimisé', compared: 'Comparé',
-};
-const ACTION_TONE: Record<string, 'sage' | 'info' | 'warn' | 'danger' | 'stone'> = {
-  created: 'sage', updated: 'info', deleted: 'danger', restored: 'warn', forked: 'stone', optimized: 'sage', compared: 'stone',
-};
 
 /** W-K-8 KitHistoryTimeline — historique des versions d'un kit. */
 export function KitHistoryTimeline({ history }: { history: KitHistoryEntry[] }) {
@@ -22,8 +15,8 @@ export function KitHistoryTimeline({ history }: { history: KitHistoryEntry[] }) 
           <li key={h.id} className="relative">
             <span className="absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full bg-sage-500" aria-hidden="true" />
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[color:var(--label)]">{ACTION_LABEL[h.action] ?? h.action}</span>
-              <Badge tone={ACTION_TONE[h.action] ?? 'stone'}>{new Date(h.created_at).toLocaleDateString('fr-FR')}</Badge>
+              <span className="text-sm text-[color:var(--label)]">{historyLabel(h.action)}</span>
+              <Badge tone={historyTone(h.action)}>{new Date(h.created_at).toLocaleDateString('fr-FR')}</Badge>
             </div>
           </li>
         ))}
