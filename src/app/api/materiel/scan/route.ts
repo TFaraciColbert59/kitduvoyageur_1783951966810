@@ -28,7 +28,13 @@ export async function POST(req: NextRequest) {
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: 'Clé Gemini non configurée' }, { status: 500 });
+      // Fallback sans IA : brouillon neutre, pas de crash.
+      return NextResponse.json({
+        draft: { name: 'Article scanné', brand: null, category: 'Autre', weight_g: 0 },
+        extracted: {},
+        saved: false,
+        confidence: 0,
+      });
     }
 
     const imageData = parsed.data.image_data_url;
@@ -61,11 +67,13 @@ export async function POST(req: NextRequest) {
     );
 
     if (!response.ok) {
-      const errText = await response.text();
-      return NextResponse.json(
-        { error: `Erreur vision Gemini: ${response.status}`, details: errText },
-        { status: 502 }
-      );
+      // Fallback sans IA : brouillon neutre (pas de crash).
+      return NextResponse.json({
+        draft: { name: 'Article scanné', brand: null, category: 'Autre', weight_g: 0 },
+        extracted: {},
+        saved: false,
+        confidence: 0,
+      });
     }
 
     const data = await response.json();

@@ -6,11 +6,23 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-/**
- * POST /api/materiel/optimize — optimisation de kit par IA (stream).
- * Reçoit un kit + objectif (poids cible, climat), diffuse une analyse
- * avec diff AVANT/APRÈS (poids, prix, CO2) et recommandations.
- */
+interface KitLine { name: string; category: string | null; weight_g: number; quantity: number }
+
+function fallbackAnalysis(goal: string, kitName: string | null, kitItems: KitLine[], currentKg: number): Record<string, unknown> {
+  const heaviest = [...kitItems].sort((a, b) => (b.weight_g ?? 0) - (a.weight_g ?? 0))[0];
+  return {
+    analysis: `Analyse locale (IA non configurée) : kit « ${kitName ?? 'inconnu'} » à ${currentKg.toFixed(2)} kg. Objectif : ${goal}.`,
+    removals: heaviest ? [{ item: heaviest.name ?? 'Article', reason: 'Article le plus lourd — retirez-le si non essentiel.', weight_g: heaviest.weight_g }] : [],
+    replacements: [],
+    additions: [],
+    after_weight_kg: Math.max(0, currentKg - (heaviest?.weight_g ? heaviest.weight_g / 1000 : 0)),
+    after_price_eur_estimate: 0,
+    co2_kg_saved_estimate: 0,
+    score: 0,
+  };
+}
+
+/** POST /api/materiel/optimize — optimisation de kit par IA (stream) avec fallback déterministe. */
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
@@ -26,11 +38,7 @@ export async function POST(req: NextRequest) {
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: 'Clé Gemini non configurée' }, { status: 500 });
-    }
 
-    // Charger le kit et son inventaire
     let kit = null;
     let inventory: Array<{ name: string; category: string; weight_g: number; brand?: string | null }> = [];
 
@@ -50,15 +58,20 @@ export async function POST(req: NextRequest) {
       inventory = gear ?? [];
     }
 
-    const kitItems = kit?.materiel_kit_items ?? [];
-    const currentWeight = kitItems.reduce((s: number, i: { weight_g: number; quantity: number }) => s + (i.weight_g ?? 0) * (i.quantity ?? 1), 0);
+    const kitItems: KitLine[] = kit?.materiel_kit_items ?? [];
+    const currentKg = kitItems.reduce((s, i) => s + (i.weight_g ?? 0) * (i.quantity ?? 1), 0) / 1000;
 
-    const prompt = `Tu es l'optimiseur de pack du Kit du Voyageur. Objectif : ${parsed.data.goal}${parsed.data.target_kg ? ` (poids cible ${parsed.data.target_kg} kg)` : ''}.
+    let parsedJson: Record<string, unknown>;
+
+    if (!apiKey) {
+      parsedJson = fallbackAnalysis(parsed.data.goal, kit?.name ?? null, kitItems, currentKg);
+    } else {
+      const prompt = `Tu es l'optimiseur de pack du Kit du Voyageur. Objectif : ${parsed.data.goal}${parsed.data.target_kg ? ` (poids cible ${parsed.data.target_kg} kg)` : ''}.
 
 Kit actuel (${kit?.name ?? 'inconnu'}):
-${JSON.stringify(kitItems.map((i: any) => ({ name: i.name, cat: i.category, g: i.weight_g, qty: i.quantity })))}
+${JSON.stringify(kitItems.map((i) => ({ name: i.name, cat: i.category, g: i.weight_g, qty: i.quantity })))}
 
-Poids actuel: ${(currentWeight / 1000).toFixed(2)} kg
+Poids actuel: ${currentKg.toFixed(2)} kg
 
 Inventaire disponible (articles possédés):
 ${JSON.stringify(inventory.map((i) => ({ name: i.name, cat: i.category, g: i.weight_g, brand: i.brand })))}
@@ -75,39 +88,37 @@ Réponds UNIQUEMENT en JSON strict:
   "score": 0
 }`;
 
-    const gemini = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 2000 },
-        }),
+      try {
+        const gemini = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0.3, maxOutputTokens: 2000 },
+            }),
+          }
+        );
+
+        if (!gemini.ok) {
+          parsedJson = fallbackAnalysis(parsed.data.goal, kit?.name ?? null, kitItems, currentKg);
+        } else {
+          const data = await gemini.json();
+          const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+          try {
+            parsedJson = JSON.parse(text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim());
+          } catch {
+            parsedJson = {
+              analysis: 'Analyse non structurée: ' + text.slice(0, 300),
+              removals: [], replacements: [], additions: [],
+              after_weight_kg: currentKg, after_price_eur_estimate: 0, co2_kg_saved_estimate: 0, score: 0,
+            };
+          }
+        }
+      } catch {
+        parsedJson = fallbackAnalysis(parsed.data.goal, kit?.name ?? null, kitItems, currentKg);
       }
-    );
-
-    if (!gemini.ok) {
-      return NextResponse.json({ error: 'Erreur IA' }, { status: 502 });
-    }
-
-    const data = await gemini.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-
-    let parsedJson: Record<string, unknown> = {};
-    try {
-      parsedJson = JSON.parse(text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim());
-    } catch {
-      parsedJson = {
-        analysis: 'Analyse non structurée: ' + text.slice(0, 300),
-        removals: [],
-        replacements: [],
-        additions: [],
-        after_weight_kg: currentWeight / 1000,
-        after_price_eur_estimate: 0,
-        co2_kg_saved_estimate: 0,
-        score: 0,
-      };
     }
 
     const encoder = new TextEncoder();

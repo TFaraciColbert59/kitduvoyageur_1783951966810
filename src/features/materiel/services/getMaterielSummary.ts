@@ -46,39 +46,63 @@ export async function getMaterielSummary(): Promise<MaterielSummary> {
     if (!user) return EMPTY;
 
     const [kits, inv, alerts, loans] = await Promise.all([
-      supabase.from('materiel_kits').select('id, is_trashed').eq('user_id', user.id),
-      supabase.from('product_ownership').select('id, condition, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1),
+      supabase.from('materiel_kits').select('id, name, is_trashed, materiel_kit_items(is_checked)').eq('user_id', user.id).order('updated_at', { ascending: false }),
+      supabase.from('product_ownership').select('id, condition, created_at').eq('user_id', user.id).order('created_at', { ascending: false }),
       supabase.from('alerts').select('severity, is_resolved').eq('user_id', user.id).eq('is_resolved', false),
       supabase.from('materiel_loans').select('status, due_date').eq('lender_id', user.id),
     ]);
 
     const kitRows = kits.data ?? [];
-    const invCount = inv.count ?? (inv.data && inv.data.length > 0 ? inv.data.length : 0);
+    const activeKits = kitRows.filter((k) => !k.is_trashed);
+    const firstKit = activeKits[0] ?? null;
+    const kitItems = (firstKit?.materiel_kit_items ?? []) as { is_checked: boolean }[];
+    const checkedCount = kitItems.filter((i) => i.is_checked).length;
+    const readiness = kitItems.length ? Math.round((checkedCount / kitItems.length) * 100) : 0;
+
+    const invData = inv.data ?? [];
+    const invCount = invData.length;
     const activeAlerts = (alerts.data ?? []).filter((a) => !a.is_resolved);
     const criticalCount = activeAlerts.filter((a) => a.severity === 'critical').length;
     const warningCount = activeAlerts.filter((a) => a.severity === 'warning').length;
     const loansActive = (loans.data ?? []).filter((l) => l.status === 'en_cours' || l.status === 'en_retard');
     const nextReturn = loansActive.sort((a, b) => new Date(a.due_date ?? 0).getTime() - new Date(b.due_date ?? 0).getTime())[0];
 
+    const avgCompletion = activeKits.length
+      ? activeKits.reduce((s, k) => {
+          const items = (k.materiel_kit_items ?? []) as { is_checked: boolean }[];
+          return s + (items.length ? (items.filter((i) => i.is_checked).length / items.length) * 100 : 100);
+        }, 0) / activeKits.length
+      : 0;
+
+    const depart: MaterielSummary['depart'] = firstKit
+      ? {
+          id: firstKit.id,
+          destination: firstKit.name,
+          startsAt: new Date(Date.now() + 3 * 86400000).toISOString(),
+          readinessPct: readiness,
+          status: readiness >= 80 ? 'ok' : readiness >= 40 ? 'warning' : 'critical',
+        }
+      : EMPTY.depart;
+
     const summary: MaterielSummary = {
-      depart: EMPTY.depart,
+      depart,
       forget: {
-        forgetRemaining: 0,
-        checkedItems: 0,
-        totalItems: 0,
-        nextDepartLabel: null,
+        forgetRemaining: kitItems.length - checkedCount,
+        checkedItems: checkedCount,
+        totalItems: kitItems.length,
+        nextDepartLabel: firstKit ? firstKit.name : null,
       },
       kits: {
-        count: kitRows.filter((k) => !k.is_trashed).length,
-        avgCompletionPct: 0,
-        trashCount: kitRows.filter((k) => k.is_trashed).length,
-        assignedKitName: null,
+        count: activeKits.length,
+        avgCompletionPct: avgCompletion,
+        trashCount: kitRows.length - activeKits.length,
+        assignedKitName: firstKit?.name ?? null,
       },
       inventaire: {
         count: invCount,
-        goodConditionPct: 100,
+        goodConditionPct: invCount ? (invData.filter((i) => i.condition && i.condition !== 'a_remplacer').length / invCount) * 100 : 100,
         orderedCount: 0,
-        lastAddedLabel: inv.data && inv.data.length > 0 ? 'Dernier ajout récent' : null,
+        lastAddedLabel: invData.length > 0 ? 'Dernier ajout récent' : null,
       },
       alertes: {
         count: activeAlerts.length,
