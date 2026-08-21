@@ -551,6 +551,30 @@ No files found   ✅
 #### Statut
 ✅ TERMINÉE.
 
+#### Correctifs finaux (pages vides / layout / responsive)
+- **Plein écran Départ vide** : `trail_id` (colonne inexistante sur `materiel_kits`) retiré de la
+  requête `getDepartDetail` → le cockpit affiche le kit assigné + les 10 widgets. **Prouvé par e2e**
+  (assertions sur « Terrain Readiness Score », « Météo 48h », « Kit assigné », absence d'état vide).
+- **Harness anti-régression** : `scripts/verify-materiel.mjs` (login démo + 7 tables peuplées).
+- **e2e durci** : login robuste (cookie `auth-token` attendu, bouton « Se connecter » précis),
+  5 tests verts (grille, nav, cockpit widgets réels, écrans, axe 0).
+- **Grille responsive** : desktop masqué sur mobile via CSS module (`display:none` → grid @md) →
+  6 cartes sur mobile + réordre, 6 sur desktop. (Bug des 12 cartes corrigé.)
+- **Audit colonnes** : après le fix, toutes les références `.select()/.from()` des services/API
+  matchent le schéma réel.
+
+#### Preuve finale
+```
+> npm run test        # 30 tests pass
+> npm run build       # ✓ Compiled successfully
+> npm run test:e2e    # 5 passed (14s) — axe 0 violation
+> node scripts/verify-materiel.mjs   # 7/7 tables peuplées (demo)
+> mobile 390px : 6 cartes + reorder | desktop 1440px : 6 cartes (grille hero 8col)
+```
+
+#### Statut
+✅ TERMINÉE.
+
 
 
 
