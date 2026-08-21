@@ -12,18 +12,29 @@ import { GearCardDispo } from './cards/GearCardDispo';
 
 const AREAS = ['depart', 'forget', 'kits', 'inventaire', 'alertes', 'dispo'] as const;
 
+// Classes littérales pour que Tailwind les génère (JIT ne lit pas les template literals).
+const AREA_CLASS: Record<string, string> = {
+  depart: '[grid-area:depart]',
+  forget: '[grid-area:forget]',
+  kits: '[grid-area:kits]',
+  inventaire: '[grid-area:inventaire]',
+  alertes: '[grid-area:alertes]',
+  dispo: '[grid-area:dispo]',
+};
+
 /** MaterielGrid — grille des 6 cartes (desktop en zones nommées, mobile réordonnable persisté). */
 export function MaterielGrid({ data }: { data: MaterielSummary }) {
   const { order, move } = useMaterielOrder();
 
   const renderCard = (area: string) => {
+    const cardClass = 'spotlight h-full';
     switch (area) {
-      case 'depart': return <GearCardDepart data={data.depart} />;
-      case 'forget': return <GearCardForget data={data.forget} />;
-      case 'kits': return <GearCardKits data={data.kits} />;
-      case 'inventaire': return <GearCardInventaire data={data.inventaire} />;
-      case 'alertes': return <GearCardAlertes data={data.alertes} />;
-      case 'dispo': return <GearCardDispo data={data.dispo} />;
+      case 'depart': return <GearCardDepart data={data.depart} className={cardClass} />;
+      case 'forget': return <GearCardForget data={data.forget} className={cardClass} />;
+      case 'kits': return <GearCardKits data={data.kits} className={cardClass} />;
+      case 'inventaire': return <GearCardInventaire data={data.inventaire} className={cardClass} />;
+      case 'alertes': return <GearCardAlertes data={data.alertes} className={cardClass} />;
+      case 'dispo': return <GearCardDispo data={data.dispo} className={cardClass} />;
       default: return null;
     }
   };
@@ -33,7 +44,7 @@ export function MaterielGrid({ data }: { data: MaterielSummary }) {
       {/* Desktop : grille à zones nommées (ordre fixe, conforme prompt) */}
       <div className={`${styles.grid} hidden md:grid`}>
         {AREAS.map((area) => (
-          <SpotlightTracker key={area} className={`[grid-area:${area}]`}>
+          <SpotlightTracker key={area} className={AREA_CLASS[area]}>
             {renderCard(area)}
           </SpotlightTracker>
         ))}
