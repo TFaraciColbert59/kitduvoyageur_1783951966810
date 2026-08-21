@@ -385,7 +385,6 @@ export default function KitConfiguratorWizard() {
               <nav className="hidden sm:flex items-center gap-5 text-xs text-[#526356] font-medium">
                 <Link href="/explorer" className="hover:text-[#1C3829] transition-colors">Aventures</Link>
                 <Link href="/boutique" className="hover:text-[#1C3829] transition-colors">Boutique</Link>
-                <Link href="/mon-materiel" className="hover:text-[#1C3829] transition-colors">Mon Inventaire</Link>
               </nav>
 
               <Link href="/" className="text-xs text-[#7A8A7D] hover:text-[#1C3829] transition-colors font-medium">

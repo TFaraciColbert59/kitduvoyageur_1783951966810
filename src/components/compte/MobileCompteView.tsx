@@ -115,10 +115,10 @@ export default function MobileCompteView({
 
         {/* Big Inventory Button on Mobile */}
         <Link
-          href="/mon-materiel"
+          href="/compte"
           className="w-full py-3 bg-[#17402C] hover:bg-[#cc3d10] text-white font-black text-xs rounded-2xl shadow-lg flex items-center justify-center gap-2 border border-white/10"
         >
-          <span>🎒 Accéder à mon Inventaire</span>
+          <span>🎒 Mon Compte</span>
           <Icon name="ArrowRightIcon" size={14} />
         </Link>
       </div>

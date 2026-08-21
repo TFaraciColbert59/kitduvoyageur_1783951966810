@@ -855,12 +855,12 @@ export default function MobileCompteV2() {
               </p>
             </div>
             <Link
-              href="/mon-materiel"
+              href="/compte"
               onClick={() => triggerHaptic('selection')}
               className="px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-xs active:scale-95 transition-transform flex items-center gap-1"
               style={{ background: C.forest800 }}
             >
-              <span>Gérer</span>
+              <span>Mon Compte</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
@@ -900,7 +900,7 @@ export default function MobileCompteV2() {
                 Ajoutez vos tentes, duvets et réchauds pour générer des checklists précises.
               </p>
               <Link
-                href="/mon-materiel"
+                href="/compte"
                 className="inline-flex items-center gap-1 px-4 py-2 rounded-full text-xs font-bold text-white"
                 style={{ background: C.forest800 }}
               >
@@ -1262,7 +1262,7 @@ export default function MobileCompteV2() {
               <div className="space-y-1">
                 {([
                   { label: 'Modifier mon profil', icon: '👤', href: '/compte/modifier' },
-                  { label: 'Mon inventaire matériel', icon: '🎒', href: '/mon-materiel' },
+                  { label: 'Mon Compte', icon: '🎒', href: '/compte' },
                   { label: 'Mes commandes & factures', icon: '📦', href: '/boutique' },
                   { label: 'Programme Fidélité & Récompenses', icon: '🏆', href: '/fidelite' },
                   { label: 'Gains & Parrainage', icon: '💎', href: '/recompenses' },

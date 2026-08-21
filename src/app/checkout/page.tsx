@@ -575,8 +575,8 @@ export default function CheckoutPage() {
                 <p className="text-sm text-[#5C6B5E] mb-8 max-w-sm mx-auto leading-relaxed">
                   Merci ! Un email de confirmation vous a été envoyé. Préparez-vous pour l'aventure.
                 </p>
-                <Link href="/mon-materiel" className="inline-flex items-center gap-2 bg-[#1C2620] text-white px-8 py-3.5 rounded-xl font-600 text-sm hover:bg-[#2A3830] transition-colors">
-                  Voir mon inventaire
+                <Link href="/explorer" className="inline-flex items-center gap-2 bg-[#1C2620] text-white px-8 py-3.5 rounded-xl font-600 text-sm hover:bg-[#2A3830] transition-colors">
+                  Voir les aventures
                 </Link>
               </div>
             )}

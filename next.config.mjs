@@ -29,27 +29,27 @@ const nextConfig = {
     return [
       {
         source: '/boutique',
-        destination: '/mon-materiel',
+        destination: '/explorer',
         permanent: true,
       },
       {
         source: '/mon-kit',
-        destination: '/mon-materiel',
+        destination: '/explorer',
         permanent: true,
       },
       {
         source: '/inventaire',
-        destination: '/mon-materiel',
+        destination: '/explorer',
         permanent: true,
       },
       {
         source: '/shop',
-        destination: '/mon-materiel',
+        destination: '/explorer',
         permanent: true,
       },
       {
         source: '/catalogue/:path*',
-        destination: '/mon-materiel',
+        destination: '/explorer',
         permanent: true,
       },
       {
@@ -64,7 +64,7 @@ const nextConfig = {
       },
       {
         source: '/ateliers',
-        destination: '/boutique',
+        destination: '/explorer',
         permanent: false,
       },
       {

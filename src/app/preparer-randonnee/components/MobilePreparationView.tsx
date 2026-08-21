@@ -263,7 +263,7 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
                     weather: weatherData,
                   });
                   setShowDateModal(false);
-                  router.push('/mon-materiel');
+                  router.push('/compte');
                 }}
                 className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#0B1F17] shadow-sm"
               >

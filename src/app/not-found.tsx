@@ -10,7 +10,6 @@ const POPULAR_PAGES = [
   { label: 'Configurateur IA', href: '/ai-configurator', icon: 'SparklesIcon' },
   { label: 'Boutique', href: '/boutique', icon: 'ShoppingBagIcon' },
   { label: 'Destinations', href: '/pays', icon: 'GlobeAltIcon' },
-  { label: 'Mon inventaire', href: '/mon-materiel', icon: 'ArchiveBoxIcon' },
 ];
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';

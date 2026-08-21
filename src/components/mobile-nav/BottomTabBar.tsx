@@ -35,14 +35,6 @@ const DEFAULT_TABS: Tab[] = [
     matchPaths: ['/explorer', '/carte-interactive', '/hors-ligne'],
   },
   {
-    href: '/mon-materiel',
-    label: 'Matériel',
-    iconName: 'box',
-    ariaLabel: 'Mon matériel et équipement voyageur',
-    matchPaths: ['/mon-materiel'],
-    isHero: true,
-  },
-  {
     href: '/communaute',
     label: 'Communauté',
     iconName: 'users',
