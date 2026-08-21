@@ -40,6 +40,10 @@ turbo/
 dev-server.log
 dev-server.err.log
 *.log
+*.err
+
+# Playwright
+test-results/
 
 # Géodonnées volumineuses générées (3 Go)
 geo_data/
