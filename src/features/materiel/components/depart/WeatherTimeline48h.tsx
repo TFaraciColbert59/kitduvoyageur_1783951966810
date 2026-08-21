@@ -21,7 +21,7 @@ export function WeatherTimeline48h({ forecast }: { forecast?: WeatherForecast | 
       <h3 id="weather-title" className="sr-only">Timeline météo 48 heures</h3>
       <div className="mt-2 flex gap-2 overflow-x-auto no-scrollbar">
         {cells.map((h, i) => (
-          <div key={i} className="bg-white/20 rounded-[var(--r-sm)] h-[72px] w-[56px] shrink-0 flex flex-col items-center justify-center gap-0.5 p-1" title={weatherLabel(h.weathercode)}>
+          <div key={i} className="bg-white/20 rounded-[var(--r-sm)] h-[56px] w-[48px] shrink-0 flex flex-col items-center justify-center gap-0.5 p-1" title={weatherLabel(h.weathercode)}>
             <span className="text-[11px] text-[color:var(--label-tertiary)]">{h.hour}</span>
             <span aria-hidden="true">{iconFor(h.weathercode)}</span>
             <span className="text-[13px] font-semibold text-[color:var(--label)] tabular-nums">{h.tempC}°</span>

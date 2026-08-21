@@ -46,7 +46,17 @@ export default async function AlertesPage() {
       <div className="grid grid-cols-12 gap-[var(--grid-gap)]">
         <div className="col-span-12 md:col-span-3"><ReliabilityScore score={score} critical={critical} warning={warning} /></div>
         <div className="col-span-12 md:col-span-9"><CategoryTabs alerts={alerts} /></div>
-        <div className="col-span-12"><TopAlertsAccordion alerts={alerts} /></div>
+<div className="col-span-12 md:col-span-6"><TopAlertsAccordion alerts={alerts} /></div>
+        <div className="col-span-12 md:col-span-6">
+          <AlertsTimeline
+            entries={alerts.map((a) => ({
+              id: a.id,
+              date: new Date(a.created_at).toLocaleDateString('fr-FR'),
+              message: a.message,
+              severity: a.severity,
+            }))}
+          />
+        </div>
         <div className="col-span-12">
           <SeasonalBanner
             chip={`Saison : ${season}`}
@@ -55,16 +65,6 @@ export default async function AlertesPage() {
                 ? `Votre équipement est sain pour la saison ${season}.`
                 : `${alerts.length} alerte(s) active(s) — pensez à entretenir votre matériel avant la prochaine sortie.`
             }
-          />
-        </div>
-        <div className="col-span-12">
-          <AlertsTimeline
-            entries={alerts.map((a) => ({
-              id: a.id,
-              date: new Date(a.created_at).toLocaleDateString('fr-FR'),
-              message: a.message,
-              severity: a.severity,
-            }))}
           />
         </div>
         <div className="col-span-12 md:col-span-6"><ToCompleteList items={inventory} /></div>
@@ -78,8 +78,8 @@ export default async function AlertesPage() {
             }
           />
         </div>
-        <div className="col-span-12"><MaintenanceCalendar events={calendarEvents} /></div>
-        <div className="col-span-12"><OccasionMarketplace products={occasion} /></div>
+        <div className="col-span-12 md:col-span-6"><MaintenanceCalendar events={calendarEvents} /></div>
+        <div className="col-span-12 md:col-span-6"><OccasionMarketplace products={occasion} /></div>
         <div className="col-span-12"><ExportShareBar /></div>
       </div>
     </div>

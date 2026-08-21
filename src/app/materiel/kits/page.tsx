@@ -53,8 +53,8 @@ export default async function KitsPage() {
         <div className="col-span-12"><KitOptimizer kits={kits} /></div>
         <div className="col-span-12 md:col-span-6"><KitComparator kits={kits} /></div>
         <div className="col-span-12 md:col-span-6"><WeatherMatchScore season={firstKit?.season ?? null} /></div>
-        <div className="col-span-12"><TemplateStore kits={publicKits} /></div>
-        <div className="col-span-12"><KitHistoryTimeline history={history} /></div>
+<div className="col-span-12 md:col-span-6"><TemplateStore kits={publicKits} /></div>
+        <div className="col-span-12 md:col-span-6"><KitHistoryTimeline history={history} /></div>
         <div className="col-span-12"><KitProductSuggestions products={products} /></div>
       </div>
     </div>

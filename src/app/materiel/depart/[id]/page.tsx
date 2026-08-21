@@ -60,7 +60,7 @@ export default async function DepartPage({ params }: { params: { id: string } })
       </header>
 
       {/* HERO — carte pleine largeur + overlay glass */}
-      <div className="relative mb-5 h-[340px] md:h-[400px]">
+      <div className="relative mb-5 h-[300px] md:h-[320px]">
         <LazyMap3D route={depart.route} className="h-full w-full" />
         <div className="absolute left-4 top-4 max-w-xs glass size-hero p-4 flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">
@@ -92,13 +92,15 @@ export default async function DepartPage({ params }: { params: { id: string } })
       {/* Rangée C — Météo 48h (pleine largeur) */}
       <div className="mb-5"><WeatherTimeline48h forecast={weather} /></div>
 
-      {/* Rangée D — Participants & urgence */}
-      <div className="mb-5">
-        <ParticipantsEmergency participants={depart.participants} emergencyContact={depart.emergencyContact} kitId={depart.id} />
+      {/* Rangée D — Participants & urgence + Kits communauté */}
+      <div className="grid grid-cols-12 gap-[var(--grid-gap)] mb-5">
+        <div className="col-span-12 md:col-span-6">
+          <ParticipantsEmergency participants={depart.participants} emergencyContact={depart.emergencyContact} kitId={depart.id} />
+        </div>
+        <div className="col-span-12 md:col-span-6">
+          <SimilarCommunityKits kits={similarKits} />
+        </div>
       </div>
-
-      {/* Rangée E — Kits communauté */}
-      <div><SimilarCommunityKits kits={similarKits} /></div>
 
       <DepartActionsBar departId={depart.id} className="sticky bottom-0 mt-5" />
     </div>

@@ -53,7 +53,7 @@ export function KitBuilder({
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="bg-white/20 rounded-[var(--r-md)] p-3">
         <p className="text-sm font-medium mb-2">Inventaire</p>
-        <ul className="flex flex-col gap-1 max-h-[420px] overflow-y-auto">
+        <ul className="flex flex-col gap-1 max-h-[220px] overflow-y-auto">
           {inventory.map((item) => (
             <li
               key={item.id}

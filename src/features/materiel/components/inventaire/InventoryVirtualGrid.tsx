@@ -15,7 +15,7 @@ export function InventoryVirtualGrid({ items, onSelect }: { items: InventoryItem
   });
 
   return (
-    <div ref={parentRef} className="h-[70vh] overflow-y-auto">
+    <div ref={parentRef} className="h-[52vh] overflow-y-auto">
       <div style={{ height: rowVirtualizer.getTotalSize(), position: 'relative' }}>
         {rowVirtualizer.getVirtualItems().map((virtualRow) => {
           const pair = items.slice(virtualRow.index * 2, virtualRow.index * 2 + 2);

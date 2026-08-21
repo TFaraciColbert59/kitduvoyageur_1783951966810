@@ -75,14 +75,14 @@ export default async function DisponibilitePage() {
         <div className="col-span-12 md:col-span-8">
           <DispoKpis data={{ active: active.length, overdue, returned, totalObjects: inventory.length }} />
         </div>
-        <div className="col-span-12"><GanttTimeline loans={loans.map((l) => ({ id: l.id, label: l.borrower_contact ?? 'Prêt', start: l.loaned_at ?? '', end: l.due_date ?? l.loaned_at ?? '' }))} /></div>
-        <div className="col-span-12"><LoanTabs loans={loans} userId={userId} /></div>
-        <div className="col-span-12"><ConflictDetector conflicts={conflicts} /></div>
+<div className="col-span-12"><GanttTimeline loans={loans.map((l) => ({ id: l.id, label: l.borrower_contact ?? 'Prêt', start: l.loaned_at ?? '', end: l.due_date ?? l.loaned_at ?? '' }))} /></div>
+        <div className="col-span-12 md:col-span-6"><LoanTabs loans={loans} userId={userId} /></div>
+        <div className="col-span-12 md:col-span-6"><ConflictDetector conflicts={conflicts} /></div>
         <div className="col-span-12 md:col-span-6"><LoanHeatmap byMonth={heatmap} /></div>
         <div className="col-span-12 md:col-span-6"><DigitalLoanContract loan={active[0] ?? null} /></div>
-        <div className="col-span-12"><AutoReminders reminders={active.filter((l) => l.due_date).map((l) => ({ id: l.id, label: `Retour de ${l.borrower_contact ?? 'prêt'}`, due: l.due_date! }))} /></div>
+        <div className="col-span-12 md:col-span-6"><AutoReminders reminders={active.filter((l) => l.due_date).map((l) => ({ id: l.id, label: `Retour de ${l.borrower_contact ?? 'prêt'}`, due: l.due_date! }))} /></div>
         <div className="col-span-12 md:col-span-6"><DispoScore score={score} overdue={overdue} /></div>
-        <div className="col-span-12 md:col-span-6"><CollectiveActions /></div>
+        <div className="col-span-12"><CollectiveActions /></div>
       </div>
     </div>
   );
