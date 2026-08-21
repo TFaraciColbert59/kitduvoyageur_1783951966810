@@ -41,16 +41,35 @@ Tables (schéma `public`, RLS par `auth.uid()`), migration `20260825000000_mater
 > `loans` (déjà existantes, schémas incompatibles). Voir `MISSION_LOG.md` (décision D3.1).
 
 ## API
-Routes sous `src/app/api/materiel/*` : `items`, `kits`, `kits/[id]`, `export`, `share`, `calendar`,
-`optimize` (IA), `scan` (OCR). Validation Zod systématique côté serveur, `runtime = nodejs`.
+Routes sous `src/app/api/materiel/*` (validation Zod systématique, `runtime = nodejs`) :
+
+| Route | Méthodes | Rôle |
+|---|---|---|
+| `items` | GET/POST | Inventaire (`product_ownership`) |
+| `items/[id]` | PATCH/DELETE | Édition/suppression d'un objet |
+| `kits` | GET/POST | Kits (`materiel_kits`) + journalisation historique |
+| `kits/[id]` | PATCH/DELETE | Mise à jour/suppression d'un kit |
+| `kits/[id]/history` | GET | Historique du kit (`materiel_kit_history`) |
+| `kit-items/[id]` | PATCH | Check/uncheck + quantité article de kit |
+| `alerts/[id]` | PATCH | Résolution d'alerte |
+| `loans/[id]` | PATCH | Statut de prêt (rendu, etc.) |
+| `participants` | POST | Ajout d'un participant à un départ |
+| `export` | POST | Export kit (csv/json) |
+| `share` | POST/GET | Génération/lecture de token de partage (`share_tokens`, service_role pour lecture publique) |
+| `calendar` | GET | Export ICS |
+| `fork` | POST | Dupliquer un kit public |
+| `search` | GET | Recherche ⌘K (kits + items) |
+| `optimize` | POST | Optimiseur IA (SSE, fallback déterministe) |
+| `scan` | POST | Scan OCR/code-barres (fallback déterministe) |
 
 ## Offline
 - `public/sw.js` : cache des routes `/materiel`, `/materiel/kits`, `/materiel/inventaire`.
-- `src/lib/materiel/db.ts` : miroir IndexedDB (Dexie) + sync.
+- `src/lib/materiel/db.ts` : miroir IndexedDB (Dexie) + `src/features/materiel/services/sync.ts`.
 
 ## Tests
-- Vitest : `tests/schemas/materiel.spec.ts` (8 tests).
-- Playwright : `scripts/e2e/materiel.spec.ts` (grille, axe, navigation).
+- Vitest : `tests/schemas/*.spec.ts` + `tests/materiel/*.spec.ts` (30 tests : zod, optimizer,
+  comparator, conflicts, scanner, history, order).
+- Playwright : `scripts/e2e/materiel.spec.ts` (grille, nav, écrans, cockpit départ, axe 0).
 
 ## Développement
 ```bash
@@ -58,4 +77,6 @@ npm run dev        # http://localhost:4000
 npm run type-check # tsc --noEmit
 npm run test       # vitest run
 npm run build
+npm run test:e2e   # playwright (serveur sur 4028, build requis)
+node scripts/verify-materiel.mjs   # harness DB démo (tables peuplées)
 ```
