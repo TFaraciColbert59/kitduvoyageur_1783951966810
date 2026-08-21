@@ -12,7 +12,7 @@ export function BackgroundVideo() {
     <div className="fixed inset-0 -z-10" aria-hidden="true">
       {mounted && (
         <video
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover blur-[6px] scale-105"
           src="/materiel/background.mp4"
           autoPlay
           muted
