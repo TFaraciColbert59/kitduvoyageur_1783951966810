@@ -30,7 +30,7 @@ export async function getDepartDetail(id: string): Promise<DepartDetail | null> 
 
     const { data: kit, error } = await supabase
       .from('materiel_kits')
-      .select('id, name, total_weight_g, consumables, trail_id, materiel_kit_items(name, category, weight_g, quantity, is_checked)')
+      .select('id, name, total_weight_g, consumables, materiel_kit_items(name, category, weight_g, quantity, is_checked)')
       .eq('user_id', user.id)
       .eq('is_trashed', false)
       .order('updated_at', { ascending: false })
