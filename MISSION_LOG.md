@@ -525,7 +525,31 @@ No files found   ✅
 - Documentation : `docs/materiel-liquid-glass.md`.
 - PR depuis `feat/materiel-rebuild-liquid-glass`.
 
-<!-- à compléter -->
+#### Finalisation (seed démo + e2e vert + derniers widgets)
+- **Seed démo** : `scripts/seed/seed-materiel.mjs` crée `demo@lkdv.app` et peuple 10 objets,
+  3 kits (2 publics), 3 alertes, 2 prêts, 3 participants + historique. Bouton « Connexion démo »
+  sur `/materiel` quand vide.
+- **Fallbacks IA** : `/api/materiel/optimize` et `/scan` retombent sur une analyse déterministe
+  (ou brouillon neutre) si la clé Gemini est absente/échoue → widgets toujours fonctionnels.
+- **KitBuilder persistant** : « Enregistrer ce kit » → POST `/api/materiel/kits`.
+- **getMaterielSummary** : données réelles (depart = 1er kit actif, inventaire 10, alertes, prêts).
+- **Participants « Ajouter »** : `POST /api/materiel/participants` + formulaire dans W-D-7.
+- **Grille mobile réordonnable persistée** : `useMaterielOrder` (Zustand + persist) + flèches mobile.
+- **Historique par kit** : `lib/materiel/history.ts` (helpers testés) + `GET /api/materiel/kits/[id]/history`.
+- **A11y (axe)** : suppression des `<main>` imbriqués (landmarks) → violations axe = 0.
+- **e2e Playwright** : login démo robuste + 4 tests verts (grille, nav, cockpit+axe, axe).
+
+#### Preuve finale
+```
+> npm run test        # 7 files, 30 tests pass
+> npm run build       # ✓ Compiled successfully
+> npm run test:e2e    # 4 passed (16s) — axe 0 violation
+> GET (dev) : /materiel + 6 fullscreens + vidéo  -> 200
+> grille remplie (démo) : Départ « Vanlife été » · Kits 3 · Inventaire 10 · Alertes 3 · Dispo 2
+```
+
+#### Statut
+✅ TERMINÉE.
 
 
 
