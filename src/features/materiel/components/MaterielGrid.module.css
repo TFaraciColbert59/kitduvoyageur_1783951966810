@@ -1,5 +1,5 @@
 .grid {
-  display: grid;
+  display: none;
   gap: var(--grid-gap);
   grid-template-columns: repeat(12, minmax(0, 1fr));
   grid-template-areas:
@@ -7,9 +7,8 @@
     "kits kits kits kits inventaire inventaire inventaire inventaire alertes alertes alertes alertes"
     "dispo dispo dispo dispo dispo dispo dispo dispo dispo dispo dispo dispo";
 }
-@media (max-width: 768px) {
+@media (min-width: 768px) {
   .grid {
-    grid-template-columns: 1fr;
-    grid-template-areas: "depart" "forget" "kits" "inventaire" "alertes" "dispo";
+    display: grid;
   }
 }

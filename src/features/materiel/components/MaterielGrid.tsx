@@ -41,8 +41,8 @@ export function MaterielGrid({ data }: { data: MaterielSummary }) {
 
   return (
     <>
-      {/* Desktop : grille à zones nommées (ordre fixe, conforme prompt) */}
-      <div className={`${styles.grid} hidden md:grid`}>
+      {/* Desktop : grille à zones nommées (masquée en CSS sur mobile, ordre fixe conforme prompt) */}
+      <div className={styles.grid}>
         {AREAS.map((area) => (
           <SpotlightTracker key={area} className={AREA_CLASS[area]}>
             {renderCard(area)}
