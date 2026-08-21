@@ -51,28 +51,8 @@ export async function getDepartDetail(id: string): Promise<DepartDetail | null> 
     const total = kit.total_weight_g ?? items.reduce((s, i) => s + (i.weight_g ?? 0), 0);
     const grade = total === 0 ? 'E' : total <= 12000 ? 'A+' : total <= 15000 ? 'B' : total <= 20000 ? 'C' : total <= 25000 ? 'D' : 'E';
 
-    // Route réelle via trail_id (hiking_routes.geometry) sinon synthétique
-    let route: { coordinates: [number, number][] } | null = null;
-    if (kit.trail_id) {
-      const { data: trail } = await supabase
-        .from('hiking_routes')
-        .select('geometry')
-        .eq('id', kit.trail_id)
-        .maybeSingle();
-      const geom = trail?.geometry;
-      if (geom) {
-        try {
-          const parsed = typeof geom === 'string' ? JSON.parse(geom) : geom;
-          const coords = parsed?.geometry?.coordinates ?? parsed?.coordinates;
-          if (Array.isArray(coords) && coords.length > 1) {
-            route = { coordinates: coords.map((c: number[]) => [Number(c[0]), Number(c[1])]) as [number, number][] };
-          }
-        } catch {
-          route = null;
-        }
-      }
-    }
-    if (!route) route = { coordinates: SYNTHETIC_ROUTE };
+    // Route de synthèse (pas de colonne trail_id sur materiel_kits)
+    const route: { coordinates: [number, number][] } = { coordinates: SYNTHETIC_ROUTE };
 
     // Participants réels (depart_participants)
     const { data: parts } = await supabase
