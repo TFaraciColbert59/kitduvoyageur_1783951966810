@@ -114,9 +114,17 @@ export const exportSchema = z.object({
 });
 
 export const optimizeRequestSchema = z.object({
-  kit_id: z.string().uuid(),
+  kit_id: z.string().uuid().nullable().optional(),
   goal: z.string().max(400).optional().default('alléger le kit'),
   target_kg: z.number().min(1).max(50).nullable().optional(),
+  items: z.array(
+    z.object({
+      name: z.string(),
+      category: z.string().nullable().optional(),
+      weight_g: z.number().optional().default(0),
+      quantity: z.number().optional().default(1),
+    })
+  ).optional(),
 });
 
 export const scanRequestSchema = z.object({

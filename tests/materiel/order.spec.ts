@@ -3,8 +3,8 @@ import { normalizeOrder, DEFAULT_ORDER } from '@/features/materiel/store/useMate
 
 describe('normalizeOrder', () => {
   it('garde un ordre valide', () => {
-    expect(normalizeOrder(['kits', 'depart', 'inventaire', 'forget', 'alertes', 'dispo']))
-      .toEqual(['kits', 'depart', 'inventaire', 'forget', 'alertes', 'dispo']);
+    expect(normalizeOrder(['forget', 'dispo', 'depart', 'kits', 'alertes']))
+      .toEqual(['forget', 'dispo', 'depart', 'kits', 'alertes']);
   });
   it('ajoute les manquantes et dédoublonne', () => {
     expect(normalizeOrder(['kits', 'kits'])).toEqual(['kits', ...DEFAULT_ORDER.filter((a) => a !== 'kits')]);

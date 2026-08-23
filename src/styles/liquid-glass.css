@@ -59,30 +59,30 @@
   --bg-secondary: var(--stone-100);
   --bg-tertiary: var(--stone-200);
 
-  /* ---- Liquid Glass (iOS 26 Spec - Ultra-Luminous Crystal) ---- */
-  --glass-bg-light: rgba(255, 255, 255, 0.68);
-  --glass-bg-medium: rgba(255, 255, 255, 0.58);
-  --glass-bg-strong: rgba(255, 255, 255, 0.82);
-  --glass-bg-dark: color-mix(in oklab, var(--ink-900) 45%, transparent);
-  --glass-border: rgba(255, 255, 255, 0.78);
-  --glass-highlight-top: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.95) 25%, rgba(255, 255, 255, 0.95) 75%, transparent 100%);
-  --glass-highlight-radial: radial-gradient(120% 60% at 20% 0%, rgba(255, 255, 255, 0.6), transparent 60%);
-  --glass-tint-sage: color-mix(in oklab, var(--sage-500) 8%, transparent);
-  --glass-blur-sm: 14px;
-  --glass-blur-md: 26px;
-  --glass-blur-lg: 36px;
-  --glass-sat: 190%;
+  /* ---- Liquid Glass (iOS 26 Spec - True Crystal Glass) ---- */
+  --glass-bg-light: rgba(255, 255, 255, 0.06);
+  --glass-bg-medium: rgba(255, 255, 255, 0.03);
+  --glass-bg-strong: rgba(255, 255, 255, 0.09);
+  --glass-bg-dark: color-mix(in oklab, var(--ink-900) 15%, transparent);
+  --glass-border: rgba(255, 255, 255, 0.32);
+  --glass-highlight-top: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.8) 25%, rgba(255, 255, 255, 0.8) 75%, transparent 100%);
+  --glass-highlight-radial: radial-gradient(120% 60% at 20% 0%, rgba(255, 255, 255, 0.12), transparent 60%);
+  --glass-tint-sage: rgba(255, 255, 255, 0.04);
+  --glass-blur-sm: 6px;
+  --glass-blur-md: 10px;
+  --glass-blur-lg: 16px;
+  --glass-sat: 150%;
 
   /* Specular / sheen / depth — Liquid Glass (iOS 26) */
   --glass-edge-light: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(255, 255, 255, 0.55) 32%,
-    rgba(255, 255, 255, 0.12) 65%,
-    rgba(11, 31, 23, 0.05) 100%
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0.4) 32%,
+    rgba(255, 255, 255, 0.1) 65%,
+    rgba(11, 31, 23, 0.04) 100%
   );
-  --glass-sheen: radial-gradient(130% 85% at 24% 0%, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0) 58%);
-  --glass-depth-inset: inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 2px 0 rgba(11, 31, 23, 0.04);
+  --glass-sheen: radial-gradient(130% 85% at 24% 0%, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 60%);
+  --glass-depth-inset: inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.85), inset 0 -1px 2px 0 rgba(11, 31, 23, 0.03);
 
   /* ---- Elevation (5 niveaux, ink-based, jamais rgba(0,0,0)) ---- */
   --elevation-1: 0 1px 2px -1px rgba(11, 31, 23, 0.04), 0 2px 4px -2px rgba(11, 31, 23, 0.03);
@@ -160,17 +160,17 @@
 
 /* Le cockpit Mon Matériel reste ultra-lumineux et cristallin */
 [data-lkv-material-theme='light'] {
-  --label: #0B1F17;
-  --label-secondary: #2D4A3A;
+  --label: #17402C;
+  --label-secondary: #365233;
   --label-tertiary: #5A7064;
   --bg-primary: #FAF8F5;
   --bg-secondary: #F1EDE6;
   --bg-tertiary: #E4DED3;
-  --glass-bg-light: rgba(255, 255, 255, 0.72);
-  --glass-bg-medium: rgba(255, 255, 255, 0.62);
-  --glass-bg-strong: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.80);
-  --elevation-3: 0 10px 36px -6px rgba(11, 31, 23, 0.08), 0 2px 8px -2px rgba(11, 31, 23, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --glass-bg-light: rgba(255, 255, 255, 0.14);
+  --glass-bg-medium: rgba(255, 255, 255, 0.08);
+  --glass-bg-strong: rgba(255, 255, 255, 0.18);
+  --glass-border: rgba(255, 255, 255, 0.35);
+  --elevation-3: 0 10px 36px -6px rgba(11, 31, 23, 0.06), 0 2px 8px -2px rgba(11, 31, 23, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 /* Accessibilité — reduce-transparency */
@@ -272,31 +272,30 @@
   box-shadow: var(--glass-depth-inset), var(--elevation-3), 0 0 0 2px var(--bg-primary), 0 0 0 4px color-mix(in oklab, var(--sage-500) 60%, transparent);
 }
 
-/* Liquid Glass — lisibilité du texte sur verre très translucide (règle d'accessibilité
-   « text on glass must remain readable »). Ombre légère + léger voile sous les textes. */
+/* Liquid Glass — lisibilité du texte sur verre très translucide */
 .glass h1, .glass h2, .glass h3, .glass p, .glass li, .glass span {
-  text-shadow: 0 1px 1px rgba(250, 248, 245, 0.55), 0 1px 3px rgba(20, 20, 15, 0.18);
+  text-shadow: 0 1px 1px rgba(250, 248, 245, 0.6), 0 1px 2px rgba(20, 20, 15, 0.04);
 }
 
-/* Variantes tone */
+/* Variantes tone ultra-cristallines sans voile */
 .glass.tone-sage {
-  background: color-mix(in oklab, var(--sage-100) 55%, transparent);
-  border-color: color-mix(in oklab, var(--sage-500) 40%, transparent);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .glass.tone-warn {
-  background: color-mix(in oklab, var(--warn-bg) 70%, transparent);
-  border-color: color-mix(in oklab, var(--warn) 35%, transparent);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(200, 154, 59, 0.35);
 }
 
 .glass.tone-danger {
-  background: color-mix(in oklab, var(--danger-bg) 70%, transparent);
-  border-color: color-mix(in oklab, var(--danger) 30%, transparent);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(168, 68, 58, 0.35);
 }
 
 .glass.tone-info {
-  background: color-mix(in oklab, var(--info-bg) 70%, transparent);
-  border-color: color-mix(in oklab, var(--info) 35%, transparent);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(75, 107, 124, 0.35);
 }
 
 /* Variantes blur */
@@ -594,68 +593,62 @@
   box-shadow: var(--elevation-3), 0 0 0 2px var(--bg-primary), 0 0 0 4px color-mix(in oklab, var(--sage-500) 60%, transparent);
 }
 
-/* Primary Capsule Button (Forêt Émeraude avec Biseau Luminous) */
+/* Primary Capsule Button (Verre liquide Vert Forêt) */
 .glass-btn-primary,
 .glass-capsule-btn.primary {
   background: linear-gradient(
     180deg,
-    rgba(34, 86, 60, 0.92) 0%,
-    rgba(15, 43, 30, 0.96) 100%
+    rgba(23, 64, 44, 0.88) 0%,
+    rgba(15, 43, 30, 0.94) 100%
   );
-  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   color: #FAF8F5;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   box-shadow:
-    inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.25),
-    0 8px 26px -4px rgba(11, 31, 23, 0.35),
-    0 2px 6px 0 rgba(0, 0, 0, 0.12);
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.5),
+    0 6px 20px -4px rgba(11, 31, 23, 0.25);
 }
 
 .glass-btn-primary:hover,
 .glass-capsule-btn.primary:hover {
   background: linear-gradient(
     180deg,
-    rgba(45, 107, 74, 0.95) 0%,
-    rgba(23, 64, 44, 0.98) 100%
+    rgba(34, 86, 60, 0.92) 0%,
+    rgba(17, 48, 33, 0.96) 100%
   );
-  border-color: rgba(255, 255, 255, 0.7);
+  border-color: rgba(255, 255, 255, 0.55);
   box-shadow:
-    inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.85),
-    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.25),
-    0 12px 34px -4px rgba(11, 31, 23, 0.45),
-    0 4px 12px 0 rgba(0, 0, 0, 0.18);
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.7),
+    0 8px 24px -4px rgba(11, 31, 23, 0.35);
   color: #ffffff;
 }
 
-/* Secondary Capsule Button (Cristal Dépoli) */
+/* Secondary Capsule Button (Verre liquide translucide) */
 .glass-btn-secondary,
 .glass-capsule-btn.secondary {
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.80) 0%,
-    rgba(255, 255, 255, 0.50) 100%
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.06) 100%
   );
-  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.45);
   color: #17402C;
   box-shadow:
-    inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.95),
-    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.06),
-    0 4px 14px -2px rgba(11, 31, 23, 0.10);
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.7),
+    0 4px 14px -2px rgba(11, 31, 23, 0.06);
 }
 
 .glass-btn-secondary:hover,
 .glass-capsule-btn.secondary:hover {
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.94) 0%,
-    rgba(255, 255, 255, 0.70) 100%
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.14) 100%
   );
-  color: #0B1F17;
-  border-color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.7);
   box-shadow:
-    inset 0 1.5px 2px 0 #ffffff,
-    0 6px 18px -2px rgba(11, 31, 23, 0.15);
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.9),
+    0 6px 18px -2px rgba(11, 31, 23, 0.10);
+  color: #17402C;
 }
 
 .glass-btn-danger {
@@ -726,21 +719,19 @@
   background: rgba(255, 255, 255, 0.30);
 }
 
-/* Sub-cards et micro-widgets vitrés */
+/* Sub-cards et micro-widgets vitrés — ultra-cristallins (sans double-flou) */
 .glass-sub-card {
-  background: rgba(255, 255, 255, 0.48);
-  border: 1px solid rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: var(--r-md);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.85), 0 2px 6px -1px rgba(11, 31, 23, 0.03);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 2px 8px -2px rgba(11, 31, 23, 0.04);
   transition: all var(--dur-fast) var(--ease-glass);
 }
 
 .glass-sub-card:hover {
-  background: rgba(255, 255, 255, 0.65);
-  border-color: rgba(255, 255, 255, 0.9);
-  box-shadow: inset 0 1px 1px #ffffff, 0 4px 12px -2px rgba(11, 31, 23, 0.06);
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 4px 12px -2px rgba(11, 31, 23, 0.06);
 }
 
 /* Mini checkboxes interactifs style iOS 26 Reminders */
@@ -926,5 +917,58 @@
   background: #ffffff;
   color: var(--ink-900);
   box-shadow: var(--elevation-1);
+}
+
+/* ============================================================
+   ENGRAVED LIQUID GLASS BUTTONS
+   Boutons "gravés" DANS le verre : ni relief, ni lévitation.
+   Tous uniformes, translucides, légèrement verdâtres (Sage).
+   ============================================================ */
+.glass.interactive[class*="rounded-full"],
+.glass-capsule-btn,
+.glass-btn {
+  background: color-mix(in oklab, var(--sage-300) 24%, rgba(255, 255, 255, 0.55)) !important;
+  background-image: none !important;
+  border: 1px solid color-mix(in oklab, var(--sage-400) 45%, rgba(255, 255, 255, 0.6)) !important;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
+  transform: none;
+  box-shadow:
+    inset 0 1px 1px rgba(20, 20, 15, 0.08),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.75),
+    inset 0 0 0 1px color-mix(in oklab, var(--sage-300) 22%, transparent) !important;
+}
+
+/* Boutons pleins (bg-sage-800 / text-white) ramenés à la même teinte claire, texte vert foncé lisible */
+.glass.interactive[class*="rounded-full"][class*="bg-sage-800"] {
+  color: var(--sage-700) !important;
+}
+
+/* Capsule / boutons génériques : texte vert foncé uniforme (incl. .primary qui était blanc) */
+.glass-capsule-btn,
+.glass-btn {
+  color: var(--sage-700) !important;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5) !important;
+}
+
+.glass.interactive[class*="rounded-full"]:hover,
+.glass-capsule-btn:hover,
+.glass-btn:hover {
+  transform: none !important;
+  filter: brightness(1.05);
+  background: color-mix(in oklab, var(--sage-300) 28%, rgba(255, 255, 255, 0.6)) !important;
+  background-image: none !important;
+  border-color: color-mix(in oklab, var(--sage-400) 60%, rgba(255, 255, 255, 0.55)) !important;
+  box-shadow:
+    inset 0 1px 2px rgba(20, 20, 15, 0.10),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.8),
+    inset 0 0 0 1px color-mix(in oklab, var(--sage-300) 30%, transparent) !important;
+}
+
+.glass.interactive[class*="rounded-full"]:active,
+.glass-capsule-btn:active,
+.glass-btn:active {
+  transform: scale(0.985) !important;
+  filter: brightness(0.97);
+  transition-duration: var(--dur-xfast);
 }
 

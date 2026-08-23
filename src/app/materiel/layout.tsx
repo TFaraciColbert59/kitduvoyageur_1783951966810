@@ -15,12 +15,12 @@ export default function MaterielLayout({ children }: { children: React.ReactNode
       <BackgroundVideo />
       <div
         className="pointer-events-none fixed inset-x-0 top-0 z-0 h-[60vh]"
-        style={{ background: 'radial-gradient(80% 60% at 50% 0%, rgba(226,235,222,0.55), transparent 70%)' }}
+        style={{ background: 'radial-gradient(80% 60% at 50% 0%, rgba(226,235,222,0.22), transparent 70%)' }}
         aria-hidden="true"
       />
       <div className="relative z-10">
         <Header />
-        <div className="pt-20">{children}</div>
+        <div className="pt-1 md:pt-20">{children}</div>
       </div>
       <GlassCommand />
     </div>

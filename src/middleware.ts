@@ -88,11 +88,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, { status: 301 });
   }
 
-  // ─── /kits → /boutique?type=kit redirect (301) ───────────────────────────────
+  // ─── /kits → /materiel/kits redirect (301) ───────────────────────────────────
   if (pathname === '/kits') {
     const url = request.nextUrl.clone();
-    url.pathname = '/boutique';
-    url.searchParams.set('type', 'kit');
+    url.pathname = '/materiel/kits';
     return NextResponse.redirect(url, { status: 301 });
   }
 

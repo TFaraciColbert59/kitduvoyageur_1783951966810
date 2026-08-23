@@ -2,14 +2,22 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export const DEFAULT_ORDER = ['depart', 'forget', 'kits', 'inventaire', 'alertes', 'dispo'] as const;
+export const DEFAULT_ORDER = [
+  'forget',
+  'dispo',
+  'depart',
+  'kits',
+  'alertes',
+] as const;
 
-/** Normalise un ordre : garde les zones connues, dédoublonne, ajoute les manquantes. */
+export type MaterielWidgetId = (typeof DEFAULT_ORDER)[number];
+
+/** Normalise un ordre : garde les 5 zones connues, dédoublonne, ajoute les manquantes. */
 export function normalizeOrder(order: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const a of [...order, ...DEFAULT_ORDER]) {
-    if (DEFAULT_ORDER.includes(a as (typeof DEFAULT_ORDER)[number]) && !seen.has(a)) {
+    if (DEFAULT_ORDER.includes(a as MaterielWidgetId) && !seen.has(a)) {
       seen.add(a);
       out.push(a);
     }
@@ -36,6 +44,6 @@ export const useMaterielOrder = create<OrderState>()(
           return { order: normalizeOrder(order) };
         }),
     }),
-    { name: 'lkdv-materiel-order' }
+    { name: 'lkdv-materiel-cockpit-order-v3' }
   )
 );

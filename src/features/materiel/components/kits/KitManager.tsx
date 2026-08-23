@@ -10,7 +10,7 @@ import type { InventoryItem } from '@/features/materiel/services/getInventory';
 
 const SEASONS = ['printemps', 'ete', 'automne', 'hiver', 'toute_saison'];
 
-/** W-K — gestion CRUD des kits (créer / éditer / supprimer), connecté Supabase. */
+/** W-K — gestion CRUD des kits (créer / éditer / supprimer), connecté Supabase en Liquid Glass. */
 export function KitManager({ kits, inventory }: { kits: KitListItem[]; inventory: InventoryItem[] }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -78,42 +78,53 @@ export function KitManager({ kits, inventory }: { kits: KitListItem[]; inventory
   };
 
   return (
-    <GlassCard className="p-4" aria-labelledby="kit-manager-title">
-<div className="flex items-center justify-between">
+    <GlassCard tone="sage" className="p-4 sm:p-5" aria-labelledby="kit-manager-title">
+      <div className="flex items-center justify-between">
         <Eyebrow>Gestion des kits</Eyebrow>
-        <button type="button" onClick={openCreate} className="glass interactive h-10 px-4 rounded-full text-sm font-medium text-white bg-sage-800">+ Nouveau kit</button>
+        <button
+          type="button"
+          onClick={openCreate}
+          className="glass-capsule-btn primary"
+        >
+          + Nouveau kit
+        </button>
       </div>
 
       <GlassDrawer open={open} onOpenChange={setOpen} title={editing ? 'Modifier le kit' : 'Nouveau kit'}>
-        <div className="flex flex-col gap-3">
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-[color:var(--label-secondary)]">Nom *</span>
-            <input value={name} onChange={(e) => setName(e.target.value)} className="glass-input" />
+        <div className="flex flex-col gap-3.5">
+          <label className="flex flex-col gap-1 text-xs sm:text-sm">
+            <span className="font-semibold text-[#365233]">Nom *</span>
+            <input value={name} onChange={(e) => setName(e.target.value)} className="glass-input text-[#17402C]" />
           </label>
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-[color:var(--label-secondary)]">Saison</span>
-            <select value={season} onChange={(e) => setSeason(e.target.value)} className="glass-input">
+          <label className="flex flex-col gap-1 text-xs sm:text-sm">
+            <span className="font-semibold text-[#365233]">Saison</span>
+            <select value={season} onChange={(e) => setSeason(e.target.value)} className="glass-input text-[#17402C]">
               {SEASONS.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-[color:var(--label-secondary)]">Description</span>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="glass-input" rows={2} />
+          <label className="flex flex-col gap-1 text-xs sm:text-sm">
+            <span className="font-semibold text-[#365233]">Description</span>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="glass-input text-[#17402C]" rows={2} />
           </label>
           <div>
-            <p className="text-sm text-[color:var(--label-secondary)] mb-1">Articles ({selectedItems.size})</p>
-            <ul className="max-h-64 overflow-y-auto flex flex-col gap-1">
+            <p className="text-xs sm:text-sm font-semibold text-[#365233] mb-1.5">Articles ({selectedItems.size})</p>
+            <ul className="max-h-64 overflow-y-auto flex flex-col gap-1.5">
               {inventory.map((i) => (
-                <li key={i.id}>
-                  <label className="flex items-center gap-2 text-sm text-[color:var(--label)]">
-                    <input type="checkbox" checked={selectedItems.has(i.id)} onChange={() => toggleItem(i.id)} />
-                    {i.name}
+                <li key={i.id} className="glass-sub-card p-2 rounded-xl">
+                  <label className="flex items-center gap-2 text-xs sm:text-sm text-[#17402C] cursor-pointer">
+                    <input type="checkbox" checked={selectedItems.has(i.id)} onChange={() => toggleItem(i.id)} className="rounded border-white/40" />
+                    <span className="truncate">{i.name}</span>
                   </label>
                 </li>
               ))}
             </ul>
           </div>
-          <button type="button" onClick={save} disabled={saving} className="glass interactive h-12 rounded-full text-sm font-medium text-white bg-sage-800 disabled:opacity-40">
+          <button
+            type="button"
+            onClick={save}
+            disabled={saving}
+            className="glass-capsule-btn primary w-full justify-center h-11 mt-2"
+          >
             {saving ? 'Enregistrement…' : 'Enregistrer'}
           </button>
         </div>

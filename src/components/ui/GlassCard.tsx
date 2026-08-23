@@ -15,15 +15,15 @@ interface GlassCardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const toneTint: Record<GlassTone, string> = {
-  neutral: '',
-  sage: 'shadow-[0_0_24px_-6px_rgba(91,127,85,0.25)] border-[rgba(163,196,163,0.7)]',
-  warn: 'shadow-[0_0_24px_-6px_rgba(200,154,59,0.25)] border-[rgba(200,154,59,0.45)]',
-  danger: 'shadow-[0_0_24px_-6px_rgba(168,68,58,0.25)] border-[rgba(168,68,58,0.45)]',
-  info: 'shadow-[0_0_24px_-6px_rgba(75,107,124,0.25)] border-[rgba(75,107,124,0.45)]',
+  neutral: 'border-white/30',
+  sage: 'border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.08),inset_0_1.5px_1px_rgba(255,255,255,0.6)]',
+  warn: 'border-[rgba(200,154,59,0.35)] shadow-[0_8px_32px_rgba(0,0,0,0.08),inset_0_1.5px_1px_rgba(255,255,255,0.6)]',
+  danger: 'border-[rgba(168,68,58,0.35)] shadow-[0_8px_32px_rgba(0,0,0,0.08),inset_0_1.5px_1px_rgba(255,255,255,0.6)]',
+  info: 'border-[rgba(75,107,124,0.35)] shadow-[0_8px_32px_rgba(0,0,0,0.08),inset_0_1.5px_1px_rgba(255,255,255,0.6)]',
 };
 
 export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
-  ({ tone = 'neutral', blur = 'md', interactive = false, as = 'div', ariaLabelledBy, className, children, ...props }, ref) => {
+  ({ tone = 'neutral', blur = 'sm', interactive = false, as = 'div', ariaLabelledBy, className, children, ...props }, ref) => {
     const Comp = motion[as] as React.ElementType;
     return (
       <Comp
@@ -34,7 +34,7 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
         className={cn(
           'glass rounded-[28px]',
           interactive && 'interactive cursor-pointer',
-          `backdrop-blur-${blur === 'sm' ? '[14px]' : blur === 'lg' ? '[36px]' : '[26px]'}`,
+          `backdrop-blur-${blur === 'sm' ? '[8px]' : blur === 'lg' ? '[16px]' : '[10px]'}`,
           toneTint[tone],
           className
         )}

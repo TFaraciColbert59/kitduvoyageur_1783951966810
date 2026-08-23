@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
-import { Compass, Clock, ArrowRight, Backpack } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Clock, ArrowRight, Backpack } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
@@ -18,17 +19,31 @@ interface DepartData {
 }
 
 export function GearCardDepart({ data, className }: { data: DepartData; className?: string }) {
+  const router = useRouter();
+  const href = data.id !== 'none' ? `/materiel/depart/${data.id}` : '/materiel/depart/none';
+  const go = () => router.push(href);
+
   return (
-    <GlassCard as="article" interactive tone="sage" ariaLabelledBy="depart-title" className={className}>
+    <GlassCard
+      as="article"
+      interactive
+      tone="sage"
+      ariaLabelledBy="depart-title"
+      className={className}
+      onClick={go}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          go();
+        }
+      }}
+    >
       <div className="p-5 flex flex-col justify-between h-full gap-4">
         {/* Top Header */}
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-3 pr-10 md:pr-12">
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Compass size={14} className="text-[#17402C]" />
-              <Eyebrow>Prochain départ</Eyebrow>
-            </div>
-            <h2 id="depart-title" className="text-[28px] sm:text-[32px] leading-tight font-display font-bold tracking-tight text-[#0B1F17]">
+            <Eyebrow>Prochain départ</Eyebrow>
+            <h2 id="depart-title" className="text-[28px] sm:text-[32px] leading-tight font-display font-bold tracking-tight text-[#17402C]">
               {data.destination}
             </h2>
           </div>
@@ -40,18 +55,18 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
         {/* Live Countdown in Frosted Capsule */}
         <div className="glass-sub-card p-3.5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/70 shadow-sm border border-white flex items-center justify-center text-[#17402C]">
+            <div className="w-10 h-10 rounded-full bg-white/[0.08] shadow-[inset_0_1px_1px_rgba(255,255,255,0.5)] border border-white/30 flex items-center justify-center text-[#17402C]">
               <Clock size={18} />
             </div>
             <div>
               <span className="text-[11px] font-semibold uppercase tracking-wider text-[#5A7064]">Compte à rebours</span>
-              <div className="text-[24px] sm:text-[28px] font-mono font-bold leading-tight text-[#0B1F17]">
+              <div className="text-[24px] sm:text-[28px] font-mono font-bold leading-tight text-[#17402C]">
                 <CountdownLive target={data.startsAt} />
               </div>
             </div>
           </div>
           {data.totalWeightKg !== undefined && data.totalWeightKg > 0 && (
-            <div className="hidden sm:flex flex-col items-end border-l border-white/60 pl-4">
+            <div className="hidden sm:flex flex-col items-end border-l border-white/30 pl-4">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-[#5A7064]">Poids du kit</span>
               <div className="flex items-center gap-1.5 text-[18px] font-mono font-bold text-[#17402C]">
                 <Backpack size={16} />
@@ -63,9 +78,9 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
 
         {/* Progress & Quick Metrics */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs font-semibold text-[#2D4A3A]">
+          <div className="flex items-center justify-between text-xs font-semibold text-[#365233]">
             <span>Progression du pack</span>
-            <span className="font-mono">{data.readinessPct}% préparé</span>
+            <span className="font-mono text-[#17402C]">{data.readinessPct}% préparé</span>
           </div>
           <ProgressBar
             value={data.readinessPct}
@@ -82,6 +97,7 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
           {data.id !== 'none' ? (
             <Link
               href={`/materiel/depart/${data.id}`}
+              onClick={(e) => e.stopPropagation()}
               className="glass-capsule-btn primary"
             >
               <span>Ouvrir le cockpit</span>
@@ -89,7 +105,8 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
             </Link>
           ) : (
             <Link
-              href="/materiel/kits"
+              href="/materiel/depart/none"
+              onClick={(e) => e.stopPropagation()}
               className="glass-capsule-btn primary"
             >
               <span>Préparer</span>

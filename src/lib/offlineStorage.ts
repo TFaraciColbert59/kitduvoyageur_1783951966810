@@ -6,6 +6,8 @@
  *   - "routes"  : clé = routeId (string), valeur = OfflineRoute
  */
 
+import { newId } from '@/lib/uuid';
+
 const DB_NAME = 'lkdv-offline';
 const DB_VERSION = 2; // Incremented for new stores
 const STORE_ROUTES = 'routes';
@@ -185,7 +187,7 @@ export async function enqueueOfflineAction(action: Omit<OfflineAction, 'id' | 't
   const db = await openDB();
   const fullAction: OfflineAction = {
     ...action,
-    id: crypto.randomUUID(),
+    id: newId(),
     timestamp: Date.now(),
   };
   await storePut(db, STORE_OFFLINE_ACTIONS, fullAction);

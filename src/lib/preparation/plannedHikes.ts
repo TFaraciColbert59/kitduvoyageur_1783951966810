@@ -1,3 +1,5 @@
+import { newId } from '@/lib/uuid';
+
 /**
  * LKDV — Planned Hikes Manager
  * Gestion des randonnées planifiées enregistrées depuis le préparateur ou explorateur
@@ -101,7 +103,7 @@ export function savePlannedHike(hikeData: Omit<PlannedHike, 'id' | 'createdAt'>)
   const all = getPlannedHikes();
   const newHike: PlannedHike = {
     ...hikeData,
-    id: crypto.randomUUID(),
+    id: newId(),
     createdAt: new Date().toISOString(),
   };
   const updated = [newHike, ...all.filter((h) => h.routeId !== hikeData.routeId)];

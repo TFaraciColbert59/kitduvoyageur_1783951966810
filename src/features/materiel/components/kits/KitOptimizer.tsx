@@ -17,7 +17,7 @@ interface OptimizeResult {
   score: number;
 }
 
-/** W-K-5 KitOptimizer — optimise un kit via /api/materiel/optimize (SSE). */
+/** W-K-5 KitOptimizer — optimise un kit via /api/materiel/optimize en Liquid Glass. */
 export function KitOptimizer({ kits }: { kits: KitListItem[] }) {
   const active = kits.filter((k) => !k.is_trashed);
   const [kitId, setKitId] = useState(active[0]?.id ?? '');
@@ -67,11 +67,16 @@ export function KitOptimizer({ kits }: { kits: KitListItem[] }) {
   }) : null;
 
   return (
-    <GlassCard as="article" ariaLabelledBy="optimizer-title" className="p-4">
+    <GlassCard as="article" tone="sage" ariaLabelledBy="optimizer-title" className="p-4 sm:p-5">
       <Eyebrow>Optimiseur IA</Eyebrow>
-      <h3 id="optimizer-title" className="sr-only">Optimisation de kit par IA</h3>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <select value={kitId} onChange={(e) => setKitId(e.target.value)} aria-label="Kit à optimiser" className="glass-input flex-1 min-w-[140px]">
+      <h3 id="optimizer-title" className="font-display font-bold text-[20px] text-[#17402C] mt-0.5 mb-3">Optimisation intelligente</h3>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <select
+          value={kitId}
+          onChange={(e) => setKitId(e.target.value)}
+          aria-label="Kit à optimiser"
+          className="glass-input flex-1 min-w-[140px] text-xs sm:text-sm text-[#17402C]"
+        >
           {active.map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
         </select>
         <input
@@ -79,23 +84,28 @@ export function KitOptimizer({ kits }: { kits: KitListItem[] }) {
           onChange={(e) => setGoal(e.target.value)}
           placeholder="Objectif (ex: alléger le kit)"
           aria-label="Objectif d'optimisation"
-          className="glass-input flex-1 min-w-[140px]"
+          className="glass-input flex-1 min-w-[140px] text-xs sm:text-sm text-[#17402C]"
         />
-        <button type="button" onClick={run} disabled={loading} className="glass interactive h-11 px-4 rounded-full text-sm font-medium text-white bg-sage-800 disabled:opacity-40">
+        <button
+          type="button"
+          onClick={run}
+          disabled={loading}
+          className="glass-capsule-btn primary shrink-0 h-10 justify-center"
+        >
           {loading ? 'Analyse…' : 'Optimiser ✨'}
         </button>
       </div>
 
-      {error && <p className="mt-3 text-sm text-danger">{error}</p>}
+      {error && <p className="mt-3 text-xs text-[#A8443A]">{error}</p>}
 
       {result && diff && (
-        <div className="mt-3 flex flex-col gap-3">
+        <div className="mt-4 glass-sub-card p-3.5 rounded-2xl flex flex-col gap-2.5">
           <div className="flex flex-wrap gap-2">
             <Badge tone="sage">Score {result.score ?? diff.score}/100</Badge>
             <Badge tone="info">{(diff.beforeG / 1000).toFixed(1)} → {(diff.afterG / 1000).toFixed(1)} kg</Badge>
           </div>
-          <p className="text-sm text-[color:var(--label)]">{result.analysis}</p>
-          {diffSummary(diff).map((s) => <p key={s} className="text-xs text-[color:var(--label-secondary)]">{s}</p>)}
+          <p className="text-xs sm:text-sm text-[#17402C] leading-relaxed">{result.analysis}</p>
+          {diffSummary(diff).map((s) => <p key={s} className="text-xs text-[#365233] font-medium">{s}</p>)}
         </div>
       )}
     </GlassCard>

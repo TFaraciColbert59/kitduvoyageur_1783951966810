@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { PackageCheck, Plus, CheckCircle2 } from 'lucide-react';
+import { Plus, CheckCircle2 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { ProgressBar } from '@/components/ui/ProgressBar';
@@ -22,16 +22,13 @@ export function GearCardInventaire({ data, className }: { data: InventaireData; 
         {/* Header with Title & Large Metric */}
         <div className="flex items-start justify-between">
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <PackageCheck size={14} className="text-[#17402C]" />
-              <Eyebrow>Catalogue personnel</Eyebrow>
-            </div>
-            <h2 id="inv-title" className="text-[20px] font-display font-bold text-[#0B1F17]">
+            <Eyebrow>Catalogue personnel</Eyebrow>
+            <h2 id="inv-title" className="text-[20px] font-display font-bold text-[#17402C]">
               Inventaire
             </h2>
           </div>
           <div className="text-right">
-            <span className="text-[36px] font-mono font-bold leading-none text-[#0B1F17]">
+            <span className="text-[36px] font-mono font-bold leading-none text-[#17402C]">
               {data.count}
             </span>
             <span className="block text-[10.5px] font-semibold uppercase tracking-wider text-[#5A7064]">
@@ -43,7 +40,7 @@ export function GearCardInventaire({ data, className }: { data: InventaireData; 
         {/* Condition Split Cards */}
         <div className="grid grid-cols-2 gap-2">
           <div className="glass-sub-card p-2.5 flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-[#17402C]/10 flex items-center justify-center text-[#17402C] flex-shrink-0">
+            <div className="w-7 h-7 rounded-full bg-white/[0.08] border border-white/25 flex items-center justify-center text-[#17402C] flex-shrink-0 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]">
               <CheckCircle2 size={15} />
             </div>
             <div className="truncate">
@@ -52,21 +49,21 @@ export function GearCardInventaire({ data, className }: { data: InventaireData; 
             </div>
           </div>
           <div className="glass-sub-card p-2.5 flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-stone-100 flex items-center justify-center text-[#5A7064] flex-shrink-0">
+            <div className="w-7 h-7 rounded-full bg-white/[0.08] border border-white/25 flex items-center justify-center text-[#5A7064] flex-shrink-0 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]">
               <span className="text-[10px] font-bold font-mono">0</span>
             </div>
             <div className="truncate">
               <span className="block text-[10px] uppercase font-semibold text-[#5A7064]">En commande</span>
-              <span className="text-[13px] font-mono font-bold text-[#3F3B34]">{data.orderedCount || 0}</span>
+              <span className="text-[13px] font-mono font-bold text-[#365233]">{data.orderedCount || 0}</span>
             </div>
           </div>
         </div>
 
         {/* Good Condition Progress Bar */}
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs font-semibold text-[#2D4A3A]">
+          <div className="flex items-center justify-between text-xs font-semibold text-[#365233]">
             <span>Santé de l&apos;inventaire</span>
-            <span className="font-mono">{data.goodConditionPct}%</span>
+            <span className="font-mono text-[#17402C]">{data.goodConditionPct}%</span>
           </div>
           <ProgressBar value={data.goodConditionPct} label="Objets en bon état" tone={data.goodConditionPct >= 80 ? 'sage' : 'warn'} />
         </div>

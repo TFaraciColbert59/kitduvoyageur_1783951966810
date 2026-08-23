@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { UserProfile } from '@/lib/mock/compte-marceline';
+import { newId } from '@/lib/uuid';
 
 // ─────────────────────────────────────────────
 // Types
@@ -173,7 +174,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
 
   // Generate unique idempotency key
   const [idempotencyKey, setIdempotencyKey] = useState<string>(() => {
-    return typeof window !== 'undefined' ? crypto.randomUUID() : '';
+    return typeof window !== 'undefined' ? newId() : '';
   });
 
   // ─────────────────────────────────────────────
@@ -388,7 +389,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
       setIban('');
       setBic('');
       setPaypalEmail('');
-      setIdempotencyKey(crypto.randomUUID());
+      setIdempotencyKey(newId());
 
       // Refresh real balances
       await fetchData();
