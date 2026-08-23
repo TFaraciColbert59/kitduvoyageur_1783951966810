@@ -1,0 +1,81 @@
+'use client';
+import Link from 'next/link';
+import { Check, ArrowRight } from 'lucide-react';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { Eyebrow } from '@/components/ui/Eyebrow';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+
+interface ForgetData {
+  forgetRemaining: number;
+  checkedItems: number;
+  totalItems: number;
+  nextDepartLabel: string | null;
+  sampleItems?: { name: string; is_checked: boolean }[];
+}
+
+export function GearCardForget({ data, className }: { data: ForgetData; className?: string }) {
+  const pct = data.totalItems > 0 ? Math.round((data.checkedItems / data.totalItems) * 100) : 100;
+  const items = data.sampleItems && data.sampleItems.length > 0 ? data.sampleItems : [
+    { name: 'Tente & Bivouac', is_checked: true },
+    { name: 'Gourde filtrante 1L', is_checked: false },
+    { name: 'Trousse de secours', is_checked: false },
+  ];
+
+  return (
+    <GlassCard as="article" interactive ariaLabelledBy="forget-title" className={className}>
+      <div className="p-3.5 sm:p-5 flex flex-col justify-between h-full gap-3 sm:gap-4">
+        {/* Header with Title & Large Metric */}
+        <div className="flex items-start justify-between pr-8 md:pr-10">
+          <div className="space-y-0.5 sm:space-y-1">
+            <Eyebrow>Checklist</Eyebrow>
+            <h2 id="forget-title" className="text-[15px] sm:text-[20px] font-display font-bold text-[#17402C] leading-tight">
+              À ne pas oublier
+            </h2>
+          </div>
+          <div className="text-right shrink-0">
+            <span className={`text-[24px] sm:text-[36px] font-mono font-bold leading-none ${data.forgetRemaining === 0 ? 'text-[#17402C]' : 'text-[#A8443A]'}`}>
+              {data.forgetRemaining}
+            </span>
+            <span className="block text-[9px] sm:text-[10.5px] font-semibold uppercase tracking-wider text-[#5A7064]">
+              {data.forgetRemaining === 0 ? 'Tout prêt' : 'restant(s)'}
+            </span>
+          </div>
+        </div>
+
+        {/* Mini Checklist List */}
+        <div className="glass-sub-card p-2 sm:p-2.5 flex flex-col gap-1.5 sm:gap-2">
+          {items.slice(0, 3).map((item, idx) => (
+            <div key={idx} className="flex items-center gap-2 px-1 py-0.5 rounded-lg text-[11px] sm:text-xs font-medium text-[#17402C]">
+              <span className={`glass-check-circle ${item.is_checked ? 'checked' : ''}`}>
+                {item.is_checked && <Check size={10} strokeWidth={3} />}
+              </span>
+              <span className={`flex-1 truncate ${item.is_checked ? 'line-through opacity-60 text-[#365233]' : ''}`}>
+                {item.name}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Progress Bar */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-[#365233]">
+            <span>Complétude</span>
+            <span className="font-mono text-[#17402C]">{pct}%</span>
+          </div>
+          <ProgressBar value={pct} label="Checklist de départ" tone={pct === 100 ? 'sage' : 'warn'} />
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-0.5">
+          <span className="text-[10px] sm:text-xs text-[#5A7064] truncate max-w-[110px] sm:max-w-[140px]">
+            {data.nextDepartLabel ?? 'Aucun départ'}
+          </span>
+          <Link href="/materiel/forget" className="glass-capsule-btn secondary text-[10px] sm:text-xs h-6.5 sm:h-7 px-2.5">
+            <span>Voir tout</span>
+            <ArrowRight size={12} />
+          </Link>
+        </div>
+      </div>
+    </GlassCard>
+  );
+}

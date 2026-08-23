@@ -40,10 +40,10 @@ export default function TabEquipement() {
 
         <div className="flex items-center gap-2">
           <Link
-            href="/mon-materiel"
+            href="/compte"
             className="px-4 py-2.5 rounded-xl bg-[#F4F1EB] hover:bg-[#EBE7DF] text-[#0B1F17] text-xs font-bold transition-colors"
           >
-            Gérer mon sac
+            Mon Compte
           </Link>
           <Link
             href="/boutique"

@@ -94,7 +94,7 @@ export default function ProductCard({
   const { triggerHaptic } = useHapticFeedback();
   const handleDelete = onDelete || onRemoveFromEquipment;
 
-  const productUrl = product.slug ? `/produit/${product.slug}` : `/mon-materiel/${product.id}`;
+  const productUrl = product.slug ? `/produit/${product.slug}` : `/explorer`;
   const cond = product.condition ? CONDITION_BADGES[product.condition] || null : null;
 
   /* ──────────────────────────────────────────────────────────────────────────

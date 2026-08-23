@@ -9,6 +9,7 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import WeightGauge from '@/components/WeightGauge';
 import TopoSeparator from '@/components/TopoSeparator';
 import Icon from '@/components/ui/AppIcon';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { saveCart, getCart } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 
@@ -403,190 +404,169 @@ export default function KitDetailPage() {
         </div>
       </div>
 
-      {/* ── MOBILE ── */}
+      {/* ── MOBILE (COCKPIT LIQUID GLASS) ── */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <div style={{ padding: '0' }}>
-            {/* Mobile Hero */}
-            <div style={{ position: 'relative', height: '240px', overflow: 'hidden' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={kit.image} alt={kit.alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(11,31,23,0.9) 0%, rgba(11,31,23,0.3) 60%, transparent 100%)' }} />
-              <div style={{ position: 'absolute', bottom: '16px', left: '16px', right: '16px' }}>
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', padding: '2px 8px', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '4px', color: 'white', background: 'rgba(255,255,255,0.1)' }}>
-                    {kit.difficulte.toUpperCase()}
-                  </span>
-                  <span style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', padding: '2px 8px', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '4px', color: 'white', background: 'rgba(255,255,255,0.1)' }}>
-                    {kit.activite.toUpperCase()}
-                  </span>
-                </div>
-                <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'white', lineHeight: '1.2', marginBottom: '4px' }}>{kit.nom}</h1>
-                <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>📍 {kit.destination} · 🗓 {kit.saison}</p>
+          <div className="px-3 pt-3 pb-24 flex flex-col gap-3.5">
+            {/* Header with back link */}
+            <header className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#5A7064]">
+                  {kit.difficulte} · {kit.activite}
+                </span>
+                <h1 className="font-display font-bold text-[20px] tracking-tight text-[#17402C] truncate">
+                  {kit.nom}
+                </h1>
               </div>
-            </div>
+              <Link
+                href="/kits"
+                className="glass interactive h-7.5 px-3 rounded-full flex items-center text-xs font-semibold text-[#17402C] border border-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)] shrink-0"
+              >
+                ← Kits
+              </Link>
+            </header>
 
-            {/* Content */}
-            <div style={{ padding: '16px' }}>
-              <p style={{ fontSize: '14px', color: '#6B7A72', lineHeight: '1.6', marginBottom: '16px' }}>{kit.description}</p>
+            {/* Mobile Hero Card */}
+            <GlassCard tone="sage" className="overflow-hidden p-0 border border-white/40">
+              <div className="relative h-44 w-full">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={kit.image} alt={kit.alt} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#17402C]/90 via-[#17402C]/30 to-transparent" />
+                <div className="absolute bottom-3 left-3 right-3 text-white">
+                  <p className="text-xs font-medium text-white/90">📍 {kit.destination} · 🗓 {kit.saison}</p>
+                </div>
+              </div>
+            </GlassCard>
 
-              {/* Tabs */}
-              <div style={{ display: 'flex', gap: '4px', marginBottom: '16px', background: '#F4F1EA', borderRadius: '8px', padding: '4px', border: '1px solid rgba(11,31,23,0.06)' }}>
-                {(['composition', 'conseils'] as const).map((tab) => (
+            <p className="text-xs text-[#365233] leading-relaxed px-1">{kit.description}</p>
+
+            {/* Animated Tab Pill Selector */}
+            <div className="p-1 rounded-full bg-white/[0.08] border border-white/25 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.4)] flex items-center gap-1">
+              {(['composition', 'conseils'] as const).map((tab) => {
+                const isActive = activeTab === tab;
+                return (
                   <button
                     key={tab}
+                    type="button"
                     onClick={() => setActiveTab(tab)}
-                    style={{
-                      flex: 1,
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      fontSize: '13px',
-                      fontWeight: activeTab === tab ? 700 : 500,
-                      color: activeTab === tab ? 'white' : '#6B7A72',
-                      background: activeTab === tab ? '#17402C' : 'transparent',
-                      cursor: 'pointer',
-                    }}
+                    className="relative flex-1 py-1.5 px-3 rounded-full text-xs font-bold text-center transition-colors select-none"
                   >
-                    {tab === 'composition' ? 'Composition' : 'Conseils'}
+                    {isActive && (
+                      <span
+                        className="absolute inset-0 rounded-full bg-[#17402C]/12 border border-[#17402C]/20 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.8),0_2px_8px_rgba(23,64,44,0.08)]"
+                      />
+                    )}
+                    <span className={`relative z-10 ${isActive ? 'text-[#17402C] font-extrabold' : 'text-[#365233]/70'}`}>
+                      {tab === 'composition' ? 'Composition' : 'Conseils'}
+                    </span>
                   </button>
+                );
+              })}
+            </div>
+
+            {activeTab === 'composition' && (
+              <div className="flex flex-col gap-2">
+                {(kit.items ?? []).length === 0 ? (
+                  <p className="text-xs text-[#5A7064] p-4 text-center">Aucun article dans ce kit.</p>
+                ) : (
+                  (kit.items ?? []).map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => toggleItem(item.id)}
+                      className={`glass-sub-card p-3 flex items-center gap-3 cursor-pointer rounded-2xl transition-all ${
+                        selectedItems.has(item.id) ? 'border-[#17402C]/40 bg-white/25' : ''
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 border transition-all ${
+                        selectedItems.has(item.id) ? 'bg-[#17402C] border-[#17402C] text-white' : 'border-white/40 bg-white/10'
+                      }`}>
+                        {selectedItems.has(item.id) && <span className="text-[10px] font-bold">✓</span>}
+                      </div>
+                      <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-white/30">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={item.image} alt={item.alt} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold text-xs text-[#17402C] truncate">{item.nom}</span>
+                          {item.essentiel && (
+                            <span className="text-[9px] font-mono px-1.5 py-0.5 bg-[#17402C]/10 text-[#17402C] rounded-full border border-[#17402C]/20 font-bold">
+                              Essentiel
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-[#5A7064] mt-0.5">{item.categorie} · {item.poids_g}g</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-xs font-mono font-bold text-[#17402C]">{(item.prix_cents / 100).toFixed(2)} €</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {activeTab === 'conseils' && (
+              <div className="flex flex-col gap-2">
+                {(kit.conseils ?? []).length === 0 ? (
+                  <p className="text-xs text-[#5A7064] p-4 text-center">Aucun conseil disponible pour ce kit.</p>
+                ) : (
+                  (kit.conseils ?? []).map((conseil, i) => (
+                    <div key={i} className="glass-sub-card p-3 rounded-2xl flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-[#17402C]/10 border border-[#17402C]/20 flex items-center justify-center shrink-0">
+                        <span className="text-[10px] font-mono font-bold text-[#17402C]">{String(i + 1).padStart(2, '0')}</span>
+                      </div>
+                      <p className="text-xs text-[#365233] leading-relaxed">{conseil}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Mobile Summary CTA */}
+            <GlassCard tone="sage" className="p-4 rounded-2xl flex flex-col gap-3 mt-2">
+              <h3 className="font-display font-bold text-sm text-[#17402C]">Récapitulatif</h3>
+              <div className="flex justify-between text-xs text-[#5A7064]">
+                <span>Articles sélectionnés</span>
+                <span className="font-mono font-bold text-[#17402C]">{selectedItemsData.length}</span>
+              </div>
+              <div className="flex justify-between text-xs text-[#5A7064]">
+                <span>Poids total</span>
+                <span className="font-mono font-bold text-[#17402C]">{(totalPoids / 1000).toFixed(2)} kg</span>
+              </div>
+              <div className="flex justify-between text-sm font-bold pt-2 border-t border-white/20">
+                <span className="text-[#17402C]">Total</span>
+                <span className="font-mono text-[#17402C]">{(totalPrix / 100).toFixed(2)} €</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddAllToCart}
+                disabled={selectedItemsData.length === 0}
+                className="glass-capsule-btn primary w-full justify-center h-11 text-xs mt-1"
+              >
+                {addedToCart ? '✓ Ajouté au panier' : 'Ajouter au panier'}
+              </button>
+            </GlassCard>
+
+            {/* Kit Info */}
+            <GlassCard tone="sage" className="p-4 rounded-2xl flex flex-col gap-2">
+              <h3 className="font-display font-bold text-xs text-[#17402C] mb-1">Détails du kit</h3>
+              <div className="flex flex-col gap-1.5 text-xs">
+                {[
+                  { label: 'Destination', value: kit.destination },
+                  { label: 'Saison', value: kit.saison },
+                  { label: 'Activité', value: kit.activite },
+                  { label: 'Difficulté', value: kit.difficulte },
+                ].map((info) => (
+                  <div key={info.label} className="flex justify-between py-0.5">
+                    <span className="text-[#5A7064]">{info.label}</span>
+                    <span className="font-medium text-[#17402C]">{info.value}</span>
+                  </div>
                 ))}
               </div>
-
-              {activeTab === 'composition' && (
-                <div>
-                  {(kit.items ?? []).length === 0 ? (
-                    <p style={{ fontSize: '13px', color: '#6B7A72' }}>Aucun article dans ce kit.</p>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {(kit.items ?? []).map((item) => (
-                        <div
-                          key={item.id}
-                          onClick={() => toggleItem(item.id)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            padding: '12px',
-                            borderRadius: '12px',
-                            border: selectedItems.has(item.id) ? '1.5px solid #17402C' : '1px solid rgba(11,31,23,0.06)',
-                            background: selectedItems.has(item.id) ? 'rgba(23,64,44,0.05)' : '#F4F1EA',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <div style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '4px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                            border: '2px solid',
-                            borderColor: selectedItems.has(item.id) ? '#17402C' : 'rgba(11,31,23,0.06)',
-                            background: selectedItems.has(item.id) ? '#17402C' : 'transparent',
-                          }}>
-                            {selectedItems.has(item.id) && <span style={{ color: 'white', fontSize: '11px' }}>✓</span>}
-                          </div>
-                          <div style={{ width: '44px', height: '44px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={item.image} alt={item.alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                              <span style={{ fontWeight: 500, fontSize: '13px', color: '#1C2620' }}>{item.nom}</span>
-                              {item.essentiel && (
-                                <span style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', padding: '1px 6px', background: 'rgba(23,64,44,0.1)', color: '#17402C', borderRadius: '4px', border: '1px solid rgba(23,64,44,0.2)' }}>Essentiel</span>
-                              )}
-                              {item.quantite > 1 && (
-                                <span style={{ fontSize: '10px', color: '#6B7A72' }}>×{item.quantite}</span>
-                              )}
-                            </div>
-                            <p style={{ fontSize: '11px', color: '#6B7A72', marginTop: '2px' }}>{item.categorie} · {item.poids_g}g</p>
-                          </div>
-                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#1C2620', fontFamily: 'ui-monospace, monospace' }}>{(item.prix_cents / 100).toFixed(2)} €</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === 'conseils' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {(kit.conseils ?? []).length === 0 ? (
-                    <p style={{ fontSize: '13px', color: '#6B7A72' }}>Aucun conseil disponible pour ce kit.</p>
-                  ) : (
-                    (kit.conseils ?? []).map((conseil, i) => (
-                      <div key={i} style={{ display: 'flex', gap: '12px', padding: '14px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(23,64,44,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <span style={{ fontSize: '11px', fontWeight: 700, color: '#17402C', fontFamily: 'ui-monospace, monospace' }}>{String(i + 1).padStart(2, '0')}</span>
-                        </div>
-                        <p style={{ fontSize: '13px', color: '#6B7A72', lineHeight: '1.5' }}>{conseil}</p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-
-              {/* Mobile Summary CTA */}
-              <div style={{ marginTop: '24px', padding: '16px', background: '#F4F1EA', borderRadius: '16px', border: '1px solid rgba(11,31,23,0.06)' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C2620', marginBottom: '12px' }}>Récapitulatif</h3>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#6B7A72', marginBottom: '8px' }}>
-                  <span>Articles sélectionnés</span>
-                  <span style={{ fontWeight: 600, color: '#1C2620' }}>{selectedItemsData.length}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#6B7A72', marginBottom: '8px' }}>
-                  <span>Poids total</span>
-                  <span style={{ fontWeight: 600, color: '#1C2620' }}>{(totalPoids / 1000).toFixed(2)} kg</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 700, paddingTop: '12px', borderTop: '1px solid rgba(11,31,23,0.06)' }}>
-                  <span style={{ color: '#1C2620' }}>Total</span>
-                  <span style={{ color: '#17402C', fontFamily: 'ui-monospace, monospace' }}>{(totalPrix / 100).toFixed(2)} €</span>
-                </div>
-                <button
-                  onClick={handleAddAllToCart}
-                  disabled={selectedItemsData.length === 0}
-                  style={{
-                    width: '100%',
-                    marginTop: '16px',
-                    padding: '14px 0',
-                    borderRadius: '12px',
-                    border: 'none',
-                    fontSize: '14px',
-                    fontWeight: 700,
-                    color: 'white',
-                    background: addedToCart ? '#2D6B4A' : selectedItemsData.length === 0 ? 'rgba(11,31,23,0.1)' : '#17402C',
-                    cursor: selectedItemsData.length === 0 ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {addedToCart ? '✓ Ajouté au panier' : 'Ajouter au panier'}
-                </button>
-              </div>
-
-              {/* Kit Info */}
-              <div style={{ marginTop: '16px', padding: '16px', background: '#F4F1EA', borderRadius: '16px', border: '1px solid rgba(11,31,23,0.06)' }}>
-                <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#1C2620', marginBottom: '12px' }}>Infos kit</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {[
-                    { label: 'Destination', value: kit.destination },
-                    { label: 'Saison', value: kit.saison },
-                    { label: 'Activité', value: kit.activite },
-                    { label: 'Difficulté', value: kit.difficulte },
-                  ].map((info) => (
-                    <div key={info.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                      <span style={{ color: '#6B7A72' }}>{info.label}</span>
-                      <span style={{ color: '#1C2620', fontWeight: 500 }}>{info.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            </GlassCard>
           </div>
         </MobilePageShell>
-        
       </div>
     </>
   );

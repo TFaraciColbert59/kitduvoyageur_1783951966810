@@ -35,8 +35,7 @@
       "format",
       "serve",
       "type-check",
-      "test",
-      "test:domain"
+      "test:e2e"
     ],
     "warning": "🚨 CRITICAL: DO NOT REMOVE OR MODIFY ABOVE DEPENDENCIES - Required for Next.js 15 TypeScript app functionality"
   },
@@ -49,8 +48,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css,md,json}\"",
     "serve": "next start",
     "type-check": "tsc --noEmit",
-    "test": "tsx src/features/mon-materiel/test/domain.test.ts",
-    "test:domain": "tsx src/features/mon-materiel/test/domain.test.ts",
+    "test": "vitest run",
     "test:e2e": "playwright test",
     "supabase:status": "supabase status"
   },
@@ -59,20 +57,30 @@
     "@capacitor/core": "^8.5.0",
     "@capacitor/ios": "^8.5.0",
     "@dhiwise/component-tagger": "^1.0.15",
+    "@headlessui/react": "^2.2.10",
     "@heroicons/react": "^2.2.0",
+    "@radix-ui/react-dialog": "^1.1.23",
+    "@radix-ui/react-toast": "^1.2.23",
     "@rocketnew/llm-sdk": "^1.1.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/typography": "^0.5.16",
     "@tanstack/react-query": "^5.101.4",
+    "@tanstack/react-virtual": "^3.14.10",
     "@types/web-push": "^3.6.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
+    "dexie": "^4.4.5",
     "framer-motion": "^12.43.0",
     "geojson": "^0.5.0",
     "leaflet": "1.9.4",
     "leaflet.markercluster": "^1.5.3",
     "lucide-react": "^1.7.0",
+    "maplibre-gl": "^6.4.1",
     "next": "15.5.18",
+    "pg": "^8.23.0",
     "react": "19.0.3",
     "react-dom": "19.0.3",
     "react-globe.gl": "^2.38.0",
@@ -80,11 +88,14 @@
     "react-leaflet": "5.0.0",
     "recharts": "^2.15.2",
     "stripe": "^17.7.0",
+    "tailwind-merge": "^3.6.0",
     "three": "^0.185.1",
     "web-push": "^3.6.7",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/eslintrc": "^3",
     "@netlify/plugin-nextjs": "^5.11.1",
     "@playwright/test": "^1.51.1",
@@ -107,6 +118,7 @@
     "tailwindcss-animate": "^1.0.7",
     "ts-node": "^10.9.2",
     "tsx": "^4.7.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.11"
   }
 }

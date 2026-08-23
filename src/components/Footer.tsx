@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 
 const FOOTER_LINKS = [
-  { label: 'Matériel', href: '/mon-materiel' },
   { label: 'Earth', href: '/pays' },
   { label: 'Clubs', href: '/communaute' },
   { label: 'Configurateur IA', href: '/ai-configurator' },

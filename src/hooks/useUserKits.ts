@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { newId } from '@/lib/uuid';
 import { UserEquipmentItem } from '@/hooks/useEquipment';
 
 export interface CustomKitItem {
@@ -279,7 +280,7 @@ export function useUserKits(userEquipment: UserEquipmentItem[] = []) {
         : userEquipment.find((g) => g.name.toLowerCase() === item.item_name.toLowerCase());
 
       return {
-        id: crypto.randomUUID(),
+        id: newId(),
         kit_id: '',
         gear_item_id: matchingGear ? matchingGear.id : item.gear_item_id || null,
         item_name: matchingGear ? matchingGear.name : item.item_name,
@@ -292,7 +293,7 @@ export function useUserKits(userEquipment: UserEquipmentItem[] = []) {
     });
 
     const totalWeight = kitItemsToInsert.reduce((sum, i) => sum + (i.weight_g * i.quantity), 0);
-    const newKitId = crypto.randomUUID();
+    const newKitId = newId();
     const fallbackKit: CustomKit = {
       id: newKitId,
       user_id: user?.id || 'guest',
@@ -490,7 +491,7 @@ export function useUserKits(userEquipment: UserEquipmentItem[] = []) {
       const target = kits.find((k) => k.id === kitId);
       if (!target) return;
       const newItem: CustomKitItem = {
-        id: crypto.randomUUID(),
+        id: newId(),
         kit_id: kitId,
         gear_item_id: gearItem.id,
         item_name: gearItem.name,

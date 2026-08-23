@@ -4,7 +4,6 @@ import React, { useEffect, useState, memo } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '@/contexts/AuthContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useSearchContext } from '@/contexts/SearchContext';
 import LkvIcon from '@/components/ui/LkvIcon';
@@ -35,12 +34,11 @@ const DEFAULT_TABS: Tab[] = [
     matchPaths: ['/explorer', '/carte-interactive', '/hors-ligne'],
   },
   {
-    href: '/mon-materiel',
+    href: '/materiel',
     label: 'Matériel',
     iconName: 'box',
-    ariaLabel: 'Mon matériel et équipement voyageur',
-    matchPaths: ['/mon-materiel'],
-    isHero: true,
+    ariaLabel: 'Mon matériel, kits et prochain départ',
+    matchPaths: ['/materiel', '/materiel/'],
   },
   {
     href: '/communaute',
@@ -63,10 +61,10 @@ const DEFAULT_TABS: Tab[] = [
   },
   {
     href: '/compte',
-    label: 'Compte',
+    label: 'Profil',
     iconName: 'user',
-    ariaLabel: 'Mon compte',
-    matchPaths: ['/compte', '/profil', '/connexion', '/inscription'],
+    ariaLabel: 'Mon compte voyageur',
+    matchPaths: ['/compte', '/connexion', '/inscription', '/profil'],
   },
 ];
 
@@ -101,7 +99,7 @@ const COMMUNITY_TABS: Tab[] = [
   },
 ];
 
-// A memoized tab link to avoid unnecessary re‑renders
+// A memoized tab link — Liquid Glass ultra-translucide & pilule animée glissante
 const TabLink = memo(function TabLink({ tab, isActive, onPress }: { tab: Tab; isActive: boolean; onPress: (href: string) => void }) {
   const { triggerHaptic } = useHapticFeedback();
   const handleClick = () => {
@@ -112,6 +110,7 @@ const TabLink = memo(function TabLink({ tab, isActive, onPress }: { tab: Tab; is
   return (
     <Link
       href={tab.href}
+      prefetch={true}
       onClick={handleClick}
       aria-label={tab.ariaLabel}
       style={{
@@ -121,37 +120,35 @@ const TabLink = memo(function TabLink({ tab, isActive, onPress }: { tab: Tab; is
         justifyContent: 'center',
         gap: '2px',
         textDecoration: 'none',
-        color: isActive ? '#A8C4A2' : 'rgba(255, 255, 255, 0.5)',
         position: 'relative',
-        transition: 'color 0.2s ease',
         userSelect: 'none',
         WebkitTapHighlightColor: 'transparent',
-        width: '44px',
+        width: '56px',
+        height: '48px',
       }}
     >
+      {isActive && (
+        <motion.span
+          layoutId="bottom-tab-active-pill"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: '16px',
+            background: 'rgba(23, 64, 44, 0.10)',
+            border: '1px solid rgba(23, 64, 44, 0.20)',
+            boxShadow: '0 4px 14px -4px rgba(23, 64, 44, 0.20), inset 0 1px 1px rgba(255,255,255,0.7)',
+          }}
+          transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+        />
+      )}
       <motion.div
         whileTap={{ scale: 0.85 }}
         transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', position: 'relative', zIndex: 1 }}
       >
-        <LkvIcon name={tab.iconName} size={18} />
-        <span style={{ fontSize: '8.5px', fontWeight: isActive ? 600 : 500, fontFamily: 'var(--font-mono)', letterSpacing: '-0.02em' }}>{tab.label}</span>
+        <LkvIcon name={tab.iconName} size={20} color={isActive ? '#17402C' : '#365233'} />
+        <span style={{ fontSize: '9px', fontWeight: isActive ? 700 : 600, fontFamily: 'var(--font-mono)', letterSpacing: '-0.02em', whiteSpace: 'nowrap', color: isActive ? '#17402C' : '#365233', opacity: isActive ? 1 : 0.8 }}>{tab.label}</span>
       </motion.div>
-      {isActive && (
-        <motion.div
-          layoutId="tab-indicator"
-          transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-          style={{
-            position: 'absolute',
-            top: '-8px',
-            width: '4px',
-            height: '4px',
-            borderRadius: '50%',
-            background: '#A8C4A2',
-            boxShadow: '0 0 8px rgba(168, 196, 162, 0.8)',
-          }}
-        />
-      )}
     </Link>
   );
 });
@@ -172,23 +169,24 @@ function HamburgerMenu({ menuOpen, setMenuOpen, openSearch, isCommunity }: { men
           width: '32px',
           height: '32px',
           borderRadius: '999px',
-          background: 'rgba(255,255,255,0.1)',
+          background: 'rgba(255, 255, 255, 0.25)',
           backdropFilter: 'blur(16px)',
-          border: '1px solid rgba(255,255,255,0.15)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255, 255, 255, 0.45)',
+          boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.6)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: '#fff',
+          color: '#17402C',
           cursor: 'pointer',
           outline: 'none',
         }}
       >
-        <LkvIcon name="menu" size={14} />
+        <LkvIcon name="menu" size={14} color="#17402C" />
       </motion.button>
       <AnimatePresence>
         {menuOpen && (
           <>
-            {/* Scrim to capture outside taps */}
             <div
               onClick={() => setMenuOpen(false)}
               style={{
@@ -206,18 +204,19 @@ function HamburgerMenu({ menuOpen, setMenuOpen, openSearch, isCommunity }: { men
               style={{
                 position: 'absolute',
                 right: 0,
-                bottom: '44px',
+                bottom: '60px',
                 zIndex: 56,
-                background: 'rgba(11,31,23,0.92)',
-                backdropFilter: 'blur(30px)',
+                background: 'rgba(255, 255, 255, 0.45)',
+                backdropFilter: 'blur(12px) saturate(160%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(160%)',
                 borderRadius: '16px',
-                border: '1px solid rgba(255,255,255,0.12)',
-                boxShadow: '0 12px 32px rgba(0,0,0,0.4)',
+                border: '1px solid rgba(255, 255, 255, 0.5)',
+                boxShadow: '0 16px 36px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255,255,255,0.7)',
                 padding: '8px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '6px',
-                minWidth: '130px',
+                minWidth: '135px',
               }}
             >
               {/* Search */}
@@ -234,20 +233,20 @@ function HamburgerMenu({ menuOpen, setMenuOpen, openSearch, isCommunity }: { men
                   gap: '8px',
                   padding: '8px 10px',
                   borderRadius: '10px',
-                  background: 'rgba(255,255,255,0.06)',
+                  background: 'rgba(23, 64, 44, 0.06)',
                   border: 'none',
-                  color: '#fff',
+                  color: '#17402C',
                   fontSize: '13px',
-                  fontWeight: 500,
+                  fontWeight: 600,
                   cursor: 'pointer',
                   textAlign: 'left',
                 }}
               >
-                <LkvIcon name="search" size={16} />
+                <LkvIcon name="search" size={16} color="#17402C" />
                 Recherche
               </button>
 
-              {/* Enregistrés / Favoris (Visible in Community Section) */}
+              {/* Enregistrés / Favoris */}
               {isCommunity && (
                 <Link
                   href="/carnets?tab=favorites"
@@ -262,14 +261,14 @@ function HamburgerMenu({ menuOpen, setMenuOpen, openSearch, isCommunity }: { men
                     gap: '8px',
                     padding: '8px 10px',
                     borderRadius: '10px',
-                    background: 'rgba(255,255,255,0.06)',
+                    background: 'rgba(23, 64, 44, 0.06)',
                     textDecoration: 'none',
-                    color: '#A8C4A2',
+                    color: '#17402C',
                     fontSize: '13px',
                     fontWeight: 600,
                   }}
                 >
-                  <LkvIcon name="bookmark" size={16} color="#A8C4A2" />
+                  <LkvIcon name="bookmark" size={16} color="#17402C" />
                   Enregistrés
                 </Link>
               )}
@@ -288,20 +287,20 @@ function HamburgerMenu({ menuOpen, setMenuOpen, openSearch, isCommunity }: { men
                   gap: '8px',
                   padding: '8px 10px',
                   borderRadius: '10px',
-                  background: 'rgba(255,255,255,0.06)',
+                  background: 'rgba(23, 64, 44, 0.06)',
                   textDecoration: 'none',
-                  color: '#fff',
+                  color: '#17402C',
                   fontSize: '13px',
-                  fontWeight: 500,
+                  fontWeight: 600,
                   position: 'relative',
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                   <path d="M13.7 21a2 2 0 0 1-3.4 0" />
                 </svg>
                 Alertes
-                <span style={{ position: 'absolute', top: '10px', right: '10px', width: '6px', height: '6px', borderRadius: '50%', background: '#A8C4A2' }} aria-hidden="true" />
+                <span style={{ position: 'absolute', top: '10px', right: '10px', width: '6px', height: '6px', borderRadius: '50%', background: '#5B7F55' }} aria-hidden="true" />
               </Link>
               {/* Cart */}
               <Link
@@ -317,36 +316,38 @@ function HamburgerMenu({ menuOpen, setMenuOpen, openSearch, isCommunity }: { men
                   gap: '8px',
                   padding: '8px 10px',
                   borderRadius: '10px',
-                  background: 'rgba(255,255,255,0.06)',
+                  background: 'rgba(23, 64, 44, 0.06)',
                   textDecoration: 'none',
-                  color: '#fff',
+                  color: '#17402C',
                   fontSize: '13px',
-                  fontWeight: 500,
+                  fontWeight: 600,
                   position: 'relative',
                 }}
               >
-                <LkvIcon name="bag" size={16} />
+                <LkvIcon name="bag" size={16} color="#17402C" />
                 Panier
                 {(() => {
                   const cart = getCart();
-                  const count = cart.reduce((acc, i) => acc + i.quantity, 0);
-                  return count > 0 ? (
-                    <span
-                      style={{
-                        marginLeft: 'auto',
-                        padding: '1px 6px',
-                        borderRadius: '999px',
-                        background: '#A8C4A2',
-                        color: '#0B1F17',
-                        fontSize: '10px',
+                  const count = Array.isArray(cart) ? cart.reduce((sum: number, item: { quantity?: number }) => sum + (item.quantity || 0), 0) : 0;
+                  if (count > 0) {
+                    return (
+                      <span style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        background: '#17402C',
+                        color: '#fff',
+                        fontSize: '9px',
                         fontWeight: 700,
-                        fontFamily: 'var(--font-mono)',
-                      }}
-                      aria-hidden="true"
-                    >
-                      {count > 9 ? '9+' : count}
-                    </span>
-                  ) : null;
+                        padding: '1px 5px',
+                        borderRadius: '999px',
+                        fontFamily: 'monospace',
+                      }}>
+                        {count}
+                      </span>
+                    );
+                  }
+                  return null;
                 })()}
               </Link>
             </motion.div>
@@ -361,7 +362,6 @@ function BottomTabBar() {
   const pathname = usePathname();
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
-  const { loading } = useAuth();
   const { openSearch } = useSearchContext();
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -371,7 +371,6 @@ function BottomTabBar() {
     setMounted(true);
   }, []);
 
-  // Reset pressed visual state when navigation changes
   useEffect(() => {
     setPressedTab(null);
   }, [pathname]);
@@ -410,29 +409,30 @@ function BottomTabBar() {
     }
   };
 
-  if (loading || !mounted) {
+  if (!mounted) {
     return (
-      <nav role="navigation" aria-label="Chargement de la navigation" className="md:hidden" style={{ position: 'fixed', left: '10px', right: '10px', bottom: 'calc(4px + env(safe-area-inset-bottom))', zIndex: 50 }}>
+      <nav role="navigation" aria-label="Chargement de la navigation" className="md:hidden" style={{ position: 'fixed', left: '8px', right: '8px', bottom: '0px', paddingBottom: 'env(safe-area-inset-bottom, 0px)', zIndex: 50 }}>
         <div style={{
-          height: '52px',
-          background: 'rgba(20, 40, 30, 0.65)',
-          backdropFilter: 'blur(40px) saturate(200%)',
-          WebkitBackdropFilter: 'blur(40px) saturate(200%)',
-          borderRadius: '999px',
-          borderTop: '1px solid rgba(255,255,255,0.25)',
-          borderLeft: '1px solid rgba(255,255,255,0.12)',
-          borderRight: '1px solid rgba(255,255,255,0.12)',
-          borderBottom: '1px solid rgba(255,255,255,0.05)',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.35), inset 0 1px 6px rgba(255,255,255,0.1)',
+          height: '56px',
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.08) 100%)',
+          backdropFilter: 'blur(24px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+          borderRadius: '24px',
+          borderTop: '1.5px solid rgba(255,255,255,0.65)',
+          borderLeft: '1px solid rgba(255,255,255,0.35)',
+          borderRight: '1px solid rgba(255,255,255,0.35)',
+          borderBottom: '1px solid rgba(255,255,255,0.15)',
+          boxShadow: '0 12px 36px rgba(0,0,0,0.08), inset 0 1px 1.5px rgba(255,255,255,0.7)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-around',
           padding: '0 8px',
+          gap: '2px',
         }}>
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="animate-pulse" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', width: '44px' }}>
-              <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }} />
-              <div style={{ width: '26px', height: '5px', borderRadius: '4px', background: 'rgba(255,255,255,0.2)' }} />
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="animate-pulse" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', width: '56px', height: '48px' }}>
+              <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(23, 64, 44, 0.08)' }} />
+              <div style={{ width: '30px', height: '5px', borderRadius: '4px', background: 'rgba(23, 64, 44, 0.08)' }} />
             </div>
           ))}
         </div>
@@ -441,26 +441,26 @@ function BottomTabBar() {
   }
 
   return (
-    <nav role="navigation" aria-label="Navigation principale" className="md:hidden" style={{ position: 'fixed', left: '10px', right: '10px', bottom: 'calc(4px + env(safe-area-inset-bottom))', zIndex: 50 }}>
+    <nav role="navigation" aria-label="Navigation principale" className="md:hidden" style={{ position: 'fixed', left: '8px', right: '8px', bottom: '0px', paddingBottom: 'env(safe-area-inset-bottom, 0px)', zIndex: 50 }}>
       <div
         style={{
-          height: '52px',
-          background: 'rgba(20, 40, 30, 0.65)',
-          backdropFilter: 'blur(40px) saturate(200%)',
-          WebkitBackdropFilter: 'blur(40px) saturate(200%)',
-          borderRadius: '999px',
-          borderTop: '1px solid rgba(255,255,255,0.25)',
-          borderLeft: '1px solid rgba(255,255,255,0.12)',
-          borderRight: '1px solid rgba(255,255,255,0.12)',
-          borderBottom: '1px solid rgba(255,255,255,0.05)',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.35), inset 0 1px 6px rgba(255,255,255,0.1)',
+          height: '56px',
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.03) 100%)',
+          backdropFilter: 'blur(8px) saturate(150%)',
+          WebkitBackdropFilter: 'blur(8px) saturate(150%)',
+          borderRadius: '24px',
+          borderTop: '1.5px solid rgba(255,255,255,0.65)',
+          borderLeft: '1px solid rgba(255,255,255,0.30)',
+          borderRight: '1px solid rgba(255,255,255,0.30)',
+          borderBottom: '1px solid rgba(255,255,255,0.12)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.06), inset 0 1px 1.5px rgba(255,255,255,0.6)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-around',
-          padding: '0 8px',
+          padding: '0 10px',
+          gap: '2px',
         }}
       >
-        {/* Left-most back arrow when in community section */}
         {isCommunitySection && (
           <motion.button
             type="button"
@@ -475,15 +475,15 @@ function BottomTabBar() {
               gap: '2px',
               background: 'transparent',
               border: 'none',
-              color: 'rgba(255, 255, 255, 0.8)',
+              color: '#17402C',
               cursor: 'pointer',
               userSelect: 'none',
               WebkitTapHighlightColor: 'transparent',
               width: '38px',
             }}
           >
-            <LkvIcon name="arrow-left" size={17} />
-            <span style={{ fontSize: '8px', fontWeight: 600, fontFamily: 'var(--font-mono)', letterSpacing: '-0.02em' }}>Retour</span>
+            <LkvIcon name="arrow-left" size={17} color="#17402C" />
+            <span style={{ fontSize: '8px', fontWeight: 600, fontFamily: 'var(--font-mono)', letterSpacing: '-0.02em', color: '#17402C' }}>Retour</span>
           </motion.button>
         )}
 
@@ -503,7 +503,3 @@ function BottomTabBar() {
 }
 
 export default memo(BottomTabBar);
-
-
-
-

@@ -1,15 +1,14 @@
 'use client';
 
-/**
- * LKDV — Mon Matériel : composant client chargé d'exécuter la migration du stockage
- * UNE SEULE FOIS au montage (via `useMonMaterielMigration`).
- * Rendu dans le RootLayout (Server Component) : les hooks React ne sont pas
- * appelables côté serveur, d'où ce petit composant d'échelon.
- */
-
-import { useMonMaterielMigration } from '@/hooks/useMonMaterielMigration';
+import { useEffect } from 'react';
 
 export default function MigrationEffect() {
-  useMonMaterielMigration();
+  useEffect(() => {
+    // This effect runs once on client-side mount.
+    // In a real app, we might run migration logic here.
+    // For now, we do nothing.
+    console.log('MigrationEffect: no-op');
+  }, []);
+
   return null;
 }

@@ -218,17 +218,6 @@ function LoggedInProfile() {
       sub: '0 carnet',
     },
     {
-      href: '/mon-materiel',
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-          <rect x="2" y="7" width="20" height="14" rx="2" />
-          <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
-        </svg>
-      ),
-      label: 'Mon inventaire',
-      sub: '0 équipement',
-    },
-    {
       href: '/fidelite',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">

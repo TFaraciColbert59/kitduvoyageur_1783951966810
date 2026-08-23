@@ -1,0 +1,14 @@
+.grid {
+  display: none;
+  gap: var(--grid-gap);
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-areas:
+    "depart depart depart depart depart depart kits kits kits kits kits kits"
+    "suivi suivi suivi suivi suivi suivi suivi suivi suivi suivi suivi suivi";
+}
+
+@media (min-width: 768px) {
+  .grid {
+    display: grid;
+  }
+}

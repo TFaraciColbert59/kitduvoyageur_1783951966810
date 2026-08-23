@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { CONFIGURATOR_STEPS } from '@/lib/configuratorData';
 import { addToCart } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
+import { newId } from '@/lib/uuid';
 import {
   fetchUserInventory,
   fetchGroupContext,
@@ -292,7 +293,7 @@ export default function KitConfiguratorWizard() {
           const localKey = 'lkdv_guest_kits';
           const existing = JSON.parse(localStorage.getItem(localKey) || '[]');
           const newGuestKit = {
-            id: crypto.randomUUID(),
+            id: newId(),
             user_id: 'guest',
             name: `Kit ${dest} — IA`,
             description: `Généré automatiquement par le Configurateur IA`,
@@ -306,7 +307,7 @@ export default function KitConfiguratorWizard() {
             updated_at: new Date().toISOString(),
             is_favorite: false,
             items: (report.missingItems || []).map((item: any) => ({
-              id: crypto.randomUUID(),
+              id: newId(),
               kit_id: 'guest',
               item_name: item.name || 'Article',
               category: item.category || 'Autre',
@@ -385,7 +386,6 @@ export default function KitConfiguratorWizard() {
               <nav className="hidden sm:flex items-center gap-5 text-xs text-[#526356] font-medium">
                 <Link href="/explorer" className="hover:text-[#1C3829] transition-colors">Aventures</Link>
                 <Link href="/boutique" className="hover:text-[#1C3829] transition-colors">Boutique</Link>
-                <Link href="/mon-materiel" className="hover:text-[#1C3829] transition-colors">Mon Inventaire</Link>
               </nav>
 
               <Link href="/" className="text-xs text-[#7A8A7D] hover:text-[#1C3829] transition-colors font-medium">

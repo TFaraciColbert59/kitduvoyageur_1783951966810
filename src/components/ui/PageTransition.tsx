@@ -9,17 +9,13 @@ export default function PageTransition({ children }: { children: React.ReactNode
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
+    <AnimatePresence mode="popLayout" initial={false}>
       <motion.div
         key={pathname}
-        initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
+        initial={prefersReducedMotion ? false : { opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={prefersReducedMotion ? undefined : { opacity: 0, y: -4 }}
-        transition={
-          prefersReducedMotion
-            ? { duration: 0 }
-            : { duration: 0.25, ease: [0.16, 1, 0.3, 1] } // Apple / iOS smooth curve
-        }
+        exit={prefersReducedMotion ? undefined : { opacity: 0, y: -2 }}
+        transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
         className="w-full"
       >
         {children}

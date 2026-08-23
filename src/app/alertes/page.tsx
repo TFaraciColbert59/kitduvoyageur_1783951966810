@@ -124,8 +124,9 @@ export default function AlertesPage() {
   // Subscribe to real-time notification changes
   useEffect(() => {
     if (!user) return;
+    const channelName = `alertes-page-${user.id}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const channel = supabase
-      .channel('alertes-page-changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },

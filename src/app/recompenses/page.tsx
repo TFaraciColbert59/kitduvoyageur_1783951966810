@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import Icon from '@/components/ui/AppIcon';
+import { newId } from '@/lib/uuid';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -65,7 +66,7 @@ export default function RecompensesPage() {
   // Generate idempotency key for withdrawal session
   const idempotencyKey = useMemo(() => {
     if (typeof window !== 'undefined') {
-      return crypto.randomUUID();
+      return newId();
     }
     return '';
   }, [successMessage]); // Regenerate after a successful submission

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { getCart, addToCart as addCartItem, removeFromCart as removeCartItem, updateQuantity as updateCartQty, CartItem } from '@/lib/cart';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { newId } from '@/lib/uuid';
 import { Kit } from '@/types/kit';
 
 export interface UnifiedProduct {
@@ -752,7 +753,7 @@ export function useEquipment() {
       overrides?: Partial<UserEquipmentItem>
     ) => {
       triggerHaptic('selection');
-      const generatedId = crypto.randomUUID();
+      const generatedId = newId();
       const newItem: UserEquipmentItem = {
         id: generatedId,
         user_id: user?.id || 'guest',
