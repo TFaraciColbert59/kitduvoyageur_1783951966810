@@ -1,0 +1,99 @@
+name: LKDV iOS Build (Capacitor)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    permissions:
+      contents: read
+      actions: read
+      artifacts: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify ios directory exists
+        run: |
+          if [ ! -d "ios" ]; then
+            echo "❌ ios/ directory not found" && exit 1
+          fi
+          echo "✅ ios/ directory present"
+
+      - name: Verify Capacitor config
+        run: |
+          if [ ! -f "capacitor.config.ts" ] && [ ! -f "capacitor.config.json" ]; then
+            echo "❌ Capacitor config not found" && exit 1
+          fi
+          echo "✅ Capacitor config present"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build web assets
+        run: npm run build
+
+      - name: Sync Capacitor iOS project
+        run: npx cap sync ios
+
+      - name: Install CocoaPods
+        run: |
+          sudo gem install cocoapods
+          cd ios/App
+          pod install --repo-update
+
+      - name: Build iOS app (Xcode)
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_BUNDLE_ID: ${{ secrets.APPLE_BUNDLE_ID }}
+        run: |
+          if [ -n "$APPLE_ID" ]; then
+            fastlane match development --username "$APPLE_ID" --team_id "$APPLE_TEAM_ID"
+          fi
+          xcodebuild -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -archivePath ${{ github.workspace }}/build/App.xcarchive \
+            clean archive
+
+      - name: Prepare ExportOptions.plist (free dev signing)
+        run: |
+          cat > ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>development</string>
+            <key>signingStyle</key><string>automatic</string>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Export IPA
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath ${{ github.workspace }}/build/App.xcarchive \
+            -exportPath ${{ github.workspace }}/build/AppExport \
+            -exportOptionsPlist ${{ github.workspace }}/ExportOptions.plist
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LKDV-iOS-IPA
+          path: ${{ github.workspace }}/build/AppExport/*.ipa
