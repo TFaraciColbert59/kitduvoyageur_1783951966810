@@ -26,17 +26,35 @@ jobs:
       - name: Build web app
         run: npm run build
 
+      - name: Mask Capacitor server URL in logs
+        run: echo "::add-mask::${{ secrets.CAPACITOR_SERVER_URL }}"
+
       - name: Capacitor sync
         env:
           CAPACITOR_SERVER_URL: ${{ secrets.CAPACITOR_SERVER_URL }}
         run: npx cap sync ios
+
+      - name: Verify Capacitor server.url (no secret leak)
+        run: |
+          CONFIG="ios/App/App/capacitor.config.json"
+          if [ ! -f "$CONFIG" ]; then
+            echo "::error::capacitor.config.json introuvable"
+            exit 1
+          fi
+          # Check only the KEY presence; the value is never printed.
+          if grep -q '"url"' "$CONFIG"; then
+            echo "server.url: present in embedded Capacitor config"
+          else
+            echo "::warning::server.url: MISSING - the app will load the local shell instead of the backend"
+          fi
 
       - name: Build unsigned iOS app
         working-directory: ios/App
         run: |
           xcodebuild \
             -project App.xcodeproj \
-            -scheme App \
+            -target App \
+            -destination 'generic/platform=iOS' \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath build \
