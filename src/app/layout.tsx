@@ -18,6 +18,7 @@ import PageTransition from '@/components/ui/PageTransition';
 import CustomCursor from '@/components/ui/CustomCursor';
 import PrefetchRoutes from '@/components/PrefetchRoutes';
 import NativeAppBootstrap from '@/components/NativeAppBootstrap';
+import { Analytics } from '@vercel/analytics/next';
 
 // Fonts
 const dmSans = DM_Sans({
@@ -253,6 +254,7 @@ export default function RootLayout({
             </ToastProvider>
           </WishlistProvider>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
