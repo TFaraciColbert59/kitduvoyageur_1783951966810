@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { DM_Sans, Manrope, IBM_Plex_Mono, Instrument_Serif } from 'next/font/google';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import '@/styles/index.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
@@ -253,6 +254,7 @@ export default function RootLayout({
             </ToastProvider>
           </WishlistProvider>
         </AuthProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
