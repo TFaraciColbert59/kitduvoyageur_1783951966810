@@ -31,15 +31,11 @@ jobs:
           CAPACITOR_SERVER_URL: ${{ secrets.CAPACITOR_SERVER_URL }}
         run: npx cap sync ios
 
-      - name: Install CocoaPods
-        working-directory: ios/App
-        run: pod install
-
       - name: Build unsigned iOS app
         working-directory: ios/App
         run: |
           xcodebuild \
-            -workspace App.xcworkspace \
+            -project App.xcodeproj \
             -scheme App \
             -configuration Release \
             -sdk iphoneos \
