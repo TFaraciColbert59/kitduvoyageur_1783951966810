@@ -63,6 +63,8 @@ jobs:
             -sdk iphoneos \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
+            SWIFT_USE_PREBUILT_MODULES=NO \
+            ONLY_ACTIVE_ARCH=YES \
             build \
             CONFIGURATION_BUILD_DIR=$PWD/build/Release-iphoneos
 
