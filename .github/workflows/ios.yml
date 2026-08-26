@@ -52,26 +52,28 @@ jobs:
         working-directory: ios/App
         run: xcodebuild -list
 
+      - name: Resolve SPM dependencies
+        working-directory: ios/App
+        run: xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App -sdk iphoneos
+
       - name: Build unsigned iOS app
         working-directory: ios/App
         run: |
           xcodebuild \
             -project App.xcodeproj \
-            -target App \
+            -scheme App \
             -destination 'generic/platform=iOS' \
             -configuration Release \
             -sdk iphoneos \
+            -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            SWIFT_USE_PREBUILT_MODULES=NO \
-            ONLY_ACTIVE_ARCH=YES \
-            build \
-            CONFIGURATION_BUILD_DIR=$PWD/build/Release-iphoneos
+            build
 
       - name: Package IPA
         run: |
           mkdir -p Payload
-          cp -R ios/App/build/Release-iphoneos/App.app Payload/
+          cp -R ios/App/build/Build/Products/Release-iphoneos/App.app Payload/
           zip -r LKDV-ios-unsigned.ipa Payload
 
       - name: Upload IPA
