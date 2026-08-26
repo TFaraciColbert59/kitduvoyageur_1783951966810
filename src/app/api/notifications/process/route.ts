@@ -1,15 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Initialize Supabase Admin client with service role key
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+// Lazy Supabase Admin client: constructed on first use so this module can be
+// imported during `next build` even when env vars are not yet available.
+let _supabaseAdmin: SupabaseClient<any> | null = null;
+function getSupabaseAdmin(): SupabaseClient<any> {
+  if (!_supabaseAdmin) {
+    _supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    );
+  }
+  return _supabaseAdmin;
+}
+const supabaseAdmin = new Proxy({} as SupabaseClient<any>, {
+  get(_target, prop, receiver) {
+    return Reflect.get(getSupabaseAdmin(), prop, receiver);
+  },
+});
 
 // Setup Web Push VAPID details if configured
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
@@ -32,7 +44,7 @@ if (vapidPublicKey && vapidPrivateKey) {
 export async function POST(req: NextRequest) {
   try {
     // 1. Fetch pending deliveries
-    const { data: pending, error: fetchError } = await supabaseAdmin
+    const { data: pending, error: fetchError } = (await supabaseAdmin
       .from('notification_deliveries')
       .select(`
         id,
@@ -48,7 +60,7 @@ export async function POST(req: NextRequest) {
         )
       `)
       .eq('status', 'pending')
-      .limit(10); // Process 10 items at a time
+      .limit(10)) as any; // Process 10 items at a time
 
     if (fetchError) throw fetchError;
     if (!pending || pending.length === 0) {

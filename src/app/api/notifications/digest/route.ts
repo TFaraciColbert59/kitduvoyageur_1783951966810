@@ -1,14 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Initialize Supabase Admin client with service role key
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+// Lazy Supabase Admin client: constructed on first use so this module can be
+// imported during `next build` even when env vars are not yet available.
+let _supabaseAdmin: SupabaseClient<any> | null = null;
+function getSupabaseAdmin(): SupabaseClient<any> {
+  if (!_supabaseAdmin) {
+    _supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    );
+  }
+  return _supabaseAdmin;
+}
+const supabaseAdmin = new Proxy({} as SupabaseClient<any>, {
+  get(_target, prop, receiver) {
+    return Reflect.get(getSupabaseAdmin(), prop, receiver);
+  },
+});
 
 /**
  * GET or POST /api/notifications/digest
