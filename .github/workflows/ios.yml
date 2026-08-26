@@ -56,20 +56,20 @@ jobs:
         working-directory: ios/App
         run: |
           xcodebuild \
-            -workspace App/App.xcworkspace \
-            -scheme App \
+            -project App.xcodeproj \
+            -target App \
             -destination 'generic/platform=iOS' \
             -configuration Release \
             -sdk iphoneos \
-            -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            build
+            build \
+            CONFIGURATION_BUILD_DIR=$PWD/build/Release-iphoneos
 
       - name: Package IPA
         run: |
           mkdir -p Payload
-          cp -R ios/App/build/Build/Products/Release-iphoneos/App.app Payload/
+          cp -R ios/App/build/Release-iphoneos/App.app Payload/
           zip -r LKDV-ios-unsigned.ipa Payload
 
       - name: Upload IPA
