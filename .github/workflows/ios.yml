@@ -48,11 +48,16 @@ jobs:
             echo "::warning::server.url: MISSING - the app will load the local shell instead of the backend"
           fi
 
+      - name: List Xcode schemes
+        working-directory: ios/App
+        run: xcodebuild -list
+
       - name: Build unsigned iOS app
         working-directory: ios/App
         run: |
           xcodebuild \
             -project App.xcodeproj \
+            -scheme App \
             -target App \
             -destination 'generic/platform=iOS' \
             -configuration Release \
